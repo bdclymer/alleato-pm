@@ -469,41 +469,137 @@ function PrimeContractSection({
   contracts: Contract[];
   contractLineItems: Pick<ContractLineItem, "contract_id" | "total_cost" | "quantity" | "unit_cost">[];
 }) {
-  const totalValue = contractLineItems.reduce((sum, li) => sum + (li.total_cost ?? 0), 0);
+  const primary = contracts[0] ?? null;
+  const additional = contracts.slice(1, 3);
 
   return (
     <section>
       <SectionHeading action={<ViewAllLink href={`/${projectId}/prime-contracts`} label="View All" />}>
         Prime Contract
       </SectionHeading>
-      {contracts.length === 0 ? (
+
+      {!primary ? (
         <Link
           href={`/${projectId}/prime-contracts/new`}
-          className="flex items-center gap-2 rounded-md border border-dashed border-border px-3 py-3 text-sm text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
+          className="flex items-center gap-2 rounded-md px-3 py-3 text-sm text-muted-foreground transition-colors hover:text-primary"
+          style={{ borderStyle: "dashed", borderWidth: 1 }}
         >
           <Building2 className="h-4 w-4 shrink-0" strokeWidth={1.5} />
           <span>No prime contract — create one</span>
           <ChevronRight className="ml-auto h-3.5 w-3.5" />
         </Link>
       ) : (
-        <div>
-          {contracts.slice(0, 3).map((c) => (
-            <Link
-              key={c.id}
-              href={`/${projectId}/prime-contracts/${c.id}`}
-              className="-mx-2 flex items-center gap-2.5 rounded-md border-b border-border/50 px-2 py-2.5 last:border-0 transition-colors hover:bg-muted/50"
-            >
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm">{c.title ?? c.contract_number ?? "Prime Contract"}</p>
-                {totalValue > 0 && (
-                  <p className="mt-0.5 text-xs text-muted-foreground tabular-nums">
-                    {fmtFull(totalValue)}
+        <div className="space-y-2">
+          {/* Primary contract — info card */}
+          <Link
+            href={`/${projectId}/prime-contracts/${primary.id}`}
+            className="group block"
+          >
+            <div className="rounded-xl bg-primary/5 p-4 transition-colors group-hover:bg-primary/8">
+              {/* Header */}
+              <div className="mb-3 flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-foreground leading-snug">
+                    {primary.title ?? primary.contract_number ?? "Prime Contract"}
                   </p>
+                  {primary.contract_number && primary.title && (
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {primary.contract_number}
+                    </p>
+                  )}
+                </div>
+                <StatusBadge status={primary.status ?? "Draft"} />
+              </div>
+
+              {/* Stats grid */}
+              <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    Contract Value
+                  </p>
+                  <p className="mt-0.5 text-base font-semibold tabular-nums text-foreground">
+                    {fmtFull(primary.revised_contract_value || primary.original_contract_value || null)}
+                  </p>
+                  {primary.revised_contract_value > 0 &&
+                    primary.original_contract_value > 0 &&
+                    primary.revised_contract_value !== primary.original_contract_value && (
+                      <p className="mt-0.5 text-[11px] text-muted-foreground tabular-nums">
+                        Original {fmtCompact(primary.original_contract_value)}
+                      </p>
+                    )}
+                </div>
+
+                {primary.retention_percentage != null && (
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      Retention
+                    </p>
+                    <p className="mt-0.5 text-base font-semibold tabular-nums text-foreground">
+                      {primary.retention_percentage}%
+                    </p>
+                  </div>
+                )}
+
+                {primary.start_date && (
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      Start Date
+                    </p>
+                    <p className="mt-0.5 text-sm font-medium text-foreground">
+                      {format(new Date(primary.start_date), "MMM d, yyyy")}
+                    </p>
+                  </div>
+                )}
+
+                {primary.end_date && (
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      Completion
+                    </p>
+                    <p className={cn(
+                      "mt-0.5 text-sm font-medium",
+                      isPast(new Date(primary.end_date)) && primary.status !== "Closed"
+                        ? "text-destructive"
+                        : "text-foreground"
+                    )}>
+                      {format(new Date(primary.end_date), "MMM d, yyyy")}
+                    </p>
+                  </div>
                 )}
               </div>
-              <StatusBadge status={c.status ?? "Draft"} />
-            </Link>
-          ))}
+
+              {/* Footer: executed flag + arrow */}
+              <div className="mt-3 flex items-center justify-between">
+                {primary.executed ? (
+                  <span className="flex items-center gap-1 text-[11px] font-medium text-green-600 dark:text-green-400">
+                    <Check className="h-3 w-3" /> Executed
+                  </span>
+                ) : (
+                  <span className="text-[11px] text-muted-foreground">Not executed</span>
+                )}
+                <ArrowRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+              </div>
+            </div>
+          </Link>
+
+          {/* Additional contracts — compact list */}
+          {additional.length > 0 && (
+            <div className="space-y-0.5">
+              {additional.map((c) => (
+                <Link
+                  key={c.id}
+                  href={`/${projectId}/prime-contracts/${c.id}`}
+                  className="-mx-1 flex items-center gap-2.5 rounded-md px-1 py-2 transition-colors hover:bg-muted/50"
+                >
+                  <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" strokeWidth={1.5} />
+                  <p className="min-w-0 flex-1 truncate text-sm">
+                    {c.title ?? c.contract_number ?? "Prime Contract"}
+                  </p>
+                  <StatusBadge status={c.status ?? "Draft"} />
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </section>
