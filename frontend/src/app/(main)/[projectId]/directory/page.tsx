@@ -1821,6 +1821,18 @@ export default function ProjectDirectoryPage() {
     .map((v) => v.companies?.id)
     .filter(Boolean) as string[];
 
+  // Silently sync companies from contracts/commitments on mount
+  React.useEffect(() => {
+    if (!projectId) return;
+    fetch(`/api/projects/${projectId}/directory/companies/sync`, { method: "POST" })
+      .then((r) => r.ok ? r.json() : null)
+      .then((result: { added: number } | null) => {
+        if (result && result.added > 0) refetchCompanies();
+      })
+      .catch(() => {/* silent — sync is best-effort */});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectId]);
+
   return (
     <PageShell
       variant="dashboard"
