@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { apiFetch } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { ChatSidebar } from "./chat-sidebar";
@@ -43,9 +44,8 @@ export function ChatLayout({ username }: ChatLayoutProps) {
   }, []);
 
   const fetchPreviews = useCallback(() => {
-    fetch("/api/team-chat/previews")
-      .then((r) => r.json())
-      .then((data: Record<string, ChannelPreview>) => setPreviews(data))
+    apiFetch<Record<string, ChannelPreview>>("/api/team-chat/previews")
+      .then((data) => setPreviews(data ?? {}))
       .catch(() => {});
   }, []);
 

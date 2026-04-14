@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
+import { apiFetch } from "@/lib/api-client";
 import { createAuthClient } from "@/lib/supabase/client-auth";
 import { validateCallbackUrl } from "@/lib/validation/callback-url";
 import { toast } from "sonner";
@@ -49,10 +50,11 @@ export function LoginPageV2({ redirectTo }: LoginPageV2Props) {
         }, 100);
       } else {
         try {
-          const response = await fetch("/api/auth/post-login-redirect");
-          const { redirect } = await response.json();
+          const result = await apiFetch<{ redirect?: string }>(
+            "/api/auth/post-login-redirect",
+          );
           setTimeout(() => {
-            router.push(redirect || "/");
+            router.push(result?.redirect || "/");
             router.refresh();
           }, 100);
         } catch {

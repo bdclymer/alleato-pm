@@ -138,6 +138,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { apiFetch } from "@/lib/api-client";
 import { toast } from "sonner";
 import {
   Search,
@@ -1293,19 +1294,14 @@ export function GenericDataTable({
 
     setIsSaving(true);
     try {
-      const response = await fetch("/api/table-update", {
+      await apiFetch("/api/table-update", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           table: config.editConfig.tableName,
           id: editingRow.id,
           data: editingRow,
         }),
       });
-
-      if (!response.ok) {
-        throw new Error("Failed to save changes");
-      }
 
       setData((prevData) =>
         prevData.map((row) => (row.id === editingRow.id ? editingRow : row)),
@@ -1316,7 +1312,11 @@ export function GenericDataTable({
       setIsEditDialogOpen(false);
       setEditingRow(null);
     } catch (error) {
-      toast.error("Failed to save changes. Please try again.");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to save changes. Please try again.",
+      );
     } finally {
       setIsSaving(false);
     }
@@ -1368,19 +1368,14 @@ export function GenericDataTable({
 
       setIsSavingCell(true);
       try {
-        const response = await fetch("/api/table-update", {
+        await apiFetch("/api/table-update", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             table: config.editConfig.tableName,
             id: rowId,
             data: { [columnId]: newValue },
           }),
         });
-
-        if (!response.ok) {
-          throw new Error("Failed to save changes");
-        }
 
         // Update local data
         setData((prevData) =>
@@ -1393,7 +1388,11 @@ export function GenericDataTable({
         setEditingCell(null);
         setEditingValue("");
       } catch (error) {
-        toast.error("Failed to save changes. Please try again.");
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Failed to save changes. Please try again.",
+        );
       } finally {
         setIsSavingCell(false);
       }

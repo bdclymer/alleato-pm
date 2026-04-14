@@ -6,6 +6,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { SendHorizontal, Loader2 } from "lucide-react";
+import { apiFetch } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 
 interface SimpleRagChatProps {
@@ -99,12 +100,12 @@ export function SimpleRagChat({
 
     setSessionId(savedSession);
     setIsLoadingMessages(true);
-    fetch(`/api/ai-assistant/messages/${savedSession}`)
-      .then(async (res) => {
-        if (!res.ok) throw new Error("Failed to load chat history");
-        const data = await res.json();
-        const historyMessages = (data.messages || []).map(
-          (msg: ChatHistoryMessage) => dbMessageToUIMessage(msg),
+    apiFetch<{ messages?: ChatHistoryMessage[] }>(
+      `/api/ai-assistant/messages/${savedSession}`,
+    )
+      .then((data) => {
+        const historyMessages = (data?.messages ?? []).map((msg) =>
+          dbMessageToUIMessage(msg),
         );
         setMessages(historyMessages);
       })
@@ -117,14 +118,14 @@ export function SimpleRagChat({
   }, [setMessages]);
 
   const createConversation = useCallback(async (title: string) => {
-    const response = await fetch("/api/ai-assistant/conversations", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title }),
-    });
-    if (!response.ok) throw new Error("Failed to create conversation");
-    const data = await response.json();
-    const nextSessionId = data?.conversation?.session_id as string;
+    const data = await apiFetch<{ conversation?: { session_id?: string } }>(
+      "/api/ai-assistant/conversations",
+      {
+        method: "POST",
+        body: JSON.stringify({ title }),
+      },
+    );
+    const nextSessionId = data?.conversation?.session_id;
     if (!nextSessionId) throw new Error("Conversation created without session id");
     sessionIdRef.current = nextSessionId;
     localStorage.setItem(WIDGET_SESSION_STORAGE_KEY, nextSessionId);

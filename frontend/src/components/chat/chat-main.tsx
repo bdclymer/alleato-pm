@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { apiFetch } from "@/lib/api-client";
 import { ChatHeader } from "./chat-header";
 import { MessageList } from "./message-list";
 import { Composer } from "./composer";
@@ -53,9 +54,10 @@ export function ChatMain({
     setHistory([]);
     setMessageQuery("");
 
-    fetch(`/api/team-chat/messages?channel=${encodeURIComponent(channel.id)}`)
-      .then((response) => response.json())
-      .then((rows: MessageRow[]) => {
+    apiFetch<MessageRow[]>(
+      `/api/team-chat/messages?channel=${encodeURIComponent(channel.id)}`,
+    )
+      .then((rows) => {
         if (!Array.isArray(rows)) {
           return;
         }
@@ -107,9 +109,8 @@ export function ChatMain({
   const handleSend = async (content: string) => {
     sendMessage(content);
 
-    fetch("/api/team-chat/messages", {
+    apiFetch("/api/team-chat/messages", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ channelId: channel.id, content, userName: username }),
     })
       .then(() => onMessageSent?.())

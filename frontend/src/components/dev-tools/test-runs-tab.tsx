@@ -18,6 +18,7 @@ import { Loader2, CheckCircle2, XCircle, SkipForward, Play } from "lucide-react"
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { apiFetch } from "@/lib/api-client";
 import { toast } from "sonner";
 
 type Priority = "HIGH" | "MEDIUM" | "LOW";
@@ -67,11 +68,11 @@ export function TestRunsTab({ tool }: Props) {
   const loadSuite = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/dev/test-suites/${tool}`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const json = await res.json();
-      setSuiteId(json.suite?.id ?? null);
-      setCases(json.cases ?? []);
+      const json = await apiFetch<{ suite?: { id?: string }; cases?: TestCase[] }>(
+        `/api/dev/test-suites/${tool}`,
+      );
+      setSuiteId(json?.suite?.id ?? null);
+      setCases(json?.cases ?? []);
     } catch (err) {
       toast.error(`Failed to load test suite: ${(err as Error).message}`);
     } finally {
@@ -87,17 +88,18 @@ export function TestRunsTab({ tool }: Props) {
     if (!suiteId) return;
     setStarting(true);
     try {
-      const res = await fetch("/api/dev/test-runs", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ suite_id: suiteId, branch: "main" }),
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const { run } = await res.json();
+      const { run } = await apiFetch<{ run: { id: string } }>(
+        "/api/dev/test-runs",
+        {
+          method: "POST",
+          body: JSON.stringify({ suite_id: suiteId, branch: "main" }),
+        },
+      );
 
-      const detail = await fetch(`/api/dev/test-runs/${run.id}`);
-      const detailJson = await detail.json();
-      setActiveRun({ id: run.id, results: detailJson.results ?? [] });
+      const detailJson = await apiFetch<{ results?: TestResult[] }>(
+        `/api/dev/test-runs/${run.id}`,
+      );
+      setActiveRun({ id: run.id, results: detailJson?.results ?? [] });
       toast.success("Test run started");
     } catch (err) {
       toast.error(`Failed to start run: ${(err as Error).message}`);
@@ -120,12 +122,10 @@ export function TestRunsTab({ tool }: Props) {
           : prev,
       );
       try {
-        const res = await fetch(`/api/dev/test-results/${resultId}`, {
+        await apiFetch(`/api/dev/test-results/${resultId}`, {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(patch),
         });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
       } catch (err) {
         toast.error(`Save failed: ${(err as Error).message}`);
       }

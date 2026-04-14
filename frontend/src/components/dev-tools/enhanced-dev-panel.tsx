@@ -34,6 +34,7 @@ import { Separator } from "@/components/ui/separator"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { ApiError, apiFetch } from "@/lib/api-client"
 import { createClient } from "@/lib/supabase/client"
 import { useParams, usePathname } from "next/navigation"
 import { toast } from "sonner"
@@ -339,18 +340,21 @@ export function EnhancedDevPanel({ variant = "sidebar" }: EnhancedDevPanelProps)
     if (params.projectId) {
       const apiStart = Date.now()
       try {
-        const response = await fetch(`/api/projects/${params.projectId}/budget`)
+        await apiFetch(`/api/projects/${params.projectId}/budget`)
         checks[2] = {
           ...checks[2],
-          status: response.ok ? "success" : "error",
-          message: response.ok ? `${response.status} OK` : `${response.status} ${response.statusText}`,
+          status: "success",
+          message: "200 OK",
           duration: Date.now() - apiStart,
         }
       } catch (err) {
+        const status = err instanceof ApiError ? err.status : 0
         checks[2] = {
           ...checks[2],
           status: "error",
-          message: String(err),
+          message: status
+            ? `${status} ${err instanceof Error ? err.message : "Request failed"}`
+            : String(err),
           duration: Date.now() - apiStart,
         }
       }
@@ -384,40 +388,45 @@ export function EnhancedDevPanel({ variant = "sidebar" }: EnhancedDevPanelProps)
   const checkRouteConflicts = async () => {
     setIsCheckingRoutes(true)
     try {
-      const response = await fetch("/api/dev-tools/check-routes")
-      const data = await response.json()
-      setRouteConflicts(data.conflicts || "✅ No route conflicts found")
+      const data = await apiFetch<{ conflicts?: string }>("/api/dev-tools/check-routes")
+      setRouteConflicts(data?.conflicts || "✅ No route conflicts found")
     } catch (err) {
-      setRouteConflicts(`Error checking routes: ${err}`)
+      setRouteConflicts(
+        `Error checking routes: ${err instanceof Error ? err.message : String(err)}`,
+      )
     }
     setIsCheckingRoutes(false)
   }
 
   const clearNextjsCache = async () => {
     try {
-      const response = await fetch("/api/dev-tools/clear-cache", { method: "POST" })
-      const data = await response.json()
-      if (data.success) {
+      const data = await apiFetch<{ success?: boolean; message?: string }>(
+        "/api/dev-tools/clear-cache",
+        { method: "POST" },
+      )
+      if (data?.success) {
         toast.success("Next.js cache cleared. Refresh the page.")
       } else {
-        toast.error(data.message || "Failed to clear cache")
+        toast.error(data?.message || "Failed to clear cache")
       }
     } catch (err) {
-      toast.error(`Error: ${err}`)
+      toast.error(`Error: ${err instanceof Error ? err.message : String(err)}`)
     }
   }
 
   const regenerateTypes = async () => {
     try {
-      const response = await fetch("/api/dev-tools/regenerate-types", { method: "POST" })
-      const data = await response.json()
-      if (data.success) {
+      const data = await apiFetch<{ success?: boolean; message?: string }>(
+        "/api/dev-tools/regenerate-types",
+        { method: "POST" },
+      )
+      if (data?.success) {
         toast.success("Types regenerated successfully")
       } else {
-        toast.error(data.message || "Failed to regenerate types")
+        toast.error(data?.message || "Failed to regenerate types")
       }
     } catch (err) {
-      toast.error(`Error: ${err}`)
+      toast.error(`Error: ${err instanceof Error ? err.message : String(err)}`)
     }
   }
 
