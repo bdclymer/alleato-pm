@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { AutocompleteField, MoneyField } from "@/components/forms";
+import { AutocompleteField, MoneyField, FileUploadField } from "@/components/forms";
 import {
   Select,
   SelectContent,
@@ -62,8 +62,6 @@ interface FormData {
   description: string;
   square_footage: string;
   total_value: string;
-  est_profit: string;
-  project_code: string;
   office: string;
   country: string;
   street_address: string;
@@ -107,8 +105,6 @@ function initForm(project: Project): FormData {
     description: project.summary || "",
     square_footage: str(m.square_footage),
     total_value: project["est revenue"] != null ? String(project["est revenue"]) : "",
-    est_profit: project["est profit"] != null ? String(project["est profit"]) : "",
-    project_code: str(m.project_code),
     office: str(m.office),
     country: str(m.country) || "United States",
     street_address: project.address || "",
@@ -222,13 +218,19 @@ function TextField({
 export function EditProjectSidebar({ project, open, onOpenChange }: EditProjectSidebarProps) {
   const [form, setForm] = React.useState<FormData>(initForm(project));
   const [saving, setSaving] = React.useState(false);
+  const [logoFile, setLogoFile] = React.useState<File | null>(null);
+  const [photoFile, setPhotoFile] = React.useState<File | null>(null);
   const router = useRouter();
   const { options: companyOptions, isLoading: isLoadingCompanies } = useCompanies({
     enabled: open,
   });
 
   React.useEffect(() => {
-    if (open) setForm(initForm(project));
+    if (open) {
+      setForm(initForm(project));
+      setLogoFile(null);
+      setPhotoFile(null);
+    }
   }, [open, project]);
 
   const clientOptions = React.useMemo(() => {
@@ -269,14 +271,14 @@ export function EditProjectSidebar({ project, open, onOpenChange }: EditProjectS
         "start date": form.start_date || null,
         "est completion": form.completion_date || null,
         "est revenue": parseNum(form.total_value),
-        "est profit": parseNum(form.est_profit),
         work_scope: form.work_scope || null,
         project_sector: form.project_sector || null,
         delivery_method: form.delivery_method || null,
         summary_metadata: {
           ...existingMeta,
           square_footage: parseNum(form.square_footage),
-          project_code: form.project_code || null,
+          project_logo: logoFile ? logoFile.name : (existingMeta.project_logo ?? null),
+          project_photo: photoFile ? photoFile.name : (existingMeta.project_photo ?? null),
           city: form.city || null,
           postal_code: form.postal_code || null,
           country: form.country || null,
@@ -313,13 +315,13 @@ export function EditProjectSidebar({ project, open, onOpenChange }: EditProjectS
         <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
           <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
             <SheetHeader className="pb-2">
-              <SheetTitle>Edit Project</SheetTitle>
+              <SheetTitle className="text-xl font-semibold text-left">Edit Project</SheetTitle>
               <SheetDescription className="sr-only">Edit project details</SheetDescription>
             </SheetHeader>
 
             {/* General Information */}
             <section className="space-y-3">
-              <h3 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+              <h3 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">
                 General Information
               </h3>
               <div className="grid grid-cols-2 gap-3">
@@ -413,7 +415,7 @@ export function EditProjectSidebar({ project, open, onOpenChange }: EditProjectS
 
             {/* Project Metrics */}
             <section className="space-y-3">
-              <h3 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+              <h3 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">
                 Project Metrics
               </h3>
               <div className="grid grid-cols-2 gap-3">
@@ -424,19 +426,51 @@ export function EditProjectSidebar({ project, open, onOpenChange }: EditProjectS
                   value={parseNum(form.total_value) ?? undefined}
                   onChange={(value) => set("total_value", value !== undefined ? String(value) : "")}
                 />
-                <MoneyField
-                  id="edit-profit"
-                  label="Est. Profit"
-                  value={parseNum(form.est_profit) ?? undefined}
-                  onChange={(value) => set("est_profit", value !== undefined ? String(value) : "")}
+              </div>
+            </section>
+
+            {/* Logo */}
+            <section className="space-y-3">
+              <h3 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">
+                Logo
+              </h3>
+              <div className="grid grid-cols-2 gap-3">
+                <FileUploadField
+                  label="Project Logo"
+                  accept=".jpg,.jpeg,.png,.tif,.tiff,.bmp"
+                  hint="Square image recommended"
+                  onFilesSelected={(files) => setLogoFile(files[0] ?? null)}
+                  value={
+                    logoFile
+                      ? [{ name: logoFile.name, size: logoFile.size, type: logoFile.type }]
+                      : getMetadata(project).project_logo
+                        ? [{ name: String(getMetadata(project).project_logo), size: 0, type: "image/*" }]
+                        : []
+                  }
+                  variant="minimal"
+                  showMetaText={false}
                 />
-                <TextField id="edit-code" label="Project Code" value={form.project_code} onChange={(v) => set("project_code", v)} />
+                <FileUploadField
+                  label="Project Photo"
+                  accept=".jpg,.jpeg,.png,.tif,.tiff,.bmp"
+                  hint="Landscape image recommended"
+                  onFilesSelected={(files) => setPhotoFile(files[0] ?? null)}
+                  value={
+                    photoFile
+                      ? [{ name: photoFile.name, size: photoFile.size, type: photoFile.type }]
+                      : getMetadata(project).project_photo
+                        ? [{ name: String(getMetadata(project).project_photo), size: 0, type: "image/*" }]
+                        : []
+                  }
+                  variant="minimal"
+                  showMetaText={false}
+                />
               </div>
             </section>
 
             {/* Location */}
             <section className="space-y-3">
-              <h3 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+              <h3 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">
                 Location
               </h3>
               <div className="grid grid-cols-2 gap-3">
@@ -494,7 +528,7 @@ export function EditProjectSidebar({ project, open, onOpenChange }: EditProjectS
 
             {/* Dates */}
             <section className="space-y-3">
-              <h3 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+              <h3 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">
                 Dates
               </h3>
               <div className="grid grid-cols-2 gap-3">
@@ -505,7 +539,7 @@ export function EditProjectSidebar({ project, open, onOpenChange }: EditProjectS
 
             {/* Status & Flags */}
             <section className="space-y-3">
-              <h3 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+              <h3 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">
                 Status & Flags
               </h3>
               <div className="space-y-2.5">
