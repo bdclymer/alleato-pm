@@ -446,6 +446,12 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
                   <LabelValueRow label="Executed">
                     {commitment.executed === true ? "Yes" : commitment.executed === false ? "No" : "—"}
                   </LabelValueRow>
+                  <LabelValueRow label="Visibility">
+                    {commitment.private ? "Private" : "Public"}
+                  </LabelValueRow>
+                  <LabelValueRow label="Non-Admin Can View SOV Items">
+                    {commitment.allow_non_admin_view_sov_items ? "Yes" : "No"}
+                  </LabelValueRow>
                   <LabelValueRow label="Created By" missing={!commitment.created_by_name && !commitment.created_by}>
                     {commitment.created_by_name || "—"}
                   </LabelValueRow>
@@ -543,17 +549,6 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
               </dl>
             </div>
 
-            <div className="space-y-4">
-              <SectionRuleHeading label="Privacy" className="[&_span]:text-primary" />
-              <dl className="space-y-3 text-sm">
-                <LabelValueRow label="Visibility">
-                  {commitment.private ? "Private" : "Public"}
-                </LabelValueRow>
-                <LabelValueRow label="Non-Admin Can View SOV Items">
-                  {commitment.allow_non_admin_view_sov_items ? "Yes" : "No"}
-                </LabelValueRow>
-              </dl>
-            </div>
           </div>
         </div>
       </section>
