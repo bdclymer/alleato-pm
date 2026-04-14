@@ -44,7 +44,7 @@ export const GET = withApiGuardrails(
     const { data, error } = await supabase
       .from("pco_line_items")
       .select("*")
-      .eq("pco_id", numericPcoId)
+      .eq("pco_id", String(numericPcoId))
       .order("id", { ascending: true });
 
     if (error) {
@@ -110,16 +110,18 @@ export const POST = withApiGuardrails(
       );
     }
 
-    const insertData: Record<string, any> = {
-      pco_id: numericPcoId,
+    // Schema note: pco_line_items.pco_id is string-typed; legacy fields
+    // (cost_code, uom, line_type, category, subcontractor_id, line_amount) were
+    // replaced by (budget_code_id, unit_of_measure, amount, pco_type).
+    const insertData = {
+      pco_id: String(numericPcoId),
+      pco_type: body.pco_type || "commitment",
       description: body.description,
-      cost_code: body.cost_code || null,
+      budget_code_id: body.budget_code_id || null,
       quantity: body.quantity ?? null,
-      uom: body.uom || null,
+      unit_of_measure: body.unit_of_measure || body.uom || null,
       unit_cost: body.unit_cost ?? null,
-      line_type: body.line_type || null,
-      category: body.category || null,
-      subcontractor_id: body.subcontractor_id || null,
+      amount: body.amount ?? body.line_amount ?? null,
       change_event_line_item_id: body.change_event_line_item_id || null,
     };
 
@@ -188,12 +190,12 @@ export const PATCH = withApiGuardrails(
       );
     }
 
-    // Verify line item belongs to this PCO
+    // Verify line item belongs to this PCO (pco_id is string-typed)
     const { data: existing, error: fetchError } = await supabase
       .from("pco_line_items")
       .select("id")
       .eq("id", body.id)
-      .eq("pco_id", numericPcoId)
+      .eq("pco_id", String(numericPcoId))
       .single();
 
     if (fetchError || !existing) {
@@ -203,19 +205,27 @@ export const PATCH = withApiGuardrails(
       );
     }
 
+    // Only real columns on pco_line_items; legacy field names are translated below.
     const allowedFields = [
-      "cost_code",
+      "budget_code_id",
       "description",
       "quantity",
-      "uom",
+      "unit_of_measure",
       "unit_cost",
-      "line_type",
-      "category",
-      "subcontractor_id",
+      "amount",
+      "pco_type",
       "change_event_line_item_id",
     ];
 
-    const updates: Record<string, any> = {};
+    // Back-compat: translate legacy field names to current schema.
+    if (body.uom !== undefined && body.unit_of_measure === undefined) {
+      body.unit_of_measure = body.uom;
+    }
+    if (body.line_amount !== undefined && body.amount === undefined) {
+      body.amount = body.line_amount;
+    }
+
+    const updates: Record<string, unknown> = {};
     for (const field of allowedFields) {
       if (body[field] !== undefined) {
         updates[field] = body[field];
@@ -296,12 +306,12 @@ export const DELETE = withApiGuardrails(
       );
     }
 
-    // Delete and return the deleted item for confirmation
+    // Delete and return the deleted item for confirmation (pco_id is string-typed)
     const { data, error } = await supabase
       .from("pco_line_items")
       .delete()
       .eq("id", body.lineItemId)
-      .eq("pco_id", numericPcoId)
+      .eq("pco_id", String(numericPcoId))
       .select()
       .single();
 

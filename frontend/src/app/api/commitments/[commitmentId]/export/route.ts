@@ -216,7 +216,6 @@ async function fetchCommitmentData(
   }
 
   const isSubcontract = unifiedData.commitment_type === "subcontract";
-  const tableName = isSubcontract ? "subcontracts" : "purchase_orders";
   const sovTableName = isSubcontract
     ? "subcontract_sov_items"
     : "purchase_order_sov_items";
@@ -225,20 +224,42 @@ async function fetchCommitmentData(
     ? "subcontracts_with_totals"
     : "purchase_orders_with_totals";
 
-  // Fetch base record with company join
-  const { data, error } = await supabase
-    .from(tableName)
-    .select(
-      `
-      *,
-      contract_company:companies!contract_company_id(id, name, address, city, state)
-    `
-    )
-    .eq("id", id)
-    .single();
+  // Fetch base record. FK to companies isn't declared in the generated
+  // schema for either PO or subcontract, so we look up the company
+  // separately below. Branch on type so TS keeps table-specific columns.
+  const baseRecord = isSubcontract
+    ? await supabase.from("subcontracts").select("*").eq("id", id).single()
+    : await supabase.from("purchase_orders").select("*").eq("id", id).single();
 
-  if (error || !data) {
+  if (baseRecord.error || !baseRecord.data) {
     return null;
+  }
+  const data = baseRecord.data;
+
+  // Narrow via the branch we took above. Each table's Row shape is distinct,
+  // so guard with a runtime property presence check — no `as any`.
+  const subcontractData =
+    "start_date" in data ? data : null;
+  const purchaseOrderData =
+    "accounting_method" in data ? data : null;
+
+  // Look up the contract company (one extra query; FK isn't declared).
+  let contractCompany: CommitmentData["contract_company"] = null;
+  if (data.contract_company_id) {
+    const { data: companyRow } = await supabase
+      .from("companies")
+      .select("id, name, address, city, state")
+      .eq("id", data.contract_company_id)
+      .maybeSingle();
+    if (companyRow?.name) {
+      contractCompany = {
+        id: companyRow.id,
+        name: companyRow.name,
+        address: companyRow.address,
+        city: companyRow.city,
+        state: companyRow.state,
+      };
+    }
   }
 
   // Fetch financial totals
@@ -340,31 +361,35 @@ async function fetchCommitmentData(
     }
   }
 
+  if (!data.id) {
+    return null;
+  }
+
   return {
     id: data.id,
     number: data.contract_number || data.id,
     title: data.title || (isSubcontract ? "Subcontract" : "Purchase Order"),
     description: data.description,
     status: data.status,
-    type: unifiedData.commitment_type,
+    type: unifiedData.commitment_type ?? (isSubcontract ? "subcontract" : "purchase_order"),
     original_amount: originalAmount,
     approved_change_orders: 0,
     revised_contract_amount: originalAmount,
     billed_to_date: billedToDate,
     balance_to_finish: balanceToFinish,
     retention_percentage: data.default_retainage_percent ?? null,
-    start_date: data.start_date,
+    start_date: subcontractData?.start_date ?? null,
     executed_date: data.contract_date || null,
     substantial_completion_date:
-      data.estimated_completion_date || data.substantial_completion_date || null,
-    accounting_method: data.accounting_method,
+      subcontractData?.estimated_completion_date ?? null,
+    accounting_method: purchaseOrderData?.accounting_method ?? null,
     contract_date: data.contract_date || null,
-    payment_terms: data.payment_terms || null,
-    delivery_date: data.delivery_date || null,
-    bill_to: data.bill_to || null,
-    ship_to: data.ship_to || null,
+    payment_terms: purchaseOrderData?.payment_terms ?? null,
+    delivery_date: purchaseOrderData?.delivery_date ?? null,
+    bill_to: purchaseOrderData?.bill_to ?? null,
+    ship_to: purchaseOrderData?.ship_to ?? null,
     issued_on_date: data.issued_on_date || null,
-    contract_company: data.contract_company,
+    contract_company: contractCompany,
     project: projectData
       ? {
           id: projectData.id,
@@ -388,8 +413,8 @@ async function fetchCommitmentData(
       billed_to_date: item.billed_to_date || 0,
       type: item.change_event_line_item || (isSubcontract ? "Subcontract" : "Material"),
     })),
-    created_at: data.created_at,
-    updated_at: data.updated_at,
+    created_at: data.created_at ?? "",
+    updated_at: data.updated_at ?? "",
   };
 }
 

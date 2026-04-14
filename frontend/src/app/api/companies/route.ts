@@ -68,7 +68,16 @@ export const GET = withApiGuardrails("/api/companies#GET", async ({ request }) =
     });
   }
 
-  const companies: Company[] = data || [];
+  const rows = data ?? [];
+  const companies: Company[] = rows.map((r) => ({
+    id: r.id,
+    name: r.name,
+    type: (r.type as Company["type"]) ?? "vendor",
+    contact_email: r.contact_email ?? undefined,
+    contact_phone: r.contact_phone ?? undefined,
+    address: r.address ?? undefined,
+    tax_id: r.tax_id ?? undefined,
+  }));
   validateResponseContract(
     z.array(CompanyResponseSchema),
     companies,

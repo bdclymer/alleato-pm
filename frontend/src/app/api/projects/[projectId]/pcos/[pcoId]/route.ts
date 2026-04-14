@@ -98,11 +98,11 @@ export const GET = withApiGuardrails(
       changeEvent: changeEventsMap[pce.change_event_id] || null,
     }));
 
-    // Fetch line items
+    // Fetch line items (pco_line_items.pco_id is a string-typed FK)
     const { data: lineItems } = await supabase
       .from("pco_line_items")
       .select("*")
-      .eq("pco_id", numericPcoId)
+      .eq("pco_id", String(numericPcoId))
       .order("id", { ascending: true });
 
     // Fetch timeline events

@@ -38,11 +38,22 @@ export async function fetchInvoicePdfData(
 
   if (error || !invoice) return null;
 
-  const { data: project } = await supabase
+  const { data: projectRow } = await supabase
     .from("projects")
-    .select("id, name, number, address, city, state")
+    .select("id, name, project_number, address, state")
     .eq("id", projectIdNum)
     .single();
+
+  const project = projectRow
+    ? {
+        id: projectRow.id,
+        name: projectRow.name,
+        number: projectRow.project_number ?? null,
+        address: projectRow.address ?? null,
+        city: null,
+        state: projectRow.state ?? null,
+      }
+    : null;
 
   // Resolve contract company name if possible
   const contractJoin = Array.isArray(invoice.prime_contracts)
@@ -90,7 +101,7 @@ export async function fetchInvoicePdfData(
   return {
     id: invoice.id,
     invoice_number: invoice.invoice_number,
-    status: invoice.status,
+    status: invoice.status ?? "draft",
     billing_date: invoice.billing_date,
     period_start: invoice.period_start,
     period_end: invoice.period_end,

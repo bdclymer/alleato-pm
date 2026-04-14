@@ -143,7 +143,7 @@ export const PATCH = withApiGuardrails<{ projectId: string; invoiceId: string }>
 
     // Allow edits on draft and revise_and_resubmit invoices
     const editableStatuses = ["draft", "revise_and_resubmit"];
-    if (!editableStatuses.includes(existing.status)) {
+    if (!editableStatuses.includes(existing.status ?? "")) {
       return NextResponse.json(
         {
           error: "Cannot edit invoice",

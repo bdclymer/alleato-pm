@@ -1,8 +1,33 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
+import { getPublicTables } from "@/lib/supabase/dev-rpc";
+import { listRuntimeTableRowsWhereEqual } from "@/lib/supabase/runtime-table";
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
+
+interface RuntimeHeadQueryClient {
+  from: (tableName: string) => {
+    select: (
+      selectedColumns: string,
+      options?: { count?: "exact"; head?: boolean },
+    ) => Promise<{ error: { message: string } | null }>;
+  };
+}
+
+interface RuntimeSingleRowClient {
+  from: (tableName: string) => {
+    select: (selectedColumns: string) => {
+      limit: (count: number) => {
+        maybeSingle: () => Promise<{
+          data: Record<string, unknown> | null;
+          error: { message: string } | null;
+        }>;
+      };
+    };
+  };
+}
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 /**
  * DEV ONLY: Get Supabase table schemas for table page generator.
@@ -33,28 +58,32 @@ export const GET = withApiGuardrails(
   }
 
   try {
-    // Query information_schema for all public tables
-    const { data, error } = await supabase.rpc("get_public_tables");
-
-    if (!error && data && Array.isArray(data) && data.length > 0) {
-      const tables = (data as { table_name: string }[])
-        .map((r) => r.table_name)
-        .sort();
-      return NextResponse.json({
-        tables,
-        count: tables.length,
-        note: `Found ${tables.length} accessible tables.`,
-      });
+    // Query information_schema for all public tables via dev RPC helper.
+    try {
+      const data = await getPublicTables(supabase);
+      if (data.length > 0) {
+        const tables = data.map((r) => r.table_name).sort();
+        return NextResponse.json({
+          tables,
+          count: tables.length,
+          note: `Found ${tables.length} accessible tables.`,
+        });
+      }
+    } catch {
+      // fall through to next strategy
     }
 
-    // Fallback: query pg_tables directly via raw SQL
-    const { data: pgData, error: pgError } = await supabase
-      .from("pg_tables" as string)
-      .select("tablename")
-      .eq("schemaname", "public");
+    // Fallback: query the Postgres catalog through the runtime table helper
+    // because pg_tables is outside the generated public schema types.
+    const { data: pgData, error: pgError } = await listRuntimeTableRowsWhereEqual(
+      supabase,
+      "pg_tables",
+      { column: "schemaname", value: "public" },
+      "tablename",
+    );
 
     if (!pgError && pgData && pgData.length > 0) {
-      const tables = (pgData as { tablename: string }[])
+      const tables = (pgData as Array<{ tablename: string }>)
         .map((r) => r.tablename)
         .filter((t) => !t.startsWith("_"))
         .sort();
@@ -159,9 +188,12 @@ async function discoverTablesByProbing(
     "bid_packages",
   ];
 
+  // Probing arbitrary table names requires bypassing the generated table union.
+  // Safe: this is a dev-only diagnostic that ignores result data.
+  const untyped = supabase as unknown as RuntimeHeadQueryClient;
   const results = await Promise.allSettled(
     candidates.map(async (tableName) => {
-      const { error } = await supabase
+      const { error } = await untyped
         .from(tableName)
         .select("*", { count: "exact", head: true });
       return { tableName, exists: !error };
@@ -213,8 +245,11 @@ export const POST = withApiGuardrails(
       );
     }
 
-    // Fetch a sample row to infer column types
-    const { data: sampleRow, error: sampleError } = await supabase
+    // Fetch a sample row to infer column types. tableName is dynamic, so we
+    // bypass the generated table union here. Safe: dev-only, return shape is
+    // narrowed to Record<string, unknown> below.
+    const untyped = supabase as unknown as RuntimeSingleRowClient;
+    const { data: sampleRow, error: sampleError } = await untyped
       .from(tableName)
       .select("*")
       .limit(1)

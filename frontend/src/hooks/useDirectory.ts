@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { useSupabase } from "@/hooks/useSupabase";
 import type {
   DirectoryFilters,
   PersonWithDetails,
 } from "@/components/directory/DirectoryFilters";
+import { apiFetch } from "@/lib/api-client";
 
 interface DirectoryGroup {
   key: string;
@@ -47,7 +47,6 @@ export function useDirectory(
   projectId: string,
   initialFilters: DirectoryFilters = {},
 ): UseDirectoryResult {
-  const supabase = useSupabase();
   const [data, setData] = useState<PersonWithDetails[]>([]);
   const [groups, setGroups] = useState<DirectoryGroup[]>();
   const [loading, setLoading] = useState(true);
@@ -121,15 +120,18 @@ export function useDirectory(
       params.append("per_page", "50");
 
       // Fetch from API
-      const response = await fetch(
+      const result = await apiFetch<{
+        data?: PersonWithDetails[];
+        groups?: DirectoryGroup[];
+        meta?: {
+          total: number;
+          page: number;
+          perPage: number;
+          totalPages: number;
+        };
+      }>(
         `/api/projects/${projectId}/directory/people?${params}`,
       );
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch directory: ${response.statusText}`);
-      }
-
-      const result = await response.json();
 
       setData(result.data || []);
       setGroups(result.groups);
@@ -152,7 +154,7 @@ export function useDirectory(
         );
       }
     } catch (err) {
-      setError(err instanceof Error ? err : new Error("an unexpected error occurred — please try again"));
+      setError(err instanceof Error ? err : new Error("An unexpected error occurred."));
       if (typeof window !== "undefined") {
         const cached = window.localStorage.getItem(cacheKey);
         if (cached) {
@@ -169,7 +171,7 @@ export function useDirectory(
     } finally {
       setLoading(false);
     }
-  }, [projectId, filters, supabase, cacheKey, meta]);
+  }, [projectId, filters, cacheKey, meta]);
 
   useEffect(() => {
     fetchData();

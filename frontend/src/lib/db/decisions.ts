@@ -38,7 +38,7 @@ export async function getDecisions(): Promise<DecisionWithMetadata[]> {
     throw error;
   }
 
-  return data as DecisionWithMetadata[];
+  return data as unknown as DecisionWithMetadata[];
 }
 
 /**

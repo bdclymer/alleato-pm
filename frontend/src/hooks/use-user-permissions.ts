@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api-client";
 
 interface Permission {
   tool_name: string;
@@ -20,16 +21,9 @@ export function useUserPermissions(projectId: string, personId: string) {
   return useQuery<UserPermissionsResponse>({
     queryKey: ["user-permissions", projectId, personId],
     queryFn: async () => {
-      const response = await fetch(
+      return apiFetch<UserPermissionsResponse>(
         `/api/projects/${projectId}/directory/people/${personId}/permissions`,
       );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to fetch user permissions");
-      }
-
-      return response.json();
     },
     enabled: !!projectId && !!personId,
   });
@@ -40,7 +34,7 @@ export function useUpdateUserPermissions(projectId: string, personId: string) {
 
   return useMutation({
     mutationFn: async (permissions: Permission[]) => {
-      const response = await fetch(
+      return apiFetch<UserPermissionsResponse>(
         `/api/projects/${projectId}/directory/people/${personId}/permissions`,
         {
           method: "PATCH",
@@ -48,13 +42,6 @@ export function useUpdateUserPermissions(projectId: string, personId: string) {
           body: JSON.stringify({ permissions }),
         },
       );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to update permissions");
-      }
-
-      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({

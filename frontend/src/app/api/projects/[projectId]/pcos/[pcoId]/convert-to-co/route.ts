@@ -90,11 +90,11 @@ export const POST = withApiGuardrails(
       );
     }
 
-    // 2. Fetch line items for this PCO
+    // 2. Fetch line items for this PCO (pco_id column is string-typed)
     const { data: lineItems } = await supabase
       .from("pco_line_items")
       .select("*")
-      .eq("pco_id", numericPcoId)
+      .eq("pco_id", String(numericPcoId))
       .order("id", { ascending: true });
 
     // 3. Auto-generate next PCCO number (safe parsing — treat non-numeric as 0)
@@ -114,11 +114,12 @@ export const POST = withApiGuardrails(
       }
     }
 
-    // Calculate total amount from line items or use estimated_value
+    // Calculate total amount from line items or use estimated_value.
+    // Column is `amount` (legacy: `line_amount`).
     const totalAmount =
       lineItems && lineItems.length > 0
         ? lineItems.reduce(
-            (sum, item) => sum + (item.line_amount || 0),
+            (sum, item) => sum + (item.amount || 0),
             0
           )
         : pco.estimated_value || 0;
@@ -187,18 +188,35 @@ export const POST = withApiGuardrails(
       [];
 
     if (lineItems && lineItems.length > 0) {
-      // Group line items by subcontractor_id (skip null)
-      const subcontractorGroups: Record<
-        string,
-        Array<(typeof lineItems)[0]>
-      > = {};
+      // pco_line_items no longer carries subcontractor_id directly; the
+      // subcontractor is now resolved via the linked change_event_line_item.
+      const celiIds = lineItems
+        .map((li) => li.change_event_line_item_id)
+        .filter((v): v is string => !!v);
+
+      const vendorByCeliId = new Map<string, string | null>();
+      if (celiIds.length > 0) {
+        const { data: celiRows } = await supabase
+          .from("change_event_line_items")
+          .select("id, vendor_id")
+          .in("id", celiIds);
+        for (const row of celiRows ?? []) {
+          vendorByCeliId.set(row.id, row.vendor_id ?? null);
+        }
+      }
+
+      type PcoLineItem = (typeof lineItems)[0];
+      const subcontractorGroups: Record<string, PcoLineItem[]> = {};
 
       for (const item of lineItems) {
-        if (item.subcontractor_id) {
-          if (!subcontractorGroups[item.subcontractor_id]) {
-            subcontractorGroups[item.subcontractor_id] = [];
+        const subcontractorId = item.change_event_line_item_id
+          ? vendorByCeliId.get(item.change_event_line_item_id) ?? null
+          : null;
+        if (subcontractorId) {
+          if (!subcontractorGroups[subcontractorId]) {
+            subcontractorGroups[subcontractorId] = [];
           }
-          subcontractorGroups[item.subcontractor_id].push(item);
+          subcontractorGroups[subcontractorId].push(item);
         }
       }
 
@@ -275,7 +293,7 @@ export const POST = withApiGuardrails(
         }
 
         const subAmount = items.reduce(
-          (sum, item) => sum + (item.line_amount || 0),
+          (sum, item) => sum + (item.amount || 0),
           0
         );
 

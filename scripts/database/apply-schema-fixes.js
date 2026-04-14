@@ -54,16 +54,11 @@ async function runMigration() {
       }).single();
       
       if (error) {
-        // Try direct execution if RPC doesn't exist
-        const { error: directError } = await supabase.from('_sql').select(statement);
+        console.error(`Error executing statement ${i + 1}:`, error.message);
+        console.error('Statement:', statement.substring(0, 100) + '...');
         
-        if (directError) {
-          console.error(`Error executing statement ${i + 1}:`, directError.message);
-          console.error('Statement:', statement.substring(0, 100) + '...');
-          
-          // Continue with other statements even if one fails
-          continue;
-        }
+        // Continue with other statements even if one fails
+        continue;
       }
     }
     

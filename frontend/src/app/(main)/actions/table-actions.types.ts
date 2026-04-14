@@ -8,42 +8,12 @@ export type TableInsert<T extends TableName> = Database["public"]["Tables"][T]["
 export type TableUpdate<T extends TableName> = Database["public"]["Tables"][T]["Update"];
 
 // Specific table data types
-export interface MeetingData {
-  title?: string;
-  date?: string;
-  location?: string;
-  attendees?: string[];
-  notes?: string;
-  status?: "scheduled" | "completed" | "cancelled";
-}
-
-export interface ProjectData {
-  name?: string;
-  project_number?: string;
-  client?: string;
-  client_id?: string;
-  phase?: string;
-  state?: string;
-  address?: string;
-  budget?: number;
-  health_status?: string;
-  health_score?: number;
-  completion_percentage?: number;
-  project_manager?: number;
-  archived?: boolean;
-}
-
-export interface CompanyData {
-  name: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  zip?: string;
-  type?: string;
-  phone?: string;
-  email?: string;
-  website?: string;
-}
+export type MeetingData = TableUpdate<"document_metadata">;
+export type ProjectData = TableUpdate<"projects">;
+export type CompanyData = TableInsert<"companies">;
+export type CompanyUpdateData = TableUpdate<"companies">;
+export type ContactData = TableInsert<"people">;
+export type ContactUpdateData = TableUpdate<"people">;
 
 // Response types
 export interface ActionResponse<T = unknown> {

@@ -670,7 +670,7 @@ export default function NewCommitmentCOPage() {
                           onChange={(e) =>
                             field.onChange(e.target.value ? parseInt(e.target.value, 10) : null)
                           }
-                          placeholder="0"
+                          placeholder=""
                         />
                       </FormControl>
                       <FormMessage />
@@ -994,7 +994,7 @@ export default function NewCommitmentCOPage() {
                           onChange={(e) =>
                             field.onChange(e.target.value ? parseInt(e.target.value, 10) : null)
                           }
-                          placeholder="0"
+                          placeholder=""
                         />
                       </FormControl>
                       <FormMessage />

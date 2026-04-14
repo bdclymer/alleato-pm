@@ -21,7 +21,7 @@ const updateSubmittalSchema = z.object({
   submittal_type_id: z.string().uuid().nullable().optional(),
   division: z.string().nullable().optional(),
   submittal_package_id: z.string().uuid().nullable().optional(),
-  responsible_contractor_id: z.string().nullable().optional(),
+  responsible_contractor_id: z.coerce.number().int().nullable().optional(),
   received_from_id: z.string().uuid().nullable().optional(),
   submittal_manager_id: z.string().uuid().nullable().optional(),
   final_due_date: z.string().nullable().optional(),

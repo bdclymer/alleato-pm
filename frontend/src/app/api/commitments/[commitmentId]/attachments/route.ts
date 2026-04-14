@@ -368,6 +368,15 @@ export const DELETE = withApiGuardrails(
       );
     }
 
+    if (!isCommitmentRecord(commitment)) {
+      return NextResponse.json(
+        {
+          error: "Commitment row is missing required fields (id or project_id)",
+        },
+        { status: 422 },
+      );
+    }
+
     // Expect array of attachment IDs
     if (!Array.isArray(body.attachmentIds)) {
       return NextResponse.json(
@@ -396,6 +405,7 @@ export const DELETE = withApiGuardrails(
       const filePaths = attachments
         .map((a) => {
           // Extract storage path from public URL
+          if (!a.url) return null;
           const urlObj = new URL(a.url);
           const pathMatch = urlObj.pathname.match(/\/storage\/v1\/object\/public\/[^/]+\/(.+)$/);
           return pathMatch ? pathMatch[1] : null;

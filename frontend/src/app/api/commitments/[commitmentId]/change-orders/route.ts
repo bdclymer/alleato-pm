@@ -229,7 +229,7 @@ export const POST = withApiGuardrails<{ commitmentId: string }>(
         contract_id: commitmentId,
         change_order_number: validated.change_order_number,
         title: validated.title ?? null,
-        description: validated.description ?? null,
+        description: validated.description ?? "",
         amount: validated.amount,
         status: validated.status,
         requested_date: validated.requested_date || new Date().toISOString(),

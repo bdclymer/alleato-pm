@@ -60,10 +60,27 @@ const settingsResponseSchema = z.object({
   default_distribution_pco: z.string().nullable(),
 });
 
-function normalizeSettingsRow(projectId: number, data?: Partial<z.infer<typeof settingsResponseSchema>> | null) {
+type SettingsRow = {
+  co_tier_count?: number | null;
+  allow_standard_users_create_pcco?: boolean | null;
+  allow_standard_users_create_pco?: boolean | null;
+  sov_always_editable?: boolean | null;
+  enable_completed_work_retainage?: boolean | null;
+  enable_stored_materials_retainage?: boolean | null;
+  default_retainage_percent?: number | null;
+  show_markup_on_co_pdf?: boolean | null;
+  show_markup_on_invoice_pdf?: boolean | null;
+  default_distribution_prime_contract?: string | null;
+  default_distribution_pcco?: string | null;
+  default_distribution_pco?: string | null;
+};
+
+function normalizeSettingsRow(projectId: number, data?: SettingsRow | null) {
+  const coTier = data?.co_tier_count === 2 ? 2 : 1;
   return {
     ...DEFAULT_SETTINGS,
-    ...data,
+    ...(data ?? {}),
+    co_tier_count: coTier as 1 | 2,
     project_id: projectId,
   };
 }

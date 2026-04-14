@@ -76,10 +76,11 @@ export const POST = withApiGuardrails(
     }
 
     // Fetch line items and grouped change events for snapshot
+    // pco_line_items.pco_id is a string-typed FK
     const { data: lineItems } = await supabase
       .from("pco_line_items")
       .select("*")
-      .eq("pco_id", numericPcoId);
+      .eq("pco_id", String(numericPcoId));
 
     const { data: groupedCEs } = await supabase
       .from("pco_change_events")

@@ -56,16 +56,17 @@ async function createTestUser() {
     console.log('Password:', testPassword);
     
     if (signUpData.user) {
-      // Also create a user profile in the users table if it exists
+      // Keep the profile table aligned with auth so local test logins work consistently.
       const { error: profileError } = await supabase
-        .from('users')
-        .insert({
+        .from('user_profiles')
+        .upsert({
           id: signUpData.user.id,
           email: testEmail,
-          name: 'Test User',
+          full_name: 'Test User',
           role: 'admin'
-        })
-        .single();
+        }, {
+          onConflict: 'id'
+        });
 
       if (profileError && profileError.code !== '23505') { // Ignore duplicate key errors
         console.log('Note: Could not create user profile:', profileError.message);

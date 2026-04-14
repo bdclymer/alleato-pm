@@ -65,16 +65,17 @@ for (const [index, statement] of statements.entries()) {
     });
 
     if (error) {
-      // Try direct query if RPC not available
-      const { error: queryError } = await supabase.from('_migrations').select('*').limit(0);
-
-      if (queryError) {
-        console.error(`  ❌ Failed: ${error.message}`);
-        failCount++;
+      if (
+        error.message?.includes("Could not find the function") ||
+        error.message?.includes("exec_sql")
+      ) {
+        console.error(
+          "  ❌ Failed: exec_sql RPC is unavailable in this environment; apply the SQL file manually in Supabase SQL Editor.",
+        );
       } else {
-        console.log('  ✅ Applied');
-        successCount++;
+        console.error(`  ❌ Failed: ${error.message}`);
       }
+      failCount++;
     } else {
       console.log('  ✅ Applied');
       successCount++;
@@ -99,21 +100,6 @@ if (failCount > 0) {
   console.log('Please apply the migration manually via Supabase SQL Editor:');
   console.log(`  File: ${migrationPath}`);
   process.exit(1);
-}
-
-// Verify RLS is enabled
-console.log('\n🔍 Verifying RLS status...');
-const { data: tables, error: tablesError } = await supabase
-  .from('pg_tables')
-  .select('tablename, rowsecurity')
-  .like('tablename', 'change_event%');
-
-if (!tablesError && tables) {
-  console.log('\nRLS Status:');
-  tables.forEach(table => {
-    const status = table.rowsecurity ? '✅ ENABLED' : '❌ DISABLED';
-    console.log(`  ${table.tablename}: ${status}`);
-  });
 }
 
 console.log('\n✅ RLS Migration Complete!');

@@ -33,11 +33,11 @@ import { createClient } from "@/lib/supabase/server";
 // ---------------------------------------------------------------------------
 
 interface ProcoreTool {
-  id: string;
-  name: string | null;
-  slug: string | null;
-  category: string | null;
-  status: string | null;
+  id: number;
+  name: string;
+  slug: string;
+  category: string;
+  status: string;
   description: string | null;
   procore_link: string | null;
 }
@@ -193,7 +193,7 @@ export default async function ToolsPage() {
   for (const tool of tools ?? []) {
     const cat = tool.category ?? "Other";
     if (!grouped[cat]) grouped[cat] = [];
-    grouped[cat].push(tool as ProcoreTool);
+    grouped[cat].push(tool);
   }
 
   // Ordered categories (known ones first, then any extras)

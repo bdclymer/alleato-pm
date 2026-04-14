@@ -122,11 +122,11 @@ console.log("║         AI RAG Tool Query Test Suite                           
 console.log("║         Testing against Project 43 (Westfield Collective)           ║");
 console.log("╚══════════════════════════════════════════════════════════════════════╝");
 
-// 1. getBudgetLineItems — v_budget_lines
+// 1. getBudgetLineItems — budget_lines
 await runTest(
   "getBudgetLineItems",
-  "v_budget_lines",
-  () => supabase.from("v_budget_lines").select("*").eq("project_id", 43).limit(5)
+  "budget_lines",
+  () => supabase.from("budget_lines").select("*").eq("project_id", 43).limit(5)
 );
 
 // 2a. getCommitmentsOverview — subcontracts
@@ -217,11 +217,11 @@ await runTest(
   () => supabase.from("project_directory_memberships").select("*").eq("project_id", 43).limit(10)
 );
 
-// 12. getVendorPerformance — vendors
+// 12. getVendorPerformance — companies
 await runTest(
   "getVendorPerformance",
-  "vendors",
-  () => supabase.from("vendors").select("*").limit(5)
+  "companies",
+  () => supabase.from("companies").select("*").eq("is_vendor", true).limit(5)
 );
 
 // 13a. Company Knowledge — company_context

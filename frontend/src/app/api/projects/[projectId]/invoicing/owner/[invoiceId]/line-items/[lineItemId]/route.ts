@@ -58,7 +58,7 @@ export const DELETE = withApiGuardrails<{ projectId: string; invoiceId: string; 
     }
 
     const editableStatuses = ["draft", "revise_and_resubmit"];
-    if (!editableStatuses.includes(invoice.status)) {
+    if (!editableStatuses.includes(invoice.status ?? "")) {
       throw new GuardrailError({
         code: "INVALID_PAYLOAD",
         where: "projects/[projectId]/invoicing/owner/[invoiceId]/line-items/[lineItemId]#DELETE",

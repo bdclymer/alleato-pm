@@ -240,12 +240,20 @@ export const POST = withApiGuardrails(
           .single();
 
         if (pcc) {
+          if (!pcc.cost_type_id) {
+            throw new GuardrailError({
+              code: "INVALID_PAYLOAD",
+              where: "projects/[projectId]/change-events/[changeEventId]/line-items#POST",
+              message: `Project cost code ${validatedData.budgetCodeId} has no cost_type_id; cannot resolve budget line.`,
+            });
+          }
+          const pccCostTypeId: string = pcc.cost_type_id;
           const { data: matchingBudgetLine } = await supabase
             .from('budget_lines')
             .select('id')
             .eq('project_id', parseInt(projectId, 10))
             .eq('cost_code_id', pcc.cost_code_id)
-            .eq('cost_type_id', pcc.cost_type_id)
+            .eq('cost_type_id', pccCostTypeId)
             .single();
 
           if (matchingBudgetLine) {
@@ -257,7 +265,7 @@ export const POST = withApiGuardrails(
               .insert({
                 project_id: parseInt(projectId, 10),
                 cost_code_id: pcc.cost_code_id,
-                cost_type_id: pcc.cost_type_id,
+                cost_type_id: pccCostTypeId,
               })
               .select('id')
               .single();

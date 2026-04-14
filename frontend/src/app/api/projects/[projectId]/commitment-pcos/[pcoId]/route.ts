@@ -81,16 +81,31 @@ export const GET = withApiGuardrails(
     let linkedChangeEvents: Array<Record<string, any>> = [];
     if (links && links.length > 0) {
       const ceIds = links.map((l) => l.change_event_id);
-      const { data: ces } = await supabase
-        .from("change_events")
-        .select("id, number, title, status, type, total_revenue_rom, total_cost_rom")
-        .in("id", ceIds)
-        .is("deleted_at", null);
+      // total_revenue_rom / total_cost_rom live on the change_events_summary
+      // view, so we fetch base fields from change_events and aggregates from
+      // the view, then merge by id.
+      const [{ data: ces }, { data: ceTotals }] = await Promise.all([
+        supabase
+          .from("change_events")
+          .select("id, number, title, status, type")
+          .in("id", ceIds)
+          .is("deleted_at", null),
+        supabase
+          .from("change_events_summary")
+          .select("id, total_revenue_rom, total_cost_rom")
+          .in("id", ceIds),
+      ]);
+      const totalsById = new Map(
+        (ceTotals ?? []).map((row) => [row.id, row]),
+      );
 
       linkedChangeEvents = (ces || []).map((ce) => {
         const link = links.find((l) => l.change_event_id === ce.id);
+        const totals = totalsById.get(ce.id);
         return {
           ...ce,
+          total_revenue_rom: totals?.total_revenue_rom ?? null,
+          total_cost_rom: totals?.total_cost_rom ?? null,
           linked_at: link?.linked_at,
           linked_by: link?.linked_by,
         };
@@ -183,8 +198,11 @@ export const PATCH = withApiGuardrails(
       updates.due_date = validatedData.due_date;
     if (validatedData.designated_reviewer_id !== undefined)
       updates.designated_reviewer_id = validatedData.designated_reviewer_id;
-    // Handle approval
-    if (validatedData.status === "approved" && existing.status !== "approved") {
+    // Handle approval. The guard above narrows existing.status to "draft" |
+    // "pending", so if the update moves it to "approved" we always record
+    // approver info.
+    const nextStatus = validatedData.status;
+    if (nextStatus && nextStatus === "approved") {
       updates.approved_at = new Date().toISOString();
       updates.approved_by = user.id;
     }

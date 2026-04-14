@@ -92,12 +92,15 @@ export const GET = withApiGuardrails(
         const { data, error } = await query;
         if (error) return apiErrorResponse(error);
 
-        options = (data || []).map((m) => ({
-          id: m.id,
-          label: m.date ? `${m.title} (${m.date})` : m.title,
-          number: null,
-          status: m.status,
-        }));
+        options = (data || []).map((m) => {
+          const safeTitle = m.title ?? "Untitled";
+          return {
+            id: String(m.id),
+            label: m.date ? `${safeTitle} (${m.date})` : safeTitle,
+            number: null,
+            status: m.status ?? null,
+          };
+        });
         break;
       }
 
@@ -117,12 +120,15 @@ export const GET = withApiGuardrails(
         const { data, error } = await query;
         if (error) return apiErrorResponse(error);
 
-        options = (data || []).map((e) => ({
-          id: e.id,
-          label: e.from_name ? `${e.subject} (from ${e.from_name})` : e.subject,
-          number: null,
-          status: e.status,
-        }));
+        options = (data || []).map((e) => {
+          const subject = e.subject ?? "(no subject)";
+          return {
+            id: String(e.id),
+            label: e.from_name ? `${subject} (from ${e.from_name})` : subject,
+            number: null,
+            status: e.status ?? null,
+          };
+        });
         break;
       }
     }

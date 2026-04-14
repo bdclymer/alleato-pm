@@ -18,6 +18,32 @@ type CreateFinancialToolsOptions = {
   pinnedProjectId?: number;
 };
 
+const PRIME_CHANGE_ORDER_LINES_TABLE = "change_order_lines";
+const BUDGET_LINES_VIEW = "v_budget_lines";
+
+type RuntimeRowsResult = {
+  data: Array<Record<string, unknown>> | null;
+  error: unknown;
+};
+
+type RuntimeProjectRowsClient = {
+  from: (tableName: string) => {
+    select: (columns: string) => {
+      eq: (column: string, value: number) => Promise<RuntimeRowsResult>;
+    };
+  };
+};
+
+type RuntimeBudgetLineRowsClient = {
+  from: (tableName: string) => {
+    select: (columns: string) => {
+      eq: (column: string, value: number) => {
+        eq: (column: string, value: string) => Promise<RuntimeRowsResult>;
+      } & Promise<RuntimeRowsResult>;
+    };
+  };
+};
+
 function asNumber(value: unknown): number {
   if (typeof value === "number") {
     return Number.isFinite(value) ? value : 0;
@@ -103,6 +129,54 @@ async function resolveProject(
     return { id: data.id, name: data.name ?? "" };
   }
   return { error: "Provide either projectId or projectName" };
+}
+
+/** Loads pending prime change-order line allocations, or an empty set when the legacy table is absent. */
+async function fetchPendingPrimeChangeOrderLines(
+  supabase: ReturnType<typeof createServiceClient>,
+  projectId: number,
+) {
+  const runtimeProjectClient = supabase as unknown as RuntimeProjectRowsClient;
+  const result = await runtimeProjectClient
+    .from(PRIME_CHANGE_ORDER_LINES_TABLE)
+    .select(
+      "id, change_order_id, amount, description, cost_code_id, cost_type_id",
+    )
+    .eq("project_id", projectId);
+
+  const errStr = JSON.stringify(result.error);
+  const isMissingTable =
+    errStr.includes(PRIME_CHANGE_ORDER_LINES_TABLE) ||
+    errStr.includes("PGRST205") ||
+    errStr.includes("schema cache");
+
+  if (result.error && isMissingTable) {
+    return { data: [], error: null };
+  }
+
+  return result;
+}
+
+/** Loads budget-line rows from the runtime view and optionally filters by cost code. */
+async function fetchRuntimeBudgetLines(
+  supabase: ReturnType<typeof createServiceClient>,
+  projectId: number,
+  costCodeId?: string,
+): Promise<RuntimeRowsResult> {
+  const runtimeBudgetClient = supabase as unknown as RuntimeBudgetLineRowsClient;
+  const baseQuery = runtimeBudgetClient
+    .from(BUDGET_LINES_VIEW)
+    .select(
+      "id, original_amount, revised_budget, approved_co_total, " +
+      "budget_mod_total, cost_code_id, cost_type_id, description",
+    )
+    .eq("project_id", projectId);
+
+  if (!costCodeId) {
+    return baseQuery;
+  }
+
+  return baseQuery.eq("cost_code_id", costCodeId);
 }
 
 // ---------------------------------------------------------------------------
@@ -377,12 +451,10 @@ export function createFinancialTools(
               .select("id, title, contract_number, status")
               .eq("project_id", resolved.id),
              
-            (supabase as any)
-              .from("change_order_lines")
-              .select(
-                "id, change_order_id, amount, description, cost_code_id, cost_type_id",
-              )
-              .eq("project_id", resolved.id) as Promise<{ data: Array<Record<string, unknown>> | null; error: unknown }>,
+            fetchPendingPrimeChangeOrderLines(
+              supabase,
+              resolved.id,
+            ) as Promise<{ data: Array<Record<string, unknown>> | null; error: unknown }>,
           ]);
 
           // Normalize both CO types into a unified shape
@@ -710,23 +782,9 @@ export function createFinancialTools(
 
           // Fetch budget lines (from the view), cost codes, cost types, and forecasts
            
-          const supabaseAny = supabase as any;
-           
-          let blQuery: any = supabaseAny
-            .from("v_budget_lines")
-            .select(
-              "id, original_amount, revised_budget, approved_co_total, " +
-              "budget_mod_total, cost_code_id, cost_type_id, description",
-            )
-            .eq("project_id", resolved.id);
-
-          if (costCodeId) {
-            blQuery = blQuery.eq("cost_code_id", costCodeId);
-          }
-
           const [blRes, ccRes, ctRes, forecastRes, directCostLinesRes] =
             await Promise.all([
-              blQuery as Promise<{ data: Array<Record<string, unknown>> | null; error: unknown }>,
+              fetchRuntimeBudgetLines(supabase, resolved.id, costCodeId),
               supabase
                 .from("cost_codes")
                 .select("id, division_id, title, division_title"),
@@ -1151,13 +1209,7 @@ export function createFinancialTools(
               .eq("project_id", resolved.id),
             // Budget lines for budget-based analysis
              
-            (supabase as any)
-              .from("v_budget_lines" as any)
-              .select(
-                "id, original_amount, revised_budget, approved_co_total, " +
-                "budget_mod_total, cost_code_id, cost_type_id, description",
-              )
-              .eq("project_id", resolved.id) as Promise<{ data: Array<Record<string, unknown>> | null; error: unknown }>,
+            fetchRuntimeBudgetLines(supabase, resolved.id),
             // Direct costs
             supabase
               .from("direct_costs")

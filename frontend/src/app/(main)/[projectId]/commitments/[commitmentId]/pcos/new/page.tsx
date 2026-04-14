@@ -327,7 +327,7 @@ export default function NewCommitmentPcoPage() {
                                 : 0,
                             )
                           }
-                          placeholder="0"
+                          placeholder=""
                         />
                       </FormControl>
                       <FormMessage />

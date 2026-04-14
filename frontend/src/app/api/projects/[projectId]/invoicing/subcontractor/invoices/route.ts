@@ -60,7 +60,29 @@ export const GET = withApiGuardrails<{ projectId: string }>(
       query = query.eq("purchase_order_id", purchaseOrderId);
     }
     if (status) {
-      query = query.eq("status", status);
+      const SUBCONTRACTOR_INVOICE_STATUSES = [
+        "draft",
+        "approved",
+        "pending",
+        "paid",
+        "void",
+        "under_review",
+        "revise_and_resubmit",
+        "not_invited",
+        "invited",
+        "approved_as_noted",
+        "pending_owner_approval",
+      ] as const;
+      type SubcontractorInvoiceStatus = (typeof SUBCONTRACTOR_INVOICE_STATUSES)[number];
+      if (!(SUBCONTRACTOR_INVOICE_STATUSES as readonly string[]).includes(status)) {
+        return NextResponse.json(
+          {
+            error: `Invalid status "${status}". Expected one of: ${SUBCONTRACTOR_INVOICE_STATUSES.join(", ")}.`,
+          },
+          { status: 400 },
+        );
+      }
+      query = query.eq("status", status as SubcontractorInvoiceStatus);
     }
 
     const { data: invoices, error: invoicesError } = await query;

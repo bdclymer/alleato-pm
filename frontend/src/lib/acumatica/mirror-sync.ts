@@ -18,6 +18,7 @@
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { upsertRuntimeTableRows } from "@/lib/supabase/runtime-table";
 import { createClient } from "@/lib/supabase/server";
 import { createAcumaticaClient } from "./client";
 import type {
@@ -708,10 +709,12 @@ export async function syncMirrorEntity<TFlat extends { LastModifiedDateTime?: st
 
         // Batch upsert in chunks of 100 to avoid Supabase payload limits
         for (const rowChunk of chunk(rows, 100)) {
-          const { error: upsertErr, count } = await db
-            .from(config.tableName)
-            .upsert(rowChunk, { onConflict: "external_key" })
-            .select("external_key");
+          const { error: upsertErr, count } = await upsertRuntimeTableRows(
+            db,
+            config.tableName,
+            rowChunk,
+            "external_key",
+          );
 
           if (upsertErr) {
             errors += rowChunk.length;

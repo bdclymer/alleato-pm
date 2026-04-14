@@ -43,7 +43,7 @@ export const DELETE = withApiGuardrails<{ commitmentId: string }>(
     // First determine the type and verify it's deleted from the unified view
     const { data: existing, error: fetchError } = await supabase
       .from("commitments_unified")
-      .select("id, type, deleted_at")
+      .select("id, commitment_type, deleted_at")
       .eq("id", commitmentId)
       .single();
 
@@ -67,7 +67,7 @@ export const DELETE = withApiGuardrails<{ commitmentId: string }>(
 
     // Hard delete from the appropriate table
     const tableName =
-      existing.type === "subcontract" ? "subcontracts" : "purchase_orders";
+      existing.commitment_type === "subcontract" ? "subcontracts" : "purchase_orders";
 
     const { error } = await supabase.from(tableName).delete().eq("id", commitmentId);
 

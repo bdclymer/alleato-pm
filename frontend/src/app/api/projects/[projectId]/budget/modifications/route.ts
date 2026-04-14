@@ -294,7 +294,7 @@ export const POST = withApiGuardrails<{ projectId: string }>(
     const { data: modification, error: modError } = await supabase
       .from("budget_modifications")
       .insert({
-        project_id: projectId,
+        project_id: projectIdNum,
         number: nextNumber,
         title: title || `Budget Modification ${nextNumber}`,
         reason: reason || description || null,
@@ -320,7 +320,7 @@ export const POST = withApiGuardrails<{ projectId: string }>(
       .from("budget_mod_lines")
       .insert({
         budget_modification_id: modification.id,
-        project_id: projectId,
+        project_id: projectIdNum,
         cost_code_id: budgetLine.cost_code_id,
         cost_type_id: budgetLine.cost_type_id,
         sub_job_id: budgetLine.sub_job_id,
@@ -489,7 +489,7 @@ export const PATCH = withApiGuardrails<{ projectId: string }>(
     // Refresh the materialized view when status changes to/from approved
     // This ensures v_budget_lines.budget_mod_total is recalculated
     if (targetStatus === "approved" || currentMod.status === "approved") {
-      await supabase.rpc("refresh_budget_rollup", { p_project_id: projectId });
+      await supabase.rpc("refresh_budget_rollup", { p_project_id: projectIdNum });
     }
 
     const actionMessages: Record<string, string> = {

@@ -81,9 +81,13 @@ export const GET = withApiGuardrails<{ commitmentId: string }>(
     const isSubcontract = unifiedData.commitment_type === "subcontract";
     const tableName = isSubcontract ? "subcontracts" : "purchase_orders";
 
-    const { data, error } = await supabase
+    // NOTE: `advanced_settings` is a JSONB column that may not yet exist in
+    // every environment (no migration shipped for it yet). It's intentionally
+    // not in the generated Database types. We fetch the whole row and read
+    // the column defensively, returning defaults if it's absent.
+    const { data: rawData, error } = await supabase
       .from(tableName)
-      .select("advanced_settings")
+      .select("*")
       .eq("id", commitmentId)
       .single();
 
@@ -95,9 +99,16 @@ export const GET = withApiGuardrails<{ commitmentId: string }>(
       );
     }
 
+    // `advanced_settings` is not in generated types yet; pull it off the row
+    // with a narrow index access.
+    const advancedSettings =
+      rawData && typeof rawData === "object" && "advanced_settings" in rawData
+        ? (rawData as { advanced_settings: Record<string, unknown> | null }).advanced_settings
+        : null;
+
     // If settings exist, merge with defaults to ensure all keys are present
-    const settings = data?.advanced_settings
-      ? { ...DEFAULT_SETTINGS, ...data.advanced_settings }
+    const settings = advancedSettings
+      ? { ...DEFAULT_SETTINGS, ...advancedSettings }
       : DEFAULT_SETTINGS;
 
     return NextResponse.json({ data: settings });

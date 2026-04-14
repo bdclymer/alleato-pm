@@ -568,16 +568,23 @@ export const PATCH = withApiGuardrails(
 
     // Create audit log entries for changed fields
     const auditEntries = [];
+    const existingRow = existingEvent as Record<string, unknown>;
     for (const [field, newValue] of Object.entries(updates)) {
       if (
         field !== "updated_at" &&
         field !== "updated_by" &&
-        existingEvent[field] !== newValue
+        existingRow[field] !== newValue
       ) {
+        const oldVal = existingRow[field];
         auditEntries.push({
           change_event_id: changeEventId,
           field_name: field,
-          old_value: existingEvent[field]?.toString() || null,
+          old_value:
+            oldVal === null || oldVal === undefined
+              ? null
+              : typeof oldVal === "string"
+                ? oldVal
+                : JSON.stringify(oldVal),
           new_value: newValue?.toString() || null,
           changed_by: user.id,
           change_type: "UPDATE",

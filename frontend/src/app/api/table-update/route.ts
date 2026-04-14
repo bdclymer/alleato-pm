@@ -1,26 +1,59 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
+import {
+  selectRuntimeTableRow,
+  updateRuntimeTableRow,
+} from "@/lib/supabase/runtime-table";
 import { createClient } from "@/lib/supabase/server";
+import type { Database } from "@/types/database.types";
 import { NextResponse } from "next/server";
+
+type TableName = keyof Database["public"]["Tables"];
 
 /**
  * Strict allowlist of tables accessible via the generic update endpoint.
  * Any table not in this set will be rejected with 403.
  * OWASP A01:2021 - Broken Access Control
  */
-const TABLE_ALLOWLIST = new Set([
-  "projects", "budget_lines", "prime_contracts", "commitments",
-  "contract_line_items", "contract_change_orders", "change_events",
-  "direct_costs", "rfis", "submittals", "punch_list_items",
-  "daily_logs", "meetings", "meeting_items", "specifications",
-  "specification_sections", "drawings", "drawing_revisions",
-  "photos", "documents", "transmittals", "emails",
-  "companies", "vendors", "clients", "people", "contacts",
-  "user_profiles", "project_memberships", "tasks", "schedule_tasks",
-  "prime_contract_change_orders", "payment_applications",
-  "payment_application_line_items", "direct_cost_line_items",
-  "change_event_line_items", "project_cost_codes",
-]);
+const TABLE_ALLOWLIST = [
+  "projects",
+  "budget_lines",
+  "prime_contracts",
+  "change_events",
+  "direct_costs",
+  "rfis",
+  "submittals",
+  "daily_logs",
+  "daily_log_manpower",
+  "daily_log_equipment",
+  "daily_log_notes",
+  "daily_recaps",
+  "notes",
+  "meeting_segments",
+  "ai_insights",
+  "specifications",
+  "drawings",
+  "photos",
+  "documents",
+  "project_transmittals",
+  "project_emails",
+  "companies",
+  "people",
+  "user_profiles",
+  "schedule_tasks",
+  "prime_contract_change_orders",
+  "prime_contract_payment_applications",
+  "payment_application_line_items",
+  "direct_cost_line_items",
+  "change_event_line_items",
+  "project_cost_codes",
+  "procore_features",
+  "procore_pages",
+] as const satisfies readonly TableName[];
+
+function isAllowedTable(value: string): value is (typeof TABLE_ALLOWLIST)[number] {
+  return (TABLE_ALLOWLIST as readonly string[]).includes(value);
+}
 
 export const POST = withApiGuardrails(
   "table-update#POST",
@@ -42,7 +75,7 @@ export const POST = withApiGuardrails(
       );
     }
 
-    if (!TABLE_ALLOWLIST.has(table)) {
+    if (!isAllowedTable(table)) {
       return NextResponse.json(
         { error: `Table "${table}" is not accessible via this endpoint` },
         { status: 403 },
@@ -52,12 +85,13 @@ export const POST = withApiGuardrails(
     // Remove fields that shouldn't be updated
     const { id: _, created_at, updated_at, ...updateData } = data;
 
-    if ((table === "prime_contract_change_orders" || table === "contract_change_orders") && updateData.status) {
-      const { data: existing, error: fetchError } = await supabase
-        .from(table)
-        .select("status, submitted_at, approved_at")
-        .eq("id", id)
-        .single();
+    if (table === "prime_contract_change_orders" && updateData.status) {
+      const { data: existing, error: fetchError } = await selectRuntimeTableRow(
+        supabase,
+        "prime_contract_change_orders",
+        id,
+        "status, submitted_at, approved_at",
+      );
 
       if (fetchError) {
         return NextResponse.json(
@@ -85,13 +119,12 @@ export const POST = withApiGuardrails(
       }
     }
 
-    // Update the record
-    const { data: updatedRecord, error } = await supabase
-      .from(table)
-      .update(updateData)
-      .eq("id", id)
-      .select()
-      .single();
+    const { data: updatedRecord, error } = await updateRuntimeTableRow(
+      supabase,
+      table,
+      id,
+      updateData as Record<string, unknown>,
+    );
 
     if (error) {
       return NextResponse.json(

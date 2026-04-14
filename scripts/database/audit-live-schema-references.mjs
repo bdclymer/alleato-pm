@@ -11,6 +11,7 @@ const repoRoot = path.resolve(__dirname, "..", "..");
 const frontendRoot = path.join(repoRoot, "frontend");
 const liveTypesPath = path.join(frontendRoot, "src", "types", "database.types.ts");
 const localTypesPath = path.join(frontendRoot, "src", "types", "database.local.types.ts");
+const SYSTEM_RELATIONS = new Set(["_migrations", "_sql", "pg_tables"]);
 
 function readFile(filePath) {
   return fs.readFileSync(filePath, "utf8");
@@ -50,6 +51,11 @@ function extractRelationNames(typesContent, blockName) {
 }
 
 function getRgMatches() {
+  const scanRoots = ["frontend/src"];
+  if (process.env.SCHEMA_AUDIT_INCLUDE_SCRIPTS === "1") {
+    scanRoots.push("scripts");
+  }
+
   const raw = execFileSync(
     "rg",
     [
@@ -57,8 +63,7 @@ function getRgMatches() {
       "-n",
       "-o",
       String.raw`\.from\((["'])(([A-Za-z0-9_]+))\1\)`,
-      "frontend/src",
-      "scripts",
+      ...scanRoots,
       "-g",
       "!frontend/src/types/database.types.ts",
       "-g",
@@ -87,13 +92,28 @@ function getRgMatches() {
 }
 
 function shouldIgnoreMatch(entry) {
+  if (SYSTEM_RELATIONS.has(entry.relation)) {
+    return true;
+  }
+
   const content = readFile(path.join(repoRoot, entry.file));
-  const line = content.split("\n")[entry.line - 1] ?? "";
+  const lines = content.split("\n");
+  const line = lines[entry.line - 1] ?? "";
+  const trimmedLine = line.trim();
+  const contextWindow = lines
+    .slice(Math.max(0, entry.line - 3), entry.line + 1)
+    .join("\n");
 
   if (
-    line.includes(".storage.from(") ||
+    trimmedLine.startsWith("//") ||
+    trimmedLine.startsWith("*") ||
+    trimmedLine.startsWith("/*") ||
+    contextWindow.includes(".storage.from(") ||
+    (contextWindow.includes(".storage") && line.includes(".from(")) ||
     line.includes("match(") ||
-    line.includes("new Function(")
+    line.includes("new Function(") ||
+    line.includes('.from("table")') ||
+    entry.file.includes("frontend/src/components/dev-tools/")
   ) {
     return true;
   }

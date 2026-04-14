@@ -137,14 +137,22 @@ export const GET = withApiGuardrails(
 
     const { data: profile } = await supabase
       .from("user_profiles")
-      .select("*")
+      .select("id, email, is_admin")
       .eq("id", user.id)
       .single();
+
+    // profile is typed as Pick<Row, ...> from the select. is_admin lives on
+    // the row but the inferred narrow type may drop it depending on the
+    // generated type variant — so read defensively.
+    const isAdmin =
+      profile && typeof (profile as { is_admin?: boolean | null }).is_admin === "boolean"
+        ? Boolean((profile as { is_admin?: boolean | null }).is_admin)
+        : false;
 
     return NextResponse.json({
       user_id: user.id,
       email: user.email,
-      is_admin: profile?.is_admin || false,
+      is_admin: isAdmin,
       profile,
     });
   } catch {

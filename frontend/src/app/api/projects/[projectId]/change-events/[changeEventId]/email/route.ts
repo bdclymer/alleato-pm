@@ -140,7 +140,7 @@ function buildHtml(changeEvent: any, lineItems: any[], project: any): string {
       <div>${companyPhone}</div>
     </div>
     <div class="header-right">
-      <div class="project-name">Project: ${project?.number ? `${project.number} - ` : ""}${project?.name || "Unknown Project"}</div>
+      <div class="project-name">Project: ${project?.project_number ? `${project.number} - ` : ""}${project?.name || "Unknown Project"}</div>
       ${projectAddress ? `<div>${projectAddress}</div>` : ""}
     </div>
   </div>
@@ -279,7 +279,7 @@ export const POST = withApiGuardrails(
     // Fetch project info
     const { data: project } = await supabase
       .from("projects")
-      .select("id, name, number, address, city, state")
+      .select("id, name, project_number, address, state")
       .eq("id", parseInt(projectId, 10))
       .single();
 
@@ -335,7 +335,7 @@ export const POST = withApiGuardrails(
         <div style="padding:24px;">
           <h2 style="font-size:16px;margin-bottom:8px;">Change Event #${ceNumber}: ${changeEvent.title || "Untitled"}</h2>
           <p style="color:#666;font-size:13px;margin-bottom:16px;">
-            Project: ${project?.name || "Unknown Project"}${project?.number ? ` (${project.number})` : ""}
+            Project: ${project?.name || "Unknown Project"}${project?.project_number ? ` (${project.project_number})` : ""}
           </p>
           ${messageHtml}
           <p style="font-size:13px;color:#444;">Please find the change event details attached as a PDF.</p>

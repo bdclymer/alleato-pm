@@ -1,11 +1,18 @@
 "use server";
 
+import {
+  deleteRuntimeTableRow,
+  updateRuntimeTableRow,
+} from "@/lib/supabase/runtime-table";
 import { createClient as createSupabaseClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import type {
   MeetingData,
   ProjectData,
   CompanyData,
+  CompanyUpdateData,
+  ContactData,
+  ContactUpdateData,
   UpdateResponse,
   DeleteResponse,
   CreateResponse,
@@ -22,7 +29,12 @@ export async function updateTableRow<T extends TableName>(
   try {
     const supabase = await createSupabaseClient();
 
-    const { error } = await supabase.from(tableName).update(data).eq("id", id);
+    const { error } = await updateRuntimeTableRow(
+      supabase,
+      tableName,
+      id,
+      data as Record<string, unknown>,
+    );
 
     if (error) {
       return { error: error.message };
@@ -38,7 +50,7 @@ export async function updateTableRow<T extends TableName>(
 
     return { success: true };
   } catch (error) {
-    return { error: "Failed to update record" };
+    return { error: error instanceof Error ? error.message : "Failed to update record" };
   }
 }
 
@@ -50,7 +62,7 @@ export async function deleteTableRow(
   try {
     const supabase = await createSupabaseClient();
 
-    const { error } = await supabase.from(tableName).delete().eq("id", id);
+    const { error } = await deleteRuntimeTableRow(supabase, tableName, id);
 
     if (error) {
       return { error: error.message };
@@ -66,7 +78,7 @@ export async function deleteTableRow(
 
     return { success: true };
   } catch (error) {
-    return { error: "Failed to delete record" };
+    return { error: error instanceof Error ? error.message : "Failed to delete record" };
   }
 }
 
@@ -108,11 +120,11 @@ export async function createCompany(data: CompanyData): Promise<CreateResponse<C
     revalidatePath("/directory/companies");
     return { success: true, data: company };
   } catch (error) {
-    return { error: "Failed to create company" };
+    return { error: error instanceof Error ? error.message : "Failed to create company" };
   }
 }
 
-export async function updateCompany(id: string, data: Record<string, any>) {
+export async function updateCompany(id: string, data: CompanyUpdateData) {
   return updateTableRow("companies", id, data, [
     "/companies",
     "/directory/companies",
@@ -126,13 +138,13 @@ export async function deleteCompany(id: string) {
   ]);
 }
 
-export async function createClient(data: Record<string, any>) {
+export async function createClient(data: CompanyData) {
   try {
     const supabase = await createSupabaseClient();
 
     const { data: client, error } = await supabase
       .from("companies")
-      .insert({ ...data, type: "client" })
+      .insert({ ...data, type: data.type ?? "client" })
       .select()
       .single();
 
@@ -144,11 +156,11 @@ export async function createClient(data: Record<string, any>) {
     revalidatePath("/directory/clients");
     return { success: true, data: client };
   } catch (error) {
-    return { error: "Failed to create client" };
+    return { error: error instanceof Error ? error.message : "Failed to create client" };
   }
 }
 
-export async function updateClient(id: string, data: Record<string, any>) {
+export async function updateClient(id: string, data: CompanyUpdateData) {
   return updateTableRow("companies", id, data, [
     "/clients",
     "/directory/clients",
@@ -159,7 +171,7 @@ export async function deleteClient(id: string) {
   return deleteTableRow("companies", id, ["/clients", "/directory/clients"]);
 }
 
-export async function createContact(data: Record<string, any>) {
+export async function createContact(data: ContactData) {
   try {
     const supabase = await createSupabaseClient();
 
@@ -182,11 +194,11 @@ export async function createContact(data: Record<string, any>) {
     revalidatePath("/directory/contacts");
     return { success: true, data: contact };
   } catch (error) {
-    return { error: "Failed to create contact" };
+    return { error: error instanceof Error ? error.message : "Failed to create contact" };
   }
 }
 
-export async function updateContact(id: string, data: Record<string, any>) {
+export async function updateContact(id: string, data: ContactUpdateData) {
   return updateTableRow("people", id, data, [
     "/contacts",
     "/directory/contacts",

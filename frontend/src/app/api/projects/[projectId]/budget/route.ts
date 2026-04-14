@@ -88,6 +88,45 @@ interface CommitmentChangeOrderLineItem {
 }
 
 type BudgetRowSource = "view" | "table";
+const BUDGET_LINES_VIEW = "v_budget_lines";
+const PRIME_CHANGE_ORDER_LINES_TABLE = "change_order_lines";
+
+// The `v_budget_lines` view exists in the database but is not yet included in
+// the generated `Database` types. Cast the client to an untyped shape for the
+// single call that needs it so we don't blow up the whole file with deep
+// inference / "no overload" errors. This is a documented escape hatch; regen
+// types once the view is added to the generator output.
+type UntypedFrom = {
+  from: (table: string) => {
+    select: (query: string) => {
+      eq: (
+        column: string,
+        value: unknown,
+      ) => {
+        order: (
+          column: string,
+          options: { ascending: boolean },
+        ) => Promise<{ data: Record<string, unknown>[] | null; error: unknown }>;
+      };
+    };
+  };
+};
+
+type PendingChangeOrderLinesClient = {
+  from: (table: string) => {
+    select: (query: string) => {
+      eq: (
+        column: string,
+        value: number,
+      ) => {
+        like: (
+          nextColumn: string,
+          pattern: string,
+        ) => Promise<{ data: Record<string, unknown>[] | null; error: unknown }>;
+      };
+    };
+  };
+};
 
 async function fetchBudgetRows(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -97,8 +136,9 @@ async function fetchBudgetRows(
   error: unknown;
   source: BudgetRowSource;
 }> {
-  const viewResult = await supabase
-    .from("v_budget_lines")
+  const untypedClient = supabase as unknown as UntypedFrom;
+  const viewResult = await untypedClient
+    .from(BUDGET_LINES_VIEW)
     .select(
       `
       *,
@@ -121,6 +161,7 @@ async function fetchBudgetRows(
   const serializedError = JSON.stringify(viewResult.error);
   const isMissingView =
     serializedError.includes("v_budget_lines") ||
+    serializedError.includes(BUDGET_LINES_VIEW) ||
     serializedError.includes("PGRST205") ||
     serializedError.includes("schema cache");
 
@@ -155,6 +196,30 @@ async function fetchBudgetRows(
     error: tableResult.error,
     source: "table",
   };
+}
+
+async function fetchPendingPrimeChangeOrderLines(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  projectIdNum: number,
+) {
+  const runtimeClient = supabase as unknown as PendingChangeOrderLinesClient;
+  const result = await runtimeClient
+    .from(PRIME_CHANGE_ORDER_LINES_TABLE)
+    .select("cost_code_id, amount, change_orders!inner(status, project_id)")
+    .eq("change_orders.project_id", projectIdNum)
+    .like("change_orders.status", "Pending%");
+
+  const serializedError = JSON.stringify(result.error);
+  const isMissingTable =
+    serializedError.includes(PRIME_CHANGE_ORDER_LINES_TABLE) ||
+    serializedError.includes("PGRST205") ||
+    serializedError.includes("schema cache");
+
+  if (result.error && isMissingTable) {
+    return { data: [], error: null };
+  }
+
+  return result;
 }
 
 // GET /api/projects/[id]/budget - Fetch budget data for a project
@@ -235,11 +300,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
         .eq("purchase_orders.project_id", projectIdNum)
         .in("purchase_orders.status", PENDING_PO_STATUSES),
 
-      supabase
-        .from("change_order_lines")
-        .select("cost_code_id, amount, change_orders!inner(status, project_id)")
-        .eq("change_orders.project_id", projectIdNum)
-        .like("change_orders.status", "Pending%"),
+      fetchPendingPrimeChangeOrderLines(supabase, projectIdNum),
 
       supabase
         .from("subcontract_sov_items")
@@ -678,13 +739,23 @@ export const POST = withApiGuardrails<{ projectId: string }>(
         }
         budgetLine = updatedLine;
       } else {
-        // Create new budget_line
+        // Create new budget_line. cost_type_id is required by the DB schema.
+        if (!item.costTypeId) {
+          return NextResponse.json(
+            {
+              error:
+                "cost_type_id is required for new budget lines. Cost type could not be resolved.",
+              costCodeId: item.costCodeId,
+            },
+            { status: 400 },
+          );
+        }
         const { data: newBudgetLine, error: blError } = await supabase
           .from("budget_lines")
           .insert({
             project_id: projectIdNum,
             cost_code_id: item.costCodeId,
-            cost_type_id: item.costTypeId ?? null,
+            cost_type_id: item.costTypeId,
             sub_job_id: null,
             description: item.description || null,
             original_amount: item.amount || 0,

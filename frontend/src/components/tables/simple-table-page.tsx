@@ -1,12 +1,16 @@
 import { createClient } from "@/lib/supabase/server";
+import { listRuntimeTableRows } from "@/lib/supabase/runtime-table";
 import {
   GenericDataTable,
   type GenericTableConfig,
 } from "@/components/tables/generic-table-factory";
 import { PageHeader } from "@/components/layout";
+import type { Database } from "@/types/database.types";
+
+type TableName = keyof Database["public"]["Tables"];
 
 interface SimpleTablePageProps {
-  tableName: string;
+  tableName: TableName;
   config: GenericTableConfig;
 }
 
@@ -30,10 +34,7 @@ export async function SimpleTablePage({
 }: SimpleTablePageProps) {
   const supabase = await createClient();
 
-  const { data, error } = await supabase
-    .from(tableName)
-    .select("*")
-    .order("created_at", { ascending: false });
+  const { data, error } = await listRuntimeTableRows(supabase, tableName);
 
   const title: string = config.title || "Data";
   const description: string = config.description || "";
@@ -50,9 +51,9 @@ export async function SimpleTablePage({
   }
 
   return (
-    <>
-      <PageHeader title={title} description={description} />
-      <GenericDataTable data={data || []} config={config} />
-    </>
+      <>
+        <PageHeader title={title} description={description} />
+      <GenericDataTable data={data ?? []} config={config} />
+      </>
   );
 }

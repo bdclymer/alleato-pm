@@ -99,19 +99,18 @@ export const GET = withApiGuardrails<{ projectId: string }>(
       );
     }
 
-    // Transform the data
-    const uniqueCostCodeCodes = Array.from(
-      new Set((projectBudgetCodesData || []).map((item) => (item as ProjectBudgetCodeRow).cost_code_id)),
+    // Transform the data. project_cost_codes.cost_code_id is already a FK to
+    // cost_codes.id, so no secondary lookup is needed — the same value is the
+    // legacy cost_code id.
+    const uniqueCostCodeIds = Array.from(
+      new Set(
+        (projectBudgetCodesData || []).map(
+          (item) => (item as ProjectBudgetCodeRow).cost_code_id,
+        ),
+      ),
     );
-    const { data: legacyCostCodes } = uniqueCostCodeCodes.length
-      ? await supabase
-          .from("cost_codes")
-          .select("id, code")
-          .in("code", uniqueCostCodeCodes)
-      : { data: [] };
-
     const legacyCostCodeIdByCode = new Map<string, string>(
-      (legacyCostCodes || []).map((item) => [item.code, item.id]),
+      uniqueCostCodeIds.map((id) => [id, id]),
     );
 
     const budgetCodes: BudgetCodeResponse["budgetCodes"] = (

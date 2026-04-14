@@ -164,11 +164,15 @@ export const POST = withApiGuardrails(
     const { data, error } = await supabase
       .from("acumatica_ar_invoices")
       .insert({
+        // external_key is required by the table — for locally-created invoices
+        // (not synced from Acumatica yet) we namespace with a local: prefix so
+        // a future Acumatica import can update the row via its real external key.
+        external_key: `local:${validated.invoice_number}:${Date.now()}`,
         reference_nbr: validated.invoice_number,
         type: "Invoice",
         status: toAcumaticaStatus(validated.status),
         date: validated.invoice_date,
-        project_id: validated.project_id || null,
+        project_id: validated.project_id ?? null,
         amount: validated.amount,
         balance: validated.status === "paid" ? 0 : validated.amount,
         tax_total: validated.tax_amount ?? 0,

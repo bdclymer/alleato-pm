@@ -35,7 +35,7 @@ export const POST = withApiGuardrails<{ projectId: string }>(
     const { data: project, error: fetchError } = await supabase
       .from("projects")
       .select("budget_locked, budget_locked_at, budget_locked_by")
-      .eq("id", projectId)
+      .eq("id", projectIdNum)
       .single();
 
     if (fetchError) {
@@ -60,7 +60,7 @@ export const POST = withApiGuardrails<{ projectId: string }>(
         budget_locked_at: new Date().toISOString(),
         budget_locked_by: user?.id || null,
       })
-      .eq("id", projectId)
+      .eq("id", projectIdNum)
       .select();
 
     if (error) {
@@ -127,7 +127,7 @@ export const DELETE = withApiGuardrails<{ projectId: string }>(
     const { data: project, error: fetchError } = await supabase
       .from("projects")
       .select("budget_locked")
-      .eq("id", projectId)
+      .eq("id", projectIdNum)
       .single();
 
     if (fetchError) {
@@ -176,7 +176,7 @@ export const DELETE = withApiGuardrails<{ projectId: string }>(
     let deletedCount = 0;
     if (!preserveLineItems) {
       const { error: deleteError, count } = await supabase
-        .from("budget_line_items")
+        .from("budget_lines")
         .delete({ count: "exact" })
         .eq("project_id", projectIdNum);
 
@@ -198,7 +198,7 @@ export const DELETE = withApiGuardrails<{ projectId: string }>(
         budget_locked_at: null,
         budget_locked_by: null,
       })
-      .eq("id", projectId)
+      .eq("id", projectIdNum)
       .select();
 
     if (error) {
@@ -251,7 +251,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
     const { data: project, error } = await supabase
       .from("projects")
       .select("budget_locked, budget_locked_at, budget_locked_by")
-      .eq("id", projectId)
+      .eq("id", projectIdNum)
       .single();
 
     if (error) {

@@ -9,11 +9,11 @@ import type {
   PluginAPI,
   PluginManifest,
   PluginRecord,
-  PluginStatus,
   HookType,
   HookContext,
 } from "@/types/plugin.types";
 import {
+  PluginStatus,
   PluginError,
   PluginValidationResult,
   MenuItem,
@@ -24,6 +24,8 @@ import { pluginManifestSchema } from "@/types/plugin.types";
 import { EventEmitter } from "events";
 
 export class PluginManager extends EventEmitter {
+  private static readonly RECORDS_STORAGE_KEY = "alleato.plugins.records";
+  private static readonly PLUGIN_STORAGE_PREFIX = "alleato.plugins.storage";
   private static instance: PluginManager;
   private plugins: Map<string, Plugin> = new Map();
   private hooks: Map<
@@ -34,7 +36,6 @@ export class PluginManager extends EventEmitter {
   private widgets: DashboardWidget[] = [];
   private projectTabs: Map<string, ProjectTab[]> = new Map();
   private supabase = createClient();
-
   private constructor() {
     super();
     this.initialize();
@@ -67,18 +68,11 @@ export class PluginManager extends EventEmitter {
    * Load all enabled plugins from the database
    */
   async loadEnabledPlugins() {
-    const { data: pluginRecords, error } = await (this.supabase as any)
-      .from("plugins")
-      .select("*")
-      .eq("status", "enabled");
-
-    if (error) {
-      return;
-    }
-
-    for (const record of (pluginRecords as any[]) || []) {
+    for (const record of (await this.listPlugins()).filter(
+      (plugin) => plugin.status === PluginStatus.ENABLED,
+    )) {
       try {
-        await this.loadPlugin(record as PluginRecord);
+        await this.loadPlugin(record);
       } catch (error) {
         await this.setPluginError(record.id, error as Error);
       }
@@ -151,33 +145,20 @@ export class PluginManager extends EventEmitter {
     return {
       storage: {
         get: async (key: string) => {
-          const { data } = await (this.supabase as any)
-            .from("plugin_storage")
-            .select("value")
-            .eq("plugin_id", pluginId)
-            .eq("key", key)
-            .single();
-          return (data as any)?.value;
+          return this.readPluginStorage(pluginId)[key];
         },
         set: async (key: string, value: any) => {
-          await (this.supabase as any).from("plugin_storage").upsert({
-            plugin_id: pluginId,
-            key,
-            value: value as any,
-          } as any);
+          const storage = this.readPluginStorage(pluginId);
+          storage[key] = value;
+          this.writePluginStorage(pluginId, storage);
         },
         delete: async (key: string) => {
-          await (this.supabase as any)
-            .from("plugin_storage")
-            .delete()
-            .eq("plugin_id", pluginId)
-            .eq("key", key);
+          const storage = this.readPluginStorage(pluginId);
+          delete storage[key];
+          this.writePluginStorage(pluginId, storage);
         },
         clear: async () => {
-          await (this.supabase as any)
-            .from("plugin_storage")
-            .delete()
-            .eq("plugin_id", pluginId);
+          this.writePluginStorage(pluginId, {});
         },
       },
 
@@ -354,18 +335,18 @@ export class PluginManager extends EventEmitter {
     // Check permissions
     await this.checkPermissions(manifest);
 
-    // Create plugin record
-    const { data: record, error } = await (this.supabase as any)
-      .from("plugins")
-      .insert({
-        manifest_url: manifestUrl,
-        manifest,
-        status: "installed" as PluginStatus,
-      })
-      .select()
-      .single();
-
-    if (error) throw error;
+    // Create plugin record in local persistent storage.
+    const record: PluginRecord = {
+      id: crypto.randomUUID(),
+      manifestUrl,
+      manifest,
+      status: PluginStatus.INSTALLED,
+      installedAt: new Date(),
+      updatedAt: new Date(),
+    };
+    const records = this.readPluginRecords();
+    records.push(record);
+    this.writePluginRecords(records);
 
     // Run install lifecycle
     const plugin = await this.downloadPlugin(manifest);
@@ -382,24 +363,18 @@ export class PluginManager extends EventEmitter {
    * Enable a plugin
    */
   async enablePlugin(pluginId: string) {
-    // Update plugin status directly instead of using RPC
-    const { error } = await (this.supabase as any)
-      .from("plugins")
-      .update({ status: "enabled" as PluginStatus })
-      .eq("id", pluginId);
-
-    if (error) throw error;
-
-    // Reload the plugin
-    const { data: record } = await (this.supabase as any)
-      .from("plugins")
-      .select("*")
-      .eq("id", pluginId)
-      .single();
-
-    if (record) {
-      await this.loadPlugin(record as any as PluginRecord);
+    const records = this.readPluginRecords();
+    const record = records.find((plugin) => plugin.id === pluginId);
+    if (!record) {
+      throw new PluginError("Plugin not found", "PLUGIN_NOT_FOUND", pluginId);
     }
+
+    record.status = PluginStatus.ENABLED;
+    record.enabledAt = new Date();
+    record.updatedAt = new Date();
+    this.writePluginRecords(records);
+
+    await this.loadPlugin(record);
   }
 
   /**
@@ -423,13 +398,14 @@ export class PluginManager extends EventEmitter {
       }
     }
 
-    // Update plugin status directly instead of using RPC
-    const { error } = await (this.supabase as any)
-      .from("plugins")
-      .update({ status: "disabled" as PluginStatus })
-      .eq("id", pluginId);
-
-    if (error) throw error;
+    const records = this.readPluginRecords();
+    const record = records.find((plugin) => plugin.id === pluginId);
+    if (record) {
+      record.status = PluginStatus.DISABLED;
+      record.disabledAt = new Date();
+      record.updatedAt = new Date();
+      this.writePluginRecords(records);
+    }
 
     this.emit("plugin:disabled", { pluginId });
   }
@@ -449,15 +425,17 @@ export class PluginManager extends EventEmitter {
       await this.disablePlugin(pluginId);
     }
 
-    // Delete from database
-    const { error } = await (this.supabase as any)
-      .from("plugins")
-      .delete()
-      .eq("id", pluginId);
-
-    if (error) throw error;
+    this.writePluginRecords(
+      this.readPluginRecords().filter((plugin) => plugin.id !== pluginId),
+    );
+    this.clearPluginStorage(pluginId);
 
     this.emit("plugin:uninstalled", { pluginId });
+  }
+
+  /** Lists installed plugins from the client-side plugin registry store. */
+  async listPlugins(): Promise<PluginRecord[]> {
+    return this.readPluginRecords();
   }
 
   /**
@@ -532,13 +510,85 @@ export class PluginManager extends EventEmitter {
    * Set plugin error state
    */
   private async setPluginError(pluginId: string, error: Error) {
-    await (this.supabase as any)
-      .from("plugins")
-      .update({
-        status: "error" as PluginStatus,
-        error_message: error.message,
-      })
-      .eq("id", pluginId);
+    const records = this.readPluginRecords();
+    const record = records.find((plugin) => plugin.id === pluginId);
+    if (!record) return;
+    record.status = PluginStatus.ERROR;
+    record.errorMessage = error.message;
+    record.updatedAt = new Date();
+    this.writePluginRecords(records);
+  }
+
+  /** Reads persisted plugin records from local storage for the browser runtime. */
+  private readPluginRecords(): PluginRecord[] {
+    if (typeof window === "undefined") return [];
+
+    const raw = window.localStorage.getItem(PluginManager.RECORDS_STORAGE_KEY);
+    if (!raw) return [];
+
+    try {
+      const parsed = JSON.parse(raw) as Array<
+        Omit<
+          PluginRecord,
+          "installedAt" | "updatedAt" | "enabledAt" | "disabledAt"
+        > & {
+          installedAt: string;
+          updatedAt: string;
+          enabledAt?: string;
+          disabledAt?: string;
+        }
+      >;
+
+      return parsed.map((record) => ({
+        ...record,
+        installedAt: new Date(record.installedAt),
+        updatedAt: new Date(record.updatedAt),
+        enabledAt: record.enabledAt ? new Date(record.enabledAt) : undefined,
+        disabledAt: record.disabledAt ? new Date(record.disabledAt) : undefined,
+      }));
+    } catch {
+      return [];
+    }
+  }
+
+  /** Persists plugin records to local storage for the browser runtime. */
+  private writePluginRecords(records: PluginRecord[]) {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(
+      PluginManager.RECORDS_STORAGE_KEY,
+      JSON.stringify(records),
+    );
+  }
+
+  /** Reads plugin-private key/value storage from local storage. */
+  private readPluginStorage(pluginId: string): Record<string, unknown> {
+    if (typeof window === "undefined") return {};
+    const raw = window.localStorage.getItem(
+      `${PluginManager.PLUGIN_STORAGE_PREFIX}.${pluginId}`,
+    );
+    if (!raw) return {};
+    try {
+      return JSON.parse(raw) as Record<string, unknown>;
+    } catch {
+      return {};
+    }
+  }
+
+  /** Persists plugin-private key/value storage to local storage. */
+  private writePluginStorage(pluginId: string, storage: Record<string, unknown>) {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(
+      `${PluginManager.PLUGIN_STORAGE_PREFIX}.${pluginId}`,
+      JSON.stringify(storage),
+    );
+  }
+
+  /** Removes all local storage state for a plugin when it is uninstalled. */
+  private clearPluginStorage(pluginId: string) {
+    if (typeof window === "undefined") return;
+    window.localStorage.removeItem(
+      `${PluginManager.PLUGIN_STORAGE_PREFIX}.${pluginId}`,
+    );
   }
 }
 

@@ -54,7 +54,7 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
 
     // Only draft or revise_and_resubmit invoices can be submitted
     const submittableStatuses = ["draft", "revise_and_resubmit"];
-    if (!submittableStatuses.includes(invoice.status)) {
+    if (!submittableStatuses.includes(invoice.status ?? "")) {
       throw new GuardrailError({
         code: "INVALID_PAYLOAD",
         where: "projects/[projectId]/invoicing/owner/[invoiceId]/submit#POST",

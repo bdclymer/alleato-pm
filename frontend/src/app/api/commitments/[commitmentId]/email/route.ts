@@ -193,7 +193,6 @@ async function fetchCommitmentData(
   }
 
   const isSubcontract = unifiedData.commitment_type === "subcontract";
-  const tableName = isSubcontract ? "subcontracts" : "purchase_orders";
   const sovTableName = isSubcontract
     ? "subcontract_sov_items"
     : "purchase_order_sov_items";
@@ -202,33 +201,79 @@ async function fetchCommitmentData(
     ? "subcontracts_with_totals"
     : "purchase_orders_with_totals";
 
-  // Fetch base record with company join
-  const { data, error } = await supabase
-    .from(tableName)
-    .select(
-      `
-      *,
-      contract_company:companies!contract_company_id(name)
-    `
-    )
-    .eq("id", id)
-    .single();
+  // Fetch base record (no embedded company — FK is not declared in the
+  // generated schema, so we look it up separately). Narrow by type so TS
+  // can distinguish the two row shapes.
+  const baseRecord = isSubcontract
+    ? await supabase
+        .from("subcontracts")
+        .select(
+          "id, contract_number, title, description, status, contract_company_id",
+        )
+        .eq("id", id)
+        .single()
+    : await supabase
+        .from("purchase_orders")
+        .select(
+          "id, contract_number, title, description, status, contract_company_id",
+        )
+        .eq("id", id)
+        .single();
 
-  if (error || !data) {
+  if (baseRecord.error || !baseRecord.data) {
     return null;
+  }
+  const data = baseRecord.data;
+
+  // Separate companies lookup for the contract company name.
+  let contractCompany: { name: string } | null = null;
+  if (data.contract_company_id) {
+    const { data: companyRow } = await supabase
+      .from("companies")
+      .select("name")
+      .eq("id", data.contract_company_id)
+      .maybeSingle();
+    if (companyRow) contractCompany = { name: companyRow.name };
   }
 
   // Fetch financial totals
-  const { data: totalsData } = await (supabase as any)
+  const { data: totalsData } = await (supabase as unknown as {
+    from: (table: string) => {
+      select: (cols: string) => {
+        eq: (col: string, val: string) => {
+          single: () => Promise<{
+            data: {
+              total_sov_amount: number | null;
+              total_billed_to_date: number | null;
+              total_amount_remaining: number | null;
+            } | null;
+          }>;
+        };
+      };
+    };
+  })
     .from(totalsViewName)
-    .select(
-      "total_sov_amount, total_billed_to_date, total_amount_remaining"
-    )
+    .select("total_sov_amount, total_billed_to_date, total_amount_remaining")
     .eq("id", id)
     .single();
 
   // Fetch SOV line items
-  const { data: sovItems } = await (supabase as any)
+  const { data: sovItems } = await (supabase as unknown as {
+    from: (table: string) => {
+      select: (cols: string) => {
+        eq: (col: string, val: string) => {
+          order: (col: string, opts: { ascending: boolean }) => Promise<{
+            data: Array<{
+              line_number: number | null;
+              description: string | null;
+              amount: number | null;
+              billed_to_date: number | null;
+            }> | null;
+          }>;
+        };
+      };
+    };
+  })
     .from(sovTableName)
     .select("line_number, description, amount, billed_to_date")
     .eq(sovFkColumn, id)
@@ -238,19 +283,23 @@ async function fetchCommitmentData(
   const billedToDate = Number(totalsData?.total_billed_to_date) || 0;
   const balanceToFinish = Number(totalsData?.total_amount_remaining) || 0;
 
+  if (!data.id) {
+    return null;
+  }
+
   return {
     id: data.id,
-    number: data.number,
-    title: data.title,
+    number: data.contract_number,
+    title: data.title ?? "",
     description: data.description,
     status: data.status,
-    type: unifiedData.commitment_type,
+    type: unifiedData.commitment_type ?? (isSubcontract ? "subcontract" : "purchase_order"),
     original_amount: originalAmount,
     revised_contract_amount: originalAmount,
     billed_to_date: billedToDate,
     balance_to_finish: balanceToFinish,
-    contract_company: data.contract_company,
-    line_items: sovItems || [],
+    contract_company: contractCompany,
+    line_items: sovItems ?? [],
   };
 }
 

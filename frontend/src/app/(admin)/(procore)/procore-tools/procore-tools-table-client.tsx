@@ -17,7 +17,7 @@ import {
 } from "@/components/tables/unified";
 
 export interface ProcoreToolRow {
-  id?: string;
+  id?: number;
   name: string | null;
   slug: string | null;
   category: string | null;
@@ -260,7 +260,7 @@ function matchesSearch(item: ProcoreToolRow, query: string): boolean {
 }
 
 function getToolRowId(item: ProcoreToolRow): string {
-  if (item.id) return item.id;
+  if (item.id !== null && item.id !== undefined) return String(item.id);
   if (item.slug) return `slug:${item.slug}`;
   if (item.name) return `name:${item.name}`;
   return `tool:${toDisplayValue(item.category)}:${toDisplayValue(item.status)}`;

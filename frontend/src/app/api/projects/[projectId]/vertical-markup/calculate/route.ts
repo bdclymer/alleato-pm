@@ -128,7 +128,15 @@ export const POST = withApiGuardrails<{ projectId: string }>(
       });
     }
 
-    const result = calculateMarkups(baseAmount, markups);
+    const normalizedMarkups: MarkupItem[] = markups.map((m) => ({
+      projectId: String(m.project_id ?? ""),
+      markup_type: m.markup_type,
+      percentage: Number(m.percentage),
+      compound: Boolean(m.compound),
+      calculation_order: m.calculation_order,
+    }));
+
+    const result = calculateMarkups(baseAmount, normalizedMarkups);
 
     return NextResponse.json({
       baseAmount,

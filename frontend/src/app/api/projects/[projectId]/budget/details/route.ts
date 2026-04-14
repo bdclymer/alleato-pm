@@ -21,6 +21,23 @@ type CostCodeRef = {
 };
 
 const APPROVED_DIRECT_COST_STATUSES = ["Approved"];
+const PRIME_CHANGE_ORDER_LINES_TABLE = "change_order_lines";
+
+interface RuntimePendingChangeOrderLinesClient {
+  from: (tableName: string) => {
+    select: (selectedColumns: string) => {
+      eq: (column: string, value: number) => {
+        like: (
+          column: string,
+          pattern: string,
+        ) => Promise<{
+          data: Array<Record<string, unknown>> | null;
+          error: unknown;
+        }>;
+      };
+    };
+  };
+}
 
 /**
  * GET /api/projects/[projectId]/budget/details
@@ -222,24 +239,51 @@ export const GET = withApiGuardrails(
 
     // 4b. Fetch Pending Prime Contract Change Orders
      
+    const pendingContractCOsResult =
+      await (async () => {
+        const runtimeSupabase =
+          supabase as unknown as RuntimePendingChangeOrderLinesClient;
+        const result = await runtimeSupabase
+          .from(PRIME_CHANGE_ORDER_LINES_TABLE)
+          .select(
+            `
+          id,
+          amount,
+          description,
+          cost_code_id,
+          change_orders!inner (
+            status,
+            change_order_number,
+            project_id
+          )
+        `,
+          )
+          .eq("change_orders.project_id", projectIdNum)
+          .like("change_orders.status", "Pending%");
+
+        const errStr = JSON.stringify(result.error);
+        const isMissingTable =
+          errStr.includes(PRIME_CHANGE_ORDER_LINES_TABLE) ||
+          errStr.includes("PGRST205") ||
+          errStr.includes("schema cache");
+
+        if (result.error && isMissingTable) {
+          return { data: [], error: null };
+        }
+
+        return result;
+      })();
     const { data: pendingContractCOs, error: pendingContractCOsError } =
-      await (supabase as any)
-        .from("change_order_lines")
-        .select(
-          `
-        id,
-        amount,
-        description,
-        cost_code_id,
-        change_orders!inner (
-          status,
-          change_order_number,
-          project_id
-        )
-      `,
-        )
-        .eq("change_orders.project_id", projectIdNum)
-        .like("change_orders.status", "Pending%") as { data: Array<{ id: string; amount: number | null; description: string | null; cost_code_id: string | null; change_orders: { status: string; change_order_number: string; project_id: number } }> | null; error: unknown };
+      pendingContractCOsResult as {
+        data: Array<{
+          id: string;
+          amount: number | null;
+          description: string | null;
+          cost_code_id: string | null;
+          change_orders: { status: string; change_order_number: string; project_id: number };
+        }> | null;
+        error: unknown;
+      };
 
     if (!pendingContractCOsError && pendingContractCOs) {
       pendingContractCOs.forEach((co) => {

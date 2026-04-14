@@ -1,5 +1,5 @@
 /**
- * Sync active vendors from Acumatica → Supabase vendors table
+ * Sync active vendors from Acumatica → Supabase companies table
  * Usage: node scripts/sync-acumatica-vendors.mjs
  */
 
@@ -93,9 +93,9 @@ async function syncVendors() {
   console.log(`  ${allVendors.length} total, ${activeVendors.length} active\n`);
 
   const { data: existing, error: fetchError } = await supabase
-    .from("vendors")
+    .from("companies")
     .select("id, name, acumatica_vendor_id")
-    .eq("company_id", ALLEATO_COMPANY_ID);
+    .eq("is_vendor", true);
   if (fetchError) throw new Error(`Failed to load vendors: ${fetchError.message}`);
 
   const byAcuId = new Map();
@@ -114,7 +114,7 @@ async function syncVendors() {
     try {
       const linkedById = byAcuId.get(acuId);
       if (linkedById) {
-        const { error } = await supabase.from("vendors").update(fields).eq("id", linkedById.id);
+        const { error } = await supabase.from("companies").update(fields).eq("id", linkedById.id);
         if (error) result.errors.push(`${acuId}: ${error.message}`);
         else result.updated++;
         continue;
@@ -122,7 +122,7 @@ async function syncVendors() {
 
       const linkedByName = byName.get(v.VendorName.toLowerCase().trim());
       if (linkedByName) {
-        const { error } = await supabase.from("vendors")
+        const { error } = await supabase.from("companies")
           .update({ ...fields, acumatica_vendor_id: acuId })
           .eq("id", linkedByName.id);
         if (error) result.errors.push(`${acuId}: ${error.message}`);
@@ -130,10 +130,10 @@ async function syncVendors() {
         continue;
       }
 
-      const { error } = await supabase.from("vendors").insert({
-        company_id: ALLEATO_COMPANY_ID,
+      const { error } = await supabase.from("companies").insert({
         acumatica_vendor_id: acuId,
-        is_active: true,
+        is_vendor: true,
+        status: "active",
         ...fields,
       });
       if (error) result.errors.push(`${acuId} (${v.VendorName}): ${error.message}`);

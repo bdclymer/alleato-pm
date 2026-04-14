@@ -170,12 +170,19 @@ export const PATCH = withApiGuardrails(
           .single();
 
         if (pcc) {
+          if (!pcc.cost_type_id) {
+            return NextResponse.json(
+              { error: 'Invalid budget code', details: `Project cost code ${validatedData.budgetCodeId} has no cost_type_id; cannot resolve budget line.` },
+              { status: 400 },
+            );
+          }
+          const pccCostTypeId: string = pcc.cost_type_id;
           const { data: matchingBudgetLine } = await supabase
             .from('budget_lines')
             .select('id')
             .eq('project_id', parseInt(projectId, 10))
             .eq('cost_code_id', pcc.cost_code_id)
-            .eq('cost_type_id', pcc.cost_type_id)
+            .eq('cost_type_id', pccCostTypeId)
             .single();
 
           if (matchingBudgetLine) {
@@ -187,7 +194,7 @@ export const PATCH = withApiGuardrails(
               .insert({
                 project_id: parseInt(projectId, 10),
                 cost_code_id: pcc.cost_code_id,
-                cost_type_id: pcc.cost_type_id,
+                cost_type_id: pccCostTypeId,
               })
               .select('id')
               .single();

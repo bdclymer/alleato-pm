@@ -618,7 +618,7 @@ export default function NewPrimeContractPcoPage() {
                                 : null,
                             )
                           }
-                          placeholder="0"
+                          placeholder=""
                         />
                       </FormControl>
                       <FormMessage />
@@ -946,7 +946,7 @@ export default function NewPrimeContractPcoPage() {
                                 : null,
                             )
                           }
-                          placeholder="0"
+                          placeholder=""
                         />
                       </FormControl>
                       <FormMessage />

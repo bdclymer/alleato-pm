@@ -86,15 +86,19 @@ export const GET = withApiGuardrails(
       return apiErrorResponse(error);
     }
 
-    // Batch-fetch change event and line item counts (no FK join available for pco_line_items)
-    const pcoIds = (data || []).map((pco: Record<string, unknown>) => String(pco.id));
+    // Batch-fetch change event and line item counts (no FK join available for pco_line_items).
+    // `pco_change_events.pco_id` is a number; `pco_line_items.pco_id` is a string.
+    const pcoIdStrings = (data || []).map((pco: Record<string, unknown>) => String(pco.id));
+    const pcoIdNumbers = pcoIdStrings
+      .map((id) => Number(id))
+      .filter((n) => Number.isFinite(n));
     const ceCountMap: Record<string, number> = {};
     const liCountMap: Record<string, number> = {};
 
-    if (pcoIds.length > 0) {
+    if (pcoIdStrings.length > 0) {
       const [ceResult, liResult] = await Promise.all([
-        supabase.from("pco_change_events").select("pco_id").in("pco_id", pcoIds),
-        supabase.from("pco_line_items").select("pco_id").in("pco_id", pcoIds),
+        supabase.from("pco_change_events").select("pco_id").in("pco_id", pcoIdNumbers),
+        supabase.from("pco_line_items").select("pco_id").in("pco_id", pcoIdStrings),
       ]);
 
       if (ceResult.data) {
@@ -179,11 +183,31 @@ export const POST = withApiGuardrails(
       );
     }
 
-    const insertData: Record<string, any> = {
+    // Generate next PCO number for this project if not provided
+    let pcoNumber: string | undefined = body.number;
+    if (!pcoNumber) {
+      const { data: latest } = await supabase
+        .from("potential_change_orders")
+        .select("number")
+        .eq("project_id", numericProjectId)
+        .order("id", { ascending: false })
+        .limit(1);
+      const prev = Number(latest?.[0]?.number);
+      pcoNumber = Number.isFinite(prev) && prev > 0
+        ? String(Math.floor(prev) + 1).padStart(3, "0")
+        : "001";
+    }
+
+    // Only include columns that exist on `potential_change_orders`.
+    // Legacy fields (change_reason, location, reference, request_received_from,
+    // due_date, is_private, field_change, paid_in_full) are no longer on this
+    // table and are ignored.
+    const insertData = {
       project_id: numericProjectId,
+      number: pcoNumber,
       title: body.title.trim(),
       description: body.description || null,
-      type: body.type || null,
+      type: body.type || "Client",
       status: "DRAFT",
       current_version: 1,
       estimated_value: body.estimated_value ?? null,
@@ -195,14 +219,6 @@ export const POST = withApiGuardrails(
       annotation: body.annotation || null,
       annotation_note: body.annotation_note || null,
       prime_change_order_id: body.prime_change_order_id ?? null,
-      change_reason: body.change_reason || null,
-      location: body.location || null,
-      reference: body.reference || null,
-      request_received_from: body.request_received_from || null,
-      due_date: body.due_date || null,
-      is_private: body.is_private ?? false,
-      field_change: body.field_change ?? false,
-      paid_in_full: body.paid_in_full ?? false,
       created_by_id: user.id,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),

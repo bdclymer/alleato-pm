@@ -3,7 +3,7 @@
  * Seed Direct Costs Data
  *
  * Creates test data for the Direct Costs feature:
- * - Vendors
+ * - Vendor companies
  * - Budget codes (project_budget_codes)
  * - Direct costs with line items
  *
@@ -61,8 +61,7 @@ const vendorNames = [
   'Reliable Vendors Inc'
 ];
 
-const generateVendor = (companyId: string, name: string) => ({
-  company_id: companyId,
+const generateVendor = (_companyId: string, name: string) => ({
   name,
   contact_name: faker.person.fullName(),
   contact_email: faker.internet.email(),
@@ -73,7 +72,8 @@ const generateVendor = (companyId: string, name: string) => ({
   zip_code: faker.location.zipCode(),
   country: 'USA',
   tax_id: faker.string.numeric(9),
-  is_active: true,
+  is_vendor: true,
+  status: 'active',
   notes: faker.helpers.arrayElement([
     null,
     'Preferred vendor',
@@ -237,8 +237,9 @@ async function clearDirectCostsData() {
   }
 
   const { error: vendorsError } = await supabase
-    .from('vendors')
+    .from('companies')
     .delete()
+    .eq('is_vendor', true)
     .neq('id', '00000000-0000-0000-0000-000000000000');
 
   if (vendorsError) {
@@ -271,8 +272,8 @@ async function seedDirectCostsData() {
         .from('companies')
         .insert({
           name: 'General Contractors Inc',
-          trade: 'General Contractor',
-          is_active: true
+          type: 'general_contractor',
+          status: 'active'
         })
         .select()
         .single();
@@ -285,12 +286,12 @@ async function seedDirectCostsData() {
     // ========================================================================
     // Step 2: Create Vendors
     // ========================================================================
-    console.log('\n📋 Step 2: Creating vendors...');
+    console.log('\n📋 Step 2: Creating vendor companies...');
 
     const vendors = vendorNames.map(name => generateVendor(company.id, name));
 
     const { data: insertedVendors, error: vendorsError } = await supabase
-      .from('vendors')
+      .from('companies')
       .insert(vendors)
       .select();
 
@@ -432,8 +433,8 @@ async function seedDirectCostsData() {
     console.log('\n📋 Step 6: Getting employees...');
 
     const { data: employees } = await supabase
-      .from('employees')
-      .select('id, first_name, last_name')
+      .from('people')
+      .select('id, name')
       .limit(5);
 
     if (employees && employees.length > 0) {

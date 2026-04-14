@@ -41,6 +41,78 @@ type ActionToolsOptions = {
   pinnedProjectId?: number;
 };
 
+type RuntimeReplayAuditRow = {
+  response_payload?: unknown;
+};
+
+type RuntimeContractNumberRow = {
+  contract_number?: string;
+};
+
+type RuntimeInsertedRecord = {
+  id: string;
+  contract_number: string;
+  title: string;
+  status: string;
+};
+
+type RuntimeAuditClient = {
+  from: (tableName: string) => {
+    select: (columns: string) => {
+      eq: (column: string, value: string) => {
+        eq: (column: string, value: string) => {
+          eq: (column: string, value: string) => {
+            eq: (column: string, value: string) => {
+              order: (
+                column: string,
+                options: { ascending: boolean },
+              ) => {
+                limit: (count: number) => {
+                  maybeSingle: () => Promise<{
+                    data: RuntimeReplayAuditRow | null;
+                    error: unknown;
+                  }>;
+                };
+              };
+            };
+          };
+        };
+      };
+    };
+    insert: (payload: Record<string, unknown>) => Promise<{ error: unknown }>;
+  };
+};
+
+type RuntimeCommitmentReadClient = {
+  from: (tableName: string) => {
+    select: (columns: string) => {
+      eq: (column: string, value: number) => {
+        order: (
+          column: string,
+          options: { ascending: boolean },
+        ) => {
+          limit: (
+            count: number,
+          ) => Promise<{ data: RuntimeContractNumberRow[] | null; error: unknown }>;
+        };
+      };
+    };
+  };
+};
+
+type RuntimeCommitmentWriteClient = {
+  from: (tableName: string) => {
+    insert: (payload: Record<string, unknown>) => {
+      select: (columns: string) => {
+        single: () => Promise<{
+          data: RuntimeInsertedRecord | null;
+          error: { message: string } | null;
+        }>;
+      };
+    };
+  };
+};
+
 function withTrace<TInput extends Record<string, unknown>, TResult>(
   name: string,
   options: ActionToolsOptions,
@@ -64,6 +136,12 @@ export function createActionTools(
   options: ActionToolsOptions = {},
 ) {
   const supabase = createServiceClient();
+  const writeAuditTable = "ai_tool_write_audits";
+  const runtimeAuditClient = supabase as unknown as RuntimeAuditClient;
+  const runtimeCommitmentReadClient =
+    supabase as unknown as RuntimeCommitmentReadClient;
+  const runtimeCommitmentWriteClient =
+    supabase as unknown as RuntimeCommitmentWriteClient;
   const guardrails = createToolGuardrails(userId, {
     pinnedProjectId: options.pinnedProjectId,
   });
@@ -86,8 +164,8 @@ export function createActionTools(
     toolName: string,
     idempotencyKey: string,
   ): Promise<unknown | null> {
-    const { data } = await (supabase as any)
-      .from("ai_tool_write_audits")
+    const { data, error } = await runtimeAuditClient
+      .from(writeAuditTable)
       .select("response_payload")
       .eq("user_id", userId)
       .eq("tool_name", toolName)
@@ -97,6 +175,7 @@ export function createActionTools(
       .limit(1)
       .maybeSingle();
 
+    if (error) return null;
     return data?.response_payload ?? null;
   }
 
@@ -108,7 +187,7 @@ export function createActionTools(
     status: "success" | "error";
     response: unknown;
   }): Promise<void> {
-    await (supabase as any).from("ai_tool_write_audits").insert({
+    const { error } = await runtimeAuditClient.from(writeAuditTable).insert({
       user_id: userId,
       tool_name: params.toolName,
       idempotency_key: params.idempotencyKey,
@@ -117,6 +196,7 @@ export function createActionTools(
       response_payload: params.response,
       status: params.status,
     });
+    if (error) return;
   }
 
   async function enforceProjectWriteAccess(
@@ -1562,7 +1642,7 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
         // Auto-generate contract number if not provided
         let finalContractNumber = contractNumber;
         if (!finalContractNumber) {
-          const { data: existing } = await (supabase as any)
+          const { data: existing } = await runtimeCommitmentReadClient
             .from(table)
             .select("contract_number")
             .eq("project_id", projectId)
@@ -1653,7 +1733,7 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
           insertPayload.invoice_contact_ids = [];
         }
 
-        const { data, error } = await (supabase as any)
+        const { data, error } = await runtimeCommitmentWriteClient
           .from(table)
           .insert(insertPayload)
           .select("id, contract_number, title, status")

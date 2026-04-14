@@ -90,10 +90,22 @@ export const POST = withApiGuardrails(
 
     const derivedName = name ?? `${new Date(start_date).toLocaleDateString()} - ${new Date(end_date).toLocaleDateString()}`;
 
+    // Next period_number for this project (required, not auto-assigned).
+    const { data: lastPeriod } = await supabase
+      .from("billing_periods")
+      .select("period_number")
+      .eq("project_id", projectIdNum)
+      .order("period_number", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const nextPeriodNumber = (lastPeriod?.period_number ?? 0) + 1;
+
     const { data, error } = await supabase
       .from("billing_periods")
       .insert({
         project_id: projectIdNum,
+        period_number: nextPeriodNumber,
         start_date,
         end_date,
         name: derivedName,

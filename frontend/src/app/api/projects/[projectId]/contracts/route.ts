@@ -44,7 +44,24 @@ export const GET = withApiGuardrails(
       .order("created_at", { ascending: false });
 
     if (status) {
-      contractQuery = contractQuery.eq("status", status);
+      const CONTRACT_STATUSES = [
+        "draft",
+        "out_for_bid",
+        "out_for_signature",
+        "approved",
+        "complete",
+        "terminated",
+      ] as const;
+      type ContractStatus = (typeof CONTRACT_STATUSES)[number];
+      if (!(CONTRACT_STATUSES as readonly string[]).includes(status)) {
+        return NextResponse.json(
+          {
+            error: `Invalid status "${status}". Expected one of: ${CONTRACT_STATUSES.join(", ")}.`,
+          },
+          { status: 400 },
+        );
+      }
+      contractQuery = contractQuery.eq("status", status as ContractStatus);
     }
 
     if (search) {

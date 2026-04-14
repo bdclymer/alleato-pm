@@ -154,14 +154,22 @@ export const POST = withApiGuardrails<{ projectId: string }>(
       console.warn(
         `[Subcontracts API] Creating ${data.sov.length} SOV line items`,
       );
+      const toNumber = (v: unknown): number => {
+        if (typeof v === "number") return v;
+        if (typeof v === "string") {
+          const n = Number(v);
+          return Number.isFinite(n) ? n : 0;
+        }
+        return 0;
+      };
       const sovItems = data.sov.map((item, index) => ({
         subcontract_id: subcontract.id,
         line_number: item.lineNumber || index + 1,
         change_event_line_item: item.changeEventLineItem || null,
         budget_code: item.budgetCode || null,
         description: item.description || null,
-        amount: item.amount?.toString() || "0",
-        billed_to_date: item.billedToDate?.toString() || "0",
+        amount: toNumber(item.amount),
+        billed_to_date: toNumber(item.billedToDate),
         sort_order: index,
       }));
 

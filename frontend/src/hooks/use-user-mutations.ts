@@ -8,6 +8,7 @@ import {
   type PersonUpdateDTO,
 } from "@/services/directoryService";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api-client";
 
 export function useAddUser(projectId: string) {
   const queryClient = useQueryClient();
@@ -25,21 +26,14 @@ export function useAddUser(projectId: string) {
       let inviteSent = false;
       if (person?.id && personData.email && send_invite === true) {
         try {
-          const response = await fetch(
+          await apiFetch(
             `/api/projects/${projectId}/directory/people/${person.id}/invite`,
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },
             },
           );
-
-          if (response.ok) {
-            inviteSent = true;
-          } else {
-            console.warn(
-              `Failed to auto-send invite (HTTP ${response.status}), user can be invited manually`,
-            );
-          }
+          inviteSent = true;
         } catch (error) {
           // Invite send failure is non-fatal - user is still created
           console.warn("Failed to auto-send invite, user can be invited manually", error);
@@ -114,7 +108,11 @@ export function useBulkAddUsers(projectId: string) {
       users: PersonCreateDTO[];
       send_invites?: boolean;
     }) => {
-      const response = await fetch(
+      return apiFetch<{
+        created_count: number;
+        failed_count: number;
+        errors: { index: number; error: string }[];
+      }>(
         `/api/projects/${projectId}/directory/users/bulk-add`,
         {
           method: "POST",
@@ -122,13 +120,6 @@ export function useBulkAddUsers(projectId: string) {
           body: JSON.stringify(data),
         },
       );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to bulk add users");
-      }
-
-      return response.json();
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["project-users", projectId] });
@@ -170,20 +161,13 @@ export function useResendInvite(projectId: string, personId: string) {
 
   return useMutation({
     mutationFn: async () => {
-      const response = await fetch(
+      return apiFetch(
         `/api/projects/${projectId}/directory/people/${personId}/resend-invite`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
         },
       );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to resend invite");
-      }
-
-      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["project-users", projectId] });

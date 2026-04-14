@@ -5,6 +5,7 @@ import type { DirectoryFilters } from "@/components/directory/DirectoryFilters";
 import type { ColumnConfig } from "@/components/directory/ColumnManager";
 import type { DirectorySavedFilter } from "@/services/directoryPreferencesService";
 import { toast } from "@/hooks/use-toast";
+import { apiFetch } from "@/lib/api-client";
 
 interface DirectoryPreferencesState {
   savedFilters: DirectorySavedFilter[];
@@ -22,17 +23,17 @@ export function useDirectoryPreferences(projectId: string) {
   const refresh = React.useCallback(async () => {
     setState((prev) => ({ ...prev, loading: true }));
     try {
-      const [filtersResponse, prefsResponse] = await Promise.all([
-        fetch(`/api/projects/${projectId}/directory/filters`),
-        fetch(`/api/projects/${projectId}/directory/preferences`),
+      const [filtersPayload, prefsPayload] = await Promise.all([
+        apiFetch<{ data?: DirectorySavedFilter[] }>(
+          `/api/projects/${projectId}/directory/filters`,
+        ),
+        apiFetch<{
+          data?: {
+            lastFilters?: DirectoryFilters;
+            columnPreferences?: ColumnConfig[];
+          };
+        }>(`/api/projects/${projectId}/directory/preferences`),
       ]);
-
-      if (!filtersResponse.ok || !prefsResponse.ok) {
-        throw new Error("Failed to load preferences");
-      }
-
-      const filtersPayload = await filtersResponse.json();
-      const prefsPayload = await prefsResponse.json();
 
       setState({
         savedFilters: filtersPayload.data || [],
@@ -61,7 +62,7 @@ export function useDirectoryPreferences(projectId: string) {
       search?: string;
     }) => {
       try {
-        const response = await fetch(
+        const data = await apiFetch<{ data: DirectorySavedFilter }>(
           `/api/projects/${projectId}/directory/filters`,
           {
             method: "POST",
@@ -69,10 +70,6 @@ export function useDirectoryPreferences(projectId: string) {
             body: JSON.stringify(payload),
           },
         );
-        if (!response.ok) {
-          throw new Error("Unable to save filter");
-        }
-        const data = await response.json();
         setState((prev) => ({
           ...prev,
           savedFilters: prev.savedFilters.some(
@@ -95,13 +92,10 @@ export function useDirectoryPreferences(projectId: string) {
   const deleteFilter = React.useCallback(
     async (filterId: string) => {
       try {
-        const response = await fetch(
+        await apiFetch(
           `/api/projects/${projectId}/directory/filters?id=${filterId}`,
           { method: "DELETE" },
         );
-        if (!response.ok) {
-          throw new Error("Unable to delete filter");
-        }
         setState((prev) => ({
           ...prev,
           savedFilters: prev.savedFilters.filter(
@@ -123,7 +117,7 @@ export function useDirectoryPreferences(projectId: string) {
       columnPreferences?: ColumnConfig[];
     }) => {
       try {
-        const response = await fetch(
+        await apiFetch(
           `/api/projects/${projectId}/directory/preferences`,
           {
             method: "POST",
@@ -131,9 +125,6 @@ export function useDirectoryPreferences(projectId: string) {
             body: JSON.stringify(payload),
           },
         );
-        if (!response.ok) {
-          throw new Error("Unable to save preferences");
-        }
         setState((prev) => ({
           ...prev,
           lastFilters: payload.lastFilters ?? prev.lastFilters,

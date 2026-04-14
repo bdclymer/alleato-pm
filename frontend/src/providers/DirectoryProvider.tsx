@@ -11,6 +11,7 @@ import {
 } from "@/services/directoryService";
 import type { DistributionGroupWithMembers } from "@/services/distributionGroupService";
 import type { Database } from "@/types/database.types";
+import { apiFetch } from "@/lib/api-client";
 
 type Company = Database["public"]["Tables"]["companies"]["Row"];
 
@@ -167,13 +168,9 @@ export function DirectoryProvider({
     async (projectId: string) => {
       setState((prev) => ({ ...prev, loading: true, error: null }));
       try {
-        const response = await fetch(
+        const groups = await apiFetch<DistributionGroupWithMembers[]>(
           `/api/projects/${projectId}/directory/groups?include_members=true`,
         );
-        if (!response.ok) {
-          throw new Error(`Server returned ${response.status} when loading distribution groups`);
-        }
-        const groups = await response.json();
         setState((prev) => ({
           ...prev,
           distributionGroups: groups,

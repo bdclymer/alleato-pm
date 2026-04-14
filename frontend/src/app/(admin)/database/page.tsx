@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { PageShell } from "@/components/layout";
 import { Database } from "@/types/database.types";
+import { getPublicTables } from "@/lib/supabase/dev-rpc";
 import { DatabaseTablesCatalogClient } from "./database-tables-catalog-client";
 
 type DatabaseTableCatalogRow =
@@ -27,16 +28,20 @@ export default async function DatabaseTablesCatalogPage() {
 
   // Source of truth: actual tables currently in the public schema.
   // We keep catalog metadata when present, but only for real existing tables.
-  const { data: publicTablesData, error: publicTablesError } = await supabase.rpc(
-    "get_public_tables",
-  );
+  let publicTablesData: Array<{ table_name: string }> = [];
+  let publicTablesError: Error | null = null;
+  try {
+    publicTablesData = await getPublicTables(supabase);
+  } catch (err) {
+    publicTablesError = err instanceof Error ? err : new Error(String(err));
+  }
 
   const catalogByTableName = new Map(
     ((catalogRows || []) as DatabaseTableCatalogRow[]).map((row) => [row.table_name, row]),
   );
 
-  const publicTableNames = !publicTablesError && Array.isArray(publicTablesData)
-    ? (publicTablesData as Array<{ table_name: string }>)
+  const publicTableNames = !publicTablesError && publicTablesData.length > 0
+    ? publicTablesData
         .map((row) => row.table_name)
         .filter((name): name is string => Boolean(name))
         .sort((a, b) => a.localeCompare(b))

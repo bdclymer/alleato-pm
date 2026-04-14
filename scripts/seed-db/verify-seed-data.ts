@@ -36,16 +36,17 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey, {
 async function verify() {
   console.log('🔍 Verifying seeded data...\n');
 
-  // Count vendors
+  // Count vendor companies
   const { count: vendorCount } = await supabase
-    .from('vendors')
+    .from('companies')
     .select('*', { count: 'exact', head: true });
-  console.log(`✓ Vendors: ${vendorCount}`);
+  console.log(`✓ Vendor Companies: ${vendorCount}`);
 
-  // Get sample vendors
+  // Get sample vendor companies
   const { data: vendors } = await supabase
-    .from('vendors')
-    .select('name, contact_name, is_active')
+    .from('companies')
+    .select('name, contact_name, is_vendor')
+    .eq('is_vendor', true)
     .limit(3);
   console.log('  Sample vendors:', vendors?.map(v => v.name).join(', '));
 
@@ -90,18 +91,18 @@ async function verify() {
   // Verify foreign key relationships
   const { data: costsWithVendors } = await supabase
     .from('direct_costs')
-    .select('id, vendors(name)')
+    .select('id, companies(name)')
     .eq('cost_type', 'Invoice')
     .limit(3);
   console.log('\n✓ Foreign Keys (Direct Costs → Vendors):');
   costsWithVendors?.forEach(dc => {
-    const vendorName = (dc.vendors as any)?.name || 'N/A';
+    const vendorName = (dc.companies as any)?.name || 'N/A';
     console.log(`    - Direct Cost ${dc.id.substring(0, 8)}... → Vendor: ${vendorName}`);
   });
 
   // Summary
   console.log('\n📊 Summary:');
-  console.log(`- Total Vendors: ${vendorCount}`);
+  console.log(`- Total Vendor Companies: ${vendorCount}`);
   console.log(`- Total Budget Codes: ${budgetCodeCount}`);
   console.log(`- Total Direct Costs: ${directCostCount}`);
   console.log(`- Total Line Items: ${lineItemCount}`);

@@ -101,7 +101,9 @@ export const POST = withApiGuardrails(
       }
 
       const linkedCommitmentIds = new Set<string>(
-        (lineItems ?? []).map((lineItem) => lineItem.commitment_id).filter(Boolean),
+        (lineItems ?? [])
+          .map((lineItem) => lineItem.commitment_id)
+          .filter((value): value is string => !!value),
       );
 
       const budgetLineIds = [

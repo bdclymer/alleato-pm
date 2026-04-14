@@ -1,10 +1,23 @@
 #!/usr/bin/env tsx
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from "@supabase/supabase-js";
+import { config as loadEnv } from "dotenv";
 
-const supabase = createClient(
-  'https://lgveqfnpkxvzbnnwuled.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxndmVxZm5wa3h2emJubnd1bGVkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NTI1NDE2NiwiZXhwIjoyMDcwODMwMTY2fQ.kIFo_ZSwO1uwpttYXxjSnYbBpUhwZhkW-ZGaiQLhKmA'
-);
+loadEnv({ path: ".env.local", override: false });
+loadEnv({ path: ".env", override: false });
+loadEnv({ path: "frontend/.env.local", override: false });
+loadEnv({ path: "frontend/.env", override: false });
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseServiceKey =
+  process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SERVICE_KEY;
+
+if (!supabaseUrl || !supabaseServiceKey) {
+  throw new Error(
+    "Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in local env files.",
+  );
+}
+
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 async function checkSchemas() {
   console.log('\n🔍 Checking table schemas...\n');
@@ -20,11 +33,11 @@ async function checkSchemas() {
 
   // Check commitments
   const { data: comm, error: commError } = await supabase
-    .from('commitments')
+    .from('commitments_unified')
     .select('*')
     .limit(1);
 
-  console.log('\ncommitments columns:', Object.keys(comm?.[0] || {}));
+  console.log('\ncommitments_unified columns:', Object.keys(comm?.[0] || {}));
   if (commError) console.log('  Error:', commError.message);
 
   // Check direct_costs

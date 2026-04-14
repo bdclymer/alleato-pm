@@ -106,9 +106,23 @@ export const PATCH = withApiGuardrails<Promise<{ cardId: string }>>(
       });
     }
 
+    // initiative_cards.Update expects priority/sort_order to be non-null (DB
+    // defaults apply), so strip null overrides before writing.
+    const {
+      priority: priorityOverride,
+      sort_order: sortOrderOverride,
+      ...restUpdates
+    } = updates;
+    const normalizedUpdates: typeof restUpdates & {
+      priority?: string;
+      sort_order?: number;
+    } = { ...restUpdates };
+    if (priorityOverride != null) normalizedUpdates.priority = priorityOverride;
+    if (sortOrderOverride != null) normalizedUpdates.sort_order = sortOrderOverride;
+
     const { data, error } = await supabase
       .from("initiative_cards")
-      .update(updates)
+      .update(normalizedUpdates)
       .eq("id", cardId)
       .select()
       .single();

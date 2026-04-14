@@ -39,7 +39,7 @@ export const POST = withApiGuardrails<{ commitmentId: string }>(
     // First determine the type from the unified view (including deleted records)
     const { data: existing, error: fetchError } = await supabase
       .from("commitments_unified")
-      .select("id, type, deleted_at, status")
+      .select("id, commitment_type, deleted_at, status")
       .eq("id", commitmentId)
       .single();
 
@@ -63,7 +63,7 @@ export const POST = withApiGuardrails<{ commitmentId: string }>(
 
     // Restore the commitment by setting deleted_at to null
     const tableName =
-      existing.type === "subcontract" ? "subcontracts" : "purchase_orders";
+      existing.commitment_type === "subcontract" ? "subcontracts" : "purchase_orders";
 
     const restoredAt = new Date().toISOString();
     const { data, error } = await supabase

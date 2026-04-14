@@ -48,6 +48,8 @@ interface UpsertAgentLearningInput {
 }
 
 const MAX_CONTEXT_TOKENS = 400;
+const AGENT_LEARNINGS_TABLE = "agent_learnings";
+const AGENT_LEARNING_USAGES_TABLE = "agent_learning_usages";
 
 const STOPWORDS = new Set([
   "the",
@@ -303,11 +305,15 @@ export async function upsertAgentLearning(input: UpsertAgentLearningInput) {
     input.problemSignature,
   ]);
 
-  const { data: existing } = await supabase
-    .from("agent_learnings")
+  const { data: existing, error: existingError } = await supabase
+    .from(AGENT_LEARNINGS_TABLE)
     .select("id, occurrences, confidence, status, evidence")
     .eq("learning_key", learningKey)
     .maybeSingle();
+
+  if (existingError) {
+    return null;
+  }
 
   const nextOccurrences = ((existing?.occurrences as number | undefined) ?? 0) + 1;
   const requestedStatus = input.status ?? "candidate";
@@ -349,7 +355,7 @@ export async function upsertAgentLearning(input: UpsertAgentLearningInput) {
   };
 
   const { data, error } = await supabase
-    .from("agent_learnings")
+    .from(AGENT_LEARNINGS_TABLE)
     .upsert(payload, { onConflict: "learning_key" })
     .select(
       "id, title, source, status, prevention_prompt, scope_tags, tool_id, project_id, occurrences, confidence",
@@ -357,7 +363,7 @@ export async function upsertAgentLearning(input: UpsertAgentLearningInput) {
     .single();
 
   if (error) {
-    throw new Error(error.message);
+    return null;
   }
 
   return data as AgentLearning;
@@ -388,7 +394,7 @@ export async function getRelevantAgentLearnings(params: {
 
   const keywords = extractKeywords(params.messageText, 6);
   let query = supabase
-    .from("agent_learnings")
+    .from(AGENT_LEARNINGS_TABLE)
     .select(
       "id, title, source, status, prevention_prompt, scope_tags, tool_id, project_id, occurrences, confidence",
     )
@@ -428,7 +434,7 @@ export async function recordAgentLearningUsages(params: {
 
   await Promise.allSettled(
     params.learnings.map((learning) =>
-      supabase.from("agent_learning_usages").upsert(
+      supabase.from(AGENT_LEARNING_USAGES_TABLE).upsert(
         {
           learning_id: learning.id,
           session_id: params.sessionId,
@@ -453,7 +459,7 @@ export async function updateLearningUsageOutcomeForSession(
 ) {
   const supabase = createUntypedServiceClient();
   await supabase
-    .from("agent_learning_usages")
+    .from(AGENT_LEARNING_USAGES_TABLE)
     .update({ outcome })
     .eq("session_id", sessionId)
     .eq("outcome", "unknown");

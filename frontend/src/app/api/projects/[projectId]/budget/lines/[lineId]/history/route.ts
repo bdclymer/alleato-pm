@@ -62,8 +62,14 @@ export const GET = withApiGuardrails<{ projectId: string; lineId: string }>(
       );
     }
 
-    // Get unique user IDs from history
-    const userIds = [...new Set(historyData.map((h) => h.changed_by))];
+    // Get unique user IDs from history (filter out nulls)
+    const userIds = [
+      ...new Set(
+        historyData
+          .map((h) => h.changed_by)
+          .filter((id): id is string => id !== null),
+      ),
+    ];
 
     // Fetch user details for all users who made changes
     const { data: usersData, error: usersError } = await supabase
@@ -96,7 +102,7 @@ export const GET = withApiGuardrails<{ projectId: string; lineId: string }>(
       field_name: h.field_name,
       old_value: h.old_value,
       new_value: h.new_value,
-      changed_by: usersMap.get(h.changed_by) || {
+      changed_by: (h.changed_by ? usersMap.get(h.changed_by) : null) || {
         id: h.changed_by,
         email: "Unknown User",
         name: "Unknown User",

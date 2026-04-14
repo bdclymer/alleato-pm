@@ -52,7 +52,6 @@ import {
   User,
 } from "lucide-react";
 import { pluginManager } from "@/lib/plugins/plugin-manager";
-import { createClient } from "@/lib/supabase/client";
 import type { PluginRecord, PluginStatus } from "@/types/plugin.types";
 import { toast } from "sonner";
 
@@ -63,8 +62,6 @@ export function PluginManagerUI() {
   const [selectedTab, setSelectedTab] = useState("installed");
   const [installUrl, setInstallUrl] = useState("");
   const [isInstalling, setIsInstalling] = useState(false);
-  const supabase = createClient();
-
   // Load plugins on mount
   useEffect(() => {
     loadPlugins();
@@ -72,13 +69,8 @@ export function PluginManagerUI() {
 
   const loadPlugins = async () => {
     try {
-      const { data, error } = await (supabase as any)
-        .from("plugins")
-        .select("*")
-        .order("name");
-
-      if (error) throw error;
-      setPlugins((data as PluginRecord[]) || []);
+      const records = await pluginManager.listPlugins();
+      setPlugins(records);
     } catch (error) {
       toast.error("Failed to load plugins");
     } finally {

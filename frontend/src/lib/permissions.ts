@@ -120,6 +120,35 @@ export async function loadUserPermissions(
 // Templates
 // ---------------------------------------------------------------------------
 
+type PermissionTemplateDbRow = {
+  id: string;
+  name: string;
+  description: string | null;
+  rules_json: unknown;
+  granular_flags: string[] | null;
+  is_system: boolean | null;
+  scope: string | null;
+};
+
+function parsePermissionTemplate(row: PermissionTemplateDbRow): PermissionTemplate {
+  // Json column → narrow to PermissionTemplate.rules_json shape. The DB
+  // schema doesn't constrain this, so we coerce defensively. Bad shapes will
+  // produce permission misses (deny-by-default) rather than crashes.
+  const rules = (row.rules_json && typeof row.rules_json === "object"
+    ? row.rules_json
+    : {}) as Record<PermissionModule, PermissionLevel[]>;
+
+  return {
+    id: row.id,
+    name: row.name,
+    description: row.description ?? undefined,
+    rules_json: rules,
+    granular_flags: (row.granular_flags ?? []) as GranularFlag[],
+    is_system: row.is_system ?? false,
+    scope: row.scope ?? undefined,
+  };
+}
+
 export async function getPermissionTemplates(
   scope?: "project" | "company" | "global",
 ): Promise<PermissionTemplate[]> {
@@ -142,7 +171,7 @@ export async function getPermissionTemplates(
     return [];
   }
 
-  return data ?? [];
+  return (data ?? []).map(parsePermissionTemplate);
 }
 
 export async function createPermissionTemplate(
@@ -164,7 +193,8 @@ export async function createPermissionTemplate(
     .single();
 
   if (error) return { error: error.message };
-  return { data: data as PermissionTemplate };
+  if (!data) return { error: "Insert returned no row" };
+  return { data: parsePermissionTemplate(data as PermissionTemplateDbRow) };
 }
 
 export async function updatePermissionTemplate(

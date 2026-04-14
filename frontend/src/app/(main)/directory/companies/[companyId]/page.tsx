@@ -442,6 +442,7 @@ export default function CompanyDetailsPage() {
       const result = await createContact({
         first_name: newContactForm.first_name.trim(),
         last_name: newContactForm.last_name.trim(),
+        person_type: "contact",
         email: newContactForm.email.trim() || null,
         phone_business: newContactForm.phone_business.trim() || null,
         job_title: newContactForm.job_title.trim() || null,

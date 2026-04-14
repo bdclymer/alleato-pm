@@ -1,7 +1,24 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import type { Database } from "@/types/database.types";
 import { revalidatePath } from "next/cache";
+
+type DailyLogInsert = Database["public"]["Tables"]["daily_logs"]["Insert"];
+
+/** Normalizes weather payloads into a JSON-safe shape accepted by Supabase. */
+function normalizeWeatherConditions(
+  value: unknown,
+): DailyLogInsert["weather_conditions"] {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+
+  try {
+    return JSON.parse(JSON.stringify(value)) as DailyLogInsert["weather_conditions"];
+  } catch {
+    return null;
+  }
+}
 
 export async function createDailyLog(params: {
   projectId: number;
@@ -14,7 +31,7 @@ export async function createDailyLog(params: {
     .insert({
       project_id: params.projectId,
       log_date: params.logDate,
-      weather_conditions: params.weatherConditions ?? null,
+      weather_conditions: normalizeWeatherConditions(params.weatherConditions),
     })
     .select()
     .single();

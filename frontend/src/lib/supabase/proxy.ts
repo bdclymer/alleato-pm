@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { hasEnvVars } from "../utils";
 import { getSupabaseConfig } from "./config";
+import type { Database } from "@/types/database.types";
 
 const PUBLIC_CHAT_PATHS = [
   "/api/rag-chatkit",
@@ -31,8 +32,7 @@ export async function updateSession(request: NextRequest) {
   // With Fluid compute, don't put this client in a global environment
   // variable. Always create a new one on each request.
   const { url, anonKey } = getSupabaseConfig();
-  // TODO(wave-2-typing): Add <Database> generic — proxy only does auth so low impact.
-  const supabase = createServerClient(url, anonKey, {
+  const supabase = createServerClient<Database>(url, anonKey, {
     cookies: {
       getAll() {
         return request.cookies.getAll();

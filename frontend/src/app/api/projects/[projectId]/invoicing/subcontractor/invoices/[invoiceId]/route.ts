@@ -496,14 +496,20 @@ export const PATCH = withApiGuardrails<{ projectId: string; invoiceId: string }>
     // Log field-level edits to audit log (status changes handled by DB trigger)
     if (currentData) {
       const fieldsToLog = ["invoice_number", "period_start", "period_end", "billing_date", "notes"];
+      const toJsonValue = (v: unknown): string | number | boolean | null =>
+        v === undefined || v === null
+          ? null
+          : typeof v === "string" || typeof v === "number" || typeof v === "boolean"
+            ? v
+            : JSON.stringify(v);
       const auditRows = fieldsToLog
         .filter((f) => f in updatePayload && (currentData as Record<string, unknown>)[f] !== updatePayload[f])
         .map((f) => ({
           invoice_id: invoiceIdNum,
-          event_type: "field.updated" as const,
+          event_type: "field.updated",
           field_name: f,
-          old_value: (currentData as Record<string, unknown>)[f] ?? null,
-          new_value: updatePayload[f] ?? null,
+          old_value: toJsonValue((currentData as Record<string, unknown>)[f]),
+          new_value: toJsonValue(updatePayload[f]),
           actor_user_id: user.id,
           actor_email: user.email ?? null,
           notes: `Updated ${f.replace(/_/g, " ")}`,

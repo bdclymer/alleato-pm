@@ -33,7 +33,7 @@ export const POST = withApiGuardrails<{ projectId: string; viewId: string }>(
     const { data, error } = await supabase.rpc("clone_budget_view", {
       source_view_id: viewId,
       new_name,
-      new_description: new_description || null,
+      new_description: new_description ?? undefined,
     });
 
     if (error) {

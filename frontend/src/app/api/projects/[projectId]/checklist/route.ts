@@ -28,7 +28,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
         .select("id", { count: "exact", head: true })
         .eq("project_id", projectId),
       supabase
-        .from("budget_line_items")
+        .from("budget_lines")
         .select("id", { count: "exact", head: true })
         .eq("project_id", projectId),
       supabase

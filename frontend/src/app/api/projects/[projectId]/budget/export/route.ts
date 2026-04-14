@@ -29,6 +29,47 @@ const PENDING_PO_STATUSES = [
 // Executed/Approved commitment statuses for Committed Costs calculation
 const EXECUTED_SUBCONTRACT_STATUSES = ["Approved", "Complete"];
 const EXECUTED_PO_STATUSES = ["Approved", "Completed"];
+const BUDGET_LINES_VIEW = "v_budget_lines";
+const PRIME_CHANGE_ORDER_LINES_TABLE = "change_order_lines";
+
+interface RuntimeOrderedRowsClient {
+  from: (tableName: string) => {
+    select: (selectedColumns: string) => {
+      eq: (column: string, value: number) => {
+        order: (
+          column: string,
+          options: { ascending: boolean },
+        ) => Promise<{ data: Array<Record<string, unknown>> | null; error: unknown }>;
+      };
+    };
+  };
+}
+
+interface RuntimeDirectCostRowsClient {
+  from: (tableName: string) => {
+    select: (selectedColumns: string) => {
+      eq: (column: string, value: number) => {
+        in: (
+          filterColumn: string,
+          values: string[],
+        ) => Promise<{ data: Array<Record<string, unknown>> | null; error: unknown }>;
+      };
+    };
+  };
+}
+
+interface RuntimePendingChangeOrderRowsClient {
+  from: (tableName: string) => {
+    select: (selectedColumns: string) => {
+      eq: (column: string, value: number) => {
+        like: (
+          filterColumn: string,
+          pattern: string,
+        ) => Promise<{ data: Array<Record<string, unknown>> | null; error: unknown }>;
+      };
+    };
+  };
+}
 
 interface ExportBudgetRow {
   "Cost Code": string;
@@ -87,8 +128,13 @@ export const GET = withApiGuardrails<{ projectId: string }>(
       sub_job:sub_jobs(code, name)
     `;
      
-    let budgetLinesRes = await (supabase as any)
-      .from("v_budget_lines")
+    const runtimeOrderedClient = supabase as unknown as RuntimeOrderedRowsClient;
+    const runtimeDirectCostClient = supabase as unknown as RuntimeDirectCostRowsClient;
+    const runtimePendingChangeOrderClient =
+      supabase as unknown as RuntimePendingChangeOrderRowsClient;
+
+    let budgetLinesRes = await runtimeOrderedClient
+      .from(BUDGET_LINES_VIEW)
       .select(budgetLineSelect)
       .eq("project_id", numericProjectId)
       .order("cost_code_id", { ascending: true });
@@ -96,7 +142,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
     if (budgetLinesRes.error) {
       const errStr = JSON.stringify(budgetLinesRes.error);
       const isMissingView =
-        errStr.includes("v_budget_lines") ||
+        errStr.includes(BUDGET_LINES_VIEW) ||
         errStr.includes("PGRST205") ||
         errStr.includes("schema cache");
       if (isMissingView) {
@@ -122,7 +168,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
 
       // Direct costs for calculations
        
-      (supabase as any)
+      runtimeDirectCostClient
         .from("direct_cost_line_items")
         .select(
           `
@@ -157,12 +203,25 @@ export const GET = withApiGuardrails<{ projectId: string }>(
         .in("purchase_orders.status", PENDING_PO_STATUSES),
 
       // Pending change orders for Pending Budget Changes
-       
-      (supabase as any)
-        .from("change_order_lines")
-        .select("cost_code_id, amount, change_orders!inner(status, project_id)")
-        .eq("change_orders.project_id", numericProjectId)
-        .like("change_orders.status", "Pending%") as Promise<{ data: Array<Record<string, unknown>> | null; error: unknown }>,
+      (async () => {
+        const result = await runtimePendingChangeOrderClient
+          .from(PRIME_CHANGE_ORDER_LINES_TABLE)
+          .select("cost_code_id, amount, change_orders!inner(status, project_id)")
+          .eq("change_orders.project_id", numericProjectId)
+          .like("change_orders.status", "Pending%");
+
+        const errStr = JSON.stringify(result.error);
+        const isMissingTable =
+          errStr.includes(PRIME_CHANGE_ORDER_LINES_TABLE) ||
+          errStr.includes("PGRST205") ||
+          errStr.includes("schema cache");
+
+        if (result.error && isMissingTable) {
+          return { data: [], error: null };
+        }
+
+        return result;
+      })() as Promise<{ data: Array<Record<string, unknown>> | null; error: unknown }>,
 
       // Executed/Approved Subcontract SOV items for Committed Costs
       supabase

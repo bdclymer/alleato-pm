@@ -43,10 +43,7 @@ export const GET = withApiGuardrails(
     // Get attachment
     const { data: attachment, error } = await supabase
       .from('change_event_attachments')
-      .select(`
-        *,
-        uploader:users(id, email)
-      `)
+      .select('*')
       .eq('change_event_id', changeEventId)
       .eq('id', attachmentId)
       .single();
@@ -56,6 +53,19 @@ export const GET = withApiGuardrails(
         { error: 'Attachment not found' },
         { status: 404 }
       );
+    }
+
+    // Resolve uploader (no FK relationship; fetch separately when present)
+    let uploader: { id: string; email: string | null } | null = null;
+    if (attachment.uploaded_by) {
+      const { data: userRow } = await supabase
+        .from('user_profiles')
+        .select('id, email')
+        .eq('id', attachment.uploaded_by)
+        .maybeSingle();
+      if (userRow) {
+        uploader = { id: userRow.id, email: userRow.email ?? null };
+      }
     }
 
     // Get public URL
@@ -69,9 +79,9 @@ export const GET = withApiGuardrails(
       changeEventId: attachment.change_event_id,
       fileName: attachment.file_name,
       filePath: attachment.file_path,
-      fileSize: attachment.file_size_bytes,
+      fileSize: attachment.file_size,
       mimeType: attachment.mime_type,
-      uploadedBy: attachment.uploader,
+      uploadedBy: uploader,
       uploadedAt: attachment.uploaded_at,
       publicUrl,
       downloadUrl: `/api/projects/${projectId}/change-events/${changeEventId}/attachments/${attachmentId}/download`,
