@@ -11,7 +11,7 @@ import { createClient } from "@/lib/supabase/server";
 export const GET = withApiGuardrails<{ slug: string }>(
   "testing/suites/[slug]/cases#GET",
   async ({ request, params }) => {
-    const { slug } = params;
+    const { slug } = await params;
     const { searchParams } = new URL(request.url);
     const typeFilter = searchParams.get("type") ?? "scenario";
     const depthFilter = searchParams.get("depth") ?? "broad";
