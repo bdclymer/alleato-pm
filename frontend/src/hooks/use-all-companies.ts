@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api-client";
 
 interface Company {
   id: string;
@@ -61,21 +62,9 @@ export function useAllCompanies(
       if (filters.page) params.set("page", String(filters.page));
       if (filters.per_page) params.set("per_page", String(filters.per_page));
 
-      const response = await fetch(
+      return apiFetch<CompanyListResponse>(
         `/api/directory/companies?${params}`
       );
-      if (!response.ok) {
-        let errorMessage = "Failed to fetch companies";
-        try {
-          const error = await response.json();
-          errorMessage = error.message || errorMessage;
-        } catch {
-          // If response doesn't have valid JSON, use default message
-          errorMessage = `Failed to fetch companies (${response.status})`;
-        }
-        throw new Error(errorMessage);
-      }
-      return response.json();
     },
     enabled: true,
   });
@@ -94,28 +83,14 @@ export function useCreateCompany() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: Partial<Company>) => {
-      const response = await fetch(
+    mutationFn: async (data: Partial<Company>) =>
+      apiFetch<Company>(
         `/api/directory/companies`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),
         },
-      );
-      if (!response.ok) {
-        let errorMessage = "Failed to create company";
-        try {
-          const error = await response.json();
-          errorMessage = error.message || errorMessage;
-        } catch {
-          // If response doesn't have valid JSON, use default message
-          errorMessage = `Failed to create company (${response.status})`;
-        }
-        throw new Error(errorMessage);
-      }
-      return response.json();
-    },
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["all-companies"],
@@ -137,28 +112,14 @@ export function useUpdateCompany() {
     }: {
       companyId: string;
       data: Partial<Company>;
-    }) => {
-      const response = await fetch(
+    }) =>
+      apiFetch<Company>(
         `/api/directory/companies/${companyId}`,
         {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),
         },
-      );
-      if (!response.ok) {
-        let errorMessage = "Failed to update company";
-        try {
-          const error = await response.json();
-          errorMessage = error.message || errorMessage;
-        } catch {
-          // If response doesn't have valid JSON, use default message
-          errorMessage = `Failed to update company (${response.status})`;
-        }
-        throw new Error(errorMessage);
-      }
-      return response.json();
-    },
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["all-companies"],
@@ -175,23 +136,12 @@ export function useDeleteCompany() {
 
   return useMutation({
     mutationFn: async (companyId: string) => {
-      const response = await fetch(
+      await apiFetch(
         `/api/directory/companies/${companyId}`,
         {
           method: "DELETE",
         },
       );
-      if (!response.ok) {
-        let errorMessage = "Failed to delete company";
-        try {
-          const error = await response.json();
-          errorMessage = error.message || errorMessage;
-        } catch {
-          // If response doesn't have valid JSON, use default message
-          errorMessage = `Failed to delete company (${response.status})`;
-        }
-        throw new Error(errorMessage);
-      }
       return true;
     },
     onSuccess: () => {

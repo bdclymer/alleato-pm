@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { apiFetch } from "@/lib/api-client";
 
 export type PermissionLevel = "none" | "read_only" | "standard" | "admin";
 
@@ -45,12 +46,7 @@ export function useDirectoryPermissions(
         ? `/api/projects/${projectId}/directory/permissions?search=${encodeURIComponent(searchQuery)}`
         : `/api/projects/${projectId}/directory/permissions`;
 
-      const response = await fetch(url);
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Failed to fetch permissions");
-      }
-      const { data } = await response.json();
+      const { data } = await apiFetch<{ data?: DirectoryUser[] }>(url);
       setUsers(data || []);
     } catch (err) {
       setError(err instanceof Error ? err : new Error("an unexpected error occurred — please try again"));
@@ -73,15 +69,8 @@ export function useDirectoryPermissions(
           ? `/api/projects/${projectId}/directory/permissions?search=${encodeURIComponent(searchQuery)}`
           : `/api/projects/${projectId}/directory/permissions`;
 
-        const response = await fetch(url);
-
         if (cancelled) return;
-
-        if (!response.ok) {
-          const data = await response.json();
-          throw new Error(data.error || "Failed to fetch permissions");
-        }
-        const { data } = await response.json();
+        const { data } = await apiFetch<{ data?: DirectoryUser[] }>(url);
 
         if (!cancelled) {
           setUsers(data || []);
@@ -106,22 +95,16 @@ export function useDirectoryPermissions(
 
   const updatePermission = useCallback(
     async (personId: string, level: PermissionLevel) => {
-      const response = await fetch(
+      await apiFetch(
         `/api/projects/${projectId}/directory/permissions`,
         {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             person_id: personId,
             permission_level: level,
           }),
         },
       );
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Failed to update permission");
-      }
 
       // Update local state optimistically
       setUsers((prev) =>

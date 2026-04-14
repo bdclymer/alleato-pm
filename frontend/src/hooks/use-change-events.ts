@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { apiFetch } from "@/lib/api-client";
 
 import { createClient } from "@/lib/supabase/client";
 import type { ChangeEvent } from "@/types/change-events";
@@ -103,21 +104,16 @@ export function useChangeEvents(
         if (includeDeleted) searchParams.set("includeDeleted", "true");
         if (tab) searchParams.set("tab", tab);
 
-        const response = await fetch(
+        const payload = await apiFetch<{
+          data?: ChangeEvent[];
+          meta?: {
+            total?: number;
+            tabSummary?: TabSummary | null;
+          };
+        }>(
           `/api/projects/${projectId}/change-events?${searchParams.toString()}`,
           { cache: "no-store" },
         );
-
-        if (!response.ok) {
-          const errorPayload = await response
-            .json()
-            .catch(() => ({}));
-          throw new Error(
-            errorPayload.error || `Server returned ${response.status} when loading change events`,
-          );
-        }
-
-        const payload = await response.json();
         setChangeEvents(payload.data || []);
         setTotal(payload.meta?.total ?? 0);
         setTabSummary(payload.meta?.tabSummary ?? null);
@@ -165,13 +161,10 @@ export function useChangeEvents(
           throw new Error("Project ID is required");
         }
 
-        const response = await fetch(
+        const data = await apiFetch<ChangeEvent>(
           `/api/projects/${changeEvent.project_id}/change-events`,
           {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
             body: JSON.stringify({
               title: changeEvent.title,
               type: changeEvent.type || "Owner Change",
@@ -181,15 +174,6 @@ export function useChangeEvents(
             }),
           },
         );
-
-        if (!response.ok) {
-          const errorData = await response
-            .json()
-            .catch(() => ({}));
-          throw new Error(errorData.error || `Server returned ${response.status}`);
-        }
-
-        const data = await response.json();
 
         // Refetch to update the list
         await fetchChangeEvents();

@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { apiFetch } from "@/lib/api-client";
 import { useProjectChangeEvents } from "@/hooks/use-change-events";
 import type { ChangeEvent } from "@/types/change-events";
 
@@ -65,13 +66,10 @@ export interface ChangeManagementMetrics {
 function usePrimeCOs(projectId: string) {
   return useQuery<PrimeContractCO[]>({
     queryKey: ["prime-contract-change-orders", projectId],
-    queryFn: async () => {
-      const res = await fetch(
+    queryFn: async () =>
+      apiFetch<PrimeContractCO[]>(
         `/api/projects/${projectId}/prime-contract-change-orders`,
-      );
-      if (!res.ok) throw new Error("Failed to fetch Prime COs");
-      return (await res.json()) as PrimeContractCO[];
-    },
+      ),
     enabled: !!projectId,
   });
 }
