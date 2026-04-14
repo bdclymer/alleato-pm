@@ -9,6 +9,7 @@ import type {
 } from "@/components/tables/unified";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { apiFetch } from "@/lib/api-client";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -286,9 +287,14 @@ function DrawingGridCard({ item, onClick, selected, onSelect }: DrawingGridCardP
 
   useEffect(() => {
     if (!item.fileUrl) return;
-    fetch(`/api/projects/${item.projectId}/drawings/${item.id}/download`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => { if (data?.downloadUrl) setPreviewUrl(data.downloadUrl); })
+    apiFetch<{ downloadUrl?: string }>(
+      `/api/projects/${item.projectId}/drawings/${item.id}/download`,
+    )
+      .then((data) => {
+        if (data?.downloadUrl) {
+          setPreviewUrl(data.downloadUrl);
+        }
+      })
       .catch(() => {});
   }, [item.id, item.projectId, item.fileUrl]);
 
@@ -446,9 +452,10 @@ export function renderDrawingList(
         </div>
       )}
 
-      <button
+      <Button
         type="button"
-        className={`flex w-full cursor-pointer items-center justify-between rounded-md px-4 py-2 text-left transition-colors hover:bg-muted/50${onDelete ? " pr-12" : ""}`}
+        variant="ghost"
+        className={`h-auto flex w-full items-center justify-between rounded-md px-4 py-2 text-left hover:bg-muted/50${onDelete ? " pr-12" : ""}`}
         onClick={() => onClick(item)}
       >
         <div>
@@ -473,7 +480,7 @@ export function renderDrawingList(
             </Badge>
           )}
         </div>
-      </button>
+      </Button>
     </div>
   );
 }
