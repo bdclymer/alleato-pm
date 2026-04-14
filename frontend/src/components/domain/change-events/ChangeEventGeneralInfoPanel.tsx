@@ -89,9 +89,6 @@ export function ChangeEventGeneralInfoPanel({
                       "Not set"
                     )}
                   </LabelValueRow>
-                  <LabelValueRow label="Description" missing={!changeEvent.description}>
-                    <span className="whitespace-pre-wrap">{changeEvent.description || "Not set"}</span>
-                  </LabelValueRow>
                 </dl>
 
                 {/* Attachments inline under Details */}
@@ -178,6 +175,9 @@ export function ChangeEventGeneralInfoPanel({
                   </LabelValueRow>
                   <LabelValueRow label="Change Reason" missing={!changeEvent.reason}>
                     {changeEvent.reason || "Not set"}
+                  </LabelValueRow>
+                  <LabelValueRow label="Description" missing={!changeEvent.description}>
+                    <span className="whitespace-pre-wrap">{changeEvent.description || "Not set"}</span>
                   </LabelValueRow>
                 </dl>
               </div>
