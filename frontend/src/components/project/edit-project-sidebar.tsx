@@ -309,14 +309,13 @@ export function EditProjectSidebar({ project, open, onOpenChange }: EditProjectS
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-lg overflow-hidden p-0 flex flex-col">
-        <SheetHeader className="px-6 pt-6 pb-4 border-b border-border flex-shrink-0">
-          <SheetTitle>Edit Project</SheetTitle>
-          <SheetDescription className="sr-only">Edit project details</SheetDescription>
-        </SheetHeader>
-
+      <SheetContent side="right" className="w-full sm:max-w-3xl overflow-hidden p-0 flex flex-col">
         <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
           <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
+            <SheetHeader className="pb-2">
+              <SheetTitle>Edit Project</SheetTitle>
+              <SheetDescription className="sr-only">Edit project details</SheetDescription>
+            </SheetHeader>
 
             {/* General Information */}
             <section className="space-y-3">
