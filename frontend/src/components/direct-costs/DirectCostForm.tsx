@@ -47,6 +47,12 @@ import { RHFTextareaField } from '@/components/forms/fields/RHFTextareaField'
 import { LineItemsManager } from './LineItemsManager'
 import { AttachmentManager } from './AttachmentManager'
 import { AutoSaveIndicator } from './AutoSaveIndicator'
+import {
+  buildEmployeeOptions,
+  buildVendorOptions,
+  type EmployeeMeta,
+  type VendorMeta,
+} from './form-options'
 import { CreateBudgetCodeModal } from '@/app/(main)/[projectId]/budget/setup/components/CreateBudgetCodeModal'
 import {
   AlertCircle,
@@ -117,6 +123,45 @@ export function DirectCostForm({
   const [showCreateBudgetCodeModal, setShowCreateBudgetCodeModal] = useState(false)
   const [targetBudgetCodeRowIndex, setTargetBudgetCodeRowIndex] = useState<number | null>(null)
 
+  // Capture currently-assigned vendor/employee metadata BEFORE sanitization strips them.
+  // The direct-costs GET API returns `vendor:companies(*)` and `employee:people(*)` alongside
+  // `vendor_id` / `employee_id`. We use this metadata to:
+  //   1. Guarantee the saved record's vendor/employee always appears as an option, even if
+  //      scoping on the `/vendors` endpoint (project_vendors vs all companies) or stale data
+  //      would otherwise exclude it.
+  //   2. Provide a `selectedLabel` fallback so the combobox never shows a placeholder when
+  //      the FK is populated — prevents the "Select vendor..." regression on Edit.
+  //
+  // See docs/patterns/form-id-mismatch-prevention.md — this is the same bug class that hit
+  // change_event_line_items.vendor_id. `direct_costs.vendor_id` FK targets `companies.id`.
+  const initialVendorMeta = useMemo<VendorMeta | null>(() => {
+    const raw = (initialData as Record<string, unknown> | undefined)?.vendor
+    if (!raw || typeof raw !== 'object') return null
+    const rec = raw as Record<string, unknown>
+    const id = typeof rec.id === 'string' ? rec.id : undefined
+    if (!id) return null
+    const name =
+      typeof rec.name === 'string'
+        ? rec.name
+        : typeof rec.legal_name === 'string'
+          ? rec.legal_name
+          : null
+    return { id, name }
+  }, [initialData])
+
+  const initialEmployeeMeta = useMemo<EmployeeMeta | null>(() => {
+    const raw = (initialData as Record<string, unknown> | undefined)?.employee
+    if (!raw || typeof raw !== 'object') return null
+    const rec = raw as Record<string, unknown>
+    const id = typeof rec.id === 'string' ? rec.id : undefined
+    if (!id) return null
+    return {
+      id,
+      first_name: typeof rec.first_name === 'string' ? rec.first_name : '',
+      last_name: typeof rec.last_name === 'string' ? rec.last_name : '',
+    }
+  }, [initialData])
+
   // Stable budget codes list for LineItemsManager (prevents new array ref on every render)
   const mappedBudgetCodes = useMemo(
     () =>
@@ -127,24 +172,25 @@ export function DirectCostForm({
       })),
     [budgetCodes]
   )
+  // Guardrail: if the saved record points to a vendor that's not in the dropdown list
+  // (company not flagged is_vendor, or project_vendors scoping excluded it), inject it
+  // so the Edit view renders the correct selection instead of a placeholder.
+  // Unit-tested in form-options.test.ts.
   const vendorOptions = useMemo(
-    () =>
-      vendors.map((vendor) => ({
-        value: vendor.id,
-        label: `${vendor.vendor_name}${vendor.company ? ` (${vendor.company})` : ''}`,
-        keywords: [vendor.vendor_name, vendor.company].filter(Boolean) as string[],
-      })),
-    [vendors]
+    () => buildVendorOptions(vendors, initialVendorMeta),
+    [vendors, initialVendorMeta]
   )
   const employeeOptions = useMemo(
-    () =>
-      employees.map((employee) => ({
-        value: employee.id,
-        label: `${employee.first_name} ${employee.last_name}`,
-        keywords: [employee.first_name, employee.last_name],
-      })),
-    [employees]
+    () => buildEmployeeOptions(employees, initialEmployeeMeta),
+    [employees, initialEmployeeMeta]
   )
+
+  // Fallback label for the combobox when options are still loading — prevents
+  // the user seeing a placeholder ("Search vendors...") on first paint of the Edit form.
+  const vendorSelectedLabel = initialVendorMeta?.name ?? undefined
+  const employeeSelectedLabel = initialEmployeeMeta
+    ? `${initialEmployeeMeta.first_name} ${initialEmployeeMeta.last_name}`.trim() || undefined
+    : undefined
 
   // Auto-fill button visibility - only shown in development
   const showAutoFill = process.env.NODE_ENV === 'development'
@@ -255,36 +301,120 @@ export function DirectCostForm({
   // which triggers resolver on every render and causes infinite loops
   const { errors: formErrors, isDirty } = useFormState({ control: form.control })
 
-  // Load dropdown options
+  // Load dropdown options.
+  // Each endpoint failure surfaces a specific, actionable toast (Rule 2 — no generic errors).
   useEffect(() => {
     async function loadOptions() {
       setIsLoadingOptions(true)
-      try {
-        const [vendorsRes, employeesRes, budgetCodesRes] = await Promise.all([
-          fetch(`/api/projects/${projectId}/vendors`),
-          fetch(`/api/projects/${projectId}/employees`),
-          fetch(`/api/projects/${projectId}/budget-codes`),
-        ])
 
-        if (vendorsRes.ok) {
-          setVendors(await vendorsRes.json())
+      const describeFailure = async (
+        response: Response,
+        label: string,
+      ): Promise<string> => {
+        try {
+          const body = await response.json()
+          const reason =
+            (body && typeof body === 'object' && 'error' in body
+              ? String((body as { error?: unknown }).error ?? '')
+              : '') ||
+            (body && typeof body === 'object' && 'message' in body
+              ? String((body as { message?: unknown }).message ?? '')
+              : '')
+          return reason
+            ? `${label} load failed: ${reason}`
+            : `${label} load failed (HTTP ${response.status})`
+        } catch {
+          return `${label} load failed (HTTP ${response.status})`
         }
-        if (employeesRes.ok) {
-          setEmployees(await employeesRes.json())
-        }
-        if (budgetCodesRes.ok) {
-          const budgetCodesData = await budgetCodesRes.json()
-          setBudgetCodes(
-            Array.isArray(budgetCodesData)
-              ? budgetCodesData
-              : budgetCodesData.budgetCodes || []
-          )
-        }
-      } catch (error) {
-        toast.error('Failed to load form options')
-      } finally {
-        setIsLoadingOptions(false)
       }
+
+      const [vendorsRes, employeesRes, budgetCodesRes] = await Promise.allSettled([
+        fetch(`/api/projects/${projectId}/vendors`),
+        fetch(`/api/projects/${projectId}/employees`),
+        fetch(`/api/projects/${projectId}/budget-codes`),
+      ])
+
+      if (vendorsRes.status === 'fulfilled') {
+        const res = vendorsRes.value
+        if (res.ok) {
+          try {
+            const data = await res.json()
+            setVendors(Array.isArray(data) ? data : [])
+          } catch (error) {
+            toast.error(
+              `Vendor list returned malformed JSON: ${
+                error instanceof Error ? error.message : 'unknown parse error'
+              }`,
+            )
+          }
+        } else {
+          toast.error(await describeFailure(res, 'Vendors'))
+        }
+      } else {
+        toast.error(
+          `Vendor list network error: ${
+            vendorsRes.reason instanceof Error
+              ? vendorsRes.reason.message
+              : 'request failed'
+          }`,
+        )
+      }
+
+      if (employeesRes.status === 'fulfilled') {
+        const res = employeesRes.value
+        if (res.ok) {
+          try {
+            const data = await res.json()
+            setEmployees(Array.isArray(data) ? data : [])
+          } catch (error) {
+            toast.error(
+              `Employee list returned malformed JSON: ${
+                error instanceof Error ? error.message : 'unknown parse error'
+              }`,
+            )
+          }
+        } else {
+          toast.error(await describeFailure(res, 'Employees'))
+        }
+      } else {
+        toast.error(
+          `Employee list network error: ${
+            employeesRes.reason instanceof Error
+              ? employeesRes.reason.message
+              : 'request failed'
+          }`,
+        )
+      }
+
+      if (budgetCodesRes.status === 'fulfilled') {
+        const res = budgetCodesRes.value
+        if (res.ok) {
+          try {
+            const data = await res.json()
+            setBudgetCodes(
+              Array.isArray(data) ? data : data.budgetCodes || [],
+            )
+          } catch (error) {
+            toast.error(
+              `Budget codes returned malformed JSON: ${
+                error instanceof Error ? error.message : 'unknown parse error'
+              }`,
+            )
+          }
+        } else {
+          toast.error(await describeFailure(res, 'Budget codes'))
+        }
+      } else {
+        toast.error(
+          `Budget codes network error: ${
+            budgetCodesRes.reason instanceof Error
+              ? budgetCodesRes.reason.message
+              : 'request failed'
+          }`,
+        )
+      }
+
+      setIsLoadingOptions(false)
     }
 
     loadOptions()
@@ -483,6 +613,7 @@ export function DirectCostForm({
                 description="Optional - for subcontractor costs"
                 disabled={isLoadingOptions}
                 options={vendorOptions}
+                selectedLabel={vendorSelectedLabel}
               />
 
               <RHFComboboxField
@@ -495,6 +626,7 @@ export function DirectCostForm({
                 description="Optional - for labor costs"
                 disabled={isLoadingOptions}
                 options={employeeOptions}
+                selectedLabel={employeeSelectedLabel}
               />
             </FormGrid>
 
