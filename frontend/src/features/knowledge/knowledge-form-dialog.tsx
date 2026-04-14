@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useForm } from "react-hook-form";
+import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { X } from "lucide-react";
@@ -87,8 +87,7 @@ export function KnowledgeFormDialog({
   const [tagInput, setTagInput] = React.useState("");
 
   const form = useForm<KnowledgeFormValues>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolver: zodResolver(knowledgeFormSchema) as any,
+    resolver: zodResolver(knowledgeFormSchema) as Resolver<KnowledgeFormValues>,
     defaultValues: buildDefaults(article),
   });
 
@@ -276,13 +275,16 @@ export function KnowledgeFormDialog({
                             className="gap-1 pr-1"
                           >
                             {tag}
-                            <button
+                            <Button
                               type="button"
                               onClick={() => removeTag(tag)}
-                              className="ml-0.5 rounded-full hover:bg-muted-foreground/20 p-0.5"
+                              variant="ghost"
+                              size="icon"
+                              className="ml-0.5 h-5 w-5 rounded-full hover:bg-muted-foreground/20"
+                              aria-label={`Remove ${tag} tag`}
                             >
                               <X className="h-3 w-3" />
-                            </button>
+                            </Button>
                           </Badge>
                         ))}
                       </div>

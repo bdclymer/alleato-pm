@@ -173,13 +173,14 @@ export function buildInvoiceTableColumns(
       label: "Invoice #",
       alwaysVisible: true,
       render: (invoice) => (
-        <button
+        <Button
           type="button"
-          className="font-medium text-primary hover:underline"
+          variant="link"
+          className="h-auto p-0 font-medium"
           onClick={() => onView(invoice)}
         >
           {invoice.invoice_number || `INV-${invoice.id}`}
-        </button>
+        </Button>
       ),
     },
     {

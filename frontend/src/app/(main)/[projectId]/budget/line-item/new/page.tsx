@@ -600,20 +600,26 @@ export default function NewBudgetLineItemPage() {
           <DevAutoFillButton
             formType="budgetLineItem"
             onAutoFill={(data) => {
+              const autoFillData = data as {
+                amount?: number;
+                quantity?: number;
+                unit?: string;
+                unit_cost?: number;
+              };
               const firstBudgetCode = budgetCodes[0];
               setRows([
                 {
                   id: "1",
                   budgetCodeId: firstBudgetCode?.id || "",
                   budgetCodeLabel: firstBudgetCode?.fullLabel || "",
-                  qty: data.quantity?.toString() || "1",
-                  uom: data.unit || "EA",
-                  unitCost: data.unit_cost?.toString() || "",
+                  qty: autoFillData.quantity?.toString() || "1",
+                  uom: autoFillData.unit || "EA",
+                  unitCost: autoFillData.unit_cost?.toString() || "",
                   amount:
-                    data.amount?.toString() ||
+                    autoFillData.amount?.toString() ||
                     calculateAmount(
-                      data.quantity?.toString() || "1",
-                      data.unit_cost?.toString() || "0",
+                      autoFillData.quantity?.toString() || "1",
+                      autoFillData.unit_cost?.toString() || "0",
                     ),
                 },
               ]);

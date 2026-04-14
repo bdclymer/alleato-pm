@@ -161,6 +161,8 @@ function EmailTemplate({
 }: EmailTemplateProps) {
   return (
     <html>
+      {/* This template renders email HTML, not a Next.js document head. */}
+      {/* eslint-disable-next-line @next/next/no-head-element */}
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <meta httpEquiv="Content-Type" content="text/html; charset=UTF-8" />
