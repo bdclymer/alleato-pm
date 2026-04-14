@@ -4,6 +4,7 @@ import * as React from "react";
 
 import { Send } from "lucide-react";
 
+import { apiFetch } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 
 interface Message {
@@ -40,36 +41,24 @@ export function ChatTab({ feature }: Props) {
     scrollToBottom();
 
     try {
-      const res = await fetch("/api/rag-chat", {
+      const data = await apiFetch<{ answer?: string }>("/api/procore-docs/ask", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          message: text,
-          history: messages.map((m) => ({ role: m.role, text: m.content })),
+          query: text,
+          conversationHistory: messages.map((m) => ({ role: m.role, content: m.content })),
         }),
       });
 
-      if (res.status === 503) {
-        setError("RAG backend is offline. Start the Python backend to enable chat.");
-        return;
-      }
-
-      if (!res.ok) {
-        setError("Something went wrong. Try again.");
-        return;
-      }
-
-      const data = await res.json() as { response?: string };
       const reply: Message = {
         id: crypto.randomUUID(),
         role: "assistant",
-        content: data.response ?? "No response received.",
+        content: data.answer ?? "No response received.",
         timestamp: Date.now(),
       };
       setMessages((prev) => [...prev, reply]);
       scrollToBottom();
-    } catch {
-      setError("Network error. Check your connection.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Network error. Check your connection.");
     } finally {
       setLoading(false);
     }
