@@ -1211,7 +1211,7 @@ export default function TestingPage() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label>Project ID <span className="text-muted-foreground text-xs">(for test links)</span></Label>
+              <Label className="text-primary">Project ID <span className="text-muted-foreground text-xs">(for test links)</span></Label>
               <Input
                 value={runForm.projectId}
                 onChange={(e) => setRunForm((f) => ({ ...f, projectId: e.target.value }))}
@@ -1244,6 +1244,23 @@ export default function TestingPage() {
             </div>
           </div>
 
+          {startError && (
+            <p className="text-sm text-red-500 bg-red-50 dark:bg-red-950/30 rounded-lg px-4 py-3">{startError}</p>
+          )}
+
+          <Button
+            type="button"
+            className="w-full"
+            size="lg"
+            onClick={startRun}
+            disabled={saving || !runForm.tester.trim()}
+          >
+            {saving ? "Setting up…" : `Start ${selectedSuite?.display_name} testing →`}
+          </Button>
+          {!runForm.tester.trim() && (
+            <p className="text-xs text-center text-muted-foreground">Enter your name above to begin</p>
+          )}
+
           {/* Auto-submit feedback toggle */}
           <label className="flex items-start gap-3 cursor-pointer group">
             <div className="relative mt-0.5 shrink-0">
@@ -1268,23 +1285,6 @@ export default function TestingPage() {
               <p className="text-xs text-muted-foreground mt-0.5">When you mark a test as &quot;Issue found&quot;, it&apos;s automatically sent to the admin feedback inbox and creates a GitHub issue.</p>
             </div>
           </label>
-
-          {startError && (
-            <p className="text-sm text-red-500 bg-red-50 dark:bg-red-950/30 rounded-lg px-4 py-3">{startError}</p>
-          )}
-
-          <Button
-            type="button"
-            className="w-full"
-            size="lg"
-            onClick={startRun}
-            disabled={saving || !runForm.tester.trim()}
-          >
-            {saving ? "Setting up…" : `Start ${selectedSuite?.display_name} testing →`}
-          </Button>
-          {!runForm.tester.trim() && (
-            <p className="text-xs text-center text-muted-foreground">Enter your name above to begin</p>
-          )}
         </div>
       </PageShell>
     );
@@ -1524,13 +1524,6 @@ export default function TestingPage() {
         </div>
       </div>
 
-      {/* Tool reference panel — collapsible, lazy-loaded */}
-      {selectedSuite && (
-        <div className="mb-4">
-          <ToolReferencePanel toolName={selectedSuite.tool_name} />
-        </div>
-      )}
-
       <div className="space-y-6 pb-12">
 
         {/* Category chip + test number + edit toggle */}
@@ -1566,8 +1559,8 @@ export default function TestingPage() {
         <h2 className="text-lg sm:text-xl font-semibold leading-snug tracking-tight">{tc.test_name}</h2>
 
         {/* Project ID */}
-        <div className="flex items-center gap-3 rounded-lg border border-border bg-muted/40 px-4 py-3">
-          <span className="text-sm font-medium text-foreground shrink-0">Project ID</span>
+        <div className="flex items-center gap-3 rounded-lg border border-border px-4 py-3">
+          <span className="text-sm font-medium text-primary shrink-0">Project ID</span>
           <input
             id="runner-project-id"
             type="text"
@@ -1890,6 +1883,13 @@ export default function TestingPage() {
         </div>
 
       </div>
+
+      {/* Tool reference panel — collapsible, lazy-loaded */}
+      {selectedSuite && (
+        <div className="pb-12">
+          <ToolReferencePanel toolName={selectedSuite.tool_name} />
+        </div>
+      )}
     </PageShell>
   );
 }
