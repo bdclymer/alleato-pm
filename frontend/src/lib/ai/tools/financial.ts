@@ -376,7 +376,7 @@ export function createFinancialTools(
               .from("prime_contracts")
               .select("id, title, contract_number, status")
               .eq("project_id", resolved.id),
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+             
             (supabase as any)
               .from("change_order_lines")
               .select(
@@ -709,9 +709,9 @@ export function createFinancialTools(
           if ("error" in resolved) return resolved;
 
           // Fetch budget lines (from the view), cost codes, cost types, and forecasts
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+           
           const supabaseAny = supabase as any;
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+           
           let blQuery: any = supabaseAny
             .from("v_budget_lines")
             .select(
@@ -1150,7 +1150,7 @@ export function createFinancialTools(
               )
               .eq("project_id", resolved.id),
             // Budget lines for budget-based analysis
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+             
             (supabase as any)
               .from("v_budget_lines" as any)
               .select(

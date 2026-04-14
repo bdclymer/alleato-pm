@@ -19,6 +19,8 @@ import {
   sendTextMentionNotificationEmail,
   sendCustomNotificationEmail,
 } from "@/lib/integrations/email-notifications";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 
 // ── Clients ───────────────────────────────────────────────────────────────────
 
@@ -59,13 +61,21 @@ function isCommentCreatedEvent(
 
 // ── Main handler ─────────────────────────────────────────────────────────────
 
-export async function POST(request: NextRequest) {
+export const POST = withApiGuardrails(
+  "/api/liveblocks/webhook#POST",
+  async ({ request }) => {
   let webhookHandler: WebhookHandler;
   try {
     webhookHandler = getWebhookHandler();
   } catch (error) {
-    console.error("[liveblocks-webhook] misconfigured secret", error);
-    return NextResponse.json({ error: "Webhook endpoint is not configured" }, { status: 500 });
+    throw new GuardrailError({
+      code: "MISSING_ENV_VAR",
+      where: "/api/liveblocks/webhook#POST",
+      message: "Webhook endpoint is not configured.",
+      details: { reason: error instanceof Error ? error.message : "Unknown error" },
+      severity: "high",
+      cause: error instanceof Error ? error : undefined,
+    });
   }
 
   const rawBody = await request.text();
@@ -74,8 +84,15 @@ export async function POST(request: NextRequest) {
   try {
     event = webhookHandler.verifyRequest({ headers: request.headers, rawBody });
   } catch (error) {
-    console.warn("[liveblocks-webhook] signature verification failed", error);
-    return NextResponse.json({ error: "Invalid webhook signature" }, { status: 401 });
+    throw new GuardrailError({
+      code: "AUTH_FORBIDDEN",
+      where: "/api/liveblocks/webhook#POST",
+      message: "Invalid webhook signature.",
+      status: 401,
+      severity: "medium",
+      details: { reason: error instanceof Error ? error.message : "Unknown error" },
+      cause: error instanceof Error ? error : undefined,
+    });
   }
 
   // ── AI comment reply ──────────────────────────────────────────────────────
@@ -97,8 +114,15 @@ export async function POST(request: NextRequest) {
         await sendCustomNotificationEmail(liveblocks, event);
       }
     } catch (error) {
-      console.error("[liveblocks-webhook] Email delivery failed", error);
-      return NextResponse.json({ error: "Email delivery failed" }, { status: 502 });
+      throw new GuardrailError({
+        code: "UPSTREAM_FAILURE",
+        where: "/api/liveblocks/webhook#POST",
+        message: "Email delivery failed.",
+        status: 502,
+        severity: "high",
+        details: { reason: error instanceof Error ? error.message : "Unknown error" },
+        cause: error instanceof Error ? error : undefined,
+      });
     }
     return NextResponse.json({ ok: true });
   }
@@ -110,7 +134,12 @@ export async function POST(request: NextRequest) {
     const bodyUrl = process.env.LIVEBLOCKS_TEAMS_BODY_URL;
 
     if (!adaptiveCardUrl && !bodyUrl) {
-      return NextResponse.json({ error: "Missing Teams webhook URL" }, { status: 500 });
+      throw new GuardrailError({
+        code: "MISSING_ENV_VAR",
+        where: "/api/liveblocks/webhook#POST",
+        message: "Missing Teams webhook URL.",
+        severity: "high",
+      });
     }
 
     let inboxNotification = null;
@@ -129,14 +158,22 @@ export async function POST(request: NextRequest) {
         appBaseUrl: process.env.LIVEBLOCKS_NOTIFICATION_BASE_URL,
       });
     } catch (error) {
-      console.error("[liveblocks-webhook] Teams delivery failed", error);
-      return NextResponse.json({ error: "Teams delivery failed" }, { status: 502 });
+      throw new GuardrailError({
+        code: "UPSTREAM_FAILURE",
+        where: "/api/liveblocks/webhook#POST",
+        message: "Teams delivery failed.",
+        status: 502,
+        severity: "high",
+        details: { reason: error instanceof Error ? error.message : "Unknown error" },
+        cause: error instanceof Error ? error : undefined,
+      });
     }
     return NextResponse.json({ ok: true });
   }
 
   return NextResponse.json({ ok: true, ignored: true });
-}
+},
+);
 
 // ── AI comment handler ────────────────────────────────────────────────────────
 

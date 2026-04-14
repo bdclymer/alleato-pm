@@ -5,6 +5,9 @@ description: auth fixture missing documentation
 
 # Pattern: Auth Fixture Missing
 
+> Migrated on 2026-04-14.
+> Canonical replacement: `docs/ops/patterns/playwright-authenticated-api-requests.md`.
+
 **Severity:** CRITICAL
 **Triggers:** `playwright`, `test`, `api`, `request`, `401`, `403`, `unauthorized`, `forbidden`, `auth`, `cookie`, `bearer`, `token`
 **Category:** Testing

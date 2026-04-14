@@ -70,7 +70,7 @@ export const POST = withApiGuardrails(
     // 3. Fetch digest for last meeting (if exists)
     let lastDigest = null;
     if (lastMeeting) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const { data: digest } = await (serviceClient as any)
         .from("meeting_digests")
         .select("*")

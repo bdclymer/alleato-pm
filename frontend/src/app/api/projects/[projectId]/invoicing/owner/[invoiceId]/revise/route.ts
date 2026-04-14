@@ -2,7 +2,6 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
 
 // POST /api/projects/[projectId]/invoicing/owner/[invoiceId]/revise
@@ -33,20 +32,29 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
 
     if (fetchError) {
       if (fetchError.code === "PGRST116") {
-        return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
+        throw new GuardrailError({
+          code: "ROUTE_BINDING_MISSING",
+          where: "projects/[projectId]/invoicing/owner/[invoiceId]/revise#POST",
+          message: "Invoice not found.",
+        });
       }
-      return NextResponse.json({ error: fetchError.message }, { status: 500 });
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: "projects/[projectId]/invoicing/owner/[invoiceId]/revise#POST",
+        message: "Failed to fetch invoice.",
+        details: fetchError.message,
+      });
     }
 
     // Only under_review invoices can be sent back for revision
     if (invoice.status !== "under_review") {
-      return NextResponse.json(
-        {
-          error: "Cannot request revision",
-          message: `Invoice status is '${invoice.status}'. Only invoices under review can be sent back for revision.`,
-        },
-        { status: 400 },
-      );
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: "projects/[projectId]/invoicing/owner/[invoiceId]/revise#POST",
+        message:
+          "Cannot request revision. Only invoices under review can be sent back.",
+        details: `Current status: ${invoice.status}`,
+      });
     }
 
     const updatePayload: Record<string, unknown> = { status: "revise_and_resubmit" };
@@ -60,7 +68,12 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
       .single();
 
     if (updateError) {
-      return NextResponse.json({ error: updateError.message }, { status: 500 });
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: "projects/[projectId]/invoicing/owner/[invoiceId]/revise#POST",
+        message: "Failed to update invoice status.",
+        details: updateError.message,
+      });
     }
 
     return NextResponse.json({

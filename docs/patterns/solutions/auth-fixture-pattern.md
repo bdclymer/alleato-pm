@@ -5,6 +5,9 @@ description: auth fixture pattern documentation
 
 # Solution: Universal Auth Fixture Pattern
 
+> Migrated on 2026-04-14.
+> Canonical replacement: `docs/ops/patterns/playwright-authenticated-api-requests.md`.
+
 **Solves:** auth-fixture-missing.md
 **Category:** Testing
 

@@ -84,7 +84,7 @@ function CustomThread({ thread }: { thread: ThreadData }) {
   const issueId = getIssueId(room.id);
 
   if (!open) {
-    // eslint-disable-next-line design-system/no-design-violations -- liveblocks thread toggle
+     
     return (
       <button
         onClick={() => setOpen(true)}

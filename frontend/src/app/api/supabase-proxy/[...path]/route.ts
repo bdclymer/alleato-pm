@@ -1,16 +1,29 @@
 import { NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 
+/** Resolve route params whether Next provides plain object or promise-wrapped params. */
+async function resolvePathParams(
+  rawParams: { path: string[] } | Promise<{ path: string[] }>,
+): Promise<{ path: string[] }> {
+  return rawParams instanceof Promise ? await rawParams : rawParams;
+}
+
+/** Proxy a request to the Supabase Management API with enforced auth and admin checks. */
 async function forwardToSupabaseAPI(
   request: Request,
   method: string,
-  params: { path: string[] },
+  params: { path: string[] } | Promise<{ path: string[] }>,
 ) {
   if (!process.env.SUPABASE_MANAGEMENT_API_TOKEN) {
-    return NextResponse.json(
-      { message: "Server configuration error." },
-      { status: 500 },
-    );
+    throw new GuardrailError({
+      code: "MISSING_ENV_VAR",
+      where: "/api/supabase-proxy/[...path]#forward",
+      message: "SUPABASE_MANAGEMENT_API_TOKEN is not configured.",
+      details: { variable: "SUPABASE_MANAGEMENT_API_TOKEN" },
+      severity: "high",
+    });
   }
 
   // Authenticate the request and verify admin role.
@@ -19,7 +32,15 @@ async function forwardToSupabaseAPI(
   const supabase = await createClient();
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    throw new GuardrailError({
+      code: "AUTH_EXPIRED",
+      where: "/api/supabase-proxy/[...path]#forward",
+      message: "Unauthorized Supabase proxy request.",
+      status: 401,
+      severity: "medium",
+      details: authError ? { reason: authError.message } : undefined,
+      cause: authError ?? undefined,
+    });
   }
 
   // Verify the user has admin privileges before proxying to the Management API
@@ -30,14 +51,26 @@ async function forwardToSupabaseAPI(
     .single();
 
   if (!profile?.is_admin) {
-    return NextResponse.json(
-      { message: "Admin access required to use the Supabase Management API proxy." },
-      { status: 403 },
-    );
+    throw new GuardrailError({
+      code: "AUTH_FORBIDDEN",
+      where: "/api/supabase-proxy/[...path]#forward",
+      message: "Admin access required to use the Supabase Management API proxy.",
+      status: 403,
+      severity: "medium",
+    });
   }
 
-  const { path } = params;
-  const apiPath = path.join("/");
+  const resolvedParams = await resolvePathParams(params);
+  const apiPath = resolvedParams.path.join("/");
+  if (!apiPath) {
+    throw new GuardrailError({
+      code: "INVALID_PAYLOAD",
+      where: "/api/supabase-proxy/[...path]#forward",
+      message: "Proxy path is required.",
+      status: 400,
+      severity: "low",
+    });
+  }
 
   const url = new URL(request.url);
   url.protocol = "https";
@@ -69,8 +102,15 @@ async function forwardToSupabaseAPI(
           fetchOptions.body = body;
         }
       } catch (error) {
-        console.error("Failed to read request body:", error);
-        // Intentionally swallowed: body reading is optional
+        throw new GuardrailError({
+          code: "INVALID_PAYLOAD",
+          where: "/api/supabase-proxy/[...path]#forward",
+          message: "Failed to read proxy request body.",
+          status: 400,
+          severity: "low",
+          details: { reason: error instanceof Error ? error.message : "Unknown error" },
+          cause: error instanceof Error ? error : undefined,
+        });
       }
     }
 
@@ -88,56 +128,46 @@ async function forwardToSupabaseAPI(
 
     // Return the response with the same status
     return NextResponse.json(responseData, { status: response.status });
-  } catch (error: any) {
-    const errorMessage = error.message || "An unexpected error occurred.";
-    return NextResponse.json({ message: errorMessage }, { status: 500 });
+  } catch (error: unknown) {
+    if (error instanceof GuardrailError) throw error;
+    throw new GuardrailError({
+      code: "UPSTREAM_FAILURE",
+      where: "/api/supabase-proxy/[...path]#forward",
+      message: "Supabase Management API proxy request failed.",
+      status: 502,
+      severity: "high",
+      details: { reason: error instanceof Error ? error.message : "Unknown error" },
+      cause: error instanceof Error ? error : undefined,
+    });
   }
 }
 
-export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ path: string[] }> },
-) {
-  const resolvedParams = await params;
-  return forwardToSupabaseAPI(request, "GET", resolvedParams);
-}
+export const GET = withApiGuardrails<{ path: string[] }>(
+  "/api/supabase-proxy/[...path]#GET",
+  async ({ request, params }) => forwardToSupabaseAPI(request, "GET", params),
+);
 
-export async function HEAD(
-  request: Request,
-  { params }: { params: Promise<{ path: string[] }> },
-) {
-  const resolvedParams = await params;
-  return forwardToSupabaseAPI(request, "HEAD", resolvedParams);
-}
+export const HEAD = withApiGuardrails<{ path: string[] }>(
+  "/api/supabase-proxy/[...path]#HEAD",
+  async ({ request, params }) => forwardToSupabaseAPI(request, "HEAD", params),
+);
 
-export async function POST(
-  request: Request,
-  { params }: { params: Promise<{ path: string[] }> },
-) {
-  const resolvedParams = await params;
-  return forwardToSupabaseAPI(request, "POST", resolvedParams);
-}
+export const POST = withApiGuardrails<{ path: string[] }>(
+  "/api/supabase-proxy/[...path]#POST",
+  async ({ request, params }) => forwardToSupabaseAPI(request, "POST", params),
+);
 
-export async function PUT(
-  request: Request,
-  { params }: { params: Promise<{ path: string[] }> },
-) {
-  const resolvedParams = await params;
-  return forwardToSupabaseAPI(request, "PUT", resolvedParams);
-}
+export const PUT = withApiGuardrails<{ path: string[] }>(
+  "/api/supabase-proxy/[...path]#PUT",
+  async ({ request, params }) => forwardToSupabaseAPI(request, "PUT", params),
+);
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: Promise<{ path: string[] }> },
-) {
-  const resolvedParams = await params;
-  return forwardToSupabaseAPI(request, "DELETE", resolvedParams);
-}
+export const DELETE = withApiGuardrails<{ path: string[] }>(
+  "/api/supabase-proxy/[...path]#DELETE",
+  async ({ request, params }) => forwardToSupabaseAPI(request, "DELETE", params),
+);
 
-export async function PATCH(
-  request: Request,
-  { params }: { params: Promise<{ path: string[] }> },
-) {
-  const resolvedParams = await params;
-  return forwardToSupabaseAPI(request, "PATCH", resolvedParams);
-}
+export const PATCH = withApiGuardrails<{ path: string[] }>(
+  "/api/supabase-proxy/[...path]#PATCH",
+  async ({ request, params }) => forwardToSupabaseAPI(request, "PATCH", params),
+);

@@ -332,6 +332,9 @@ export function ContractForm({
     if (!formData.title?.trim()) {
       errors.title = "Title is required.";
     }
+    if (!formData.executed) {
+      errors.executed = "Executed must be checked.";
+    }
 
     if (Object.keys(errors).length > 0) {
       setValidationErrors(errors);
@@ -567,6 +570,39 @@ export function ContractForm({
     }));
   };
 
+  const toggleSovAccountingMethod = () => {
+    setFormData((prev) => {
+      const nextMethod = prev.accountingMethod === "unit_quantity"
+        ? "amount"
+        : "unit_quantity";
+
+      const nextItems = (prev.sovItems || []).map((item) => {
+        if (item.isGroup) return item;
+
+        if (nextMethod === "unit_quantity") {
+          const quantity = item.quantity ?? 1;
+          const unitCost = item.unitCost ?? item.amount ?? 0;
+          return {
+            ...item,
+            quantity,
+            unitCost,
+            unitOfMeasure: item.unitOfMeasure ?? "",
+            amount: quantity * unitCost,
+          };
+        }
+
+        const amount = item.amount ?? ((item.quantity ?? 0) * (item.unitCost ?? 0));
+        return { ...item, amount };
+      });
+
+      return {
+        ...prev,
+        accountingMethod: nextMethod,
+        sovItems: nextItems,
+      };
+    });
+  };
+
   const handleImportFromBudgetSuccess = (items: unknown[]) => {
     const importedItems = Array.isArray(items) ? items : [];
     if (importedItems.length === 0) {
@@ -611,6 +647,8 @@ export function ContractForm({
   const filteredBudgetCodes = budgetCodes.filter((code) =>
     code.fullLabel.toLowerCase().includes(budgetCodeSearchQuery.toLowerCase()),
   );
+  const isUnitQuantityMode = formData.accountingMethod === "unit_quantity";
+  const sovColumnCount = isUnitQuantityMode ? 8 : 6;
 
   // Auto-fill handler (development only)
   const handleAutoFill = () => {
@@ -927,26 +965,37 @@ export function ContractForm({
         title="Schedule of Values"
         description="Build line items that define contract value and billing progress."
         actions={
-          <Select
-            key={sovActionMenuKey}
-            onValueChange={(value) => {
-              if (value === "add_group") {
-                addSOVGroup();
-              }
-              if (value === "import_budget") {
-                setShowImportFromBudget(true);
-              }
-              setSovActionMenuKey((prev) => prev + 1);
-            }}
-          >
-            <SelectTrigger className="h-8 w-36 border-border bg-muted">
-              <SelectValue placeholder="Actions" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="add_group">Add Group</SelectItem>
-              <SelectItem value="import_budget">Import from Budget</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              data-testid="sov-accounting-toggle"
+              onClick={toggleSovAccountingMethod}
+            >
+              {isUnitQuantityMode ? "Use Amount" : "Use Quantity × Unit Cost"}
+            </Button>
+            <Select
+              key={sovActionMenuKey}
+              onValueChange={(value) => {
+                if (value === "add_group") {
+                  addSOVGroup();
+                }
+                if (value === "import_budget") {
+                  setShowImportFromBudget(true);
+                }
+                setSovActionMenuKey((prev) => prev + 1);
+              }}
+            >
+              <SelectTrigger className="h-8 w-36 border-border bg-muted">
+                <SelectValue placeholder="Actions" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="add_group">Add Group</SelectItem>
+                <SelectItem value="import_budget">Import from Budget</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         }
       >
         {/* SOV Table */}
@@ -972,6 +1021,12 @@ export function ContractForm({
                 </div>
               </InlineTableHeaderCell>
               <InlineTableHeaderCell className="min-w-[240px]">Description</InlineTableHeaderCell>
+              {isUnitQuantityMode && (
+                <>
+                  <InlineTableHeaderCell className="w-28">Quantity</InlineTableHeaderCell>
+                  <InlineTableHeaderCell className="w-32">Unit Cost</InlineTableHeaderCell>
+                </>
+              )}
               <InlineTableHeaderCell className="w-36">Amount</InlineTableHeaderCell>
               <InlineTableHeaderCell className="w-36">Billed to Date</InlineTableHeaderCell>
               <InlineTableHeaderCell className="w-36">Amount Remaining</InlineTableHeaderCell>
@@ -981,7 +1036,7 @@ export function ContractForm({
           <InlineTableBody>
               {(formData.sovItems || []).length === 0 ? (
                 <InlineTableRow>
-                  <InlineTableCell colSpan={6} className="py-8 text-center text-muted-foreground">
+                  <InlineTableCell colSpan={sovColumnCount} className="py-8 text-center text-muted-foreground">
                     <div className="flex flex-col items-center space-y-2">
                       <p className="text-sm text-muted-foreground">
                         No line items yet.
@@ -1000,7 +1055,7 @@ export function ContractForm({
                       type="group"
                       data-testid={`sov-group-${index}`}
                     >
-                      <InlineTableCell colSpan={5}>
+                      <InlineTableCell colSpan={sovColumnCount - 1}>
                         <Input
                           value={item.description}
                           onChange={(e) =>
@@ -1115,6 +1170,40 @@ export function ContractForm({
                           data-testid="sov-line-description"
                         />
                       </InlineTableCell>
+                      {isUnitQuantityMode && (
+                        <>
+                          <InlineTableCell>
+                            <Input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={String(item.quantity ?? 0)}
+                              onChange={(e) =>
+                                updateSOVLine(item.id, {
+                                  quantity: Number(e.target.value || 0),
+                                })
+                              }
+                              className="h-10"
+                              data-testid="sov-line-quantity"
+                            />
+                          </InlineTableCell>
+                          <InlineTableCell>
+                            <Input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={String(item.unitCost ?? 0)}
+                              onChange={(e) =>
+                                updateSOVLine(item.id, {
+                                  unitCost: Number(e.target.value || 0),
+                                })
+                              }
+                              className="h-10"
+                              data-testid="sov-line-unit-cost"
+                            />
+                          </InlineTableCell>
+                        </>
+                      )}
                       <InlineTableCell>
                         <MoneyField
                           inline
@@ -1163,13 +1252,13 @@ export function ContractForm({
           </InlineTableBody>
           <InlineTableFooter>
             <InlineTableFooterRow type="action">
-              <InlineTableFooterCell colSpan={5} className="font-normal">
+              <InlineTableFooterCell colSpan={sovColumnCount - 1} className="font-normal">
                 <Button
                   type="button"
                   variant="link"
                   className="h-auto p-0 text-sm font-medium"
                   onClick={addSOVLine}
-                  data-testid="sov-add-line-item"
+                  data-testid={(formData.sovItems || []).length === 0 ? "sov-add-line-empty" : "sov-add-line-footer"}
                 >
                   Add Line Item
                 </Button>

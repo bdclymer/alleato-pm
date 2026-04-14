@@ -10,6 +10,9 @@ optimized_for_llm: true
 
 # Project Context for AI Agents
 
+> Snapshot notice: this file is a point-in-time rules snapshot.
+> Canonical active memory and lessons live in `docs/ops/`.
+
 _This file contains critical rules and patterns that AI agents must follow when implementing code in this project. Focus on unobvious details that agents might otherwise miss._
 
 ---

@@ -10,6 +10,7 @@ import { SectionHeader } from "@/components/ds/section-header";
 import { StatusBadge } from "@/components/ds";
 import { UnifiedTablePage, type TableColumn } from "@/components/tables/unified/unified-table-page";
 import { Button } from "@/components/ui/button";
+import { apiFetch, apiFetchBlob } from "@/lib/api-client";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,21 +35,10 @@ async function downloadPrimeContractChangeOrderPdf(
   changeOrder: Pick<PrimeContractCO, "id" | "change_order_number">,
 ) {
   try {
-    const response = await fetch(
+    const blob = await apiFetchBlob(
       `/api/document-center/prime-contract-change-order/${changeOrder.id}/pdf`,
     );
-
-    if (!response.ok) {
-      const data = await response.json().catch(() => ({}));
-      throw new Error(data.error || "Failed to generate PDF");
-    }
-
-    const blob = await response.blob();
-    const filename =
-      response.headers
-        .get("Content-Disposition")
-        ?.match(/filename="?([^"]+)"?/)?.[1] ||
-      `${changeOrder.change_order_number || "prime-contract-change-order"}.pdf`;
+    const filename = `${changeOrder.change_order_number || "prime-contract-change-order"}.pdf`;
 
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -83,23 +73,18 @@ export function PrimeContractChangeOrdersTab({
 
   const handleApproveCo = useCallback(async (coId: string) => {
     try {
-      const response = await fetch(
+      await apiFetch(
         `/api/projects/${projectId}/contracts/${contractId}/change-orders/${coId}/approve`,
         { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) },
       );
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
-        toast.error(err.error || "Failed to approve change order");
-        return;
-      }
       setChangeOrders((prev) =>
         prev.map((co) =>
           co.id === coId ? { ...co, status: "approved", approved_date: new Date().toISOString() } : co,
         ),
       );
       toast.success("Change order approved");
-    } catch {
-      toast.error("Failed to approve change order");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to approve change order");
     }
   }, [contractId, projectId, setChangeOrders]);
 

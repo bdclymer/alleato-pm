@@ -1,4 +1,7 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
+import { parseJsonBody, withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 import {
   exportChangeOrdersToAcumatica,
@@ -23,6 +26,20 @@ const ALL_ENTITIES: ExportEntity[] = [
   "paymentApplications",
 ];
 
+const ExportEntitySchema = z.enum([
+  "commitments",
+  "primeContracts",
+  "changeOrders",
+  "invoices",
+  "paymentApplications",
+]);
+
+const ExportRequestSchema = z.object({
+  projectId: z.number().int().positive(),
+  contractId: z.string().optional(),
+  entities: z.array(ExportEntitySchema).optional(),
+});
+
 /**
  * POST /api/sync/acumatica/export
  *
@@ -35,7 +52,7 @@ const ALL_ENTITIES: ExportEntity[] = [
  *   entities?: Array<"commitments" | "primeContracts" | "changeOrders" | "invoices" | "paymentApplications">
  * }
  */
-export async function POST(request: Request) {
+export const POST = withApiGuardrails("/api/sync/acumatica/export#POST", async ({ request }) => {
   const supabase = await createClient();
 
   const {
@@ -43,24 +60,23 @@ export async function POST(request: Request) {
     error: authError,
   } = await supabase.auth.getUser();
   if (authError || !user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    throw new GuardrailError({
+      code: "AUTH_EXPIRED",
+      where: "/api/sync/acumatica/export#POST",
+      message: "Unauthorized Acumatica export sync request.",
+      status: 401,
+      severity: "medium",
+      details: authError ? { reason: authError.message } : undefined,
+      cause: authError ?? undefined,
+    });
   }
 
-  let body: { projectId?: number; contractId?: string; entities?: ExportEntity[] };
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
-  }
-
-  const projectId = body.projectId;
-  const contractId = body.contractId;
-  if (!projectId || typeof projectId !== "number") {
-    return NextResponse.json(
-      { error: "projectId (number) is required" },
-      { status: 400 },
-    );
-  }
+  const body = await parseJsonBody(
+    request,
+    ExportRequestSchema,
+    "/api/sync/acumatica/export#POST",
+  );
+  const { projectId, contractId } = body;
 
   const entities =
     body.entities && body.entities.length > 0
@@ -116,7 +132,12 @@ export async function POST(request: Request) {
       syncedAt: new Date().toISOString(),
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    throw new GuardrailError({
+      code: "UPSTREAM_FAILURE",
+      where: "/api/sync/acumatica/export#POST",
+      message: "Acumatica export sync failed.",
+      details: { reason: err instanceof Error ? err.message : "Unknown error" },
+      cause: err instanceof Error ? err : undefined,
+    });
   }
-}
+});

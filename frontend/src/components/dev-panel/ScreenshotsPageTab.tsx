@@ -147,7 +147,7 @@ function ScreenshotRow({
               Screenshot not available
             </div>
           ) : (
-            // eslint-disable-next-line @next/next/no-img-element
+             
             <img
               src={imgSrc}
               alt={label}

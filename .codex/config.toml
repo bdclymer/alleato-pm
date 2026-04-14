@@ -6,3 +6,7 @@ inherit = "core"
 
 [shell_environment_policy.set]
 CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS = "1"
+
+[agents]
+max_threads = 6
+max_depth = 1

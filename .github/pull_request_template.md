@@ -14,10 +14,12 @@
   - [ ] prevention step
 - [ ] I verified this change fails loudly with useful context.
 - [ ] I verified this change makes recurrence less likely.
+- [ ] I updated `docs/ops/memory/current-state.md` if scope/status changed.
+- [ ] I added or updated the current weekly log in `docs/ops/logs/`.
+- [ ] If this fixes a repeated issue, I updated `docs/ops/lessons/recurring-failures.md`.
 
 ## What would have caught this earlier?
 
 - Prevention:
 - Earlier detection:
 - New guardrail added in this PR:
-

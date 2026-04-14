@@ -11,31 +11,42 @@
 
 import { after } from "next/server";
 import { bot } from "@/lib/bot";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 
 export const maxDuration = 120;
 
 type Platform = keyof typeof bot.webhooks;
 
-export async function POST(
-  request: Request,
-  context: { params: Promise<{ platform: string }> },
-) {
+export const POST = withApiGuardrails<Promise<{ platform: string }>>(
+  "/api/bot/[platform]#POST",
+  async ({ request, params }) => {
   try {
-    const { platform } = await context.params;
+    const { platform } = await params;
 
     const handler = bot.webhooks[platform as Platform];
     if (!handler) {
-      return new Response(`Unknown platform: ${platform}`, { status: 404 });
+      throw new GuardrailError({
+        code: "ROUTE_BINDING_MISSING",
+        where: "/api/bot/[platform]#POST",
+        message: `Unknown platform: ${platform}`,
+        status: 404,
+        severity: "low",
+      });
     }
 
     return await handler(request, {
       waitUntil: (task: Promise<unknown>) => after(() => task),
     });
   } catch (error) {
-    console.error("[bot-webhook] Error:", error);
-    return new Response(
-      JSON.stringify({ error: String(error) }),
-      { status: 500, headers: { "Content-Type": "application/json" } },
-    );
+    if (error instanceof GuardrailError) throw error;
+    throw new GuardrailError({
+      code: "INTERNAL_ERROR",
+      where: "/api/bot/[platform]#POST",
+      message: "Bot webhook processing failed.",
+      details: { reason: error instanceof Error ? error.message : String(error) },
+      cause: error instanceof Error ? error : undefined,
+    });
   }
-}
+  },
+);

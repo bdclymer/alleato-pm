@@ -6,6 +6,9 @@ keywords: ["solutions", "patterns", "fixes", "verification", "authentication", "
 
 # Solution Patterns
 
+> Deprecated on 2026-04-14.
+> Canonical replacement: `docs/ops/patterns/index.md`.
+
 This library documents proven solutions to recurring problems in the Alleato-Procore project. Each solution pattern addresses specific [error patterns](/patterns/error-patterns) documented in the codebase.
 
 ## Available Solutions

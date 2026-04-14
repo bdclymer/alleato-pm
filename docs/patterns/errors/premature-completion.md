@@ -5,6 +5,9 @@ description: premature completion documentation
 
 # Pattern: Premature Completion Claims
 
+> Migrated on 2026-04-14.
+> Canonical replacement: `docs/ops/patterns/evidence-based-completion.md`.
+
 **Severity:** CRITICAL
 **Triggers:** `complete`, `done`, `finished`, `verified`, `passing`, `working`, `ready`
 **Category:** Workflow

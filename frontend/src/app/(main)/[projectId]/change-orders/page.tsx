@@ -43,7 +43,7 @@ export default async function ProjectChangeOrdersPage({
     console.error("Error loading commitment change orders:", commitmentResponse.error);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const primeCOs: PrimeContractCO[] = (primeResponse.data || []).map((co: any) => ({
     id: co.id,
     pcco_number: co.pcco_number,
@@ -65,7 +65,7 @@ export default async function ProjectChangeOrdersPage({
     review_date: co.review_date ?? null,
   }));
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const commitmentCOs: CommitmentCO[] = (commitmentResponse.data || []).map((co: any) => ({
     id: co.id,
     change_order_number: co.change_order_number ?? null,

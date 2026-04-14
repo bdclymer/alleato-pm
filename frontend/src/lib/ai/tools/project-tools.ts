@@ -396,7 +396,7 @@ export function createProjectTools(
 
           const [risksRes, insightsRes, issueRes, healthRes, meetingRes] =
             await Promise.all([
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+               
               supabase
                 .from("risks" as any)
                 .select(
@@ -673,7 +673,7 @@ export function createProjectTools(
             .select("*")
             .eq("id", resolvedId)
             .single(),
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+           
           supabase
             .from("v_budget_lines" as any)
             .select(
@@ -1030,7 +1030,7 @@ export function createProjectTools(
           }
 
           const [budgetRes, contractRes] = await Promise.all([
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+             
             supabase
               .from("v_budget_lines" as any)
               .select(

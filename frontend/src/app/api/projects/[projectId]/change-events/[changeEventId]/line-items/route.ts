@@ -35,10 +35,13 @@ export const GET = withApiGuardrails(
       .single();
 
     if (eventError || !changeEvent) {
-      return NextResponse.json(
-        { error: 'Change event not found' },
-        { status: 404 }
-      );
+      throw new GuardrailError({
+        code: "ROUTE_BINDING_MISSING",
+        where: "projects/[projectId]/change-events/[changeEventId]/line-items#GET",
+        message: "Change event not found.",
+        status: 404,
+        severity: "low",
+      });
     }
 
     // Get line items with budget_line details
@@ -189,17 +192,23 @@ export const POST = withApiGuardrails(
       .single();
 
     if (eventError || !changeEvent) {
-      return NextResponse.json(
-        { error: 'Change event not found' },
-        { status: 404 }
-      );
+      throw new GuardrailError({
+        code: "ROUTE_BINDING_MISSING",
+        where: "projects/[projectId]/change-events/[changeEventId]/line-items#POST",
+        message: "Change event not found.",
+        status: 404,
+        severity: "low",
+      });
     }
 
     if (changeEvent.status === 'Closed' || changeEvent.status === 'Void') {
-      return NextResponse.json(
-        { error: `Cannot add line items to a ${changeEvent.status.toLowerCase()} change event` },
-        { status: 409 }
-      );
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: "projects/[projectId]/change-events/[changeEventId]/line-items#POST",
+        message: `Cannot add line items to a ${changeEvent.status.toLowerCase()} change event.`,
+        status: 409,
+        severity: "low",
+      });
     }
 
     // Resolve budgetCodeId: could be budget_lines.id OR project_cost_codes.id
@@ -214,10 +223,13 @@ export const POST = withApiGuardrails(
 
       if (budgetLine) {
         if (budgetLine.project_id !== parseInt(projectId, 10)) {
-          return NextResponse.json(
-            { error: 'Budget code does not belong to this project' },
-            { status: 400 }
-          );
+          throw new GuardrailError({
+            code: "INVALID_PAYLOAD",
+            where: "projects/[projectId]/change-events/[changeEventId]/line-items#POST",
+            message: "Budget code does not belong to this project.",
+            status: 400,
+            severity: "low",
+          });
         }
       } else {
         // Not a budget_lines ID — try project_cost_codes and find matching budget_line
@@ -257,17 +269,27 @@ export const POST = withApiGuardrails(
                 `[line-items POST] Failed to auto-create budget_line for project_cost_code ${validatedData.budgetCodeId}:`,
                 createError?.message,
               );
-              return NextResponse.json(
-                { error: 'Failed to resolve budget code', details: `Could not create budget line for cost code. ${createError?.message || ''}` },
-                { status: 400 },
-              );
+              throw new GuardrailError({
+                code: "INVALID_PAYLOAD",
+                where: "projects/[projectId]/change-events/[changeEventId]/line-items#POST",
+                message: "Failed to resolve budget code.",
+                status: 400,
+                severity: "low",
+                details: {
+                  reason: `Could not create budget line for cost code. ${createError?.message || ""}`,
+                },
+                cause: createError ?? undefined,
+              });
             }
           }
         } else {
-          return NextResponse.json(
-            { error: 'Invalid budget code', details: `ID ${validatedData.budgetCodeId} not found in budget_lines or project_cost_codes` },
-            { status: 400 },
-          );
+          throw new GuardrailError({
+            code: "INVALID_PAYLOAD",
+            where: "projects/[projectId]/change-events/[changeEventId]/line-items#POST",
+            message: `Invalid budget code: ID ${validatedData.budgetCodeId} not found in budget_lines or project_cost_codes.`,
+            status: 400,
+            severity: "low",
+          });
         }
       }
     }
@@ -288,7 +310,8 @@ export const POST = withApiGuardrails(
         budget_code_id: resolvedBudgetCodeId || undefined,
         description: validatedData.description,
         vendor_id: resolvedVendorId || undefined,
-        contract_id: validatedData.contractId ? parseInt(validatedData.contractId, 10) : undefined,
+        // SENSITIVE: this writes a contract foreign key; preserve UUID exactly.
+        contract_id: validatedData.contractId || undefined,
         commitment_id: validatedData.commitmentId || undefined,
         commitment_type: validatedData.commitmentType || undefined,
         commitment_line_item_id: validatedData.commitmentLineItemId || undefined,
@@ -393,25 +416,34 @@ export const PUT = withApiGuardrails(
       .single();
 
     if (eventError || !changeEvent) {
-      return NextResponse.json(
-        { error: 'Change event not found' },
-        { status: 404 }
-      );
+      throw new GuardrailError({
+        code: "ROUTE_BINDING_MISSING",
+        where: "projects/[projectId]/change-events/[changeEventId]/line-items#PUT",
+        message: "Change event not found.",
+        status: 404,
+        severity: "low",
+      });
     }
 
     if (changeEvent.status === 'Closed' || changeEvent.status === 'Void') {
-      return NextResponse.json(
-        { error: `Cannot update line items in a ${changeEvent.status.toLowerCase()} change event` },
-        { status: 409 }
-      );
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: "projects/[projectId]/change-events/[changeEventId]/line-items#PUT",
+        message: `Cannot update line items in a ${changeEvent.status.toLowerCase()} change event.`,
+        status: 409,
+        severity: "low",
+      });
     }
 
     // Expect array of { id, sortOrder }
     if (!Array.isArray(body)) {
-      return NextResponse.json(
-        { error: 'Request body must be an array of line item updates' },
-        { status: 400 }
-      );
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: "projects/[projectId]/change-events/[changeEventId]/line-items#PUT",
+        message: "Request body must be an array of line item updates.",
+        status: 400,
+        severity: "low",
+      });
     }
 
     // Update sort orders

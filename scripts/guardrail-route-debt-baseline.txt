@@ -2,24 +2,3 @@
 # These are intentionally excluded due to streaming, webhooks, or proxy patterns
 # that are incompatible with the withApiGuardrails wrapper.
 # Each line must be a route file path.
-frontend/src/app/api/admin/rag-eval/run/route.ts
-frontend/src/app/api/ai-assistant/chat/route.ts
-frontend/src/app/api/bot/[platform]/route.ts
-frontend/src/app/api/liveblocks/webhook/route.ts
-frontend/src/app/api/monitoring/websocket/route.ts
-frontend/src/app/api/primitives/tool-calling/route.ts
-frontend/src/app/api/procore-docs/chat/route.ts
-frontend/src/app/api/procore-screenshots/[feature]/[filename]/route.ts
-frontend/src/app/api/procore-screenshots/[feature]/route.ts
-frontend/src/app/api/rag-chat/route.ts
-frontend/src/app/api/rag-chatkit/bootstrap/route.ts
-frontend/src/app/api/rag-chatkit/route.ts
-frontend/src/app/api/rag-chatkit/state/route.ts
-frontend/src/app/api/supabase-proxy/[...path]/route.ts
-frontend/src/app/api/sync/acumatica/ar-invoices/route.ts
-frontend/src/app/api/sync/acumatica/ar-payments/route.ts
-frontend/src/app/api/sync/acumatica/commitments/route.ts
-frontend/src/app/api/sync/acumatica/direct-costs/route.ts
-frontend/src/app/api/sync/acumatica/export/route.ts
-frontend/src/app/api/sync/acumatica/vendors/route.ts
-frontend/src/app/api/tool-calling/route.ts

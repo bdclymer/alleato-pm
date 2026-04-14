@@ -64,7 +64,7 @@ function AvatarBubble({ name, avatarUrl, isSelf }: AvatarBubbleProps) {
       style={{ backgroundColor: bg }}
     >
       {avatarUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
+         
         <img
           src={avatarUrl}
           alt={name ?? ""}

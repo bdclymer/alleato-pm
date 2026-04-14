@@ -1,4 +1,7 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
+import { parseJsonBody, withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 import { syncCommitments } from "@/lib/acumatica/sync";
 
@@ -10,25 +13,32 @@ import { syncCommitments } from "@/lib/acumatica/sync";
  *
  * Body: { projectId: number }
  */
-export async function POST(request: Request) {
+const SyncProjectPayloadSchema = z.object({
+  projectId: z.number().int().positive(),
+});
+
+export const POST = withApiGuardrails("/api/sync/acumatica/commitments#POST", async ({ request }) => {
   const supabase = await createClient();
 
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    throw new GuardrailError({
+      code: "AUTH_EXPIRED",
+      where: "/api/sync/acumatica/commitments#POST",
+      message: "Unauthorized commitments sync request.",
+      status: 401,
+      severity: "medium",
+      details: authError ? { reason: authError.message } : undefined,
+      cause: authError ?? undefined,
+    });
   }
 
-  let body: { projectId?: number };
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
-  }
-
-  const projectId = body.projectId;
-  if (!projectId || typeof projectId !== "number") {
-    return NextResponse.json({ error: "projectId (number) is required" }, { status: 400 });
-  }
+  const body = await parseJsonBody(
+    request,
+    SyncProjectPayloadSchema,
+    "/api/sync/acumatica/commitments#POST",
+  );
+  const { projectId } = body;
 
   try {
     const result = await syncCommitments(projectId, user.id);
@@ -40,7 +50,12 @@ export async function POST(request: Request) {
       syncedAt: new Date().toISOString(),
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    throw new GuardrailError({
+      code: "UPSTREAM_FAILURE",
+      where: "/api/sync/acumatica/commitments#POST",
+      message: "Commitments sync failed.",
+      details: { reason: err instanceof Error ? err.message : "Unknown error" },
+      cause: err instanceof Error ? err : undefined,
+    });
   }
-}
+});

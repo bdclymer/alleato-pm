@@ -48,7 +48,7 @@ const Header = () => {
                 all[0]?.classList.remove('active');
             }
 
-            let allLinks = document.querySelectorAll('ul.horizontal-menu a.active');
+            const allLinks = document.querySelectorAll('ul.horizontal-menu a.active');
             for (let i = 0; i < allLinks.length; i++) {
                 const element = allLinks[i];
                 element?.classList.remove('active');

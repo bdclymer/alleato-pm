@@ -5,6 +5,9 @@ description: domcontentloaded pattern documentation
 
 # Solution: DOMContentLoaded Navigation Pattern
 
+> Migrated on 2026-04-14.
+> Canonical replacement: `docs/ops/patterns/playwright-navigation-wait-strategy.md` and `docs/ops/patterns/playwright-navigation-helpers.md`.
+
 **Solves:** networkidle-timeout.md
 **Category:** Testing
 

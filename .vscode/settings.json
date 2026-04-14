@@ -32,6 +32,10 @@
         {
             "filePath": "docs/design/design-inspiration/original-7f238f33228255d5d2a8b52982074cca.webp",
             "group": "Default"
+        },
+        {
+            "filePath": "docs/project-overview",
+            "group": "Default"
         }
     ],
     "files.exclude": {

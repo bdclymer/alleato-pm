@@ -1,10 +1,20 @@
 import { NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 
-export async function GET() {
+export const GET = withApiGuardrails("/api/accounting/projects#GET", async () => {
   const user = await getApiRouteUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!user) {
+    throw new GuardrailError({
+      code: "AUTH_EXPIRED",
+      where: "/api/accounting/projects#GET",
+      message: "Unauthorized accounting projects request.",
+      status: 401,
+      severity: "medium",
+    });
+  }
 
   const supabase = createServiceClient();
   const { data, error } = await supabase
@@ -12,6 +22,14 @@ export async function GET() {
     .select("id, external_key, project_id, description, status, customer, hold, income, expenses, assets, liabilities, template_id, external_ref_nbr, last_modified_at, acumatica_sync_at")
     .order("project_id", { ascending: true });
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    throw new GuardrailError({
+      code: "INTERNAL_ERROR",
+      where: "/api/accounting/projects#GET",
+      message: "Failed to load accounting projects.",
+      details: { reason: error.message },
+      cause: error,
+    });
+  }
   return NextResponse.json(data);
-}
+});

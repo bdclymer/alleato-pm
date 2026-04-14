@@ -191,7 +191,7 @@ export function AnnotationsTab({ pageUrl }: Props) {
                 {/* Screenshot thumbnail */}
                 {a.screenshot_url && (
                   <div className="mt-2">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    { }
                     <img
                       src={a.screenshot_url}
                       alt="Annotation screenshot"

@@ -116,7 +116,7 @@ export const POST = withApiGuardrails(
       console.error("Failed to update version decision:", versionUpdateError);
     }
 
-    let updates: Record<string, any> = {
+    const updates: Record<string, unknown> = {
       updated_at: now,
     };
 

@@ -8,6 +8,7 @@ import { SectionHeader } from "@/components/ds/section-header";
 import { StatusBadge } from "@/components/ds/status-badge";
 import { UnifiedTablePage, type TableColumn } from "@/components/tables/unified/unified-table-page";
 import { formatDate } from "@/lib/table-config/formatters";
+import { apiFetch } from "@/lib/api-client";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -53,12 +54,10 @@ export function PrimeContractPcosSection({
     const fetchPcos = async () => {
       setIsLoading(true);
       try {
-        const res = await fetch(
+        const json = await apiFetch<{ data?: PrimePco[] } | PrimePco[]>(
           `/api/projects/${projectId}/prime-contract-pcos`,
         );
-        if (!res.ok) throw new Error("Failed to fetch PCOs");
-        const json = await res.json();
-        const allPcos: PrimePco[] = json.data ?? json ?? [];
+        const allPcos: PrimePco[] = Array.isArray(json) ? json : (json.data ?? []);
         // Filter client-side to only show PCOs belonging to this prime contract
         setPcos(
           contractId
@@ -67,8 +66,8 @@ export function PrimeContractPcosSection({
               )
             : allPcos,
         );
-      } catch {
-        toast.error("Failed to load potential change orders");
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Failed to load potential change orders");
       } finally {
         setIsLoading(false);
       }

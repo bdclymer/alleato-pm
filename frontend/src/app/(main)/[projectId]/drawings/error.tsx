@@ -3,6 +3,20 @@
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 
+// Detect chunk/runtime module loading failures that require a hard refresh.
+function isRuntimeModuleLoadError(error: Error): boolean {
+  const message = error.message.toLowerCase();
+  return (
+    message.includes("loading chunk") ||
+    message.includes("failed to load chunk") ||
+    message.includes("failed to fetch dynamically imported module") ||
+    message.includes("importing a module script failed") ||
+    message.includes("_next/static") ||
+    message.includes("module factory is not available") ||
+    message.includes("worker was terminated")
+  );
+}
+
 export default function DrawingsError({
   error,
   reset,
@@ -10,9 +24,23 @@ export default function DrawingsError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const isRuntimeLoadError = isRuntimeModuleLoadError(error);
+
   useEffect(() => {
     console.error("Drawings module error:", error);
-  }, [error]);
+
+    // Force one-time reload for chunk/runtime load mismatches.
+    if (!isRuntimeLoadError) return;
+    try {
+      const lastReload = sessionStorage.getItem("drawings-module-error-reload");
+      if (!lastReload || Date.now() - Number(lastReload) > 10_000) {
+        sessionStorage.setItem("drawings-module-error-reload", String(Date.now()));
+        window.location.reload();
+      }
+    } catch {
+      window.location.reload();
+    }
+  }, [error, isRuntimeLoadError]);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[400px] gap-4 p-8">
@@ -33,11 +61,13 @@ export default function DrawingsError({
       </div>
       <h2 className="text-xl font-semibold">Drawings Error</h2>
       <p className="text-muted-foreground text-center max-w-md">
-        {error.message || "Failed to load drawings data. Please try again."}
+        {isRuntimeLoadError
+          ? "The page code changed while this tab was open. Refresh to continue."
+          : error.message || "Failed to load drawings data. Please try again."}
       </p>
       <div className="flex gap-4">
-        <Button onClick={reset} variant="default">
-          Try Again
+        <Button onClick={() => (isRuntimeLoadError ? window.location.reload() : reset())} variant="default">
+          {isRuntimeLoadError ? "Refresh Now" : "Try Again"}
         </Button>
         <Button onClick={() => window.history.back()} variant="outline">
           Go Back

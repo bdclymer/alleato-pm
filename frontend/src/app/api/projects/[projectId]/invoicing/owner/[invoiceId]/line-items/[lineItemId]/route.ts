@@ -2,7 +2,6 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { apiErrorResponse } from "@/lib/api-error";
 
 // DELETE /api/projects/[projectId]/invoicing/owner/[invoiceId]/line-items/[lineItemId]
 // Delete a single line item. Only allowed when invoice is draft or revise_and_resubmit.
@@ -27,7 +26,11 @@ export const DELETE = withApiGuardrails<{ projectId: string; invoiceId: string; 
       Number.isNaN(invoiceIdNum) ||
       Number.isNaN(lineItemIdNum)
     ) {
-      return NextResponse.json({ error: "Invalid id parameter" }, { status: 400 });
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: "projects/[projectId]/invoicing/owner/[invoiceId]/line-items/[lineItemId]#DELETE",
+        message: "Invalid id parameter.",
+      });
     }
 
     // Verify invoice belongs to project + fetch status
@@ -40,20 +43,27 @@ export const DELETE = withApiGuardrails<{ projectId: string; invoiceId: string; 
 
     if (verifyError) {
       if (verifyError.code === "PGRST116") {
-        return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
+        throw new GuardrailError({
+          code: "ROUTE_BINDING_MISSING",
+          where: "projects/[projectId]/invoicing/owner/[invoiceId]/line-items/[lineItemId]#DELETE",
+          message: "Invoice not found.",
+        });
       }
-      return NextResponse.json(
-        { error: "Failed to verify invoice", details: verifyError.message },
-        { status: 500 },
-      );
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: "projects/[projectId]/invoicing/owner/[invoiceId]/line-items/[lineItemId]#DELETE",
+        message: "Failed to verify invoice.",
+        details: verifyError.message,
+      });
     }
 
     const editableStatuses = ["draft", "revise_and_resubmit"];
     if (!editableStatuses.includes(invoice.status)) {
-      return NextResponse.json(
-        { error: `Invoice status '${invoice.status}' does not allow editing` },
-        { status: 400 },
-      );
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: "projects/[projectId]/invoicing/owner/[invoiceId]/line-items/[lineItemId]#DELETE",
+        message: `Invoice status '${invoice.status}' does not allow editing.`,
+      });
     }
 
     const { error: deleteError } = await supabase
@@ -63,10 +73,12 @@ export const DELETE = withApiGuardrails<{ projectId: string; invoiceId: string; 
       .eq("invoice_id", invoiceIdNum);
 
     if (deleteError) {
-      return NextResponse.json(
-        { error: "Failed to delete line item", details: deleteError.message },
-        { status: 500 },
-      );
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: "projects/[projectId]/invoicing/owner/[invoiceId]/line-items/[lineItemId]#DELETE",
+        message: "Failed to delete line item.",
+        details: deleteError.message,
+      });
     }
 
     return NextResponse.json({ success: true });

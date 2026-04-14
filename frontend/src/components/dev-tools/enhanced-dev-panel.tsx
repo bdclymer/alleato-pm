@@ -987,7 +987,7 @@ const supabase = createClient(url, key);
   if (variant === "footer") {
     return (
       <div ref={footerRef} className="w-full">
-        {/* eslint-disable-next-line design-system/no-design-violations -- footer dev tools toggle */}
+        { }
         <div className="flex items-center px-4 py-3 sm:px-6 lg:px-8">
           <button
             type="button"

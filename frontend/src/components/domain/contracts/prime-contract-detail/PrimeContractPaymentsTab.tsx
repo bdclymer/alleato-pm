@@ -21,6 +21,7 @@ import {
   DataTable,
   type DataTableFooterCell,
 } from "@/components/tables/DataTable";
+import { apiFetch } from "@/lib/api-client";
 import type {
   Payment,
   PaymentApplication,
@@ -64,12 +65,16 @@ export function PrimeContractPaymentsTab({
     () => payments.reduce((sum, payment) => sum + payment.amount, 0),
     [payments],
   );
+  const refreshContract = async () => {
+    const nextContract = await apiFetch<Contract>(`/api/projects/${projectId}/contracts/${contractId}`);
+    setContract(nextContract);
+  };
 
   const handleCreatePayment = async () => {
     if (!paymentForm.amount || !paymentForm.payment_date) return;
     try {
       setIsSubmittingPayment(true);
-      const response = await fetch(
+      const newPayment = await apiFetch<Payment>(
         `/api/projects/${projectId}/contracts/${contractId}/payments`,
         {
           method: "POST",
@@ -85,12 +90,6 @@ export function PrimeContractPaymentsTab({
           }),
         },
       );
-      if (!response.ok) {
-        const err = await response.json();
-        toast.error(err.error || "Failed to record payment");
-        return;
-      }
-      const newPayment = await response.json();
       setPayments((prev) => [newPayment, ...prev]);
       setShowAddPaymentDialog(false);
       setPaymentForm({
@@ -103,12 +102,9 @@ export function PrimeContractPaymentsTab({
         notes: "",
       });
       toast.success("Payment recorded successfully");
-      const contractRes = await fetch(
-        `/api/projects/${projectId}/contracts/${contractId}`,
-      );
-      if (contractRes.ok) setContract(await contractRes.json());
-    } catch {
-      toast.error("Failed to record payment");
+      await refreshContract();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to record payment");
     } finally {
       setIsSubmittingPayment(false);
     }
@@ -116,20 +112,17 @@ export function PrimeContractPaymentsTab({
 
   const handleDeletePayment = async (paymentId: string) => {
     if (!confirm("Delete this payment record? This cannot be undone.")) return;
-    const response = await fetch(
-      `/api/projects/${projectId}/contracts/${contractId}/payments/${paymentId}`,
-      { method: "DELETE" },
-    );
-    if (!response.ok) {
-      toast.error("Failed to delete payment");
-      return;
+    try {
+      await apiFetch(
+        `/api/projects/${projectId}/contracts/${contractId}/payments/${paymentId}`,
+        { method: "DELETE" },
+      );
+      setPayments((prev) => prev.filter((p) => p.id !== paymentId));
+      toast.success("Payment deleted");
+      await refreshContract();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to delete payment");
     }
-    setPayments((prev) => prev.filter((p) => p.id !== paymentId));
-    toast.success("Payment deleted");
-    const contractRes = await fetch(
-      `/api/projects/${projectId}/contracts/${contractId}`,
-    );
-    if (contractRes.ok) setContract(await contractRes.json());
   };
 
   const columns: ColumnDef<Payment>[] = useMemo(

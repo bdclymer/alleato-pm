@@ -6,6 +6,10 @@ keywords: ["patterns", "best practices", "crud", "supabase", "api routes", "vali
 
 # Validated Patterns Registry
 
+> Deprecated on 2026-04-14.
+> Canonical replacement: `docs/ops/patterns/index.md`.
+> Reason: duplicated content and drift risk.
+
 This document indexes all validated, production-tested patterns in the codebase. **Claude MUST reference these patterns before writing new code.**
 
 ## Quick Reference

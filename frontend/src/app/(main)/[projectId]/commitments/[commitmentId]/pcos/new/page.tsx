@@ -171,7 +171,7 @@ export default function NewCommitmentPcoPage() {
       }
     };
     fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [commitmentId, projectId]);
 
   const handleSubmit: SubmitHandler<FormData> = async (data) => {

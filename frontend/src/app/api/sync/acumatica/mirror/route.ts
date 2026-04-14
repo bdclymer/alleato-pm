@@ -1,4 +1,7 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
+import { parseJsonBody, withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -16,7 +19,13 @@ import { createClient } from "@/lib/supabase/server";
  */
 export const maxDuration = 300;
 
-export async function POST(request: Request) {
+const AcumaticaMirrorSyncSchema = z.object({
+  mode: z.enum(["full", "incremental"]).optional(),
+  entities: z.array(z.string()).optional(),
+  tier: z.number().int().min(0).max(3).optional(),
+});
+
+export const POST = withApiGuardrails("/api/sync/acumatica/mirror#POST", async ({ request }) => {
   const supabase = await createClient();
 
   // Verify user is authenticated
@@ -25,20 +34,22 @@ export async function POST(request: Request) {
     error: authError,
   } = await supabase.auth.getUser();
   if (authError || !user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    throw new GuardrailError({
+      code: "AUTH_EXPIRED",
+      where: "/api/sync/acumatica/mirror#POST",
+      message: "Unauthorized Acumatica mirror sync request.",
+      status: 401,
+      severity: "medium",
+      details: authError ? { reason: authError.message } : undefined,
+      cause: authError ?? undefined,
+    });
   }
 
-  let body: {
-    mode?: "full" | "incremental";
-    entities?: string[];
-    tier?: number;
-  };
-  try {
-    body = await request.json();
-  } catch {
-    body = {};
-  }
-
+  const body = await parseJsonBody(
+    request,
+    AcumaticaMirrorSyncSchema,
+    "/api/sync/acumatica/mirror#POST",
+  );
   const mode = body.mode ?? "incremental";
 
   try {
@@ -80,7 +91,14 @@ export async function POST(request: Request) {
       syncedAt: new Date().toISOString(),
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    throw new GuardrailError({
+      code: "UPSTREAM_FAILURE",
+      where: "/api/sync/acumatica/mirror#POST",
+      message: "Acumatica mirror sync failed.",
+      details: {
+        reason: err instanceof Error ? err.message : "Unknown error",
+      },
+      cause: err instanceof Error ? err : undefined,
+    });
   }
-}
+});

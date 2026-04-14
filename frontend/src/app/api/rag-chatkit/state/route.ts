@@ -1,25 +1,38 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 import { isBackendOfflineError } from "../utils";
 
 const PYTHON_BACKEND_URL =
   process.env.PYTHON_BACKEND_URL || "http://127.0.0.1:8000";
 
-export async function GET(request: NextRequest) {
+export const GET = withApiGuardrails("/api/rag-chatkit/state#GET", async ({ request }) => {
   const supabase = await createClient();
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    throw new GuardrailError({
+      code: "AUTH_EXPIRED",
+      where: "/api/rag-chatkit/state#GET",
+      message: "Unauthorized RAG state request.",
+      status: 401,
+      severity: "medium",
+      details: authError ? { reason: authError.message } : undefined,
+      cause: authError ?? undefined,
+    });
   }
 
   const url = new URL(request.url);
   const threadId = url.searchParams.get("thread_id");
 
   if (!threadId) {
-    return NextResponse.json(
-      { error: "thread_id is required" },
-      { status: 400 },
-    );
+    throw new GuardrailError({
+      code: "INVALID_PAYLOAD",
+      where: "/api/rag-chatkit/state#GET",
+      message: "thread_id is required.",
+      status: 400,
+      severity: "low",
+    });
   }
 
   try {
@@ -28,40 +41,40 @@ export async function GET(request: NextRequest) {
     );
     if (!response.ok) {
       const errorText = await response.text();
-      return NextResponse.json(
-        {
-          error: "RAG Backend Error",
-          message: "RAG backend state fetch failed.",
-          details:
-            process.env.NODE_ENV === "development"
-              ? errorText.substring(0, 500)
-              : undefined,
-        },
-        { status: response.status },
-      );
+      throw new GuardrailError({
+        code: "UPSTREAM_FAILURE",
+        where: "/api/rag-chatkit/state#GET",
+        message: "RAG backend state fetch failed.",
+        status: response.status,
+        details:
+          process.env.NODE_ENV === "development"
+            ? { reason: errorText.substring(0, 500) }
+            : undefined,
+      });
     }
     const data = await response.json();
 
     return NextResponse.json(data);
-  } catch (error) {
-    const err = error as Error;
+  } catch (error: unknown) {
+    if (error instanceof GuardrailError) throw error;
     if (isBackendOfflineError(error)) {
-      return NextResponse.json(
-        {
-          error: "RAG Backend Unavailable",
-          message:
-            "The RAG backend is unavailable. Fix backend connectivity before retrying.",
+      throw new GuardrailError({
+        code: "UPSTREAM_FAILURE",
+        where: "/api/rag-chatkit/state#GET",
+        message: "The RAG backend is unavailable. Fix backend connectivity before retrying.",
+        status: 503,
+        details: {
+          reason: error instanceof Error ? error.message : "Unknown error",
         },
-        { status: 503 },
-      );
+        severity: "high",
+      });
     }
 
-    return NextResponse.json(
-      {
-        error: "Internal Server Error",
-        message: err.message || "Unknown error",
-      },
-      { status: 500 },
-    );
+    throw new GuardrailError({
+      code: "INTERNAL_ERROR",
+      where: "/api/rag-chatkit/state#GET",
+      message: "Unexpected RAG state error.",
+      details: { reason: error instanceof Error ? error.message : "Unknown error" },
+    });
   }
-}
+});

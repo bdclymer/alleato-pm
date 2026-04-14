@@ -45,11 +45,11 @@ export async function Issue({ issueId }: { issueId: string }) {
     }
   );
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   let storage: any;
   let contentHtml: string | undefined;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const emptyStorage: any = {
     meta: { title: "" },
     properties: { progress: "none", priority: "none", assignedTo: "none" },

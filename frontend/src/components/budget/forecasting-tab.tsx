@@ -80,7 +80,7 @@ function CostBar({ budget, costs }: { budget: number; costs: number }) {
 
   return (
     <div className="h-1 w-full overflow-hidden rounded-full bg-border">
-      {/* eslint-disable-next-line react/forbid-dom-props -- dynamic percentage width requires inline style */}
+      { }
       <div
         className={cn("h-full rounded-full transition-all", tone)}
         style={{ width: `${pct}%` }}

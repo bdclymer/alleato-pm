@@ -20,6 +20,66 @@ Rule 7: Before closing any bug, ask: “What makes this never happen again?”
 - Code chunks may include inline line numbers like `Lxxx:LINE_CONTENT`. Treat the `Lxxx:` prefix as metadata — do NOT include it in edits.
 - Default expectation: deliver working code, not just a plan. If details are missing, make reasonable assumptions and complete a working version.
 
+## Parallel Session Orchestration (MANDATORY)
+
+When more than one Codex session is active, use `docs/ops/orchestration/` as the control plane.
+
+### Required Files
+
+- `docs/ops/orchestration/leader-runbook.md`
+- `docs/ops/orchestration/worker-protocol.md`
+- `docs/ops/orchestration/session-board.md`
+- `docs/ops/orchestration/review-queue.md`
+- Worker handoffs: `docs/ops/handoffs/YYYY-MM-DD-S<session>-<topic>.md`
+
+### Non-Negotiable Rules
+
+1. Every worker must claim exactly one active task in `session-board.md` before coding.
+2. Every worker must maintain a handoff doc with command evidence, artifacts, changed files, risks, and next step.
+3. No worker may start a new task until their current handoff is marked `Accepted` in `review-queue.md`.
+4. Unclaimed work is invalid and must not be treated as progress.
+5. "Done" claims without evidence are automatically rejected as `Needs Rework`.
+
+### Leader Responsibilities
+
+- Assign non-overlapping ownership scopes.
+- Process `Pending Review` items every 30-60 minutes.
+- Accept/reject with explicit notes in `review-queue.md`.
+- Reflect accepted outcomes in `docs/ops/logs/` and `docs/ops/memory/current-state.md`.
+
+### Worker Summary Requirement
+
+Yes: each active session must summarize what it did and what it found in its handoff file so the leader can consolidate and decide.
+
+---
+
+## Frontend-First Validation Workflow (MANDATORY FOR "MAKE IT WORK")
+
+When the objective is "make tools work cleanly on frontend," prioritize end-user flows and visible outcomes over backend-only activity.
+
+### Canonical User Journey Test Chain
+
+1. Create Project
+2. Add Budget
+3. Create Prime Contract + Schedule of Values
+4. Create Commitments (including subcontractor SOV where applicable)
+5. Execute Change Management flow:
+   - Change Event
+   - Potential Change Order
+   - Official Change Order
+6. Create/validate Invoicing flow
+
+### Execution Rules
+
+- Test this chain as user flows first (agent-browser/manual-style E2E), then add/refresh Playwright coverage for deterministic regression checks.
+- For each step, log pass/fail, blocker, and artifact path (screenshot/video/report) in worker handoff.
+- Any backend change without corresponding frontend flow verification is incomplete.
+- Focus work queue by user-visible breakage severity, not by subsystem ownership.
+
+### Definition Of Practical Progress
+
+Progress only counts when a user-flow step is verified passing with artifacts and accepted in the review queue.
+
 ---
 
 ## BMAD Method Integration

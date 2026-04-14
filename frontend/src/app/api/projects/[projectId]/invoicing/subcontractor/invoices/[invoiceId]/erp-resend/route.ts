@@ -2,7 +2,6 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { apiErrorResponse } from "@/lib/api-error";
 
 // POST → resend this invoice to the ERP (Acumatica).
 // Phase 1: logs the intent to the audit log so the Change History tab reflects
@@ -27,17 +26,20 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
       .single();
 
     if (fetchError || !invoice) {
-      return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
+      throw new GuardrailError({
+        code: "ROUTE_BINDING_MISSING",
+        where: "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/erp-resend#POST",
+        message: "Invoice not found.",
+      });
     }
 
     if (!["approved", "approved_as_noted", "paid"].includes(invoice.status)) {
-      return NextResponse.json(
-        {
-          error: "Cannot resend to ERP",
-          message: `Invoice must be approved before it can be sent to the ERP. Current status: ${invoice.status}`,
-        },
-        { status: 400 },
-      );
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/erp-resend#POST",
+        message: "Invoice must be approved before it can be sent to the ERP.",
+        details: `Current status: ${invoice.status}`,
+      });
     }
 
     await supabase.from("subcontractor_invoice_audit_log").insert({

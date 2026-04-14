@@ -10,6 +10,10 @@ interface RouteParams {
   params: Promise<{ projectId: string; primeCoId: string }>;
 }
 
+// Force dynamic execution to prevent dev static-path resolution from attempting
+// to prerender this route handler path and throwing PageNotFoundError.
+export const dynamic = "force-dynamic";
+
 /**
  * GET /api/projects/[projectId]/prime-contract-change-orders/[primeCoId]
  * Returns the PCCO with related contract info and line items.

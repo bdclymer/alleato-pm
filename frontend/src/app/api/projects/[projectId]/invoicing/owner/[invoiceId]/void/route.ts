@@ -2,7 +2,6 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
 
 // POST /api/projects/[projectId]/invoicing/owner/[invoiceId]/void
@@ -45,23 +44,32 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
 
     if (fetchError) {
       if (fetchError.code === "PGRST116") {
-        return NextResponse.json(
-          { error: "Invoice not found" },
-          { status: 404 },
-        );
+        throw new GuardrailError({
+          code: "ROUTE_BINDING_MISSING",
+          where: "projects/[projectId]/invoicing/owner/[invoiceId]/void#POST",
+          message: "Invoice not found",
+          status: 404,
+          severity: "low",
+        });
       }
 
-      return NextResponse.json(
-        { error: "Failed to verify invoice", details: fetchError.message },
-        { status: 500 },
-      );
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: "projects/[projectId]/invoicing/owner/[invoiceId]/void#POST",
+        message: "Failed to verify invoice",
+        details: { reason: fetchError.message },
+        cause: fetchError,
+      });
     }
 
     if (invoice.status === "paid" || invoice.status === "void") {
-      return NextResponse.json(
-        { error: `Invoice cannot be voided from status "${invoice.status}"` },
-        { status: 400 },
-      );
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: "projects/[projectId]/invoicing/owner/[invoiceId]/void#POST",
+        message: `Invoice cannot be voided from status "${invoice.status}"`,
+        status: 400,
+        severity: "low",
+      });
     }
 
     // Append the void reason to notes (preserving any prior notes)
@@ -86,16 +94,22 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
 
     if (updateError) {
       if (updateError.code === "42501") {
-        return NextResponse.json(
-          { error: "Permission denied" },
-          { status: 403 },
-        );
+        throw new GuardrailError({
+          code: "AUTH_FORBIDDEN",
+          where: "projects/[projectId]/invoicing/owner/[invoiceId]/void#POST",
+          message: "Permission denied",
+          status: 403,
+          severity: "medium",
+        });
       }
 
-      return NextResponse.json(
-        { error: "Failed to void invoice", details: updateError.message },
-        { status: 500 },
-      );
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: "projects/[projectId]/invoicing/owner/[invoiceId]/void#POST",
+        message: "Failed to void invoice",
+        details: { reason: updateError.message },
+        cause: updateError,
+      });
     }
 
     return NextResponse.json({

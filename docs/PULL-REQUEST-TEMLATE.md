@@ -21,6 +21,9 @@
 - [ ] For UI changes: Playwright tests updated/added and evidence (screenshots/videos) saved under `frontend/tests/screenshots/` (list paths)
 - [ ] For DB changes: Supabase types regenerated (`frontend/src/types/database.types.ts`) and schema validated (no invented columns)
 - [ ] Logged any rule violations in `RULE-VIOLATION-LOG.md` (if applicable)
+- [ ] Updated `docs/ops/memory/current-state.md` for status/scope changes
+- [ ] Added weekly progress note under `docs/ops/logs/`
+- [ ] If this was a repeat issue, updated `docs/ops/lessons/recurring-failures.md`
 
 ## Design System Checklist
 

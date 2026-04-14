@@ -80,6 +80,11 @@ interface VerticalMarkupRow {
   compound: boolean | null
 }
 
+// Validate UUID-like identifiers before sending them to strict FK filters.
+function isUuid(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
+}
+
 function computeMarkupAdditions(
   _baseCost: number,
   baseRevenue: number,
@@ -185,7 +190,7 @@ export const GET = withApiGuardrails(
     // to that tab so we can apply an IN filter on the main paginated query.
     // We also compute tab counts for the response meta in one pass.
     let tabFilterIds: string[] | null = null
-    let tabSummary = { lineItems: 0, noLineItems: 0, rfqs: 0, recycleBin: 0 }
+    const tabSummary = { lineItems: 0, noLineItems: 0, rfqs: 0, recycleBin: 0 }
 
     if (queryParams.tab && queryParams.tab !== 'all') {
       // 1. Fetch all CE IDs for the project (active and deleted)
@@ -331,7 +336,7 @@ export const GET = withApiGuardrails(
           .from('change_event_line_items')
           .select('change_event_id, revenue_rom, cost_rom, non_committed_cost, contract_id')
           .in('change_event_id', eventIds)
-      : { data: [] as any[] }
+      : { data: [] as unknown[] }
 
     const lineItemMap = new Map<
       string,
@@ -363,20 +368,32 @@ export const GET = withApiGuardrails(
       lineItemMap.set(key, existing)
     }
 
-    const contractIds = Array.from(
+    const rawContractIds = Array.from(
       new Set(
         Array.from(lineItemMap.values())
           .map((entry) => entry.contractId)
           .filter((id): id is string => id !== null)
       )
     )
+    const contractIds = rawContractIds.filter(isUuid)
+    const droppedContractIds = rawContractIds.length - contractIds.length
 
-    const { data: contracts } = contractIds.length
+    if (droppedContractIds > 0) {
+      console.warn(
+        `[change-events GET] Ignored ${droppedContractIds} invalid contract_id value(s) while aggregating commitments for project ${projectId}.`,
+      )
+    }
+
+    const { data: contracts, error: contractsError } = contractIds.length
       ? await (supabase as any)
           .from('prime_contracts')
           .select('id, contract_number, title')
           .in('id', contractIds)
-      : { data: [] as any[] }
+      : { data: [] as unknown[], error: null }
+
+    if (contractsError) {
+      return apiErrorResponse(contractsError)
+    }
 
     const contractMap = new Map<
       string,
@@ -395,7 +412,7 @@ export const GET = withApiGuardrails(
           .select('change_event_id, title, created_at')
           .in('change_event_id', eventIds)
           .order('created_at', { ascending: false })
-      : { data: [] as any[] }
+      : { data: [] as unknown[] }
 
     const rfqMap = new Map<string, string>()
     for (const rfq of rfqs || []) {
@@ -416,13 +433,26 @@ export const GET = withApiGuardrails(
           .eq('pco_type', 'prime')
       : { data: [] as Array<{ change_event_id: string; pco_id: string }> }
 
-    const primePcoIds = [...new Set((rawPcoLinks ?? []).map((l) => l.pco_id))]
-    const { data: primePcosData } = primePcoIds.length
+    const rawPrimePcoIds = [...new Set((rawPcoLinks ?? []).map((l) => l.pco_id))]
+    const primePcoIds = rawPrimePcoIds.filter(isUuid)
+    const droppedPrimePcoIds = rawPrimePcoIds.length - primePcoIds.length
+
+    if (droppedPrimePcoIds > 0) {
+      console.warn(
+        `[change-events GET] Ignored ${droppedPrimePcoIds} invalid prime PCO id value(s) while building list rows for project ${projectId}.`,
+      )
+    }
+
+    const { data: primePcosData, error: primePcosError } = primePcoIds.length
       ? await supabase
           .from('prime_contract_pcos')
           .select('id, pco_number, title')
           .in('id', primePcoIds)
-      : { data: [] as Array<{ id: string; pco_number: string | null; title: string | null }> }
+      : { data: [] as Array<{ id: string; pco_number: string | null; title: string | null }>, error: null }
+
+    if (primePcosError) {
+      return apiErrorResponse(primePcosError)
+    }
 
     const pcoById = new Map((primePcosData ?? []).map((p) => [p.id, p]))
     const pcoMap = new Map<string, { number: string | null; title: string | null }>()
@@ -524,10 +554,15 @@ export const POST = withApiGuardrails(
       : await supabase.auth.getUser()
 
     if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized', details: authError?.message },
-        { status: 401 }
-      )
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "projects/[projectId]/change-events#POST",
+        message: "Unauthorized change event creation request.",
+        status: 401,
+        severity: "medium",
+        details: authError?.message ? { reason: authError.message } : undefined,
+        cause: authError ?? undefined,
+      });
     }
 
     // Validate request body

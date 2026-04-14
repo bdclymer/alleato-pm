@@ -9,22 +9,46 @@ import {
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { parseJsonBody, withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
 
-export async function POST(req: Request) {
+const ToolCallingRequestSchema = z.object({
+  messages: z.array(z.custom<UIMessage>()),
+  apiKey: z.string().min(1).optional(),
+});
+
+export const POST = withApiGuardrails("/api/tool-calling#POST", async ({ request }) => {
   const supabase = await createClient();
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    throw new GuardrailError({
+      code: "AUTH_EXPIRED",
+      where: "/api/tool-calling#POST",
+      message: "Unauthorized tool-calling request.",
+      status: 401,
+      severity: "medium",
+      details: authError ? { reason: authError.message } : undefined,
+      cause: authError ?? undefined,
+    });
   }
 
-  const { messages, apiKey }: { messages: UIMessage[]; apiKey?: string } =
-    await req.json();
+  const { messages, apiKey } = await parseJsonBody(
+    request,
+    ToolCallingRequestSchema,
+    "/api/tool-calling#POST",
+  );
 
   if (!apiKey) {
-    return new Response("OpenAI API key is required", { status: 400 });
+    throw new GuardrailError({
+      code: "INVALID_PAYLOAD",
+      where: "/api/tool-calling#POST",
+      message: "OpenAI API key is required.",
+      status: 400,
+      severity: "low",
+    });
   }
 
   const openai = createOpenAI({ apiKey });
@@ -87,4 +111,4 @@ export async function POST(req: Request) {
   });
 
   return result.toUIMessageStreamResponse();
-}
+});

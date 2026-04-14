@@ -75,7 +75,7 @@ export const CometCard = ({
           rotateY,
           translateX,
           translateY,
-          // eslint-disable-next-line design-system/no-hardcoded-colors -- decorative 3D card shadow effect
+           
           boxShadow:
             "rgba(0, 0, 0, 0.01) 0px 520px 146px 0px, rgba(0, 0, 0, 0.04) 0px 333px 133px 0px, rgba(0, 0, 0, 0.26) 0px 83px 83px 0px, rgba(0, 0, 0, 0.29) 0px 21px 46px 0px",
         }}

@@ -1888,7 +1888,7 @@ export default function ProjectDirectoryPage() {
         if (result && result.added > 0) refetchCompanies();
       })
       .catch(() => {/* silent — sync is best-effort */});
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, [projectId]);
 
   return (

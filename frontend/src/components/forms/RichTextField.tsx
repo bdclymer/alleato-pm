@@ -153,7 +153,7 @@ export function RichTextField({
       }
     }
     // Only on mount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
 
   return (

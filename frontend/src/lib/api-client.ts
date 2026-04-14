@@ -24,6 +24,8 @@
  *   await apiFetch(`/api/projects/${id}`, { method: "DELETE" });
  */
 
+import { fetchWithTransientRouteRetry } from "@/lib/fetch-with-transient-route-retry";
+
 /** Structured error from our API routes (see lib/api-error.ts) */
 export interface ApiErrorBody {
   error?: string;
@@ -103,12 +105,37 @@ export async function apiFetch<T = unknown>(
   url: string,
   init?: RequestInit,
 ): Promise<T> {
+  return performApiFetch<T>(url, init, (requestUrl, requestInit) =>
+    fetch(requestUrl, requestInit),
+  );
+}
+
+/**
+ * Fetch wrapper with transient route retry for dev-time module compilation races.
+ * Use for idempotent GET/HEAD requests when first-hit Next.js route compilation
+ * may intermittently return a temporary 500.
+ */
+export async function apiFetchWithTransientRouteRetry<T = unknown>(
+  url: string,
+  init?: RequestInit,
+  options?: { retries?: number; delayMs?: number },
+): Promise<T> {
+  return performApiFetch<T>(url, init, (requestUrl, requestInit) =>
+    fetchWithTransientRouteRetry(requestUrl, requestInit, options),
+  );
+}
+
+async function performApiFetch<T>(
+  url: string,
+  init: RequestInit | undefined,
+  request: (url: string, init: RequestInit | undefined) => Promise<Response>,
+): Promise<T> {
   const headers = new Headers(init?.headers);
   if (!(init?.body instanceof FormData) && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
 
-  const response = await fetch(url, {
+  const response = await request(url, {
     ...init,
     headers,
   });

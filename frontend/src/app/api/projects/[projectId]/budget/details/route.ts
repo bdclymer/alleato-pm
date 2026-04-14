@@ -221,7 +221,7 @@ export const GET = withApiGuardrails(
     }
 
     // 4b. Fetch Pending Prime Contract Change Orders
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const { data: pendingContractCOs, error: pendingContractCOsError } =
       await (supabase as any)
         .from("change_order_lines")

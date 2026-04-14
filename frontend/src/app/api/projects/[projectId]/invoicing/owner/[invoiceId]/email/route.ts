@@ -2,7 +2,6 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { apiErrorResponse } from "@/lib/api-error";
 import { renderInvoicePdfBuffer } from "@/lib/invoice-pdf";
 import { fetchInvoicePdfData } from "../pdf/route";
 import { requirePermission } from "@/lib/permissions-guard";
@@ -54,10 +53,11 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
     const ccList = normalizeEmails(body.cc);
 
     if (toList.length === 0) {
-      return NextResponse.json(
-        { error: "At least one valid recipient is required in 'to'" },
-        { status: 400 },
-      );
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: "projects/[projectId]/invoicing/owner/[invoiceId]/email#POST",
+        message: "At least one valid recipient is required in 'to'.",
+      });
     }
 
     const invoiceIdNum = parseInt(invoiceId, 10);
@@ -68,7 +68,11 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
       invoiceIdNum,
     );
     if (!data) {
-      return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
+      throw new GuardrailError({
+        code: "ROUTE_BINDING_MISSING",
+        where: "projects/[projectId]/invoicing/owner/[invoiceId]/email#POST",
+        message: "Invoice not found.",
+      });
     }
 
     const invoiceNumber = data.invoice_number || `INV-${data.id}`;
@@ -107,10 +111,12 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
 
     const apiKey = process.env.RESEND_API_KEY;
     if (!apiKey) {
-      return NextResponse.json(
-        { error: "Email service not configured (missing RESEND_API_KEY)" },
-        { status: 500 },
-      );
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: "projects/[projectId]/invoicing/owner/[invoiceId]/email#POST",
+        message: "Email service not configured.",
+        details: "Missing RESEND_API_KEY.",
+      });
     }
 
     const { Resend } = await import("resend");
@@ -132,10 +138,12 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
 
     if (sendError) {
       console.error("[invoice email] Resend error:", sendError);
-      return NextResponse.json(
-        { error: "Failed to send email", details: sendError.message },
-        { status: 500 },
-      );
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: "projects/[projectId]/invoicing/owner/[invoiceId]/email#POST",
+        message: "Failed to send email.",
+        details: sendError.message,
+      });
     }
 
     return NextResponse.json({ success: true, id: sendResult?.id });

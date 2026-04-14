@@ -1,8 +1,7 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
-import { type NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { apiErrorResponse } from "@/lib/api-error";
 
 type Ctx = { params: Promise<{ projectId: string; paymentId: string }> };
 
@@ -22,7 +21,13 @@ export const GET = withApiGuardrails(
   async ({ request, params }) => {
   
     const { supabase, error: authErr } = await getAuthedClient();
-    if (authErr) return NextResponse.json({ error: authErr }, { status: 401 });
+    if (authErr) {
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "projects/[projectId]/invoicing/payments/[paymentId]#GET",
+        message: authErr,
+      });
+    }
 
     const { projectId, paymentId } = params;
     const projectIdNum = parseInt(projectId, 10);
@@ -42,13 +47,19 @@ export const GET = withApiGuardrails(
       .maybeSingle();
 
     if (error) {
-      return NextResponse.json(
-        { error: "Failed to fetch payment", details: error.message },
-        { status: 500 },
-      );
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: "projects/[projectId]/invoicing/payments/[paymentId]#GET",
+        message: "Failed to fetch payment.",
+        details: error.message,
+      });
     }
     if (!data) {
-      return NextResponse.json({ error: "Payment not found" }, { status: 404 });
+      throw new GuardrailError({
+        code: "ROUTE_BINDING_MISSING",
+        where: "projects/[projectId]/invoicing/payments/[paymentId]#GET",
+        message: "Payment not found.",
+      });
     }
 
     return NextResponse.json({ data });
@@ -61,7 +72,13 @@ export const PATCH = withApiGuardrails(
   async ({ request, params }) => {
   
     const { supabase, error: authErr } = await getAuthedClient();
-    if (authErr) return NextResponse.json({ error: authErr }, { status: 401 });
+    if (authErr) {
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "projects/[projectId]/invoicing/payments/[paymentId]#PATCH",
+        message: authErr,
+      });
+    }
 
     const { projectId, paymentId } = params;
     const projectIdNum = parseInt(projectId, 10);
@@ -84,7 +101,11 @@ export const PATCH = withApiGuardrails(
     }
 
     if (Object.keys(updates).length === 0) {
-      return NextResponse.json({ error: "No updatable fields provided" }, { status: 400 });
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: "projects/[projectId]/invoicing/payments/[paymentId]#PATCH",
+        message: "No updatable fields provided.",
+      });
     }
 
     const { data, error } = await supabase
@@ -96,10 +117,12 @@ export const PATCH = withApiGuardrails(
       .single();
 
     if (error) {
-      return NextResponse.json(
-        { error: "Failed to update payment", details: error.message },
-        { status: 500 },
-      );
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: "projects/[projectId]/invoicing/payments/[paymentId]#PATCH",
+        message: "Failed to update payment.",
+        details: error.message,
+      });
     }
 
     return NextResponse.json({ data });
@@ -112,7 +135,13 @@ export const DELETE = withApiGuardrails(
   async ({ request, params }) => {
   
     const { supabase, error: authErr } = await getAuthedClient();
-    if (authErr) return NextResponse.json({ error: authErr }, { status: 401 });
+    if (authErr) {
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "projects/[projectId]/invoicing/payments/[paymentId]#DELETE",
+        message: authErr,
+      });
+    }
 
     const { projectId, paymentId } = params;
     const projectIdNum = parseInt(projectId, 10);
@@ -125,10 +154,12 @@ export const DELETE = withApiGuardrails(
       .eq("project_id", projectIdNum);
 
     if (error) {
-      return NextResponse.json(
-        { error: "Failed to delete payment", details: error.message },
-        { status: 500 },
-      );
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: "projects/[projectId]/invoicing/payments/[paymentId]#DELETE",
+        message: "Failed to delete payment.",
+        details: error.message,
+      });
     }
 
     return NextResponse.json({ success: true });

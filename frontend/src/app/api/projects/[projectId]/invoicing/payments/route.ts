@@ -1,8 +1,7 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
-import { type NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { apiErrorResponse } from "@/lib/api-error";
 
 // GET /api/projects/[projectId]/invoicing/payments
 // List all payments for a project, joined with owner/subcontractor invoice info.
@@ -18,10 +17,12 @@ export const GET = withApiGuardrails<{ projectId: string }>(
       error: authError,
     } = await supabase.auth.getUser();
     if (authError) {
-      return NextResponse.json(
-        { error: "Authentication failed", details: authError.message },
-        { status: 401 },
-      );
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "projects/[projectId]/invoicing/payments#GET",
+        message: "Authentication failed.",
+        details: authError.message,
+      });
     }
     if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/invoicing/payments#GET", message: "Authentication required." });
@@ -29,7 +30,11 @@ export const GET = withApiGuardrails<{ projectId: string }>(
 
     const projectIdNum = parseInt(projectId, 10);
     if (!Number.isFinite(projectIdNum)) {
-      return NextResponse.json({ error: "Invalid project id" }, { status: 400 });
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: "projects/[projectId]/invoicing/payments#GET",
+        message: "Invalid project id.",
+      });
     }
 
     const { data: payments, error: paymentsError } = await supabase
@@ -45,10 +50,12 @@ export const GET = withApiGuardrails<{ projectId: string }>(
       .order("payment_date", { ascending: false, nullsFirst: false });
 
     if (paymentsError) {
-      return NextResponse.json(
-        { error: "Failed to fetch payments", details: paymentsError.message },
-        { status: 500 },
-      );
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: "projects/[projectId]/invoicing/payments#GET",
+        message: "Failed to fetch payments.",
+        details: paymentsError.message,
+      });
     }
 
     const enriched = (payments ?? []).map((row) => {
@@ -103,10 +110,12 @@ export const POST = withApiGuardrails<{ projectId: string }>(
       error: authError,
     } = await supabase.auth.getUser();
     if (authError) {
-      return NextResponse.json(
-        { error: "Authentication failed", details: authError.message },
-        { status: 401 },
-      );
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "projects/[projectId]/invoicing/payments#POST",
+        message: "Authentication failed.",
+        details: authError.message,
+      });
     }
     if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/invoicing/payments#POST", message: "Authentication required." });
@@ -114,7 +123,11 @@ export const POST = withApiGuardrails<{ projectId: string }>(
 
     const projectIdNum = parseInt(projectId, 10);
     if (!Number.isFinite(projectIdNum)) {
-      return NextResponse.json({ error: "Invalid project id" }, { status: 400 });
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: "projects/[projectId]/invoicing/payments#POST",
+        message: "Invalid project id.",
+      });
     }
 
     const body = await request.json();
@@ -130,13 +143,25 @@ export const POST = withApiGuardrails<{ projectId: string }>(
     } = body ?? {};
 
     if (amount === undefined || amount === null || Number.isNaN(Number(amount))) {
-      return NextResponse.json({ error: "amount is required" }, { status: 400 });
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: "projects/[projectId]/invoicing/payments#POST",
+        message: "amount is required.",
+      });
     }
     if (!payment_date) {
-      return NextResponse.json({ error: "payment_date is required" }, { status: 400 });
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: "projects/[projectId]/invoicing/payments#POST",
+        message: "payment_date is required.",
+      });
     }
     if (!payment_method) {
-      return NextResponse.json({ error: "payment_method is required" }, { status: 400 });
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: "projects/[projectId]/invoicing/payments#POST",
+        message: "payment_method is required.",
+      });
     }
 
     const hasOwner = owner_invoice_id !== undefined && owner_invoice_id !== null && owner_invoice_id !== "";
@@ -146,13 +171,12 @@ export const POST = withApiGuardrails<{ projectId: string }>(
       subcontractor_invoice_id !== "";
 
     if (hasOwner === hasSub) {
-      return NextResponse.json(
-        {
-          error:
-            "Provide exactly one of owner_invoice_id or subcontractor_invoice_id",
-        },
-        { status: 400 },
-      );
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: "projects/[projectId]/invoicing/payments#POST",
+        message:
+          "Provide exactly one of owner_invoice_id or subcontractor_invoice_id.",
+      });
     }
 
     // Verify the referenced invoice belongs to this project.
@@ -164,10 +188,11 @@ export const POST = withApiGuardrails<{ projectId: string }>(
         .eq("prime_contracts.project_id", projectIdNum)
         .maybeSingle();
       if (oErr || !ownerInv) {
-        return NextResponse.json(
-          { error: "Owner invoice not found for this project" },
-          { status: 404 },
-        );
+        throw new GuardrailError({
+          code: "ROUTE_BINDING_MISSING",
+          where: "projects/[projectId]/invoicing/payments#POST",
+          message: "Owner invoice not found for this project.",
+        });
       }
     } else {
       const { data: subInv, error: sErr } = await supabase
@@ -177,10 +202,11 @@ export const POST = withApiGuardrails<{ projectId: string }>(
         .eq("project_id", projectIdNum)
         .maybeSingle();
       if (sErr || !subInv) {
-        return NextResponse.json(
-          { error: "Subcontractor invoice not found for this project" },
-          { status: 404 },
-        );
+        throw new GuardrailError({
+          code: "ROUTE_BINDING_MISSING",
+          where: "projects/[projectId]/invoicing/payments#POST",
+          message: "Subcontractor invoice not found for this project.",
+        });
       }
     }
 
@@ -201,10 +227,12 @@ export const POST = withApiGuardrails<{ projectId: string }>(
       .single();
 
     if (insertError) {
-      return NextResponse.json(
-        { error: "Failed to create payment", details: insertError.message },
-        { status: 500 },
-      );
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: "projects/[projectId]/invoicing/payments#POST",
+        message: "Failed to create payment.",
+        details: insertError.message,
+      });
     }
 
     return NextResponse.json({ data: payment }, { status: 201 });

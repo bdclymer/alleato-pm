@@ -5,6 +5,9 @@ description: fk constraint user documentation
 
 # Pattern: Foreign Key Constraint on User Profile
 
+> Migrated on 2026-04-14.
+> Canonical replacement: `docs/ops/patterns/fk-created-by-profile-guard.md`.
+
 **Severity:** HIGH
 **Triggers:** `foreign key`, `fk`, `constraint`, `profiles`, `created_by`, `user_id`, `auth.users`, `insert`, `violates`
 **Category:** Database

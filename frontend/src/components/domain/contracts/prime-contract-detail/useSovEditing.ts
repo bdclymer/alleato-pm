@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { arrayMove } from "@dnd-kit/sortable";
 import { toast } from "sonner";
 import type { ContractLineItem, BudgetCode } from "@/app/(main)/[projectId]/prime-contracts/[contractId]/types";
+import { apiFetch } from "@/lib/api-client";
 
 const normalizeSovDraftItems = (items: ContractLineItem[]) =>
   items.filter((item): item is ContractLineItem => Boolean(item)).map((item, index) => {
@@ -93,21 +94,21 @@ export function useSovEditing({ projectId, contractId, lineItems, setLineItems, 
   }, []);
 
   const handleDeleteSovLine = useCallback(async (lineId: string) => {
+    const restoreLineItems = async () => {
+      try {
+        const restored = await apiFetch<ContractLineItem[]>(`/api/projects/${projectId}/contracts/${contractId}/line-items`);
+        setLineItems(restored ?? []);
+      } catch {
+        // Best-effort rollback after optimistic removal.
+      }
+    };
     setLineItems((prev) => prev.filter((li) => li.id !== lineId));
     try {
-      const response = await fetch(`/api/projects/${projectId}/contracts/${contractId}/line-items/${lineId}`, { method: "DELETE" });
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        toast.error(data.error || "Failed to delete line item");
-        const restored = await fetch(`/api/projects/${projectId}/contracts/${contractId}/line-items`);
-        if (restored.ok) setLineItems(await restored.json());
-        return;
-      }
+      await apiFetch(`/api/projects/${projectId}/contracts/${contractId}/line-items/${lineId}`, { method: "DELETE" });
       toast.success("Line item deleted");
-    } catch {
-      toast.error("Failed to delete line item");
-      const restored = await fetch(`/api/projects/${projectId}/contracts/${contractId}/line-items`);
-      if (restored.ok) setLineItems(await restored.json());
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to delete line item");
+      await restoreLineItems();
     }
   }, [projectId, contractId, setLineItems]);
 
@@ -143,43 +144,48 @@ export function useSovEditing({ projectId, contractId, lineItems, setLineItems, 
       const temporaryLineBase = 100000;
       for (let index = 0; index < updatePayload.length; index++) {
         const item = updatePayload[index];
-        const tempRes = await fetch(`/api/projects/${projectId}/contracts/${contractId}/line-items/${item.id}`, {
-          method: "PUT", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ line_number: temporaryLineBase + index + 1 }),
-        });
-        if (!tempRes.ok) {
-          const errorData = await tempRes.json().catch(() => ({}));
-          throw new Error(`Could not save "${item.description || `Line ${item.line_number}`}": ${errorData.error || errorData.details || "unknown error"}`);
+        try {
+          await apiFetch(`/api/projects/${projectId}/contracts/${contractId}/line-items/${item.id}`, {
+            method: "PUT", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ line_number: temporaryLineBase + index + 1 }),
+          });
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "unknown error";
+          throw new Error(`Could not save "${item.description || `Line ${item.line_number}`}": ${message}`);
         }
       }
-      const deletionResponses = await Promise.all(deletionIds.map((id) => fetch(`/api/projects/${projectId}/contracts/${contractId}/line-items/${id}`, { method: "DELETE" })));
-      const failedDeletion = deletionResponses.findIndex((r) => !r.ok);
-      if (failedDeletion !== -1) {
-        const errorData = await deletionResponses[failedDeletion].json().catch(() => ({}));
-        throw new Error(`Could not delete a removed line item: ${errorData.error || errorData.details || "unknown error"}`);
+      for (const id of deletionIds) {
+        try {
+          await apiFetch(`/api/projects/${projectId}/contracts/${contractId}/line-items/${id}`, { method: "DELETE" });
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "unknown error";
+          throw new Error(`Could not delete a removed line item: ${message}`);
+        }
       }
       for (const item of updatePayload) {
-        const updateRes = await fetch(`/api/projects/${projectId}/contracts/${contractId}/line-items/${item.id}`, {
-          method: "PUT", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ line_number: item.line_number, description: item.description || `Line ${item.line_number}`, cost_code_id: item.cost_code_id, budget_code_id: sovDraftBudgetCodeIds[item.id] || null, quantity: Number(item.quantity) || 0, unit_cost: Number(item.unit_cost) || 0, unit_of_measure: item.unit_of_measure || null }),
-        });
-        if (!updateRes.ok) {
-          const errorData = await updateRes.json().catch(() => ({}));
-          throw new Error(`Could not save "${item.description || `Line ${item.line_number}`}": ${errorData.error || errorData.details || "unknown error"}`);
+        try {
+          await apiFetch(`/api/projects/${projectId}/contracts/${contractId}/line-items/${item.id}`, {
+            method: "PUT", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ line_number: item.line_number, description: item.description || `Line ${item.line_number}`, cost_code_id: item.cost_code_id, budget_code_id: sovDraftBudgetCodeIds[item.id] || null, quantity: Number(item.quantity) || 0, unit_cost: Number(item.unit_cost) || 0, unit_of_measure: item.unit_of_measure || null }),
+          });
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "unknown error";
+          throw new Error(`Could not save "${item.description || `Line ${item.line_number}`}": ${message}`);
         }
       }
       for (const item of createPayload) {
-        const createRes = await fetch(`/api/projects/${projectId}/contracts/${contractId}/line-items`, {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ line_number: item.line_number, description: item.description || `Line ${item.line_number}`, cost_code_id: item.cost_code_id, budget_code_id: sovDraftBudgetCodeIds[item.id] || null, quantity: Number(item.quantity) || 0, unit_cost: Number(item.unit_cost) || 0, unit_of_measure: item.unit_of_measure || null }),
-        });
-        if (!createRes.ok) {
-          const errorData = await createRes.json().catch(() => ({}));
-          throw new Error(`Could not add "${item.description || `Line ${item.line_number}`}": ${errorData.error || errorData.details || "unknown error"}`);
+        try {
+          await apiFetch(`/api/projects/${projectId}/contracts/${contractId}/line-items`, {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ line_number: item.line_number, description: item.description || `Line ${item.line_number}`, cost_code_id: item.cost_code_id, budget_code_id: sovDraftBudgetCodeIds[item.id] || null, quantity: Number(item.quantity) || 0, unit_cost: Number(item.unit_cost) || 0, unit_of_measure: item.unit_of_measure || null }),
+          });
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "unknown error";
+          throw new Error(`Could not add "${item.description || `Line ${item.line_number}`}": ${message}`);
         }
       }
-      const refreshed = await fetch(`/api/projects/${projectId}/contracts/${contractId}/line-items`);
-      if (refreshed.ok) setLineItems((await refreshed.json()) || []);
+      const refreshed = await apiFetch<ContractLineItem[]>(`/api/projects/${projectId}/contracts/${contractId}/line-items`);
+      setLineItems(refreshed ?? []);
       setIsSovEditing(false);
       setSovDraftItems([]);
       setSovDraftBudgetCodeIds({});

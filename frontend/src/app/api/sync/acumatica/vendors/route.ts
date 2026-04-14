@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 import { syncVendors } from "@/lib/acumatica/sync";
 
@@ -10,13 +12,21 @@ import { syncVendors } from "@/lib/acumatica/sync";
  *
  * No body required.
  */
-export async function POST(_request: Request) {
+export const POST = withApiGuardrails("/api/sync/acumatica/vendors#POST", async () => {
   const supabase = await createClient();
 
   // Verify user is authenticated
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    throw new GuardrailError({
+      code: "AUTH_EXPIRED",
+      where: "/api/sync/acumatica/vendors#POST",
+      message: "Unauthorized vendors sync request.",
+      status: 401,
+      severity: "medium",
+      details: authError ? { reason: authError.message } : undefined,
+      cause: authError ?? undefined,
+    });
   }
 
   try {
@@ -28,7 +38,12 @@ export async function POST(_request: Request) {
       syncedAt: new Date().toISOString(),
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    throw new GuardrailError({
+      code: "UPSTREAM_FAILURE",
+      where: "/api/sync/acumatica/vendors#POST",
+      message: "Vendors sync failed.",
+      details: { reason: err instanceof Error ? err.message : "Unknown error" },
+      cause: err instanceof Error ? err : undefined,
+    });
   }
-}
+});

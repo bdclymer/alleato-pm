@@ -515,20 +515,30 @@ export default function ProjectContractDetailPage() {
   const handleErpSync = async () => {
     setIsSyncing(true);
     try {
-      const [invResp, payResp] = await Promise.all([
-        fetch("/api/sync/acumatica/ar-invoices", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ projectId: Number(projectId) }) }),
-        fetch("/api/sync/acumatica/ar-payments", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ projectId: Number(projectId) }) }),
+      const [invData, payData] = await Promise.all([
+        apiFetch<{ result: { created: number; updated: number; errors: string[] } }>(
+          "/api/sync/acumatica/ar-invoices",
+          {
+            method: "POST",
+            body: JSON.stringify({ projectId: Number(projectId) }),
+          },
+        ),
+        apiFetch<{ result: { created: number; updated: number; errors: string[] } }>(
+          "/api/sync/acumatica/ar-payments",
+          {
+            method: "POST",
+            body: JSON.stringify({ projectId: Number(projectId) }),
+          },
+        ),
       ]);
-      const invData = await invResp.json();
-      const payData = await payResp.json();
-      if (!invResp.ok) throw new Error(invData.error ?? "Invoice sync failed");
-      if (!payResp.ok) throw new Error(payData.error ?? "Payment sync failed");
       const inv = invData.result;
       const pay = payData.result;
       toast.success(`ERP sync complete: ${inv.created + pay.created} created, ${inv.updated + pay.updated} updated${inv.errors.length + pay.errors.length > 0 ? ` (${inv.errors.length + pay.errors.length} errors)` : ""}`);
       queryClient.invalidateQueries({ queryKey: paymentApplicationKeys.list(Number(projectId), contractId) });
-      const payListResp = await fetch(`/api/projects/${projectId}/contracts/${contractId}/payments`);
-      if (payListResp.ok) setPayments((await payListResp.json()) || []);
+      const payList = await apiFetch<Payment[]>(
+        `/api/projects/${projectId}/contracts/${contractId}/payments`,
+      );
+      setPayments(payList || []);
       router.refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "ERP sync failed");
@@ -540,13 +550,15 @@ export default function ProjectContractDetailPage() {
   const handleErpExport = async () => {
     setIsExporting(true);
     try {
-      const response = await fetch("/api/sync/acumatica/export", {
+      const body = await apiFetch<{
+        results?: {
+          paymentApplications?: { created?: number; updated?: number; skipped?: number; errors?: string[] };
+          invoices?: { created?: number; updated?: number; skipped?: number; errors?: string[] };
+        };
+      }>("/api/sync/acumatica/export", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ projectId: Number(projectId), contractId, entities: ["paymentApplications", "invoices"] }),
       });
-      const body = await response.json();
-      if (!response.ok) throw new Error(body.error ?? "Acumatica export failed");
       const paResult = body.results?.paymentApplications as { created?: number; updated?: number; skipped?: number; errors?: string[] } | undefined;
       const invResult = body.results?.invoices as { created?: number; updated?: number; skipped?: number; errors?: string[] } | undefined;
       const totalCreated = (paResult?.created ?? 0) + (invResult?.created ?? 0);
@@ -569,9 +581,17 @@ export default function ProjectContractDetailPage() {
     try {
       const formData = new FormData();
       formData.append("file", file);
-      const response = await fetch(`/api/projects/${projectId}/contracts/${contractId}/attachments`, { method: "POST", body: formData });
-      if (!response.ok) { const err = await response.json().catch(() => ({})); toast.error(err.error || "Failed to upload attachment"); return; }
-      const newAttachment = await response.json();
+      const newAttachment = await apiFetch<{
+        id: string;
+        fileName: string;
+        url: string | null;
+        downloadUrl: string | null;
+        uploadedBy: string;
+        uploadedAt: string;
+      }>(`/api/projects/${projectId}/contracts/${contractId}/attachments`, {
+        method: "POST",
+        body: formData,
+      });
       setAttachments((prev) => [{ id: newAttachment.id, fileName: newAttachment.fileName, url: newAttachment.url ?? null, downloadUrl: newAttachment.downloadUrl, uploadedBy: newAttachment.uploadedBy, uploadedAt: newAttachment.uploadedAt }, ...prev]);
       toast.success(`"${file.name}" uploaded successfully`);
     } catch { toast.error("Failed to upload attachment"); } finally { setIsUploadingAttachment(false); }
@@ -579,8 +599,7 @@ export default function ProjectContractDetailPage() {
 
   const handleDeleteAttachment = async (attachmentId: string) => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/contracts/${contractId}/attachments/${attachmentId}`, { method: "DELETE" });
-      if (!response.ok) { const err = await response.json().catch(() => ({})); toast.error(err.error || "Failed to delete attachment"); return; }
+      await apiFetch(`/api/projects/${projectId}/contracts/${contractId}/attachments/${attachmentId}`, { method: "DELETE" });
       setAttachments((prev) => prev.filter((a) => a.id !== attachmentId));
       toast.success("Attachment deleted");
     } catch { toast.error("Failed to delete attachment"); }
@@ -592,12 +611,10 @@ export default function ProjectContractDetailPage() {
     if (!coForm.change_order_number || !coForm.description || !coForm.amount) { toast.error("CO number, description, and amount are required"); return; }
     setIsSubmittingCo(true);
     try {
-      const response = await fetch(`/api/projects/${projectId}/contracts/${contractId}/change-orders`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
+      const newCo = await apiFetch<PrimeContractCO>(`/api/projects/${projectId}/contracts/${contractId}/change-orders`, {
+        method: "POST",
         body: JSON.stringify({ contract_id: contractId, change_order_number: coForm.change_order_number, description: coForm.description, amount: parseFloat(coForm.amount), status: coForm.status }),
       });
-      if (!response.ok) { const err = await response.json().catch(() => ({})); toast.error(err.error || "Failed to create change order"); return; }
-      const newCo = await response.json();
       setChangeOrders((prev) => [...prev, newCo]);
       setShowNewCoDialog(false);
       setCoForm({ change_order_number: "", description: "", amount: "", status: "pending" });
@@ -615,12 +632,10 @@ export default function ProjectContractDetailPage() {
     if (!editCoForm.change_order_number || !editCoForm.description || !editCoForm.amount) { toast.error("CO number, description, and amount are required"); return; }
     setIsUpdatingCo(true);
     try {
-      const response = await fetch(`/api/projects/${projectId}/contracts/${contractId}/change-orders/${editingCo.id}`, {
-        method: "PUT", headers: { "Content-Type": "application/json" },
+      const updated = await apiFetch<PrimeContractCO>(`/api/projects/${projectId}/contracts/${contractId}/change-orders/${editingCo.id}`, {
+        method: "PUT",
         body: JSON.stringify({ change_order_number: editCoForm.change_order_number, description: editCoForm.description, amount: parseFloat(editCoForm.amount) }),
       });
-      if (!response.ok) { const err = await response.json().catch(() => ({})); toast.error(err.error || "Failed to update change order"); return; }
-      const updated = await response.json();
       setChangeOrders((prev) => prev.map((co) => (co.id === editingCo.id ? { ...co, ...updated } : co)));
       setEditingCo(null);
       toast.success("Change order updated");
@@ -631,8 +646,7 @@ export default function ProjectContractDetailPage() {
     if (!deletingCo) return;
     setIsDeletingCo(true);
     try {
-      const response = await fetch(`/api/projects/${projectId}/contracts/${contractId}/change-orders/${deletingCo.id}`, { method: "DELETE" });
-      if (!response.ok) { const err = await response.json().catch(() => ({})); toast.error(err.error || "Failed to delete change order"); return; }
+      await apiFetch(`/api/projects/${projectId}/contracts/${contractId}/change-orders/${deletingCo.id}`, { method: "DELETE" });
       setChangeOrders((prev) => prev.filter((co) => co.id !== deletingCo.id));
       setDeletingCo(null);
       toast.success("Change order deleted");
@@ -643,10 +657,10 @@ export default function ProjectContractDetailPage() {
     if (!rejectingCoId || !rejectionReason.trim()) { toast.error("Rejection reason is required"); return; }
     setIsRejectingCo(true);
     try {
-      const response = await fetch(`/api/projects/${projectId}/contracts/${contractId}/change-orders/${rejectingCoId}/reject`, {
-        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ rejection_reason: rejectionReason }),
+      await apiFetch(`/api/projects/${projectId}/contracts/${contractId}/change-orders/${rejectingCoId}/reject`, {
+        method: "POST",
+        body: JSON.stringify({ rejection_reason: rejectionReason }),
       });
-      if (!response.ok) { const err = await response.json().catch(() => ({})); toast.error(err.error || "Failed to reject change order"); return; }
       setChangeOrders((prev) => prev.map((co) => co.id === rejectingCoId ? { ...co, status: "rejected", rejection_reason: rejectionReason } : co));
       setShowRejectCoDialog(false);
       setRejectingCoId(null);
@@ -660,9 +674,9 @@ export default function ProjectContractDetailPage() {
   const handleBudgetCodeCreated = async (budgetCodeId: string) => {
     try {
       setBudgetCodesLoading(true);
-      const response = await fetch(`/api/projects/${projectId}/budget-codes`);
-      if (!response.ok) return;
-      const { budgetCodes: codes } = (await response.json()) as { budgetCodes: BudgetCode[] };
+      const { budgetCodes: codes } = await apiFetch<{ budgetCodes: BudgetCode[] }>(
+        `/api/projects/${projectId}/budget-codes`,
+      );
       setBudgetCodes(codes || []);
       const createdBudgetCode = (codes || []).find((code) => code.id === budgetCodeId);
       const costCodeId = createdBudgetCode?.legacyCostCodeId ?? null;
@@ -687,13 +701,14 @@ export default function ProjectContractDetailPage() {
     if (!selectedBudgetCode) { toast.error("Please select a budget code before adding a line item."); return; }
     setIsSubmittingLineItem(true);
     try {
-      const response = await fetch(`/api/projects/${projectId}/contracts/${contractId}/line-items`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
+      await apiFetch(`/api/projects/${projectId}/contracts/${contractId}/line-items`, {
+        method: "POST",
         body: JSON.stringify({ line_number: parseInt(lineItemForm.lineNumber, 10), description: lineItemForm.description, quantity: parseFloat(lineItemForm.quantity) || 0, unit_cost: parseFloat(lineItemForm.unitCost) || 0, unit_of_measure: lineItemForm.unitOfMeasure || null, cost_code_id: costCodeId, budget_code_id: selectedBudgetCode.id }),
       });
-      if (!response.ok) { const errorData = await response.json(); throw new Error(errorData.error || "Failed to create line item"); }
-      const lineItemsResponse = await fetch(`/api/projects/${projectId}/contracts/${contractId}/line-items`);
-      if (lineItemsResponse.ok) setLineItems((await lineItemsResponse.json()) || []);
+      const refreshedItems = await apiFetch<ContractLineItem[]>(
+        `/api/projects/${projectId}/contracts/${contractId}/line-items`,
+      );
+      setLineItems(refreshedItems || []);
       setLineItemForm({ lineNumber: "", description: "", quantity: "1", unitCost: "0", unitOfMeasure: "", budgetCodeId: "" });
       setShowAddLineItemDialog(false);
     } catch (err) { toast.error(err instanceof Error ? err.message : "Failed to create line item"); } finally { setIsSubmittingLineItem(false); }
@@ -703,8 +718,7 @@ export default function ProjectContractDetailPage() {
     if (!lineItemToDelete) return;
     setIsDeletingLineItem(true);
     try {
-      const response = await fetch(`/api/projects/${projectId}/contracts/${contractId}/line-items/${lineItemToDelete.id}`, { method: "DELETE" });
-      if (!response.ok) { const data = await response.json().catch(() => ({})); toast.error(data.error || "Failed to delete line item"); return; }
+      await apiFetch(`/api/projects/${projectId}/contracts/${contractId}/line-items/${lineItemToDelete.id}`, { method: "DELETE" });
       setLineItems((prev) => prev.filter((li) => li.id !== lineItemToDelete.id));
       toast.success("Line item deleted");
     } catch { toast.error("Failed to delete line item"); } finally { setIsDeletingLineItem(false); setLineItemToDelete(null); }
@@ -718,8 +732,8 @@ export default function ProjectContractDetailPage() {
     try {
       const sovItems = (data.sovItems || []).filter((item) => !item.isGroup);
       const sovTotal = sovItems.reduce((sum, item) => sum + (data.accountingMethod === "unit_quantity" ? (item.quantity ?? 0) * (item.unitCost ?? 0) : item.amount || 0), 0);
-      const response = await fetch(`/api/projects/${projectId}/contracts/${contractId}`, {
-        method: "PUT", headers: { "Content-Type": "application/json" },
+      await apiFetch(`/api/projects/${projectId}/contracts/${contractId}`, {
+        method: "PUT",
         body: JSON.stringify({
           contract_number: data.number, title: data.title, client_id: data.ownerCompanyId || null, contractor_id: data.contractorId || null, architect_engineer_id: data.architectEngineerId || null,
           contract_company_id: data.ownerCompanyId || data.contractCompanyId || null, description: data.description, status: data.status || "draft", executed: data.executed || false, original_contract_value: sovTotal,
@@ -730,9 +744,9 @@ export default function ProjectContractDetailPage() {
           is_private: data.isPrivate || false, inclusions: data.inclusions || null, exclusions: data.exclusions || null,
         }),
       });
-      if (!response.ok) { const errorData = await response.json().catch(() => ({})); if (errorData.details?.length > 0) { throw new Error(`Validation failed — ${errorData.details.map((d: { field: string; message: string }) => `${d.field}: ${d.message}`).join("; ")}`); } throw new Error(errorData.error || "Failed to update contract"); }
-      const budgetCodesResponse = await fetch(`/api/projects/${projectId}/budget-codes`, { credentials: "include" });
-      const budgetCodesPayload = budgetCodesResponse.ok ? await budgetCodesResponse.json().catch(() => ({ budgetCodes: [] })) : { budgetCodes: [] };
+      const budgetCodesPayload = await apiFetch<{ budgetCodes: Array<{ id: string; legacyCostCodeId?: string | null }> }>(
+        `/api/projects/${projectId}/budget-codes`,
+      ).catch(() => ({ budgetCodes: [] }));
       const budgetCodeIdToCostCode = new Map<string, string | null>((budgetCodesPayload.budgetCodes || []).map((code: { id: string; legacyCostCodeId?: string | null }) => [code.id, code.legacyCostCodeId ?? null]));
       const itemsToPersist = sovItems.map((item, index) => {
         const budgetCodeId = item.budgetCodeId || "";
@@ -746,23 +760,54 @@ export default function ProjectContractDetailPage() {
       const updates = itemsToPersist.filter((item) => existingIds.has(item.id));
       const creates = itemsToPersist.filter((item) => !existingIds.has(item.id));
       const deletions = lineItems.filter((item) => !incomingIds.has(item.id)).map((item) => item.id);
-      const formatSovError = (errorData: { error?: string; details?: string | Array<{ field: string; message: string }> }): string => {
-        const base = errorData.error || "an unexpected error occurred";
-        if (!errorData.details) return base;
-        const detail = typeof errorData.details === "string" ? errorData.details : Array.isArray(errorData.details) ? errorData.details.map((d) => `${d.field}: ${d.message}`).join("; ") : "";
-        return detail ? `${base} — ${detail}` : base;
-      };
-      const [updateResults, deleteResponses] = await Promise.all([
-        Promise.all(updates.map(async (item) => { const res = await fetch(`/api/projects/${projectId}/contracts/${contractId}/line-items/${item.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ line_number: item.line_number, description: item.description, cost_code_id: item.cost_code_id, budget_code_id: item.budget_code_id, quantity: item.quantity, unit_cost: item.unit_cost, unit_of_measure: item.unit_of_measure }) }); return { item, res }; })),
-        Promise.all(deletions.map((lineItemId) => fetch(`/api/projects/${projectId}/contracts/${contractId}/line-items/${lineItemId}`, { method: "DELETE" }))),
-      ]);
-      const failedUpdate = updateResults.find((r) => !r.res.ok);
-      if (failedUpdate) { const errorData = await failedUpdate.res.json().catch(() => ({})); throw new Error(`Could not save "${failedUpdate.item.description || `Line ${failedUpdate.item.line_number}`}": ${formatSovError(errorData)}`); }
-      const failedDelete = deleteResponses.find((res) => !res.ok);
-      if (failedDelete) { const errorData = await failedDelete.json().catch(() => ({})); throw new Error(`Could not remove line item: ${formatSovError(errorData)}`); }
+      for (const item of updates) {
+        try {
+          await apiFetch(`/api/projects/${projectId}/contracts/${contractId}/line-items/${item.id}`, {
+            method: "PUT",
+            body: JSON.stringify({
+              line_number: item.line_number,
+              description: item.description,
+              cost_code_id: item.cost_code_id,
+              budget_code_id: item.budget_code_id,
+              quantity: item.quantity,
+              unit_cost: item.unit_cost,
+              unit_of_measure: item.unit_of_measure,
+            }),
+          });
+        } catch (error) {
+          throw new Error(
+            `Could not save "${item.description || `Line ${item.line_number}`}": ${error instanceof Error ? error.message : String(error)}`,
+          );
+        }
+      }
+      for (const lineItemId of deletions) {
+        try {
+          await apiFetch(`/api/projects/${projectId}/contracts/${contractId}/line-items/${lineItemId}`, { method: "DELETE" });
+        } catch (error) {
+          throw new Error(
+            `Could not remove line item: ${error instanceof Error ? error.message : String(error)}`,
+          );
+        }
+      }
       for (const item of creates) {
-        const createRes = await fetch(`/api/projects/${projectId}/contracts/${contractId}/line-items`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ line_number: item.line_number, description: item.description, cost_code_id: item.cost_code_id, budget_code_id: item.budget_code_id, quantity: item.quantity, unit_cost: item.unit_cost, unit_of_measure: item.unit_of_measure }) });
-        if (!createRes.ok) { const errorData = await createRes.json().catch(() => ({})); throw new Error(`Could not add "${item.description || `Line ${item.line_number}`}": ${formatSovError(errorData)}`); }
+        try {
+          await apiFetch(`/api/projects/${projectId}/contracts/${contractId}/line-items`, {
+            method: "POST",
+            body: JSON.stringify({
+              line_number: item.line_number,
+              description: item.description,
+              cost_code_id: item.cost_code_id,
+              budget_code_id: item.budget_code_id,
+              quantity: item.quantity,
+              unit_cost: item.unit_cost,
+              unit_of_measure: item.unit_of_measure,
+            }),
+          });
+        } catch (error) {
+          throw new Error(
+            `Could not add "${item.description || `Line ${item.line_number}`}": ${error instanceof Error ? error.message : String(error)}`,
+          );
+        }
       }
       toast.success("Contract updated successfully");
       setIsEditing(false);

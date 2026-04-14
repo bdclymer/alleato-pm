@@ -1,4 +1,7 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
+import { parseJsonBody, withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { syncAllMirrorEntities } from "@/lib/acumatica/mirror-sync";
 
 /**
@@ -9,23 +12,40 @@ import { syncAllMirrorEntities } from "@/lib/acumatica/mirror-sync";
  *
  * Called by the scheduled remote agent twice daily (6am + 6pm ET).
  */
-export async function POST(req: Request) {
-  const authHeader = req.headers.get("authorization");
+const AccountingSyncRequestSchema = z.object({
+  mode: z.enum(["incremental", "full"]).optional(),
+});
+
+export const POST = withApiGuardrails("/api/accounting/sync#POST", async ({ request }) => {
+  const authHeader = request.headers.get("authorization");
   const secret = process.env.ACCOUNTING_SYNC_SECRET;
 
   if (!secret) {
-    return NextResponse.json(
-      { error: "ACCOUNTING_SYNC_SECRET not configured" },
-      { status: 500 },
-    );
+    throw new GuardrailError({
+      code: "MISSING_ENV_VAR",
+      where: "/api/accounting/sync#POST",
+      message: "ACCOUNTING_SYNC_SECRET is not configured.",
+      details: { variable: "ACCOUNTING_SYNC_SECRET" },
+      severity: "high",
+    });
   }
 
   if (authHeader !== `Bearer ${secret}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    throw new GuardrailError({
+      code: "AUTH_EXPIRED",
+      where: "/api/accounting/sync#POST",
+      message: "Unauthorized accounting sync request.",
+      status: 401,
+      severity: "medium",
+    });
   }
 
-  const body = await req.json().catch(() => ({}));
-  const mode: "incremental" | "full" = body.mode === "full" ? "full" : "incremental";
+  const body = await parseJsonBody(
+    request,
+    AccountingSyncRequestSchema,
+    "/api/accounting/sync#POST",
+  );
+  const mode: "incremental" | "full" = body.mode ?? "incremental";
 
   try {
     const results = await syncAllMirrorEntities({ mode });
@@ -51,8 +71,14 @@ export async function POST(req: Request) {
       syncedAt: new Date().toISOString(),
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    console.error("[accounting/sync] Sync failed:", message);
-    return NextResponse.json({ ok: false, error: message }, { status: 500 });
+    throw new GuardrailError({
+      code: "UPSTREAM_FAILURE",
+      where: "/api/accounting/sync#POST",
+      message: "Accounting mirror sync failed.",
+      details: {
+        reason: err instanceof Error ? err.message : "Unknown error",
+      },
+      cause: err instanceof Error ? err : undefined,
+    });
   }
-}
+});

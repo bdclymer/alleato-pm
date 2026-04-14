@@ -30,6 +30,7 @@ import {
   InlineTableRow,
   InlineTableCell,
 } from "@/components/ds/inline-table";
+import { apiFetch } from "@/lib/api-client";
 import type { BudgetCode, VerticalMarkup } from "@/app/(main)/[projectId]/prime-contracts/[contractId]/types";
 
 const ALLOWED_MARKUP_TYPES = ["insurance", "bond", "fee", "overhead", "custom"] as const;
@@ -203,22 +204,17 @@ export function PrimeContractFinancialMarkupTab({
             ? { ...m, markup_type: markupForm.markup_type.trim(), percentage: pct, compound: markupForm.compound }
             : m,
         );
-        const response = await fetch(`/api/projects/${projectId}/vertical-markup`, {
+        const data = await apiFetch<{ markups?: VerticalMarkup[] }>(`/api/projects/${projectId}/vertical-markup`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ markups: updatedMarkups }),
         });
-        if (!response.ok) {
-          const err = await response.json();
-          throw new Error(err.error || "Failed to update markup");
-        }
-        const data = await response.json();
         const normalized = normalizeVerticalMarkupRows(data.markups || []);
         setVerticalMarkups(normalized);
         setSavedVerticalMarkups(normalized);
         toast.success("Markup updated");
       } else {
-        const response = await fetch(`/api/projects/${projectId}/vertical-markup`, {
+        const data = await apiFetch<{ data: VerticalMarkup }>(`/api/projects/${projectId}/vertical-markup`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -227,11 +223,6 @@ export function PrimeContractFinancialMarkupTab({
             compound: markupForm.compound,
           }),
         });
-        if (!response.ok) {
-          const err = await response.json();
-          throw new Error(err.error || "Failed to create markup");
-        }
-        const data = await response.json();
         setVerticalMarkups((prev) => [...prev, data.data]);
         toast.success("Markup added");
       }
@@ -247,14 +238,10 @@ export function PrimeContractFinancialMarkupTab({
   const handleDeleteMarkup = async (markupId: string) => {
     setDeletingMarkupId(markupId);
     try {
-      const response = await fetch(
+      await apiFetch(
         `/api/projects/${projectId}/vertical-markup?markupId=${markupId}`,
         { method: "DELETE" },
       );
-      if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.error || "Failed to delete markup");
-      }
       setVerticalMarkups((prev) => prev.filter((m) => m.id !== markupId));
       setSavedVerticalMarkups((prev) => prev.filter((m) => m.id !== markupId));
       setMarkupMapsToById((prev) => {
@@ -284,7 +271,7 @@ export function PrimeContractFinancialMarkupTab({
       return;
     }
     try {
-      const response = await fetch(`/api/projects/${projectId}/vertical-markup`, {
+      const data = await apiFetch<{ data: VerticalMarkup }>(`/api/projects/${projectId}/vertical-markup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -293,11 +280,6 @@ export function PrimeContractFinancialMarkupTab({
           compound: false,
         }),
       });
-      if (!response.ok) {
-        const err = await response.json().catch(() => null);
-        throw new Error(err?.error || "Failed to create markup");
-      }
-      const data = await response.json();
       const newMarkup: VerticalMarkup = data.data;
       setVerticalMarkups((prev) => [...prev, newMarkup]);
       setSavedVerticalMarkups((prev) => [...prev, newMarkup]);
@@ -402,20 +384,11 @@ export function PrimeContractFinancialMarkupTab({
 
     setIsSavingMarkupTable(true);
     try {
-      const response = await fetch(`/api/projects/${projectId}/vertical-markup`, {
+      const data = await apiFetch<{ markups?: VerticalMarkup[] }>(`/api/projects/${projectId}/vertical-markup`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ markups: markupsToPersist }),
       });
-      if (!response.ok) {
-        const err = await response.json().catch(() => null);
-        const details =
-          typeof err?.details === "string" && err.details.trim().length > 0
-            ? ` (${err.details})`
-            : "";
-        throw new Error((err?.error || "Failed to save markup table") + details);
-      }
-      const data = await response.json();
       const updatedMarkups: VerticalMarkup[] = normalizeVerticalMarkupRows(
         data.markups || [],
       );

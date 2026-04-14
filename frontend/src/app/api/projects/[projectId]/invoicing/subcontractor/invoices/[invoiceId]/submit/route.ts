@@ -3,7 +3,6 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
-import { apiErrorResponse } from "@/lib/api-error";
 import { sendEmail } from "@/lib/email/send";
 import InvoiceSubmittedToPM from "@/emails/subcontractor/InvoiceSubmittedToPM";
 import { APP_BASE_URL } from "@/lib/email/client";
@@ -23,10 +22,15 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
     } = await supabase.auth.getUser();
 
     if (authError) {
-      return NextResponse.json(
-        { error: "Authentication failed", details: authError.message },
-        { status: 401 },
-      );
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/submit#POST",
+        message: "Authentication failed",
+        status: 401,
+        severity: "medium",
+        details: { reason: authError.message },
+        cause: authError,
+      });
     }
 
     if (!user) {
@@ -45,23 +49,32 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
 
     if (fetchError) {
       if (fetchError.code === "PGRST116") {
-        return NextResponse.json(
-          { error: "Invoice not found" },
-          { status: 404 },
-        );
+        throw new GuardrailError({
+          code: "ROUTE_BINDING_MISSING",
+          where: "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/submit#POST",
+          message: "Invoice not found",
+          status: 404,
+          severity: "low",
+        });
       }
-      return NextResponse.json(
-        { error: "Failed to verify invoice", details: fetchError.message },
-        { status: 500 },
-      );
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/submit#POST",
+        message: "Failed to verify invoice",
+        details: { reason: fetchError.message },
+        cause: fetchError,
+      });
     }
 
     const submittableStatuses = ["draft", "revise_and_resubmit"];
     if (!submittableStatuses.includes(invoice.status)) {
-      return NextResponse.json(
-        { error: "Invoice must be in Draft or Revise & Resubmit status to submit" },
-        { status: 400 },
-      );
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/submit#POST",
+        message: "Invoice must be in Draft or Revise & Resubmit status to submit",
+        status: 400,
+        severity: "low",
+      });
     }
 
     const { data: updated, error: updateError } = await supabase
@@ -76,15 +89,21 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
 
     if (updateError) {
       if (updateError.code === "42501") {
-        return NextResponse.json(
-          { error: "Permission denied" },
-          { status: 403 },
-        );
+        throw new GuardrailError({
+          code: "AUTH_FORBIDDEN",
+          where: "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/submit#POST",
+          message: "Permission denied",
+          status: 403,
+          severity: "medium",
+        });
       }
-      return NextResponse.json(
-        { error: "Failed to submit invoice", details: updateError.message },
-        { status: 500 },
-      );
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/submit#POST",
+        message: "Failed to submit invoice",
+        details: { reason: updateError.message },
+        cause: updateError,
+      });
     }
 
     // Fire-and-forget PM notification — do not block the submit response.

@@ -86,7 +86,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
       cost_type:cost_code_types(code, description),
       sub_job:sub_jobs(code, name)
     `;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     let budgetLinesRes = await (supabase as any)
       .from("v_budget_lines")
       .select(budgetLineSelect)
@@ -121,7 +121,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
     ] = await Promise.all([
 
       // Direct costs for calculations
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       (supabase as any)
         .from("direct_cost_line_items")
         .select(
@@ -157,7 +157,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
         .in("purchase_orders.status", PENDING_PO_STATUSES),
 
       // Pending change orders for Pending Budget Changes
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       (supabase as any)
         .from("change_order_lines")
         .select("cost_code_id, amount, change_orders!inner(status, project_id)")

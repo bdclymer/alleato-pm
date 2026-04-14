@@ -5,6 +5,10 @@ description: README documentation
 
 # Pattern Library
 
+> Deprecated on 2026-04-14.
+> Canonical replacement: `docs/ops/patterns/index.md`.
+> Reason: references outdated `.agents/patterns` path and old injection workflow.
+
 This folder contains documented patterns for preventing recurring AI mistakes in the Alleato-Procore project.
 
 ## Purpose

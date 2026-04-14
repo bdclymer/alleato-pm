@@ -1,4 +1,7 @@
 import { NextRequest } from "next/server";
+import { z } from "zod";
+import { parseJsonBody, withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -7,25 +10,48 @@ import { createClient } from "@/lib/supabase/server";
  * This route spawns Python eval scripts — it only works in local development.
  * On Vercel, it returns 503 since there's no Python venv available.
  */
-export async function POST(request: NextRequest) {
+const RagEvalTypeSchema = z.enum(["l1", "l2", "reranker", "coverage", "e2e"]);
+const RagEvalRequestSchema = z.object({
+  type: RagEvalTypeSchema,
+});
+
+export const POST = withApiGuardrails("/api/admin/rag-eval/run#POST", async ({ request }) => {
   // OWASP A01:2021 - Broken Access Control: require authenticated admin
   const supabase = await createClient();
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
+    throw new GuardrailError({
+      code: "AUTH_EXPIRED",
+      where: "/api/admin/rag-eval/run#POST",
+      message: "Unauthorized RAG eval request.",
+      status: 401,
+      severity: "medium",
+      details: authError ? { reason: authError.message } : undefined,
+      cause: authError ?? undefined,
+    });
   }
   const { data: profile } = await supabase.from("user_profiles").select("is_admin").eq("id", user.id).single();
   if (!profile?.is_admin) {
-    return Response.json({ error: "Admin access required" }, { status: 403 });
+    throw new GuardrailError({
+      code: "AUTH_FORBIDDEN",
+      where: "/api/admin/rag-eval/run#POST",
+      message: "Admin access required.",
+      status: 403,
+      severity: "medium",
+    });
   }
 
   // This route requires a local Python venv and backend scripts.
   // It cannot function on Vercel.
   if (process.env.VERCEL) {
-    return Response.json(
-      { error: "RAG eval runner is only available in local development (requires Python venv)" },
-      { status: 503 },
-    );
+    throw new GuardrailError({
+      code: "UPSTREAM_FAILURE",
+      where: "/api/admin/rag-eval/run#POST",
+      message: "RAG eval runner is only available in local development.",
+      status: 503,
+      severity: "low",
+      details: { reason: "Requires local Python environment; unavailable on Vercel." },
+    });
   }
 
   // Dynamic imports to avoid bundling child_process/fs/path at trace time
@@ -37,7 +63,7 @@ export async function POST(request: NextRequest) {
   const PYTHON = process.env.RAG_EVAL_PYTHON_BIN || "python3";
   const RAG_DIR = path.join(REPO_ROOT, "docs/PRPs/rag");
 
-  type EvalType = "l1" | "l2" | "reranker" | "coverage" | "e2e";
+  type EvalType = z.infer<typeof RagEvalTypeSchema>;
 
   const EVAL_CONFIGS: Record<EvalType, { script: string; args: (outputPath: string) => string[]; description: string }> = {
     l1: {
@@ -67,15 +93,12 @@ export async function POST(request: NextRequest) {
     },
   };
 
-  const body = await request.json();
-  const evalType = body.type as EvalType;
-
-  if (!evalType || !EVAL_CONFIGS[evalType]) {
-    return Response.json(
-      { error: `Unknown eval type: ${evalType}. Valid: ${Object.keys(EVAL_CONFIGS).join(", ")}` },
-      { status: 400 },
-    );
-  }
+  const body = await parseJsonBody(
+    request,
+    RagEvalRequestSchema,
+    "/api/admin/rag-eval/run#POST",
+  );
+  const evalType: EvalType = body.type;
 
   const config = EVAL_CONFIGS[evalType];
   const scriptPath = path.join(REPO_ROOT, config.script);
@@ -138,4 +161,4 @@ export async function POST(request: NextRequest) {
       Connection: "keep-alive",
     },
   });
-}
+});

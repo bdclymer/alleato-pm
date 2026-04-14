@@ -2,7 +2,6 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { apiErrorResponse } from "@/lib/api-error";
 
 // POST /api/projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/void
 // Void a subcontractor invoice. Pre-condition: must not already be paid or void.
@@ -19,10 +18,15 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
     } = await supabase.auth.getUser();
 
     if (authError) {
-      return NextResponse.json(
-        { error: "Authentication failed", details: authError.message },
-        { status: 401 },
-      );
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/void#POST",
+        message: "Authentication failed",
+        status: 401,
+        severity: "medium",
+        details: { reason: authError.message },
+        cause: authError,
+      });
     }
 
     if (!user) {
@@ -51,22 +55,31 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
 
     if (fetchError) {
       if (fetchError.code === "PGRST116") {
-        return NextResponse.json(
-          { error: "Invoice not found" },
-          { status: 404 },
-        );
+        throw new GuardrailError({
+          code: "ROUTE_BINDING_MISSING",
+          where: "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/void#POST",
+          message: "Invoice not found",
+          status: 404,
+          severity: "low",
+        });
       }
-      return NextResponse.json(
-        { error: "Failed to verify invoice", details: fetchError.message },
-        { status: 500 },
-      );
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/void#POST",
+        message: "Failed to verify invoice",
+        details: { reason: fetchError.message },
+        cause: fetchError,
+      });
     }
 
     if (invoice.status === "paid" || invoice.status === "void") {
-      return NextResponse.json(
-        { error: `Invoice cannot be voided from status "${invoice.status}"` },
-        { status: 400 },
-      );
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/void#POST",
+        message: `Invoice cannot be voided from status "${invoice.status}"`,
+        status: 400,
+        severity: "low",
+      });
     }
 
     const existingNotes: string | null = invoice.notes ?? null;
@@ -87,15 +100,21 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
 
     if (updateError) {
       if (updateError.code === "42501") {
-        return NextResponse.json(
-          { error: "Permission denied" },
-          { status: 403 },
-        );
+        throw new GuardrailError({
+          code: "AUTH_FORBIDDEN",
+          where: "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/void#POST",
+          message: "Permission denied",
+          status: 403,
+          severity: "medium",
+        });
       }
-      return NextResponse.json(
-        { error: "Failed to void invoice", details: updateError.message },
-        { status: 500 },
-      );
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/void#POST",
+        message: "Failed to void invoice",
+        details: { reason: updateError.message },
+        cause: updateError,
+      });
     }
 
     return NextResponse.json({

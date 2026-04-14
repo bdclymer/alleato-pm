@@ -2,7 +2,6 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { apiErrorResponse } from "@/lib/api-error";
 
 // GET → list related items for this invoice
 // POST → link a related item  { related_type, related_id, description? }
@@ -22,10 +21,12 @@ export const GET = withApiGuardrails<{ projectId: string; invoiceId: string }>(
       .order("linked_at", { ascending: false });
 
     if (error) {
-      return NextResponse.json(
-        { error: "Failed to fetch related items", details: error.message },
-        { status: 500 },
-      );
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/related-items#GET",
+        message: "Failed to fetch related items.",
+        details: error.message,
+      });
     }
 
     return NextResponse.json({ data: data ?? [] });
@@ -46,10 +47,11 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
     const body = await request.json().catch(() => ({}));
     const { related_type, related_id, description } = body ?? {};
     if (!related_type || !related_id) {
-      return NextResponse.json(
-        { error: "related_type and related_id required" },
-        { status: 400 },
-      );
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/related-items#POST",
+        message: "related_type and related_id required.",
+      });
     }
 
     const { data, error } = await supabase
@@ -65,10 +67,12 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
       .single();
 
     if (error) {
-      return NextResponse.json(
-        { error: "Failed to link item", details: error.message },
-        { status: 500 },
-      );
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/related-items#POST",
+        message: "Failed to link item.",
+        details: error.message,
+      });
     }
 
     return NextResponse.json({ data });
@@ -86,7 +90,11 @@ export const DELETE = withApiGuardrails<{ projectId: string; invoiceId: string }
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
     if (!id) {
-      return NextResponse.json({ error: "id query param required" }, { status: 400 });
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/related-items#DELETE",
+        message: "id query param required.",
+      });
     }
 
     const { error } = await supabase
@@ -96,10 +104,12 @@ export const DELETE = withApiGuardrails<{ projectId: string; invoiceId: string }
       .eq("invoice_id", invoiceIdNum);
 
     if (error) {
-      return NextResponse.json(
-        { error: "Failed to unlink item", details: error.message },
-        { status: 500 },
-      );
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/related-items#DELETE",
+        message: "Failed to unlink item.",
+        details: error.message,
+      });
     }
 
     return NextResponse.json({ message: "Unlinked" });

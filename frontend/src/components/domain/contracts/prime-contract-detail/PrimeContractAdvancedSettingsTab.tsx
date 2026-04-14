@@ -72,46 +72,32 @@ export function PrimeContractAdvancedSettingsTab({
 
     setAdvancedSettingsSaving(true);
     try {
-      const savedProjectSettings = await apiFetch<PrimeContractSettings>(
-        `/api/projects/${projectId}/contracts/settings`,
+      const payload = await apiFetch<{
+        project_settings: PrimeContractSettings;
+        contract: Record<string, unknown>;
+      }>(
+        `/api/projects/${projectId}/contracts/${contractId}/advanced-settings`,
         {
           method: "PUT",
-          body: JSON.stringify(advancedSettings),
-        },
-      );
-
-      setAdvancedSettings(savedProjectSettings);
-
-      try {
-        const savedContract = await apiFetch<Record<string, unknown>>(
-          `/api/projects/${projectId}/contracts/${contractId}`,
-          {
-            method: "PUT",
-            body: JSON.stringify({
+          body: JSON.stringify({
+            project_settings: advancedSettings,
+            contract_settings: {
               inclusions: contractAdvancedDraft.inclusions || null,
               exclusions: contractAdvancedDraft.exclusions || null,
               is_private: contractAdvancedDraft.is_private,
               retention_percentage: advancedSettings.default_retainage_percent,
               payment_terms: contractAdvancedDraft.payment_terms || null,
               billing_schedule: contractAdvancedDraft.billing_schedule || null,
-            }),
-          },
-        );
+            },
+          }),
+        },
+      );
 
-        setContract((prev) => (prev ? { ...prev, ...savedContract } : prev));
-        toast.success("Advanced settings saved");
-      } catch (contractError) {
-        const { message } = handleFormError(contractError, {
-          entity: "prime contract advanced settings",
-          action: "save",
-          silent: true,
-        });
-        toast.error(
-          `Project-level settings were saved, but the contract-specific advanced settings were not. ${message}`,
-        );
-      }
-    } catch (projectSettingsError) {
-      handleFormError(projectSettingsError, {
+      setAdvancedSettings(payload.project_settings);
+      setContract((prev) => (prev ? { ...prev, ...payload.contract } : prev));
+      toast.success("Advanced settings saved");
+    } catch (error) {
+      handleFormError(error, {
         entity: "prime contract advanced settings",
         action: "save",
       });

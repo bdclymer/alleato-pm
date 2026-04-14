@@ -2,7 +2,6 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { apiErrorResponse } from "@/lib/api-error";
 
 // Helper to verify invoice belongs to project and return editable status
 async function verifyInvoice(
@@ -42,8 +41,21 @@ export const GET = withApiGuardrails<{ projectId: string; invoiceId: string }>(
     const invoiceIdNum = parseInt(invoiceId, 10);
 
     const { invoice, notFound, error } = await verifyInvoice(supabase, invoiceIdNum, projectIdNum);
-    if (notFound) return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
-    if (error || !invoice) return NextResponse.json({ error: "Failed to verify invoice" }, { status: 500 });
+    if (notFound) {
+      throw new GuardrailError({
+        code: "ROUTE_BINDING_MISSING",
+        where: "projects/[projectId]/invoicing/owner/[invoiceId]/line-items#GET",
+        message: "Invoice not found.",
+      });
+    }
+    if (error || !invoice) {
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: "projects/[projectId]/invoicing/owner/[invoiceId]/line-items#GET",
+        message: "Failed to verify invoice.",
+        details: error?.message ?? undefined,
+      });
+    }
 
     const { data: lineItems, error: lineItemsError } = await supabase
       .from("owner_invoice_line_items")
@@ -52,10 +64,12 @@ export const GET = withApiGuardrails<{ projectId: string; invoiceId: string }>(
       .order("sort_order", { ascending: true });
 
     if (lineItemsError) {
-      return NextResponse.json(
-        { error: "Failed to fetch line items", details: lineItemsError.message },
-        { status: 500 },
-      );
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: "projects/[projectId]/invoicing/owner/[invoiceId]/line-items#GET",
+        message: "Failed to fetch line items.",
+        details: lineItemsError.message,
+      });
     }
 
     return NextResponse.json({ data: lineItems ?? [] });
@@ -80,15 +94,29 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
     const invoiceIdNum = parseInt(invoiceId, 10);
 
     const { invoice, notFound, error: verifyError } = await verifyInvoice(supabase, invoiceIdNum, projectIdNum);
-    if (notFound) return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
-    if (verifyError || !invoice) return NextResponse.json({ error: "Failed to verify invoice" }, { status: 500 });
+    if (notFound) {
+      throw new GuardrailError({
+        code: "ROUTE_BINDING_MISSING",
+        where: "projects/[projectId]/invoicing/owner/[invoiceId]/line-items#POST",
+        message: "Invoice not found.",
+      });
+    }
+    if (verifyError || !invoice) {
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: "projects/[projectId]/invoicing/owner/[invoiceId]/line-items#POST",
+        message: "Failed to verify invoice.",
+        details: verifyError?.message ?? undefined,
+      });
+    }
 
     const editableStatuses = ["draft", "revise_and_resubmit"];
     if (!editableStatuses.includes(invoice.status)) {
-      return NextResponse.json(
-        { error: `Invoice status '${invoice.status}' does not allow editing` },
-        { status: 400 },
-      );
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: "projects/[projectId]/invoicing/owner/[invoiceId]/line-items#POST",
+        message: `Invoice status '${invoice.status}' does not allow editing.`,
+      });
     }
 
     const body = await request.json();
@@ -120,10 +148,12 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
       .single();
 
     if (insertError) {
-      return NextResponse.json(
-        { error: "Failed to create line item", details: insertError.message },
-        { status: 500 },
-      );
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: "projects/[projectId]/invoicing/owner/[invoiceId]/line-items#POST",
+        message: "Failed to create line item.",
+        details: insertError.message,
+      });
     }
 
     return NextResponse.json({ data: lineItem }, { status: 201 });
@@ -149,24 +179,40 @@ export const PATCH = withApiGuardrails<{ projectId: string; invoiceId: string }>
     const invoiceIdNum = parseInt(invoiceId, 10);
 
     const { invoice, notFound, error: verifyError } = await verifyInvoice(supabase, invoiceIdNum, projectIdNum);
-    if (notFound) return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
-    if (verifyError || !invoice) return NextResponse.json({ error: "Failed to verify invoice" }, { status: 500 });
+    if (notFound) {
+      throw new GuardrailError({
+        code: "ROUTE_BINDING_MISSING",
+        where: "projects/[projectId]/invoicing/owner/[invoiceId]/line-items#PATCH",
+        message: "Invoice not found.",
+      });
+    }
+    if (verifyError || !invoice) {
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: "projects/[projectId]/invoicing/owner/[invoiceId]/line-items#PATCH",
+        message: "Failed to verify invoice.",
+        details: verifyError?.message ?? undefined,
+      });
+    }
 
     const editableStatuses = ["draft", "revise_and_resubmit"];
     if (!editableStatuses.includes(invoice.status)) {
-      return NextResponse.json(
-        { error: `Invoice status '${invoice.status}' does not allow editing` },
-        { status: 400 },
-      );
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: "projects/[projectId]/invoicing/owner/[invoiceId]/line-items#PATCH",
+        message: `Invoice status '${invoice.status}' does not allow editing.`,
+      });
     }
 
     const body = await request.json();
     const updates = Array.isArray(body) ? body : body?.updates;
     if (!Array.isArray(updates) || updates.length === 0) {
-      return NextResponse.json(
-        { error: "Request body must include a non-empty 'updates' array of line item updates" },
-        { status: 400 },
-      );
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: "projects/[projectId]/invoicing/owner/[invoiceId]/line-items#PATCH",
+        message:
+          "Request body must include a non-empty 'updates' array of line item updates.",
+      });
     }
 
     const ALLOWED_UPDATE_FIELDS = [
@@ -202,10 +248,12 @@ export const PATCH = withApiGuardrails<{ projectId: string; invoiceId: string }>
         .single();
 
       if (updateError) {
-        return NextResponse.json(
-          { error: `Failed to update line item ${id}`, details: updateError.message },
-          { status: 500 },
-        );
+        throw new GuardrailError({
+          code: "INTERNAL_ERROR",
+          where: "projects/[projectId]/invoicing/owner/[invoiceId]/line-items#PATCH",
+          message: `Failed to update line item ${id}.`,
+          details: updateError.message,
+        });
       }
 
       results.push(updated);

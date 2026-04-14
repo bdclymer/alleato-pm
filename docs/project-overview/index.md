@@ -1,5 +1,8 @@
 # Alleato-PM — Documentation Index
 
+> Snapshot notice: this directory is a generated/reference snapshot and may drift from live code.
+> For ongoing decisions, incidents, and active guardrails, use `docs/ops/` as canonical.
+
 > Last updated: 2026-03-24 | Full deep scan | Multi-part monorepo
 
 Alleato-PM (alleato-procore) is a construction project management platform built as a Next.js 15 frontend with a Python FastAPI AI/agent backend and Supabase PostgreSQL database. It mirrors Procore's functionality with tools for budgets, contracts, change orders, drawings, scheduling, and more — augmented by an AI assistant with RAG capabilities.

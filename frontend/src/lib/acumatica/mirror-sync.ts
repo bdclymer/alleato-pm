@@ -70,7 +70,7 @@ type MirrorRow = Record<string, unknown> & {
 // Entity config
 // ---------------------------------------------------------------------------
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 interface EntityConfig<TFlat = any> {
   /** Acumatica API entity name (e.g. "Customer", "Bill"). */
   entityName: string;

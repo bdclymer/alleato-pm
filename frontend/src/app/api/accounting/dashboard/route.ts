@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 
@@ -133,11 +135,17 @@ function startOfCurrentMonth(): string {
 // GET /api/accounting/dashboard
 // ---------------------------------------------------------------------------
 
-export async function GET() {
+export const GET = withApiGuardrails("/api/accounting/dashboard#GET", async () => {
   // Auth check
   const user = await getApiRouteUser();
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    throw new GuardrailError({
+      code: "AUTH_EXPIRED",
+      where: "/api/accounting/dashboard#GET",
+      message: "Unauthorized accounting dashboard request.",
+      status: 401,
+      severity: "medium",
+    });
   }
 
   const supabase = createServiceClient();
@@ -219,11 +227,12 @@ export async function GET() {
   ].filter(Boolean);
 
   if (errors.length > 0) {
-    console.error("[accounting/dashboard] Query errors:", errors);
-    return NextResponse.json(
-      { error: "Failed to load accounting dashboard data", details: errors.map((e) => e?.message) },
-      { status: 500 },
-    );
+    throw new GuardrailError({
+      code: "INTERNAL_ERROR",
+      where: "/api/accounting/dashboard#GET",
+      message: "Failed to load accounting dashboard data.",
+      details: { reasons: errors.map((error) => error?.message).filter(Boolean) },
+    });
   }
 
   // ---------------------------------------------------------------------------
@@ -294,7 +303,13 @@ export async function GET() {
     .select("project_id, description, customer");
 
   if (projectDescriptionsResult.error) {
-    console.error("[accounting/dashboard] Project descriptions query error:", projectDescriptionsResult.error);
+    throw new GuardrailError({
+      code: "INTERNAL_ERROR",
+      where: "/api/accounting/dashboard#GET",
+      message: "Failed to load project descriptions for accounting dashboard.",
+      details: { reason: projectDescriptionsResult.error.message },
+      cause: projectDescriptionsResult.error,
+    });
   }
 
   const projectDescMap = new Map<string, { description: string | null; customer: string | null }>();
@@ -370,4 +385,4 @@ export async function GET() {
       "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
     },
   });
-}
+});

@@ -50,7 +50,7 @@ export const GET = withApiGuardrails(
     const changeEventIds = (pcoChangeEvents || []).map(
       (pce: any) => pce.change_event_id
     );
-    let changeEventsMap: Record<string, any> = {};
+    const changeEventsMap: Record<string, unknown> = {};
     if (changeEventIds.length > 0) {
       const { data: changeEvents } = await supabase
         .from("change_events")

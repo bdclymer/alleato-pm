@@ -99,7 +99,7 @@ export function HeaderNavGroup({
       {isOpen && (
         <>
           {/* Backdrop */}
-          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+          { }
           <div
             className="fixed inset-0 z-40 bg-black/40 top-14"
             onClick={onClose}

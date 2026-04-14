@@ -225,7 +225,7 @@ function PageDetail({ state, feature }: { state: ManifestState; feature: string 
             Screenshot not available
           </div>
         ) : (
-          // eslint-disable-next-line @next/next/no-img-element
+           
           <img
             src={imgSrc}
             alt={stateLabel(state.id)}

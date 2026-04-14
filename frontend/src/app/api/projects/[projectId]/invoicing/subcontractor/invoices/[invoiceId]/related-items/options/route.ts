@@ -181,7 +181,7 @@ export const GET = withApiGuardrails(
 
       case "cost_code": {
         // project_cost_codes joined with cost_codes
-        let q = supabase
+        const q = supabase
           .from("project_cost_codes")
           .select("id, cost_codes!inner(id, title, division_title)")
           .eq("project_id", parsedProjectId)
@@ -275,7 +275,7 @@ export const GET = withApiGuardrails(
       }
 
       case "drawing_revision": {
-        let q = supabase
+        const q = supabase
           .from("drawing_revisions")
           .select("id, revision_number, description, status, drawings!inner(drawing_number, title, project_id)")
           .limit(limit);

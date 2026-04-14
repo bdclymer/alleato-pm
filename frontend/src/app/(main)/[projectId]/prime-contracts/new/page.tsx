@@ -8,6 +8,7 @@ import { PageShell } from "@/components/layout";
 import { ContractForm } from "@/components/domain/contracts";
 import type { ContractFormData } from "@/components/domain/contracts/ContractForm";
 import { fetchWithTransientRouteRetry } from "@/lib/fetch-with-transient-route-retry";
+import { apiFetch } from "@/lib/api-client";
 
 export default function NewContractPage() {
   const router = useRouter();
@@ -43,7 +44,7 @@ export default function NewContractPage() {
             : item.amount || 0),
         0,
       );
-      const response = await fetch(`/api/projects/${projectId}/contracts`, {
+      const newContract = await apiFetch<{ id: string }>(`/api/projects/${projectId}/contracts`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -80,21 +81,6 @@ export default function NewContractPage() {
         }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error("Contract creation failed:", errorData);
-        if (Array.isArray(errorData.details) && errorData.details.length > 0) {
-          const fieldErrors = errorData.details
-            .map((d: { field: string; message: string }) => `${d.field}: ${d.message}`)
-            .join("; ");
-          throw new Error(`Validation failed — ${fieldErrors}`);
-        }
-        const detail = typeof errorData.details === "string" ? ` — ${errorData.details}` : "";
-        throw new Error((errorData.error || "Failed to create contract") + detail);
-      }
-
-      const newContract = await response.json();
-
       if (sovItems.length > 0) {
         // Sequential inserts to avoid the UNIQUE(contract_id, line_number) constraint
         // race condition that occurs when Promise.all fires all POSTs simultaneously.
@@ -108,7 +94,7 @@ export default function NewContractPage() {
             data.accountingMethod === "unit_quantity"
               ? item.unitCost ?? 0
               : item.amount || 0;
-          const lineItemResponse = await fetch(
+          await apiFetch(
             `/api/projects/${projectId}/contracts/${newContract.id}/line-items`,
             {
               method: "POST",
@@ -123,10 +109,6 @@ export default function NewContractPage() {
               }),
             },
           );
-          if (!lineItemResponse.ok) {
-            const errorData = await lineItemResponse.json().catch(() => ({}));
-            throw new Error(errorData.error || `Failed to create SOV line item ${index + 1}`);
-          }
         }
       }
 
@@ -138,23 +120,19 @@ export default function NewContractPage() {
       // even though the INSERT may have already committed. Check if it was actually saved.
       if (err instanceof TypeError && err.message.toLowerCase().includes("failed to fetch")) {
         try {
-          const checkRes = await fetch(
+          const contracts = await apiFetch<Array<{ contract_number: string; id: string }>>(
             `/api/projects/${projectId}/contracts?search=${encodeURIComponent(data.number)}`,
           );
-          if (checkRes.ok) {
-            const contracts = await checkRes.json();
-            const saved = Array.isArray(contracts)
-              ? contracts.find(
-                  (c: { contract_number: string; id: string }) =>
-                    c.contract_number === data.number,
-                )
-              : null;
-            if (saved) {
-              void warmContractDetailSurface(saved.id);
-              toast.success("Prime contract created");
-              router.push(`/${projectId}/prime-contracts/${saved.id}`);
-              return;
-            }
+          const saved = Array.isArray(contracts)
+            ? contracts.find(
+                (c) => c.contract_number === data.number,
+              )
+            : null;
+          if (saved) {
+            void warmContractDetailSurface(saved.id);
+            toast.success("Prime contract created");
+            router.push(`/${projectId}/prime-contracts/${saved.id}`);
+            return;
           }
         } catch {
           // recovery failed — fall through to the error toast

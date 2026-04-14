@@ -22,6 +22,9 @@ import OpenAI from "openai";
 import { createClient as createAuthClient } from "@/lib/supabase/server";
 import { createClient } from "@supabase/supabase-js";
 import { getLanguageModel } from "@/lib/ai/providers";
+import { parseJsonBody, withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { z } from "zod";
 
 export const maxDuration = 60;
 
@@ -65,6 +68,10 @@ interface SearchResult {
   category: string | null;
   similarity: number;
 }
+
+const ProcoreDocsChatSchema = z.object({
+  messages: z.array(z.custom<UIMessage>()),
+});
 
 async function expandQuery(query: string): Promise<string[]> {
   try {
@@ -140,7 +147,9 @@ const SYSTEM_PROMPT = `You are an expert Procore construction software assistant
 - When docs are incomplete, suggest related features or ask clarifying questions
 - Never say "I don't have information on that" — always reason toward a helpful response`;
 
-export async function POST(request: NextRequest) {
+export const POST = withApiGuardrails(
+  "/api/procore-docs/chat#POST",
+  async ({ request }) => {
   const authSupabase = await createAuthClient();
   const {
     data: { user },
@@ -148,14 +157,31 @@ export async function POST(request: NextRequest) {
   } = await authSupabase.auth.getUser();
 
   if (authError || !user) {
-    return new Response("Unauthorized", { status: 401 });
+    throw new GuardrailError({
+      code: "AUTH_EXPIRED",
+      where: "/api/procore-docs/chat#POST",
+      message: "Unauthorized Procore docs chat request.",
+      status: 401,
+      severity: "medium",
+      details: authError ? { reason: authError.message } : undefined,
+      cause: authError ?? undefined,
+    });
   }
 
-  const body = await request.json();
-  const { messages } = body as { messages: UIMessage[] };
+  const { messages } = await parseJsonBody(
+    request,
+    ProcoreDocsChatSchema,
+    "/api/procore-docs/chat#POST",
+  ) as { messages: UIMessage[] };
 
   if (!messages?.length) {
-    return new Response("messages is required", { status: 400 });
+    throw new GuardrailError({
+      code: "INVALID_PAYLOAD",
+      where: "/api/procore-docs/chat#POST",
+      message: "messages is required.",
+      status: 400,
+      severity: "low",
+    });
   }
 
   // Extract query text from the last user message parts
@@ -167,7 +193,13 @@ export async function POST(request: NextRequest) {
       .join("") ?? "";
 
   if (!query.trim()) {
-    return new Response("No query text in messages", { status: 400 });
+    throw new GuardrailError({
+      code: "INVALID_PAYLOAD",
+      where: "/api/procore-docs/chat#POST",
+      message: "No query text in messages.",
+      status: 400,
+      severity: "low",
+    });
   }
 
   const supabase = getServiceSupabase();
@@ -220,4 +252,5 @@ export async function POST(request: NextRequest) {
   });
 
   return createUIMessageStreamResponse({ stream });
-}
+},
+);

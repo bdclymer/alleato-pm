@@ -88,8 +88,8 @@ export const GET = withApiGuardrails(
 
     // Batch-fetch change event and line item counts (no FK join available for pco_line_items)
     const pcoIds = (data || []).map((pco: Record<string, unknown>) => String(pco.id));
-    let ceCountMap: Record<string, number> = {};
-    let liCountMap: Record<string, number> = {};
+    const ceCountMap: Record<string, number> = {};
+    const liCountMap: Record<string, number> = {};
 
     if (pcoIds.length > 0) {
       const [ceResult, liResult] = await Promise.all([

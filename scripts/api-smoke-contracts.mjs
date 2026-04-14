@@ -57,6 +57,17 @@ const ENDPOINTS = [
   // Contracts
   ["GET", `/api/projects/${PROJECT_ID}/contracts`, "Contracts list", [200, 401]],
   ["GET", `/api/projects/${PROJECT_ID}/contracts/settings`, "Prime contract settings", [200, 401]],
+  ["GET", `/api/projects/${PROJECT_ID}/contracts/${FAKE_UUID}`, "Prime contract detail (fake id)", [200, 401, 404]],
+  ["GET", `/api/projects/${PROJECT_ID}/contracts/${FAKE_UUID}/line-items`, "Prime contract line items (fake id)", [200, 401, 404]],
+  ["GET", `/api/projects/${PROJECT_ID}/contracts/${FAKE_UUID}/payments`, "Prime contract payments (fake id)", [200, 401, 404]],
+  ["GET", `/api/projects/${PROJECT_ID}/contracts/${FAKE_UUID}/payment-applications`, "Prime contract payment apps (fake id)", [200, 401, 404]],
+  ["GET", `/api/projects/${PROJECT_ID}/vertical-markup`, "Prime contract vertical markup settings", [200, 401]],
+  [
+    "PUT",
+    `/api/projects/${PROJECT_ID}/contracts/${FAKE_UUID}/advanced-settings`,
+    "Prime contract advanced settings unauthorized",
+    [401],
+  ],
 
   // Commitments
   ["GET", "/api/commitments", "Commitments list", [200, 401]],
@@ -190,6 +201,18 @@ const AUTH_WRITE_PROBES = [
     expectedStatuses: [400],
     body: {
       default_retainage_percent: 101,
+    },
+  },
+  {
+    method: "PUT",
+    path: `/api/projects/${PROJECT_ID}/contracts/${FAKE_UUID}/advanced-settings`,
+    description: "Prime contract advanced settings invalid payload validation",
+    expectedStatuses: [400],
+    body: {
+      project_settings: {
+        co_tier_count: 9,
+      },
+      contract_settings: {},
     },
   },
 ];

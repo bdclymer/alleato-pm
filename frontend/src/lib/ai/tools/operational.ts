@@ -1267,7 +1267,7 @@ export function createOperationalTools(
           if ("error" in resolved) return resolved;
 
           // Fetch budget lines with full financial data
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+           
           const { data: budgetRows, error } = await supabase
             .from("v_budget_lines" as any)
             .select("*")
@@ -1431,7 +1431,7 @@ export function createOperationalTools(
             // search_all_knowledge     → insights (decisions/risks/opportunities)
             // search_knowledge_base    → company_knowledge
             const [chunksRes, knowledgeRes, knowledgeBaseRes] = await Promise.all([
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+               
               (supabase as any).rpc("search_document_chunks", {
                 query_embedding: embeddingArg3072,
                 filter_source_types: null,
@@ -3178,7 +3178,7 @@ async function searchDocumentChunksByCategory({
     });
     const queryEmbedding = embeddingResponse.data[0].embedding;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const { data, error } = await (supabase as any).rpc(
       "search_document_chunks_by_category",
       {

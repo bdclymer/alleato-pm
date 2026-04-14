@@ -104,7 +104,11 @@ export const createChangeEventSchema = z.object({
   origin: ChangeEventOrigin.optional(),
   expectingRevenue: z.boolean().default(true),
   lineItemRevenueSource: LineItemRevenueSource.optional(),
-  primeContractId: z.union([z.string().uuid(), z.coerce.number().int().positive()]).optional(),
+  // Prime contract FK references prime_contracts.id (UUID).
+  primeContractId: z.preprocess(
+    (value) => (value === "" ? undefined : value),
+    z.string().uuid().optional(),
+  ),
   description: z.string().optional(),
 });
 
@@ -117,7 +121,11 @@ export const updateChangeEventSchema = z.object({
   origin: ChangeEventOrigin.nullable().optional(),
   expectingRevenue: z.boolean().optional(),
   lineItemRevenueSource: LineItemRevenueSource.nullable().optional(),
-  primeContractId: z.union([z.string().uuid(), z.coerce.number().int().positive()]).nullable().optional(),
+  // Prime contract FK references prime_contracts.id (UUID).
+  primeContractId: z.preprocess(
+    (value) => (value === "" ? null : value),
+    z.string().uuid().nullable().optional(),
+  ),
   description: z.string().nullable().optional(),
   status: ChangeEventStatus.optional(), // Only admin can change status
 }); // Create Line Item Schema
@@ -125,7 +133,11 @@ export const createLineItemSchema = z.object({
   budgetCodeId: z.string().uuid().optional(),
   description: z.string(),
   vendorId: z.string().uuid().optional(),
-  contractId: z.string().optional(),
+  // Contract FK references prime_contracts.id (UUID).
+  contractId: z.preprocess(
+    (value) => (value === "" ? undefined : value),
+    z.string().uuid().optional(),
+  ),
   commitmentId: z.string().uuid().optional(),
   commitmentType: z.enum(["subcontract", "purchase_order"]).optional(),
   commitmentLineItemId: z.string().uuid().optional(),

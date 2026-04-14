@@ -5,6 +5,10 @@ description: verification gate pattern documentation
 
 # Solution: Verification Gate Pattern
 
+> Adapted on 2026-04-14 (not adopted verbatim).
+> Canonical replacement: `docs/ops/patterns/evidence-based-completion.md` and `docs/ops/orchestration/review-queue.md`.
+> Reason: legacy tool/path assumptions and unnecessary checksum complexity for current workflow.
+
 **Solves:** premature-completion.md
 **Category:** Workflow
 

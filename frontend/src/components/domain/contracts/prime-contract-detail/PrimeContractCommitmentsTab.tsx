@@ -36,6 +36,7 @@ import {
   renderCommitmentList,
   renderCommitmentRowActions,
 } from "@/features/commitments/commitments-table-config";
+import { apiFetch } from "@/lib/api-client";
 
 interface PrimeContractCommitmentsTabProps {
   projectId: string;
@@ -66,10 +67,18 @@ function CommitmentChangeOrdersRow({
   React.useEffect(() => {
     let cancelled = false;
     setIsLoading(true);
-    fetch(`/api/commitments/${commitmentId}/change-orders`)
-      .then((r) => r.json())
-      .then((json) => { if (!cancelled) { setChangeOrders(json.data ?? []); setIsLoading(false); } })
-      .catch(() => { if (!cancelled) setIsLoading(false); });
+    apiFetch<{ data?: CommitmentChangeOrder[] } | CommitmentChangeOrder[]>(
+      `/api/commitments/${commitmentId}/change-orders`,
+    )
+      .then((json) => {
+        if (cancelled) return;
+        const rows = Array.isArray(json) ? json : (json.data ?? []);
+        setChangeOrders(rows);
+        setIsLoading(false);
+      })
+      .catch(() => {
+        if (!cancelled) setIsLoading(false);
+      });
     return () => { cancelled = true; };
   }, [commitmentId]);
 
@@ -193,13 +202,11 @@ export function PrimeContractCommitmentsTab({
   const handleStatusChange = React.useCallback(
     async (id: string, status: string) => {
       try {
-        const resp = await fetch(`/api/commitments/${id}`, {
+        await apiFetch(`/api/commitments/${id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ status }),
         });
-        const data = await resp.json();
-        if (!resp.ok) throw new Error(data.error ?? "Failed to update status");
         toast.success("Status updated");
         await refetch();
       } catch (err) {
@@ -282,14 +289,10 @@ export function PrimeContractCommitmentsTab({
       const failures: string[] = [];
       for (const id of ids) {
         try {
-          const resp = await fetch(`/api/commitments/${id}`, { method: "DELETE" });
-          if (!resp.ok) {
-            const err = await resp.json().catch(() => ({}));
-            const item = map.get(id);
-            failures.push(`${item?.number ?? id}: ${err.error ?? "Failed"}`);
-          }
-        } catch {
-          failures.push(`${map.get(id)?.number ?? id}: Network error`);
+          await apiFetch(`/api/commitments/${id}`, { method: "DELETE" });
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "Network error";
+          failures.push(`${map.get(id)?.number ?? id}: ${message}`);
         }
       }
       const successCount = ids.length - failures.length;

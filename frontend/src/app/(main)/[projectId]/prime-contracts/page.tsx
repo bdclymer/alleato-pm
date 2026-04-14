@@ -508,9 +508,11 @@ export default function ProjectContractsPage(): ReactElement {
               alwaysVisible: true,
               width: 40,
               render: (item: PrimeContract) => (
-                <button
+                <Button
                   type="button"
-                  className="flex h-6 w-6 items-center justify-center rounded hover:bg-muted"
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 rounded"
                   onClick={(e) => {
                     e.stopPropagation();
                     toggleExpand(item.id);
@@ -522,7 +524,7 @@ export default function ProjectContractsPage(): ReactElement {
                   ) : (
                     <ChevronRight className="h-4 w-4" />
                   )}
-                </button>
+                </Button>
               ),
               sortValue: () => 0,
             },

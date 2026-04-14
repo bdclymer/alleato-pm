@@ -35,13 +35,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Text } from "@/components/ds/text";
 import { cn } from "@/lib/utils";
@@ -125,6 +119,13 @@ interface ChangeEventSummary {
 interface Contact {
   id: string;
   name: string;
+}
+
+// Formats commitment metadata into a single display label for picker rows.
+function formatCommitmentLabel(option: CommitmentOption): string {
+  const number = option.contract_number?.trim() || "—";
+  const title = option.title?.trim() || "Untitled";
+  return `${number} — ${title}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -221,6 +222,98 @@ function ContactCombobox({
   );
 }
 
+// Renders a searchable commitment picker with stable selection behavior.
+function CommitmentCombobox({
+  value,
+  onChange,
+  commitments,
+  search,
+  onSearchChange,
+  open,
+  onOpenChange,
+  isLoading,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  commitments: CommitmentOption[];
+  search: string;
+  onSearchChange: (v: string) => void;
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  isLoading: boolean;
+}) {
+  const normalizedSearch = search.trim().toLowerCase();
+  const filtered = commitments.filter((option) => {
+    if (!normalizedSearch) return true;
+    const label = formatCommitmentLabel(option).toLowerCase();
+    const company = option.company_name?.toLowerCase() ?? "";
+    return label.includes(normalizedSearch) || company.includes(normalizedSearch);
+  });
+
+  const selected = commitments.find((option) => option.id === value);
+
+  return (
+    <Popover open={open} onOpenChange={onOpenChange}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-label="Contract *"
+          data-testid="commitment-contract-picker"
+          className={cn(
+            "w-full justify-between font-normal",
+            !selected && "text-muted-foreground",
+          )}
+          disabled={isLoading}
+        >
+          {selected ? formatCommitmentLabel(selected) : "Select a commitment"}
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+        <Command shouldFilter={false}>
+          <CommandInput
+            placeholder="Search commitments…"
+            value={search}
+            onValueChange={onSearchChange}
+          />
+          <CommandList>
+            <CommandEmpty>No commitments found.</CommandEmpty>
+            <CommandGroup>
+              {filtered.map((option) => (
+                <CommandItem
+                  key={option.id}
+                  value={option.id}
+                  onSelect={() => {
+                    onChange(option.id);
+                    onOpenChange(false);
+                    onSearchChange("");
+                  }}
+                >
+                  <Check
+                    className={cn(
+                      "mr-2 h-4 w-4",
+                      value === option.id ? "opacity-100" : "opacity-0",
+                    )}
+                  />
+                  <div className="flex min-w-0 flex-col">
+                    <span className="truncate">{formatCommitmentLabel(option)}</span>
+                    {option.company_name ? (
+                      <span className="text-xs text-muted-foreground truncate">
+                        {option.company_name}
+                      </span>
+                    ) : null}
+                  </div>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Page
 // ---------------------------------------------------------------------------
@@ -243,6 +336,8 @@ export default function NewCommitmentCOPage() {
   const [changeEvents, setChangeEvents] = useState<ChangeEventSummary[]>([]);
   const [isLoadingChangeEvents, setIsLoadingChangeEvents] = useState(false);
   const [isLoadingNextNumber, setIsLoadingNextNumber] = useState(false);
+  const [commitmentSearch, setCommitmentSearch] = useState("");
+  const [commitmentOpen, setCommitmentOpen] = useState(false);
 
   // Contacts combobox state
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -280,6 +375,18 @@ export default function NewCommitmentCOPage() {
 
   const selectedContractId = form.watch("contract_id");
   const selectedCommitment = commitments.find((c) => c.id === selectedContractId);
+
+  // Default to the only available commitment to avoid a dead-end required-field flow.
+  useEffect(() => {
+    if (isLoadingCommitments) return;
+    if (commitments.length !== 1) return;
+    if (selectedContractId) return;
+    form.setValue("contract_id", commitments[0].id, {
+      shouldDirty: true,
+      shouldValidate: true,
+      shouldTouch: true,
+    });
+  }, [commitments, form, isLoadingCommitments, selectedContractId]);
 
   // ── Fetch commitments with company names ─────────────────────────
   useEffect(() => {
@@ -369,7 +476,7 @@ export default function NewCommitmentCOPage() {
       }
     };
     fetchChangeEvents();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [projectId, changeEventIdsParam]);
 
   const applyChangeEventDefaults = useCallback(
@@ -578,20 +685,18 @@ export default function NewCommitmentCOPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Contract *</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a commitment" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {commitments.map((c) => (
-                            <SelectItem key={c.id} value={c.id}>
-                              {c.contract_number ?? "—"} — {c.title ?? "Untitled"}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <FormControl>
+                        <CommitmentCombobox
+                          value={field.value}
+                          onChange={field.onChange}
+                          commitments={commitments}
+                          search={commitmentSearch}
+                          onSearchChange={setCommitmentSearch}
+                          open={commitmentOpen}
+                          onOpenChange={setCommitmentOpen}
+                          isLoading={isLoadingCommitments}
+                        />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}

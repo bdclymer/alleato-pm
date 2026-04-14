@@ -5,6 +5,9 @@ description: route param mismatch documentation
 
 # Pattern: Route Parameter Mismatch
 
+> Migrated on 2026-04-14.
+> Canonical replacement: `docs/ops/patterns/route-param-naming.md`.
+
 **Severity:** CRITICAL
 **Triggers:** `route`, `[projectId]`, `[id]`, `param`, `dynamic`, `api`, `app router`, `next.js`, `page.tsx`, `route.ts`
 **Category:** Next.js Routing

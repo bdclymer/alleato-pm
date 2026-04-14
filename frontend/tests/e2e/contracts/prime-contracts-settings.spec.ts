@@ -322,4 +322,78 @@ test.describe("Prime Contracts - Configure Settings", () => {
     expect(typeof data.request_id).toBe("string");
     expect(Array.isArray(data.details)).toBe(true);
   });
+
+  test("API: atomic advanced settings endpoint updates project and contract settings together", async ({
+    authenticatedRequest,
+  }) => {
+    const createRes = await authenticatedRequest.post(
+      `/api/projects/${projectId}/contracts`,
+      {
+        data: {
+          contract_number: `PC-ATOMIC-${Date.now()}`,
+          title: "Atomic Advanced Settings Contract",
+          original_contract_value: 10000,
+        },
+      },
+    );
+    expect(createRes.ok()).toBe(true);
+    const contract = await createRes.json();
+    const contractId = contract.id as string;
+
+    try {
+      const saveRes = await authenticatedRequest.put(
+        `/api/projects/${projectId}/contracts/${contractId}/advanced-settings`,
+        {
+          data: {
+            project_settings: {
+              co_tier_count: 2,
+              allow_standard_users_create_pcco: true,
+              allow_standard_users_create_pco: false,
+              sov_always_editable: true,
+              enable_completed_work_retainage: true,
+              enable_stored_materials_retainage: false,
+              default_retainage_percent: 6.5,
+              show_markup_on_co_pdf: true,
+              show_markup_on_invoice_pdf: true,
+              default_distribution_prime_contract: "owner@example.com",
+              default_distribution_pcco: null,
+              default_distribution_pco: null,
+            },
+            contract_settings: {
+              inclusions: "Scope A",
+              exclusions: "Scope B",
+              is_private: true,
+              retention_percentage: 6.5,
+              payment_terms: "Net 30",
+              billing_schedule: "Monthly",
+            },
+          },
+        },
+      );
+
+      expect(saveRes.ok()).toBe(true);
+      const saveData = await saveRes.json();
+      expect(saveData.project_settings.default_retainage_percent).toBe(6.5);
+      expect(saveData.contract.retention_percentage).toBe(6.5);
+      expect(saveData.contract.inclusions).toBe("Scope A");
+
+      const { data: settingsRow, error: settingsError } = await supabaseAdmin
+        .from("prime_contract_project_settings")
+        .select("default_retainage_percent, co_tier_count")
+        .eq("project_id", parseInt(projectId, 10))
+        .single();
+      expect(settingsError).toBeNull();
+      expect(settingsRow?.default_retainage_percent).toBe(6.5);
+      expect(settingsRow?.co_tier_count).toBe(2);
+
+      const savedContract = await fetchPrimeContract(contractId);
+      expect(savedContract.retention_percentage).toBe(6.5);
+      expect(savedContract.inclusions).toBe("Scope A");
+      expect(savedContract.exclusions).toBe("Scope B");
+      expect(savedContract.payment_terms).toBe("Net 30");
+      expect(savedContract.billing_schedule).toBe("Monthly");
+    } finally {
+      await deletePrimeContractCascade(contractId);
+    }
+  });
 });

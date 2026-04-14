@@ -74,7 +74,7 @@ export function ScreenshotsTab({ feature, onExpandedChange }: Props) {
             className="group flex shrink-0 flex-col overflow-hidden rounded-md border border-border bg-muted hover:border-primary/50 transition-colors"
           >
             <div className="relative h-40 w-60 overflow-hidden">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
+              { }
               <img
                 src={shot.src}
                 alt={shot.label}
@@ -110,7 +110,7 @@ export function ScreenshotsTab({ feature, onExpandedChange }: Props) {
             )}
           >
             <div className="h-7 w-10 shrink-0 overflow-hidden rounded border border-border/50 bg-muted">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
+              { }
               <img src={shot.src} alt="" className="h-full w-full object-cover object-top" />
             </div>
             <span className="truncate leading-tight">{shot.label}</span>
@@ -120,7 +120,7 @@ export function ScreenshotsTab({ feature, onExpandedChange }: Props) {
 
       {/* Large image */}
       <div className="relative flex flex-1 items-center justify-center overflow-auto bg-muted/30 p-3">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
+        { }
         <img
           src={selected?.src ?? ""}
           alt={selected?.label ?? ""}

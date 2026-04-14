@@ -6,6 +6,10 @@ keywords: ["playwright", "testing", "e2e", "authentication", "supabase", "select
 
 # Playwright Testing Patterns for Alleato-Procore
 
+> Partially deprecated on 2026-04-14.
+> Canonical replacement: `docs/ops/patterns/playwright-navigation-wait-strategy.md` and `docs/ops/patterns/playwright-authenticated-api-requests.md`.
+> Reason: this file contains conflicting wait guidance (`networkidle`) vs active guardrail (`domcontentloaded`).
+
 **CRITICAL:** This document contains the production-tested patterns extracted from our test suite. Use these patterns EXACTLY as shown.
 
 ---

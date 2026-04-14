@@ -1,12 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from "@/lib/supabase/server";
+import { z } from "zod";
+import { parseJsonBody, withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 
 // Server-Sent Events endpoint for real-time monitoring updates
-export async function GET(request: NextRequest) {
+export const GET = withApiGuardrails(
+  "/api/monitoring/websocket#GET",
+  async ({ request }) => {
   const supabase = await createClient();
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    throw new GuardrailError({
+      code: "AUTH_EXPIRED",
+      where: "/api/monitoring/websocket#GET",
+      message: "Unauthorized websocket monitoring request.",
+      status: 401,
+      severity: "medium",
+      details: authError ? { reason: authError.message } : undefined,
+      cause: authError ?? undefined,
+    });
   }
 
   const { searchParams } = new URL(request.url);
@@ -107,16 +120,36 @@ export async function GET(request: NextRequest) {
       'Access-Control-Allow-Methods': 'GET, OPTIONS',
     },
   });
-}
+},
+);
 
-export async function POST(request: NextRequest) {
+const MonitoringEventSchema = z.object({
+  event: z.string().min(1),
+  data: z.unknown().optional(),
+});
+
+export const POST = withApiGuardrails(
+  "/api/monitoring/websocket#POST",
+  async ({ request }) => {
   try {
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "/api/monitoring/websocket#POST",
+        message: "Unauthorized websocket monitoring event request.",
+        status: 401,
+        severity: "medium",
+        details: authError ? { reason: authError.message } : undefined,
+        cause: authError ?? undefined,
+      });
     }
-    const body = await request.json();
+    const body = await parseJsonBody(
+      request,
+      MonitoringEventSchema,
+      "/api/monitoring/websocket#POST",
+    );
     const { event, data } = body;
 
     // In a real implementation, you'd broadcast this to all connected clients
@@ -127,13 +160,20 @@ export async function POST(request: NextRequest) {
       event,
       timestamp: new Date().toISOString(),
     });
-  } catch (error) {
-    return NextResponse.json(
-      { error: 'Failed to process event' },
-      { status: 400 }
-    );
+  } catch (error: unknown) {
+    if (error instanceof GuardrailError) throw error;
+    throw new GuardrailError({
+      code: "INVALID_PAYLOAD",
+      where: "/api/monitoring/websocket#POST",
+      message: "Failed to process monitoring event.",
+      status: 400,
+      severity: "low",
+      details: { reason: error instanceof Error ? error.message : "Unknown error" },
+      cause: error instanceof Error ? error : undefined,
+    });
   }
-}
+},
+);
 
 export async function OPTIONS() {
   return new Response(null, {

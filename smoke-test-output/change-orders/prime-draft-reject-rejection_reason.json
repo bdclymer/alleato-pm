@@ -1,0 +1,4 @@
+{
+  "body": "{\"error\":\"Cannot reject a change order with status \\\"draft\\\". Rejectable statuses: proposed, pending, submitted, under_review, revised.\"}",
+  "status": 409
+}

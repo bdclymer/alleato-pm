@@ -9,17 +9,35 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { getLanguageModel } from "@/lib/ai/providers";
+import { parseJsonBody, withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 
 export const maxDuration = 30;
 
-export async function POST(req: Request) {
+const ToolCallingRequestSchema = z.object({
+  messages: z.array(z.custom<UIMessage>()),
+});
+
+export const POST = withApiGuardrails("/api/primitives/tool-calling#POST", async ({ request }) => {
   const supabase = await createClient();
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    throw new GuardrailError({
+      code: "AUTH_EXPIRED",
+      where: "/api/primitives/tool-calling#POST",
+      message: "Unauthorized primitives tool-calling request.",
+      status: 401,
+      severity: "medium",
+      details: authError ? { reason: authError.message } : undefined,
+      cause: authError ?? undefined,
+    });
   }
 
-  const { messages }: { messages: UIMessage[] } = await req.json();
+  const { messages } = await parseJsonBody(
+    request,
+    ToolCallingRequestSchema,
+    "/api/primitives/tool-calling#POST",
+  );
 
   const result = streamText({
     model: getLanguageModel("openai/gpt-4.1-nano"),
@@ -79,4 +97,4 @@ export async function POST(req: Request) {
   });
 
   return result.toUIMessageStreamResponse();
-}
+});

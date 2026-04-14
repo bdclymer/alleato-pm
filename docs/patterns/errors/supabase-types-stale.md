@@ -5,6 +5,9 @@ description: supauase types stale documentation
 
 # Pattern: Stale Supabase Types
 
+> Migrated on 2026-04-14.
+> Canonical replacement: `docs/ops/patterns/supabase-types-and-fk-validation.md`.
+
 **Severity:** HIGH
 **Triggers:** `supabase`, `database`, `types`, `schema`, `migration`, `column`, `table`, `Property does not exist`
 **Category:** Database

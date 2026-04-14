@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { apiFetch } from "@/lib/api-client";
+import { apiFetch, apiFetchWithTransientRouteRetry } from "@/lib/api-client";
 import type { CreateContractInput, UpdateContractInput } from "@/app/api/projects/[projectId]/contracts/validation";
 import {
   primeContractsSchema,
@@ -39,7 +39,7 @@ export function usePrimeContracts(
   return useQuery<PrimeContract[]>({
     queryKey: primeContractKeys.list(projectId, params),
     queryFn: async () => {
-      const payload = await apiFetch<
+      const payload = await apiFetchWithTransientRouteRetry<
         PrimeContract[] | { data: PrimeContract[] }
       >(url);
 
@@ -62,7 +62,9 @@ export function usePrimeContract(projectId: number, contractId: string) {
   return useQuery<PrimeContract>({
     queryKey: primeContractKeys.detail(projectId, contractId),
     queryFn: () =>
-      apiFetch<PrimeContract>(`/api/projects/${projectId}/contracts/${contractId}`),
+      apiFetchWithTransientRouteRetry<PrimeContract>(
+        `/api/projects/${projectId}/contracts/${contractId}`,
+      ),
     enabled: !!projectId && !!contractId,
   });
 }

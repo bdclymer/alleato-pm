@@ -21,6 +21,7 @@ import {
 import { InvoiceGeneralSettings } from "@/components/domain/invoices/InvoiceGeneralSettings";
 import { InvoiceG702Summary } from "@/components/domain/invoices/InvoiceG702Summary";
 import { InvoiceG703Detail } from "@/components/domain/invoices/InvoiceG703Detail";
+import { apiFetch } from "@/lib/api-client";
 import type {
   PaymentApplication,
   PaymentApplicationLineItem,
@@ -84,15 +85,12 @@ export default function InvoiceDetailPage({
   useEffect(() => {
     async function fetchContract() {
       try {
-        const res = await fetch(
+        const data = await apiFetch<Contract>(
           `/api/projects/${projectId}/contracts/${contractId}`,
         );
-        if (res.ok) {
-          const data = await res.json();
-          setContract(data);
-        }
-      } catch {
-        // Contract fetch failed silently
+        setContract(data);
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Failed to load contract details");
       }
     }
     fetchContract();
@@ -102,15 +100,12 @@ export default function InvoiceDetailPage({
   useEffect(() => {
     async function fetchBillingPeriods() {
       try {
-        const res = await fetch(
+        const data = await apiFetch<BillingPeriod[]>(
           `/api/projects/${projectId}/billing-periods`,
         );
-        if (res.ok) {
-          const data = await res.json();
-          setBillingPeriods(data);
-        }
-      } catch {
-        // Billing periods fetch failed silently
+        setBillingPeriods(data);
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Failed to load billing periods");
       }
     }
     fetchBillingPeriods();
@@ -120,11 +115,9 @@ export default function InvoiceDetailPage({
   useEffect(() => {
     async function fetchPreviousApplications() {
       try {
-        const res = await fetch(
+        const applications = await apiFetch<PaymentApplication[]>(
           `/api/projects/${projectId}/contracts/${contractId}/payment-applications`,
         );
-        if (!res.ok) return;
-        const applications: PaymentApplication[] = await res.json();
 
         // Sum net_amount of all approved applications with a lower number
         const currentNumber = invoice?.application_number ?? "";
@@ -138,8 +131,8 @@ export default function InvoiceDetailPage({
           .reduce((sum, app) => sum + app.net_amount, 0);
 
         setPreviousPaymentDue(previousTotal);
-      } catch {
-        // Previous applications fetch failed silently
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Failed to load previous payment applications");
       }
     }
     if (invoice) {

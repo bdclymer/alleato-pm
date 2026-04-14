@@ -5,6 +5,9 @@ description: networkidle timeout documentation
 
 # Pattern: NetworkIdle Timeout
 
+> Migrated on 2026-04-14.
+> Canonical replacement: `docs/ops/patterns/playwright-navigation-wait-strategy.md`.
+
 **Severity:** CRITICAL
 **Triggers:** `playwright`, `test`, `waitForLoadState`, `networkidle`, `timeout`, `navigation`
 **Category:** Testing

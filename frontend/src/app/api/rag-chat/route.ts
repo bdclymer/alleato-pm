@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { parseJsonBody, withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { isBackendOfflineError } from "../rag-chatkit/utils";
 
@@ -20,34 +23,35 @@ interface ChatRequestBody {
   history?: Array<{ role: string; text: string }>;
 }
 
-export async function POST(request: NextRequest) {
+const ChatRequestSchema = z.object({
+  message: z.string().min(1),
+  thread_id: z.string().nullable().optional(),
+  history: z.array(z.object({ role: z.string(), text: z.string() })).optional(),
+});
+
+export const POST = withApiGuardrails("/api/rag-chat#POST", async ({ request }) => {
   const startTime = Date.now();
-  let body: ChatRequestBody | null = null;
+  const user = await getApiRouteUser();
+  if (!user) {
+    throw new GuardrailError({
+      code: "AUTH_EXPIRED",
+      where: "/api/rag-chat#POST",
+      message: "Unauthorized RAG chat request.",
+      status: 401,
+      severity: "medium",
+    });
+  }
+
+  const body = await parseJsonBody(request, ChatRequestSchema, "/api/rag-chat#POST");
+  const validBody: ChatRequestBody = body;
+
+  // Log incoming request for debugging
+  console.warn("[RAG-Chat API] Incoming request:", {
+    message: validBody.message.substring(0, 100),
+    hasHistory: !!(validBody.history && validBody.history.length > 0),
+  });
 
   try {
-    const user = await getApiRouteUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const rawBody = await request.json();
-    body = rawBody as ChatRequestBody;
-
-    if (!body || !body.message?.trim()) {
-      return NextResponse.json(
-        { error: "Message is required" },
-        { status: 400 },
-      );
-    }
-
-    const validBody = body as ChatRequestBody;
-
-    // Log incoming request for debugging
-    console.warn("[RAG-Chat API] Incoming request:", {
-      message: validBody.message.substring(0, 100),
-      hasHistory: !!(validBody.history && validBody.history.length > 0),
-    });
-
     // Call the simple backend chat endpoint (non-streaming)
     const response = await fetch(`${PYTHON_BACKEND_URL}/api/chat`, {
       method: "POST",
@@ -67,17 +71,16 @@ export async function POST(request: NextRequest) {
         response.status,
         errorText,
       );
-      return NextResponse.json(
-        {
-          error: "RAG Backend Error",
-          message: "RAG backend returned an error response.",
-          details:
-            process.env.NODE_ENV === "development"
-              ? errorText.substring(0, 500)
-              : undefined,
-        },
-        { status: response.status },
-      );
+      throw new GuardrailError({
+        code: "UPSTREAM_FAILURE",
+        where: "/api/rag-chat#POST",
+        message: "RAG backend returned an error response.",
+        status: response.status,
+        details:
+          process.env.NODE_ENV === "development"
+            ? { reason: errorText.substring(0, 500) }
+            : undefined,
+      });
     }
 
     const data = await response.json();
@@ -90,33 +93,37 @@ export async function POST(request: NextRequest) {
       thread_id: validBody.thread_id || null,
     });
   } catch (error: unknown) {
-    const elapsed = Date.now() - startTime;
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
-    const errorCode =
-      error && typeof error === "object" && "code" in error
-        ? (error as { code: string }).code
-        : null;
-
-    console.error("[RAG-Chat API] Error after", elapsed, "ms:", errorMessage);
-
-    if (isBackendOfflineError({ code: errorCode, message: errorMessage })) {
-      return NextResponse.json(
-        {
-          error: "RAG Backend Unavailable",
-          message:
-            "The RAG backend is unavailable. Fix backend connectivity before retrying.",
-        },
-        { status: 503 },
-      );
-    }
-
-    return NextResponse.json(
-      {
-        error: "Internal Server Error",
-        message: "An unexpected error occurred",
-      },
-      { status: 500 },
-    );
+    normalizeRagTransportError(error);
   }
+});
+
+// Normalize transport-level backend failures so clients get retry-safe 503 envelopes.
+export function normalizeRagTransportError(error: unknown): never {
+  if (error instanceof GuardrailError) {
+    throw error;
+  }
+
+  const errorMessage = error instanceof Error ? error.message : "Unknown error";
+  const errorCode =
+    error && typeof error === "object" && "code" in error
+      ? (error as { code: string }).code
+      : null;
+
+  if (isBackendOfflineError({ code: errorCode, message: errorMessage })) {
+    throw new GuardrailError({
+      code: "UPSTREAM_FAILURE",
+      where: "/api/rag-chat#POST",
+      message: "The RAG backend is unavailable. Fix backend connectivity before retrying.",
+      status: 503,
+      details: { reason: errorMessage },
+      severity: "high",
+    });
+  }
+
+  throw new GuardrailError({
+    code: "INTERNAL_ERROR",
+    where: "/api/rag-chat#POST",
+    message: "An unexpected RAG chat error occurred.",
+    details: { reason: errorMessage },
+  });
 }
