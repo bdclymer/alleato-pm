@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api-client";
 import type { DrawingRevision } from "@/types/drawings.types";
 
 /**
@@ -10,18 +11,10 @@ import type { DrawingRevision } from "@/types/drawings.types";
 export function useDrawingRevisions(projectId: string, drawingId: string) {
   return useQuery<DrawingRevision[]>({
     queryKey: ["drawing-revisions", projectId, drawingId],
-    queryFn: async () => {
-      const response = await fetch(
+    queryFn: async () =>
+      apiFetch<DrawingRevision[]>(
         `/api/projects/${projectId}/drawings/${drawingId}/revisions`,
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to fetch revisions");
-      }
-
-      return response.json();
-    },
+      ),
     enabled: !!drawingId,
   });
 }
@@ -33,22 +26,14 @@ export function useCreateRevision(projectId: string, drawingId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (formData: FormData) => {
-      const response = await fetch(
+    mutationFn: async (formData: FormData) =>
+      apiFetch<DrawingRevision>(
         `/api/projects/${projectId}/drawings/${drawingId}/revisions`,
         {
           method: "POST",
           body: formData,
         },
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to create revision");
-      }
-
-      return response.json();
-    },
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["drawing-revisions", drawingId],

@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api-client";
 import type { UploadDrawingFormData } from "@/lib/schemas/drawing-schemas";
 import type {
   DrawingRevision,
@@ -87,20 +88,13 @@ export function useDrawingUpload(projectId: string) {
       if (metadata.description) formData.append("description", metadata.description);
       if (metadata.area_id) formData.append("area_id", metadata.area_id);
 
-      const response = await fetch(
+      const result = await apiFetch<DrawingRevision & { drawing_id?: string | number }>(
         `/api/projects/${projectId}/drawings`,
         {
           method: "POST",
           body: formData,
         },
       );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to upload drawing");
-      }
-
-      const result = await response.json();
 
       // Update progress to completed
       setProgress((prev) =>

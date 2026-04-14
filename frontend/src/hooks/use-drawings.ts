@@ -2,8 +2,10 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api-client";
 import type { DrawingLogTableRow } from "@/types/drawings.types";
 import { mapDrawingLogRow } from "@/types/drawings.types";
+import type { DrawingLogViewRow } from "@/types/drawings.types";
 import type {
   DrawingFilters,
   DrawingListResponse,
@@ -13,6 +15,14 @@ import type {
 // Mapped response type with camelCase drawings
 interface MappedDrawingListResponse extends Omit<DrawingListResponse, 'drawings'> {
   drawings: DrawingLogTableRow[];
+}
+
+interface DeletedDrawingsResponse {
+  drawings?: DrawingLogViewRow[];
+}
+
+export interface DeletedDrawingRow extends DrawingLogTableRow {
+  deletedAt: string | null;
 }
 
 /**
@@ -36,16 +46,9 @@ export function useDrawings(projectId: string, filters?: DrawingFilters) {
       if (filters?.include_obsolete)
         params.set("include_obsolete", "true");
 
-      const response = await fetch(
+      const data = await apiFetch<DrawingListResponse>(
         `/api/projects/${projectId}/drawings?${params}`,
       );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || `Server returned ${response.status} when loading drawings`);
-      }
-
-      const data = await response.json();
 
       // Map snake_case rows to camelCase
       return {
@@ -63,18 +66,10 @@ export function useDrawings(projectId: string, filters?: DrawingFilters) {
 export function useDrawing(projectId: string, drawingId: string) {
   return useQuery<DrawingWithRevision>({
     queryKey: ["drawing", projectId, drawingId],
-    queryFn: async () => {
-      const response = await fetch(
+    queryFn: async () =>
+      apiFetch<DrawingWithRevision>(
         `/api/projects/${projectId}/drawings/${drawingId}`,
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || `Server returned ${response.status} when loading drawing details`);
-      }
-
-      return response.json();
-    },
+      ),
     enabled: !!projectId && !!drawingId,
   });
 }
@@ -86,22 +81,14 @@ export function useCreateDrawing(projectId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (formData: FormData) => {
-      const response = await fetch(
+    mutationFn: async (formData: FormData) =>
+      apiFetch<DrawingWithRevision>(
         `/api/projects/${projectId}/drawings`,
         {
           method: "POST",
           body: formData,
         },
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || `Server returned ${response.status} — the drawing could not be created`);
-      }
-
-      return response.json();
-    },
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["drawings", projectId],
@@ -135,23 +122,14 @@ export function useUpdateDrawing(projectId: string) {
         drawing_type?: string;
         area_id?: string;
       };
-    }) => {
-      const response = await fetch(
+    }) =>
+      apiFetch<DrawingWithRevision>(
         `/api/projects/${projectId}/drawings/${drawingId}`,
         {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),
         },
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || `Server returned ${response.status} — the drawing could not be updated`);
-      }
-
-      return response.json();
-    },
+      ),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: ["drawings", projectId],
@@ -181,20 +159,14 @@ export function useUploadRevision(projectId: string) {
     }: {
       drawingId: string;
       formData: FormData;
-    }) => {
-      const res = await fetch(
+    }) =>
+      apiFetch<DrawingWithRevision>(
         `/api/projects/${projectId}/drawings/${drawingId}/revisions`,
         {
           method: "POST",
           body: formData,
         },
-      );
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Failed to upload revision");
-      }
-      return res.json();
-    },
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["drawings", projectId] });
     },
@@ -208,21 +180,13 @@ export function useDeleteDrawing(projectId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (drawingId: string) => {
-      const response = await fetch(
+    mutationFn: async (drawingId: string) =>
+      apiFetch(
         `/api/projects/${projectId}/drawings/${drawingId}`,
         {
           method: "DELETE",
         },
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || `Server returned ${response.status} — the drawing could not be deleted`);
-      }
-
-      return response.json();
-    },
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["drawings", projectId],
@@ -246,14 +210,11 @@ export function useDeleteDrawing(projectId: string) {
 export function usePublishDrawing(projectId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ drawingId, publish }: { drawingId: string; publish: boolean }) => {
-      const res = await fetch(
+    mutationFn: async ({ drawingId, publish }: { drawingId: string; publish: boolean }) =>
+      apiFetch(
         `/api/projects/${projectId}/drawings/${drawingId}/publish`,
         { method: publish ? "PATCH" : "DELETE" },
-      );
-      if (!res.ok) throw new Error("Failed to update drawing");
-      return res.json();
-    },
+      ),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["drawings", projectId] });
       queryClient.invalidateQueries({ queryKey: ["drawing", projectId, variables.drawingId] });
@@ -271,14 +232,11 @@ export function usePublishDrawing(projectId: string) {
 export function useObsoleteDrawing(projectId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ drawingId, obsolete }: { drawingId: string; obsolete: boolean }) => {
-      const res = await fetch(
+    mutationFn: async ({ drawingId, obsolete }: { drawingId: string; obsolete: boolean }) =>
+      apiFetch(
         `/api/projects/${projectId}/drawings/${drawingId}/obsolete`,
         { method: obsolete ? "PATCH" : "DELETE" },
-      );
-      if (!res.ok) throw new Error("Failed to update drawing");
-      return res.json();
-    },
+      ),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["drawings", projectId] });
       queryClient.invalidateQueries({ queryKey: ["drawing", projectId, variables.drawingId] });
@@ -294,18 +252,16 @@ export function useObsoleteDrawing(projectId: string) {
  * React Query hook for fetching soft-deleted drawings (recycle bin)
  */
 export function useDeletedDrawings(projectId: string) {
-  return useQuery({
+  return useQuery<DeletedDrawingRow[]>({
     queryKey: ["drawings-recycle-bin", projectId],
     queryFn: async () => {
-      const response = await fetch(
+      const response = await apiFetch<DeletedDrawingsResponse>(
         `/api/projects/${projectId}/drawings/recycle-bin`,
       );
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch deleted drawings");
-      }
-
-      return response.json();
+      return (response.drawings ?? []).map((row) => ({
+        ...mapDrawingLogRow(row),
+        deletedAt: row.deleted_at ?? null,
+      }));
     },
     enabled: !!projectId,
   });
@@ -318,19 +274,11 @@ export function useRestoreDrawing(projectId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (drawingId: string) => {
-      const response = await fetch(
+    mutationFn: async (drawingId: string) =>
+      apiFetch(
         `/api/projects/${projectId}/drawings/${drawingId}/restore`,
         { method: "PATCH" },
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to restore drawing");
-      }
-
-      return response.json();
-    },
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["drawings", projectId] });
       queryClient.invalidateQueries({ queryKey: ["drawings-recycle-bin", projectId] });
@@ -349,19 +297,11 @@ export function usePermanentDeleteDrawing(projectId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (drawingId: string) => {
-      const response = await fetch(
+    mutationFn: async (drawingId: string) =>
+      apiFetch(
         `/api/projects/${projectId}/drawings/${drawingId}/restore`,
         { method: "DELETE" },
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to permanently delete drawing");
-      }
-
-      return response.json();
-    },
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["drawings-recycle-bin", projectId] });
       toast.success("Drawing permanently deleted");
