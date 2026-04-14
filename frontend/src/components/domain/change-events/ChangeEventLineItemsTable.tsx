@@ -649,7 +649,7 @@ export function ChangeEventLineItemsTable({
                         <BudgetCodeCell li={li} />
                       </InlineTableCell>
                       <InlineTableCell className="max-w-30 truncate">
-                        {safeDescription(li.description) || formatBudgetCodeText(li) || "--"}
+                        {safeDescription(li.description) || "--"}
                       </InlineTableCell>
                       <InlineTableCell className="max-w-22.5 truncate">
                         {li.vendor?.name || "--"}

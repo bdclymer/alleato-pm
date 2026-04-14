@@ -2,8 +2,6 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { toast } from "sonner";
-
 import { SectionHeader } from "@/components/ds/section-header";
 import { StatusBadge } from "@/components/ds/status-badge";
 import {
@@ -81,8 +79,8 @@ export function ChangeEventPrimePCOsSection({
           { cache: "no-store" as RequestCache },
         );
         setPcos(res.data ?? []);
-      } catch {
-        toast.error("Failed to load prime contract PCOs");
+      } catch (err) {
+        console.error("[ChangeEventPrimePCOsSection] Failed to load prime contract PCOs:", err);
       } finally {
         setIsLoading(false);
       }

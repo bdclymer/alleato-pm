@@ -2,8 +2,6 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { toast } from "sonner";
-
 import { SectionHeader } from "@/components/ds/section-header";
 import { StatusBadge } from "@/components/ds/status-badge";
 import {
@@ -74,8 +72,8 @@ export function ChangeEventCommitmentPCOsSection({
           { cache: "no-store" as RequestCache },
         );
         setPcos(res.data ?? []);
-      } catch {
-        toast.error("Failed to load commitment PCOs");
+      } catch (err) {
+        console.error("[ChangeEventCommitmentPCOsSection] Failed to load commitment PCOs:", err);
       } finally {
         setIsLoading(false);
       }
