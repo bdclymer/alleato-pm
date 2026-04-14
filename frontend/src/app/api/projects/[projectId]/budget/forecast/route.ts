@@ -46,6 +46,10 @@ export const GET = withApiGuardrails(
         projectedBudget?: number;
         projectedCosts?: number;
         projectedOverUnder?: number;
+        forecastToComplete?: number;
+        estimatedCostAtCompletion?: number;
+        forecastStartDate?: string | null;
+        forecastEndDate?: string | null;
         costCode?: string;
         costCodeDescription?: string;
       }>;
@@ -54,6 +58,8 @@ export const GET = withApiGuardrails(
     // Calculate forecasts
     let totalProjectedBudget = 0;
     let totalProjectedCosts = 0;
+    let totalProjectedCostToComplete = 0;
+    let totalEstimatedCostAtCompletion = 0;
     let totalOriginalBudget = 0;
     let totalRevisedBudget = 0;
 
@@ -62,7 +68,11 @@ export const GET = withApiGuardrails(
       costCodeName: string;
       projectedBudget: number;
       projectedCosts: number;
+      projectedCostToComplete: number;
+      estimatedCostAtCompletion: number;
       projectedVariance: number;
+      forecastStartDate: string | null;
+      forecastEndDate: string | null;
     }> = [];
 
     (budgetData.lineItems ?? []).forEach((line) => {
@@ -70,13 +80,19 @@ export const GET = withApiGuardrails(
       const revised = Number(line.revisedBudget) || original;
       const projectedBudget = Number(line.projectedBudget) || revised;
       const projectedCosts = Number(line.projectedCosts) || 0;
+      const projectedCostToComplete =
+        Number(line.forecastToComplete) || Math.max(0, projectedBudget - projectedCosts);
+      const estimatedCostAtCompletion =
+        Number(line.estimatedCostAtCompletion) || projectedCosts + projectedCostToComplete;
       const projectedVariance =
-        Number(line.projectedOverUnder) || projectedBudget - projectedCosts;
+        Number(line.projectedOverUnder) || projectedBudget - estimatedCostAtCompletion;
 
       totalOriginalBudget += original;
       totalRevisedBudget += revised;
       totalProjectedBudget += projectedBudget;
       totalProjectedCosts += projectedCosts;
+      totalProjectedCostToComplete += projectedCostToComplete;
+      totalEstimatedCostAtCompletion += estimatedCostAtCompletion;
 
       if (line.costCode) {
         forecastByCostCode.push({
@@ -84,12 +100,19 @@ export const GET = withApiGuardrails(
           costCodeName: line.costCodeDescription || "",
           projectedBudget,
           projectedCosts,
+          projectedCostToComplete,
+          estimatedCostAtCompletion,
           projectedVariance,
+          // Date columns for time-phased forecasting (Procore parity).
+          // Backed by future budget_lines.forecast_start_date / forecast_end_date columns;
+          // null until the schema migration lands and lines are populated.
+          forecastStartDate: line.forecastStartDate ?? null,
+          forecastEndDate: line.forecastEndDate ?? null,
         });
       }
     });
 
-    const totalProjectedVariance = totalProjectedBudget - totalProjectedCosts;
+    const totalProjectedVariance = totalProjectedBudget - totalEstimatedCostAtCompletion;
 
     return NextResponse.json({
       summary: {
@@ -97,6 +120,8 @@ export const GET = withApiGuardrails(
         totalRevisedBudget,
         totalProjectedBudget,
         totalProjectedCosts,
+        totalProjectedCostToComplete,
+        totalEstimatedCostAtCompletion,
         totalProjectedVariance,
         variancePercentage:
           totalProjectedBudget > 0

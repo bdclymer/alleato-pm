@@ -215,7 +215,7 @@ const ComponentsAppsScrumBoard = () => {
 
             const today = new Date();
             const dd = String(today.getDate()).padStart(2, '0');
-            const mm = String(today.getMonth()); //January is 0!
+            const mm = today.getMonth(); //January is 0!
             const yyyy = today.getFullYear();
             const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
             const task = {

@@ -3,6 +3,7 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import type { Database } from "@/types/database.types";
 
 
 /**
@@ -142,7 +143,7 @@ export const POST = withApiGuardrails("/api/agentation/inbox#POST", async ({ req
       status: "open",
       agentation_id: agentationId,
       created_by: user.id,
-      metadata,
+      metadata: metadata as Database["public"]["Tables"]["dev_annotations"]["Insert"]["metadata"],
     })
     .select("id, agentation_id")
     .single();

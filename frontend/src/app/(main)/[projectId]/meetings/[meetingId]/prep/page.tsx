@@ -130,7 +130,7 @@ export default function MeetingPrepPage() {
   return (
     <PageShell
       variant="content"
-      title={meeting.title}
+      title={meeting.title ?? ""}
       description={formattedDate}
       onBack={() => router.back()}
       backLabel="Back to Meetings"

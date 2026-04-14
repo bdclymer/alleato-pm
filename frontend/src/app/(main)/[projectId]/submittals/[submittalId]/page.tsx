@@ -1,6 +1,7 @@
 import { createServiceClient } from "@/lib/supabase/service";
 import { notFound } from "next/navigation";
 import { SubmittalDetailClient } from "@/features/submittals/submittal-detail-client";
+import type { SubmittalDetail } from "@/hooks/use-submittals";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -68,10 +69,14 @@ export default async function SubmittalDetailPage({ params }: Props) {
   if (error || !submittal) {
     notFound();
   }
+  const submittalDetail: SubmittalDetail = {
+    ...(submittal as Omit<SubmittalDetail, "responsible_contractor">),
+    responsible_contractor: null,
+  };
 
   return (
     <SubmittalDetailClient
-      submittal={submittal as Parameters<typeof SubmittalDetailClient>[0]["submittal"]}
+      submittal={submittalDetail}
       projectId={parseInt(projectId, 10)}
     />
   );

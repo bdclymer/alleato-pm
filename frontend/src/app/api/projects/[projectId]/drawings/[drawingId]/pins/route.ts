@@ -45,7 +45,7 @@ export const POST = withApiGuardrails(
   if (!user) throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/drawings/[drawingId]/pins#POST", message: "Authentication required." });
 
   const { projectId, drawingId } = await params;
-  const body = await req.json();
+  const body = await request.json();
   const service = createServiceClient();
 
   const { data, error } = await (service

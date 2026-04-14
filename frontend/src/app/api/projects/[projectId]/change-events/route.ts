@@ -39,6 +39,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createChangeEventSchema, changeEventQuerySchema } from './validation'
 import { ZodError } from 'zod'
 import type { Database } from '@/types/database.types'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
 
@@ -79,6 +80,8 @@ interface VerticalMarkupRow {
   calculation_order: number | null
   compound: boolean | null
 }
+
+type RouteSupabaseClient = SupabaseClient<Database>
 
 // Validate UUID-like identifiers before sending them to strict FK filters.
 function isUuid(value: string): boolean {
@@ -128,7 +131,7 @@ function computeMarkupAdditions(
  * Format: "001", "002", "003", etc.
  */
 async function generateChangeEventNumber(
-  supabase: any,
+  supabase: RouteSupabaseClient,
   projectId: number
 ): Promise<string> {
   // Get ALL change event numbers (including soft-deleted) to avoid unique constraint
@@ -194,7 +197,7 @@ export const GET = withApiGuardrails(
 
     if (queryParams.tab && queryParams.tab !== 'all') {
       // 1. Fetch all CE IDs for the project (active and deleted)
-      const { data: projectCEs } = await (supabase as any)
+      const { data: projectCEs } = await supabase
         .from('change_events')
         .select('id, deleted_at')
         .eq('project_id', projectIdNum)
@@ -210,7 +213,7 @@ export const GET = withApiGuardrails(
       // 2. CE IDs that have at least one line item
       const idsWithItemsSet = new Set<string>()
       if (activeCEIds.length > 0) {
-        const { data: ceWithItems } = await (supabase as any)
+        const { data: ceWithItems } = await supabase
           .from('change_event_line_items')
           .select('change_event_id')
           .in('change_event_id', activeCEIds)
@@ -226,7 +229,7 @@ export const GET = withApiGuardrails(
       // 3. CE IDs that have an RFQ
       const idsWithRfqSet = new Set<string>()
       if (activeCEIds.length > 0) {
-        const { data: ceWithRfqs } = await (supabase as any)
+        const { data: ceWithRfqs } = await supabase
           .from('change_event_rfqs')
           .select('change_event_id')
           .in('change_event_id', activeCEIds)
@@ -250,7 +253,7 @@ export const GET = withApiGuardrails(
     }
 
     // ── Build base query ────────────────────────────────────────────────────
-    let query = (supabase as any)
+    let query = supabase
       .from('change_events')
       .select(
         `
@@ -325,14 +328,14 @@ export const GET = withApiGuardrails(
     const events = data || []
     const eventIds = events.map((event: ChangeEvent) => event.id)
 
-    const { data: projectMarkups } = await (supabase as any)
+    const { data: projectMarkups } = await supabase
       .from('vertical_markup')
       .select('percentage, calculation_order, compound')
       .eq('project_id', parseInt(projectId, 10))
 
     // Batch fetch line-item level parity data for all rows on page.
     const { data: allLineItems } = eventIds.length
-      ? await (supabase as any)
+      ? await supabase
           .from('change_event_line_items')
           .select('change_event_id, revenue_rom, cost_rom, non_committed_cost, contract_id')
           .in('change_event_id', eventIds)
@@ -385,7 +388,7 @@ export const GET = withApiGuardrails(
     }
 
     const { data: contracts, error: contractsError } = contractIds.length
-      ? await (supabase as any)
+      ? await supabase
           .from('prime_contracts')
           .select('id, contract_number, title')
           .in('id', contractIds)
@@ -407,7 +410,7 @@ export const GET = withApiGuardrails(
     }
 
     const { data: rfqs } = eventIds.length
-      ? await (supabase as any)
+      ? await supabase
           .from('change_event_rfqs')
           .select('change_event_id, title, created_at')
           .in('change_event_id', eventIds)
@@ -433,8 +436,8 @@ export const GET = withApiGuardrails(
           .eq('pco_type', 'prime')
       : { data: [] as Array<{ change_event_id: string; pco_id: string }> }
 
-    const rawPrimePcoIds = [...new Set((rawPcoLinks ?? []).map((l) => l.pco_id))]
-    const primePcoIds = rawPrimePcoIds.filter(isUuid)
+    const rawPrimePcoIds = [...new Set((rawPcoLinks ?? []).map((l: unknown) => (l as { pco_id?: string }).pco_id))]
+    const primePcoIds = rawPrimePcoIds.filter((value): value is string => typeof value === "string" && isUuid(value))
     const droppedPrimePcoIds = rawPrimePcoIds.length - primePcoIds.length
 
     if (droppedPrimePcoIds > 0) {
@@ -454,9 +457,11 @@ export const GET = withApiGuardrails(
       return apiErrorResponse(primePcosError)
     }
 
-    const pcoById = new Map((primePcosData ?? []).map((p) => [p.id, p]))
+    const pcoById: Map<string, { pco_number: string | null; title: string | null }> = new Map(
+      (primePcosData ?? []).map((p: { id: string; pco_number: string | null; title: string | null }) => [p.id, p]),
+    )
     const pcoMap = new Map<string, { number: string | null; title: string | null }>()
-    for (const link of rawPcoLinks ?? []) {
+    for (const link of (rawPcoLinks ?? []) as Array<{ change_event_id: string; pco_id: string }>) {
       const key = String(link.change_event_id)
       if (!pcoMap.has(key)) {
         const pco = pcoById.get(link.pco_id)
@@ -588,7 +593,7 @@ export const POST = withApiGuardrails(
     )
 
     // Look up person via users_auth bridge (for foreign key constraint)
-    const { data: authLink } = await (supabase as any)
+    const { data: authLink } = await supabase
       .from('users_auth')
       .select('person_id')
       .eq('auth_user_id', user.id)
@@ -616,7 +621,7 @@ export const POST = withApiGuardrails(
     }
 
     // Create the change event
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from('change_events')
       .insert(dbData)
       .select()
@@ -628,7 +633,7 @@ export const POST = withApiGuardrails(
 
     // Create audit log entry
     if (userExists) {
-      await (supabase as any).from('change_event_history').insert({
+      await supabase.from('change_event_history').insert({
         change_event_id: data.id,
         field_name: 'status',
         old_value: null,

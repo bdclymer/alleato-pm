@@ -33,7 +33,7 @@
     },
     {
       "kind": "button",
-      "label": "What permissions do I need to have to edit an RFI?CmdK",
+      "label": "Which pay applications are still pending approval?CmdK",
       "ariaLabel": "",
       "tag": "button",
       "id": "nav-bar-search",
@@ -42,7 +42,7 @@
       "qa": "",
       "colId": "",
       "rowIndex": "",
-      "x": 768,
+      "x": 767,
       "y": 26
     },
     {
@@ -56,7 +56,7 @@
       "qa": "",
       "colId": "",
       "rowIndex": "",
-      "x": 1065,
+      "x": 1062,
       "y": 49
     },
     {

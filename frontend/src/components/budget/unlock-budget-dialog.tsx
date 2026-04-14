@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/budget-overlay";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { apiFetch } from "@/lib/api-client";
 
 interface UnlockBudgetDialogProps {
   open: boolean;
@@ -33,44 +34,40 @@ export function UnlockBudgetDialog({
     setUnlocking(true);
 
     try {
-      const response = await fetch(`/api/projects/${projectId}/budget/lock`, {
+      const data = await apiFetch<{ deletedCount?: number }>(
+        `/api/projects/${projectId}/budget/lock`,
+        {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ preserveLineItems }),
-      });
+        },
+      );
 
-      if (response.ok) {
-        const data = await response.json();
-
-        // Show success message based on choice
-        if (preserveLineItems) {
-          toast.success("Budget unlocked successfully", {
-            description: "All budget line items have been preserved.",
-          });
-        } else {
-          const deletedCount = data.deletedCount || 0;
-          toast.success(
-            `Budget unlocked and ${deletedCount} line items deleted`,
-            {
-              description: "The budget is now editable with a clean slate.",
-            },
-          );
-        }
-
-        onUnlockSuccess();
-        onOpenChange(false);
-      } else {
-        const error = await response.json();
-        toast.error("Could not unlock budget", {
-          description:
-            error.error || "The server returned an error — please try again",
+      // Show success message based on choice
+      if (preserveLineItems) {
+        toast.success("Budget unlocked successfully", {
+          description: "All budget line items have been preserved.",
         });
+      } else {
+        const deletedCount = data.deletedCount || 0;
+        toast.success(
+          `Budget unlocked and ${deletedCount} line items deleted`,
+          {
+            description: "The budget is now editable with a clean slate.",
+          },
+        );
       }
+
+      onUnlockSuccess();
+      onOpenChange(false);
     } catch (error) {
       toast.error("Could not unlock budget", {
-        description: "An unexpected error occurred — please try again",
+        description:
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred — please try again",
       });
     } finally {
       setUnlocking(false);

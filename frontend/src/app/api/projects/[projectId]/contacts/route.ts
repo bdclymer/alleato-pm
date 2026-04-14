@@ -48,9 +48,20 @@ export const GET = withApiGuardrails(
 
     // Flatten and deduplicate
     const seen = new Set<string>();
-    const contacts = (data ?? [])
+    const rows = (data ?? []) as unknown as Array<{
+      person:
+        | Array<{
+            id: string;
+            first_name: string | null;
+            last_name: string | null;
+            email: string | null;
+            person_type: string | null;
+          }>
+        | null;
+    }>;
+    const contacts = rows
       .map((row) => {
-        const p = row.person as { id: string; first_name: string | null; last_name: string | null; email: string | null; person_type: string | null } | null;
+        const p = Array.isArray(row.person) ? row.person[0] ?? null : row.person;
         if (!p) return null;
         return {
           id: p.id,

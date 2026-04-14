@@ -208,7 +208,7 @@ async function fetchCommitmentData(
   const { data: unifiedData, error: unifiedError } = await supabase
     .from("commitments_unified")
     .select("commitment_type")
-    .eq("id", commitmentId)
+    .eq("id", id)
     .single();
 
   if (unifiedError || !unifiedData) {
@@ -234,7 +234,7 @@ async function fetchCommitmentData(
       contract_company:companies!contract_company_id(id, name, address, city, state)
     `
     )
-    .eq("id", commitmentId)
+    .eq("id", id)
     .single();
 
   if (error || !data) {
@@ -247,7 +247,7 @@ async function fetchCommitmentData(
     .select(
       "total_sov_amount, total_billed_to_date, total_amount_remaining, sov_line_count"
     )
-    .eq("id", commitmentId)
+    .eq("id", id)
     .single();
 
   // Fetch SOV line items

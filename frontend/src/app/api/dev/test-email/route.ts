@@ -77,7 +77,7 @@ export const POST = withApiGuardrails(
     return NextResponse.json({ error: "Not available in production" }, { status: 403 });
   }
 
-  const body = await req.json().catch(() => ({}));
+  const body = await request.json().catch(() => ({}));
   const template = body.template as string;
   const to = (body.to as string) || "delivered@resend.dev";
 

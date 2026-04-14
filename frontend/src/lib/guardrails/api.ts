@@ -19,13 +19,13 @@ type UnwrapParams<TParams> = TParams extends Promise<infer TUnwrapped>
   ? TUnwrapped
   : TParams;
 
-interface HandlerContext<TParams = Record<string, string>> {
+interface HandlerContext<TParams = any> {
   request: NextRequest;
   params: TParams;
   requestId: string;
 }
 
-type WrappedHandler<TParams = Record<string, string>> = (
+type WrappedHandler<TParams = any> = (
   context: HandlerContext<TParams>,
 ) => Promise<Response>;
 
@@ -57,7 +57,7 @@ function errorEnvelopeFrom(
   };
 }
 
-export function withApiGuardrails<TParams = Record<string, string>>(
+export function withApiGuardrails<TParams = any>(
   where: string,
   handler: WrappedHandler<UnwrapParams<TParams>>,
 ) {

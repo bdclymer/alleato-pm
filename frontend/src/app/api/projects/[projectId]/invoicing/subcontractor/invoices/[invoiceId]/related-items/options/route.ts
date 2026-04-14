@@ -195,14 +195,14 @@ export const GET = withApiGuardrails(
         const searchLower = search.toLowerCase();
         options = (data ?? [])
           .filter((r) => {
-            const cc = r.cost_codes as { title?: string | null; division_title?: string | null } | null;
+            const cc = r.cost_codes as unknown as { title?: string | null; division_title?: string | null } | null;
             if (!cc) return false;
             if (!search) return true;
             const haystack = `${cc.title ?? ""} ${cc.division_title ?? ""}`.toLowerCase();
             return haystack.includes(searchLower);
           })
           .map((r) => {
-            const cc = r.cost_codes as { id: string; title?: string | null; division_title?: string | null };
+            const cc = r.cost_codes as unknown as { id: string; title?: string | null; division_title?: string | null };
             const label = cc.division_title ? `${cc.division_title} — ${cc.title ?? ""}` : (cc.title ?? "Unknown");
             return {
               id: r.id,
@@ -286,14 +286,14 @@ export const GET = withApiGuardrails(
         const searchLower = search.toLowerCase();
         options = (data ?? [])
           .filter((r) => {
-            const d = r.drawings as { project_id: number; drawing_number?: string | null; title?: string | null } | null;
+            const d = r.drawings as unknown as { project_id: number; drawing_number?: string | null; title?: string | null } | null;
             if (!d || d.project_id !== parsedProjectId) return false;
             if (!search) return true;
             const haystack = `${d.drawing_number ?? ""} ${d.title ?? ""} ${r.revision_number}`.toLowerCase();
             return haystack.includes(searchLower);
           })
           .map((r) => {
-            const d = r.drawings as { drawing_number?: string | null; title?: string | null };
+            const d = r.drawings as unknown as { drawing_number?: string | null; title?: string | null };
             return {
               id: r.id,
               relatedNumber: `${d.drawing_number ?? ""}  Rev ${r.revision_number}`,

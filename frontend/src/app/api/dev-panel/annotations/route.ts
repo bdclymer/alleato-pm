@@ -11,7 +11,7 @@ import { createClient } from "@/lib/supabase/server";
 export const GET = withApiGuardrails(
   "dev-panel/annotations#GET",
   async ({ request }) => {
-  const { searchParams } = new URL(req.url);
+  const { searchParams } = new URL(request.url);
   const url = searchParams.get("url") ?? "";
 
   // Normalise to just the pathname (strip origin if present)

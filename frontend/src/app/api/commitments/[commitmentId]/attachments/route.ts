@@ -81,7 +81,14 @@ export const GET = withApiGuardrails(
     }
 
     // Format response
-    const formattedAttachments = (attachments || []).map((attachment) => ({
+    const formattedAttachments = (attachments || []).map((attachment: {
+      id: string;
+      attached_to_id: string | null;
+      file_name: string | null;
+      url: string | null;
+      uploaded_by: string | null;
+      uploaded_at: string | null;
+    }) => ({
       id: attachment.id,
       commitmentId: attachment.attached_to_id,
       fileName: attachment.file_name,

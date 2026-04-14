@@ -35,6 +35,49 @@ Comprehensive quality assessment: functional testing + Procore compliance + usab
 | 4. Usability & Architecture | Code review for perf, library choices, missing capabilities, UX gaps | ~5-10 min |
 | 5. Report & Fix | Write report, fix Critical/High issues inline | ~5-10 min |
 
+## Non-Negotiable Audit Gates
+
+An audit is invalid unless all required artifacts exist for the tested flows.
+
+### Required artifacts before report closure
+
+For every audited flow that includes a form, the audit must capture:
+- A screenshot of the empty or starting state
+- A screenshot of the form before submit
+- A screenshot of the success or resulting state
+- Database validation output for the saved record
+- Edit prefill verification after reload
+
+For every failure, the audit must capture:
+- A screenshot of the failure state
+- A short reproduction note
+- If applicable, a failure video
+
+### Mandatory form-completion rule
+
+If a feature has a create or edit form, you must complete the form end-to-end and verify persistence before moving to the next phase.
+
+This means:
+- Fill every required field
+- Fill representative optional fields that Procore exposes
+- Submit the form
+- Reload or revisit the record
+- Confirm the saved values are still present
+
+If the feature includes related nested forms or sub-forms, at least one complete pass through each nested form is required before the audit can advance.
+
+### Per-flow audit checklist
+
+Every audited form flow must be marked complete only after all of the following are done:
+- `Create` flow completed and saved
+- `Edit` flow completed and saved
+- `Reload` or reopen verification completed
+- `DB` validation completed for the saved record
+- `Negative path` test completed for the same form
+- `Artifacts` captured for each state
+
+If any item is missing, the flow is incomplete and the audit cannot advance to the report phase.
+
 ---
 
 ## Phase 1: Context Assembly (Parallel)
@@ -156,6 +199,25 @@ Check:
 - Values match what was entered
 - No silently dropped fields (null when a value was entered)
 - FK columns resolve to the correct related record (JOIN check)
+
+### 2.2.1 Form Completion Proof
+
+Before moving past a form-based test case, capture proof that the form was actually completed:
+- Record the values entered for required and optional fields
+- Verify the create/update response or DB row contains those values
+- Reload the page or reopen the record and verify the values still exist
+- If the form has nested sub-forms, verify at least one nested item persisted
+
+### 2.2.2 Required flow order
+
+For each form-based feature, execute tests in this order:
+1. Create
+2. Edit
+3. Reload / reopen verification
+4. DB validation
+5. Negative path
+
+Do not skip ahead to compliance comparison or usability review until the full flow order is complete for the tested record.
 
 ### 2.3 FK & Edit Pre-fill Check (Gate 11)
 
@@ -351,6 +413,12 @@ Copy template and fill:
 ```bash
 cp {SKILL_DIR}/templates/feature-audit-report-template.md feature-audit-output/<tool-name>/report.md
 ```
+
+The report must not be finalized until the following are complete:
+- All required form-completion artifacts are present
+- All screenshot paths referenced in the report exist
+- All fixed issues were re-verified in the browser
+- Every open issue includes a concrete reproduction path
 
 Read every screenshot with the Read tool before finalizing.
 

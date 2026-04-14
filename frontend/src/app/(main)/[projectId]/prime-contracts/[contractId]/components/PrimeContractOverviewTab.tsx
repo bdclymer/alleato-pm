@@ -48,7 +48,6 @@ import {
   InlineTableHeader,
   InlineTableHeaderCell,
   InlineTableHeaderRow,
-  InlineTableRow,
 } from "@/components/ds/inline-table";
 import { getCostTypeLabel } from "@/constants/budget";
 import type {
@@ -844,12 +843,12 @@ function SortableSovRow({ id, className, children }: SortableSovRowProps) {
   };
 
   return (
-    <InlineTableRow
+    <tr
       ref={setNodeRef}
       style={style}
-      className={`${className || ""}${isDragging ? " opacity-80 bg-muted/30" : ""}`}
+      className={`border-b border-border/60 group transition-colors hover:bg-muted/30${isDragging ? " opacity-80 bg-muted/30" : ""}${className ? ` ${className}` : ""}`}
     >
       {children({ attributes, listeners })}
-    </InlineTableRow>
+    </tr>
   );
 }

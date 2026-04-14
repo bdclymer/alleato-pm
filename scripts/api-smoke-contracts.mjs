@@ -41,6 +41,8 @@ const ENDPOINTS = [
   ["GET", `/api/projects/${PROJECT_ID}/budget/snapshots`, "Budget snapshots", [200, 401]],
   ["GET", `/api/projects/${PROJECT_ID}/budget/direct-costs`, "Budget direct costs", [200, 401]],
   ["GET", `/api/projects/${PROJECT_ID}/budget-codes`, "Budget codes", [200, 401]],
+  ["GET", `/api/projects/${PROJECT_ID}/budget/export?format=csv`, "Budget export CSV", [200, 401]],
+  ["GET", `/api/projects/${PROJECT_ID}/budget/export?format=excel`, "Budget export Excel", [200, 401]],
 
   // Change Events
   ["GET", `/api/projects/${PROJECT_ID}/change-events`, "Change events list", [200, 401]],

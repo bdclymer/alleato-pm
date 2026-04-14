@@ -30,7 +30,7 @@ export const POST = withApiGuardrails(
     throw new GuardrailError({ code: "AUTH_EXPIRED", where: "dev/annotate#POST", message: "Authentication required." });
   }
 
-  const body = await req.json();
+  const body = await request.json();
   const { route, comment, screenshotDataUrl, elementSelector, componentHint } = body;
 
   if (!route || !comment) {
@@ -80,7 +80,7 @@ export const POST = withApiGuardrails(
 export const GET = withApiGuardrails(
   "dev/annotate#GET",
   async ({ request }) => {
-  const { searchParams } = new URL(req.url);
+  const { searchParams } = new URL(request.url);
   const status = searchParams.get("status") ?? "open";
 
   // Watcher uses service client (has full access)
@@ -101,7 +101,7 @@ export const GET = withApiGuardrails(
 export const PATCH = withApiGuardrails(
   "dev/annotate#PATCH",
   async ({ request }) => {
-  const body = await req.json();
+  const body = await request.json();
   const { id, reply, status } = body;
 
   if (!id || !reply) {

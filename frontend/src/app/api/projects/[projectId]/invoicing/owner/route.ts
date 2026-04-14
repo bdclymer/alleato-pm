@@ -244,8 +244,8 @@ export const GET = withApiGuardrails<{ projectId: string }>(
         .filter((p) => p.owner_invoice_id === invoice.id)
         .reduce((sum, p) => sum + (p.amount || 0), 0);
       const billedTotal =
-        (invoice.net_amount ?? net_amount) ||
-        (invoice.gross_amount ?? gross_amount) ||
+        (invoice.net_amount ?? canonical_net) ||
+        (invoice.gross_amount ?? canonical_gross) ||
         total_amount;
       let payment_status: "unpaid" | "partially_paid" | "paid" = "unpaid";
       if (billedTotal > 0 && total_paid >= billedTotal) {

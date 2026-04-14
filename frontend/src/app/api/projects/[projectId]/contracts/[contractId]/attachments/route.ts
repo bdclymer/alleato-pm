@@ -11,6 +11,18 @@ interface RouteParams {
   params: Promise<{ projectId: string; contractId: string }>;
 }
 
+type ContractAttachmentLinkRow = {
+  attachment_id: string;
+};
+
+type ContractAttachmentRecord = {
+  id: string;
+  attached_to_id: string | null;
+  file_name: string | null;
+  url: string | null;
+  uploaded_at: string | null;
+};
+
 const isMissingJoinTableError = (error: { code?: string; message?: string } | null) =>
   !!error &&
   (error.code === "PGRST205" ||
@@ -61,15 +73,9 @@ export const GET = withApiGuardrails(
       );
     }
 
-    const linkedAttachmentIds = (linkRows ?? []).map((row) => row.attachment_id);
+    const linkedAttachmentIds = (linkRows ?? []) as ContractAttachmentLinkRow[];
 
-    let attachments: Array<{
-      id: string;
-      attached_to_id: string | null;
-      file_name: string | null;
-      url: string | null;
-      uploaded_at: string | null;
-    }> = [];
+    let attachments: ContractAttachmentRecord[] = [];
 
     if (linkedAttachmentIds.length > 0) {
       const { data: mappedAttachments, error: mappedAttachmentsError } = await serviceClient
@@ -88,7 +94,7 @@ export const GET = withApiGuardrails(
         );
       }
 
-      attachments = mappedAttachments ?? [];
+      attachments = (mappedAttachments ?? []) as ContractAttachmentRecord[];
     } else {
       // Temporary fallback while environments are being migrated.
       const { data: legacyAttachments, error: legacyError } = await serviceClient
@@ -105,7 +111,7 @@ export const GET = withApiGuardrails(
         );
       }
 
-      attachments = legacyAttachments ?? [];
+      attachments = (legacyAttachments ?? []) as ContractAttachmentRecord[];
     }
 
     // Final fallback for environments with detached legacy rows:
@@ -120,7 +126,7 @@ export const GET = withApiGuardrails(
           .order("uploaded_at", { ascending: false });
 
       if (!pathMatchedError && pathMatchedAttachments) {
-        attachments = pathMatchedAttachments;
+        attachments = pathMatchedAttachments as ContractAttachmentRecord[];
       }
     }
 
@@ -251,7 +257,7 @@ export const POST = withApiGuardrails(
       );
     }
 
-    const { error: linkInsertError } = await serviceClient
+    const { error: linkInsertError } = await serviceAny
       .from("prime_contract_attachments")
       .insert({
         contract_id: contractId,

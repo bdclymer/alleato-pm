@@ -343,7 +343,7 @@ async function loadLegacyLinkedRows(
 
 export const GET = withApiGuardrails("/api/admin/acumatica-outbound-logs#GET", async ({ request }) => {
   const auth = await requireAdminAuth();
-  if ("error" in auth) return auth.error;
+  if ("error" in auth) return auth.error!;
   const { supabase } = auth;
 
   const url = new URL(request.url);

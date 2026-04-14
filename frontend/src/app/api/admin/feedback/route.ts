@@ -52,6 +52,12 @@ const feedbackPayloadSchema = z.object({
 type FeedbackInsert =
   Database["public"]["Tables"]["admin_feedback_items"]["Insert"];
 type JsonValue = Database["public"]["Tables"]["admin_feedback_items"]["Row"]["metadata"];
+type ApiErrorPayload = {
+  error: string;
+  code?: string;
+  hint?: string;
+  details?: string;
+};
 
 function toErrorDetails(value: unknown) {
   if (typeof value === "object" && value !== null) {
@@ -116,6 +122,10 @@ function toJsonValue(value: unknown): JsonValue {
   }
 
   return String(value);
+}
+
+function jsonError(status: number, payload: ApiErrorPayload): NextResponse<ApiErrorPayload> {
+  return NextResponse.json(payload, { status });
 }
 
 async function ensureFeedbackBucket() {

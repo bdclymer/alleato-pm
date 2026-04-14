@@ -221,7 +221,7 @@ export const POST = withApiGuardrails(
     const guard = await requirePermission(projectIdNum, "change_orders", "write");
     if (guard.denied) return guard.response;
 
-    const body = await req.json();
+    const body = await request.json();
 
     const { recipients, subject, message } = body as {
       recipients: string[];

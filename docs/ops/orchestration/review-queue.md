@@ -18,6 +18,7 @@ Leader reviews all pending handoffs here.
 | `docs/ops/handoffs/2026-04-14-S8-workstream.md` | S8 | ORCH-008 | 2026-04-14 | Yes | Accepted | Protocol bootstrap complete; duplicate review-row reconciled |
 | `docs/ops/handoffs/2026-04-14-S8-workstream.md` | S8 | ORCH-010 | 2026-04-14 | Yes | Accepted | Phase-2 frontend flow audit accepted; intake parser updated to support equivalent intake-block format |
 | `docs/ops/handoffs/2026-04-14-S9-directory-members-company.md` | S9 | ORCH-011 | 2026-04-14 | Yes | Pending Review | Added company column to live project members table and cleared targeted directory page warnings; eslint now returns 0 warnings, 0 errors |
+| `docs/ops/handoffs/2026-04-14-SC-budget-regression-coverage.md` | SC | ORCH-012 | 2026-04-14 | Yes | Pending Review | Replaced skipped/stale budget regression coverage with current-UI create/edit failure-message specs; browser runtime rerun still hangs and is documented as the remaining gap |
 | `docs/ops/handoffs/2026-04-14-S11-route-guardrails.md` | S11 | ORCH-013 | 2026-04-14 | Yes | Pending Review | Changed-route raw-error debt now blocks touched routes; predeploy now runs changed-file API-client enforcement before route/build stages |
 
 ## Disposition Rules

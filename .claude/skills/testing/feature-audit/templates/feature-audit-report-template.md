@@ -41,6 +41,12 @@
 |---|-----------|----------|--------|-------|
 | 1.1.1 | {name from matrix} | HIGH | PASS/FAIL | |
 
+### Form Completion Coverage
+
+| Form / Flow | Create Saved | Edit Saved | Reload / Reopen Verified | DB Verified | Negative Path Tested | Artifact Paths |
+|------------|--------------|-----------|--------------------------|------------|----------------------|----------------|
+| {create/edit form name} | Yes/No | Yes/No | Yes/No | Yes/No | Yes/No | screenshots/{name}.png, videos/{name}.webm |
+
 ### DB Validation
 
 | Field | Value Entered | DB Value | Match |
@@ -173,6 +179,17 @@
 | # | Description | Path |
 |---|-------------|------|
 | 1 | {description} | screenshots/{name}.png |
+
+### Required Artifact Checklist
+
+- [ ] Empty/start state screenshot for each form flow
+- [ ] Pre-submit screenshot for each form flow
+- [ ] Post-submit or resulting-state screenshot for each form flow
+- [ ] DB validation output for each create/update
+- [ ] Edit prefill screenshot after reload
+- [ ] Failure screenshot for each failed case
+- [ ] Failure video for each failed case
+- [ ] Create, edit, reload, DB verify, and negative path completed in order for each audited form flow
 
 ---
 

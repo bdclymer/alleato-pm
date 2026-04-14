@@ -6,32 +6,32 @@ let projectId: number;
 let budgetCodes: Array<Record<string, unknown>> = [];
 
 /**
- * Chooses a seeded budget code that already has a cost type so the create sheet can submit.
+ * Stubs the budget code lookup so the active create sheet always has one selectable code with a cost type.
  */
-function getSelectableBudgetCodeLabel(): string {
-  const match = budgetCodes.find((code) => {
-    const costTypeId =
-      code.costTypeId ??
-      code.cost_type_id ??
-      code.costType ??
-      code.cost_type;
+async function stubSelectableBudgetCode(page: Page, projectId: number) {
+  await page.route(`**/api/projects/${projectId}/budget-codes`, async (route) => {
+    if (route.request().method() !== "GET") {
+      await route.continue();
+      return;
+    }
 
-    const fullLabel =
-      code.fullLabel ??
-      code.full_label ??
-      code.label ??
-      code.code;
-
-    return Boolean(costTypeId) && typeof fullLabel === "string" && fullLabel.length > 0;
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        budgetCodes: [
+          {
+            id: "test-budget-code-1",
+            code: "01-1000",
+            costType: "L",
+            costTypeId: "11111111-2222-3333-4444-555555555555",
+            description: "Concrete",
+            fullLabel: "01-1000.L - Concrete",
+          },
+        ],
+      }),
+    });
   });
-
-  if (!match) {
-    throw new Error("Bootstrap did not return a selectable budget code with a cost type.");
-  }
-
-  return String(
-    match.fullLabel ?? match.full_label ?? match.label ?? match.code,
-  );
 }
 
 /**
@@ -57,10 +57,7 @@ async function openBudgetCreateSheet(page: Page) {
  * Fills the minimum fields required for a single-row budget line item submission.
  */
 async function fillBudgetCreateRow(page: Page, budgetCodeLabel: string) {
-  const budgetCodeTrigger = page
-    .locator('button[role="combobox"]')
-    .filter({ hasText: /select budget code/i })
-    .first();
+  const budgetCodeTrigger = page.getByTestId("budget-code-trigger-0");
 
   await expect(budgetCodeTrigger).toBeVisible({ timeout: 10000 });
   await budgetCodeTrigger.click();
@@ -73,17 +70,40 @@ async function fillBudgetCreateRow(page: Page, budgetCodeLabel: string) {
   await expect(matchingCode).toBeVisible({ timeout: 10000 });
   await matchingCode.click();
 
-  const amountInput = page.getByLabel(/^Amount$/i).first();
-  await expect(amountInput).toBeVisible({ timeout: 5000 });
-  await amountInput.fill("50000");
+  const quantityInput = page.getByTestId("budget-qty-input-0");
+  await expect(quantityInput).toBeVisible({ timeout: 5000 });
+  await quantityInput.fill("10");
+
+  const uomTrigger = page.getByTestId("budget-uom-trigger-0");
+  await expect(uomTrigger).toBeVisible({ timeout: 5000 });
+  await uomTrigger.click();
+  await page.getByRole("option", { name: /^EA\b/i }).click();
+
+  const unitCostInput = page.getByTestId("budget-unit-cost-input-0");
+  await expect(unitCostInput).toBeVisible({ timeout: 5000 });
+  await unitCostInput.fill("5000");
 }
 
 /**
- * Opens the original budget edit sidebar from the first editable value cell.
+ * Opens the original budget edit sidebar from the first expanded child row.
  */
 async function openOriginalBudgetSidebar(page: Page) {
-  const editableCell = page.locator('button[aria-label^="Edit $"]').first();
-  await expect(editableCell).toBeVisible({ timeout: 15000 });
+  const rows = page.locator("table tbody tr");
+  const initialRowCount = await rows.count();
+
+  const expandButton = page.locator('button[aria-label^="Expand "]').first();
+  await expect(expandButton).toBeVisible({ timeout: 15000 });
+  await expandButton.click();
+
+  await expect
+    .poll(async () => rows.count(), { timeout: 10000 })
+    .toBeGreaterThan(initialRowCount);
+
+  const childRow = rows.nth(1);
+  await expect(childRow).toBeVisible({ timeout: 10000 });
+
+  const editableCell = childRow.locator('button[aria-label^="Edit $"]').first();
+  await expect(editableCell).toBeVisible({ timeout: 10000 });
   await editableCell.click();
 
   await expect(page.getByText(/^Original Budget Amount$/i)).toBeVisible({
@@ -92,6 +112,8 @@ async function openOriginalBudgetSidebar(page: Page) {
 }
 
 test.describe("Budget Line Item Failure Messaging", () => {
+  test.describe.configure({ mode: "serial" });
+
   test.beforeEach(async ({ page, authenticatedRequest, safeNavigate }) => {
     const project = await createTestProject(
       page,
@@ -110,6 +132,8 @@ test.describe("Budget Line Item Failure Messaging", () => {
   test("shows the server message when budget line item creation fails", async ({ page }) => {
     const createFailure = "Budget line items are locked by accounting sync.";
 
+    await stubSelectableBudgetCode(page, projectId);
+
     await page.route(`**/api/projects/${projectId}/budget`, async (route) => {
       if (route.request().method() !== "POST") {
         await route.continue();
@@ -126,7 +150,7 @@ test.describe("Budget Line Item Failure Messaging", () => {
     });
 
     await openBudgetCreateSheet(page);
-    await fillBudgetCreateRow(page, getSelectableBudgetCodeLabel());
+    await fillBudgetCreateRow(page, "01-1000.L - Concrete");
 
     await page.getByRole("button", { name: /create 1 line item/i }).click();
 
@@ -156,7 +180,7 @@ test.describe("Budget Line Item Failure Messaging", () => {
 
     await openOriginalBudgetSidebar(page);
 
-    const originalBudgetInput = page.getByLabel(/original budget/i).first();
+    const originalBudgetInput = page.locator('input[aria-label="Original Budget"]').first();
     await expect(originalBudgetInput).toBeVisible({ timeout: 5000 });
     await originalBudgetInput.fill("12345");
 

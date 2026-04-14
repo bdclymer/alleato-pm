@@ -53,6 +53,11 @@ import {
   updateBudgetLineItem,
 } from "@/lib/budget/update-budget-line-item";
 import {
+  apiFetch,
+  apiFetchBlob,
+  summarizeBulkResults,
+} from "@/lib/api-client";
+import {
   applyQuickFilter,
   loadQuickFilterPreference,
   saveQuickFilterPreference,
@@ -175,13 +180,14 @@ function BudgetPageContent() {
   // Fetch budget lock status
   const fetchLockStatus = React.useCallback(async () => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/budget/lock`);
-      if (response.ok) {
-        const data = await response.json();
-        setIsLocked(data.isLocked || false);
-        setLockedAt(data.lockedAt);
-        setLockedBy(data.lockedBy);
-      }
+      const data = await apiFetch<{
+        isLocked?: boolean;
+        lockedAt?: string | null;
+        lockedBy?: string | null;
+      }>(`/api/projects/${projectId}/budget/lock`);
+      setIsLocked(data.isLocked || false);
+      setLockedAt(data.lockedAt || null);
+      setLockedBy(data.lockedBy || null);
     } catch (error) {
       console.error("Failed to fetch budget lock status:", error);
       // Intentionally swallowed: lock status fetch is non-critical
@@ -195,19 +201,16 @@ function BudgetPageContent() {
       setLoading(true);
 
       // Fetch budget data and lock status in parallel
-      const [budgetResponse] = await Promise.all([
-        fetch(`/api/projects/${projectId}/budget`),
+      const [budgetDataResponse] = await Promise.all([
+        apiFetch<{
+          lineItems?: BudgetLineItem[];
+          grandTotals?: typeof EMPTY_GRAND_TOTALS;
+        }>(`/api/projects/${projectId}/budget`),
         fetchLockStatus(),
       ]);
 
-      if (budgetResponse.ok) {
-        const budgetDataResponse = await budgetResponse.json();
-        setBudgetData(budgetDataResponse.lineItems || []);
-        setGrandTotals(budgetDataResponse.grandTotals || EMPTY_GRAND_TOTALS);
-      } else {
-        setBudgetData([]);
-        setGrandTotals(EMPTY_GRAND_TOTALS);
-      }
+      setBudgetData(budgetDataResponse.lineItems || []);
+      setGrandTotals(budgetDataResponse.grandTotals || EMPTY_GRAND_TOTALS);
     } catch (error) {
       console.error("Failed to fetch budget data:", error);
       setBudgetData([]);
@@ -283,22 +286,24 @@ function BudgetPageContent() {
 
   const handleLockBudget = async () => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/budget/lock`, {
+      const data = await apiFetch<{
+        data: {
+          budget_locked_at: string | null;
+          budget_locked_by: string | null;
+        };
+      }>(`/api/projects/${projectId}/budget/lock`, {
         method: "POST",
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        setIsLocked(true);
-        setLockedAt(data.data.budget_locked_at);
-        setLockedBy(data.data.budget_locked_by);
-        toast.success("Budget locked successfully");
-      } else {
-        const error = await response.json();
-        toast.error(error.error || "Failed to lock budget");
-      }
+      setIsLocked(true);
+      setLockedAt(data.data.budget_locked_at);
+      setLockedBy(data.data.budget_locked_by);
+      toast.success("Budget locked successfully");
     } catch (error) {
-      toast.error("Failed to lock budget");
+      toast.error("Failed to lock budget", {
+        description:
+          error instanceof Error ? error.message : "An unexpected error occurred.",
+      });
     }
   };
 
@@ -315,16 +320,16 @@ function BudgetPageContent() {
 
     try {
       setLoading(true);
-      const [budgetResponse] = await Promise.all([
-        fetch(`/api/projects/${projectId}/budget`),
+      const [budgetDataResponse] = await Promise.all([
+        apiFetch<{
+          lineItems?: BudgetLineItem[];
+          grandTotals?: typeof EMPTY_GRAND_TOTALS;
+        }>(`/api/projects/${projectId}/budget`),
         fetchLockStatus(),
       ]);
 
-      if (budgetResponse.ok) {
-        const budgetDataResponse = await budgetResponse.json();
-        setBudgetData(budgetDataResponse.lineItems || []);
-        setGrandTotals(budgetDataResponse.grandTotals || EMPTY_GRAND_TOTALS);
-      }
+      setBudgetData(budgetDataResponse.lineItems || []);
+      setGrandTotals(budgetDataResponse.grandTotals || EMPTY_GRAND_TOTALS);
     } catch (fetchError) {
       console.error("Failed to refetch budget data after unlock:", fetchError);
       toast.error("Failed to refresh data after unlock", {
@@ -347,7 +352,7 @@ function BudgetPageContent() {
     let toastId: string | number | undefined;
     try {
       toastId = toast.loading("Creating snapshot...");
-      const response = await fetch(`/api/projects/${projectId}/budget/snapshots`, {
+      await apiFetch(`/api/projects/${projectId}/budget/snapshots`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -357,11 +362,6 @@ function BudgetPageContent() {
           description: "Manual snapshot",
         }),
       });
-
-      if (!response.ok) {
-        const errorBody = await response.json().catch(() => null);
-        throw new Error(errorBody?.error || "Failed to create snapshot");
-      }
 
       setSnapshotsRefreshToken((prev) => prev + 1);
       toast.success("Snapshot created successfully", { id: toastId });
@@ -397,17 +397,10 @@ function BudgetPageContent() {
       });
 
       // Call export API
-      const response = await fetch(
+      const blob = await apiFetchBlob(
         `/api/projects/${projectId}/budget/export?format=${format}`,
-        {
-          method: "GET",
-        },
+        { method: "GET" },
       );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Export failed");
-      }
 
       // Update progress
       toast.loading(`Generating ${format.toUpperCase()} file...`, {
@@ -416,21 +409,12 @@ function BudgetPageContent() {
       });
 
       // Create download link
-      const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
 
       // Extract filename from Content-Disposition header or use default
-      const contentDisposition = response.headers.get("Content-Disposition");
-      let filename = `budget-export.${format === "excel" ? "xlsx" : "csv"}`;
-
-      if (contentDisposition) {
-        const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
-        if (filenameMatch) {
-          filename = filenameMatch[1];
-        }
-      }
+      const filename = `budget-export.${format === "excel" ? "xlsx" : "csv"}`;
 
       // Update progress before download
       toast.loading("Starting download...", {
@@ -486,20 +470,16 @@ function BudgetPageContent() {
       setDetailsRequested(true);
       setDetailsLoading(true);
       setDetailsFetchError(false);
-      const response = await fetch(`/api/projects/${projectId}/budget/details`);
-      if (response.ok) {
-        const data = await response.json();
-        setBudgetDetailsData(data.details || []);
-      } else {
-        const errorBody = await response.json().catch(() => null);
-        const errorMessage =
-          errorBody?.error || "Failed to load budget details";
-        toast.error(errorMessage);
-        setDetailsFetchError(true);
-      }
+      const data = await apiFetch<{ details?: BudgetDetailLineItem[] }>(
+        `/api/projects/${projectId}/budget/details`,
+      );
+      setBudgetDetailsData(data.details || []);
     } catch (error) {
       console.error("Failed to load budget details:", error);
-      toast.error("Failed to load budget details");
+      toast.error("Failed to load budget details", {
+        description:
+          error instanceof Error ? error.message : "An unexpected error occurred.",
+      });
       setDetailsFetchError(true);
     } finally {
       setDetailsLoading(false);
@@ -590,24 +570,31 @@ function BudgetPageContent() {
     // Refresh budget data after creating line items
     const fetchData = async () => {
       try {
-        const budgetResponse = await fetch(`/api/projects/${projectId}/budget`);
-        if (budgetResponse.ok) {
-          const budgetDataResponse = await budgetResponse.json();
-          setBudgetData(budgetDataResponse.lineItems || []);
-          setGrandTotals(budgetDataResponse.grandTotals || EMPTY_GRAND_TOTALS);
-        }
+        const budgetDataResponse = await apiFetch<{
+          lineItems?: BudgetLineItem[];
+          grandTotals?: typeof EMPTY_GRAND_TOTALS;
+        }>(`/api/projects/${projectId}/budget`);
+        setBudgetData(budgetDataResponse.lineItems || []);
+        setGrandTotals(budgetDataResponse.grandTotals || EMPTY_GRAND_TOTALS);
 
         // Also refresh budget details if that tab has been loaded
         if (detailsRequested) {
-          const detailsResponse = await fetch(`/api/projects/${projectId}/budget/details`);
-          if (detailsResponse.ok) {
-            const detailsDataResponse = await detailsResponse.json();
-            setBudgetDetailsData(detailsDataResponse.lineItems || []);
-          }
+          const detailsDataResponse = await apiFetch<{
+            details?: BudgetDetailLineItem[];
+            lineItems?: BudgetDetailLineItem[];
+          }>(`/api/projects/${projectId}/budget/details`);
+          setBudgetDetailsData(
+            detailsDataResponse.details || detailsDataResponse.lineItems || [],
+          );
         }
       } catch (error) {
         console.error("Failed to refresh budget data:", error);
-        toast.error("Failed to refresh budget", { description: "Please reload the page." });
+        toast.error("Failed to refresh budget", {
+          description:
+            error instanceof Error
+              ? error.message
+              : "Please reload the page.",
+        });
       }
     };
     fetchData();
@@ -628,27 +615,25 @@ function BudgetPageContent() {
       let costCodeId: string | null = null;
 
       try {
-        const codesResponse = await fetch(`/api/projects/${projectId}/budget-codes`);
-        if (codesResponse.ok) {
-          const codesData = await codesResponse.json();
-          const budgetCodes = codesData.budgetCodes || [];
+        const codesData = await apiFetch<{
+          budgetCodes?: Array<{ code: string; id: string }>;
+        }>(`/api/projects/${projectId}/budget-codes`);
+        const fetchedBudgetCodes = codesData.budgetCodes || [];
 
-          if (lineItem.costCode) {
-            // User provided a cost code - try to match it
-            const matchingCode = budgetCodes.find(
-              (c: { code: string; id: string }) =>
-                c.code === lineItem.costCode || c.id === lineItem.costCode,
-            );
-            if (matchingCode) {
-              costCodeId = matchingCode.code;
-            } else {
-              // Try using the provided code directly (it might be a valid cost_code id)
-              costCodeId = lineItem.costCode;
-            }
-          } else if (budgetCodes.length > 0) {
-            // No cost code provided but budget codes exist - use the first one
-            costCodeId = budgetCodes[0].code;
+        if (lineItem.costCode) {
+          // User provided a cost code - try to match it
+          const matchingCode = fetchedBudgetCodes.find(
+            (c) => c.code === lineItem.costCode || c.id === lineItem.costCode,
+          );
+          if (matchingCode) {
+            costCodeId = matchingCode.code;
+          } else {
+            // Try using the provided code directly (it might be a valid cost_code id)
+            costCodeId = lineItem.costCode;
           }
+        } else if (fetchedBudgetCodes.length > 0) {
+          // No cost code provided but budget codes exist - use the first one
+          costCodeId = fetchedBudgetCodes[0].code;
         }
       } catch {
         // If fetching budget codes fails and user provided one, use it directly
@@ -677,18 +662,13 @@ function BudgetPageContent() {
         }]
       };
 
-      const response = await fetch(`/api/projects/${projectId}/budget`, {
+      await apiFetch(`/api/projects/${projectId}/budget`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(payload)
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to create budget line item');
-      }
 
       // Refresh the budget data
       await handleLineItemSuccess();
@@ -710,18 +690,13 @@ function BudgetPageContent() {
         })),
       };
 
-      const response = await fetch(`/api/projects/${projectId}/budget`, {
+      await apiFetch(`/api/projects/${projectId}/budget`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(payload),
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to create budget line items");
-      }
 
       // Refresh the budget data
       await handleLineItemSuccess();
@@ -846,27 +821,40 @@ function BudgetPageContent() {
 
     setDeleting(true);
     try {
-      // Delete all selected items
+      // Sensitive write path: delete failures must surface the real server reason instead of collapsing into a partial-success shrug.
       const deletePromises = selectedIds.map((id) =>
-        fetch(`/api/projects/${projectId}/budget/lines/${id}`, {
+        apiFetch(`/api/projects/${projectId}/budget/lines/${id}`, {
           method: "DELETE",
         }),
       );
 
-      const results = await Promise.all(deletePromises);
-      const allSuccessful = results.every((r) => r.ok);
+      const results = await Promise.allSettled(deletePromises);
+      const { succeeded, failed, firstError } = summarizeBulkResults(results);
 
-      if (allSuccessful) {
+      if (failed === 0) {
         toast.success(
           `${selectedIds.length} line item(s) deleted successfully`,
         );
         setSelectedIds([]);
         handleLineItemSuccess(); // Refresh data
       } else {
-        toast.error("Some items could not be deleted");
+        if (succeeded > 0) {
+          toast.error(`Deleted ${succeeded} line item(s), but ${failed} failed`, {
+            description: firstError,
+          });
+          setSelectedIds([]);
+          handleLineItemSuccess();
+        } else {
+          toast.error("Failed to delete line items", {
+            description: firstError,
+          });
+        }
       }
     } catch (error) {
-      toast.error("Failed to delete line items");
+      toast.error("Failed to delete line items", {
+        description:
+          error instanceof Error ? error.message : "An unexpected error occurred.",
+      });
     } finally {
       setDeleting(false);
       setShowDeleteDialog(false);

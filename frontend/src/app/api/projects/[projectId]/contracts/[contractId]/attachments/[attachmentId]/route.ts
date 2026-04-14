@@ -10,6 +10,10 @@ interface RouteParams {
   params: Promise<{ projectId: string; contractId: string; attachmentId: string }>;
 }
 
+type ContractAttachmentLinkRow = {
+  attachment_id: string;
+};
+
 /**
  * DELETE /api/projects/[projectId]/contracts/[contractId]/attachments/[attachmentId]
  * Deletes an attachment from a prime contract
@@ -48,7 +52,7 @@ export const DELETE = withApiGuardrails(
       const { data: mappedAttachment, error: mappedAttachmentError } = await serviceClient
         .from("attachments")
         .select("id, url")
-        .eq("id", link.attachment_id)
+        .eq("id", (link as ContractAttachmentLinkRow).attachment_id)
         .single();
       if (!mappedAttachmentError && mappedAttachment) {
         attachment = mappedAttachment;
@@ -72,11 +76,17 @@ export const DELETE = withApiGuardrails(
       attachment = legacyAttachment;
     }
 
+    if (!attachment) {
+      return NextResponse.json({ error: "Attachment not found" }, { status: 404 });
+    }
+
+    const attachmentRecord = attachment;
+
     // Delete DB record first
     const { error: deleteError } = await serviceClient
       .from("attachments")
       .delete()
-      .eq("id", attachment.id);
+      .eq("id", attachmentRecord.id);
 
     if (deleteError) {
       return NextResponse.json(
@@ -86,9 +96,9 @@ export const DELETE = withApiGuardrails(
     }
 
     // Best-effort: remove from storage (derive path from public URL)
-    if (attachment.url) {
+    if (attachmentRecord.url) {
       try {
-        const url = new URL(attachment.url);
+        const url = new URL(attachmentRecord.url);
         const pathMatch = url.pathname.match(/\/storage\/v1\/object\/public\/project-files\/(.+)/);
         if (pathMatch?.[1]) {
           await serviceClient.storage

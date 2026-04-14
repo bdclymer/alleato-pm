@@ -151,7 +151,7 @@ export const GET = withApiGuardrails<{ projectId: string; invoiceId: string }>(
     });
 
     // This invoice's totals from its line items
-    const lineItems = enrichedLineItems as Array<{
+    const lineItems = enrichedLineItems as unknown as Array<{
       total_completed_stored: number | null;
       retainage_amount: number | null;
       materials_retainage_amount: number | null;

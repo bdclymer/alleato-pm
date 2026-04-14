@@ -466,7 +466,7 @@ export const GET = withApiGuardrails(
 
     if (!directCostsError && directCostLineItems) {
       directCostLineItems.forEach((line) => {
-        const directCost = line.direct_costs as
+        const directCost = line.direct_costs as unknown as
           | {
               vendor_id: string | null;
               vendors: { name: string } | null;

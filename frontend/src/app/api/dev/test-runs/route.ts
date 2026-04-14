@@ -19,7 +19,7 @@ export const POST = withApiGuardrails(
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "dev/test-runs#POST", message: "Authentication required." });
     }
 
-    const body = await req.json();
+    const body = await request.json();
     const { suite_id, tester, environment, branch, notes } = body ?? {};
     if (!suite_id) {
       return NextResponse.json({ error: "suite_id required" }, { status: 400 });

@@ -26,7 +26,24 @@ import { IRootState } from '@/store';
 import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 
-const contactList = [
+type ChatMessage = {
+    fromUserId: number;
+    toUserId: number;
+    text: string;
+    time?: string;
+};
+
+type ChatContact = {
+    userId: number;
+    name: string;
+    path: string;
+    time: string;
+    preview: string;
+    messages: ChatMessage[];
+    active: boolean;
+};
+
+const contactList: ChatContact[] = [
     {
         userId: 1,
         name: 'Nia Hillyer',
@@ -291,7 +308,7 @@ const ComponentsAppsChat = () => {
     const sendMessage = () => {
         if (textMessage.trim()) {
             const list = contactList;
-            const user = list.find((d: { userId: number; messages: Array<{ fromUserId: number; toUserId: number; text: string; time: string }> }) => d.userId === selectedUser.userId);
+            const user = list.find((d) => d.userId === selectedUser.userId);
             if (user) {
                 user.messages.push({
                     fromUserId: selectedUser.userId,

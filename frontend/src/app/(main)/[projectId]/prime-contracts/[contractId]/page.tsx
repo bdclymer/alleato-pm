@@ -279,7 +279,9 @@ export default function ProjectContractDetailPage() {
         );
         if (response.ok) setLineItems((await response.json()) || []);
       } catch (err) {
-        console.error("Failed to load data:", err);
+        toast.error(
+          err instanceof Error ? err.message : "Failed to load schedule of values",
+        );
       } finally {
         setLineItemsLoading(false);
       }
@@ -311,66 +313,16 @@ export default function ProjectContractDetailPage() {
     if (!contract) return;
     const fetchChangeOrders = async () => {
       try {
-
-        const [ccoResponse, pccoResponse] = await Promise.all([
-          fetchWithTransientRouteRetry(
-            `/api/projects/${projectId}/contracts/${contractId}/change-orders`,
-          ),
-          fetchWithTransientRouteRetry(
-            `/api/projects/${projectId}/prime-contract-change-orders`,
-          ),
-        ]);
+        const ccoResponse = await fetchWithTransientRouteRetry(
+          `/api/projects/${projectId}/contracts/${contractId}/change-orders`,
+        );
         const ccos: PrimeContractCO[] = ccoResponse.ok ? await ccoResponse.json() : [];
-        const pccoRaw = pccoResponse.ok ? await pccoResponse.json() : [];
-        const pccoList: unknown[] = Array.isArray(pccoRaw) ? pccoRaw : (Array.isArray(pccoRaw?.data) ? pccoRaw.data : []);
-        const pccos: PrimeContractCO[] = pccoList
-          .filter((p: unknown) => {
-            const item = p as { id: number; contract_id: string | null; prime_contract_id: string | null };
-            return String(item.prime_contract_id ?? item.contract_id) === String(contractId);
-          })
-          .map((p: unknown) => {
-            const item = p as {
-              id: number;
-              contract_id: string | null;
-              prime_contract_id: string | null;
-              pcco_number: string | null;
-              title: string | null;
-              total_amount: number | null;
-              status: string | null;
-              submitted_at: string | null;
-              approved_at: string | null;
-              created_at: string | null;
-              revision: number | null;
-              executed: boolean | null;
-              due_date: string | null;
-              review_date: string | null;
-              designated_reviewer: string | null;
-            };
-            return {
-              id: String(item.id),
-              contract_id: String(item.prime_contract_id ?? item.contract_id ?? contractId),
-              change_order_number: item.pcco_number || "",
-              description: item.title || "",
-              title: item.title ?? null,
-              amount: item.total_amount ?? 0,
-              status: (item.status || "proposed").toLowerCase(),
-              revision: item.revision ?? null,
-              executed: item.executed ?? null,
-              requested_by: null,
-              requested_date: item.submitted_at || item.created_at || "",
-              due_date: item.due_date ?? null,
-              review_date: item.review_date ?? null,
-              designated_reviewer: item.designated_reviewer ?? null,
-              approved_by: null,
-              approved_date: item.approved_at || null,
-              rejection_reason: null,
-              created_at: item.created_at || "",
-              updated_at: item.created_at || "",
-            };
-          });
-        setChangeOrders([...ccos, ...pccos]);
+        // Keep the Change Orders tab scoped to actual change orders; PCOs render in the dedicated section below.
+        setChangeOrders(ccos);
       } catch (err) {
-        console.error("Failed to load data:", err);
+        toast.error(
+          err instanceof Error ? err.message : "Failed to load change orders",
+        );
       }
     };
     fetchChangeOrders();
@@ -466,7 +418,11 @@ export default function ProjectContractDetailPage() {
           `/api/projects/${projectId}/contracts/${contractId}/attachments`,
         );
         if (response.ok) { const data = await response.json(); setAttachments(data.data || []); }
-      } catch { /* swallowed */ } finally { setAttachmentsLoading(false); }
+      } catch (error) {
+        toast.error(
+          error instanceof Error ? error.message : "Failed to load attachments",
+        );
+      } finally { setAttachmentsLoading(false); }
     };
     fetchAttachments();
   }, [contract, contractId, projectId]);
@@ -586,13 +542,20 @@ export default function ProjectContractDetailPage() {
         fileName: string;
         url: string | null;
         downloadUrl: string | null;
-        uploadedBy: string;
+        uploadedBy: { id: string; email: string } | null;
         uploadedAt: string;
       }>(`/api/projects/${projectId}/contracts/${contractId}/attachments`, {
         method: "POST",
         body: formData,
       });
-      setAttachments((prev) => [{ id: newAttachment.id, fileName: newAttachment.fileName, url: newAttachment.url ?? null, downloadUrl: newAttachment.downloadUrl, uploadedBy: newAttachment.uploadedBy, uploadedAt: newAttachment.uploadedAt }, ...prev]);
+      setAttachments((prev) => [{
+        id: newAttachment.id,
+        fileName: newAttachment.fileName,
+        url: newAttachment.url ?? null,
+        downloadUrl: newAttachment.downloadUrl ?? undefined,
+        uploadedBy: newAttachment.uploadedBy ?? null,
+        uploadedAt: newAttachment.uploadedAt,
+      }, ...prev]);
       toast.success(`"${file.name}" uploaded successfully`);
     } catch { toast.error("Failed to upload attachment"); } finally { setIsUploadingAttachment(false); }
   };

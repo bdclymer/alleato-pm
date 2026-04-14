@@ -103,7 +103,7 @@ function resolveAnnotationId(annotation: AgentationAnnotation) {
 export const POST = withApiGuardrails(
   "agentation#POST",
   async ({ request }) => {
-  const body = (await req.json()) as AgentationWebhookBody | AgentationAnnotation[] | AgentationAnnotation;
+  const body = (await request.json()) as AgentationWebhookBody | AgentationAnnotation[] | AgentationAnnotation;
 
   // Ignore purely delete/clear events for ingestion.
   const eventName = !Array.isArray(body) && body && typeof body === "object" ? (body as AgentationWebhookBody).event : undefined;
@@ -258,7 +258,7 @@ export const POST = withApiGuardrails(
 export const PATCH = withApiGuardrails(
   "agentation#PATCH",
   async ({ request }) => {
-  const body = await req.json();
+  const body = await request.json();
   const {
     agentationId,
     status,

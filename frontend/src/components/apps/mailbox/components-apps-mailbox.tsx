@@ -48,8 +48,33 @@ import 'react-quill/dist/quill.snow.css';
 
 const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
 
+type MailAttachment = {
+    name: string;
+    size: string;
+    type: string;
+};
+
+type MailItem = {
+    id: number;
+    path: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    date: string | Date;
+    time: string;
+    title: string;
+    displayDescription: string;
+    type: string;
+    isImportant: boolean;
+    isStar?: boolean;
+    group: string;
+    isUnread: boolean;
+    attachments?: MailAttachment[];
+    description: string;
+};
+
 const ComponentsAppsMailbox = () => {
-    const [mailList, setMailList] = useState([
+    const [mailList, setMailList] = useState<MailItem[]>([
         {
             id: 1,
             path: 'profile-15.jpeg',
@@ -1104,32 +1129,32 @@ const ComponentsAppsMailbox = () => {
         }
         const cDt = new Date();
 
-        const obj = {
+        const obj: MailItem = {
             id: maxId + 1,
             path: '',
             firstName: '',
             lastName: '',
             email: params.to,
-            date: cDt.getMonth() + 1 + '/' + cDt.getDate() + '/' + cDt.getFullYear(),
+            date: cDt,
             time: cDt.toLocaleTimeString(),
             title: params.title,
             displayDescription: params.displayDescription,
             type: 'draft',
             isImportant: false,
+            isStar: false,
             group: '',
             isUnread: false,
             description: params.description,
-            attachments: null,
+            attachments: [],
         };
         if (params.file && params.file.length) {
-            obj.attachments = [];
             for (const file of params.file) {
                 const flObj = {
                     name: file.name,
                     size: getFileSize(file.size),
                     type: getFileType(file.type),
                 };
-                obj.attachments.push(flObj);
+                obj.attachments?.push(flObj);
             }
         }
         if (type === 'save' || type === 'save_reply' || type === 'save_forward') {

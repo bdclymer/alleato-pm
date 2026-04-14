@@ -38,7 +38,7 @@ export const POST = withApiGuardrails<{ feature: string }>(
     return NextResponse.json({ error: "Invalid feature" }, { status: 400 });
   }
 
-  const body = await req.json() as {
+  const body = await request.json() as {
     content: string;
     author_name: string;
     author_email?: string;

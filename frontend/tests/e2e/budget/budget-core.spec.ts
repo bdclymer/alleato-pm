@@ -62,7 +62,7 @@ test.describe("Budget Core", () => {
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible({ timeout: 15000 });
 
-    const closeButton = page.getByRole("button", { name: /close|cancel/i }).first();
+    const closeButton = dialog.getByRole("button", { name: /close|cancel/i }).first();
     await closeButton.click();
     await expect(dialog).not.toBeVisible({ timeout: 15000 });
   });

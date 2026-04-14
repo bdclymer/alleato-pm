@@ -81,20 +81,59 @@ export default function EditCommitmentPage() {
     // Normalize status to match schema enum values (Title Case)
     const rawStatus = typeof r.status === "string" ? r.status : "draft";
     const statusKey = rawStatus.toLowerCase().replace(/_/g, " ");
-    const statusMap: Record<string, string> = {
+    const statusMap: Record<string, CreatePurchaseOrderInput["status"] | CreateSubcontractInput["status"] | "Out for Bid" | "Out for Signature"> = {
       draft: "Draft",
-      "out for signature": "Sent",
-      "out for bid": "Draft",
+      "out for signature": "Out for Signature",
+      "out for bid": "Out for Bid",
+      closed: "Closed",
+      executed: "Executed",
       pending: "Pending",
       approved: "Approved",
-      complete: "Closed",
+      complete: "Completed",
       terminated: "Void",
       void: "Void",
       sent: "Sent",
-      acknowledged: "Sent",
+      acknowledged: "Acknowledged",
       completed: "Closed",
     };
-    const normalizedStatus = statusMap[statusKey] ?? rawStatus;
+    const normalizedStatus = statusMap[statusKey] ?? "Draft";
+
+    const normalizedPurchaseOrderStatus: CreatePurchaseOrderInput["status"] = (() => {
+      if (normalizedStatus === "Out for Signature" || normalizedStatus === "Out for Bid" || normalizedStatus === "Pending" || normalizedStatus === "Completed" || normalizedStatus === "Closed") {
+        if (normalizedStatus === "Completed" || normalizedStatus === "Closed") {
+          return "Completed";
+        }
+        return "Sent";
+      }
+      if (normalizedStatus === "Acknowledged") return "Acknowledged";
+      if (
+        normalizedStatus === "Draft" ||
+        normalizedStatus === "Approved" ||
+        normalizedStatus === "Sent"
+      ) {
+        return normalizedStatus;
+      }
+      return "Draft";
+    })();
+
+    const normalizedSubcontractStatus: CreateSubcontractInput["status"] = (() => {
+      if (normalizedStatus === "Out for Signature") return "Sent";
+      if (normalizedStatus === "Out for Bid") return "Draft";
+      if (
+        normalizedStatus === "Draft" ||
+        normalizedStatus === "Sent" ||
+        normalizedStatus === "Pending" ||
+        normalizedStatus === "Approved" ||
+        normalizedStatus === "Executed" ||
+        normalizedStatus === "Closed" ||
+        normalizedStatus === "Void"
+      ) {
+        return normalizedStatus;
+      }
+      if (normalizedStatus === "Completed") return "Closed";
+      if (normalizedStatus === "Acknowledged") return "Sent";
+      return "Draft";
+    })();
 
     // Map line items to SOV format
     const sovLines = Array.isArray(r.line_items)
@@ -118,7 +157,7 @@ export default function EditCommitmentPage() {
         title: typeof r.title === "string" ? r.title : "",
         contractCompanyId: typeof r.contract_company_id === "string" ? r.contract_company_id : undefined,
         contractCompanyName: companyObj?.name,
-        status: normalizedStatus as "Draft" | "Approved" | "Sent" | "Closed" | "Executed" | "Void",
+        status: normalizedPurchaseOrderStatus,
         executed: typeof r.executed === "boolean" ? r.executed : false,
         defaultRetainagePercent: typeof r.default_retainage_percent === "number" ? r.default_retainage_percent : undefined,
         description: typeof r.description === "string" ? r.description : undefined,
@@ -145,7 +184,7 @@ export default function EditCommitmentPage() {
       contractNumber: typeof r.contract_number === "string" ? r.contract_number : "",
       title: typeof r.title === "string" ? r.title : "",
       contractCompanyId: typeof r.contract_company_id === "string" ? r.contract_company_id : "",
-      status: normalizedStatus as "Draft" | "Out for Bid" | "Out for Signature" | "Approved" | "Closed" | "Executed" | "Void",
+      status: normalizedSubcontractStatus,
       executed: typeof r.executed === "boolean" ? r.executed : false,
       accountingMethod,
       defaultRetainagePercent: typeof r.default_retainage_percent === "number" ? r.default_retainage_percent : undefined,
