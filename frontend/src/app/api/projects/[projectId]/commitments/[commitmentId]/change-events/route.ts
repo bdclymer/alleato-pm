@@ -6,8 +6,13 @@ import { apiErrorResponse } from "@/lib/api-error";
 /**
  * GET /api/projects/[projectId]/commitments/[commitmentId]/change-events
  *
- * Returns change events linked to a specific commitment through
- * change_event_pco_links → commitment_pcos or contract_change_orders.
+ * Returns change events linked to a specific commitment through any of:
+ *   1. change_event_line_items.commitment_id (line item directly references commitment)
+ *   2. change_event_pco_links → commitment_pcos (linked via commitment PCO)
+ *   3. change_event_pco_links → contract_change_orders (linked via commitment CO)
+ *
+ * Source 1 matches Procore behavior: selecting a commitment on a CE line item
+ * is sufficient linkage — no PCO creation required.
  */
 export const GET = withApiGuardrails(
   "projects/[projectId]/commitments/[commitmentId]/change-events#GET",
@@ -15,7 +20,17 @@ export const GET = withApiGuardrails(
     const { projectId, commitmentId } = await params;
     const supabase = await createClient();
 
-    // Step 1: Get all commitment PCO IDs for this commitment
+    // --- Source 1: change events with a line item referencing this commitment ---
+    const { data: lineItemCEs, error: lineItemError } = await supabase
+      .from("change_event_line_items")
+      .select("change_event_id")
+      .eq("commitment_id", commitmentId);
+
+    if (lineItemError) return apiErrorResponse(lineItemError);
+
+    // --- Source 2 & 3: change events linked via PCOs/CCOs ---
+
+    // Get all commitment PCO IDs for this commitment
     const { data: pcos, error: pcoError } = await supabase
       .from("commitment_pcos")
       .select("id")
@@ -23,7 +38,7 @@ export const GET = withApiGuardrails(
 
     if (pcoError) return apiErrorResponse(pcoError);
 
-    // Step 2: Get all CCO IDs for this commitment
+    // Get all CCO IDs for this commitment
     const { data: ccos, error: ccoError } = await supabase
       .from("contract_change_orders")
       .select("id")
@@ -35,29 +50,30 @@ export const GET = withApiGuardrails(
     const ccoIds = (ccos ?? []).map((c) => c.id);
     const allLinkedIds = [...pcoIds, ...ccoIds];
 
-    if (allLinkedIds.length === 0) {
+    const pcoLinkCEIds: string[] = [];
+    if (allLinkedIds.length > 0) {
+      const { data: links, error: linkError } = await supabase
+        .from("change_event_pco_links")
+        .select("change_event_id")
+        .in("pco_id", allLinkedIds);
+
+      if (linkError) return apiErrorResponse(linkError);
+      pcoLinkCEIds.push(...(links ?? []).map((l) => l.change_event_id));
+    }
+
+    // Merge and deduplicate CE IDs from all sources
+    const lineItemCEIds = (lineItemCEs ?? []).map((r) => r.change_event_id);
+    const allCEIds = [...new Set([...lineItemCEIds, ...pcoLinkCEIds])];
+
+    if (allCEIds.length === 0) {
       return NextResponse.json({ data: [], meta: { total_count: 0 } });
     }
 
-    // Step 3: Get change event IDs linked to these PCOs/CCOs
-    const { data: links, error: linkError } = await supabase
-      .from("change_event_pco_links")
-      .select("change_event_id")
-      .in("pco_id", allLinkedIds);
-
-    if (linkError) return apiErrorResponse(linkError);
-
-    const ceIds = [...new Set((links ?? []).map((l) => l.change_event_id))];
-
-    if (ceIds.length === 0) {
-      return NextResponse.json({ data: [], meta: { total_count: 0 } });
-    }
-
-    // Step 4: Fetch the actual change events
+    // Fetch the actual change events
     const { data: changeEvents, error: ceError } = await supabase
       .from("change_events")
       .select("id, number, title, status, reason, scope, type, created_at, description")
-      .in("id", ceIds)
+      .in("id", allCEIds)
       .eq("project_id", Number(projectId))
       .is("deleted_at", null)
       .order("number", { ascending: true });
