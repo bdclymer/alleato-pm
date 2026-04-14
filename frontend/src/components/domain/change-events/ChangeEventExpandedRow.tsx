@@ -69,6 +69,12 @@ interface ChangeEventExpandedRowProps {
 
 /* ── Helpers ──────────────────────────────────────────────────────── */
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
+function safeDescription(desc: string | null | undefined): string | null {
+  if (!desc) return null;
+  return UUID_RE.test(desc) ? null : desc;
+}
+
 function formatMoney(value: number | null | undefined): string {
   const numeric = typeof value === "number" ? value : 0;
   return new Intl.NumberFormat("en-US", {
@@ -97,7 +103,7 @@ function lineItemValueForColumn(li: LineItem, columnId: string): React.ReactNode
     case "number_title":
       return (
         <span className="pl-6 truncate block">
-          {li.description || formatBudgetCode(li) || "Untitled"}
+          {safeDescription(li.description) || formatBudgetCode(li) || "Untitled"}
         </span>
       );
     case "status":

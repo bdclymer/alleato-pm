@@ -34,6 +34,14 @@ interface ChangeEventLineItemsTableProps {
   onDeleteLineItem?: (lineItemId: string) => Promise<void>;
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
+
+/** Returns null if the description looks like a raw ID (UUID or UUID+suffix) — legacy data guard. */
+function safeDescription(desc: string | null | undefined): string | null {
+  if (!desc) return null;
+  return UUID_RE.test(desc) ? null : desc;
+}
+
 function formatBudgetCodeText(li: ChangeEventDetailLineItem): string {
   if (!li.budgetLine) return "--";
   const cc = li.budgetLine.cost_code;
@@ -183,7 +191,7 @@ export function ChangeEventLineItemsTable({
       const q = search.toLowerCase();
       items = items.filter(
         (li) =>
-          (li.description ?? "").toLowerCase().includes(q) ||
+          (safeDescription(li.description) ?? "").toLowerCase().includes(q) ||
           formatBudgetCodeText(li).toLowerCase().includes(q) ||
           (li.vendor?.name ?? "").toLowerCase().includes(q),
       );
@@ -641,7 +649,7 @@ export function ChangeEventLineItemsTable({
                         <BudgetCodeCell li={li} />
                       </InlineTableCell>
                       <InlineTableCell className="max-w-30 truncate">
-                        {li.description || formatBudgetCodeText(li) || "--"}
+                        {safeDescription(li.description) || formatBudgetCodeText(li) || "--"}
                       </InlineTableCell>
                       <InlineTableCell className="max-w-22.5 truncate">
                         {li.vendor?.name || "--"}
