@@ -14,6 +14,8 @@ export async function createClient() {
   const cookieStore = await cookies();
   const { url, anonKey } = getSupabaseConfig();
 
+  // TODO(wave-2-typing): Add <Database> generic here once the 127 downstream
+  // type errors it exposes are fixed. See docs/reports/codebase-audit-2026-04-14/.
   return createServerClient(url, anonKey, {
     cookies: {
       getAll() {

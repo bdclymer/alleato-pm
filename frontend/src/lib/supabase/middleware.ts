@@ -9,6 +9,7 @@ export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
   const { url, anonKey } = getSupabaseConfig();
+  // TODO(wave-2-typing): Add <Database> generic — middleware only does auth so low impact.
   const supabase = createServerClient(url, anonKey, {
     cookies: {
       getAll() {

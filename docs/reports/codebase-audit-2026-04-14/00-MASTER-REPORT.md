@@ -163,6 +163,31 @@ node scripts/audits/audit-form-fk-mismatches.mjs
 
 ---
 
+---
+
+## Wave 1 Outcome (executed 2026-04-14)
+
+| Action | Result |
+|--------|--------|
+| `npm run db:types` regenerated | **Phantom tables: 60 → 4** (4 remaining are false positives — `supabase.storage.from()` and string literals in code templates) |
+| Type Supabase factories with `<Database>` (server.ts, middleware.ts, proxy.ts) | **Attempted — exposed 127 hidden type errors.** Reverted with `TODO(wave-2-typing)` comments; this is now Wave 2 scope (a focused multi-hour pass) |
+| Phantom-table pre-commit guard wired | **`scripts/audits/check-no-new-phantom-tables.mjs` + `.husky/pre-commit`** — any commit that introduces a `.from("nonexistent_table")` call now fails before it can land |
+| Plugin system deletion | **Deferred** — wired to `/settings/plugins` page; needs user decision (delete the feature or write the missing migrations) |
+
+### Key lesson from Wave 1
+The Supabase typing fix (3 lines, adding `<Database>` to 3 factory calls) would close ~150 `as any` casts mechanically — but it surfaces 127 real type errors that are currently hidden. **Those 127 errors are the actual rot.** Wave 2 should:
+1. Re-apply the typing fix
+2. Spawn parallel agents to fix the 127 errors in batches by directory
+3. Land in one PR or a tight series of PRs
+
+### Wave 2 scope (recommended)
+- Type Supabase clients + fix 127 downstream errors (~1 day with parallel agents)
+- Decide on plugin system: delete or migrate
+- Migrate 336 raw `fetch("/api/...")` calls to `apiFetch` — start with hooks (52 — biggest leverage)
+- Delete unused template files (`components/apps/**`, `components-widgets.tsx`, deprecated header/sidebar) — clears ~1,000 design violations + ~50 dead components
+
+---
+
 ## What this audit DOESN'T catch (yet)
 
 - **N+1 query patterns** in API routes

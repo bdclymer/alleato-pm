@@ -31,6 +31,7 @@ export async function updateSession(request: NextRequest) {
   // With Fluid compute, don't put this client in a global environment
   // variable. Always create a new one on each request.
   const { url, anonKey } = getSupabaseConfig();
+  // TODO(wave-2-typing): Add <Database> generic — proxy only does auth so low impact.
   const supabase = createServerClient(url, anonKey, {
     cookies: {
       getAll() {
