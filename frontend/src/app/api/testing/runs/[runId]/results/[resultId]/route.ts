@@ -13,7 +13,7 @@ export const PATCH = withApiGuardrails<{ runId: string; resultId: string }>(
   const { resultId } = await params;
   const supabase = await createClient();
 
-  const body = await req.json();
+  const body = await request.json();
   const { status, notes, severity } = body as { status?: string; notes?: string; severity?: string | null };
 
   const validStatuses = ["pass", "fail", "skip", "not_tested"];

@@ -15,7 +15,7 @@ export const POST = withApiGuardrails<{ runId: string; resultId: string }>(
   const supabase = await createClient();
   const service = createServiceClient();
 
-  const body = await req.json();
+  const body = await request.json();
   const { dataUrl, label } = body as { dataUrl: string; label?: string };
 
   if (!dataUrl) {
