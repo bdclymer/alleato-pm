@@ -58,7 +58,6 @@ import { ChangeEventForm } from "@/components/domain/change-events/ChangeEventFo
 import { ChangeEventGeneralInfoPanel } from "@/components/domain/change-events/ChangeEventGeneralInfoPanel";
 import { ChangeEventLineagePanel } from "@/components/domain/change-events/ChangeEventLineagePanel";
 import { ChangeEventLineItemsTable } from "@/components/domain/change-events/ChangeEventLineItemsTable";
-import { ChangeEventApprovalWorkflow } from "@/components/domain/change-events/ChangeEventApprovalWorkflow";
 import { ChangeEventHistoryTab } from "@/components/domain/change-events/ChangeEventHistoryTab";
 import { ChangeEventRelatedItemsTab } from "@/components/domain/change-events/ChangeEventRelatedItemsTab";
 import { ChangeEventPrimePCOsSection } from "@/components/domain/change-events/ChangeEventPrimePCOsSection";
@@ -661,7 +660,6 @@ export default function ChangeEventDetailPage() {
           </TabsTrigger>
           <TabsTrigger value="comments">Comments (0)</TabsTrigger>
           <TabsTrigger value="emails">Emails (0)</TabsTrigger>
-          <TabsTrigger value="approvals">Approvals</TabsTrigger>
           <TabsTrigger value="history" data-testid="change-event-tab-history">
             Change History ({historyEntries.length})
           </TabsTrigger>
@@ -729,17 +727,6 @@ export default function ChangeEventDetailPage() {
               icon={<Mail />}
               title="No emails"
               description="Emails related to this change event will appear here."
-            />
-          </TabsContent>
-
-          <TabsContent value="approvals">
-            <ChangeEventApprovalWorkflow
-              changeEventId={changeEventId}
-              projectId={projectId}
-              currentStatus={changeEvent.status || "open"}
-              onStatusChange={async (newStatus) => {
-                await actions.updateStatus(newStatus);
-              }}
             />
           </TabsContent>
 
