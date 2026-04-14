@@ -192,7 +192,7 @@ export default function NewChangeEventPage() {
 
   return (
     <PageShell
-      variant="form"
+      variant="dashboard"
       title="Create Change Event"
       description="Document a potential change to project scope, schedule, or budget."
       onBack={handleCancel}
