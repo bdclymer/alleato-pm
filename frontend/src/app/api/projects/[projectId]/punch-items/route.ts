@@ -1,29 +1,11 @@
 import { withApiGuardrails, parseJsonBody } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
-import { z } from "zod";
 import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { PunchItemService } from "@/services/PunchItemService";
 import type { PunchItemFilters } from "@/services/PunchItemService";
 import { apiErrorResponse } from "@/lib/api-error";
-
-const PUNCH_ITEM_STATUSES = ["draft", "work_required", "initiated", "closed"] as const;
-
-const createPunchItemSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  description: z.string().optional().nullable(),
-  status: z.enum(PUNCH_ITEM_STATUSES).default("draft"),
-  priority: z.enum(["low", "medium", "high"]).optional().nullable(),
-  assignee_id: z.string().uuid().optional().nullable(),
-  assignee_company: z.string().optional().nullable(),
-  ball_in_court: z.string().optional().nullable(),
-  due_date: z.string().optional().nullable(),
-  location: z.string().optional().nullable(),
-  trade: z.string().optional().nullable(),
-  type: z.string().optional().nullable(),
-  reference: z.string().optional().nullable(),
-  drawing_reference: z.string().optional().nullable(),
-});
+import { createPunchItemSchema } from "./payload";
 
 /**
  * GET /api/projects/[projectId]/punch-items
