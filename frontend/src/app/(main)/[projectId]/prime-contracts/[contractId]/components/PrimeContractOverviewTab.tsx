@@ -806,15 +806,13 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
           ) : null}
 
           {!lineItemsLoading && displayedSovItems.length > 0 ? (
-            <div className="flex justify-end pt-5">
-              <div className="text-right">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Total Contract Value
-                </p>
-                <p className="mt-1 text-4xl font-semibold tabular-nums tracking-tight text-foreground">
-                  {formatCurrency(displayedSovTotal)}
-                </p>
-              </div>
+            <div className="pt-5">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Total Contract Value
+              </p>
+              <p className="mt-1 text-4xl font-semibold tabular-nums tracking-tight text-foreground">
+                {formatCurrency(displayedSovTotal)}
+              </p>
             </div>
           ) : null}
         </div>
