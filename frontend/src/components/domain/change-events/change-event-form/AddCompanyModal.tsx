@@ -1,16 +1,28 @@
 "use client";
 
 import * as React from "react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { apiFetch } from "@/lib/api-client";
 
 interface AddCompanyModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   projectId: number;
   onCompanyAdded: () => void;
+}
+
+interface AddVendorResponse {
+  item: {
+    id: string;
+    vendor_name: string;
+    company_id: string;
+    company: string;
+  };
+  alreadyLinked: boolean;
 }
 
 export function AddCompanyModal({
@@ -23,19 +35,35 @@ export function AddCompanyModal({
   const [saving, setSaving] = React.useState(false);
 
   const handleSave = async () => {
-    if (!companyName.trim()) return;
+    const trimmed = companyName.trim();
+    if (!trimmed) return;
     setSaving(true);
     try {
-      const response = await fetch(`/api/projects/${projectId}/vendors`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: companyName.trim() }),
-      });
-      if (response.ok) {
-        setCompanyName("");
-        onOpenChange(false);
-        onCompanyAdded();
+      const result = await apiFetch<AddVendorResponse>(
+        `/api/projects/${projectId}/vendors`,
+        {
+          method: "POST",
+          body: JSON.stringify({ name: trimmed }),
+        },
+      );
+
+      setCompanyName("");
+      onOpenChange(false);
+      onCompanyAdded();
+
+      if (result?.alreadyLinked) {
+        toast.info(`${trimmed} is already linked to this project.`);
+      } else {
+        toast.success(`${trimmed} added to project directory.`);
       }
+    } catch (error) {
+      // apiFetch throws ApiError with the real server message. Surface it
+      // instead of swallowing the failure silently (per CLAUDE.md Rule 2).
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to add company to project directory.",
+      );
     } finally {
       setSaving(false);
     }
