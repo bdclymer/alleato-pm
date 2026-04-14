@@ -757,7 +757,7 @@ export default function ProjectChangeEventsPage(): ReactElement {
     {deleteDialog.dialog}
     {bulkDeleteDialog.dialog}
     <Sheet open={showRfqSheet} onOpenChange={setShowRfqSheet}>
-      <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
+      <SheetContent className="overflow-y-auto">
         <SheetHeader>
           <SheetTitle>Send Requests for Quote</SheetTitle>
         </SheetHeader>

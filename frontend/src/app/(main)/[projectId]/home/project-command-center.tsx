@@ -957,7 +957,7 @@ function ProjectSetupSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-md flex flex-col gap-0 p-0">
+      <SheetContent side="right" className="flex flex-col gap-0 p-0">
         <SheetHeader className="px-6 pt-6 pb-4 border-b border-border">
           <SheetTitle className="text-base font-semibold">Project Setup</SheetTitle>
           <p className="text-sm text-muted-foreground">
