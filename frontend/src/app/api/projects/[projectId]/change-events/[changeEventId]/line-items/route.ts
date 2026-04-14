@@ -109,6 +109,28 @@ export const GET = withApiGuardrails(
 
     // vendor_id stores companies.id — no remap needed.
 
+    // Batch-fetch commitment names from purchase_orders + subcontracts.
+    // commitment_id has no enforced FK so we query both tables by unique IDs.
+    const commitmentIds = [...new Set(
+      (lineItems || []).map(i => i.commitment_id).filter(Boolean)
+    )] as string[];
+
+    const commitmentMap = new Map<string, { id: string; contract_number: string | null; title: string | null; company_name: string | null; display_name?: string | null }>();
+    if (commitmentIds.length > 0) {
+      const [{ data: pos }, { data: subs }] = await Promise.all([
+        supabase
+          .from('purchase_orders')
+          .select('id, contract_number, title, company_name')
+          .in('id', commitmentIds),
+        supabase
+          .from('subcontracts')
+          .select('id, contract_number, title, company_name')
+          .in('id', commitmentIds),
+      ]);
+      for (const po of pos || []) commitmentMap.set(po.id, po);
+      for (const sub of subs || []) commitmentMap.set(sub.id, sub);
+    }
+
     // Format response
     const formattedItems = (lineItems || []).map(item => {
       const quantity = item.quantity || 0;
@@ -131,6 +153,7 @@ export const GET = withApiGuardrails(
         commitmentId: item.commitment_id,
         commitmentType: item.commitment_type,
         commitmentLineItemId: item.commitment_line_item_id,
+        commitment: item.commitment_id ? (commitmentMap.get(item.commitment_id) ?? undefined) : undefined,
         quantity: item.quantity,
         unitOfMeasure: item.unit_of_measure,
         unitCost: item.unit_cost,

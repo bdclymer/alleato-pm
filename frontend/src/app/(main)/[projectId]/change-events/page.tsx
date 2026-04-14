@@ -747,6 +747,7 @@ export default function ProjectChangeEventsPage(): ReactElement {
       features={{
         enableExport: true,
         enableBulkDelete: activeTab !== "recycle_bin",
+        enableColumnPinning: false,
       }}
       layout={{
         fullBleedTable: true,

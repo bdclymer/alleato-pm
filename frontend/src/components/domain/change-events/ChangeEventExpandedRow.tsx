@@ -24,6 +24,13 @@ interface LineItem {
   unitCost: number | null;
   unitOfMeasure: string | null;
   contractId: number | string | null;
+  commitmentId?: string | null;
+  commitment?: {
+    id: string;
+    contract_number: string | null;
+    title: string | null;
+    company_name: string | null;
+  } | null;
   vendor?: { id: string; name: string } | null;
   budgetLine?: {
     id: string;
@@ -102,7 +109,7 @@ function lineItemValueForColumn(li: LineItem, columnId: string): React.ReactNode
     case "reason":
       return li.vendor?.name ? <span className="truncate block">{li.vendor.name}</span> : dash;
     case "origin":
-      return li.contractId ? `#${li.contractId}` : dash;
+      return dash;
     case "revenue_prime_pco":
       return (
         <span className="tabular-nums">{formatMoney(li.revenueRom)}</span>
@@ -119,8 +126,12 @@ function lineItemValueForColumn(li: LineItem, columnId: string): React.ReactNode
       ) : (
         dash
       );
-    case "commitment_title":
-      return dash;
+    case "commitment_title": {
+      const c = li.commitment;
+      if (!c) return dash;
+      const label = [c.contract_number, c.title].filter(Boolean).join(" - ");
+      return label ? <span className="truncate block">{label}</span> : dash;
+    }
     case "created_at":
       return dash;
     default:

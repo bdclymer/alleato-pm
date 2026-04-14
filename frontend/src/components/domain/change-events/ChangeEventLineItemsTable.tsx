@@ -529,8 +529,8 @@ export function ChangeEventLineItemsTable({
             <col style={{ width: colWidths.vendor }} />
             <col style={{ width: colWidths.contract }} />
             <col style={{ width: colWidths.uom }} />
-            {COST_COLS.map((c) => visibleCols[c] && <col key={c} style={{ width: colWidths[c] }} />)}
             {REV_COLS.map((c) => visibleCols[c] && <col key={c} style={{ width: colWidths[c] }} />)}
+            {COST_COLS.map((c) => visibleCols[c] && <col key={c} style={{ width: colWidths[c] }} />)}
             {visibleCols.overUnder && <col style={{ width: colWidths.overUnder }} />}
             {visibleCols.budgetMod && <col style={{ width: colWidths.budgetMod }} />}
             {onDeleteLineItem && <col style={{ width: colWidths.action }} />}
@@ -540,20 +540,20 @@ export function ChangeEventLineItemsTable({
             {/* Group header row */}
             <InlineTableHeaderRow type="group">
               <InlineTableHeaderCell colSpan={detailSpan}>Detail</InlineTableHeaderCell>
-              {showCost && (
-                <InlineTableHeaderCell colSpan={costSpan} divider>Cost</InlineTableHeaderCell>
-              )}
               {showRevenue && (
                 <InlineTableHeaderCell colSpan={revenueSpan} divider>Revenue</InlineTableHeaderCell>
               )}
-              {visibleCols.overUnder && <InlineTableHeaderCell divider>Variance</InlineTableHeaderCell>}
+              {showCost && (
+                <InlineTableHeaderCell colSpan={costSpan} divider>Cost</InlineTableHeaderCell>
+              )}
+              {visibleCols.overUnder && <InlineTableHeaderCell divider>O/U</InlineTableHeaderCell>}
               {visibleCols.budgetMod && <InlineTableHeaderCell divider>Mod</InlineTableHeaderCell>}
               {onDeleteLineItem && <InlineTableHeaderCell />}
             </InlineTableHeaderRow>
 
             {/* Column header row */}
             <InlineTableHeaderRow className="border-t border-border/50">
-              <InlineTableHeaderCell className="sticky left-0 z-10 bg-card">
+              <InlineTableHeaderCell className="relative">
                 Budget Code <RH col="budgetCode" />
               </InlineTableHeaderCell>
               <InlineTableHeaderCell className="relative">
@@ -569,20 +569,6 @@ export function ChangeEventLineItemsTable({
                 UOM <RH col="uom" />
               </InlineTableHeaderCell>
 
-              {COST_COLS.map((col) =>
-                visibleCols[col] ? (
-                  <InlineTableHeaderCell
-                    key={col}
-                    align={col === "cost_commitment" ? undefined : "right"}
-                    divider={col === firstCostCol}
-                    className="relative"
-                  >
-                    {COL_LABELS[col]}
-                    <RH col={col} />
-                  </InlineTableHeaderCell>
-                ) : null,
-              )}
-
               {REV_COLS.map((col) =>
                 visibleCols[col] ? (
                   <InlineTableHeaderCell
@@ -597,9 +583,23 @@ export function ChangeEventLineItemsTable({
                 ) : null,
               )}
 
+              {COST_COLS.map((col) =>
+                visibleCols[col] ? (
+                  <InlineTableHeaderCell
+                    key={col}
+                    align={col === "cost_commitment" ? undefined : "right"}
+                    divider={col === firstCostCol}
+                    className="relative"
+                  >
+                    {COL_LABELS[col]}
+                    <RH col={col} />
+                  </InlineTableHeaderCell>
+                ) : null,
+              )}
+
               {visibleCols.overUnder && (
                 <InlineTableHeaderCell align="right" divider className="relative">
-                  Variance <RH col="overUnder" />
+                  O/U <RH col="overUnder" />
                 </InlineTableHeaderCell>
               )}
               {visibleCols.budgetMod && (
@@ -637,7 +637,7 @@ export function ChangeEventLineItemsTable({
 
                   return (
                     <InlineTableRow key={li.id}>
-                      <InlineTableCell className="sticky left-0 z-10 bg-card align-top">
+                      <InlineTableCell className="align-top">
                         <BudgetCodeCell li={li} />
                       </InlineTableCell>
                       <InlineTableCell className="max-w-30 truncate">
@@ -656,6 +656,32 @@ export function ChangeEventLineItemsTable({
                       <InlineTableCell className="truncate">
                         {li.unitOfMeasure || "--"}
                       </InlineTableCell>
+
+                      {visibleCols.rev_qty && (
+                        <InlineTableCell align="right" numeric divider={firstRevCol === "rev_qty"}>
+                          {li.quantity ?? "--"}
+                        </InlineTableCell>
+                      )}
+                      {visibleCols.rev_unitCost && (
+                        <InlineTableCell align="right" numeric divider={firstRevCol === "rev_unitCost"}>
+                          {li.unitCost != null ? formatCurrency(li.unitCost) : "--"}
+                        </InlineTableCell>
+                      )}
+                      {visibleCols.rev_rom && (
+                        <InlineTableCell align="right" numeric divider={firstRevCol === "rev_rom"}>
+                          {formatCurrency(li.revenueRom)}
+                        </InlineTableCell>
+                      )}
+                      {visibleCols.rev_primePco && (
+                        <InlineTableCell align="right" numeric divider={firstRevCol === "rev_primePco"}>
+                          --
+                        </InlineTableCell>
+                      )}
+                      {visibleCols.rev_latestPrice && (
+                        <InlineTableCell align="right" numeric divider={firstRevCol === "rev_latestPrice"}>
+                          {formatCurrency(latestPrice)}
+                        </InlineTableCell>
+                      )}
 
                       {visibleCols.cost_qty && (
                         <InlineTableCell align="right" numeric divider={firstCostCol === "cost_qty"}>
@@ -709,32 +735,6 @@ export function ChangeEventLineItemsTable({
                         </InlineTableCell>
                       )}
 
-                      {visibleCols.rev_qty && (
-                        <InlineTableCell align="right" numeric divider={firstRevCol === "rev_qty"}>
-                          {li.quantity ?? "--"}
-                        </InlineTableCell>
-                      )}
-                      {visibleCols.rev_unitCost && (
-                        <InlineTableCell align="right" numeric divider={firstRevCol === "rev_unitCost"}>
-                          {li.unitCost != null ? formatCurrency(li.unitCost) : "--"}
-                        </InlineTableCell>
-                      )}
-                      {visibleCols.rev_rom && (
-                        <InlineTableCell align="right" numeric divider={firstRevCol === "rev_rom"}>
-                          {formatCurrency(li.revenueRom)}
-                        </InlineTableCell>
-                      )}
-                      {visibleCols.rev_primePco && (
-                        <InlineTableCell align="right" numeric divider={firstRevCol === "rev_primePco"}>
-                          --
-                        </InlineTableCell>
-                      )}
-                      {visibleCols.rev_latestPrice && (
-                        <InlineTableCell align="right" numeric divider={firstRevCol === "rev_latestPrice"}>
-                          {formatCurrency(latestPrice)}
-                        </InlineTableCell>
-                      )}
-
                       {visibleCols.overUnder && (
                         <InlineTableCell
                           align="right"
@@ -783,6 +783,20 @@ export function ChangeEventLineItemsTable({
                 <InlineTableCell />
                 <InlineTableCell />
 
+                {visibleCols.rev_qty && <InlineTableCell divider={firstRevCol === "rev_qty"} />}
+                {visibleCols.rev_unitCost && <InlineTableCell divider={firstRevCol === "rev_unitCost"} />}
+                {visibleCols.rev_rom && (
+                  <InlineTableCell align="right" numeric divider={firstRevCol === "rev_rom"}>
+                    {formatCurrency(markup.revenueAmount)}
+                  </InlineTableCell>
+                )}
+                {visibleCols.rev_primePco && <InlineTableCell divider={firstRevCol === "rev_primePco"} />}
+                {visibleCols.rev_latestPrice && (
+                  <InlineTableCell align="right" numeric divider={firstRevCol === "rev_latestPrice"}>
+                    {formatCurrency(markup.revenueAmount)}
+                  </InlineTableCell>
+                )}
+
                 {visibleCols.cost_qty && <InlineTableCell divider={firstCostCol === "cost_qty"} />}
                 {visibleCols.cost_unitCost && <InlineTableCell divider={firstCostCol === "cost_unitCost"} />}
                 {visibleCols.cost_rom && (
@@ -796,20 +810,6 @@ export function ChangeEventLineItemsTable({
                 {visibleCols.cost_latestCost && (
                   <InlineTableCell align="right" numeric divider={firstCostCol === "cost_latestCost"}>
                     {formatCurrency(markup.costAmount)}
-                  </InlineTableCell>
-                )}
-
-                {visibleCols.rev_qty && <InlineTableCell divider={firstRevCol === "rev_qty"} />}
-                {visibleCols.rev_unitCost && <InlineTableCell divider={firstRevCol === "rev_unitCost"} />}
-                {visibleCols.rev_rom && (
-                  <InlineTableCell align="right" numeric divider={firstRevCol === "rev_rom"}>
-                    {formatCurrency(markup.revenueAmount)}
-                  </InlineTableCell>
-                )}
-                {visibleCols.rev_primePco && <InlineTableCell divider={firstRevCol === "rev_primePco"} />}
-                {visibleCols.rev_latestPrice && (
-                  <InlineTableCell align="right" numeric divider={firstRevCol === "rev_latestPrice"}>
-                    {formatCurrency(markup.revenueAmount)}
                   </InlineTableCell>
                 )}
 
@@ -827,11 +827,25 @@ export function ChangeEventLineItemsTable({
           {/* Totals row */}
           <InlineTableFooter>
             <InlineTableFooterRow type="totals">
-              <InlineTableFooterCell className="sticky left-0 z-10 bg-card">Totals</InlineTableFooterCell>
+              <InlineTableFooterCell>Totals</InlineTableFooterCell>
               <InlineTableFooterCell />
               <InlineTableFooterCell />
               <InlineTableFooterCell />
               <InlineTableFooterCell />
+
+              {visibleCols.rev_qty && <InlineTableFooterCell divider={firstRevCol === "rev_qty"} />}
+              {visibleCols.rev_unitCost && <InlineTableFooterCell divider={firstRevCol === "rev_unitCost"} />}
+              {visibleCols.rev_rom && (
+                <InlineTableFooterCell align="right" numeric divider={firstRevCol === "rev_rom"}>
+                  {formatCurrency(totals.revenueRom)}
+                </InlineTableFooterCell>
+              )}
+              {visibleCols.rev_primePco && <InlineTableFooterCell divider={firstRevCol === "rev_primePco"} />}
+              {visibleCols.rev_latestPrice && (
+                <InlineTableFooterCell align="right" numeric divider={firstRevCol === "rev_latestPrice"}>
+                  {formatCurrency(totals.latestPrice)}
+                </InlineTableFooterCell>
+              )}
 
               {visibleCols.cost_qty && <InlineTableFooterCell divider={firstCostCol === "cost_qty"} />}
               {visibleCols.cost_unitCost && <InlineTableFooterCell divider={firstCostCol === "cost_unitCost"} />}
@@ -850,20 +864,6 @@ export function ChangeEventLineItemsTable({
               {visibleCols.cost_latestCost && (
                 <InlineTableFooterCell align="right" numeric divider={firstCostCol === "cost_latestCost"}>
                   {formatCurrency(totals.latestCost)}
-                </InlineTableFooterCell>
-              )}
-
-              {visibleCols.rev_qty && <InlineTableFooterCell divider={firstRevCol === "rev_qty"} />}
-              {visibleCols.rev_unitCost && <InlineTableFooterCell divider={firstRevCol === "rev_unitCost"} />}
-              {visibleCols.rev_rom && (
-                <InlineTableFooterCell align="right" numeric divider={firstRevCol === "rev_rom"}>
-                  {formatCurrency(totals.revenueRom)}
-                </InlineTableFooterCell>
-              )}
-              {visibleCols.rev_primePco && <InlineTableFooterCell divider={firstRevCol === "rev_primePco"} />}
-              {visibleCols.rev_latestPrice && (
-                <InlineTableFooterCell align="right" numeric divider={firstRevCol === "rev_latestPrice"}>
-                  {formatCurrency(totals.latestPrice)}
                 </InlineTableFooterCell>
               )}
 
