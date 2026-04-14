@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api-client";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -69,16 +70,15 @@ export function usePhotos(
 ) {
   return useQuery({
     queryKey: [...photoKeys.list(projectId, album), options],
-    queryFn: async (): Promise<PhotoSummary[]> => {
+    queryFn: ({ signal }): Promise<PhotoSummary[]> => {
       const params = new URLSearchParams();
       if (album) params.set("album", album);
       if (options?.starred) params.set("starred", "true");
       if (options?.deleted) params.set("deleted", "true");
-      const res = await fetch(
+      return apiFetch<PhotoSummary[]>(
         `/api/projects/${projectId}/photos?${params.toString()}`,
+        { signal },
       );
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return res.json();
     },
     enabled: Boolean(projectId),
   });
@@ -87,13 +87,11 @@ export function usePhotos(
 export function usePhoto(projectId: number, photoId: number) {
   return useQuery({
     queryKey: photoKeys.detail(projectId, photoId),
-    queryFn: async (): Promise<PhotoSummary> => {
-      const res = await fetch(
+    queryFn: ({ signal }): Promise<PhotoSummary> =>
+      apiFetch<PhotoSummary>(
         `/api/projects/${projectId}/photos/${photoId}`,
-      );
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return res.json();
-    },
+        { signal },
+      ),
     enabled: Boolean(projectId) && Boolean(photoId),
   });
 }
@@ -101,18 +99,11 @@ export function usePhoto(projectId: number, photoId: number) {
 export function useCreatePhoto(projectId: number) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: CreatePhotoInput): Promise<PhotoSummary> => {
-      const res = await fetch(`/api/projects/${projectId}/photos`, {
+    mutationFn: (input: CreatePhotoInput): Promise<PhotoSummary> =>
+      apiFetch<PhotoSummary>(`/api/projects/${projectId}/photos`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(input),
-      });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? `HTTP ${res.status}`);
-      }
-      return res.json();
-    },
+      }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: photoKeys.all(projectId) });
       toast.success("Photo uploaded");
@@ -126,21 +117,14 @@ export function useCreatePhoto(projectId: number) {
 export function useUpdatePhoto(projectId: number, photoId: number) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: UpdatePhotoInput): Promise<PhotoSummary> => {
-      const res = await fetch(
+    mutationFn: (input: UpdatePhotoInput): Promise<PhotoSummary> =>
+      apiFetch<PhotoSummary>(
         `/api/projects/${projectId}/photos/${photoId}`,
         {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(input),
         },
-      );
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? `HTTP ${res.status}`);
-      }
-      return res.json();
-    },
+      ),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: photoKeys.all(projectId) });
       toast.success("Photo updated");
@@ -178,15 +162,13 @@ export function useUploadPhotos(projectId: number) {
       if (album) formData.append("album", album);
       if (is_private) formData.append("is_private", "true");
 
-      const res = await fetch(`/api/projects/${projectId}/photos/upload`, {
-        method: "POST",
-        body: formData,
-      });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? `HTTP ${res.status}`);
-      }
-      const result = await res.json();
+      const result = await apiFetch<{ photos: PhotoSummary[] }>(
+        `/api/projects/${projectId}/photos/upload`,
+        {
+          method: "POST",
+          body: formData,
+        },
+      );
       return result.photos;
     },
     onSuccess: (_data, input) => {
@@ -203,16 +185,11 @@ export function useUploadPhotos(projectId: number) {
 export function useDeletePhoto(projectId: number) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (photoId: number): Promise<void> => {
-      const res = await fetch(
+    mutationFn: (photoId: number): Promise<unknown> =>
+      apiFetch(
         `/api/projects/${projectId}/photos/${photoId}`,
         { method: "DELETE" },
-      );
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? `HTTP ${res.status}`);
-      }
-    },
+      ),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: photoKeys.all(projectId) });
       toast.success("Photo deleted");
@@ -226,16 +203,11 @@ export function useDeletePhoto(projectId: number) {
 export function useRestorePhoto(projectId: number) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (photoId: number): Promise<void> => {
-      const res = await fetch(
+    mutationFn: (photoId: number): Promise<unknown> =>
+      apiFetch(
         `/api/projects/${projectId}/photos/${photoId}/restore`,
         { method: "PATCH" },
-      );
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? `HTTP ${res.status}`);
-      }
-    },
+      ),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: photoKeys.all(projectId) });
       toast.success("Photo restored");
@@ -249,16 +221,11 @@ export function useRestorePhoto(projectId: number) {
 export function useDeletePhotoPermanently(projectId: number) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (photoId: number): Promise<void> => {
-      const res = await fetch(
+    mutationFn: (photoId: number): Promise<unknown> =>
+      apiFetch(
         `/api/projects/${projectId}/photos/${photoId}?permanent=true`,
         { method: "DELETE" },
-      );
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? `HTTP ${res.status}`);
-      }
-    },
+      ),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: photoKeys.all(projectId) });
       toast.success("Photo permanently deleted");

@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { apiFetch } from "@/lib/api-client";
 
 interface ChecklistStatus {
   "setup-team": boolean;
@@ -14,13 +15,8 @@ interface ChecklistStatus {
 export function useProjectChecklist(projectId: string) {
   return useQuery<ChecklistStatus>({
     queryKey: ["project-checklist", projectId],
-    queryFn: async () => {
-      const response = await fetch(`/api/projects/${projectId}/checklist`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch checklist status");
-      }
-      return response.json();
-    },
+    queryFn: ({ signal }) =>
+      apiFetch<ChecklistStatus>(`/api/projects/${projectId}/checklist`, { signal }),
     refetchOnWindowFocus: true,
     staleTime: 30000, // 30 seconds
   });

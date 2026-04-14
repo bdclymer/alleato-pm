@@ -7,6 +7,7 @@ import {
   keepPreviousData,
 } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api-client";
 import {
   commitmentListResponseSchema,
   type CommitmentListItem,
@@ -71,7 +72,7 @@ export function useCommitmentsList(
 ) {
   return useQuery<CommitmentListResponse>({
     queryKey: commitmentKeys.list(projectId, filters),
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       const params = new URLSearchParams();
       params.set("projectId", projectId);
       if (filters?.page) params.set("page", String(filters.page));
@@ -81,12 +82,7 @@ export function useCommitmentsList(
       if (filters?.companyId) params.set("companyId", filters.companyId);
       if (filters?.type) params.set("type", filters.type);
 
-      const response = await fetch(`/api/commitments?${params}`);
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new Error(error.error || `Server returned ${response.status} when loading commitments`);
-      }
-      const data = await response.json();
+      const data = await apiFetch<unknown>(`/api/commitments?${params}`, { signal });
       const parsed = commitmentListResponseSchema.safeParse(data);
       if (!parsed.success) {
         throw new Error("Commitments data from the server was in an unexpected format — try refreshing the page");
@@ -114,16 +110,15 @@ export function useCommitmentsList(
 export function useCommitmentDetail(commitmentId: string) {
   return useQuery({
     queryKey: commitmentKeys.detail(commitmentId),
-    queryFn: async () => {
-      const response = await fetch(`/api/commitments/${commitmentId}`);
-      if (!response.ok) {
-        if (response.status === 404) {
-          throw new Error("This commitment was not found — it may have been deleted");
-        }
-        throw new Error(`Server returned ${response.status} when loading commitment details`);
+    queryFn: async ({ signal }) => {
+      const data = await apiFetch<{ data?: unknown } | unknown>(
+        `/api/commitments/${commitmentId}`,
+        { signal },
+      );
+      if (data && typeof data === "object" && "data" in data && (data as { data: unknown }).data) {
+        return (data as { data: unknown }).data;
       }
-      const data = await response.json();
-      return data.data || data;
+      return data;
     },
     enabled: !!commitmentId,
     staleTime: 15 * 1000, // 15 seconds
@@ -141,15 +136,19 @@ export function useCommitmentDetail(commitmentId: string) {
 export function useCommitmentChangeOrdersQuery(commitmentId: string) {
   return useQuery({
     queryKey: commitmentKeys.changeOrders(commitmentId),
-    queryFn: async () => {
-      const response = await fetch(
-        `/api/commitments/${commitmentId}/change-orders`,
-      );
-      if (!response.ok) {
-        if (response.status === 404) return { data: [], meta: null };
-        throw new Error(`Server returned ${response.status} when loading change orders`);
+    queryFn: async ({ signal }) => {
+      try {
+        return await apiFetch<{ data: unknown[]; meta: unknown }>(
+          `/api/commitments/${commitmentId}/change-orders`,
+          { signal },
+        );
+      } catch (err) {
+        // Treat 404 as empty list (commitment has no change orders yet)
+        if (err instanceof Error && "status" in err && (err as { status: number }).status === 404) {
+          return { data: [], meta: null };
+        }
+        throw err;
       }
-      return response.json();
     },
     enabled: !!commitmentId,
     staleTime: 30 * 1000,
@@ -166,15 +165,19 @@ export function useCommitmentChangeOrdersQuery(commitmentId: string) {
 export function useCommitmentInvoicesQuery(commitmentId: string) {
   return useQuery({
     queryKey: commitmentKeys.invoices(commitmentId),
-    queryFn: async () => {
-      const response = await fetch(
-        `/api/commitments/${commitmentId}/invoices`,
-      );
-      if (!response.ok) {
-        if (response.status === 404) return { summary: null, line_items: [] };
-        throw new Error(`Server returned ${response.status} when loading invoice data`);
+    queryFn: async ({ signal }) => {
+      try {
+        return await apiFetch<{ summary: unknown; line_items: unknown[] }>(
+          `/api/commitments/${commitmentId}/invoices`,
+          { signal },
+        );
+      } catch (err) {
+        // Treat 404 as empty (no invoices yet for this commitment)
+        if (err instanceof Error && "status" in err && (err as { status: number }).status === 404) {
+          return { summary: null, line_items: [] };
+        }
+        throw err;
       }
-      return response.json();
     },
     enabled: !!commitmentId,
     staleTime: 30 * 1000,
@@ -189,20 +192,12 @@ export function useCommitmentInvoicesQuery(commitmentId: string) {
  * Mutation hook for deleting a commitment.
  * Automatically invalidates list cache on success.
  */
-export function useDeleteCommitment(projectId: string) {
+export function useDeleteCommitment(_projectId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (commitmentId: string) => {
-      const response = await fetch(`/api/commitments/${commitmentId}`, {
-        method: "DELETE",
-      });
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `Server returned ${response.status} — the commitment could not be deleted`);
-      }
-      return response.json();
-    },
+    mutationFn: (commitmentId: string) =>
+      apiFetch(`/api/commitments/${commitmentId}`, { method: "DELETE" }),
     onSuccess: () => {
       // Invalidate the list cache to refetch
       queryClient.invalidateQueries({
@@ -243,26 +238,16 @@ export function useUpdateCommitmentInline() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (input: CommitmentInlineUpdateInput) => {
+    mutationFn: (input: CommitmentInlineUpdateInput) => {
       const payload =
         input.field === "number"
           ? { number: input.value }
           : { title: input.value };
 
-      const response = await fetch(`/api/commitments/${input.id}`, {
+      return apiFetch(`/api/commitments/${input.id}`, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify(payload),
       });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Server returned ${response.status} — the commitment could not be updated`);
-      }
-
-      return response.json();
     },
     onMutate: async (input) => {
       await queryClient.cancelQueries({ queryKey: commitmentKeys.lists() });
@@ -283,20 +268,18 @@ export function useUpdateCommitmentInline() {
         });
       }
 
-      queryClient.setQueryData(commitmentKeys.detail(input.id), (current: any) => {
-        if (!current || typeof current !== "object") return current;
-        return {
-          ...current,
-          number:
-            input.field === "number"
-              ? input.value
-              : (current as Record<string, unknown>).number,
-          title:
-            input.field === "title"
-              ? input.value
-              : (current as Record<string, unknown>).title,
-        };
-      });
+      queryClient.setQueryData(
+        commitmentKeys.detail(input.id),
+        (current: unknown) => {
+          if (!current || typeof current !== "object") return current;
+          const record = current as Record<string, unknown>;
+          return {
+            ...record,
+            number: input.field === "number" ? input.value : record.number,
+            title: input.field === "title" ? input.value : record.title,
+          };
+        },
+      );
 
       return { previousLists, previousDetail };
     },
@@ -337,17 +320,11 @@ export function useApproveChangeOrder(commitmentId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (changeOrderId: string) => {
-      const response = await fetch(
+    mutationFn: (changeOrderId: string) =>
+      apiFetch(
         `/api/commitments/${commitmentId}/change-orders/${changeOrderId}/approve`,
         { method: "POST" },
-      );
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Server returned ${response.status} — the change order could not be approved`);
-      }
-      return response.json();
-    },
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: commitmentKeys.changeOrders(commitmentId),

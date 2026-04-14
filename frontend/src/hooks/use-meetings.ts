@@ -6,6 +6,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api-client";
 
 // =============================================================================
 // Types
@@ -56,6 +57,14 @@ export interface UpdateMeetingInput {
   status?: string | null;
 }
 
+interface MeetingApiResponse {
+  data: Meeting;
+}
+
+interface MeetingsApiResponse {
+  data: Meeting[];
+}
+
 // =============================================================================
 // Query Keys
 // =============================================================================
@@ -73,16 +82,10 @@ export const meetingKeys = {
 // =============================================================================
 
 export function useMeetings(projectId: string) {
-  return useQuery<{ data: Meeting[] }>({
+  return useQuery<MeetingsApiResponse>({
     queryKey: meetingKeys.list(projectId),
-    queryFn: async () => {
-      const response = await fetch(`/api/projects/${projectId}/meetings`);
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new Error(error.error || "Failed to fetch meetings");
-      }
-      return response.json();
-    },
+    queryFn: async () =>
+      apiFetch<MeetingsApiResponse>(`/api/projects/${projectId}/meetings`),
     enabled: !!projectId,
     staleTime: 30 * 1000,
   });
@@ -93,20 +96,12 @@ export function useMeetings(projectId: string) {
 // =============================================================================
 
 export function useMeeting(projectId: string, meetingId: string) {
-  return useQuery<{ data: Meeting }>({
+  return useQuery<MeetingApiResponse>({
     queryKey: meetingKeys.detail(meetingId),
-    queryFn: async () => {
-      const response = await fetch(
-        `/api/projects/${projectId}/meetings/${meetingId}`
-      );
-      if (!response.ok) {
-        if (response.status === 404) {
-          throw new Error("Meeting not found");
-        }
-        throw new Error("Failed to fetch meeting details");
-      }
-      return response.json();
-    },
+    queryFn: async () =>
+      apiFetch<MeetingApiResponse>(
+        `/api/projects/${projectId}/meetings/${meetingId}`,
+      ),
     enabled: !!projectId && !!meetingId,
     staleTime: 15 * 1000,
   });
@@ -120,18 +115,11 @@ export function useCreateMeeting(projectId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (input: CreateMeetingInput) => {
-      const response = await fetch(`/api/projects/${projectId}/meetings`, {
+    mutationFn: async (input: CreateMeetingInput) =>
+      apiFetch<MeetingApiResponse>(`/api/projects/${projectId}/meetings`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(input),
-      });
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new Error(error.error || "Failed to create meeting");
-      }
-      return response.json();
-    },
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: meetingKeys.list(projectId),
@@ -158,21 +146,14 @@ export function useUpdateMeeting(projectId: string) {
     }: {
       meetingId: string;
       data: UpdateMeetingInput;
-    }) => {
-      const response = await fetch(
+    }) =>
+      apiFetch<MeetingApiResponse>(
         `/api/projects/${projectId}/meetings/${meetingId}`,
         {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),
         }
-      );
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new Error(error.error || "Failed to update meeting");
-      }
-      return response.json();
-    },
+      ),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: meetingKeys.list(projectId),
@@ -196,17 +177,11 @@ export function useDeleteMeeting(projectId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (meetingId: string) => {
-      const response = await fetch(
+    mutationFn: async (meetingId: string) =>
+      apiFetch(
         `/api/projects/${projectId}/meetings/${meetingId}`,
         { method: "DELETE" }
-      );
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new Error(error.error || "Failed to delete meeting");
-      }
-      return response.json();
-    },
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: meetingKeys.list(projectId),

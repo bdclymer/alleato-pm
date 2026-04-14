@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { apiFetch } from "@/lib/api-client";
 
 export interface ProjectVendor {
   id: string;
@@ -41,12 +42,9 @@ export function useProjectVendors(projectId: string): UseProjectVendorsResult {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/projects/${projectId}/directory/vendors`);
-      if (!res.ok) {
-        const d = await res.json();
-        throw new Error(d.error ?? "Failed to fetch vendors");
-      }
-      const { data } = await res.json();
+      const { data } = await apiFetch<{ data: ProjectVendor[] }>(
+        `/api/projects/${projectId}/directory/vendors`,
+      );
       setVendors(data ?? []);
     } catch (err) {
       setError(err instanceof Error ? err : new Error("an unexpected error occurred — please try again"));
@@ -63,13 +61,9 @@ export function useProjectVendors(projectId: string): UseProjectVendorsResult {
       setIsLoading(true);
       setError(null);
       try {
-        const res = await fetch(`/api/projects/${projectId}/directory/vendors`);
-        if (cancelled) return;
-        if (!res.ok) {
-          const d = await res.json();
-          throw new Error(d.error ?? "Failed to fetch vendors");
-        }
-        const { data } = await res.json();
+        const { data } = await apiFetch<{ data: ProjectVendor[] }>(
+          `/api/projects/${projectId}/directory/vendors`,
+        );
         if (!cancelled) setVendors(data ?? []);
       } catch (err) {
         if (!cancelled)
@@ -87,15 +81,10 @@ export function useProjectVendors(projectId: string): UseProjectVendorsResult {
 
   const addVendor = useCallback(
     async (vendorId: string, notes?: string) => {
-      const res = await fetch(`/api/projects/${projectId}/directory/vendors`, {
+      await apiFetch(`/api/projects/${projectId}/directory/vendors`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ vendor_id: vendorId, notes }),
       });
-      if (!res.ok) {
-        const d = await res.json();
-        throw new Error(d.error ?? "Failed to add vendor");
-      }
       await fetchVendors();
     },
     [projectId, fetchVendors],
@@ -103,14 +92,10 @@ export function useProjectVendors(projectId: string): UseProjectVendorsResult {
 
   const removeVendor = useCallback(
     async (id: string) => {
-      const res = await fetch(
+      await apiFetch(
         `/api/projects/${projectId}/directory/vendors?id=${id}`,
         { method: "DELETE" },
       );
-      if (!res.ok) {
-        const d = await res.json();
-        throw new Error(d.error ?? "Failed to remove vendor");
-      }
       await fetchVendors();
     },
     [projectId, fetchVendors],

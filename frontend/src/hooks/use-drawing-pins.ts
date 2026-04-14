@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api-client";
 
 export interface DrawingMarkupPin {
   id: string;
@@ -23,10 +24,11 @@ export interface DrawingMarkupPin {
 export function useDrawingPins(projectId: string, drawingId: string) {
   return useQuery<DrawingMarkupPin[]>({
     queryKey: ["drawing-pins", projectId, drawingId],
-    queryFn: async () => {
-      const res = await fetch(`/api/projects/${projectId}/drawings/${drawingId}/pins`);
-      if (!res.ok) throw new Error("Failed to fetch pins");
-      const data = await res.json();
+    queryFn: async ({ signal }) => {
+      const data = await apiFetch<{ pins?: DrawingMarkupPin[] }>(
+        `/api/projects/${projectId}/drawings/${drawingId}/pins`,
+        { signal },
+      );
       return data.pins ?? [];
     },
     enabled: !!projectId && !!drawingId,
@@ -49,16 +51,14 @@ export function useCreateDrawingPin(projectId: string, drawingId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: CreatePinInput) => {
-      const res = await fetch(`/api/projects/${projectId}/drawings/${drawingId}/pins`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(input),
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Failed to create pin");
-      }
-      return (await res.json()).pin as DrawingMarkupPin;
+      const data = await apiFetch<{ pin: DrawingMarkupPin }>(
+        `/api/projects/${projectId}/drawings/${drawingId}/pins`,
+        {
+          method: "POST",
+          body: JSON.stringify(input),
+        },
+      );
+      return data.pin;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["drawing-pins", projectId, drawingId] });
@@ -70,13 +70,11 @@ export function useCreateDrawingPin(projectId: string, drawingId: string) {
 export function useDeleteDrawingPin(projectId: string, drawingId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (pinId: string) => {
-      const res = await fetch(
+    mutationFn: (pinId: string) =>
+      apiFetch(
         `/api/projects/${projectId}/drawings/${drawingId}/pins/${pinId}`,
-        { method: "DELETE" }
-      );
-      if (!res.ok) throw new Error("Failed to delete pin");
-    },
+        { method: "DELETE" },
+      ),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["drawing-pins", projectId, drawingId] });
       toast.success("Link removed");

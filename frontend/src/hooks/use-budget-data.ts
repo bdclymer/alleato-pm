@@ -2,7 +2,13 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api-client";
 import type { BudgetLineItem, BudgetGrandTotals } from "@/types/budget";
+
+interface BudgetApiResponse {
+  lineItems?: BudgetLineItem[];
+  grandTotals?: BudgetGrandTotals;
+}
 
 interface UseBudgetDataReturn {
   budgetData: BudgetLineItem[];
@@ -12,28 +18,30 @@ interface UseBudgetDataReturn {
   refetchBudgetData: () => Promise<void>;
 }
 
+const EMPTY_GRAND_TOTALS: BudgetGrandTotals = {
+  originalBudgetAmount: 0,
+  budgetModifications: 0,
+  approvedCOs: 0,
+  revisedBudget: 0,
+  jobToDateCostDetail: 0,
+  directCosts: 0,
+  pendingChanges: 0,
+  projectedBudget: 0,
+  committedCosts: 0,
+  pendingCostChanges: 0,
+  projectedCosts: 0,
+  forecastToComplete: 0,
+  estimatedCostAtCompletion: 0,
+  projectedOverUnder: 0,
+};
+
 /**
  * Custom hook for fetching and managing budget data from SQL views
  * Uses pre-calculated values from mv_budget_rollup and v_budget_grand_totals
  */
 export function useBudgetData(projectId: string, options?: { silent?: boolean }): UseBudgetDataReturn {
   const [budgetData, setBudgetData] = useState<BudgetLineItem[]>([]);
-  const [grandTotals, setGrandTotals] = useState<BudgetGrandTotals>({
-    originalBudgetAmount: 0,
-    budgetModifications: 0,
-    approvedCOs: 0,
-    revisedBudget: 0,
-    jobToDateCostDetail: 0,
-    directCosts: 0,
-    pendingChanges: 0,
-    projectedBudget: 0,
-    committedCosts: 0,
-    pendingCostChanges: 0,
-    projectedCosts: 0,
-    forecastToComplete: 0,
-    estimatedCostAtCompletion: 0,
-    projectedOverUnder: 0,
-  });
+  const [grandTotals, setGrandTotals] = useState<BudgetGrandTotals>(EMPTY_GRAND_TOTALS);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -44,45 +52,24 @@ export function useBudgetData(projectId: string, options?: { silent?: boolean })
       setLoading(true);
       setError(null);
 
-      const response = await fetch(`/api/projects/${projectId}/budget`);
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const data = await response.json();
+      const data = await apiFetch<BudgetApiResponse>(`/api/projects/${projectId}/budget`);
 
       // Data from SQL views is already calculated - no manual calculations needed
       setBudgetData(data.lineItems || []);
-      setGrandTotals(data.grandTotals || {
-        originalBudgetAmount: 0,
-        budgetModifications: 0,
-        approvedCOs: 0,
-        revisedBudget: 0,
-        jobToDateCostDetail: 0,
-        directCosts: 0,
-        pendingChanges: 0,
-        projectedBudget: 0,
-        committedCosts: 0,
-        pendingCostChanges: 0,
-        projectedCosts: 0,
-        forecastToComplete: 0,
-        estimatedCostAtCompletion: 0,
-        projectedOverUnder: 0,
-      });
+      setGrandTotals(data.grandTotals || EMPTY_GRAND_TOTALS);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to fetch budget data";
       setError(errorMessage);
       console.error("Budget data fetch error:", err);
       if (!options?.silent) {
         toast.error("Failed to load budget", {
-          description: "Please try again."
+          description: errorMessage,
         });
       }
     } finally {
       setLoading(false);
     }
-  }, [projectId]);
+  }, [projectId, options?.silent]);
 
   useEffect(() => {
     refetchBudgetData();

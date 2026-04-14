@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api-client";
 
 // =============================================================================
 // Types
@@ -85,14 +86,7 @@ export function useDocuments(projectId: number, folder?: string) {
 
   return useQuery<ProjectDocument[]>({
     queryKey: documentKeys.list(projectId, folder),
-    queryFn: async () => {
-      const res = await fetch(url);
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to fetch documents");
-      }
-      return res.json();
-    },
+    queryFn: ({ signal }) => apiFetch<ProjectDocument[]>(url, { signal }),
     enabled: !!projectId,
   });
 }
@@ -100,16 +94,11 @@ export function useDocuments(projectId: number, folder?: string) {
 export function useDocument(projectId: number, documentId: string) {
   return useQuery<ProjectDocument>({
     queryKey: documentKeys.detail(projectId, documentId),
-    queryFn: async () => {
-      const res = await fetch(
+    queryFn: ({ signal }) =>
+      apiFetch<ProjectDocument>(
         `/api/projects/${projectId}/documents/${documentId}`,
-      );
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to fetch document");
-      }
-      return res.json();
-    },
+        { signal },
+      ),
     enabled: !!projectId && !!documentId,
   });
 }
@@ -122,18 +111,11 @@ export function useCreateDocument(projectId: number) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: CreateDocumentInput) => {
-      const res = await fetch(`/api/projects/${projectId}/documents`, {
+    mutationFn: (data: CreateDocumentInput) =>
+      apiFetch<ProjectDocument>(`/api/projects/${projectId}/documents`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to create document");
-      }
-      return res.json() as Promise<ProjectDocument>;
-    },
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: documentKeys.all(projectId),
@@ -150,21 +132,14 @@ export function useUpdateDocument(projectId: number, documentId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: UpdateDocumentInput) => {
-      const res = await fetch(
+    mutationFn: (data: UpdateDocumentInput) =>
+      apiFetch<ProjectDocument>(
         `/api/projects/${projectId}/documents/${documentId}`,
         {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),
         },
-      );
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to update document");
-      }
-      return res.json() as Promise<ProjectDocument>;
-    },
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: documentKeys.all(projectId),
@@ -184,17 +159,11 @@ export function useDeleteDocument(projectId: number) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (documentId: string) => {
-      const res = await fetch(
+    mutationFn: (documentId: string) =>
+      apiFetch(
         `/api/projects/${projectId}/documents/${documentId}`,
         { method: "DELETE" },
-      );
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to delete document");
-      }
-      return res.json();
-    },
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: documentKeys.all(projectId),

@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiFetch } from "@/lib/api-client";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -85,7 +86,7 @@ export function useFinancialAlerts(params?: {
 }) {
   return useQuery<AlertsResponse>({
     queryKey: financialInsightsKeys.alerts(params),
-    queryFn: async () => {
+    queryFn: ({ signal }) => {
       const searchParams = new URLSearchParams();
       if (params?.status) searchParams.set("status", params.status);
       if (params?.severity) searchParams.set("severity", params.severity);
@@ -94,11 +95,7 @@ export function useFinancialAlerts(params?: {
 
       const qs = searchParams.toString();
       const url = `/api/financial-insights/alerts${qs ? `?${qs}` : ""}`;
-      const res = await fetch(url);
-      if (!res.ok) {
-        throw new Error(`Failed to fetch alerts: ${res.status} ${res.statusText}`);
-      }
-      return res.json();
+      return apiFetch<AlertsResponse>(url, { signal });
     },
   });
 }
@@ -111,15 +108,8 @@ export function useScanPortfolio() {
   const queryClient = useQueryClient();
 
   return useMutation<ScanResult>({
-    mutationFn: async () => {
-      const res = await fetch("/api/financial-insights/scan", {
-        method: "POST",
-      });
-      if (!res.ok) {
-        throw new Error(`Scan failed: ${res.status} ${res.statusText}`);
-      }
-      return res.json();
-    },
+    mutationFn: () =>
+      apiFetch<ScanResult>("/api/financial-insights/scan", { method: "POST" }),
     onSuccess: () => {
       // Refetch alerts after a successful scan
       queryClient.invalidateQueries({ queryKey: financialInsightsKeys.all });
@@ -132,17 +122,10 @@ export function useScanPortfolio() {
  */
 export function useCrossReference() {
   return useMutation<CrossReferenceResult, Error, { projectId: number }>({
-    mutationFn: async ({ projectId }) => {
-      const res = await fetch("/api/financial-insights/cross-reference", {
+    mutationFn: ({ projectId }) =>
+      apiFetch<CrossReferenceResult>("/api/financial-insights/cross-reference", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ projectId }),
-      });
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(text || `Cross-reference failed: ${res.status}`);
-      }
-      return res.json();
-    },
+      }),
   });
 }

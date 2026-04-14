@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api-client";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -110,10 +111,11 @@ export const knowledgeKeys = {
 export function useCompanyContext() {
   return useQuery({
     queryKey: ["company-context"],
-    queryFn: async (): Promise<CompanyContext | null> => {
-      const res = await fetch("/api/admin/company-context");
-      if (!res.ok) throw new Error("Failed to fetch company context");
-      const json = await res.json();
+    queryFn: async ({ signal }): Promise<CompanyContext | null> => {
+      const json = await apiFetch<{ data: CompanyContext | null }>(
+        "/api/admin/company-context",
+        { signal },
+      );
       return json.data;
     },
   });
@@ -122,15 +124,11 @@ export function useCompanyContext() {
 export function useUpdateCompanyContext() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (updates: Partial<CompanyContext>) => {
-      const res = await fetch("/api/admin/company-context", {
+    mutationFn: (updates: Partial<CompanyContext>) =>
+      apiFetch("/api/admin/company-context", {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updates),
-      });
-      if (!res.ok) throw new Error("Failed to update company context");
-      return res.json();
-    },
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["company-context"] });
     },
@@ -169,10 +167,11 @@ export function useKnowledgeArticles(filters?: KnowledgeFilters) {
 
   return useQuery({
     queryKey: knowledgeKeys.list(filters),
-    queryFn: async (): Promise<KnowledgeArticle[]> => {
-      const res = await fetch(`/api/knowledge?${params.toString()}`);
-      if (!res.ok) throw new Error("Failed to fetch knowledge articles");
-      const json = await res.json();
+    queryFn: async ({ signal }): Promise<KnowledgeArticle[]> => {
+      const json = await apiFetch<{ data: KnowledgeArticle[] }>(
+        `/api/knowledge?${params.toString()}`,
+        { signal },
+      );
       return json.data;
     },
   });
@@ -181,7 +180,7 @@ export function useKnowledgeArticles(filters?: KnowledgeFilters) {
 export function useCreateKnowledgeArticle() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (
+    mutationFn: (
       article: Pick<KnowledgeArticle, "title" | "content" | "category"> & {
         tags?: string[];
         source?: string;
@@ -189,18 +188,11 @@ export function useCreateKnowledgeArticle() {
         meeting_id?: string;
         origin?: KnowledgeOrigin;
       },
-    ) => {
-      const res = await fetch("/api/knowledge", {
+    ) =>
+      apiFetch("/api/knowledge", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(article),
-      });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? "Failed to create knowledge article");
-      }
-      return res.json();
-    },
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: knowledgeKeys.all });
       toast.success("Knowledge article created");
@@ -214,20 +206,13 @@ export function useCreateKnowledgeArticle() {
 export function useUpdateKnowledgeArticle() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (
+    mutationFn: (
       update: { id: string } & Partial<KnowledgeArticle>,
-    ) => {
-      const res = await fetch("/api/knowledge", {
+    ) =>
+      apiFetch("/api/knowledge", {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(update),
-      });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? "Failed to update knowledge article");
-      }
-      return res.json();
-    },
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: knowledgeKeys.all });
       toast.success("Knowledge article updated");
@@ -241,17 +226,11 @@ export function useUpdateKnowledgeArticle() {
 export function useDeleteKnowledgeArticle() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (id: string) => {
-      const res = await fetch(
+    mutationFn: (id: string) =>
+      apiFetch(
         `/api/knowledge?id=${encodeURIComponent(id)}`,
         { method: "DELETE" },
-      );
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? "Failed to delete knowledge article");
-      }
-      return res.json();
-    },
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: knowledgeKeys.all });
       toast.success("Knowledge article deleted");

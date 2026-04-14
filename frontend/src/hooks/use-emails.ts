@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api-client";
 
 export interface ProjectEmail {
   id: number;
@@ -66,16 +67,11 @@ export function useEmails(projectId: number, status?: string) {
 
   return useQuery<ProjectEmail[]>({
     queryKey: emailKeys.list(projectId, status),
-    queryFn: async () => {
-      const res = await fetch(
+    queryFn: ({ signal }) =>
+      apiFetch<ProjectEmail[]>(
         `/api/projects/${projectId}/emails${queryString ? `?${queryString}` : ""}`,
-      );
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to fetch emails");
-      }
-      return res.json();
-    },
+        { signal },
+      ),
     enabled: !!projectId,
   });
 }
@@ -83,16 +79,11 @@ export function useEmails(projectId: number, status?: string) {
 export function useEmail(projectId: number, emailId: string) {
   return useQuery<ProjectEmail>({
     queryKey: emailKeys.detail(projectId, emailId),
-    queryFn: async () => {
-      const res = await fetch(
+    queryFn: ({ signal }) =>
+      apiFetch<ProjectEmail>(
         `/api/projects/${projectId}/emails/${emailId}`,
-      );
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to fetch email");
-      }
-      return res.json();
-    },
+        { signal },
+      ),
     enabled: !!projectId && !!emailId,
   });
 }
@@ -101,18 +92,11 @@ export function useCreateEmail(projectId: number) {
   const queryClient = useQueryClient();
 
   return useMutation<ProjectEmail, Error, CreateEmailInput>({
-    mutationFn: async (input) => {
-      const res = await fetch(`/api/projects/${projectId}/emails`, {
+    mutationFn: (input) =>
+      apiFetch<ProjectEmail>(`/api/projects/${projectId}/emails`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(input),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to create email");
-      }
-      return res.json();
-    },
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: emailKeys.all(projectId) });
       toast.success("Email created successfully");
@@ -127,21 +111,14 @@ export function useUpdateEmail(projectId: number, emailId: string) {
   const queryClient = useQueryClient();
 
   return useMutation<ProjectEmail, Error, UpdateEmailInput>({
-    mutationFn: async (input) => {
-      const res = await fetch(
+    mutationFn: (input) =>
+      apiFetch<ProjectEmail>(
         `/api/projects/${projectId}/emails/${emailId}`,
         {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(input),
         },
-      );
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to update email");
-      }
-      return res.json();
-    },
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: emailKeys.all(projectId) });
       queryClient.invalidateQueries({
@@ -158,18 +135,12 @@ export function useUpdateEmail(projectId: number, emailId: string) {
 export function useDeleteEmail(projectId: number) {
   const queryClient = useQueryClient();
 
-  return useMutation<{ message: string; id: number }, Error, string>({
-    mutationFn: async (emailId) => {
-      const res = await fetch(
+  return useMutation<{ message: string; id: number } | null, Error, string>({
+    mutationFn: (emailId) =>
+      apiFetch<{ message: string; id: number } | null>(
         `/api/projects/${projectId}/emails/${emailId}`,
         { method: "DELETE" },
-      );
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to delete email");
-      }
-      return res.json();
-    },
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: emailKeys.all(projectId) });
       toast.success("Email deleted successfully");

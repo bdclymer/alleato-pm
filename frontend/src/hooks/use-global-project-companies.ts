@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { apiFetch } from "@/lib/api-client";
 
 interface GlobalProjectCompany {
   id: string;
@@ -53,7 +54,7 @@ export function useGlobalProjectCompanies(
 ): UseGlobalProjectCompaniesResult {
   const query = useQuery<GlobalProjectCompanyListResponse, Error>({
     queryKey: ["global-project-companies", filters],
-    queryFn: async () => {
+    queryFn: ({ signal }) => {
       const params = new URLSearchParams();
       if (filters.search) params.set("search", filters.search);
       if (filters.status) params.set("status", filters.status);
@@ -62,18 +63,10 @@ export function useGlobalProjectCompanies(
       if (filters.page) params.set("page", String(filters.page));
       if (filters.per_page) params.set("per_page", String(filters.per_page));
 
-      const response = await fetch(`/api/directory/project-companies?${params.toString()}`);
-      if (!response.ok) {
-        let errorMessage = "Failed to fetch project companies";
-        try {
-          const error = await response.json();
-          errorMessage = error.message || errorMessage;
-        } catch {
-          errorMessage = `Failed to fetch project companies (${response.status})`;
-        }
-        throw new Error(errorMessage);
-      }
-      return response.json();
+      return apiFetch<GlobalProjectCompanyListResponse>(
+        `/api/directory/project-companies?${params.toString()}`,
+        { signal },
+      );
     },
     enabled: true,
   });

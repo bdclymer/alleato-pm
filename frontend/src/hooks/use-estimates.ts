@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
+import { apiFetch } from "@/lib/api-client";
 import type {
   EstimateCreate,
   EstimateLineItem,
@@ -53,14 +54,7 @@ export function useEstimates(
 
   return useQuery<EstimateListResponse>({
     queryKey: ["estimates", projectId, params],
-    queryFn: async () => {
-      const res = await fetch(url);
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to fetch estimates");
-      }
-      return res.json();
-    },
+    queryFn: ({ signal }) => apiFetch<EstimateListResponse>(url, { signal }),
     enabled: !!projectId,
   });
 }
@@ -71,16 +65,11 @@ export function useEstimates(
 export function useEstimate(projectId: number, estimateId: number) {
   return useQuery<EstimateWithLineItems>({
     queryKey: ["estimate", estimateId],
-    queryFn: async () => {
-      const res = await fetch(
+    queryFn: ({ signal }) =>
+      apiFetch<EstimateWithLineItems>(
         `/api/projects/${projectId}/estimates/${estimateId}`,
-      );
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to fetch estimate");
-      }
-      return res.json();
-    },
+        { signal },
+      ),
     enabled: !!projectId && !!estimateId,
   });
 }
@@ -97,18 +86,11 @@ export function useCreateEstimate(projectId: number) {
   const router = useRouter();
 
   return useMutation({
-    mutationFn: async (data: EstimateCreate) => {
-      const res = await fetch(`/api/projects/${projectId}/estimates`, {
+    mutationFn: (data: EstimateCreate) =>
+      apiFetch<EstimateWithLineItems>(`/api/projects/${projectId}/estimates`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to create estimate");
-      }
-      return res.json();
-    },
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["estimates", projectId],
@@ -130,27 +112,20 @@ export function useUpdateEstimate(projectId: number) {
   const router = useRouter();
 
   return useMutation({
-    mutationFn: async ({
+    mutationFn: ({
       estimateId,
       data,
     }: {
       estimateId: number;
       data: Omit<EstimateUpdate, "estimate_id">;
-    }) => {
-      const res = await fetch(
+    }) =>
+      apiFetch<EstimateWithLineItems>(
         `/api/projects/${projectId}/estimates/${estimateId}`,
         {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),
         },
-      );
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to update estimate");
-      }
-      return res.json();
-    },
+      ),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
         queryKey: ["estimates", projectId],
@@ -175,19 +150,11 @@ export function useDeleteEstimate(projectId: number) {
   const router = useRouter();
 
   return useMutation({
-    mutationFn: async (estimateId: number) => {
-      const res = await fetch(
+    mutationFn: (estimateId: number) =>
+      apiFetch(
         `/api/projects/${projectId}/estimates/${estimateId}`,
-        {
-          method: "DELETE",
-        },
-      );
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to delete estimate");
-      }
-      return res.json();
-    },
+        { method: "DELETE" },
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["estimates", projectId],
@@ -212,21 +179,14 @@ export function useAddLineItem(projectId: number, estimateId: number) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: EstimateLineItem) => {
-      const res = await fetch(
+    mutationFn: (data: EstimateLineItem) =>
+      apiFetch<EstimateLineItem>(
         `/api/projects/${projectId}/estimates/${estimateId}/line-items`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),
         },
-      );
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to add line item");
-      }
-      return res.json();
-    },
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["estimate", estimateId],
@@ -246,27 +206,20 @@ export function useUpdateLineItem(projectId: number, estimateId: number) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
+    mutationFn: ({
       lineItemId,
       data,
     }: {
       lineItemId: number;
       data: Partial<EstimateLineItem>;
-    }) => {
-      const res = await fetch(
+    }) =>
+      apiFetch<EstimateLineItem>(
         `/api/projects/${projectId}/estimates/${estimateId}/line-items/${lineItemId}`,
         {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),
         },
-      );
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to update line item");
-      }
-      return res.json();
-    },
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["estimate", estimateId],
@@ -286,19 +239,11 @@ export function useDeleteLineItem(projectId: number, estimateId: number) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (lineItemId: number) => {
-      const res = await fetch(
+    mutationFn: (lineItemId: number) =>
+      apiFetch(
         `/api/projects/${projectId}/estimates/${estimateId}/line-items/${lineItemId}`,
-        {
-          method: "DELETE",
-        },
-      );
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to delete line item");
-      }
-      return res.json();
-    },
+        { method: "DELETE" },
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["estimate", estimateId],
