@@ -180,7 +180,7 @@ export function buildPrimeTableColumns(): TableColumn<PrimeContractCO>[] {
       width: 100,
       render: (item) =>
         item.executed ? (
-          <span className="text-[hsl(var(--status-success))]">Yes</span>
+          <span className="text-success">Yes</span>
         ) : (
           <span className="text-muted-foreground">No</span>
         ),
