@@ -97,7 +97,7 @@ function lineItemValueForColumn(li: LineItem, columnId: string): React.ReactNode
     case "number_title":
       return (
         <span className="pl-6 truncate block">
-          {li.description || "Untitled"}
+          {li.description || formatBudgetCode(li) || "Untitled"}
         </span>
       );
     case "status":

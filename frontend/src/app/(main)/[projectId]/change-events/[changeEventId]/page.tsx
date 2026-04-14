@@ -63,6 +63,7 @@ import { ChangeEventHistoryTab } from "@/components/domain/change-events/ChangeE
 import { ChangeEventRelatedItemsTab } from "@/components/domain/change-events/ChangeEventRelatedItemsTab";
 import { ChangeEventPrimePCOsSection } from "@/components/domain/change-events/ChangeEventPrimePCOsSection";
 import { ChangeEventCommitmentPCOsSection } from "@/components/domain/change-events/ChangeEventCommitmentPCOsSection";
+import { ChangeEventPrimeContractCOsTab } from "@/components/domain/change-events/ChangeEventPrimeContractCOsTab";
 import { EntityComments, EntityRoom } from "@/components/comments/entity-comments";
 
 /* ── Helpers ──────────────────────────────────────────────────────── */
@@ -659,6 +660,7 @@ export default function ChangeEventDetailPage() {
 <TabsTrigger value="related-items">
             Related Items ({relatedItems.length})
           </TabsTrigger>
+          <TabsTrigger value="change-orders">Change Orders</TabsTrigger>
           <TabsTrigger value="comments">Comments (0)</TabsTrigger>
           <TabsTrigger value="emails">Emails (0)</TabsTrigger>
           <TabsTrigger value="approvals">Approvals</TabsTrigger>
@@ -715,6 +717,13 @@ export default function ChangeEventDetailPage() {
               onFetchOptions={actions.fetchRelatedItemOptions}
               onLink={actions.linkRelatedItem}
               onUnlink={actions.unlinkRelatedItem}
+            />
+          </TabsContent>
+
+          <TabsContent value="change-orders">
+            <ChangeEventPrimeContractCOsTab
+              changeEventId={changeEventId}
+              projectId={projectId}
             />
           </TabsContent>
 
