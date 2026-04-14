@@ -92,6 +92,7 @@ import {
 } from "@/features/invoicing/invoicing-table-config";
 import { InvoicingSettingsTab } from "@/features/invoicing/invoicing-settings-tab";
 import { PaymentsTab } from "@/features/invoicing/payments-tab";
+import { apiFetch } from "@/lib/api-client";
 
 // =============================================================================
 // Types
@@ -848,10 +849,14 @@ export default function ProjectInvoicingPage(): ReactElement {
   const { data: billingPeriods = [] } = useQuery<{ id: string; name: string | null; start_date: string }[]>({
     queryKey: ["billing-periods-filter", projectId],
     queryFn: async () => {
-      const resp = await fetch(`/api/projects/${projectId}/invoicing/billing-periods`);
-      if (!resp.ok) return [];
-      const json = await resp.json();
-      return json.data ?? [];
+      try {
+        const json = await apiFetch<{ data?: { id: string; name: string | null; start_date: string }[] }>(
+          `/api/projects/${projectId}/invoicing/billing-periods`,
+        );
+        return json.data ?? [];
+      } catch {
+        return [];
+      }
     },
     enabled: Boolean(projectId),
   });
@@ -859,11 +864,16 @@ export default function ProjectInvoicingPage(): ReactElement {
   const { data: contracts = [] } = useQuery<{ id: string; contract_number: string | null; title: string | null }[]>({
     queryKey: ["contracts-filter", projectId],
     queryFn: async () => {
-      const resp = await fetch(`/api/projects/${projectId}/contracts`);
-      if (!resp.ok) return [];
-      const json = await resp.json();
-      // contracts route returns the array directly (not wrapped in .data)
-      return Array.isArray(json) ? json : (json.data ?? []);
+      try {
+        const json = await apiFetch<
+          | { id: string; contract_number: string | null; title: string | null }[]
+          | { data?: { id: string; contract_number: string | null; title: string | null }[] }
+        >(`/api/projects/${projectId}/contracts`);
+        // contracts route returns the array directly (not wrapped in .data)
+        return Array.isArray(json) ? json : (json.data ?? []);
+      } catch {
+        return [];
+      }
     },
     enabled: Boolean(projectId),
   });
@@ -906,13 +916,12 @@ export default function ProjectInvoicingPage(): ReactElement {
   const handleErpSync = React.useCallback(async () => {
     setIsSyncing(true);
     try {
-      const resp = await fetch("/api/sync/acumatica/ar-invoices", {
+      const data = await apiFetch<{
+        result: { created: number; updated: number; errors: unknown[] };
+      }>("/api/sync/acumatica/ar-invoices", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ projectId: Number(projectId) }),
       });
-      const data = await resp.json();
-      if (!resp.ok) throw new Error(data.error ?? "Sync failed");
       const { result } = data;
       toast.success(
         `Invoice sync complete: ${result.created} created, ${result.updated} updated` +

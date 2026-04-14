@@ -44,6 +44,7 @@ import { DirectCostForm } from "@/components/direct-costs/DirectCostForm";
 import { DirectCostsImportDialog } from "@/components/direct-costs/DirectCostsImportDialog";
 import { ExportDialog } from "@/components/direct-costs/ExportDialog";
 import type { DirectCostUpdate } from "@/lib/schemas/direct-costs";
+import { apiFetch } from "@/lib/api-client";
 
 export type DirectCostRow = {
   id: string;
@@ -220,13 +221,12 @@ export function DirectCostsClient({
   const handleErpSync = React.useCallback(async () => {
     setIsSyncing(true);
     try {
-      const resp = await fetch("/api/sync/acumatica/direct-costs", {
+      const data = await apiFetch<{
+        result: { created: number; updated: number; errors: unknown[] };
+      }>("/api/sync/acumatica/direct-costs", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ projectId: Number(projectId) }),
       });
-      const data = await resp.json();
-      if (!resp.ok) throw new Error(data.error ?? "Sync failed");
       const { result } = data;
       toast.success(
         `ERP sync complete: ${result.created} created, ${result.updated} updated` +
@@ -345,13 +345,12 @@ export function DirectCostsClient({
   const handleDeleteConfirm = async (): Promise<void> => {
     if (!directCostToDelete) return;
 
-    const response = await fetch(`/api/projects/${projectId}/direct-costs/${directCostToDelete.id}`, {
-      method: "DELETE",
-    });
-
-    if (!response.ok) {
-      const errorData = (await response.json().catch(() => ({}))) as { error?: string };
-      toast.error(errorData.error || "Failed to delete direct cost");
+    try {
+      await apiFetch(`/api/projects/${projectId}/direct-costs/${directCostToDelete.id}`, {
+        method: "DELETE",
+      });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to delete direct cost");
       return;
     }
 
@@ -368,13 +367,9 @@ export function DirectCostsClient({
     setEditingInitialData(undefined);
 
     try {
-      const response = await fetch(`/api/projects/${projectId}/direct-costs/${costId}`);
-      if (!response.ok) {
-        const errorData = (await response.json().catch(() => ({}))) as { error?: string };
-        throw new Error(errorData.error || "Failed to load direct cost for editing");
-      }
-
-      const payload = (await response.json()) as DirectCostUpdate;
+      const payload = await apiFetch<DirectCostUpdate>(
+        `/api/projects/${projectId}/direct-costs/${costId}`,
+      );
       setEditingInitialData(payload);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to load direct cost";
@@ -400,18 +395,10 @@ export function DirectCostsClient({
   const handleInlineStatusChange = async (costId: string, nextStatus: string): Promise<void> => {
     setUpdatingStatusId(costId);
     try {
-      const response = await fetch(`/api/projects/${projectId}/direct-costs/${costId}`, {
+      await apiFetch(`/api/projects/${projectId}/direct-costs/${costId}`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify({ status: nextStatus }),
       });
-
-      if (!response.ok) {
-        const errData = (await response.json().catch(() => ({}))) as { error?: string };
-        throw new Error(errData.error || "Failed to update status");
-      }
 
       toast.success(`Status updated to ${nextStatus}`);
       router.refresh();
@@ -426,6 +413,8 @@ export function DirectCostsClient({
   const runBulkStatusUpdate = async (status: "Approved" | "Revise and Resubmit"): Promise<void> => {
     if (tableState.selectedIds.length === 0) return;
 
+    // Note: bulk endpoint returns HTTP 207 (Multi-Status) for partial success.
+    // apiFetch would treat 207 as an error, so we use raw fetch here.
     const response = await fetch(`/api/projects/${projectId}/direct-costs/bulk`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },

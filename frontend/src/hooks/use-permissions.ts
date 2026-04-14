@@ -7,6 +7,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { apiFetch } from "@/lib/api-client";
 import {
   type UserPermissions,
   type PermissionModule,
@@ -31,13 +32,9 @@ export function useUserPermissions(projectId: string | number) {
     setError(null);
 
     try {
-      const response = await fetch(`/api/projects/${projectId}/permissions`);
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to load permissions");
-      }
-
-      const { data } = await response.json();
+      const { data } = await apiFetch<{ data: UserPermissions }>(
+        `/api/projects/${projectId}/permissions`
+      );
       setPermissions(data);
     } catch (err) {
       setError(err instanceof Error ? err : new Error("an unexpected error occurred — please try again"));
@@ -84,13 +81,9 @@ export function usePermissionTemplates() {
     setError(null);
 
     try {
-      const response = await fetch("/api/permissions/templates");
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to load templates");
-      }
-
-      const { data } = await response.json();
+      const { data } = await apiFetch<{ data: PermissionTemplate[] }>(
+        "/api/permissions/templates"
+      );
       setTemplates(data);
     } catch (err) {
       setError(err instanceof Error ? err : new Error("an unexpected error occurred — please try again"));
@@ -106,23 +99,16 @@ export function usePermissionTemplates() {
 
   const assignTemplate = useCallback(
     async (projectId: string | number, personId: string, templateId: string) => {
-      const response = await fetch(`/api/projects/${projectId}/permissions/assign`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          person_id: personId,
-          template_id: templateId,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to assign template");
-      }
-
-      return await response.json();
+      return await apiFetch<unknown>(
+        `/api/projects/${projectId}/permissions/assign`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            person_id: personId,
+            template_id: templateId,
+          }),
+        }
+      );
     },
     []
   );
@@ -153,13 +139,10 @@ export function usePermissionOverrides(projectId: string | number) {
       setError(null);
 
       try {
-        const response = await fetch(
+        return await apiFetch<unknown>(
           `/api/projects/${projectId}/permissions/override`,
           {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
             body: JSON.stringify({
               person_id: personId,
               module,
@@ -167,13 +150,6 @@ export function usePermissionOverrides(projectId: string | number) {
             }),
           }
         );
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || "Failed to set override");
-        }
-
-        return await response.json();
       } catch (err) {
         const error = err instanceof Error ? err : new Error("an unexpected error occurred — please try again");
         setError(error);
@@ -191,19 +167,12 @@ export function usePermissionOverrides(projectId: string | number) {
       setError(null);
 
       try {
-        const response = await fetch(
+        return await apiFetch<unknown>(
           `/api/projects/${projectId}/permissions/override?person_id=${personId}&module=${module}`,
           {
             method: "DELETE",
           }
         );
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || "Failed to remove override");
-        }
-
-        return await response.json();
       } catch (err) {
         const error = err instanceof Error ? err : new Error("an unexpected error occurred — please try again");
         setError(error);

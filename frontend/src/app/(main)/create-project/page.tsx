@@ -23,6 +23,7 @@ import {
 } from "@/components/forms";
 import { ProjectCreatedModal } from "@/components/project/ProjectCreatedModal";
 import { useCreateProjectDevConfig } from "@/components/project/create-project-dev-config";
+import { apiFetch } from "@/lib/api-client";
 import {
   createProjectSchema,
   defaultValues,
@@ -159,29 +160,10 @@ function CreateProjectForm() {
         },
       };
 
-      const response = await fetch("/api/projects", {
+      const project = await apiFetch<{ id: string | number }>("/api/projects", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify(payload),
       });
-
-      if (!response.ok) {
-        const contentType = response.headers.get("content-type") ?? "";
-        let errorMessage = `Server returned ${response.status}`;
-        if (contentType.includes("application/json")) {
-          const body = await response.json().catch(() => null);
-          if (body?.error) errorMessage = body.error;
-        } else {
-          const text = await response.text().catch(() => "");
-          if (text) errorMessage = text.slice(0, 200);
-        }
-        console.error("[CreateProject] API error:", response.status, errorMessage);
-        throw new Error(errorMessage);
-      }
-
-      const project = await response.json();
 
       // Store project info and show success modal
       setCreatedProject({

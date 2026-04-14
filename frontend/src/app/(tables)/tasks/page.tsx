@@ -33,6 +33,7 @@ import {
   renderTasksList,
   renderTasksRowActions,
 } from "@/features/tasks/tasks-table-config";
+import { apiFetch } from "@/lib/api-client";
 
 type TasksFilterState = Record<string, FilterValue>;
 
@@ -155,9 +156,9 @@ export default function TasksPage() {
     setIsLoading(true);
     try {
       // TODO: Replace with your API endpoint
-      const resp = await fetch("/api/tasks", { cache: "no-store" });
-      const result = await resp.json();
-      if (!resp.ok) throw new Error(result?.error || "Failed to load");
+      const result = await apiFetch<{ data?: TasksRow[] }>("/api/tasks", {
+        cache: "no-store",
+      });
       setData((result.data || []) as TasksRow[]);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to load";
@@ -234,13 +235,12 @@ export default function TasksPage() {
         return;
       }
       try {
-        const resp = await fetch(`/api/tasks/${item.id}`, { method: "DELETE" });
-        if (!resp.ok) throw new Error("Failed to delete task");
+        await apiFetch(`/api/tasks/${item.id}`, { method: "DELETE" });
         toast.success("Task deleted");
         tableState.setSelectedIds((prev) => prev.filter((id) => id !== item.id));
         void refresh();
-      } catch {
-        toast.error("Failed to delete task");
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Failed to delete task");
       }
     },
     [refresh, tableState],
@@ -272,15 +272,10 @@ export default function TasksPage() {
 
     setIsBulkDeleting(true);
     try {
-      const resp = await fetch("/api/tasks/bulk", {
+      await apiFetch("/api/tasks/bulk", {
         method: "DELETE",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ task_ids: selectedIds }),
       });
-      const result = await resp.json();
-      if (!resp.ok) {
-        throw new Error(result?.error || "Failed to delete selected tasks");
-      }
 
       toast.success(`Deleted ${selectedIds.length} tasks`);
       tableState.setSelectedIds([]);

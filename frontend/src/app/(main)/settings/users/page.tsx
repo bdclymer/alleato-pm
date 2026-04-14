@@ -34,6 +34,7 @@ import {
 import { DataTable, type TableColumn } from "@/components/ds";
 import { PageShell } from "@/components/layout";
 import { createClient } from "@/lib/supabase/client";
+import { apiFetch } from "@/lib/api-client";
 
 const ROLES = [
   { value: "project_manager", label: "Project Manager" },
@@ -109,28 +110,25 @@ export default function UsersSettingsPage() {
 
   const handleDeactivate = React.useCallback(async (profile: UserProfileRow) => {
     try {
-      const res = await fetch(`/api/settings/users/${profile.id}`, {
+      await apiFetch(`/api/settings/users/${profile.id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ is_active: !profile.is_active }),
       });
-      if (!res.ok) throw new Error();
       toast.success(profile.is_active ? "User deactivated" : "User activated");
       void loadUsers();
-    } catch {
-      toast.error("Failed to update user status");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to update user status");
     }
   }, [loadUsers]);
 
   const handleDelete = React.useCallback(async (profile: UserProfileRow) => {
     if (!confirm(`Delete ${getDisplayName(profile)}? This cannot be undone.`)) return;
     try {
-      const res = await fetch(`/api/settings/users/${profile.id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error();
+      await apiFetch(`/api/settings/users/${profile.id}`, { method: "DELETE" });
       toast.success("User deleted");
       void loadUsers();
-    } catch {
-      toast.error("Failed to delete user");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to delete user");
     }
   }, [loadUsers]);
 
@@ -138,17 +136,14 @@ export default function UsersSettingsPage() {
     if (!inviteEmail.trim()) return;
     setIsSendingInvite(true);
     try {
-      const res = await fetch("/api/settings/users/invite", {
+      await apiFetch("/api/settings/users/invite", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: inviteEmail.trim(),
           full_name: inviteName.trim() || undefined,
           role: inviteRole || undefined,
         }),
       });
-      const json = (await res.json()) as { error?: string };
-      if (!res.ok) throw new Error(json.error ?? "Failed to send invite");
       toast.success(`Invitation sent to ${inviteEmail.trim()}`);
       setInviteOpen(false);
       setInviteEmail("");

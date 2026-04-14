@@ -47,6 +47,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { apiFetch } from "@/lib/api-client";
 
 interface CompanyRow {
   id: string;
@@ -421,9 +422,15 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
   const handleErpSync = React.useCallback(async () => {
     setIsSyncing(true);
     try {
-      const resp = await fetch("/api/sync/acumatica/vendors", { method: "POST" });
-      const data = await resp.json();
-      if (!resp.ok) throw new Error(data.error ?? "Sync failed");
+      const data = await apiFetch<{
+        result: {
+          created: number;
+          updated: number;
+          companiesCreated?: number;
+          companiesUpdated?: number;
+          errors: unknown[];
+        };
+      }>("/api/sync/acumatica/vendors", { method: "POST" });
       const { result } = data;
       toast.success(
         `ERP sync complete: ${result.created} vendors created, ${result.updated} vendors updated, ` +
@@ -494,13 +501,12 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
   const handleDeleteCompany = React.useCallback(
     async (company: CompanyRow) => {
       try {
-        const resp = await fetch(`/api/directory/companies/${company.id}`, { method: "DELETE" });
-        if (!resp.ok) throw new Error("Failed to delete company");
+        await apiFetch(`/api/directory/companies/${company.id}`, { method: "DELETE" });
         toast.success("Company deleted");
         // Trigger re-fetch by navigating to same page
         router.refresh();
-      } catch {
-        toast.error("Failed to delete company");
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Failed to delete company");
       }
     },
     [router],
