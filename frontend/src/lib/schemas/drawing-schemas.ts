@@ -60,8 +60,6 @@ export const uploadDrawingFormSchema = z.object({
 
   drawing_type: z.string().optional(),
 
-  area_id: z.string().uuid().optional(),
-
   drawing_number: z.string().max(100).optional(),
 
   title: z.string().max(255).optional(),
@@ -97,8 +95,6 @@ export const editDrawingSchema = z.object({
   discipline: z.string().optional(),
 
   drawing_type: z.string().optional(),
-
-  area_id: z.string().uuid().optional(),
 });
 
 export type EditDrawingFormData = z.infer<typeof editDrawingSchema>;

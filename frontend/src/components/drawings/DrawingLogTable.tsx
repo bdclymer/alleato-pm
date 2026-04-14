@@ -27,7 +27,7 @@ const createDrawingLogConfig = (
 ): GenericTableConfig => ({
   title: "Drawing Log",
   description: "Manage all drawing revisions and their metadata",
-  searchFields: ["drawingNumber", "title", "fileName", "areaName", "setName"],
+  searchFields: ["drawingNumber", "title", "fileName", "setName"],
   exportFilename: `drawings-export-${new Date().toISOString().split('T')[0]}.csv`,
   rowClickPath: `/{projectId}/drawings/viewer/{id}`,
   rowActions: [
@@ -154,12 +154,6 @@ const createDrawingLogConfig = (
       type: "date",
     },
     {
-      id: "areaName",
-      label: "Area",
-      defaultVisible: true,
-      type: "text",
-    },
-    {
       id: "setName",
       label: "Set",
       defaultVisible: false,
@@ -246,12 +240,6 @@ const createDrawingLogConfig = (
         { value: "superseded", label: "Superseded" },
         { value: "void", label: "Void" },
       ],
-    },
-    {
-      id: "areaName",
-      label: "Area",
-      field: "areaName",
-      options: [], // Will be populated dynamically
     },
     {
       id: "setName",
@@ -391,7 +379,6 @@ export function DrawingLogTable({
             'Status': row.status,
             'Drawing Date': row.drawingDate,
             'Received Date': row.receivedDate,
-            'Area': row.areaName,
             'Set': row.setName,
             'File Name': row.fileName,
             'Uploaded By': row.uploadedByEmail,

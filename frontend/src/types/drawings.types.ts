@@ -164,15 +164,13 @@ export const drawingUploadSchema = z.object({
   description: z.string()
     .max(1000, 'Description must be 1000 characters or less')
     .optional(),
-  areaId: z.string().uuid('Invalid area ID').optional(),
 });
 
 export const drawingFilterSchema = z.object({
   search: z.string().optional(),
   discipline: z.enum(DRAWING_DISCIPLINES).optional(),
-  drawingType: z.enum(DRAWING_TYPES).optional(), 
+  drawingType: z.enum(DRAWING_TYPES).optional(),
   status: z.enum(['draft', 'under_review', 'approved', 'superseded', 'void'] as const).optional(),
-  areaId: z.string().uuid('Invalid area ID').optional(),
   drawingSetId: z.string().uuid('Invalid drawing set ID').optional(),
   uploadedBy: z.string().uuid('Invalid user ID').optional(),
   dateFrom: z.string().datetime('Invalid date').optional(),
@@ -211,7 +209,6 @@ export function mapDrawingLogRow(row: DrawingLogViewRow): DrawingLogTableRow {
   return {
     id: row.id ?? '',
     projectId: row.project_id ?? 0,
-    areaId: row.area_id ?? null,
     drawingNumber: row.drawing_number ?? '',
     title: row.title ?? '',
     discipline: row.discipline ?? null,
@@ -230,7 +227,6 @@ export function mapDrawingLogRow(row: DrawingLogViewRow): DrawingLogTableRow {
     revisionDescription: row.revision_description ?? null,
     uploadedBy: row.uploaded_by ?? null,
     revisionCreatedAt: row.revision_created_at ?? null,
-    areaName: row.area_name ?? null,
     setName: row.set_name ?? null,
     uploadedByEmail: row.uploaded_by_email ?? null,
     isPublished: row.is_published ?? true,
@@ -250,7 +246,6 @@ export interface DrawingAreaWithCount extends DrawingArea {
 export interface DrawingLogTableRow {
   id: string;
   projectId: number;
-  areaId: string | null;
   drawingNumber: string;
   title: string;
   discipline: string | null;
@@ -269,7 +264,6 @@ export interface DrawingLogTableRow {
   revisionDescription: string | null;
   uploadedBy: string | null;
   revisionCreatedAt: string | null;
-  areaName: string | null;
   setName: string | null;
   uploadedByEmail: string | null;
   isPublished: boolean;

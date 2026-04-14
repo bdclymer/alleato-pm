@@ -88,7 +88,6 @@ import {
   useObsoleteDrawing,
 } from "@/hooks/use-drawings";
 import { useDrawingRevisions } from "@/hooks/use-drawing-revisions";
-import { useDrawingAreas } from "@/hooks/use-drawing-areas";
 import {
   DRAWING_DISCIPLINES,
   DRAWING_TYPES,
@@ -145,7 +144,6 @@ interface EditFormState {
   title: string;
   discipline: string;
   drawing_type: string;
-  area_id: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -320,7 +318,6 @@ export default function DrawingDetailPage() {
   const { data: drawing, isLoading, error } = useDrawing(projectId, drawingId);
   const { data: revisions = [], isLoading: revisionsLoading } =
     useDrawingRevisions(projectId, drawingId);
-  const { data: areas = [] } = useDrawingAreas(projectId);
   const updateDrawing = useUpdateDrawing(projectId);
   const deleteDrawing = useDeleteDrawing(projectId);
   const publishDrawing = usePublishDrawing(projectId);
@@ -335,7 +332,6 @@ export default function DrawingDetailPage() {
     title: "",
     discipline: "",
     drawing_type: "",
-    area_id: "",
   });
 
   // Fetch signed preview URL once drawing is loaded
@@ -359,7 +355,6 @@ export default function DrawingDetailPage() {
       title: drawing.title ?? "",
       discipline: drawing.discipline ?? "",
       drawing_type: drawing.drawing_type ?? "",
-      area_id: drawing.area_id ?? "",
     });
     setIsEditing(true);
   };
@@ -376,7 +371,6 @@ export default function DrawingDetailPage() {
           title: editForm.title || undefined,
           discipline: editForm.discipline || undefined,
           drawing_type: editForm.drawing_type || undefined,
-          area_id: editForm.area_id || undefined,
         },
       });
       setIsEditing(false);
@@ -721,14 +715,6 @@ export default function DrawingDetailPage() {
                           value={drawing.drawing_type}
                         />
                         <FieldRow
-                          label="Area"
-                          value={
-                            drawing.area_id
-                              ? (areas.find((a) => a.id === drawing.area_id)?.name ?? "—")
-                              : "—"
-                          }
-                        />
-                        <FieldRow
                           label="Obsolete"
                           value={drawing.is_obsolete ? "Yes" : "No"}
                         />
@@ -802,32 +788,6 @@ export default function DrawingDetailPage() {
                               {DRAWING_TYPES.map((t) => (
                                 <SelectItem key={t} value={t}>
                                   {t}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-1.5">
-                          <Label htmlFor="area_id">Area</Label>
-                          <Select
-                            value={editForm.area_id}
-                            onValueChange={(val) =>
-                              setEditForm((f) => ({
-                                ...f,
-                                area_id: val === "__none__" ? "" : val,
-                              }))
-                            }
-                          >
-                            <SelectTrigger id="area_id">
-                              <SelectValue placeholder="Select area" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="__none__">
-                                None / No Area
-                              </SelectItem>
-                              {areas.map((area) => (
-                                <SelectItem key={area.id} value={area.id}>
-                                  {area.name}
                                 </SelectItem>
                               ))}
                             </SelectContent>

@@ -44,16 +44,13 @@ import {
 import {
   DRAWING_DISCIPLINES,
   DRAWING_TYPES,
-  type DrawingArea,
 } from "@/types/drawings.types";
-import { useDrawingAreas } from "@/hooks/use-drawing-areas";
-import { cn } from "@/lib/utils";
+
 
 interface DrawingUploadDialogProps {
   projectId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  defaultAreaId?: string;
   onUploadComplete?: () => void;
   /** Files pre-populated from drag-and-drop on the page */
   initialFiles?: File[];
@@ -99,7 +96,6 @@ export function DrawingUploadDialog({
   const [isUploadingRevision, setIsUploadingRevision] = useState(false);
 
   const { data: sets = [] } = useDrawingSets(projectId);
-  const { data: areas = [] } = useDrawingAreas(projectId);
   const { uploadMultipleDrawings, isUploading, errors, clearErrors } = useDrawingUpload(projectId);
   const uploadRevision = useUploadRevision(projectId);
 
@@ -176,7 +172,6 @@ export function DrawingUploadDialog({
         fd.append("received_date", uploadData.received_date || new Date().toISOString());
         if (uploadData.drawing_set_id) fd.append("drawing_set_id", uploadData.drawing_set_id);
         if (uploadData.description) fd.append("description", uploadData.description);
-        if (uploadData.area_id) fd.append("area_id", uploadData.area_id);
 
         const res = await fetch(`/api/projects/${projectId}/drawings`, {
           method: "POST",
@@ -263,19 +258,6 @@ export function DrawingUploadDialog({
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
     return (bytes / (1024 * 1024)).toFixed(1) + " MB";
   };
-
-  const flatAreas = React.useMemo(() => {
-    const flatten = (
-      areasList: DrawingArea[],
-      depth = 0
-    ): Array<{ id: string; name: string; depth: number }> => {
-      return areasList.flatMap((area: DrawingArea) => [
-        { id: area.id, name: area.name, depth },
-        ...flatten(area.children || [], depth + 1),
-      ]);
-    };
-    return flatten(areas);
-  }, [areas]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -435,7 +417,7 @@ export function DrawingUploadDialog({
                 type="button"
                 variant="ghost"
                 onClick={() => setShowAdvanced((v) => !v)}
-                className="flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary px-0"
+                className="flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 px-0"
               >
                 {showAdvanced ? (
                   <ChevronDown className="h-4 w-4" />
@@ -542,40 +524,6 @@ export function DrawingUploadDialog({
                             {DRAWING_TYPES.map((t) => (
                               <SelectItem key={t} value={t}>
                                 {t}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="area_id"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Drawing Area</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          value={field.value}
-                          disabled={isUploading}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select area" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {flatAreas.map((area) => (
-                              <SelectItem key={area.id} value={area.id}>
-                                <span
-                                  style={{ paddingLeft: `${area.depth * 16}px` }}
-                                  className={cn(area.depth > 0 && "text-muted-foreground")}
-                                >
-                                  {area.name}
-                                </span>
                               </SelectItem>
                             ))}
                           </SelectContent>

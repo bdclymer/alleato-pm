@@ -284,13 +284,16 @@ const DEFAULT_ROLES = ["Project Manager", "Superintendent", "Architect"];
 function ProjectTeamSection({ projectId }: { projectId: string }) {
   const { roles, isLoading } = useProjectRoles(projectId);
 
-  // Build the display list:
-  // 1. All roles that exist in the database (assigned or not)
-  // 2. Any DEFAULT_ROLES not already in the database get appended as empty slots
-  const dbRoleNames = roles.map((r) => r.role_name);
-  const missingDefaults = DEFAULT_ROLES.filter(
-    (d) => !dbRoleNames.some((n) => n.toLowerCase() === d.toLowerCase()),
-  );
+  // Only show the DEFAULT_ROLES slots. For each, find the matching DB role (if any)
+  // and display the first assigned member, or "Not Assigned" if empty.
+  const slots = DEFAULT_ROLES.map((roleName) => {
+    const dbRole = roles.find(
+      (r) => r.role_name.toLowerCase() === roleName.toLowerCase(),
+    );
+    const firstMember = dbRole?.members[0] ?? null;
+    const person = firstMember?.person ?? null;
+    return { roleName, person };
+  });
 
   return (
     <section>
@@ -316,30 +319,27 @@ function ProjectTeamSection({ projectId }: { projectId: string }) {
         </div>
       ) : (
         <div>
-          {/* Existing roles from the database */}
-          {roles.map((role) => {
-            const firstMember = role.members[0] ?? null;
-            const person = firstMember?.person ?? null;
+          {slots.map(({ roleName, person }) => {
             const displayName = person
               ? `${person.first_name} ${person.last_name}`.trim()
               : null;
 
             return (
               <div
-                key={role.id}
+                key={roleName}
                 className="flex items-center gap-3 border-b border-border/50 py-2.5 last:border-0"
               >
                 {person ? (
                   <>
                     <Avatar className="h-8 w-8 shrink-0 rounded-full">
                       <AvatarFallback className="text-xs bg-primary/10 text-primary">
-                        {initials(displayName ?? role.role_name)}
+                        {initials(displayName ?? roleName)}
                       </AvatarFallback>
                     </Avatar>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium">{displayName}</p>
                       <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                        {role.role_name}
+                        {roleName}
                       </p>
                     </div>
                   </>
@@ -347,9 +347,9 @@ function ProjectTeamSection({ projectId }: { projectId: string }) {
                   <>
                     <div className="h-8 w-8 shrink-0 rounded-full border border-dashed border-border bg-muted" />
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm text-muted-foreground">Not Assigned</p>
+                      <p className="truncate text-sm text-muted-foreground italic">Not Assigned</p>
                       <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                        {role.role_name}
+                        {roleName}
                       </p>
                     </div>
                     <Link
@@ -363,26 +363,6 @@ function ProjectTeamSection({ projectId }: { projectId: string }) {
               </div>
             );
           })}
-
-          {/* Default role slots not yet created in the database */}
-          {missingDefaults.map((roleName) => (
-            <div
-              key={roleName}
-              className="flex items-center gap-3 border-b border-border/50 py-2.5 last:border-0"
-            >
-              <div className="h-8 w-8 shrink-0 rounded-full border border-dashed border-border bg-muted" />
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm text-muted-foreground">Not Assigned</p>
-                <p className="mt-0.5 truncate text-xs text-muted-foreground">{roleName}</p>
-              </div>
-              <Link
-                href={`/${projectId}/directory`}
-                className="shrink-0 text-xs text-primary hover:underline"
-              >
-                Assign
-              </Link>
-            </div>
-          ))}
         </div>
       )}
     </section>
@@ -913,7 +893,7 @@ export function ProjectCommandCenter({
       </div>
 
       {/* Body — 2-col layout */}
-      <div className="flex-1 grid grid-cols-1 gap-y-8 lg:grid-cols-[minmax(0,1fr)_480px] lg:gap-x-12 lg:gap-y-0">
+      <div className="flex-1 grid grid-cols-1 gap-y-8 lg:grid-cols-[minmax(0,1fr)_560px] lg:gap-x-12 lg:gap-y-0">
         {/* Left: Main */}
         <div className="min-w-0 px-4 py-4 sm:px-5 sm:py-5 lg:px-6">
           <ContentSectionStack>

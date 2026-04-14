@@ -49,7 +49,6 @@ const EMPTY_FILTERS: DrawingFilterState = {
   discipline: undefined,
   drawingType: undefined,
   status: undefined,
-  areaName: undefined,
 };
 
 export default function ProjectDrawingsPage() {
@@ -82,7 +81,6 @@ export default function ProjectDrawingsPage() {
     discipline: searchParams.get("discipline") ?? undefined,
     drawingType: searchParams.get("drawingType") ?? undefined,
     status: searchParams.get("status") ?? undefined,
-    areaName: searchParams.get("areaName") ?? undefined,
   };
 
   const tableState = useUnifiedTableState({
@@ -151,23 +149,15 @@ export default function ProjectDrawingsPage() {
       typeof activeFilters.drawingType === "string" ? activeFilters.drawingType : "";
     const statusFilter =
       typeof activeFilters.status === "string" ? activeFilters.status : "";
-    const areaFilter =
-      typeof activeFilters.areaName === "string"
-        ? activeFilters.areaName.toLowerCase()
-        : "";
-
     return drawings.filter((row) => {
       if (disciplineFilter && row.discipline !== disciplineFilter) return false;
       if (typeFilter && row.drawingType !== typeFilter) return false;
       if (statusFilter && row.status !== statusFilter) return false;
-      if (areaFilter && !(row.areaName ?? "").toLowerCase().includes(areaFilter))
-        return false;
       if (!search) return true;
       return (
         row.drawingNumber.toLowerCase().includes(search) ||
         row.title.toLowerCase().includes(search) ||
         (row.discipline ?? "").toLowerCase().includes(search) ||
-        (row.areaName ?? "").toLowerCase().includes(search) ||
         (row.fileName ?? "").toLowerCase().includes(search)
       );
     });
@@ -208,8 +198,6 @@ export default function ProjectDrawingsPage() {
         typeof nextFilters.drawingType === "string" ? nextFilters.drawingType : null,
       status:
         typeof nextFilters.status === "string" ? nextFilters.status : null,
-      areaName:
-        typeof nextFilters.areaName === "string" ? nextFilters.areaName : null,
       page: "1",
     });
     tableState.setPage(1);
@@ -298,8 +286,7 @@ export default function ProjectDrawingsPage() {
     Boolean(tableState.searchInput) ||
     Boolean(activeFilters.discipline) ||
     Boolean(activeFilters.drawingType) ||
-    Boolean(activeFilters.status) ||
-    Boolean(activeFilters.areaName);
+    Boolean(activeFilters.status);
 
   const selectedCount = tableState.selectedIds.length;
 

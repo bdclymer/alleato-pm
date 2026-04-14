@@ -69,7 +69,6 @@ export default function DrawingsRevisionsReportPage() {
       d.drawingNumber,
       d.title,
       d.discipline ?? "",
-      d.areaName ?? "",
       d.revisionNumber ?? "",
       d.setName ?? "",
       d.drawingDate ?? "",
@@ -82,7 +81,6 @@ export default function DrawingsRevisionsReportPage() {
       "Number",
       "Title",
       "Discipline",
-      "Area",
       "Revision",
       "Set",
       "Drawing Date",
@@ -135,7 +133,6 @@ export default function DrawingsRevisionsReportPage() {
               <TableHead>Number</TableHead>
               <TableHead>Title</TableHead>
               <TableHead>Discipline</TableHead>
-              <TableHead>Area</TableHead>
               <TableHead>Revision</TableHead>
               <TableHead>Set</TableHead>
               <TableHead>Drawing Date</TableHead>
@@ -150,7 +147,7 @@ export default function DrawingsRevisionsReportPage() {
             {isLoading ? (
               Array.from({ length: 6 }).map((_, i) => (
                 <TableRow key={i}>
-                  {Array.from({ length: 12 }).map((_, j) => (
+                  {Array.from({ length: 11 }).map((_, j) => (
                     <TableCell key={j}>
                       <div className="h-4 bg-muted rounded animate-pulse" />
                     </TableCell>
@@ -159,7 +156,7 @@ export default function DrawingsRevisionsReportPage() {
               ))
             ) : filteredItems.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={12} className="py-16">
+                <TableCell colSpan={11} className="py-16">
                   <EmptyState
                     icon={<FileText className="h-8 w-8 text-muted-foreground" />}
                     title="No drawings found"
@@ -190,7 +187,6 @@ export default function DrawingsRevisionsReportPage() {
                     </span>
                   </TableCell>
                   <TableCell>{drawing.discipline ?? "—"}</TableCell>
-                  <TableCell>{drawing.areaName ?? "—"}</TableCell>
                   <TableCell>{drawing.revisionNumber ?? "—"}</TableCell>
                   <TableCell>{drawing.setName ?? "—"}</TableCell>
                   <TableCell>{formatDate(drawing.drawingDate)}</TableCell>

@@ -55,7 +55,6 @@ export const drawingColumns: ColumnConfig[] = [
   { id: "publishState", label: "State", defaultVisible: true },
   { id: "drawingDate", label: "Drawing Date", defaultVisible: true },
   { id: "receivedDate", label: "Received", defaultVisible: true },
-  { id: "areaName", label: "Area", defaultVisible: true },
   { id: "setName", label: "Set", defaultVisible: false },
   { id: "fileName", label: "File", defaultVisible: false },
   { id: "uploadedByEmail", label: "Uploaded By", defaultVisible: false },
@@ -91,11 +90,6 @@ export const drawingFilters: FilterConfig[] = [
       { value: "superseded", label: "Superseded" },
       { value: "void", label: "Void" },
     ],
-  },
-  {
-    id: "areaName",
-    label: "Area",
-    type: "text",
   },
 ];
 
@@ -199,22 +193,13 @@ export function buildDrawingTableColumns(): TableColumn<DrawingLogTableRow>[] {
       ...drawingColumns[9],
       render: (item) => (
         <span className="text-sm text-muted-foreground">
-          {item.areaName || "-"}
-        </span>
-      ),
-      sortValue: (item) => item.areaName ?? "",
-    },
-    {
-      ...drawingColumns[10],
-      render: (item) => (
-        <span className="text-sm text-muted-foreground">
           {item.setName || "-"}
         </span>
       ),
       sortValue: (item) => item.setName ?? "",
     },
     {
-      ...drawingColumns[11],
+      ...drawingColumns[10],
       render: (item) => (
         <span className="text-xs text-muted-foreground truncate max-w-32 block">
           {item.fileName || "-"}
@@ -223,7 +208,7 @@ export function buildDrawingTableColumns(): TableColumn<DrawingLogTableRow>[] {
       sortValue: (item) => item.fileName ?? "",
     },
     {
-      ...drawingColumns[12],
+      ...drawingColumns[11],
       render: (item) => (
         <span className="text-sm text-muted-foreground">
           {item.uploadedByEmail || "-"}
@@ -336,8 +321,8 @@ function DrawingGridCard({ item, onClick, selected, onSelect }: DrawingGridCardP
         </div>
       )}
 
-      {/* Square thumbnail */}
-      <div className="relative w-full bg-muted" style={{ aspectRatio: "1 / 1" }}>
+      {/* Landscape thumbnail (PDF proportions ~11:8.5) */}
+      <div className="relative w-full bg-muted" style={{ aspectRatio: "11 / 8.5" }}>
         {previewUrl && isPdf ? (
           <iframe
             src={`${previewUrl}#toolbar=0&navpanes=0&scrollbar=0&view=Fit`}
@@ -473,7 +458,6 @@ export function renderDrawingList(
           <p className="text-xs text-muted-foreground">
             {item.revisionNumber ? `Rev. ${item.revisionNumber}` : "No rev."}
             {item.discipline ? ` · ${item.discipline}` : ""}
-            {item.areaName ? ` · ${item.areaName}` : ""}
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
