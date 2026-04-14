@@ -7,13 +7,15 @@ import {
   ArrowLeft,
   ChevronDown,
   CreditCard,
-  Download,
   DollarSign,
+  Download,
   FileText,
+  GitBranch,
   History,
   Mail,
   MoreVertical,
   Pencil,
+  PenLine,
   Plus,
   RefreshCw,
   Upload,
@@ -852,9 +854,9 @@ export default function ProjectContractDetailPage() {
                 <Button variant="default" size="sm"><Plus />Create<ChevronDown /></Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => router.push(`/${projectId}/change-events/new?contractId=${contractId}`)}><FileText className="h-4 w-4 mr-2" />Create Change Event</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push(`/${projectId}/change-orders/prime/new?contractId=${contractId}`)}><DollarSign className="h-4 w-4 mr-2" />Create Prime Contract CO</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setActiveTab("invoices")}><FileText className="h-4 w-4 mr-2" />Create Invoice</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push(`/${projectId}/change-events/new?contractId=${contractId}`)}><GitBranch className="h-4 w-4 mr-2" />Create Change Event</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push(`/${projectId}/change-orders/prime/new?contractId=${contractId}`)}><PenLine className="h-4 w-4 mr-2" />Create Prime Contract CO</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setActiveTab("invoices")}><DollarSign className="h-4 w-4 mr-2" />Create Invoice</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setActiveTab("payments")}><CreditCard className="h-4 w-4 mr-2" />Create Payment</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => { setDocumentDialogTab("email"); setIsDocumentDialogOpen(true); }}><Mail className="h-4 w-4 mr-2" />Email Contract</DropdownMenuItem>
               </DropdownMenuContent>
