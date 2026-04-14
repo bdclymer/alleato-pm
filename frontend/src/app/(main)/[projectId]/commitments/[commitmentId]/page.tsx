@@ -898,14 +898,6 @@ export default function CommitmentDetailPage() {
         <DropdownMenuContent align="end">
           <DropdownMenuItem
             onSelect={() => {
-              router.push(`/${projectId}/change-events/new`);
-            }}
-          >
-            <FileText className="mr-2 h-4 w-4" />
-            Change Event
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onSelect={() => {
               const commitmentType =
                 commitment.type === "purchase_order"
                   ? "purchase_order"
