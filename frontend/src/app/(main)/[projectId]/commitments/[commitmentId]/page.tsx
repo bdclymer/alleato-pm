@@ -5,12 +5,16 @@ import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import {
   ChevronDown,
+  CreditCard,
+  DollarSign,
   Download,
   FileText,
+  GitBranch,
   Mail,
-  Pencil,
+  MoreVertical,
   Plus,
-  Receipt,
+  Trash2,
+  Upload,
 } from "lucide-react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
@@ -860,42 +864,21 @@ export default function CommitmentDetailPage() {
 
   const headerActions = (
     <>
-      <Button
-        variant="outline"
-        size="icon"
-        onClick={handleEmail}
-        aria-label="Email"
-        title="Email"
-      >
-        <Mail />
-      </Button>
-      <Button
-        variant="outline"
-        size="icon"
-        onClick={handleExport}
-        aria-label="Export"
-        title="Export"
-      >
-        <Download />
-      </Button>
-      <Button
-        variant="outline"
-        size="icon"
-        onClick={() => router.push(`/${projectId}/commitments/${commitmentId}/edit`)}
-        aria-label="Edit Commitment"
-        title="Edit Commitment"
-      >
-        <Pencil />
-      </Button>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="default">
+          <Button variant="default" size="sm">
             <Plus className="mr-1.5 h-4 w-4" />
             Create
             <ChevronDown className="ml-1.5 h-3.5 w-3.5 opacity-70" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
+          <DropdownMenuItem
+            onSelect={() => router.push(`/${projectId}/change-events/new?commitmentId=${commitmentId}`)}
+          >
+            <GitBranch className="mr-2 h-4 w-4" />
+            Create Change Event
+          </DropdownMenuItem>
           <DropdownMenuItem
             onSelect={() => {
               const commitmentType =
@@ -907,29 +890,49 @@ export default function CommitmentDetailPage() {
               );
             }}
           >
-            <Receipt className="mr-2 h-4 w-4" />
-            Invoice
+            <DollarSign className="mr-2 h-4 w-4" />
+            Create Invoice
           </DropdownMenuItem>
           <DropdownMenuItem
-            onClick={() => {
-              setActiveTab("payments");
-              toast.info("Navigate to Payments tab to create a payment");
-            }}
+            onSelect={() => setActiveTab("payments")}
           >
-            <Receipt className="mr-2 h-4 w-4" />
-            Payment
+            <CreditCard className="mr-2 h-4 w-4" />
+            Create Payment
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={handleEmail}>
+            <Mail className="mr-2 h-4 w-4" />
+            Email Commitment
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="icon" aria-label="More actions">
+            <MoreVertical className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onSelect={() => toast.info("Import coming soon")}>
+            <Upload className="mr-2 h-4 w-4" />
+            Import
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={handleExport}>
+            <Download className="mr-2 h-4 w-4" />
+            Export
           </DropdownMenuItem>
           <DropdownMenuItem
-            onSelect={() => {
-              router.push(`/${projectId}/change-events`);
-            }}
+            onSelect={() => router.push(`/${projectId}/commitments/${commitmentId}/edit`)}
           >
             <FileText className="mr-2 h-4 w-4" />
-            RFQ
+            Edit
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleEmail}>
-            <Mail className="mr-2 h-4 w-4" />
-            Email Contract
+          <DropdownMenuItem
+            className="text-destructive focus:text-destructive"
+            onSelect={handleDelete}
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            Delete
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
