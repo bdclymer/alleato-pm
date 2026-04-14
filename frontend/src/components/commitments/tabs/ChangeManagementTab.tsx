@@ -16,7 +16,6 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatCurrency } from '@/lib/utils'
 import { formatDate } from '@/lib/table-config/formatters'
-import { PotentialChangeOrdersTab } from './PotentialChangeOrdersTab'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -242,7 +241,7 @@ function ChangeOrdersSection({ commitmentId, projectId }: ChangeManagementTabPro
   return (
     <section className="space-y-4">
       <SectionHeader
-        title="Change Orders"
+        title="Commitment Change Orders"
         count={changeOrders.length}
         action={{
           label: '+ Create',
@@ -278,12 +277,8 @@ export const ChangeManagementTab = memo(function ChangeManagementTab({
 }: ChangeManagementTabProps) {
   return (
     <div className="space-y-10">
-      <ChangeEventsSection commitmentId={commitmentId} projectId={projectId} />
-      <PotentialChangeOrdersTab
-        commitmentId={commitmentId}
-        projectId={projectId}
-      />
       <ChangeOrdersSection commitmentId={commitmentId} projectId={projectId} />
+      <ChangeEventsSection commitmentId={commitmentId} projectId={projectId} />
     </div>
   )
 })
