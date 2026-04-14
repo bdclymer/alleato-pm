@@ -144,7 +144,7 @@ export function KnowledgeFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-dvh overflow-y-auto sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>
             {isEditing ? "Edit Knowledge Entry" : "Add Knowledge Entry"}

@@ -15,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ds";
+import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useUploadPhotos } from "@/hooks/use-photos";
@@ -111,7 +112,7 @@ export function PhotoUploadDialog({
                 JPG, PNG, GIF, WEBP — multiple files supported
               </p>
             </div>
-            <input
+            <Input
               ref={inputRef}
               id="photo-file-input"
               type="file"
