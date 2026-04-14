@@ -213,25 +213,25 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
               <div className="space-y-6">
                 <SectionRuleHeading label="Details" className="[&_span]:text-primary" />
                 <dl className="space-y-4 text-sm">
-                  <LabelValueRow label="Contract #">
+                  <LabelValueRow label="Contract #" labelClassName="w-44">
                     {contract.contract_number || "Not set"}
                   </LabelValueRow>
-                  <LabelValueRow label="Title">
+                  <LabelValueRow label="Title" labelClassName="w-44">
                     {contract.title}
                   </LabelValueRow>
-                  <LabelValueRow label="Status">
+                  <LabelValueRow label="Status" labelClassName="w-44">
                     {formatStatusLabel(contract.status)}
                   </LabelValueRow>
-                  <LabelValueRow label="Executed">
+                  <LabelValueRow label="Executed" labelClassName="w-44">
                     {contract.executed ? formatDate(contract.executed_at) || "Yes" : "No"}
                   </LabelValueRow>
-                  <LabelValueRow label="Contractor" missing={!contract.contractor?.name}>
+                  <LabelValueRow label="Contractor" labelClassName="w-44" missing={!contract.contractor?.name}>
                     {contract.contractor?.name || "Not set"}
                   </LabelValueRow>
-                  <LabelValueRow label="Architect" missing={!contract.architect_engineer?.name}>
+                  <LabelValueRow label="Architect" labelClassName="w-44" missing={!contract.architect_engineer?.name}>
                     {contract.architect_engineer?.name || "Not set"}
                   </LabelValueRow>
-                  <LabelValueRow label="Owner" missing={!ownerName}>
+                  <LabelValueRow label="Owner" labelClassName="w-44" missing={!ownerName}>
                     {ownerName && (contract.contract_company?.id || contract.client?.id) ? (
                       <Link
                         href={`/directory/vendors/${contract.contract_company?.id || contract.client?.id}`}
@@ -241,7 +241,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                       </Link>
                     ) : (ownerName || "Not set")}
                   </LabelValueRow>
-                  <LabelValueRow label="Default Retainage">
+                  <LabelValueRow label="Default Retainage" labelClassName="w-44">
                     {contract.retention_percentage ?? 0}%
                   </LabelValueRow>
                 </dl>
@@ -251,22 +251,22 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
               <div className="space-y-6">
                 <SectionRuleHeading label="Key Dates" className="[&_span]:text-primary" />
                 <dl className="space-y-4 text-sm">
-                  <LabelValueRow label="Start Date">
+                  <LabelValueRow label="Start Date" labelClassName="w-44">
                     {renderDateOrDash(contract.start_date)}
                   </LabelValueRow>
-                  <LabelValueRow label="Estimated Completion">
+                  <LabelValueRow label="Estimated Completion" labelClassName="w-44">
                     {renderDateOrDash(contract.end_date)}
                   </LabelValueRow>
-                  <LabelValueRow label="Substantial Completion">
+                  <LabelValueRow label="Substantial Completion" labelClassName="w-44">
                     {renderDateOrDash(contract.substantial_completion_date)}
                   </LabelValueRow>
-                  <LabelValueRow label="Actual Completion">
+                  <LabelValueRow label="Actual Completion" labelClassName="w-44">
                     {renderDateOrDash(contract.actual_completion_date)}
                   </LabelValueRow>
-                  <LabelValueRow label="Signed Contract Received">
+                  <LabelValueRow label="Signed Contract Received" labelClassName="w-44">
                     {renderDateOrDash(contract.signed_contract_received_date)}
                   </LabelValueRow>
-                  <LabelValueRow label="Contract Termination">
+                  <LabelValueRow label="Contract Termination" labelClassName="w-44">
                     {renderDateOrDash(contract.contract_termination_date)}
                   </LabelValueRow>
                 </dl>
@@ -278,6 +278,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
               <dl className="space-y-4 text-sm">
                 <LabelValueRow
                   label="Description"
+                  labelClassName="w-44"
                   missing={getTextValue(contract.description).isMissing}
                   valueClassName="leading-relaxed font-normal text-foreground"
                 >
@@ -285,6 +286,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                 </LabelValueRow>
                 <LabelValueRow
                   label="Inclusions"
+                  labelClassName="w-44"
                   missing={inclusionsList.length === 0}
                   valueClassName="leading-relaxed font-normal text-foreground"
                 >
@@ -300,6 +302,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                 </LabelValueRow>
                 <LabelValueRow
                   label="Exclusions"
+                  labelClassName="w-44"
                   missing={exclusionsList.length === 0}
                   valueClassName="leading-relaxed font-normal text-foreground"
                 >
@@ -335,7 +338,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                           e.target.value = "";
                         }}
                       />
-                      <span className="text-sm text-primary hover:underline cursor-pointer">
+                      <span className="text-xs text-primary hover:underline cursor-pointer">
                         {isUploadingAttachment ? "Uploading..." : "Upload file"}
                       </span>
                     </label>
