@@ -1,144 +1,168 @@
-/**
- * @deprecated Use the canonical route at /api/commitments/[commitmentId]/change-orders/[changeOrderId] instead.
- * This route is kept for backward compatibility with existing integrations.
- */
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
 import { NextResponse } from "next/server";
 import { updateChangeOrderSchema } from "../validation";
-import { ZodError } from "zod";
 import { requirePermission } from "@/lib/permissions-guard";
+import type { Database } from "@/types/database.types";
 
 interface RouteParams {
   params: Promise<{ projectId: string; contractId: string; changeOrderId: string }>;
 }
 
+type PrimeContractChangeOrderRow =
+  Database["public"]["Tables"]["prime_contract_change_orders"]["Row"];
+
+// Maps the revenue-side PCCO row into the legacy contract page response shape.
+function mapPrimeContractChangeOrder(
+  row: PrimeContractChangeOrderRow,
+  contractId: string,
+) {
+  const requestedDate =
+    row.submitted_at ??
+    row.created_at ??
+    row.review_date ??
+    row.approved_at ??
+    new Date().toISOString();
+
+  const updatedAt =
+    row.review_date ??
+    row.approved_at ??
+    row.submitted_at ??
+    row.created_at ??
+    new Date().toISOString();
+
+  return {
+    id: String(row.id),
+    contract_id: row.prime_contract_id ?? row.contract_id ?? contractId,
+    change_order_number: row.pcco_number ?? "",
+    description: row.description ?? "",
+    title: row.title ?? null,
+    amount: Number(row.total_amount ?? 0),
+    status: (row.status ?? "pending").toLowerCase(),
+    revision: row.revision ?? null,
+    executed: row.executed ?? null,
+    requested_by: row.created_by ?? null,
+    requested_date: requestedDate,
+    due_date: row.due_date ?? null,
+    review_date: row.review_date ?? null,
+    designated_reviewer: row.designated_reviewer ?? null,
+    approved_by: null,
+    approved_date: row.approved_at ?? null,
+    rejection_reason: row.rejection_reason ?? null,
+    created_at: row.created_at ?? requestedDate,
+    updated_at: updatedAt,
+  };
+}
+
+// Resolves the legacy route id into the numeric PCCO id used by the revenue-side table.
+function parsePrimeChangeOrderId(changeOrderId: string): number | null {
+  const numericId = Number(changeOrderId);
+  return Number.isFinite(numericId) && numericId > 0 ? numericId : null;
+}
+
 /**
- * GET /api/projects/[id]/contracts/[contractId]/change-orders/[changeOrderId]
- * Returns a single change order by ID
+ * GET /api/projects/[projectId]/contracts/[contractId]/change-orders/[changeOrderId]
  */
 export const GET = withApiGuardrails(
   "projects/[projectId]/contracts/[contractId]/change-orders/[changeOrderId]#GET",
   async ({ request, params }) => {
-  
     const { projectId, contractId, changeOrderId } = await params;
+    const numericProjectId = Number(projectId);
+    const numericChangeOrderId = parsePrimeChangeOrderId(changeOrderId);
+
+    if (!numericChangeOrderId) {
+      return NextResponse.json({ error: "Change order not found" }, { status: 404 });
+    }
+
     const supabase = await createClient();
 
-    // Verify contract exists and belongs to project
     const { data: contract } = await supabase
       .from("prime_contracts")
       .select("id")
       .eq("id", contractId)
-      .eq("project_id", parseInt(projectId, 10))
+      .eq("project_id", numericProjectId)
       .single();
 
     if (!contract) {
-      return NextResponse.json(
-        { error: "Contract not found" },
-        { status: 404 },
-      );
+      return NextResponse.json({ error: "Contract not found" }, { status: 404 });
     }
 
     const { data, error } = await supabase
-      .from("contract_change_orders")
+      .from("prime_contract_change_orders")
       .select("*")
-      .eq("id", changeOrderId)
-      .eq("contract_id", contractId)
+      .eq("id", numericChangeOrderId)
+      .eq("project_id", numericProjectId)
+      .or(`prime_contract_id.eq.${contractId},contract_id.eq.${contractId}`)
       .single();
 
     if (error) {
       if (error.code === "PGRST116") {
-        return NextResponse.json(
-          { error: "Change order not found" },
-          { status: 404 },
-        );
+        return NextResponse.json({ error: "Change order not found" }, { status: 404 });
       }
-      return NextResponse.json(
-        { error: "Failed to fetch change order", details: error.message },
-        { status: 400 },
-      );
+      return apiErrorResponse(error);
     }
 
-    return NextResponse.json(data);
-    },
+    return NextResponse.json(mapPrimeContractChangeOrder(data, contractId));
+  },
 );
 
 /**
- * PUT /api/projects/[id]/contracts/[contractId]/change-orders/[changeOrderId]
- * Updates a change order
+ * PUT /api/projects/[projectId]/contracts/[contractId]/change-orders/[changeOrderId]
  */
 export const PUT = withApiGuardrails(
   "projects/[projectId]/contracts/[contractId]/change-orders/[changeOrderId]#PUT",
   async ({ request, params }) => {
-  
     const { projectId, contractId, changeOrderId } = await params;
-    const projectIdNum = parseInt(projectId, 10);
-    const guard = await requirePermission(projectIdNum, "contracts", "write");
+    const numericProjectId = Number(projectId);
+    const numericChangeOrderId = parsePrimeChangeOrderId(changeOrderId);
+    const guard = await requirePermission(numericProjectId, "contracts", "write");
     if (guard.denied) return guard.response;
+
+    if (!numericChangeOrderId) {
+      return NextResponse.json({ error: "Change order not found" }, { status: 404 });
+    }
 
     const supabase = await createClient();
     const body = await request.json();
-
-    // Validate request body
     const validatedData = updateChangeOrderSchema.parse(body);
 
-    // Get current user
     const {
       data: { user },
       error: authError,
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/contracts/[contractId]/change-orders/[changeOrderId]#PUT", message: "Authentication required." });
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "projects/[projectId]/contracts/[contractId]/change-orders/[changeOrderId]#PUT",
+        message: "Authentication required.",
+      });
     }
 
-    // Verify contract exists and belongs to project
     const { data: contract } = await supabase
       .from("prime_contracts")
       .select("id")
       .eq("id", contractId)
-      .eq("project_id", parseInt(projectId, 10))
+      .eq("project_id", numericProjectId)
       .single();
 
     if (!contract) {
-      return NextResponse.json(
-        { error: "Contract not found" },
-        { status: 404 },
-      );
+      return NextResponse.json({ error: "Contract not found" }, { status: 404 });
     }
 
-    // Check if change order exists and belongs to this contract
-    const { data: existingChangeOrder } = await supabase
-      .from("contract_change_orders")
-      .select("id, change_order_number")
-      .eq("id", changeOrderId)
-      .eq("contract_id", contractId)
-      .single();
-
-    if (!existingChangeOrder) {
-      return NextResponse.json(
-        { error: "Change order not found" },
-        { status: 404 },
-      );
-    }
-
-    // If updating change_order_number, check for uniqueness
-    if (
-      validatedData.change_order_number &&
-      validatedData.change_order_number !==
-        existingChangeOrder.change_order_number
-    ) {
-      const { data: duplicateChangeOrder } = await supabase
-        .from("contract_change_orders")
+    if (validatedData.change_order_number) {
+      const { data: duplicate } = await supabase
+        .from("prime_contract_change_orders")
         .select("id")
-        .eq("contract_id", contractId)
-        .eq("change_order_number", validatedData.change_order_number)
-        .neq("id", changeOrderId)
-        .single();
+        .eq("project_id", numericProjectId)
+        .or(`prime_contract_id.eq.${contractId},contract_id.eq.${contractId}`)
+        .eq("pcco_number", validatedData.change_order_number)
+        .neq("id", numericChangeOrderId)
+        .maybeSingle();
 
-      if (duplicateChangeOrder) {
+      if (duplicate) {
         return NextResponse.json(
           { error: "Change order number already exists for this contract" },
           { status: 400 },
@@ -146,98 +170,106 @@ export const PUT = withApiGuardrails(
       }
     }
 
-    // Update the change order
+    const updateData: Database["public"]["Tables"]["prime_contract_change_orders"]["Update"] = {
+      pcco_number: validatedData.change_order_number,
+      description: validatedData.description,
+      title: validatedData.description,
+      total_amount: validatedData.amount,
+      rejection_reason: validatedData.rejection_reason,
+    };
+
     const { data, error } = await supabase
-      .from("contract_change_orders")
-      .update(validatedData)
-      .eq("id", changeOrderId)
-      .eq("contract_id", contractId)
+      .from("prime_contract_change_orders")
+      .update(updateData)
+      .eq("id", numericChangeOrderId)
+      .eq("project_id", numericProjectId)
+      .or(`prime_contract_id.eq.${contractId},contract_id.eq.${contractId}`)
       .select("*")
       .single();
 
     if (error) {
-      return NextResponse.json(
-        { error: "Failed to update change order", details: error.message },
-        { status: 400 },
-      );
+      return apiErrorResponse(error);
     }
 
-    return NextResponse.json(data);
-    },
+    return NextResponse.json(mapPrimeContractChangeOrder(data, contractId));
+  },
 );
 
 /**
- * DELETE /api/projects/[id]/contracts/[contractId]/change-orders/[changeOrderId]
- * Deletes a change order
+ * DELETE /api/projects/[projectId]/contracts/[contractId]/change-orders/[changeOrderId]
  */
 export const DELETE = withApiGuardrails(
   "projects/[projectId]/contracts/[contractId]/change-orders/[changeOrderId]#DELETE",
   async ({ request, params }) => {
-  
     const { projectId, contractId, changeOrderId } = await params;
-    const projectIdNum = parseInt(projectId, 10);
-    const guard = await requirePermission(projectIdNum, "contracts", "admin");
+    const numericProjectId = Number(projectId);
+    const numericChangeOrderId = parsePrimeChangeOrderId(changeOrderId);
+    const guard = await requirePermission(numericProjectId, "contracts", "admin");
     if (guard.denied) return guard.response;
+
+    if (!numericChangeOrderId) {
+      return NextResponse.json({ error: "Change order not found" }, { status: 404 });
+    }
 
     const supabase = await createClient();
 
-    // Get current user
     const {
       data: { user },
       error: authError,
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/contracts/[contractId]/change-orders/[changeOrderId]#DELETE", message: "Authentication required." });
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "projects/[projectId]/contracts/[contractId]/change-orders/[changeOrderId]#DELETE",
+        message: "Authentication required.",
+      });
     }
 
-    // Verify contract exists and belongs to project
     const { data: contract } = await supabase
       .from("prime_contracts")
       .select("id")
       .eq("id", contractId)
-      .eq("project_id", parseInt(projectId, 10))
+      .eq("project_id", numericProjectId)
       .single();
 
     if (!contract) {
-      return NextResponse.json(
-        { error: "Contract not found" },
-        { status: 404 },
-      );
+      return NextResponse.json({ error: "Contract not found" }, { status: 404 });
     }
 
-    // Check if change order exists before deleting
-    const { data: existingChangeOrder } = await supabase
-      .from("contract_change_orders")
-      .select("id")
-      .eq("id", changeOrderId)
-      .eq("contract_id", contractId)
+    const { data: existing, error: existingError } = await supabase
+      .from("prime_contract_change_orders")
+      .select("id, status")
+      .eq("id", numericChangeOrderId)
+      .eq("project_id", numericProjectId)
+      .or(`prime_contract_id.eq.${contractId},contract_id.eq.${contractId}`)
       .single();
 
-    if (!existingChangeOrder) {
+    if (existingError || !existing) {
+      return NextResponse.json({ error: "Change order not found" }, { status: 404 });
+    }
+
+    const normalizedStatus = (existing.status ?? "").toLowerCase();
+    if (!["draft", "pending", "rejected", "proposed"].includes(normalizedStatus)) {
       return NextResponse.json(
-        { error: "Change order not found" },
-        { status: 404 },
+        {
+          error: `Cannot delete a change order with status "${normalizedStatus}".`,
+        },
+        { status: 409 },
       );
     }
 
-    // Delete the change order
     const { error } = await supabase
-      .from("contract_change_orders")
+      .from("prime_contract_change_orders")
       .delete()
-      .eq("id", changeOrderId)
-      .eq("contract_id", contractId);
+      .eq("id", numericChangeOrderId)
+      .eq("project_id", numericProjectId)
+      .or(`prime_contract_id.eq.${contractId},contract_id.eq.${contractId}`);
 
     if (error) {
-      return NextResponse.json(
-        { error: "Failed to delete change order", details: error.message },
-        { status: 400 },
-      );
+      return apiErrorResponse(error);
     }
 
-    return NextResponse.json(
-      { message: "Change order deleted successfully" },
-      { status: 200 },
-    );
-    },
+    return NextResponse.json({ message: "Change order deleted successfully" });
+  },
 );

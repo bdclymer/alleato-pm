@@ -32,6 +32,10 @@ export const GET = withApiGuardrails<{ projectId: string }>(
       );
     }
 
+    // Permission check: reading budget modifications requires "read" on budget
+    const guard = await requirePermission(projectIdNum, "budget", "read");
+    if (guard.denied) return guard.response;
+
     const { searchParams } = new URL(request.url);
     const budgetLineId = searchParams.get("budgetLineId");
     const status = searchParams.get("status");
@@ -486,10 +490,24 @@ export const PATCH = withApiGuardrails<{ projectId: string }>(
       );
     }
 
-    // Refresh the materialized view when status changes to/from approved
-    // This ensures v_budget_lines.budget_mod_total is recalculated
+    // Refresh derived budget rollups when approval state changes.
+    // This keeps rollup reads consistent with the status transition we just applied.
+    let refreshWarning: string | null = null;
     if (targetStatus === "approved" || currentMod.status === "approved") {
-      await supabase.rpc("refresh_budget_rollup", { p_project_id: projectIdNum });
+      const { error: refreshError } = await supabase.rpc("refresh_budget_rollup", {
+        p_project_id: projectIdNum,
+      });
+      if (refreshError) {
+        console.error("Budget rollup refresh failed after modification status update", {
+          projectId: projectIdNum,
+          modificationId: modId,
+          previousStatus: currentMod.status,
+          targetStatus,
+          error: refreshError.message,
+        });
+        refreshWarning =
+          "Modification status saved, but budget totals refresh failed. Totals may be temporarily stale.";
+      }
     }
 
     const actionMessages: Record<string, string> = {
@@ -508,6 +526,7 @@ export const PATCH = withApiGuardrails<{ projectId: string }>(
         effectiveDate: updatedMod.effective_date,
       },
       message: actionMessages[action],
+      warning: refreshWarning,
     });
     },
 );

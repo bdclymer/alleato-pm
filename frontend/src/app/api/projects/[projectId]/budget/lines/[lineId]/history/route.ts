@@ -2,6 +2,7 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { requirePermission } from "@/lib/permissions-guard";
 
 // GET /api/projects/[id]/budget/lines/[lineId]/history - Get change history for a budget line item
 export const GET = withApiGuardrails<{ projectId: string; lineId: string }>(
@@ -17,6 +18,10 @@ export const GET = withApiGuardrails<{ projectId: string; lineId: string }>(
         { status: 400 },
       );
     }
+
+    // Permission check: reading budget line history requires "read" on budget
+    const guard = await requirePermission(projectIdNum, "budget", "read");
+    if (guard.denied) return guard.response;
 
     const supabase = await createClient();
 

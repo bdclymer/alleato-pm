@@ -59,6 +59,14 @@ export interface ChangeManagementMetrics {
   avgCycleTimeDays: number | null;
 }
 
+interface PrimeContractCOListResponse {
+  data?: PrimeContractCO[];
+}
+
+interface CommitmentCOListResponse {
+  data?: CommitmentCO[];
+}
+
 // =============================================================================
 // Internal hooks
 // =============================================================================
@@ -66,10 +74,13 @@ export interface ChangeManagementMetrics {
 function usePrimeCOs(projectId: string) {
   return useQuery<PrimeContractCO[]>({
     queryKey: ["prime-contract-change-orders", projectId],
-    queryFn: async () =>
-      apiFetch<PrimeContractCO[]>(
+    // Normalizes prime CO API responses so dashboard code doesn't depend on route wrapper shape.
+    queryFn: async () => {
+      const response = await apiFetch<PrimeContractCOListResponse>(
         `/api/projects/${projectId}/prime-contract-change-orders`,
-      ),
+      );
+      return response.data ?? [];
+    },
     enabled: !!projectId,
   });
 }
@@ -92,17 +103,12 @@ interface CommitmentCO {
 function useCommitmentCOs(projectId: string) {
   return useQuery<CommitmentCO[]>({
     queryKey: ["commitment-change-orders", projectId],
+    // Loads commitment COs through the project API so the client doesn't assume a project_id column exists.
     queryFn: async () => {
-      // No project-level list API for commitment COs — query Supabase directly
-      const { createClient } = await import("@/lib/supabase/client");
-      const supabase = createClient();
-      const { data, error } = await supabase
-        .from("contract_change_orders")
-        .select("*")
-        .eq("project_id", Number(projectId))
-        .order("created_at", { ascending: false });
-      if (error) throw new Error(error.message);
-      return (data ?? []) as unknown as CommitmentCO[];
+      const response = await apiFetch<CommitmentCOListResponse>(
+        `/api/projects/${projectId}/commitment-change-orders`,
+      );
+      return response.data ?? [];
     },
     enabled: !!projectId,
   });

@@ -246,6 +246,9 @@ export const GET = withApiGuardrails<{ projectId: string }>(
       );
     }
 
+    const guard = await requirePermission(projectIdNum, "budget", "read");
+    if (guard.denied) return guard.response;
+
     const supabase = await createClient();
 
     const { data: project, error } = await supabase

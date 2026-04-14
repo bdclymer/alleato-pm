@@ -61,6 +61,10 @@ export const GET = withApiGuardrails<{ projectId: string; lineId: string }>(
       );
     }
 
+    // Permission check: reading budget lines requires "read" on budget
+    const guard = await requirePermission(projectIdNum, "budget", "read");
+    if (guard.denied) return guard.response;
+
     const supabase = await createClient();
 
     // Get current user for authorization

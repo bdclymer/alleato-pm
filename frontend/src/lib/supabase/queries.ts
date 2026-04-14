@@ -225,21 +225,47 @@ export async function getProjectChangeOrders(
   supabase: SupabaseClient<Database>,
   projectId: number,
 ) {
-  const [primeRes, contractRes] = await Promise.all([
+  const [primeRes, commitmentsRes] = await Promise.all([
     supabase
       .from("prime_contract_change_orders")
       .select("*")
       .eq("project_id", projectId)
       .order("created_at", { ascending: false }),
     supabase
-      .from("contract_change_orders")
-      .select("*, prime_contracts!inner(project_id)")
-      .eq("prime_contracts.project_id", projectId)
-      .order("created_at", { ascending: false }),
+      .from("commitments_unified")
+      .select("id")
+      .eq("project_id", projectId)
+      .is("deleted_at", null),
   ]);
+
+  if (primeRes.error || commitmentsRes.error) {
+    return {
+      data: primeRes.data ?? [],
+      error: primeRes.error || commitmentsRes.error,
+    };
+  }
+
+  const commitmentIds = (commitmentsRes.data ?? [])
+    .map((commitment) => commitment.id)
+    .filter((value): value is string => Boolean(value));
+
+  let contractData: Database["public"]["Tables"]["contract_change_orders"]["Row"][] = [];
+  let contractError: Error | null = null;
+
+  if (commitmentIds.length > 0) {
+    const contractRes = await supabase
+      .from("contract_change_orders")
+      .select("*")
+      .in("contract_id", commitmentIds)
+      .order("created_at", { ascending: false });
+
+    contractData = contractRes.data ?? [];
+    contractError = contractRes.error;
+  }
+
   return {
-    data: [...(primeRes.data ?? []), ...(contractRes.data ?? [])],
-    error: primeRes.error || contractRes.error,
+    data: [...(primeRes.data ?? []), ...contractData],
+    error: primeRes.error || contractError,
   };
 }
 

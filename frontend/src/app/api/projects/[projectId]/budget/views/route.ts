@@ -13,7 +13,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
   async ({ request, params }) => {
   
     const supabase = await createClient();
-    const { projectId } = params;
+    const { projectId } = await params;
 
     // Check authentication
     const {
@@ -42,6 +42,10 @@ export const GET = withApiGuardrails<{ projectId: string }>(
         { status: 400 },
       );
     }
+
+    // Permission check: reading budget views requires "read" on budget
+    const guard = await requirePermission(projectIdNum, "budget", "read");
+    if (guard.denied) return guard.response;
 
     // Fetch views with their columns
     const { data: views, error: viewsError } = await supabase
@@ -90,7 +94,7 @@ export const POST = withApiGuardrails<{ projectId: string }>(
   async ({ request, params }) => {
   
     const supabase = await createClient();
-    const { projectId } = params;
+    const { projectId } = await params;
     const body: CreateBudgetViewRequest = await request.json();
 
     const { name, description, is_default = false, columns } = body;
@@ -123,6 +127,10 @@ export const POST = withApiGuardrails<{ projectId: string }>(
         { status: 400 },
       );
     }
+
+    // Permission check: managing budget views requires "write" on budget
+    const guard = await requirePermission(projectIdNum, "budget", "write");
+    if (guard.denied) return guard.response;
 
     // Create the view
     const { data: view, error: viewError } = await supabase

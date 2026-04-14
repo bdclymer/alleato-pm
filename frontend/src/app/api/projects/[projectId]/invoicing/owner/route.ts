@@ -5,6 +5,11 @@ import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
 
+// Normalize optional request values so Postgres sees nulls instead of empty strings.
+function normalizeOptionalField<T extends string | null | undefined>(value: T): T | null {
+  return typeof value === "string" && value.trim() === "" ? null : value ?? null;
+}
+
 // POST /api/projects/[projectId]/invoicing/owner
 // Create a new owner invoice for a project
 export const POST = withApiGuardrails<{ projectId: string }>(
@@ -45,26 +50,24 @@ export const POST = withApiGuardrails<{ projectId: string }>(
     }
 
     // Insert the new owner invoice
+    // Sensitive: this write creates a billable owner invoice record in the project's ledger.
     const { data: invoice, error: insertError } = await supabase
       .from("owner_invoices")
       .insert({
         prime_contract_id,
-        invoice_number: invoice_number ?? null,
-        period_start: period_start ?? null,
-        period_end: period_end ?? null,
-        billing_period_id: billing_period_id ?? null,
-        billing_date: billing_date === "" ? null : (billing_date ?? null),
+        invoice_number: normalizeOptionalField(invoice_number),
+        period_start: normalizeOptionalField(period_start),
+        period_end: normalizeOptionalField(period_end),
+        billing_period_id: normalizeOptionalField(billing_period_id),
+        billing_date: normalizeOptionalField(billing_date),
         status: status ?? "draft",
-        payment_application_id: payment_application_id ?? null,
+        payment_application_id: normalizeOptionalField(payment_application_id),
       })
       .select()
       .single();
 
     if (insertError) {
-      return NextResponse.json(
-        { error: "Failed to create owner invoice", details: insertError.message },
-        { status: 500 },
-      );
+      return apiErrorResponse(insertError);
     }
 
     return NextResponse.json({ data: invoice }, { status: 201 });

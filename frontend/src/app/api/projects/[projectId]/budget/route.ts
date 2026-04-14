@@ -26,6 +26,10 @@ export const GET = withApiGuardrails<{ projectId: string }>(
       );
     }
 
+    // Permission check: reading budget requires "read" on budget
+    const guard = await requirePermission(projectIdNum, "budget", "read");
+    if (guard.denied) return guard.response;
+
     const supabase = await createClient();
 
     try {
@@ -90,6 +94,12 @@ export const POST = withApiGuardrails<{ projectId: string }>(
     }));
 
     const supabase = await createClient();
+    const runtimeSupabase = supabase as unknown as {
+      rpc: (
+        fn: string,
+        args: Record<string, unknown>,
+      ) => Promise<{ data: unknown; error: unknown }>;
+    };
 
     // Get current user
     const {
@@ -105,7 +115,9 @@ export const POST = withApiGuardrails<{ projectId: string }>(
     }
 
     // Look up cost code IDs from the code strings or IDs
-    const costCodes = normalizedLineItems.map((item) => item.costCodeId);
+    const costCodes = Array.from(
+      new Set(normalizedLineItems.map((item) => item.costCodeId)),
+    );
     const { data: costCodeData, error: codeError } = await supabase
       .from("cost_codes")
       .select("id")
@@ -147,7 +159,8 @@ export const POST = withApiGuardrails<{ projectId: string }>(
         : null,
     }));
 
-    // Create budget_lines using new schema
+    // Create or increment budget_lines atomically using a DB function.
+    // This avoids read-then-write races under concurrent requests.
     const results = [];
 
     for (const item of resolvedLineItems) {
@@ -155,81 +168,57 @@ export const POST = withApiGuardrails<{ projectId: string }>(
         throw new Error(`Cost code not found: ${item.costCodeId}`);
       }
 
-      // Create or update budget_line
-      // First try to find existing budget_line
-      let query = supabase
-        .from("budget_lines")
-        .select("id, original_amount")
-        .eq("project_id", projectIdNum)
-        .eq("cost_code_id", item.costCodeId)
-        .is("sub_job_id", null);
-
-      if (item.costTypeId) {
-        query = query.eq("cost_type_id", item.costTypeId);
-      } else {
-        query = query.is("cost_type_id", null);
+      // Create new budget_line. cost_type_id is required by the DB schema.
+      if (!item.costTypeId) {
+        return NextResponse.json(
+          {
+            error:
+              "cost_type_id is required for new budget lines. Cost type could not be resolved.",
+            costCodeId: item.costCodeId,
+          },
+          { status: 400 },
+        );
       }
 
-      const { data: existingBudgetLine } = await query.maybeSingle();
+      const runtimeSupabase = supabase as unknown as {
+        rpc: (
+          fn: string,
+          args: Record<string, unknown>,
+        ) => Promise<{ data: unknown; error: unknown }>;
+      };
+      const { data: upsertedLine, error: upsertError } =
+        await runtimeSupabase.rpc("upsert_budget_line_amount", {
+          p_project_id: projectIdNum,
+          p_cost_code_id: item.costCodeId,
+          p_cost_type_id: item.costTypeId,
+          p_sub_job_id: null,
+          p_description: item.description || null,
+          p_delta_amount: item.amount || 0,
+          p_quantity: item.qty,
+          p_unit_of_measure: item.uom,
+          p_unit_cost: item.unitCost,
+          p_actor: user.id,
+        });
 
-      let budgetLine: { id: string };
-      if (existingBudgetLine) {
-        // Update existing budget line - add to original amount
-        const newAmount =
-          (existingBudgetLine.original_amount || 0) + item.amount;
-        const { data: updatedLine, error: updateError } = await supabase
-          .from("budget_lines")
-          .update({
-            original_amount: newAmount,
-            updated_by: user.id,
-          })
-          .eq("id", existingBudgetLine.id)
-          .select()
-          .single();
+      if (upsertError) {
+        return apiErrorResponse(upsertError);
+      }
 
-        if (updateError) {
-          return apiErrorResponse(updateError);
-        }
-        budgetLine = updatedLine;
-      } else {
-        // Create new budget_line. cost_type_id is required by the DB schema.
-        if (!item.costTypeId) {
-          return NextResponse.json(
-            {
-              error:
-                "cost_type_id is required for new budget lines. Cost type could not be resolved.",
-              costCodeId: item.costCodeId,
-            },
-            { status: 400 },
-          );
-        }
-        const { data: newBudgetLine, error: blError } = await supabase
-          .from("budget_lines")
-          .insert({
-            project_id: projectIdNum,
-            cost_code_id: item.costCodeId,
-            cost_type_id: item.costTypeId,
-            sub_job_id: null,
-            description: item.description || null,
-            original_amount: item.amount || 0,
-            quantity: item.qty,
-            unit_of_measure: item.uom,
-            unit_cost: item.unitCost,
-            created_by: user?.id,
-          })
-          .select()
-          .single();
-
-        if (blError) {
-          return apiErrorResponse(blError);
-        }
-        budgetLine = newBudgetLine;
+      const budgetLine = (Array.isArray(upsertedLine)
+        ? upsertedLine[0]
+        : upsertedLine) as { id?: string } | null | undefined;
+      if (!budgetLine?.id) {
+        return NextResponse.json(
+          { error: "Failed to create or update budget line" },
+          { status: 500 },
+        );
       }
 
       results.push(budgetLine);
     }
 
-    // Recalculate total budget from all budget lines for the project
+    // Recalculate budget summary once (single aggregate query) after all writes.
+    // This is safer than per-row updates and avoids stale total drift.
     const { data: allBudgetLines, error: totalsError } = await supabase
       .from("budget_lines")
       .select("original_amount")
