@@ -28,6 +28,7 @@ export type EmailTemplate =
   | "forgot-password"
   | "password-changed"
   | "sov-invitation"
+  | "sov-invite-new-user"
   | "sov-reminder"
   | "sov-submitted-to-pm"
   | "sov-approved"

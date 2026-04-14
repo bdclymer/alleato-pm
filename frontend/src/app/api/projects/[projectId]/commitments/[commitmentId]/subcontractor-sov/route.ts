@@ -6,10 +6,12 @@ import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
 import { sendEmail } from "@/lib/email/send";
 import SOVInvitation from "@/emails/subcontractor/SOVInvitation";
+import SubcontractorSovInvite from "@/emails/subcontractor/SubcontractorSovInvite";
 import SSOVSubmittedToPM from "@/emails/subcontractor/SSOVSubmittedToPM";
 import { APP_BASE_URL } from "@/lib/email/client";
 import { isAuthError, verifyProjectAccess } from "@/lib/supabase/auth-guard";
 import { requirePermission } from "@/lib/permissions-guard";
+import { createServiceClient } from "@/lib/supabase/service";
 
 interface RouteParams {
   params: Promise<{ projectId: string; commitmentId: string }>;
@@ -184,7 +186,7 @@ async function getInvoiceContactEmails(supabase: any, invoiceContactIds: string[
 }
 
 async function sendSsovInviteEmail(args: {
-  recipients: Array<{ name: string; email: string }>;
+  recipients: Array<{ id: string; name: string; email: string }>;
   projectId: number;
   projectName: string;
   commitmentId: string;
@@ -207,8 +209,10 @@ async function sendSsovInviteEmail(args: {
   } = args;
   if (recipients.length === 0) return;
 
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
   const subject = `Submit your Schedule of Values${commitmentNumber ? ` — ${commitmentNumber}` : ""}`;
-  const submissionUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/${projectId}/commitments/${commitmentId}?tab=subcontractor-sov`;
+  const sovTabPath = `/${projectId}/commitments/${commitmentId}?tab=subcontractor-sov`;
+  const submissionUrl = `${appUrl}${sovTabPath}`;
   const contractAmountFormatted = contractAmount.toLocaleString("en-US", {
     style: "currency",
     currency: "USD",
@@ -221,10 +225,110 @@ async function sendSsovInviteEmail(args: {
     year: "numeric",
   });
 
+  const adminSupabase = createServiceClient();
+
+  // Check which recipients already have auth accounts
+  const { data: existingAuthLinks } = await adminSupabase
+    .from("users_auth")
+    .select("person_id")
+    .in("person_id", recipients.map((r) => r.id));
+
+  const existingPersonIds = new Set((existingAuthLinks || []).map((row: { person_id: string }) => row.person_id));
+
   // Send individually so each recipient gets personalized greeting + own idempotency key
   await Promise.all(
-    recipients.map((recipient) =>
-      sendEmail({
+    recipients.map(async (recipient) => {
+      const isNewUser = !existingPersonIds.has(recipient.id);
+
+      if (isNewUser) {
+        // Generate a Supabase magic invite link for account creation.
+        // After OTP verification, the user lands on /auth/update-password?next=<sovTabPath>
+        // where they set their password and are then redirected to the SOV tab.
+        const passwordSetupUrl = `/auth/update-password?next=${encodeURIComponent(sovTabPath)}`;
+        const confirmBaseUrl = `${appUrl}/auth/confirm`;
+
+        const { data: linkData, error: linkError } = await adminSupabase.auth.admin.generateLink({
+          type: "invite",
+          email: recipient.email,
+          options: {
+            // redirectTo is where Supabase sends the browser after OTP verification.
+            // We point it at our /auth/confirm route which handles the token_hash.
+            // However, generateLink returns an action_link we can rewrite for SSR.
+            redirectTo: `${appUrl}/auth/callback`,
+          },
+        });
+
+        if (linkError || !linkData?.properties?.action_link) {
+          console.error(`[ssov-invite] Failed to generate invite link for ${recipient.email}:`, linkError);
+          // Fall back to sending a regular notification with the direct (auth-required) link
+          return sendEmail({
+            template: "sov-invitation",
+            to: recipient.email,
+            subject,
+            react: SOVInvitation({
+              subcontractorName: recipient.name,
+              projectName,
+              commitmentNumber: commitmentNumber || "—",
+              contractAmount: contractAmountFormatted,
+              dueDate,
+              submissionUrl,
+              pmName,
+            }),
+            entity: { type: "sov_submission", id: submissionId },
+            idempotencyKey: `sov-invite/${submissionId}/${recipient.email}`,
+            metadata: { projectId, commitmentId, commitmentTitle },
+          });
+        }
+
+        // Extract the OTP token from the action_link and build a SSR-friendly confirm URL.
+        // The action_link looks like: https://PROJECT.supabase.co/auth/v1/verify?token=TOKEN&type=invite&...
+        const actionUrl = new URL(linkData.properties.action_link);
+        const token = actionUrl.searchParams.get("token");
+
+        let inviteUrl: string;
+        if (token) {
+          // Build our own SSR-safe confirm URL so the session is set via cookies
+          inviteUrl = `${confirmBaseUrl}?token_hash=${token}&type=invite&next=${encodeURIComponent(passwordSetupUrl)}`;
+        } else {
+          // Fallback: use the raw action_link (less ideal for SSR)
+          inviteUrl = linkData.properties.action_link;
+        }
+
+        // Ensure the person has a subcontractor membership for this project so they
+        // can access it after logging in.
+        await adminSupabase
+          .from("project_directory_memberships")
+          .upsert(
+            {
+              person_id: recipient.id,
+              project_id: projectId,
+              user_type: "subcontractor",
+              status: "active",
+            },
+            { onConflict: "person_id,project_id", ignoreDuplicates: false },
+          );
+
+        return sendEmail({
+          template: "sov-invite-new-user",
+          to: recipient.email,
+          subject: `You're invited: ${subject}`,
+          react: SubcontractorSovInvite({
+            subcontractorName: recipient.name,
+            projectName,
+            commitmentNumber: commitmentNumber || "—",
+            contractAmount: contractAmountFormatted,
+            dueDate,
+            inviteUrl,
+            pmName,
+          }),
+          entity: { type: "sov_submission", id: submissionId },
+          idempotencyKey: `sov-invite-new/${submissionId}/${recipient.email}`,
+          metadata: { projectId, commitmentId, commitmentTitle },
+        });
+      }
+
+      // Existing user — send standard notification with direct link
+      return sendEmail({
         template: "sov-invitation",
         to: recipient.email,
         subject,
@@ -240,8 +344,8 @@ async function sendSsovInviteEmail(args: {
         entity: { type: "sov_submission", id: submissionId },
         idempotencyKey: `sov-invite/${submissionId}/${recipient.email}`,
         metadata: { projectId, commitmentId, commitmentTitle },
-      }),
-    ),
+      });
+    }),
   );
 }
 
@@ -730,7 +834,8 @@ export const POST = withApiGuardrails(
       ]);
 
       await sendSsovInviteEmail({
-        recipients: contacts.map((contact: { name: string; email: string }) => ({
+        recipients: contacts.map((contact: { id: string; name: string; email: string }) => ({
+          id: contact.id,
           name: contact.name,
           email: contact.email,
         })),

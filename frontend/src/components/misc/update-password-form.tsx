@@ -16,10 +16,15 @@ import { Label } from "@/components/ui/label";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+interface UpdatePasswordFormProps extends React.ComponentPropsWithoutRef<"div"> {
+  next?: string;
+}
+
 export function UpdatePasswordForm({
   className,
+  next,
   ...props
-}: React.ComponentPropsWithoutRef<"div">) {
+}: UpdatePasswordFormProps) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -39,8 +44,7 @@ export function UpdatePasswordForm({
       }
       const { error } = await supabase.auth.updateUser({ password });
       if (error) throw error;
-      // Update this route to redirect to an authenticated route. The user already has an active session.
-      router.push("/protected");
+      router.push(next && next.startsWith("/") ? next : "/");
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "Could not update password — please try again");
     } finally {
@@ -52,9 +56,13 @@ export function UpdatePasswordForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">Reset Your Password</CardTitle>
+          <CardTitle className="text-2xl">
+            {next ? "Create your password" : "Reset your password"}
+          </CardTitle>
           <CardDescription>
-            Please enter your new password below.
+            {next
+              ? "Set a password to secure your account, then you'll be taken straight to your task."
+              : "Please enter your new password below."}
           </CardDescription>
         </CardHeader>
         <CardContent>
