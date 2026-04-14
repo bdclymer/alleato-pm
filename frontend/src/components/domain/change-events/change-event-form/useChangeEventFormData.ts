@@ -123,7 +123,7 @@ export function useChangeEventFormData({
         const nextItems = [...prev.lineItems];
         const current = { ...nextItems[rowIndex], contract: commitmentId, commitmentId: commitmentId || undefined, commitmentLineItemId: "" };
         if (commitment?.vendorId) {
-          current.vendor = commitment.vendorId;
+          current.vendor = String(commitment.vendorId);
         }
         nextItems[rowIndex] = current;
         return { ...prev, lineItems: nextItems };
@@ -133,15 +133,17 @@ export function useChangeEventFormData({
 
       if (commitmentLineItemsMap[commitmentId] !== undefined) {
         const items = commitmentLineItemsMap[commitmentId];
-        if (items.length === 1 && items[0].budget_code) {
-          const bc = budgetCodes.find((b) => b.code === items[0].budget_code);
-          if (bc) {
-            setFormData((prev) => {
-              const nextItems = [...prev.lineItems];
-              nextItems[rowIndex] = { ...nextItems[rowIndex], budgetCode: bc.id };
-              return { ...prev, lineItems: nextItems };
-            });
-          }
+        if (items.length === 1) {
+          const item = items[0];
+          const bc = item.budget_code ? budgetCodes.find((b) => b.code === item.budget_code) : undefined;
+          setFormData((prev) => {
+            const nextItems = [...prev.lineItems];
+            const updates: Partial<typeof nextItems[number]> = {};
+            if (bc) updates.budgetCode = bc.id;
+            if (item.description) updates.description = item.description;
+            nextItems[rowIndex] = { ...nextItems[rowIndex], ...updates };
+            return { ...prev, lineItems: nextItems };
+          });
         }
         return;
       }
@@ -159,15 +161,17 @@ export function useChangeEventFormData({
         const items: CommitmentSovLineItem[] = data.data || [];
         setCommitmentLineItemsMap((prev) => ({ ...prev, [commitmentId]: items }));
 
-        if (items.length === 1 && items[0].budget_code) {
-          const bc = budgetCodes.find((b) => b.code === items[0].budget_code);
-          if (bc) {
-            setFormData((prev) => {
-              const nextItems = [...prev.lineItems];
-              nextItems[rowIndex] = { ...nextItems[rowIndex], budgetCode: bc.id };
-              return { ...prev, lineItems: nextItems };
-            });
-          }
+        if (items.length === 1) {
+          const item = items[0];
+          const bc = item.budget_code ? budgetCodes.find((b) => b.code === item.budget_code) : undefined;
+          setFormData((prev) => {
+            const nextItems = [...prev.lineItems];
+            const updates: Partial<typeof nextItems[number]> = {};
+            if (bc) updates.budgetCode = bc.id;
+            if (item.description) updates.description = item.description;
+            nextItems[rowIndex] = { ...nextItems[rowIndex], ...updates };
+            return { ...prev, lineItems: nextItems };
+          });
         }
       } catch {
         setCommitmentLineItemsMap((prev) => ({ ...prev, [commitmentId]: [] }));
@@ -186,6 +190,9 @@ export function useChangeEventFormData({
         if (selectedItem?.budget_code) {
           const bc = budgetCodes.find((b) => b.code === selectedItem.budget_code);
           if (bc) current.budgetCode = bc.id;
+        }
+        if (selectedItem?.description) {
+          current.description = selectedItem.description;
         }
         nextItems[rowIndex] = current;
         return { ...prev, lineItems: nextItems };

@@ -76,7 +76,7 @@ export default function NewChangeEventPage() {
         }),
       });
 
-      await Promise.all(
+      const lineItemResults = await Promise.allSettled(
         data.lineItems
           .filter((lineItem) => {
             return (
@@ -88,8 +88,8 @@ export default function NewChangeEventPage() {
               lineItem.nonCommittedCost > 0
             );
           })
-          .map((lineItem, index) =>
-            fetch(
+          .map(async (lineItem, index) => {
+            const res = await fetch(
               `/api/projects/${projectId}/change-events/${newEvent.id}/line-items`,
               {
                 method: "POST",
@@ -112,15 +112,31 @@ export default function NewChangeEventPage() {
                   sortOrder: index,
                   budgetCodeId: lineItem.budgetCode || undefined,
                   vendorId: lineItem.vendor || undefined,
-                  contractId: lineItem.contract
-                    ? lineItem.contract.replace(/^(po-|sub-)/, "")
-                    : undefined,
+                  // contract stores either "po-<uuid>" / "sub-<uuid>" (commitment) or a plain UUID (prime contract).
+                  // contract_id FK → prime_contracts; commitment_id FK → purchase_orders/subcontracts.
+                  // Send to the correct column based on the prefix.
+                  ...(lineItem.contract && /^(po|sub)-/.test(lineItem.contract)
+                    ? { commitmentId: lineItem.contract.replace(/^(po-|sub-)/, "") }
+                    : { contractId: lineItem.contract || undefined }),
                   commitmentLineItemId: lineItem.commitmentLineItemId || undefined,
                 }),
               },
-            ),
-          ),
+            );
+            if (!res.ok) {
+              const errData = await res.json().catch(() => ({ error: "Unknown error" }));
+              throw new Error(`Line item ${index + 1}: ${errData.error || res.statusText}`);
+            }
+            return res;
+          }),
       );
+      const failedLineItems = lineItemResults.filter((r) => r.status === "rejected");
+      if (failedLineItems.length > 0) {
+        const reasons = failedLineItems
+          .map((r) => (r as PromiseRejectedResult).reason?.message)
+          .filter(Boolean)
+          .join("; ");
+        toast.warning(`Change event created but ${failedLineItems.length} line item(s) failed to save: ${reasons}`);
+      }
 
       await Promise.all(
         data.attachments.map(async (file) => {

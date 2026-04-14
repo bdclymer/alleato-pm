@@ -320,25 +320,47 @@ export function PrimeContractFinancialMarkupTab({
     });
   };
 
-  const handleSaveMarkupRowEdit = (markupId: string) => {
+  const handleSaveMarkupRowEdit = async (markupId: string) => {
     const draft = markupRowDrafts[markupId];
     if (!draft) return;
 
-    setVerticalMarkups((prev) =>
-      prev.map((row) =>
-        row.id === markupId
-          ? {
-              ...row,
-              markup_type: draft.markup_type,
-              percentage: Number(draft.percentage) || 0,
-              compound: Boolean(draft.compound),
-            }
-          : row,
-      ),
+    const updatedMarkups = verticalMarkups.map((row) =>
+      row.id === markupId
+        ? {
+            ...row,
+            markup_type: draft.markup_type,
+            percentage: Number(draft.percentage) || 0,
+            compound: Boolean(draft.compound),
+          }
+        : row,
     );
+
+    setVerticalMarkups(updatedMarkups);
     setMarkupDisplayById((prev) => ({ ...prev, [markupId]: draft.displayIn }));
     setMarkupMapsToById((prev) => ({ ...prev, [markupId]: draft.mapsTo }));
     handleCancelMarkupRowEdit(markupId);
+
+    // Persist immediately so the user doesn't have to hit "Save Changes"
+    try {
+      const markupsToPersist = [...updatedMarkups]
+        .sort((a, b) => a.calculation_order - b.calculation_order)
+        .map((markup, index) => ({
+          ...markup,
+          markup_type: markup.markup_type.trim(),
+          percentage: Number(markup.percentage),
+          calculation_order: index + 1,
+        }));
+      const data = await apiFetch<{ markups?: VerticalMarkup[] }>(`/api/projects/${projectId}/vertical-markup`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ markups: markupsToPersist }),
+      });
+      const normalized = normalizeVerticalMarkupRows(data.markups || []);
+      setVerticalMarkups(normalized);
+      setSavedVerticalMarkups(normalized);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to save markup");
+    }
   };
 
   const handleSaveMarkupTable = async () => {
