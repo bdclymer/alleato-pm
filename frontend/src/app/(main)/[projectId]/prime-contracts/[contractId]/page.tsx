@@ -892,7 +892,6 @@ export default function ProjectContractDetailPage() {
     >
       <PageTabs
         variant="inline"
-        className="border-b border-border"
         tabs={[
           { label: "General", href: "overview", isActive: activeTab === "overview" },
           { label: "Change Orders", href: "change-orders", isActive: activeTab === "change-orders", count: changeOrders.length || undefined },
@@ -907,7 +906,7 @@ export default function ProjectContractDetailPage() {
         onTabClick={(href) => setActiveTab(href as ContractTab)}
       />
 
-      <div className="pt-1">
+      <div>
         {activeTab === "overview" && (
           <PrimeContractOverviewTab
             contract={contract} changeOrders={changeOrders} attachments={attachments} attachmentsLoading={attachmentsLoading}
