@@ -170,6 +170,8 @@ export function ImportBudgetModal({
       const result: ImportResult = await response.json();
 
       if (!response.ok) {
+        // Still surface the detailed errors in the UI
+        setImportResult(result);
         throw new Error(
           result.error ||
           result.errors?.[0] ||
@@ -193,7 +195,8 @@ export function ImportBudgetModal({
 
       toast.success(message);
 
-      // Call success callback to refresh budget data
+      // Close modal and refresh budget data
+      onOpenChange(false);
       onSuccess?.();
     } catch (err) {
       const errorMessage =
