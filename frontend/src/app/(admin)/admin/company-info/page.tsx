@@ -56,6 +56,7 @@ import {
   type KnowledgeArticle,
 } from "@/hooks/use-company-knowledge";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api-client";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -662,42 +663,30 @@ function DocumentsTab() {
         formData.append("file", file);
         formData.append("category", "document");
 
-        const resp = await fetch("/api/documents/upload", {
+        await apiFetch("/api/documents/upload", {
           method: "POST",
           body: formData,
         });
 
-        const result = await resp.json();
-
-        if (!resp.ok) {
-          setUploads((prev) =>
-            prev.map((u) =>
-              u.id === uploadId
-                ? { ...u, status: "error", message: result.error }
-                : u,
-            ),
-          );
-        } else {
-          setUploads((prev) =>
-            prev.map((u) =>
-              u.id === uploadId
-                ? {
-                    ...u,
-                    status: "success",
-                    message: "Uploaded — pipeline processing queued",
-                  }
-                : u,
-            ),
-          );
-          // Refresh documents list
-          fetchDocuments();
-        }
-      } catch {
         setUploads((prev) =>
           prev.map((u) =>
             u.id === uploadId
-              ? { ...u, status: "error", message: "Network error" }
+              ? {
+                  ...u,
+                  status: "success",
+                  message: "Uploaded — pipeline processing queued",
+                }
               : u,
+          ),
+        );
+        // Refresh documents list
+        fetchDocuments();
+      } catch (uploadError) {
+        const message =
+          uploadError instanceof Error ? uploadError.message : "Network error";
+        setUploads((prev) =>
+          prev.map((u) =>
+            u.id === uploadId ? { ...u, status: "error", message } : u,
           ),
         );
       }

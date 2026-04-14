@@ -48,6 +48,7 @@ import {
 import { cn } from "@/lib/utils";
 import { FormLayout } from "@/components/layouts";
 import { PageContainer, PageHeader } from "@/components/layout";
+import { apiFetch } from "@/lib/api-client";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -66,6 +67,18 @@ interface FilterOption {
   field: string;
   label: string;
   options: { value: string; label: string }[];
+}
+
+function normalizeColumnType(type: string): Column["type"] {
+  switch (type) {
+    case "date":
+    case "badge":
+    case "number":
+    case "email":
+      return type;
+    default:
+      return "text";
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -581,15 +594,10 @@ export default function TableGeneratorPage() {
   const fetchTables = async () => {
     setIsFetchingTables(true);
     try {
-      const response = await fetch("/api/dev/schema");
-      const data = await response.json();
-      if (data.error) {
-        toast.error(data.error);
-        return;
-      }
+      const data = await apiFetch<{ tables?: string[] }>("/api/dev/schema");
       setTables(data.tables || []);
-    } catch {
-      toast.error("Failed to fetch tables");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to fetch tables");
     } finally {
       setIsFetchingTables(false);
     }
@@ -598,24 +606,22 @@ export default function TableGeneratorPage() {
   const fetchColumns = async (table: string) => {
     setIsLoading(true);
     try {
-      const response = await fetch("/api/dev/schema", {
+      const data = await apiFetch<{
+        columns: Array<{ name: string; type: string; isSystemField: boolean }>;
+        note?: string;
+      }>("/api/dev/schema", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ tableName: table }),
       });
-      const data = await response.json();
-      if (data.error) {
-        toast.error(data.error);
-        return;
-      }
 
       const cols: Column[] = data.columns.map(
         (col: { name: string; type: string; isSystemField: boolean }) => ({
           ...col,
+          type: normalizeColumnType(col.type),
           defaultVisible:
             !col.isSystemField && col.name !== "updated_at" && col.name !== "id",
           alwaysVisible: col.name === "name" || col.name === "title",
-          searchable: col.type === "text" && !col.isSystemField,
+          searchable: normalizeColumnType(col.type) === "text" && !col.isSystemField,
         }),
       );
 
@@ -636,8 +642,8 @@ export default function TableGeneratorPage() {
       } else {
         toast.success(`Loaded ${cols.length} columns from ${table}`);
       }
-    } catch {
-      toast.error("Failed to fetch columns");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to fetch columns");
     } finally {
       setIsLoading(false);
     }

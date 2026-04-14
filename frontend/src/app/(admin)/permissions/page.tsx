@@ -48,6 +48,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Check, Columns3, Minus, MoreVertical, Plus, Search, ShieldCheck, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { apiFetch } from "@/lib/api-client";
 import { ALL_MODULES, GRANULAR_FLAG_LABELS } from "@/lib/permissions-shared";
 import type {
   PermissionTemplate,
@@ -111,23 +112,23 @@ const LEVEL_LABELS: Record<PermissionLevel, string> = {
 };
 
 async function fetchTemplates(scope: TemplateScope): Promise<PermissionTemplate[]> {
-  const res = await fetch(`/api/permissions/templates?scope=${scope}`);
-  if (!res.ok) throw new Error("Failed to load templates");
-  const { data } = await res.json();
+  const { data } = await apiFetch<{ data: PermissionTemplate[] }>(
+    `/api/permissions/templates?scope=${scope}`,
+  );
   return data;
 }
 
 async function fetchAllTemplates(): Promise<PermissionTemplate[]> {
-  const res = await fetch("/api/permissions/templates");
-  if (!res.ok) throw new Error("Failed to load templates");
-  const { data } = await res.json();
+  const { data } = await apiFetch<{ data: PermissionTemplate[] }>(
+    "/api/permissions/templates",
+  );
   return data;
 }
 
 async function fetchUsers(): Promise<PermissionUser[]> {
-  const res = await fetch("/api/permissions/users");
-  if (!res.ok) throw new Error("Failed to load users");
-  const { data } = await res.json();
+  const { data } = await apiFetch<{ data: PermissionUser[] }>(
+    "/api/permissions/users",
+  );
   return data;
 }
 
@@ -192,15 +193,10 @@ export default function PermissionsAdminPage() {
       rules_json: Record<PermissionModule, PermissionLevel[]>;
       granular_flags?: GranularFlag[];
     }) => {
-      const res = await fetch("/api/permissions/templates", {
+      await apiFetch("/api/permissions/templates", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...payload, scope: createScope }),
       });
-      if (!res.ok) {
-        const { error } = await res.json();
-        throw new Error(error ?? "Failed to create template");
-      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["permission-templates"] });
@@ -222,15 +218,10 @@ export default function PermissionsAdminPage() {
       rules_json: Record<PermissionModule, PermissionLevel[]>;
       granular_flags?: GranularFlag[];
     }) => {
-      const res = await fetch(`/api/permissions/templates/${id}`, {
+      await apiFetch(`/api/permissions/templates/${id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      if (!res.ok) {
-        const { error } = await res.json();
-        throw new Error(error ?? "Failed to update template");
-      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["permission-templates"] });
@@ -241,11 +232,7 @@ export default function PermissionsAdminPage() {
 
   const deleteMutation = useMutation({
     mutationFn: async ({ id }: { id: string; scope: TemplateScope }) => {
-      const res = await fetch(`/api/permissions/templates/${id}`, { method: "DELETE" });
-      if (!res.ok) {
-        const { error } = await res.json();
-        throw new Error(error ?? "Failed to delete template");
-      }
+      await apiFetch(`/api/permissions/templates/${id}`, { method: "DELETE" });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["permission-templates"] });
@@ -506,15 +493,10 @@ function UsersTableTab({
 }) {
   const adminMutation = useMutation({
     mutationFn: async ({ authUserId, isAdmin }: { authUserId: string; isAdmin: boolean }) => {
-      const res = await fetch("/api/admin/set-admin-status", {
+      await apiFetch("/api/admin/set-admin-status", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ auth_user_id: authUserId, is_admin: isAdmin }),
       });
-      if (!res.ok) {
-        const { error } = await res.json();
-        throw new Error(error ?? "Failed to update admin status");
-      }
     },
     onSuccess: (_data, variables) => {
       toast.success(variables.isAdmin ? "Admin access granted" : "Admin access removed");
@@ -535,15 +517,10 @@ function UsersTableTab({
       personId: string;
       templateId: string;
     }) => {
-      const res = await fetch(`/api/projects/${projectId}/permissions/assign`, {
+      await apiFetch(`/api/projects/${projectId}/permissions/assign`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ person_id: personId, template_id: templateId }),
       });
-      if (!res.ok) {
-        const { error } = await res.json();
-        throw new Error(error ?? "Failed to assign template");
-      }
     },
     onSuccess: () => {
       toast.success("Template assigned");

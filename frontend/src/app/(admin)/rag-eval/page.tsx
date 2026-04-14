@@ -27,6 +27,7 @@ import {
 import { PageContainer } from "@/components/layout";
 import { PageHeader } from "@/components/layout/page-header-unified";
 import { cn } from "@/lib/utils";
+import { apiFetch } from "@/lib/api-client";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -538,8 +539,10 @@ export default function RagEvalPage() {
   const fetchResults = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/rag-eval/results");
-      if (res.ok) setResults(await res.json());
+      const data = await apiFetch<EvalResults>("/api/admin/rag-eval/results");
+      setResults(data);
+    } catch {
+      // Keep previous state on error
     } finally {
       setLoading(false);
     }

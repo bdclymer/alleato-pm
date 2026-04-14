@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { apiFetch } from "@/lib/api-client";
 import { createClient } from "@/lib/supabase/client";
 import { ToolReferencePanel } from "@/components/domain/testing/ToolReferencePanel";
 import { Button } from "@/components/ui/button";
@@ -187,8 +188,7 @@ export default function TestingPage() {
 
   // ── Load suites + pre-fill tester name from session ──
   useEffect(() => {
-    fetch("/api/testing/suites")
-      .then((r) => r.json())
+    apiFetch<{ suites?: Suite[] }>("/api/testing/suites")
       .then((d) => {
         const loaded: Suite[] = (d.suites ?? []).filter((s: Suite) => s.scenario_count > 0);
         setSuites(loaded);
@@ -196,8 +196,7 @@ export default function TestingPage() {
         // Fetch in-progress runs for each suite
         Promise.all(
           loaded.map((suite) =>
-            fetch(`/api/testing/runs?suite=${suite.tool_name}`)
-              .then((r) => r.ok ? r.json() : { runs: [] })
+            apiFetch<{ runs?: HistoryRun[] }>(`/api/testing/runs?suite=${suite.tool_name}`)
               .then((data) => {
                 const incomplete = (data.runs ?? []).filter((run: HistoryRun) => run.not_tested > 0);
                 return incomplete.map((run: HistoryRun) => ({
@@ -206,12 +205,15 @@ export default function TestingPage() {
                   suiteDisplayName: suite.display_name,
                 }));
               })
-              .catch(() => [])
+              .catch(() => [] as Array<{ run: HistoryRun; suiteName: string; suiteDisplayName: string }>)
           )
         ).then((results) => {
           const flat = results.flat();
           setInProgressRuns(flat);
         });
+      })
+      .catch(() => {
+        // Failed to load suites; keep previous state
       });
 
     const supabase = createClient();
@@ -246,10 +248,11 @@ export default function TestingPage() {
     setHistoryLoading(true);
     setHistoryRuns([]);
     setView("history");
-    const res = await fetch(`/api/testing/runs?suite=${suite.tool_name}`);
-    if (res.ok) {
-      const d = await res.json();
+    try {
+      const d = await apiFetch<{ runs?: HistoryRun[] }>(`/api/testing/runs?suite=${suite.tool_name}`);
       setHistoryRuns(d.runs ?? []);
+    } catch {
+      // keep empty list
     }
     setHistoryLoading(false);
   };
@@ -259,10 +262,11 @@ export default function TestingPage() {
     setRunDetailLoading(true);
     setRunDetail([]);
     setView("run-detail");
-    const res = await fetch(`/api/testing/runs/${runId}/results`);
-    if (res.ok) {
-      const d = await res.json();
+    try {
+      const d = await apiFetch<{ results?: TestResult[] }>(`/api/testing/runs/${runId}/results`);
       setRunDetail(d.results ?? []);
+    } catch {
+      // keep empty detail
     }
     setRunDetailLoading(false);
   };
@@ -273,11 +277,14 @@ export default function TestingPage() {
     setManageCases([]);
     setExpandedCase(null);
     setManageEditId(null);
-    const res = await fetch(`/api/testing/suites/${suite.tool_name}/cases?type=scenario&depth=${depth}`);
-    if (res.ok) {
-      const d = await res.json();
+    try {
+      const d = await apiFetch<{ grouped?: Record<string, ManagedCase[]> }>(
+        `/api/testing/suites/${suite.tool_name}/cases?type=scenario&depth=${depth}`,
+      );
       const all: ManagedCase[] = Object.values(d.grouped ?? {}).flat() as ManagedCase[];
       setManageCases(all);
+    } catch {
+      // keep empty list
     }
     setManageCasesLoading(false);
   }, []);
@@ -289,15 +296,18 @@ export default function TestingPage() {
   // ── Manage Cases: save inline edit ──
   const saveManageEdit = async (caseId: string) => {
     setManageEditSaving(true);
-    const res = await fetch(`/api/testing/cases/${caseId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(manageEditForm),
-    });
-    if (res.ok) {
-      const { case: updated } = await res.json();
+    try {
+      const { case: updated } = await apiFetch<{ case: ManagedCase }>(
+        `/api/testing/cases/${caseId}`,
+        {
+          method: "PATCH",
+          body: JSON.stringify(manageEditForm),
+        },
+      );
       setManageCases((prev) => prev.map((c) => c.id === caseId ? { ...c, ...updated } : c));
       setManageEditId(null);
+    } catch {
+      // keep existing state on error
     }
     setManageEditSaving(false);
   };
@@ -305,10 +315,12 @@ export default function TestingPage() {
   // ── Manage Cases: delete ──
   const deleteCase = async (caseId: string) => {
     setManageDeleting(caseId);
-    const res = await fetch(`/api/testing/cases/${caseId}`, { method: "DELETE" });
-    if (res.ok) {
+    try {
+      await apiFetch(`/api/testing/cases/${caseId}`, { method: "DELETE" });
       setManageCases((prev) => prev.filter((c) => c.id !== caseId));
       if (expandedCase === caseId) setExpandedCase(null);
+    } catch {
+      // keep existing state on error
     }
     setManageDeleting(null);
   };
@@ -317,13 +329,11 @@ export default function TestingPage() {
   const addCase = async () => {
     if (!manageSuite) return;
     setAddSaving(true);
-    const res = await fetch("/api/testing/cases", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ suite_id: manageSuite.id, ...addForm }),
-    });
-    if (res.ok) {
-      const { case: created } = await res.json();
+    try {
+      const { case: created } = await apiFetch<{ case: ManagedCase }>("/api/testing/cases", {
+        method: "POST",
+        body: JSON.stringify({ suite_id: manageSuite.id, ...addForm }),
+      });
       setManageCases((prev) => [...prev, created]);
       setShowAddCase(false);
       setAddForm({
@@ -331,6 +341,8 @@ export default function TestingPage() {
         priority: "MEDIUM", scenario_depth: "broad",
         steps: "", setup_steps: "", context_note: "", expected_result: "", start_url: "",
       });
+    } catch {
+      // keep dialog open on error
     }
     setAddSaving(false);
   };
@@ -365,19 +377,21 @@ export default function TestingPage() {
     if (!selectedSuite) return;
     setStartError(null);
     setSaving(true);
-    const res = await fetch("/api/testing/runs", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ suite: selectedSuite.tool_name, testType: "scenario", ...runForm }),
-    });
-    if (res.ok) {
-      const { run_id, effective_depth } = await res.json();
+    try {
+      const { run_id, effective_depth } = await apiFetch<{ run_id: string; effective_depth?: string }>(
+        "/api/testing/runs",
+        {
+          method: "POST",
+          body: JSON.stringify({ suite: selectedSuite.tool_name, testType: "scenario", ...runForm }),
+        },
+      );
       if (effective_depth && effective_depth !== runForm.scenarioDepth) {
         setRunForm((f) => ({ ...f, scenarioDepth: effective_depth as ScenarioDepth }));
       }
       setActiveRunId(run_id);
-      const r2 = await fetch(`/api/testing/runs/${run_id}/results?type=scenario`);
-      const d2 = await r2.json();
+      const d2 = await apiFetch<{ results?: TestResult[] }>(
+        `/api/testing/runs/${run_id}/results?type=scenario`,
+      );
       const loaded = d2.results ?? [];
       if (loaded.length === 0) {
         setStartError(
@@ -392,9 +406,9 @@ export default function TestingPage() {
         setSeverityMap({});
         setView("running");
       }
-    } else {
-      const err = await res.json().catch(() => ({}));
-      setStartError(err.error ?? "Failed to create test run. Please try again.");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to create test run. Please try again.";
+      setStartError(message);
     }
     setSaving(false);
   };
@@ -406,9 +420,15 @@ export default function TestingPage() {
     setSelectedSuite(suite);
     setActiveRunId(run.id);
     setRunForm((f) => ({ ...f, scenarioDepth: run.scenario_depth ?? "broad" }));
-    const res = await fetch(`/api/testing/runs/${run.id}/results?type=scenario`);
-    const d = await res.json();
-    const loaded: TestResult[] = d.results ?? [];
+    let loaded: TestResult[] = [];
+    try {
+      const d = await apiFetch<{ results?: TestResult[] }>(
+        `/api/testing/runs/${run.id}/results?type=scenario`,
+      );
+      loaded = d.results ?? [];
+    } catch {
+      loaded = [];
+    }
     setResults(loaded);
     const firstUntested = loaded.findIndex((r) => r.status === "not_tested");
     setCursor(firstUntested >= 0 ? firstUntested : 0);
@@ -449,9 +469,8 @@ export default function TestingPage() {
         : startPath;
 
     try {
-      await fetch("/api/admin/feedback", {
+      await apiFetch("/api/admin/feedback", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: `[Test] ${tc.test_name}`,
           comment: notes ?? `Test failed: ${tc.test_name}`,
@@ -494,13 +513,14 @@ export default function TestingPage() {
     setSaving(true);
     const notes = notesMap[current.id] || null;
     const severity = severityMap[current.id] || null;
-    const res = await fetch(`/api/testing/runs/${activeRunId}/results/${current.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status, notes, severity }),
-    });
-    if (res.ok) {
-      const { result } = await res.json();
+    try {
+      const { result } = await apiFetch<{ result: TestResult }>(
+        `/api/testing/runs/${activeRunId}/results/${current.id}`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({ status, notes, severity }),
+        },
+      );
       const updatedResult = { ...current, status: result.status, notes: result.notes };
       setResults((prev) =>
         prev.map((r) => r.id === current.id ? updatedResult : r)
@@ -514,6 +534,8 @@ export default function TestingPage() {
       } else {
         setView("complete");
       }
+    } catch {
+      // keep current state on error
     }
     setSaving(false);
   }, [current, activeRunId, notesMap, severityMap, cursor, results.length, runForm.autoSubmitFeedback, sendToFeedback]);
@@ -524,14 +546,21 @@ export default function TestingPage() {
     setUploadingScreenshot(true);
     const reader = new FileReader();
     reader.onload = async () => {
-      await fetch(`/api/testing/runs/${activeRunId}/results/${current.id}/screenshots`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dataUrl: reader.result, label: file.name }),
-      });
-      const r2 = await fetch(`/api/testing/runs/${activeRunId}/results`);
-      const d2 = await r2.json();
-      setResults(d2.results ?? []);
+      try {
+        await apiFetch(
+          `/api/testing/runs/${activeRunId}/results/${current.id}/screenshots`,
+          {
+            method: "POST",
+            body: JSON.stringify({ dataUrl: reader.result, label: file.name }),
+          },
+        );
+        const d2 = await apiFetch<{ results?: TestResult[] }>(
+          `/api/testing/runs/${activeRunId}/results`,
+        );
+        setResults(d2.results ?? []);
+      } catch {
+        // keep current state on error
+      }
       setUploadingScreenshot(false);
     };
     reader.readAsDataURL(file);
@@ -595,13 +624,14 @@ export default function TestingPage() {
   const saveEdit = async () => {
     if (!current) return;
     setEditSaving(true);
-    const res = await fetch(`/api/testing/cases/${current.test_cases.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(editForm),
-    });
-    if (res.ok) {
-      const { case: updated } = await res.json();
+    try {
+      const { case: updated } = await apiFetch<{ case: Partial<TestResult["test_cases"]> }>(
+        `/api/testing/cases/${current.test_cases.id}`,
+        {
+          method: "PATCH",
+          body: JSON.stringify(editForm),
+        },
+      );
       setResults((prev) =>
         prev.map((r) =>
           r.id === current.id
@@ -610,6 +640,8 @@ export default function TestingPage() {
         )
       );
       setEditingCase(false);
+    } catch {
+      // keep edit form open on error
     }
     setEditSaving(false);
   };

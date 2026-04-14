@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { apiFetch } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Send, Loader2, Bot, User, Sparkles } from "lucide-react";
@@ -44,11 +45,12 @@ export default function SimpleChatPage() {
 
     try {
       // Call the RAG chat API endpoint
-      const response = await fetch("/api/rag-chat", {
+      const data = await apiFetch<{
+        response?: string;
+        message?: string;
+        retrieved?: unknown[];
+      }>("/api/rag-chat", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify({
           message: userMessage.content,
           history: messages.map((m) => ({
@@ -57,13 +59,6 @@ export default function SimpleChatPage() {
           })),
         }),
       });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`HTTP error! status: ${response.status}, ${errorText}`);
-      }
-
-      const data = await response.json();
 
       const assistantMessage: Message = {
         role: "assistant",

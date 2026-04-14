@@ -9,6 +9,7 @@ import {
 import { PortfolioViewType, StatusFilter, Project } from "@/types/portfolio";
 import { portfolioViews, financialViews } from "@/config/portfolio";
 import { useRouter } from "next/navigation";
+import { apiFetch } from "@/lib/api-client";
 
 export default function ProjectsPage() {
   const router = useRouter();
@@ -26,29 +27,6 @@ export default function ProjectsPage() {
   const [clientFilter, setClientFilter] = React.useState<string | null>(null);
   const [projects, setProjects] = React.useState<Project[]>([]);
   const [loading, setLoading] = React.useState(true);
-
-  const parseProjectsResponse = React.useCallback(
-    async (response: Response) => {
-      const contentType = response.headers.get("content-type") || "";
-
-      if (contentType.includes("application/json")) {
-        try {
-          return await response.json();
-        } catch (error) {
-          console.error("Failed to parse projects JSON:", error);
-          return null;
-        }
-      }
-
-      const fallbackBody = await response.text();
-      console.error(
-        "Projects API returned non-JSON response:",
-        fallbackBody.slice(0, 200),
-      );
-      return null;
-    },
-    [],
-  );
 
   // Fetch projects from Supabase
   React.useEffect(() => {
@@ -71,19 +49,21 @@ export default function ProjectsPage() {
           pagedParams.set("page", String(page));
           pagedParams.set("limit", "100");
 
-          const response = await fetch(`/api/projects?${pagedParams.toString()}`);
-          const result = await parseProjectsResponse(response);
-
-          if (!result || !response.ok) {
-            console.error(
-              "Failed to fetch projects:",
-              result?.error || response.statusText,
-            );
+          let result: { data?: unknown[]; meta?: { totalPages?: number } };
+          try {
+            result = await apiFetch<{
+              data?: unknown[];
+              meta?: { totalPages?: number };
+            }>(`/api/projects?${pagedParams.toString()}`);
+          } catch (fetchError) {
+            console.error("Failed to fetch projects:", fetchError);
             setProjects([]);
             return;
           }
 
-          const pageRows = Array.isArray(result.data) ? result.data : [];
+          const pageRows = Array.isArray(result.data)
+            ? (result.data as Record<string, unknown>[])
+            : [];
           allProjectRows.push(...pageRows);
           const apiTotalPages =
             typeof result.meta?.totalPages === "number"
@@ -148,7 +128,7 @@ export default function ProjectsPage() {
     };
 
     fetchProjects();
-  }, [searchQuery, statusFilter, parseProjectsResponse]);
+  }, [searchQuery, statusFilter]);
 
   // Extract unique phase, category, and client options from projects
   const phaseOptions = React.useMemo(() => {
@@ -224,23 +204,26 @@ export default function ProjectsPage() {
   const handleCreateTestProject = async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/projects/bootstrap", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: `Test Project ${new Date().toISOString().split("T")[0]}`,
-        }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
+      let result: { project?: { id: string | number } };
+      try {
+        result = await apiFetch<{ project?: { id: string | number } }>(
+          "/api/projects/bootstrap",
+          {
+            method: "POST",
+            body: JSON.stringify({
+              name: `Test Project ${new Date().toISOString().split("T")[0]}`,
+            }),
+          },
+        );
+      } catch (error) {
         console.error("Failed to create test project:", error);
-        alert("Failed to create test project. Check console for details.");
+        alert(
+          error instanceof Error
+            ? `Failed to create test project: ${error.message}`
+            : "Failed to create test project. Check console for details.",
+        );
         return;
       }
-
-      const result = await response.json();
-      void result;
 
       // Refresh projects list
       const params = new URLSearchParams();
@@ -248,8 +231,14 @@ export default function ProjectsPage() {
       if (statusFilter === "active") params.append("archived", "false");
       else if (statusFilter === "inactive") params.append("archived", "true");
 
-      const refreshResponse = await fetch(`/api/projects?${params.toString()}`);
-      const refreshResult = await parseProjectsResponse(refreshResponse);
+      let refreshResult: { data?: Record<string, unknown>[] } | null = null;
+      try {
+        refreshResult = await apiFetch<{ data?: Record<string, unknown>[] }>(
+          `/api/projects?${params.toString()}`,
+        );
+      } catch (refreshError) {
+        console.error("Failed to refresh projects:", refreshError);
+      }
 
       if (refreshResult?.data) {
         const mappedProjects: Project[] = refreshResult.data.map((p: any) => ({
@@ -279,7 +268,9 @@ export default function ProjectsPage() {
       }
 
       // Navigate to the newly created project
-      router.push(`/${result.project.id}/home`);
+      if (result.project?.id !== undefined) {
+        router.push(`/${result.project.id}/home`);
+      }
     } catch (error) {
       console.error("Error creating test project:", error);
       alert("Failed to create test project. Check console for details.");

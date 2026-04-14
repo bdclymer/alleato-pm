@@ -24,6 +24,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Copy, ExternalLink, Plus, RefreshCw, Send, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import { apiFetch, ApiError } from "@/lib/api-client";
 
 type AgentTarget = "codex" | "claude_code";
 type StatusFilter = "all" | "open" | "in_progress" | "resolved";
@@ -223,9 +224,8 @@ export default function AnnotationInboxPage() {
     }
     setCreating(true);
     try {
-      const res = await fetch("/api/agentation/inbox", {
+      const result = await apiFetch<{ id?: string }>("/api/agentation/inbox", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title,
           details: newDetails.trim() || undefined,
@@ -234,15 +234,10 @@ export default function AnnotationInboxPage() {
           assignedAgent: newAssignee === "unassigned" ? undefined : newAssignee,
         }),
       });
-      if (!res.ok) {
-        const data = (await res.json().catch(() => ({}))) as { error?: string };
-        throw new Error(data.error || "Failed to create task");
-      }
-      const result = (await res.json()) as { id?: string };
       resetCreateForm();
       setCreateOpen(false);
       await loadItems();
-      if (result.id) setSelectedId(result.id);
+      if (result?.id) setSelectedId(result.id);
       toast.success("Task created");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to create task");
@@ -253,34 +248,38 @@ export default function AnnotationInboxPage() {
 
   async function loadItems() {
     setLoading(true);
+    let primaryError: ApiError | null = null;
     try {
-      const primary = await fetch("/api/agentation/inbox?limit=500");
-
-      if (primary.ok) {
-        const data = await primary.json();
-        const all = Array.isArray(data.items) ? (data.items as FeedbackItem[]) : [];
+      try {
+        const data = await apiFetch<{ items?: FeedbackItem[] }>(
+          "/api/agentation/inbox?limit=500",
+        );
+        const all = Array.isArray(data.items) ? data.items : [];
         setItems(all.filter((item) => getAgentationId(item) !== null));
         return;
+      } catch (err) {
+        if (err instanceof ApiError) {
+          primaryError = err;
+        } else {
+          throw err;
+        }
       }
 
       // Fallback path: use the admin feedback endpoint and filter to annotation records.
-      const fallback = await fetch("/api/admin/feedback?limit=500");
-      if (fallback.ok) {
-        const data = await fallback.json();
-        const all = Array.isArray(data.items) ? (data.items as FeedbackItem[]) : [];
+      try {
+        const data = await apiFetch<{ items?: FeedbackItem[] }>(
+          "/api/admin/feedback?limit=500",
+        );
+        const all = Array.isArray(data.items) ? data.items : [];
         setItems(all.filter((item) => getAgentationId(item) !== null));
         return;
+      } catch (fallbackErr) {
+        const message =
+          (fallbackErr instanceof Error ? fallbackErr.message : null) ||
+          (primaryError ? primaryError.message : null) ||
+          "Failed to load annotations";
+        toast.error(message);
       }
-
-      const primaryError = (await primary.json().catch(() => ({}))) as { error?: string; details?: string };
-      const fallbackError = (await fallback.json().catch(() => ({}))) as { error?: string; details?: string };
-      const message =
-        fallbackError.error ||
-        primaryError.error ||
-        fallbackError.details ||
-        primaryError.details ||
-        "Failed to load annotations";
-      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -290,15 +289,10 @@ export default function AnnotationInboxPage() {
     id: string,
     payload: { status?: "open" | "in_progress" | "resolved"; metadata?: Record<string, unknown> },
   ) {
-    const res = await fetch("/api/agentation/inbox", {
+    await apiFetch("/api/agentation/inbox", {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, ...payload }),
     });
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      throw new Error((data as { error?: string }).error || "Update failed");
-    }
   }
 
   useEffect(() => {
@@ -439,21 +433,21 @@ export default function AnnotationInboxPage() {
   async function submitReply() {
     if (!selected || !replyBody.trim()) return;
     setSavingReply(true);
-    const res = await fetch("/api/dev/annotate", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        id: selected.id,
-        reply: replyBody.trim(),
-        status: "replied",
-      }),
-    });
-    setSavingReply(false);
-
-    if (!res.ok) {
-      toast.error("Failed to post reply");
+    try {
+      await apiFetch("/api/dev/annotate", {
+        method: "PATCH",
+        body: JSON.stringify({
+          id: selected.id,
+          reply: replyBody.trim(),
+          status: "replied",
+        }),
+      });
+    } catch (error) {
+      setSavingReply(false);
+      toast.error(error instanceof Error ? error.message : "Failed to post reply");
       return;
     }
+    setSavingReply(false);
 
     setComments([
       {
