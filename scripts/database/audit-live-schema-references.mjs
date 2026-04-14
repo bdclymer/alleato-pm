@@ -1,0 +1,177 @@
+#!/usr/bin/env node
+
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+import { execFileSync } from "child_process";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const repoRoot = path.resolve(__dirname, "..", "..");
+const frontendRoot = path.join(repoRoot, "frontend");
+const liveTypesPath = path.join(frontendRoot, "src", "types", "database.types.ts");
+const localTypesPath = path.join(frontendRoot, "src", "types", "database.local.types.ts");
+
+function readFile(filePath) {
+  return fs.readFileSync(filePath, "utf8");
+}
+
+function extractBlock(content, blockName) {
+  const startToken = `${blockName}: {`;
+  const start = content.indexOf(startToken);
+  if (start === -1) return "";
+
+  let depth = 0;
+  let blockStart = -1;
+  for (let i = start; i < content.length; i += 1) {
+    const ch = content[i];
+    if (ch === "{") {
+      depth += 1;
+      if (blockStart === -1) blockStart = i;
+    } else if (ch === "}") {
+      depth -= 1;
+      if (depth === 0 && blockStart !== -1) {
+        return content.slice(blockStart + 1, i);
+      }
+    }
+  }
+
+  return "";
+}
+
+function extractRelationNames(typesContent, blockName) {
+  const block = extractBlock(typesContent, blockName);
+  const names = new Set();
+  const regex = /^\s{6}([A-Za-z0-9_]+):\s*\{/gm;
+  for (const match of block.matchAll(regex)) {
+    names.add(match[1]);
+  }
+  return names;
+}
+
+function getRgMatches() {
+  const raw = execFileSync(
+    "rg",
+    [
+      "--pcre2",
+      "-n",
+      "-o",
+      String.raw`\.from\((["'])(([A-Za-z0-9_]+))\1\)`,
+      "frontend/src",
+      "scripts",
+      "-g",
+      "!frontend/src/types/database.types.ts",
+      "-g",
+      "!frontend/src/types/database.local.types.ts",
+    ],
+    {
+      cwd: repoRoot,
+      encoding: "utf8",
+    },
+  );
+
+  return raw
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const [file, lineNo, match] = line.split(":");
+      const relationMatch = match.match(/\.from\((["'])([A-Za-z0-9_]+)\1\)/);
+      return {
+        file,
+        line: Number(lineNo),
+        relation: relationMatch?.[2] ?? "",
+      };
+    })
+    .filter((entry) => entry.relation);
+}
+
+function shouldIgnoreMatch(entry) {
+  const content = readFile(path.join(repoRoot, entry.file));
+  const line = content.split("\n")[entry.line - 1] ?? "";
+
+  if (
+    line.includes(".storage.from(") ||
+    line.includes("match(") ||
+    line.includes("new Function(")
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+function collectUnknownRelations(knownRelations) {
+  const matches = getRgMatches();
+  const unknownByRelation = new Map();
+
+  for (const match of matches) {
+    if (shouldIgnoreMatch(match)) continue;
+    if (knownRelations.has(match.relation)) continue;
+    const existing = unknownByRelation.get(match.relation) ?? [];
+    existing.push(`${match.file}:${match.line}`);
+    unknownByRelation.set(match.relation, existing);
+  }
+
+  return unknownByRelation;
+}
+
+function collectLocalOnlyRelations(liveRelations) {
+  if (!fs.existsSync(localTypesPath)) return [];
+
+  const localContent = readFile(localTypesPath);
+  const localRelations = new Set([
+    ...extractRelationNames(localContent, "Tables"),
+    ...extractRelationNames(localContent, "Views"),
+  ]);
+
+  return [...localRelations].filter((relation) => !liveRelations.has(relation)).sort();
+}
+
+function main() {
+  if (!fs.existsSync(liveTypesPath)) {
+    console.error(`Missing live database types at ${liveTypesPath}`);
+    process.exit(1);
+  }
+
+  const liveContent = readFile(liveTypesPath);
+  const liveRelations = new Set([
+    ...extractRelationNames(liveContent, "Tables"),
+    ...extractRelationNames(liveContent, "Views"),
+  ]);
+
+  const unknownRelations = collectUnknownRelations(liveRelations);
+  const localOnlyRelations = collectLocalOnlyRelations(liveRelations);
+
+  let failed = false;
+
+  if (unknownRelations.size > 0) {
+    failed = true;
+    console.error("Unknown live schema references found:");
+    for (const [relation, locations] of [...unknownRelations.entries()].sort()) {
+      console.error(`- ${relation}`);
+      for (const location of locations.slice(0, 8)) {
+        console.error(`  ${location}`);
+      }
+      if (locations.length > 8) {
+        console.error(`  ... ${locations.length - 8} more`);
+      }
+    }
+  }
+
+  if (localOnlyRelations.length > 0) {
+    failed = true;
+    console.error("Stale local-only schema relations found in frontend/src/types/database.local.types.ts:");
+    for (const relation of localOnlyRelations) {
+      console.error(`- ${relation}`);
+    }
+  }
+
+  if (failed) {
+    process.exit(1);
+  }
+
+  console.log(`Schema reference audit passed. Checked ${liveRelations.size} live relations.`);
+}
+
+main();

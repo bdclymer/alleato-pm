@@ -36,6 +36,10 @@ interface BillingPeriod {
   period_number: number;
 }
 
+interface BillingPeriodResponse {
+  items?: BillingPeriod[];
+}
+
 function formatStatusDisplay(status: string): string {
   return status
     .replace(/_/g, " ")
@@ -100,10 +104,10 @@ export default function InvoiceDetailPage({
   useEffect(() => {
     async function fetchBillingPeriods() {
       try {
-        const data = await apiFetch<BillingPeriod[]>(
+        const data = await apiFetch<BillingPeriod[] | BillingPeriodResponse>(
           `/api/projects/${projectId}/billing-periods`,
         );
-        setBillingPeriods(data);
+        setBillingPeriods(Array.isArray(data) ? data : data.items ?? []);
       } catch (error) {
         toast.error(error instanceof Error ? error.message : "Failed to load billing periods");
       }

@@ -99,22 +99,6 @@ export const POST = withApiGuardrails(
       return apiErrorResponse(insertError);
     }
 
-    const { error: highlightError } = await supabase
-      .from("note_highlights")
-      .insert({
-        note_id: insertedNote.id,
-        project_id: meeting.project_id,
-        source_type: "meeting_transcript",
-        source_metadata_id: meeting.id,
-        exact_text: selectedText,
-        created_by: user.email || user.id,
-      });
-
-    if (highlightError) {
-      await supabase.from("notes").delete().eq("id", insertedNote.id);
-      return apiErrorResponse(highlightError);
-    }
-
     return NextResponse.json(
       {
         id: insertedNote.id,

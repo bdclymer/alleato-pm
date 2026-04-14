@@ -816,6 +816,49 @@ function BudgetPageContent() {
     setShowDeleteDialog(true);
   };
 
+  // Per-row delete (Procore-parity tests 1.3.1–1.3.4). Surfaces the real
+  // server reason on 409 (LINE_HAS_BUDGET, LINE_HAS_ACTIVE_MODIFICATIONS,
+  // BUDGET_LOCKED) so users know exactly what's blocking the delete.
+  const handleDeleteLineItem = React.useCallback(
+    async (lineItem: BudgetLineItem) => {
+      if (isLocked) {
+        toast.error("Budget is locked. Unlock to delete line items.");
+        return;
+      }
+      const original = Number(lineItem.originalBudgetAmount ?? 0);
+      if (original !== 0) {
+        toast.error("Cannot delete a line with an original budget", {
+          description:
+            "Use a budget modification to remove or zero out funded lines.",
+        });
+        return;
+      }
+      const label = lineItem.description || lineItem.costCode || "this line item";
+      const confirmed =
+        typeof window !== "undefined"
+          ? window.confirm(`Delete "${label}"? This cannot be undone.`)
+          : true;
+      if (!confirmed) return;
+
+      try {
+        await apiFetch(
+          `/api/projects/${projectId}/budget/lines/${lineItem.id}`,
+          { method: "DELETE" },
+        );
+        toast.success("Line item deleted");
+        handleLineItemSuccess();
+      } catch (error) {
+        toast.error("Could not delete line item", {
+          description:
+            error instanceof Error
+              ? error.message
+              : "An unexpected error occurred — please try again.",
+        });
+      }
+    },
+    [isLocked, projectId, handleLineItemSuccess],
+  );
+
   const confirmDeleteSelected = async () => {
     if (selectedIds.length === 0) return;
 
@@ -1003,6 +1046,7 @@ function BudgetPageContent() {
                       grandTotals={grandTotals}
                       isLocked={isLocked}
                       onEditLineItem={handleEditLineItem}
+                      onDeleteLineItem={handleDeleteLineItem}
                       onSelectionChange={handleSelectionChange}
                       projectId={projectId}
                       onBudgetModificationsClick={handleBudgetModificationsClick}

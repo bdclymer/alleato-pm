@@ -332,7 +332,9 @@ export default function ProjectContractDetailPage() {
     if (activeTab === "invoices") {
       fetchWithTransientRouteRetry(`/api/projects/${projectId}/billing-periods`)
         .then((r) => r.json())
-        .then((data) => setBillingPeriods(Array.isArray(data) ? data : []))
+        .then((data) =>
+          setBillingPeriods(Array.isArray(data) ? data : data.items ?? []),
+        )
         .catch(() => {});
     }
   }, [activeTab, projectId]);

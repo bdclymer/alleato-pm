@@ -5,7 +5,7 @@
   "packageManager": "pnpm@10.13.1",
   "scripts": {
     "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
-    "dev:frontend": "cd frontend && npm run dev",
+    "dev:frontend": "bash scripts/dev/start-frontend-clean.sh",
     "dev:backend": "cd backend && ./start.sh",
     "build": "pnpm --dir frontend install --frozen-lockfile && pnpm --dir frontend run build",
     "start": "cd frontend && npm start",
@@ -27,6 +27,7 @@
     "seed:project": "npx tsx scripts/seed-db/seed-project-financial-data.ts",
     "schema:extract": "node scripts/database/generate-schema-from-types.js",
     "schema:docs": "npm run schema:extract && node scripts/database/generate-schema-docs.js",
+    "schema:audit-live-refs": "node scripts/database/audit-live-schema-references.mjs",
     "db:types": "npx supabase gen types typescript --project-id lgveqfnpkxvzbnnwuled --schema public > frontend/src/types/database.types.ts && npm run devtools:sync-schema-fk",
     "db:audit": "cd frontend && npm run audit:db && npm run audit:db:fk-types && npm run audit:db:ambiguous-embeds",
     "db:push": "supabase db push && npm run db:types",

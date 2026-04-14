@@ -7,6 +7,16 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { PermissionService } from "@/services/permissionService";
 import { DirectoryService } from "@/services/directoryService";
 
+/** Parses a stored data URL avatar into response bytes and MIME type. */
+function parseDataUrlAvatar(dataUrl: string): { mimeType: string; buffer: Buffer } | null {
+  const match = dataUrl.match(/^data:(.+?);base64,(.+)$/);
+  if (!match) return null;
+  return {
+    mimeType: match[1] || "image/png",
+    buffer: Buffer.from(match[2], "base64"),
+  };
+}
+
 export const GET = withApiGuardrails(
   "avatar/[personId]#GET",
   async ({ request, params }) => {
@@ -52,10 +62,10 @@ export const GET = withApiGuardrails(
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    const { data, error } = await (serviceSupabase as any)
-      .from("person_profile_photos")
-      .select("*")
-      .eq("person_id", personId)
+    const { data, error } = await serviceSupabase
+      .from("people")
+      .select("profile_photo_url")
+      .eq("id", personId)
       .maybeSingle();
 
     if (error) {
@@ -66,15 +76,18 @@ export const GET = withApiGuardrails(
       });
     }
 
-    if (!data) {
+    if (!data?.profile_photo_url) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    const photoData = data as { data_base64: string; content_type: string };
-    const buffer = Buffer.from(photoData.data_base64, "base64");
-    return new NextResponse(buffer, {
+    const parsedAvatar = parseDataUrlAvatar(data.profile_photo_url);
+    if (!parsedAvatar) {
+      return NextResponse.json({ error: "Invalid avatar data" }, { status: 500 });
+    }
+
+    return new NextResponse(new Uint8Array(parsedAvatar.buffer), {
       headers: {
-        "Content-Type": photoData.content_type || "image/png",
+        "Content-Type": parsedAvatar.mimeType,
         "Cache-Control": "private, max-age=300",
       },
     });

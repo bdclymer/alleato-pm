@@ -7,14 +7,15 @@ type ProjectDirectoryMembership =
   Tables["project_directory_memberships"]["Row"];
 type PermissionTemplate = Tables["permission_templates"]["Row"];
 type Company = Tables["companies"]["Row"];
+type UserModulePermission = Tables["user_module_permissions"]["Row"];
+type PermissionAuditLog = Tables["permission_audit_log"]["Row"];
 
-// Manual type definitions for new tables until types are regenerated
 export interface UserPermission {
   id: string;
   person_id: string;
   project_id: number;
   tool_name: string;
-  permission_type: "read" | "write" | "admin" | "approve";
+  permission_type: "read" | "write" | "admin";
   is_granted: boolean;
   created_at: string;
   updated_at: string;
@@ -25,12 +26,58 @@ export interface UserActivityLog {
   project_id: number;
   person_id: string;
   action: string;
-  action_description?: string;
+  action_description?: string | null;
   changes?: Record<string, unknown>;
-  performed_by?: string;
+  performed_by?: string | null;
   performed_at: string;
-  ip_address?: string;
-  user_agent?: string;
+}
+
+const PERMISSION_LEVEL_ORDER = ["read", "write", "admin"] as const;
+
+/** Maps a module-level override row into the legacy directory permission shape. */
+function toLegacyOverridePermission(
+  row: UserModulePermission,
+): UserPermission {
+  return {
+    id: row.id,
+    person_id: row.person_id,
+    project_id: row.project_id,
+    tool_name: row.module,
+    permission_type: row.level as UserPermission["permission_type"],
+    is_granted: row.level !== "none",
+    created_at: row.updated_at,
+    updated_at: row.updated_at,
+  };
+}
+
+/** Normalizes legacy directory override payloads into the live module-level permission table. */
+function toPermissionLevel(
+  permissions: Array<{
+    tool_name: string;
+    permission_type: string;
+    is_granted: boolean;
+  }>,
+): Map<string, "read" | "write" | "admin"> {
+  const levels = new Map<string, "read" | "write" | "admin">();
+
+  for (const permission of permissions) {
+    if (!permission.is_granted) continue;
+    if (!PERMISSION_LEVEL_ORDER.includes(permission.permission_type as "read")) {
+      continue;
+    }
+
+    const nextLevel = permission.permission_type as "read" | "write" | "admin";
+    const currentLevel = levels.get(permission.tool_name);
+    if (
+      !currentLevel ||
+      PERMISSION_LEVEL_ORDER.indexOf(nextLevel) >
+        PERMISSION_LEVEL_ORDER.indexOf(currentLevel)
+    ) {
+      levels.set(permission.tool_name, nextLevel);
+    }
+  }
+
+  return levels;
 }
 
 export interface DirectoryFilters {
@@ -703,8 +750,8 @@ export class DirectoryService {
     }
 
     // Get override permissions
-    const { data: overrides, error } = await (this.supabase as any)
-      .from("user_permissions")
+    const { data: overrides, error } = await this.supabase
+      .from("user_module_permissions")
       .select("*")
       .eq("project_id", projectIdNum)
       .eq("person_id", personId);
@@ -713,7 +760,8 @@ export class DirectoryService {
 
     // Calculate effective permissions (template + overrides)
     const effective_permissions = { ...template_permissions };
-    (overrides || []).forEach((override: UserPermission) => {
+    const overridePermissions = (overrides || []).map(toLegacyOverridePermission);
+    overridePermissions.forEach((override) => {
       if (!effective_permissions[override.tool_name]) {
         effective_permissions[override.tool_name] = [];
       }
@@ -735,7 +783,7 @@ export class DirectoryService {
 
     return {
       template_permissions,
-      override_permissions: (overrides || []) as UserPermission[],
+      override_permissions: overridePermissions,
       effective_permissions,
     };
   }
@@ -752,39 +800,54 @@ export class DirectoryService {
   ): Promise<void> {
     const projectIdNum = Number.parseInt(projectId, 10);
 
-    // Delete existing overrides
-    await (this.supabase as any)
-      .from("user_permissions")
-      .delete()
-      .eq("project_id", projectIdNum)
-      .eq("person_id", personId);
+    const normalizedOverrides = toPermissionLevel(permissions);
 
-    // Insert new overrides
-    if (permissions.length > 0) {
-      const { error } = await (this.supabase as any)
-        .from("user_permissions")
+    // Delete existing overrides for modules included in this update.
+    const targetModules = Array.from(new Set(permissions.map((p) => p.tool_name)));
+    if (targetModules.length > 0) {
+      const { error: deleteError } = await this.supabase
+        .from("user_module_permissions")
+        .delete()
+        .eq("project_id", projectIdNum)
+        .eq("person_id", personId)
+        .in("module", targetModules);
+
+      if (deleteError) throw deleteError;
+    }
+
+    // Insert new overrides using the live module-level permission table.
+    if (normalizedOverrides.size > 0) {
+      const { error } = await this.supabase
+        .from("user_module_permissions")
         .insert(
-          permissions.map((p) => ({
+          Array.from(normalizedOverrides.entries()).map(([module, level]) => ({
             person_id: personId,
             project_id: projectIdNum,
-            tool_name: p.tool_name,
-            permission_type: p.permission_type,
-            is_granted: p.is_granted,
+            module,
+            level,
+            updated_by: performedBy,
           })),
         );
 
       if (error) throw error;
     }
 
-    // Log activity
-    await this.logActivity(
-      projectId,
-      personId,
-      "permissions_updated",
-      "User permissions updated",
-      { permissions },
-      performedBy,
-    );
+    // Log activity through the live permission audit table.
+    const { error: logError } = await this.supabase
+      .from("permission_audit_log")
+      .insert(
+        targetModules.map((module) => ({
+          project_id: projectIdNum,
+          person_id: personId,
+          action: "directory_permissions_updated",
+          module,
+          old_level: null,
+          new_level: normalizedOverrides.get(module) ?? null,
+          changed_by: performedBy,
+        })),
+      );
+
+    if (logError) throw logError;
   }
 
   async logActivity(
@@ -797,19 +860,29 @@ export class DirectoryService {
   ): Promise<void> {
     const projectIdNum = Number.parseInt(projectId, 10);
 
-    const { error } = await (this.supabase as any)
-      .from("user_activity_log")
+    const { error } = await this.supabase
+      .from("permission_audit_log")
       .insert({
         project_id: projectIdNum,
         person_id: personId,
         action,
-        action_description: description,
-        changes,
-        performed_by: performedBy || personId,
+        module:
+          typeof changes.tool_name === "string"
+            ? changes.tool_name
+            : typeof changes.module === "string"
+              ? changes.module
+              : null,
+        new_level:
+          typeof changes.permission_type === "string"
+            ? changes.permission_type
+            : typeof changes.level === "string"
+              ? changes.level
+              : null,
+        changed_by: performedBy || null,
       });
 
     if (error) {
-      // Log error but don't throw - activity logging is not critical
-      }
+      throw error;
+    }
   }
 }

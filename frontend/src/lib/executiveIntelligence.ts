@@ -9,7 +9,7 @@
  */
 
 import { createClient } from "@supabase/supabase-js";
-import type { Risk, Opportunity, Task } from "./projectIntelligence";
+import { listAllRisks, listProjectRisks, type Task } from "./projectIntelligence";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -75,10 +75,9 @@ export interface ExecutiveSummary {
 
 export async function getCompanyRiskHeatMap(): Promise<RiskHeatMap> {
   // Get all open risks across all projects
-  const { data: currentRisks } = await supabase
-    .from("risks")
-    .select("*")
-    .eq("status", "open");
+  const currentRisks = (await listAllRisks()).filter(
+    (risk) => risk.status === "open",
+  );
 
   // Calculate risk severity
   const critical =
@@ -111,13 +110,9 @@ export async function getCompanyRiskHeatMap(): Promise<RiskHeatMap> {
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-  const { data: historicalRisks } = await supabase
-    .from("risks")
-    .select("id, created_at")
-    .eq("status", "open")
-    .lte("created_at", thirtyDaysAgo.toISOString());
-
-  const historicalCount = historicalRisks?.length || 0;
+  const historicalCount = currentRisks.filter(
+    (risk) => new Date(risk.created_at) <= thirtyDaysAgo,
+  ).length;
   const trendPercentage =
     historicalCount > 0
       ? Math.round(((total - historicalCount) / historicalCount) * 100)
@@ -161,11 +156,9 @@ export async function calculateProjectHealth(
   }
 
   // Get all risks for this project
-  const { data: risks } = await supabase
-    .from("risks")
-    .select("*")
-    .contains("project_ids", [projectId])
-    .eq("status", "open");
+  const risks = (await listProjectRisks(projectId)).filter(
+    (risk) => risk.status === "open",
+  );
 
   // Get all tasks for this project
   const { data: tasks } = await supabase
@@ -208,15 +201,15 @@ export async function calculateProjectHealth(
   // Check last meeting date
   const { data: lastMeeting } = await supabase
     .from("document_metadata")
-    .select("started_at")
-    .contains("project_ids", [projectId])
-    .order("started_at", { ascending: false })
+    .select("date")
+    .eq("project_id", projectId)
+    .order("date", { ascending: false })
     .limit(1)
     .single();
 
   const daysSinceLastMeeting = lastMeeting
     ? Math.floor(
-        (Date.now() - new Date(lastMeeting.started_at).getTime()) /
+        (Date.now() - new Date(lastMeeting.date).getTime()) /
           (1000 * 60 * 60 * 24),
       )
     : 999;
@@ -237,7 +230,7 @@ export async function calculateProjectHealth(
     project_name: projectData.name,
     health_score: score,
     status,
-    open_risks_count: risks?.length || 0,
+    open_risks_count: risks.length || 0,
     critical_risks_count: criticalRisks.length,
     overdue_tasks_count: overdueTasks.length,
     last_meeting_days_ago: daysSinceLastMeeting,
@@ -270,10 +263,7 @@ export async function detectPatterns(): Promise<Pattern[]> {
   const patterns: Pattern[] = [];
 
   // Get all risks
-  const { data: allRisks } = await supabase
-    .from("risks")
-    .select("*")
-    .eq("status", "open");
+  const allRisks = (await listAllRisks()).filter((risk) => risk.status === "open");
 
   if (!allRisks || allRisks.length === 0) return patterns;
 

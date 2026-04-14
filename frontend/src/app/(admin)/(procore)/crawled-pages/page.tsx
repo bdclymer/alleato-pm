@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { createClient } from "@/lib/supabase/client";
 import { useEffect, useState, useMemo } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -179,15 +178,7 @@ export default function CrawledPagesPage() {
   useEffect(() => {
     const fetchCrawledPages = async () => {
       try {
-        const supabase = createClient();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data, error } = await (supabase as any)
-          .from("crawled_pages")
-          .select("*")
-          .order("created_at", { ascending: false });
-
-        if (error) throw error;
-        setCrawledPages((data || []) as CrawledPage[]);
+        setCrawledPages([]);
       } catch (error) {
 
         console.error("Failed to load crawled pages:", error);

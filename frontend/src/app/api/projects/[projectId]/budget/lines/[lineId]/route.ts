@@ -380,8 +380,12 @@ export const DELETE = withApiGuardrails<{ projectId: string; lineId: string }>(
     }
 
     if (project.budget_locked) {
+      // Procore-parity rule (test 1.3.3): delete blocked when budget is locked.
       return NextResponse.json(
-        { error: "Budget is locked and cannot be deleted" },
+        {
+          error: "Budget is locked. Unlock the budget before deleting line items.",
+          code: "BUDGET_LOCKED",
+        },
         { status: 403 },
       );
     }
@@ -389,7 +393,7 @@ export const DELETE = withApiGuardrails<{ projectId: string; lineId: string }>(
     // Verify the budget line exists and belongs to this project
     const { data: existingLine, error: lineError } = await supabase
       .from("budget_lines")
-      .select("id, project_id")
+      .select("id, project_id, original_amount, cost_code_id, cost_type_id")
       .eq("id", lineId)
       .single();
 
@@ -404,6 +408,60 @@ export const DELETE = withApiGuardrails<{ projectId: string; lineId: string }>(
       return NextResponse.json(
         { error: "Budget line does not belong to this project" },
         { status: 403 },
+      );
+    }
+
+    // Procore-parity rule (test 1.3.2): delete is only allowed when the
+    // original budget amount is $0. Once a line carries a budget value,
+    // changes must flow through a budget modification rather than a delete.
+    const originalAmount = Number(existingLine.original_amount ?? 0);
+    if (originalAmount !== 0) {
+      return NextResponse.json(
+        {
+          error:
+            `Budget line cannot be deleted because its original budget is ${originalAmount.toLocaleString("en-US", { style: "currency", currency: "USD" })}. ` +
+            "Only line items with an original budget of $0 may be deleted. " +
+            "Use a budget modification to remove or zero out funded lines.",
+          code: "LINE_HAS_BUDGET",
+          originalAmount,
+        },
+        { status: 409 },
+      );
+    }
+
+    // Procore-parity rule (test 1.3.4): delete blocked when an active
+    // (non-void) budget modification references this line's cost code.
+    const { data: blockingMods, error: modCheckError } = await supabase
+      .from("budget_modifications")
+      .select("id, number, status, budget_mod_lines!inner(cost_code_id, cost_type_id)")
+      .eq("project_id", projectIdNum)
+      .neq("status", "void")
+      .eq("budget_mod_lines.cost_code_id", existingLine.cost_code_id);
+
+    if (modCheckError) {
+      return NextResponse.json(
+        {
+          error: "Failed to verify active budget modifications",
+          details: modCheckError.message,
+        },
+        { status: 500 },
+      );
+    }
+
+    if (blockingMods && blockingMods.length > 0) {
+      return NextResponse.json(
+        {
+          error:
+            `Budget line cannot be deleted because ${blockingMods.length} active budget modification${blockingMods.length === 1 ? "" : "s"} reference${blockingMods.length === 1 ? "s" : ""} its cost code. ` +
+            "Delete or void each modification first.",
+          code: "LINE_HAS_ACTIVE_MODIFICATIONS",
+          modifications: blockingMods.map((m) => ({
+            id: m.id,
+            number: m.number,
+            status: m.status,
+          })),
+        },
+        { status: 409 },
       );
     }
 

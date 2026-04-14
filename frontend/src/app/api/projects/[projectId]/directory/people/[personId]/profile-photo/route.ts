@@ -13,6 +13,12 @@ const ALLOWED_MIME_TYPES = new Set([
   "image/webp",
 ]);
 
+/** Encodes the uploaded avatar into a data URL stored on the person record. */
+function toDataUrl(contentType: string, arrayBuffer: ArrayBuffer): string {
+  const dataBase64 = Buffer.from(arrayBuffer).toString("base64");
+  return `data:${contentType};base64,${dataBase64}`;
+}
+
 interface RouteParams {
   params: Promise<{ projectId: string; personId: string }>;
 }
@@ -72,24 +78,14 @@ export const POST = withApiGuardrails(
     }
 
     const arrayBuffer = await file.arrayBuffer();
-    const dataBase64 = Buffer.from(arrayBuffer).toString("base64");
+    const profilePhotoUrl = toDataUrl(file.type, arrayBuffer);
 
-    const { error: upsertError } = await (serviceSupabase as any)
-      .from("person_profile_photos")
-      .upsert({
-        person_id: personId,
-        content_type: file.type,
-        data_base64: dataBase64,
-        uploaded_by: user.id,
-      });
-
-    if (upsertError) {
-      throw upsertError;
-    }
-
-    await (serviceSupabase as any)
+    await serviceSupabase
       .from("people")
-      .update({ updated_at: new Date().toISOString() })
+      .update({
+        profile_photo_url: profilePhotoUrl,
+        updated_at: new Date().toISOString(),
+      })
       .eq("id", personId);
 
     return NextResponse.json({ success: true });

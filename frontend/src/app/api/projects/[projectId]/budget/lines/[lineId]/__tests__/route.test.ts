@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { PATCH } from "../route";
+import { PATCH, DELETE } from "../route";
 import { createClient } from "@/lib/supabase/server";
 import { requirePermission } from "@/lib/permissions-guard";
 
@@ -24,6 +24,13 @@ function makePatchRequest(body: Record<string, unknown>): NextRequest {
       headers: { "content-type": "application/json" },
       body: JSON.stringify(body),
     },
+  );
+}
+
+function makeDeleteRequest(): NextRequest {
+  return new NextRequest(
+    "http://localhost/api/projects/42/budget/lines/line-1",
+    { method: "DELETE" },
   );
 }
 
@@ -58,5 +65,254 @@ describe("budget line PATCH route", () => {
     await expect(response.json()).resolves.toEqual({
       error: "Unauthorized - please log in",
     });
+  });
+});
+
+// ─── DELETE route guards ────────────────────────────────────────────────────
+// Procore-parity rules (parity-audit tests 1.3.1–1.3.4):
+//   • Block delete when the budget is locked        (BUDGET_LOCKED, 403)
+//   • Block delete when original_amount > 0         (LINE_HAS_BUDGET, 409)
+//   • Block delete when active modifications exist  (LINE_HAS_ACTIVE_MODIFICATIONS, 409)
+//   • Allow delete when budget unlocked + amount $0 + no active mods
+//
+// These tests are the regression guard required by the Bug Fix Completion
+// Gate — without them, a future refactor could silently re-allow deletes
+// that flow around Procore's rules.
+
+type SupabaseFromMock = jest.Mock & { mockReturnThis: () => SupabaseFromMock };
+
+interface QueryBuilderShape {
+  select: jest.Mock;
+  eq: jest.Mock;
+  neq: jest.Mock;
+  single: jest.Mock;
+  delete: jest.Mock;
+  insert?: jest.Mock;
+  update?: jest.Mock;
+}
+
+/**
+ * Build a Supabase mock whose `from(table)` dispatch is driven by a per-table
+ * map. Each table maps to an array of "single()" results consumed in order so
+ * a single test can describe a multi-step query sequence (project -> line ->
+ * modifications -> delete) without the test reading like a tower of mocks.
+ */
+function buildSupabaseMock(
+  steps: Record<
+    string,
+    Array<
+      | { single: { data: unknown; error: null | { message: string; code?: string } } }
+      | { delete: { error: null | { message: string } } }
+      | { listResult: { data: unknown; error: null | { message: string } } }
+    >
+  >,
+) {
+  const cursors: Record<string, number> = {};
+
+  const fromMock: SupabaseFromMock = jest.fn((table: string) => {
+    const tableSteps = steps[table];
+    if (!tableSteps) {
+      throw new Error(`Unexpected supabase.from("${table}") call in test`);
+    }
+    const idx = cursors[table] ?? 0;
+    cursors[table] = idx + 1;
+    const step = tableSteps[idx];
+    if (!step) {
+      throw new Error(
+        `No more queued responses for supabase.from("${table}") (call #${idx + 1})`,
+      );
+    }
+
+    const builder: QueryBuilderShape = {
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      neq: jest.fn().mockReturnThis(),
+      single: jest.fn(),
+      delete: jest.fn().mockReturnThis(),
+    };
+
+    if ("single" in step) {
+      builder.single.mockResolvedValue(step.single);
+    } else if ("delete" in step) {
+      // For .delete().eq() chains the awaited value is { error }.
+      // We model this by having the final `.eq()` resolve directly.
+      builder.delete = jest.fn().mockReturnValue({
+        eq: jest.fn().mockResolvedValue(step.delete),
+      });
+    } else if ("listResult" in step) {
+      // For chains like .select().eq().neq().eq() that resolve as a list,
+      // the final `.eq()` returns the awaited value.
+      const terminal = jest.fn().mockResolvedValue(step.listResult);
+      builder.eq = jest.fn().mockImplementation(function chain(this: unknown) {
+        // After the first .eq, return an object whose .neq().eq() resolves.
+        return {
+          eq: terminal,
+          neq: jest.fn().mockReturnValue({
+            eq: terminal,
+          }),
+        };
+      });
+    }
+    return builder as unknown;
+  }) as SupabaseFromMock;
+  fromMock.mockReturnThis = () => fromMock;
+
+  return {
+    auth: {
+      getUser: jest.fn().mockResolvedValue({
+        data: { user: { id: "user-1" } },
+        error: null,
+      }),
+    },
+    from: fromMock,
+  } as unknown as Awaited<ReturnType<typeof createClient>>;
+}
+
+describe("budget line DELETE route — Procore-parity guards", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    process.env.NEXT_PUBLIC_SUPABASE_URL ??= "https://example.supabase.co";
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??= "test-anon-key";
+    requirePermissionMock.mockResolvedValue({
+      denied: false,
+    } as Awaited<ReturnType<typeof requirePermission>>);
+  });
+
+  it("blocks delete with 403 BUDGET_LOCKED when the budget is locked", async () => {
+    createClientMock.mockResolvedValue(
+      buildSupabaseMock({
+        projects: [
+          { single: { data: { budget_locked: true }, error: null } },
+        ],
+      }),
+    );
+
+    const response = await DELETE(makeDeleteRequest(), {
+      params: Promise.resolve({ projectId: "42", lineId: "line-1" }),
+    });
+
+    expect(response.status).toBe(403);
+    const body = (await response.json()) as { code?: string; error?: string };
+    expect(body.code).toBe("BUDGET_LOCKED");
+    expect(body.error).toMatch(/locked/i);
+  });
+
+  it("blocks delete with 409 LINE_HAS_BUDGET when original_amount > 0", async () => {
+    createClientMock.mockResolvedValue(
+      buildSupabaseMock({
+        projects: [
+          { single: { data: { budget_locked: false }, error: null } },
+        ],
+        budget_lines: [
+          {
+            single: {
+              data: {
+                id: "line-1",
+                project_id: 42,
+                original_amount: 1500,
+                cost_code_id: "cc-1",
+                cost_type_id: "ct-1",
+              },
+              error: null,
+            },
+          },
+        ],
+      }),
+    );
+
+    const response = await DELETE(makeDeleteRequest(), {
+      params: Promise.resolve({ projectId: "42", lineId: "line-1" }),
+    });
+
+    expect(response.status).toBe(409);
+    const body = (await response.json()) as {
+      code?: string;
+      originalAmount?: number;
+    };
+    expect(body.code).toBe("LINE_HAS_BUDGET");
+    expect(body.originalAmount).toBe(1500);
+  });
+
+  it("blocks delete with 409 LINE_HAS_ACTIVE_MODIFICATIONS when an active mod references the cost code", async () => {
+    createClientMock.mockResolvedValue(
+      buildSupabaseMock({
+        projects: [
+          { single: { data: { budget_locked: false }, error: null } },
+        ],
+        budget_lines: [
+          {
+            single: {
+              data: {
+                id: "line-1",
+                project_id: 42,
+                original_amount: 0,
+                cost_code_id: "cc-1",
+                cost_type_id: "ct-1",
+              },
+              error: null,
+            },
+          },
+        ],
+        budget_modifications: [
+          {
+            listResult: {
+              data: [
+                { id: "mod-1", number: "BM-0001", status: "draft" },
+              ],
+              error: null,
+            },
+          },
+        ],
+      }),
+    );
+
+    const response = await DELETE(makeDeleteRequest(), {
+      params: Promise.resolve({ projectId: "42", lineId: "line-1" }),
+    });
+
+    expect(response.status).toBe(409);
+    const body = (await response.json()) as {
+      code?: string;
+      modifications?: Array<{ id: string; status: string }>;
+    };
+    expect(body.code).toBe("LINE_HAS_ACTIVE_MODIFICATIONS");
+    expect(body.modifications?.[0]?.status).toBe("draft");
+  });
+
+  it("allows delete when unlocked, $0 original budget, and no active mods", async () => {
+    createClientMock.mockResolvedValue(
+      buildSupabaseMock({
+        projects: [
+          { single: { data: { budget_locked: false }, error: null } },
+        ],
+        budget_lines: [
+          {
+            single: {
+              data: {
+                id: "line-1",
+                project_id: 42,
+                original_amount: 0,
+                cost_code_id: "cc-1",
+                cost_type_id: "ct-1",
+              },
+              error: null,
+            },
+          },
+          // Second from("budget_lines") call is the .delete().eq()
+          { delete: { error: null } },
+        ],
+        budget_modifications: [
+          { listResult: { data: [], error: null } },
+        ],
+      }),
+    );
+
+    const response = await DELETE(makeDeleteRequest(), {
+      params: Promise.resolve({ projectId: "42", lineId: "line-1" }),
+    });
+
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as { success?: boolean };
+    expect(body.success).toBe(true);
   });
 });

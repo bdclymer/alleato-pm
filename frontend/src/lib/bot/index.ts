@@ -83,15 +83,16 @@ async function resolveUserId(platformUserId: string): Promise<string> {
     return mapping.supabase_user_id;
   }
 
-  // Fallback: use a service account or the first admin user
-  const { data: admin } = await (supabase as any)
-    .from("profiles")
+  // Fallback: use the first active admin profile from the live auth mirror.
+  const { data: admin } = await supabase
+    .from("user_profiles")
     .select("id")
     .eq("role", "admin")
+    .eq("is_active", true)
     .limit(1)
-    .single();
+    .maybeSingle();
 
-  return (admin as any)?.id ?? "system";
+  return admin?.id ?? "system";
 }
 
 // ---------------------------------------------------------------------------

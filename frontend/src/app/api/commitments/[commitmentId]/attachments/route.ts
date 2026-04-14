@@ -10,6 +10,45 @@ interface RouteParams {
   params: Promise<{ commitmentId: string }>;
 }
 
+type CommitmentRecord = {
+  id: string;
+  project_id: number;
+  commitment_type: string | null;
+};
+
+// Update the real underlying commitment record because there is no typed `commitments` base table.
+async function touchCommitmentRecord(
+  supabase: ReturnType<typeof createServiceClient>,
+  commitment: CommitmentRecord,
+  userId: string,
+): Promise<void> {
+  const updatePayload = {
+    updated_at: new Date().toISOString(),
+    updated_by: userId,
+  };
+
+  if (commitment.commitment_type === "subcontract") {
+    await supabase.from("subcontracts").update(updatePayload).eq("id", commitment.id);
+    return;
+  }
+
+  if (commitment.commitment_type === "purchase_order") {
+    await supabase.from("purchase_orders").update(updatePayload).eq("id", commitment.id);
+  }
+}
+
+function isCommitmentRecord(value: {
+  id: string | null;
+  project_id: number | null;
+  commitment_type: string | null;
+} | null): value is CommitmentRecord {
+  return (
+    value !== null &&
+    typeof value.id === "string" &&
+    typeof value.project_id === "number"
+  );
+}
+
 // Validation schema for attachment upload
 const createAttachmentSchema = z.object({
   fileName: z.string().max(255),
@@ -58,6 +97,13 @@ export const GET = withApiGuardrails(
       return NextResponse.json(
         { error: "Commitment not found" },
         { status: 404 },
+      );
+    }
+
+    if (!isCommitmentRecord(commitment)) {
+      return NextResponse.json(
+        { error: "Commitment metadata is incomplete" },
+        { status: 500 },
       );
     }
 
@@ -156,7 +202,7 @@ export const POST = withApiGuardrails(
     // Verify commitment exists and get project_id
     const { data: commitment, error: commitmentError } = await serviceClient
       .from("commitments_unified")
-      .select("id, project_id")
+      .select("id, project_id, commitment_type")
       .eq("id", commitmentId)
       .is("deleted_at", null)
       .single();
@@ -165,6 +211,13 @@ export const POST = withApiGuardrails(
       return NextResponse.json(
         { error: "Commitment not found" },
         { status: 404 },
+      );
+    }
+
+    if (!isCommitmentRecord(commitment)) {
+      return NextResponse.json(
+        { error: "Commitment metadata is incomplete" },
+        { status: 500 },
       );
     }
 
@@ -237,13 +290,7 @@ export const POST = withApiGuardrails(
     }
 
     // Update commitment modification timestamp
-    await serviceClient
-      .from("commitments")
-      .update({
-        updated_at: new Date().toISOString(),
-        updated_by: user.id,
-      })
-      .eq("id", commitmentId);
+    await touchCommitmentRecord(serviceClient, commitment, user.id);
 
     // Format response
     const response = {
@@ -309,7 +356,7 @@ export const DELETE = withApiGuardrails(
     // Verify commitment exists
     const { data: commitment, error: commitmentError } = await supabase
       .from("commitments_unified")
-      .select("id, project_id")
+      .select("id, project_id, commitment_type")
       .eq("id", commitmentId)
       .is("deleted_at", null)
       .single();
@@ -381,13 +428,7 @@ export const DELETE = withApiGuardrails(
     }
 
     // Update commitment modification timestamp
-    await supabase
-      .from("commitments")
-      .update({
-        updated_at: new Date().toISOString(),
-        updated_by: user.id,
-      })
-      .eq("id", commitmentId);
+    await touchCommitmentRecord(createServiceClient(), commitment, user.id);
 
     return NextResponse.json({
       message: `${attachments?.length || 0} attachment(s) deleted successfully`,

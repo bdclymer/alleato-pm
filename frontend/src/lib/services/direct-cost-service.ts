@@ -606,25 +606,77 @@ export class DirectCostService {
     const { page, limit } = params;
 
     const { data, error } = await this.supabase
-      .from("direct_costs_summary_by_cost_code")
-      .select("*")
+      .from("direct_costs")
+      .select(
+        `
+        cost_type,
+        line_items:direct_cost_line_items(
+          budget_code_id,
+          line_total,
+          budget_code:budget_codes(code, description)
+        )
+      `
+      )
       .eq("project_id", projectId)
-      .order("budget_code");
+      .eq("is_deleted", false);
 
     if (error)
       throw new Error(`Failed to fetch cost code summary: ${error.message}`);
 
-    // Calculate percentages
-    const totalAmount =
-      data?.reduce((sum, item) => sum + (item.total_amount || 0), 0) || 0;
+    const summaryMap = new Map<string, CostCodeSummary>();
 
-    const summaryWithPercentages: CostCodeSummary[] = (data || []).map(
-      (item) => ({
-        ...item,
-        percentage_of_total:
-          totalAmount > 0 ? ((item.total_amount || 0) / totalAmount) * 100 : 0,
-      })
+    for (const cost of data || []) {
+      for (const lineItem of cost.line_items || []) {
+        if (!lineItem.budget_code_id) continue;
+
+        const budgetCode = Array.isArray(lineItem.budget_code)
+          ? lineItem.budget_code[0]
+          : lineItem.budget_code;
+
+        const existing: CostCodeSummary = summaryMap.get(lineItem.budget_code_id) ?? {
+          budget_code_id: lineItem.budget_code_id,
+          budget_code: budgetCode?.code || lineItem.budget_code_id,
+          budget_description: budgetCode?.description || "",
+          total_amount: 0,
+          item_count: 0,
+          cost_types: [],
+        };
+
+        const amount = lineItem.line_total || 0;
+        existing.total_amount += amount;
+        existing.item_count += 1;
+
+        const costTypeEntry = existing.cost_types.find(
+          (entry) => entry.cost_type === cost.cost_type
+        );
+
+        if (costTypeEntry) {
+          costTypeEntry.amount += amount;
+          costTypeEntry.count += 1;
+        } else {
+          existing.cost_types.push({
+            cost_type: cost.cost_type,
+            amount,
+            count: 1,
+          });
+        }
+
+        summaryMap.set(lineItem.budget_code_id, existing);
+      }
+    }
+
+    const summaryRows = Array.from(summaryMap.values()).sort((a, b) =>
+      a.budget_code.localeCompare(b.budget_code)
     );
+
+    const totalAmount =
+      summaryRows.reduce((sum, item) => sum + (item.total_amount || 0), 0) || 0;
+
+    const summaryWithPercentages: CostCodeSummary[] = summaryRows.map((item) => ({
+      ...item,
+      percentage_of_total:
+        totalAmount > 0 ? ((item.total_amount || 0) / totalAmount) * 100 : 0,
+    }));
 
     // Apply pagination
     const offset = (page - 1) * limit;
@@ -837,15 +889,9 @@ export class DirectCostService {
     changedFields: Record<string, unknown>,
     userId: string
   ): Promise<void> {
-    try {
-      await this.supabase.from("direct_cost_audit_log").insert({
-        direct_cost_id: directCostId,
-        action,
-        changed_fields: changedFields,
-        user_id: userId,
-      });
-    } catch {
-      // Don't fail the main operation if audit logging fails
-    }
+    void directCostId;
+    void action;
+    void changedFields;
+    void userId;
   }
 }

@@ -277,6 +277,7 @@ interface BudgetTableProps {
   grandTotals: BudgetGrandTotals;
   isLocked?: boolean;
   onEditLineItem?: (lineItem: BudgetLineItem) => void;
+  onDeleteLineItem?: (lineItem: BudgetLineItem) => void;
   onSelectionChange?: (selectedIds: string[]) => void;
   onBudgetModificationsClick?: (lineItem: BudgetLineItem) => void;
   onApprovedCOsClick?: (lineItem: BudgetLineItem) => void;
@@ -386,6 +387,7 @@ export function BudgetTable({
   grandTotals,
   isLocked = false,
   onEditLineItem,
+  onDeleteLineItem,
   onSelectionChange,
   onBudgetModificationsClick,
   onApprovedCOsClick,
@@ -972,8 +974,22 @@ export function BudgetTable({
           () => onEditLineItem(row.original)
         );
 
+        // Procore-parity delete rules (tests 1.3.1–1.3.4):
+        //  • Allowed only when original budget is $0
+        //  • Blocked when budget is locked
+        //  • Server also blocks when active budget modifications reference
+        //    the line's cost code (LINE_HAS_ACTIVE_MODIFICATIONS)
+        const originalAmount = Number(row.original.originalBudgetAmount ?? 0);
+        const hasOriginalBudget = originalAmount !== 0;
+        const deleteDisabled = isLocked || hasOriginalBudget;
+        const deleteDisabledReason = isLocked
+          ? "Budget is locked. Unlock the budget to delete line items."
+          : hasOriginalBudget
+            ? "Cannot delete a line with an original budget. Use a budget modification to remove or zero out funded lines."
+            : "";
+
         return (
-          <div className="flex justify-end">
+          <div className="flex items-center justify-end gap-0.5">
             <Button
               type="button"
               variant="ghost"
@@ -984,12 +1000,46 @@ export function BudgetTable({
             >
               <Pencil className="text-muted-foreground" />
             </Button>
+            {onDeleteLineItem &&
+              (deleteDisabled ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    {/* span wrapper so the disabled button still triggers the tooltip */}
+                    <span className="inline-flex">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        disabled
+                        aria-label="Delete line item (disabled)"
+                      >
+                        <Trash2 className="text-muted-foreground/50" />
+                      </Button>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="left" className="max-w-xs">
+                    {deleteDisabledReason}
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 hover:text-destructive"
+                  onClick={() => onDeleteLineItem(row.original)}
+                  aria-label="Delete line item"
+                >
+                  <Trash2 className="text-muted-foreground" />
+                </Button>
+              ))}
           </div>
         );
       },
-      size: 48,
-      minSize: 40,
-      maxSize: 56,
+      size: 80,
+      minSize: 72,
+      maxSize: 96,
     },
   ];
 

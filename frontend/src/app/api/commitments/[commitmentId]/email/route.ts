@@ -54,8 +54,6 @@ interface CommitmentData {
  * Generates an HTML email containing commitment information, financial summary,
  * and optional SOV line items. Supports optional PDF attachment flag.
  *
- * Email activity is logged to the `email_logs` table (non-blocking).
- *
  * @route POST /api/commitments/[commitmentId]/email
  * @param {string} commitmentId - Commitment UUID
  *
@@ -154,8 +152,10 @@ export const POST = withApiGuardrails<{ commitmentId: string }>(
       : user.email?.split("@")[0] || "Alleato User";
     const senderEmail = senderProfile?.email || user.email || "noreply@alleato.com";
 
-    // Generate email content
+    // Generate email content for the downstream mail transport integration.
     const emailHTML = generateEmailHTML(commitmentData, emailParams, senderName);
+    void senderEmail;
+    void emailHTML;
 
     // In a production environment, you would send the email here using a service like:
     // - SendGrid
@@ -163,25 +163,7 @@ export const POST = withApiGuardrails<{ commitmentId: string }>(
     // - Resend
     // - Postmark
     //
-    // For now, we'll log the email and return success
-    // This can be replaced with actual email sending logic
-
-    // Log email activity to database (optional)
-    try {
-      await (supabase as any).from("email_logs").insert({
-        commitment_id: commitmentId,
-        sender_id: user.id,
-        recipients: emailParams.recipients,
-        subject: emailParams.subject,
-        message: emailParams.message,
-        attach_pdf: emailParams.attach_pdf,
-        status: "sent",
-        sent_at: new Date().toISOString(),
-      });
-    } catch (logError) {
-      // Email logging is optional - don't fail the request if logging fails
-      console.warn("Failed to log email activity:", logError);
-    }
+    // For now, return a transport-ready success response without writing to a dead audit table.
 
     return NextResponse.json({
       success: true,

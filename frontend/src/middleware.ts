@@ -28,9 +28,8 @@ export const config = {
      * - _next (all Next.js internals: static, image, HMR, etc.)
      * - favicon.ico (favicon file)
      * - public folder and static assets
-     * - api routes
      * - auth routes (entire /auth path)
      */
-    '/((?!_next/|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$|api|auth).*)',
+    '/((?!_next/|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$|auth).*)',
   ],
 }

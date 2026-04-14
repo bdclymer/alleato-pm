@@ -7535,6 +7535,7 @@ export type Database = {
           route: string
           screenshot_url: string | null
           status: string | null
+          tool: number | null
         }
         Insert: {
           agentation_id?: string | null
@@ -7551,6 +7552,7 @@ export type Database = {
           route: string
           screenshot_url?: string | null
           status?: string | null
+          tool?: number | null
         }
         Update: {
           agentation_id?: string | null
@@ -7567,8 +7569,17 @@ export type Database = {
           route?: string
           screenshot_url?: string | null
           status?: string | null
+          tool?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "dev_annotations_tool_fkey"
+            columns: ["tool"]
+            isOneToOne: false
+            referencedRelation: "procore_tools"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       dev_panel_comments: {
         Row: {

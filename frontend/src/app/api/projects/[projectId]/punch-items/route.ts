@@ -2,7 +2,7 @@ import { withApiGuardrails, parseJsonBody } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { PunchItemService } from "@/services/PunchItemService";
 import type { PunchItemFilters } from "@/services/PunchItemService";
 import { apiErrorResponse } from "@/lib/api-error";
@@ -36,10 +36,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
   const numericProjectId = parseInt(projectId, 10);
   const supabase = await createClient();
 
-  // Verify authentication
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getApiRouteUser();
   if (!user) {
     throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/punch-items#GET", message: "Authentication required." });
   }
@@ -82,10 +79,7 @@ export const POST = withApiGuardrails<{ projectId: string }>(
   const numericProjectId = parseInt(projectId, 10);
   const supabase = await createClient();
 
-  // Verify authentication
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getApiRouteUser();
   if (!user) {
     throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/punch-items#POST", message: "Authentication required." });
   }

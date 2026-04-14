@@ -1,6 +1,0 @@
-Detail|http://localhost:3000/767/change-events/e441d155-03ec-4922-96ad-400c94db83dd|Yes|None|PASS
-List|http://localhost:3000/767/change-events|Yes|None|PASS
-New|http://localhost:3000/767/change-events/new|Yes|None|PASS
-Detail|http://localhost:3000/767/change-events/e441d155-03ec-4922-96ad-400c94db83dd|Yes|None|PASS
-Edit|http://localhost:3000/767/change-events/e441d155-03ec-4922-96ad-400c94db83dd/edit|Yes|None|PASS
-Edit|http://localhost:3000/767/change-events/e441d155-03ec-4922-96ad-400c94db83dd/edit|Yes|None|PASS

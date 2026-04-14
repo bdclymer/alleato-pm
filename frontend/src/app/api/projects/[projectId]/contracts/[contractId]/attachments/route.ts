@@ -11,10 +11,6 @@ interface RouteParams {
   params: Promise<{ projectId: string; contractId: string }>;
 }
 
-type ContractAttachmentLinkRow = {
-  attachment_id: string;
-};
-
 type ContractAttachmentRecord = {
   id: string;
   attached_to_id: string | null;
@@ -22,11 +18,6 @@ type ContractAttachmentRecord = {
   url: string | null;
   uploaded_at: string | null;
 };
-
-const isMissingJoinTableError = (error: { code?: string; message?: string } | null) =>
-  !!error &&
-  (error.code === "PGRST205" ||
-    error.message?.includes("Could not find the table 'public.prime_contract_attachments'"));
 
 const createAttachmentSchema = z.object({
   fileName: z.string().max(255),
@@ -61,58 +52,23 @@ export const GET = withApiGuardrails(
       );
     }
 
-    const { data: linkRows, error: linkError } = await serviceClient
-      .from("prime_contract_attachments")
-      .select("attachment_id")
-      .eq("contract_id", contractId);
+    let attachments: ContractAttachmentRecord[] = [];
 
-    if (linkError && !isMissingJoinTableError(linkError)) {
+    const { data: legacyAttachments, error: legacyError } = await serviceClient
+      .from("attachments")
+      .select("id, attached_to_id, file_name, url, uploaded_at")
+      .eq("attached_to_id", contractId)
+      .eq("attached_to_table", "prime_contracts")
+      .order("uploaded_at", { ascending: false });
+
+    if (legacyError) {
       return NextResponse.json(
-        { error: "Failed to fetch attachment links", details: linkError.message },
+        { error: "Failed to fetch attachments", details: legacyError.message },
         { status: 400 },
       );
     }
 
-    const linkedAttachmentIds = (linkRows ?? []) as ContractAttachmentLinkRow[];
-
-    let attachments: ContractAttachmentRecord[] = [];
-
-    if (linkedAttachmentIds.length > 0) {
-      const { data: mappedAttachments, error: mappedAttachmentsError } = await serviceClient
-        .from("attachments")
-        .select("id, attached_to_id, file_name, url, uploaded_at")
-        .in("id", linkedAttachmentIds)
-        .order("uploaded_at", { ascending: false });
-
-      if (mappedAttachmentsError) {
-        return NextResponse.json(
-          {
-            error: "Failed to fetch mapped attachments",
-            details: mappedAttachmentsError.message,
-          },
-          { status: 400 },
-        );
-      }
-
-      attachments = (mappedAttachments ?? []) as ContractAttachmentRecord[];
-    } else {
-      // Temporary fallback while environments are being migrated.
-      const { data: legacyAttachments, error: legacyError } = await serviceClient
-        .from("attachments")
-        .select("id, attached_to_id, file_name, url, uploaded_at")
-        .eq("attached_to_id", contractId)
-        .eq("attached_to_table", "prime_contracts")
-        .order("uploaded_at", { ascending: false });
-
-      if (legacyError) {
-        return NextResponse.json(
-          { error: "Failed to fetch attachments", details: legacyError.message },
-          { status: 400 },
-        );
-      }
-
-      attachments = (legacyAttachments ?? []) as ContractAttachmentRecord[];
-    }
+    attachments = (legacyAttachments ?? []) as ContractAttachmentRecord[];
 
     // Final fallback for environments with detached legacy rows:
     // recover rows by storage path pattern when attached_to_id is null.
@@ -252,25 +208,6 @@ export const POST = withApiGuardrails(
         {
           error: "Failed to create attachment record",
           details: attachmentError?.message ?? "Unknown insert error",
-        },
-        { status: 400 },
-      );
-    }
-
-    const { error: linkInsertError } = await serviceAny
-      .from("prime_contract_attachments")
-      .insert({
-        contract_id: contractId,
-        attachment_id: attachment.id,
-      });
-
-    if (linkInsertError && !isMissingJoinTableError(linkInsertError)) {
-      await serviceClient.from("attachments").delete().eq("id", attachment.id);
-      await serviceClient.storage.from("project-files").remove([storagePath]);
-      return NextResponse.json(
-        {
-          error: "Failed to create contract attachment link",
-          details: linkInsertError.message,
         },
         { status: 400 },
       );

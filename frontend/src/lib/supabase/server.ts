@@ -69,6 +69,12 @@ async function getUserFromCookieJwt(): Promise<Pick<User, "id" | "email"> | null
     const cookieStore = await cookies();
     const tokenData = getBestSupabaseAuthToken(cookieStore.getAll());
     if (!tokenData?.userId) return null;
+    if (
+      typeof tokenData.expiresAtMs === "number" &&
+      tokenData.expiresAtMs <= Date.now() + 15_000
+    ) {
+      return null;
+    }
 
     return { id: tokenData.userId, email: tokenData.email };
   } catch {

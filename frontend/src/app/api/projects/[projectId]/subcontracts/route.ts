@@ -1,7 +1,7 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { CreateSubcontractSchema } from "@/lib/schemas/create-subcontract-schema";
 import { mapFormToInsert } from "@/lib/db/subcontracts";
 import { apiErrorResponse } from "@/lib/api-error";
@@ -17,13 +17,8 @@ export const GET = withApiGuardrails<{ projectId: string }>(
     const { projectId } = await params;
     const supabase = await createClient();
 
-    // Get current user
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-
-    if (userError || !user) {
+    const user = await getApiRouteUser();
+    if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/subcontracts#GET", message: "Authentication required." });
     }
 
@@ -61,20 +56,7 @@ export const POST = withApiGuardrails<{ projectId: string }>(
   try {
     const supabase = await createClient();
 
-    // Get current user
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-
-    if (userError) {
-      console.error("[Subcontracts API] Auth error:", userError);
-      return NextResponse.json(
-        { error: "Authentication failed", details: userError.message },
-        { status: 401 },
-      );
-    }
-
+    const user = await getApiRouteUser();
     if (!user) {
       console.error("[Subcontracts API] No authenticated user found");
       return NextResponse.json(
@@ -84,7 +66,7 @@ export const POST = withApiGuardrails<{ projectId: string }>(
     }
 
     console.warn(
-      `[Subcontracts API] Authenticated user: ${user.email} (${user.id})`,
+      `[Subcontracts API] Authenticated user: ${user.email ?? "unknown"} (${user.id})`,
     );
 
     // Parse and validate request body

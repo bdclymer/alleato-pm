@@ -128,8 +128,8 @@ export function DocsChat() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        const message = errorData?.error || "Failed to get response";
+        const errorData = await response.json().catch(() => null) as Record<string, unknown> | null;
+        const message = (errorData?.error_message ?? errorData?.error ?? "Failed to get response") as string;
         throw new Error(message);
       }
 

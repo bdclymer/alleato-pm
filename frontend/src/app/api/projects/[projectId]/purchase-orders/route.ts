@@ -1,7 +1,7 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { CreatePurchaseOrderSchema } from "@/lib/schemas/create-purchase-order-schema";
 import { apiErrorResponse } from "@/lib/api-error";
 
@@ -16,12 +16,8 @@ export const GET = withApiGuardrails<{ projectId: string }>(
     const { projectId } = await params;
     const supabase = await createClient();
 
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-
-    if (userError || !user) {
+    const user = await getApiRouteUser();
+    if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/purchase-orders#GET", message: "Authentication required." });
     }
 
@@ -54,18 +50,7 @@ export const POST = withApiGuardrails<{ projectId: string }>(
   try {
     const supabase = await createClient();
 
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-
-    if (userError) {
-      return NextResponse.json(
-        { error: "Authentication failed", details: userError.message },
-        { status: 401 },
-      );
-    }
-
+    const user = await getApiRouteUser();
     if (!user) {
       return NextResponse.json(
         { error: "Unauthorized - no user session" },

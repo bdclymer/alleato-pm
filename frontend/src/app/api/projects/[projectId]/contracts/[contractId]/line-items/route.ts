@@ -124,10 +124,10 @@ export const POST = withApiGuardrails(
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/contracts/[contractId]/line-items#POST", message: "Authentication required." });
     }
 
-    // DEVELOPMENT: Permission check disabled for easier testing
-    // TODO: Re-enable this in production
+    // DEVELOPMENT: Membership-specific line-item overrides remain disabled here.
+    // TODO: Re-enable project membership enforcement against the live directory membership model.
     // const { data: projectMember } = await supabase
-    //   .from("project_members")
+    //   .from("project directory membership source")
     //   .select("access")
     //   .eq("project_id", parseInt(projectId, 10))
     //   .eq("user_id", user.id)

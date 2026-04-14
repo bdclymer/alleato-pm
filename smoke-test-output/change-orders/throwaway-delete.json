@@ -1,4 +1,0 @@
-{
-  "body": "{\"error\":\"Cannot delete a change order with status \\\"proposed\\\". Only draft, pending, or rejected change orders can be deleted.\"}",
-  "status": 409
-}

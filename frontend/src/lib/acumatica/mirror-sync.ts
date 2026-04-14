@@ -557,7 +557,7 @@ async function writeCursor(
 }
 
 // ---------------------------------------------------------------------------
-// Sync run log helpers (acumatica_sync_runs table)
+// Sync run log helpers (legacy sync-run table has been removed from the live schema)
 // ---------------------------------------------------------------------------
 
 interface SyncRunRecord {
@@ -581,12 +581,9 @@ async function logRunStart(
   supabase: SupabaseClient,
   record: Omit<SyncRunRecord, "completed_at" | "fetched" | "upserted" | "skipped" | "errors">,
 ): Promise<string | null> {
-  const { data } = await supabase
-    .from("acumatica_sync_runs")
-    .insert(record)
-    .select("id")
-    .single();
-  return (data?.id as string | null) ?? null;
+  void supabase;
+  void record;
+  return null;
 }
 
 async function logRunComplete(
@@ -595,10 +592,8 @@ async function logRunComplete(
   update: Partial<SyncRunRecord>,
 ): Promise<void> {
   if (!runId) return;
-  await supabase
-    .from("acumatica_sync_runs")
-    .update({ ...update, completed_at: new Date().toISOString() })
-    .eq("id", runId);
+  void supabase;
+  void update;
 }
 
 // ---------------------------------------------------------------------------

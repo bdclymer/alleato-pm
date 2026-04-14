@@ -16,6 +16,7 @@ import type { Database } from "@/types/database.types";
 
 type Tables = Database["public"]["Tables"];
 type PermissionTemplate = Tables["permission_templates"]["Row"];
+type PermissionAuditLog = Tables["permission_audit_log"]["Row"];
 
 export type DirectoryTemplateType = "users" | "contacts" | "companies";
 
@@ -311,11 +312,11 @@ export class DirectoryAdminService {
   ): Promise<DirectoryActivityEntry[]> {
     const projectIdNum = Number.parseInt(projectId, 10);
 
-    let query = (this.supabase as any)
-      .from("user_activity_log")
+    let query = this.supabase
+      .from("permission_audit_log")
       .select("*")
       .eq("project_id", projectIdNum)
-      .order("performed_at", { ascending: false })
+      .order("created_at", { ascending: false })
       .limit(options.limit ?? 100);
 
     if (options.personId) {
@@ -325,10 +326,26 @@ export class DirectoryAdminService {
     const { data, error } = await query;
     if (error) throw error;
 
-    return (data || []).map((entry: any) => ({
-      ...entry,
-      changes: (entry.changes as Record<string, unknown>) ?? undefined,
-    })) as DirectoryActivityEntry[];
+    return ((data || []) as PermissionAuditLog[]).map((entry) => ({
+      id: entry.id,
+      person_id: entry.person_id,
+      project_id: entry.project_id,
+      action: entry.action,
+      action_description: entry.module
+        ? `Permission change recorded for ${entry.module}`
+        : "Permission change recorded",
+      performed_by: entry.changed_by,
+      performed_at: entry.created_at,
+      changes:
+        entry.module || entry.old_level || entry.new_level
+          ? {
+              module: entry.module,
+              old_level: entry.old_level,
+              new_level: entry.new_level,
+              template_id: entry.template_id,
+            }
+          : undefined,
+    }));
   }
 
   private parseCsv(

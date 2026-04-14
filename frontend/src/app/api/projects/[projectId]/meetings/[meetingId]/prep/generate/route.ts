@@ -67,15 +67,14 @@ export const POST = withApiGuardrails(
       .limit(1)
       .maybeSingle();
 
-    // 3. Fetch digest for last meeting (if exists)
+    // 3. Fetch prior prep context for the last meeting (if it exists).
     let lastDigest = null;
     if (lastMeeting) {
-       
-      const { data: digest } = await (serviceClient as any)
-        .from("meeting_digests")
-        .select("*")
-        .eq("metadata_id", lastMeeting.id)
-        .maybeSingle() as { data: { digest_text?: string; action_items_summary?: unknown[]; decisions_summary?: unknown[] } | null; error: unknown };
+      const { data: digest } = await serviceClient
+        .from("meeting_preps")
+        .select("content")
+        .eq("meeting_id", lastMeeting.id)
+        .maybeSingle();
       lastDigest = digest;
     }
 
@@ -92,9 +91,9 @@ export const POST = withApiGuardrails(
       projectName: meeting.project,
       lastMeetingTitle: lastMeeting?.title,
       lastMeetingDate: lastMeeting?.date,
-      lastMeetingDigest: lastDigest?.digest_text,
-      lastMeetingActionItems: lastDigest?.action_items_summary as unknown[] | undefined,
-      lastMeetingDecisions: lastDigest?.decisions_summary as unknown[] | undefined,
+      lastMeetingDigest: lastDigest?.content,
+      lastMeetingActionItems: undefined,
+      lastMeetingDecisions: undefined,
     });
 
     const tools = createProjectTools(user.id);

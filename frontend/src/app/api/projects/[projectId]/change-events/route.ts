@@ -52,9 +52,9 @@ async function getSupabaseClient(request: NextRequest) {
   const authHeader = request.headers.get('authorization')
   if (authHeader?.startsWith('Bearer ')) {
     const token = authHeader.slice(7)
-    return { client: createClientWithToken(token), token }
+    return { client: createClientWithToken(token) as RouteSupabaseClient, token }
   }
-  return { client: await createClient(), token: null }
+  return { client: await createClient() as RouteSupabaseClient, token: null }
 }
 
 interface RouteParams {
@@ -79,6 +79,26 @@ interface VerticalMarkupRow {
   percentage: number | null
   calculation_order: number | null
   compound: boolean | null
+}
+
+type ChangeEventLineItemAggregateRow = {
+  change_event_id: string | null
+  revenue_rom: number | null
+  cost_rom: number | null
+  non_committed_cost: number | null
+  contract_id: string | null
+}
+
+type PrimeContractSummaryRow = {
+  id: string
+  contract_number: string | null
+  title: string | null
+}
+
+type ChangeEventRfqSummaryRow = {
+  change_event_id: string | null
+  title: string | null
+  created_at: string | null
 }
 
 type RouteSupabaseClient = SupabaseClient<Database>
@@ -339,7 +359,7 @@ export const GET = withApiGuardrails(
           .from('change_event_line_items')
           .select('change_event_id, revenue_rom, cost_rom, non_committed_cost, contract_id')
           .in('change_event_id', eventIds)
-      : { data: [] as unknown[] }
+      : { data: [] as ChangeEventLineItemAggregateRow[] }
 
     const lineItemMap = new Map<
       string,
@@ -352,7 +372,7 @@ export const GET = withApiGuardrails(
       }
     >()
 
-    for (const item of allLineItems || []) {
+    for (const item of (allLineItems || []) as ChangeEventLineItemAggregateRow[]) {
       const key = String(item.change_event_id)
       const existing = lineItemMap.get(key) || {
         rom: 0,
@@ -392,7 +412,7 @@ export const GET = withApiGuardrails(
           .from('prime_contracts')
           .select('id, contract_number, title')
           .in('id', contractIds)
-      : { data: [] as unknown[], error: null }
+      : { data: [] as PrimeContractSummaryRow[], error: null }
 
     if (contractsError) {
       return apiErrorResponse(contractsError)
@@ -402,7 +422,7 @@ export const GET = withApiGuardrails(
       string,
       { contractNumber: string | null; title: string | null }
     >()
-    for (const contract of contracts || []) {
+    for (const contract of (contracts || []) as PrimeContractSummaryRow[]) {
       contractMap.set(contract.id, {
         contractNumber: contract.contract_number || null,
         title: contract.title || null,
@@ -415,10 +435,10 @@ export const GET = withApiGuardrails(
           .select('change_event_id, title, created_at')
           .in('change_event_id', eventIds)
           .order('created_at', { ascending: false })
-      : { data: [] as unknown[] }
+      : { data: [] as ChangeEventRfqSummaryRow[] }
 
     const rfqMap = new Map<string, string>()
-    for (const rfq of rfqs || []) {
+    for (const rfq of (rfqs || []) as ChangeEventRfqSummaryRow[]) {
       const key = String(rfq.change_event_id)
       if (!rfqMap.has(key)) {
         rfqMap.set(key, rfq.title || '')

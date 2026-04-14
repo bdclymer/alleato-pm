@@ -10,10 +10,6 @@ interface RouteParams {
   params: Promise<{ projectId: string; contractId: string; attachmentId: string }>;
 }
 
-type ContractAttachmentLinkRow = {
-  attachment_id: string;
-};
-
 /**
  * DELETE /api/projects/[projectId]/contracts/[contractId]/attachments/[attachmentId]
  * Deletes an attachment from a prime contract
@@ -39,28 +35,9 @@ export const DELETE = withApiGuardrails(
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/contracts/[contractId]/attachments/[attachmentId]#DELETE", message: "Authentication required." });
     }
 
-    const { data: link, error: linkError } = await serviceClient
-      .from("prime_contract_attachments")
-      .select("attachment_id")
-      .eq("contract_id", contractId)
-      .eq("attachment_id", attachmentId)
-      .single();
-
     let attachment: { id: string; url: string | null } | null = null;
 
-    if (!linkError && link) {
-      const { data: mappedAttachment, error: mappedAttachmentError } = await serviceClient
-        .from("attachments")
-        .select("id, url")
-        .eq("id", (link as ContractAttachmentLinkRow).attachment_id)
-        .single();
-      if (!mappedAttachmentError && mappedAttachment) {
-        attachment = mappedAttachment;
-      }
-    }
-
     if (!attachment) {
-      // Temporary fallback while environments are being migrated.
       const { data: legacyAttachment, error: legacyFetchError } = await serviceClient
         .from("attachments")
         .select("id, url")

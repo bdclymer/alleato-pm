@@ -137,6 +137,7 @@ async function performApiFetch<T>(
 
   const response = await request(url, {
     ...init,
+    credentials: init?.credentials ?? "same-origin",
     headers,
   });
 
@@ -197,6 +198,7 @@ export async function apiFetchBlob(
 
   const response = await fetch(url, {
     ...init,
+    credentials: init?.credentials ?? "same-origin",
     headers,
   });
 
