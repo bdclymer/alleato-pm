@@ -6,6 +6,7 @@ import {
   AlertCircle,
   ArrowLeft,
   ChevronDown,
+  CreditCard,
   Download,
   DollarSign,
   FileText,
@@ -851,10 +852,11 @@ export default function ProjectContractDetailPage() {
                 <Button variant="default" size="sm"><Plus />Create<ChevronDown /></Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => router.push(`/${projectId}/change-events/new?contractId=${contractId}`)}><FileText className="h-4 w-4 mr-2" />Change Event</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push(`/${projectId}/change-orders/prime/new?contractId=${contractId}`)}><DollarSign className="h-4 w-4 mr-2" />Change Order</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push(`/${projectId}/commitments/new?type=purchase_order&contractId=${contractId}`)}><FileText className="h-4 w-4 mr-2" />Purchase Order</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push(`/${projectId}/commitments/new?type=subcontract&contractId=${contractId}`)}><FileText className="h-4 w-4 mr-2" />Subcontract</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push(`/${projectId}/change-events/new?contractId=${contractId}`)}><FileText className="h-4 w-4 mr-2" />Create Change Event</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push(`/${projectId}/change-orders/prime/new?contractId=${contractId}`)}><DollarSign className="h-4 w-4 mr-2" />Create Prime Contract CO</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setActiveTab("invoices")}><FileText className="h-4 w-4 mr-2" />Create Invoice</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setActiveTab("payments")}><CreditCard className="h-4 w-4 mr-2" />Create Payment</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => { setDocumentDialogTab("email"); setIsDocumentDialogOpen(true); }}><Mail className="h-4 w-4 mr-2" />Email Contract</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 
