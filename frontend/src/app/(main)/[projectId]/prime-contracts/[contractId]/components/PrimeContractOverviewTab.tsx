@@ -247,7 +247,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                 </dl>
               </div>
 
-              {/* Key Dates */}
+              {/* Key Dates + Attachments */}
               <div className="space-y-6">
                 <SectionRuleHeading label="Key Dates" className="[&_span]:text-primary" />
                 <dl className="space-y-4 text-sm">
@@ -270,62 +270,12 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                     {renderDateOrDash(contract.contract_termination_date)}
                   </LabelValueRow>
                 </dl>
-              </div>
-            </div>
 
-            {/* Row directly below Details + Entity Roles */}
-            <div className="space-y-4">
-              <dl className="space-y-4 text-sm">
-                <LabelValueRow
-                  label="Description"
-                  labelClassName="w-44"
-                  missing={getTextValue(contract.description).isMissing}
-                  valueClassName="leading-relaxed font-normal text-foreground"
-                >
-                  {getTextValue(contract.description).text}
-                </LabelValueRow>
-                <LabelValueRow
-                  label="Inclusions"
-                  labelClassName="w-44"
-                  missing={inclusionsList.length === 0}
-                  valueClassName="leading-relaxed font-normal text-foreground"
-                >
-                  {inclusionsList.length === 0 ? (
-                    "Not set"
-                  ) : (
-                    <div className="space-y-1">
-                      {inclusionsList.map((line, index) => (
-                        <p key={`inclusion-${index}`}>{line}</p>
-                      ))}
-                    </div>
-                  )}
-                </LabelValueRow>
-                <LabelValueRow
-                  label="Exclusions"
-                  labelClassName="w-44"
-                  missing={exclusionsList.length === 0}
-                  valueClassName="leading-relaxed font-normal text-foreground"
-                >
-                  {exclusionsList.length === 0 ? (
-                    "Not set"
-                  ) : (
-                    <div className="space-y-1">
-                      {exclusionsList.map((line, index) => (
-                        <p key={`exclusion-${index}`}>{line}</p>
-                      ))}
-                    </div>
-                  )}
-                </LabelValueRow>
-              </dl>
-
-              {/* Attachments — below Exclusions, same row style as dl above */}
-              <div className="flex items-start gap-4 text-sm">
-                <dt className="w-44 shrink-0 pt-0.5 text-xs text-muted-foreground">
-                  Attachments
-                </dt>
-                <dd className="min-w-0 flex-1">
+                {/* Attachments */}
+                <div className="space-y-3 pt-2">
+                  <SectionRuleHeading label="Attachments" className="[&_span]:text-primary" />
                   {attachmentsLoading ? (
-                    <p className="italic text-muted-foreground">Loading...</p>
+                    <p className="text-sm italic text-muted-foreground">Loading...</p>
                   ) : attachments.length === 0 ? (
                     <label className="cursor-pointer">
                       <input
@@ -352,12 +302,12 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                               href={att.downloadUrl || att.url || "#"}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-foreground hover:underline"
+                              className="text-sm text-foreground hover:underline"
                             >
                               {att.fileName}
                             </a>
                           ) : (
-                            <span className="text-muted-foreground">{att.fileName}</span>
+                            <span className="text-sm text-muted-foreground">{att.fileName}</span>
                           )}
                           <Button
                             variant="ghost"
@@ -387,7 +337,46 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                       </label>
                     </div>
                   )}
-                </dd>
+                </div>
+              </div>
+            </div>
+
+            {/* Description + Inclusions/Exclusions side by side */}
+            <div className="space-y-6">
+              <LabelValueRow
+                label="Description"
+                labelClassName="w-44"
+                missing={getTextValue(contract.description).isMissing}
+                valueClassName="leading-relaxed font-normal text-foreground text-sm"
+              >
+                {getTextValue(contract.description).text}
+              </LabelValueRow>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-14 gap-y-6">
+                <div className="space-y-2">
+                  <p className="text-xs text-muted-foreground">Inclusions</p>
+                  {inclusionsList.length === 0 ? (
+                    <p className="text-sm text-muted-foreground/60">Not set</p>
+                  ) : (
+                    <div className="space-y-1 text-sm leading-relaxed text-foreground">
+                      {inclusionsList.map((line, index) => (
+                        <p key={`inclusion-${index}`}>{line}</p>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <p className="text-xs text-muted-foreground">Exclusions</p>
+                  {exclusionsList.length === 0 ? (
+                    <p className="text-sm text-muted-foreground/60">Not set</p>
+                  ) : (
+                    <div className="space-y-1 text-sm leading-relaxed text-foreground">
+                      {exclusionsList.map((line, index) => (
+                        <p key={`exclusion-${index}`}>{line}</p>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
