@@ -20,6 +20,8 @@ interface MoneyFieldProps extends FormFieldBaseProps, Omit<
   /** Inline mode: renders just the input with $ prefix, no label/FormField wrapper.
    *  Use this for inline table editing where the label comes from the column header. */
   inline?: boolean;
+  /** When true, treat value=0 as empty — show placeholder instead of "0.00". Default false. */
+  clearZeroOnFocus?: boolean;
 }
 
 /**
@@ -46,6 +48,7 @@ export function MoneyField({
   showCurrency = true,
   allowNegative = false,
   inline = false,
+  clearZeroOnFocus = false,
   className,
   ...inputProps
 }: MoneyFieldProps) {
@@ -93,12 +96,12 @@ export function MoneyField({
 
   React.useEffect(() => {
     if (isFocusedRef.current) return;
-    if (value !== undefined) {
+    if (value !== undefined && !(clearZeroOnFocus && value === 0)) {
       setDisplayValue(formatForDisplay(value));
     } else {
       setDisplayValue("");
     }
-  }, [value]);
+  }, [value, clearZeroOnFocus]);
 
   // ── Event handlers ──────────────────────────────────────────────────
 
@@ -129,8 +132,8 @@ export function MoneyField({
 
   const handleBlur = () => {
     isFocusedRef.current = false;
-    // Format with commas and decimals on blur
-    if (value !== undefined) {
+    // Format with commas and decimals on blur; treat 0 as empty if clearZeroOnFocus
+    if (value !== undefined && !(clearZeroOnFocus && value === 0)) {
       setDisplayValue(formatForDisplay(value));
     } else {
       setDisplayValue("");
@@ -139,9 +142,11 @@ export function MoneyField({
 
   const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
     isFocusedRef.current = true;
-    // Switch to raw number for clean editing
-    if (value !== undefined) {
+    // Switch to raw number for clean editing; treat 0 as empty if clearZeroOnFocus
+    if (value !== undefined && !(clearZeroOnFocus && value === 0)) {
       setDisplayValue(value.toString());
+    } else {
+      setDisplayValue("");
     }
     // Select all text for quick replacement
     requestAnimationFrame(() => e.target.select());

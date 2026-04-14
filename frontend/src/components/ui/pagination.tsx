@@ -128,8 +128,8 @@ function SimplePaginationButton({
       aria-label={`Go to page ${page}`}
       aria-current={isActive ? "page" : undefined}
       className={cn(
-        "size-8 rounded-full p-0 text-xs font-medium text-violet-700 hover:bg-violet-200 hover:text-violet-800",
-        isActive ? "bg-violet-200 text-violet-900" : "bg-transparent",
+        "size-8 rounded-full p-0 text-xs font-medium hover:bg-accent hover:text-primary",
+        isActive ? "bg-accent text-primary font-semibold" : "bg-transparent text-muted-foreground",
       )}
       onClick={() => onPageChange(page)}
     >

@@ -59,9 +59,9 @@ export default function MainLayout({
               {...feedbackTargetProps("app.main-content")}
             >
               {children}
-              {!isDrawingViewer ? <SiteFooter /> : null}
             </main>
             <ProcoreReferencePanel />
+            {!isDrawingViewer && <SiteFooter />}
           </div>
         </CreateProjectDevConfigProvider>
         <Overlays />

@@ -655,21 +655,9 @@ export function BudgetLineItemModal({
                           </InlineTableCell>
 
                           <InlineTableCell>
-                            <NumberInput
-                              step="0.01"
-                              value={row.amount}
-                              onChange={(e) =>
-                                handleRowChange(
-                                  row.id,
-                                  "amount",
-                                  e.target.value,
-                                )
-                              }
-                              placeholder="Amount *"
-                              className="h-9 font-medium"
-                              clearZeroOnFocus={true}
-                              autoSelectOnFocus={true}
-                            />
+                            <div className="h-9 flex items-center justify-end px-3 tabular-nums font-medium text-foreground pointer-events-none select-none">
+                              ${parseFloat(row.amount || "0").toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </div>
                           </InlineTableCell>
 
                           <InlineTableCell>

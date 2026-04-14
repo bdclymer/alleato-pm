@@ -150,7 +150,16 @@ export const GET = withApiGuardrails<{ projectId: string }>(
       };
     });
 
-    return NextResponse.json({ budgetCodes });
+    // Deduplicate by cost_code_id + costType (keep first occurrence)
+    const seen = new Set<string>();
+    const uniqueBudgetCodes = budgetCodes.filter((bc) => {
+      const key = `${bc.code}|${bc.costTypeId ?? ""}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+    return NextResponse.json({ budgetCodes: uniqueBudgetCodes });
     },
 );
 
@@ -215,6 +224,22 @@ export const POST = withApiGuardrails<{ projectId: string }>(
       if (costTypeData) {
         costTypeUuid = costTypeData.id;
       }
+    }
+
+    // Check for existing duplicate before inserting
+    const { data: existingCode } = await supabase
+      .from("project_cost_codes")
+      .select("id")
+      .eq("project_id", projectIdNum)
+      .eq("cost_code_id", cost_code_id)
+      .eq("cost_type_id", costTypeUuid)
+      .maybeSingle();
+
+    if (existingCode) {
+      return NextResponse.json(
+        { error: "This budget code already exists for this project" },
+        { status: 409 },
+      );
     }
 
     // Insert new project_cost_code (the chart of accounts entry)

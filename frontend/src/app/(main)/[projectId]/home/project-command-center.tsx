@@ -268,11 +268,12 @@ function FinancialOverviewSection({
 const DEFAULT_ROLES = ["Project Manager", "Superintendent", "Architect"];
 
 function ProjectTeamSection({ projectId }: { projectId: string }) {
-  const { roles, isLoading, updateRoleMembers } = useProjectRoles(projectId);
+  const { roles, isLoading, updateRoleMembers, createRole } = useProjectRoles(projectId);
   const [assignDialog, setAssignDialog] = React.useState<{
     open: boolean;
     role: ProjectRole | null;
   }>({ open: false, role: null });
+  const [creating, setCreating] = React.useState<string | null>(null);
 
   const slots = DEFAULT_ROLES.map((roleName) => {
     const dbRole = roles.find(
@@ -283,9 +284,21 @@ function ProjectTeamSection({ projectId }: { projectId: string }) {
     return { roleName, dbRole: dbRole ?? null as ProjectRole | null, person };
   });
 
-  const openDialog = (dbRole: ProjectRole | null) => {
-    if (!dbRole) return;
-    setAssignDialog({ open: true, role: dbRole });
+  const openDialog = async (dbRole: ProjectRole | null, roleName: string) => {
+    if (dbRole) {
+      setAssignDialog({ open: true, role: dbRole });
+      return;
+    }
+    // Role doesn't exist in DB yet — create it first
+    setCreating(roleName);
+    try {
+      const newRole = await createRole(roleName);
+      setAssignDialog({ open: true, role: newRole });
+    } catch {
+      // ignore — createRole shows its own error
+    } finally {
+      setCreating(null);
+    }
   };
 
   return (
@@ -316,23 +329,23 @@ function ProjectTeamSection({ projectId }: { projectId: string }) {
             const displayName = person
               ? `${person.first_name} ${person.last_name}`.trim()
               : null;
-            const isClickable = !!dbRole;
+            const isCreating = creating === roleName;
 
             return (
               <button
                 key={roleName}
                 type="button"
-                onClick={() => openDialog(dbRole)}
-                disabled={!isClickable}
+                onClick={() => openDialog(dbRole, roleName)}
+                disabled={isCreating}
                 className={cn(
                   "w-full flex items-center gap-3 border-b border-border/50 py-2.5 last:border-0 text-left",
-                  isClickable && "group hover:bg-muted/40 -mx-3 px-3 rounded-md transition-colors cursor-pointer"
+                  "group hover:bg-muted/40 -mx-3 px-3 rounded-md transition-colors cursor-pointer"
                 )}
               >
                 {person ? (
                   <>
                     <Avatar className="h-8 w-8 shrink-0 rounded-full">
-                      <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                      <AvatarFallback className="text-xs bg-primary-surface text-primary">
                         {initials(displayName ?? roleName)}
                       </AvatarFallback>
                     </Avatar>
@@ -351,9 +364,9 @@ function ProjectTeamSection({ projectId }: { projectId: string }) {
                       <p className="truncate text-sm text-muted-foreground italic">Not Assigned</p>
                       <p className="mt-0.5 truncate text-xs text-muted-foreground">{roleName}</p>
                     </div>
-                    {isClickable && (
-                      <span className="shrink-0 text-xs text-primary">Assign</span>
-                    )}
+                    <span className="shrink-0 text-xs text-primary">
+                      {isCreating ? "..." : "Assign"}
+                    </span>
                   </>
                 )}
               </button>

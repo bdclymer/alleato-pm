@@ -1,5 +1,6 @@
 {
   "framework": "nextjs",
+  "toolbar": false,
   "installCommand": "pnpm install --frozen-lockfile --ignore-scripts",
   "buildCommand": "rm -rf .next && NODE_OPTIONS='--max-old-space-size=7168' pnpm run build",
   "crons": [

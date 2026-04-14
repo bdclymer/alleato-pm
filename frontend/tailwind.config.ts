@@ -75,6 +75,7 @@ export default {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
+          surface: "hsl(var(--primary) / 0.15)", /* subtle tinted bg: avatars, table headers, chips */
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",

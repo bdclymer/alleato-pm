@@ -238,22 +238,20 @@ function ColumnHeader({ lines, columnKey }: ColumnHeaderProps) {
       <TooltipContent
         side="bottom"
         align="center"
-        className="max-w-sm space-y-3 text-left text-sm leading-relaxed"
+        className="max-w-xs space-y-1.5 text-left text-xs leading-relaxed"
       >
-        <div className="space-y-0.5">
-          <p className="text-lg font-semibold">{tooltip.formula}</p>
-          {tooltip.type && <p className="text-sm text-muted-foreground">{tooltip.type}</p>}
-        </div>
+        <p className="font-medium text-foreground">{tooltip.formula}</p>
+        {tooltip.type && <p className="text-muted-foreground">{tooltip.type}</p>}
         {(tooltip.sectionTitle || tooltip.sections?.length) && <div className="h-px w-full bg-border/60" />}
         {tooltip.sectionTitle ? (
-          <p className="text-base font-semibold">{tooltip.sectionTitle}</p>
+          <p className="font-medium">{tooltip.sectionTitle}</p>
         ) : null}
         {tooltip.sections?.length ? (
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             {tooltip.sections.map((section) => (
               <div key={section.label}>
-                <p className="font-semibold">{section.label}</p>
-                <ul className="list-disc space-y-0.5 pl-5">
+                <p className="font-medium">{section.label}</p>
+                <ul className="list-disc space-y-0.5 pl-4">
                   {section.items.map((item) => (
                     <li key={`${section.label}-${item}`}>{item}</li>
                   ))}
@@ -263,7 +261,7 @@ function ColumnHeader({ lines, columnKey }: ColumnHeaderProps) {
           </div>
         ) : null}
         {tooltip.details?.length ? (
-          <ul className="list-disc space-y-1 pl-5">
+          <ul className="list-disc space-y-0.5 pl-4">
             {tooltip.details.map((detail) => (
               <li key={detail}>{detail}</li>
             ))}

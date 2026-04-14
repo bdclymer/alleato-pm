@@ -403,8 +403,17 @@ export function BudgetLineItemCreatorModal({
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to create budget code");
+        const errorData = await response.json();
+        if (response.status === 409) {
+          const costTypeLabel = getCostTypeLabel(newCodeData.costType);
+          toast.error(
+            `Budget code "${selectedCostCode.title} – ${costTypeLabel}" already exists for this project. Select it from the dropdown instead.`,
+          );
+          setShowCreateCodeModal(false);
+          setNewCodeData({ costCodeId: "", costType: "" });
+          return;
+        }
+        throw new Error(errorData.error || "Failed to create budget code");
       }
 
       const { budgetCode: createdCode } = await response.json();
@@ -512,8 +521,32 @@ export function BudgetLineItemCreatorModal({
     }
   };
 
-  const filteredCodes = budgetCodes.filter((code) =>
-    code.fullLabel.toLowerCase().includes(searchQuery.toLowerCase())
+  // Deduplicate budget codes (same code + costType) and filter out codes already selected in other rows
+  const deduplicatedCodes = React.useMemo(() => {
+    const seen = new Set<string>();
+    return budgetCodes.filter((code) => {
+      const key = `${code.code}|${code.costTypeId ?? ""}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [budgetCodes]);
+
+  const getAvailableCodesForRow = React.useCallback(
+    (rowIndex: number) => {
+      // Collect budget code IDs already selected in OTHER rows
+      const selectedIds = new Set(
+        rows
+          .filter((r, i) => i !== rowIndex && r.budgetCodeId)
+          .map((r) => r.budgetCodeId),
+      );
+      return deduplicatedCodes.filter(
+        (code) =>
+          !selectedIds.has(code.id) &&
+          code.fullLabel.toLowerCase().includes(searchQuery.toLowerCase()),
+      );
+    },
+    [deduplicatedCodes, rows, searchQuery],
   );
 
   const toggleDivision = (division: string) => {
@@ -669,7 +702,7 @@ export function BudgetLineItemCreatorModal({
                                         {loadingCodes ? "Loading..." : "No budget codes found."}
                                       </CommandEmpty>
                                       <CommandGroup>
-                                        {filteredCodes.map((code) => (
+                                        {getAvailableCodesForRow(index).map((code) => (
                                           <CommandItem
                                             key={code.id}
                                             value={code.fullLabel}
@@ -746,15 +779,9 @@ export function BudgetLineItemCreatorModal({
                             </td>
 
                             <td className="py-2 pr-2 align-top pt-3 w-36">
-                              <MoneyField
-                                label="Amount"
-                                value={row.amount ? parseFloat(String(row.amount)) : undefined}
-                                onChange={() => {}}
-                                inline
-                                showCurrency={false}
-                                className="h-8 font-medium bg-muted/20 border-border/50 text-muted-foreground cursor-default"
-                                disabled={isCreating}
-                              />
+                              <div className="h-8 flex items-center justify-end px-3 tabular-nums font-medium text-foreground pointer-events-none select-none">
+                                ${parseFloat(row.amount || "0").toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </div>
                               {negativeAmountRows.has(index) && (
                                 <p className="text-xs text-amber-600 dark:text-amber-400 mt-1 flex items-center gap-1">
                                   <AlertTriangle className="h-3 w-3 shrink-0" />

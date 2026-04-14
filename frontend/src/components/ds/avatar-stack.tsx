@@ -27,7 +27,7 @@ export function AvatarStack({
         <div
           key={i}
           className={cn(
-            "flex items-center justify-center rounded-full bg-primary/15 font-medium text-primary ring-2 ring-background",
+            "flex items-center justify-center rounded-full bg-primary-surface font-medium text-primary ring-2 ring-background",
             sizeClasses
           )}
         >

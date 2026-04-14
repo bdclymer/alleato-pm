@@ -52,7 +52,7 @@ export function DataTable<T extends { id: string | number }>({
   return (
     <div className={cn("w-full overflow-x-auto", className)}>
       <table className="w-full">
-        <thead className="bg-primary/10">
+        <thead className="bg-primary-surface">
           <tr className="border-b border-border">
             {columns.map((col) => (
               <th

@@ -162,6 +162,7 @@ export default async function ProjectHomePage({
     verticalMarkupCountResult,
     primeCosWithoutChangeRequestCountResult,
     commitmentCosWithoutChangeRequestCountResult,
+    submittalsResult,
   ] = await Promise.all([
     // Fetch main project data
     supabase.from("projects").select("*").eq("id", numericProjectId).single(),
@@ -321,6 +322,16 @@ export default async function ProjectHomePage({
       .select("id, prime_contracts!inner(project_id)", { count: "exact", head: true })
       .eq("prime_contracts.project_id", numericProjectId)
       .is("change_event_id", null),
+
+    // Fetch open submittals
+    supabase
+      .from("submittals")
+      .select("*")
+      .eq("project_id", numericProjectId)
+      .is("deleted_at", null)
+      .not("status", "eq", "Closed")
+      .order("updated_at", { ascending: false })
+      .limit(20),
   ]);
 
   if (projectResult.error || !projectResult.data) {
@@ -435,6 +446,7 @@ export default async function ProjectHomePage({
   };
   const contractLineItems = contractLineItemsResult.data || [];
   const budget = budgetResult.data || [];
+  const submittals = submittalsResult.data || [];
   const changeEvents = changeEventsResult.data || [];
   const schedule = scheduleResult.data || [];
   const teamFromRpc = teamResult.data || [];
@@ -470,6 +482,7 @@ export default async function ProjectHomePage({
         changeEvents={changeEvents}
         schedule={schedule}
         team={team}
+        submittals={submittals}
         homeAlerts={homeAlerts}
         pendingSsovReviews={pendingSsovReviews}
       />

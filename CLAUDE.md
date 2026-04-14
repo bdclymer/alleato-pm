@@ -2,6 +2,24 @@
 
 This file provides guidance to Claude Code when working with code in this repository.
 
+## Mandatory Rules
+
+**Rule 1:** Do not ship silent failures.
+**Rule 2:** Do not return generic errors.
+**Rule 3:** Do not fix a recurring bug without adding a guardrail.
+**Rule 4:** Do not introduce one-off handling when a shared abstraction is warranted.
+**Rule 5:** For every failure, explain cause, detection gap, and prevention step.
+**Rule 6:** Before closing any task, ask: “How does this fail loudly?”
+**Rule 7:** Before closing any bug, ask: “What makes this never happen again?”
+
+> Do not give me another isolated fix. Standardize this at the system level. Add shared error handling, structured logging, actionable notifications, a regression test, and the appropriate pre-deploy or post-deploy guardrail. Also tell me what would have caught this before I did.
+
+### Every issue falls into one of these buckets:
+
+* **Should have been prevented** → add validation / constraints
+* **Should have been caught pre-deploy** → add tests / CI
+* **Should have been caught post-deploy** → add monitoring
+
 ## Must Reference
 
 - Design.md - **Read this before building any page or component.**
