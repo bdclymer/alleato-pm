@@ -7,6 +7,7 @@ import { CreateProjectDevConfigProvider } from "@/components/project/create-proj
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { SiteHeader } from "@/components/header";
 import { ProcoreReferencePanel } from "@/components/header/procore-reference-panel";
+import { CommentsSidebarPanel } from "@/components/header/comments-sidebar";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { LiveCursors } from "@/components/live-cursors/LiveCursors";
 // AdminFeedbackWidget replaced by UnifiedFeedbackWidget in root layout
@@ -53,15 +54,20 @@ export default function MainLayout({
       <SidebarInset className="h-svh overflow-hidden">
         <CreateProjectDevConfigProvider>
           {!isDrawingViewer && <SiteHeader />}
-          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-            <main
-              className="flex flex-1 flex-col overflow-auto scrollbar-hide min-w-0 min-h-0"
-              {...feedbackTargetProps("app.main-content")}
-            >
-              {children}
-            </main>
-            <ProcoreReferencePanel />
-            {!isDrawingViewer && <SiteFooter />}
+          <div className="flex min-h-0 flex-1 overflow-hidden">
+            <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+              <main
+                className="flex flex-1 flex-col overflow-auto scrollbar-hide min-w-0 min-h-0"
+                {...feedbackTargetProps("app.main-content")}
+              >
+                {children}
+              </main>
+              <ProcoreReferencePanel />
+              {!isDrawingViewer && <SiteFooter />}
+            </div>
+            <React.Suspense fallback={null}>
+              <CommentsSidebarPanel />
+            </React.Suspense>
           </div>
         </CreateProjectDevConfigProvider>
         <Overlays />

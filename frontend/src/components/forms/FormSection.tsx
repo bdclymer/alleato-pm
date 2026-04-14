@@ -1,6 +1,21 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
+type FormSectionSpacing = "default" | "compact";
+
+const spacingStyles: Record<FormSectionSpacing, { section: string; divider: string; noDivider: string }> = {
+  default: {
+    section:   "space-y-6 pb-8",
+    divider:   "border-t border-border/70 pt-8 first:border-t-0 first:pt-0",
+    noDivider: "pt-8 first:pt-0",
+  },
+  compact: {
+    section:   "space-y-4 pb-6",
+    divider:   "border-t border-border/70 pt-6 first:border-t-0 first:pt-0",
+    noDivider: "pt-6 first:pt-0",
+  },
+};
+
 interface FormSectionProps {
   title: string;
   description?: string;
@@ -8,6 +23,7 @@ interface FormSectionProps {
   actions?: React.ReactNode;
   className?: string;
   showDivider?: boolean;
+  spacing?: FormSectionSpacing;
 }
 
 export function FormSection({
@@ -17,14 +33,14 @@ export function FormSection({
   actions,
   className,
   showDivider = true,
+  spacing = "default",
 }: FormSectionProps) {
+  const s = spacingStyles[spacing];
   return (
     <section
       className={cn(
-        "space-y-6 pb-8",
-        showDivider
-          ? "border-t border-border/70 pt-8 first:border-t-0 first:pt-0"
-          : "pt-8 first:pt-0",
+        s.section,
+        showDivider ? s.divider : s.noDivider,
         className,
       )}
     >

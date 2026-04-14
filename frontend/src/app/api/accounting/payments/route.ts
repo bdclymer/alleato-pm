@@ -1,10 +1,20 @@
 import { NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 
-export async function GET() {
+export const GET = withApiGuardrails("/api/accounting/payments#GET", async () => {
   const user = await getApiRouteUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!user) {
+    throw new GuardrailError({
+      code: "AUTH_EXPIRED",
+      where: "/api/accounting/payments#GET",
+      message: "Unauthorized accounting payments request.",
+      status: 401,
+      severity: "medium",
+    });
+  }
 
   const supabase = createServiceClient();
 
@@ -19,8 +29,25 @@ export async function GET() {
       .select("payment_reference_nbr, invoice_reference_nbr, amount_applied"),
   ]);
 
-  if (paymentsResult.error) return NextResponse.json({ error: paymentsResult.error.message }, { status: 500 });
-  if (applicationsResult.error) return NextResponse.json({ error: applicationsResult.error.message }, { status: 500 });
+  if (paymentsResult.error) {
+    throw new GuardrailError({
+      code: "INTERNAL_ERROR",
+      where: "/api/accounting/payments#GET",
+      message: "Failed to load accounting payments.",
+      details: { reason: paymentsResult.error.message },
+      cause: paymentsResult.error,
+    });
+  }
+
+  if (applicationsResult.error) {
+    throw new GuardrailError({
+      code: "INTERNAL_ERROR",
+      where: "/api/accounting/payments#GET",
+      message: "Failed to load accounting payment applications.",
+      details: { reason: applicationsResult.error.message },
+      cause: applicationsResult.error,
+    });
+  }
 
   // Build a map: payment_reference_nbr → [{invoiceRef, amount}]
   const invoiceMap = new Map<string, Array<{ invoiceRef: string; amount: number }>>();
@@ -45,4 +72,4 @@ export async function GET() {
   }));
 
   return NextResponse.json(enriched);
-}
+});

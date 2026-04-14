@@ -1,0 +1,440 @@
+name: Codex Fix Issue
+
+on:
+  issues:
+    types: [labeled]
+
+concurrency:
+  group: codex-fix-issue-${{ github.event.issue.number }}
+  cancel-in-progress: true
+
+jobs:
+  codex-fix:
+    if: github.event.label.name == 'codex:fix'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: |
+            pnpm-lock.yaml
+            frontend/pnpm-lock.yaml
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.13.1
+
+      - name: Prepare issue context
+        id: prepare
+        uses: actions/github-script@v7
+        env:
+          RUNNER_TEMP: ${{ runner.temp }}
+        with:
+          script: |
+            const core = require("@actions/core");
+            const fs = require("fs");
+            const path = require("path");
+
+            const issue = context.payload.issue;
+            const cleanBody = (issue.body || "").replace(/<!--[\s\S]*?-->/g, "").trim();
+
+            function section(title) {
+              const escaped = title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+              const regex = new RegExp(`### ${escaped}\\s*([\\s\\S]*?)(?=\\n### |$)`, "i");
+              const match = cleanBody.match(regex);
+              return match ? match[1].trim() : "";
+            }
+
+            function normalizeSlug(value) {
+              return value
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, "-")
+                .replace(/^-+|-+$/g, "")
+                .slice(0, 48);
+            }
+
+            const automationScope = section("Automation scope");
+            const problem = section("Problem statement");
+            const expected = section("Expected behavior");
+            const repro = section("Reproduction");
+            const acceptance = section("Acceptance criteria");
+            const allowedPaths = section("Allowed edit paths");
+            const guardrail = section("Required guardrail");
+
+            const missing = [];
+            for (const [label, value] of Object.entries({
+              "Automation scope": automationScope,
+              "Problem statement": problem,
+              "Expected behavior": expected,
+              "Reproduction": repro,
+              "Acceptance criteria": acceptance,
+              "Allowed edit paths": allowedPaths,
+              "Required guardrail": guardrail,
+            })) {
+              if (!value) missing.push(label);
+            }
+
+            const blockedReasons = [];
+            if (missing.length > 0) {
+              blockedReasons.push(`Issue template is incomplete. Missing sections: ${missing.join(", ")}.`);
+            }
+
+            if (automationScope.toLowerCase() !== "frontend") {
+              blockedReasons.push("This workflow only supports `Frontend` automation scope in its first version.");
+            }
+
+            const allowedPathLines = allowedPaths
+              .split("\n")
+              .map((line) => line.trim())
+              .filter(Boolean);
+
+            const invalidAllowedPaths = allowedPathLines.filter((line) => !/^frontend\/(src|tests)\//.test(line));
+            if (invalidAllowedPaths.length > 0) {
+              blockedReasons.push(
+                `Allowed edit paths must stay under \`frontend/src/\` or \`frontend/tests/\`. Invalid paths: ${invalidAllowedPaths.join(", ")}.`,
+              );
+            }
+
+            const normalizedTitle = (issue.title || `issue-${issue.number}`)
+              .replace(/^\[codex fix\]:\s*/i, "")
+              .trim();
+            const issueSlug = normalizeSlug(normalizedTitle || `issue-${issue.number}`);
+            const branchName = `codex/issue-${issue.number}-${issueSlug || "fix"}`;
+
+            const issueContext = [
+              "# GitHub Issue Context",
+              "",
+              `Issue Number: #${issue.number}`,
+              `Issue Title: ${issue.title}`,
+              `Issue URL: ${issue.html_url}`,
+              `Automation Scope: ${automationScope || "unknown"}`,
+              "Allowed Edit Paths:",
+              ...allowedPathLines.map((line) => `- ${line}`),
+              "",
+              "## Problem statement",
+              problem || "_missing_",
+              "",
+              "## Expected behavior",
+              expected || "_missing_",
+              "",
+              "## Reproduction",
+              repro || "_missing_",
+              "",
+              "## Acceptance criteria",
+              acceptance || "_missing_",
+              "",
+              "## Required guardrail",
+              guardrail || "_missing_",
+              "",
+              "## Fixed validation commands",
+              "- pnpm --dir frontend install --frozen-lockfile",
+              "- pnpm --dir frontend run quality",
+              "- pnpm run check:routes",
+              "",
+            ].join("\n");
+
+            const promptPath = path.join(process.env.RUNNER_TEMP, "codex-issue-context.md");
+            fs.writeFileSync(promptPath, issueContext);
+
+            const blockerComment = blockedReasons.length
+              ? [
+                  "Codex did not start because the issue is not safely automatable yet.",
+                  "",
+                  "Cause:",
+                  blockedReasons.map((reason) => `- ${reason}`).join("\n"),
+                  "",
+                  "Detection gap:",
+                  "- The issue payload did not provide a fully constrained frontend-only task that this workflow can validate safely.",
+                  "",
+                  "Prevention step:",
+                  "- Use the `Codex Fixable Frontend Bug` issue form and keep edits limited to `frontend/src/**` and `frontend/tests/**`.",
+                ].join("\n")
+              : "";
+
+            core.setOutput("blocked", blockedReasons.length > 0 ? "true" : "false");
+            core.setOutput("blocker_comment", blockerComment);
+            core.setOutput("branch_name", branchName);
+            core.setOutput("issue_title", normalizedTitle);
+            core.setOutput("issue_context_path", promptPath);
+
+      - name: Build Codex prompt
+        if: steps.prepare.outputs.blocked != 'true'
+        env:
+          ISSUE_CONTEXT_PATH: ${{ steps.prepare.outputs.issue_context_path }}
+          RUNNER_TEMP: ${{ runner.temp }}
+        run: |
+          cp .github/codex/prompts/fix-issue.md "$RUNNER_TEMP/codex-prompt.md"
+          printf '\n\n' >> "$RUNNER_TEMP/codex-prompt.md"
+          cat "$ISSUE_CONTEXT_PATH" >> "$RUNNER_TEMP/codex-prompt.md"
+
+      - name: Start blocker artifact directory
+        if: steps.prepare.outputs.blocked != 'true'
+        run: mkdir -p .github/codex-artifacts
+
+      - name: Run Codex
+        if: steps.prepare.outputs.blocked != 'true'
+        id: run_codex
+        continue-on-error: true
+        uses: openai/codex-action@v1
+        with:
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          prompt-file: ${{ runner.temp }}/codex-prompt.md
+          output-file: .github/codex-artifacts/final-message.md
+          model: gpt-5.4
+          effort: high
+          sandbox: workspace-write
+          safety-strategy: drop-sudo
+          codex-args: '["--full-auto"]'
+
+      - name: Check changed files
+        if: steps.prepare.outputs.blocked != 'true' && steps.run_codex.outcome == 'success'
+        id: diff
+        shell: bash
+        run: |
+          mapfile -t all_changed < <(git diff --name-only --diff-filter=ACMR)
+          changed=()
+
+          for file in "${all_changed[@]}"; do
+            if [[ "$file" == .github/codex-artifacts/* ]]; then
+              continue
+            fi
+            changed+=("$file")
+          done
+
+          if [ "${#changed[@]}" -eq 0 ]; then
+            echo "no_changes=true" >> "$GITHUB_OUTPUT"
+            echo "allowed=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          invalid=()
+          for file in "${changed[@]}"; do
+            if [[ "$file" == .github/codex-artifacts/* ]]; then
+              continue
+            fi
+            if [[ ! "$file" =~ ^frontend/src/ && ! "$file" =~ ^frontend/tests/ ]]; then
+              invalid+=("$file")
+            fi
+          done
+
+          if [ "${#invalid[@]}" -gt 0 ]; then
+            {
+              echo "allowed=false"
+              echo "invalid_files<<EOF"
+              printf '%s\n' "${invalid[@]}"
+              echo "EOF"
+            } >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          {
+            echo "no_changes=false"
+            echo "allowed=true"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Install frontend dependencies
+        if: steps.prepare.outputs.blocked != 'true' && steps.run_codex.outcome == 'success' && steps.diff.outputs.no_changes != 'true' && steps.diff.outputs.allowed == 'true'
+        run: pnpm --dir frontend install --frozen-lockfile
+
+      - name: Validate Codex changes
+        if: steps.prepare.outputs.blocked != 'true' && steps.run_codex.outcome == 'success' && steps.diff.outputs.no_changes != 'true' && steps.diff.outputs.allowed == 'true'
+        id: validate
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          {
+            echo '$ pnpm --dir frontend run quality'
+            pnpm --dir frontend run quality
+            echo
+            echo '$ pnpm run check:routes'
+            pnpm run check:routes
+          } 2>&1 | tee .github/codex-artifacts/validation.log
+
+      - name: Prepare PR body
+        if: steps.prepare.outputs.blocked != 'true' && steps.run_codex.outcome == 'success' && steps.diff.outputs.no_changes != 'true' && steps.diff.outputs.allowed == 'true' && steps.validate.outcome == 'success'
+        env:
+          RUNNER_TEMP: ${{ runner.temp }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_TITLE: ${{ steps.prepare.outputs.issue_title }}
+        shell: bash
+        run: |
+          {
+            echo "# Automated Codex Fix"
+            echo
+            echo "Resolves #$ISSUE_NUMBER"
+            echo
+            if [ -f .github/codex-artifacts/SUMMARY.md ]; then
+              cat .github/codex-artifacts/SUMMARY.md
+              echo
+            fi
+            cat .github/codex/templates/pr-body.md
+          } > "$RUNNER_TEMP/codex-pr-body.md"
+
+      - name: Upload Codex artifacts
+        if: always() && steps.prepare.outputs.blocked != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: codex-issue-${{ github.event.issue.number }}-artifacts
+          path: .github/codex-artifacts/
+          if-no-files-found: ignore
+
+      - name: Comment with blocker details
+        if: |
+          always() &&
+          (
+            steps.prepare.outputs.blocked == 'true' ||
+            steps.run_codex.outcome == 'failure' ||
+            steps.diff.outputs.allowed == 'false' ||
+            steps.diff.outputs.no_changes == 'true' ||
+            steps.validate.outcome == 'failure'
+          )
+        uses: actions/github-script@v7
+        env:
+          BLOCKED: ${{ steps.prepare.outputs.blocked }}
+          BLOCKER_COMMENT: ${{ steps.prepare.outputs.blocker_comment }}
+          CODEX_OUTCOME: ${{ steps.run_codex.outcome }}
+          DIFF_ALLOWED: ${{ steps.diff.outputs.allowed }}
+          DIFF_INVALID_FILES: ${{ steps.diff.outputs.invalid_files }}
+          DIFF_NO_CHANGES: ${{ steps.diff.outputs.no_changes }}
+        with:
+          script: |
+            const fs = require("fs");
+
+            let body = "";
+
+            if (process.env.BLOCKED === "true") {
+              body = process.env.BLOCKER_COMMENT;
+            } else if (process.env.CODEX_OUTCOME === "failure") {
+              const finalMessagePath = ".github/codex-artifacts/final-message.md";
+              const finalMessage = fs.existsSync(finalMessagePath)
+                ? fs.readFileSync(finalMessagePath, "utf8").trim()
+                : "Codex exited before producing a final message.";
+
+              body = [
+                "Codex attempted the fix but did not complete successfully.",
+                "",
+                "Cause:",
+                `- ${finalMessage}`,
+                "",
+                "Detection gap:",
+                "- The workflow has no stronger preflight signal for this failure mode than the Codex run itself.",
+                "",
+                "Prevention step:",
+                "- Tighten the issue scope further or split the issue into a smaller frontend-only fix with explicit acceptance criteria.",
+              ].join("\n");
+            } else if (process.env.DIFF_ALLOWED === "false") {
+              body = [
+                "Codex changes were rejected before PR creation.",
+                "",
+                "Cause:",
+                "- Codex edited files outside the allowed frontend scope.",
+                process.env.DIFF_INVALID_FILES ? `- Invalid files:\n${process.env.DIFF_INVALID_FILES}` : "",
+                "",
+                "Detection gap:",
+                "- The issue scope was not narrow enough to keep the agent inside the approved file boundaries.",
+                "",
+                "Prevention step:",
+                "- Narrow the allowed paths in the issue and reserve this automation for focused frontend bugs.",
+              ].filter(Boolean).join("\n");
+            } else if (process.env.DIFF_NO_CHANGES === "true") {
+              const blockedPath = ".github/codex-artifacts/BLOCKED.md";
+              const blocked = fs.existsSync(blockedPath)
+                ? fs.readFileSync(blockedPath, "utf8").trim()
+                : "Codex finished without making changes.";
+
+              body = [
+                "Codex did not open a PR because no code changes were produced.",
+                "",
+                blocked,
+              ].join("\n");
+            } else {
+              const validationPath = ".github/codex-artifacts/validation.log";
+              const validationLog = fs.existsSync(validationPath)
+                ? fs.readFileSync(validationPath, "utf8").trim().split("\n").slice(-60).join("\n")
+                : "Validation log not found.";
+
+              body = [
+                "Codex produced a candidate fix, but validation failed so no PR was created.",
+                "",
+                "Cause:",
+                "- Repo validation failed after Codex edits.",
+                "",
+                "Detection gap:",
+                "- The workflow could not prove the issue was fixed without violating repo quality gates.",
+                "",
+                "Prevention step:",
+                "- Add or tighten issue acceptance criteria so the fix path stays aligned with existing frontend checks.",
+                "",
+                "Validation excerpt:",
+                "```text",
+                validationLog,
+                "```",
+              ].join("\n");
+            }
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body,
+            });
+
+      - name: Remove Codex runtime artifacts from diff
+        if: steps.prepare.outputs.blocked != 'true' && steps.run_codex.outcome == 'success'
+        shell: bash
+        run: |
+          rm -rf .github/codex-artifacts
+          git clean -fd .github/codex-artifacts || true
+
+      - name: Create draft pull request
+        if: steps.prepare.outputs.blocked != 'true' && steps.run_codex.outcome == 'success' && steps.diff.outputs.no_changes != 'true' && steps.diff.outputs.allowed == 'true' && steps.validate.outcome == 'success'
+        id: create_pr
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: ${{ steps.prepare.outputs.branch_name }}
+          title: "fix: ${{ steps.prepare.outputs.issue_title }} (#${{ github.event.issue.number }})"
+          body-path: ${{ runner.temp }}/codex-pr-body.md
+          commit-message: "fix: ${{ steps.prepare.outputs.issue_title }} (#${{ github.event.issue.number }})"
+          draft: true
+          delete-branch: true
+          labels: |
+            codex
+            automated-pr
+
+      - name: Comment with draft PR link
+        if: steps.prepare.outputs.blocked != 'true' && steps.run_codex.outcome == 'success' && steps.diff.outputs.no_changes != 'true' && steps.diff.outputs.allowed == 'true' && steps.validate.outcome == 'success'
+        uses: actions/github-script@v7
+        env:
+          PULL_REQUEST_NUMBER: ${{ steps.create_pr.outputs.pull-request-number }}
+          PULL_REQUEST_URL: ${{ steps.create_pr.outputs.pull-request-url }}
+        with:
+          script: |
+            const core = require("@actions/core");
+            const prNumber = process.env.PULL_REQUEST_NUMBER;
+            const prUrl = process.env.PULL_REQUEST_URL;
+
+            if (!prNumber || !prUrl) {
+              core.setFailed("Draft PR metadata was not returned by create-pull-request.");
+              return;
+            }
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `Codex opened draft PR #${prNumber}: ${prUrl}`,
+            });

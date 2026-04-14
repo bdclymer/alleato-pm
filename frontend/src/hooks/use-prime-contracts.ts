@@ -4,48 +4,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api-client";
 import type { CreateContractInput, UpdateContractInput } from "@/app/api/projects/[projectId]/contracts/validation";
-
-// =============================================================================
-// Types
-// =============================================================================
-
-export interface PrimeContract {
-  id: string;
-  project_id: number;
-  contract_number: string;
-  title: string;
-  client_id: string | null;
-  vendor_id: string | null;
-  contractor_id: string | null;
-  architect_engineer_id: string | null;
-  description: string | null;
-  status: string;
-  executed: boolean;
-  executed_at: string | null;
-  original_contract_value: number;
-  revised_contract_value: number;
-  start_date: string | null;
-  end_date: string | null;
-  substantial_completion_date: string | null;
-  actual_completion_date: string | null;
-  signed_contract_received_date: string | null;
-  contract_termination_date: string | null;
-  retention_percentage: number | null;
-  is_private: boolean;
-  inclusions: string | null;
-  exclusions: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-interface PrimeContractListResponse {
-  data: PrimeContract[];
-  meta?: {
-    total: number;
-    page: number;
-    limit: number;
-  };
-}
+import {
+  primeContractsSchema,
+  type PrimeContract,
+} from "@/lib/validation/prime-contracts";
 
 // =============================================================================
 // Query Keys
@@ -74,9 +36,20 @@ export function usePrimeContracts(
   const queryString = searchParams.toString();
   const url = `/api/projects/${projectId}/contracts${queryString ? `?${queryString}` : ""}`;
 
-  return useQuery<PrimeContractListResponse>({
+  return useQuery<PrimeContract[]>({
     queryKey: primeContractKeys.list(projectId, params),
-    queryFn: () => apiFetch<PrimeContractListResponse>(url),
+    queryFn: async () => {
+      const payload = await apiFetch<
+        PrimeContract[] | { data: PrimeContract[] }
+      >(url);
+
+      const contracts = Array.isArray(payload) ? payload : payload.data;
+      const parsed = primeContractsSchema.safeParse(contracts);
+      if (!parsed.success) {
+        throw new Error("Invalid prime contracts response format");
+      }
+      return parsed.data;
+    },
     enabled: !!projectId,
   });
 }

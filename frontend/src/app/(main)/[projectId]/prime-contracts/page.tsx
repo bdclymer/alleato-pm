@@ -37,10 +37,10 @@ import {
   type PccoSummary,
   type PcoSummary,
 } from "@/features/prime-contracts/prime-contracts-table-config";
-import {
-  primeContractsSchema,
-  type PrimeContract,
-} from "@/lib/validation/prime-contracts";
+import { type PrimeContract } from "@/lib/validation/prime-contracts";
+import { fetchWithTransientRouteRetry } from "@/lib/fetch-with-transient-route-retry";
+import { apiFetch, summarizeBulkResults } from "@/lib/api-client";
+import { usePrimeContracts } from "@/hooks/use-prime-contracts";
 
 const EMPTY_FILTERS: Record<string, FilterValue> = {
   status: undefined,
@@ -58,6 +58,7 @@ export default function ProjectContractsPage(): ReactElement {
   const searchParams = useSearchParams();
   const params = useParams<{ projectId: string }>();
   const projectId = params.projectId ?? "";
+  const projectIdNumber = Number(projectId);
 
   useProjectTitle("Prime Contracts");
 
@@ -86,9 +87,6 @@ export default function ProjectContractsPage(): ReactElement {
     },
   });
 
-  const [contracts, setContracts] = React.useState<PrimeContract[]>([]);
-  const [isLoading, setIsLoading] = React.useState(true);
-  const [error, setError] = React.useState<Error | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [contractToDelete, setContractToDelete] = React.useState<PrimeContract | null>(null);
   const [isDeleting, setIsDeleting] = React.useState(false);
@@ -117,12 +115,10 @@ export default function ProjectContractsPage(): ReactElement {
       if (!pccoCache[contractId]) {
         setPccoCache((prev) => ({ ...prev, [contractId]: { loading: true, data: [], pcos: [] } }));
         try {
-          const [pccoRes, pcoRes] = await Promise.all([
-            fetch(`/api/projects/${projectId}/prime-contract-change-orders`),
-            fetch(`/api/projects/${projectId}/prime-contract-pcos?prime_contract_id=${contractId}`),
+          const [allPccos, allPcos] = await Promise.all([
+            apiFetch<Array<{ id: number; prime_contract_id: string | null; pcco_number: string | null; title: string | null; status: string | null; total_amount: number | null }>>(`/api/projects/${projectId}/prime-contract-change-orders`),
+            apiFetch<Array<{ id: string; prime_contract_id: string | null; pco_number: string | null; title: string | null; status: string | null; total_amount: number | null }>>(`/api/projects/${projectId}/prime-contract-pcos?prime_contract_id=${contractId}`),
           ]);
-          const allPccos: Array<{ id: number; prime_contract_id: string | null; pcco_number: string | null; title: string | null; status: string | null; total_amount: number | null }> = pccoRes.ok ? await pccoRes.json() : [];
-          const allPcos: Array<{ id: string; prime_contract_id: string | null; pco_number: string | null; title: string | null; status: string | null; total_amount: number | null }> = pcoRes.ok ? await pcoRes.json() : [];
           const filteredPccos = allPccos.filter((p) => p.prime_contract_id == null || String(p.prime_contract_id) === String(contractId));
           setPccoCache((prev) => ({ ...prev, [contractId]: { loading: false, data: filteredPccos, pcos: allPcos } }));
         } catch {
@@ -158,45 +154,51 @@ export default function ProjectContractsPage(): ReactElement {
     tableState.setSearchParams({ view: "list" });
   }, [tableState.currentView, tableState.setCurrentView, tableState.setSearchParams]);
 
-  React.useEffect(() => {
-    const fetchContracts = async () => {
-      if (!projectId) return;
-
-      try {
-        setIsLoading(true);
-        setError(null);
-        const response = await fetch(`/api/projects/${projectId}/contracts`);
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const json = await response.json();
-        const parsed = primeContractsSchema.safeParse(json);
-        if (!parsed.success) {
-          throw new Error("Failed to parse contracts response");
-        }
-
-        setContracts(parsed.data);
-      } catch (err) {
-        const message =
-          err instanceof Error ? err.message : "Failed to load contracts";
-        setError(err instanceof Error ? err : new Error(message));
-        toast.error("Failed to load contracts");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchContracts();
-  }, [projectId]);
-
   const activeFilters = tableState.activeFilters as FilterState;
 
   const statusFilter = activeFilters.status as ContractStatus | undefined;
   const executedFilter = activeFilters.executed as string | undefined;
   const clientNameFilter = activeFilters.client_name as string | undefined;
   const searchTerm = tableState.debouncedSearch.trim().toLowerCase();
+  const {
+    data: contracts = [],
+    isLoading,
+    error: contractsError,
+    refetch: refetchContracts,
+  } = usePrimeContracts(projectIdNumber, {
+    status: statusFilter,
+    search: searchTerm || undefined,
+  });
+
+  React.useEffect(() => {
+    if (!contractsError) return;
+    toast.error(
+      contractsError instanceof Error
+        ? contractsError.message
+        : "Failed to load contracts",
+    );
+  }, [contractsError]);
+
+  React.useEffect(() => {
+    if (!projectId || contracts.length === 0) return;
+
+    // Warm routes/endpoints once so first navigation doesn't race module compilation.
+    const firstContractId = contracts[0]?.id;
+    if (!firstContractId) return;
+
+    router.prefetch(`/${projectId}/prime-contracts/${firstContractId}`);
+    void Promise.allSettled([
+      fetchWithTransientRouteRetry(
+        `/api/projects/${projectId}/contracts/settings`,
+      ),
+      fetchWithTransientRouteRetry(
+        `/api/projects/${projectId}/contracts/${firstContractId}`,
+      ),
+      fetchWithTransientRouteRetry(
+        `/api/projects/${projectId}/contracts/${firstContractId}/line-items`,
+      ),
+    ]);
+  }, [contracts, projectId, router]);
 
   // Build dynamic client_name filter options from loaded data
   const dynamicFilters = React.useMemo(() => {
@@ -313,20 +315,15 @@ export default function ProjectContractsPage(): ReactElement {
     if (!contractToDelete) return;
 
     setIsDeleting(true);
+    const deletingId = contractToDelete.id;
+    const deletingTitle = contractToDelete.title;
     try {
-      const response = await fetch(
-        `/api/projects/${projectId}/contracts/${contractToDelete.id}`,
+      await apiFetch<void>(
+        `/api/projects/${projectId}/contracts/${deletingId}`,
         { method: "DELETE" },
       );
-
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        toast.error(data.error || `Failed to delete contract (HTTP ${response.status})`);
-        return;
-      }
-
-      setContracts((prev) => prev.filter((item) => item.id !== contractToDelete.id));
-      toast.success(`Contract "${contractToDelete.title}" deleted successfully`);
+      await refetchContracts();
+      toast.success(`Contract "${deletingTitle}" deleted successfully`);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error";
       toast.error(`Failed to delete contract: ${message}`);
@@ -342,42 +339,45 @@ export default function ProjectContractsPage(): ReactElement {
     if (ids.length === 0) return;
 
     setIsBulkDeleting(true);
-    const errors: string[] = [];
-
-    for (const id of ids) {
-      try {
-        const response = await fetch(
-          `/api/projects/${projectId}/contracts/${id}`,
-          { method: "DELETE" },
-        );
-        if (!response.ok) {
-          const data = await response.json().catch(() => ({}));
-          const contract = contracts.find((c) => c.id === id);
-          errors.push(
-            `${contract?.contract_number ?? id}: ${data.error || "Failed to delete"}`,
-          );
-        }
-      } catch {
-        errors.push(`${id}: Network error`);
-      }
-    }
-
-    const deletedIds = ids.filter(
-      (id) => !errors.some((err) => err.startsWith(id)),
-    );
-    setContracts((prev) => prev.filter((item) => !deletedIds.includes(item.id)));
-    tableState.setSelectedIds([]);
-
-    if (errors.length > 0) {
-      toast.error(
-        `${deletedIds.length} deleted, ${errors.length} failed:\n${errors.join("\n")}`,
+    try {
+      const deletionResults = await Promise.allSettled(
+        ids.map(async (id) => {
+          await apiFetch<void>(`/api/projects/${projectId}/contracts/${id}`, {
+            method: "DELETE",
+          });
+          return id;
+        }),
       );
-    } else {
-      toast.success(`${deletedIds.length} contract${deletedIds.length === 1 ? "" : "s"} deleted`);
-    }
+      const failedDeletes: string[] = [];
+      deletionResults.forEach((result, index) => {
+        if (result.status !== "rejected") return;
+        const contractId = ids[index];
+        const contractNumber = contracts.find((c) => c.id === contractId)
+          ?.contract_number;
+        const message =
+          result.reason instanceof Error
+            ? result.reason.message
+            : "Failed to delete";
+        failedDeletes.push(`${contractNumber ?? contractId}: ${message}`);
+      });
 
-    setIsBulkDeleting(false);
-    setBulkDeleteDialogOpen(false);
+      const summary = summarizeBulkResults(deletionResults);
+      await refetchContracts();
+      tableState.setSelectedIds([]);
+
+      if (failedDeletes.length > 0) {
+        toast.error(
+          `${summary.succeeded} deleted, ${summary.failed} failed:\n${failedDeletes.join("\n")}`,
+        );
+      } else {
+        toast.success(
+          `${summary.succeeded} contract${summary.succeeded === 1 ? "" : "s"} deleted`,
+        );
+      }
+    } finally {
+      setIsBulkDeleting(false);
+      setBulkDeleteDialogOpen(false);
+    }
   };
 
   const handleExport = () => {
@@ -497,7 +497,7 @@ export default function ProjectContractsPage(): ReactElement {
         data={{
           items: pagedContracts,
           isLoading,
-          error: error ?? undefined,
+          error: contractsError instanceof Error ? contractsError : undefined,
         }}
         table={{
           defaultPinnedLeftColumns: ["expand", "contract_number"],

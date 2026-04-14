@@ -20,6 +20,7 @@
 const BASE_URL = process.env.API_SMOKE_BASE_URL || "http://localhost:3000";
 const ERROR_ALERT_WEBHOOK_URL = process.env.ERROR_ALERT_WEBHOOK_URL || "";
 const PROJECT_ID = process.env.API_SMOKE_PROJECT_ID || "67";
+const BEARER_TOKEN = process.env.API_SMOKE_BEARER_TOKEN || "";
 const FAKE_UUID = "00000000-0000-0000-0000-000000000000";
 
 // ─── Endpoint definitions ───────────────────────────────────────────────────
@@ -55,6 +56,7 @@ const ENDPOINTS = [
 
   // Contracts
   ["GET", `/api/projects/${PROJECT_ID}/contracts`, "Contracts list", [200, 401]],
+  ["GET", `/api/projects/${PROJECT_ID}/contracts/settings`, "Prime contract settings", [200, 401]],
 
   // Commitments
   ["GET", "/api/commitments", "Commitments list", [200, 401]],
@@ -180,6 +182,18 @@ const ENDPOINTS = [
   ["GET", "/api/monitoring/notify", "Monitoring notify unauthorized", [401]],
 ];
 
+const AUTH_WRITE_PROBES = [
+  {
+    method: "PUT",
+    path: `/api/projects/${PROJECT_ID}/contracts/settings`,
+    description: "Prime contract settings invalid payload validation",
+    expectedStatuses: [400],
+    body: {
+      default_retainage_percent: 101,
+    },
+  },
+];
+
 // ─── Health check contract ──────────────────────────────────────────────────
 function assertHealthBody(body) {
   return (
@@ -214,7 +228,8 @@ async function run() {
   const failures = [];
   const warnings = [];
   let pass = 0;
-  const total = ENDPOINTS.length;
+  const authProbeCount = BEARER_TOKEN ? AUTH_WRITE_PROBES.length : 0;
+  let total = ENDPOINTS.length + authProbeCount;
   const timestamp = new Date().toISOString();
 
   console.log(`\nAPI Smoke Test — ${timestamp}`);
@@ -275,6 +290,61 @@ async function run() {
 
     console.log(`   OK   ${status}  ${method} ${path}  (${description})`);
     pass++;
+  }
+
+  if (BEARER_TOKEN) {
+    for (const probe of AUTH_WRITE_PROBES) {
+      const url = `${BASE_URL}${probe.path}`;
+      let status = 0;
+      let body = null;
+
+      try {
+        const res = await fetch(url, {
+          method: probe.method,
+          headers: {
+            Authorization: `Bearer ${BEARER_TOKEN}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(probe.body),
+          signal: AbortSignal.timeout(10000),
+        });
+        status = res.status;
+        const text = await res.text();
+        try {
+          body = text ? JSON.parse(text) : null;
+        } catch {
+          body = null;
+        }
+      } catch {
+        status = 0;
+      }
+
+      if (status === 500 || status === 0) {
+        const label = status === 0 ? "TIMEOUT" : "500";
+        console.error(`  FAIL  ${label}  ${probe.method} ${probe.path}  (${probe.description})`);
+        failures.push(`${label}: ${probe.method} ${probe.path} — ${probe.description}`);
+        continue;
+      }
+
+      if (!probe.expectedStatuses.includes(status)) {
+        console.error(`  FAIL  ${status}  ${probe.method} ${probe.path}  expected [${probe.expectedStatuses.join(", ")}]  (${probe.description})`);
+        failures.push(`Unexpected ${status}: ${probe.method} ${probe.path} — ${probe.description} (expected [${probe.expectedStatuses.join(", ")}])`);
+        continue;
+      }
+
+      if (status >= 400 && body !== null) {
+        const hasStandard = hasStandardErrorEnvelope(body);
+        const hasLegacy = hasLegacyErrorEnvelope(body);
+        if (!hasStandard && !hasLegacy) {
+          warnings.push(`${probe.method} ${probe.path} [${status}] — error response missing standard envelope`);
+        }
+      }
+
+      console.log(`   OK   ${status}  ${probe.method} ${probe.path}  (${probe.description})`);
+      pass++;
+    }
+  } else {
+    warnings.push("Authenticated write probes skipped because API_SMOKE_BEARER_TOKEN is not set.");
   }
 
   // Summary

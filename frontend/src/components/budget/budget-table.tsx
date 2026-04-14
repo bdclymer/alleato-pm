@@ -563,22 +563,34 @@ export function BudgetTable({
         const hasChildren = Boolean(
           row.original.children && row.original.children.length > 0);
         const isGroupRow = hasChildren;
+        const { costCodeDescription, costType, description } = row.original;
+
+        // Build the label prefix: "01-3245.X" (code + dot + cost type)
+        const codeLabel = costCodeDescription
+          ? costType
+            ? `${costCodeDescription}.${costType}`
+            : costCodeDescription
+          : null;
+
+        const fullLabel = codeLabel && description
+          ? `${codeLabel} ${description}`
+          : description || codeLabel || "";
 
         return (
           <div
             className={cn(
-              "flex items-center gap-1 min-w-0",
+              "flex items-center gap-1.5 min-w-0",
               isGroupRow ? "text-foreground font-medium" : "text-foreground font-normal",
               getDepthPadding(row.depth),
             )}
-            title={String(row.getValue("description"))}
+            title={fullLabel}
           >
-            {isGroupRow && (
+            {codeLabel && (
               <span className="text-muted-foreground font-mono text-xs shrink-0">
-                {row.original.costCode}
+                {codeLabel}
               </span>
             )}
-            <span className="truncate">{String(row.getValue("description"))}</span>
+            <span className="truncate">{description}</span>
           </div>
         );
       },

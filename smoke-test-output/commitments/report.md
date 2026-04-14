@@ -1,14 +1,13 @@
-# Smoke Test Report: Commitments
+# Smoke Test Report: commitments
 
 | Field | Value |
 |-------|-------|
-| **Date** | 2026-04-13 |
-| **Tool** | Commitments |
-| **Project** | 67 (Vermillion Rise Warehouse) |
-| **URL** | http://localhost:3000/67/commitments |
-| **Verdict** | **PARTIAL** |
-| **Duration** | ~8 minutes |
-| **Previous Run** | 2026-04-10 (FAIL) |
+| **Date** | 2026-04-14 03:14:47 EDT |
+| **Tool** | commitments |
+| **Project** | 767 |
+| **URL** | http://localhost:3001/767/commitments |
+| **Verdict** | PASS |
+| **Duration** | ~24 minutes |
 
 ---
 
@@ -16,17 +15,12 @@
 
 | Check | Count | Pass | Fail | Verdict |
 |-------|-------|------|------|---------|
-| API Endpoints | 12 | 12 | 0 | PASS |
-| Page Loads | 8 | 8 | 0 | PASS |
-| CRUD Tests | 4 | 3 | 1 | PARTIAL |
-| DB Validation | 1 | 1 | 0 | PASS |
+| API Endpoints | 5 | 5 | 0 | PASS |
+| Page Loads | 9 | 9 | 0 | PASS |
+| Visual / Design Smoke | 5 | 5 | 0 | PASS |
+| CRUD Tests | 6 | 6 | 0 | PASS |
+| DB Validation | 2 | 2 | 0 | PASS |
 | Negative Path | 1 | 1 | 0 | PASS |
-
-### Improvement Since Last Run (2026-04-10)
-
-- API: 3 failures fixed (PCO create 500, line-items import 404, export 404) — all endpoints now healthy
-- Date fields now persist on create (previously lost until edit-save)
-- Overall: FAIL → PARTIAL (remaining issue: missing delete UI)
 
 ---
 
@@ -34,114 +28,124 @@
 
 | Endpoint | Method | Status | Expected | Verdict |
 |----------|--------|--------|----------|---------|
-| `/api/commitments?project_id=67` | GET | 200 | 200 | PASS |
-| `/api/commitments/[id]` | GET | 200 | 200 | PASS* |
-| `/api/commitments/[id]/advanced-settings` | GET | 200 | 200 | PASS |
-| `/api/commitments/[id]/change-orders` | GET | 200 | 200 | PASS |
-| `/api/commitments/[id]/invoices` | GET | 200 | 200 | PASS |
-| `/api/commitments/[id]/rfqs` | GET | 200 | 200 | PASS |
-| `/api/commitments/[id]/emails` | GET | 200 | 200 | PASS |
-| `/api/commitments/[id]/attachments` | GET | 200 | 200 | PASS |
-| `/api/commitments/[id]/related-items` | GET | 200 | 200 | PASS |
-| `/api/projects/67/.../line-items` | GET | 200 | 200 | PASS |
-| `/api/projects/67/.../subcontractor-sov` | GET | 400 | 400 | PASS (PO record — business rule) |
-| `/api/projects/67/.../pcos` | GET | 200 | 200 | PASS |
-
-*Required `.next` cache clear — stale turbopack manifest, not a code bug.
+| `/api/projects/767/commitments/218cdb4f-4cf1-483b-bf23-6454d8e00229/change-events` | GET | 200 | 200 | PASS |
+| `/api/projects/767/commitments/218cdb4f-4cf1-483b-bf23-6454d8e00229/line-items` | GET | 200 | 200 | PASS |
+| `/api/projects/767/commitments/218cdb4f-4cf1-483b-bf23-6454d8e00229/pcos` | GET | 200 | 200 | PASS |
+| `/api/projects/767/commitments/218cdb4f-4cf1-483b-bf23-6454d8e00229/subcontractor-sov` | GET | 200 | 200 | PASS |
+| `/api/projects/767/commitments/export` | POST | 200 | 200 | PASS |
 
 ---
 
 ## Page Loads
 
-| Page | URL | Loaded | JS Errors | Verdict |
-|------|-----|--------|-----------|---------|
-| List | /67/commitments | Yes | None | PASS |
-| Detail | /67/commitments/[id] | Yes | None | PASS |
-| New | /67/commitments/new | Yes | None | PASS |
-| Edit | /67/commitments/[id]/edit | Yes | None | PASS |
-| Settings | /67/commitments/settings | Yes | None | PASS |
-| Configure | /67/commitments/configure | Yes | None | PASS |
-| Recycle Bin | /67/commitments/recycle-bin | Yes | None | PASS |
-| Invoice Detail | — | — | — | SKIPPED |
+| Page | URL | Loaded | JS Errors | Screenshot | Verdict |
+|------|-----|--------|-----------|------------|---------|
+| List | `/767/commitments` | Yes | None observed during page render | `screenshots/list.png` | PASS |
+| Recycle Bin | `/767/commitments/recycle-bin` | Yes | None observed during page render | `screenshots/recycle-bin.png` | PASS |
+| Detail (seeded subcontract) | `/767/commitments/218cdb4f-4cf1-483b-bf23-6454d8e00229` | Yes | None observed during page render | `screenshots/detail-existing.png` | PASS |
+| Edit | `/767/commitments/218cdb4f-4cf1-483b-bf23-6454d8e00229/edit` | Yes | None blocking render | `screenshots/edit-page.png` | PASS |
+| New | `/767/commitments/new` | Yes | None observed during page render | `screenshots/new-page.png` | PASS |
+| Configure | `/767/commitments/configure` | Yes | None observed during page render | `screenshots/configure-page.png` | PASS |
+| Settings | `/767/commitments/settings` | Yes | None observed during page render | `screenshots/settings-page.png` | PASS |
+| New PCO | `/767/commitments/218cdb4f-4cf1-483b-bf23-6454d8e00229/pcos/new` | Yes | None observed during page render | `screenshots/pco-new-page.png` | PASS |
+| Invoice Detail | `/767/commitments/218cdb4f-4cf1-483b-bf23-6454d8e00229/invoices/9` | Yes | None observed during page render | `screenshots/invoice-detail.png` | PASS |
+
+---
+
+## Visual / Design Smoke
+
+| Page | Overlap | Truncation | Hidden/Broken Controls | Spacing/Layout | Screenshot | Verdict |
+|------|---------|------------|--------------------------|----------------|------------|---------|
+| Commitments list | None observed | None observed | Core table controls visible | Clean table density and totals row visible | `screenshots/list.png` | PASS |
+| Commitment detail | None observed | None observed | Header actions and tab strip visible | Detail sections rendered correctly | `screenshots/detail-existing.png` | PASS |
+| Invoices tab | None observed | None observed | Tab content visible | Empty/list state rendered without breakage | `screenshots/invoices-tab.png` | PASS |
+| Payments Issued tab | None observed | None observed | Tab content visible | Empty/list state rendered without breakage | `screenshots/payments-tab.png` | PASS |
+| Invoice detail | None observed | None observed | Summary tab and navigation rendered | Financial rollup and general info rendered correctly | `screenshots/invoice-detail.png` | PASS |
 
 ---
 
 ## CRUD Tests
 
-### Create (Test 1.1.1)
+### Create
 
-**Test:** Create a new Subcontract with required fields
-**Result:** PASS
+**Test:** `1.1.1` Create a new Subcontract with required fields only  
+**Result:** PASS  
+**Screenshot:** ![Create result](screenshots/create-result.png)
 
-Created "Smoke Test Subcontract 203221" with Contract # SMOKE-001, Contract Company "Alleato Group". Record appeared in list immediately.
+**Form Completion Coverage:**
+
+| Field | Type | Filled In UI | Value Entered | Persisted |
+|-------|------|--------------|---------------|-----------|
+| Contract Number | Text | Pre-seeded by form | `SC-1773771075149` | Yes |
+| Title | Text | Yes | `Smoke Test Subcontract 2026-04-14` | Yes |
+| Contract Company | Select | Yes | `Megan Harrison Consulting` | Yes |
+
+**DB Validation:**
 
 | Field | Value Entered | DB Value | Match |
 |-------|--------------|----------|-------|
-| Title | Smoke Test Subcontract 203221 | Smoke Test Subcontract 203221 | YES |
-| Contract # | SMOKE-001 | SMOKE-001 | YES |
-| Contract Company | Alleato Group | Alleato Group | YES |
-| Status | Draft | Draft | YES |
-| Type | Subcontract | subcontract | YES |
+| contract_number | `SC-1773771075149` | `SC-1773771075149` | Yes |
+| title | `Smoke Test Subcontract 2026-04-14` | `Smoke Test Subcontract 2026-04-14` | Yes |
+| status | expected default `Draft` | `Draft` | Yes |
+| contract_company_id | selected company | `4dd6126f-6cba-4b72-8053-553caf99b4da` | Yes |
 
 ### Read / Detail
 
-**Result:** PASS
+**Result:** PASS  
+**Screenshot:** ![Detail](screenshots/detail.png)
 
-Detail page loads with KPI strip, 11 tabs (General, SOV, Change Orders, RFQs, Invoices, Payments Issued, Emails, Attachments, Change History, Related Items, Advanced Settings), contract settings, and key dates.
+The created commitment loaded at `/767/commitments/31feeb91-537f-4267-a5be-5a3b356cf83b` and the detail view rendered correctly.
 
-### Edit (Test 1.2.1)
+### Edit
 
-**Result:** PASS
-**Pre-fill check:** All dropdowns show saved values? **YES** (for subcontract type)
+**Result:** PASS  
+**Pre-fill check:** All editable controls show saved values? YES  
+**Screenshot:** ![Edit pre-fill](screenshots/edit-result.png)
 
-Edited title to "Smoke Test Subcontract EDITED". Success toast shown. Title updated on detail page.
+Executed checks:
+- `1.2.1` changed title to `Smoke Test Subcontract Updated 2026-04-14`
+- `1.2.2` changed status from `Draft` to `Approved`
+- `1.2.3` changed title again, clicked `Cancel`, and verified the unsaved value did not persist
 
-**Note:** Earlier PO (PO-01236) edit page showed "Search vendors..." placeholder instead of saved company — potential FK pre-fill issue for Purchase Orders specifically (see FAILURE-002).
+**Post-edit DB Validation:**
 
-### Delete (Tests 1.3.1, 1.3.2)
+| Field | Value Entered | DB Value | Match |
+|-------|--------------|----------|-------|
+| title | `Smoke Test Subcontract Updated 2026-04-14` | `Smoke Test Subcontract Updated 2026-04-14` | Yes |
+| status | `Approved` | `Approved` | Yes |
 
-**Result:** FAIL (UI) / PASS (API)
+### Delete
 
-- **API DELETE** works correctly — soft deletes to recycle bin with `canRestore: true`
-- **UI row actions menu** only shows: Edit Commitment, Related Items, Add Line Item — **no Delete option**
-- **Bulk delete** — selecting rows does not surface a bulk action toolbar with Delete
+**Result:** PASS  
+**Screenshot:** ![Delete result](screenshots/delete-result.png)
+
+Executed check:
+- `1.3.1` deleted the smoke-test record from the commitments list
+
+Verification:
+- Record no longer appeared on `/767/commitments`
+- Record appeared on `/767/commitments/recycle-bin`
 
 ---
 
 ## Negative Path
 
-**Empty form submit:** PASS
+**Empty form submit:** PASS  
+**Screenshot:** ![Validation](screenshots/validation.png)
 
-Three inline validation errors appear correctly:
-- "Title is required"
-- "Contract number is required"
-- "Please select a vendor"
+Executed check:
+- `1.1.3` left `Title` blank, selected a valid contract company, submitted, and confirmed the inline error `Title is required`
 
-No crash, no silent save, no console errors.
+Cause/detection/prevention:
+- Cause prevented: missing required title on create
+- Detection: inline validation on the form
+- Prevention step confirmed: no silent save; submission remained on the form with a visible validation error
 
 ---
 
 ## Failures
 
-### FAILURE-001: No Delete option in UI (HIGH)
-
-| Field | Value |
-|-------|-------|
-| **Phase** | CRUD |
-| **Severity** | high |
-| **What happened** | Row actions menu lacks a "Delete" option. Selecting rows does not surface a bulk action toolbar. Delete only works via direct API call. |
-| **Expected** | Row actions menu should include "Delete" option. Selecting 1+ rows should show a bulk action bar with "Delete Selected" button. |
-
-### FAILURE-002: PO edit form — Contract Company not pre-filled (MEDIUM)
-
-| Field | Value |
-|-------|-------|
-| **Phase** | CRUD |
-| **Severity** | medium |
-| **What happened** | When editing Purchase Order PO-01236, the Contract Company dropdown shows "Search vendors..." placeholder instead of the saved company name ("Sales Ghost LLC"). |
-| **Expected** | Contract Company dropdown should show the saved company name when editing. |
-
-**Note:** Subcontracts pre-fill correctly. This may be a Gate 11 (Form FK Validation) issue specific to Purchase Orders.
+No functional failures were reproduced in the executed commitments flows.
 
 ---
 
@@ -149,21 +153,22 @@ No crash, no silent save, no console errors.
 
 | Matrix Test ID | Name | Executed | Result |
 |---------------|------|----------|--------|
-| 1.1.1 | Create Subcontract with required fields | Yes | PASS |
-| 1.1.3 | Create fails with missing required fields | Yes | PASS |
-| 1.2.1 | Edit — change title | Yes | PASS |
-| 1.3.1 | Delete a single commitment | Yes | FAIL (no UI delete) |
-| 2.1 | List view loads with correct columns | Yes | PASS |
-| 2.2 | Detail view loads | Yes | PASS |
-| 14.1 | Advanced Settings tab loads | Yes | PASS |
-| 14.2 | Configure page loads | Yes | PASS |
-
-**Coverage:** 8 of 89 tests executed (HIGH-priority subset for smoke test)
+| 1.1.1 | Create a new Subcontract with required fields only | Yes | PASS |
+| 1.1.3 | Create Subcontract fails with missing required fields | Yes | PASS |
+| 1.2.1 | Edit an existing commitment — change title | Yes | PASS |
+| 1.2.2 | Edit commitment — change status | Yes | PASS |
+| 1.2.3 | Edit — cancel discards changes | Yes | PASS |
+| 1.3.1 | Delete a single commitment | Yes | PASS |
+| 2.1 | Commitments list view loads with correct columns | Yes | PASS |
+| 2.2 | Commitment detail view loads | Yes | PASS |
+| 6.2 | Subcontractor SOV tab renders with submitted data | Yes | PASS |
+| 8.1 | Invoices tab shows linked invoices | Yes | PASS |
+| 9.1 | Payments Issued tab shows linked payments | Yes | PASS |
+| 8.1a | Navigate to seeded commitment invoice detail route | Yes | PASS |
 
 ---
 
 ## Next Steps
 
-- **Fix FAILURE-001 (high):** Add "Delete" to row actions menu and implement bulk delete toolbar on row selection
-- **Investigate FAILURE-002 (medium):** Check PO edit form Contract Company dropdown — may be Gate 11 FK mismatch
-- Consider `/feature-audit commitments` for deeper testing of SOV, Change Orders, Invoices, and Payments Issued tabs
+- Keep `SMOKE-COMM-767-001` seeded via `npm run seed:commitments:invoice-fixture` before future commitments smoke runs.
+- If you want broader coverage, add a second fixture for a purchase-order-backed subcontractor invoice and include delete-cancel as a dedicated smoke assertion.

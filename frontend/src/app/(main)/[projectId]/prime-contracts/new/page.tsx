@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { PageShell } from "@/components/layout";
 import { ContractForm } from "@/components/domain/contracts";
 import type { ContractFormData } from "@/components/domain/contracts/ContractForm";
+import { fetchWithTransientRouteRetry } from "@/lib/fetch-with-transient-route-retry";
 
 export default function NewContractPage() {
   const router = useRouter();
@@ -14,6 +15,21 @@ export default function NewContractPage() {
   const projectId = params.projectId as string;
 
   const [isSaving, setIsSaving] = useState(false);
+
+  const warmContractDetailSurface = async (contractId: string) => {
+    router.prefetch(`/${projectId}/prime-contracts/${contractId}`);
+    await Promise.allSettled([
+      fetchWithTransientRouteRetry(
+        `/api/projects/${projectId}/contracts/settings`,
+      ),
+      fetchWithTransientRouteRetry(
+        `/api/projects/${projectId}/contracts/${contractId}`,
+      ),
+      fetchWithTransientRouteRetry(
+        `/api/projects/${projectId}/contracts/${contractId}/line-items`,
+      ),
+    ]);
+  };
 
   const handleSubmit = async (data: ContractFormData) => {
     setIsSaving(true);
@@ -114,6 +130,7 @@ export default function NewContractPage() {
         }
       }
 
+      void warmContractDetailSurface(newContract.id);
       toast.success("Prime contract created");
       router.push(`/${projectId}/prime-contracts/${newContract.id}`);
     } catch (err) {
@@ -133,6 +150,7 @@ export default function NewContractPage() {
                 )
               : null;
             if (saved) {
+              void warmContractDetailSurface(saved.id);
               toast.success("Prime contract created");
               router.push(`/${projectId}/prime-contracts/${saved.id}`);
               return;

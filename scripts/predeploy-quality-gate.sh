@@ -11,12 +11,15 @@ bash scripts/verify-api-routes.sh
 npm run check:routes
 echo "2b) Changed-route guardrail enforcement"
 if git rev-parse --verify HEAD~1 >/dev/null 2>&1; then
-  GUARDRAIL_BASE_REF="$(git rev-parse HEAD~1)" node scripts/check-changed-route-guardrails.mjs
+  GUARDRAIL_BASE_REF="$(git rev-parse HEAD~1)" GUARDRAIL_ENFORCE_RAW_ERRORS=true node scripts/check-changed-route-guardrails.mjs
 else
   echo "Skipping changed-route guardrail check (no prior commit available)."
 fi
 echo "2c) Full-route guardrail debt gate"
 GUARDRAIL_SCOPE=all node scripts/check-changed-route-guardrails.mjs
+
+echo "2d) New explicit any debt gate"
+node scripts/check-no-new-any.mjs
 
 echo "3) Frontend lint + typecheck + build"
 cd frontend

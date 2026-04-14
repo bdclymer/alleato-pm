@@ -1017,7 +1017,7 @@ export function UnifiedTablePage<T>({
             style={resolvedFeatures.enableVirtualization ? { maxHeight: 640, overflowY: "auto" } : undefined}
           >
             <Table className={cn(table.density === "compact" && "[&_thead_tr]:h-9 [&_th]:py-1.5 [&_th]:px-3 [&_td]:py-1.5 [&_td]:px-3 [&_td]:text-xs")}>
-              <TableHeader className={cn((table.stickyHeader !== false) && "sticky top-0 z-20 bg-primary/[2%]!")}>
+              <TableHeader className={cn((table.stickyHeader !== false) && "sticky top-0 z-20 bg-card")}>
                 {columnGroups && columnGroups.length > 0 && (
                   <TableRow className="border-b-0">
                     {hasRowSelection && (

@@ -63,6 +63,7 @@ import { useProjectVendors } from "@/hooks/use-project-vendors";
 import { useProjectCompanies } from "@/hooks/use-project-companies";
 import { usePermissionTemplates } from "@/hooks/use-permissions";
 import { createClient } from "@/lib/supabase/client";
+import { apiFetch, ApiError } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import {
   type PermissionModule,
@@ -236,14 +237,13 @@ function SectionRow({
 
   return (
     <div className="flex items-center justify-between gap-4">
-      {/* Left: title + action */}
+      {/* Left: title */}
       <div className="flex items-center gap-3 min-w-0">
         <h2 className="text-lg font-semibold text-foreground shrink-0">{title}</h2>
-        {action}
       </div>
 
-      {/* Right: search + filter + count */}
-      <div className="flex items-center gap-1 shrink-0">
+      {/* Right: search + filter + count + action */}
+      <div className="flex items-center gap-2 shrink-0">
         {onSearch !== undefined && (
           <ExpandableSearch
             value={search ?? ""}
@@ -282,6 +282,8 @@ function SectionRow({
             </span>
           </>
         )}
+
+        {action && <div className="ml-2">{action}</div>}
       </div>
     </div>
   );
@@ -844,7 +846,7 @@ function AssignExistingCompanyDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Assign Company</DialogTitle>
+          <DialogTitle>Add Company</DialogTitle>
           <DialogDescription>
             Search and select an existing company to add to this project.
           </DialogDescription>
@@ -892,7 +894,7 @@ function AssignExistingCompanyDialog({
             Cancel
           </Button>
           <Button onClick={handleAssign} disabled={!selected || saving}>
-            {saving ? "Assigning..." : "Assign Company"}
+            {saving ? "Adding..." : "Add Company"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -1038,9 +1040,7 @@ function ProjectTeamSection({
         title="Project Team"
         action={
           <Button
-            variant="link"
-            size="sm"
-            className="h-auto p-0 text-sm font-medium text-primary"
+            size="xs"
             onClick={() => setCreateRoleOpen(true)}
           >
             Manage Roles
@@ -1287,16 +1287,10 @@ function MembersDataTable({
         header: "Name",
         cell: ({ row }) => {
           const person = row.original;
-          const isEmployee = person.person_type === "employee";
           return (
             <div className="flex items-center gap-2.5">
               <Avatar className="h-8 w-8 shrink-0">
-                <AvatarFallback
-                  className={cn(
-                    "text-xs font-medium",
-                    isEmployee ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground",
-                  )}
-                >
+                <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
                   {initials(person.first_name, person.last_name)}
                 </AvatarFallback>
               </Avatar>
@@ -1531,12 +1525,10 @@ function ExternalMembersSection({
         title="All Project Members"
         action={
           <Button
-            variant="link"
-            size="sm"
-            className="h-auto p-0 text-sm font-medium text-primary"
+            size="xs"
             onClick={onAddClick}
           >
-            + Add
+            Add Members
           </Button>
         }
         count={filtered.length}
@@ -1688,11 +1680,14 @@ function VendorsSection({
 // ─── Companies Section ──────────────────────────────────────────
 
 function CompaniesSection({
+  projectId,
   companies,
   isLoading,
   error,
   onAssignClick,
+  onRefetch,
 }: {
+  projectId: string;
   companies: Array<{
     id: string;
     company_id: string;
@@ -1702,8 +1697,37 @@ function CompaniesSection({
   isLoading: boolean;
   error: Error | null;
   onAssignClick: () => void;
+  onRefetch: () => void;
 }) {
   const [search, setSearch] = React.useState("");
+  const [removingCompanyId, setRemovingCompanyId] = React.useState<string | null>(null);
+
+  const handleRemoveCompany = async (companyId: string, companyName: string) => {
+    if (removingCompanyId) return;
+    const confirmed = window.confirm(
+      `Remove ${companyName} from this project directory?`,
+    );
+    if (!confirmed) return;
+    try {
+      setRemovingCompanyId(companyId);
+      await apiFetch(
+        `/api/projects/${projectId}/directory/companies/${companyId}`,
+        { method: "DELETE" },
+      );
+      onRefetch();
+      toast.success("Company removed");
+    } catch (err) {
+      const message =
+        err instanceof ApiError
+          ? err.message
+          : err instanceof Error
+            ? err.message
+            : "Failed to remove company";
+      toast.error(message);
+    } finally {
+      setRemovingCompanyId(null);
+    }
+  };
 
   const companyRows = React.useMemo(
     () =>
@@ -1728,8 +1752,8 @@ function CompaniesSection({
         header: "Company",
         cell: ({ row }) => (
           <Link href={`/directory/companies/${row.original.id}`} className="flex items-center gap-3">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted">
-              <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
+              <Building2 className="h-3.5 w-3.5 text-primary" />
             </div>
             <span className="text-sm font-medium text-foreground hover:underline">
               {row.original.name}
@@ -1746,8 +1770,44 @@ function CompaniesSection({
           </span>
         ),
       },
+      {
+        id: "actions",
+        header: "Actions",
+        cell: ({ row }) => {
+          const company = row.original;
+          return (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <MoreHorizontal />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                <DropdownMenuItem asChild>
+                  <Link href={`/directory/companies/${company.id}`}>
+                    <Pencil className="mr-2 h-3.5 w-3.5" />Edit
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-destructive"
+                  disabled={removingCompanyId === company.id}
+                  onClick={() => void handleRemoveCompany(company.id, company.name)}
+                >
+                  <Trash2 className="mr-2 h-3.5 w-3.5" />
+                  {removingCompanyId === company.id ? "Removing..." : "Remove"}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          );
+        },
+      },
     ],
-    [],
+    [removingCompanyId, projectId],
   );
 
   return (
@@ -1756,12 +1816,10 @@ function CompaniesSection({
         title="Companies"
         action={
           <Button
-            variant="link"
-            size="sm"
-            className="h-auto p-0 text-sm font-medium text-primary"
+            size="xs"
             onClick={onAssignClick}
           >
-            Assign Company
+            Add Company
           </Button>
         }
         count={filteredRows.length}
@@ -1837,7 +1895,7 @@ export default function ProjectDirectoryPage() {
     <PageShell
       variant="dashboard"
       title="Project Directory"
-      contentClassName="space-y-8"
+      contentClassName="space-y-12"
       actions={
         <Button variant="outline" size="sm">
           <Download className="mr-1.5 h-3.5 w-3.5" />
@@ -1857,10 +1915,12 @@ export default function ProjectDirectoryPage() {
       {/* Section 2: Companies */}
       <section>
         <CompaniesSection
+          projectId={projectId}
           companies={projectCompanies}
           isLoading={companiesLoading}
           error={companiesError}
           onAssignClick={() => setAddCompanyOpen(true)}
+          onRefetch={() => { void refetchCompanies(); }}
         />
       </section>
 

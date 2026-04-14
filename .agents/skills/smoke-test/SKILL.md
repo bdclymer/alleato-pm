@@ -103,6 +103,10 @@ HIGH-priority tests: [list of test IDs and names from matrix]
 ```bash
 mkdir -p smoke-test-output/<tool-name>/screenshots
 
+# Enforce any deterministic smoke fixtures before the run starts.
+# This must fail loudly if a required fixture cannot be prepared.
+npm run smoke:fixtures -- <tool-name>
+
 # Check dev server
 STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000 2>/dev/null)
 if [ "$STATUS" = "000" ]; then

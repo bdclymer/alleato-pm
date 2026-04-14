@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { apiFetch } from "@/lib/api-client";
+import { handleFormError } from "@/lib/handle-form-error";
 
 interface PrimeContractSettings {
   project_id: number;
@@ -70,44 +72,49 @@ export function PrimeContractAdvancedSettingsTab({
 
     setAdvancedSettingsSaving(true);
     try {
-      const [projectSettingsRes, contractRes] = await Promise.all([
-        fetch(`/api/projects/${projectId}/contracts/settings`, {
+      const savedProjectSettings = await apiFetch<PrimeContractSettings>(
+        `/api/projects/${projectId}/contracts/settings`,
+        {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(advancedSettings),
-        }),
-        fetch(`/api/projects/${projectId}/contracts/${contractId}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            inclusions: contractAdvancedDraft.inclusions || null,
-            exclusions: contractAdvancedDraft.exclusions || null,
-            is_private: contractAdvancedDraft.is_private,
-            retention_percentage: advancedSettings.default_retainage_percent,
-            payment_terms: contractAdvancedDraft.payment_terms || null,
-            billing_schedule: contractAdvancedDraft.billing_schedule || null,
-          }),
-        }),
-      ]);
+        },
+      );
 
-      if (!projectSettingsRes.ok) {
-        const err = await projectSettingsRes.json().catch(() => null);
-        throw new Error(err?.error || "Failed to save project contract settings");
-      }
-      if (!contractRes.ok) {
-        const err = await contractRes.json().catch(() => null);
-        throw new Error(err?.error || "Failed to save contract advanced settings");
-      }
-
-      const [savedProjectSettings, savedContract] = await Promise.all([
-        projectSettingsRes.json() as Promise<PrimeContractSettings>,
-        contractRes.json(),
-      ]);
       setAdvancedSettings(savedProjectSettings);
-      setContract((prev) => (prev ? { ...prev, ...savedContract } : prev));
-      toast.success("Advanced settings saved");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to save advanced settings");
+
+      try {
+        const savedContract = await apiFetch<Record<string, unknown>>(
+          `/api/projects/${projectId}/contracts/${contractId}`,
+          {
+            method: "PUT",
+            body: JSON.stringify({
+              inclusions: contractAdvancedDraft.inclusions || null,
+              exclusions: contractAdvancedDraft.exclusions || null,
+              is_private: contractAdvancedDraft.is_private,
+              retention_percentage: advancedSettings.default_retainage_percent,
+              payment_terms: contractAdvancedDraft.payment_terms || null,
+              billing_schedule: contractAdvancedDraft.billing_schedule || null,
+            }),
+          },
+        );
+
+        setContract((prev) => (prev ? { ...prev, ...savedContract } : prev));
+        toast.success("Advanced settings saved");
+      } catch (contractError) {
+        const { message } = handleFormError(contractError, {
+          entity: "prime contract advanced settings",
+          action: "save",
+          silent: true,
+        });
+        toast.error(
+          `Project-level settings were saved, but the contract-specific advanced settings were not. ${message}`,
+        );
+      }
+    } catch (projectSettingsError) {
+      handleFormError(projectSettingsError, {
+        entity: "prime contract advanced settings",
+        action: "save",
+      });
     } finally {
       setAdvancedSettingsSaving(false);
     }

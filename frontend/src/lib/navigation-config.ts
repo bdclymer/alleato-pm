@@ -481,6 +481,15 @@ export const headerNavGroups: HeaderNavGroup[] = [
         description: "Project task board",
       },
       {
+        name: "Project Permissions",
+        path: "permissions",
+        requiresProject: true,
+        icon: Lock,
+        description: "Member roles and access control",
+        module: "directory",
+        requiredPermission: "admin",
+      },
+      {
         name: "Project Settings",
         path: "settings",
         requiresProject: true,

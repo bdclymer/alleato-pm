@@ -498,7 +498,7 @@ function ChangePipelineSection({
       ) : (
         <div className="overflow-hidden rounded-md border border-border/70 bg-background">
           <Table>
-            <TableHeader className="bg-muted/40">
+            <TableHeader>
               <TableRow>
                 <TableHead className="w-16 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                   Type

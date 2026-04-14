@@ -1,10 +1,20 @@
 import { NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 
-export async function GET() {
+export const GET = withApiGuardrails("/api/accounting/invoices#GET", async () => {
   const user = await getApiRouteUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!user) {
+    throw new GuardrailError({
+      code: "AUTH_EXPIRED",
+      where: "/api/accounting/invoices#GET",
+      message: "Unauthorized accounting invoices request.",
+      status: 401,
+      severity: "medium",
+    });
+  }
 
   const supabase = createServiceClient();
 
@@ -24,7 +34,35 @@ export async function GET() {
       .select("payment_reference_nbr, invoice_reference_nbr, amount_applied"),
   ]);
 
-  if (invoicesResult.error) return NextResponse.json({ error: invoicesResult.error.message }, { status: 500 });
+  if (invoicesResult.error) {
+    throw new GuardrailError({
+      code: "INTERNAL_ERROR",
+      where: "/api/accounting/invoices#GET",
+      message: "Failed to load accounting invoices.",
+      details: { reason: invoicesResult.error.message },
+      cause: invoicesResult.error,
+    });
+  }
+
+  if (projectsResult.error) {
+    throw new GuardrailError({
+      code: "INTERNAL_ERROR",
+      where: "/api/accounting/invoices#GET",
+      message: "Failed to load accounting project metadata.",
+      details: { reason: projectsResult.error.message },
+      cause: projectsResult.error,
+    });
+  }
+
+  if (paymentsResult.error) {
+    throw new GuardrailError({
+      code: "INTERNAL_ERROR",
+      where: "/api/accounting/invoices#GET",
+      message: "Failed to load accounting payment applications.",
+      details: { reason: paymentsResult.error.message },
+      cause: paymentsResult.error,
+    });
+  }
 
   // Build project description lookup
   const projectDescMap = new Map<string, string>();
@@ -55,4 +93,4 @@ export async function GET() {
   }));
 
   return NextResponse.json(enriched);
-}
+});

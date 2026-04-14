@@ -7,6 +7,10 @@
 - **Test Project:** Project 67 — Vermillion Rise Warehouse
 - **Login:** test1@mail.com / test12026!!!
 
+**Smoke fixture note:** Before any commitments smoke run, enforce seeded fixtures with
+`npm run smoke:fixtures -- commitments`. This guarantees the commitment invoice detail
+route exists for project `767` and fails loudly if fixture prep breaks.
+
 A **commitment** is a contract with a subcontractor or vendor — for example, an agreement to pay a roofing company $50,000 to complete the roof, or a purchase order to a supplier for materials. It tracks what was agreed, how much it costs, and what has been paid so far.
 
 ---

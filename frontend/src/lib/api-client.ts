@@ -26,8 +26,13 @@
 
 /** Structured error from our API routes (see lib/api-error.ts) */
 export interface ApiErrorBody {
-  error: string;
-  details?: string;
+  error?: string;
+  details?: string | Array<{ field?: string; path?: string; message?: string }>;
+  message?: string;
+  error_code?: string;
+  error_message?: string;
+  where_it_failed?: string;
+  request_id?: string;
 }
 
 /**
@@ -37,15 +42,53 @@ export interface ApiErrorBody {
 export class ApiError extends Error {
   readonly status: number;
   readonly body: ApiErrorBody;
+  readonly requestId?: string;
+  readonly errorCode?: string;
+  readonly whereItFailed?: string;
 
   constructor(status: number, body: ApiErrorBody) {
-    // Prefer `details` (the specific reason) over `error` (the category)
-    const message = body.details || body.error;
+    const message = getApiErrorMessage(status, body);
     super(message);
     this.name = "ApiError";
     this.status = status;
     this.body = body;
+    this.requestId = body.request_id;
+    this.errorCode = body.error_code;
+    this.whereItFailed = body.where_it_failed;
   }
+}
+
+function stringifyErrorDetails(details: ApiErrorBody["details"]): string | undefined {
+  if (typeof details === "string" && details.trim()) {
+    return details.trim();
+  }
+
+  if (Array.isArray(details)) {
+    const joined = details
+      .map((detail) => {
+        const location = detail.path || detail.field;
+        if (location && detail.message) {
+          return `${location}: ${detail.message}`;
+        }
+        return detail.message;
+      })
+      .filter((detail): detail is string => Boolean(detail && detail.trim()))
+      .join("; ");
+
+    return joined || undefined;
+  }
+
+  return undefined;
+}
+
+function getApiErrorMessage(status: number, body: ApiErrorBody): string {
+  return (
+    stringifyErrorDetails(body.details) ||
+    body.error_message ||
+    body.error ||
+    body.message ||
+    `Request failed (HTTP ${status})`
+  );
 }
 
 /**
@@ -92,23 +135,20 @@ export async function apiFetch<T = unknown>(
   try {
     const json = await response.json();
     body = {
-      error: json.error || json.message || `Request failed (HTTP ${response.status})`,
-      details: typeof json.details === "string"
-        ? json.details
-        : Array.isArray(json.details)
-          ? json.details
-            .map((d: { field?: string; message?: string }) =>
-              d.field ? `${d.field}: ${d.message}` : d.message,
-            )
-            .filter(Boolean)
-            .join("; ")
-          : undefined,
+      error: json.error,
+      details: json.details,
+      message: json.message,
+      error_code: json.error_code,
+      error_message: json.error_message,
+      where_it_failed: json.where_it_failed,
+      request_id: json.request_id || response.headers.get("x-request-id") || undefined,
     };
   } catch {
     // Response wasn't JSON — use status text
     const text = await response.text().catch(() => "");
     body = {
       error: text || `Request failed (HTTP ${response.status})`,
+      request_id: response.headers.get("x-request-id") || undefined,
     };
   }
 
@@ -141,22 +181,19 @@ export async function apiFetchBlob(
   try {
     const json = await response.json();
     body = {
-      error: json.error || json.message || `Request failed (HTTP ${response.status})`,
-      details: typeof json.details === "string"
-        ? json.details
-        : Array.isArray(json.details)
-          ? json.details
-            .map((d: { field?: string; message?: string }) =>
-              d.field ? `${d.field}: ${d.message}` : d.message,
-            )
-            .filter(Boolean)
-            .join("; ")
-          : undefined,
+      error: json.error,
+      details: json.details,
+      message: json.message,
+      error_code: json.error_code,
+      error_message: json.error_message,
+      where_it_failed: json.where_it_failed,
+      request_id: json.request_id || response.headers.get("x-request-id") || undefined,
     };
   } catch {
     const text = await response.text().catch(() => "");
     body = {
       error: text || `Request failed (HTTP ${response.status})`,
+      request_id: response.headers.get("x-request-id") || undefined,
     };
   }
 

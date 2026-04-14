@@ -34,6 +34,9 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageTabs } from "@/components/layout/PageTabs";
 import { useProjectTitle } from "@/hooks/useProjectTitle";
+import { fetchWithTransientRouteRetry } from "@/lib/fetch-with-transient-route-retry";
+import { apiFetch } from "@/lib/api-client";
+import { handleFormError } from "@/lib/handle-form-error";
 import {
   usePaymentApplications,
   useCreatePaymentApplication,
@@ -245,7 +248,9 @@ export default function ProjectContractDetailPage() {
     const fetchContract = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`/api/projects/${projectId}/contracts/${contractId}`);
+        const response = await fetchWithTransientRouteRetry(
+          `/api/projects/${projectId}/contracts/${contractId}`,
+        );
         if (!response.ok) {
           setError(response.status === 404 ? "Contract not found" : "Failed to load contract");
           return;
@@ -269,7 +274,9 @@ export default function ProjectContractDetailPage() {
     const fetchLineItems = async () => {
       try {
         setLineItemsLoading(true);
-        const response = await fetch(`/api/projects/${projectId}/contracts/${contractId}/line-items`);
+        const response = await fetchWithTransientRouteRetry(
+          `/api/projects/${projectId}/contracts/${contractId}/line-items`,
+        );
         if (response.ok) setLineItems((await response.json()) || []);
       } catch (err) {
         console.error("Failed to load data:", err);
@@ -285,7 +292,9 @@ export default function ProjectContractDetailPage() {
     const fetchBudgetCodes = async () => {
       try {
         setBudgetCodesLoading(true);
-        const response = await fetch(`/api/projects/${projectId}/budget-codes`);
+        const response = await fetchWithTransientRouteRetry(
+          `/api/projects/${projectId}/budget-codes`,
+        );
         if (!response.ok) throw new Error("Failed to load budget codes");
         const { budgetCodes: codes } = (await response.json()) as { budgetCodes: BudgetCode[] };
         setBudgetCodes(codes || []);
@@ -304,8 +313,12 @@ export default function ProjectContractDetailPage() {
       try {
 
         const [ccoResponse, pccoResponse] = await Promise.all([
-          fetch(`/api/projects/${projectId}/contracts/${contractId}/change-orders`),
-          fetch(`/api/projects/${projectId}/prime-contract-change-orders`),
+          fetchWithTransientRouteRetry(
+            `/api/projects/${projectId}/contracts/${contractId}/change-orders`,
+          ),
+          fetchWithTransientRouteRetry(
+            `/api/projects/${projectId}/prime-contract-change-orders`,
+          ),
         ]);
         const ccos: PrimeContractCO[] = ccoResponse.ok ? await ccoResponse.json() : [];
         const pccoRaw = pccoResponse.ok ? await pccoResponse.json() : [];
@@ -365,7 +378,7 @@ export default function ProjectContractDetailPage() {
 
   useEffect(() => {
     if (activeTab === "invoices") {
-      fetch(`/api/projects/${projectId}/billing-periods`)
+      fetchWithTransientRouteRetry(`/api/projects/${projectId}/billing-periods`)
         .then((r) => r.json())
         .then((data) => setBillingPeriods(Array.isArray(data) ? data : []))
         .catch(() => {});
@@ -377,7 +390,9 @@ export default function ProjectContractDetailPage() {
     const fetchPayments = async () => {
       try {
         setPaymentsReceivedLoading(true);
-        const response = await fetch(`/api/projects/${projectId}/contracts/${contractId}/payments`);
+        const response = await fetchWithTransientRouteRetry(
+          `/api/projects/${projectId}/contracts/${contractId}/payments`,
+        );
         if (response.ok) setPayments((await response.json()) || []);
       } catch (err) {
         console.error("Failed to load payments:", err);
@@ -393,7 +408,9 @@ export default function ProjectContractDetailPage() {
     const fetchVerticalMarkups = async () => {
       try {
         setMarkupsLoading(true);
-        const response = await fetch(`/api/projects/${projectId}/vertical-markup`);
+        const response = await fetchWithTransientRouteRetry(
+          `/api/projects/${projectId}/vertical-markup`,
+        );
         if (!response.ok) return;
         const data = await response.json();
         const fetched = normalizeVerticalMarkupRows(data.markups || []);
@@ -413,11 +430,15 @@ export default function ProjectContractDetailPage() {
     const fetchAdvancedSettings = async () => {
       try {
         setAdvancedSettingsLoading(true);
-        const response = await fetch(`/api/projects/${projectId}/contracts/settings`);
-        if (!response.ok) throw new Error("Failed to fetch advanced settings");
-        setAdvancedSettings(await response.json());
-      } catch {
-        toast.error("Failed to load advanced settings");
+        const settings = await apiFetch<PrimeContractSettings>(
+          `/api/projects/${projectId}/contracts/settings`,
+        );
+        setAdvancedSettings(settings);
+      } catch (error) {
+        handleFormError(error, {
+          entity: "prime contract advanced settings",
+          action: "load",
+        });
       } finally {
         setAdvancedSettingsLoading(false);
       }
@@ -441,7 +462,9 @@ export default function ProjectContractDetailPage() {
     const fetchAttachments = async () => {
       try {
         setAttachmentsLoading(true);
-        const response = await fetch(`/api/projects/${projectId}/contracts/${contractId}/attachments`);
+        const response = await fetchWithTransientRouteRetry(
+          `/api/projects/${projectId}/contracts/${contractId}/attachments`,
+        );
         if (response.ok) { const data = await response.json(); setAttachments(data.data || []); }
       } catch { /* swallowed */ } finally { setAttachmentsLoading(false); }
     };

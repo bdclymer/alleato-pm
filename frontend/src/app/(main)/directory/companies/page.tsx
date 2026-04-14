@@ -98,9 +98,6 @@ const companyColumns: ColumnConfig[] = [
   { id: "erp_vendor_id", label: "ERP Vendor ID", defaultVisible: false },
   { id: "created_at", label: "Date Added", defaultVisible: false },
   { id: "updated_at", label: "Last Updated", defaultVisible: false },
-  { id: "id", label: "ID", defaultVisible: false },
-  { id: "project_id", label: "Project ID", defaultVisible: false },
-  { id: "company_id", label: "Company ID", defaultVisible: false },
   { id: "primary_contact_id", label: "Primary Contact ID", defaultVisible: false },
   { id: "logo_url", label: "Logo URL", defaultVisible: false },
 ];
@@ -185,21 +182,6 @@ function buildCompanyTableColumns(): TableColumn<CompanyRow>[] {
       ...col("updated_at"),
       render: (item) => <TableDateValue value={item.updated_at} emptyLabel="-" />,
       sortValue: (item) => (item.updated_at ? new Date(item.updated_at).getTime() : 0),
-    },
-    {
-      ...col("id"),
-      render: (item) => <CellText value={item.id} emptyLabel="-" className="font-mono text-xs" />,
-      sortValue: (item) => item.id,
-    },
-    {
-      ...col("project_id"),
-      render: (item) => <CellText value={String(item.project_id)} />,
-      sortValue: (item) => item.project_id,
-    },
-    {
-      ...col("company_id"),
-      render: (item) => <CellText value={item.company_id} className="font-mono text-xs" />,
-      sortValue: (item) => item.company_id,
     },
     {
       ...col("primary_contact_id"),
@@ -392,7 +374,7 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
   };
 
   const tableState = useUnifiedTableState({
-    entityKey: isClientsRoute ? "global-directory-clients" : "global-directory-companies",
+    entityKey: isClientsRoute ? "global-directory-clients-v2" : "global-directory-companies-v2",
     searchParams,
     pathname,
     router,

@@ -1,10 +1,12 @@
-import { withApiGuardrails } from "@/lib/guardrails/api";
+import {
+  parseJsonBody,
+  validateResponseContract,
+  withApiGuardrails,
+} from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
-import { apiErrorResponse } from "@/lib/api-error";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { ZodError } from "zod";
 import { requirePermission } from "@/lib/permissions-guard";
 
 interface RouteParams {
@@ -42,6 +44,30 @@ const updateSettingsSchema = z.object({
   default_distribution_pco: z.string().nullable().optional(),
 });
 
+const settingsResponseSchema = z.object({
+  project_id: z.number().int(),
+  co_tier_count: z.union([z.literal(1), z.literal(2)]),
+  allow_standard_users_create_pcco: z.boolean(),
+  allow_standard_users_create_pco: z.boolean(),
+  sov_always_editable: z.boolean(),
+  enable_completed_work_retainage: z.boolean(),
+  enable_stored_materials_retainage: z.boolean(),
+  default_retainage_percent: z.number().min(0).max(100),
+  show_markup_on_co_pdf: z.boolean(),
+  show_markup_on_invoice_pdf: z.boolean(),
+  default_distribution_prime_contract: z.string().nullable(),
+  default_distribution_pcco: z.string().nullable(),
+  default_distribution_pco: z.string().nullable(),
+});
+
+function normalizeSettingsRow(projectId: number, data?: Partial<z.infer<typeof settingsResponseSchema>> | null) {
+  return {
+    ...DEFAULT_SETTINGS,
+    ...data,
+    project_id: projectId,
+  };
+}
+
 /**
  * GET /api/projects/[projectId]/contracts/settings
  * Returns the prime contract project-level settings.
@@ -49,33 +75,34 @@ const updateSettingsSchema = z.object({
  */
 export const GET = withApiGuardrails(
   "projects/[projectId]/contracts/settings#GET",
-  async ({ request, params }) => {
-  
+  async ({ params }) => {
     const { projectId } = await params;
+    const projectIdNum = parseInt(projectId, 10);
     const supabase = await createClient();
 
     const { data, error } = await supabase
       .from("prime_contract_project_settings")
       .select("*")
-      .eq("project_id", parseInt(projectId, 10))
+      .eq("project_id", projectIdNum)
       .single();
 
     if (error && error.code !== "PGRST116") {
-      return NextResponse.json(
-        { error: "Failed to fetch settings", details: error.message },
-        { status: 400 },
-      );
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: "projects/[projectId]/contracts/settings#GET",
+        message: "Failed to fetch prime contract settings.",
+        details: error.message,
+      });
     }
 
-    // Return existing row or defaults (without persisting)
-    return NextResponse.json(
-      {
-        ...DEFAULT_SETTINGS,
-        ...data,
-        project_id: parseInt(projectId, 10),
-      },
+    const responseBody = validateResponseContract(
+      settingsResponseSchema,
+      normalizeSettingsRow(projectIdNum, data),
+      "projects/[projectId]/contracts/settings#GET:response",
     );
-    },
+
+    return NextResponse.json(responseBody);
+  },
 );
 
 /**
@@ -85,16 +112,17 @@ export const GET = withApiGuardrails(
 export const PUT = withApiGuardrails(
   "projects/[projectId]/contracts/settings#PUT",
   async ({ request, params }) => {
-  
     const { projectId } = await params;
     const projectIdNum = parseInt(projectId, 10);
     const guard = await requirePermission(projectIdNum, "contracts", "admin");
     if (guard.denied) return guard.response;
 
     const supabase = await createClient();
-    const body = await request.json();
-
-    const validatedData = updateSettingsSchema.parse(body);
+    const validatedData = await parseJsonBody(
+      request,
+      updateSettingsSchema,
+      "projects/[projectId]/contracts/settings#PUT:payload",
+    );
 
     // Upsert (insert if not exists, update if exists)
     const { data, error } = await supabase
@@ -110,12 +138,20 @@ export const PUT = withApiGuardrails(
       .single();
 
     if (error) {
-      return NextResponse.json(
-        { error: "Failed to save settings", details: error.message },
-        { status: 400 },
-      );
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: "projects/[projectId]/contracts/settings#PUT",
+        message: "Failed to save prime contract settings.",
+        details: error.message,
+      });
     }
 
-    return NextResponse.json(data);
-    },
+    const responseBody = validateResponseContract(
+      settingsResponseSchema,
+      normalizeSettingsRow(projectIdNum, data),
+      "projects/[projectId]/contracts/settings#PUT:response",
+    );
+
+    return NextResponse.json(responseBody);
+  },
 );

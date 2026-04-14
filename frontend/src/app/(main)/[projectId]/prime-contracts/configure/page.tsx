@@ -11,6 +11,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { PageShell } from "@/components/layout";
 import { FormSection } from "@/components/forms";
 import { ToggleField } from "@/components/forms";
+import { apiFetch } from "@/lib/api-client";
+import { handleFormError } from "@/lib/handle-form-error";
 
 interface PrimeContractSettings {
   project_id: number;
@@ -38,13 +40,15 @@ export default function PrimeContractsConfigurePage() {
     const fetchSettings = async () => {
       try {
         setLoading(true);
-        const res = await fetch(
+        const data = await apiFetch<PrimeContractSettings>(
           `/api/projects/${projectId}/contracts/settings`,
         );
-        if (!res.ok) throw new Error("Failed to fetch settings");
-        setSettings(await res.json());
-      } catch {
-        toast.error("Failed to load settings");
+        setSettings(data);
+      } catch (error) {
+        handleFormError(error, {
+          entity: "prime contract settings",
+          action: "load",
+        });
       } finally {
         setLoading(false);
       }
@@ -56,23 +60,20 @@ export default function PrimeContractsConfigurePage() {
     if (!settings) return;
     try {
       setSaving(true);
-      const res = await fetch(
+      const savedSettings = await apiFetch<PrimeContractSettings>(
         `/api/projects/${projectId}/contracts/settings`,
         {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(settings),
         },
       );
-      if (!res.ok) {
-        const err = await res.json();
-        toast.error(err.error || "Failed to save settings");
-        return;
-      }
-      setSettings(await res.json());
+      setSettings(savedSettings);
       toast.success("Settings saved");
-    } catch {
-      toast.error("Failed to save settings");
+    } catch (error) {
+      handleFormError(error, {
+        entity: "prime contract settings",
+        action: "save",
+      });
     } finally {
       setSaving(false);
     }
@@ -86,7 +87,7 @@ export default function PrimeContractsConfigurePage() {
   return (
     <PageShell
       variant="content"
-      title="Configure Prime Contracts"
+      title="Prime Contracts Settings"
       description="Project-level settings for how prime contracts behave"
       actions={
         <Button size="sm" onClick={handleSave} disabled={saving || loading}>
@@ -105,11 +106,13 @@ export default function PrimeContractsConfigurePage() {
         </div>
       ) : settings ? (
         <div className="space-y-8">
+
+{/* ───── CHANGE ORDER WORKFLOW ────────────────────────────────────────────────────────── */}
           <FormSection
             title="Change Order Workflow"
             description="Controls how change orders are submitted and approved."
           >
-            <div className="space-y-2">
+            <div className="space-y-3">
               <Label className="text-sm font-medium">Number of CO Tiers</Label>
               <p className="text-sm text-muted-foreground">
                 1-tier: single change order type. 2-tier: PCO → PCCO workflow.
@@ -120,7 +123,7 @@ export default function PrimeContractsConfigurePage() {
                     key={n}
                     type="button"
                     onClick={() => update("co_tier_count", n)}
-                    className={`rounded-md border px-3 py-2 text-sm transition-colors ${
+                    className={`rounded-sm border px-3 py-1 text-sm transition-colors ${
                       settings.co_tier_count === n
                         ? "border-primary bg-primary text-primary-foreground"
                         : "border-input hover:bg-muted"
@@ -133,6 +136,7 @@ export default function PrimeContractsConfigurePage() {
             </div>
           </FormSection>
 
+{/* ───── PERMISSIONS ────────────────────────────────────────────────────────── */}
           <FormSection
             title="Permissions"
             description="Controls what standard-level project members can do."
@@ -163,6 +167,7 @@ export default function PrimeContractsConfigurePage() {
             </div>
           </FormSection>
 
+{/* ───── PDF EXPORT ────────────────────────────────────────────────────────── */}
           <FormSection
             title="PDF & Export"
             description="Controls what information appears in generated PDFs and CSV exports."
@@ -185,6 +190,7 @@ export default function PrimeContractsConfigurePage() {
             </div>
           </FormSection>
 
+{/* ───── DISTRIBUTIONS ────────────────────────────────────────────────────────── */}
           <FormSection
             title="Default Distributions"
             description="Default email recipients when distributing documents."

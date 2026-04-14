@@ -1,5 +1,9 @@
 import { expect, test } from "../../fixtures/index";
-import { supabaseAdmin } from "../../helpers/prime-contracts-db";
+import {
+  deletePrimeContractCascade,
+  fetchPrimeContract,
+  supabaseAdmin,
+} from "../../helpers/prime-contracts-db";
 
 const projectId = process.env.E2E_PROJECT_ID ?? "67";
 
@@ -34,7 +38,7 @@ test.describe("Prime Contracts - Configure Settings", () => {
 
     // Header
     await expect(
-      page.getByRole("heading", { name: "Configure Prime Contracts" }),
+      page.getByRole("heading", { name: "Prime Contracts Settings" }),
     ).toBeVisible();
 
     // 1 Tier button is visible (default)
@@ -77,14 +81,17 @@ test.describe("Prime Contracts - Configure Settings", () => {
     safeNavigate,
   }) => {
     await safeNavigate(`/${projectId}/prime-contracts/configure`);
-    await expect(page.locator("#allow-pcco")).toBeVisible({ timeout: 15000 });
+    const allowPccoSwitch = page
+      .locator("label", { hasText: "Allow standard users to create PCCOs" })
+      .locator('xpath=ancestor::div[1]/following-sibling::*[@role="switch"]');
+    await expect(allowPccoSwitch).toBeVisible({ timeout: 15000 });
 
     // Default is off — verify
-    await expect(page.locator("#allow-pcco")).not.toBeChecked();
+    await expect(allowPccoSwitch).not.toBeChecked();
 
     // Toggle on
-    await page.locator("#allow-pcco").click();
-    await expect(page.locator("#allow-pcco")).toBeChecked();
+    await allowPccoSwitch.click();
+    await expect(allowPccoSwitch).toBeChecked();
 
     // Save
     await page.getByRole("button", { name: "Save Settings" }).first().click();
@@ -102,12 +109,15 @@ test.describe("Prime Contracts - Configure Settings", () => {
 
   test("user enables SOV always editable and it persists", async ({ page, safeNavigate }) => {
     await safeNavigate(`/${projectId}/prime-contracts/configure`);
-    await expect(page.locator("#sov-editable")).toBeVisible({ timeout: 15000 });
+    const sovAlwaysEditableSwitch = page
+      .locator("label", { hasText: "SOV always editable" })
+      .locator('xpath=ancestor::div[1]/following-sibling::*[@role="switch"]');
+    await expect(sovAlwaysEditableSwitch).toBeVisible({ timeout: 15000 });
 
-    await expect(page.locator("#sov-editable")).not.toBeChecked();
+    await expect(sovAlwaysEditableSwitch).not.toBeChecked();
 
-    await page.locator("#sov-editable").click();
-    await expect(page.locator("#sov-editable")).toBeChecked();
+    await sovAlwaysEditableSwitch.click();
+    await expect(sovAlwaysEditableSwitch).toBeChecked();
 
     await page.getByRole("button", { name: "Save Settings" }).first().click();
     await expect(page.getByText("Settings saved")).toBeVisible({ timeout: 10000 });
@@ -148,14 +158,67 @@ test.describe("Prime Contracts - Configure Settings", () => {
     expect(data?.default_distribution_pcco).toBe("pm@testco.com");
   });
 
-  test("back button navigates to prime contracts list", async ({ page, safeNavigate }) => {
+  test("configure page shows the expected settings sections", async ({
+    page,
+    safeNavigate,
+  }) => {
     await safeNavigate(`/${projectId}/prime-contracts/configure`);
-    await expect(
-      page.getByRole("button", { name: /Back to Contracts/i }),
-    ).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText("PDF & Export")).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText("Default Distributions")).toBeVisible();
+  });
 
-    await page.getByRole("button", { name: /Back to Contracts/i }).click();
-    await page.waitForURL(`**/${projectId}/prime-contracts`, { timeout: 15000 });
+  test("contract detail advanced settings save persists and shows success", async ({
+    page,
+    safeNavigate,
+    authenticatedRequest,
+  }) => {
+    const createRes = await authenticatedRequest.post(
+      `/api/projects/${projectId}/contracts`,
+      {
+        data: {
+          contract_number: `PC-E2E-${Date.now()}`,
+          title: "Prime Contract Advanced Settings E2E",
+          original_contract_value: 250000,
+        },
+      },
+    );
+    expect(createRes.ok()).toBe(true);
+
+    const createdContract = await createRes.json();
+    const contractId = createdContract.id as string;
+
+    try {
+      await safeNavigate(`/${projectId}/prime-contracts/${contractId}`);
+
+      await page.getByRole("button", { name: "Advanced Settings" }).click();
+      await expect(
+        page.getByRole("heading", { name: "Advanced Settings" }),
+      ).toBeVisible({ timeout: 15000 });
+
+      const retainageInput = page.getByRole("spinbutton", {
+        name: "Default Retainage Percent",
+      });
+      await expect(retainageInput).toBeVisible({ timeout: 15000 });
+      await retainageInput.fill("7.5");
+
+      await page.getByRole("button", { name: "Save Advanced Settings" }).click();
+      await expect(page.getByText("Advanced settings saved")).toBeVisible({
+        timeout: 10000,
+      });
+
+      const { data: savedSettings, error: settingsError } = await supabaseAdmin
+        .from("prime_contract_project_settings")
+        .select("default_retainage_percent")
+        .eq("project_id", parseInt(projectId, 10))
+        .single();
+      expect(settingsError).toBeNull();
+      expect(savedSettings?.default_retainage_percent).toBe(7.5);
+
+      const savedContract = await fetchPrimeContract(contractId);
+      expect(savedContract.retention_percentage).toBe(7.5);
+    } finally {
+      await deletePrimeContractCascade(contractId);
+    }
   });
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -252,5 +315,11 @@ test.describe("Prime Contracts - Configure Settings", () => {
     );
     expect(res.ok()).toBe(false);
     expect(res.status()).toBe(400);
+
+    const data = await res.json();
+    expect(data.success).toBe(false);
+    expect(data.error_code).toBe("INVALID_PAYLOAD");
+    expect(typeof data.request_id).toBe("string");
+    expect(Array.isArray(data.details)).toBe(true);
   });
 });

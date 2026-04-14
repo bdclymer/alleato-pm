@@ -13,5 +13,7 @@ module.exports = {
     // Regression (2026-04-13): use-rfis.ts raw fetch caused "Failed to fetch"
     // instead of real server error messages. This gate prevents recurrence.
     `cd ${frontendDir} && ${eslintBin} --rule '{"design-system/require-api-client": "error"}' ${filenames.join(' ')}`,
+    // Ratchet no-new-any on staged changes only; existing debt is handled separately.
+    'node scripts/check-no-new-any.mjs --staged',
   ],
 };

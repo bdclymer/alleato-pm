@@ -20,9 +20,15 @@ jobs:
       - name: Guardrail route coverage (changed files only)
         env:
           GUARDRAIL_BASE_REF: origin/${{ github.base_ref }}
+          GUARDRAIL_ENFORCE_RAW_ERRORS: "true"
         run: node scripts/check-changed-route-guardrails.mjs
 
       - name: Guardrail full-route debt gate
         env:
           GUARDRAIL_SCOPE: all
         run: node scripts/check-changed-route-guardrails.mjs
+
+      - name: Guardrail no-new-any type debt
+        env:
+          GUARDRAIL_BASE_REF: origin/${{ github.base_ref }}
+        run: node scripts/check-no-new-any.mjs

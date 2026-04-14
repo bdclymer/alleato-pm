@@ -21,6 +21,8 @@
     "seed:db": "npx tsx scripts/seed-db/seed-database.ts",
     "seed:db:dry": "npx tsx scripts/seed-db/seed-database.ts --dry-run",
     "seed:db:reset": "npx tsx scripts/seed-db/seed-database.ts --reset",
+    "seed:commitments:invoice-fixture": "npx tsx scripts/seed-db/ensure-commitments-invoice-smoke-fixture.ts",
+    "smoke:fixtures": "node scripts/seed-db/ensure-smoke-fixtures.mjs",
     "seed:financial": "npx tsx scripts/seed-db/seed-financial-data.ts",
     "seed:project": "npx tsx scripts/seed-db/seed-project-financial-data.ts",
     "schema:extract": "node scripts/database/generate-schema-from-types.js",

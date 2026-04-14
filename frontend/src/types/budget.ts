@@ -1,6 +1,10 @@
 export interface BudgetLineItem {
   id: string;
   costCode: string;
+  /** Human-readable cost code label, e.g. "01-3245" */
+  costCodeDescription?: string;
+  /** Cost type letter code, e.g. "X", "L", "M" */
+  costType?: string;
   description: string;
   originalBudgetAmount: number;
   unitQty?: number;
