@@ -32,6 +32,7 @@ import {
 
 import {
   sidebarNavGroups,
+  subcontractorSidebarGroup,
   buildToolUrl,
   isActivePath,
   extractProjectId,
@@ -318,6 +319,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   // Header nav hook for project selector
   const nav = useHeaderNav()
 
+  const isSubcontractor = userType === "subcontractor"
+
   // Filter tools by permission
   const filterTools = React.useCallback(
     (tools: NavigationTool[]): NavigationTool[] => {
@@ -325,13 +328,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         if (tool.onlyWithoutProject && projectId) return false;
         if (tool.requiresProject && !projectId) return false
         if (tool.adminOnly && !isAppAdmin && userType !== "developer") return false
+        // Subcontractor-only tools: only show for subcontractors
+        if (tool.subcontractorOnly && !isSubcontractor) return false
+        // Hide subcontractor-only tools from non-subcontractors (already handled above)
         if (tool.module && projectId) {
           return hasModulePermission(permissions, tool.module, tool.requiredPermission || "read")
         }
         return true
       })
     },
-    [projectId, permissions, isAppAdmin, userType]
+    [projectId, permissions, isAppAdmin, userType, isSubcontractor]
   )
 
   // Check if a group has any active child
@@ -370,15 +376,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     return { name: displayName, email: userEmail, avatar: avatarSrc || "" }
   }, [user])
 
-  // Filtered groups
+  // Filtered groups — subcontractors get a focused single-group nav
   const filteredGroups = React.useMemo(() => {
+    if (isSubcontractor && projectId) {
+      const tools = filterTools(subcontractorSidebarGroup.tools)
+      return tools.length > 0 ? [{ ...subcontractorSidebarGroup, tools }] : []
+    }
     return sidebarNavGroups
       .map((group) => ({
         ...group,
         tools: filterTools(group.tools),
       }))
       .filter((group) => group.tools.length > 0)
-  }, [filterTools])
+  }, [filterTools, isSubcontractor, projectId])
 
   const teamChatCollapsedShortcuts = React.useMemo(
     () => [

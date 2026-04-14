@@ -227,6 +227,15 @@ async function sendSsovInviteEmail(args: {
 
   const adminSupabase = createServiceClient();
 
+  // Fetch the Subcontractor system permission template ID once for the whole batch.
+  const { data: subcontractorTemplate } = await adminSupabase
+    .from("permission_templates")
+    .select("id")
+    .eq("name", "Subcontractor")
+    .eq("is_system", true)
+    .maybeSingle();
+  const subcontractorTemplateId = subcontractorTemplate?.id ?? null;
+
   // Check which recipients already have auth accounts
   const { data: existingAuthLinks } = await adminSupabase
     .from("users_auth")
@@ -304,6 +313,7 @@ async function sendSsovInviteEmail(args: {
               project_id: projectId,
               user_type: "subcontractor",
               status: "active",
+              ...(subcontractorTemplateId ? { permission_template_id: subcontractorTemplateId } : {}),
             },
             { onConflict: "person_id,project_id", ignoreDuplicates: false },
           );
@@ -326,6 +336,20 @@ async function sendSsovInviteEmail(args: {
           metadata: { projectId, commitmentId, commitmentTitle },
         });
       }
+
+      // Ensure existing users also have the subcontractor membership + template assigned.
+      await adminSupabase
+        .from("project_directory_memberships")
+        .upsert(
+          {
+            person_id: recipient.id,
+            project_id: projectId,
+            user_type: "subcontractor",
+            status: "active",
+            ...(subcontractorTemplateId ? { permission_template_id: subcontractorTemplateId } : {}),
+          },
+          { onConflict: "person_id,project_id", ignoreDuplicates: false },
+        );
 
       // Existing user — send standard notification with direct link
       return sendEmail({

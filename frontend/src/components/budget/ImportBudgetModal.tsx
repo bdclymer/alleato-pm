@@ -10,11 +10,10 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
-  BudgetOverlay,
-  BudgetOverlayBody,
-  BudgetOverlayFooter,
-  BudgetOverlayHeader,
-} from "@/components/ui/budget-overlay";
+  BaseModal,
+  ModalBody,
+  ModalFooter,
+} from "@/components/budget/modals/BaseModal";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -46,12 +45,9 @@ export function ImportBudgetModal({
   const [isImporting, setIsImporting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [isDragging, setIsDragging] = React.useState(false);
-  const [importResult, setImportResult] = React.useState<ImportResult | null>(
-    null,
-  );
+  const [importResult, setImportResult] = React.useState<ImportResult | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-  // Reset state when modal closes
   React.useEffect(() => {
     if (!open) {
       setFile(null);
@@ -62,9 +58,8 @@ export function ImportBudgetModal({
     }
   }, [open]);
 
-  const handleDownloadTemplate = async () => {
+  const handleDownloadTemplate = () => {
     try {
-      // Use the static template file
       const link = document.createElement("a");
       link.href = "/alleato-budget-template.xlsx";
       link.download = `budget-template-project-${projectId}.xlsx`;
@@ -72,36 +67,26 @@ export function ImportBudgetModal({
       link.click();
       document.body.removeChild(link);
       toast.success("Template downloaded successfully");
-    } catch (err) {
+    } catch {
       toast.error("Failed to download template");
     }
   };
 
   const validateFile = (selectedFile: File): string | null => {
-    // Check file type - support both Excel and CSV
     const validExcelTypes = [
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       "application/vnd.ms-excel",
     ];
     const validCsvTypes = ["text/csv", "application/csv"];
-
     const isExcel =
       validExcelTypes.includes(selectedFile.type) ||
       selectedFile.name.endsWith(".xlsx");
     const isCsv =
       validCsvTypes.includes(selectedFile.type) ||
       selectedFile.name.endsWith(".csv");
-
-    if (!isExcel && !isCsv) {
-      return "Please upload a valid Excel (.xlsx) or CSV (.csv) file";
-    }
-
-    // Check file size (10MB max)
-    const maxSize = 10 * 1024 * 1024; // 10MB
-    if (selectedFile.size > maxSize) {
-      return "File size must be less than 10MB";
-    }
-
+    if (!isExcel && !isCsv) return "Please upload a valid Excel (.xlsx) or CSV (.csv) file";
+    const maxSize = 10 * 1024 * 1024;
+    if (selectedFile.size > maxSize) return "File size must be less than 10MB";
     return null;
   };
 
@@ -112,18 +97,13 @@ export function ImportBudgetModal({
       setFile(null);
       return;
     }
-
     setFile(selectedFile);
     setError(null);
   };
 
-  const handleFileInputChange = (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
+  const handleFileInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
-    if (selectedFile) {
-      handleFileSelect(selectedFile);
-    }
+    if (selectedFile) handleFileSelect(selectedFile);
   };
 
   const handleDragOver = (event: React.DragEvent) => {
@@ -139,24 +119,18 @@ export function ImportBudgetModal({
   const handleDrop = (event: React.DragEvent) => {
     event.preventDefault();
     setIsDragging(false);
-
     const droppedFile = event.dataTransfer.files?.[0];
-    if (droppedFile) {
-      handleFileSelect(droppedFile);
-    }
+    if (droppedFile) handleFileSelect(droppedFile);
   };
 
   const handleRemoveFile = () => {
     setFile(null);
     setError(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleImport = async () => {
     if (!file) return;
-
     setIsImporting(true);
     setError(null);
 
@@ -172,39 +146,27 @@ export function ImportBudgetModal({
       const result: ImportResult = await response.json();
 
       if (!response.ok) {
-        // Still surface the detailed errors in the UI
         setImportResult(result);
         throw new Error(
-          result.error ||
-            result.errors?.[0] ||
-            result.message ||
-            "Failed to import budget",
+          result.error || result.errors?.[0] || result.message || "Failed to import budget",
         );
       }
 
-      // Store the result for display
       setImportResult(result);
 
-      // Show success message with details
       let message = `Budget imported successfully! ${result.importedCount || 0} line item(s) added.`;
-
       if (result.warnings?.length || result.skippedRows) {
         const issues = [];
-        if (result.warnings?.length)
-          issues.push(`${result.warnings.length} warnings`);
-        if (result.skippedRows)
-          issues.push(`${result.skippedRows} skipped rows`);
+        if (result.warnings?.length) issues.push(`${result.warnings.length} warnings`);
+        if (result.skippedRows) issues.push(`${result.skippedRows} skipped rows`);
         message += ` (${issues.join(", ")})`;
       }
 
       toast.success(message);
-
-      // Close modal and refresh budget data
       onOpenChange(false);
       onSuccess?.();
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Failed to import budget";
+      const errorMessage = err instanceof Error ? err.message : "Failed to import budget";
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -219,82 +181,58 @@ export function ImportBudgetModal({
   };
 
   return (
-    <BudgetOverlay
-      open={open}
-      onOpenChange={(nextOpen) => {
-        if (!isImporting) onOpenChange(nextOpen);
-      }}
-      variant="dialog"
+    <BaseModal
+      isOpen={open}
+      onClose={() => { if (!isImporting) onOpenChange(false); }}
+      title="Import Budget"
       size="md"
-      className="flex h-full flex-col"
     >
-      <BudgetOverlayHeader title="Import Budget from Excel" />
-      <BudgetOverlayBody className="px-4 sm:px-6">
-        <div className="space-y-4 pt-2">
-          <div className="flex items-start gap-2 rounded-md bg-warning/10 p-4 text-warning">
-            <AlertCircle className="w-5 h-5 mt-0.5 flex-shrink-0" />
-            <div className="text-sm">
-              <p className="font-medium">Important Notes:</p>
-              <ul className="list-disc list-inside mt-1 space-y-1">
-                <li>
-                  The budget uses the project currency and will not be converted
-                  on import
-                </li>
-                <li>
-                  Consider taking a snapshot before importing to preserve
-                  current budget state
-                </li>
+      <ModalBody>
+        <div className="space-y-5">
+          {/* Notes */}
+          <div className="rounded-lg bg-warning/10 p-4 text-warning flex items-start gap-3">
+            <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+            <div className="text-sm space-y-1">
+              <p className="font-medium text-foreground">Before you import</p>
+              <ul className="text-muted-foreground space-y-0.5 list-disc list-inside">
+                <li>Budget uses project currency — no conversion is applied</li>
+                <li>Take a snapshot first to preserve current state</li>
               </ul>
             </div>
           </div>
 
-          <div className="text-sm text-foreground">
-            <p className="font-medium mb-2">How to import:</p>
-            <ol className="list-decimal list-inside space-y-1 ml-2">
+          {/* Steps */}
+          <div className="space-y-1.5">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              How to import
+            </p>
+            <ol className="text-sm text-foreground space-y-1 list-decimal list-inside ml-0.5">
               <li>Download the Excel template below</li>
-              <li>Complete the template with your budget line items</li>
-              <li>Upload the completed file to populate your budget</li>
+              <li>Fill in your budget line items</li>
+              <li>Upload the completed file</li>
             </ol>
           </div>
 
-          <a
-            href="https://support.procore.com/products/online/user-guide/project-level/budget/tutorials/import-a-budget"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
-          >
-            Learn more about budget imports →
-          </a>
-        </div>
-
-        <div className="space-y-4 py-4">
-          {/* Download Template Section */}
-          <div className="flex items-center justify-between p-4 bg-muted rounded-lg border">
-            <div className="flex items-center gap-4">
-              <FileSpreadsheet className="w-8 h-8 text-green-600" />
+          {/* Template download */}
+          <div className="flex items-center justify-between rounded-lg bg-muted/40 px-4 py-3">
+            <div className="flex items-center gap-3">
+              <FileSpreadsheet className="h-8 w-8 text-primary shrink-0" />
               <div>
-                <p className="font-medium text-sm">Budget Import Template</p>
-                <p className="text-xs text-muted-foreground">
-                  Excel format (.xlsx)
-                </p>
+                <p className="text-sm font-medium text-foreground">Budget Import Template</p>
+                <p className="text-xs text-muted-foreground">Excel format (.xlsx)</p>
               </div>
             </div>
-            <Button
-              onClick={handleDownloadTemplate}
-              variant="outline"
-              size="sm"
-              className="gap-2"
-            >
-              <Upload />
-              Download Template
+            <Button onClick={handleDownloadTemplate} variant="outline" size="sm">
+              <Upload className="h-3.5 w-3.5" />
+              Download
             </Button>
           </div>
 
-          {/* File Upload Section */}
+          {/* File upload */}
           <div className="space-y-2">
-            <label className="text-sm font-medium">
-              Excel File <span className="text-red-500">*</span>
-            </label>
+            <p className="text-sm font-medium text-foreground">
+              Excel or CSV file <span className="text-destructive">*</span>
+            </p>
 
             {!file ? (
               <div
@@ -303,43 +241,36 @@ export function ImportBudgetModal({
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
                 className={cn(
-                  "border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors",
+                  "rounded-lg border-2 border-dashed p-8 text-center cursor-pointer transition-colors",
                   isDragging
-                    ? "border-primary bg-primary/10"
-                    : "border-border hover:border-border hover:bg-muted",
+                    ? "border-primary bg-primary/5"
+                    : "border-border hover:border-primary/40 hover:bg-muted/40",
                 )}
               >
-                <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                <p className="text-sm font-medium text-foreground mb-1">
-                  Upload File
-                </p>
-                <p className="text-xs text-muted-foreground">or Drag & Drop</p>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Excel (.xlsx) or CSV (.csv) files, max 10MB
+                <Upload className="h-8 w-8 mx-auto mb-3 text-muted-foreground" />
+                <p className="text-sm font-medium text-foreground">Drop file here or click to browse</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  .xlsx or .csv, max 10 MB
                 </p>
               </div>
             ) : (
-              <div className="border rounded-lg p-4 bg-green-50 border-green-200">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start gap-4">
-                    <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5" />
-                    <div>
-                      <p className="text-sm font-medium text-foreground">
-                        {file.name}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {formatFileSize(file.size)}
-                      </p>
+              <div className="rounded-lg bg-muted/40 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">{file.name}</p>
+                      <p className="text-xs text-muted-foreground">{formatFileSize(file.size)}</p>
                     </div>
                   </div>
                   <Button
                     onClick={handleRemoveFile}
                     variant="ghost"
-                    size="sm"
+                    size="icon"
                     disabled={isImporting}
-                    className="h-8 w-8 p-0"
+                    className="h-7 w-7 shrink-0"
                   >
-                    <X className="w-4 h-4" />
+                    <X className="h-3.5 w-3.5" />
                   </Button>
                 </div>
               </div>
@@ -354,83 +285,67 @@ export function ImportBudgetModal({
             />
 
             {error && (
-              <div className="flex items-start gap-2 text-red-600 bg-red-50 p-4 rounded-md text-sm">
-                <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                <p>{error}</p>
+              <div className="flex items-start gap-2 rounded-md bg-destructive/10 p-3 text-sm">
+                <AlertCircle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
+                <p className="text-destructive">{error}</p>
               </div>
             )}
           </div>
 
-          {/* Import Results Section */}
-          {importResult &&
-            (importResult.warnings?.length || importResult.errors?.length) && (
-              <div className="space-y-4">
-                <h4 className="font-medium text-sm">Import Results</h4>
+          {/* Import results */}
+          {importResult && (importResult.warnings?.length || importResult.errors?.length) ? (
+            <div className="space-y-3">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Import results
+              </p>
 
-                {importResult.warnings && importResult.warnings.length > 0 && (
-                  <div className="rounded-md border border-warning/20 bg-warning/10 p-4">
-                    <div className="flex items-start gap-2">
-                      <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
-                      <div className="space-y-2 flex-1">
-                        <p className="text-sm font-medium text-warning">
-                          Warnings ({importResult.warnings.length})
-                        </p>
-                        <div className="max-h-24 overflow-y-auto">
-                          <ul className="text-xs space-y-1">
-                            {importResult.warnings
-                              .slice(0, 5)
-                              .map((warning, index) => (
-                                <li key={index} className="text-warning">
-                                  {warning}
-                                </li>
-                              ))}
-                            {importResult.warnings.length > 5 && (
-                              <li className="italic text-warning">
-                                +{importResult.warnings.length - 5} more
-                                warnings...
-                              </li>
-                            )}
-                          </ul>
-                        </div>
-                      </div>
+              {importResult.warnings && importResult.warnings.length > 0 && (
+                <div className="rounded-md bg-warning/10 p-3">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="h-4 w-4 shrink-0 text-warning mt-0.5" />
+                    <div className="flex-1 space-y-1.5">
+                      <p className="text-sm font-medium text-warning">
+                        {importResult.warnings.length} warning{importResult.warnings.length !== 1 ? "s" : ""}
+                      </p>
+                      <ul className="text-xs text-warning space-y-0.5 max-h-20 overflow-y-auto">
+                        {importResult.warnings.slice(0, 5).map((w) => (
+                          <li key={w}>{w}</li>
+                        ))}
+                        {importResult.warnings.length > 5 && (
+                          <li className="italic">+{importResult.warnings.length - 5} more…</li>
+                        )}
+                      </ul>
                     </div>
                   </div>
-                )}
+                </div>
+              )}
 
-                {importResult.errors && importResult.errors.length > 0 && (
-                  <div className="bg-red-50 border border-red-200 rounded-md p-4">
-                    <div className="flex items-start gap-2">
-                      <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
-                      <div className="space-y-2 flex-1">
-                        <p className="text-sm font-medium text-red-800">
-                          Errors ({importResult.errors.length})
-                        </p>
-                        <div className="max-h-24 overflow-y-auto">
-                          <ul className="text-xs space-y-1">
-                            {importResult.errors
-                              .slice(0, 5)
-                              .map((error, index) => (
-                                <li key={index} className="text-red-700">
-                                  {error}
-                                </li>
-                              ))}
-                            {importResult.errors.length > 5 && (
-                              <li className="text-red-600 italic">
-                                +{importResult.errors.length - 5} more errors...
-                              </li>
-                            )}
-                          </ul>
-                        </div>
-                      </div>
+              {importResult.errors && importResult.errors.length > 0 && (
+                <div className="rounded-md bg-destructive/10 p-3">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
+                    <div className="flex-1 space-y-1.5">
+                      <p className="text-sm font-medium text-destructive">
+                        {importResult.errors.length} error{importResult.errors.length !== 1 ? "s" : ""}
+                      </p>
+                      <ul className="text-xs text-destructive space-y-0.5 max-h-20 overflow-y-auto">
+                        {importResult.errors.slice(0, 5).map((e) => (
+                          <li key={e}>{e}</li>
+                        ))}
+                        {importResult.errors.length > 5 && (
+                          <li className="italic">+{importResult.errors.length - 5} more…</li>
+                        )}
+                      </ul>
                     </div>
                   </div>
-                )}
-              </div>
-            )}
+                </div>
+              )}
+            </div>
+          ) : null}
         </div>
-      </BudgetOverlayBody>
+      </ModalBody>
 
-      <BudgetOverlayFooter>
+      <ModalFooter>
         <Button
           type="button"
           variant="outline"
@@ -446,17 +361,17 @@ export function ImportBudgetModal({
         >
           {isImporting ? (
             <>
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-              Importing...
+              <div className="h-3.5 w-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+              Importing…
             </>
           ) : (
             <>
-              <Upload />
+              <Upload className="h-3.5 w-3.5" />
               Import
             </>
           )}
         </Button>
-      </BudgetOverlayFooter>
-    </BudgetOverlay>
+      </ModalFooter>
+    </BaseModal>
   );
 }

@@ -6,6 +6,7 @@ import {
   ArrowLeft,
   Check,
   Edit,
+  FileDown,
   FileUp,
   Link2,
   List,
@@ -1293,6 +1294,15 @@ export default function PrimeContractCODetailPage() {
                   Reject
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <a
+                    href={`/api/projects/${projectId}/prime-contract-change-orders/${primeCoId}/pdf`}
+                    download
+                  >
+                    <FileDown className="mr-2 h-4 w-4" />
+                    Export PDF
+                  </a>
+                </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <a
                     href={`/api/projects/${projectId}/prime-contract-change-orders/export?status=${co.status}`}

@@ -424,6 +424,7 @@ export function SubcontractorInvoiceDetail({
             invoiceId={invoiceId}
             lineItems={lineItems}
             canEdit={canEdit}
+            isRetainageRelease={invoice.is_retainage_release ?? false}
             onRefetch={refetch}
           />
         )}

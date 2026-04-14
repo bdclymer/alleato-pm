@@ -317,11 +317,12 @@ export const POST = withApiGuardrails<{ projectId: string }>(
       );
     }
 
-    // Verify the commitment belongs to this project
+    // Verify the commitment belongs to this project and capture default retainage %
+    let defaultRetainagePct = 0;
     if (subcontract_id) {
       const { data: sc, error: scError } = await supabase
         .from("subcontracts")
-        .select("id")
+        .select("id, default_retainage_percent")
         .eq("id", subcontract_id)
         .eq("project_id", projectIdNum)
         .single();
@@ -332,12 +333,13 @@ export const POST = withApiGuardrails<{ projectId: string }>(
           { status: 404 },
         );
       }
+      defaultRetainagePct = Number(sc.default_retainage_percent) || 0;
     }
 
     if (purchase_order_id) {
       const { data: po, error: poError } = await supabase
         .from("purchase_orders")
-        .select("id")
+        .select("id, default_retainage_percent")
         .eq("id", purchase_order_id)
         .eq("project_id", projectIdNum)
         .single();
@@ -348,6 +350,7 @@ export const POST = withApiGuardrails<{ projectId: string }>(
           { status: 404 },
         );
       }
+      defaultRetainagePct = Number(po.default_retainage_percent) || 0;
     }
 
     const { data: invoice, error: insertError } = await supabase
@@ -410,13 +413,16 @@ export const POST = withApiGuardrails<{ projectId: string }>(
         const previous = Number(item.work_completed_previous) || 0;
         const thisPeriod = Number(item.work_completed_period) || 0;
         const stored = Number(item.materials_stored) || 0;
-        const retainagePct = Number(item.retainage_pct) || 0;
-        const materialsRetainagePct = Number(item.materials_retainage_pct) || 0;
+        // Fall back to commitment's default retainage % when caller doesn't supply one
+        const retainagePct = item.retainage_pct != null ? Number(item.retainage_pct) : defaultRetainagePct;
+        const materialsRetainagePct = item.materials_retainage_pct != null ? Number(item.materials_retainage_pct) : defaultRetainagePct;
 
         // Derived fields — total_completed_stored is GENERATED in Postgres, compute only for pct
         const totalCompletedStored = previous + thisPeriod + stored;
         const workCompletedPct = scheduled > 0 ? (totalCompletedStored / scheduled) * 100 : 0;
-        const retainageAmount = ((previous + thisPeriod) * retainagePct) / 100;
+        // "Work Retainage This Period" applies ONLY to work billed this period.
+        // Prior periods' retainage is tracked in previous_work_retainage separately.
+        const retainageAmount = (thisPeriod * retainagePct) / 100;
         const materialsRetainageAmount = (stored * materialsRetainagePct) / 100;
 
         return {

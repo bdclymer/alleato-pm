@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Pencil, X } from "lucide-react";
 
+import { apiFetch } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -123,6 +124,7 @@ interface DetailTabProps {
   invoiceId: number;
   lineItems: SovLineItem[];
   canEdit: boolean;
+  isRetainageRelease?: boolean;
   onRefetch: () => Promise<unknown>;
 }
 
@@ -131,6 +133,7 @@ export function DetailTab({
   invoiceId,
   lineItems,
   canEdit,
+  isRetainageRelease = false,
   onRefetch,
 }: DetailTabProps) {
   const [editing, setEditing] = useState(false);
@@ -150,8 +153,11 @@ export function DetailTab({
       const workPct = Number(e.retainage_pct) || 0;
       const matPct = Number(e.materials_retainage_pct) || 0;
       const totalCompleted = previous + thisPeriod + stored;
-      const workRetainage = ((previous + thisPeriod) * workPct) / 100;
+      // Retainage applies only to THIS period's billing, not cumulative
+      const workRetainage = (thisPeriod * workPct) / 100;
       const matRetainage = (stored * matPct) / 100;
+      const workReleased = Number(e.work_retainage_released) || 0;
+      const matReleased = Number(e.materials_retainage_released) || 0;
       return {
         ...li,
         work_completed_period: thisPeriod,
@@ -160,6 +166,8 @@ export function DetailTab({
         materials_retainage_pct: matPct,
         retainage_amount: workRetainage,
         materials_retainage_amount: matRetainage,
+        work_retainage_released: workReleased,
+        materials_retainage_released: matReleased,
         total_completed_stored: totalCompleted,
         work_completed_pct:
           scheduled > 0 ? (totalCompleted / scheduled) * 100 : 0,
@@ -218,6 +226,8 @@ export function DetailTab({
         materials_stored: String(li.materials_stored ?? 0),
         retainage_pct: String(li.retainage_pct ?? 0),
         materials_retainage_pct: String(li.materials_retainage_pct ?? 0),
+        work_retainage_released: String(li.work_retainage_released ?? 0),
+        materials_retainage_released: String(li.materials_retainage_released ?? 0),
       };
     }
     setEdits(seed);
@@ -254,21 +264,18 @@ export function DetailTab({
       materials_stored: Number(v.materials_stored) || 0,
       retainage_pct: Number(v.retainage_pct) || 0,
       materials_retainage_pct: Number(v.materials_retainage_pct) || 0,
+      work_retainage_released: Number(v.work_retainage_released) || 0,
+      materials_retainage_released: Number(v.materials_retainage_released) || 0,
     }));
     setBusy(true);
     try {
-      const res = await fetch(
+      await apiFetch(
         `/api/projects/${projectId}/invoicing/subcontractor/invoices/${invoiceId}/line-items`,
         {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ updates }),
         },
       );
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? "Failed to save line items");
-      }
       toast.success("SOV updated");
       setEditing(false);
       setEdits({});
@@ -282,6 +289,12 @@ export function DetailTab({
 
   return (
     <section className="space-y-4">
+      {isRetainageRelease && (
+        <div className="rounded-md bg-muted px-4 py-3 text-sm text-muted-foreground">
+          <span className="font-medium text-foreground">Release of Retainage Invoice</span>
+          {" — "}Enter amounts to release from previously withheld retainage. Billing fields are read-only.
+        </div>
+      )}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-sm font-semibold text-foreground">
@@ -296,13 +309,15 @@ export function DetailTab({
           <div className="flex items-center gap-2">
             {editing ? (
               <>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setRetainageSidebarOpen(true)}
-                >
-                  Set Retainage
-                </Button>
+                {!isRetainageRelease && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setRetainageSidebarOpen(true)}
+                  >
+                    Set Retainage
+                  </Button>
+                )}
                 <Button
                   size="sm"
                   variant="outline"
@@ -317,7 +332,8 @@ export function DetailTab({
               </>
             ) : (
               <Button size="sm" variant="outline" onClick={enterEdit}>
-                <Pencil className="h-4 w-4 mr-1" /> Edit SOV
+                <Pencil className="h-4 w-4 mr-1" />
+                {isRetainageRelease ? "Edit Release Amounts" : "Edit SOV"}
               </Button>
             )}
           </div>
@@ -519,7 +535,7 @@ export function DetailTab({
                     </TableCell>
                     {/* E: This Period */}
                     <TableCell className="text-right tabular-nums text-xs">
-                      {editing && e ? (
+                      {editing && e && !isRetainageRelease ? (
                         <Input
                           type="number"
                           step="0.01"
@@ -541,7 +557,7 @@ export function DetailTab({
                     </TableCell>
                     {/* F: Materials Stored */}
                     <TableCell className="text-right tabular-nums text-xs">
-                      {editing && e ? (
+                      {editing && e && !isRetainageRelease ? (
                         <Input
                           type="number"
                           step="0.01"
@@ -589,7 +605,7 @@ export function DetailTab({
                     </TableCell>
                     {/* Retained This Period: Work % */}
                     <TableCell className="text-right tabular-nums text-xs border-l border-border">
-                      {editing && e ? (
+                      {editing && e && !isRetainageRelease ? (
                         <Input
                           type="number"
                           step="0.01"
@@ -617,7 +633,7 @@ export function DetailTab({
                     </TableCell>
                     {/* Retained This Period: Materials % */}
                     <TableCell className="text-right tabular-nums text-xs">
-                      {editing && e ? (
+                      {editing && e && !isRetainageRelease ? (
                         <Input
                           type="number"
                           step="0.01"
@@ -645,11 +661,49 @@ export function DetailTab({
                     </TableCell>
                     {/* Released This Period: Work $ */}
                     <TableCell className="text-right tabular-nums text-xs border-l border-border">
-                      {formatCurrency(li.work_retainage_released)}
+                      {editing && e ? (
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          className="h-7 w-24 ml-auto text-right tabular-nums text-xs"
+                          value={e.work_retainage_released}
+                          onChange={(ev) =>
+                            setEdits((prev) => ({
+                              ...prev,
+                              [li.id]: {
+                                ...prev[li.id],
+                                work_retainage_released: ev.target.value,
+                              },
+                            }))
+                          }
+                        />
+                      ) : (
+                        formatCurrency(li.work_retainage_released)
+                      )}
                     </TableCell>
                     {/* Released This Period: Materials $ */}
                     <TableCell className="text-right tabular-nums text-xs">
-                      {formatCurrency(li.materials_retainage_released)}
+                      {editing && e ? (
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          className="h-7 w-24 ml-auto text-right tabular-nums text-xs"
+                          value={e.materials_retainage_released}
+                          onChange={(ev) =>
+                            setEdits((prev) => ({
+                              ...prev,
+                              [li.id]: {
+                                ...prev[li.id],
+                                materials_retainage_released: ev.target.value,
+                              },
+                            }))
+                          }
+                        />
+                      ) : (
+                        formatCurrency(li.materials_retainage_released)
+                      )}
                     </TableCell>
                     {/* Currently Retained: Work $ */}
                     <TableCell className="text-right tabular-nums text-xs border-l border-border">

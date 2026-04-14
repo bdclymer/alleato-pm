@@ -25,11 +25,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  BudgetOverlay,
-  BudgetOverlayBody,
-  BudgetOverlayFooter,
-  BudgetOverlayHeader,
-} from "@/components/ui/budget-overlay";
+  SidebarFooter,
+} from "@/components/budget/modals/BaseSidebar";
+import {
+  BaseModal,
+  ModalBody,
+  ModalFooter,
+} from "@/components/budget/modals/BaseModal";
 import {
   Command,
   CommandEmpty,
@@ -509,11 +511,6 @@ export function BudgetLineItemForm({
 
   return (
     <>
-      <BudgetOverlayHeader
-        title="Create Budget Line Items"
-        description="Add one or more line items to the project budget."
-      />
-
       <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
         <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6">
           <div>
@@ -770,7 +767,7 @@ export function BudgetLineItemForm({
           </div>
         </div>
 
-        <BudgetOverlayFooter>
+        <SidebarFooter>
           <Button type="button" variant="outline" onClick={onCancel}>
             Cancel
           </Button>
@@ -779,22 +776,17 @@ export function BudgetLineItemForm({
               ? "Creating..."
               : `Create ${rows.length} Line Item${rows.length > 1 ? "s" : ""}`}
           </Button>
-        </BudgetOverlayFooter>
+        </SidebarFooter>
       </form>
 
       {/* Create Budget Code Modal */}
-      <BudgetOverlay
-        open={showCreateCodeModal}
-        onOpenChange={setShowCreateCodeModal}
-        variant="dialog"
+      <BaseModal
+        isOpen={showCreateCodeModal}
+        onClose={() => setShowCreateCodeModal(false)}
+        title="Create New Budget Code"
         size="sm"
-        className="flex h-full flex-col"
       >
-        <BudgetOverlayHeader
-          title="Create New Budget Code"
-          description="Add a new budget code that can be used for line items in this project."
-        />
-        <BudgetOverlayBody className="px-4 py-4 sm:px-6">
+        <ModalBody>
           <div className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="costCode">Cost Code*</Label>
@@ -903,8 +895,8 @@ export function BudgetLineItemForm({
               </p>
             </div>
           </div>
-        </BudgetOverlayBody>
-        <BudgetOverlayFooter>
+        </ModalBody>
+        <ModalFooter>
           <Button
             type="button"
             variant="outline"
@@ -921,8 +913,8 @@ export function BudgetLineItemForm({
           >
             {loading ? "Creating..." : "Create Budget Code"}
           </Button>
-        </BudgetOverlayFooter>
-      </BudgetOverlay>
+        </ModalFooter>
+      </BaseModal>
     </>
   );
 }

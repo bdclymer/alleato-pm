@@ -1,6 +1,7 @@
 import { createServiceClient } from "@/lib/supabase/service";
+import { createClient } from "@/lib/supabase/server";
 import { PageShell } from "@/components/layout";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { ProjectCommandCenter as ProjectHomeClient } from "./project-command-center";
 
 export const dynamic = "force-dynamic";
@@ -136,6 +137,29 @@ export default async function ProjectHomePage({
   // Validate projectId is a valid number
   if (isNaN(numericProjectId)) {
     notFound();
+  }
+
+  // Redirect subcontractors to their focused My Work page
+  const authClient = await createClient();
+  const { data: { user } } = await authClient.auth.getUser();
+  if (user) {
+    const { data: authLink } = await supabase
+      .from("users_auth")
+      .select("person_id")
+      .eq("auth_user_id", user.id)
+      .maybeSingle();
+    if (authLink) {
+      const { data: membership } = await supabase
+        .from("project_directory_memberships")
+        .select("user_type")
+        .eq("person_id", authLink.person_id)
+        .eq("project_id", numericProjectId)
+        .eq("status", "active")
+        .maybeSingle();
+      if (membership?.user_type === "subcontractor") {
+        redirect(`/${projectId}/my-work`);
+      }
+    }
   }
 
   // Fetch project data with all related information in parallel

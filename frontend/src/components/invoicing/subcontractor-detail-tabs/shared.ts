@@ -32,6 +32,8 @@ export type LineItemEdits = Record<
     materials_stored: string;
     retainage_pct: string;
     materials_retainage_pct: string;
+    work_retainage_released: string;
+    materials_retainage_released: string;
   }
 >;
 

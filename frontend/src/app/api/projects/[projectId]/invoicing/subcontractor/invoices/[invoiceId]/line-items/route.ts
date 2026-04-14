@@ -6,8 +6,21 @@ import { apiErrorResponse } from "@/lib/api-error";
 
 // PATCH /api/projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/line-items
 // Bulk-update editable SOV fields on line items of a draft / revise_and_resubmit invoice.
-// Accepts: { updates: Array<{ id: number; work_completed_period?: number; materials_stored?: number; retainage_pct?: number; materials_retainage_pct?: number }> }
+// Accepts: { updates: Array<{
+//   id: number;
+//   work_completed_period?: number;
+//   materials_stored?: number;
+//   retainage_pct?: number;
+//   materials_retainage_pct?: number;
+//   work_retainage_released?: number;   // amount of work retainage to release this period
+//   materials_retainage_released?: number; // amount of materials retainage to release this period
+// }> }
 // Server recomputes derived totals (pct, total, work_retainage_amount, materials_retainage_amount, balance, net).
+//
+// IMPORTANT: work_retainage_amount = thisPeriod * workRetainagePct / 100
+// NOT (previous + thisPeriod) * pct. "Work Retainage This Period" applies only
+// to work completed in the current billing period. Prior periods' retainage is
+// already tracked in previous_work_retainage and carried forward separately.
 export const PATCH = withApiGuardrails<{ projectId: string; invoiceId: string }>(
   "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/line-items#PATCH",
   async ({ request, params }) => {
@@ -81,7 +94,7 @@ export const PATCH = withApiGuardrails<{ projectId: string; invoiceId: string }>
     const { data: existingRows, error: rowsError } = await supabase
       .from("subcontractor_invoice_line_items")
       .select(
-        "id, invoice_id, scheduled_value, work_completed_previous, work_completed_period, materials_stored, retainage_pct, materials_retainage_pct",
+        "id, invoice_id, scheduled_value, work_completed_previous, work_completed_period, materials_stored, retainage_pct, materials_retainage_pct, previous_work_retainage, previous_materials_retainage, retainage_amount, materials_retainage_amount, work_retainage_released, materials_retainage_released",
       )
       .in("id", ids)
       .eq("invoice_id", invoiceIdNum);
@@ -123,17 +136,55 @@ export const PATCH = withApiGuardrails<{ projectId: string; invoiceId: string }>
           ? Number(patch.materials_retainage_pct) || 0
           : Number(existing.materials_retainage_pct) || 0;
 
+      // Retainage release amounts (capped at total currently withheld)
+      const prevWorkRetained = Number(existing.previous_work_retainage) || 0;
+      const prevMatRetained = Number(existing.previous_materials_retainage) || 0;
+
       // total_completed_stored, balance_to_finish, and net_amount_this_period
       // are GENERATED ALWAYS columns in Postgres — do not write them.
       const totalCompletedStored = previous + thisPeriod + stored;
       const workCompletedPct =
         scheduled > 0 ? (totalCompletedStored / scheduled) * 100 : 0;
-      // Work retainage is applied to work completed (previous + this period),
-      // materials retainage is applied only to materials stored.
-      const workRetainageAmount =
-        ((previous + thisPeriod) * workRetainagePct) / 100;
-      const materialsRetainageAmount =
-        (stored * materialsRetainagePct) / 100;
+
+      // "Work Retainage This Period" applies ONLY to work billed this period,
+      // not cumulative. Previous periods' retainage is tracked in
+      // previous_work_retainage and carried forward independently.
+      const workRetainageAmount = (thisPeriod * workRetainagePct) / 100;
+      const materialsRetainageAmount = (stored * materialsRetainagePct) / 100;
+
+      // Maximum releasable = what was withheld in prior periods + what's being
+      // withheld this period. Cannot release more than this total.
+      const maxWorkReleasable = prevWorkRetained + workRetainageAmount;
+      const maxMatReleasable = prevMatRetained + materialsRetainageAmount;
+
+      let workRetainageReleased =
+        patch.work_retainage_released !== undefined
+          ? Number(patch.work_retainage_released) || 0
+          : Number(existing.work_retainage_released) || 0;
+      let materialsRetainageReleased =
+        patch.materials_retainage_released !== undefined
+          ? Number(patch.materials_retainage_released) || 0
+          : Number(existing.materials_retainage_released) || 0;
+
+      // Guard: cannot release more than what was withheld
+      if (workRetainageReleased > maxWorkReleasable) {
+        results.push({
+          id,
+          ok: false,
+          error: `Work retainage released (${workRetainageReleased}) exceeds total withheld (${maxWorkReleasable.toFixed(2)})`,
+        });
+        continue;
+      }
+      if (materialsRetainageReleased > maxMatReleasable) {
+        results.push({
+          id,
+          ok: false,
+          error: `Materials retainage released (${materialsRetainageReleased}) exceeds total withheld (${maxMatReleasable.toFixed(2)})`,
+        });
+        continue;
+      }
+      if (workRetainageReleased < 0) workRetainageReleased = 0;
+      if (materialsRetainageReleased < 0) materialsRetainageReleased = 0;
 
       const { error: updateError } = await supabase
         .from("subcontractor_invoice_line_items")
@@ -144,6 +195,8 @@ export const PATCH = withApiGuardrails<{ projectId: string; invoiceId: string }>
           retainage_amount: workRetainageAmount,
           materials_retainage_pct: materialsRetainagePct,
           materials_retainage_amount: materialsRetainageAmount,
+          work_retainage_released: workRetainageReleased,
+          materials_retainage_released: materialsRetainageReleased,
           work_completed_pct: workCompletedPct,
           updated_at: new Date().toISOString(),
         })
@@ -163,8 +216,9 @@ export const PATCH = withApiGuardrails<{ projectId: string; invoiceId: string }>
             work_completed_period: Number(existing.work_completed_period) || 0,
             materials_stored: Number(existing.materials_stored) || 0,
             retainage_pct: Number(existing.retainage_pct) || 0,
-            materials_retainage_pct:
-              Number(existing.materials_retainage_pct) || 0,
+            materials_retainage_pct: Number(existing.materials_retainage_pct) || 0,
+            work_retainage_released: Number(existing.work_retainage_released) || 0,
+            materials_retainage_released: Number(existing.materials_retainage_released) || 0,
           },
           new_value: {
             work_completed_period: thisPeriod,
@@ -173,6 +227,8 @@ export const PATCH = withApiGuardrails<{ projectId: string; invoiceId: string }>
             materials_retainage_pct: materialsRetainagePct,
             retainage_amount: workRetainageAmount,
             materials_retainage_amount: materialsRetainageAmount,
+            work_retainage_released: workRetainageReleased,
+            materials_retainage_released: materialsRetainageReleased,
           },
         });
       }

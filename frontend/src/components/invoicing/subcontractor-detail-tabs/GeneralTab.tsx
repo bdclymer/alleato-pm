@@ -5,6 +5,7 @@ import { format, isValid, parse } from "date-fns";
 import { Calendar as CalendarIcon, Paperclip, Pencil, X } from "lucide-react";
 import { toast } from "sonner";
 
+import { apiFetch } from "@/lib/api-client";
 import { InvoiceStatusBadge } from "@/components/invoicing/InvoiceStatusBadge";
 import { LabelValueRow } from "@/components/layout";
 import { Button } from "@/components/ui/button";
@@ -270,18 +271,13 @@ export function GeneralTab({
         period_end: displayToIso(fields.period_end),
         billing_date: displayToIso(fields.billing_date),
       };
-      const res = await fetch(
+      await apiFetch(
         `/api/projects/${projectId}/invoicing/subcontractor/invoices/${invoiceId}`,
         {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         },
       );
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? "Failed to save");
-      }
       toast.success("Invoice updated");
       await onSave?.();
     } catch (err) {
@@ -309,12 +305,13 @@ export function GeneralTab({
       const workPct = Number(e.retainage_pct) || 0;
       const matPct = Number(e.materials_retainage_pct) || 0;
       const totalCompleted = previous + thisPeriod + stored;
-      const workRetainage = ((previous + thisPeriod) * workPct) / 100;
+      // Retainage applies only to THIS period's billing, not cumulative
+      const workRetainage = (thisPeriod * workPct) / 100;
       const matRetainage = (stored * matPct) / 100;
       const prevWorkRet = Number(li.previous_work_retainage) || 0;
       const prevMatRet = Number(li.previous_materials_retainage) || 0;
-      const workReleased = Number(li.work_retainage_released) || 0;
-      const matReleased = Number(li.materials_retainage_released) || 0;
+      const workReleased = Number(e.work_retainage_released) || 0;
+      const matReleased = Number(e.materials_retainage_released) || 0;
       return {
         ...li,
         work_completed_period: thisPeriod,
@@ -400,6 +397,8 @@ export function GeneralTab({
         materials_stored: String(li.materials_stored ?? 0),
         retainage_pct: String(li.retainage_pct ?? 0),
         materials_retainage_pct: String(li.materials_retainage_pct ?? 0),
+        work_retainage_released: String(li.work_retainage_released ?? 0),
+        materials_retainage_released: String(li.materials_retainage_released ?? 0),
       };
     }
     setEdits(seed);
@@ -436,21 +435,18 @@ export function GeneralTab({
       materials_stored: Number(v.materials_stored) || 0,
       retainage_pct: Number(v.retainage_pct) || 0,
       materials_retainage_pct: Number(v.materials_retainage_pct) || 0,
+      work_retainage_released: Number(v.work_retainage_released) || 0,
+      materials_retainage_released: Number(v.materials_retainage_released) || 0,
     }));
     setSavingSOV(true);
     try {
-      const res = await fetch(
+      await apiFetch(
         `/api/projects/${projectId}/invoicing/subcontractor/invoices/${invoiceId}/line-items`,
         {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ updates }),
         },
       );
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? "Failed to save line items");
-      }
       toast.success("SOV updated");
       setEditingSOV(false);
       setEdits({});

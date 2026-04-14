@@ -59,6 +59,8 @@ export interface NavigationTool {
   requiredPermission?: "read" | "write" | "admin";
   /** If true, only visible to app admins or developers. */
   adminOnly?: boolean;
+  /** If true, only visible to users with user_type === "subcontractor". */
+  subcontractorOnly?: boolean;
 }
 
 // Extended type for header navigation with icons and descriptions
@@ -116,6 +118,19 @@ export const financialManagementTools: NavigationTool[] = [
   { name: "Change Events", path: "change-events", icon: Clock, requiresProject: true, module: "change_orders" },
   { name: "Direct Costs", path: "direct-costs", icon: DollarSign, requiresProject: true, module: "budget" },
   { name: "Invoicing", path: "invoices", icon: Receipt, requiresProject: true, module: "contracts" },
+];
+
+/**
+ * Tools shown exclusively to users with user_type === "subcontractor".
+ * These replace the full Financial/Operations nav for subcontractors.
+ */
+export const subcontractorTools: NavigationTool[] = [
+  { name: "My Work", path: "my-work", icon: Home, requiresProject: true, subcontractorOnly: true },
+  { name: "My Schedule of Values", path: "commitments", icon: ClipboardList, requiresProject: true, subcontractorOnly: true, module: "contracts" },
+  { name: "Submit Invoice", path: "invoicing/subcontractor/new", icon: Receipt, requiresProject: true, subcontractorOnly: true, module: "contracts" },
+  { name: "RFIs", path: "rfis", icon: MessageCircle, requiresProject: true, subcontractorOnly: true, module: "rfis" },
+  { name: "Submittals", path: "submittals", icon: Package, requiresProject: true, subcontractorOnly: true, module: "submittals" },
+  { name: "Documents", path: "documents", icon: FolderOpen, requiresProject: true, subcontractorOnly: true, module: "documents" },
 ];
 
 export const adminTools: NavigationTool[] = [
@@ -201,6 +216,13 @@ export interface SidebarNavGroup {
   icon: LucideIcon;
   tools: NavigationTool[];
 }
+
+export const subcontractorSidebarGroup: SidebarNavGroup = {
+  id: "subcontractor",
+  label: "My Project",
+  icon: Briefcase,
+  tools: subcontractorTools,
+};
 
 export const sidebarNavGroups: SidebarNavGroup[] = [
   {

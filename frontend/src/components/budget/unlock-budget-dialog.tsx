@@ -1,16 +1,14 @@
 "use client";
 
-import * as React from "react";
 import { useState, useEffect } from "react";
 import { Loader2, AlertTriangle, ShieldCheck, Lock } from "lucide-react";
 import { toast } from "sonner";
 
 import {
-  BudgetOverlay,
-  BudgetOverlayBody,
-  BudgetOverlayFooter,
-  BudgetOverlayHeader,
-} from "@/components/ui/budget-overlay";
+  BaseSidebar,
+  SidebarBody,
+  SidebarFooter,
+} from "@/components/budget/modals/BaseSidebar";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { apiFetch, ApiError } from "@/lib/api-client";
@@ -144,23 +142,18 @@ export function UnlockBudgetDialog({
   const isBlocked = activeMods.length > 0;
 
   return (
-    <BudgetOverlay
+    <BaseSidebar
       open={open}
-      onOpenChange={onOpenChange}
-      variant="sheet"
+      onClose={() => onOpenChange(false)}
+      title="Unlock Budget"
+      subtitle={
+        isBlocked
+          ? "Unlock is blocked while active modifications exist"
+          : "Choose how to unlock this budget"
+      }
       size="md"
-      className="flex h-full flex-col"
     >
-      <BudgetOverlayHeader
-        title="Unlock Budget"
-        description={
-          isBlocked
-            ? "Unlock is blocked while active budget modifications exist."
-            : "Choose how you want to unlock this budget. This action will allow editing of budget line items."
-        }
-      />
-
-      <BudgetOverlayBody className="space-y-4 px-4 py-4 sm:px-6">
+      <SidebarBody className="px-4 py-5 sm:px-6">
         {checkingMods ? (
           <div className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -169,14 +162,11 @@ export function UnlockBudgetDialog({
         ) : isBlocked ? (
           <BlockedView modifications={activeMods} />
         ) : (
-          <UnlockOptions
-            unlocking={unlocking}
-            onUnlock={handleUnlock}
-          />
+          <UnlockOptions unlocking={unlocking} onUnlock={handleUnlock} />
         )}
-      </BudgetOverlayBody>
+      </SidebarBody>
 
-      <BudgetOverlayFooter>
+      <SidebarFooter>
         <Button
           type="button"
           variant="outline"
@@ -185,8 +175,8 @@ export function UnlockBudgetDialog({
         >
           {isBlocked ? "Close" : "Cancel"}
         </Button>
-      </BudgetOverlayFooter>
-    </BudgetOverlay>
+      </SidebarFooter>
+    </BaseSidebar>
   );
 }
 
@@ -205,11 +195,11 @@ function BlockedView({ modifications }: { modifications: ActiveModification[] })
         </AlertDescription>
       </Alert>
 
-      <div className="rounded-lg border border-border bg-card">
-        <div className="border-b border-border px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+      <div className="rounded-lg bg-muted/40 overflow-hidden">
+        <div className="px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground border-b border-border/50">
           Blocking modifications ({count})
         </div>
-        <ul className="divide-y divide-border">
+        <ul className="divide-y divide-border/50">
           {modifications.map((m) => (
             <li
               key={String(m.id)}
@@ -223,7 +213,7 @@ function BlockedView({ modifications }: { modifications: ActiveModification[] })
                   Modification {m.number ?? `#${m.id}`}
                 </span>
               </div>
-              <span className="rounded-full border border-border bg-muted px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+              <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
                 {m.status}
               </span>
             </li>
@@ -258,55 +248,52 @@ function UnlockOptions({
       </Alert>
 
       {/* Option 1: Preserve Line Items */}
-      <div className="border rounded-lg p-6 space-y-4 hover:border-primary/50 transition-colors">
-        <div className="flex items-start gap-4">
-          <div className="rounded-full bg-primary/10 p-2">
-            <ShieldCheck className="h-5 w-5 text-primary" />
+      <div className="rounded-lg bg-muted/40 p-5 space-y-3">
+        <div className="flex items-start gap-3">
+          <div className="rounded-full bg-primary/10 p-2 shrink-0">
+            <ShieldCheck className="h-4 w-4 text-primary" />
           </div>
-          <div className="flex-1 space-y-2">
-            <h3 className="font-semibold text-base">Preserve Line Items</h3>
+          <div className="flex-1 space-y-1.5">
+            <p className="font-medium text-sm text-foreground">Preserve Line Items</p>
             <p className="text-sm text-muted-foreground">
               Keep all existing budget line items. Use this when you need to
-              make minor adjustments or add new items without losing current
-              data.
+              make minor adjustments or add new items without losing current data.
             </p>
-            <Button
-              onClick={() => onUnlock(true)}
-              disabled={unlocking}
-              className="w-full sm:w-auto"
-              variant="default"
-            >
-              {unlocking && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Unlock and Preserve
-            </Button>
           </div>
         </div>
+        <Button
+          onClick={() => onUnlock(true)}
+          disabled={unlocking}
+          size="sm"
+        >
+          {unlocking && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          Unlock and Preserve
+        </Button>
       </div>
 
       {/* Option 2: Delete All Line Items */}
-      <div className="border rounded-lg p-6 space-y-4 hover:border-destructive/50 transition-colors">
-        <div className="flex items-start gap-4">
-          <div className="rounded-full bg-destructive/10 p-2">
-            <AlertTriangle className="h-5 w-5 text-destructive" />
+      <div className="rounded-lg bg-destructive/5 p-5 space-y-3">
+        <div className="flex items-start gap-3">
+          <div className="rounded-full bg-destructive/10 p-2 shrink-0">
+            <AlertTriangle className="h-4 w-4 text-destructive" />
           </div>
-          <div className="flex-1 space-y-2">
-            <h3 className="font-semibold text-base">Delete All Line Items</h3>
+          <div className="flex-1 space-y-1.5">
+            <p className="font-medium text-sm text-foreground">Delete All Line Items</p>
             <p className="text-sm text-muted-foreground">
-              Remove all budget line items and start fresh. Use this when you
-              need to rebuild the budget from scratch.{" "}
-              <strong>This cannot be undone.</strong>
+              Remove all budget line items and start fresh.{" "}
+              <span className="font-medium text-foreground">This cannot be undone.</span>
             </p>
-            <Button
-              onClick={() => onUnlock(false)}
-              disabled={unlocking}
-              className="w-full sm:w-auto"
-              variant="destructive"
-            >
-              {unlocking && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Unlock and Delete All
-            </Button>
           </div>
         </div>
+        <Button
+          onClick={() => onUnlock(false)}
+          disabled={unlocking}
+          variant="destructive"
+          size="sm"
+        >
+          {unlocking && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          Unlock and Delete All
+        </Button>
       </div>
     </div>
   );

@@ -36,11 +36,15 @@ import {
   CommandSeparator,
 } from "@/components/ui/command";
 import {
-  BudgetOverlay,
-  BudgetOverlayBody,
-  BudgetOverlayFooter,
-  BudgetOverlayHeader,
-} from "@/components/ui/budget-overlay";
+  BaseSidebar,
+  SidebarBody,
+  SidebarFooter,
+} from "@/components/budget/modals/BaseSidebar";
+import {
+  BaseModal,
+  ModalBody,
+  ModalFooter,
+} from "@/components/budget/modals/BaseModal";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
@@ -574,21 +578,13 @@ export function BudgetLineItemCreatorModal({
 
   return (
     <>
-      <BudgetOverlay
+      <BaseSidebar
         open={isOpen}
-        onOpenChange={(nextOpen) => {
-          if (!nextOpen) onClose();
-        }}
-        variant="sheet"
+        onClose={onClose}
+        title="Add Budget Line Items"
         size="full"
-        className="flex h-full flex-col"
       >
-        <BudgetOverlayHeader
-          title="Add Budget Line Items"
-          className="px-6 pt-5 pb-4"
-        />
-
-        <BudgetOverlayBody className="min-h-0 px-6 pb-4">
+        <SidebarBody className="min-h-0 px-6 pb-4">
           {/* Smart Copy UOM Toggle */}
           <div className="mb-4 flex gap-4 text-xs">
             <label className="flex cursor-pointer items-center gap-2 text-muted-foreground">
@@ -623,7 +619,7 @@ export function BudgetLineItemCreatorModal({
                   <th className="w-36 bg-primary/5 py-2 pr-3 text-left text-[11px] font-semibold uppercase tracking-wide text-foreground">
                     Amount <span className="text-destructive">*</span>
                   </th>
-                  <th className="w-8 bg-primary/5 py-2" />
+                  <th className="w-8 bg-primary/5 py-2"><span className="sr-only">Actions</span></th>
                 </tr>
               </thead>
               <tbody>
@@ -849,9 +845,9 @@ export function BudgetLineItemCreatorModal({
               Add Line Item
             </Button>
           </div>
-        </BudgetOverlayBody>
+        </SidebarBody>
 
-        <BudgetOverlayFooter className="justify-end border-t-0 bg-background px-6 pt-3 pb-5">
+        <SidebarFooter>
           <Button variant="outline" onClick={onClose} disabled={isCreating}>
             Cancel
           </Button>
@@ -873,22 +869,17 @@ export function BudgetLineItemCreatorModal({
               `Create ${rows.length} Line Item${rows.length > 1 ? "s" : ""}`
             )}
           </Button>
-        </BudgetOverlayFooter>
-      </BudgetOverlay>
+        </SidebarFooter>
+      </BaseSidebar>
 
       {/* Create Budget Code Modal */}
-      <BudgetOverlay
-        open={showCreateCodeModal}
-        onOpenChange={setShowCreateCodeModal}
-        variant="dialog"
+      <BaseModal
+        isOpen={showCreateCodeModal}
+        onClose={() => setShowCreateCodeModal(false)}
+        title="Create New Budget Code"
         size="sm"
-        className="flex h-full flex-col"
       >
-        <BudgetOverlayHeader
-          title="Create New Budget Code"
-          description="Add a new budget code that can be used for line items in this project."
-        />
-        <BudgetOverlayBody className="px-4 py-4 sm:px-6">
+        <ModalBody>
           <div className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="costCode">Cost Code*</Label>
@@ -986,8 +977,8 @@ export function BudgetLineItemCreatorModal({
               </p>
             </div>
           </div>
-        </BudgetOverlayBody>
-        <BudgetOverlayFooter>
+        </ModalBody>
+        <ModalFooter>
           <Button
             type="button"
             variant="outline"
@@ -1002,8 +993,8 @@ export function BudgetLineItemCreatorModal({
           >
             Create Budget Code
           </Button>
-        </BudgetOverlayFooter>
-      </BudgetOverlay>
+        </ModalFooter>
+      </BaseModal>
     </>
   );
 }

@@ -13,11 +13,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  BudgetOverlay,
-  BudgetOverlayBody,
-  BudgetOverlayFooter,
-  BudgetOverlayHeader,
-} from "@/components/ui/budget-overlay";
+  BaseSidebar,
+  SidebarBody,
+  SidebarFooter,
+} from "@/components/budget/modals/BaseSidebar";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 
@@ -57,7 +56,6 @@ export function BudgetModificationModal({
   >([]);
   const [loadingItems, setLoadingItems] = useState(false);
 
-  // Reset form when modal opens and set preselected item if provided
   useEffect(() => {
     if (open) {
       if (preselectedLineItem) {
@@ -74,9 +72,7 @@ export function BudgetModificationModal({
       try {
         setLoadingItems(true);
         const response = await fetch(`/api/projects/${projectId}/budget`);
-        if (!response.ok) {
-          throw new Error("Failed to load budget items");
-        }
+        if (!response.ok) throw new Error("Failed to load budget items");
         const data = await response.json();
         const options =
           data?.lineItems?.map(
@@ -87,20 +83,17 @@ export function BudgetModificationModal({
             }),
           ) ?? [];
         setBudgetItems(options);
-        // Only auto-select first item if no preselection and form is empty
         if (options.length && !formData.budgetItemId && !preselectedLineItem) {
           setFormData((prev) => ({ ...prev, budgetItemId: options[0].id }));
         }
-      } catch (error) {
+      } catch {
         toast.error("Unable to load budget items for modifications");
       } finally {
         setLoadingItems(false);
       }
     };
 
-    if (open) {
-      fetchBudgetItems();
-    }
+    if (open) fetchBudgetItems();
   }, [open, projectId, preselectedLineItem]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -135,9 +128,7 @@ export function BudgetModificationModal({
       if (!response.ok) {
         const error = await response.json();
         throw new Error(
-          error.details ||
-            error.error ||
-            "Failed to create budget modification",
+          error.details || error.error || "Failed to create budget modification",
         );
       }
 
@@ -148,7 +139,6 @@ export function BudgetModificationModal({
       onOpenChange(false);
       onSuccess?.();
 
-      // Reset form
       setFormData({
         budgetItemId: preselectedLineItem?.id || budgetItems[0]?.id || "",
         title: "",
@@ -173,25 +163,18 @@ export function BudgetModificationModal({
   };
 
   return (
-    <BudgetOverlay
+    <BaseSidebar
       open={open}
-      onOpenChange={onOpenChange}
-      variant="sheet"
+      onClose={() => onOpenChange(false)}
+      title="Create Budget Modification"
+      subtitle="Budget change order, transfer, or adjustment"
       size="md"
-      className="flex h-full flex-col"
     >
-      <BudgetOverlayHeader
-        title="Create Budget Modification"
-        description="Create a budget change order, transfer, or adjustment for this project."
-        className="px-4 py-4 sm:px-8 sm:py-6"
-      />
-
       <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
-        <BudgetOverlayBody className="px-4 sm:px-8">
-          <div className="grid gap-4 py-4">
-            {/* Budget Item */}
+        <SidebarBody className="px-4 sm:px-8">
+          <div className="grid gap-5 py-5">
             <div className="grid gap-2">
-              <Label htmlFor="budgetItem">Budget Line Item*</Label>
+              <Label htmlFor="budgetItem">Budget Line Item</Label>
               <Select
                 value={formData.budgetItemId}
                 onValueChange={(value) => handleChange("budgetItemId", value)}
@@ -213,15 +196,14 @@ export function BudgetModificationModal({
                 </SelectContent>
               </Select>
               {!budgetItems.length && !loadingItems && (
-                <p className="text-sm text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   No budget items available. Create a line item first.
                 </p>
               )}
             </div>
 
-            {/* Title */}
             <div className="grid gap-2">
-              <Label htmlFor="title">Title*</Label>
+              <Label htmlFor="title">Title</Label>
               <Input
                 id="title"
                 value={formData.title}
@@ -231,9 +213,8 @@ export function BudgetModificationModal({
               />
             </div>
 
-            {/* Type */}
             <div className="grid gap-2">
-              <Label htmlFor="type">Modification Type*</Label>
+              <Label htmlFor="type">Modification Type</Label>
               <Select
                 value={formData.type}
                 onValueChange={(value) => handleChange("type", value)}
@@ -243,35 +224,31 @@ export function BudgetModificationModal({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="change_order">Change Order</SelectItem>
-                  <SelectItem value="budget_transfer">
-                    Budget Transfer
-                  </SelectItem>
+                  <SelectItem value="budget_transfer">Budget Transfer</SelectItem>
                   <SelectItem value="adjustment">Budget Adjustment</SelectItem>
                   <SelectItem value="revision">Budget Revision</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            {/* Amount */}
             <div className="grid gap-2">
-              <Label htmlFor="amount">Amount*</Label>
+              <Label htmlFor="amount">Amount</Label>
               <Input
                 id="amount"
                 type="number"
                 step="0.01"
                 value={formData.amount}
                 onChange={(e) => handleChange("amount", e.target.value)}
-                placeholder=""
+                placeholder="0.00"
                 required
               />
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 Use negative values for decreases
               </p>
             </div>
 
-            {/* Reason */}
             <div className="grid gap-2">
-              <Label htmlFor="reason">Reason*</Label>
+              <Label htmlFor="reason">Reason</Label>
               <Textarea
                 id="reason"
                 value={formData.reason}
@@ -282,7 +259,6 @@ export function BudgetModificationModal({
               />
             </div>
 
-            {/* Description */}
             <div className="grid gap-2">
               <Label htmlFor="description">Description</Label>
               <Textarea
@@ -294,36 +270,34 @@ export function BudgetModificationModal({
               />
             </div>
 
-            {/* Workflow Info */}
-            <div className="rounded-lg border border-border bg-muted p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Badge variant="outline" className="bg-background">
+            <div className="rounded-lg bg-muted/40 p-4 space-y-2">
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="bg-background text-xs">
                   Draft
                 </Badge>
-                <span className="text-sm text-muted-foreground">→</span>
+                <span className="text-xs text-muted-foreground">→</span>
                 <Badge
                   variant="outline"
-                  className="bg-warning/10 text-warning border-warning/20"
+                  className="bg-warning/10 text-warning border-warning/20 text-xs"
                 >
                   Pending
                 </Badge>
-                <span className="text-sm text-muted-foreground">→</span>
+                <span className="text-xs text-muted-foreground">→</span>
                 <Badge
                   variant="outline"
-                  className="bg-success/10 text-success border-success/20"
+                  className="bg-success/10 text-success border-success/20 text-xs"
                 >
                   Approved
                 </Badge>
               </div>
-              <p className="text-sm text-muted-foreground">
-                Modifications are created as drafts. Submit for approval, then
-                approve to update budget totals.
+              <p className="text-xs text-muted-foreground">
+                Modifications are created as drafts. Submit for approval to update budget totals.
               </p>
             </div>
           </div>
-        </BudgetOverlayBody>
+        </SidebarBody>
 
-        <BudgetOverlayFooter className="flex-shrink-0 px-4 py-4 sm:px-8 sm:py-6">
+        <SidebarFooter>
           <Button
             type="button"
             variant="outline"
@@ -333,10 +307,10 @@ export function BudgetModificationModal({
             Cancel
           </Button>
           <Button type="submit" disabled={loading || !formData.budgetItemId}>
-            {loading ? "Creating..." : "Create Draft Modification"}
+            {loading ? "Creating..." : "Create Draft"}
           </Button>
-        </BudgetOverlayFooter>
+        </SidebarFooter>
       </form>
-    </BudgetOverlay>
+    </BaseSidebar>
   );
 }

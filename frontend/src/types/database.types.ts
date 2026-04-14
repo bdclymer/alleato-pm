@@ -19950,12 +19950,17 @@ export type Database = {
       subcontractor_invoice_line_items: {
         Row: {
           balance_to_finish: number | null
+          budget_code: string | null
+          change_value: number | null
+          commitment_value: number | null
           created_at: string
           description: string | null
           id: number
           invoice_id: number
+          line_item_type: string | null
           materials_retainage_amount: number
           materials_retainage_pct: number
+          materials_retainage_released: number
           materials_stored: number
           net_amount_this_period: number | null
           previous_materials_retainage: number
@@ -19970,15 +19975,22 @@ export type Database = {
           work_completed_pct: number
           work_completed_period: number
           work_completed_previous: number
+          work_completed_previous_pct: number | null
+          work_retainage_released: number
         }
         Insert: {
           balance_to_finish?: number | null
+          budget_code?: string | null
+          change_value?: number | null
+          commitment_value?: number | null
           created_at?: string
           description?: string | null
           id?: number
           invoice_id: number
+          line_item_type?: string | null
           materials_retainage_amount?: number
           materials_retainage_pct?: number
+          materials_retainage_released?: number
           materials_stored?: number
           net_amount_this_period?: number | null
           previous_materials_retainage?: number
@@ -19993,15 +20005,22 @@ export type Database = {
           work_completed_pct?: number
           work_completed_period?: number
           work_completed_previous?: number
+          work_completed_previous_pct?: number | null
+          work_retainage_released?: number
         }
         Update: {
           balance_to_finish?: number | null
+          budget_code?: string | null
+          change_value?: number | null
+          commitment_value?: number | null
           created_at?: string
           description?: string | null
           id?: number
           invoice_id?: number
+          line_item_type?: string | null
           materials_retainage_amount?: number
           materials_retainage_pct?: number
+          materials_retainage_released?: number
           materials_stored?: number
           net_amount_this_period?: number | null
           previous_materials_retainage?: number
@@ -20016,6 +20035,8 @@ export type Database = {
           work_completed_pct?: number
           work_completed_period?: number
           work_completed_previous?: number
+          work_completed_previous_pct?: number | null
+          work_retainage_released?: number
         }
         Relationships: [
           {
