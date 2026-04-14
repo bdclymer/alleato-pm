@@ -43,6 +43,11 @@ const ENDPOINTS = [
   ["GET", `/api/projects/${PROJECT_ID}/budget-codes`, "Budget codes", [200, 401]],
   ["GET", `/api/projects/${PROJECT_ID}/budget/export?format=csv`, "Budget export CSV", [200, 401]],
   ["GET", `/api/projects/${PROJECT_ID}/budget/export?format=excel`, "Budget export Excel", [200, 401]],
+  // Lock + modifications power the Unlock dialog's "blocked when active mods exist"
+  // guard (test 1.5.3). If either contract regresses the dialog can't compute its
+  // blocked state and silently lets users unlock through pending changes.
+  ["GET", `/api/projects/${PROJECT_ID}/budget/lock`, "Budget lock status", [200, 401]],
+  ["GET", `/api/projects/${PROJECT_ID}/budget/modifications`, "Budget modifications list", [200, 401]],
 
   // Change Events
   ["GET", `/api/projects/${PROJECT_ID}/change-events`, "Change events list", [200, 401]],
@@ -265,6 +270,26 @@ function assertForecastBody(body) {
   return "forecastStartDate" in first && "forecastEndDate" in first;
 }
 
+// ─── Budget modifications contract ──────────────────────────────────────────
+// The Unlock Budget dialog (test 1.5.3) reads this endpoint to decide whether
+// unlock is blocked. The DELETE /budget/lock guard does the same server-side
+// check. If the response shape changes, the dialog can't compute its blocked
+// state and the UI silently lets users unlock through pending changes.
+function assertModificationsBody(body) {
+  if (!body || typeof body !== "object") return false;
+  if (!Array.isArray(body.modifications)) return false;
+  // Empty list is fine — the contract is "an array of modifications exists".
+  if (body.modifications.length === 0) return true;
+  const first = body.modifications[0];
+  return (
+    first &&
+    typeof first === "object" &&
+    "id" in first &&
+    "status" in first &&
+    typeof first.status === "string"
+  );
+}
+
 // ─── Error envelope contracts ────────────────────────────────────────────────
 function hasStandardErrorEnvelope(body) {
   return (
@@ -350,6 +375,20 @@ async function run() {
         `Forecast body contract failed: missing required summary or per-item fields ` +
           `(totalProjectedCostToComplete, totalEstimatedCostAtCompletion, ` +
           `projectedCostToComplete, estimatedCostAtCompletion, forecastStartDate, forecastEndDate)`,
+      );
+      continue;
+    }
+
+    // Budget modifications: assert array shape (powers Unlock dialog blocked state)
+    if (
+      path.endsWith("/budget/modifications") &&
+      status === 200 &&
+      !assertModificationsBody(body)
+    ) {
+      console.error(`  FAIL  200  ${method} ${path}  modifications body shape mismatch`);
+      failures.push(
+        `Budget modifications body contract failed: expected { modifications: [...] } ` +
+          `with each item having id and status fields`,
       );
       continue;
     }

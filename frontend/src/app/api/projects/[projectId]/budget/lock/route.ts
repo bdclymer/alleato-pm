@@ -141,6 +141,37 @@ export const DELETE = withApiGuardrails<{ projectId: string }>(
       );
     }
 
+    // Procore-parity rule: Unlock is BLOCKED while active budget modifications exist.
+    // Users must delete (draft) or void (approved) every modification first.
+    // Active = anything not already voided.
+    const { data: activeMods, error: modCheckError } = await supabase
+      .from("budget_modifications")
+      .select("id, number, status")
+      .eq("project_id", projectIdNum)
+      .neq("status", "void");
+
+    if (modCheckError) {
+      return apiErrorResponse(modCheckError);
+    }
+
+    if (activeMods && activeMods.length > 0) {
+      return NextResponse.json(
+        {
+          error:
+            `Budget cannot be unlocked while ${activeMods.length} budget modification${activeMods.length === 1 ? "" : "s"} exist${activeMods.length === 1 ? "s" : ""}. ` +
+            "Delete or void each modification first, then unlock the budget.",
+          code: "BUDGET_HAS_ACTIVE_MODIFICATIONS",
+          modificationCount: activeMods.length,
+          modifications: activeMods.map((m) => ({
+            id: m.id,
+            number: m.number,
+            status: m.status,
+          })),
+        },
+        { status: 409 },
+      );
+    }
+
     // Delete budget line items if requested
     let deletedCount = 0;
     if (!preserveLineItems) {
