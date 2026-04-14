@@ -103,7 +103,7 @@ function findFromTable(expr: ts.Expression): string | null {
   let current: ts.Expression | undefined = expr;
   while (current) {
     if (ts.isCallExpression(current)) {
-      const callee = current.expression;
+      const callee: ts.LeftHandSideExpression = current.expression;
       if (ts.isPropertyAccessExpression(callee) && callee.name.text === "from") {
         const arg = current.arguments[0];
         if (arg && ts.isStringLiteral(arg)) return arg.text;

@@ -12,6 +12,7 @@ import {
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { apiFetch } from "@/lib/api-client";
 import { createClient } from "@/lib/supabase/client";
 import { NumberInput } from "@/components/ui/number-input";
 import { MoneyField } from "@/components/forms/MoneyField";
@@ -246,16 +247,9 @@ export function BudgetLineItemForm({
 
       try {
         setLoadingCodes(true);
-        const response = await fetch(`/api/projects/${projectId}/budget-codes`);
-
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error?.error || "Failed to load budget codes");
-        }
-
-        const { budgetCodes } = (await response.json()) as {
+        const { budgetCodes } = await apiFetch<{
           budgetCodes: BudgetCode[];
-        };
+        }>(`/api/projects/${projectId}/budget-codes`);
 
         setBudgetCodes(budgetCodes || []);
 
@@ -335,26 +329,16 @@ export function BudgetLineItemForm({
       }
 
       // Call API to create project budget code
-      const response = await fetch(`/api/projects/${projectId}/budget-codes`, {
+      const { budgetCode } = await apiFetch<{
+        budgetCode: BudgetCode;
+      }>(`/api/projects/${projectId}/budget-codes`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify({
           cost_code_id: newCodeData.costCodeId,
           cost_type_id: newCodeData.costType,
           description: selectedCostCode.title || null,
         }),
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error?.error || "Failed to create budget code");
-      }
-
-      const { budgetCode } = (await response.json()) as {
-        budgetCode: BudgetCode;
-      };
 
       setBudgetCodes((prev) => [...prev, budgetCode]);
 
@@ -504,24 +488,12 @@ export function BudgetLineItemForm({
       });
 
       // Call API to create budget line items
-      const response = await fetch(`/api/projects/${projectId}/budget`, {
+      await apiFetch(`/api/projects/${projectId}/budget`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify({
           lineItems: lineItemsToSubmit,
         }),
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(
-          error.details || error.error || "Failed to create budget line items",
-        );
-      }
-
-      await response.json();
       toast.success("Budget line items created");
       onSuccess?.();
     } catch (error) {

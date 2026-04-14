@@ -1,3 +1,4 @@
+import type { Page } from "@playwright/test";
 import { test, expect } from "../../fixtures/index";
 import { createTestProject } from "../../helpers/bootstrap";
 
@@ -6,9 +7,7 @@ let projectId: number;
 /**
  * Waits for the main budget table so the page is ready for interaction.
  */
-async function waitForBudgetTable(
-  page: Parameters<typeof test>[0]["page"],
-) {
+async function waitForBudgetTable(page: Page) {
   await page.waitForSelector("table", { timeout: 15000 });
 }
 

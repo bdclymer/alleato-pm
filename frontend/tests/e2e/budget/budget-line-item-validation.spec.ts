@@ -1,3 +1,4 @@
+import type { Page } from "@playwright/test";
 import { test, expect } from "../../fixtures/index";
 import { createTestProject } from "../../helpers/bootstrap";
 
@@ -36,7 +37,7 @@ function getSelectableBudgetCodeLabel(): string {
 /**
  * Opens the active create sheet used by the budget page.
  */
-async function openBudgetCreateSheet(page: Parameters<typeof test>[0]["page"]) {
+async function openBudgetCreateSheet(page: Page) {
   const createButton = page.getByRole("button", { name: /create/i }).first();
   await expect(createButton).toBeVisible({ timeout: 15000 });
   await createButton.click();
@@ -55,10 +56,7 @@ async function openBudgetCreateSheet(page: Parameters<typeof test>[0]["page"]) {
 /**
  * Fills the minimum fields required for a single-row budget line item submission.
  */
-async function fillBudgetCreateRow(
-  page: Parameters<typeof test>[0]["page"],
-  budgetCodeLabel: string,
-) {
+async function fillBudgetCreateRow(page: Page, budgetCodeLabel: string) {
   const budgetCodeTrigger = page
     .locator('button[role="combobox"]')
     .filter({ hasText: /select budget code/i })
@@ -83,9 +81,7 @@ async function fillBudgetCreateRow(
 /**
  * Opens the original budget edit sidebar from the first editable value cell.
  */
-async function openOriginalBudgetSidebar(
-  page: Parameters<typeof test>[0]["page"],
-) {
+async function openOriginalBudgetSidebar(page: Page) {
   const editableCell = page.locator('button[aria-label^="Edit $"]').first();
   await expect(editableCell).toBeVisible({ timeout: 15000 });
   await editableCell.click();
