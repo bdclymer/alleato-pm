@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { ApiError, apiFetch } from "@/lib/api-client";
 
 // =============================================================================
 // Types
@@ -68,17 +69,17 @@ export function useMeetingDigest(projectId: string, meetingId: string) {
   return useQuery<MeetingDigest | null>({
     queryKey: digestKeys.detail(meetingId),
     queryFn: async () => {
-      const response = await fetch(
-        `/api/projects/${projectId}/meetings/${meetingId}/digest`
-      );
-      if (response.status === 404) {
-        return null;
+      try {
+        const response = await apiFetch<{ data?: MeetingDigest | null }>(
+          `/api/projects/${projectId}/meetings/${meetingId}/digest`
+        );
+        return response.data ?? null;
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 404) {
+          return null;
+        }
+        throw error;
       }
-      if (!response.ok) {
-        throw new Error("Failed to fetch meeting digest");
-      }
-      const json = await response.json();
-      return json.data ?? null;
     },
     enabled: !!projectId && !!meetingId,
     staleTime: 60 * 1000,

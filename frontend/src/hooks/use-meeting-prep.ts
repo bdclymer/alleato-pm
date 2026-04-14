@@ -6,6 +6,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { ApiError, apiFetch } from "@/lib/api-client";
 
 // =============================================================================
 // Types
@@ -24,6 +25,10 @@ export interface MeetingPrep {
   updated_at: string | null;
 }
 
+interface MeetingPrepApiResponse {
+  data: MeetingPrep | null;
+}
+
 // =============================================================================
 // Query Keys
 // =============================================================================
@@ -38,20 +43,19 @@ export const meetingPrepKeys = {
 // =============================================================================
 
 export function useMeetingPrep(projectId: string, meetingId: string) {
-  return useQuery<{ data: MeetingPrep | null }>({
+  return useQuery<MeetingPrepApiResponse>({
     queryKey: meetingPrepKeys.detail(meetingId),
     queryFn: async () => {
-      const response = await fetch(
-        `/api/projects/${projectId}/meetings/${meetingId}/prep`
-      );
-      if (response.status === 404) {
-        return { data: null };
+      try {
+        return await apiFetch<MeetingPrepApiResponse>(
+          `/api/projects/${projectId}/meetings/${meetingId}/prep`
+        );
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 404) {
+          return { data: null };
+        }
+        throw error;
       }
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new Error(error.error || "Failed to fetch meeting prep");
-      }
-      return response.json();
     },
     enabled: !!projectId && !!meetingId,
     staleTime: 30 * 1000,
@@ -66,21 +70,14 @@ export function useSaveMeetingPrep(projectId: string, meetingId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (content: string) => {
-      const response = await fetch(
+    mutationFn: async (content: string) =>
+      apiFetch<MeetingPrepApiResponse>(
         `/api/projects/${projectId}/meetings/${meetingId}/prep`,
         {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ content }),
         }
-      );
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new Error(error.error || "Failed to save meeting prep");
-      }
-      return response.json();
-    },
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: meetingPrepKeys.detail(meetingId),
@@ -99,18 +96,12 @@ export function useSaveMeetingPrep(projectId: string, meetingId: string) {
 export function useGenerateMeetingPrep(projectId: string, meetingId: string) {
   const queryClient = useQueryClient();
 
-  return useMutation<{ data: MeetingPrep }>({
-    mutationFn: async () => {
-      const response = await fetch(
+  return useMutation<MeetingPrepApiResponse>({
+    mutationFn: async () =>
+      apiFetch<MeetingPrepApiResponse>(
         `/api/projects/${projectId}/meetings/${meetingId}/prep/generate`,
         { method: "POST" }
-      );
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new Error(error.error || "Failed to generate meeting prep");
-      }
-      return response.json();
-    },
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: meetingPrepKeys.detail(meetingId),

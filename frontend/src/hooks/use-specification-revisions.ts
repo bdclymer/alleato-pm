@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api-client";
 import type {
   RevisionListResponse,
   RevisionWithUploader,
@@ -17,18 +18,10 @@ export function useSpecificationRevisions(
 ) {
   return useQuery<RevisionListResponse>({
     queryKey: ["specification-revisions", projectId, sectionId],
-    queryFn: async () => {
-      const response = await fetch(
+    queryFn: async () =>
+      apiFetch<RevisionListResponse>(
         `/api/projects/${projectId}/specifications/${sectionId}/revisions`,
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || `Server returned ${response.status} when loading revisions`);
-      }
-
-      return response.json();
-    },
+      ),
     enabled: !!projectId && !!sectionId,
   });
 }
@@ -43,18 +36,10 @@ export function useSpecificationRevision(
 ) {
   return useQuery<RevisionWithUploader>({
     queryKey: ["specification-revision", projectId, sectionId, revisionId],
-    queryFn: async () => {
-      const response = await fetch(
+    queryFn: async () =>
+      apiFetch<RevisionWithUploader>(
         `/api/projects/${projectId}/specifications/${sectionId}/revisions/${revisionId}`,
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || `Server returned ${response.status} when loading revision details`);
-      }
-
-      return response.json();
-    },
+      ),
     enabled: !!projectId && !!sectionId && !!revisionId,
   });
 }
@@ -75,20 +60,13 @@ export function useAddRevision(projectId: string, sectionId: string) {
         data.notify_subscribers ? "true" : "false",
       );
 
-      const response = await fetch(
+      return apiFetch<RevisionWithUploader>(
         `/api/projects/${projectId}/specifications/${sectionId}/revisions`,
         {
           method: "POST",
           body: formData,
         },
       );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || `Server returned ${response.status} — the revision could not be added`);
-      }
-
-      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -117,21 +95,13 @@ export function useSetCurrentRevision(projectId: string, sectionId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (revisionId: string) => {
-      const response = await fetch(
+    mutationFn: async (revisionId: string) =>
+      apiFetch<RevisionWithUploader>(
         `/api/projects/${projectId}/specifications/${sectionId}/revisions/${revisionId}`,
         {
           method: "PATCH",
         },
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || `Server returned ${response.status} — could not set current revision`);
-      }
-
-      return response.json();
-    },
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["specification-revisions", projectId, sectionId],
@@ -156,21 +126,13 @@ export function useDeleteRevision(projectId: string, sectionId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (revisionId: string) => {
-      const response = await fetch(
+    mutationFn: async (revisionId: string) =>
+      apiFetch(
         `/api/projects/${projectId}/specifications/${sectionId}/revisions/${revisionId}`,
         {
           method: "DELETE",
         },
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || `Server returned ${response.status} — the revision could not be deleted`);
-      }
-
-      return response.json();
-    },
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["specification-revisions", projectId, sectionId],
@@ -200,18 +162,10 @@ export function useRevisionDownloadUrl(
       sectionId,
       revisionId,
     ],
-    queryFn: async () => {
-      const response = await fetch(
+    queryFn: async () =>
+      apiFetch<{ url: string }>(
         `/api/projects/${projectId}/specifications/${sectionId}/revisions/${revisionId}/download`,
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || `Server returned ${response.status} — could not generate download link`);
-      }
-
-      return response.json();
-    },
+      ),
     enabled: !!projectId && !!sectionId && !!revisionId,
     staleTime: 5 * 60 * 1000, // 5 minutes (signed URL valid for 1 hour)
   });

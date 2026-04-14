@@ -62,25 +62,20 @@ import {
   useSubcontractorInvoiceDetail,
   useDeleteSubcontractorInvoice,
 } from "@/hooks/use-subcontractor-invoices";
+import { apiFetch } from "@/lib/api-client";
 
 async function patchStatus(
   projectId: string,
   invoiceId: string | number,
   status: string,
 ) {
-  const res = await fetch(
+  return apiFetch(
     `/api/projects/${projectId}/invoicing/subcontractor/invoices/${invoiceId}`,
     {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status }),
     },
   );
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(body.error ?? "Failed to update status");
-  }
-  return res.json();
 }
 
 async function postTransition(
@@ -88,15 +83,10 @@ async function postTransition(
   invoiceId: string | number,
   action: "approve-as-noted" | "pending-owner-approval",
 ) {
-  const res = await fetch(
+  return apiFetch(
     `/api/projects/${projectId}/invoicing/subcontractor/invoices/${invoiceId}/${action}`,
     { method: "POST" },
   );
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(body.error ?? "Failed to update invoice");
-  }
-  return res.json();
 }
 
 interface SubcontractorInvoiceDetailProps {
@@ -178,11 +168,10 @@ export function SubcontractorInvoiceDetail({
       .filter(Boolean);
     if (to.length === 0) return;
     try {
-      const res = await fetch(
+      await apiFetch(
         `/api/projects/${projectId}/invoicing/subcontractor/invoices/${invoiceId}/emails`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             to_recipients: to,
             subject: `Invoice ${invoice?.invoice_number ?? ""}`.trim(),
@@ -190,7 +179,6 @@ export function SubcontractorInvoiceDetail({
           }),
         },
       );
-      if (!res.ok) throw new Error((await res.json()).error ?? "Failed");
       toast.success("Email logged");
       await refetch();
       setActiveTab("emails");
@@ -211,12 +199,10 @@ export function SubcontractorInvoiceDetail({
 
   async function handleResendErp() {
     try {
-      const res = await fetch(
+      const body = await apiFetch<{ message?: string }>(
         `/api/projects/${projectId}/invoicing/subcontractor/invoices/${invoiceId}/erp-resend`,
         { method: "POST" },
       );
-      const body = await res.json();
-      if (!res.ok) throw new Error(body.error ?? "Failed");
       toast.success(body.message ?? "ERP resend queued");
       await refetch();
       setActiveTab("history");
@@ -501,11 +487,10 @@ export function SubcontractorInvoiceDetail({
                   }
                   // Save comment if changed
                   if (reviewComment !== (invoice.notes ?? "")) {
-                    await fetch(
+                    await apiFetch(
                       `/api/projects/${projectId}/invoicing/subcontractor/invoices/${invoiceId}`,
                       {
                         method: "PATCH",
-                        headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ notes: reviewComment }),
                       },
                     );

@@ -7,6 +7,7 @@ import {
   keepPreviousData,
 } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api-client";
 
 // =============================================================================
 // Types
@@ -59,6 +60,10 @@ export interface UpdateInvoicePaymentInput {
   notes?: string | null;
 }
 
+interface InvoicePaymentsApiResponse<T> {
+  data?: T;
+}
+
 // =============================================================================
 // Query Keys
 // =============================================================================
@@ -78,17 +83,10 @@ export function useInvoicePaymentsList(projectId: string) {
   return useQuery<InvoicePayment[]>({
     queryKey: invoicePaymentKeys.list(projectId),
     queryFn: async () => {
-      const response = await fetch(
+      const response = await apiFetch<InvoicePaymentsApiResponse<InvoicePayment[]>>(
         `/api/projects/${projectId}/invoicing/payments`,
       );
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
-        throw new Error(
-          err.error || `Server returned ${response.status} when loading payments`,
-        );
-      }
-      const data = await response.json();
-      return data.data ?? [];
+      return response.data ?? [];
     },
     enabled: !!projectId,
     staleTime: 30 * 1000,
@@ -104,23 +102,14 @@ export function useCreateInvoicePayment(projectId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (input: CreateInvoicePaymentInput) => {
-      const response = await fetch(
+    mutationFn: async (input: CreateInvoicePaymentInput) =>
+      apiFetch<InvoicePaymentsApiResponse<InvoicePayment>>(
         `/api/projects/${projectId}/invoicing/payments`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(input),
         },
-      );
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
-        throw new Error(
-          err.error || `Server returned ${response.status} — the payment could not be created`,
-        );
-      }
-      return response.json();
-    },
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: invoicePaymentKeys.lists() });
       toast.success("Payment recorded successfully");
@@ -135,23 +124,14 @@ export function useUpdateInvoicePayment(projectId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ paymentId, ...fields }: UpdateInvoicePaymentInput) => {
-      const response = await fetch(
+    mutationFn: async ({ paymentId, ...fields }: UpdateInvoicePaymentInput) =>
+      apiFetch<InvoicePaymentsApiResponse<InvoicePayment>>(
         `/api/projects/${projectId}/invoicing/payments/${paymentId}`,
         {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(fields),
         },
-      );
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
-        throw new Error(
-          err.error || `Server returned ${response.status} — the payment could not be updated`,
-        );
-      }
-      return response.json();
-    },
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: invoicePaymentKeys.lists() });
       toast.success("Payment updated successfully");
@@ -166,19 +146,11 @@ export function useDeleteInvoicePayment(projectId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (paymentId: number) => {
-      const response = await fetch(
+    mutationFn: async (paymentId: number) =>
+      apiFetch(
         `/api/projects/${projectId}/invoicing/payments/${paymentId}`,
         { method: "DELETE" },
-      );
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
-        throw new Error(
-          err.error || `Server returned ${response.status} — the payment could not be deleted`,
-        );
-      }
-      return response.json();
-    },
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: invoicePaymentKeys.lists() });
       toast.success("Payment deleted successfully");

@@ -7,6 +7,7 @@ import {
   keepPreviousData,
 } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api-client";
 import type { OwnerInvoice } from "@/features/invoicing/invoicing-table-config";
 
 // =============================================================================
@@ -17,6 +18,12 @@ export interface InvoiceListFilters {
   billing_period_id?: string;
   prime_contract_id?: string;
   search?: string;
+}
+
+interface OwnerInvoicesApiResponse<T> {
+  data?: T;
+  success?: boolean;
+  id?: string;
 }
 
 // =============================================================================
@@ -52,18 +59,17 @@ export function useOwnerInvoicesList(
     queryKey: invoiceKeys.list(projectId, filters),
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (filters?.billing_period_id) params.set("billing_period_id", filters.billing_period_id);
-      if (filters?.prime_contract_id) params.set("prime_contract_id", filters.prime_contract_id);
+      if (filters?.billing_period_id) {
+        params.set("billing_period_id", filters.billing_period_id);
+      }
+      if (filters?.prime_contract_id) {
+        params.set("prime_contract_id", filters.prime_contract_id);
+      }
       const qs = params.toString();
-      const response = await fetch(
+      const response = await apiFetch<OwnerInvoicesApiResponse<OwnerInvoice[]>>(
         `/api/projects/${projectId}/invoicing/owner${qs ? `?${qs}` : ""}`,
       );
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new Error(error.error || `Server returned ${response.status} when loading invoices`);
-      }
-      const data = await response.json();
-      return data.data ?? [];
+      return response.data ?? [];
     },
     enabled: !!projectId,
     staleTime: 30 * 1000,
@@ -90,21 +96,13 @@ export function useSendInvoiceEmail(projectId: string) {
   return useMutation({
     mutationFn: async (payload: SendInvoiceEmailPayload) => {
       const { invoiceId, ...body } = payload;
-      const response = await fetch(
+      return apiFetch<OwnerInvoicesApiResponse<never>>(
         `/api/projects/${projectId}/invoicing/owner/${invoiceId}/email`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),
         },
       );
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.error || errorData.message || `Server returned ${response.status}`,
-        );
-      }
-      return response.json() as Promise<{ success: boolean; id?: string }>;
     },
     onSuccess: () => {
       toast.success("Invoice emailed successfully");
@@ -123,17 +121,11 @@ export function useDeleteOwnerInvoice(projectId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (invoiceId: number) => {
-      const response = await fetch(
+    mutationFn: async (invoiceId: number) =>
+      apiFetch(
         `/api/projects/${projectId}/invoicing/owner/${invoiceId}`,
         { method: "DELETE" },
-      );
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `Server returned ${response.status} — the invoice could not be deleted`);
-      }
-      return response.json();
-    },
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: invoiceKeys.lists() });
       toast.success("Invoice deleted successfully");
@@ -152,28 +144,22 @@ export function useApproveOwnerInvoiceAsNoted(projectId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (invoiceId: number) => {
-      const response = await fetch(
+    mutationFn: async (invoiceId: number) =>
+      apiFetch(
         `/api/projects/${projectId}/invoicing/owner/${invoiceId}/approve-as-noted`,
         { method: "POST" },
-      );
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.error ||
-            errorData.message ||
-            `Server returned ${response.status} — the invoice could not be approved as noted`,
-        );
-      }
-      return response.json();
-    },
+      ),
     onSuccess: (_data, invoiceId) => {
       queryClient.invalidateQueries({ queryKey: invoiceKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: invoiceKeys.detail(invoiceId) });
+      queryClient.invalidateQueries({
+        queryKey: invoiceKeys.detail(invoiceId),
+      });
       toast.success("Invoice approved as noted");
     },
     onError: (error: Error) => {
-      toast.error("Could not approve invoice as noted", { description: error.message });
+      toast.error("Could not approve invoice as noted", {
+        description: error.message,
+      });
     },
   });
 }
@@ -192,28 +178,19 @@ export function useVoidOwnerInvoice(projectId: string) {
     }: {
       invoiceId: number;
       reason?: string;
-    }) => {
-      const response = await fetch(
+    }) =>
+      apiFetch(
         `/api/projects/${projectId}/invoicing/owner/${invoiceId}/void`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ reason }),
         },
-      );
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.error ||
-            errorData.message ||
-            `Server returned ${response.status} — the invoice could not be voided`,
-        );
-      }
-      return response.json();
-    },
+      ),
     onSuccess: (_data, { invoiceId }) => {
       queryClient.invalidateQueries({ queryKey: invoiceKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: invoiceKeys.detail(invoiceId) });
+      queryClient.invalidateQueries({
+        queryKey: invoiceKeys.detail(invoiceId),
+      });
       toast.success("Invoice voided");
     },
     onError: (error: Error) => {

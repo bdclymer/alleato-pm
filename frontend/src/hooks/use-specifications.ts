@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api-client";
 import type {
   SpecificationWithRevision,
   SpecificationWithAreas,
@@ -35,16 +36,9 @@ export function useSpecifications(
       if (filters?.page_size)
         params.set("page_size", filters.page_size.toString());
 
-      const response = await fetch(
-        `/api/projects/${projectId}/specifications?${params}`,
+      return apiFetch<SpecificationListResponse>(
+        `/api/projects/${projectId}/specifications?${params.toString()}`,
       );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || `Server returned ${response.status} when loading specifications`);
-      }
-
-      return response.json();
     },
     enabled: !!projectId,
   });
@@ -56,18 +50,10 @@ export function useSpecifications(
 export function useSpecification(projectId: string, sectionId: string) {
   return useQuery<SpecificationWithAreas>({
     queryKey: ["specification", projectId, sectionId],
-    queryFn: async () => {
-      const response = await fetch(
+    queryFn: async () =>
+      apiFetch<SpecificationWithAreas>(
         `/api/projects/${projectId}/specifications/${sectionId}`,
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || `Server returned ${response.status} when loading specification details`);
-      }
-
-      return response.json();
-    },
+      ),
     enabled: !!projectId && !!sectionId,
   });
 }
@@ -91,27 +77,13 @@ export function useCreateSpecification(projectId: string) {
       if (data.subscriber_ids)
         formData.append("subscriber_ids", JSON.stringify(data.subscriber_ids));
 
-      let response: Response;
-      try {
-        response = await fetch(
-          `/api/projects/${projectId}/specifications`,
-          {
-            method: "POST",
-            body: formData,
-          },
-        );
-      } catch {
-        throw new Error(
-          "Unable to reach the server. Restart the frontend dev server and try again.",
-        );
-      }
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || `Server returned ${response.status} — the specification could not be created`);
-      }
-
-      return response.json();
+      return apiFetch<SpecificationWithRevision>(
+        `/api/projects/${projectId}/specifications`,
+        {
+          method: "POST",
+          body: formData,
+        },
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -134,23 +106,14 @@ export function useUpdateSpecification(projectId: string, sectionId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: EditSpecificationFormData) => {
-      const response = await fetch(
+    mutationFn: async (data: EditSpecificationFormData) =>
+      apiFetch<SpecificationWithAreas>(
         `/api/projects/${projectId}/specifications/${sectionId}`,
         {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),
         },
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || `Server returned ${response.status} — the specification could not be updated`);
-      }
-
-      return response.json();
-    },
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["specifications", projectId],
@@ -175,21 +138,13 @@ export function useDeleteSpecification(projectId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (sectionId: string) => {
-      const response = await fetch(
+    mutationFn: async (sectionId: string) =>
+      apiFetch(
         `/api/projects/${projectId}/specifications/${sectionId}`,
         {
           method: "DELETE",
         },
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || `Server returned ${response.status} — the specification could not be deleted`);
-      }
-
-      return response.json();
-    },
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["specifications", projectId],
