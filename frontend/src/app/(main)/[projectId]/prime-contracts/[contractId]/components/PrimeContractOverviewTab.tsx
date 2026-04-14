@@ -225,14 +225,6 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                   <LabelValueRow label="Executed">
                     {contract.executed ? formatDate(contract.executed_at) || "Yes" : "No"}
                   </LabelValueRow>
-                </dl>
-
-              </div>
-
-              {/* Entity Roles */}
-              <div className="space-y-6">
-                <SectionRuleHeading label="Entity Roles" className="[&_span]:text-primary" />
-                <dl className="space-y-4 text-sm">
                   <LabelValueRow label="Contractor" missing={!contract.contractor?.name}>
                     {contract.contractor?.name || "Not set"}
                   </LabelValueRow>
@@ -251,6 +243,31 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                   </LabelValueRow>
                   <LabelValueRow label="Default Retainage">
                     {contract.retention_percentage ?? 0}%
+                  </LabelValueRow>
+                </dl>
+              </div>
+
+              {/* Key Dates */}
+              <div className="space-y-6">
+                <SectionRuleHeading label="Key Dates" className="[&_span]:text-primary" />
+                <dl className="space-y-4 text-sm">
+                  <LabelValueRow label="Start Date">
+                    {renderDateOrDash(contract.start_date)}
+                  </LabelValueRow>
+                  <LabelValueRow label="Estimated Completion">
+                    {renderDateOrDash(contract.end_date)}
+                  </LabelValueRow>
+                  <LabelValueRow label="Substantial Completion">
+                    {renderDateOrDash(contract.substantial_completion_date)}
+                  </LabelValueRow>
+                  <LabelValueRow label="Actual Completion">
+                    {renderDateOrDash(contract.actual_completion_date)}
+                  </LabelValueRow>
+                  <LabelValueRow label="Signed Contract Received">
+                    {renderDateOrDash(contract.signed_contract_received_date)}
+                  </LabelValueRow>
+                  <LabelValueRow label="Contract Termination">
+                    {renderDateOrDash(contract.contract_termination_date)}
                   </LabelValueRow>
                 </dl>
               </div>
@@ -367,9 +384,8 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
             </div>
           </div>
 
-          {/* Right sidebar: Financial Summary + Key Dates stacked */}
+          {/* Right sidebar: Financial Summary */}
           <div className="space-y-8">
-            {/* Financial Summary */}
             <div className="space-y-4">
               <SectionRuleHeading label="Financial Summary" className="[&_span]:text-primary" />
               <div className="rounded-md border border-border bg-muted p-6">
@@ -384,33 +400,6 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                   <SummaryValueRow label="Payments Received" value={formatCurrency(paymentsReceivedTotal)} />
                   <SummaryValueRow label="Remaining Balance" value={formatCurrency(remainingBalanceTotal)} />
                   <SummaryValueRow label="Percent Paid" value={`${percentPaid.toFixed(2)}%`} bold border />
-                </dl>
-              </div>
-            </div>
-
-            {/* Key Dates */}
-            <div className="space-y-4">
-              <SectionRuleHeading label="Key Dates" className="[&_span]:text-primary" />
-              <div className="rounded-md border border-border bg-muted p-6">
-                <dl className="space-y-3 text-sm">
-                  <LabelValueRow label="Start Date">
-                    {renderDateOrDash(contract.start_date)}
-                  </LabelValueRow>
-                  <LabelValueRow label="Estimated Completion">
-                    {renderDateOrDash(contract.end_date)}
-                  </LabelValueRow>
-                  <LabelValueRow label="Substantial Completion">
-                    {renderDateOrDash(contract.substantial_completion_date)}
-                  </LabelValueRow>
-                  <LabelValueRow label="Actual Completion">
-                    {renderDateOrDash(contract.actual_completion_date)}
-                  </LabelValueRow>
-                  <LabelValueRow label="Signed Contract Received">
-                    {renderDateOrDash(contract.signed_contract_received_date)}
-                  </LabelValueRow>
-                  <LabelValueRow label="Contract Termination">
-                    {renderDateOrDash(contract.contract_termination_date)}
-                  </LabelValueRow>
                 </dl>
               </div>
             </div>
