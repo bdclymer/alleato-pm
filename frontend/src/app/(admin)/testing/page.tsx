@@ -1519,17 +1519,6 @@ export default function TestingPage() {
           <span className="rounded-full border border-border px-2 py-0.5">
             {depthLabel(runForm.scenarioDepth)}
           </span>
-          <div className="flex items-center gap-1.5">
-            <label htmlFor="runner-project-id" className="text-muted-foreground shrink-0">Project ID:</label>
-            <input
-              id="runner-project-id"
-              type="text"
-              value={runForm.projectId}
-              onChange={(e) => setRunForm((f) => ({ ...f, projectId: e.target.value }))}
-              placeholder="e.g. 67"
-              className="w-16 rounded border border-border bg-background px-1.5 py-0.5 text-xs text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary"
-            />
-          </div>
           <span className="text-green-600 font-medium">{results.filter((r) => r.status === "pass").length} ✓</span>
           <span className="text-red-500 font-medium">{results.filter((r) => r.status === "fail").length} ✗</span>
         </div>
@@ -1575,6 +1564,24 @@ export default function TestingPage() {
 
         {/* Title */}
         <h2 className="text-lg sm:text-xl font-semibold leading-snug tracking-tight">{tc.test_name}</h2>
+
+        {/* Project ID */}
+        <div className="flex items-center gap-3 rounded-lg border border-border bg-muted/40 px-4 py-3">
+          <span className="text-sm font-medium text-foreground shrink-0">Project ID</span>
+          <input
+            id="runner-project-id"
+            type="text"
+            value={runForm.projectId}
+            onChange={(e) => setRunForm((f) => ({ ...f, projectId: e.target.value }))}
+            placeholder="Enter project ID (e.g. 890)"
+            className="flex-1 rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/40"
+          />
+          {runForm.projectId && (
+            <span className="text-xs text-muted-foreground font-mono shrink-0">
+              /{runForm.projectId}/…
+            </span>
+          )}
+        </div>
 
         {/* ── Edit mode ── */}
         {editingCase ? (
