@@ -20,6 +20,7 @@ import {
   Receipt,
   CreditCard,
   FolderKanban,
+  ClipboardList,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -92,6 +93,15 @@ interface RecentCheck {
   status: string | null;
 }
 
+interface FinancialGuardrailAlert {
+  id: string;
+  severity: "high" | "medium";
+  category: "duplicate_outgoing_check" | "duplicate_incoming_payment" | "near_duplicate_outgoing_check";
+  title: string;
+  description: string;
+  references: string[];
+}
+
 interface DashboardResponse {
   arAging: AgingResult;
   apAging: AgingResult;
@@ -102,6 +112,7 @@ interface DashboardResponse {
     payments: RecentPayment[];
     checks: RecentCheck[];
   };
+  guardrailAlerts: FinancialGuardrailAlert[];
   generatedAt: string;
 }
 
@@ -347,6 +358,48 @@ function ProjectTable({ projects }: { projects: ProjectRevenue[] }) {
   );
 }
 
+function GuardrailAlerts({ alerts }: { alerts: FinancialGuardrailAlert[] }) {
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-semibold text-foreground">Payment Guardrails</h3>
+        <Badge variant={alerts.length > 0 ? "destructive" : "secondary"}>
+          {alerts.length > 0 ? `${alerts.length} flagged` : "No flags"}
+        </Badge>
+      </div>
+
+      {alerts.length === 0 ? (
+        <p className="text-xs text-muted-foreground">
+          No duplicate payment patterns detected in the last 90 days.
+        </p>
+      ) : (
+        <div className="space-y-2">
+          {alerts.slice(0, 8).map((alert) => (
+            <div
+              key={alert.id}
+              className={cn(
+                "rounded-md border px-3 py-2 text-xs",
+                alert.severity === "high"
+                  ? "border-destructive/40 bg-destructive/5"
+                  : "border-amber-400/40 bg-amber-50/50",
+              )}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-medium text-foreground">{alert.title}</span>
+                <Badge variant={alert.severity === "high" ? "destructive" : "outline"}>
+                  {alert.severity}
+                </Badge>
+              </div>
+              <p className="mt-1 text-muted-foreground">{alert.description}</p>
+              <p className="mt-1 text-muted-foreground">Refs: {alert.references.join(", ")}</p>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ---------------------------------------------------------------------------
 // AR by Project Bar Chart
 // ---------------------------------------------------------------------------
@@ -529,7 +582,15 @@ export default function AccountingDashboardPage() {
 
   if (!data) return null;
 
-  const { cashPosition, arAging, apAging, revenueByProject, arByProject, recentActivity } = data;
+  const {
+    cashPosition,
+    arAging,
+    apAging,
+    revenueByProject,
+    arByProject,
+    recentActivity,
+    guardrailAlerts,
+  } = data;
 
   return (
     <PageShell
@@ -576,6 +637,12 @@ export default function AccountingDashboardPage() {
                 <Link href="/accounting/projects" className="flex items-center gap-2">
                   <FolderKanban className="h-3.5 w-3.5" />
                   Projects
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/accounting/wip" className="flex items-center gap-2">
+                  <ClipboardList className="h-3.5 w-3.5" />
+                  WIP Report
                 </Link>
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -715,6 +782,12 @@ export default function AccountingDashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardContent className="p-5">
+          <GuardrailAlerts alerts={guardrailAlerts} />
+        </CardContent>
+      </Card>
     </PageShell>
   );
 }

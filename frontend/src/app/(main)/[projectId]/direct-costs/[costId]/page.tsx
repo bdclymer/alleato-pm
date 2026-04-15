@@ -7,16 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import {
   Table,
   TableBody,
   TableCell,
@@ -27,10 +17,7 @@ import {
 } from "@/components/ui/table";
 import { toast } from "sonner";
 import { formatCurrency, formatDate } from "@/lib/table-config/formatters";
-import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
-import { Slideover, SlideoverContent, SlideoverHeader, SlideoverTitle } from "@/components/ui/unified-slideover";
-import { DirectCostForm } from "@/components/direct-costs/DirectCostForm";
-import type { DirectCostUpdate } from "@/lib/schemas/direct-costs";
+import { ArrowLeft } from "lucide-react";
 
 interface DirectCostDetailPageProps {
   params: Promise<{
@@ -92,13 +79,6 @@ export default function DirectCostDetailPage({
   const router = useRouter();
   const [directCost, setDirectCost] = useState<DirectCostDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [isEditOpen, setIsEditOpen] = useState(false);
-  const [editData, setEditData] = useState<DirectCostUpdate | undefined>(
-    undefined,
-  );
-  const [isEditLoading, setIsEditLoading] = useState(false);
   const [resolvedParams, setResolvedParams] = useState<{
     projectId: string;
     costId: string;
@@ -133,51 +113,6 @@ export default function DirectCostDetailPage({
 
     fetchDirectCost();
   }, [resolvedParams]);
-
-  const handleDelete = async () => {
-    if (!resolvedParams) return;
-
-    try {
-      setIsDeleting(true);
-      const response = await fetch(
-        `/api/projects/${resolvedParams.projectId}/direct-costs/${resolvedParams.costId}`,
-        { method: "DELETE" },
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to delete direct cost");
-      }
-
-      toast.success("Direct cost deleted successfully");
-      router.push(`/${resolvedParams.projectId}/direct-costs`);
-    } catch {
-      toast.error("Failed to delete direct cost");
-    } finally {
-      setIsDeleting(false);
-      setDeleteDialogOpen(false);
-    }
-  };
-
-  const handleOpenEdit = async () => {
-    if (!resolvedParams) return;
-    setIsEditOpen(true);
-    setIsEditLoading(true);
-    setEditData(undefined);
-
-    try {
-      const response = await fetch(
-        `/api/projects/${resolvedParams.projectId}/direct-costs/${resolvedParams.costId}`,
-      );
-      if (!response.ok) throw new Error("Failed to load for editing");
-      const payload = (await response.json()) as DirectCostUpdate;
-      setEditData(payload);
-    } catch {
-      toast.error("Failed to load direct cost for editing");
-      setIsEditOpen(false);
-    } finally {
-      setIsEditLoading(false);
-    }
-  };
 
   if (!resolvedParams || isLoading) {
     return (
@@ -221,23 +156,6 @@ export default function DirectCostDetailPage({
         title="Direct Cost Details"
         description={directCost.invoice_number ? `Invoice #${directCost.invoice_number}` : `#${directCost.id.slice(0, 8)}`}
         onBack={() => router.back()}
-        actions={
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={handleOpenEdit}>
-              <Pencil />
-              Edit
-            </Button>
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={() => setDeleteDialogOpen(true)}
-              disabled={isDeleting}
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete
-            </Button>
-          </div>
-        }
       >
         <ContentSectionStack>
           {/* Cost Information + Record Info */}
@@ -396,71 +314,6 @@ export default function DirectCostDetailPage({
           )}
         </ContentSectionStack>
       </PageShell>
-
-      {/* Delete Confirmation */}
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Direct Cost</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete this direct cost? This action
-              cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => void handleDelete()}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {isDeleting ? "Deleting..." : "Delete"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Edit Slideover */}
-      <Slideover
-        open={isEditOpen}
-        onOpenChange={(open) => !open && setIsEditOpen(false)}
-      >
-        <SlideoverContent
-          side="right"
-          className="w-[92vw] sm:max-w-3xl overflow-y-auto p-0"
-        >
-          <SlideoverHeader className="border-b p-4">
-            <SlideoverTitle>Edit Direct Cost</SlideoverTitle>
-          </SlideoverHeader>
-          <div className="p-4">
-            {isEditLoading || !editData ? (
-              <div className="py-8 text-sm text-muted-foreground">
-                Loading direct cost...
-              </div>
-            ) : (
-              <DirectCostForm
-                mode="edit"
-                initialData={editData}
-                projectId={Number(resolvedParams.projectId)}
-                onCancel={() => setIsEditOpen(false)}
-                onSuccess={() => {
-                  setIsEditOpen(false);
-                  router.refresh();
-                  // Re-fetch to update the detail view
-                  const fetchUpdated = async () => {
-                    const response = await fetch(
-                      `/api/projects/${resolvedParams.projectId}/direct-costs/${resolvedParams.costId}`,
-                    );
-                    if (response.ok) {
-                      setDirectCost(await response.json());
-                    }
-                  };
-                  fetchUpdated();
-                }}
-              />
-            )}
-          </div>
-        </SlideoverContent>
-      </Slideover>
     </>
   );
 }

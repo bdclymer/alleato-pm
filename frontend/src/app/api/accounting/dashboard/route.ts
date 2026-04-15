@@ -56,6 +56,17 @@ interface RecentCheck {
   status: string | null;
 }
 
+type AlertSeverity = "high" | "medium";
+
+interface FinancialGuardrailAlert {
+  id: string;
+  severity: AlertSeverity;
+  category: "duplicate_outgoing_check" | "duplicate_incoming_payment" | "near_duplicate_outgoing_check";
+  title: string;
+  description: string;
+  references: string[];
+}
+
 interface DashboardResponse {
   arAging: AgingResult;
   apAging: AgingResult;
@@ -66,6 +77,7 @@ interface DashboardResponse {
     payments: RecentPayment[];
     checks: RecentCheck[];
   };
+  guardrailAlerts: FinancialGuardrailAlert[];
   generatedAt: string;
 }
 
@@ -131,6 +143,155 @@ function startOfCurrentMonth(): string {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
 }
 
+function dateDaysAgoIso(daysAgo: number): string {
+  const now = new Date();
+  now.setDate(now.getDate() - daysAgo);
+  return now.toISOString().slice(0, 10);
+}
+
+function normalizeText(value: string | null | undefined): string {
+  return (value ?? "").trim().toUpperCase();
+}
+
+function normalizeAmount(value: number | null | undefined): number {
+  return Math.round(Number(value ?? 0) * 100) / 100;
+}
+
+function detectGuardrailAlerts(params: {
+  checks: Array<{
+    reference_nbr: string;
+    vendor_id: string | null;
+    vendor_name: string | null;
+    payment_ref: string | null;
+    payment_amount: number | null;
+    application_date: string | null;
+    status: string | null;
+    cash_account: string | null;
+  }>;
+  payments: Array<{
+    reference_nbr: string;
+    customer_id: string | null;
+    customer_name: string | null;
+    payment_ref: string | null;
+    external_ref: string | null;
+    payment_amount: number | null;
+    application_date: string | null;
+    status: string | null;
+  }>;
+}): FinancialGuardrailAlert[] {
+  const alerts: FinancialGuardrailAlert[] = [];
+  const checkRows = params.checks.filter((row) => {
+    const status = normalizeText(row.status);
+    return status !== "VOIDED" && normalizeAmount(row.payment_amount) > 0;
+  });
+  const paymentRows = params.payments.filter((row) => {
+    const status = normalizeText(row.status);
+    return status !== "VOIDED" && normalizeAmount(row.payment_amount) > 0;
+  });
+
+  const exactOutgoing = new Map<string, typeof checkRows>();
+  for (const row of checkRows) {
+    const key = [
+      normalizeText(row.vendor_id),
+      normalizeText(row.payment_ref),
+      normalizeAmount(row.payment_amount).toFixed(2),
+      row.application_date ?? "",
+      normalizeText(row.cash_account),
+    ].join("|");
+    const group = exactOutgoing.get(key) ?? [];
+    group.push(row);
+    exactOutgoing.set(key, group);
+  }
+
+  for (const group of exactOutgoing.values()) {
+    if (group.length < 2) continue;
+    const references = Array.from(new Set(group.map((row) => row.reference_nbr))).slice(0, 6);
+    if (references.length < 2) continue;
+    const amount = normalizeAmount(group[0].payment_amount);
+    const vendor = group[0].vendor_name ?? group[0].vendor_id ?? "Unknown vendor";
+    alerts.push({
+      id: `outgoing:${references.join(",")}`,
+      severity: "high",
+      category: "duplicate_outgoing_check",
+      title: "Possible duplicate outgoing check payment",
+      description: `${vendor} has ${references.length} checks with the same payment ref/date/amount (${amount.toLocaleString("en-US", { style: "currency", currency: "USD" })}).`,
+      references,
+    });
+  }
+
+  const byVendorAndAmount = new Map<string, typeof checkRows>();
+  for (const row of checkRows) {
+    const key = [
+      normalizeText(row.vendor_id),
+      normalizeAmount(row.payment_amount).toFixed(2),
+    ].join("|");
+    const group = byVendorAndAmount.get(key) ?? [];
+    group.push(row);
+    byVendorAndAmount.set(key, group);
+  }
+
+  for (const group of byVendorAndAmount.values()) {
+    if (group.length < 2) continue;
+    const sorted = group
+      .filter((row) => row.application_date)
+      .sort((a, b) => (a.application_date ?? "").localeCompare(b.application_date ?? ""));
+    for (let i = 1; i < sorted.length; i += 1) {
+      const previous = sorted[i - 1];
+      const current = sorted[i];
+      if (!previous.application_date || !current.application_date) continue;
+      const dayDiff =
+        Math.abs(
+          new Date(current.application_date).getTime() -
+            new Date(previous.application_date).getTime(),
+        ) /
+        (1000 * 60 * 60 * 24);
+      if (dayDiff > 3) continue;
+      if (normalizeText(previous.reference_nbr) === normalizeText(current.reference_nbr)) continue;
+      alerts.push({
+        id: `near-outgoing:${previous.reference_nbr}:${current.reference_nbr}`,
+        severity: "medium",
+        category: "near_duplicate_outgoing_check",
+        title: "Potential near-duplicate outgoing payment",
+        description: `Two checks for ${current.vendor_name ?? current.vendor_id ?? "vendor"} have the same amount within ${Math.round(dayDiff)} day(s).`,
+        references: [previous.reference_nbr, current.reference_nbr],
+      });
+    }
+  }
+
+  const exactIncoming = new Map<string, typeof paymentRows>();
+  for (const row of paymentRows) {
+    const normalizedRef = normalizeText(row.payment_ref) || normalizeText(row.external_ref);
+    if (!normalizedRef) continue;
+    const key = [
+      normalizeText(row.customer_id),
+      normalizedRef,
+      normalizeAmount(row.payment_amount).toFixed(2),
+      row.application_date ?? "",
+    ].join("|");
+    const group = exactIncoming.get(key) ?? [];
+    group.push(row);
+    exactIncoming.set(key, group);
+  }
+
+  for (const group of exactIncoming.values()) {
+    if (group.length < 2) continue;
+    const references = Array.from(new Set(group.map((row) => row.reference_nbr))).slice(0, 6);
+    if (references.length < 2) continue;
+    const amount = normalizeAmount(group[0].payment_amount);
+    const customer = group[0].customer_name ?? group[0].customer_id ?? "Unknown customer";
+    alerts.push({
+      id: `incoming:${references.join(",")}`,
+      severity: "medium",
+      category: "duplicate_incoming_payment",
+      title: "Possible duplicate incoming payment",
+      description: `${customer} has ${references.length} payments with the same payment reference and amount (${amount.toLocaleString("en-US", { style: "currency", currency: "USD" })}).`,
+      references,
+    });
+  }
+
+  return alerts.slice(0, 25);
+}
+
 // ---------------------------------------------------------------------------
 // GET /api/accounting/dashboard
 // ---------------------------------------------------------------------------
@@ -150,6 +311,7 @@ export const GET = withApiGuardrails("/api/accounting/dashboard#GET", async () =
 
   const supabase = createServiceClient();
   const monthStart = startOfCurrentMonth();
+  const guardrailLookbackStart = dateDaysAgoIso(90);
 
   // Run all independent queries in parallel for performance
   const [
@@ -161,6 +323,8 @@ export const GET = withApiGuardrails("/api/accounting/dashboard#GET", async () =
     paymentApplicationsResult,
     recentPaymentsResult,
     recentChecksResult,
+    guardrailChecksResult,
+    guardrailPaymentsResult,
   ] = await Promise.all([
     // 1. AR invoices — outstanding only, for aging + cash position
     supabase
@@ -212,6 +376,16 @@ export const GET = withApiGuardrails("/api/accounting/dashboard#GET", async () =
       .not("application_date", "is", null)
       .order("application_date", { ascending: false })
       .limit(10),
+    supabase
+      .from("acumatica_checks")
+      .select("reference_nbr, vendor_id, vendor_name, payment_ref, payment_amount, application_date, status, cash_account")
+      .gte("application_date", guardrailLookbackStart)
+      .limit(1000),
+    supabase
+      .from("acumatica_payments")
+      .select("reference_nbr, customer_id, customer_name, payment_ref, external_ref, payment_amount, application_date, status")
+      .gte("application_date", guardrailLookbackStart)
+      .limit(1000),
   ]);
 
   // Surface any query errors
@@ -224,6 +398,8 @@ export const GET = withApiGuardrails("/api/accounting/dashboard#GET", async () =
     paymentApplicationsResult.error,
     recentPaymentsResult.error,
     recentChecksResult.error,
+    guardrailChecksResult.error,
+    guardrailPaymentsResult.error,
   ].filter(Boolean);
 
   if (errors.length > 0) {
@@ -358,6 +534,11 @@ export const GET = withApiGuardrails("/api/accounting/dashboard#GET", async () =
     status: c.status ?? null,
   }));
 
+  const guardrailAlerts = detectGuardrailAlerts({
+    checks: guardrailChecksResult.data ?? [],
+    payments: guardrailPaymentsResult.data ?? [],
+  });
+
   // ---------------------------------------------------------------------------
   // Response
   // ---------------------------------------------------------------------------
@@ -376,6 +557,7 @@ export const GET = withApiGuardrails("/api/accounting/dashboard#GET", async () =
       payments: recentPayments,
       checks: recentChecks,
     },
+    guardrailAlerts,
     generatedAt: new Date().toISOString(),
   };
 

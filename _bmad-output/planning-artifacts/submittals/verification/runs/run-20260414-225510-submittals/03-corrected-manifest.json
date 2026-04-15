@@ -1,0 +1,644 @@
+{
+  "generated_at": "2026-04-15T03:00:47Z",
+  "run_id": "run-20260414-225510-submittals",
+  "feature": "submittals",
+  "sources": [
+    "02-procore-reference.md",
+    "01-codebase-inventory.md",
+    "crawl-data",
+    "RAG-queries"
+  ],
+  "normalized": {
+    "list": {
+      "columns": [
+        {
+          "id": "specification_section",
+          "label": "Spec",
+          "type": "text",
+          "default_visible": true
+        },
+        {
+          "id": "submittal_number",
+          "label": "#",
+          "type": "text",
+          "default_visible": true,
+          "always_visible": true
+        },
+        {
+          "id": "revision",
+          "label": "Rev.",
+          "type": "integer",
+          "default_visible": true
+        },
+        {
+          "id": "title",
+          "label": "Title",
+          "type": "text",
+          "default_visible": true
+        },
+        {
+          "id": "submittal_type_name",
+          "label": "Type",
+          "type": "text",
+          "default_visible": true
+        },
+        {
+          "id": "status",
+          "label": "Status",
+          "type": "badge",
+          "default_visible": true
+        },
+        {
+          "id": "responsible_contractor",
+          "label": "Responsible C.",
+          "type": "text_fk_company",
+          "default_visible": true
+        },
+        {
+          "id": "received_from",
+          "label": "Received From",
+          "type": "text_fk_person",
+          "default_visible": false
+        },
+        {
+          "id": "ball_in_court",
+          "label": "Ball In Court",
+          "type": "text_fk_person",
+          "default_visible": true
+        },
+        {
+          "id": "approvers",
+          "label": "Approvers",
+          "type": "text_array",
+          "default_visible": false
+        },
+        {
+          "id": "latest_response",
+          "label": "Response",
+          "type": "badge",
+          "default_visible": true
+        },
+        {
+          "id": "sent_date",
+          "label": "Sent Date",
+          "type": "date",
+          "default_visible": true
+        }
+      ],
+      "column_groups": [],
+      "tabs": [
+        {
+          "id": "items",
+          "label": "Items",
+          "description": "Flat list of all active submittals"
+        },
+        {
+          "id": "packages",
+          "label": "Packages",
+          "description": "Grouped by submittal package"
+        },
+        {
+          "id": "spec_sections",
+          "label": "Spec Sections",
+          "description": "Grouped by specification section/division"
+        },
+        {
+          "id": "ball_in_court",
+          "label": "Ball In Court",
+          "description": "Grouped by current BIC person"
+        },
+        {
+          "id": "recycle_bin",
+          "label": "Recycle Bin",
+          "description": "Soft-deleted submittals"
+        }
+      ],
+      "toolbar_actions": [
+        {
+          "id": "create",
+          "label": "Create",
+          "type": "dropdown",
+          "options": [
+            "Submittal",
+            "Submittal Package"
+          ]
+        },
+        {
+          "id": "export",
+          "label": "Export",
+          "type": "dropdown",
+          "options": [
+            "PDF",
+            "CSV",
+            "Excel"
+          ]
+        },
+        {
+          "id": "reports",
+          "label": "Reports",
+          "type": "dropdown",
+          "options": [
+            "Submittal Approvers Response Time"
+          ]
+        },
+        {
+          "id": "search",
+          "label": "Search",
+          "type": "button"
+        },
+        {
+          "id": "add_filter",
+          "label": "Add Filter",
+          "type": "button"
+        },
+        {
+          "id": "settings",
+          "label": "Settings",
+          "type": "link_icon"
+        }
+      ],
+      "bulk_actions": [
+        {
+          "id": "apply_workflow",
+          "label": "Apply Workflow"
+        },
+        {
+          "id": "bulk_edit",
+          "label": "Edit",
+          "fields": [
+            "responsible_contractor",
+            "received_from",
+            "status",
+            "submittal_package",
+            "type",
+            "required_on_site_date"
+          ]
+        },
+        {
+          "id": "bulk_delete",
+          "label": "Delete",
+          "tabs": [
+            "items"
+          ]
+        }
+      ],
+      "filters": [
+        {
+          "id": "approver",
+          "label": "Approver",
+          "type": "multi-select"
+        },
+        {
+          "id": "ball_in_court",
+          "label": "Ball In Court",
+          "type": "multi-select"
+        },
+        {
+          "id": "created_by",
+          "label": "Created By",
+          "type": "multi-select"
+        },
+        {
+          "id": "current_revision",
+          "label": "Current Revision",
+          "type": "toggle"
+        },
+        {
+          "id": "division",
+          "label": "Division",
+          "type": "multi-select"
+        },
+        {
+          "id": "location",
+          "label": "Location",
+          "type": "multi-select"
+        },
+        {
+          "id": "number",
+          "label": "Number",
+          "type": "text"
+        },
+        {
+          "id": "private",
+          "label": "Private",
+          "type": "toggle"
+        },
+        {
+          "id": "received_from",
+          "label": "Received From",
+          "type": "multi-select"
+        },
+        {
+          "id": "response",
+          "label": "Response",
+          "type": "multi-select"
+        },
+        {
+          "id": "responsible_contractor",
+          "label": "Responsible Contractor",
+          "type": "multi-select"
+        },
+        {
+          "id": "submittal_type",
+          "label": "Submittal Type",
+          "type": "multi-select"
+        },
+        {
+          "id": "status",
+          "label": "Status",
+          "type": "multi-select"
+        }
+      ],
+      "row_actions": [
+        {
+          "id": "view",
+          "label": "View"
+        },
+        {
+          "id": "edit",
+          "label": "Edit"
+        },
+        {
+          "id": "duplicate",
+          "label": "Duplicate"
+        },
+        {
+          "id": "delete",
+          "label": "Delete"
+        },
+        {
+          "id": "restore",
+          "label": "Restore",
+          "tab": "recycle_bin"
+        }
+      ]
+    },
+    "create_form": {
+      "fields": [
+        {
+          "id": "title",
+          "label": "Title",
+          "type": "text",
+          "required": true,
+          "section": "general"
+        },
+        {
+          "id": "specification_section",
+          "label": "Specification",
+          "type": "select_search",
+          "required": false,
+          "section": "general",
+          "source": "specifications"
+        },
+        {
+          "id": "submittal_number",
+          "label": "Number",
+          "type": "text",
+          "required": true,
+          "section": "general"
+        },
+        {
+          "id": "revision",
+          "label": "Revision",
+          "type": "integer_readonly",
+          "required": true,
+          "section": "general",
+          "default": 0
+        },
+        {
+          "id": "submittal_type_id",
+          "label": "Submittal Type",
+          "type": "select",
+          "required": false,
+          "section": "general",
+          "source": "submittal_types"
+        },
+        {
+          "id": "submittal_package_id",
+          "label": "Submittal Package",
+          "type": "select",
+          "required": false,
+          "section": "general",
+          "source": "submittal_packages"
+        },
+        {
+          "id": "responsible_contractor_id",
+          "label": "Responsible Contractor",
+          "type": "select_company",
+          "required": false,
+          "section": "general",
+          "source": "project_companies"
+        },
+        {
+          "id": "received_from_id",
+          "label": "Received From",
+          "type": "select_person",
+          "required": false,
+          "section": "general",
+          "source": "project_directory"
+        },
+        {
+          "id": "submittal_manager_id",
+          "label": "Submittal Manager",
+          "type": "select_person",
+          "required": true,
+          "section": "general",
+          "source": "project_users"
+        },
+        {
+          "id": "status",
+          "label": "Status",
+          "type": "select",
+          "required": false,
+          "section": "general",
+          "options": [
+            "Draft",
+            "Open",
+            "Closed",
+            "Distributed"
+          ],
+          "default": "Draft"
+        },
+        {
+          "id": "final_due_date",
+          "label": "Final Due Date",
+          "type": "date",
+          "required": false,
+          "section": "schedule"
+        },
+        {
+          "id": "cost_code_id",
+          "label": "Cost Code",
+          "type": "select",
+          "required": false,
+          "section": "general",
+          "source": "project_cost_codes"
+        },
+        {
+          "id": "location_id",
+          "label": "Location",
+          "type": "select",
+          "required": false,
+          "section": "general",
+          "source": "project_locations"
+        },
+        {
+          "id": "lead_time",
+          "label": "Lead Time",
+          "type": "number_days",
+          "required": false,
+          "section": "schedule"
+        },
+        {
+          "id": "required_on_site_date",
+          "label": "Required On-Site Date",
+          "type": "date",
+          "required": false,
+          "section": "schedule"
+        },
+        {
+          "id": "description",
+          "label": "Description",
+          "type": "rich_text",
+          "required": false,
+          "section": "content"
+        },
+        {
+          "id": "attachments",
+          "label": "Attachments",
+          "type": "file_upload",
+          "required": false,
+          "section": "content"
+        },
+        {
+          "id": "is_private",
+          "label": "Private",
+          "type": "checkbox",
+          "required": false,
+          "section": "distribution",
+          "default": false
+        },
+        {
+          "id": "distribution_list",
+          "label": "Distribution List",
+          "type": "multi_select_person",
+          "required": false,
+          "section": "distribution"
+        },
+        {
+          "id": "ball_in_court",
+          "label": "Ball In Court",
+          "type": "auto_calculated",
+          "required": false,
+          "section": "distribution"
+        }
+      ],
+      "actions": [
+        {
+          "id": "create",
+          "label": "Create",
+          "description": "Save without sending emails"
+        },
+        {
+          "id": "create_and_send",
+          "label": "Create & Send",
+          "description": "Save and send email notifications"
+        },
+        {
+          "id": "cancel",
+          "label": "Cancel"
+        }
+      ]
+    },
+    "detail": {
+      "tabs": [
+        {
+          "id": "general",
+          "label": "General",
+          "sections": [
+            {
+              "id": "distribution_summary",
+              "label": "Distribution Summary",
+              "conditional": "status === 'Distributed'"
+            },
+            {
+              "id": "description",
+              "label": "Description"
+            },
+            {
+              "id": "workflow_responses",
+              "label": "Workflow Responses"
+            },
+            {
+              "id": "revision_history",
+              "label": "Revision History"
+            }
+          ]
+        },
+        {
+          "id": "related_items",
+          "label": "Related Items",
+          "sections": [
+            {
+              "id": "linked_items",
+              "label": "Linked Items",
+              "types": [
+                "Bids",
+                "RFIs",
+                "Change Events"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "emails",
+          "label": "Emails",
+          "sections": [
+            {
+              "id": "email_history",
+              "label": "Email History"
+            }
+          ]
+        },
+        {
+          "id": "change_history",
+          "label": "Change History",
+          "sections": [
+            {
+              "id": "audit_log",
+              "label": "Change History"
+            }
+          ]
+        }
+      ],
+      "toolbar_actions": [
+        {
+          "id": "edit",
+          "label": "Edit",
+          "type": "button"
+        },
+        {
+          "id": "redistribute",
+          "label": "Redistribute",
+          "type": "button",
+          "conditional": "status === 'Closed' || status === 'Distributed'"
+        },
+        {
+          "id": "create_revision",
+          "label": "Create Revision",
+          "type": "overflow_menu"
+        },
+        {
+          "id": "duplicate",
+          "label": "Duplicate Submittal",
+          "type": "overflow_menu"
+        },
+        {
+          "id": "email",
+          "label": "Email",
+          "type": "overflow_menu"
+        },
+        {
+          "id": "delete",
+          "label": "Delete",
+          "type": "overflow_menu"
+        }
+      ],
+      "sidebar_fields": [
+        {
+          "id": "submittal_type",
+          "label": "Type"
+        },
+        {
+          "id": "submittal_package",
+          "label": "Package"
+        },
+        {
+          "id": "responsible_contractor",
+          "label": "Responsible Contractor"
+        },
+        {
+          "id": "received_from",
+          "label": "Received From"
+        },
+        {
+          "id": "submittal_manager",
+          "label": "Submittal Manager"
+        },
+        {
+          "id": "ball_in_court",
+          "label": "Ball In Court"
+        },
+        {
+          "id": "final_due_date",
+          "label": "Final Due Date"
+        },
+        {
+          "id": "lead_time",
+          "label": "Lead Time"
+        },
+        {
+          "id": "required_on_site_date",
+          "label": "Required On-Site Date"
+        },
+        {
+          "id": "cost_code",
+          "label": "Cost Code"
+        },
+        {
+          "id": "location",
+          "label": "Location"
+        },
+        {
+          "id": "sent_date",
+          "label": "Sent Date"
+        },
+        {
+          "id": "is_private",
+          "label": "Private"
+        }
+      ]
+    },
+    "workflow": {
+      "statuses": [
+        {
+          "id": "Draft",
+          "transitions_to": [
+            "Open"
+          ]
+        },
+        {
+          "id": "Open",
+          "transitions_to": [
+            "Closed"
+          ]
+        },
+        {
+          "id": "Closed",
+          "transitions_to": [
+            "Distributed"
+          ]
+        },
+        {
+          "id": "Distributed",
+          "transitions_to": []
+        }
+      ],
+      "response_statuses": [
+        "Pending",
+        "Submitted",
+        "Approved",
+        "Approved as Noted",
+        "Revise and Resubmit",
+        "Rejected",
+        "Reviewed - No Exception"
+      ],
+      "step_types": [
+        "Submitter",
+        "Approver",
+        "Reviewer"
+      ],
+      "ball_in_court_logic": "Sequential by step_order groups. Advances when all required members in current group respond."
+    }
+  }
+}

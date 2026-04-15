@@ -1,0 +1,129 @@
+QUERY: submittals list view tabs navigation
+
+
+Searching Procore docs: "submittals list view tabs navigation"
+
+Found 8 relevant documentation chunks:
+
+========================================================================
+
+[1] FAQ/Troubleshooting — 62.4% match
+    Section: Submittals
+    Category: Submittals
+    URL: https://v2.support.procore.com/product-manuals/submittals-project/faq-or-troubleshooting
+
+    #  Submittals
+
+------------------------------------------------------------------------
+
+[2] Permissions — 62.3% match
+    Section: Submittals
+    Category: Submittals
+    URL: https://v2.support.procore.com/product-manuals/submittals-project/permissions
+
+    #  Submittals
+
+------------------------------------------------------------------------
+
+[3] Switch Between Submittals Views — 57.5% match
+    Section: Steps​
+    Category: Submittals
+    URL: https://v2.support.procore.com/product-manuals/submittals-project/tutorials/switch-between-submittals-views
+
+    #  Switch Between Submittals Views 
+    
+    
+    ##  Background 
+    You can view your project's submittals data using a variety of different views, which include: Items, Packages, Spec Sections, Ball In Court, and the Recycle Bin. ##  Things to Consider 
+      * **Required User Permissions:**
+        * 'Read Only' level permissions or higher on the project's Submittals tool. 
+    
+    ##  Steps​ 
+      1. Navigate to the project's **Submittals** tool. This reveals the Submittals page. The default view is **Items**. 
+    ![Switch Bet...
+
+------------------------------------------------------------------------
+
+[4] Overview — 55.8% match
+    Section: Overview
+    Category: Submittals
+    URL: https://v2.support.procore.com/product-manuals/submittals-project
+
+    #  Submittals 
+    
+    
+    
+    ##  Overview 
+    The Submittals tool enables you to organize your submittal log by division, add shop drawings, or even pages from product catalogs. Attachments can either be added directly from your computer or the project's Documents tool.
+      * Always know the current status of your project's submittals and who needs to take action
+      * Quickly locate a submittal
+      * Attach documents, drawings, and more directly to your project's submittals
+      * Assign multiple users to the 'Submit...
+
+------------------------------------------------------------------------
+
+[5] View a Submittal — 55.6% match
+    Section: View a Submittal
+    Category: Submittals
+    URL: https://v2.support.procore.com/product-manuals/submittals-project/tutorials/view-a-submittal
+
+    #  View a Submittal
+
+------------------------------------------------------------------------
+
+[6] Switch Between Submittals Views — 53.4% match
+    Section: Things to Consider
+    Category: Submittals
+    URL: https://v2.support.procore.com/product-manuals/submittals-project/tutorials/switch-between-submittals-views
+
+    #  Switch Between Submittals Views 
+    
+    
+    ##  Background 
+    You can view your project's submittals data using a variety of different views, which include: Items, Packages, Spec Sections, Ball In Court, and the Recycle Bin.
+    
+    
+    ##  Things to Consider 
+      * **Required User Permissions:**
+        * 'Read Only' level permissions or higher on the project's Submittals tool.
+
+------------------------------------------------------------------------
+
+[7] Search for and Filter Submittals — 50.3% match
+    Section: See Also
+    Category: Submittals
+    URL: https://v2.support.procore.com/product-manuals/submittals-project/tutorials/search-for-and-filter-submittals
+
+    See [Create Custom Submittal Types](https://v2.support.procore.com/product-manuals/admin-company/tutorials/create-custom-submittal-types). 4. Press ESC on your keyboard to view the filtered list of submittals. 5. _Optional:_ Repeat the steps above to add more filters. 6. To clear one filter, click the X next to its name. OR  
+    To clear all filters, click **Clear All**. 
+    
+    ### Sort the Submittals Log
+      1. Navigate to the project's **Submittals** tool.
+      2. Click the **Items** , **Packages** , **Spe...
+
+------------------------------------------------------------------------
+
+[8] Tutorials — 50.0% match
+    Section: Tutorials
+    Category: Submittals
+    URL: https://v2.support.procore.com/product-manuals/submittals-project/tutorials
+
+    #  Submittals 
+    
+    
+    
+    ##  Tutorials 
+    
+    
+    ###  Process Guides 
+      * [ Best Practices Submittals ](https://v2.support.procore.com/process-guides/best-practices-submittals/)
+    
+    
+    
+    
+    ###  Tutorials 
+    ####  Submittals 
+      * [ Add a Related Item to a Submittal Package ](https://v2.support.procore.com/product-manuals/submittals-project/tutorials/add-a-related-item-to-a-submittal-package/)
+      * [ Add a Submitter and Approvers to the Submittal Workflow ](https://v2.support.procore.com/product-manuals/submittals-projec...
+
+------------------------------------------------------------------------

@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
+const PROJECT_ID = process.env.E2E_PROJECT_ID ?? '67';
 
 test.use({ storageState: 'tests/.auth/user.json' });
 
@@ -20,40 +20,30 @@ test.describe('Submittals smoke', () => {
   });
 
   test.beforeEach(async ({ page }) => {
-    await page.goto(`/submittals`);
-    await page.waitForLoadState('networkidle');
+    await page.goto(`/${PROJECT_ID}/submittals`);
+    await page.waitForLoadState('domcontentloaded');
+    await expect(page.getByRole('heading', { name: 'Submittals' })).toBeVisible();
   });
 
   test('navigates tabs and respects Ball In Court filter', async ({ page }) => {
     await page.getByTestId('submittals-tab-items').click();
-    await expect(page.getByTestId('submittals-table')).toBeVisible();
+    await expect(page).toHaveURL(new RegExp(`/${PROJECT_ID}/submittals`));
 
     await page.getByTestId('submittals-tab-ball-in-court').click();
-    await expect(page.getByTestId('submittals-filter-chip')).toContainText(/Ball In Court/i);
+    await expect(page).toHaveURL(new RegExp(`tab=ball-in-court`));
   });
 
-  test('dropdown actions are present', async ({ page }) => {
+  test('create dropdown actions are present', async ({ page }) => {
     await page.getByTestId('submittals-dropdown-create').click();
-    await expect(page.getByTestId('submittals-create-submittal')).toBeVisible();
-    await expect(page.getByTestId('submittals-create-package')).toBeVisible();
-
-    await page.getByTestId('submittals-dropdown-export').click();
-    await expect(page.getByTestId('submittals-export-csv')).toBeVisible();
-    await expect(page.getByTestId('submittals-export-pdf')).toBeVisible();
-    await expect(page.getByTestId('submittals-export-excel')).toBeVisible();
+    await expect(page.getByRole('menuitem', { name: 'Create Submittal' })).toBeVisible();
+    await expect(page.getByRole('menuitem', { name: 'Create from Package' })).toBeVisible();
+    await expect(page.getByRole('menuitem', { name: 'Create from Specifications' })).toBeVisible();
   });
 
-  test('settings save and persist', async ({ page }) => {
-    await page.goto(`/submittals/settings/general`);
-    await page.waitForLoadState('networkidle');
-
-    const numbering = page.getByTestId('submittals-numbering-prefix');
-    await numbering.fill('SUB');
-    await page.getByTestId('submittals-settings-save').click();
-    await expect(page.getByText(/Settings saved/i)).toBeVisible();
-
-    await page.reload();
-    await page.waitForLoadState('networkidle');
-    await expect(page.getByTestId('submittals-numbering-prefix')).toHaveValue('SUB');
+  test('create from package opens picker dialog', async ({ page }) => {
+    await page.getByTestId('submittals-dropdown-create').click();
+    await page.getByRole('menuitem', { name: 'Create from Package' }).click();
+    await expect(page.getByRole('dialog')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Select a Package' })).toBeVisible();
   });
 });

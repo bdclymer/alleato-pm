@@ -19,6 +19,7 @@ Rule 7: Before closing any bug, ask: “What makes this never happen again?”
 - Parallelize tool calls whenever possible (`multi_tool_use.parallel`). Never read files one-by-one unless logically unavoidable.
 - Code chunks may include inline line numbers like `Lxxx:LINE_CONTENT`. Treat the `Lxxx:` prefix as metadata — do NOT include it in edits.
 - Default expectation: deliver working code, not just a plan. If details are missing, make reasonable assumptions and complete a working version.
+- Do not tell the user to perform actions that the agent can execute directly (e.g., migrations, type generation, lint/type checks, or local commands). Execute them and report the result.
 
 ## Parallel Session Orchestration (MANDATORY)
 

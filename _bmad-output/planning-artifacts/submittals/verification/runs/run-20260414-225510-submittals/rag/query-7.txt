@@ -1,0 +1,143 @@
+QUERY: submittals line items and calculations
+
+
+Searching Procore docs: "submittals line items and calculations"
+
+Found 8 relevant documentation chunks:
+
+========================================================================
+
+[1] FAQ/Troubleshooting — 62.4% match
+    Section: Submittals
+    Category: Submittals
+    URL: https://v2.support.procore.com/product-manuals/submittals-project/faq-or-troubleshooting
+
+    #  Submittals
+
+------------------------------------------------------------------------
+
+[2] Permissions — 62.4% match
+    Section: Submittals
+    Category: Submittals
+    URL: https://v2.support.procore.com/product-manuals/submittals-project/permissions
+
+    #  Submittals
+
+------------------------------------------------------------------------
+
+[3] Construction Management Glossary — 55.5% match
+    Section: Submittals
+    Category: General
+    URL: https://v2.support.procore.com/glossary-of-terms
+
+    ## Submittal Package
+    A _submittal package_ is a container that stores one or more _submittals_. Typically, a _general contractor_ creates submittal packages that list all of the individual submittals specific to a particular trade or _subcontractor_. For example, one might create a submittal package to contain all of the plumbing-related submittals in a commercial building project. 
+    
+    ## Submittal Schedule Calculations
+    _Submittal Schedule Calculations_ is a back end configuration option in Procor...
+
+------------------------------------------------------------------------
+
+[4] Create a Submittal — 53.7% match
+    Section: Calculate Submittal Schedule Information (If Enabled)
+    Category: Submittals
+    URL: https://v2.support.procore.com/product-manuals/submittals-project/tutorials/create-a-submittal
+
+    If your system is configured to use parallel approval, the notification goes to the Submittal Manager and members of the approval workflow). * Lead Time
+      * Required On-Site Date
+      * Cost Code
+      * Submittal Manager
+      * Type
+      * Private
+      * Location
+      * Linked Drawings
+      * Description
+      * Attachments
+      * Distribution List
+    
+    
+    
+    
+    ##  Calculate Submittal Schedule Information (If Enabled) 
+    _Submittal Schedule Calculations_ is an optional feature that you can enable. See [Enable Submittal Schedule Calcu...
+
+------------------------------------------------------------------------
+
+[5] Duplicate a Submittal — 53.4% match
+    Section: Calculate Submittal Schedule Information (If Enabled)
+    Category: Submittals
+    URL: https://v2.support.procore.com/product-manuals/submittals-project/tutorials/duplicate-a-submittal
+
+    Revise the following submittal information as needed:
+         * Title
+         * Spec Section
+         * Received From
+         * Submittal Package
+         * Status
+         * Cost Code
+         * Type
+         * Location
+         * Private
+         * Description
+         * Attachments
+         * Submittal Workflow
+         * Distribution List
+         * Related Items
+         * Custom Fields
+    
+    
+    ### Calculate Submittal Schedule Information (If Enabled)
+    _Submittal Schedule Calculations_ is an optional feature that you can enable. See [Enable Submittal Sc...
+
+------------------------------------------------------------------------
+
+[6] Enable Submittal Schedule Calculations — 51.5% match
+    Section: Demo
+    Category: Submittals
+    URL: https://v2.support.procore.com/product-manuals/submittals-project/tutorials/enable-submittal-schedule-calculations
+
+    #  Enable Submittal Schedule Calculations 
+    
+    
+    ##  Background 
+    _Submittal Schedule Calculations_ is an optional configuration feature that can be enabled for use with the Project level Submittals tool. When enabled on a Procore project, this option analyzes these key dates, which are entered by the creator under Submittal Schedule Information in a submittal package or a submittal item:
+      * Required On-Site Date
+      * Lead Time
+      * Design Team Review Time
+      * Internal Review Time
+    
+    
+    After analyzing th...
+
+------------------------------------------------------------------------
+
+[7] Update the Submittals Import Template — 51.3% match
+    Section: Steps
+    Category: Submittals
+    URL: https://v2.support.procore.com/product-manuals/submittals-project/tutorials/update-the-submittals-import-template
+
+    * **Admin: Configure Submittal Settings:** * See [Best Practices: Company Level Submittal Settings](https://v2.support.procore.com/process-guides/best-practices-submittals/company-level-settings) and [Best Practices: Submittal Project Configurations](https://v2.support.procore.com/process-guides/best-practices-submittals/project-configurations). 
+    
+    ##  Steps 
+      1. Complete the **Submittal Package Information** as follows:  
+    If you will be importing Submittal Package information, include the follo...
+
+------------------------------------------------------------------------
+
+[8] Overview — 51.1% match
+    Section: Overview
+    Category: Submittals
+    URL: https://v2.support.procore.com/product-manuals/submittals-project
+
+    #  Submittals 
+    
+    
+    
+    ##  Overview 
+    The Submittals tool enables you to organize your submittal log by division, add shop drawings, or even pages from product catalogs. Attachments can either be added directly from your computer or the project's Documents tool.
+      * Always know the current status of your project's submittals and who needs to take action
+      * Quickly locate a submittal
+      * Attach documents, drawings, and more directly to your project's submittals
+      * Assign multiple users to the 'Submit...
+
+------------------------------------------------------------------------

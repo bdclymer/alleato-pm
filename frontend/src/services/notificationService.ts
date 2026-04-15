@@ -1,186 +1,52 @@
-import { Liveblocks } from "@liveblocks/node";
 import { nanoid } from "nanoid";
-import type {
-  CriticalIssueData,
-  DeadlineData,
-  StatusChangeData,
-  BudgetAlertData,
-  WeeklyDigestData,
-  AssignmentData,
-  ApprovalRequestData,
-  BallInCourtData,
-} from "../../liveblocks.config";
 
-// ── Liveblocks server client ────────────────────────────────────────────────
-
-const liveblocks = new Liveblocks({
-  secret: process.env.LIVEBLOCKS_SECRET_KEY!,
-});
-
-// ── Helper to send to one or many users ─────────────────────────────────────
+import { createServiceClient } from "@/lib/supabase/service";
 
 type UserTarget = string | string[];
 
-function toArray(target: UserTarget): string[] {
-  return Array.isArray(target) ? target : [target];
-}
+type BasePayload = {
+  projectId?: number;
+  entityType?: string;
+  entityId?: string;
+};
 
-// ── Critical Issue ──────────────────────────────────────────────────────────
+export type CriticalIssueData = BasePayload & {
+  severity?: string;
+  summary?: string;
+};
 
-export async function notifyCriticalIssue(
-  userId: UserTarget,
-  data: CriticalIssueData
-) {
-  const users = toArray(userId);
-  await Promise.all(
-    users.map((uid) =>
-      liveblocks.triggerInboxNotification({
-        userId: uid,
-        kind: "$criticalIssue",
-        subjectId: data.entityId ?? nanoid(),
-        activityData: data,
-      })
-    )
-  );
-}
+export type DeadlineData = BasePayload & {
+  dueDate?: string;
+  title?: string;
+};
 
-// ── Deadline Approaching ────────────────────────────────────────────────────
+export type StatusChangeData = BasePayload & {
+  from?: string;
+  to?: string;
+};
 
-export async function notifyDeadline(
-  userId: UserTarget,
-  data: DeadlineData
-) {
-  const users = toArray(userId);
-  await Promise.all(
-    users.map((uid) =>
-      liveblocks.triggerInboxNotification({
-        userId: uid,
-        kind: "$deadline",
-        subjectId: `deadline-${data.entityType}-${data.entityId ?? nanoid()}`,
-        activityData: data,
-      })
-    )
-  );
-}
+export type BudgetAlertData = BasePayload & {
+  alertType?: string;
+  amount?: number;
+};
 
-// ── Status Change ───────────────────────────────────────────────────────────
+export type WeeklyDigestData = BasePayload & {
+  totalOpenItems?: number;
+};
 
-export async function notifyStatusChange(
-  userId: UserTarget,
-  data: StatusChangeData
-) {
-  const users = toArray(userId);
-  await Promise.all(
-    users.map((uid) =>
-      liveblocks.triggerInboxNotification({
-        userId: uid,
-        kind: "$statusChange",
-        subjectId: `status-${data.entityType}-${data.entityId ?? nanoid()}`,
-        activityData: data,
-      })
-    )
-  );
-}
+export type AssignmentData = BasePayload & {
+  assignee?: string;
+};
 
-// ── Budget Alert ────────────────────────────────────────────────────────────
+export type ApprovalRequestData = BasePayload & {
+  requester?: string;
+};
 
-export async function notifyBudgetAlert(
-  userId: UserTarget,
-  data: BudgetAlertData
-) {
-  const users = toArray(userId);
-  await Promise.all(
-    users.map((uid) =>
-      liveblocks.triggerInboxNotification({
-        userId: uid,
-        kind: "$budgetAlert",
-        subjectId: `budget-${data.alertType}-${nanoid()}`,
-        activityData: data,
-      })
-    )
-  );
-}
+export type BallInCourtData = BasePayload & {
+  rfiNumber?: string;
+};
 
-// ── Weekly Digest ───────────────────────────────────────────────────────────
-
-export async function notifyWeeklyDigest(
-  userId: UserTarget,
-  data: WeeklyDigestData
-) {
-  const users = toArray(userId);
-  await Promise.all(
-    users.map((uid) =>
-      liveblocks.triggerInboxNotification({
-        userId: uid,
-        kind: "$weeklyDigest",
-        subjectId: `digest-${nanoid()}`,
-        activityData: data,
-      })
-    )
-  );
-}
-
-// ── Assignment ──────────────────────────────────────────────────────────────
-
-export async function notifyAssignment(
-  userId: UserTarget,
-  data: AssignmentData
-) {
-  const users = toArray(userId);
-  await Promise.all(
-    users.map((uid) =>
-      liveblocks.triggerInboxNotification({
-        userId: uid,
-        kind: "$assignment",
-        subjectId: `assign-${data.entityType}-${data.entityId ?? nanoid()}`,
-        activityData: data,
-      })
-    )
-  );
-}
-
-// ── Approval Request ────────────────────────────────────────────────────────
-
-export async function notifyApprovalRequest(
-  userId: UserTarget,
-  data: ApprovalRequestData
-) {
-  const users = toArray(userId);
-  await Promise.all(
-    users.map((uid) =>
-      liveblocks.triggerInboxNotification({
-        userId: uid,
-        kind: "$approvalRequest",
-        subjectId: `approval-${data.entityType}-${data.entityId ?? nanoid()}`,
-        activityData: data,
-      })
-    )
-  );
-}
-
-// ── Ball in Court ──────────────────────────────────────────────────────────
-
-export async function notifyBallInCourt(
-  userId: UserTarget,
-  data: BallInCourtData
-) {
-  const users = toArray(userId);
-  await Promise.all(
-    users.map((uid) =>
-      liveblocks.triggerInboxNotification({
-        userId: uid,
-        kind: "$ballInCourt",
-        subjectId: `bic-rfi-${data.rfiNumber}-${nanoid()}`,
-        activityData: data,
-      })
-    )
-  );
-}
-
-// ── Convenience: Notify all project members ─────────────────────────────────
-
-/** Valid custom notification kind names */
-type NotificationKind =
+export type NotificationKind =
   | "$criticalIssue"
   | "$deadline"
   | "$statusChange"
@@ -190,7 +56,6 @@ type NotificationKind =
   | "$approvalRequest"
   | "$ballInCourt";
 
-/** Activity data union for all custom kinds */
 type AnyActivityData =
   | CriticalIssueData
   | DeadlineData
@@ -201,27 +66,99 @@ type AnyActivityData =
   | ApprovalRequestData
   | BallInCourtData;
 
-/**
- * Send a notification to all members of a project.
- * Caller is responsible for ensuring data matches the kind.
- */
+function toArray(target: UserTarget): string[] {
+  return Array.isArray(target) ? target : [target];
+}
+
+function describeKind(kind: NotificationKind): { title: string; body: string } {
+  switch (kind) {
+    case "$criticalIssue":
+      return { title: "Critical issue", body: "A critical issue needs attention." };
+    case "$deadline":
+      return { title: "Deadline approaching", body: "A tracked item is due soon." };
+    case "$statusChange":
+      return { title: "Status changed", body: "A tracked record changed status." };
+    case "$budgetAlert":
+      return { title: "Budget alert", body: "A budget threshold was triggered." };
+    case "$weeklyDigest":
+      return { title: "Weekly digest", body: "Your weekly project summary is ready." };
+    case "$assignment":
+      return { title: "Assignment", body: "You were assigned to a record." };
+    case "$approvalRequest":
+      return { title: "Approval requested", body: "A record requires your approval." };
+    case "$ballInCourt":
+      return { title: "Ball in court", body: "Ownership has shifted to your queue." };
+    default:
+      return { title: "Notification", body: "You have a new update." };
+  }
+}
+
+async function notifyUsers(
+  userId: UserTarget,
+  kind: NotificationKind,
+  data: AnyActivityData,
+) {
+  const serviceClient = createServiceClient();
+  const users = toArray(userId);
+  const descriptor = describeKind(kind);
+
+  const { error } = await serviceClient.from("collaboration_notifications").insert(
+    users.map((uid) => ({
+      user_id: uid,
+      project_id: data.projectId ?? null,
+      entity_type: data.entityType ?? null,
+      entity_id: data.entityId ?? null,
+      kind,
+      title: descriptor.title,
+      body: descriptor.body,
+      metadata: {
+        ...data,
+        eventKey: nanoid(),
+      },
+    })),
+  );
+
+  if (error) {
+    throw new Error(`Failed to create notifications (${kind}): ${error.message}`);
+  }
+}
+
+export async function notifyCriticalIssue(userId: UserTarget, data: CriticalIssueData) {
+  await notifyUsers(userId, "$criticalIssue", data);
+}
+
+export async function notifyDeadline(userId: UserTarget, data: DeadlineData) {
+  await notifyUsers(userId, "$deadline", data);
+}
+
+export async function notifyStatusChange(userId: UserTarget, data: StatusChangeData) {
+  await notifyUsers(userId, "$statusChange", data);
+}
+
+export async function notifyBudgetAlert(userId: UserTarget, data: BudgetAlertData) {
+  await notifyUsers(userId, "$budgetAlert", data);
+}
+
+export async function notifyWeeklyDigest(userId: UserTarget, data: WeeklyDigestData) {
+  await notifyUsers(userId, "$weeklyDigest", data);
+}
+
+export async function notifyAssignment(userId: UserTarget, data: AssignmentData) {
+  await notifyUsers(userId, "$assignment", data);
+}
+
+export async function notifyApprovalRequest(userId: UserTarget, data: ApprovalRequestData) {
+  await notifyUsers(userId, "$approvalRequest", data);
+}
+
+export async function notifyBallInCourt(userId: UserTarget, data: BallInCourtData) {
+  await notifyUsers(userId, "$ballInCourt", data);
+}
+
 export async function notifyProjectTeam(
   memberUserIds: string[],
   kind: NotificationKind,
-  data: AnyActivityData
+  data: AnyActivityData,
 ) {
-  await Promise.all(
-    memberUserIds.map((uid) =>
-      liveblocks.triggerInboxNotification({
-        userId: uid,
-        kind,
-        subjectId: nanoid(),
-        activityData: data,
-      })
-    )
-  );
+  await notifyUsers(memberUserIds, kind, data);
 }
-
-// ── Re-export the Liveblocks client for advanced use ────────────────────────
-
-export { liveblocks };

@@ -64,16 +64,33 @@ export default async function ProjectDirectCostsPage({
     ),
   );
 
-  const { data: costCodes } =
+  const { data: projectCostCodes } =
     budgetCodeIds.length > 0
+      ? await supabase
+          .from("project_cost_codes")
+          .select("id,cost_code_id")
+          .in("id", budgetCodeIds)
+      : { data: [] as Array<{ id: string; cost_code_id: string | null }> };
+
+  const costCodeIds = Array.from(
+    new Set(
+      (projectCostCodes || [])
+        .map((row) => row.cost_code_id)
+        .filter((value): value is string => Boolean(value)),
+    ),
+  );
+
+  const { data: costCodes } =
+    costCodeIds.length > 0
       ? await supabase
           .from("cost_codes")
           .select("id,title,division_title")
-          .in("id", budgetCodeIds)
+          .in("id", costCodeIds)
       : { data: [] as Array<{ id: string; title: string | null; division_title: string | null }> };
 
-  const costCodeMap = new Map(
-    (costCodes || []).map((row) => [row.id, row]),
+  const costCodeById = new Map((costCodes || []).map((row) => [row.id, row]));
+  const projectCostCodeMap = new Map(
+    (projectCostCodes || []).map((row) => [row.id, row.cost_code_id ? costCodeById.get(row.cost_code_id) : null]),
   );
 
   const costCodeDetails: CostCodeDetailRow[] = (directCosts || []).flatMap((row) => {
@@ -88,7 +105,7 @@ export default async function ProjectDirectCostsPage({
       }> | null) || [];
 
     return lineItems.map((lineItem) => {
-      const costCode = costCodeMap.get(lineItem.budget_code_id);
+      const costCode = projectCostCodeMap.get(lineItem.budget_code_id) ?? null;
       const amount =
         lineItem.line_total ??
         (lineItem.quantity ?? 0) * (lineItem.unit_cost ?? 0);

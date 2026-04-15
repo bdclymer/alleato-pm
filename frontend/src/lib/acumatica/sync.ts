@@ -114,6 +114,16 @@ export interface DirectCostSyncResult {
   errors: string[];
 }
 
+interface MappedDirectCostLineItem {
+  budget_code_id: string;
+  description: string | null;
+  quantity: number;
+  uom: string | null;
+  unit_cost: number;
+  line_total: number;
+  line_order: number;
+}
+
 function mapTransactionStatus(acuStatus: string): string {
   switch (acuStatus) {
     case "Released":
@@ -141,6 +151,16 @@ function toTransactionCostType(
   }
   // GL, AR, and all other modules default to Expense
   return "Expense";
+}
+
+function normalizeCostCode(value?: string): string | null {
+  if (!value) return null;
+  const trimmed = value.trim();
+  if (!trimmed || trimmed === "{}" || trimmed === "N/A" || trimmed === "<N/A>") return null;
+  if (trimmed.length === 6 && /^\d+$/.test(trimmed)) {
+    return `${trimmed.slice(0, 2)}-${trimmed.slice(2)}`;
+  }
+  return trimmed;
 }
 
 /**
@@ -224,9 +244,9 @@ export async function syncDirectCosts(
   // 4. Load existing direct costs for dedup
   const { data: existingCosts, error: fetchError } = await supabase
     .from("direct_costs")
-    .select("id, acumatica_ref_nbr")
+    .select("id, acumatica_ref_nbr, acumatica_document_key")
     .eq("project_id", projectId)
-    .not("acumatica_ref_nbr", "is", null);
+    .or("acumatica_ref_nbr.not.is.null,acumatica_document_key.not.is.null");
 
   if (fetchError) {
     result.errors.push(`Failed to load existing direct costs: ${fetchError.message}`);
@@ -234,8 +254,10 @@ export async function syncDirectCosts(
   }
 
   const byRefNbr = new Map<string, string>();
+  const byDocumentKey = new Map<string, string>();
   for (const c of existingCosts ?? []) {
     if (c.acumatica_ref_nbr) byRefNbr.set(c.acumatica_ref_nbr, c.id);
+    if (c.acumatica_document_key) byDocumentKey.set(c.acumatica_document_key, c.id);
   }
 
   // Build vendor lookup (acumatica_vendor_id → company.id)
@@ -250,17 +272,94 @@ export async function syncDirectCosts(
     if (v.acumatica_vendor_id) vendorByAcuId.set(v.acumatica_vendor_id, v.id);
   }
 
+  const { data: costCodes, error: costCodesError } = await supabase
+    .from("cost_codes")
+    .select("id");
+
+  if (costCodesError) {
+    result.errors.push(`Failed to load cost codes: ${costCodesError.message}`);
+    return result;
+  }
+
+  const validCostCodes = new Set((costCodes ?? []).map((row) => row.id));
+
+  const { data: existingProjectCostCodes, error: projectCostCodesError } = await supabase
+    .from("project_cost_codes")
+    .select("id, cost_code_id")
+    .eq("project_id", projectId);
+
+  if (projectCostCodesError) {
+    result.errors.push(`Failed to load project cost codes: ${projectCostCodesError.message}`);
+    return result;
+  }
+
+  const projectCostCodeByCode = new Map<string, string>();
+  for (const row of existingProjectCostCodes ?? []) {
+    if (row.cost_code_id) projectCostCodeByCode.set(row.cost_code_id, row.id);
+  }
+
   const now = new Date().toISOString();
+  const pendingLineItemsByCostId = new Map<string, MappedDirectCostLineItem[]>();
 
   // 5. Upsert each matched transaction as a direct_cost
   for (const { header, matchingDetails } of matched) {
     const refNbr = header.ReferenceNbr;
+    const documentKey = `ProjectTransaction|${refNbr}`;
+    const mappedLineItems: MappedDirectCostLineItem[] = [];
+
+    for (let index = 0; index < matchingDetails.length; index += 1) {
+      const detail = matchingDetails[index];
+      const normalizedCostCode = normalizeCostCode(detail.CostCode);
+      if (!normalizedCostCode) continue;
+      if (!validCostCodes.has(normalizedCostCode)) continue;
+
+      let projectCostCodeId = projectCostCodeByCode.get(normalizedCostCode);
+      if (!projectCostCodeId) {
+        const { data: insertedCostCode, error: insertProjectCostCodeError } = await supabase
+          .from("project_cost_codes")
+          .insert({
+            project_id: projectId,
+            cost_code_id: normalizedCostCode,
+            is_active: true,
+          })
+          .select("id")
+          .single();
+
+        if (insertProjectCostCodeError) {
+          result.errors.push(
+            `${refNbr}: failed to ensure project cost code ${normalizedCostCode} (${insertProjectCostCodeError.message})`,
+          );
+          continue;
+        }
+
+        projectCostCodeId = insertedCostCode.id;
+        projectCostCodeByCode.set(normalizedCostCode, projectCostCodeId);
+      }
+
+      const quantity = detail.Qty && detail.Qty > 0 ? detail.Qty : 1;
+      const amount = detail.Amount ?? 0;
+      const lineTotal = amount;
+      const unitCost = quantity > 0 ? lineTotal / quantity : lineTotal;
+      mappedLineItems.push({
+        budget_code_id: projectCostCodeId,
+        description: detail.Description ?? null,
+        quantity,
+        uom: detail.UOM ?? null,
+        unit_cost: unitCost,
+        line_total: lineTotal,
+        line_order: index + 1,
+      });
+    }
+
+    if (mappedLineItems.length === 0) {
+      result.errors.push(
+        `${refNbr}: no mappable cost-coded detail lines were found in ProjectTransaction details.`,
+      );
+      continue;
+    }
 
     // Sum amounts from the matching detail lines (only lines for our project)
-    const totalAmount = matchingDetails.reduce(
-      (sum, d) => sum + (d.Amount ?? 0),
-      0,
-    );
+    const totalAmount = mappedLineItems.reduce((sum, line) => sum + line.line_total, 0);
 
     // Use the earliest detail date, or fall back to header CreatedDateTime
     const earliestDate = matchingDetails
@@ -298,6 +397,7 @@ export async function syncDirectCosts(
       terms: null as string | null,
       vendor_id: vendorId,
       acumatica_ref_nbr: refNbr,
+      acumatica_document_key: documentKey,
       acumatica_doc_type: header.OriginalDocType ?? header.Module ?? null,
       acumatica_financial_period: finPeriod,
       acumatica_sync_at: now,
@@ -305,26 +405,60 @@ export async function syncDirectCosts(
     };
 
     try {
-      const existingId = byRefNbr.get(refNbr);
+      const existingId = byDocumentKey.get(documentKey) ?? byRefNbr.get(refNbr);
       if (existingId) {
-        const { error } = await supabase
+        const { error: updateError } = await supabase
           .from("direct_costs")
           .update({ ...fields, updated_by_user_id: userId })
           .eq("id", existingId);
-        if (error) result.errors.push(`${refNbr}: ${error.message}`);
-        else result.updated++;
+        if (updateError) {
+          result.errors.push(`${refNbr}: ${updateError.message}`);
+          continue;
+        }
+
+        pendingLineItemsByCostId.set(existingId, mappedLineItems);
+        result.updated++;
       } else {
-        const { error } = await supabase.from("direct_costs").insert({
+        const { data: insertedCost, error: insertError } = await supabase.from("direct_costs").insert({
           ...fields,
           project_id: projectId,
           created_by_user_id: userId,
           updated_by_user_id: userId,
-        });
-        if (error) result.errors.push(`${refNbr}: ${error.message}`);
-        else result.created++;
+        }).select("id").single();
+        if (insertError || !insertedCost) {
+          result.errors.push(`${refNbr}: ${insertError?.message ?? "Insert failed"}`);
+          continue;
+        }
+        pendingLineItemsByCostId.set(insertedCost.id, mappedLineItems);
+        result.created++;
       }
     } catch (err) {
       result.errors.push(`${refNbr}: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+
+  for (const [directCostId, lineItems] of pendingLineItemsByCostId.entries()) {
+    const { error: deleteLinesError } = await supabase
+      .from("direct_cost_line_items")
+      .delete()
+      .eq("direct_cost_id", directCostId);
+
+    if (deleteLinesError) {
+      result.errors.push(`${directCostId}: failed to clear line items (${deleteLinesError.message})`);
+      continue;
+    }
+
+    const linePayloads = lineItems.map((item) => ({
+      direct_cost_id: directCostId,
+      ...item,
+    }));
+
+    const { error: insertLinesError } = await supabase
+      .from("direct_cost_line_items")
+      .insert(linePayloads);
+
+    if (insertLinesError) {
+      result.errors.push(`${directCostId}: failed to insert line items (${insertLinesError.message})`);
     }
   }
 

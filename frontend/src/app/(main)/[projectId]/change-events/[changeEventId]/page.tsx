@@ -717,7 +717,11 @@ export default function ChangeEventDetailPage() {
           </TabsContent>
 
           <TabsContent value="comments">
-            <EntityRoom entityType="change-event" entityId={changeEventId}>
+            <EntityRoom
+              entityType="change-event"
+              entityId={changeEventId}
+              projectId={projectId}
+            >
               <EntityComments title="Comments" />
             </EntityRoom>
           </TabsContent>

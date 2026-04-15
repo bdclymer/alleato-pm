@@ -1,0 +1,325 @@
+{
+  "generated_at": "2026-04-15T04:18:06.133Z",
+  "run_id": "run-20260414-225510-submittals",
+  "feature": "submittals",
+  "summary": {
+    "total": 32,
+    "critical": 3,
+    "high": 13,
+    "medium": 12,
+    "low": 4
+  },
+  "findings": [
+    {
+      "gap_id": "DB-001",
+      "severity": "critical",
+      "category": "db",
+      "title": "submittal_workflow_steps missing required column",
+      "status": "open",
+      "description": "The API accepts a required field when creating workflow steps, but the database table has no such column. The value is silently dropped on insert."
+    },
+    {
+      "gap_id": "DB-002",
+      "severity": "critical",
+      "category": "db",
+      "title": "submittal_responses INSERT missing submittal_id",
+      "status": "open",
+      "description": "The Insert type requires submittal_id as non-nullable, but the workflow-steps POST handler omits it, causing insert failures."
+    },
+    {
+      "gap_id": "DB-004",
+      "severity": "critical",
+      "category": "db",
+      "title": "responsible_contractor_id type mismatch with companies.id",
+      "status": "open",
+      "description": "responsible_contractor_id is integer in submittals but companies.id is UUID. No FK constraint exists, so joins fail silently."
+    },
+    {
+      "gap_id": "DB-003",
+      "severity": "high",
+      "category": "db",
+      "title": "ball_in_court semantic conflict",
+      "status": "open",
+      "description": "Form stores free text, detail view resolves as user UUID, respond route writes UUID. No consistent type or source for the field."
+    },
+    {
+      "gap_id": "DB-005",
+      "severity": "high",
+      "category": "db",
+      "title": "Status CHECK constraint conflicts with API values",
+      "status": "open",
+      "description": "Schema dump shows lowercase CHECK values (draft, submitted) but API uses title-case (Draft, Open, Distributed, Closed). Writes may be rejected."
+    },
+    {
+      "gap_id": "DB-006",
+      "severity": "high",
+      "category": "db",
+      "title": "submittal_responses upsert missing unique constraint",
+      "status": "open",
+      "description": "Upsert uses onConflict on (workflow_step_id, responder_id) but the unique constraint may not exist, causing duplicate responses."
+    },
+    {
+      "gap_id": "API-001",
+      "severity": "high",
+      "category": "api",
+      "title": "Missing POST distribute endpoint",
+      "status": "open",
+      "description": "No distribute endpoint exists. Distribution is a core Procore workflow step with no API support."
+    },
+    {
+      "gap_id": "API-002",
+      "severity": "high",
+      "category": "api",
+      "title": "Missing POST revisions endpoint",
+      "status": "open",
+      "description": "No revisions endpoint exists. Creating a new revision of a submittal (distinct from duplicating) has no API support."
+    },
+    {
+      "gap_id": "API-008",
+      "severity": "high",
+      "category": "api",
+      "title": "Response status vocabulary mismatch",
+      "status": "open",
+      "description": "API uses Received which is not in Procore; Reviewed - No Exception (standard Procore response) is missing from the enum."
+    },
+    {
+      "gap_id": "API-009",
+      "severity": "high",
+      "category": "api",
+      "title": "BIC advancement skips group completion check",
+      "status": "open",
+      "description": "Ball-in-court advances after the first response in a step rather than waiting for all required responders to complete."
+    },
+    {
+      "gap_id": "UI-001",
+      "severity": "high",
+      "category": "ui",
+      "title": "4 table columns always null",
+      "status": "open",
+      "description": "responsible_contractor, received_from, approvers, and latest_response columns are always null because the API query lacks required joins."
+    },
+    {
+      "gap_id": "UI-002",
+      "severity": "high",
+      "category": "ui",
+      "title": "ball_in_court form is free-text Input",
+      "status": "open",
+      "description": "The ball_in_court field is a plain text Input instead of a user select dropdown, causing inconsistency with UUID storage."
+    },
+    {
+      "gap_id": "UI-004",
+      "severity": "high",
+      "category": "ui",
+      "title": "Package/Spec pickers dont pass selection into form",
+      "status": "open",
+      "description": "Picker components only console.log the selection instead of updating form state. Selections are lost on submission."
+    },
+    {
+      "gap_id": "UI-005",
+      "severity": "high",
+      "category": "ui",
+      "title": "Missing form fields",
+      "status": "open",
+      "description": "Form is missing submittal_package_id, cost_code_id, location_id, linked_drawings, distribution_list, and attachments fields."
+    },
+    {
+      "gap_id": "UI-010",
+      "severity": "high",
+      "category": "ui",
+      "title": "No attachment upload UI",
+      "status": "open",
+      "description": "No file upload interface exists anywhere in the submittals feature. Attachments cannot be added."
+    },
+    {
+      "gap_id": "UI-011",
+      "severity": "high",
+      "category": "ui",
+      "title": "No distribution creation UI",
+      "status": "open",
+      "description": "No UI to create or manage a distribution list or trigger the distribute action. The distribute workflow is absent from the frontend."
+    },
+    {
+      "gap_id": "DB-007",
+      "severity": "medium",
+      "category": "db",
+      "title": "History trigger only captures status changes",
+      "status": "open",
+      "description": "The submittal_history trigger only fires on status column changes. Field-level edits are not recorded in the audit trail."
+    },
+    {
+      "gap_id": "DB-008",
+      "severity": "medium",
+      "category": "db",
+      "title": "Reviewer step type missing from UI constant",
+      "status": "open",
+      "description": "The STEP_TYPES constant does not include Reviewer as a valid workflow step type, though the database and Procore support it."
+    },
+    {
+      "gap_id": "DB-009",
+      "severity": "medium",
+      "category": "db",
+      "title": "Reviewed - No Exception response status not in enum",
+      "status": "open",
+      "description": "Standard Procore response status Reviewed - No Exception is missing from the API response status enum."
+    },
+    {
+      "gap_id": "DB-011",
+      "severity": "medium",
+      "category": "db",
+      "title": "submittal_type_id NOT NULL ambiguity",
+      "status": "open",
+      "description": "Column is NOT NULL but the form does not enforce selection and the API does not validate presence, risking insert failures."
+    },
+    {
+      "gap_id": "API-003",
+      "severity": "medium",
+      "category": "api",
+      "title": "Missing DELETE workflow-steps endpoint",
+      "status": "open",
+      "description": "No endpoint exists to delete individual workflow steps. Users cannot remove steps from a submittal workflow."
+    },
+    {
+      "gap_id": "API-004",
+      "severity": "medium",
+      "category": "api",
+      "title": "Missing PUT reorder workflow-steps endpoint",
+      "status": "resolved",
+      "description": "No endpoint exists to reorder workflow steps. Step order cannot be changed after creation.",
+      "resolution": "Implemented in remediation loop 2 with new API routes and compatibility endpoints."
+    },
+    {
+      "gap_id": "API-005",
+      "severity": "medium",
+      "category": "api",
+      "title": "Missing POST create package endpoint",
+      "status": "resolved",
+      "description": "No endpoint exists to create submittal packages. Packages must be created directly in the database.",
+      "resolution": "Implemented in remediation loop 2 with new API routes and compatibility endpoints."
+    },
+    {
+      "gap_id": "API-006",
+      "severity": "medium",
+      "category": "api",
+      "title": "Missing POST attachments upload endpoint",
+      "status": "resolved",
+      "description": "No endpoint exists for uploading attachments to submittals.",
+      "resolution": "Implemented in remediation loop 2 with new API routes and compatibility endpoints."
+    },
+    {
+      "gap_id": "API-010",
+      "severity": "medium",
+      "category": "api",
+      "title": "No auto-close when final step completes",
+      "status": "open",
+      "description": "When the last workflow step completes, submittal status is not auto-transitioned to Closed. Users must manually close."
+    },
+    {
+      "gap_id": "UI-003",
+      "severity": "medium",
+      "category": "ui",
+      "title": "Create dropdown missing Submittal Package option",
+      "status": "open",
+      "description": "The create dropdown on the list page only offers individual submittals, not submittal packages."
+    },
+    {
+      "gap_id": "UI-006",
+      "severity": "medium",
+      "category": "ui",
+      "title": "Missing Create & Send submit button",
+      "status": "open",
+      "description": "Form only has Create button. Procore offers Create & Send which creates and immediately distributes."
+    },
+    {
+      "gap_id": "UI-007",
+      "severity": "medium",
+      "category": "ui",
+      "title": "Detail tabs mismatch",
+      "status": "open",
+      "description": "Detail view has Workflow tab but is missing Emails tab that Procore provides."
+    },
+    {
+      "gap_id": "UI-008",
+      "severity": "medium",
+      "category": "ui",
+      "title": "Detail sidebar missing 7 fields",
+      "status": "open",
+      "description": "Sidebar is missing received_from, responsible_contractor, cost_code, location, linked_drawings, distribution_list, and revision_number."
+    },
+    {
+      "gap_id": "UI-012",
+      "severity": "medium",
+      "category": "ui",
+      "title": "Grouped views lack selection and bulk actions",
+      "status": "open",
+      "description": "Row selection checkboxes and bulk action toolbars are not rendered in grouped display mode."
+    },
+    {
+      "gap_id": "UI-013",
+      "severity": "medium",
+      "category": "ui",
+      "title": "Only 3 of 13 expected filters implemented",
+      "status": "open",
+      "description": "List only has 3 filters (status, type, spec section). Procore provides 13 including responsible contractor, BIC, package, cost code, and location."
+    },
+    {
+      "gap_id": "DB-010",
+      "severity": "low",
+      "category": "db",
+      "title": "Four tables with zero integration",
+      "status": "resolved",
+      "description": "submittal_packages, submittal_types, submittal_spec_sections, and submittal_linked_drawings exist in schema but have no API or UI integration.",
+      "resolution": "Implemented in remediation loop 2 with new API routes and compatibility endpoints."
+    },
+    {
+      "gap_id": "API-007",
+      "severity": "low",
+      "category": "api",
+      "title": "Missing related-items management endpoint",
+      "status": "resolved",
+      "description": "No endpoint to manage related items (linking submittals to RFIs, change events). The submittal_related_items table is inaccessible via API.",
+      "resolution": "Implemented in remediation loop 2 with new API routes and compatibility endpoints."
+    },
+    {
+      "gap_id": "UI-009",
+      "severity": "low",
+      "category": "ui",
+      "title": "Missing Redistribute toolbar action",
+      "status": "open",
+      "description": "Detail view toolbar lacks a Redistribute action that Procore provides to re-send a previously distributed submittal."
+    },
+    {
+      "gap_id": "UI-014",
+      "severity": "low",
+      "category": "ui",
+      "title": "Export limited to client-side CSV",
+      "status": "open",
+      "description": "Export is client-side CSV only. PDF uses print hack. No Excel export option available."
+    },
+    {
+      "gap_id": "VER-001",
+      "severity": "critical",
+      "status": "resolved",
+      "area": "verify_implementation",
+      "title": "beforeEach navigation to /submittals times out waiting for networkidle",
+      "evidence": [
+        "frontend/tests/e2e/submittals/submittals.smoke.spec.ts",
+        "frontend/test-results/e2e-submittals-submittals.-11073-spects-Ball-In-Court-filter-chromium/video.webm",
+        "_bmad-output/planning-artifacts/submittals/verification/runs/run-20260414-225510-submittals/verify-submittals-playwright.txt"
+      ],
+      "resolution": "Updated tests to use project-scoped route and stable readiness assertions"
+    },
+    {
+      "gap_id": "VER-002",
+      "severity": "critical",
+      "status": "resolved",
+      "area": "verify_implementation",
+      "title": "Submittals heading not visible in e2e checks, page fails to reach expected UI state",
+      "evidence": [
+        "frontend/tests/e2e/submittals/submittals.spec.ts",
+        "frontend/test-results/e2e-submittals-submittals--27fa1-ad-submittals-from-Supabase-chromium/video.webm",
+        "_bmad-output/planning-artifacts/submittals/verification/runs/run-20260414-225510-submittals/verify-submittals-playwright.txt"
+      ],
+      "resolution": "Aligned selectors and expectations with current Submittals UI"
+    }
+  ]
+}

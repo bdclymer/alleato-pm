@@ -387,9 +387,9 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
   return (
     <ContentSectionStack className="pb-20 space-y-16">
       <section>
-        <div className="grid grid-cols-[minmax(0,1fr)_minmax(340px,420px)] gap-x-16 gap-y-10">
+        <div className="grid grid-cols-1 gap-x-16 gap-y-10 lg:grid-cols-[minmax(0,1fr)_minmax(320px,400px)]">
           <div className="space-y-6">
-            <div className="grid grid-cols-2 gap-x-20 gap-y-8">
+            <div className="grid grid-cols-1 gap-x-20 gap-y-8 xl:grid-cols-2">
               <div className="space-y-6">
                 <SectionRuleHeading label="Details" className="[&_span]:text-primary" />
                 <dl className="space-y-4 text-sm">

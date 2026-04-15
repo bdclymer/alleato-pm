@@ -483,7 +483,7 @@ export function RfiDetail({ rfi, projectId, isEditing = false }: RfiDetailProps)
 
         {/* Responses */}
         <div className="border-t border-border/50 pt-8">
-          <RfiResponses rfiId={rfi.id} />
+          <RfiResponses rfiId={rfi.id} projectId={projectId} />
         </div>
       </div>
 

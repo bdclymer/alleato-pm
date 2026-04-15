@@ -42,6 +42,25 @@ This two-phase approach ensures the crawl captures a complete picture before com
 
 ---
 
+## Reliability Contract (Mandatory)
+
+Use the same non-negotiable reliability model as `procore-complete`:
+
+1. **Fail fast preflight before crawl/compare**
+   - validate `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and one of `AI_GATEWAY_API_KEY` or `OPENAI_API_KEY`
+   - run: `node scripts/procore-docs-query.js "procore <tool-name> statuses"`
+   - if preflight fails, stop and mark audit blocked/failed (do not continue on assumptions)
+2. **RAG-first expected behavior**
+   - query `procore-docs-rag` Tier 1 before parity conclusions
+   - escalate to support article fetch when score is weak (<60%) or behavior is ambiguous
+3. **Evidence gate**
+   - no gap may be marked confirmed without authoritative source URL/path
+   - ambiguous comparisons must be marked `needs-verification` or `blocked`
+4. **Recurrence-prevention gate for remediation tasks**
+   - every proposed fix task must include: root cause, detection gap, prevention step, fail-loudly rule, recurrence barrier
+
+---
+
 ## Phase 1: Crawl the Procore Tool
 
 ### Step 1.1 — Identify the tool and find/generate a crawler

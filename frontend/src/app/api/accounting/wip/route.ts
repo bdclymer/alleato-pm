@@ -1,0 +1,363 @@
+import { NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { getApiRouteUser } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
+
+type BudgetLine = {
+  project_code: string;
+  record_type: string | null;
+  original_budgeted_amount: number | null;
+  revised_budgeted_amount: number | null;
+  actual_amount: number | null;
+  revised_committed_amount: number | null;
+  committed_open_amount: number | null;
+  cost_to_complete: number | null;
+  cost_at_completion: number | null;
+  variance_amount: number | null;
+  acumatica_sync_at: string | null;
+};
+
+type ArInvoiceRow = {
+  project: string | null;
+  type: string | null;
+  status: string | null;
+  amount: number | null;
+  acumatica_sync_at: string | null;
+};
+
+type ProjectMetaRow = {
+  project_id: string | null;
+  description: string | null;
+  status: string | null;
+  customer: string | null;
+  income: number | null;
+  last_modified_at: string | null;
+  acumatica_sync_at: string | null;
+};
+
+type WipRow = {
+  projectCode: string;
+  projectDescription: string | null;
+  customer: string | null;
+  projectStatus: string | null;
+  contractValue: number;
+  revisedCostBudget: number;
+  costsToDate: number;
+  committedCosts: number;
+  openCommitments: number;
+  costToComplete: number;
+  estimatedFinalCost: number;
+  costVariance: number;
+  percentComplete: number;
+  earnedRevenue: number;
+  billedToDate: number;
+  overUnderBilling: number;
+  forecastGrossProfit: number;
+  forecastGrossMarginPct: number;
+  wipPosition: "overbilled" | "underbilled" | "balanced";
+  budgetLineCount: number;
+  latestSyncAt: string | null;
+};
+
+type WipSummary = {
+  projectCount: number;
+  contractValue: number;
+  revisedCostBudget: number;
+  costsToDate: number;
+  estimatedFinalCost: number;
+  earnedRevenue: number;
+  billedToDate: number;
+  overUnderBilling: number;
+  forecastGrossProfit: number;
+};
+
+function toNumber(value: number | null | undefined): number {
+  return Number(value ?? 0);
+}
+
+function roundMoney(value: number): number {
+  return Math.round(value * 100) / 100;
+}
+
+function asIsoDate(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return parsed.toISOString();
+}
+
+function getMaxDate(values: Array<string | null | undefined>): string | null {
+  let maxTs = 0;
+  for (const value of values) {
+    const parsed = asIsoDate(value);
+    if (!parsed) continue;
+    const ts = new Date(parsed).getTime();
+    if (ts > maxTs) maxTs = ts;
+  }
+  return maxTs ? new Date(maxTs).toISOString() : null;
+}
+
+function isClosedInvoiceStatus(status: string | null): boolean {
+  return status === "Voided";
+}
+
+function getInvoiceSignedAmount(invoice: ArInvoiceRow): number {
+  const amount = toNumber(invoice.amount);
+  if (invoice.type === "Credit Memo") return -amount;
+  if (invoice.type === "Debit Memo") return amount;
+  return amount;
+}
+
+function normalizeRecordType(type: string | null): "income" | "expense" | "other" {
+  const normalized = String(type ?? "").toLowerCase();
+  if (normalized.includes("income")) return "income";
+  if (normalized.includes("expense")) return "expense";
+  return "other";
+}
+
+export const GET = withApiGuardrails("/api/accounting/wip#GET", async () => {
+  const user = await getApiRouteUser();
+  if (!user) {
+    throw new GuardrailError({
+      code: "AUTH_EXPIRED",
+      where: "/api/accounting/wip#GET",
+      message: "Unauthorized accounting WIP request.",
+      status: 401,
+      severity: "medium",
+    });
+  }
+
+  const supabase = createServiceClient();
+
+  const [budgetResult, invoicesResult, projectsResult] = await Promise.all([
+    supabase
+      .from("acumatica_project_budgets")
+      .select(
+        "project_code, record_type, original_budgeted_amount, revised_budgeted_amount, actual_amount, revised_committed_amount, committed_open_amount, cost_to_complete, cost_at_completion, variance_amount, acumatica_sync_at",
+      )
+      .not("project_code", "is", null),
+    supabase
+      .from("acumatica_ar_invoices")
+      .select("project, type, status, amount, acumatica_sync_at")
+      .not("project", "is", null),
+    supabase
+      .from("acumatica_projects")
+      .select("project_id, description, status, customer, income, last_modified_at, acumatica_sync_at"),
+  ]);
+
+  if (budgetResult.error) {
+    throw new GuardrailError({
+      code: "INTERNAL_ERROR",
+      where: "/api/accounting/wip#GET",
+      message: "Failed to load Acumatica project budgets for WIP reporting.",
+      details: { reason: budgetResult.error.message },
+      cause: budgetResult.error,
+    });
+  }
+
+  if (invoicesResult.error) {
+    throw new GuardrailError({
+      code: "INTERNAL_ERROR",
+      where: "/api/accounting/wip#GET",
+      message: "Failed to load AR invoices required for WIP billing calculations.",
+      details: { reason: invoicesResult.error.message },
+      cause: invoicesResult.error,
+    });
+  }
+
+  if (projectsResult.error) {
+    throw new GuardrailError({
+      code: "INTERNAL_ERROR",
+      where: "/api/accounting/wip#GET",
+      message: "Failed to load Acumatica project metadata for WIP reporting.",
+      details: { reason: projectsResult.error.message },
+      cause: projectsResult.error,
+    });
+  }
+
+  const projectMetaByCode = new Map<string, ProjectMetaRow>();
+  for (const project of (projectsResult.data ?? []) as ProjectMetaRow[]) {
+    if (!project.project_id) continue;
+    projectMetaByCode.set(project.project_id, project);
+  }
+
+  const billedByProject = new Map<string, { billedToDate: number; latestSyncAt: string | null }>();
+  for (const invoice of (invoicesResult.data ?? []) as ArInvoiceRow[]) {
+    if (!invoice.project) continue;
+    if (isClosedInvoiceStatus(invoice.status)) continue;
+    const signedAmount = getInvoiceSignedAmount(invoice);
+    const existing = billedByProject.get(invoice.project) ?? {
+      billedToDate: 0,
+      latestSyncAt: null,
+    };
+    existing.billedToDate += signedAmount;
+    existing.latestSyncAt = getMaxDate([existing.latestSyncAt, invoice.acumatica_sync_at]);
+    billedByProject.set(invoice.project, existing);
+  }
+
+  type Aggregate = {
+    projectCode: string;
+    contractValueFromBudget: number;
+    revisedCostBudget: number;
+    costsToDate: number;
+    committedCosts: number;
+    openCommitments: number;
+    costToComplete: number;
+    estimatedFinalCost: number;
+    explicitVariance: number;
+    budgetLineCount: number;
+    latestSyncAt: string | null;
+  };
+
+  const aggregateByProject = new Map<string, Aggregate>();
+
+  for (const line of (budgetResult.data ?? []) as BudgetLine[]) {
+    const projectCode = line.project_code;
+    const existing = aggregateByProject.get(projectCode) ?? {
+      projectCode,
+      contractValueFromBudget: 0,
+      revisedCostBudget: 0,
+      costsToDate: 0,
+      committedCosts: 0,
+      openCommitments: 0,
+      costToComplete: 0,
+      estimatedFinalCost: 0,
+      explicitVariance: 0,
+      budgetLineCount: 0,
+      latestSyncAt: null,
+    };
+
+    const recordType = normalizeRecordType(line.record_type);
+    const revisedBudget = toNumber(line.revised_budgeted_amount);
+    const originalBudget = toNumber(line.original_budgeted_amount);
+    const budgetValue = revisedBudget !== 0 ? revisedBudget : originalBudget;
+    const actualAmount = toNumber(line.actual_amount);
+    const revisedCommitted = toNumber(line.revised_committed_amount);
+    const openCommitted = toNumber(line.committed_open_amount);
+    const costToComplete = toNumber(line.cost_to_complete);
+    const costAtCompletion = toNumber(line.cost_at_completion);
+    const variance = toNumber(line.variance_amount);
+
+    if (recordType === "income") {
+      existing.contractValueFromBudget += budgetValue;
+    } else {
+      existing.revisedCostBudget += budgetValue;
+      existing.costsToDate += actualAmount;
+      existing.committedCosts += revisedCommitted;
+      existing.openCommitments += openCommitted;
+      existing.costToComplete += costToComplete;
+      existing.estimatedFinalCost += costAtCompletion;
+      existing.explicitVariance += variance;
+    }
+
+    existing.budgetLineCount += 1;
+    existing.latestSyncAt = getMaxDate([existing.latestSyncAt, line.acumatica_sync_at]);
+    aggregateByProject.set(projectCode, existing);
+  }
+
+  const rows: WipRow[] = [];
+  const summary: WipSummary = {
+    projectCount: 0,
+    contractValue: 0,
+    revisedCostBudget: 0,
+    costsToDate: 0,
+    estimatedFinalCost: 0,
+    earnedRevenue: 0,
+    billedToDate: 0,
+    overUnderBilling: 0,
+    forecastGrossProfit: 0,
+  };
+
+  for (const aggregate of aggregateByProject.values()) {
+    const projectMeta = projectMetaByCode.get(aggregate.projectCode);
+    const invoiceAgg = billedByProject.get(aggregate.projectCode);
+
+    const contractValue = aggregate.contractValueFromBudget > 0
+      ? aggregate.contractValueFromBudget
+      : toNumber(projectMeta?.income);
+    const estimatedFinalCost = aggregate.estimatedFinalCost > 0
+      ? aggregate.estimatedFinalCost
+      : aggregate.costsToDate + aggregate.costToComplete;
+    const percentCompleteRaw = estimatedFinalCost > 0
+      ? aggregate.costsToDate / estimatedFinalCost
+      : 0;
+    const percentComplete = Math.min(Math.max(percentCompleteRaw, 0), 1);
+    const earnedRevenue = contractValue * percentComplete;
+    const billedToDate = invoiceAgg?.billedToDate ?? 0;
+    const overUnderBilling = billedToDate - earnedRevenue;
+    const forecastGrossProfit = contractValue - estimatedFinalCost;
+    const forecastGrossMarginPct = contractValue !== 0
+      ? (forecastGrossProfit / contractValue) * 100
+      : 0;
+    const costVariance = aggregate.explicitVariance !== 0
+      ? aggregate.explicitVariance
+      : aggregate.revisedCostBudget - estimatedFinalCost;
+
+    const wipPosition: WipRow["wipPosition"] =
+      overUnderBilling > 0.01
+        ? "overbilled"
+        : overUnderBilling < -0.01
+          ? "underbilled"
+          : "balanced";
+
+    const row: WipRow = {
+      projectCode: aggregate.projectCode,
+      projectDescription: projectMeta?.description ?? null,
+      customer: projectMeta?.customer ?? null,
+      projectStatus: projectMeta?.status ?? null,
+      contractValue: roundMoney(contractValue),
+      revisedCostBudget: roundMoney(aggregate.revisedCostBudget),
+      costsToDate: roundMoney(aggregate.costsToDate),
+      committedCosts: roundMoney(aggregate.committedCosts),
+      openCommitments: roundMoney(aggregate.openCommitments),
+      costToComplete: roundMoney(aggregate.costToComplete),
+      estimatedFinalCost: roundMoney(estimatedFinalCost),
+      costVariance: roundMoney(costVariance),
+      percentComplete: roundMoney(percentComplete),
+      earnedRevenue: roundMoney(earnedRevenue),
+      billedToDate: roundMoney(billedToDate),
+      overUnderBilling: roundMoney(overUnderBilling),
+      forecastGrossProfit: roundMoney(forecastGrossProfit),
+      forecastGrossMarginPct: roundMoney(forecastGrossMarginPct),
+      wipPosition,
+      budgetLineCount: aggregate.budgetLineCount,
+      latestSyncAt: getMaxDate([
+        aggregate.latestSyncAt,
+        projectMeta?.acumatica_sync_at,
+        projectMeta?.last_modified_at,
+        invoiceAgg?.latestSyncAt,
+      ]),
+    };
+
+    rows.push(row);
+
+    summary.projectCount += 1;
+    summary.contractValue += row.contractValue;
+    summary.revisedCostBudget += row.revisedCostBudget;
+    summary.costsToDate += row.costsToDate;
+    summary.estimatedFinalCost += row.estimatedFinalCost;
+    summary.earnedRevenue += row.earnedRevenue;
+    summary.billedToDate += row.billedToDate;
+    summary.overUnderBilling += row.overUnderBilling;
+    summary.forecastGrossProfit += row.forecastGrossProfit;
+  }
+
+  rows.sort((a, b) => b.contractValue - a.contractValue);
+
+  return NextResponse.json({
+    rows,
+    summary: {
+      projectCount: summary.projectCount,
+      contractValue: roundMoney(summary.contractValue),
+      revisedCostBudget: roundMoney(summary.revisedCostBudget),
+      costsToDate: roundMoney(summary.costsToDate),
+      estimatedFinalCost: roundMoney(summary.estimatedFinalCost),
+      earnedRevenue: roundMoney(summary.earnedRevenue),
+      billedToDate: roundMoney(summary.billedToDate),
+      overUnderBilling: roundMoney(summary.overUnderBilling),
+      forecastGrossProfit: roundMoney(summary.forecastGrossProfit),
+    },
+    generatedAt: new Date().toISOString(),
+  });
+});

@@ -5,6 +5,7 @@ import React, {
   useEffect,
   useCallback,
   useRef,
+  useMemo,
 } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import {
@@ -22,6 +23,7 @@ import {
   Grid3X3,
   MessageSquare,
   Pencil,
+  Highlighter,
   Square,
   ArrowUpRight,
   Type,
@@ -29,9 +31,12 @@ import {
   Undo2,
   Trash2,
   MousePointer2,
+  Check,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
   Tooltip,
@@ -49,13 +54,13 @@ pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
-type AnnotationTool = "select" | "pen" | "rectangle" | "arrow" | "text" | "eraser" | "comment" | "link";
+type AnnotationTool = "select" | "pen" | "highlighter" | "rectangle" | "arrow" | "text" | "eraser" | "comment" | "link";
 
 interface Point { x: number; y: number }
 
 interface Annotation {
   id: string;
-  type: "pen" | "rectangle" | "arrow" | "text";
+  type: "pen" | "highlighter" | "rectangle" | "arrow" | "text";
   page: number;
   color: string;
   strokeWidth: number;
@@ -180,7 +185,10 @@ function renderAnnotations(
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
 
-    if (ann.type === "pen" && ann.points && ann.points.length > 1) {
+    if ((ann.type === "pen" || ann.type === "highlighter") && ann.points && ann.points.length > 1) {
+      if (ann.type === "highlighter") {
+        ctx.globalAlpha = 0.28;
+      }
       ctx.beginPath();
       ctx.moveTo(ann.points[0].x, ann.points[0].y);
       for (let i = 1; i < ann.points.length; i++) {
@@ -199,8 +207,19 @@ function renderAnnotations(
     } else if (ann.type === "arrow" && ann.start && ann.end) {
       drawArrow(ctx, ann.start, ann.end);
     } else if (ann.type === "text" && ann.position && ann.text) {
-      ctx.font = `${ann.strokeWidth * 6 + 10}px sans-serif`;
-      ctx.fillText(ann.text, ann.position.x, ann.position.y);
+      const fontSize = ann.strokeWidth * 6 + 10;
+      const lineHeight = Math.round(fontSize * 1.35);
+      const lines = ann.text.split("\n");
+      ctx.font = `${fontSize}px sans-serif`;
+      ctx.textBaseline = "top";
+      // Add a soft contrast stroke so text stays legible on light/dark drawings.
+      ctx.lineWidth = Math.max(1, Math.round(fontSize * 0.12));
+      ctx.strokeStyle = "rgba(0, 0, 0, 0.35)";
+      lines.forEach((line, index) => {
+        const y = ann.position!.y + index * lineHeight;
+        ctx.strokeText(line, ann.position!.x, y);
+        ctx.fillText(line, ann.position!.x, y);
+      });
     }
     ctx.restore();
   }
@@ -240,7 +259,6 @@ export function DrawingViewer({
   const [fitMode, setFitMode] = useState<"width" | "page" | "custom">("page");
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [containerWidth, setContainerWidth] = useState(800);
 
   // ── annotation state ──
   const [activeTool, setActiveTool] = useState<AnnotationTool>("select");
@@ -249,29 +267,110 @@ export function DrawingViewer({
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const [inProgress, setInProgress] = useState<Annotation | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
-  const [textInput, setTextInput] = useState<{ pos: Point; value: string } | null>(null);
+  const [textInput, setTextInput] = useState<{
+    pos: Point;
+    value: string;
+    page: number;
+    annotationId?: string;
+  } | null>(null);
+  const [selectedAnnotationId, setSelectedAnnotationId] = useState<string | null>(null);
+  const [draggingAnnotationId, setDraggingAnnotationId] = useState<string | null>(null);
+  const [dragOffset, setDragOffset] = useState<Point | null>(null);
 
   // ── refs ──
   const containerRef = useRef<HTMLDivElement>(null);
   const annotationCanvasRef = useRef<HTMLCanvasElement>(null);
   const pdfPageRef = useRef<HTMLDivElement>(null);
-  const textInputRef = useRef<HTMLInputElement>(null);
+  const textInputRef = useRef<HTMLTextAreaElement>(null);
+  const originalPageSizeRef = useRef<{ width: number; height: number } | null>(null);
+  const resizeRafRef = useRef<number | null>(null);
+  const pageRenderStartRef = useRef<number | null>(null);
+  const consecutiveSlowRenderCountRef = useRef(0);
   const [pageSize, setPageSize] = useState({ width: 0, height: 0 });
   const normalizedRotation = normalizeRotation(rotation);
+  const slowRenderThresholdMs = 450;
+  const effectiveDevicePixelRatio = useMemo(() => {
+    if (typeof window === "undefined") return 1;
+    return Math.min(window.devicePixelRatio || 1, 1.5);
+  }, []);
   const isQuarterTurn = normalizedRotation === 90 || normalizedRotation === 270;
   const stageWidth = isQuarterTurn ? pageSize.height : pageSize.width;
   const stageHeight = isQuarterTurn ? pageSize.width : pageSize.height;
 
-  // ── container width ──
+  const getTextFontSize = useCallback((stroke: number) => stroke * 6 + 10, []);
+
+  const findTextAnnotationAtPoint = useCallback((pt: Point): Annotation | null => {
+    const canvas = annotationCanvasRef.current;
+    if (!canvas) return null;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+
+    const pageText = annotations
+      .filter((ann) => ann.page === pageNumber && ann.type === "text" && ann.position && ann.text)
+      .slice()
+      .reverse();
+
+    for (const ann of pageText) {
+      const fontSize = getTextFontSize(ann.strokeWidth);
+      const lineHeight = Math.round(fontSize * 1.35);
+      const lines = (ann.text || "").split("\n");
+      ctx.font = `${fontSize}px sans-serif`;
+      const maxLineWidth = lines.reduce((max, line) => Math.max(max, ctx.measureText(line).width), 0);
+      const x = ann.position!.x;
+      const y = ann.position!.y;
+      const padX = 6;
+      const padY = 4;
+      const width = maxLineWidth + padX * 2;
+      const height = lineHeight * lines.length + padY * 2;
+
+      if (pt.x >= x - padX && pt.x <= x + width && pt.y >= y - padY && pt.y <= y + height) {
+        return ann;
+      }
+    }
+    return null;
+  }, [annotations, getTextFontSize, pageNumber]);
+
+  const getFitScale = useCallback(
+    (pageWidth: number, pageHeight: number) => {
+      const containerWidth = containerRef.current?.clientWidth ?? 800;
+      const containerHeight = containerRef.current?.clientHeight ?? window.innerHeight;
+      const availableHeight = Math.max(containerHeight - 32, 200);
+      if (fitMode === "width") {
+        return Math.min(containerWidth / pageWidth, 5);
+      }
+      return Math.min(containerWidth / pageWidth, availableHeight / pageHeight, 5);
+    },
+    [fitMode]
+  );
+
+  // ── container resize (throttled) ──
   useEffect(() => {
     const update = () => {
-      if (containerRef.current) setContainerWidth(containerRef.current.clientWidth);
+      if (fitMode === "custom") return;
+      const original = originalPageSizeRef.current;
+      if (!original) return;
+      const nextScale = getFitScale(original.width, original.height);
+      setScale((prev) => (Math.abs(nextScale - prev) > 0.01 ? nextScale : prev));
     };
+
+    const scheduleUpdate = () => {
+      if (resizeRafRef.current !== null) return;
+      resizeRafRef.current = window.requestAnimationFrame(() => {
+        resizeRafRef.current = null;
+        update();
+      });
+    };
+
     update();
-    const ro = new ResizeObserver(update);
+    const ro = new ResizeObserver(scheduleUpdate);
     if (containerRef.current) ro.observe(containerRef.current);
-    return () => ro.disconnect();
-  }, []);
+    return () => {
+      ro.disconnect();
+      if (resizeRafRef.current !== null) {
+        window.cancelAnimationFrame(resizeRafRef.current);
+      }
+    };
+  }, [fitMode, getFitScale]);
 
   // ── Trackpad pinch-to-zoom & scroll-wheel zoom ──
   useEffect(() => {
@@ -336,6 +435,37 @@ export function DrawingViewer({
 
   // ── re-render annotations on canvas whenever state changes ──
   useEffect(() => {
+    if (typeof performance === "undefined") return;
+    pageRenderStartRef.current = performance.now();
+  }, [pageNumber, scale, normalizedRotation]);
+
+  const handlePageRenderSuccess = useCallback(() => {
+    if (process.env.NODE_ENV === "production") return;
+    if (typeof performance === "undefined") return;
+    const start = pageRenderStartRef.current;
+    if (start === null) return;
+    const durationMs = performance.now() - start;
+    if (durationMs > slowRenderThresholdMs) {
+      consecutiveSlowRenderCountRef.current += 1;
+      console.warn("[DrawingViewer] Slow PDF render detected", {
+        durationMs: Math.round(durationMs),
+        thresholdMs: slowRenderThresholdMs,
+        pageNumber,
+        scale: Number(scale.toFixed(2)),
+        rotation: normalizedRotation,
+        fitMode,
+        consecutiveSlowRenders: consecutiveSlowRenderCountRef.current,
+      });
+      if (consecutiveSlowRenderCountRef.current >= 3) {
+        console.error("[DrawingViewer] Multiple slow renders in a row. Consider reducing zoom or panel resize churn.");
+      }
+    } else {
+      consecutiveSlowRenderCountRef.current = 0;
+    }
+  }, [fitMode, normalizedRotation, pageNumber, scale, slowRenderThresholdMs]);
+
+  // ── current page annotations ──
+  useEffect(() => {
     const canvas = annotationCanvasRef.current;
     if (!canvas) return;
     renderAnnotations(canvas, annotations, pageAnnotations, visibleInProgress);
@@ -372,6 +502,10 @@ export function DrawingViewer({
 
   const onPageLoadSuccess = useCallback(
     (page: any) => {
+      originalPageSizeRef.current = {
+        width: page.originalWidth,
+        height: page.originalHeight,
+      };
       const w = page.originalWidth * scale;
       const h = page.originalHeight * scale;
       setPageSize({ width: w, height: h });
@@ -382,15 +516,13 @@ export function DrawingViewer({
         canvas.height = h;
       }
       if (fitMode !== "custom") {
-        const containerH = window.innerHeight - 200;
-        const newScale =
-          fitMode === "width"
-            ? Math.min(containerWidth / page.originalWidth, 5)
-            : Math.min(containerWidth / page.originalWidth, containerH / page.originalHeight, 5);
-        if (Math.abs(newScale - scale) > 0.01) setScale(newScale);
+        const newScale = getFitScale(page.originalWidth, page.originalHeight);
+        if (Math.abs(newScale - scale) > 0.01) {
+          setScale(newScale);
+        }
       }
     },
-    [containerWidth, fitMode, scale]
+    [fitMode, getFitScale, scale]
   );
 
   // ── zoom helpers (smooth 20% steps) ──
@@ -417,6 +549,7 @@ export function DrawingViewer({
     onRotationChange?.(next);
   };
   const resetView = () => {
+    const containerWidth = containerRef.current?.clientWidth ?? 800;
     const s = containerWidth / 800;
     setScale(s);
     setRotation(0);
@@ -457,10 +590,24 @@ export function DrawingViewer({
 
   // ── annotation: canvas mouse handlers ──
   const handleCanvasMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (resolvedTool === "select") return;
     const canvas = annotationCanvasRef.current;
     if (!canvas) return;
     const pt = getCanvasPoint(e, canvas);
+
+    if (resolvedTool === "select") {
+      const textAnn = findTextAnnotationAtPoint(pt);
+      if (textAnn?.position) {
+        setSelectedAnnotationId(textAnn.id);
+        setDraggingAnnotationId(textAnn.id);
+        setDragOffset({
+          x: pt.x - textAnn.position.x,
+          y: pt.y - textAnn.position.y,
+        });
+      } else {
+        setSelectedAnnotationId(null);
+      }
+      return;
+    }
 
     if (resolvedTool === "comment" || resolvedTool === "link") {
       const xPct = (pt.x / canvas.width) * 100;
@@ -470,7 +617,19 @@ export function DrawingViewer({
     }
 
     if (resolvedTool === "text") {
-      setTextInput({ pos: pt, value: "" });
+      const textAnn = findTextAnnotationAtPoint(pt);
+      if (textAnn?.position) {
+        setTextInput({
+          pos: textAnn.position,
+          value: textAnn.text || "",
+          page: textAnn.page,
+          annotationId: textAnn.id,
+        });
+        setSelectedAnnotationId(textAnn.id);
+        return;
+      }
+      setSelectedAnnotationId(null);
+      setTextInput({ pos: pt, value: "", page: pageNumber });
       return;
     }
 
@@ -481,13 +640,13 @@ export function DrawingViewer({
     }
 
     setIsDrawing(true);
-    if (resolvedTool === "pen") {
+    if (resolvedTool === "pen" || resolvedTool === "highlighter") {
       setInProgress({
         id: uid(),
-        type: "pen",
+        type: resolvedTool,
         page: pageNumber,
         color: resolvedColor,
-        strokeWidth: resolvedStrokeWidth,
+        strokeWidth: resolvedTool === "highlighter" ? Math.max(resolvedStrokeWidth * 4, 10) : resolvedStrokeWidth,
         points: [pt],
       });
     } else {
@@ -504,10 +663,29 @@ export function DrawingViewer({
   };
 
   const handleCanvasMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!isDrawing) return;
     const canvas = annotationCanvasRef.current;
     if (!canvas) return;
     const pt = getCanvasPoint(e, canvas);
+
+    if (draggingAnnotationId && resolvedTool === "select") {
+      setAnnotations((prev) =>
+        prev.map((ann) => {
+          if (ann.id !== draggingAnnotationId || ann.type !== "text" || !ann.position || !dragOffset) {
+            return ann;
+          }
+          return {
+            ...ann,
+            position: {
+              x: pt.x - dragOffset.x,
+              y: pt.y - dragOffset.y,
+            },
+          };
+        })
+      );
+      return;
+    }
+
+    if (!isDrawing) return;
 
     if (resolvedTool === "eraser") {
       eraseAtPoint(pt);
@@ -515,7 +693,7 @@ export function DrawingViewer({
     }
 
     if (!inProgress) return;
-    if (inProgress.type === "pen") {
+    if (inProgress.type === "pen" || inProgress.type === "highlighter") {
       setInProgress((prev) =>
         prev ? { ...prev, points: [...(prev.points ?? []), pt] } : prev
       );
@@ -525,6 +703,11 @@ export function DrawingViewer({
   };
 
   const handleCanvasMouseUp = () => {
+    if (draggingAnnotationId) {
+      setDraggingAnnotationId(null);
+      setDragOffset(null);
+      return;
+    }
     if (!isDrawing) return;
     setIsDrawing(false);
     if (resolvedTool === "eraser") return;
@@ -535,21 +718,38 @@ export function DrawingViewer({
 
   const commitText = () => {
     if (!textInput?.value.trim()) {
+      setSelectedAnnotationId(null);
       setTextInput(null);
       return;
     }
-    setAnnotations((prev) => [
-      ...prev,
-      {
-        id: uid(),
-        type: "text",
-        page: pageNumber,
-        color: resolvedColor,
-        strokeWidth: resolvedStrokeWidth,
-        text: textInput.value,
-        position: textInput.pos,
-      },
-    ]);
+    setAnnotations((prev) => {
+      if (textInput.annotationId) {
+        return prev.map((ann) =>
+          ann.id === textInput.annotationId
+            ? {
+                ...ann,
+                color: resolvedColor,
+                strokeWidth: Math.max(resolvedStrokeWidth, 2),
+                text: textInput.value.trim(),
+              }
+            : ann
+        );
+      }
+
+      return [
+        ...prev,
+        {
+          id: uid(),
+          type: "text",
+          page: textInput.page,
+          color: resolvedColor,
+          strokeWidth: Math.max(resolvedStrokeWidth, 2),
+          text: textInput.value.trim(),
+          position: textInput.pos,
+        },
+      ];
+    });
+    setSelectedAnnotationId(textInput.annotationId ?? null);
     setTextInput(null);
   };
 
@@ -576,13 +776,17 @@ export function DrawingViewer({
   // ── canvas cursor ──
   const canvasCursor =
     resolvedTool === "select"
-      ? "default"
+      ? draggingAnnotationId
+        ? "grabbing"
+        : selectedAnnotationId
+          ? "grab"
+          : "default"
       : resolvedTool === "comment" || resolvedTool === "link"
       ? "crosshair"
       : resolvedTool === "eraser"
       ? "cell"
       : resolvedTool === "text"
-      ? "text"
+      ? textInput ? "default" : "text"
       : "crosshair";
 
   if (loadError) {
@@ -724,6 +928,7 @@ export function DrawingViewer({
               [
                 { tool: "select" as AnnotationTool, icon: <MousePointer2 className="h-4 w-4" />, label: "Select" },
                 { tool: "pen" as AnnotationTool, icon: <Pencil className="h-4 w-4" />, label: "Pen" },
+                { tool: "highlighter" as AnnotationTool, icon: <Highlighter className="h-4 w-4" />, label: "Highlighter" },
                 { tool: "rectangle" as AnnotationTool, icon: <Square className="h-4 w-4" />, label: "Rectangle" },
                 { tool: "arrow" as AnnotationTool, icon: <ArrowUpRight className="h-4 w-4" />, label: "Arrow" },
                 { tool: "text" as AnnotationTool, icon: <Type className="h-4 w-4" />, label: "Text" },
@@ -770,7 +975,7 @@ export function DrawingViewer({
           )}
 
           {/* Stroke width */}
-          {annotationMode && activeTool !== "text" && activeTool !== "eraser" && (
+          {annotationMode && resolvedTool !== "text" && resolvedTool !== "eraser" && (
             <div className="flex items-center gap-1 ml-1">
               {STROKE_WIDTHS.map((w) => (
                 <Button
@@ -853,7 +1058,11 @@ export function DrawingViewer({
                   pageNumber={pageNumber}
                   scale={scale}
                   onLoadSuccess={onPageLoadSuccess}
+                  onRenderSuccess={handlePageRenderSuccess}
                   renderMode="canvas"
+                  renderTextLayer={false}
+                  renderAnnotationLayer={false}
+                  devicePixelRatio={effectiveDevicePixelRatio}
                 />
               </Document>
 
@@ -868,6 +1077,20 @@ export function DrawingViewer({
                 onMouseMove={handleCanvasMouseMove}
                 onMouseUp={handleCanvasMouseUp}
                 onMouseLeave={handleCanvasMouseUp}
+                onDoubleClick={(e) => {
+                  const canvas = annotationCanvasRef.current;
+                  if (!canvas) return;
+                  const pt = getCanvasPoint(e, canvas);
+                  const textAnn = findTextAnnotationAtPoint(pt);
+                  if (!textAnn?.position) return;
+                  setTextInput({
+                    pos: textAnn.position,
+                    value: textAnn.text || "",
+                    page: textAnn.page,
+                    annotationId: textAnn.id,
+                  });
+                  setSelectedAnnotationId(textAnn.id);
+                }}
               />
 
               {/* Floating text input */}
@@ -876,15 +1099,15 @@ export function DrawingViewer({
                   className="absolute z-20"
                   style={{ left: textInput.pos.x, top: textInput.pos.y - 28 }}
                 >
-                  <input
+                  <div className="rounded-md border border-border bg-background/95 shadow-sm p-1.5 min-w-52">
+                    <Textarea
                     ref={textInputRef}
-                    type="text"
                     value={textInput.value}
                     onChange={(e) => setTextInput((t) => t ? { ...t, value: e.target.value } : t)}
                     onBlur={commitText}
                     onMouseDown={(e) => e.stopPropagation()}
                     onKeyDown={(e) => {
-                      if (e.key === "Enter") {
+                      if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
                         e.preventDefault();
                         commitText();
                       }
@@ -893,10 +1116,34 @@ export function DrawingViewer({
                         setTextInput(null);
                       }
                     }}
-                    className="border border-border bg-background/90 px-1.5 py-0.5 text-sm rounded shadow-sm outline-none min-w-24"
+                    className="w-full resize-none border border-border bg-background/90 px-2 py-1.5 text-sm rounded outline-none min-h-16"
                     placeholder="Type text…"
                     style={{ color: resolvedColor }}
                   />
+                    <div className="mt-1.5 flex items-center justify-end gap-1">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        className="h-6 px-2"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => setTextInput(null)}
+                      >
+                        <X className="h-3.5 w-3.5 mr-1" />
+                        Cancel
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        className="h-6 px-2"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={commitText}
+                      >
+                        <Check className="h-3.5 w-3.5 mr-1" />
+                        Add
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               )}
 

@@ -1,0 +1,117 @@
+QUERY: submittals required fields validation rules
+
+
+Searching Procore docs: "submittals required fields validation rules"
+
+Found 8 relevant documentation chunks:
+
+========================================================================
+
+[1] FAQ/Troubleshooting — 56.8% match
+    Section: Submittals
+    Category: Submittals
+    URL: https://v2.support.procore.com/product-manuals/submittals-project/faq-or-troubleshooting
+
+    #  Submittals
+
+------------------------------------------------------------------------
+
+[2] Permissions — 56.7% match
+    Section: Submittals
+    Category: Submittals
+    URL: https://v2.support.procore.com/product-manuals/submittals-project/permissions
+
+    #  Submittals
+
+------------------------------------------------------------------------
+
+[3] Best Practices: Company Level Submittal Settings — 46.4% match
+    Section: Common Examples
+    Category: General
+    URL: https://v2.support.procore.com/reference-best-practices-company-level-submittal-settings
+
+    With clear statuses, teams can see if a submittal is at risk of being delayed and confirm whether its the most current and approved version. Without custom statuses like "Approved / No Exceptions" or "Rejected", it could be difficult for users to find the final version of a submittal if all of its revisions had "Closed" as their status. 
+    
+    ##  Configurable Fieldsets 
+    Use Configurable Fieldsets to help make sure that your project team only sees and completes the fields that are applicable to your ...
+
+------------------------------------------------------------------------
+
+[4] Best Practices Submittals - Company Level Settings — 45.6% match
+    Section: Common Examples
+    Category: Submittals
+    URL: https://v2.support.procore.com/process-guides/best-practices-submittals/company-level-settings
+
+    With clear statuses, teams can see if a submittal is at risk of being delayed and confirm whether its the most current and approved version. Without custom statuses like "Approved / No Exceptions" or "Rejected", it could be difficult for users to find the final version of a submittal if all of its revisions had "Closed" as their status. 
+    
+    ###  Configurable Fieldsets 
+    Use Configurable Fieldsets to help make sure that your project team only sees and completes the fields that are applicable to your...
+
+------------------------------------------------------------------------
+
+[5] Overview — 45.0% match
+    Section: Overview
+    Category: Submittals
+    URL: https://v2.support.procore.com/product-manuals/submittals-project
+
+    #  Submittals 
+    
+    
+    
+    ##  Overview 
+    The Submittals tool enables you to organize your submittal log by division, add shop drawings, or even pages from product catalogs. Attachments can either be added directly from your computer or the project's Documents tool.
+      * Always know the current status of your project's submittals and who needs to take action
+      * Quickly locate a submittal
+      * Attach documents, drawings, and more directly to your project's submittals
+      * Assign multiple users to the 'Submit...
+
+------------------------------------------------------------------------
+
+[6] Best Practices Submittals - Submittal Builder — 44.3% match
+    Section: Next Steps
+    Category: Submittals
+    URL: https://v2.support.procore.com/process-guides/best-practices-submittals/submittal-builder
+
+    * Type
+      * Description
+      * Submittal Manager
+    
+    
+    Submittal Builder creates submittal items with the following fields pre-populated by the system:
+      * Spec Section Number & Description
+      * Status (All submittals created will be in Draft status.)
+      * Submittal Number
+        * _Note:_ * If the project has the "Number Submittals by Spec Section" setting enabled, then the submittals will be numbered accordingly within their spec section. For example:* 06 25 09 - **001** * 06 25 09 - **002** * 06 25 09 - *...
+
+------------------------------------------------------------------------
+
+[7] Create a Submittal — 44.1% match
+    Section: See Also
+    Category: Submittals
+    URL: https://v2.support.procore.com/product-manuals/submittals-project/tutorials/create-a-submittal
+
+    ![Submittals Change Order Table](https://images.ctfassets.net/plvbd9i6qkpm/5e6966bf5739e8dc3fb213664ce89d1f/21248ab37350d4f7b71f092186cb9183/submittals-change-order-table.png?fm=webp)
+    
+    
+    
+    
+    ##  Update and Send the Submittal for Review 
+    When finished with the steps above, do one of the following:
+      * To save your changes without sending an email to members of the submittal workflow, distribution list members, and submittal manager, click **Create**. * To save your changes and to send an email notif...
+
+------------------------------------------------------------------------
+
+[8] Duplicate a Submittal — 43.9% match
+    Section: See Also
+    Category: Submittals
+    URL: https://v2.support.procore.com/product-manuals/submittals-project/tutorials/duplicate-a-submittal
+
+    ![Submittals Change Order Table](https://images.ctfassets.net/plvbd9i6qkpm/5e6966bf5739e8dc3fb213664ce89d1f/21248ab37350d4f7b71f092186cb9183/submittals-change-order-table.png?fm=webp)
+    
+    
+    ### Update and Send the Submittal for Review
+    When finished with the steps above, choose one of these options:
+           * To save your changes without sending an email to members of the submittal workflow, distribution list members, and submittal manager, click **Create**. OR
+           * To save your changes and to sen...
+
+------------------------------------------------------------------------

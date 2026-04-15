@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { ChevronRight, ChevronsUpDown, GitCompare, Inbox, Menu, Sparkles, X } from "lucide-react";
+import type { User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { useProjectPermissions } from "@/hooks/use-project-permissions";
 import {
@@ -28,6 +29,8 @@ import { CommentsSidebar } from "./comments-sidebar";
 import { useProcorePanelStore } from "@/lib/stores/procore-panel-store";
 import { LiveAvatarStack } from "./live-avatar-stack";
 import { feedbackTargetProps } from "@/lib/admin-feedback/constants";
+import { HeaderUserMenu } from "./header-user-menu";
+import { createClient } from "@/lib/supabase/client";
 
 function ProcoreReferenceToggle() {
   const { open, toggle } = useProcorePanelStore();
@@ -58,7 +61,27 @@ export function SiteHeader() {
   const { permissions, userType, isAppAdmin } = useProjectPermissions(
     nav.projectId
   );
+  const [user, setUser] = React.useState<User | null>(null);
   const [mobileNavOpen, setMobileNavOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    const supabase = createClient();
+
+    const fetchUser = async () => {
+      const { data } = await supabase.auth.getUser();
+      setUser(data.user ?? null);
+    };
+
+    fetchUser();
+
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => {
+      data.subscription.unsubscribe();
+    };
+  }, []);
 
   React.useEffect(() => {
     if (!mobileNavOpen) return;
@@ -162,6 +185,14 @@ export function SiteHeader() {
           <React.Suspense fallback={null}>
             <NotificationBell />
           </React.Suspense>
+          <HeaderUserMenu
+            user={user}
+            projectId={nav.projectId}
+            activeToolName={nav.activeToolName}
+            permissions={permissions}
+            isAppAdmin={isAppAdmin}
+            userType={userType}
+          />
         </div>
 
         {/* Mobile: Menu button on right */}

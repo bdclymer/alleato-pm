@@ -3,9 +3,9 @@
  * DIRECT COSTS API ENDPOINTS
  * =============================================================================
  *
- * RESTful API endpoints for Direct Costs CRUD operations
+ * RESTful API endpoints for Direct Costs read operations
  * Follows the patterns established in the codebase and supports:
- * - Full CRUD operations
+ * - Read-only access (writes are explicitly blocked)
  * - Advanced filtering and search
  * - Pagination and sorting
  * - Summary views and aggregations
@@ -16,12 +16,8 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import {
-  DirectCostCreateSchema,
-  DirectCostListParamsSchema,
-} from '@/lib/schemas/direct-costs';
+import { DirectCostListParamsSchema } from '@/lib/schemas/direct-costs';
 import { DirectCostService } from '@/lib/services/direct-cost-service';
-import { requirePermission } from "@/lib/permissions-guard";
 
 // =============================================================================
 // GET - Fetch Direct Costs (with filtering, pagination, sorting)
@@ -95,35 +91,15 @@ export const GET = withApiGuardrails<{ projectId: string }>(
 export const POST = withApiGuardrails<{ projectId: string }>(
   "projects/[projectId]/direct-costs#POST",
   async ({ request, params }) => {
-  
-    const { projectId } = await params;
-    const projectIdNum = parseInt(projectId, 10);
+    void request;
+    void params;
 
-    const guard = await requirePermission(projectIdNum, "budget", "write");
-    if (guard.denied) return guard.response;
-
-    const supabase = await createClient();
-
-    const body = await request.json();
-
-    // Validate request data
-    const validation = DirectCostCreateSchema.safeParse(body);
-
-    if (!validation.success) {
-      return NextResponse.json(
-        {
-          error: 'Invalid direct cost data',
-          details: validation.error.format(),
-        },
-        { status: 400 }
-      );
-    }
-
-    const service = new DirectCostService(supabase);
-
-    // Create the direct cost with line items
-    const directCost = await service.create(projectId, validation.data);
-
-    return NextResponse.json(directCost, { status: 201 });
-    },
+    throw new GuardrailError({
+      code: "READ_ONLY_RESOURCE",
+      where: "projects/[projectId]/direct-costs#POST",
+      message: "Direct costs are read-only in Alleato. Sync from Acumatica to add records.",
+      status: 405,
+      severity: "medium",
+    });
+  },
 );

@@ -1,0 +1,46 @@
+{
+  "generated_at": "2026-04-15T04:04:53Z",
+  "run_id": "run-20260414-225510-submittals",
+  "feature": "submittals",
+  "mode": "full",
+  "ready": true,
+  "blocking_gaps": [],
+  "resolved_gaps": [
+    "VER-001",
+    "VER-002",
+    "API-004",
+    "API-005",
+    "API-006",
+    "API-007",
+    "DB-010"
+  ],
+  "waived_gaps": [],
+  "gate_failures": [],
+  "completion": {
+    "before": {
+      "percentage": 84,
+      "critical_open": 0,
+      "high_open": 0,
+      "total_gaps": 35
+    },
+    "after": {
+      "percentage": 89,
+      "critical_open": 0,
+      "high_open": 0,
+      "total_gaps": 37
+    }
+  },
+  "evidence_index": {
+    "artifact_root": "_bmad-output/planning-artifacts/submittals/verification/runs/run-20260414-225510-submittals",
+    "preflight": "_bmad-output/planning-artifacts/submittals/verification/runs/run-20260414-225510-submittals/preflight-rag.txt",
+    "verification_tests": [
+      "frontend/tests/e2e/submittals/submittals.smoke.spec.ts",
+      "frontend/tests/e2e/submittals/submittals.spec.ts"
+    ],
+    "failed_test_artifacts": [
+      "frontend/test-results/e2e-submittals-submittals.-11073-spects-Ball-In-Court-filter-chromium/error-context.md",
+      "frontend/test-results/e2e-submittals-submittals--27fa1-ad-submittals-from-Supabase-chromium/error-context.md"
+    ],
+    "verification_pass_log": "_bmad-output/planning-artifacts/submittals/verification/runs/run-20260414-225510-submittals/verify-submittals-playwright.txt"
+  }
+}

@@ -25,7 +25,7 @@ interface DrawingViewerWithCommentsProps {
   onLoadSuccess?: (pdf: any) => void;
   className?: string;
   showToolbar?: boolean;
-  controlledTool?: "select" | "pen" | "rectangle" | "arrow" | "text" | "eraser" | "comment" | "link";
+  controlledTool?: "select" | "pen" | "highlighter" | "rectangle" | "arrow" | "text" | "eraser" | "comment" | "link";
   controlledColor?: string;
   controlledStrokeWidth?: number;
   onPageNumberChange?: (page: number, total: number) => void;
@@ -36,7 +36,7 @@ interface DrawingViewerWithCommentsProps {
   linkPinsOverlay?: React.ReactNode;
   onCommentClick?: (x: number, y: number, page: number) => void;
   showCommentPins?: boolean;
-  visibleAnnotationTypes?: ("pen" | "rectangle" | "arrow" | "text")[];
+  visibleAnnotationTypes?: ("pen" | "highlighter" | "rectangle" | "arrow" | "text")[];
 }
 
 // ─── Root export (provides RoomProvider) ────────────────────────────────────

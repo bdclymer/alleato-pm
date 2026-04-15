@@ -17,6 +17,10 @@ const addStepSchema = z.object({
   required: z.boolean().optional().default(true),
 });
 
+const reorderStepsSchema = z.object({
+  step_ids: z.array(z.string().uuid()).min(1),
+});
+
 /**
  * GET /api/projects/[projectId]/submittals/[submittalId]/workflow-steps
  * Returns all workflow steps for a submittal, with their responses.
@@ -103,4 +107,77 @@ export const POST = withApiGuardrails(
 
     return NextResponse.json(step, { status: 201 });
     },
+);
+
+/**
+ * PUT /api/projects/[projectId]/submittals/[submittalId]/workflow-steps
+ * Reorders workflow steps based on an ordered step_ids array.
+ */
+export const PUT = withApiGuardrails(
+  "projects/[projectId]/submittals/[submittalId]/workflow-steps#PUT",
+  async ({ request, params }) => {
+    const { submittalId } = await params;
+    const supabase = await createClient();
+
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "projects/[projectId]/submittals/[submittalId]/workflow-steps#PUT",
+        message: "Authentication required.",
+      });
+    }
+
+    const body = await request.json();
+    const { step_ids } = reorderStepsSchema.parse(body);
+
+    const { data: existingSteps, error: readError } = await supabase
+      .from("submittal_workflow_steps")
+      .select("id")
+      .eq("submittal_id", submittalId);
+
+    if (readError) {
+      return apiErrorResponse(readError);
+    }
+
+    const existingSet = new Set((existingSteps ?? []).map((s) => s.id));
+    const requestedSet = new Set(step_ids);
+    if (
+      existingSet.size !== requestedSet.size ||
+      [...existingSet].some((id) => !requestedSet.has(id))
+    ) {
+      return NextResponse.json(
+        { error: "step_ids must include every workflow step exactly once" },
+        { status: 400 },
+      );
+    }
+
+    for (const [index, stepId] of step_ids.entries()) {
+      const { error: updateError } = await supabase
+        .from("submittal_workflow_steps")
+        .update({ step_order: index + 1 })
+        .eq("id", stepId)
+        .eq("submittal_id", submittalId);
+
+      if (updateError) {
+        return apiErrorResponse(updateError);
+      }
+    }
+
+    const { data: reordered, error: fetchError } = await supabase
+      .from("submittal_workflow_steps")
+      .select("id, step_order, step_type")
+      .eq("submittal_id", submittalId)
+      .order("step_order", { ascending: true });
+
+    if (fetchError) {
+      return apiErrorResponse(fetchError);
+    }
+
+    return NextResponse.json(reordered ?? []);
+  },
 );

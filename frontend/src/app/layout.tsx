@@ -15,8 +15,6 @@ import { UnifiedFeedbackWidget } from "@/components/dev/UnifiedFeedbackWidget";
 import { AdminFeedbackWidget } from "@/components/admin-feedback/AdminFeedbackWidget";
 import { ChunkLoadErrorRecovery } from "@/components/providers/chunk-error-recovery";
 import "./globals.css";
-import "@liveblocks/react-ui/styles.css";
-import "@liveblocks/react-ui/styles/dark/media-query.css";
 import "swagger-ui-dist/swagger-ui.css";
 
 const defaultUrl = process.env.VERCEL_URL

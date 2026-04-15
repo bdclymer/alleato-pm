@@ -1,6 +1,3 @@
-@import "@liveblocks/react-ui/styles.css";
-@import "@liveblocks/react-lexical/styles.css";
-@import "../components/issue-tracker/styles/liveblocks-issue-tracker.css";
 @import "tailwindcss";
 @import "../../styles/tailwind.css";
 
@@ -61,7 +58,7 @@
     --secondary-foreground: 240 6% 12%;
 
     /* Muted */
-    --muted: 260 30% 98%;
+    --muted: 260 30% 97%;
     --muted-subtle: 240 5% 97%;
     --muted-foreground: 240 4% 46%;
 
@@ -1596,7 +1593,7 @@
 }
 
 .lb-thread-alleato .lb-comment + .lb-comment {
-  margin-top: 4px !important;
+  margin-top: 10px !important;
 }
 
 .lb-thread-alleato .lb-avatar {
@@ -1635,8 +1632,8 @@
 
 .lb-thread-alleato .lb-comment-body {
   font-size: 13.5px !important;
-  line-height: 1.6 !important;
-  color: hsl(var(--foreground) / 0.85) !important;
+  line-height: 1.7 !important;
+  color: hsl(var(--foreground) / 0.92) !important;
   margin-top: 4px !important;
 }
 
@@ -1645,15 +1642,15 @@
 }
 
 .lb-thread-alleato .lb-comment-content {
-  background: hsl(var(--muted) / 0.3) !important;
+  background: hsl(var(--muted) / 0.4) !important;
   border-radius: 12px !important;
-  padding: 12px 16px !important;
+  padding: 14px 16px !important;
   border: none !important;
   transition: background 0.15s ease;
 }
 
 .lb-thread-alleato .lb-comment:hover .lb-comment-content {
-  background: hsl(var(--muted) / 0.5) !important;
+  background: hsl(var(--muted) / 0.58) !important;
 }
 
 .lb-thread-alleato .lb-comment-actions {
@@ -1676,7 +1673,7 @@
 .lb-thread-alleato .lb-composer {
   border: 1px solid hsl(var(--border) / 0.5) !important;
   border-radius: 12px !important;
-  background: hsl(var(--background)) !important;
+  background: hsl(var(--background) / 0.9) !important;
   box-shadow: none !important;
   margin-top: 8px !important;
 }
@@ -1689,10 +1686,47 @@
 .lb-composer-alleato {
   border: 1px solid hsl(var(--border) / 0.6) !important;
   border-radius: 14px !important;
-  background: hsl(var(--background)) !important;
+  background: hsl(var(--background) / 0.95) !important;
   box-shadow: none !important;
   padding: 4px !important;
   transition: border-color 0.2s ease;
+}
+
+.dark .lb-thread-alleato .lb-comment-author {
+  color: hsl(var(--foreground) / 0.96) !important;
+}
+
+.dark .lb-thread-alleato .lb-comment-date {
+  color: hsl(var(--muted-foreground) / 0.85) !important;
+}
+
+.dark .lb-thread-alleato .lb-comment-content {
+  background: hsl(var(--muted) / 0.6) !important;
+  border: 1px solid hsl(var(--border) / 0.55) !important;
+}
+
+.dark .lb-thread-alleato .lb-comment:hover .lb-comment-content {
+  background: hsl(var(--muted) / 0.72) !important;
+}
+
+.dark .lb-thread-alleato .lb-comment-body {
+  color: hsl(var(--foreground) / 0.96) !important;
+}
+
+.dark .lb-composer-alleato {
+  background: hsl(var(--background)) !important;
+  border-color: hsl(var(--border) / 0.8) !important;
+}
+
+.dark .lb-composer-alleato [contenteditable="true"]::before {
+  color: hsl(var(--muted-foreground) / 0.8) !important;
+}
+
+.dark .lb-thread-alleato .lb-mention,
+.dark .lb-composer-alleato .lb-mention {
+  background: hsl(var(--primary) / 0.22) !important;
+  color: hsl(var(--primary-foreground)) !important;
+  border: 1px solid hsl(var(--primary) / 0.45) !important;
 }
 
 .lb-composer-alleato:focus-within {

@@ -4,9 +4,6 @@ import * as React from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { createClient } from "@/lib/supabase/client"
-import { getBestAvatarUrl } from "@/lib/gravatar"
-import type { User } from "@supabase/supabase-js"
 import {
   Folder,
   Bell,
@@ -24,7 +21,6 @@ import {
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarHeader,
   SidebarRail,
   useSidebar,
@@ -40,7 +36,6 @@ import {
   type SidebarNavGroup,
 } from "@/lib/navigation-config"
 import { useProjectPermissions, hasModulePermission } from "@/hooks/use-project-permissions"
-import { NavUser } from "@/components/nav/nav-user"
 import { ProjectSelector } from "@/components/header/project-selector"
 import { useHeaderNav } from "@/components/header/use-header-nav"
 import { cn } from "@/lib/utils"
@@ -309,9 +304,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     }
   }, [])
 
-  const [user, setUser] = React.useState<User | null>(null)
-  const supabase = createClient()
-
   // Extract project ID from URL path
   const projectId = React.useMemo(() => extractProjectId(pathname), [pathname])
   const { permissions, userType, isAppAdmin } = useProjectPermissions(projectId)
@@ -352,29 +344,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     },
     [pathname]
   )
-
-  // Fetch current user
-  React.useEffect(() => {
-    const fetchUser = async () => {
-      const { data: { user: u } } = await supabase.auth.getUser()
-      setUser(u)
-    }
-    fetchUser()
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
-    })
-    return () => subscription.unsubscribe()
-  }, [supabase.auth])
-
-  // User data for NavUser
-  const userData = React.useMemo(() => {
-    if (!user) return null
-    const customAvatar = user.user_metadata?.avatar_url
-    const userEmail = user.email || ""
-    const avatarSrc = getBestAvatarUrl(customAvatar, userEmail)
-    const displayName = user.user_metadata?.full_name || user.email?.split("@")[0] || "User"
-    return { name: displayName, email: userEmail, avatar: avatarSrc || "" }
-  }, [user])
 
   // Filtered groups — subcontractors get a focused single-group nav
   const filteredGroups = React.useMemo(() => {
@@ -456,16 +425,18 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <ChevronsLeft className="h-4 w-4" strokeWidth={1.6} />
               </button>
             </div>
-            {/* Project selector */}
-            <ProjectSelector
-              projectId={nav.projectId}
-              currentProject={nav.currentProject}
-              projects={nav.projects}
-              loadingProjects={nav.loadingProjects}
-              onFetchProjects={nav.fetchProjects}
-              onProjectSelect={nav.handleProjectSelect}
-              onViewAll={() => router.push("/")}
-            />
+            {/* Keep project selector only for mobile sidebar drawer */}
+            <div className="md:hidden">
+              <ProjectSelector
+                projectId={nav.projectId}
+                currentProject={nav.currentProject}
+                projects={nav.projects}
+                loadingProjects={nav.loadingProjects}
+                onFetchProjects={nav.fetchProjects}
+                onProjectSelect={nav.handleProjectSelect}
+                onViewAll={() => router.push("/")}
+              />
+            </div>
           </div>
         )}
       </SidebarHeader>
@@ -531,12 +502,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </div>
         )}
       </SidebarContent>
-
-      {/* ── Footer ── */}
-      <SidebarFooter className={cn(isCollapsed ? "px-0 py-3" : "px-4 pt-2 pb-6")}>
-        {/* User menu — works in both collapsed and expanded */}
-        {userData && <NavUser user={userData} isCollapsed={isCollapsed} />}
-      </SidebarFooter>
 
       <SidebarRail />
     </Sidebar>

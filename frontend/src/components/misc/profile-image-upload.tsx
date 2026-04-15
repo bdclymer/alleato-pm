@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Dialog,
@@ -15,6 +16,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { getGravatarUrlClient } from "@/lib/gravatar";
+import { apiFetch, ApiError } from "@/lib/api-client";
 
 interface ProfileImageUploadProps {
   currentImage?: string;
@@ -25,9 +27,14 @@ interface ProfileImageUploadProps {
 
 type AvatarApiError = {
   error?: string;
+  error_message?: string;
   code?: string;
+  error_code?: string;
   hint?: string;
-  details?: string;
+  details?:
+    | string
+    | Array<{ field?: string; path?: string; message?: string }>;
+  request_id?: string;
 };
 
 export function ProfileImageUpload({
@@ -41,6 +48,16 @@ export function ProfileImageUpload({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [apiError, setApiError] = useState<AvatarApiError | null>(null);
+
+  const formatApiErrorDetails = (details: AvatarApiError["details"]) => {
+    if (!details) return null;
+    if (typeof details === "string") return details;
+    const joined = details
+      .map((detail) => detail.message || detail.path || detail.field)
+      .filter(Boolean)
+      .join("; ");
+    return joined || null;
+  };
 
   const initials =
     userName
@@ -83,23 +100,10 @@ export function ProfileImageUpload({
       const formData = new FormData();
       formData.append("file", selectedFile);
 
-      const response = await fetch("/api/profile/avatar", {
+      const payload = await apiFetch<{ avatarUrl?: string }>("/api/profile/avatar", {
         method: "POST",
         body: formData,
       });
-
-      const payload = (await response.json().catch(() => ({}))) as {
-        error?: string;
-        avatarUrl?: string;
-        code?: string;
-        hint?: string;
-        details?: string;
-      };
-
-      if (!response.ok) {
-        setApiError(payload);
-        throw new Error(payload.error || "Failed to upload image");
-      }
 
       const publicUrl = payload.avatarUrl;
       if (!publicUrl) {
@@ -116,6 +120,9 @@ export function ProfileImageUpload({
       // Refresh the page to show new avatar
       window.location.reload();
     } catch (error) {
+      if (error instanceof ApiError) {
+        setApiError(error.body);
+      }
       const message =
         error instanceof Error
           ? error.message
@@ -128,21 +135,9 @@ export function ProfileImageUpload({
 
   const handleRemove = async () => {
     try {
-      const response = await fetch("/api/profile/avatar", {
+      await apiFetch<{ success: boolean }>("/api/profile/avatar", {
         method: "DELETE",
       });
-
-      const payload = (await response.json().catch(() => ({}))) as {
-        error?: string;
-        code?: string;
-        hint?: string;
-        details?: string;
-      };
-
-      if (!response.ok) {
-        setApiError(payload);
-        throw new Error(payload.error || "Failed to remove image");
-      }
 
       toast.success("Profile image removed");
       setApiError(null);
@@ -150,6 +145,9 @@ export function ProfileImageUpload({
       setOpen(false);
       window.location.reload();
     } catch (error) {
+      if (error instanceof ApiError) {
+        setApiError(error.body);
+      }
       const message =
         error instanceof Error ? error.message : "Failed to remove image";
       toast.error(message);
@@ -204,7 +202,7 @@ export function ProfileImageUpload({
               )}
             </div>
 
-            <input
+            <Input
               id="file-input"
               type="file"
               accept="image/*"
@@ -224,8 +222,17 @@ export function ProfileImageUpload({
               <AlertTitle>{apiError.error}</AlertTitle>
               <AlertDescription className="space-y-1">
                 {apiError.hint ? <p>{apiError.hint}</p> : null}
-                {apiError.details ? <p className="break-words">{apiError.details}</p> : null}
-                {apiError.code ? <p className="font-mono text-xs">Code: {apiError.code}</p> : null}
+                {formatApiErrorDetails(apiError.details) ? (
+                  <p className="break-words">{formatApiErrorDetails(apiError.details)}</p>
+                ) : null}
+                {apiError.request_id ? (
+                  <p className="font-mono text-xs">Request: {apiError.request_id}</p>
+                ) : null}
+                {apiError.code || apiError.error_code ? (
+                  <p className="font-mono text-xs">
+                    Code: {apiError.code || apiError.error_code}
+                  </p>
+                ) : null}
               </AlertDescription>
             </Alert>
           ) : null}

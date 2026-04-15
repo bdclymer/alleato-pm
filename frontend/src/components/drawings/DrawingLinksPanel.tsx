@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Trash2, ExternalLink } from "lucide-react";
+import { Trash2, ExternalLink, Link2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { DrawingMarkupPin } from "@/hooks/use-drawing-pins";
@@ -61,7 +61,7 @@ export function DrawingLinksPanel({
     return (
       <div className="flex flex-col items-center justify-center py-10 px-4 text-center">
         <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center mb-3">
-          <span className="text-muted-foreground text-lg">🔗</span>
+          <Link2 className="h-5 w-5 text-muted-foreground" />
         </div>
         <p className="text-sm font-medium text-foreground mb-1">No links yet</p>
         <p className="text-xs text-muted-foreground">
@@ -79,6 +79,12 @@ export function DrawingLinksPanel({
         break;
       case "punch_item":
         router.push(`/${projectId}/punch-list/${pin.entity_id}`);
+        break;
+      case "drawing":
+        router.push(`/${projectId}/drawings/viewer/${pin.entity_id}`);
+        break;
+      case "photo":
+        router.push(`/${projectId}/photos?photoId=${pin.entity_id}`);
         break;
       default:
         break;

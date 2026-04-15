@@ -4,11 +4,11 @@ import * as React from "react";
 import { MessageSquare, X } from "lucide-react";
 import { useParams, usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { ClientSideSuspense } from "@liveblocks/react/suspense";
-import { RoomProvider } from "@liveblocks/react/suspense";
-import { LiveList, LiveObject } from "@liveblocks/client";
 import { EntityComments } from "@/components/comments/entity-comments";
-import { getRoomId, type CommentableEntityType } from "@/lib/liveblocks/rooms";
+import {
+  CollaborationEntityProvider,
+} from "@/components/comments/entity-context";
+import { type CommentableEntityType } from "@/lib/liveblocks/rooms";
 import { useCommentsSidebarStore } from "@/lib/stores/comments-sidebar-store";
 import { cn } from "@/lib/utils";
 
@@ -31,7 +31,7 @@ class CommentsErrorBoundary extends React.Component<
   }
 
   componentDidCatch(error: unknown) {
-    console.warn("[CommentsSidebar] Liveblocks error:", error);
+    console.warn("[CommentsSidebar] Collaboration sidebar error:", error);
   }
 
   render() {
@@ -48,21 +48,11 @@ interface EntityContext {
   entityType: CommentableEntityType;
   entityId: string;
   label: string;
+  projectId?: number;
 }
 
-const INITIAL_STORAGE = {
-  meta: new LiveObject({ title: "" }),
-  properties: new LiveObject({
-    progress: "none" as const,
-    priority: "none" as const,
-    assignedTo: "none",
-  }),
-  labels: new LiveList<string>([]),
-  links: new LiveList<string>([]),
-};
-
 /**
- * Map the current URL path to a Liveblocks entity context.
+ * Map the current URL path to an entity context for Supabase collaboration.
  * Detail pages (e.g. /43/rfis/123) → entity-level room.
  * List pages (e.g. /43/budget) → project-tool-level room.
  */
@@ -84,6 +74,7 @@ export function useEntityContext(): EntityContext | null {
     // ── Project-scoped routes ────────────────────────────────────────────────
     const projectId = params.projectId as string | undefined;
     if (!projectId) return null;
+    const numericProjectId = Number(projectId);
 
     const segments = pathname.split("/").filter(Boolean);
     const projectIndex = segments.indexOf(projectId);
@@ -107,7 +98,7 @@ export function useEntityContext(): EntityContext | null {
       schedule: { entityType: "schedule", label: "Schedule" },
       rfis: { entityType: "rfi", label: "RFI" },
       submittals: { entityType: "submittal", label: "Submittal" },
-      "change-events": { entityType: "change-order", label: "Change Event" },
+      "change-events": { entityType: "change-event", label: "Change Event" },
       "change-orders": { entityType: "change-order", label: "Change Order" },
       commitments: { entityType: "commitment", label: "Commitment" },
       "direct-costs": { entityType: "direct-cost", label: "Direct Cost" },
@@ -126,6 +117,7 @@ export function useEntityContext(): EntityContext | null {
         entityType: mapping.entityType,
         entityId: detailId,
         label: `${mapping.label} #${detailId}`,
+        projectId: Number.isFinite(numericProjectId) ? numericProjectId : undefined,
       };
     }
 
@@ -133,6 +125,7 @@ export function useEntityContext(): EntityContext | null {
       entityType: mapping.entityType,
       entityId: `project-${projectId}`,
       label: mapping.label,
+      projectId: Number.isFinite(numericProjectId) ? numericProjectId : undefined,
     };
   }, [params, pathname]);
 }
@@ -210,14 +203,16 @@ export function CommentsSidebarPanel() {
             <span className="text-sm font-medium text-foreground">
               {entityContext ? `${entityContext.label} Comments` : "Comments"}
             </span>
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="sm"
               onClick={() => setOpen(false)}
               aria-label="Close comments"
-              className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
             >
               <X className="h-4 w-4" />
-            </button>
+            </Button>
           </div>
 
           {/* Content */}
@@ -242,31 +237,17 @@ export function CommentsSidebarPanel() {
                 </div>
               }
             >
-              <ClientSideSuspense
-                fallback={
-                  <div className="flex-1 space-y-3 p-4">
-                    {[1, 2, 3].map((i) => (
-                      <div key={i} className="flex items-start gap-3 rounded-lg p-3">
-                        <div className="h-8 w-8 animate-pulse rounded-full bg-muted" />
-                        <div className="flex-1 space-y-2">
-                          <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
-                          <div className="h-3 w-1/2 animate-pulse rounded bg-muted" />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                }
+              <CollaborationEntityProvider
+                value={{
+                  entityType: entityContext.entityType,
+                  entityId: entityContext.entityId,
+                  projectId: entityContext.projectId,
+                }}
               >
-                <RoomProvider
-                  id={getRoomId(entityContext.entityType, entityContext.entityId)}
-                  initialPresence={{ cursor: null }}
-                  initialStorage={INITIAL_STORAGE}
-                >
-                  <div className="flex-1 overflow-y-auto p-4">
-                    <EntityComments title="" />
-                  </div>
-                </RoomProvider>
-              </ClientSideSuspense>
+                <div className="flex-1 overflow-y-auto p-4">
+                  <EntityComments title="" />
+                </div>
+              </CollaborationEntityProvider>
             </CommentsErrorBoundary>
           )}
         </div>

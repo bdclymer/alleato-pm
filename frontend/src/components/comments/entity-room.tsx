@@ -1,55 +1,33 @@
 "use client";
 
-import { type ReactNode } from "react";
-import { LiveList, LiveObject } from "@liveblocks/client";
-import { RoomProvider } from "@liveblocks/react/suspense";
+import type { ReactNode } from "react";
 import {
-  getRoomId,
-  type CommentableEntityType,
-} from "@/lib/liveblocks/rooms";
-
-const INITIAL_STORAGE = {
-  meta: new LiveObject({ title: "" }),
-  properties: new LiveObject({
-    progress: "none" as const,
-    priority: "none" as const,
-    assignedTo: "none",
-  }),
-  labels: new LiveList<string>([]),
-  links: new LiveList<string>([]),
-};
+  CollaborationEntityProvider,
+  type CollaborationEntityContextValue,
+} from "./entity-context";
+import type { CommentableEntityType } from "@/lib/liveblocks/rooms";
 
 interface EntityRoomProps {
-  /** The type of entity this room is for (e.g. "rfi", "submittal") */
   entityType: CommentableEntityType;
-  /** The unique ID of the entity */
   entityId: string | number;
+  projectId?: number;
   children: ReactNode;
 }
 
 /**
- * Wraps children in a Liveblocks RoomProvider scoped to a specific entity.
- *
- * Usage:
- * ```tsx
- * <EntityRoom entityType="rfi" entityId={rfi.id}>
- *   <EntityComments entityTitle={rfi.subject} />
- * </EntityRoom>
- * ```
- *
- * Each entity type + ID combination maps to a unique Liveblocks room,
- * so threads and presence are isolated per entity.
+ * Preserves the existing EntityRoom API while using Supabase-backed collaboration.
  */
 export function EntityRoom({
   entityType,
   entityId,
+  projectId,
   children,
 }: EntityRoomProps) {
-  const roomId = getRoomId(entityType, entityId);
+  const value: CollaborationEntityContextValue = {
+    entityType,
+    entityId: String(entityId),
+    projectId,
+  };
 
-  return (
-    <RoomProvider id={roomId} initialPresence={{ cursor: null }} initialStorage={INITIAL_STORAGE}>
-      {children}
-    </RoomProvider>
-  );
+  return <CollaborationEntityProvider value={value}>{children}</CollaborationEntityProvider>;
 }

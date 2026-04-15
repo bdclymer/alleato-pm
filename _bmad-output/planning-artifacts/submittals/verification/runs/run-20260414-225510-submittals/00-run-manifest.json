@@ -1,0 +1,114 @@
+{
+  "run_id": "run-20260414-225510-submittals",
+  "feature": "submittals",
+  "project_id": "562949954728542",
+  "mode": "full",
+  "git_sha": "f8293a7238a0d803bee4667fc93c89f59367948d",
+  "started_at": "2026-04-15T02:55:10Z",
+  "completed_at": "2026-04-15T04:04:53Z",
+  "phases": [
+    {
+      "phase": "INIT_COMMAND",
+      "state": "passed",
+      "started_at": "2026-04-15T02:55:10Z",
+      "completed_at": "2026-04-15T03:04:10Z",
+      "owner": "orchestrator",
+      "result": "run initialized and RAG preflight passed",
+      "evidence": [
+        "preflight-rag.txt"
+      ],
+      "errors": []
+    },
+    {
+      "phase": "DISCOVER",
+      "state": "passed",
+      "started_at": "2026-04-15T02:55:10Z",
+      "completed_at": "2026-04-15T03:04:10Z",
+      "owner": "orchestrator",
+      "result": "01-codebase-inventory.md and 02-procore-reference.md generated",
+      "evidence": [
+        "01-codebase-inventory.md",
+        "02-procore-reference.md"
+      ],
+      "errors": []
+    },
+    {
+      "phase": "CAPTURE_SOURCE_OF_TRUTH",
+      "state": "passed",
+      "started_at": "2026-04-15T02:55:10Z",
+      "completed_at": "2026-04-15T03:04:10Z",
+      "owner": "orchestrator",
+      "result": "reused validated crawl/manifest baseline",
+      "evidence": [
+        "03-corrected-manifest.json"
+      ],
+      "errors": []
+    },
+    {
+      "phase": "RECONCILE_MANIFEST",
+      "state": "passed",
+      "started_at": "2026-04-15T02:55:10Z",
+      "completed_at": "2026-04-15T03:04:10Z",
+      "owner": "orchestrator",
+      "result": "normalized corrected manifest present",
+      "evidence": [
+        "03-corrected-manifest.json"
+      ],
+      "errors": []
+    },
+    {
+      "phase": "GAP_ANALYZE",
+      "state": "passed",
+      "started_at": "2026-04-15T02:55:10Z",
+      "completed_at": "2026-04-15T03:04:10Z",
+      "owner": "orchestrator",
+      "result": "gap and task artifacts refreshed with verification findings",
+      "evidence": [
+        "04-gap-analysis-report.md",
+        "05-verification-report.json",
+        "06-task-list.json"
+      ],
+      "errors": []
+    },
+    {
+      "phase": "REMEDIATE",
+      "state": "passed",
+      "started_at": "2026-04-15T02:55:10Z",
+      "completed_at": "2026-04-15T03:04:10Z",
+      "owner": "orchestrator",
+      "result": "Applied test remediation + API completion loop (workflow reorder, attachments, related-items, compatibility endpoints)",
+      "evidence": [
+        "07-remediation-log.md"
+      ],
+      "errors": []
+    },
+    {
+      "phase": "VERIFY_IMPLEMENTATION",
+      "state": "passed",
+      "started_at": "2026-04-15T02:55:10Z",
+      "completed_at": "2026-04-15T03:04:10Z",
+      "owner": "orchestrator",
+      "result": "Submittals suites passed after remediation loops (5 passed, 1 skipped, 0 failed)",
+      "evidence": [
+        "frontend/tests/e2e/submittals/submittals.smoke.spec.ts",
+        "frontend/tests/e2e/submittals/submittals.spec.ts",
+        "verify-submittals-playwright.txt"
+      ],
+      "errors": []
+    },
+    {
+      "phase": "FINALIZE_AND_REPORT",
+      "state": "passed",
+      "started_at": "2026-04-15T02:55:10Z",
+      "completed_at": "2026-04-15T03:04:10Z",
+      "owner": "orchestrator",
+      "result": "final summary and readiness artifacts generated",
+      "evidence": [
+        "08-final-summary.md",
+        "09-feature-inventory.md",
+        "release-readiness.json"
+      ],
+      "errors": []
+    }
+  ]
+}

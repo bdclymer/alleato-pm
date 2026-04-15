@@ -3,20 +3,9 @@
 import * as React from "react";
 import type { ReactElement } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Loader2, MoreHorizontal, Plus, RefreshCw, Upload } from "lucide-react";
+import { MoreHorizontal, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
-import { PermissionGate } from "@/components/domain/permissions/PermissionGate";
 import { UnifiedTablePage, useUnifiedTableState, type FilterValue } from "@/components/tables/unified";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,8 +15,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Slideover, SlideoverContent, SlideoverHeader, SlideoverTitle } from "@/components/ui/unified-slideover";
 import {
   type CostCodeDetailRow,
   DEFAULT_COST_CODE_VISIBLE_COLUMNS,
@@ -40,10 +27,7 @@ import {
 import { CostCodeHierarchyView } from "./cost-code-hierarchy-view";
 import { DirectCostPreviewPane } from "./direct-cost-preview-pane";
 
-import { DirectCostForm } from "@/components/direct-costs/DirectCostForm";
-import { DirectCostsImportDialog } from "@/components/direct-costs/DirectCostsImportDialog";
 import { ExportDialog } from "@/components/direct-costs/ExportDialog";
-import type { DirectCostUpdate } from "@/lib/schemas/direct-costs";
 
 export type DirectCostRow = {
   id: string;
@@ -66,16 +50,12 @@ export type DirectCostRow = {
 type DirectCostFilterState = Record<string, FilterValue>;
 type SummaryTab = "summary" | "cost-code";
 
-type BulkActionType = "approve" | "revise" | "delete";
-
 interface DirectCostsClientProps {
   projectId: string;
   projectName: string;
   directCosts: DirectCostRow[];
   costCodeDetails: CostCodeDetailRow[];
 }
-
-const STATUS_OPTIONS = ["Draft", "Pending", "Revise and Resubmit", "Approved"] as const;
 
 const EMPTY_FILTERS: DirectCostFilterState = {
   status: undefined,
@@ -143,17 +123,8 @@ export function DirectCostsClient({
     },
   });
 
-  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
-  const [directCostToDelete, setDirectCostToDelete] = React.useState<DirectCostRow | null>(null);
-  const [editingCostId, setEditingCostId] = React.useState<string | null>(null);
-  const [editingInitialData, setEditingInitialData] = React.useState<DirectCostUpdate | undefined>(undefined);
-  const [isEditSheetOpen, setIsEditSheetOpen] = React.useState(false);
-  const [isEditLoading, setIsEditLoading] = React.useState(false);
-  const [isImportDialogOpen, setIsImportDialogOpen] = React.useState(false);
   const [isExportDialogOpen, setIsExportDialogOpen] = React.useState(false);
   const [isSyncing, setIsSyncing] = React.useState(false);
-  const [updatingStatusId, setUpdatingStatusId] = React.useState<string | null>(null);
-  const [bulkAction, setBulkAction] = React.useState<BulkActionType | null>(null);
   const [isMobileViewport, setIsMobileViewport] = React.useState(false);
 
   React.useEffect(() => {
@@ -342,176 +313,6 @@ export function DirectCostsClient({
     applyFilters(nextFilters);
   };
 
-  const handleDeleteConfirm = async (): Promise<void> => {
-    if (!directCostToDelete) return;
-
-    const response = await fetch(`/api/projects/${projectId}/direct-costs/${directCostToDelete.id}`, {
-      method: "DELETE",
-    });
-
-    if (!response.ok) {
-      const errorData = (await response.json().catch(() => ({}))) as { error?: string };
-      toast.error(errorData.error || "Failed to delete direct cost");
-      return;
-    }
-
-    toast.success("Direct cost deleted successfully");
-    setDeleteDialogOpen(false);
-    setDirectCostToDelete(null);
-    router.refresh();
-  };
-
-  const handleOpenEdit = async (costId: string): Promise<void> => {
-    setEditingCostId(costId);
-    setIsEditSheetOpen(true);
-    setIsEditLoading(true);
-    setEditingInitialData(undefined);
-
-    try {
-      const response = await fetch(`/api/projects/${projectId}/direct-costs/${costId}`);
-      if (!response.ok) {
-        const errorData = (await response.json().catch(() => ({}))) as { error?: string };
-        throw new Error(errorData.error || "Failed to load direct cost for editing");
-      }
-
-      const payload = (await response.json()) as DirectCostUpdate;
-      setEditingInitialData(payload);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to load direct cost";
-      toast.error(message);
-      setIsEditSheetOpen(false);
-      setEditingCostId(null);
-    } finally {
-      setIsEditLoading(false);
-    }
-  };
-
-  const handleCloseEditSheet = React.useCallback((): void => {
-    setIsEditSheetOpen(false);
-    setEditingCostId(null);
-    setEditingInitialData(undefined);
-  }, []);
-
-  const handleEditSuccess = React.useCallback((): void => {
-    handleCloseEditSheet();
-    router.refresh();
-  }, [handleCloseEditSheet, router]);
-
-  const handleInlineStatusChange = async (costId: string, nextStatus: string): Promise<void> => {
-    setUpdatingStatusId(costId);
-    try {
-      const response = await fetch(`/api/projects/${projectId}/direct-costs/${costId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ status: nextStatus }),
-      });
-
-      if (!response.ok) {
-        const errData = (await response.json().catch(() => ({}))) as { error?: string };
-        throw new Error(errData.error || "Failed to update status");
-      }
-
-      toast.success(`Status updated to ${nextStatus}`);
-      router.refresh();
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to update status";
-      toast.error(message);
-    } finally {
-      setUpdatingStatusId(null);
-    }
-  };
-
-  const runBulkStatusUpdate = async (status: "Approved" | "Revise and Resubmit"): Promise<void> => {
-    if (tableState.selectedIds.length === 0) return;
-
-    const response = await fetch(`/api/projects/${projectId}/direct-costs/bulk`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        operation: "status-update",
-        ids: tableState.selectedIds,
-        status,
-      }),
-    });
-
-    const payload = (await response.json().catch(() => ({}))) as {
-      error?: string;
-      success_count?: number;
-      failed_count?: number;
-      total?: number;
-    };
-
-    if (!response.ok && response.status !== 207) {
-      toast.error(payload.error || `Failed to ${status === "Approved" ? "approve" : "revise"} selected costs`);
-      return;
-    }
-
-    if ((payload.failed_count ?? 0) > 0) {
-      toast.warning(
-        `Updated ${payload.success_count ?? 0} of ${payload.total ?? tableState.selectedIds.length} costs.`,
-      );
-    } else {
-      toast.success(`${status === "Approved" ? "Approved" : "Revised"} ${payload.success_count ?? tableState.selectedIds.length} cost(s).`);
-    }
-
-    tableState.setSelectedIds([]);
-    router.refresh();
-  };
-
-  const runBulkDelete = async (): Promise<void> => {
-    if (tableState.selectedIds.length === 0) return;
-
-    const response = await fetch(`/api/projects/${projectId}/direct-costs/bulk`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        operation: "delete",
-        ids: tableState.selectedIds,
-      }),
-    });
-
-    const payload = (await response.json().catch(() => ({}))) as {
-      error?: string;
-      success_count?: number;
-      failed_count?: number;
-      total?: number;
-    };
-
-    if (!response.ok && response.status !== 207) {
-      toast.error(payload.error || "Failed to delete selected costs");
-      return;
-    }
-
-    if ((payload.failed_count ?? 0) > 0) {
-      toast.warning(`Deleted ${payload.success_count ?? 0} of ${payload.total ?? tableState.selectedIds.length} costs.`);
-    } else {
-      toast.success(`Deleted ${payload.success_count ?? tableState.selectedIds.length} cost(s).`);
-    }
-
-    tableState.setSelectedIds([]);
-    router.refresh();
-  };
-
-  const executeBulkAction = async (): Promise<void> => {
-    if (!bulkAction) return;
-
-    if (bulkAction === "approve") {
-      await runBulkStatusUpdate("Approved");
-    }
-
-    if (bulkAction === "revise") {
-      await runBulkStatusUpdate("Revise and Resubmit");
-    }
-
-    if (bulkAction === "delete") {
-      await runBulkDelete();
-    }
-
-    setBulkAction(null);
-  };
-
   const handleOpenDetailPage = React.useCallback(
     (item: DirectCostRow): void => {
       router.push(`/${projectId}/direct-costs/${item.id}`);
@@ -586,35 +387,10 @@ export function DirectCostsClient({
         label: "Status",
         defaultVisible: true,
         render: (item: DirectCostRow) => (
-          <div onClick={(event) => event.stopPropagation()}>
-            {updatingStatusId === item.id ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
-            ) : (
-              <Select
-                value={STATUS_OPTIONS.includes(item.status as (typeof STATUS_OPTIONS)[number]) ? item.status : undefined}
-                onValueChange={(nextStatus) => {
-                  if (nextStatus !== item.status) {
-                    void handleInlineStatusChange(item.id, nextStatus);
-                  }
-                }}
-              >
-                <SelectTrigger className="h-7 w-auto gap-1.5 border-none bg-transparent px-1.5 text-xs text-muted-foreground shadow-none hover:bg-muted/60 focus:ring-0" aria-label="Quick edit status">
-                  <span className={`h-2 w-2 shrink-0 rounded-full ${statusDotColor(item.status)}`} />
-                  {item.status}
-                </SelectTrigger>
-                <SelectContent>
-                  {STATUS_OPTIONS.map((status) => (
-                    <SelectItem key={status} value={status}>
-                      <span className="flex items-center gap-2">
-                        <span className={`h-2 w-2 shrink-0 rounded-full ${statusDotColor(status)}`} />
-                        {status}
-                      </span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          </div>
+          <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span className={`h-2 w-2 shrink-0 rounded-full ${statusDotColor(item.status)}`} />
+            {item.status}
+          </span>
         ),
         sortValue: (item: DirectCostRow) => item.status,
       },
@@ -683,7 +459,7 @@ export function DirectCostsClient({
         sortValue: (item: DirectCostRow) => item.invoice_number ?? "",
       },
     ],
-    [updatingStatusId],
+    [],
   );
 
   const renderSummaryListItem = React.useCallback(
@@ -737,7 +513,6 @@ export function DirectCostsClient({
   if (summaryTab === "cost-code") {
     return (
       <CostCodeHierarchyView
-        projectId={projectId}
         projectName={projectName}
         tabs={tabs}
         costCodeDetails={costCodeDetails}
@@ -747,7 +522,6 @@ export function DirectCostsClient({
         onViewChange={tableState.setCurrentView}
         visibleColumns={tableState.visibleColumns}
         onColumnVisibilityChange={tableState.setVisibleColumns}
-        onEdit={handleOpenEdit}
         onView={(costId) => router.push(`/${projectId}/direct-costs/${costId}`)}
       />
     );
@@ -758,28 +532,6 @@ export function DirectCostsClient({
       <UnifiedTablePage
         header={{
           title: "Direct Costs",
-          actions: (
-            <PermissionGate projectId={projectId} module="budget" level="write">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button size="sm">
-                    <Plus />
-                    Create
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => router.push(`/${projectId}/direct-costs/new`)}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    New Direct Cost
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setIsImportDialogOpen(true)}>
-                    <Upload className="mr-2 h-4 w-4" />
-                    Import CSV
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </PermissionGate>
-          ),
         }}
         layout={{
           headerAlignment: "left",
@@ -818,20 +570,6 @@ export function DirectCostsClient({
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8 shrink-0"
-                    onClick={() => setIsImportDialogOpen(true)}
-                    aria-label="Import CSV"
-                  >
-                    <Upload />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Import CSV</TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 shrink-0"
                     disabled={isSyncing}
                     onClick={handleErpSync}
                     aria-label="Sync from ERP"
@@ -844,49 +582,10 @@ export function DirectCostsClient({
             </TooltipProvider>
           ),
           onExport: () => setIsExportDialogOpen(true),
-          mobilePanelActions: (
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full justify-start"
-              onClick={() => {
-                setIsImportDialogOpen(true);
-              }}
-            >
-              <Upload />
-              Import CSV
-            </Button>
-          ),
+          mobilePanelActions: undefined,
           onBulkDelete: undefined,
         }}
-        topContent={
-          tableState.selectedIds.length > 0 ? (
-            <div className="rounded-md border bg-muted/30 p-3">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="text-sm text-foreground">
-                  <span className="font-medium">{tableState.selectedIds.length}</span> direct cost(s) selected
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <Button size="sm" variant="outline" onClick={() => setBulkAction("approve")}>
-                    Approve
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => setBulkAction("revise")}>
-                    Revise
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => setIsExportDialogOpen(true)}>
-                    Export Selected
-                  </Button>
-                  <Button size="sm" variant="destructive" onClick={() => setBulkAction("delete")}>
-                    Delete
-                  </Button>
-                  <Button size="sm" variant="ghost" onClick={() => tableState.setSelectedIds([])}>
-                    Clear
-                  </Button>
-                </div>
-              </div>
-            </div>
-          ) : undefined
-        }
+        topContent={undefined}
         data={{ items: filteredSummaryItems, isLoading: false, isFetching: false }}
         table={{
           columns: summaryTableColumns,
@@ -903,20 +602,8 @@ export function DirectCostsClient({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => handleOpenEdit(item.id)}>
-                  Edit
-                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => router.push(`/${projectId}/direct-costs/${item.id}`)}>
                   View
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="text-destructive"
-                  onClick={() => {
-                    setDirectCostToDelete(item);
-                    setDeleteDialogOpen(true);
-                  }}
-                >
-                  Delete
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -968,14 +655,10 @@ export function DirectCostsClient({
         }}
         emptyState={{
           title: "No direct costs found",
-          description: "You have not added any direct costs yet.",
+          description: "No synced direct costs found for this project.",
           filteredDescription: "Try adjusting your search or filters.",
           isFiltered: summaryIsFiltered,
-          action: (
-            <Button size="sm" onClick={() => router.push(`/${projectId}/direct-costs/new`)}>
-              Create your first direct cost
-            </Button>
-          ),
+          action: undefined,
         }}
         pagination={{
           page: tableState.page,
@@ -992,91 +675,6 @@ export function DirectCostsClient({
             tableState.setSearchParams({ per_page: nextPerPage, page: "1" });
           },
         }}
-      />
-
-      <AlertDialog open={Boolean(bulkAction)} onOpenChange={(open) => !open && setBulkAction(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {bulkAction === "approve" && "Approve Selected Direct Costs"}
-              {bulkAction === "revise" && "Revise Selected Direct Costs"}
-              {bulkAction === "delete" && "Delete Selected Direct Costs"}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {bulkAction === "approve" &&
-                `Approve ${tableState.selectedIds.length} selected direct cost(s)?`}
-              {bulkAction === "revise" &&
-                `Set ${tableState.selectedIds.length} selected direct cost(s) to Revise and Resubmit?`}
-              {bulkAction === "delete" &&
-                `Delete ${tableState.selectedIds.length} selected direct cost(s)? This action cannot be undone.`}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                void executeBulkAction();
-              }}
-              className={bulkAction === "delete" ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" : ""}
-            >
-              Confirm
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Direct Cost</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete direct cost{" "}
-              <strong>{directCostToDelete?.invoice_number ?? directCostToDelete?.id}</strong>?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                void handleDeleteConfirm();
-              }}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Delete Direct Cost
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <Slideover open={isEditSheetOpen} onOpenChange={(open) => !open && handleCloseEditSheet()}>
-        <SlideoverContent side="right" className="w-[92vw] sm:max-w-3xl overflow-y-auto p-0">
-          <SlideoverHeader className="border-b p-4">
-            <SlideoverTitle>
-              Edit Direct Cost
-              {editingCostId ? ` #${editingCostId.slice(0, 8)}` : ""}
-            </SlideoverTitle>
-          </SlideoverHeader>
-          <div className="p-4">
-            {isEditLoading || !editingInitialData ? (
-              <div className="py-8 text-sm text-muted-foreground">Loading direct cost...</div>
-            ) : (
-              <DirectCostForm
-                mode="edit"
-                initialData={editingInitialData}
-                projectId={Number(projectId)}
-                onCancel={handleCloseEditSheet}
-                onSuccess={handleEditSuccess}
-              />
-            )}
-          </div>
-        </SlideoverContent>
-      </Slideover>
-
-      <DirectCostsImportDialog
-        open={isImportDialogOpen}
-        onOpenChange={setIsImportDialogOpen}
-        projectId={projectId}
-        onImported={() => router.refresh()}
       />
 
       <ExportDialog

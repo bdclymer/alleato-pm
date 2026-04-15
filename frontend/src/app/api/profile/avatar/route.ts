@@ -63,8 +63,12 @@ async function ensureProfileBucket() {
   if (getBucketError) {
     const details = toErrorDetails(getBucketError);
     const message = details.message.toLowerCase();
+    const normalizedDetails = (details.details || "").toLowerCase();
     const isNotFound =
-      message.includes("not found") || message.includes("does not exist");
+      message.includes("not found") ||
+      message.includes("does not exist") ||
+      message.includes("could not find the bucket") ||
+      normalizedDetails.includes("not found");
 
     if (!isNotFound) {
       return {
@@ -87,6 +91,16 @@ async function ensureProfileBucket() {
 
     if (createBucketError) {
       const createDetails = toErrorDetails(createBucketError);
+      const createMessage = createDetails.message.toLowerCase();
+      const createDetailsText = (createDetails.details || "").toLowerCase();
+      const bucketAlreadyExists =
+        createMessage.includes("already exists") ||
+        createDetailsText.includes("already exists");
+
+      if (bucketAlreadyExists) {
+        return { ok: true as const };
+      }
+
       return {
         ok: false as const,
         response: jsonError(500, {

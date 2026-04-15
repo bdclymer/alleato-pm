@@ -1027,7 +1027,7 @@ export default function DrawingDetailPage() {
           {/* ---------------------------------------------------------------- */}
           <TabsContent value="comments">
             <div className="max-w-2xl">
-              <DrawingComments drawingId={drawingId} />
+              <DrawingComments drawingId={drawingId} projectId={Number(projectId)} />
             </div>
           </TabsContent>
         </Tabs>

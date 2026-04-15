@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRfis, useCreateRfi } from "@/hooks/use-rfis";
 import { usePunchItems, useCreatePunchItem } from "@/hooks/use-punch-items";
+import { useDrawings } from "@/hooks/use-drawings";
+import { usePhotos, useUploadPhotos } from "@/hooks/use-photos";
 import {
   Dialog,
   DialogContent,
@@ -24,7 +26,7 @@ import {
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import type { DrawingMarkupPin, CreatePinInput } from "@/hooks/use-drawing-pins";
-import { FileText, Wrench, AlertTriangle, CheckSquare, Link2 } from "lucide-react";
+import { FileText, Wrench, AlertTriangle, CheckSquare, Link2, Image as ImageIcon } from "lucide-react";
 
 /** Map {x,y,page} position to CreatePinInput fields */
 function posToPin(pos: { x: number; y: number; page: number }): Pick<CreatePinInput, "x_pct" | "y_pct" | "page"> {
@@ -43,7 +45,7 @@ export const PIN_TYPE_CONFIG: Record<
   task: { label: "Task", color: "#8b5cf6", icon: <CheckSquare className="h-4 w-4" /> },
   drawing: { label: "Drawing Link", color: "#22c55e", icon: <Link2 className="h-4 w-4" /> },
   document: { label: "Document", color: "#64748b", icon: <FileText className="h-4 w-4" /> },
-  photo: { label: "Photo", color: "#eab308", icon: <FileText className="h-4 w-4" /> },
+  photo: { label: "Photo", color: "#eab308", icon: <ImageIcon className="h-4 w-4" /> },
 };
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -84,8 +86,8 @@ export function LinkPinModal({
         {/* Type selector */}
         <div>
           <Label className="text-xs text-muted-foreground mb-2 block">Link type</Label>
-          <div className="grid grid-cols-4 gap-2">
-            {(["rfi", "punch_item", "coordination_issue", "task"] as const).map((type) => {
+          <div className="grid grid-cols-3 gap-2">
+            {(["rfi", "punch_item", "drawing", "photo", "coordination_issue", "task"] as const).map((type) => {
               const c = PIN_TYPE_CONFIG[type];
               return (
                 <Button
@@ -132,6 +134,24 @@ export function LinkPinModal({
             onCancel={() => onOpenChange(false)}
           />
         )}
+        {selectedType === "drawing" && (
+          <DrawingLinkContent
+            projectId={projectId}
+            position={pendingPosition}
+            color={config.color}
+            onConfirm={handleConfirm}
+            onCancel={() => onOpenChange(false)}
+          />
+        )}
+        {selectedType === "photo" && (
+          <PhotoLinkContent
+            projectId={projectId}
+            position={pendingPosition}
+            color={config.color}
+            onConfirm={handleConfirm}
+            onCancel={() => onOpenChange(false)}
+          />
+        )}
         {selectedType === "coordination_issue" && (
           <CoordinationIssueContent
             position={pendingPosition}
@@ -150,6 +170,212 @@ export function LinkPinModal({
         )}
       </DialogContent>
     </Dialog>
+  );
+}
+
+// ── Drawing link panel ───────────────────────────────────────────────────────
+
+function DrawingLinkContent({
+  projectId,
+  position,
+  color,
+  onConfirm,
+  onCancel,
+}: {
+  projectId: string;
+  position: { x: number; y: number; page: number } | null;
+  color: string;
+  onConfirm: (input: CreatePinInput) => void;
+  onCancel: () => void;
+}) {
+  const [selectedDrawingId, setSelectedDrawingId] = useState<string | null>(null);
+  const [selectedDrawingLabel, setSelectedDrawingLabel] = useState<string | null>(null);
+  const [selectedDrawingNumber, setSelectedDrawingNumber] = useState<string | null>(null);
+  const { data } = useDrawings(projectId, { page_size: 300 });
+  const drawings = data?.drawings ?? [];
+
+  const handleLink = () => {
+    if (!position || !selectedDrawingId) return;
+    onConfirm({
+      ...posToPin(position),
+      pin_type: "drawing",
+      entity_id: selectedDrawingId,
+      entity_label: selectedDrawingLabel ?? undefined,
+      entity_number: selectedDrawingNumber ?? undefined,
+      color,
+    });
+  };
+
+  return (
+    <div className="space-y-4">
+      <Command className="border rounded-md">
+        <CommandInput placeholder="Search drawings…" />
+        <CommandList className="max-h-56">
+          <CommandGroup>
+            {drawings.map((drawing) => (
+              <CommandItem
+                key={drawing.id}
+                value={`${drawing.drawingNumber ?? ""} ${drawing.title ?? ""}`}
+                onSelect={() => {
+                  setSelectedDrawingId(drawing.id);
+                  setSelectedDrawingLabel(drawing.title ?? null);
+                  setSelectedDrawingNumber(drawing.drawingNumber ?? null);
+                }}
+                className={cn(
+                  "cursor-pointer",
+                  selectedDrawingId === drawing.id && "bg-accent"
+                )}
+              >
+                <Link2 className="mr-2 h-4 w-4 text-muted-foreground" />
+                <div className="min-w-0">
+                  {drawing.drawingNumber ? (
+                    <p className="text-[11px] text-muted-foreground leading-none mb-1">
+                      {drawing.drawingNumber}
+                    </p>
+                  ) : null}
+                  <p className="truncate">{drawing.title}</p>
+                </div>
+              </CommandItem>
+            ))}
+            {drawings.length === 0 && <CommandEmpty>No drawings found</CommandEmpty>}
+          </CommandGroup>
+        </CommandList>
+      </Command>
+      <DialogFooter>
+        <Button variant="outline" onClick={onCancel}>Cancel</Button>
+        <Button onClick={handleLink} disabled={!selectedDrawingId}>Link Drawing</Button>
+      </DialogFooter>
+    </div>
+  );
+}
+
+// ── Photo link panel ─────────────────────────────────────────────────────────
+
+function PhotoLinkContent({
+  projectId,
+  position,
+  color,
+  onConfirm,
+  onCancel,
+}: {
+  projectId: string;
+  position: { x: number; y: number; page: number } | null;
+  color: string;
+  onConfirm: (input: CreatePinInput) => void;
+  onCancel: () => void;
+}) {
+  const projectIdNum = Number(projectId);
+  const { data: photos = [], isLoading } = usePhotos(projectIdNum);
+  const uploadPhotos = useUploadPhotos(projectIdNum);
+  const [mode, setMode] = useState<"link" | "upload">("link");
+  const [selectedPhotoId, setSelectedPhotoId] = useState<string | null>(null);
+  const [selectedPhotoLabel, setSelectedPhotoLabel] = useState<string | null>(null);
+  const [fileToUpload, setFileToUpload] = useState<File | null>(null);
+
+  const handleLink = () => {
+    if (!position || !selectedPhotoId) return;
+    onConfirm({
+      ...posToPin(position),
+      pin_type: "photo",
+      entity_id: selectedPhotoId,
+      entity_label: selectedPhotoLabel ?? undefined,
+      entity_number: `Photo #${selectedPhotoId}`,
+      color,
+    });
+  };
+
+  const handleUploadAndLink = async () => {
+    if (!position || !fileToUpload) return;
+    const uploaded = await uploadPhotos.mutateAsync({ files: [fileToUpload] });
+    const createdPhoto = uploaded[0];
+    if (!createdPhoto) return;
+    onConfirm({
+      ...posToPin(position),
+      pin_type: "photo",
+      entity_id: String(createdPhoto.id),
+      entity_label: createdPhoto.title || createdPhoto.file_name,
+      entity_number: `Photo #${createdPhoto.id}`,
+      color,
+    });
+  };
+
+  return (
+    <div className="space-y-4">
+      <Tabs value={mode} onValueChange={(v) => setMode(v as "link" | "upload")}>
+        <TabsList className="w-full">
+          <TabsTrigger value="link" className="flex-1">Link Existing Photo</TabsTrigger>
+          <TabsTrigger value="upload" className="flex-1">Upload & Link Photo</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="link" className="mt-3">
+          <Command className="border rounded-md">
+            <CommandInput placeholder="Search photos…" />
+            <CommandList className="max-h-56">
+              {isLoading ? (
+                <CommandEmpty>Loading…</CommandEmpty>
+              ) : (
+                <CommandGroup>
+                  {photos.map((photo) => (
+                    <CommandItem
+                      key={photo.id}
+                      value={`${photo.title} ${photo.file_name}`}
+                      onSelect={() => {
+                        setSelectedPhotoId(String(photo.id));
+                        setSelectedPhotoLabel(photo.title || photo.file_name);
+                      }}
+                      className={cn(
+                        "cursor-pointer",
+                        selectedPhotoId === String(photo.id) && "bg-accent"
+                      )}
+                    >
+                      <ImageIcon className="mr-2 h-4 w-4 text-muted-foreground" />
+                      <div className="min-w-0">
+                        <p className="truncate">{photo.title || photo.file_name}</p>
+                        <p className="text-[11px] text-muted-foreground leading-none mt-1">
+                          Photo #{photo.id}
+                        </p>
+                      </div>
+                    </CommandItem>
+                  ))}
+                  {!isLoading && photos.length === 0 && (
+                    <CommandEmpty>No photos found</CommandEmpty>
+                  )}
+                </CommandGroup>
+              )}
+            </CommandList>
+          </Command>
+          <DialogFooter className="mt-4">
+            <Button variant="outline" onClick={onCancel}>Cancel</Button>
+            <Button onClick={handleLink} disabled={!selectedPhotoId}>Link Photo</Button>
+          </DialogFooter>
+        </TabsContent>
+
+        <TabsContent value="upload" className="mt-3 space-y-3">
+          <div>
+            <Label htmlFor="drawing-photo-upload">Photo file *</Label>
+            <Input
+              id="drawing-photo-upload"
+              type="file"
+              accept="image/*"
+              onChange={(event) => setFileToUpload(event.target.files?.[0] ?? null)}
+              className="mt-1"
+            />
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Uploads to Photos, then links it directly to this drawing pin.
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={onCancel}>Cancel</Button>
+            <Button
+              onClick={() => void handleUploadAndLink()}
+              disabled={!fileToUpload || uploadPhotos.isPending}
+            >
+              {uploadPhotos.isPending ? "Uploading…" : "Upload & Link"}
+            </Button>
+          </DialogFooter>
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 }
 

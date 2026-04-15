@@ -62,6 +62,10 @@ function formatDateTime(value: string | null | undefined): string {
   });
 }
 
+function calculateProjectProfit(project: AcumaticaProject): number {
+  return (project.income ?? 0) - (project.expenses ?? 0);
+}
+
 function escapeCsvField(field: string): string {
   if (field.includes(",") || field.includes('"') || field.includes("\n")) {
     return `"${field.replace(/"/g, '""')}"`;
@@ -80,6 +84,7 @@ const DEFAULT_VISIBLE_COLUMNS = [
   "customer",
   "income",
   "expenses",
+  "project_profit",
   "assets",
   "liabilities",
   "hold",
@@ -168,6 +173,19 @@ const COLUMNS: TableColumn<AcumaticaProject>[] = [
     csvValue: (item) => String(item.expenses ?? ""),
     sortable: true,
     sortValue: (item) => item.expenses ?? 0,
+  },
+  {
+    id: "project_profit",
+    label: "Project Profit",
+    defaultVisible: true,
+    render: (item) => (
+      <span className="tabular-nums text-foreground">
+        {formatCurrency(calculateProjectProfit(item))}
+      </span>
+    ),
+    csvValue: (item) => String(calculateProjectProfit(item)),
+    sortable: true,
+    sortValue: (item) => calculateProjectProfit(item),
   },
   {
     id: "assets",
@@ -381,19 +399,20 @@ export default function AccountingProjectsPage() {
 
   // Totals for footer
   const totals = useMemo(() => {
-    let income = 0, expenses = 0, assets = 0, liabilities = 0;
+    let income = 0, expenses = 0, projectProfit = 0, assets = 0, liabilities = 0;
     for (const p of sortedProjects) {
       income += p.income ?? 0;
       expenses += p.expenses ?? 0;
+      projectProfit += calculateProjectProfit(p);
       assets += p.assets ?? 0;
       liabilities += p.liabilities ?? 0;
     }
-    return { income, expenses, assets, liabilities };
+    return { income, expenses, projectProfit, assets, liabilities };
   }, [sortedProjects]);
 
   // Export to CSV
   const handleExport = useCallback(() => {
-    const headers = ["Project ID", "Description", "Status", "Customer", "Income", "Expenses", "Assets", "Liabilities", "On Hold", "Template", "External Ref", "Last Modified"];
+    const headers = ["Project ID", "Description", "Status", "Customer", "Income", "Expenses", "Project Profit", "Assets", "Liabilities", "On Hold", "Template", "External Ref", "Last Modified"];
     const rows = sortedProjects.map((p) => [
       p.project_id ?? "",
       p.description ?? "",
@@ -401,6 +420,7 @@ export default function AccountingProjectsPage() {
       p.customer ?? "",
       String(p.income ?? ""),
       String(p.expenses ?? ""),
+      String(calculateProjectProfit(p)),
       String(p.assets ?? ""),
       String(p.liabilities ?? ""),
       p.hold == null ? "" : p.hold ? "Yes" : "No",
@@ -520,6 +540,9 @@ export default function AccountingProjectsPage() {
           ),
           expenses: (
             <span className="tabular-nums">{formatCurrency(totals.expenses)}</span>
+          ),
+          project_profit: (
+            <span className="tabular-nums">{formatCurrency(totals.projectProfit)}</span>
           ),
           assets: (
             <span className="tabular-nums">{formatCurrency(totals.assets)}</span>

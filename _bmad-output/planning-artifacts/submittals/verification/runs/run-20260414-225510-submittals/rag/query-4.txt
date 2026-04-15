@@ -1,0 +1,119 @@
+QUERY: submittals row actions menu options
+
+
+Searching Procore docs: "submittals row actions menu options"
+
+Found 8 relevant documentation chunks:
+
+========================================================================
+
+[1] FAQ/Troubleshooting — 63.4% match
+    Section: Submittals
+    Category: Submittals
+    URL: https://v2.support.procore.com/product-manuals/submittals-project/faq-or-troubleshooting
+
+    #  Submittals
+
+------------------------------------------------------------------------
+
+[2] Permissions — 63.4% match
+    Section: Submittals
+    Category: Submittals
+    URL: https://v2.support.procore.com/product-manuals/submittals-project/permissions
+
+    #  Submittals
+
+------------------------------------------------------------------------
+
+[3] Overview — 57.4% match
+    Section: Overview
+    Category: Submittals
+    URL: https://v2.support.procore.com/product-manuals/submittals-project
+
+    #  Submittals 
+    
+    
+    
+    ##  Overview 
+    The Submittals tool enables you to organize your submittal log by division, add shop drawings, or even pages from product catalogs. Attachments can either be added directly from your computer or the project's Documents tool.
+      * Always know the current status of your project's submittals and who needs to take action
+      * Quickly locate a submittal
+      * Attach documents, drawings, and more directly to your project's submittals
+      * Assign multiple users to the 'Submit...
+
+------------------------------------------------------------------------
+
+[4] Duplicate a Submittal — 56.5% match
+    Section: Update and Send the Submittal for Review
+    Category: Submittals
+    URL: https://v2.support.procore.com/product-manuals/submittals-project/tutorials/duplicate-a-submittal
+
+    If you want to change the order of the workflow steps, do the following:
+             1. Grab the line item by the vertical grip (⋮⋮). 2. Use a drag-and-drop operation to move the line item into the desired order. ![Submittals Change Order Table](https://images.ctfassets.net/plvbd9i6qkpm/5e6966bf5739e8dc3fb213664ce89d1f/21248ab37350d4f7b71f092186cb9183/submittals-change-order-table.png?fm=webp)
+    
+    
+    ### Update and Send the Submittal for Review
+    When finished with the steps above, choose one of these opt...
+
+------------------------------------------------------------------------
+
+[5] Upload and Submit a Submittal — 55.2% match
+    Section: Steps
+    Category: Submittals
+    URL: https://v2.support.procore.com/product-manuals/submittals-project/tutorials/upload-and-submit-a-submittal
+
+    #  Upload and Submit a Submittal 
+    
+    
+    ##  Background 
+    If the general contractor for a construction project assigns you to the 'Submitter' role in a submittal workflow, it means you will be required to perform an action on a submittal. For example, you might be required to upload drawings, plans, or other documents as attachments to the submittal in order to fulfill the submittal requirements.
+    Typically, submittals in Procore are created by a submittal manager. That person names the submittal item ...
+
+------------------------------------------------------------------------
+
+[6] Use Bulk Actions > Edit in the Submittals Tool — 55.1% match
+    Section: See Also
+    Category: Submittals
+    URL: https://v2.support.procore.com/product-manuals/submittals-project/tutorials/use-bulk-actions-edit-in-the-submittals-tool
+
+    * **Required On-Site Date**. The date by which materials related to the work detailed on the submittal must be delivered and available at the construction site. 5. Click **Update**. A GREEN banner appears to confirm the total number of submittals successfully edited. A RED banner appears when edits are not successfully saved. 
+    
+    ## See Also
+      * [Perform Bulk Actions on Submittals](https://v2.support.procore.com/product-manuals/submittals-project/tutorials/perform-bulk-actions-on-submittals)
+      * [...
+
+------------------------------------------------------------------------
+
+[7] View a Submittal — 54.8% match
+    Section: See Also
+    Category: Submittals
+    URL: https://v2.support.procore.com/product-manuals/submittals-project/tutorials/view-a-submittal
+
+    This reveals the _Revision Number_ , _Title_ , _Date_ _Created_ , and _Status_. You can also click the PDF icon to download a copy of any listed revision. 4. _Optional:_ To generate a PDF summary of the submittal's information, see [Export a Submittal](https://v2.support.procore.com/product-manuals/submittals-project/tutorials/export-a-submittal). 
+    
+    ##  Next Step 
+      * [Export a Submittal](https://v2.support.procore.com/product-manuals/submittals-project/tutorials/export-a-submittal)
+    
+    
+    
+    
+    ## See A...
+
+------------------------------------------------------------------------
+
+[8] Create a Submittal — 54.6% match
+    Section: Update and Send the Submittal for Review
+    Category: Submittals
+    URL: https://v2.support.procore.com/product-manuals/submittals-project/tutorials/create-a-submittal
+
+    If you want to change the order of the workflow steps, do the following:
+        1. Grab the line item by the vertical grip (⋮⋮). 2. Use a drag-and-drop operation to move the line item into the desired order. ![Submittals Change Order Table](https://images.ctfassets.net/plvbd9i6qkpm/5e6966bf5739e8dc3fb213664ce89d1f/21248ab37350d4f7b71f092186cb9183/submittals-change-order-table.png?fm=webp)
+    
+    
+    
+    
+    ##  Update and Send the Submittal for Review 
+    When finished with the steps above, do one of the following:
+    ...
+
+------------------------------------------------------------------------

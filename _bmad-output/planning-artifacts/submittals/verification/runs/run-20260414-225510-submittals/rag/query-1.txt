@@ -1,0 +1,116 @@
+QUERY: submittals toolbar actions create button options
+
+
+Searching Procore docs: "submittals toolbar actions create button options"
+
+Found 8 relevant documentation chunks:
+
+========================================================================
+
+[1] FAQ/Troubleshooting — 53.2% match
+    Section: Submittals
+    Category: Submittals
+    URL: https://v2.support.procore.com/product-manuals/submittals-project/faq-or-troubleshooting
+
+    #  Submittals
+
+------------------------------------------------------------------------
+
+[2] Permissions — 53.1% match
+    Section: Submittals
+    Category: Submittals
+    URL: https://v2.support.procore.com/product-manuals/submittals-project/permissions
+
+    #  Submittals
+
+------------------------------------------------------------------------
+
+[3] Add a Related Item to a Submittal Package — 52.9% match
+    Section: See Also
+    Category: Submittals
+    URL: https://v2.support.procore.com/product-manuals/submittals-project/tutorials/add-a-related-item-to-a-submittal-package
+
+    Select the type of item you want to add fro the list. For example, if you want to add a bid sheet, select _Bid_. The selections available in this list will depend upon which Procore tools are active on the project. 7. Select the item you want to add from the list. 8. Enter any notes you might like to add in the **Notes** field. 9. Click **Link**. 
+    
+    ## See Also
+      * [Create a Submittal Revision](https://v2.support.procore.com/product-manuals/submittals-project/tutorials/create-a-submittal-revision...
+
+------------------------------------------------------------------------
+
+[4] Submittal Builder: Add Submittals — 52.1% match
+    Section: See Also
+    Category: Specifications
+    URL: https://v2.support.procore.com/product-manuals/specifications-project/tutorials/submittal-builder-add-submittals
+
+    Click the specification section under which you want to add submittals. 2. Click **Add. **
+    ![Add Submittals](https://images.ctfassets.net/plvbd9i6qkpm/6rqZJvxGba74LsKbF4AS3p/447d4d707ce4ed69d1131fc4f6ecfeb5/add-submittals.png?fm=webp)
+        3. Enter in the **Title** , **Type,** and **Description** of the submittal. 7. Click **Confirm** in the Submittal Builder. 
+    
+    ##  Next Steps 
+      1. [Use Bulk Actions > Edit in the Submittals Tool](https://v2.support.procore.com/product-manuals/submittals-project/...
+
+------------------------------------------------------------------------
+
+[5] Duplicate a Submittal — 51.7% match
+    Section: Update and Send the Submittal for Review
+    Category: Submittals
+    URL: https://v2.support.procore.com/product-manuals/submittals-project/tutorials/duplicate-a-submittal
+
+    If you want to change the order of the workflow steps, do the following:
+             1. Grab the line item by the vertical grip (⋮⋮). 2. Use a drag-and-drop operation to move the line item into the desired order. ![Submittals Change Order Table](https://images.ctfassets.net/plvbd9i6qkpm/5e6966bf5739e8dc3fb213664ce89d1f/21248ab37350d4f7b71f092186cb9183/submittals-change-order-table.png?fm=webp)
+    
+    
+    ### Update and Send the Submittal for Review
+    When finished with the steps above, choose one of these opt...
+
+------------------------------------------------------------------------
+
+[6] Designate the 'Default Submittal Manager' for the Submittals Tool — 50.6% match
+    Section: See Also
+    Category: Submittals
+    URL: https://v2.support.procore.com/product-manuals/submittals-project/tutorials/designate-the-default-submittal-manager-for-the-submittals-tool
+
+    The submittal manager on existing submittals is NOT updated. ##  Next Steps 
+      * [Create a Submittal](https://v2.support.procore.com/product-manuals/submittals-project/tutorials/create-a-submittal)
+      * [Create a New Submittal in a Submittal Package](https://v2.support.procore.com/product-manuals/submittals-project/tutorials/create-a-new-submittal-in-a-submittal-package)
+    
+    
+    
+    
+    ## See Also
+      * [Configure Settings: Submittals Tool](https://v2.support.procore.com/product-manuals/submittals-project/tut...
+
+------------------------------------------------------------------------
+
+[7] Create a Submittal — 50.3% match
+    Section: Update and Send the Submittal for Review
+    Category: Submittals
+    URL: https://v2.support.procore.com/product-manuals/submittals-project/tutorials/create-a-submittal
+
+    If you want to change the order of the workflow steps, do the following:
+        1. Grab the line item by the vertical grip (⋮⋮). 2. Use a drag-and-drop operation to move the line item into the desired order. ![Submittals Change Order Table](https://images.ctfassets.net/plvbd9i6qkpm/5e6966bf5739e8dc3fb213664ce89d1f/21248ab37350d4f7b71f092186cb9183/submittals-change-order-table.png?fm=webp)
+    
+    
+    
+    
+    ##  Update and Send the Submittal for Review 
+    When finished with the steps above, do one of the following:
+    ...
+
+------------------------------------------------------------------------
+
+[8] Create a Submittal Revision — 50.2% match
+    Section: Steps
+    Category: Submittals
+    URL: https://v2.support.procore.com/product-manuals/submittals-project/tutorials/create-a-submittal-revision
+
+    * _To create a revision for any submittal:_ 'Admin' level permissions on the project's Submittals tool. * **Additional Information:**
+        * You can only create a revision for the most current revision of submittal. For example, if a submittal at Revision 0, you can only create Revision 1. To learn more, see [What is a submittal revision?](https://v2.support.procore.com/faq-what-is-a-submittal-revision)
+    
+    
+    
+    
+    ##  Steps 
+      1. Navigate to the project's **Submittals** tool. This reveals the Submittals...
+
+------------------------------------------------------------------------

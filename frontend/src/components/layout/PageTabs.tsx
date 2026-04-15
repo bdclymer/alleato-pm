@@ -50,8 +50,8 @@ export function PageTabs({
       : "-mb-px flex overflow-x-auto scrollbar-hide border-b border-border";
   const buttonClasses =
     variant === "inline"
-      ? "group inline-flex items-center gap-2 whitespace-nowrap border-b-2 px-0.5 pb-2.5 pt-1.5 text-sm transition-colors"
-      : "group inline-flex items-center gap-2 whitespace-nowrap border-b-2 px-1.5 pb-3 pt-3 text-sm transition-colors";
+      ? "group inline-flex min-h-11 items-center gap-2 whitespace-nowrap border-b-2 px-2 py-2 text-sm transition-colors"
+      : "group inline-flex min-h-11 items-center gap-2 whitespace-nowrap border-b-2 px-2 py-3 text-sm transition-colors";
 
   return (
     <div className={cn(wrapperClasses, className)}>

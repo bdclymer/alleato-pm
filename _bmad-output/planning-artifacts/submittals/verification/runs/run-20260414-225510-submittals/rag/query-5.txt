@@ -1,0 +1,105 @@
+QUERY: submittals statuses and workflow transitions
+
+
+Searching Procore docs: "submittals statuses and workflow transitions"
+
+Found 8 relevant documentation chunks:
+
+========================================================================
+
+[1] Create Custom Submittal Log Statuses — 60.8% match
+    Section: See Also
+    Category: Admin Company
+    URL: https://v2.support.procore.com/product-manuals/admin-company/tutorials/create-custom-submittal-log-statuses
+
+    See [Create a Submittal](https://v2.support.procore.com/product-manuals/submittals-project/tutorials/create-a-submittal) and [Edit a Submittal](https://v2.support.procore.com/product-manuals/submittals-project/tutorials/edit-a-submittal). * If a custom status is applied to a submittal with the Submittals tool, you will NOT be able to delete that status. You are only permitted to delete statuses that are NOT in use. 
+    
+    ## See Also
+      * [Configure Administrative Settings: Company Admin](https://v2.s...
+
+------------------------------------------------------------------------
+
+[2] FAQ/Troubleshooting — 58.2% match
+    Section: Submittals
+    Category: Submittals
+    URL: https://v2.support.procore.com/product-manuals/submittals-project/faq-or-troubleshooting
+
+    #  Submittals
+
+------------------------------------------------------------------------
+
+[3] Permissions — 58.2% match
+    Section: Submittals
+    Category: Submittals
+    URL: https://v2.support.procore.com/product-manuals/submittals-project/permissions
+
+    #  Submittals
+
+------------------------------------------------------------------------
+
+[4] Duplicate a Submittal — 56.8% match
+    Section: Update and Send the Submittal for Review
+    Category: Submittals
+    URL: https://v2.support.procore.com/product-manuals/submittals-project/tutorials/duplicate-a-submittal
+
+    If you want to change the order of the workflow steps, do the following:
+             1. Grab the line item by the vertical grip (⋮⋮). 2. Use a drag-and-drop operation to move the line item into the desired order. ![Submittals Change Order Table](https://images.ctfassets.net/plvbd9i6qkpm/5e6966bf5739e8dc3fb213664ce89d1f/21248ab37350d4f7b71f092186cb9183/submittals-change-order-table.png?fm=webp)
+    
+    
+    ### Update and Send the Submittal for Review
+    When finished with the steps above, choose one of these opt...
+
+------------------------------------------------------------------------
+
+[5] Best Practices Submittals - Company Level Settings — 56.3% match
+    Section: Common Examples
+    Category: Submittals
+    URL: https://v2.support.procore.com/process-guides/best-practices-submittals/company-level-settings
+
+    With clear statuses, teams can see if a submittal is at risk of being delayed and confirm whether its the most current and approved version. Without custom statuses like "Approved / No Exceptions" or "Rejected", it could be difficult for users to find the final version of a submittal if all of its revisions had "Closed" as their status. 
+    
+    ###  Configurable Fieldsets 
+    Use Configurable Fieldsets to help make sure that your project team only sees and completes the fields that are applicable to your...
+
+------------------------------------------------------------------------
+
+[6] Create a Submittal — 56.1% match
+    Section: Update and Send the Submittal for Review
+    Category: Submittals
+    URL: https://v2.support.procore.com/product-manuals/submittals-project/tutorials/create-a-submittal
+
+    If you want to change the order of the workflow steps, do the following:
+        1. Grab the line item by the vertical grip (⋮⋮). 2. Use a drag-and-drop operation to move the line item into the desired order. ![Submittals Change Order Table](https://images.ctfassets.net/plvbd9i6qkpm/5e6966bf5739e8dc3fb213664ce89d1f/21248ab37350d4f7b71f092186cb9183/submittals-change-order-table.png?fm=webp)
+    
+    
+    
+    
+    ##  Update and Send the Submittal for Review 
+    When finished with the steps above, do one of the following:
+    ...
+
+------------------------------------------------------------------------
+
+[7] Best Practices: Company Level Submittal Settings — 54.5% match
+    Section: Common Examples
+    Category: General
+    URL: https://v2.support.procore.com/reference-best-practices-company-level-submittal-settings
+
+    With clear statuses, teams can see if a submittal is at risk of being delayed and confirm whether its the most current and approved version. Without custom statuses like "Approved / No Exceptions" or "Rejected", it could be difficult for users to find the final version of a submittal if all of its revisions had "Closed" as their status. 
+    
+    ##  Configurable Fieldsets 
+    Use Configurable Fieldsets to help make sure that your project team only sees and completes the fields that are applicable to your ...
+
+------------------------------------------------------------------------
+
+[8] Best Practices: Submittal Project Configurations — 54.4% match
+    Section: Workflow Templates
+    Category: General
+    URL: https://v2.support.procore.com/reference-best-practices-submittal-project-configurations
+
+    See [Add a User Account to the Project Directory](https://v2.support.procore.com/product-manuals/directory-project/tutorials/add-user-account-to-project-directory). See [Submittals - Workflow Diagrams](https://v2.support.procore.com/product-manuals/submittals-project/diagrams) for a visual of how these roles work together in a submittal's lifecycle. 
+    
+    ##  Submittal Responses 
+    These settings allow you to customize the responses that can be used by Reviewers and Approvers. For example, you can add...
+
+------------------------------------------------------------------------

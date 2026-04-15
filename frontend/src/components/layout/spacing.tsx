@@ -72,10 +72,15 @@ export function LabelValueRow({
   missing,
 }: LabelValueRowProps) {
   return (
-    <div className={cn("flex items-start gap-4", className)}>
+    <div
+      className={cn(
+        "flex flex-col items-start gap-1.5 sm:flex-row sm:gap-4",
+        className,
+      )}
+    >
       <dt
         className={cn(
-          "w-36 shrink-0 pt-0.5 text-xs text-muted-foreground",
+          "w-full shrink-0 pt-0.5 text-xs text-muted-foreground sm:w-36",
           labelClassName,
         )}
       >

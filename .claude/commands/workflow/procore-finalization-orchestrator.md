@@ -36,6 +36,23 @@ Set project root at runtime:
 PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel)}"
 ```
 
+## RAG Preflight (Mandatory, Fail Fast)
+
+Before Phase 1, validate the Supabase-backed Procore RAG pipeline is available.
+
+1. Validate required env vars are present:
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `SUPABASE_SERVICE_ROLE_KEY`
+   - one of `AI_GATEWAY_API_KEY` or `OPENAI_API_KEY`
+2. Run a Tier 1 smoke query from project root:
+   ```bash
+   node scripts/procore-docs-query.js "procore change order statuses"
+   ```
+3. If env vars are missing, query exits non-zero, or the result has no usable article URL:
+   - mark run `failed`
+   - write failure reason under Phase 0 `errors`
+   - stop execution (do not continue with stale assumptions)
+
 ## Canonical Artifact Root
 
 All outputs must be written under run-scoped root:
@@ -71,6 +88,7 @@ Required human-readable artifacts:
 - `04-gap-analysis-report.md`
 - `07-remediation-log.md`
 - `08-final-summary.md`
+- `09-feature-inventory.md`
 
 ## Artifact Contract
 
@@ -146,6 +164,7 @@ Exit contract:
 1. Parse args and normalize feature slug.
 2. Initialize run-scoped artifact root.
 3. Create `00-run-manifest.json` + `latest.json`.
+4. Execute RAG preflight and persist evidence in `00-run-manifest.json`.
 
 ### Phase 1: DISCOVER (parallel)
 
@@ -243,6 +262,8 @@ Gate to proceed:
 - every non-passing finding has unique `gap_id`
 - task list covers all unresolved findings
 - cross-artifact invariants pass
+- every `confirmed` finding includes at least one authoritative source URL in `evidence`
+- any finding without authoritative source must be `needs-verification` or `blocked`, never `confirmed`
 
 ### Phase 5: REMEDIATE (autonomous fix loop)
 
@@ -273,10 +294,18 @@ Loop rules:
 3. Spawn `fix_worker` for each unlocked runnable task (with RAG pre-step above).
 4. After each fix:
    - run quality checks
-   - update `07-remediation-log.md` (include RAG source URL for each fix)
+   - update `07-remediation-log.md` with all of:
+     - RAG/support source URL(s) for the fix
+     - root cause
+     - detection gap (why this was not caught earlier)
+     - prevention step (guardrail added)
+     - fail-loudly rule (how future failures surface immediately)
+     - recurrence barrier (what makes this not happen again)
    - update task status in `06-task-list.json`
    - synchronize finding status in `05-verification-report.json`
 5. Release lock.
+
+Any remediation entry missing source URL or prevention fields is invalid and must fail the task.
 
 Parallelism policy:
 - up to 3 concurrent fix workers
@@ -329,6 +358,14 @@ Generate `08-final-summary.md` with:
 - closed vs remaining by severity
 - top residual risks
 - exact next actions
+
+Generate `09-feature-inventory.md` with a complete list of every feature for the target tool.
+Required structure:
+- grouped sections by surface (`list`, `create`, `detail`, `edit`, `workflow`, `line-items`, `attachments`, `reports`, `integrations`) and include `N/A` for non-applicable surfaces
+- each feature row includes: `feature_name`, `surface`, `source` (`RAG|manifest|support-article|codebase`), and `evidence` (URL or file path)
+- explicit coverage summary: `total_features`, `implemented_features`, `missing_features`, `completion_percent`
+- every listed feature must be traceable to at least one authoritative source URL or manifest/code path
+- start from template: `scripts/templates/procore-feature-inventory-template.md`
 
 ## Autonomous Behavior Rules
 

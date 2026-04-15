@@ -20,6 +20,25 @@ Produces screenshots, specs, a verified gap analysis, and an actionable task lis
 
 ---
 
+## Reliability Contract (Mandatory)
+
+Use the same non-negotiable reliability model as `procore-complete`:
+
+1. **Fail fast preflight before research**
+   - validate `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and one of `AI_GATEWAY_API_KEY` or `OPENAI_API_KEY`
+   - run: `node scripts/procore-docs-query.js "procore <tool-name> statuses"`
+   - if preflight fails, stop and mark verification blocked/failed (do not continue on assumptions)
+2. **RAG-first behavior definition**
+   - query `procore-docs-rag` Tier 1 before making parity judgments
+   - escalate to support article fetch when score is weak (<60%) or behavior is ambiguous
+3. **Evidence gate**
+   - no finding may be marked `confirmed` without authoritative evidence URL/path
+   - ambiguous findings must be `needs-verification` or `blocked`
+4. **Recurrence-prevention gate for fixes**
+   - for every fix recommendation, include: root cause, detection gap, prevention step, fail-loudly rule, recurrence barrier
+
+---
+
 ## CRITICAL: Authentication & Credentials
 
 **All credentials live in the `.env` file at the project root. NEVER ask the user to log in manually.**

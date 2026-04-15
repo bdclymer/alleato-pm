@@ -10,6 +10,7 @@ import {
   notifyWeeklyDigest,
   notifyAssignment,
   notifyApprovalRequest,
+  notifyBallInCourt,
 } from "@/services/notificationService";
 
 /**
@@ -20,7 +21,7 @@ import {
  *
  * Body:
  * {
- *   kind: "$criticalIssue" | "$deadline" | "$statusChange" | "$budgetAlert" | "$weeklyDigest" | "$assignment" | "$approvalRequest",
+ *   kind: "$criticalIssue" | "$deadline" | "$statusChange" | "$budgetAlert" | "$weeklyDigest" | "$assignment" | "$approvalRequest" | "$ballInCourt",
  *   userIds: string | string[],
  *   data: { ... kind-specific data }
  * }
@@ -79,6 +80,9 @@ export const POST = withApiGuardrails(
         break;
       case "$approvalRequest":
         await notifyApprovalRequest(userIds, data);
+        break;
+      case "$ballInCourt":
+        await notifyBallInCourt(userIds, data);
         break;
       default:
         return NextResponse.json(

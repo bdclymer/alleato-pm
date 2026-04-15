@@ -2,8 +2,7 @@
 
 import * as React from "react";
 import type { ReactElement } from "react";
-import { useRouter } from "next/navigation";
-import { ChevronDown, ChevronRight, Plus } from "lucide-react";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { UnifiedTablePage } from "@/components/tables/unified";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -35,7 +34,6 @@ type HierarchyRow = {
 };
 
 interface CostCodeHierarchyViewProps {
-  projectId: string;
   projectName: string;
   tabs: TabItem[];
   costCodeDetails: CostCodeDetailRow[];
@@ -45,12 +43,10 @@ interface CostCodeHierarchyViewProps {
   onViewChange: (view: ViewMode) => void;
   visibleColumns: string[];
   onColumnVisibilityChange: (columns: string[]) => void;
-  onEdit: (costId: string) => void;
   onView: (costId: string) => void;
 }
 
 export function CostCodeHierarchyView({
-  projectId,
   projectName,
   tabs,
   costCodeDetails,
@@ -60,10 +56,8 @@ export function CostCodeHierarchyView({
   onViewChange,
   visibleColumns,
   onColumnVisibilityChange,
-  onEdit,
   onView,
 }: CostCodeHierarchyViewProps): ReactElement {
-  const router = useRouter();
   const [expandedGroups, setExpandedGroups] = React.useState<Set<string>>(new Set());
 
   const filteredCostCodeItems = React.useMemo(() => {
@@ -223,18 +217,6 @@ export function CostCodeHierarchyView({
                 className="h-7 px-2"
                 onClick={(event) => {
                   event.stopPropagation();
-                  onEdit(detail.direct_cost_id);
-                }}
-              >
-                Edit
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                className="h-7 px-2"
-                onClick={(event) => {
-                  event.stopPropagation();
                   onView(detail.direct_cost_id);
                 }}
               >
@@ -263,12 +245,6 @@ export function CostCodeHierarchyView({
       header={{
         title: "Direct Costs",
         description: "Track and manage direct project costs",
-        actions: (
-          <Button size="sm" onClick={() => router.push(`/${projectId}/direct-costs/new`)}>
-            <Plus />
-            New Direct Cost
-          </Button>
-        ),
       }}
       tabs={tabs}
       toolbar={{

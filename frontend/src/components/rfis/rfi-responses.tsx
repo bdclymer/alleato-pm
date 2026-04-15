@@ -5,11 +5,12 @@ import { EntityComments } from "@/components/comments/entity-comments";
 
 interface RfiResponsesProps {
   rfiId: string;
+  projectId?: number;
   className?: string;
 }
 
 /**
- * RFI Responses section powered by Liveblocks threads.
+ * RFI Responses section powered by Supabase collaboration comments.
  *
  * Wraps EntityRoom + EntityComments to provide:
  * - Threaded responses from assignees
@@ -22,9 +23,9 @@ interface RfiResponsesProps {
  * <RfiResponses rfiId={rfi.id} />
  * ```
  */
-export function RfiResponses({ rfiId, className }: RfiResponsesProps) {
+export function RfiResponses({ rfiId, projectId, className }: RfiResponsesProps) {
   return (
-    <EntityRoom entityType="rfi" entityId={rfiId}>
+    <EntityRoom entityType="rfi" entityId={rfiId} projectId={projectId}>
       <EntityComments title="Responses" className={className} />
     </EntityRoom>
   );

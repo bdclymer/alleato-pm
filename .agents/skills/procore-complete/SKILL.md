@@ -27,50 +27,31 @@ Always execute:
 
 If any command or skill text conflicts with that file, the orchestrator file wins.
 
-## Execution Contract
+## Supabase RAG Requirement (Non-Negotiable)
 
-1. Parse args and initialize run context.
-2. Execute phases in order:
-- `INIT_COMMAND`
-- `DISCOVER` (parallel subagents)
-- `CAPTURE_SOURCE_OF_TRUTH`
-- `RECONCILE_MANIFEST`
-- `GAP_ANALYZE` (parallel subagents)
-- `REMEDIATE` (autonomous fix loop)
-- `VERIFY_IMPLEMENTATION`
-- `FINALIZE_AND_REPORT`
-3. Persist outputs under run root:
-- `_bmad-output/planning-artifacts/<feature>/verification/runs/<run_id>/`
-4. Update latest pointer:
-- `_bmad-output/planning-artifacts/<feature>/verification/latest.json`
-5. Enforce completion gate:
-- `critical = 0`
-- `high = 0`
-- required verification flows pass
-- quality checks pass
+This workflow requires the Procore RAG pipeline backed by Supabase.
 
-## Parallel Subagent Policy
+- Tier 1 behavior source is `procore-docs-rag` using `scripts/procore-docs-query.js`.
+- Do not skip RAG and rely on assumptions or model memory.
+- RAG usage and evidence requirements are enforced by the orchestrator in discovery, gap analysis, and remediation.
 
-Use parallel subagents for independent lanes:
-- Discovery lanes (codebase vs Procore reference)
-- Gap analysis lanes (db/api/ui)
-- Remediation workers with non-overlapping write scopes
+## Drift Control
 
-Do not parallelize live browser actions that share one session.
+This skill is intentionally thin to avoid duplicate rules drifting from the orchestrator.
 
-## Autonomous Policy
-
-Default to autonomous execution.
-
-Do not pause between phases unless an operation is destructive or there is true ambiguity that requires explicit human input.
+- Linked orchestrator: `.claude/commands/workflow/procore-finalization-orchestrator.md`
+- Last reviewed against orchestrator: `2026-04-15`
 
 ## Required Final Output
 
 Produce and report:
 - `release-readiness.json`
 - `08-final-summary.md`
+- `09-feature-inventory.md` (complete list of every feature for the target tool)
 
 Include:
 - before/after completion percentages
 - resolved vs remaining items by severity
 - blockers or waivers with owner/date/approver/rationale
+- complete feature inventory grouped by area (list/detail/create/edit/workflow/line-items/attachments/reports/integrations as applicable)
+- use template: `scripts/templates/procore-feature-inventory-template.md`

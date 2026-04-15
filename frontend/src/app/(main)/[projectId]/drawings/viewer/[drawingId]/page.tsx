@@ -14,6 +14,7 @@ import {
   Eye,
   EyeOff,
   Pencil,
+  Highlighter,
   MousePointer2,
   Square,
   ArrowUpRight,
@@ -81,15 +82,16 @@ const DrawingViewerWithComments = dynamic(
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type AnnotationTool = "select" | "pen" | "rectangle" | "arrow" | "text" | "eraser" | "comment" | "link";
+type AnnotationTool = "select" | "pen" | "highlighter" | "rectangle" | "arrow" | "text" | "eraser" | "comment" | "link";
 type RightPanel = "info" | "search" | "activity" | "links" | "filter" | null;
-type LocalAnnotationType = "pen" | "rectangle" | "arrow" | "text";
+type LocalAnnotationType = "pen" | "highlighter" | "rectangle" | "arrow" | "text";
 type PinFilterType = DrawingMarkupPin["pin_type"];
 
 // Annotation tools (excludes "link" which is handled separately)
 const ANNOTATION_TOOLS: { tool: AnnotationTool; icon: React.ReactNode; label: string }[] = [
   { tool: "select", icon: <MousePointer2 className="h-4 w-4" />, label: "Select" },
   { tool: "pen", icon: <Pencil className="h-4 w-4" />, label: "Pen" },
+  { tool: "highlighter", icon: <Highlighter className="h-4 w-4" />, label: "Highlight" },
   { tool: "rectangle", icon: <Square className="h-4 w-4" />, label: "Rectangle" },
   { tool: "arrow", icon: <ArrowUpRight className="h-4 w-4" />, label: "Arrow" },
   { tool: "text", icon: <Type className="h-4 w-4" />, label: "Text" },
@@ -111,6 +113,7 @@ const PRESET_COLORS = [
 
 const LOCAL_ANNOTATION_FILTERS: { key: LocalAnnotationType; label: string }[] = [
   { key: "pen", label: "Freehand" },
+  { key: "highlighter", label: "Highlights" },
   { key: "rectangle", label: "Rectangles" },
   { key: "arrow", label: "Arrows" },
   { key: "text", label: "Text" },
@@ -243,6 +246,7 @@ export default function DrawingViewerPage() {
   });
   const [visibleLocalAnnotations, setVisibleLocalAnnotations] = useState<Record<LocalAnnotationType, boolean>>({
     pen: true,
+    highlighter: true,
     rectangle: true,
     arrow: true,
     text: true,
@@ -428,6 +432,7 @@ export default function DrawingViewerPage() {
     });
     setVisibleLocalAnnotations({
       pen: visible,
+      highlighter: visible,
       rectangle: visible,
       arrow: visible,
       text: visible,
@@ -461,11 +466,11 @@ export default function DrawingViewerPage() {
       variant="table"
       title="Drawing Viewer"
       showHeader={false}
-      className="h-screen overflow-hidden bg-background text-foreground !px-0 !py-0"
+      className="dark h-screen overflow-hidden bg-background text-foreground !px-0 !py-0"
       contentClassName="h-full"
     >
       <TooltipProvider>
-        <div className="h-screen overflow-hidden flex flex-col bg-background text-foreground">
+        <div className="dark h-screen overflow-hidden flex flex-col bg-background text-foreground">
 
         {/* ── Top bar ──────────────────────────────────────────────────────── */}
         <div className="h-11 shrink-0 flex items-center justify-between px-2 bg-card border-b border-border">
@@ -744,7 +749,7 @@ export default function DrawingViewerPage() {
                 drawingNumber={drawing?.drawing_number ?? undefined}
                 title={drawing?.title ?? undefined}
                 showToolbar={false}
-                controlledTool={viewerTool as "select" | "pen" | "rectangle" | "arrow" | "text" | "eraser" | "comment" | "link"}
+                controlledTool={viewerTool as "select" | "pen" | "highlighter" | "rectangle" | "arrow" | "text" | "eraser" | "comment" | "link"}
                 controlledColor={annotationColor}
                 controlledScale={viewScale}
                 onScaleChange={setViewScale}
@@ -951,17 +956,17 @@ export default function DrawingViewerPage() {
 
               {/* ── Info panel ─────────────────────────────────────────── */}
               {activePanel === "info" && (
-                <div className="flex-1 overflow-y-auto p-3 space-y-3">
+                <div className="flex-1 overflow-y-auto px-4 py-4 space-y-6">
                   {drawing ? (
                     <>
-                      <div>
-                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground/80 mb-1">Drawing</p>
-                        <p className="text-sm font-medium text-foreground">{drawing.title}</p>
+                      <div className="space-y-2">
+                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground/80">Drawing</p>
+                        <p className="text-base font-semibold text-foreground leading-tight">{drawing.title}</p>
                         {drawing.drawing_number && (
-                          <p className="text-xs text-muted-foreground mt-0.5">{drawing.drawing_number}</p>
+                          <p className="text-sm text-muted-foreground">{drawing.drawing_number}</p>
                         )}
                       </div>
-                      <div className="space-y-2">
+                      <div className="space-y-3">
                         {[
                           { label: "Discipline", value: drawing.discipline },
                           { label: "Type", value: drawing.drawing_type },
@@ -974,9 +979,9 @@ export default function DrawingViewerPage() {
                         ]
                           .filter((row) => row.value)
                           .map((row) => (
-                            <div key={row.label} className="flex justify-between gap-2">
-                              <span className="text-xs text-muted-foreground/80 shrink-0">{row.label}</span>
-                              <span className="text-xs text-foreground/80 text-right truncate">{row.value}</span>
+                            <div key={row.label} className="grid grid-cols-[120px_1fr] items-start gap-4">
+                              <span className="text-xs text-muted-foreground shrink-0 pt-0.5">{row.label}</span>
+                              <span className="text-sm text-foreground text-right leading-snug break-words">{row.value}</span>
                             </div>
                           ))}
                       </div>
@@ -994,13 +999,13 @@ export default function DrawingViewerPage() {
               {/* ── Search panel ───────────────────────────────────────── */}
               {activePanel === "search" && (
                 <div className="flex-1 flex flex-col overflow-hidden">
-                  <div className="p-2 border-b border-border">
+                  <div className="px-3 py-3 border-b border-border">
                     <Input
                       autoFocus
                       placeholder="Search drawings…"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="h-8 bg-muted border-border/80 text-foreground placeholder:text-muted-foreground text-sm focus-visible:ring-ring"
+                      className="h-10 bg-muted border-border/80 text-foreground placeholder:text-muted-foreground text-base focus-visible:ring-ring"
                     />
                   </div>
                   <div className="flex-1 overflow-y-auto">
@@ -1017,16 +1022,16 @@ export default function DrawingViewerPage() {
                           variant="ghost"
                           onClick={() => navigateToDrawing(d.id)}
                           className={cn(
-                            "w-full justify-start px-3 py-2 flex items-start gap-2 hover:bg-muted transition-colors border-b border-border/50",
+                            "w-full justify-start px-3 py-3.5 flex items-start gap-3 hover:bg-muted transition-colors border-b border-border/50",
                             d.id === drawingId && "bg-accent/60"
                           )}
                         >
-                          <FileText className="h-3.5 w-3.5 text-muted-foreground/80 mt-0.5 shrink-0" />
+                          <FileText className="h-4 w-4 text-muted-foreground/80 mt-0.5 shrink-0" />
                           <div className="min-w-0">
                             {d.drawingNumber && (
-                              <p className="text-[10px] text-muted-foreground/80 leading-none mb-0.5">{d.drawingNumber}</p>
+                              <p className="text-xs text-muted-foreground/90 leading-none mb-1">{d.drawingNumber}</p>
                             )}
-                            <p className="text-xs text-foreground truncate">{d.title}</p>
+                            <p className="text-lg text-foreground leading-tight truncate">{d.title}</p>
                           </div>
                         </Button>
                       ))
@@ -1037,8 +1042,8 @@ export default function DrawingViewerPage() {
 
               {/* ── Activity / Comments panel ───────────────────────────── */}
               {activePanel === "activity" && (
-                <div className="flex-1 overflow-y-auto p-3">
-                  <DrawingComments drawingId={drawingId} />
+                <div className="flex-1 overflow-y-auto px-3 py-4">
+                  <DrawingComments drawingId={drawingId} projectId={Number(projectId)} />
                 </div>
               )}
             </div>
