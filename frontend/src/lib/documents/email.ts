@@ -17,7 +17,9 @@ interface ResendSuccessResponse {
 
 function getFromAddress(): string {
   const configuredFrom =
-    process.env.RESEND_FROM_EMAIL || process.env.DIGEST_FROM_EMAIL;
+    process.env.RESEND_FROM_EMAIL ||
+    process.env.DIGEST_FROM_EMAIL ||
+    process.env.EMAIL_FROM_ADDRESS;
 
   if (configuredFrom) {
     return configuredFrom;
@@ -28,7 +30,7 @@ function getFromAddress(): string {
   }
 
   throw new Error(
-    "RESEND_FROM_EMAIL or DIGEST_FROM_EMAIL must be configured with a verified sender address",
+    "RESEND_FROM_EMAIL, DIGEST_FROM_EMAIL, or EMAIL_FROM_ADDRESS must be configured with a verified sender address",
   );
 }
 

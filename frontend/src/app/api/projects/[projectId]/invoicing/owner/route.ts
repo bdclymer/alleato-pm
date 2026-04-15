@@ -20,7 +20,7 @@ function buildGeneratedInvoiceNumber(invoiceId: number): string {
 export const POST = withApiGuardrails<{ projectId: string }>(
   "projects/[projectId]/invoicing/owner#POST",
   async ({ request, params }) => {
-  
+    const where = "projects/[projectId]/invoicing/owner#POST";
     const { projectId } = params;
     const projectIdNum = parseInt(projectId, 10);
 
@@ -33,10 +33,12 @@ export const POST = withApiGuardrails<{ projectId: string }>(
 
     // Validate required fields
     if (!prime_contract_id) {
-      return NextResponse.json(
-        { error: "prime_contract_id is required" },
-        { status: 400 },
-      );
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where,
+        message: "prime_contract_id is required.",
+        details: [{ path: "prime_contract_id", message: "Prime contract is required." }],
+      });
     }
 
     // Verify the prime contract belongs to this project
@@ -48,10 +50,13 @@ export const POST = withApiGuardrails<{ projectId: string }>(
       .single();
 
     if (contractError || !contract) {
-      return NextResponse.json(
-        { error: "Contract not found or does not belong to this project" },
-        { status: 404 },
-      );
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where,
+        message: "Contract not found or does not belong to this project.",
+        status: 404,
+        severity: "low",
+      });
     }
 
     // Insert the new owner invoice
@@ -98,7 +103,7 @@ export const POST = withApiGuardrails<{ projectId: string }>(
 export const GET = withApiGuardrails<{ projectId: string }>(
   "projects/[projectId]/invoicing/owner#GET",
   async ({ request, params }) => {
-  
+    const where = "projects/[projectId]/invoicing/owner#GET";
     const supabase = await createClient();
     const { projectId } = params;
 
@@ -109,14 +114,11 @@ export const GET = withApiGuardrails<{ projectId: string }>(
     } = await supabase.auth.getUser();
 
     if (authError) {
-      return NextResponse.json(
-        { error: "Authentication failed", details: authError.message },
-        { status: 401 },
-      );
+      return apiErrorResponse(authError);
     }
 
     if (!user) {
-      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/invoicing/owner#GET", message: "Authentication required." });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where, message: "Authentication required." });
     }
 
     const projectIdNum = parseInt(projectId, 10);
@@ -151,10 +153,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
     const { data: invoices, error: invoicesError } = await query;
 
     if (invoicesError) {
-      return NextResponse.json(
-        { error: "Failed to fetch owner invoices", details: invoicesError.message },
-        { status: 500 },
-      );
+      return apiErrorResponse(invoicesError);
     }
 
     // Batch-fetch approved prime contract change orders for all contracts in result set

@@ -51,7 +51,7 @@ export function MobileFilterModal({
           )}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-[425px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-dvh w-full overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Filters</DialogTitle>
           <DialogDescription>

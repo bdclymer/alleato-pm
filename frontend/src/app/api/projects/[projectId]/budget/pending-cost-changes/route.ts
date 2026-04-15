@@ -8,6 +8,27 @@ type TypeFilter = "all" | "commitment" | "change_order";
 const PENDING_SUBCONTRACT_STATUSES = ["out for signature", "pending"];
 const PENDING_PO_STATUSES = ["draft", "sent", "acknowledged"];
 
+interface RuntimeCommitmentsClient {
+  from: (tableName: "commitments") => {
+    select: (selectedColumns: "id") => {
+      eq: (column: "project_id", value: number) => {
+        in: (
+          column: "id",
+          values: string[],
+        ) => Promise<{
+          data: Array<{ id: string }> | null;
+          error: { message: string } | null;
+        }>;
+      };
+    };
+  };
+}
+
+type PendingRowsResult = {
+  data: unknown[] | null;
+  error: { message: string } | null;
+};
+
 /**
  * Resolve budget cost code from query params.
  */
@@ -67,80 +88,65 @@ export const GET = withApiGuardrails<{ projectId: string }>(
       return NextResponse.json({ changes: [] });
     }
 
-    const queries: Array<PromiseLike<{ data: unknown[] | null; error: { message: string } | null }>> = [];
+    const queries: Array<Promise<PendingRowsResult>> = [];
 
     if (typeFilter === "all" || typeFilter === "commitment") {
       queries.push(
-        supabase
-          .from("subcontract_sov_items")
-          .select(
-            `
-            id,
-            amount,
-            description,
-            subcontract_id,
-            subcontracts!inner(
-              project_id,
-              status,
-              contract_number,
-              created_at
-            )
-          `,
-          )
-          .eq("subcontracts.project_id", projectIdNum)
-          .eq("budget_code", costCodeId)
-          .in("subcontracts.status", PENDING_SUBCONTRACT_STATUSES),
-      );
-
-      queries.push(
-        supabase
-          .from("purchase_order_sov_items")
-          .select(
-            `
-            id,
-            amount,
-            description,
-            purchase_order_id,
-            purchase_orders!inner(
-              project_id,
-              status,
-              contract_number,
-              created_at
-            )
-          `,
-          )
-          .eq("purchase_orders.project_id", projectIdNum)
-          .eq("budget_code", costCodeId)
-          .in("purchase_orders.status", PENDING_PO_STATUSES),
-      );
-    }
-
-    if (typeFilter === "all" || typeFilter === "change_order") {
-      queries.push(
-        supabase
-          .from("commitment_change_order_lines")
-          .select(
-            `
-            id,
-            amount,
-            description,
-            cost_code_id,
-            commitment_change_orders!inner(
+        (async () => {
+          const { data, error } = await supabase
+            .from("subcontract_sov_items")
+            .select(
+              `
               id,
-              status,
-              change_order_number,
-              submitted_at,
-              commitments!inner(
+              amount,
+              description,
+              subcontract_id,
+              subcontracts!inner(
                 project_id,
-                commitment_number,
-                commitment_type
+                status,
+                contract_number,
+                created_at
               )
+            `,
             )
-          `,
-          )
-          .eq("commitment_change_orders.commitments.project_id", projectIdNum)
-          .eq("cost_code_id", costCodeId)
-          .like("commitment_change_orders.status", "Pending%"),
+            .eq("subcontracts.project_id", projectIdNum)
+            .eq("budget_code", costCodeId)
+            .in("subcontracts.status", PENDING_SUBCONTRACT_STATUSES);
+
+          return {
+            data: (data as unknown[] | null) ?? null,
+            error: error ? { message: error.message } : null,
+          };
+        })(),
+      );
+
+      queries.push(
+        (async () => {
+          const { data, error } = await supabase
+            .from("purchase_order_sov_items")
+            .select(
+              `
+              id,
+              amount,
+              description,
+              purchase_order_id,
+              purchase_orders!inner(
+                project_id,
+                status,
+                contract_number,
+                created_at
+              )
+            `,
+            )
+            .eq("purchase_orders.project_id", projectIdNum)
+            .eq("budget_code", costCodeId)
+            .in("purchase_orders.status", PENDING_PO_STATUSES);
+
+          return {
+            data: (data as unknown[] | null) ?? null,
+            error: error ? { message: error.message } : null,
+          };
+        })(),
       );
     }
 
@@ -205,21 +211,90 @@ export const GET = withApiGuardrails<{ projectId: string }>(
     }
 
     if (typeFilter === "all" || typeFilter === "change_order") {
-      const coRows = (results[index++].data ?? []) as Array<Record<string, unknown>>;
-      for (const row of coRows) {
-        const parent = Array.isArray(row.commitment_change_orders)
-          ? row.commitment_change_orders[0]
-          : row.commitment_change_orders;
-        const parentObj = parent as Record<string, unknown> | null;
-        changes.push({
-          id: String(row.id),
-          number: String(parentObj?.change_order_number ?? ""),
-          description: String(row.description ?? ""),
-          amount: Number(row.amount) || 0,
-          status: String(parentObj?.status ?? "pending"),
-          type: "commitment_change_order",
-          requestedDate: (parentObj?.submitted_at as string | null) ?? null,
-        });
+      const { data: coLineRows, error: coLineError } = await supabase
+        .from("commitment_change_order_lines")
+        .select("id, amount, description, commitment_change_order_id")
+        .eq("cost_code_id", costCodeId);
+
+      if (coLineError) {
+        return NextResponse.json(
+          { error: "Failed to fetch pending cost changes", details: coLineError.message },
+          { status: 500 },
+        );
+      }
+
+      const changeOrderIds = Array.from(
+        new Set(
+          (coLineRows ?? [])
+            .map((row) => row.commitment_change_order_id)
+            .filter((id): id is string => typeof id === "string" && id.length > 0),
+        ),
+      );
+
+      if (changeOrderIds.length > 0) {
+        const { data: coParents, error: coParentError } = await supabase
+          .from("contract_change_orders")
+          .select("id, contract_id, change_order_number, status, requested_date, created_at")
+          .in("id", changeOrderIds)
+          .like("status", "Pending%");
+
+        if (coParentError) {
+          return NextResponse.json(
+            { error: "Failed to fetch pending cost changes", details: coParentError.message },
+            { status: 500 },
+          );
+        }
+
+        const commitmentIds = Array.from(
+          new Set(
+            (coParents ?? [])
+              .map((row) => row.contract_id)
+              .filter((id): id is string => typeof id === "string" && id.length > 0),
+          ),
+        );
+
+        let allowedCommitmentIds = new Set<string>();
+        if (commitmentIds.length > 0) {
+          const runtimeSupabase = supabase as unknown as RuntimeCommitmentsClient;
+          const { data: commitments, error: commitmentsError } = await runtimeSupabase
+            .from("commitments")
+            .select("id")
+            .eq("project_id", projectIdNum)
+            .in("id", commitmentIds);
+
+          if (commitmentsError) {
+            return NextResponse.json(
+              {
+                error: "Failed to fetch pending cost changes",
+                details: commitmentsError.message,
+              },
+              { status: 500 },
+            );
+          }
+
+          allowedCommitmentIds = new Set((commitments ?? []).map((row) => row.id));
+        }
+
+        const parentById = new Map(
+          (coParents ?? [])
+            .filter((row) => allowedCommitmentIds.has(row.contract_id))
+            .map((row) => [row.id, row]),
+        );
+
+        for (const row of coLineRows ?? []) {
+          const parent = parentById.get(row.commitment_change_order_id);
+          if (!parent) continue;
+
+          changes.push({
+            id: String(row.id),
+            number: parent.change_order_number ?? "",
+            description: String(row.description ?? ""),
+            amount: Number(row.amount) || 0,
+            status: parent.status ?? "pending",
+            type: "commitment_change_order",
+            requestedDate: parent.requested_date ?? parent.created_at ?? null,
+          });
+        }
       }
     }
 

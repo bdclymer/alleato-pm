@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
+import { getScopedCommitmentChangeOrder } from "@/lib/change-orders/commitment-change-orders";
 
 interface RouteParams {
   params: Promise<{ projectId: string; commitmentCoId: string }>;
@@ -19,45 +20,21 @@ interface RouteParams {
 export const GET = withApiGuardrails(
   "projects/[projectId]/commitment-change-orders/[commitmentCoId]#GET",
   async ({ request, params }) => {
-  
     const { projectId, commitmentCoId } = await params;
     const supabase = await createClient();
 
-    // Fetch the change order
-    const { data: co, error: coError } = await supabase
-      .from("contract_change_orders")
-      .select("*")
-      .eq("id", commitmentCoId)
-      .single();
+    const scoped = await getScopedCommitmentChangeOrder(
+      supabase,
+      Number(projectId),
+      commitmentCoId,
+    );
 
-    if (coError) {
-      if (coError.code === "PGRST116") {
-        return NextResponse.json({ error: "Not found" }, { status: 404 });
-      }
-      return apiErrorResponse(coError);
-    }
-
-    // Verify the linked commitment belongs to this project
-    const { data: commitment, error: commitmentError } = await supabase
-      .from("commitments_unified")
-      .select("id, project_id, contract_number")
-      .eq("id", co.contract_id)
-      .is("deleted_at", null)
-      .single();
-
-    if (commitmentError || !commitment) {
+    if (!scoped) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    if (commitment.project_id !== Number(projectId)) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
-    }
-
-    return NextResponse.json({
-      ...co,
-      commitment_number: commitment.contract_number,
-    });
-    },
+    return NextResponse.json(scoped);
+  },
 );
 
 /**
@@ -67,7 +44,6 @@ export const GET = withApiGuardrails(
 export const PUT = withApiGuardrails(
   "projects/[projectId]/commitment-change-orders/[commitmentCoId]#PUT",
   async ({ request, params }) => {
-  
     const { projectId, commitmentCoId } = await params;
     const projectIdNum = Number(projectId);
     const supabase = await createClient();
@@ -78,31 +54,24 @@ export const PUT = withApiGuardrails(
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/commitment-change-orders/[commitmentCoId]#PUT", message: "Authentication required." });
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where:
+          "projects/[projectId]/commitment-change-orders/[commitmentCoId]#PUT",
+        message: "Authentication required.",
+      });
     }
 
     const guard = await requirePermission(projectIdNum, "contracts", "write");
     if (guard.denied) return guard.response;
 
-    // Verify the CCO exists and belongs to this project
-    const { data: existing, error: fetchError } = await supabase
-      .from("contract_change_orders")
-      .select("id, contract_id")
-      .eq("id", commitmentCoId)
-      .single();
+    const scoped = await getScopedCommitmentChangeOrder(
+      supabase,
+      projectIdNum,
+      commitmentCoId,
+    );
 
-    if (fetchError || !existing) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
-    }
-
-    const { data: commitment } = await supabase
-      .from("commitments_unified")
-      .select("id, project_id")
-      .eq("id", existing.contract_id)
-      .is("deleted_at", null)
-      .single();
-
-    if (!commitment || commitment.project_id !== projectIdNum) {
+    if (!scoped) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
@@ -129,7 +98,7 @@ export const PUT = withApiGuardrails(
     }
 
     return NextResponse.json(data);
-    },
+  },
 );
 
 /**
@@ -139,7 +108,6 @@ export const PUT = withApiGuardrails(
 export const DELETE = withApiGuardrails(
   "projects/[projectId]/commitment-change-orders/[commitmentCoId]#DELETE",
   async ({ request, params }) => {
-  
     const { projectId, commitmentCoId } = await params;
     const projectIdNum = Number(projectId);
     const supabase = await createClient();
@@ -150,31 +118,24 @@ export const DELETE = withApiGuardrails(
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/commitment-change-orders/[commitmentCoId]#DELETE", message: "Authentication required." });
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where:
+          "projects/[projectId]/commitment-change-orders/[commitmentCoId]#DELETE",
+        message: "Authentication required.",
+      });
     }
 
     const guard = await requirePermission(projectIdNum, "contracts", "admin");
     if (guard.denied) return guard.response;
 
-    // Verify the CCO exists and belongs to this project
-    const { data: existing, error: fetchError } = await supabase
-      .from("contract_change_orders")
-      .select("id, contract_id")
-      .eq("id", commitmentCoId)
-      .single();
+    const scoped = await getScopedCommitmentChangeOrder(
+      supabase,
+      projectIdNum,
+      commitmentCoId,
+    );
 
-    if (fetchError || !existing) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
-    }
-
-    const { data: commitment } = await supabase
-      .from("commitments_unified")
-      .select("id, project_id")
-      .eq("id", existing.contract_id)
-      .is("deleted_at", null)
-      .single();
-
-    if (!commitment || commitment.project_id !== projectIdNum) {
+    if (!scoped) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
@@ -188,5 +149,5 @@ export const DELETE = withApiGuardrails(
     }
 
     return NextResponse.json({ message: "Deleted successfully" });
-    },
+  },
 );

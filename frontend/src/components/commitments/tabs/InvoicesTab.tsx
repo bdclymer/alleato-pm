@@ -174,7 +174,7 @@ export const InvoicesTab = memo(function InvoicesTab({
     () => [
       {
         accessorKey: "invoice_number",
-        header: "#",
+        header: () => <span className="text-muted-foreground">#</span>,
         cell: ({ row }) => (
           <div className="flex items-center gap-2">
             <Link
@@ -194,7 +194,7 @@ export const InvoicesTab = memo(function InvoicesTab({
       },
       {
         id: "invoice_dates",
-        header: "Invoice Dates",
+        header: () => <span className="text-muted-foreground">Invoice Dates</span>,
         cell: ({ row }) => (
           <Text size="sm" className="whitespace-nowrap">
             {formatInvoiceDates(row.original.period_start, row.original.period_end)}
@@ -203,7 +203,7 @@ export const InvoicesTab = memo(function InvoicesTab({
       },
       {
         accessorKey: "billing_date",
-        header: "Billing Date",
+        header: () => <span className="text-muted-foreground">Billing Date</span>,
         cell: ({ row }) => (
           <Text size="sm" className="whitespace-nowrap">
             {formatDate(row.original.billing_date)}
@@ -212,12 +212,12 @@ export const InvoicesTab = memo(function InvoicesTab({
       },
       {
         accessorKey: "status",
-        header: "Status",
+        header: () => <span className="text-muted-foreground">Status</span>,
         cell: ({ row }) => <InvoiceStatusBadge status={row.original.status} />,
       },
       {
         accessorKey: "original_contract_sum",
-        header: () => <div className="text-right">Original Contract Sum</div>,
+        header: () => <div className="text-right text-muted-foreground">Original Contract Sum</div>,
         cell: ({ row }) => (
           <div className="text-right tabular-nums">
             {formatCurrency(row.original.original_contract_sum)}
@@ -226,7 +226,7 @@ export const InvoicesTab = memo(function InvoicesTab({
       },
       {
         accessorKey: "net_change_by_cos",
-        header: () => <div className="text-right">Net Change by COs</div>,
+        header: () => <div className="text-right text-muted-foreground">Net Change by COs</div>,
         cell: ({ row }) => (
           <div className="text-right tabular-nums">
             {formatCurrency(row.original.net_change_by_cos)}
@@ -235,7 +235,7 @@ export const InvoicesTab = memo(function InvoicesTab({
       },
       {
         accessorKey: "revised_contract_sum",
-        header: () => <div className="text-right">Revised Contract Sum</div>,
+        header: () => <div className="text-right text-muted-foreground">Revised Contract Sum</div>,
         cell: ({ row }) => (
           <div className="text-right tabular-nums font-medium">
             {formatCurrency(row.original.revised_contract_sum)}
@@ -244,7 +244,7 @@ export const InvoicesTab = memo(function InvoicesTab({
       },
       {
         accessorKey: "total_completed",
-        header: () => <div className="text-right">Total Completed & Stored</div>,
+        header: () => <div className="text-right text-muted-foreground">Total Completed & Stored</div>,
         cell: ({ row }) => (
           <div className="text-right tabular-nums">
             {formatCurrency(row.original.total_completed)}
@@ -253,7 +253,7 @@ export const InvoicesTab = memo(function InvoicesTab({
       },
       {
         accessorKey: "total_retainage",
-        header: () => <div className="text-right">Total Retainage</div>,
+        header: () => <div className="text-right text-muted-foreground">Total Retainage</div>,
         cell: ({ row }) => (
           <div className="text-right tabular-nums">
             {formatCurrency(row.original.total_retainage)}
@@ -262,7 +262,7 @@ export const InvoicesTab = memo(function InvoicesTab({
       },
       {
         accessorKey: "total_earned_less_retainage",
-        header: () => <div className="text-right">Total Earned Less Retainage</div>,
+        header: () => <div className="text-right text-muted-foreground">Total Earned Less Retainage</div>,
         cell: ({ row }) => (
           <div className="text-right tabular-nums font-medium">
             {formatCurrency(row.original.total_earned_less_retainage)}
@@ -271,7 +271,7 @@ export const InvoicesTab = memo(function InvoicesTab({
       },
       {
         accessorKey: "net_amount",
-        header: () => <div className="text-right">Payment Due</div>,
+        header: () => <div className="text-right text-muted-foreground">Payment Due</div>,
         cell: ({ row }) => (
           <div className="text-right tabular-nums font-medium">
             {formatCurrency(row.original.net_amount)}
@@ -280,7 +280,7 @@ export const InvoicesTab = memo(function InvoicesTab({
       },
       {
         accessorKey: "balance_to_finish",
-        header: () => <div className="text-right">Balance to Finish</div>,
+        header: () => <div className="text-right text-muted-foreground">Balance to Finish</div>,
         cell: ({ row }) => (
           <div className="text-right tabular-nums">
             {formatCurrency(row.original.balance_to_finish)}
@@ -289,7 +289,7 @@ export const InvoicesTab = memo(function InvoicesTab({
       },
       {
         accessorKey: "percent_complete",
-        header: () => <div className="text-right">% Complete</div>,
+        header: () => <div className="text-right text-muted-foreground">% Complete</div>,
         cell: ({ row }) => (
           <div className="text-right tabular-nums">
             {`${Math.round(row.original.percent_complete || 0)}%`}
@@ -298,7 +298,7 @@ export const InvoicesTab = memo(function InvoicesTab({
       },
       {
         id: "attachments",
-        header: () => <div className="text-center">Attachments</div>,
+        header: () => <div className="text-center text-muted-foreground">Attachments</div>,
         cell: ({ row }) => (
           <div className="flex items-center justify-center text-muted-foreground">
             <Paperclip className="h-4 w-4" />
@@ -331,7 +331,6 @@ export const InvoicesTab = memo(function InvoicesTab({
     <div className="space-y-3">
       <div className="flex justify-end">
         <Button
-          variant="outline"
           size="sm"
           onClick={createRetainageReleaseInvoice}
           disabled={isCreating}
@@ -345,6 +344,8 @@ export const InvoicesTab = memo(function InvoicesTab({
         data={invoices}
         showToolbar={false}
         showPagination={invoices.length > 25}
+        rowHover={false}
+        emptyMessage={null}
         footerRow={invoices.length > 0 ? footerRow : undefined}
       />
     </div>

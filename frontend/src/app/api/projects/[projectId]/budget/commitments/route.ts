@@ -81,8 +81,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
             project_id,
             status,
             contract_number,
-            created_at,
-            companies(name)
+            created_at
           )
         `,
         )
@@ -102,8 +101,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
             project_id,
             status,
             contract_number,
-            created_at,
-            companies(name)
+            created_at
           )
         `,
         )
@@ -135,14 +133,11 @@ export const GET = withApiGuardrails<{ projectId: string }>(
           const parent = Array.isArray(row.subcontracts)
             ? row.subcontracts[0]
             : row.subcontracts;
-          const company = Array.isArray(parent?.companies)
-            ? parent?.companies[0]
-            : parent?.companies;
 
           return {
             id: row.id,
             commitmentNumber: parent?.contract_number || "",
-            vendor: company?.name ?? null,
+            vendor: null,
             description: row.description || "",
             amount: Number(row.amount) || 0,
             status: parent?.status || "",
@@ -164,14 +159,11 @@ export const GET = withApiGuardrails<{ projectId: string }>(
           const parent = Array.isArray(row.purchase_orders)
             ? row.purchase_orders[0]
             : row.purchase_orders;
-          const company = Array.isArray(parent?.companies)
-            ? parent?.companies[0]
-            : parent?.companies;
 
           return {
             id: row.id,
             commitmentNumber: parent?.contract_number || "",
-            vendor: company?.name ?? null,
+            vendor: null,
             description: row.description || "",
             amount: Number(row.amount) || 0,
             status: parent?.status || "",

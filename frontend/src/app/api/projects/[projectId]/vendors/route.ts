@@ -39,7 +39,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
     .eq("project_id", projectId);
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return apiErrorResponse(error);
   }
 
   // If no project-specific vendors, return all vendor companies for the dropdown
@@ -51,7 +51,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
       .order("name");
 
     if (allError) {
-      return NextResponse.json({ error: allError.message }, { status: 500 });
+      return apiErrorResponse(allError);
     }
 
     return NextResponse.json(
@@ -109,10 +109,12 @@ export const POST = withApiGuardrails<{ projectId: string }>(
     const { projectId: projectIdStr } = await params;
     const projectId = parseInt(projectIdStr, 10);
     if (Number.isNaN(projectId)) {
-      return NextResponse.json(
-        { error: "Invalid project ID" },
-        { status: 400 },
-      );
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: "projects/[projectId]/vendors#POST",
+        message: "Invalid project ID.",
+        details: [{ path: "projectId", message: "Project ID must be a number." }],
+      });
     }
 
     const supabase = await createClient();
@@ -133,25 +135,26 @@ export const POST = withApiGuardrails<{ projectId: string }>(
     let rawBody: unknown;
     try {
       rawBody = await request.json();
-    } catch {
-      return NextResponse.json(
-        { error: "Request body must be valid JSON" },
-        { status: 400 },
-      );
+    } catch (error) {
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: "projects/[projectId]/vendors#POST",
+        message: "Request body must be valid JSON.",
+        cause: error,
+      });
     }
 
     const parsed = CreateVendorSchema.safeParse(rawBody);
     if (!parsed.success) {
-      return NextResponse.json(
-        {
-          error: "Invalid request",
-          details: parsed.error.issues.map((i) => ({
-            path: i.path.join("."),
-            message: i.message,
-          })),
-        },
-        { status: 400 },
-      );
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: "projects/[projectId]/vendors#POST",
+        message: "Invalid request.",
+        details: parsed.error.issues.map((i) => ({
+          path: i.path.join("."),
+          message: i.message,
+        })),
+      });
     }
 
     const name = parsed.data.name;
@@ -190,10 +193,11 @@ export const POST = withApiGuardrails<{ projectId: string }>(
 
       if (insertError) return apiErrorResponse(insertError);
       if (!newCompany) {
-        return NextResponse.json(
-          { error: "Failed to create company (no row returned)" },
-          { status: 500 },
-        );
+        throw new GuardrailError({
+          code: "INTERNAL_ERROR",
+          where: "projects/[projectId]/vendors#POST",
+          message: "Failed to create company.",
+        });
       }
       companyId = newCompany.id;
     }

@@ -134,7 +134,7 @@ export async function fetchInvoicePdfData(
 export const GET = withApiGuardrails<{ projectId: string; invoiceId: string }>(
   "projects/[projectId]/invoicing/owner/[invoiceId]/pdf#GET",
   async ({ request, params }) => {
-  
+    const where = "projects/[projectId]/invoicing/owner/[invoiceId]/pdf#GET";
     const supabase = await createClient();
     const { projectId, invoiceId } = params;
 
@@ -144,7 +144,7 @@ export const GET = withApiGuardrails<{ projectId: string; invoiceId: string }>(
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/invoicing/owner/[invoiceId]/pdf#GET", message: "Authentication required." });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where, message: "Authentication required." });
     }
 
     const projectIdNum = parseInt(projectId, 10);
@@ -153,13 +153,25 @@ export const GET = withApiGuardrails<{ projectId: string; invoiceId: string }>(
     const result = await fetchInvoicePdfData(supabase, projectIdNum, invoiceIdNum);
     if (result.error) {
       if (result.error.code === "PGRST116") {
-        return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
+        throw new GuardrailError({
+          code: "INTERNAL_ERROR",
+          where,
+          message: "Invoice not found.",
+          status: 404,
+          severity: "low",
+        });
       }
       return apiErrorResponse(result.error);
     }
 
     if (!result.data) {
-      return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where,
+        message: "Invoice not found.",
+        status: 404,
+        severity: "low",
+      });
     }
 
     const data = result.data;

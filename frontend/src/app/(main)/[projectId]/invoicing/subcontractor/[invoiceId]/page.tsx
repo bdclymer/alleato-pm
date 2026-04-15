@@ -13,8 +13,8 @@ export default function SubcontractorInvoiceDetailPage() {
     <SubcontractorInvoiceDetail
       projectId={projectId}
       invoiceId={invoiceId}
-      backHref={`/${projectId}/invoicing?tab=subcontractor`}
-      backLabel="Back to Invoicing"
+      backHref={`/${projectId}/invoices?tab=subcontractor`}
+      backLabel="Back to Invoices"
     />
   );
 }

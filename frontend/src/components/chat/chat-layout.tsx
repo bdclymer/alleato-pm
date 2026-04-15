@@ -7,30 +7,54 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { ChatSidebar } from "./chat-sidebar";
 import { ChatMain, type TeamChatMessage } from "./chat-main";
 import { ChatRightPanel, type ThreadReply } from "./chat-right-panel";
-import { TEAM_CHANNELS, getTeamChannel, type TeamChannel } from "./team-chat-data";
+import type { TeamChannel, TeamChatAdminUser } from "./team-chat-data";
 
 interface ChatLayoutProps {
   username: string;
   onUsernameChange?: (username: string) => void;
 }
 
-export type NavView = "chats" | "channels" | "contacts";
-
-interface ChannelPreview {
-  content: string;
-  user_name: string;
-  created_at: string;
+interface ChannelListResponse {
+  channels: TeamChannel[];
+  adminUsers: TeamChatAdminUser[];
+  canManageChannels: boolean;
 }
 
+export type NavView = "chats" | "channels" | "contacts";
+
+const EMPTY_CHANNEL: TeamChannel = {
+  id: "",
+  name: "No channels",
+  topic: "Create a channel to begin chatting",
+  team: "Team Chat",
+  section: "channels",
+  unread: 0,
+  memberCount: 0,
+  preview: "",
+  lastMessageAt: null,
+  deletable: false,
+};
+
 export function ChatLayout({ username }: ChatLayoutProps) {
-  const [activeChannel, setActiveChannel] = useState(TEAM_CHANNELS[0]?.id ?? "general");
+  const [channels, setChannels] = useState<TeamChannel[]>([]);
+  const [adminUsers, setAdminUsers] = useState<TeamChatAdminUser[]>([]);
+  const [canManageChannels, setCanManageChannels] = useState(false);
+  const [activeChannel, setActiveChannel] = useState<string>("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [rightPanelOpen, setRightPanelOpen] = useState(false);
   const [selectedMessage, setSelectedMessage] = useState<TeamChatMessage | null>(null);
   const [threadRepliesByMessage, setThreadRepliesByMessage] = useState<Record<string, ThreadReply[]>>({});
   const [isMobile, setIsMobile] = useState(false);
   const [activeView] = useState<NavView>("chats");
-  const [previews, setPreviews] = useState<Record<string, ChannelPreview>>({});
+
+  const fetchChannels = useCallback(async (): Promise<ChannelListResponse> => {
+    // Refresh channel list, admin roster, and permission state from server.
+    const payload = await apiFetch<ChannelListResponse>("/api/team-chat/channels");
+    setChannels(payload.channels ?? []);
+    setAdminUsers(payload.adminUsers ?? []);
+    setCanManageChannels(payload.canManageChannels === true);
+    return payload;
+  }, []);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -38,32 +62,39 @@ export function ChatLayout({ username }: ChatLayoutProps) {
       setIsMobile(mobile);
       if (mobile) setRightPanelOpen(false);
     };
+
     checkMobile();
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  const fetchPreviews = useCallback(() => {
-    apiFetch<Record<string, ChannelPreview>>("/api/team-chat/previews")
-      .then((data) => setPreviews(data ?? {}))
-      .catch(() => {});
-  }, []);
+  useEffect(() => {
+    fetchChannels().catch(() => {
+      setChannels([]);
+      setAdminUsers([]);
+      setCanManageChannels(false);
+    });
+  }, [fetchChannels]);
 
   useEffect(() => {
-    fetchPreviews();
-  }, [fetchPreviews]);
+    if (channels.length === 0) {
+      if (activeChannel) {
+        setActiveChannel("");
+      }
+      return;
+    }
 
-  // Merge real previews into channel list
-  const channels = useMemo<TeamChannel[]>(() =>
-    TEAM_CHANNELS.map((ch) => {
-      const p = previews[ch.id];
-      if (!p) return ch;
-      return { ...ch, preview: p.content };
-    }),
-    [previews],
+    const hasActive = channels.some((channel) => channel.id === activeChannel);
+    if (!hasActive) {
+      setActiveChannel(channels[0].id);
+      setSelectedMessage(null);
+    }
+  }, [channels, activeChannel]);
+
+  const activeChannelDetails = useMemo(
+    () => channels.find((channel) => channel.id === activeChannel) ?? EMPTY_CHANNEL,
+    [channels, activeChannel],
   );
-
-  const activeChannelDetails = useMemo(() => getTeamChannel(activeChannel), [activeChannel]);
 
   const selectedThreadReplies = selectedMessage
     ? (threadRepliesByMessage[selectedMessage.id] ?? [])
@@ -83,43 +114,76 @@ export function ChatLayout({ username }: ChatLayoutProps) {
     }));
   };
 
-  // Refresh previews when a message is sent in any channel
+  const handleCreateChannel = async (name: string, topic: string) => {
+    // Create a channel and focus it immediately once persisted.
+    const created = await apiFetch<TeamChannel>("/api/team-chat/channels", {
+      method: "POST",
+      body: JSON.stringify({ name, topic }),
+    });
+
+    await fetchChannels();
+    if (created?.id) {
+      setActiveChannel(created.id);
+      setSelectedMessage(null);
+    }
+  };
+
+  const handleDeleteChannel = async (channelId: string) => {
+    // Delete a channel then fall back to first available channel.
+    await apiFetch(`/api/team-chat/channels/${encodeURIComponent(channelId)}`, {
+      method: "DELETE",
+    });
+
+    const payload = await fetchChannels();
+
+    if (activeChannel === channelId) {
+      const remaining = (payload.channels ?? []).filter((channel) => channel.id !== channelId);
+      setActiveChannel(remaining[0]?.id ?? "");
+      setSelectedMessage(null);
+    }
+  };
+
   const handleMessageSent = useCallback(() => {
-    fetchPreviews();
-  }, [fetchPreviews]);
+    fetchChannels().catch(() => {});
+  }, [fetchChannels]);
 
   return (
     <div className="flex h-full min-h-0 overflow-hidden bg-background text-foreground">
-      {/* Sidebar – desktop */}
       <div className="hidden lg:block">
         <ChatSidebar
           channels={channels}
+          adminUsers={adminUsers}
           activeChannel={activeChannel}
           activeView={activeView}
+          canManageChannels={canManageChannels}
           onChannelSelect={(channelId) => {
             setActiveChannel(channelId);
             setSelectedMessage(null);
           }}
+          onCreateChannel={handleCreateChannel}
+          onDeleteChannel={handleDeleteChannel}
         />
       </div>
 
-      {/* Sidebar – mobile sheet */}
       <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
         <SheetContent side="left" className="w-95 p-0 sm:max-w-95">
           <ChatSidebar
             channels={channels}
+            adminUsers={adminUsers}
             activeChannel={activeChannel}
             activeView={activeView}
+            canManageChannels={canManageChannels}
             onChannelSelect={(channelId) => {
               setActiveChannel(channelId);
               setSelectedMessage(null);
               setSidebarOpen(false);
             }}
+            onCreateChannel={handleCreateChannel}
+            onDeleteChannel={handleDeleteChannel}
           />
         </SheetContent>
       </Sheet>
 
-      {/* Main chat */}
       <div className="min-w-0 flex-1">
         <ChatMain
           channel={activeChannelDetails}
@@ -138,7 +202,6 @@ export function ChatLayout({ username }: ChatLayoutProps) {
         />
       </div>
 
-      {/* Right thread panel – desktop */}
       <div
         className={cn(
           "hidden xl:block border-l border-border transition-all duration-150",
@@ -156,7 +219,6 @@ export function ChatLayout({ username }: ChatLayoutProps) {
         )}
       </div>
 
-      {/* Right panel – mobile sheet */}
       <Sheet open={Boolean(rightPanelOpen && isMobile)} onOpenChange={setRightPanelOpen}>
         <SheetContent side="right" className="w-96 p-0 sm:max-w-96">
           <ChatRightPanel

@@ -179,8 +179,8 @@ export function ToolsDropdownContent(props: ToolsDropdownProps) {
   };
 
   return (
-    <div className="p-7 w-[920px]">
-      <div className="flex gap-12">
+    <div className="w-[min(920px,calc(100vw-1.5rem))] p-5 sm:p-7">
+      <div className="flex gap-8 overflow-x-auto sm:gap-12">
         {/* Financial */}
         <div className="shrink-0">
           <SectionHeader label="Financial" />

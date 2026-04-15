@@ -24,6 +24,8 @@ interface RuntimePrimeChangeOrderLinesClient {
   };
 }
 
+type RuntimePrimeChangeOrderLineRow = Record<string, unknown>;
+
 /**
  * Resolve a budget cost code for filtering from explicit query param or budget line id.
  */
@@ -143,7 +145,8 @@ export const GET = withApiGuardrails<{ projectId: string }>(
       );
     }
 
-    const changeOrders = (data ?? []).map((rawLine) => {
+    const rows = (data ?? []) as RuntimePrimeChangeOrderLineRow[];
+    const changeOrders = rows.map((rawLine) => {
       const line = rawLine as Record<string, unknown>;
       const coRaw = Array.isArray(line.change_orders)
         ? line.change_orders[0]

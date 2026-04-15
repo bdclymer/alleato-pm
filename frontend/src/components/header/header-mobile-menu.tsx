@@ -63,13 +63,13 @@ export function HeaderMobileMenu({
         <Button
           variant="ghost"
           size="sm"
-          className="h-8 w-8 p-2 text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 md:hidden"
+          className="h-11 w-11 p-2 text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 md:hidden"
           aria-label="Open navigation menu"
         >
           <Menu />
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="w-[300px] sm:w-[350px] p-0">
+      <SheetContent side="left" className="w-[min(300px,100vw)] p-0 sm:w-[350px]">
         <SheetHeader className="px-4 py-4 border-b">
           <SheetTitle className="text-left">Navigation</SheetTitle>
         </SheetHeader>

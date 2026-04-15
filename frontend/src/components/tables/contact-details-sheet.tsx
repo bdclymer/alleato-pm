@@ -45,7 +45,7 @@ export function ContactDetailsSheet({
       <SheetTrigger asChild>{trigger}</SheetTrigger>
       <SheetContent
         side="right"
-        className="flex flex-col w-[400px] sm:w-[540px]"
+        className="flex flex-col"
       >
         <SheetHeader className="gap-1">
           <SheetTitle>{fullName}</SheetTitle>
@@ -118,7 +118,7 @@ export function ContactDetailsSheet({
 
             {/* Edit Form */}
             <form className="flex flex-col gap-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="flex flex-col gap-4">
                   <Label htmlFor="first_name">First Name</Label>
                   <Input
@@ -153,7 +153,7 @@ export function ContactDetailsSheet({
             </form>
           </div>
         </div>
-        <SheetFooter className="mt-auto flex gap-2 sm:flex-col sm:space-x-0">
+        <SheetFooter className="mt-auto flex flex-col gap-2 sm:flex-row">
           <Button className="w-full">Save Changes</Button>
           <SheetClose asChild>
             <Button variant="outline" className="w-full">

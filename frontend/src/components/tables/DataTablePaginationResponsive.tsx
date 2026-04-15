@@ -75,7 +75,7 @@ export function DataTablePaginationResponsive<TData>({
             value={`${table.getState().pagination.pageSize}`}
             onValueChange={(value) => table.setPageSize(Number(value))}
           >
-            <SelectTrigger className="h-8 w-[70px]">
+            <SelectTrigger className="h-8 w-20">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -106,7 +106,7 @@ export function DataTablePaginationResponsive<TData>({
               value={`${table.getState().pagination.pageSize}`}
               onValueChange={(value) => table.setPageSize(Number(value))}
             >
-              <SelectTrigger className="h-8 w-[70px]">
+              <SelectTrigger className="h-8 w-20">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent side="top">
@@ -119,7 +119,7 @@ export function DataTablePaginationResponsive<TData>({
             </Select>
           </div>
 
-          <div className="flex w-[100px] items-center justify-center text-sm font-medium">
+          <div className="flex w-24 items-center justify-center text-sm font-medium">
             Page {currentPage} of {pageCount}
           </div>
 

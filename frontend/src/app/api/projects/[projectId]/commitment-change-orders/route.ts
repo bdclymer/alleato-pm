@@ -14,8 +14,7 @@ interface RouteParams {
  * GET /api/projects/[projectId]/commitment-change-orders
  *
  * Returns all change orders across all commitments for a project.
- * Joins contract_change_orders → commitments_unified via contract_id = commitments_unified.id
- * and filters by commitments_unified.project_id.
+ * Uses the commitments read model to scope contract_change_orders to the current project.
  *
  * Response shape:
  * {
@@ -29,12 +28,9 @@ interface RouteParams {
 export const GET = withApiGuardrails(
   "projects/[projectId]/commitment-change-orders#GET",
   async ({ request, params }) => {
-  
     const { projectId } = await params;
     const supabase = await createClient();
 
-    // Fetch all commitments for the project first, then fetch their change orders.
-    // We do a two-step query because contract_change_orders has no project_id column.
     const { data: commitments, error: commitmentsError } = await supabase
       .from("commitments_unified")
       .select("id, contract_number")
@@ -46,10 +42,15 @@ export const GET = withApiGuardrails(
     }
 
     if (!commitments || commitments.length === 0) {
-      return NextResponse.json({ data: [], meta: { total_count: 0, total_amount: 0 } });
+      return NextResponse.json({
+        data: [],
+        meta: { total_count: 0, total_amount: 0 },
+      });
     }
 
-    const commitmentIds = commitments.map((c) => c.id).filter(Boolean) as string[];
+    const commitmentIds = commitments
+      .map((c) => c.id)
+      .filter(Boolean) as string[];
 
     const { data: changeOrders, error: coError } = await supabase
       .from("contract_change_orders")
@@ -63,9 +64,19 @@ export const GET = withApiGuardrails(
       return apiErrorResponse(coError);
     }
 
-    // Build a map of commitment id → contract_number for enriching the response
-    const commitmentMap = new Map(
-      commitments.map((c) => [c.id, c.contract_number ?? ""]),
+    const commitmentRows = commitments.map((commitment) => ({
+      id: commitment.id,
+      contract_number: commitment.contract_number ?? null,
+    }));
+    const commitmentNumberById = new Map(
+      commitmentRows
+        .filter(
+          (
+            commitment,
+          ): commitment is { id: string; contract_number: string | null } =>
+            Boolean(commitment.id),
+        )
+        .map((commitment) => [commitment.id, commitment.contract_number]),
     );
 
     const data = (changeOrders ?? []).map((co) => ({
@@ -77,7 +88,7 @@ export const GET = withApiGuardrails(
       requested_date: co.requested_date,
       approved_date: co.approved_date,
       commitment_id: co.contract_id,
-      commitment_number: commitmentMap.get(co.contract_id) ?? null,
+      commitment_number: commitmentNumberById.get(co.contract_id) ?? null,
     }));
 
     const totalAmount = data.reduce((sum, co) => sum + co.amount, 0);
@@ -89,7 +100,7 @@ export const GET = withApiGuardrails(
         total_amount: totalAmount,
       },
     });
-    },
+  },
 );
 
 /**
@@ -99,7 +110,6 @@ export const GET = withApiGuardrails(
 export const POST = withApiGuardrails(
   "projects/[projectId]/commitment-change-orders#POST",
   async ({ request, params }) => {
-  
     const { projectId } = await params;
     const projectIdNum = Number(projectId);
     const supabase = await createClient();
@@ -110,13 +120,20 @@ export const POST = withApiGuardrails(
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/commitment-change-orders#POST", message: "Authentication required." });
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "projects/[projectId]/commitment-change-orders#POST",
+        message: "Authentication required.",
+      });
     }
 
     const guard = await requirePermission(projectIdNum, "contracts", "write");
     if (guard.denied) return guard.response;
 
     const body = await request.json();
+    const changeEventIds = Array.isArray(body.change_event_ids)
+      ? (body.change_event_ids as string[])
+      : [];
 
     if (!body.contract_id) {
       return NextResponse.json(
@@ -144,6 +161,37 @@ export const POST = withApiGuardrails(
       return NextResponse.json(
         { error: "Commitment does not belong to this project" },
         { status: 400 },
+      );
+    }
+
+    let originalChangeEventFlags = new Map<string, boolean>();
+
+    if (changeEventIds.length > 0) {
+      const { data: changeEvents, error: changeEventsError } = await supabase
+        .from("change_events")
+        .select("id, sent_to_commitment_pco")
+        .eq("project_id", projectIdNum)
+        .in("id", changeEventIds);
+
+      if (changeEventsError) {
+        return apiErrorResponse(changeEventsError);
+      }
+
+      if (!changeEvents || changeEvents.length !== changeEventIds.length) {
+        return NextResponse.json(
+          {
+            error:
+              "One or more change events were not found in this project.",
+          },
+          { status: 400 },
+        );
+      }
+
+      originalChangeEventFlags = new Map(
+        changeEvents.map((changeEvent) => [
+          changeEvent.id,
+          Boolean(changeEvent.sent_to_commitment_pco),
+        ]),
       );
     }
 
@@ -184,20 +232,25 @@ export const POST = withApiGuardrails(
       return apiErrorResponse(error);
     }
 
-    // Link change events if provided (2-tier: CE → CCO directly)
-    const changeEventIds: string[] = body.change_event_ids ?? [];
     if (changeEventIds.length > 0 && data?.id) {
-      // Mark each change event as sent to commitment CO
       const { error: ceUpdateError } = await supabase
         .from("change_events")
         .update({ sent_to_commitment_pco: true })
         .in("id", changeEventIds);
 
       if (ceUpdateError) {
-        console.error("Failed to update change event tracking flags:", ceUpdateError);
+        await supabase.from("contract_change_orders").delete().eq("id", data.id);
+
+        return NextResponse.json(
+          {
+            error:
+              "Failed to associate change events with the commitment change order.",
+            details: ceUpdateError.message,
+          },
+          { status: 500 },
+        );
       }
 
-      // Create link records in change_event_pco_links
       const links = changeEventIds.map((ceId) => ({
         change_event_id: ceId,
         pco_id: data.id,
@@ -209,10 +262,30 @@ export const POST = withApiGuardrails(
         .insert(links);
 
       if (linkError) {
-        console.error("Failed to create CE→CCO links:", linkError);
+        const rollbackIds = Array.from(originalChangeEventFlags.entries())
+          .filter(([, wasLinked]) => !wasLinked)
+          .map(([changeEventId]) => changeEventId);
+
+        if (rollbackIds.length > 0) {
+          await supabase
+            .from("change_events")
+            .update({ sent_to_commitment_pco: false })
+            .in("id", rollbackIds);
+        }
+
+        await supabase.from("contract_change_orders").delete().eq("id", data.id);
+
+        return NextResponse.json(
+          {
+            error:
+              "Failed to create change event links for the commitment change order.",
+            details: linkError.message,
+          },
+          { status: 500 },
+        );
       }
     }
 
     return NextResponse.json(data, { status: 201 });
-    },
+  },
 );

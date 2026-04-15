@@ -27,9 +27,20 @@ const updatePcoSchema = z.object({
   title: z.string().min(1).max(255).optional(),
   description: z.string().max(5000).optional().nullable(),
   status: z.enum(["draft", "pending", "approved", "void"]).optional(),
+  change_reason: z.string().optional().nullable(),
+  revision: z.number().int().optional().nullable(),
+  is_private: z.boolean().optional(),
+  executed: z.boolean().optional(),
+  signed_co_received_date: z.string().optional().nullable(),
+  request_received_from: z.string().max(255).optional().nullable(),
+  location: z.string().max(255).optional().nullable(),
+  field_change: z.boolean().optional(),
+  reference: z.string().max(255).optional().nullable(),
+  paid_in_full: z.boolean().optional(),
   schedule_impact: z.number().int().optional().nullable(),
   due_date: z.string().optional().nullable(),
   designated_reviewer_id: z.string().uuid().optional().nullable(),
+  promoted_to_co_id: z.number().int().optional().nullable(),
 });
 
 // ---------------------------------------------------------------------------
@@ -64,7 +75,10 @@ export const GET = withApiGuardrails(
           id,
           contract_number,
           title,
-          status
+          status,
+          contract_company:companies!prime_contracts_contract_company_id_fkey(id, name),
+          client:companies!prime_contracts_client_company_id_fkey(id, name),
+          vendor:companies!prime_contracts_vendor_id_fkey(id, name)
         )
       `,
       )
@@ -115,6 +129,25 @@ export const GET = withApiGuardrails(
       .eq("pco_id", pcoId)
       .eq("pco_type", "prime");
 
+    // Get attachments
+    const { data: attachments } = await supabase
+      .from("prime_contract_pco_attachments")
+      .select("id, file_name, file_path, file_size, mime_type, uploaded_at, uploaded_by")
+      .eq("pco_id", pcoId)
+      .order("uploaded_at", { ascending: false });
+
+    // Resolve creator display name (best effort)
+    let creatorName: string | null = null;
+    if (pco.created_by) {
+      const { data: creator } = await supabase
+        .from("user_profiles")
+        .select("full_name, email")
+        .eq("id", pco.created_by)
+        .maybeSingle();
+
+      creatorName = creator?.full_name || creator?.email || null;
+    }
+
     // Compute totals from line items
     const items = lineItems || [];
     const totalAmount = items.reduce(
@@ -128,6 +161,8 @@ export const GET = withApiGuardrails(
       line_items_count: items.length,
       calculated_amount: pco.total_amount ?? totalAmount,
       change_event_links: changeEventLinks || [],
+      attachments: attachments || [],
+      created_by_name: creatorName,
       _links: {
         self: `/api/projects/${projectId}/prime-contract-pcos/${pcoId}`,
         promote: `/api/projects/${projectId}/prime-contract-pcos/${pcoId}/promote`,
@@ -200,12 +235,31 @@ export const PATCH = withApiGuardrails(
     if (validatedData.description !== undefined)
       updates.description = validatedData.description;
     if (validatedData.status !== undefined) updates.status = validatedData.status;
+    if (validatedData.change_reason !== undefined)
+      updates.change_reason = validatedData.change_reason;
+    if (validatedData.revision !== undefined) updates.revision = validatedData.revision;
+    if (validatedData.is_private !== undefined)
+      updates.is_private = validatedData.is_private;
+    if (validatedData.executed !== undefined) updates.executed = validatedData.executed;
+    if (validatedData.signed_co_received_date !== undefined)
+      updates.signed_co_received_date = validatedData.signed_co_received_date;
+    if (validatedData.request_received_from !== undefined)
+      updates.request_received_from = validatedData.request_received_from;
+    if (validatedData.location !== undefined) updates.location = validatedData.location;
+    if (validatedData.field_change !== undefined)
+      updates.field_change = validatedData.field_change;
+    if (validatedData.reference !== undefined)
+      updates.reference = validatedData.reference;
+    if (validatedData.paid_in_full !== undefined)
+      updates.paid_in_full = validatedData.paid_in_full;
     if (validatedData.schedule_impact !== undefined)
       updates.schedule_impact = validatedData.schedule_impact;
     if (validatedData.due_date !== undefined)
       updates.due_date = validatedData.due_date;
     if (validatedData.designated_reviewer_id !== undefined)
       updates.designated_reviewer_id = validatedData.designated_reviewer_id;
+    if (validatedData.promoted_to_co_id !== undefined)
+      updates.promoted_to_co_id = validatedData.promoted_to_co_id;
 
     // Update
     const { data, error } = await supabase

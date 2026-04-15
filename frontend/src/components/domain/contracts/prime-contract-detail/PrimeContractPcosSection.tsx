@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { SectionHeader } from "@/components/ds/section-header";
@@ -75,6 +74,27 @@ export function PrimeContractPcosSection({
     fetchPcos();
   }, [projectId, contractId]);
 
+  // Build the canonical nested prime-contract PCO detail route.
+  const buildPcoHref = useCallback(
+    (pcoId: string) => `/${projectId}/prime-contracts/${contractId}/change-orders/pcos/${pcoId}`,
+    [projectId, contractId],
+  );
+
+  // Navigate reliably even when table row click delegation is interrupted by nested UI handlers.
+  const navigateToPco = useCallback(
+    (pcoId: string) => {
+      if (!pcoId) return;
+      const href = buildPcoHref(pcoId);
+      window.location.assign(href);
+      window.setTimeout(() => {
+        if (window.location.pathname !== href) {
+          window.location.assign(href);
+        }
+      }, 150);
+    },
+    [buildPcoHref],
+  );
+
   const columns: TableColumn<PrimePco>[] = useMemo(
     () => [
       {
@@ -82,12 +102,17 @@ export function PrimeContractPcosSection({
         label: "Number",
         alwaysVisible: true,
         render: (pco) => (
-          <Link
-            href={`/${projectId}/prime-contract-pcos/${pco.id}`}
+          <a
+            href={buildPcoHref(pco.id)}
             className="text-primary hover:underline font-medium"
+            data-row-interactive="true"
+            onClick={(event) => {
+              event.stopPropagation();
+              navigateToPco(pco.id);
+            }}
           >
             {pco.pco_number ?? "—"}
-          </Link>
+          </a>
         ),
       },
       {
@@ -103,7 +128,17 @@ export function PrimeContractPcosSection({
         id: "title",
         label: "Title",
         render: (pco) => (
-          <span className="text-foreground">{pco.title}</span>
+          <a
+            href={buildPcoHref(pco.id)}
+            className="text-foreground hover:underline"
+            data-row-interactive="true"
+            onClick={(event) => {
+              event.stopPropagation();
+              navigateToPco(pco.id);
+            }}
+          >
+            {pco.title}
+          </a>
         ),
       },
       {
@@ -153,7 +188,7 @@ export function PrimeContractPcosSection({
         ),
       },
     ],
-    [projectId, formatCurrency],
+    [buildPcoHref, formatCurrency, navigateToPco],
   );
 
   return (
@@ -177,6 +212,9 @@ export function PrimeContractPcosSection({
         table={{
           columns,
           getRowId: (pco) => pco.id,
+          onRowClick: (pco) => {
+            navigateToPco(pco.id);
+          },
         }}
         features={{
           enableSearch: false,

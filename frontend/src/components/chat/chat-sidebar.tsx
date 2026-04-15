@@ -1,18 +1,23 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, Shield, Trash2 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import type { NavView } from "./chat-layout";
-import type { TeamChannel } from "./team-chat-data";
+import type { TeamChannel, TeamChatAdminUser } from "./team-chat-data";
 
 interface ChatSidebarProps {
   channels: TeamChannel[];
+  adminUsers: TeamChatAdminUser[];
   activeChannel: string;
   activeView: NavView;
+  canManageChannels: boolean;
   onChannelSelect: (channelId: string) => void;
+  onCreateChannel: (name: string, topic: string) => Promise<void>;
+  onDeleteChannel: (channelId: string) => Promise<void>;
 }
 
 const AVATAR_COLORS = [
@@ -25,184 +30,245 @@ const AVATAR_COLORS = [
   "bg-teal-100 text-teal-700",
 ];
 
-const PREVIEW_TIMES = ["9:00 AM", "10:30 AM", "Yesterday", "12:45 PM", "2:00 PM", "Mon", "Tue"];
-
 function getInitials(name: string) {
-  return name.split(" ").map((p) => p[0]).join("").slice(0, 2).toUpperCase();
+  return (
+    name
+      .split(" ")
+      .map((p) => p[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase() || "CH"
+  );
 }
 
 interface ChannelRowProps {
   channel: TeamChannel;
   isActive: boolean;
+  canManageChannels: boolean;
   colorClass: string;
-  timeLabel: string;
-  showOnlineDot?: boolean;
   onClick: () => void;
+  onDelete: () => void;
 }
 
-function ChannelRow({ channel, isActive, colorClass, timeLabel, showOnlineDot, onClick }: ChannelRowProps) {
+function ChannelRow({
+  channel,
+  isActive,
+  canManageChannels,
+  colorClass,
+  onClick,
+  onDelete,
+}: ChannelRowProps) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
+    <div
       className={cn(
-        "flex w-full items-center gap-3 px-5 text-left transition-colors",
-        "py-3.75",
+        "group flex w-full items-center gap-3 px-5 py-3.5 text-left transition-colors",
         isActive ? "bg-primary/5" : "hover:bg-black/3",
       )}
     >
-      {/* Avatar — 32px (avatar-xs in template) */}
-      <div className="relative shrink-0">
-        <Avatar className="h-8 w-8">
+      <button type="button" onClick={onClick} className="flex min-w-0 flex-1 items-center gap-3 text-left">
+        <Avatar className="h-8 w-8 shrink-0">
           <AvatarFallback className={cn("text-[11px] font-semibold", colorClass)}>
             {getInitials(channel.name)}
           </AvatarFallback>
         </Avatar>
-        {showOnlineDot && (
-          <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full border-2 border-background bg-emerald-500" />
-        )}
-      </div>
 
-      {/* Text block */}
-      <div className="min-w-0 flex-1 overflow-hidden">
-        {/* Name row */}
-        <div className="flex items-center gap-2">
-          <span className={cn(
-            "flex-1 truncate text-[15px] leading-snug",
-            channel.unread > 0 ? "font-semibold text-foreground" : "font-medium text-foreground/80",
-          )}>
-            {channel.name}
-          </span>
-          <span className="shrink-0 text-[11px] text-muted-foreground">{timeLabel}</span>
-        </div>
-        {/* Preview row */}
-        <div className="flex items-center gap-2 mt-0.5">
-          <p className="flex-1 truncate text-sm text-muted-foreground">{channel.preview}</p>
-          {channel.unread > 0 && (
-            <span className="flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-primary-foreground">
-              {channel.unread}
+        <div className="min-w-0 flex-1 overflow-hidden">
+          <div className="flex items-center gap-2">
+            <span
+              className={cn(
+                "flex-1 truncate text-[15px] leading-snug",
+                channel.unread > 0 ? "font-semibold text-foreground" : "font-medium text-foreground/80",
+              )}
+            >
+              {channel.name}
             </span>
-          )}
+          </div>
+          <div className="mt-0.5 flex items-center gap-2">
+            <p className="flex-1 truncate text-sm text-muted-foreground">{channel.preview}</p>
+            {channel.unread > 0 && (
+              <span className="flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-primary-foreground">
+                {channel.unread}
+              </span>
+            )}
+          </div>
         </div>
-      </div>
-    </button>
+      </button>
+
+      {canManageChannels && channel.deletable && (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={onDelete}
+          className="h-7 w-7 opacity-100 transition-opacity lg:opacity-0 lg:group-hover:opacity-100"
+          title={`Delete ${channel.name}`}
+        >
+          <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
+        </Button>
+      )}
+    </div>
   );
 }
 
-export function ChatSidebar({ channels, activeChannel, onChannelSelect }: ChatSidebarProps) {
+export function ChatSidebar({
+  channels,
+  adminUsers,
+  activeChannel,
+  activeView,
+  canManageChannels,
+  onChannelSelect,
+  onCreateChannel,
+  onDeleteChannel,
+}: ChatSidebarProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [newChannelName, setNewChannelName] = useState("");
+  const [newChannelTopic, setNewChannelTopic] = useState("");
+  const [isCreatingChannel, setIsCreatingChannel] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const filteredChannels = useMemo(() => {
     if (!searchQuery.trim()) return channels;
     const q = searchQuery.toLowerCase();
     return channels.filter(
-      (ch) => ch.name.toLowerCase().includes(q) || ch.preview.toLowerCase().includes(q),
+      (ch) =>
+        ch.name.toLowerCase().includes(q) ||
+        ch.preview.toLowerCase().includes(q) ||
+        ch.topic.toLowerCase().includes(q),
     );
   }, [channels, searchQuery]);
 
-  const directContacts = useMemo(() => channels.filter((ch) => ch.section === "direct"), [channels]);
-  const channelList = useMemo(() => filteredChannels.filter((ch) => ch.section !== "direct"), [filteredChannels]);
-  const dmList = useMemo(() => filteredChannels.filter((ch) => ch.section === "direct"), [filteredChannels]);
+  const handleCreateChannel = async () => {
+    // Submit a new channel then clear form state on success.
+    const normalizedName = newChannelName.trim();
+    if (!normalizedName) {
+      setErrorMessage("Enter a channel name.");
+      return;
+    }
+
+    try {
+      setErrorMessage(null);
+      await onCreateChannel(normalizedName, newChannelTopic.trim());
+      setNewChannelName("");
+      setNewChannelTopic("");
+      setIsCreatingChannel(false);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Unable to create channel.");
+    }
+  };
+
+  const handleDeleteChannel = async (channel: TeamChannel) => {
+    // Guard deletion with explicit confirmation to avoid accidental data loss.
+    const confirmed = window.confirm(`Delete channel "${channel.name}"? This removes all messages in it.`);
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setErrorMessage(null);
+      await onDeleteChannel(channel.id);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Unable to delete channel.");
+    }
+  };
 
   return (
     <div className="flex h-full w-95 shrink-0 flex-col overflow-hidden border-r border-border bg-muted/60">
-
-      {/* Header — px-4 pt-4 matching template */}
-      <div className="flex items-center justify-between px-4 pt-5 pb-4">
-        <h2 className="text-base font-semibold text-foreground">Chats</h2>
-        <button
-          type="button"
-          title="New conversation"
-          className="flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-black/6 hover:text-foreground"
-        >
-          <Plus className="h-4 w-4" />
-        </button>
+      <div className="flex items-center justify-between px-4 pb-4 pt-5">
+        <h2 className="text-base font-semibold text-foreground">Team Chat</h2>
+        {canManageChannels && (
+          <button
+            type="button"
+            title="Create channel"
+            onClick={() => {
+              setErrorMessage(null);
+              setIsCreatingChannel((current) => !current);
+            }}
+            className="flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-black/6 hover:text-foreground"
+          >
+            <Plus className="h-4 w-4" />
+          </button>
+        )}
       </div>
 
-      {/* Search — px-4 pb-4 */}
       <div className="px-4 pb-4">
         <div className="relative">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search messages or users"
+            placeholder="Search channels"
             className="h-9 rounded-full border-0 bg-transparent pl-9 text-sm shadow-none focus-visible:ring-0 placeholder:text-muted-foreground/60"
           />
         </div>
       </div>
 
-      {/* Pinned contacts avatar row — px-4 pb-4, avatar-xs (32px) */}
-      {directContacts.length > 0 && (
+      {canManageChannels && isCreatingChannel && (
+        <div className="space-y-2 px-4 pb-4">
+          <Input
+            value={newChannelName}
+            onChange={(event) => setNewChannelName(event.target.value)}
+            placeholder="Channel name"
+          />
+          <Input
+            value={newChannelTopic}
+            onChange={(event) => setNewChannelTopic(event.target.value)}
+            placeholder="Topic (optional)"
+          />
+          <div className="flex justify-end">
+            <Button size="sm" onClick={handleCreateChannel}>
+              Create Channel
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {errorMessage && <p className="px-4 pb-3 text-xs text-destructive">{errorMessage}</p>}
+
+      {adminUsers.length > 0 && (
         <div className="px-4 pb-5">
+          <p className="mb-2 text-[13px] font-semibold text-muted-foreground/70">Admins</p>
           <div className="flex gap-4 overflow-x-auto scrollbar-hide">
-            {directContacts.map((contact, idx) => (
-              <button
-                key={contact.id}
-                type="button"
-                onClick={() => onChannelSelect(contact.id)}
-                className="flex shrink-0 flex-col items-center gap-1.5"
-                title={contact.name}
-              >
+            {adminUsers.map((admin, idx) => (
+              <div key={admin.id} className="flex shrink-0 flex-col items-center gap-1.5" title={admin.name}>
                 <div className="relative">
-                  <Avatar className={cn(
-                    "h-10 w-10 transition-all",
-                    activeChannel === contact.id ? "ring-2 ring-primary ring-offset-1" : "",
-                  )}>
+                  <Avatar className="h-10 w-10">
                     <AvatarFallback className={cn("text-[11px] font-semibold", AVATAR_COLORS[idx % AVATAR_COLORS.length])}>
-                      {getInitials(contact.name)}
+                      {getInitials(admin.name)}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-background bg-emerald-500" />
+                  <span className="absolute bottom-0 right-0 flex h-3 w-3 items-center justify-center rounded-full border-2 border-background bg-emerald-500">
+                    <Shield className="h-1.5 w-1.5 text-white" />
+                  </span>
                 </div>
-                <span className="max-w-11 truncate text-[11px] text-muted-foreground">
-                  {contact.name.split(" ")[0]}
-                </span>
-              </button>
+                <span className="max-w-14 truncate text-[11px] text-muted-foreground">{admin.name.split(" ")[0]}</span>
+              </div>
             ))}
           </div>
         </div>
       )}
 
-      {/* Channel + DM lists — "Recent" header matches template px-3 mb-3 font-size-16 */}
       <div className="flex-1 overflow-y-auto scrollbar-hide">
         <div className="w-95 pb-4">
-          {channelList.length > 0 && (
-            <div>
-              <p className="mb-1 px-4 text-[13px] font-semibold text-muted-foreground/60">
-                Recent
-              </p>
-              {channelList.map((channel, idx) => (
+          <div>
+            <p className="mb-1 px-4 text-[13px] font-semibold text-muted-foreground/60">
+              {activeView === "channels" ? "Channels" : "Recent"}
+            </p>
+            {filteredChannels.length === 0 ? (
+              <p className="px-4 py-2 text-sm text-muted-foreground">No channels found.</p>
+            ) : (
+              filteredChannels.map((channel, idx) => (
                 <ChannelRow
                   key={channel.id}
                   channel={channel}
+                  canManageChannels={canManageChannels}
                   isActive={activeChannel === channel.id}
                   colorClass={AVATAR_COLORS[idx % AVATAR_COLORS.length]}
-                  timeLabel={PREVIEW_TIMES[idx % PREVIEW_TIMES.length]}
                   onClick={() => onChannelSelect(channel.id)}
+                  onDelete={() => handleDeleteChannel(channel)}
                 />
-              ))}
-            </div>
-          )}
-
-          {dmList.length > 0 && (
-            <div className="mt-4">
-              <p className="mb-1 px-4 text-[13px] font-semibold text-muted-foreground/60">
-                Direct Messages
-              </p>
-              {dmList.map((contact, idx) => (
-                <ChannelRow
-                  key={contact.id}
-                  channel={contact}
-                  isActive={activeChannel === contact.id}
-                  colorClass={AVATAR_COLORS[(idx + 4) % AVATAR_COLORS.length]}
-                  timeLabel={PREVIEW_TIMES[(idx + 4) % PREVIEW_TIMES.length]}
-                  showOnlineDot
-                  onClick={() => onChannelSelect(contact.id)}
-                />
-              ))}
-            </div>
-          )}
+              ))
+            )}
+          </div>
         </div>
       </div>
     </div>

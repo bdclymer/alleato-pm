@@ -45,6 +45,7 @@ const companyTitleCache = new Map<string, string>();
 const vendorTitleCache = new Map<string, string>();
 const contactTitleCache = new Map<string, string>();
 const commitmentTitleCache = new Map<string, string>();
+const primePcoTitleCache = new Map<string, string>();
 const changeEventTitleCache = new Map<string, string>();
 const primeCoTitleCache = new Map<string, string>();
 const invoiceTitleCache = new Map<string, string>();
@@ -76,6 +77,7 @@ export function useHeaderNav(): UseHeaderNavReturn {
   const [vendorTitle, setVendorTitle] = useState<string | null>(null);
   const [contactTitle, setContactTitle] = useState<string | null>(null);
   const [commitmentTitle, setCommitmentTitle] = useState<string | null>(null);
+  const [primePcoTitle, setPrimePcoTitle] = useState<string | null>(null);
   const [changeEventTitle, setChangeEventTitle] = useState<string | null>(null);
   const [primeCoTitle, setPrimeCoTitle] = useState<string | null>(null);
   const [invoiceTitle, setInvoiceTitle] = useState<string | null>(null);
@@ -184,6 +186,16 @@ export function useHeaderNav(): UseHeaderNavReturn {
       /^\d+$/.test(segments[0]) &&
       segments[1] === "change-events" &&
       segments[2] !== "new";
+    const isPrimePcoDetailRoute =
+      segments.length >= 3 &&
+      segments[1] === "prime-contract-pcos" &&
+      segments[2] !== "new";
+    const isNestedPrimePcoDetailRoute =
+      segments.length >= 6 &&
+      segments[1] === "prime-contracts" &&
+      segments[3] === "change-orders" &&
+      segments[4] === "pcos" &&
+      segments[5] !== "new";
     const isPrimeCoDetailRoute =
       segments.length >= 4 &&
       /^\d+$/.test(segments[0]) &&
@@ -192,7 +204,6 @@ export function useHeaderNav(): UseHeaderNavReturn {
       segments[3] !== "new";
     const isInvoiceDetailRoute =
       segments.length >= 5 &&
-      /^\d+$/.test(segments[0]) &&
       segments[1] === "prime-contracts" &&
       segments[3] === "invoices" &&
       segments[4] !== "new";
@@ -295,6 +306,10 @@ export function useHeaderNav(): UseHeaderNavReturn {
         label = primeContractTitle || "Prime Contract";
       } else if (isCommitmentDetailRoute && index === 2) {
         label = commitmentTitle || "Commitment";
+      } else if (isPrimePcoDetailRoute && index === 2) {
+        label = primePcoTitle || "Prime PCO";
+      } else if (isNestedPrimePcoDetailRoute && index === 5) {
+        label = primePcoTitle || "Prime PCO";
       } else if (isChangeEventDetailRoute && index === 2) {
         label = changeEventTitle || "Change Event";
       } else if (isPrimeCoDetailRoute && index === 3) {
@@ -346,6 +361,8 @@ export function useHeaderNav(): UseHeaderNavReturn {
           // Special cases
           const labelMap: Record<string, string> = {
             "prime-contracts": "Prime Contracts",
+            "prime-contract-pcos": "Prime Contract PCOs",
+            pcos: "Potential Change Orders",
             "change-events": "Change Events",
             "change-orders": "Change Orders",
             "direct-costs": "Direct Costs",
@@ -368,7 +385,7 @@ export function useHeaderNav(): UseHeaderNavReturn {
     });
 
     return crumbs;
-  }, [pathname, companyTitle, vendorTitle, contactTitle, currentProject, meetingTitle, globalMeetingTitle, primeContractTitle, commitmentTitle, changeEventTitle, primeCoTitle, invoiceTitle, rfiTitle, settingsUserTitle, subcontractorInvoiceInfo, drawingTitle]);
+  }, [pathname, companyTitle, vendorTitle, contactTitle, currentProject, meetingTitle, globalMeetingTitle, primeContractTitle, commitmentTitle, primePcoTitle, changeEventTitle, primeCoTitle, invoiceTitle, rfiTitle, settingsUserTitle, subcontractorInvoiceInfo, drawingTitle]);
   useEffect(() => {
     const segments = pathname?.split("/").filter(Boolean) ?? [];
     const isMeetingDetailRoute =
@@ -775,6 +792,77 @@ export function useHeaderNav(): UseHeaderNavReturn {
     };
   }, [pathname]);
 
+  // Fetch title for prime contract PCO detail routes ([projectId]/prime-contract-pcos/[pcoId]).
+  useEffect(() => {
+    const segments = pathname?.split("/").filter(Boolean) ?? [];
+    const isFlatPrimePcoDetailRoute =
+      segments.length >= 3 &&
+      segments[1] === "prime-contract-pcos" &&
+      segments[2] !== "new";
+    const isNestedPrimePcoDetailRoute =
+      segments.length >= 6 &&
+      segments[1] === "prime-contracts" &&
+      segments[3] === "change-orders" &&
+      segments[4] === "pcos" &&
+      segments[5] !== "new";
+
+    if (!isFlatPrimePcoDetailRoute && !isNestedPrimePcoDetailRoute) {
+      setPrimePcoTitle(null);
+      return;
+    }
+
+    const projectId = segments[0];
+    const pcoId = isFlatPrimePcoDetailRoute ? segments[2] : segments[5];
+    const cacheKey = `${projectId}:${pcoId}`;
+    const cachedTitle = primePcoTitleCache.get(cacheKey);
+    if (cachedTitle) {
+      setPrimePcoTitle(cachedTitle);
+      return;
+    }
+
+    let isActive = true;
+    const fetchPrimePcoTitle = async () => {
+      try {
+        const response = await fetch(
+          `/api/projects/${projectId}/prime-contract-pcos/${pcoId}`,
+        );
+        if (!response.ok) return;
+
+        const contentType = response.headers.get("content-type") || "";
+        if (!contentType.includes("application/json")) return;
+
+        const data = await response.json();
+        const numberPart =
+          typeof data?.pco_number === "string" && data.pco_number.length > 0
+            ? `PCO #${data.pco_number}`
+            : null;
+        const titlePart =
+          typeof data?.title === "string" && data.title.length > 0
+            ? data.title
+            : null;
+        const title = titlePart && numberPart
+          ? `${numberPart} — ${titlePart}`
+          : (titlePart ?? numberPart);
+
+        if (isActive) {
+          if (title) {
+            primePcoTitleCache.set(cacheKey, title);
+            setPrimePcoTitle(title);
+          } else {
+            setPrimePcoTitle(null);
+          }
+        }
+      } catch {
+        // Best-effort only
+      }
+    };
+
+    fetchPrimePcoTitle();
+    return () => {
+      isActive = false;
+    };
+  }, [pathname]);
+
   // Fetch title for change event detail routes
   useEffect(() => {
     const segments = pathname?.split("/").filter(Boolean) ?? [];
@@ -897,7 +985,6 @@ export function useHeaderNav(): UseHeaderNavReturn {
     const segments = pathname?.split("/").filter(Boolean) ?? [];
     const isInvoiceRoute =
       segments.length >= 5 &&
-      /^\d+$/.test(segments[0]) &&
       segments[1] === "prime-contracts" &&
       segments[3] === "invoices" &&
       segments[4] !== "new";

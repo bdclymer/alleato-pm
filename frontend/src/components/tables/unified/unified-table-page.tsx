@@ -56,6 +56,15 @@ function isInteractiveRowTarget(target: EventTarget | null): boolean {
   return Boolean(target.closest(INTERACTIVE_ROW_TARGET_SELECTOR));
 }
 
+// Compare string arrays by value to prevent redundant state updates that can trigger render loops.
+function areStringArraysEqual(left: string[], right: string[]): boolean {
+  if (left.length !== right.length) return false;
+  for (let index = 0; index < left.length; index += 1) {
+    if (left[index] !== right[index]) return false;
+  }
+  return true;
+}
+
 interface TabItem {
   label: string;
   href: string;
@@ -527,7 +536,7 @@ export function UnifiedTablePage<T>({
 
   React.useEffect(() => {
     if (!hasUserManagedColumnOrderRef.current) {
-      setColumnOrder(visibleColumns);
+      setColumnOrder((prev) => (areStringArraysEqual(prev, visibleColumns) ? prev : visibleColumns));
       return;
     }
 
@@ -535,7 +544,8 @@ export function UnifiedTablePage<T>({
       const nextVisible = new Set(visibleColumns);
       const preserved = prev.filter((id) => nextVisible.has(id));
       const additions = visibleColumns.filter((id) => !preserved.includes(id));
-      return [...preserved, ...additions];
+      const nextOrder = [...preserved, ...additions];
+      return areStringArraysEqual(prev, nextOrder) ? prev : nextOrder;
     });
   }, [visibleColumns]);
 
@@ -580,17 +590,20 @@ export function UnifiedTablePage<T>({
 
   React.useEffect(() => {
     if (!resolvedFeatures.enableRowReorder || sorting?.sortBy) {
-      setRowOrderIds([]);
+      setRowOrderIds((prev) => (prev.length === 0 ? prev : []));
       return;
     }
 
     const nextIds = rowOrderedItems.map((item) => table.getRowId(item));
     setRowOrderIds((prev) => {
-      if (prev.length === 0) return nextIds;
+      if (prev.length === 0) {
+        return areStringArraysEqual(prev, nextIds) ? prev : nextIds;
+      }
       const seen = new Set(nextIds);
       const preserved = prev.filter((id) => seen.has(id));
       const additions = nextIds.filter((id) => !preserved.includes(id));
-      return [...preserved, ...additions];
+      const nextOrder = [...preserved, ...additions];
+      return areStringArraysEqual(prev, nextOrder) ? prev : nextOrder;
     });
   }, [resolvedFeatures.enableRowReorder, rowOrderedItems, sorting?.sortBy, table]);
 
@@ -1044,7 +1057,9 @@ export function UnifiedTablePage<T>({
                         </TableHead>
                       );
                     })}
-                    {hasRowActions && <TableHead className="w-12.5" />}
+                    {hasRowActions && (
+                      <TableHead className={cn("w-[56px] pl-2", sidePanel ? "pr-4" : "pr-2")} />
+                    )}
                   </TableRow>
                 )}
                 <TableRow className="border-border/80">
@@ -1235,7 +1250,9 @@ export function UnifiedTablePage<T>({
                         </TableHead>
                       );
                     })}
-                  {hasRowActions && <TableHead className="w-[50px]" />}
+                  {hasRowActions && (
+                    <TableHead className={cn("w-[56px] pl-2", sidePanel ? "pr-4" : "pr-2")} />
+                  )}
                 </TableRow>
               </TableHeader>
               <TableBody
@@ -1441,7 +1458,10 @@ export function UnifiedTablePage<T>({
                         </TableCell>
                       ))}
                     {hasRowActions && (
-                      <TableCell onClick={(event) => event.stopPropagation()}>
+                      <TableCell
+                        className={cn("pl-2", sidePanel ? "pr-4" : "pr-2")}
+                        onClick={(event) => event.stopPropagation()}
+                      >
                         {table.rowActions ? table.rowActions(item) : table.onDelete ? (
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -1606,7 +1626,7 @@ export function UnifiedTablePage<T>({
         padding={containerPadding}
         className={cn(
           "pb-12",
-          sidePanel && "pt-0 overflow-x-visible",
+          sidePanel && "pt-0 pr-0 sm:pr-0 lg:pr-0 overflow-x-visible",
           containerClassName,
         )}
       >
@@ -1639,7 +1659,7 @@ export function UnifiedTablePage<T>({
               {/* Side panel with resize handle */}
               <aside
                 className={cn(
-                  "hidden lg:flex lg:flex-col bg-muted border-b border-l border-border/50 relative",
+                  "hidden lg:flex lg:flex-col bg-background border-b border-l border-border/50 relative",
                   panelSticky
                     ? "lg:sticky lg:top-12 lg:max-h-[calc(100dvh-3rem)]"
                     : "lg:relative lg:max-h-none",

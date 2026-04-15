@@ -143,6 +143,19 @@ type PendingChangeOrderLinesClient = {
 
 type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
 
+type RuntimeCommitmentsLookupClient = {
+  from: (table: "commitments") => {
+    select: (query: "id") => {
+      eq: (column: "project_id", value: number) => {
+        in: (
+          column: "id",
+          values: string[],
+        ) => Promise<{ data: Array<{ id: string }> | null; error: unknown }>;
+      };
+    };
+  };
+};
+
 async function fetchBudgetRows(
   supabase: SupabaseServerClient,
   projectIdNum: number,
@@ -235,6 +248,87 @@ async function fetchPendingPrimeChangeOrderLines(
   }
 
   return result;
+}
+
+async function fetchCommitmentChangeOrderLinesByStatus(
+  supabase: SupabaseServerClient,
+  projectIdNum: number,
+  statusFilter: "pending" | "approved",
+) {
+  const { data: lineRows, error: lineError } = await supabase
+    .from("commitment_change_order_lines")
+    .select("cost_code_id, amount, commitment_change_order_id");
+
+  if (lineError) {
+    return { data: null, error: lineError };
+  }
+
+  const changeOrderIds = Array.from(
+    new Set(
+      (lineRows ?? [])
+        .map((row) => row.commitment_change_order_id)
+        .filter((id): id is string => typeof id === "string" && id.length > 0),
+    ),
+  );
+  if (changeOrderIds.length === 0) {
+    return { data: [] as ChangeOrderLineItem[], error: null };
+  }
+
+  let parentQuery = supabase
+    .from("contract_change_orders")
+    .select("id, contract_id, status")
+    .in("id", changeOrderIds);
+  if (statusFilter === "pending") {
+    parentQuery = parentQuery.like("status", "Pending%");
+  } else {
+    parentQuery = parentQuery.eq("status", "Approved");
+  }
+
+  const { data: parentRows, error: parentError } = await parentQuery;
+  if (parentError) {
+    return { data: null, error: parentError };
+  }
+
+  const commitmentIds = Array.from(
+    new Set(
+      (parentRows ?? [])
+        .map((row) => row.contract_id)
+        .filter((id): id is string => typeof id === "string" && id.length > 0),
+    ),
+  );
+  if (commitmentIds.length === 0) {
+    return { data: [] as ChangeOrderLineItem[], error: null };
+  }
+
+  const runtimeCommitmentsClient =
+    supabase as unknown as RuntimeCommitmentsLookupClient;
+  const { data: commitments, error: commitmentsError } =
+    await runtimeCommitmentsClient
+      .from("commitments")
+      .select("id")
+      .eq("project_id", projectIdNum)
+      .in("id", commitmentIds);
+  if (commitmentsError) {
+    return { data: null, error: commitmentsError };
+  }
+
+  const allowedCommitmentIds = new Set((commitments ?? []).map((row) => row.id));
+  const allowedParentIds = new Set(
+    (parentRows ?? [])
+      .filter((row) => allowedCommitmentIds.has(row.contract_id))
+      .map((row) => row.id),
+  );
+
+  const filtered = (lineRows ?? [])
+    .filter((row) => allowedParentIds.has(row.commitment_change_order_id))
+    .map(
+      (row): ChangeOrderLineItem => ({
+        cost_code_id: row.cost_code_id,
+        amount: row.amount,
+      }),
+    );
+
+  return { data: filtered, error: null };
 }
 
 // ---------------------------------------------------------------------------
@@ -422,39 +516,18 @@ export async function computeBudgetGrandTotals(
       .eq("purchase_orders.project_id", projectIdNum)
       .in("purchase_orders.status", EXECUTED_PO_STATUSES),
 
-    supabase
-      .from("commitment_change_order_lines")
-      .select(
-        `
-        cost_code_id,
-        amount,
-        commitment_change_orders!inner(
-          status,
-          commitments!inner(project_id)
-        )
-      `,
-      )
-      .eq("commitment_change_orders.commitments.project_id", projectIdNum)
-      .like("commitment_change_orders.status", "Pending%"),
-
-    supabase
-      .from("commitment_change_order_lines")
-      .select(
-        `
-        cost_code_id,
-        amount,
-        commitment_change_orders!inner(
-          status,
-          commitments!inner(project_id)
-        )
-      `,
-      )
-      .eq("commitment_change_orders.commitments.project_id", projectIdNum)
-      .eq("commitment_change_orders.status", "Approved"),
+    fetchCommitmentChangeOrderLinesByStatus(supabase, projectIdNum, "pending"),
+    fetchCommitmentChangeOrderLinesByStatus(supabase, projectIdNum, "approved"),
   ]);
 
   if (budgetRowsResult.error) {
     throw new BudgetFetchError(budgetRowsResult.error);
+  }
+  if (pendingCommitmentCOsRes.error) {
+    throw new BudgetFetchError(pendingCommitmentCOsRes.error);
+  }
+  if (approvedCommitmentCOsRes.error) {
+    throw new BudgetFetchError(approvedCommitmentCOsRes.error);
   }
 
   // ---- Aggregate costs by cost_code_id across all sources ----

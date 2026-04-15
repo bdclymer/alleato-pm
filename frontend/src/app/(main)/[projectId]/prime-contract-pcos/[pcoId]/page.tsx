@@ -1,13 +1,12 @@
 "use client";
 
 import { useEffect, useState, useMemo, useCallback } from "react";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft,
   ArrowUpRight,
   Copy,
   Download,
-  FileText,
   Inbox,
   Link2,
   MoreHorizontal,
@@ -33,11 +32,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Inline } from "@/components/layout/inline";
 import { Text } from "@/components/ds/text";
-import { PageShell } from "@/components/layout";
+import {
+  LabelValueRow,
+  PageShell,
+} from "@/components/layout";
 import { StatusBadge, EmptyState } from "@/components/ds";
 import {
   InlineTable,
@@ -90,10 +91,22 @@ interface PcoDetail {
   title: string;
   status: "draft" | "pending" | "approved" | "void";
   description: string | null;
+  change_reason: string | null;
+  revision: number | null;
+  is_private: boolean;
+  executed: boolean;
+  signed_co_received_date: string | null;
+  request_received_from: string | null;
+  location: string | null;
+  field_change: boolean;
+  reference: string | null;
+  paid_in_full: boolean;
   total_amount: number;
   calculated_amount: number;
   schedule_impact: number | null;
   created_at: string;
+  created_by: string | null;
+  created_by_name: string | null;
   updated_at: string | null;
   promoted_to_co_id: number | null;
   promoted_at: string | null;
@@ -101,11 +114,23 @@ interface PcoDetail {
   line_items: PcoLineItem[];
   line_items_count: number;
   change_event_links: LinkedChangeEvent[];
+  attachments: Array<{
+    id: string;
+    file_name: string;
+    file_path: string;
+    file_size: number;
+    mime_type: string;
+    uploaded_at: string;
+    uploaded_by: string | null;
+  }>;
   prime_contract?: {
     id: string;
     contract_number: string;
     title: string;
     status: string;
+    contract_company?: { id: string; name: string } | null;
+    client?: { id: string; name: string } | null;
+    vendor?: { id: string; name: string } | null;
   } | null;
 }
 
@@ -126,22 +151,51 @@ function formatDate(dateValue: string | null | undefined): string {
   return parsed.toLocaleDateString();
 }
 
+function formatDateTime(dateValue: string | null | undefined): string {
+  if (!dateValue) return "--";
+  const parsed = new Date(dateValue);
+  if (Number.isNaN(parsed.getTime())) return "--";
+  return parsed.toLocaleString();
+}
+
 /* ── Page Component ─────────────────────────────────────────────── */
 
 export default function PrimeContractPcoDetailPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const params = useParams();
   const projectId = parseInt(params.projectId as string, 10);
   const pcoId = params.pcoId as string;
+  const contractIdFromRoute =
+    typeof params.contractId === "string" ? params.contractId : null;
 
   const [pco, setPco] = useState<PcoDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("line-items");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showPromoteDialog, setShowPromoteDialog] = useState(false);
   const [isPromoting, setIsPromoting] = useState(false);
+
+  const buildPcoDetailPath = useCallback(
+    (primeContractId: string | null | undefined) => {
+      const resolvedContractId = contractIdFromRoute ?? primeContractId ?? null;
+      if (resolvedContractId) {
+        return `/${projectId}/prime-contracts/${resolvedContractId}/change-orders/pcos/${pcoId}`;
+      }
+      return `/${projectId}/prime-contract-pcos/${pcoId}`;
+    },
+    [contractIdFromRoute, projectId, pcoId],
+  );
+
+  const buildPcoEditPath = useCallback(
+    (primeContractId: string | null | undefined) => {
+      const resolvedContractId = contractIdFromRoute ?? primeContractId ?? null;
+      if (resolvedContractId) {
+        return `/${projectId}/prime-contracts/${resolvedContractId}/change-orders/pcos/${pcoId}/edit`;
+      }
+      return `/${projectId}/prime-contract-pcos/${pcoId}/edit`;
+    },
+    [contractIdFromRoute, projectId, pcoId],
+  );
 
   /* ── Fetch PCO detail ──────────────────────────────────────────── */
 
@@ -169,22 +223,20 @@ export default function PrimeContractPcoDetailPage() {
     fetchPco();
   }, [fetchPco]);
 
+  useEffect(() => {
+    if (contractIdFromRoute || !pco?.prime_contract_id) return;
+    router.replace(buildPcoDetailPath(pco.prime_contract_id));
+  }, [contractIdFromRoute, pco?.prime_contract_id, router, buildPcoDetailPath]);
+
   /* ── Navigation ────────────────────────────────────────────────── */
 
   const handleBack = useCallback(() => {
-    router.push(`/${projectId}/prime-contract-pcos`);
-  }, [router, projectId]);
-
-  /* ── Edit mode redirect ────────────────────────────────────────── */
-
-  useEffect(() => {
-    if (searchParams.get("edit") === "1" && pco) {
-      // For now, navigate to the detail page without edit param
-      // A full edit form can be added later
-      toast.info("Edit mode is not yet implemented for PCOs");
-      router.replace(`/${projectId}/prime-contract-pcos/${pcoId}`);
+    if (contractIdFromRoute) {
+      router.push(`/${projectId}/prime-contracts/${contractIdFromRoute}`);
+      return;
     }
-  }, [searchParams, pco, projectId, pcoId, router]);
+    router.push(`/${projectId}/prime-contract-pcos`);
+  }, [router, projectId, contractIdFromRoute]);
 
   /* ── Actions ───────────────────────────────────────────────────── */
 
@@ -200,11 +252,15 @@ export default function PrimeContractPcoDetailPage() {
       }
       toast.success("PCO deleted");
       setShowDeleteDialog(false);
-      router.push(`/${projectId}/prime-contract-pcos`);
+      if (contractIdFromRoute) {
+        router.push(`/${projectId}/prime-contracts/${contractIdFromRoute}`);
+      } else {
+        router.push(`/${projectId}/prime-contract-pcos`);
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to delete PCO");
     }
-  }, [projectId, pcoId, router]);
+  }, [projectId, pcoId, router, contractIdFromRoute]);
 
   const handlePromote = useCallback(async () => {
     setIsPromoting(true);
@@ -282,8 +338,8 @@ export default function PrimeContractPcoDetailPage() {
 
   if (isLoading) {
     return (
-      <PageShell variant="detail" title="Loading...">
-        <div className="space-y-4">
+      <PageShell variant="dashboard" title="Loading Prime Contract PCO">
+        <div className="space-y-4 px-6 py-4">
           <Skeleton className="h-8 w-64" />
           <Skeleton className="h-4 w-full" />
           <Skeleton className="h-4 w-3/4" />
@@ -299,15 +355,13 @@ export default function PrimeContractPcoDetailPage() {
     return (
       <PageShell
         variant="dashboard"
-        title="Error"
-        actions={
-          <Button variant="ghost" size="sm" onClick={handleBack}>
-            <ArrowLeft className="mr-1 h-4 w-4" />
-            Back
-          </Button>
-        }
+        title="Prime Contract PCO"
+        onBack={handleBack}
+        backLabel="Back"
       >
-        <Text tone="destructive">{error || "PCO not found"}</Text>
+        <div className="px-6 py-4">
+          <Text tone="destructive">{error || "PCO not found"}</Text>
+        </div>
       </PageShell>
     );
   }
@@ -322,8 +376,7 @@ export default function PrimeContractPcoDetailPage() {
         <Button
           variant="outline"
           size="sm"
-          disabled
-          title="Edit form coming soon"
+          onClick={() => router.push(buildPcoEditPath(pco.prime_contract_id))}
         >
           Edit
         </Button>
@@ -370,13 +423,20 @@ export default function PrimeContractPcoDetailPage() {
 
   return (
     <PageShell
-      variant="detail"
+      variant="dashboard"
       title={pageTitle}
-      actions={headerActions}
+      description={
+        pco.prime_contract
+          ? `Contract ${pco.prime_contract.contract_number}${pco.prime_contract.title ? ` — ${pco.prime_contract.title}` : ""}`
+          : undefined
+      }
       onBack={handleBack}
+      backLabel="Back"
+      actions={headerActions}
+      contentClassName="space-y-8"
     >
       {/* Summary header */}
-      <div className="flex flex-wrap items-center gap-4 pb-6 border-b border-border">
+      <div className="flex flex-wrap items-center gap-4 border-b border-border pb-6">
         <StatusBadge status={pco.status} />
         {pco.prime_contract && (
           <Text tone="muted" size="sm">
@@ -394,173 +454,214 @@ export default function PrimeContractPcoDetailPage() {
         </div>
       </div>
 
-      {/* Description */}
-      {pco.description && (
-        <div className="pt-4 pb-2">
-          <Text size="sm" tone="muted" className="mb-1">
-            Description
-          </Text>
-          <Text>{pco.description}</Text>
-        </div>
-      )}
+      <div className="space-y-8">
+        <section className="space-y-4">
+          <h2 className="text-sm font-semibold text-foreground">
+            General Information
+          </h2>
+          <div className="grid grid-cols-1 gap-x-20 gap-y-0 lg:grid-cols-2">
+            <dl className="space-y-4 text-sm">
+              <LabelValueRow label="#">{pco.pco_number || "--"}</LabelValueRow>
+              <LabelValueRow label="Revision">{pco.revision ?? 0}</LabelValueRow>
+              <LabelValueRow label="Contract Company">
+                {pco.prime_contract?.contract_company?.name ||
+                  pco.prime_contract?.client?.name ||
+                  pco.prime_contract?.vendor?.name ||
+                  "--"}
+              </LabelValueRow>
+              <LabelValueRow label="Title">{pco.title || "--"}</LabelValueRow>
+              <LabelValueRow label="Status">
+                <StatusBadge status={pco.status} />
+              </LabelValueRow>
+              <LabelValueRow label="Change Reason">
+                {pco.change_reason || "--"}
+              </LabelValueRow>
+              <LabelValueRow label="Private">
+                {pco.is_private ? "Yes" : "No"}
+              </LabelValueRow>
+              <LabelValueRow label="Description">
+                <span className="whitespace-pre-wrap">
+                  {pco.description || "--"}
+                </span>
+              </LabelValueRow>
+              <LabelValueRow label="Executed">
+                {pco.executed ? "Yes" : "No"}
+              </LabelValueRow>
+              <LabelValueRow label="Request Received From">
+                {pco.request_received_from || "--"}
+              </LabelValueRow>
+              <LabelValueRow label="Schedule Impact">
+                {pco.schedule_impact != null ? `${pco.schedule_impact} days` : "--"}
+              </LabelValueRow>
+              <LabelValueRow label="Reference">
+                {pco.reference || "--"}
+              </LabelValueRow>
+            </dl>
+            <dl className="space-y-4 text-sm">
+              <LabelValueRow label="Date Created">
+                {formatDateTime(pco.created_at)}
+              </LabelValueRow>
+              <LabelValueRow label="Created By">
+                {pco.created_by_name || pco.created_by || "--"}
+              </LabelValueRow>
+              <LabelValueRow label="Contract">
+                {pco.prime_contract
+                  ? `${pco.prime_contract.contract_number} - ${pco.prime_contract.title}`
+                  : "--"}
+              </LabelValueRow>
+              <LabelValueRow label="Prime Contract Change Order">
+                {pco.promoted_to_co_id ? `#${pco.promoted_to_co_id}` : "None"}
+              </LabelValueRow>
+              <LabelValueRow label="Signed Change Order Received Date">
+                {formatDate(pco.signed_co_received_date)}
+              </LabelValueRow>
+              <LabelValueRow label="Location">{pco.location || "--"}</LabelValueRow>
+              <LabelValueRow label="Field Change">
+                {pco.field_change ? "Yes" : "No"}
+              </LabelValueRow>
+              <LabelValueRow label="Paid in Full">
+                {pco.paid_in_full ? "Yes" : "No"}
+              </LabelValueRow>
+            </dl>
+          </div>
+        </section>
 
-      {/* Metadata row */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 py-4">
-        <div>
-          <Text size="sm" tone="muted">
-            Schedule Impact
-          </Text>
-          <Text>
-            {pco.schedule_impact != null ? `${pco.schedule_impact} days` : "--"}
-          </Text>
-        </div>
-        <div>
-          <Text size="sm" tone="muted">
-            Due Date
-          </Text>
-          <Text>{formatDate(pco.due_date)}</Text>
-        </div>
-        <div>
-          <Text size="sm" tone="muted">
-            Created
-          </Text>
-          <Text>{formatDate(pco.created_at)}</Text>
-        </div>
-        <div>
-          <Text size="sm" tone="muted">
-            Last Updated
-          </Text>
-          <Text>{formatDate(pco.updated_at)}</Text>
-        </div>
-      </div>
+        <section className="space-y-4">
+          <h2 className="text-sm font-semibold text-foreground">
+            Attachments
+          </h2>
+          {pco.attachments?.length ? (
+            <div className="space-y-2">
+              {pco.attachments.map((attachment) => (
+                <a
+                  key={attachment.id}
+                  href={attachment.file_path}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm hover:bg-muted/50"
+                >
+                  <span className="truncate">{attachment.file_name}</span>
+                  <span className="text-muted-foreground">
+                    {Math.max(1, Math.round(attachment.file_size / 1024))} KB
+                  </span>
+                </a>
+              ))}
+            </div>
+          ) : (
+            <p className="py-4 text-sm text-muted-foreground">
+              No attachments yet.
+            </p>
+          )}
+        </section>
 
-      {pco.promoted_to_co_id && (
-        <div className="rounded-md bg-muted px-4 py-3 mb-4">
-          <Text size="sm">
-            Promoted to Change Order #{pco.promoted_to_co_id} on{" "}
-            {formatDate(pco.promoted_at)}
-          </Text>
-        </div>
-      )}
-
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
-        <TabsList variant="line">
-          <TabsTrigger value="line-items" data-testid="pco-tab-line-items">
-            Line Items ({lineItems.length})
-          </TabsTrigger>
-          <TabsTrigger
-            value="change-events"
-            data-testid="pco-tab-change-events"
-          >
-            Source Change Events ({changeEventLinks.length})
-          </TabsTrigger>
-        </TabsList>
-
-        <div className="pt-6">
-          {/* Line Items Tab */}
-          <TabsContent value="line-items">
-            {lineItems.length === 0 ? (
-              <EmptyState
-                icon={<Inbox />}
-                title="No line items"
-                description="This PCO does not have any line items yet."
-              />
-            ) : (
-              <InlineTable>
-                <InlineTableHeader>
-                  <InlineTableHeaderRow>
-                    <InlineTableHeaderCell>
-                      Description
-                    </InlineTableHeaderCell>
-                    <InlineTableHeaderCell className="text-right">
-                      Qty
-                    </InlineTableHeaderCell>
-                    <InlineTableHeaderCell>
-                      UOM
-                    </InlineTableHeaderCell>
-                    <InlineTableHeaderCell className="text-right">
-                      Unit Cost
-                    </InlineTableHeaderCell>
-                    <InlineTableHeaderCell className="text-right">
-                      Amount
-                    </InlineTableHeaderCell>
-                  </InlineTableHeaderRow>
-                </InlineTableHeader>
-                <InlineTableBody>
-                  {lineItems.map((item) => (
-                    <InlineTableRow key={item.id}>
-                      <InlineTableCell>
-                        <span className="text-foreground">
-                          {item.description || "--"}
+        <section className="space-y-4">
+          <h2 className="text-sm font-semibold text-foreground">
+            Line Items
+          </h2>
+          {lineItems.length === 0 ? (
+            <EmptyState
+              icon={<Inbox />}
+              title="No line items"
+              description="This PCO does not have any line items yet."
+            />
+          ) : (
+            <InlineTable>
+              <InlineTableHeader>
+                <InlineTableHeaderRow>
+                  <InlineTableHeaderCell>
+                    Description
+                  </InlineTableHeaderCell>
+                  <InlineTableHeaderCell className="text-right">
+                    Qty
+                  </InlineTableHeaderCell>
+                  <InlineTableHeaderCell>
+                    UOM
+                  </InlineTableHeaderCell>
+                  <InlineTableHeaderCell className="text-right">
+                    Unit Cost
+                  </InlineTableHeaderCell>
+                  <InlineTableHeaderCell className="text-right">
+                    Amount
+                  </InlineTableHeaderCell>
+                </InlineTableHeaderRow>
+              </InlineTableHeader>
+              <InlineTableBody>
+                {lineItems.map((item) => (
+                  <InlineTableRow key={item.id}>
+                    <InlineTableCell>
+                      <span className="text-foreground">
+                        {item.description || "--"}
+                      </span>
+                      {item.change_event && (
+                        <span className="mt-0.5 block text-xs text-muted-foreground">
+                          CE: {item.change_event.number} -{" "}
+                          {item.change_event.title}
                         </span>
-                        {item.change_event && (
-                          <span className="block text-xs text-muted-foreground mt-0.5">
-                            CE: {item.change_event.number} -{" "}
-                            {item.change_event.title}
-                          </span>
-                        )}
-                      </InlineTableCell>
-                      <InlineTableCell className="text-right tabular-nums">
-                        {item.quantity}
-                      </InlineTableCell>
-                      <InlineTableCell className="text-muted-foreground">
-                        {item.unit_of_measure || "--"}
-                      </InlineTableCell>
-                      <InlineTableCell className="text-right tabular-nums">
-                        {formatMoney(item.unit_cost || 0)}
-                      </InlineTableCell>
-                      <InlineTableCell className="text-right tabular-nums font-medium">
-                        {formatMoney(item.amount || 0)}
-                      </InlineTableCell>
-                    </InlineTableRow>
-                  ))}
-                </InlineTableBody>
-                <InlineTableFooter>
-                  <InlineTableFooterRow>
-                    <InlineTableFooterCell colSpan={3}>
-                      Total
-                    </InlineTableFooterCell>
-                    <InlineTableFooterCell />
-                    <InlineTableFooterCell className="text-right tabular-nums font-semibold">
-                      {formatMoney(totalAmount)}
-                    </InlineTableFooterCell>
-                  </InlineTableFooterRow>
-                </InlineTableFooter>
-              </InlineTable>
-            )}
-          </TabsContent>
+                      )}
+                    </InlineTableCell>
+                    <InlineTableCell className="text-right tabular-nums">
+                      {item.quantity}
+                    </InlineTableCell>
+                    <InlineTableCell className="text-muted-foreground">
+                      {item.unit_of_measure || "--"}
+                    </InlineTableCell>
+                    <InlineTableCell className="text-right tabular-nums">
+                      {formatMoney(item.unit_cost || 0)}
+                    </InlineTableCell>
+                    <InlineTableCell className="text-right tabular-nums font-medium">
+                      {formatMoney(item.amount || 0)}
+                    </InlineTableCell>
+                  </InlineTableRow>
+                ))}
+              </InlineTableBody>
+              <InlineTableFooter>
+                <InlineTableFooterRow>
+                  <InlineTableFooterCell colSpan={3}>
+                    Total
+                  </InlineTableFooterCell>
+                  <InlineTableFooterCell />
+                  <InlineTableFooterCell className="text-right tabular-nums font-semibold">
+                    {formatMoney(totalAmount)}
+                  </InlineTableFooterCell>
+                </InlineTableFooterRow>
+              </InlineTableFooter>
+            </InlineTable>
+          )}
+        </section>
 
-          {/* Source Change Events Tab */}
-          <TabsContent value="change-events">
-            {changeEventLinks.length === 0 ? (
-              <EmptyState
-                icon={<Link2 />}
-                title="No linked change events"
-                description="No change events have been linked to this PCO."
-              />
-            ) : (
-              <div className="space-y-2">
-                {changeEventLinks.map((link) => {
-                  const ce = link.change_event;
-                  if (!ce) return null;
+        <section className="space-y-4">
+          <h2 className="text-sm font-semibold text-foreground">
+            Source Change Events
+          </h2>
+          {changeEventLinks.length === 0 ? (
+            <EmptyState
+              icon={<Link2 />}
+              title="No linked change events"
+              description="No change events have been linked to this PCO."
+            />
+          ) : (
+            <div className="space-y-2">
+              {changeEventLinks.map((link) => {
+                const ce = link.change_event;
+                if (!ce) return null;
 
-                  return (
-                    <Button
-                      key={link.change_event_id}
-                      variant="ghost"
-                      className="w-full flex items-center justify-between rounded-md bg-muted/50 px-4 py-3 h-auto text-left hover:bg-muted"
-                      onClick={() =>
-                        router.push(
-                          `/${projectId}/change-events/${ce.id}`,
-                        )
-                      }
-                    >
-                      <div className="flex-1 min-w-0">
-                        <Text className="font-medium truncate">
+                return (
+                  <Button
+                    key={link.change_event_id}
+                    variant="ghost"
+                    className="h-auto w-full rounded-md bg-muted/50 px-4 py-3 text-left hover:bg-muted"
+                    onClick={() =>
+                      router.push(
+                        `/${projectId}/change-events/${ce.id}`,
+                      )
+                    }
+                  >
+                    <div className="flex min-w-0 flex-1 items-center justify-between">
+                      <div className="min-w-0 flex-1">
+                        <Text className="truncate font-medium">
                           {ce.number} - {ce.title}
                         </Text>
-                        <div className="flex items-center gap-2 mt-1">
+                        <div className="mt-1 flex items-center gap-2">
                           <StatusBadge status={ce.status} />
                           {ce.scope && (
                             <Text size="sm" tone="muted">
@@ -577,14 +678,14 @@ export default function PrimeContractPcoDetailPage() {
                       <Text size="sm" tone="muted" className="ml-4 shrink-0">
                         Linked {formatDate(link.linked_at)}
                       </Text>
-                    </Button>
-                  );
-                })}
-              </div>
-            )}
-          </TabsContent>
-        </div>
-      </Tabs>
+                    </div>
+                  </Button>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      </div>
 
       {/* Delete Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>

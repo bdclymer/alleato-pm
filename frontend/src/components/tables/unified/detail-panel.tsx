@@ -97,7 +97,7 @@ function FieldRenderer<T extends Record<string, unknown>>({
           onChange={(e) => onChange(e.target.value)}
           placeholder={field.placeholder}
           disabled={!isEditable}
-          className="min-h-[80px] resize-none"
+          className="min-h-20 resize-none"
         />
       );
 

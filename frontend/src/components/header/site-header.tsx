@@ -169,9 +169,9 @@ export function SiteHeader() {
           type="button"
           onClick={() => setMobileNavOpen(true)}
           aria-label="Open menu"
-          className="md:hidden inline-flex h-9 w-9 items-center justify-center rounded-md text-foreground"
+          className="md:hidden inline-flex h-11 w-11 items-center justify-center rounded-md text-foreground"
         >
-          <Menu style={{ width: 26, height: 26 }} />
+          <Menu style={{ width: 22, height: 22 }} />
         </button>
       </div>
 
@@ -249,9 +249,9 @@ function MobileNavOverlay({
           type="button"
           onClick={onClose}
           aria-label="Close menu"
-          className="inline-flex h-9 w-9 items-center justify-center rounded-md text-foreground"
+          className="inline-flex h-11 w-11 items-center justify-center rounded-md text-foreground"
         >
-          <X style={{ width: 26, height: 26 }} />
+          <X style={{ width: 22, height: 22 }} />
         </button>
       </div>
 
@@ -284,10 +284,10 @@ function MobileNavOverlay({
                       onClose();
                     }}
                     className={cn(
-                      "text-xl tracking-tight transition-colors",
+                      "w-full max-w-[22rem] truncate px-2 text-center text-xl tracking-tight transition-colors",
                       isDisabled
                         ? "pointer-events-none opacity-30"
-                        : isActive
+                      : isActive
                         ? "text-foreground font-semibold"
                         : "text-foreground/85"
                     )}
@@ -356,7 +356,11 @@ function ToolsDropdown({
         </Button>
       </PopoverTrigger>
 
-      <PopoverContent align="end" sideOffset={6} className="w-[860px] p-0 border border-border shadow-sm">
+      <PopoverContent
+        align="end"
+        sideOffset={6}
+        className="w-[min(860px,calc(100vw-1.5rem))] max-w-[calc(100vw-1.5rem)] p-0 border border-border shadow-sm"
+      >
         {/* Panel header */}
         <div className="flex items-center justify-between border-b border-border/50 px-5 py-2.5">
           <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
@@ -370,17 +374,19 @@ function ToolsDropdown({
         </div>
 
         {/* Groups */}
-        <div className="flex divide-x divide-border/40">
-          {groups.map((group) => (
-            <ToolsGroup
-              key={group.id}
-              group={group}
-              visibleTools={group.visibleTools}
-              projectId={projectId}
-              activeToolName={activeToolName}
-              onClose={() => setOpen(false)}
-            />
-          ))}
+        <div className="overflow-x-auto">
+          <div className="flex min-w-[760px] divide-x divide-border/40">
+            {groups.map((group) => (
+              <ToolsGroup
+                key={group.id}
+                group={group}
+                visibleTools={group.visibleTools}
+                projectId={projectId}
+                activeToolName={activeToolName}
+                onClose={() => setOpen(false)}
+              />
+            ))}
+          </div>
         </div>
       </PopoverContent>
     </Popover>

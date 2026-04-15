@@ -850,7 +850,7 @@ export default function InvoiceDetailPage() {
 
   // Action handlers
   const handleBack = () => {
-    router.push(`/${projectId}/invoicing`);
+    router.push(`/${projectId}/invoices`);
   };
 
   const handleEdit = () => {
@@ -1007,7 +1007,7 @@ export default function InvoiceDetailPage() {
       }
 
       toast.success("Invoice deleted successfully");
-      router.push(`/${projectId}/invoicing`);
+      router.push(`/${projectId}/invoices`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to delete invoice");
     } finally {
@@ -1146,7 +1146,7 @@ export default function InvoiceDetailPage() {
               </Text>
               <Button onClick={handleBack}>
                 <ArrowLeft />
-                Back to Invoicing
+                Back to Invoices
               </Button>
             </div>
           </CardContent>

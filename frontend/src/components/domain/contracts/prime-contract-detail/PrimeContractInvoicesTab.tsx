@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { FileText, Plus, Trash2 } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/ds";
 import { DataTable, type DataTableFooterCell } from "@/components/tables/DataTable";
-import { CreateInvoiceDialog } from "@/components/domain/invoices/CreateInvoiceDialog";
 import type { PaymentApplication, Contract } from "@/app/(main)/[projectId]/prime-contracts/[contractId]/types";
 
 interface PrimeContractInvoicesTabProps {
@@ -18,24 +17,6 @@ interface PrimeContractInvoicesTabProps {
   contract: Contract;
   paymentApplications: PaymentApplication[];
   paymentsLoading: boolean;
-  billingPeriods: Array<{
-    id: string;
-    start_date: string;
-    end_date: string;
-    name: string | null;
-    period_number: number;
-  }>;
-  onCreateInvoice: (data: {
-    application_number: string;
-    billing_period_id?: string;
-    period_from?: string;
-    period_to?: string;
-    billing_date?: string;
-    status: string;
-    notes?: string;
-    amount: number;
-    retention_amount: number;
-  }) => Promise<void>;
   onDeleteInvoice: (applicationId: string) => Promise<void>;
   formatCurrency: (value: number | null | undefined) => string;
 }
@@ -46,13 +27,10 @@ export function PrimeContractInvoicesTab({
   contract,
   paymentApplications,
   paymentsLoading,
-  billingPeriods,
-  onCreateInvoice,
   onDeleteInvoice,
   formatCurrency,
 }: PrimeContractInvoicesTabProps) {
   const router = useRouter();
-  const [showAddInvoiceDialog, setShowAddInvoiceDialog] = useState(false);
   const totalAmount = useMemo(
     () => paymentApplications.reduce((sum, app) => sum + app.amount, 0),
     [paymentApplications],
@@ -194,7 +172,14 @@ export function PrimeContractInvoicesTab({
               )}
             </p>
           </div>
-          <Button size="sm" onClick={() => setShowAddInvoiceDialog(true)}>
+          <Button
+            size="sm"
+            onClick={() =>
+              router.push(
+                `/${projectId}/prime-contracts/${contractId}/invoices/new`,
+              )
+            }
+          >
             <Plus />
             Create Invoice
           </Button>
@@ -227,14 +212,6 @@ export function PrimeContractInvoicesTab({
           />
         )}
       </div>
-
-      <CreateInvoiceDialog
-        open={showAddInvoiceDialog}
-        onOpenChange={setShowAddInvoiceDialog}
-        onSubmit={onCreateInvoice}
-        nextInvoiceNumber={paymentApplications.length + 1}
-        billingPeriods={billingPeriods}
-      />
     </div>
   );
 }

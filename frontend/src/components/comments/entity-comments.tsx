@@ -60,6 +60,8 @@ interface EntityCommentsProps {
   title?: string;
   /** Optional className for the wrapper */
   className?: string;
+  /** Keep the composer visible at the bottom while scrolling thread history. */
+  stickyComposer?: boolean;
 }
 
 /**
@@ -78,11 +80,14 @@ interface EntityCommentsProps {
 export function EntityComments({
   title = "Comments",
   className,
+  stickyComposer = false,
 }: EntityCommentsProps) {
   const hasTitle = Boolean(title?.trim());
 
   return (
-    <div className={`alleato-comments ${className ?? ""}`}>
+    <div
+      className={`alleato-comments ${stickyComposer ? "flex h-full min-h-0 flex-col" : ""} ${className ?? ""}`.trim()}
+    >
       {hasTitle ? (
         <div className="mb-6 flex items-center gap-2.5">
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
@@ -114,8 +119,16 @@ export function EntityComments({
             </div>
           }
         >
-          <ThreadList />
-          <div className="mt-6">
+          <div className={stickyComposer ? "min-h-0 flex-1 overflow-y-auto pr-1" : undefined}>
+            <ThreadList />
+          </div>
+          <div
+            className={
+              stickyComposer
+                ? "sticky bottom-0 mt-4 border-t border-border/60 bg-card/95 pt-3 backdrop-blur supports-[backdrop-filter]:bg-card/80"
+                : "mt-6"
+            }
+          >
             <Composer className="lb-composer-alleato" />
           </div>
         </ClientSideSuspense>

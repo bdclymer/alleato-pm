@@ -122,7 +122,7 @@ export function ChangeEventPrimePCOsSection({
               <InlineTableRow key={pco.linkId}>
                 <InlineTableCell>
                   <Link
-                    href={`/${projectId}/prime-contract-pcos/${pco.id}`}
+                    href={`/${projectId}/prime-contracts/${pco.prime_contract_id}/change-orders/pcos/${pco.id}`}
                     className="text-primary hover:underline font-medium"
                   >
                     {pco.pco_number ?? "—"}

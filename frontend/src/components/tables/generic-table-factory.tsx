@@ -2230,7 +2230,7 @@ export function GenericDataTable({
                   setFilters((prev) => ({ ...prev, [filter.id]: value }))
                 }
               >
-                <SelectTrigger className="w-full sm:w-[160px]">
+                <SelectTrigger className="w-full sm:w-40">
                   <SelectValue placeholder={filter.label} />
                 </SelectTrigger>
                 <SelectContent>
@@ -2309,7 +2309,7 @@ export function GenericDataTable({
                     <ChevronDown className="sm:" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-[200px]">
+                <DropdownMenuContent align="end" className="w-52">
                   <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   {config.columns.map((column) => (
@@ -2388,7 +2388,7 @@ export function GenericDataTable({
           ======================================== */}
       {config.editConfig && (
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent className="sm:max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogContent className="max-h-dvh overflow-y-auto sm:max-w-3xl">
             <DialogHeader>
               <DialogTitle>
                 Edit {config.title?.slice(0, -1) || "Item"}

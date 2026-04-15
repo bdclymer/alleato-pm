@@ -198,7 +198,7 @@ export function SubmittalFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-dvh overflow-y-auto sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>{isEditing ? "Edit Submittal" : "Create Submittal"}</DialogTitle>
         </DialogHeader>
@@ -211,7 +211,7 @@ export function SubmittalFormDialog({
                 General Information
               </h3>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <FormField
                   control={form.control}
                   name="submittal_number"
@@ -259,7 +259,7 @@ export function SubmittalFormDialog({
                 )}
               />
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <FormField
                   control={form.control}
                   name="specification_section"
@@ -296,7 +296,7 @@ export function SubmittalFormDialog({
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {/* Submittal Type — FK dropdown */}
                 <FormField
                   control={form.control}
@@ -425,7 +425,7 @@ export function SubmittalFormDialog({
                 )}
               />
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {/* Received From */}
                 <FormField
                   control={form.control}
@@ -514,7 +514,7 @@ export function SubmittalFormDialog({
                 Distribution &amp; Scheduling
               </h3>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <FormField
                   control={form.control}
                   name="final_due_date"

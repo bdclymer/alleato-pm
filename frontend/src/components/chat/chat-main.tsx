@@ -38,7 +38,8 @@ export function ChatMain({
   selectedMessageId,
   threadReplyCountByMessage = {},
 }: ChatMainProps) {
-  const roomName = `${channel.id}-channel`;
+  const roomName = channel.id ? `${channel.id}-channel` : "team-chat-empty";
+  const canChatInChannel = Boolean(channel.id);
   const { messages: realtimeMessages, sendMessage, isConnected } = useRealtimeChat({
     roomName,
     username,
@@ -53,6 +54,10 @@ export function ChatMain({
   useEffect(() => {
     setHistory([]);
     setMessageQuery("");
+
+    if (!channel.id) {
+      return;
+    }
 
     apiFetch<MessageRow[]>(
       `/api/team-chat/messages?channel=${encodeURIComponent(channel.id)}`,
@@ -107,11 +112,15 @@ export function ChatMain({
   }, [allMessages, messageQuery]);
 
   const handleSend = async (content: string) => {
+    if (!canChatInChannel) {
+      return;
+    }
+
     sendMessage(content);
 
     apiFetch("/api/team-chat/messages", {
       method: "POST",
-      body: JSON.stringify({ channelId: channel.id, content, userName: username }),
+      body: JSON.stringify({ channelId: channel.id, content }),
     })
       .then(() => onMessageSent?.())
       .catch(() => {
@@ -148,7 +157,7 @@ export function ChatMain({
         onMessageQueryChange={setMessageQuery}
       />
 
-<div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-hidden">
         <MessageList
           messages={filteredMessages}
           currentUsername={username}
@@ -164,8 +173,8 @@ export function ChatMain({
       <Composer
         onSend={handleSend}
         channelName={channel.name}
-        placeholder={`Message ${channel.name}`}
-        disabled={!isConnected}
+        placeholder={canChatInChannel ? `Message ${channel.name}` : "Create a channel to start chatting"}
+        disabled={!isConnected || !canChatInChannel}
       />
     </div>
   );

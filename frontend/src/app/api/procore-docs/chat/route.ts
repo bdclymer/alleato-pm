@@ -10,11 +10,10 @@
  */
 
 import {
-  convertToModelMessages,
   createUIMessageStream,
   createUIMessageStreamResponse,
   generateText,
-  streamText,
+  type ModelMessage,
   type UIMessage,
 } from "ai";
 import { type NextRequest } from "next/server";
@@ -72,6 +71,15 @@ interface SearchResult {
 const ProcoreDocsChatSchema = z.object({
   messages: z.array(z.custom<UIMessage>()),
 });
+
+/** Extracts plain text from AI SDK UI message parts for model input. */
+function extractTextFromMessage(message: UIMessage): string {
+  return message.parts
+    .filter((part): part is { type: "text"; text: string } => part.type === "text")
+    .map((part) => part.text)
+    .join("")
+    .trim();
+}
 
 async function expandQuery(query: string): Promise<string[]> {
   try {
@@ -205,11 +213,16 @@ export const POST = withApiGuardrails(
   const supabase = getServiceSupabase();
 
   // RAG pipeline: query expansion → vector search → context injection
-  // convertToModelMessages and expandQuery can run in parallel
-  const [expandedQueries, modelMessages] = await Promise.all([
-    expandQuery(query),
-    convertToModelMessages(messages),
-  ]);
+  const expandedQueries = await expandQuery(query);
+
+  const modelMessages = messages.flatMap((message): ModelMessage[] => {
+    const content = extractTextFromMessage(message);
+    if (!content) return [];
+    if (message.role === "assistant" || message.role === "user") {
+      return [{ role: message.role, content }];
+    }
+    return [];
+  });
 
   const searchResults = await searchWithExpansion(supabase, expandedQueries, 5);
 
@@ -240,12 +253,22 @@ export const POST = withApiGuardrails(
 
   const stream = createUIMessageStream({
     execute: async ({ writer }) => {
-      const result = streamText({
+      const { text } = await generateText({
         model: getLanguageModel(PROCORE_DOCS_MODEL),
         system: systemWithContext,
-        messages: modelMessages,
+        messages: modelMessages.length > 0
+          ? modelMessages
+          : [{ role: "user", content: query }],
       });
-      writer.merge(result.toUIMessageStream());
+
+      if (!text.trim()) {
+        throw new Error("Procore docs chat model returned an empty response.");
+      }
+
+      const textId = `procore-docs-${Date.now()}`;
+      writer.write({ type: "text-start", id: textId });
+      writer.write({ type: "text-delta", id: textId, delta: text });
+      writer.write({ type: "text-end", id: textId });
     },
     onError: () =>
       "An error occurred while processing your request. Please try again.",

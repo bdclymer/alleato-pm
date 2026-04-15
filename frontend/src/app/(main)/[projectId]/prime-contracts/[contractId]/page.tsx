@@ -39,7 +39,6 @@ import { apiFetch } from "@/lib/api-client";
 import { handleFormError } from "@/lib/handle-form-error";
 import {
   usePaymentApplications,
-  useCreatePaymentApplication,
   useDeletePaymentApplication,
   paymentApplicationKeys,
 } from "@/hooks/use-payment-applications";
@@ -207,10 +206,8 @@ export default function ProjectContractDetailPage() {
 
   // ── Invoices (React Query) ──────────────────────────────────────────────
   const { data: paymentApplications = [], isLoading: paymentsLoading } = usePaymentApplications(Number(projectId), contractId);
-  const createPaymentApp = useCreatePaymentApplication(Number(projectId), contractId);
   const deletePaymentApp = useDeletePaymentApplication(Number(projectId), contractId);
   const queryClient = useQueryClient();
-  const [billingPeriods, setBillingPeriods] = useState<Array<{ id: string; start_date: string; end_date: string; name: string | null; period_number: number }>>([]);
 
   // ── Payments received ───────────────────────────────────────────────────
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -335,17 +332,6 @@ export default function ProjectContractDetailPage() {
   }, [contract, contractId, projectId]);
 
   useEffect(() => {
-    if (activeTab === "invoices") {
-      fetchWithTransientRouteRetry(`/api/projects/${projectId}/billing-periods`)
-        .then((r) => r.json())
-        .then((data) =>
-          setBillingPeriods(Array.isArray(data) ? data : data.items ?? []),
-        )
-        .catch(() => {});
-    }
-  }, [activeTab, projectId]);
-
-  useEffect(() => {
     if (activeTab !== "payments" || !contract) return;
     const fetchPayments = async () => {
       try {
@@ -453,21 +439,6 @@ export default function ProjectContractDetailPage() {
   const handleBack = () => router.push(`/${projectId}/prime-contracts`);
 
   // ── Invoice CRUD ────────────────────────────────────────────────────────
-
-  const handleCreateInvoiceSubmit = async (data: {
-    application_number: string;
-    billing_period_id?: string;
-    period_from?: string;
-    period_to?: string;
-    billing_date?: string;
-    status: string;
-    notes?: string;
-    amount: number;
-    retention_amount: number;
-  }) => {
-    await createPaymentApp.mutateAsync(data as Partial<PaymentApplication>);
-    toast.success("Invoice created successfully");
-  };
 
   const handleDeleteInvoice = async (applicationId: string) => {
     if (!confirm("Delete this invoice? This cannot be undone.")) return;
@@ -960,7 +931,7 @@ export default function ProjectContractDetailPage() {
         {activeTab === "invoices" && (
           <PrimeContractInvoicesTab
             projectId={projectId} contractId={contractId} contract={contract} paymentApplications={paymentApplications}
-            paymentsLoading={paymentsLoading} billingPeriods={billingPeriods} onCreateInvoice={handleCreateInvoiceSubmit}
+            paymentsLoading={paymentsLoading}
             onDeleteInvoice={handleDeleteInvoice} formatCurrency={formatCurrency}
           />
         )}

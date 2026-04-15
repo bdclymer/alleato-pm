@@ -213,7 +213,7 @@ export default function ProjectBillingPeriodsPage(): ReactElement {
           {!period.is_closed && (
             <DropdownMenuItem
               onClick={() =>
-                router.push(`/${projectId}/invoicing/new?billing_period_id=${period.id}`)
+                router.push(`/${projectId}/invoices/new?tab=owner&billing_period_id=${period.id}`)
               }
             >
               Create Invoice

@@ -35,7 +35,7 @@ export function CompanyDetailsSheet({
       <SheetTrigger asChild>{trigger}</SheetTrigger>
       <SheetContent
         side="right"
-        className="flex flex-col w-[400px] sm:w-[540px]"
+        className="flex flex-col"
       >
         <SheetHeader className="gap-1">
           <SheetTitle>{company.name}</SheetTitle>
@@ -159,7 +159,7 @@ export function CompanyDetailsSheet({
                 <Label htmlFor="title">Title</Label>
                 <Input id="title" defaultValue={company.title || ""} />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="flex flex-col gap-4">
                   <Label htmlFor="city">City</Label>
                   <Input id="city" defaultValue={company.city || ""} />
@@ -175,16 +175,16 @@ export function CompanyDetailsSheet({
               </div>
               <div className="flex flex-col gap-4">
                 <Label htmlFor="notes">Notes</Label>
-                <Textarea
-                  id="notes"
-                  defaultValue={company.notes || ""}
-                  className="min-h-[100px]"
-                />
-              </div>
-            </form>
+                  <Textarea
+                    id="notes"
+                    defaultValue={company.notes || ""}
+                    className="min-h-24"
+                  />
+                </div>
+              </form>
           </div>
         </div>
-        <SheetFooter className="mt-auto flex gap-2 sm:flex-col sm:space-x-0">
+        <SheetFooter className="mt-auto flex flex-col gap-2 sm:flex-row">
           <Button className="w-full">Save Changes</Button>
           <SheetClose asChild>
             <Button variant="outline" className="w-full">

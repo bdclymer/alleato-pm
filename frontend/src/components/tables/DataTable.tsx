@@ -47,10 +47,12 @@ interface DataTableProps<TData, TValue> {
   data: TData[];
   showToolbar?: boolean;
   showPagination?: boolean;
+  rowHover?: boolean;
   onRowClick?: (row: TData) => void;
   className?: string;
   searchKey?: string;
   searchPlaceholder?: string;
+  emptyMessage?: React.ReactNode | null;
   /** Optional totals/footer row rendered as a `<tfoot>`. Cells align to columns. */
   footerRow?: DataTableFooterCell[];
 }
@@ -60,10 +62,12 @@ export function DataTable<TData, TValue>({
   data,
   showToolbar = true,
   showPagination = true,
+  rowHover = true,
   onRowClick,
   className,
   searchKey,
   searchPlaceholder,
+  emptyMessage = "No results.",
   footerRow,
 }: DataTableProps<TData, TValue>) {
   const isMobile = useIsMobile();
@@ -164,9 +168,11 @@ export function DataTable<TData, TValue>({
               );
             })
           ) : (
-            <Card className="border px-4 py-10 text-center text-sm text-muted-foreground">
-              No results.
-            </Card>
+            emptyMessage !== null && (
+              <Card className="border px-4 py-10 text-center text-sm text-muted-foreground">
+                {emptyMessage}
+              </Card>
+            )
           )}
         </div>
       ) : (
@@ -198,6 +204,7 @@ export function DataTable<TData, TValue>({
                     data-state={row.getIsSelected() && "selected"}
                     className={cn(
                       onRowClick && "cursor-pointer hover:bg-muted/50",
+                      !rowHover && "hover:bg-transparent",
                     )}
                     onClick={() => onRowClick?.(row.original)}
                   >
@@ -212,14 +219,16 @@ export function DataTable<TData, TValue>({
                   </TableRow>
                 ))
               ) : (
-                <TableRow>
-                  <TableCell
-                    colSpan={columns.length}
-                    className="h-24 text-center"
-                  >
-                    No results.
-                  </TableCell>
-                </TableRow>
+                emptyMessage !== null && (
+                  <TableRow>
+                    <TableCell
+                      colSpan={columns.length}
+                      className="h-24 text-center"
+                    >
+                      {emptyMessage}
+                    </TableCell>
+                  </TableRow>
+                )
               )}
             </TableBody>
             {footerRow && footerRow.length > 0 && (

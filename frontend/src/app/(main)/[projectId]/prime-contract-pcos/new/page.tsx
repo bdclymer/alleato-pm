@@ -46,6 +46,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Text } from "@/components/ds/text";
 import { cn } from "@/lib/utils";
 import { apiFetch } from "@/lib/api-client";
+import { createClient } from "@/lib/supabase/client";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -70,7 +71,7 @@ const CHANGE_REASONS = [
 
 const PCO_STATUSES = [
   { value: "draft", label: "Draft" },
-  { value: "pending", label: "Pending" },
+  { value: "pending", label: "Pending - In Review" },
   { value: "approved", label: "Approved" },
   { value: "void", label: "Void" },
 ];
@@ -144,6 +145,10 @@ export default function NewPrimeContractPcoPage() {
   const params = useParams();
   const searchParams = useSearchParams();
   const projectId = params.projectId as string;
+  const contractIdFromRoute =
+    typeof params.contractId === "string" ? params.contractId : null;
+  const contractIdFromQuery = searchParams.get("contractId");
+  const contractContextId = contractIdFromRoute ?? contractIdFromQuery;
 
   const changeEventIdsParam = searchParams.get("changeEventIds");
   const changeEventIds = changeEventIdsParam
@@ -168,6 +173,7 @@ export default function NewPrimeContractPcoPage() {
   const [contactSearch, setContactSearch] = useState("");
   const [contactsOpen, setContactsOpen] = useState(false);
   const contactsFetched = useRef(false);
+  const [createdByLabel, setCreatedByLabel] = useState("You");
 
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -194,6 +200,24 @@ export default function NewPrimeContractPcoPage() {
   const selectedContract = contracts.find((c) => c.id === selectedContractId);
   const contractCompany =
     selectedContract?.client?.name ?? selectedContract?.vendor?.name ?? null;
+  const createdDateLabel = new Intl.DateTimeFormat("en-US", {
+    year: "2-digit",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date());
+
+  const buildPcoDetailPath = useCallback(
+    (pcoId: string, primeContractId?: string | null) => {
+      const resolvedContractId = primeContractId ?? contractContextId;
+      if (resolvedContractId) {
+        return `/${projectId}/prime-contracts/${resolvedContractId}/change-orders/pcos/${pcoId}`;
+      }
+      return `/${projectId}/prime-contract-pcos/${pcoId}`;
+    },
+    [projectId, contractContextId],
+  );
 
   // ── Fetch prime contracts ──────────────────────────────────────────
   useEffect(() => {
@@ -341,6 +365,39 @@ export default function NewPrimeContractPcoPage() {
     applyChangeEventDefaults,
   ]);
 
+  useEffect(() => {
+    if (!contractContextId || contracts.length === 0) return;
+    const hasMatchingContract = contracts.some((c) => c.id === contractContextId);
+    if (hasMatchingContract) {
+      form.setValue("prime_contract_id", contractContextId);
+    }
+  }, [contractContextId, contracts, form]);
+
+  useEffect(() => {
+    // Resolve current user display label for read-only "Created By" metadata.
+    const fetchCurrentUser = async () => {
+      try {
+        const supabase = createClient();
+        const { data: authData, error } = await supabase.auth.getUser();
+        if (error || !authData?.user) return;
+        const metadata = authData.user.user_metadata as Record<string, unknown> | undefined;
+        const fullName = typeof metadata?.full_name === "string" ? metadata.full_name.trim() : "";
+        if (fullName.length > 0) {
+          setCreatedByLabel(fullName);
+          return;
+        }
+        const email = authData.user.email ?? "";
+        if (email.length > 0) {
+          setCreatedByLabel(email);
+        }
+      } catch {
+        // Best-effort only; default "You" remains.
+      }
+    };
+
+    void fetchCurrentUser();
+  }, []);
+
   // ── Submit ─────────────────────────────────────────────────────────
   const handleSubmit: SubmitHandler<FormData> = async (data) => {
     setIsSubmitting(true);
@@ -384,7 +441,7 @@ export default function NewPrimeContractPcoPage() {
         const pcoId = result?.pco?.id;
         router.push(
           pcoId
-            ? `/${projectId}/prime-contract-pcos/${pcoId}`
+            ? buildPcoDetailPath(pcoId, data.prime_contract_id)
             : `/${projectId}/prime-contract-pcos`,
         );
       } else {
@@ -414,7 +471,7 @@ export default function NewPrimeContractPcoPage() {
         );
 
         toast.success("Prime Contract PCO created");
-        router.push(`/${projectId}/prime-contract-pcos/${created.id}`);
+        router.push(buildPcoDetailPath(created.id, data.prime_contract_id));
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to create PCO");
@@ -435,7 +492,11 @@ export default function NewPrimeContractPcoPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => router.push(`/${projectId}/prime-contract-pcos`)}
+            onClick={() =>
+              contractContextId
+                ? router.push(`/${projectId}/prime-contracts/${contractContextId}`)
+                : router.push(`/${projectId}/prime-contract-pcos`)
+            }
             disabled={isSubmitting}
           >
             Cancel
@@ -553,6 +614,24 @@ export default function NewPrimeContractPcoPage() {
                     disabled
                     placeholder="Determined by selected contract"
                   />
+                </FormItem>
+
+                {/* PCO Number (read-only preview) */}
+                <FormItem>
+                  <FormLabel>#</FormLabel>
+                  <Input value="Auto-generated on save" disabled />
+                </FormItem>
+
+                {/* Date Created (read-only metadata) */}
+                <FormItem>
+                  <FormLabel>Date Created</FormLabel>
+                  <Input value={createdDateLabel} disabled />
+                </FormItem>
+
+                {/* Created By (read-only metadata) */}
+                <FormItem>
+                  <FormLabel>Created By</FormLabel>
+                  <Input value={createdByLabel} disabled />
                 </FormItem>
 
                 {/* Title */}

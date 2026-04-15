@@ -14508,6 +14508,47 @@ export type Database = {
           },
         ]
       }
+      prime_contract_pco_attachments: {
+        Row: {
+          file_name: string
+          file_path: string
+          file_size: number
+          id: string
+          mime_type: string
+          pco_id: string
+          uploaded_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          file_name: string
+          file_path: string
+          file_size: number
+          id?: string
+          mime_type: string
+          pco_id: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          file_name?: string
+          file_path?: string
+          file_size?: number
+          id?: string
+          mime_type?: string
+          pco_id?: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prime_contract_pco_attachments_pco_id_fkey"
+            columns: ["pco_id"]
+            isOneToOne: false
+            referencedRelation: "prime_contract_pcos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prime_contract_pcos: {
         Row: {
           approved_at: string | null
@@ -19950,12 +19991,17 @@ export type Database = {
       subcontractor_invoice_line_items: {
         Row: {
           balance_to_finish: number | null
+          budget_code: string | null
+          change_value: number | null
+          commitment_value: number | null
           created_at: string
           description: string | null
           id: number
           invoice_id: number
+          line_item_type: string | null
           materials_retainage_amount: number
           materials_retainage_pct: number
+          materials_retainage_released: number
           materials_stored: number
           net_amount_this_period: number | null
           previous_materials_retainage: number
@@ -19970,15 +20016,22 @@ export type Database = {
           work_completed_pct: number
           work_completed_period: number
           work_completed_previous: number
+          work_completed_previous_pct: number | null
+          work_retainage_released: number
         }
         Insert: {
           balance_to_finish?: number | null
+          budget_code?: string | null
+          change_value?: number | null
+          commitment_value?: number | null
           created_at?: string
           description?: string | null
           id?: number
           invoice_id: number
+          line_item_type?: string | null
           materials_retainage_amount?: number
           materials_retainage_pct?: number
+          materials_retainage_released?: number
           materials_stored?: number
           net_amount_this_period?: number | null
           previous_materials_retainage?: number
@@ -19993,15 +20046,22 @@ export type Database = {
           work_completed_pct?: number
           work_completed_period?: number
           work_completed_previous?: number
+          work_completed_previous_pct?: number | null
+          work_retainage_released?: number
         }
         Update: {
           balance_to_finish?: number | null
+          budget_code?: string | null
+          change_value?: number | null
+          commitment_value?: number | null
           created_at?: string
           description?: string | null
           id?: number
           invoice_id?: number
+          line_item_type?: string | null
           materials_retainage_amount?: number
           materials_retainage_pct?: number
+          materials_retainage_released?: number
           materials_stored?: number
           net_amount_this_period?: number | null
           previous_materials_retainage?: number
@@ -20016,6 +20076,8 @@ export type Database = {
           work_completed_pct?: number
           work_completed_period?: number
           work_completed_previous?: number
+          work_completed_previous_pct?: number | null
+          work_retainage_released?: number
         }
         Relationships: [
           {
@@ -26499,6 +26561,47 @@ export type Database = {
           to: "punch_item_comments"
           isOneToOne: true
           isSetofReturn: false
+        }
+      }
+      upsert_budget_line_amount: {
+        Args: {
+          p_actor: string
+          p_cost_code_id: string
+          p_cost_type_id: string
+          p_delta_amount: number
+          p_description: string
+          p_project_id: number
+          p_quantity: number
+          p_sub_job_id: string
+          p_unit_cost: number
+          p_unit_of_measure: string
+        }
+        Returns: {
+          cost_code_id: string
+          cost_type_id: string
+          created_at: string
+          created_by: string | null
+          default_curve_id: string | null
+          default_ftc_method: string | null
+          description: string | null
+          forecasting_enabled: boolean
+          id: string
+          original_amount: number
+          project_budget_code_id: string | null
+          project_id: number
+          quantity: number | null
+          sub_job_id: string | null
+          sub_job_key: string | null
+          unit_cost: number | null
+          unit_of_measure: string | null
+          updated_at: string
+          updated_by: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "budget_lines"
+          isOneToOne: false
+          isSetofReturn: true
         }
       }
       validate_project_assignment: {

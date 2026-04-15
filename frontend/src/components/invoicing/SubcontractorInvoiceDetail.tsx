@@ -41,6 +41,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -120,6 +121,12 @@ export function SubcontractorInvoiceDetail({
   const [reviewStatus, setReviewStatus] = useState("");
   const [reviewComment, setReviewComment] = useState("");
   const [editing, setEditing] = useState(false);
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+  const [emailTo, setEmailTo] = useState("");
+  const [emailCc, setEmailCc] = useState("");
+  const [emailSubject, setEmailSubject] = useState("");
+  const [emailMessage, setEmailMessage] = useState("");
+  const [emailBusy, setEmailBusy] = useState(false);
 
   async function handleStatus(next: string, successMsg: string) {
     setBusy(true);
@@ -157,16 +164,33 @@ export function SubcontractorInvoiceDetail({
     );
   }
 
-  async function handleEmailInvoice() {
-    const recipients = window.prompt(
-      "Email invoice to (comma-separated addresses):",
-    );
-    if (!recipients) return;
-    const to = recipients
+  // Opens and pre-fills the email dialog for invoice delivery.
+  function handleEmailInvoice() {
+    const invoiceNumber = invoice?.invoice_number || `APP-${invoiceId}`;
+    setEmailTo("");
+    setEmailCc("");
+    setEmailSubject(`Invoice ${invoiceNumber}`);
+    setEmailMessage(`Please find attached invoice ${invoiceNumber}.`);
+    setEmailDialogOpen(true);
+  }
+
+  // Sends the subcontractor invoice PDF by email and logs it in invoice history.
+  async function handleSendInvoiceEmail() {
+    const to = emailTo
       .split(",")
       .map((s) => s.trim())
       .filter(Boolean);
-    if (to.length === 0) return;
+    const cc = emailCc
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    if (to.length === 0) {
+      toast.error("At least one recipient email is required");
+      return;
+    }
+
+    setEmailBusy(true);
     try {
       await apiFetch(
         `/api/projects/${projectId}/invoicing/subcontractor/invoices/${invoiceId}/emails`,
@@ -174,16 +198,21 @@ export function SubcontractorInvoiceDetail({
           method: "POST",
           body: JSON.stringify({
             to_recipients: to,
-            subject: `Invoice ${invoice?.invoice_number ?? ""}`.trim(),
+            cc_recipients: cc,
+            subject: emailSubject.trim(),
+            body: emailMessage.trim(),
             email_type: "invoice",
           }),
         },
       );
-      toast.success("Email logged");
+      toast.success("Invoice emailed successfully");
+      setEmailDialogOpen(false);
       await refetch();
       setActiveTab("emails");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to send");
+      toast.error(err instanceof Error ? err.message : "Failed to send email");
+    } finally {
+      setEmailBusy(false);
     }
   }
 
@@ -516,6 +545,64 @@ export function SubcontractorInvoiceDetail({
               }}
             >
               Update
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Email Invoice</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">To</label>
+              <Input
+                placeholder="recipient@example.com, team@example.com"
+                value={emailTo}
+                onChange={(e) => setEmailTo(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">CC</label>
+              <Input
+                placeholder="Optional"
+                value={emailCc}
+                onChange={(e) => setEmailCc(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Subject</label>
+              <Input
+                value={emailSubject}
+                onChange={(e) => setEmailSubject(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Message</label>
+              <Textarea
+                value={emailMessage}
+                onChange={(e) => setEmailMessage(e.target.value)}
+                className="min-h-24"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={emailBusy}
+              onClick={() => setEmailDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              disabled={emailBusy}
+              onClick={handleSendInvoiceEmail}
+            >
+              {emailBusy ? "Sending..." : "Send Invoice"}
             </Button>
           </DialogFooter>
         </DialogContent>

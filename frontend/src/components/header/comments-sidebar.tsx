@@ -61,6 +61,18 @@ const INITIAL_STORAGE = {
   links: new LiveList<string>([]),
 };
 
+/** Build a stable entity context for non-project routes so comments stay available. */
+function getPageEntityContext(pathname: string): EntityContext {
+  const normalizedPath = pathname === "/" ? "home" : pathname.slice(1);
+  const routeSlug = normalizedPath.replace(/[^a-zA-Z0-9/_-]/g, "").replace(/\//g, "-");
+
+  return {
+    entityType: "correspondence",
+    entityId: `page-${routeSlug || "home"}`,
+    label: pathname === "/" ? "Workspace" : pathname,
+  };
+}
+
 /**
  * Map the current URL path to a Liveblocks entity context.
  * Detail pages (e.g. /43/rfis/123) → entity-level room.
@@ -83,7 +95,7 @@ export function useEntityContext(): EntityContext | null {
 
     // ── Project-scoped routes ────────────────────────────────────────────────
     const projectId = params.projectId as string | undefined;
-    if (!projectId) return null;
+    if (!projectId) return getPageEntityContext(pathname);
 
     const segments = pathname.split("/").filter(Boolean);
     const projectIndex = segments.indexOf(projectId);
@@ -119,7 +131,7 @@ export function useEntityContext(): EntityContext | null {
     };
 
     const mapping = toolMap[toolSegment];
-    if (!mapping) return null;
+    if (!mapping) return getPageEntityContext(pathname);
 
     if (isDetailPage) {
       return {
@@ -262,8 +274,8 @@ export function CommentsSidebarPanel() {
                   initialPresence={{ cursor: null }}
                   initialStorage={INITIAL_STORAGE}
                 >
-                  <div className="flex-1 overflow-y-auto p-4">
-                    <EntityComments title="" />
+                  <div className="flex min-h-0 flex-1 p-4">
+                    <EntityComments title="" stickyComposer />
                   </div>
                 </RoomProvider>
               </ClientSideSuspense>

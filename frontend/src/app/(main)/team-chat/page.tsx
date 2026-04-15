@@ -10,15 +10,22 @@ export default function TeamChatPage(): ReactElement {
 
   useEffect(() => {
     const supabase = createClient();
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
-      if (!user) return;
-      const { data: profile } = await supabase
-        .from("user_profiles")
-        .select("full_name, email")
-        .eq("id", user.id)
-        .single();
-      setUsername(profile?.full_name ?? profile?.email ?? user.email ?? "User");
-    });
+    supabase.auth.getUser()
+      .then(async ({ data: { user } }) => {
+        if (!user) {
+          setUsername("User");
+          return;
+        }
+        const { data: profile } = await supabase
+          .from("user_profiles")
+          .select("full_name, email")
+          .eq("id", user.id)
+          .maybeSingle();
+        setUsername(profile?.full_name ?? profile?.email ?? user.email ?? "User");
+      })
+      .catch(() => {
+        setUsername("User");
+      });
   }, []);
 
   if (!username) return <div className="h-svh w-full" />;

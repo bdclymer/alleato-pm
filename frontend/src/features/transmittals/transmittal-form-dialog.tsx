@@ -162,7 +162,7 @@ export function TransmittalFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-dvh overflow-y-auto sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>
             {isEditing ? "Edit Transmittal" : "Create Transmittal"}
@@ -177,7 +177,7 @@ export function TransmittalFormDialog({
                 General Information
               </h3>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <FormField
                   control={form.control}
                   name="number"
@@ -244,7 +244,7 @@ export function TransmittalFormDialog({
                 Sender &amp; Recipient
               </h3>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <FormField
                   control={form.control}
                   name="from_company"
@@ -281,7 +281,7 @@ export function TransmittalFormDialog({
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <FormField
                   control={form.control}
                   name="to_company"
@@ -353,7 +353,7 @@ export function TransmittalFormDialog({
                 )}
               />
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <FormField
                   control={form.control}
                   name="sent_date"
