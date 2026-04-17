@@ -1,7 +1,8 @@
 /**
  * /api/testing/suites/[slug]/cases
  * GET ?type=scenario|feature&depth=broad|detailed|all
- *   — returns all test cases for a tool, grouped by category
+ *   — returns all active (non-inactive) test cases for a tool, grouped by category.
+ *     The depth param is accepted for backward compatibility but not applied.
  */
 import { NextResponse } from "next/server";
 
@@ -14,7 +15,6 @@ export const GET = withApiGuardrails<{ slug: string }>(
     const { slug } = await params;
     const { searchParams } = new URL(request.url);
     const typeFilter = searchParams.get("type") ?? "scenario";
-    const depthFilter = searchParams.get("depth") ?? "broad";
 
     const supabase = await createClient();
 
@@ -34,13 +34,10 @@ export const GET = withApiGuardrails<{ slug: string }>(
         "id, test_number, category, subcategory, test_name, context_note, setup_steps, steps, expected_result, priority, start_url, test_type, scenario_depth"
       )
       .eq("suite_id", suite.id)
-      .order("test_number");
+      .filter("status", "neq", "inactive");
 
     if (typeFilter !== "all") {
       query = query.eq("test_type", typeFilter);
-    }
-    if (depthFilter !== "all" && typeFilter === "scenario") {
-      query = query.eq("scenario_depth", depthFilter);
     }
 
     const { data: cases, error: casesErr } = await query;
@@ -49,10 +46,19 @@ export const GET = withApiGuardrails<{ slug: string }>(
       return NextResponse.json({ error: casesErr.message }, { status: 500 });
     }
 
+    // Keep scenario ordering stable for execution by sorting mixed test numbers naturally.
+    const testNumberCollator = new Intl.Collator(undefined, {
+      numeric: true,
+      sensitivity: "base",
+    });
+    const sortedCases = [...(cases ?? [])].sort((a, b) => {
+      return testNumberCollator.compare(a.test_number ?? "", b.test_number ?? "");
+    });
+
     // Group by category, preserving natural order of first appearance
     const categoryOrder: string[] = [];
     const grouped: Record<string, typeof cases> = {};
-    for (const c of cases ?? []) {
+    for (const c of sortedCases) {
       if (!grouped[c.category]) {
         grouped[c.category] = [];
         categoryOrder.push(c.category);

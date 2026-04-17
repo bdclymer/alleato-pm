@@ -3,7 +3,7 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
-import type { PaginatedResponse, Commitment } from "@/app/api/types";
+import type { PaginatedResponse, Commitment, Company } from "@/app/api/types";
 import { apiErrorResponse } from "@/lib/api-error";
 
 /**
@@ -68,10 +68,46 @@ interface UnifiedCommitmentRow {
   id: string | null;
   commitment_type: string | null;
   created_at: string | null;
+  erp_status?: string | null;
+  ssov_status?: string | null;
+}
+
+interface CoAggRow {
+  contract_id: string | null;
+  status: string | null;
+  amount: number | null;
+}
+
+interface PaymentAggRow {
+  subcontract_id: string | null;
+  purchase_order_id: string | null;
+  net_amount: number | null;
+}
+
+interface CoTotals {
+  approved: number;
+  pending: number;
+  draft: number;
+}
+
+type CompanyType = Company["type"];
+
+interface UnifiedFilterQuery {
+  is(column: string, value: null): UnifiedFilterQuery;
+  eq(column: string, value: string | number): UnifiedFilterQuery;
+  ilike(column: string, value: string): UnifiedFilterQuery;
+  or(filters: string): UnifiedFilterQuery;
+}
+
+const VALID_COMPANY_TYPES = new Set<CompanyType>(["vendor", "subcontractor", "supplier", "owner"]);
+
+// Normalize database company type values into the API union expected by Commitment.company.
+function normalizeCompanyType(value: string | null | undefined): CompanyType {
+  return value && VALID_COMPANY_TYPES.has(value as CompanyType) ? (value as CompanyType) : "vendor";
 }
 
 function applyUnifiedFilters(
-  query: any,
+  query: UnifiedFilterQuery,
   filters: {
     projectId?: string | null;
     status?: string | null;
@@ -104,15 +140,22 @@ function applyUnifiedFilters(
 function mapRowToCommitment(
   row: WithTotalsRow,
   type: "subcontract" | "purchase_order",
+  coTotals: CoTotals,
+  paymentsIssued: number,
+  erpStatus: string | null,
+  ssovStatus: string | null,
 ): Commitment {
   const originalAmount = Number(row.total_sov_amount) || 0;
   const billedToDate = Number(row.total_billed_to_date) || 0;
   const balanceToFinish = Number(row.total_amount_remaining) || 0;
 
+  const approvedCOs = coTotals.approved;
+  const pendingCOs = coTotals.pending;
+  const draftCOs = coTotals.draft;
+  const revisedContractAmount = originalAmount + approvedCOs;
   const invoicedAmount = billedToDate;
-  const paymentsIssued = 0;
-  const percentPaid = originalAmount > 0 ? (paymentsIssued / originalAmount) * 100 : 0;
-  const remainingBalance = originalAmount - paymentsIssued;
+  const percentPaid = revisedContractAmount > 0 ? (paymentsIssued / revisedContractAmount) * 100 : 0;
+  const remainingBalance = revisedContractAmount - paymentsIssued;
 
   return {
     id: row.id || "",
@@ -127,13 +170,13 @@ function mapRowToCommitment(
       ? {
           id: row.contract_company_id || "",
           name: row.company_name,
-          type: (row.company_type as any) || "vendor",
+          type: normalizeCompanyType(row.company_type),
         }
       : null,
     description: row.description,
     original_amount: originalAmount,
-    approved_change_orders: 0,
-    revised_contract_amount: originalAmount,
+    approved_change_orders: approvedCOs,
+    revised_contract_amount: revisedContractAmount,
     billed_to_date: billedToDate,
     balance_to_finish: balanceToFinish,
     start_date: row.start_date || null,
@@ -141,10 +184,10 @@ function mapRowToCommitment(
     retention_percentage: row.default_retainage_percent,
     created_at: row.created_at || new Date().toISOString(),
     updated_at: row.updated_at || new Date().toISOString(),
-    erp_status: row.erp_status || null,
-    ssov_status: row.ssov_status || null,
-    pending_change_orders: 0,
-    draft_change_orders: 0,
+    erp_status: erpStatus,
+    ssov_status: ssovStatus,
+    pending_change_orders: pendingCOs,
+    draft_change_orders: draftCOs,
     invoiced_amount: invoicedAmount,
     payments_issued: paymentsIssued,
     percent_paid: percentPaid,
@@ -239,9 +282,9 @@ export const GET = withApiGuardrails(
     const from = (page - 1) * limit;
     const to = from + limit - 1;
 
-    let baseQuery = (supabase as any)
+    let baseQuery = supabase
       .from("commitments_unified")
-      .select("id, commitment_type, created_at", { count: "exact" })
+      .select("id, commitment_type, created_at, erp_status, ssov_status", { count: "exact" })
       .order("created_at", { ascending: false })
       .range(from, to);
     baseQuery = applyUnifiedFilters(baseQuery, filters);
@@ -260,33 +303,114 @@ export const GET = withApiGuardrails(
     const purchaseOrderIds = orderedBaseRows
       .filter((row) => row.id && row.commitment_type === "purchase_order")
       .map((row) => row.id as string);
+    const allIds = [...subcontractIds, ...purchaseOrderIds];
 
-    const [subcontractRows, purchaseOrderRows] = await Promise.all([
+    // Build payment filter parts (OR across both FK columns)
+    const paymentFilterParts: string[] = [];
+    if (subcontractIds.length > 0) {
+      paymentFilterParts.push(`subcontract_id.in.(${subcontractIds.join(",")})`);
+    }
+    if (purchaseOrderIds.length > 0) {
+      paymentFilterParts.push(`purchase_order_id.in.(${purchaseOrderIds.join(",")})`);
+    }
+
+    const [subcontractRows, purchaseOrderRows, changeOrderRows, paymentRows] = await Promise.all([
       subcontractIds.length > 0
-        ? (supabase as any)
+        ? supabase
             .from("subcontracts_with_totals")
             .select(SC_LIST_COLUMNS)
             .in("id", subcontractIds)
         : Promise.resolve({ data: [], error: null }),
       purchaseOrderIds.length > 0
-        ? (supabase as any)
+        ? supabase
             .from("purchase_orders_with_totals")
             .select(PO_LIST_COLUMNS)
             .in("id", purchaseOrderIds)
+        : Promise.resolve({ data: [], error: null }),
+      // Fetch CO totals for all commitments on this page
+      allIds.length > 0
+        ? supabase
+            .from("contract_change_orders")
+            .select("contract_id, status, amount")
+            .in("contract_id", allIds)
+        : Promise.resolve({ data: [], error: null }),
+      // Fetch paid invoice totals for all commitments on this page
+      paymentFilterParts.length > 0
+        ? supabase
+            .from("subcontractor_invoices")
+            .select("subcontract_id, purchase_order_id, net_amount")
+            .eq("status", "paid")
+            .or(paymentFilterParts.join(","))
         : Promise.resolve({ data: [], error: null }),
     ]);
 
     if (subcontractRows.error) throw subcontractRows.error;
     if (purchaseOrderRows.error) throw purchaseOrderRows.error;
 
+    // Aggregate CO totals by commitment ID
+    const coTotalsById = new Map<string, CoTotals>();
+    for (const co of (changeOrderRows.data || []) as CoAggRow[]) {
+      if (!co.contract_id) continue;
+      const existing = coTotalsById.get(co.contract_id) ?? { approved: 0, pending: 0, draft: 0 };
+      const amount = Number(co.amount) || 0;
+      const status = (co.status || "draft").toLowerCase();
+      if (status === "approved" || status === "executed") {
+        existing.approved += amount;
+      } else if (status === "pending") {
+        existing.pending += amount;
+      } else if (status === "draft") {
+        existing.draft += amount;
+      }
+      coTotalsById.set(co.contract_id, existing);
+    }
+
+    // Aggregate paid payments by commitment ID
+    const paymentsById = new Map<string, number>();
+    for (const payment of (paymentRows.data || []) as PaymentAggRow[]) {
+      const id = payment.subcontract_id ?? payment.purchase_order_id;
+      if (!id) continue;
+      paymentsById.set(id, (paymentsById.get(id) ?? 0) + (Number(payment.net_amount) || 0));
+    }
+
+    // Build erp/ssov lookup from unified base rows
+    const erpStatusById = new Map<string, string | null>();
+    const ssovStatusById = new Map<string, string | null>();
+    for (const row of orderedBaseRows) {
+      if (!row.id) continue;
+      erpStatusById.set(row.id, row.erp_status ?? null);
+      ssovStatusById.set(row.id, row.ssov_status ?? null);
+    }
+
+    const emptyCoTotals: CoTotals = { approved: 0, pending: 0, draft: 0 };
+
     const commitmentsById = new Map<string, Commitment>();
     for (const row of (subcontractRows.data || []) as WithTotalsRow[]) {
       if (!row.id) continue;
-      commitmentsById.set(row.id, mapRowToCommitment(row, "subcontract"));
+      commitmentsById.set(
+        row.id,
+        mapRowToCommitment(
+          row,
+          "subcontract",
+          coTotalsById.get(row.id) ?? emptyCoTotals,
+          paymentsById.get(row.id) ?? 0,
+          erpStatusById.get(row.id) ?? null,
+          ssovStatusById.get(row.id) ?? null,
+        ),
+      );
     }
     for (const row of (purchaseOrderRows.data || []) as WithTotalsRow[]) {
       if (!row.id) continue;
-      commitmentsById.set(row.id, mapRowToCommitment(row, "purchase_order"));
+      commitmentsById.set(
+        row.id,
+        mapRowToCommitment(
+          row,
+          "purchase_order",
+          coTotalsById.get(row.id) ?? emptyCoTotals,
+          paymentsById.get(row.id) ?? 0,
+          erpStatusById.get(row.id) ?? null,
+          ssovStatusById.get(row.id) ?? null,
+        ),
+      );
     }
 
     const paginatedData = orderedBaseRows

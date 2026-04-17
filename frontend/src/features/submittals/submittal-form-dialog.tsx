@@ -33,7 +33,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { apiFetch } from "@/lib/api-client";
-import { createClient } from "@/lib/supabase/client";
 import { useProjectCompanies } from "@/hooks/use-project-companies";
 import { useAuthUsers } from "@/hooks/use-auth-users";
 import { useCreateSubmittal, useUpdateSubmittal, type SubmittalSummary } from "@/hooks/use-submittals";
@@ -45,20 +44,15 @@ interface SubmittalType {
   name: string;
 }
 
-function useSubmittalTypes() {
-  const supabase = createClient();
-
+function useSubmittalTypes(projectId: number) {
   return useQuery<SubmittalType[]>({
-    queryKey: ["submittal-types"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("submittal_types")
-        .select("id, name")
-        .order("name");
-
-      if (error) throw error;
-      return (data ?? []) as SubmittalType[];
-    },
+    queryKey: ["submittal-types", projectId],
+    queryFn: ({ signal }) =>
+      apiFetch<SubmittalType[]>(
+        `/api/projects/${projectId}/submittal-types`,
+        { signal },
+      ),
+    enabled: Boolean(projectId),
   });
 }
 
@@ -149,7 +143,7 @@ export function SubmittalFormDialog({
     { per_page: 200 },
   );
   const { users, isLoading: usersLoading } = useAuthUsers(String(projectId));
-  const { data: submittalTypes, isLoading: typesLoading } = useSubmittalTypes();
+  const { data: submittalTypes, isLoading: typesLoading } = useSubmittalTypes(projectId);
   const { data: packages, isLoading: packagesLoading } = useQuery({
     queryKey: ["submittal-packages", projectId],
     queryFn: async () =>

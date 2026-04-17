@@ -381,13 +381,8 @@ function BudgetPageContent() {
 
     try {
       // Validate format
-      if (!["excel", "csv", "pdf"].includes(format)) {
+      if (!["excel", "csv"].includes(format)) {
         toast.error("Invalid export format");
-        return;
-      }
-
-      if (format === "pdf") {
-        toast.info("PDF export coming soon");
         return;
       }
 

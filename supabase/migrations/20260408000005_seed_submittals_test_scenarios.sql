@@ -23,17 +23,6 @@ BEGIN
 
   INSERT INTO test_cases (suite_id, test_number, category, test_name, priority, start_url, context_note, setup_steps, steps, expected_result)
   VALUES (
-    v_suite_id, '1.1', 'Navigation',
-    'Open the Submittals page',
-    'HIGH', '/767/submittals',
-    'Checks that the Submittals list page loads without errors and shows existing records.',
-    NULL,
-    E'1. Make sure you are logged in as test1@mail.com\n2. Navigate to http://localhost:3000/767/submittals\n3. Wait for the page to stop loading',
-    'The page loads fully. A table of submittals is visible with columns for Number, Title, Status, Type, Division, and Due Date. No error messages appear.'
-  );
-
-  INSERT INTO test_cases (suite_id, test_number, category, test_name, priority, start_url, context_note, setup_steps, steps, expected_result)
-  VALUES (
     v_suite_id, '1.2', 'Navigation',
     'Open a submittal detail page',
     'HIGH', '/767/submittals',
@@ -58,7 +47,7 @@ BEGIN
 
   INSERT INTO test_cases (suite_id, test_number, category, test_name, priority, start_url, context_note, setup_steps, steps, expected_result)
   VALUES (
-    v_suite_id, '2.1', 'Create',
+    v_suite_id, '1.1', 'Create',
     'Create a new submittal with required fields',
     'HIGH', '/767/submittals',
     'Checks that a user can create a submittal and it appears in the list.',
@@ -95,8 +84,8 @@ BEGIN
     'Create fails when submittal number already exists',
     'MEDIUM', '/767/submittals',
     'Checks that the system prevents duplicate submittal numbers within the same project.',
-    'There must already be a submittal with number TEST-001 (created in scenario 2.1).',
-    E'1. Open the Submittals page\n2. Click **Add Submittal**\n3. In **Number**, type: **TEST-001** (same as the one created in scenario 2.1)\n4. In **Title**, type: **Duplicate Number Test**\n5. Click **Create Submittal**',
+    'There must already be a submittal with number TEST-001 (created in scenario 1.1).',
+    E'1. Open the Submittals page\n2. Click **Add Submittal**\n3. In **Number**, type: **TEST-001** (same as the one created in scenario 1.1)\n4. In **Title**, type: **Duplicate Number Test**\n5. Click **Create Submittal**',
     'An error message appears saying the submittal number already exists for this project. The submittal is NOT created.'
   );
 

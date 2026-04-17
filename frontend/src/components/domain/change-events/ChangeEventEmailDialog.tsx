@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -64,11 +65,10 @@ export function ChangeEventEmailDialog({
 
     setIsSending(true);
     try {
-      const res = await fetch(
+      await apiFetch(
         `/api/projects/${projectId}/change-events/${changeEventId}/email`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             recipients: recipientList,
             subject: subject.trim(),
@@ -77,18 +77,14 @@ export function ChangeEventEmailDialog({
         }
       );
 
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        toast.error(err.error || "Failed to send email. Please try again.");
-        return;
-      }
-
       toast.success(`Email sent to ${recipientList.join(", ")}`);
       onOpenChange(false);
       setRecipients("");
       setMessage("");
-    } catch {
-      toast.error("Failed to send email. Please try again.");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to send email. Please try again."
+      );
     } finally {
       setIsSending(false);
     }

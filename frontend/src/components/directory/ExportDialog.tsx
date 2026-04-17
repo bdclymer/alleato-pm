@@ -15,6 +15,7 @@ import type { DirectoryFilters } from "@/components/directory/DirectoryFilters";
 import type { ColumnConfig } from "@/components/directory/ColumnManager";
 import { toast } from "@/hooks/use-toast";
 import type { DirectoryExportColumn } from "@/services/directoryAdminService";
+import { apiFetchBlob } from "@/lib/api-client";
 
 interface ExportDialogProps {
   projectId: string;
@@ -91,15 +92,9 @@ export function ExportDialog({
       if (filters.sortBy?.length) params.append("sort", filters.sortBy.join(","));
       params.append("columns", JSON.stringify(selectedColumns));
 
-      const response = await fetch(
+      const blob = await apiFetchBlob(
         `/api/projects/${projectId}/directory/export?${params.toString()}`,
       );
-
-      if (!response.ok) {
-        throw new Error("Failed to export directory data");
-      }
-
-      const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;

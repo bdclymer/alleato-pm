@@ -34,29 +34,61 @@ const uploadFileSchema = z
  * Used in SpecificationUploadDialog component
  */
 export const uploadSpecificationSchema = z.object({
-  section_number: z
+  specification_set_name: z
     .string()
-    .min(1, 'Section number is required')
-    .max(50, 'Section number must be 50 characters or less')
-    .regex(
-      /^[0-9\s]+$/,
-      'Section number must contain only numbers and spaces (e.g., "03 30 00")'
-    ),
+    .min(1, 'Specification set is required')
+    .max(255, 'Specification set must be 255 characters or less'),
 
-  title: z
+  specification_set_instructions: z
     .string()
-    .min(1, 'Title is required')
-    .max(255, 'Title must be 255 characters or less'),
+    .max(1000, 'Specification set instructions must be 1000 characters or less')
+    .optional(),
 
-  description: z.string().max(1000, 'Description must be 1000 characters or less').optional(),
+  format: z.enum(
+    ['masterformat_csi', 'ncs_natspec', 'no_or_other_format'],
+    { message: 'Format is required' },
+  ),
+
+  default_issue_date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Default issue date must be in YYYY-MM-DD format')
+    .optional()
+    .or(z.literal('')),
+
+  default_receive_date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Default receive date must be in YYYY-MM-DD format')
+    .optional()
+    .or(z.literal('')),
+
+  default_revision_instruction: z
+    .string()
+    .max(255, 'Default revision instructions must be 255 characters or less')
+    .optional(),
+
+  number_to_ignore: z
+    .string()
+    .max(50, 'Number to ignore must be 50 characters or less')
+    .optional(),
+
+  specifications_language: z.enum(
+    ['english', 'spanish', 'french', 'portuguese'],
+    { message: 'Specifications language is required' },
+  ),
 
   file: uploadFileSchema,
-
-  notes: z.string().max(1000, 'Notes must be 1000 characters or less').optional(),
 
   area_ids: z.array(z.number().int().positive()).optional(),
 
   subscriber_ids: z.array(z.string().uuid()).optional(),
+}).superRefine((data, ctx) => {
+  if (data.format !== 'masterformat_csi' && data.specifications_language !== 'english') {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['specifications_language'],
+      message: 'Only CSI MasterFormat supports languages other than English.',
+    });
+  }
 });
 
 export type UploadSpecificationFormData = z.infer<typeof uploadSpecificationSchema>;

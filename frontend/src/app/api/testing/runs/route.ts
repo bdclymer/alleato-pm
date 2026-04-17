@@ -7,6 +7,9 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { testingFeatureFlags } from "@/lib/testing/feature-flags";
+
+const ENABLE_SCENARIO_DEPTH_FILTER = testingFeatureFlags.scenarioDepthFilterEnabled;
 
 export const GET = withApiGuardrails(
   "testing/runs#GET",
@@ -122,7 +125,8 @@ export const POST = withApiGuardrails(
   const withDepthCases = await supabase
     .from("test_cases")
     .select("id, test_type, scenario_depth")
-    .eq("suite_id", suiteRow.id);
+    .eq("suite_id", suiteRow.id)
+    .filter("status", "neq", "inactive");
 
   let cases = withDepthCases.data;
   let caseDepthAvailable = !withDepthCases.error;
@@ -131,7 +135,8 @@ export const POST = withApiGuardrails(
     const fallbackCases = await supabase
       .from("test_cases")
       .select("id, test_type")
-      .eq("suite_id", suiteRow.id);
+      .eq("suite_id", suiteRow.id)
+      .filter("status", "neq", "inactive");
     if (fallbackCases.error) {
       return NextResponse.json({ error: fallbackCases.error.message }, { status: 500 });
     }
@@ -143,6 +148,7 @@ export const POST = withApiGuardrails(
     if (requestedType === "feature") return c.test_type === "feature";
     if (requestedType === "scenario") {
       if (c.test_type !== "scenario") return false;
+      if (!ENABLE_SCENARIO_DEPTH_FILTER) return true;
       if (normalizedDepth === "all") return true;
       if (!caseDepthAvailable) return true;
       return (c.scenario_depth ?? "detailed") === normalizedDepth;
@@ -152,6 +158,7 @@ export const POST = withApiGuardrails(
 
   let effectiveDepth: "broad" | "detailed" | "all" = normalizedDepth;
   if (
+    ENABLE_SCENARIO_DEPTH_FILTER &&
     requestedType === "scenario" &&
     normalizedDepth === "broad" &&
     selectedCases.length === 0
@@ -171,7 +178,10 @@ export const POST = withApiGuardrails(
     notes: notes ?? null,
   };
   const runInsertPayload = caseDepthAvailable
-    ? { ...baseRunPayload, scenario_depth: effectiveDepth }
+    ? {
+        ...baseRunPayload,
+        scenario_depth: ENABLE_SCENARIO_DEPTH_FILTER ? effectiveDepth : "all",
+      }
     : baseRunPayload;
 
   const { data: run, error: runErr } = await supabase
@@ -202,7 +212,7 @@ export const POST = withApiGuardrails(
     run_id: run.id,
     run_date: run.run_date,
     case_count: resultRows.length,
-    effective_depth: effectiveDepth,
+    effective_depth: ENABLE_SCENARIO_DEPTH_FILTER ? effectiveDepth : "all",
     requested_depth: normalizedDepth,
   });
   },

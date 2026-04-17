@@ -17,6 +17,10 @@ interface LineItemInput {
   description: string | null;
   amount: number | null;
   billed_to_date: number | null;
+  quantity?: number | null;
+  unit_cost?: number | null;
+  unit_of_measure?: string | null;
+  retainage_percent?: number | null;
 }
 
 interface UpdatePayload {
@@ -190,19 +194,67 @@ export const PUT = withApiGuardrails(
       : "purchase_order_sov_items";
     const fkColumn = isSubcontract ? "subcontract_id" : "purchase_order_id";
 
-    // Fetch existing line items
+    // Fetch existing line items (with billed_to_date + amount so we can lock invoiced lines)
     const { data: existingItems } = await (supabase as any)
       .from(tableName)
-      .select("id")
+      .select("id, billed_to_date, amount")
       .eq(fkColumn, commitmentId);
 
-    const existingIds = new Set<string>((existingItems || []).map((item: { id: string }) => item.id));
+    const existingById = new Map<
+      string,
+      { billed_to_date: number | null; amount: number | null }
+    >(
+      (existingItems || []).map(
+        (item: { id: string; billed_to_date: number | null; amount: number | null }) => [
+          item.id,
+          { billed_to_date: item.billed_to_date, amount: item.amount },
+        ],
+      ),
+    );
+    const existingIds = new Set<string>(existingById.keys());
     const newItemIds = new Set<string>(
       lineItems.filter((item) => item.id).map((item) => item.id as string),
     );
 
-    // Delete items that are no longer in the list
+    const isBilled = (id: string) =>
+      (existingById.get(id)?.billed_to_date ?? 0) > 0;
+
+    // Block deletion of invoiced lines
     const idsToDelete = [...existingIds].filter((id) => !newItemIds.has(id));
+    const blockedDeletes = idsToDelete.filter(isBilled);
+    if (blockedDeletes.length > 0) {
+      return NextResponse.json(
+        {
+          error: "Cannot delete invoiced SOV lines",
+          details: `${blockedDeletes.length} line item(s) have billed_to_date > 0 and are locked. Remove the invoices first.`,
+          blockedIds: blockedDeletes,
+        },
+        { status: 400 },
+      );
+    }
+
+    // Block amount changes on invoiced lines
+    const blockedAmountChanges: string[] = [];
+    for (const item of lineItems) {
+      if (!item.id || !existingById.has(item.id)) continue;
+      if (!isBilled(item.id)) continue;
+      const prevAmount = existingById.get(item.id)?.amount ?? 0;
+      const nextAmount = item.amount ?? 0;
+      if (Number(prevAmount) !== Number(nextAmount)) {
+        blockedAmountChanges.push(item.id);
+      }
+    }
+    if (blockedAmountChanges.length > 0) {
+      return NextResponse.json(
+        {
+          error: "Cannot change amount on invoiced SOV lines",
+          details: `${blockedAmountChanges.length} line item(s) have billed_to_date > 0; their amount is locked.`,
+          blockedIds: blockedAmountChanges,
+        },
+        { status: 400 },
+      );
+    }
+
     if (idsToDelete.length > 0) {
       const { error: deleteError } = await (supabase as any)
         .from(tableName)
@@ -225,15 +277,23 @@ export const PUT = withApiGuardrails(
       const item = lineItems[i];
       const lineNumber = item.line_number ?? i + 1;
 
-      const itemData = {
+      const itemData: Record<string, unknown> = {
         [fkColumn]: commitmentId,
         line_number: lineNumber,
         budget_code: item.budget_code || null,
         description: item.description || "",
         amount: item.amount ?? 0,
         billed_to_date: item.billed_to_date ?? 0,
+        retainage_percent: item.retainage_percent ?? null,
         updated_at: new Date().toISOString(),
       };
+
+      // Purchase order SOV carries quantity / unit pricing
+      if (!isSubcontract) {
+        itemData.quantity = item.quantity ?? null;
+        itemData.unit_cost = item.unit_cost ?? null;
+        itemData.unit_of_measure = item.unit_of_measure ?? null;
+      }
 
       if (item.id && existingIds.has(item.id)) {
         // Update existing item

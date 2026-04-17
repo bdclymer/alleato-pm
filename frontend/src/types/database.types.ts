@@ -3505,6 +3505,126 @@ export type Database = {
           },
         ]
       }
+      budget_forecast_line_items: {
+        Row: {
+          budget_line_id: string
+          created_at: string
+          created_by: string | null
+          description: string
+          end_date: string | null
+          forecast_date: string
+          id: string
+          method: string
+          project_id: number
+          quantity: number
+          sort_order: number
+          start_date: string | null
+          unit_cost: number
+          units: string | null
+          units_remaining_mode: string | null
+          updated_at: string
+          updated_by: string | null
+          utilization_rate: number | null
+        }
+        Insert: {
+          budget_line_id: string
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          end_date?: string | null
+          forecast_date: string
+          id?: string
+          method: string
+          project_id: number
+          quantity?: number
+          sort_order?: number
+          start_date?: string | null
+          unit_cost?: number
+          units?: string | null
+          units_remaining_mode?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          utilization_rate?: number | null
+        }
+        Update: {
+          budget_line_id?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          end_date?: string | null
+          forecast_date?: string
+          id?: string
+          method?: string
+          project_id?: number
+          quantity?: number
+          sort_order?: number
+          start_date?: string | null
+          unit_cost?: number
+          units?: string | null
+          units_remaining_mode?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          utilization_rate?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_forecast_line_items_budget_line_id_fkey"
+            columns: ["budget_line_id"]
+            isOneToOne: false
+            referencedRelation: "budget_lines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_forecast_line_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "budget_forecast_line_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_forecast_line_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_forecast_line_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "budget_forecast_line_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_forecast_line_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_forecast_line_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       budget_line_forecasts: {
         Row: {
           budget_line_id: string
@@ -5971,6 +6091,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      commitment_audit_log: {
+        Row: {
+          action: string
+          actor_id: string | null
+          changed_fields: Json | null
+          commitment_id: string
+          commitment_type: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          changed_fields?: Json | null
+          commitment_id: string
+          commitment_type: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          changed_fields?: Json | null
+          commitment_id?: string
+          commitment_type?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: []
       }
       commitment_change_order_lines: {
         Row: {
@@ -16167,6 +16317,89 @@ export type Database = {
           },
         ]
       }
+      project_budget_settings: {
+        Row: {
+          allow_modifying_grand_total: boolean
+          autocalculate_forecast_to_complete: boolean
+          created_at: string
+          enable_advanced_forecasting: boolean
+          project_id: number
+          red_negative_values: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          allow_modifying_grand_total?: boolean
+          autocalculate_forecast_to_complete?: boolean
+          created_at?: string
+          enable_advanced_forecasting?: boolean
+          project_id: number
+          red_negative_values?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          allow_modifying_grand_total?: boolean
+          autocalculate_forecast_to_complete?: boolean
+          created_at?: string
+          enable_advanced_forecasting?: boolean
+          project_id?: number
+          red_negative_values?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_budget_settings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "project_budget_settings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_budget_settings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_budget_settings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "project_budget_settings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_budget_settings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_budget_settings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_companies: {
         Row: {
           company_id: string
@@ -18344,6 +18577,57 @@ export type Database = {
           },
         ]
       }
+      purchase_order_attachments: {
+        Row: {
+          created_at: string | null
+          file_name: string
+          file_size: number | null
+          file_type: string | null
+          id: string
+          purchase_order_id: string
+          storage_path: string
+          updated_at: string | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          file_name: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          purchase_order_id: string
+          storage_path: string
+          updated_at?: string | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          file_name?: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          purchase_order_id?: string
+          storage_path?: string
+          updated_at?: string | null
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_order_attachments_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_attachments_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders_with_totals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       purchase_order_sov_items: {
         Row: {
           acumatica_line_nbr: number | null
@@ -18416,6 +18700,7 @@ export type Database = {
       purchase_orders: {
         Row: {
           accounting_method: string | null
+          actual_completion_date: string | null
           acumatica_external_key: string | null
           allow_non_admin_view_sov_items: boolean | null
           assigned_to: string | null
@@ -18429,8 +18714,11 @@ export type Database = {
           deleted_at: string | null
           delivery_date: string | null
           description: string | null
+          estimated_completion_date: string | null
+          exclusions: string | null
           executed: boolean
           id: string
+          inclusions: string | null
           invoice_contact_ids: string[] | null
           is_private: boolean | null
           issued_on_date: string | null
@@ -18440,12 +18728,14 @@ export type Database = {
           ship_to: string | null
           ship_via: string | null
           signed_po_received_date: string | null
+          start_date: string | null
           status: string
           title: string | null
           updated_at: string | null
         }
         Insert: {
           accounting_method?: string | null
+          actual_completion_date?: string | null
           acumatica_external_key?: string | null
           allow_non_admin_view_sov_items?: boolean | null
           assigned_to?: string | null
@@ -18459,8 +18749,11 @@ export type Database = {
           deleted_at?: string | null
           delivery_date?: string | null
           description?: string | null
+          estimated_completion_date?: string | null
+          exclusions?: string | null
           executed?: boolean
           id?: string
+          inclusions?: string | null
           invoice_contact_ids?: string[] | null
           is_private?: boolean | null
           issued_on_date?: string | null
@@ -18470,12 +18763,14 @@ export type Database = {
           ship_to?: string | null
           ship_via?: string | null
           signed_po_received_date?: string | null
+          start_date?: string | null
           status?: string
           title?: string | null
           updated_at?: string | null
         }
         Update: {
           accounting_method?: string | null
+          actual_completion_date?: string | null
           acumatica_external_key?: string | null
           allow_non_admin_view_sov_items?: boolean | null
           assigned_to?: string | null
@@ -18489,8 +18784,11 @@ export type Database = {
           deleted_at?: string | null
           delivery_date?: string | null
           description?: string | null
+          estimated_completion_date?: string | null
+          exclusions?: string | null
           executed?: boolean
           id?: string
+          inclusions?: string | null
           invoice_contact_ids?: string[] | null
           is_private?: boolean | null
           issued_on_date?: string | null
@@ -18500,6 +18798,7 @@ export type Database = {
           ship_to?: string | null
           ship_via?: string | null
           signed_po_received_date?: string | null
+          start_date?: string | null
           status?: string
           title?: string | null
           updated_at?: string | null
@@ -20100,8 +20399,12 @@ export type Database = {
           description: string | null
           id: string
           line_number: number | null
+          quantity: number | null
+          retainage_percent: number | null
           sort_order: number | null
           subcontract_id: string
+          unit_cost: number | null
+          unit_of_measure: string | null
           updated_at: string | null
         }
         Insert: {
@@ -20114,8 +20417,12 @@ export type Database = {
           description?: string | null
           id?: string
           line_number?: number | null
+          quantity?: number | null
+          retainage_percent?: number | null
           sort_order?: number | null
           subcontract_id: string
+          unit_cost?: number | null
+          unit_of_measure?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -20128,8 +20435,12 @@ export type Database = {
           description?: string | null
           id?: string
           line_number?: number | null
+          quantity?: number | null
+          retainage_percent?: number | null
           sort_order?: number | null
           subcontract_id?: string
+          unit_cost?: number | null
+          unit_of_measure?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -22565,6 +22876,7 @@ export type Database = {
           source_manifest_path: string | null
           source_url: string | null
           start_url: string | null
+          status: string | null
           steps: string | null
           subcategory: string | null
           suite_id: string
@@ -22572,10 +22884,11 @@ export type Database = {
           test_number: string
           test_type: string
           tool: number | null
+          tool_name: string | null
           updated_at: string
         }
         Insert: {
-          category: string
+          category?: string
           context_note?: string | null
           created_at?: string
           expected_result?: string | null
@@ -22590,6 +22903,7 @@ export type Database = {
           source_manifest_path?: string | null
           source_url?: string | null
           start_url?: string | null
+          status?: string | null
           steps?: string | null
           subcategory?: string | null
           suite_id: string
@@ -22597,6 +22911,7 @@ export type Database = {
           test_number: string
           test_type?: string
           tool?: number | null
+          tool_name?: string | null
           updated_at?: string
         }
         Update: {
@@ -22615,6 +22930,7 @@ export type Database = {
           source_manifest_path?: string | null
           source_url?: string | null
           start_url?: string | null
+          status?: string | null
           steps?: string | null
           subcategory?: string | null
           suite_id?: string
@@ -22622,6 +22938,7 @@ export type Database = {
           test_number?: string
           test_type?: string
           tool?: number | null
+          tool_name?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -22810,6 +23127,7 @@ export type Database = {
           id: string
           last_generated_at: string
           source_doc_count: number
+          tool_id: number | null
           tool_name: string
           total_cases: number
         }
@@ -22819,6 +23137,7 @@ export type Database = {
           id?: string
           last_generated_at?: string
           source_doc_count?: number
+          tool_id?: number | null
           tool_name: string
           total_cases?: number
         }
@@ -22828,10 +23147,19 @@ export type Database = {
           id?: string
           last_generated_at?: string
           source_doc_count?: number
+          tool_id?: number | null
           tool_name?: string
           total_cases?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "test_suites_tool_id_fkey"
+            columns: ["tool_id"]
+            isOneToOne: false
+            referencedRelation: "procore_tools"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       timeline_events: {
         Row: {

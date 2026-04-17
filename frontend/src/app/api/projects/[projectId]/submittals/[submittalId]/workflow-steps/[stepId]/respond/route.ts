@@ -1,8 +1,7 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
-import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { z, ZodError } from "zod";
+import { z } from "zod";
 
 import { apiErrorResponse } from "@/lib/api-error";
 import { createClient } from "@/lib/supabase/server";
@@ -24,7 +23,7 @@ const respondSchema = z.object({
 
 /**
  * POST /api/projects/[projectId]/submittals/[submittalId]/workflow-steps/[stepId]/respond
- * Upserts a response for the current user on a workflow step.
+ * Records a response for the current assigned user on a workflow step.
  * Also advances ball_in_court to the next step's first pending user.
  */
 export const POST = withApiGuardrails(
@@ -46,20 +45,53 @@ export const POST = withApiGuardrails(
     const body = await request.json();
     const { response_status, comments } = respondSchema.parse(body);
 
-    // Upsert response for this user on this step
+    // Ensure the workflow step exists on this submittal before writing a response.
+    const { data: workflowStep, error: workflowStepError } = await supabase
+      .from("submittal_workflow_steps")
+      .select("id")
+      .eq("id", stepId)
+      .eq("submittal_id", submittalId)
+      .maybeSingle();
+
+    if (workflowStepError) {
+      return apiErrorResponse(workflowStepError);
+    }
+
+    if (!workflowStep) {
+      return NextResponse.json(
+        { error: "Workflow step not found for this submittal." },
+        { status: 404 },
+      );
+    }
+
+    // Enforce reviewer ownership: only the assigned responder can submit.
+    const { data: existingResponse, error: existingResponseError } = await supabase
+      .from("submittal_responses")
+      .select("id")
+      .eq("submittal_id", submittalId)
+      .eq("workflow_step_id", stepId)
+      .eq("responder_id", user.id)
+      .maybeSingle();
+
+    if (existingResponseError) {
+      return apiErrorResponse(existingResponseError);
+    }
+
+    if (!existingResponse) {
+      return NextResponse.json(
+        { error: "You are not assigned to review this workflow step." },
+        { status: 403 },
+      );
+    }
+
     const { data: response, error: responseError } = await supabase
       .from("submittal_responses")
-      .upsert(
-        {
-          submittal_id: submittalId,
-          workflow_step_id: stepId,
-          responder_id: user.id,
-          response_status,
-          comments: comments ?? null,
-          responded_at: new Date().toISOString(),
-        },
-        { onConflict: "workflow_step_id,responder_id" },
-      )
+      .update({
+        response_status,
+        comments: comments ?? null,
+        responded_at: new Date().toISOString(),
+      })
+      .eq("id", existingResponse.id)
       .select()
       .single();
 
@@ -68,13 +100,17 @@ export const POST = withApiGuardrails(
     }
 
     // Advance ball_in_court: only advance when ALL responses on current step are non-Pending
-    const { data: steps } = await supabase
+    const { data: steps, error: stepsError } = await supabase
       .from("submittal_workflow_steps")
       .select(
         `id, step_order, step_type, submittal_responses(responder_id, response_status)`,
       )
       .eq("submittal_id", submittalId)
       .order("step_order", { ascending: true });
+
+    if (stepsError) {
+      return apiErrorResponse(stepsError);
+    }
 
     if (steps) {
       const currentStep = steps.find((s) => s.id === stepId);
@@ -98,16 +134,20 @@ export const POST = withApiGuardrails(
 
           if (pendingResponder) {
             // Advance BIC to next step's first pending responder
-            await supabase
+            const { error: updateBicError } = await supabase
               .from("submittals")
               .update({
                 ball_in_court: pendingResponder.responder_id,
                 updated_at: new Date().toISOString(),
               })
               .eq("id", submittalId);
+
+            if (updateBicError) {
+              return apiErrorResponse(updateBicError);
+            }
           } else {
             // No more pending steps — auto-close the submittal
-            await supabase
+            const { error: closeSubmittalError } = await supabase
               .from("submittals")
               .update({
                 status: "Closed",
@@ -115,6 +155,10 @@ export const POST = withApiGuardrails(
                 updated_at: new Date().toISOString(),
               })
               .eq("id", submittalId);
+
+            if (closeSubmittalError) {
+              return apiErrorResponse(closeSubmittalError);
+            }
           }
         }
       }

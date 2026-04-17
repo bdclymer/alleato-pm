@@ -44,7 +44,14 @@ export const CreatePurchaseOrderSchema = z.object({
   contractNumber: z.string().min(1, "Contract number is required"),
   contractCompanyId: z.string().optional(),
   title: z.string().optional(),
-  status: z.enum(["Draft", "Approved", "Sent", "Acknowledged", "Completed"]),
+  status: z.enum([
+    "Draft",
+    "Out for Bid",
+    "Out for Signature",
+    "Approved",
+    "Complete",
+    "Terminated",
+  ]),
   executed: z.boolean(),
   defaultRetainagePercent: optionalPercent,
   assignedTo: z.string().optional(), // User ID

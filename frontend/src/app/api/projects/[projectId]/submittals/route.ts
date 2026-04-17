@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { z, ZodError } from "zod";
 
 import { apiErrorResponse } from "@/lib/api-error";
+import { getNormalizedSubmittalTypeCatalog } from "@/lib/submittals/submittal-type-catalog";
 import { createClient } from "@/lib/supabase/server";
 
 interface RouteParams {
@@ -142,6 +143,18 @@ export const POST = withApiGuardrails(
     }
 
     const validatedData = createSubmittalSchema.parse(body);
+    const submittalTypes = await getNormalizedSubmittalTypeCatalog(supabase);
+    const fallbackType =
+      submittalTypes.find((type) => type.name === "Other") ?? submittalTypes[0] ?? null;
+    const resolvedSubmittalTypeId =
+      validatedData.submittal_type_id ?? fallbackType?.id ?? null;
+
+    if (!resolvedSubmittalTypeId) {
+      return NextResponse.json(
+        { error: "Unable to resolve a submittal type. Please refresh and try again." },
+        { status: 422 },
+      );
+    }
 
     // Check unique submittal_number within project
     const { data: existing } = await supabase
@@ -167,7 +180,7 @@ export const POST = withApiGuardrails(
         project_id: parseInt(projectId, 10),
         submitted_by: user.id,
         created_by: user.id,
-        submittal_type_id: validatedData.submittal_type_id ?? null,
+        submittal_type_id: resolvedSubmittalTypeId,
       })
       .select(
         `*,

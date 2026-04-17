@@ -1,488 +1,295 @@
 ---
-description: "Research and create a comprehensive TypeScript PRP (Product Requirement Prompt) for one-pass implementation success"
+description: "Research Procore functionality and create a comprehensive PRP defining what to build. Sources: manifest + RAG (authoritative), planning artifacts (supplemental). No codebase or schema analysis — that happens in prp-audit."
 argument-hint: "<feature-name>"
 ---
 
-# Create TypeScript PRP
+# Create Procore Feature PRP
 
 ## Feature: $ARGUMENTS
 
-## PRP Creation Mission
+## Mission
 
-Create a comprehensive TypeScript PRP that enables **one-pass implementation success** through systematic research and context curation.
+Create a comprehensive PRP that defines **exactly what to build** based on authoritative
+Procore research. This document answers: "What does Procore do and what do we need to replicate?"
 
-**Critical Understanding**: The executing AI agent only receives:
+**This phase does NOT:**
+- Review the current codebase
+- Query the database schema
+- Analyze what's already built
 
-- Start by reading and understanding the prp concepts PRPs/prp-readme.md
-- The PRP content you create
-- Its training data knowledge
-- Access to codebase files (but needs guidance on which ones)
+That happens in `prp-audit`. Keep the phases clean.
 
-**Therefore**: Your research and context curation directly determines implementation success. Incomplete context = implementation failure.
+**Authority stack:**
+1. **Procore Manifest** (`.claude/procore-manifests/{feature}/`) — authoritative for UI structure
+2. **Procore Docs RAG** (`procore-docs-rag` skill) — authoritative for business rules and workflows
+3. **Planning Artifacts** (`_bmad-output/planning-artifacts/{feature}/`) — supplemental context only
+
+When manifest and RAG conflict with planning artifacts, **manifest + RAG win**.
+
+---
 
 ## Research Process
 
-> During the research process, create clear tasks and spawn as many agents and subagents as needed using the batch tools. The deeper research we do here the better the PRP will be. we optminize for chance of success and not for speed.
+> Spawn subagents in parallel wherever possible. Optimize for completeness, not speed.
 
-### 0. MANDATORY: Supabase Schema Review (CRITICAL - DO THIS FIRST)
+### Step 1: Load Planning Artifacts (Supplemental Context)
 
-#### Purpose
-
-**BEFORE ANY CODE ANALYSIS OR WRITING**, you MUST review the current database schema for tables relevant to this feature. Use the Supabase MCP or CLI to query only the schemas you need — do NOT generate the full types file upfront (it's too large and wastes tokens).
-
-#### Step 1: Identify Feature-Relevant Tables
-
-Determine which tables are relevant to this feature. Think about:
-
-- Tables the feature will read from or write to
-- Tables with foreign key relationships to those tables
-- Any new tables that need to be created
-
-#### Step 2: Query Schema for Relevant Tables Only
-
-Use **one** of these approaches (Supabase MCP preferred):
-
-**Option A: Supabase MCP (preferred — lowest token cost)**
-
-```sql
--- Query column details for specific tables
-SELECT table_name, column_name, data_type, is_nullable, column_default
-FROM information_schema.columns
-WHERE table_schema = 'public'
-  AND table_name IN ('table1', 'table2', 'table3')
-ORDER BY table_name, ordinal_position;
-
--- Query foreign key relationships for those tables
-SELECT
-  tc.table_name,
-  kcu.column_name,
-  ccu.table_name AS foreign_table_name,
-  ccu.column_name AS foreign_column_name
-FROM information_schema.table_constraints AS tc
-JOIN information_schema.key_column_usage AS kcu
-  ON tc.constraint_name = kcu.constraint_name
-JOIN information_schema.constraint_column_usage AS ccu
-  ON ccu.constraint_name = tc.constraint_name
-WHERE tc.constraint_type = 'FOREIGN KEY'
-  AND tc.table_schema = 'public'
-  AND (tc.table_name IN ('table1', 'table2') OR ccu.table_name IN ('table1', 'table2'));
-```
-
-**Option B: Supabase CLI (if MCP is unavailable)**
+Read these as background — they inform your queries but do not override manifest or RAG.
 
 ```bash
-# List all tables (lightweight — just names)
-npx supabase db dump --schema public --data-only=false 2>/dev/null | grep "CREATE TABLE"
-
-# Or query specific tables via psql
-npx supabase db execute "SELECT column_name, data_type, is_nullable FROM information_schema.columns WHERE table_name = 'your_table' ORDER BY ordinal_position;"
+# Check what planning artifacts exist
+ls _bmad-output/planning-artifacts/$ARGUMENTS/
+ls _bmad-output/planning-artifacts/$ARGUMENTS/crawl/ 2>/dev/null
+ls _bmad-output/planning-artifacts/$ARGUMENTS/implementation/ 2>/dev/null
 ```
 
-**Option C: Read existing types file (if recently generated)**
+Key files to skim (do not treat as authoritative):
+- `implementation/ui-{feature}.md` — UI notes from earlier research
+- `implementation/schema-{feature}.md` — data model notes
+- `implementation/forms-{feature}.md` — form field notes
+- `crawl/` — any earlier crawl data
 
-If `frontend/src/types/database.types.ts` exists and was recently updated, search it for only the relevant table definitions instead of reading the entire file:
-
-```bash
-grep -A 30 "your_table_name:" frontend/src/types/database.types.ts
-```
-
-#### Step 3: Complete Required Analysis
-
-- [ ] Identify ALL tables relevant to this feature
-- [ ] For each relevant table, document:
-  - Column names and their types
-  - Which columns are nullable
-  - Primary key type (INTEGER vs UUID)
-  - Foreign key relationships and their types
-- [ ] **CRITICAL**: Verify FK column types match PK types:
-  - `projects.id` is `number` → any `project_id` FK must be `INTEGER`
-  - `users.id` is `string` → any `user_id` FK must be `UUID`
-  - `people.id` is `string` → any `person_id` FK must be `UUID`
-
-#### Step 4: Add to PRP Context
-
-Include a "Database Schema" section in the PRP with:
-
-- Current table structures for all relevant tables (from MCP/CLI query results)
-- FK type requirements (INTEGER vs UUID)
-- Any schema changes needed for this feature
-
-**Why This Matters:**
-
-- Prevents UUID/INTEGER type mismatches (caused 3+ bugs)
-- Ensures code matches actual database schema
-- Catches missing tables/columns before coding starts
-- Queries only relevant tables instead of generating all types (saves significant tokens)
+Note gaps and questions to answer via manifest + RAG.
 
 ---
 
-### 1. Pattern Review & Historical Error Prevention (MANDATORY)
+### Step 2: Read Procore Manifest (PRIMARY — UI Structure)
 
-**BEFORE writing any PRP content**, review historical errors and patterns to avoid repeating mistakes:
-
-#### Step 1: Read Incident Log**
-
-docs/patterns/INCIDENT-LOG.md
-
-- Identify all 🔴 CRITICAL and 🟡 WARNING incidents
-- Note any incidents related to this feature domain
-- Document prevention systems that must be followed
-
-#### Step 2: Review Relevant Pattern Files
-
-Based on the feature type, read relevant pattern documentation:
-
-| Feature Type | Required Pattern Files |
-|-------------|----------------------|
-| Database/API changes | `database-issues.md`, `api-routing-errors.md` |
-| Authentication/Auth | `authentication-errors.md` |
-| Testing/E2E | `testing-errors.md`, `PLAYWRIGHT-PATTERNS.mdx` |
-| UI Components | `ui-errors.md` |
-| TypeScript changes | `typescript-errors.md` |
-
-**Pattern File Locations:**
+The manifest contains live DOM captures from the actual Procore UI. This is the
+authoritative source for columns, fields, tabs, dropdown options, and required flags.
 
 ```bash
-docs/patterns/
-├── INCIDENT-LOG.md                    # Comprehensive incident history
-├── database-issues.md                 # Schema and query problems
-├── api-routing-errors.md              # Route and endpoint failures
-├── authentication-errors.md           # Permission and login issues
-├── testing-errors.md                  # Test failures and patterns
-├── typescript-errors.md               # Type errors and solutions
-├── ui-errors.md                       # UI/UX issues
-└── PLAYWRIGHT-PATTERNS.mdx            # E2E testing best practices
-
+# Read the structured manifest
+Read .claude/procore-manifests/$ARGUMENTS/manifest.json
 ```
 
-#### Step 3: Extract Applicable Patterns
+#### Completeness check — verify these fields are non-empty arrays
 
-For each pattern file reviewed, extract:
+| Field | What it tells you |
+|-------|------------------|
+| `states.list.columns` | List view column headers |
+| `states.list.rowActions` | Per-row actions (Edit, Delete, View, etc.) |
+| `states.list.toolbarActions` | Create button options, Export, Import, Print |
+| `states.list.tabs` | View tabs on the list page |
+| `states.list.filters` | Filter options |
+| `states.create-form.formSections` | Create form fields and sections |
 
-- **Common Mistakes**: What errors happened repeatedly?
-- **Root Causes**: Why did they happen?
-- **Prevention Rules**: What must be done to avoid them?
-- **Validation Commands**: How to verify the fix?
+**If any of these are empty arrays `[]` → the manifest is incomplete. Recrawl before continuing:**
 
-#### Step 4: Add to PRP
-
-Create a "Known Pitfalls & Prevention" section in the PRP that includes:
-
-- All relevant historical errors that apply to this feature
-- Specific prevention rules from pattern files
-- Validation commands to avoid these errors
-- Links to pattern documentation for reference
-
-**Example Format:**
-
-```markdown
-## Known Pitfalls & Prevention
-
-### From Pattern Analysis (Mandatory Review)
-
-#### Database Type Mismatches (INCIDENT-LOG.md - CRITICAL)
-**Historical Error:** Used UUID for project_id when projects.id is INTEGER
-**Prevention:** Always verify FK types match PK types in database.types.ts before creating migrations
-**Validation:** `grep "project_id" migration.sql` and verify type is INTEGER
-
-#### Next.js Route Caching (INCIDENT-LOG.md - CRITICAL)
-**Historical Error:** New page.tsx files showing 404 due to .next cache
-**Prevention:** Clear .next cache after creating new route files
-**Validation:** `rm -rf .next && npm run dev`
-
-[Additional patterns specific to this feature...]
+```bash
+cd scripts/playwright-crawl
+node procore-deep-crawl.js $ARGUMENTS
 ```
 
-**Why This Matters:**
+Then re-read the manifest and confirm fields are populated.
 
-- Prevents repeating the same mistakes (saved hours of debugging)
-- Ensures PRP includes prevention rules from past incidents
-- Makes executing agent aware of common pitfalls upfront
-- Reduces implementation failures from known issues
+#### What to extract from the manifest
+
+- Every column in the list view (exact label, what data it shows)
+- Every field in the create/edit form (label, type, required, options/placeholder)
+- Every tab on the detail view (name, what content it contains)
+- Every toolbar action (Create options, Export, Import, Bulk actions)
+- Every row-level action (Edit, Delete, Duplicate, Status changes, etc.)
+- Header/summary fields on the detail view
+
+If field detail is sparse in `manifest.json`, read the raw DOM:
+
+```bash
+Read .claude/procore-manifests/$ARGUMENTS/dom/list.html
+Read .claude/procore-manifests/$ARGUMENTS/dom/create-form.html
+```
 
 ---
 
-### 2. Procore Crawl Data & Spec Artifacts (CRITICAL for Procore features)
+### Step 3: Run Procore Docs RAG (PRIMARY — Business Rules & Workflows)
 
-Before starting codebase analysis, check for existing Procore crawl data and spec artifacts:
+Use the `procore-docs-rag` skill to query the 560-article Procore knowledge base.
+This is the authoritative source for: status workflows, business rules, financial
+calculations, field validation logic, and how this tool relates to other tools.
+
+Run from project root:
 
 ```bash
-# Crawl data location (inside the PRP tool folder):
-docs/PRPs/{feature}/crawl/
-
-# Key files to load:
-docs/PRPs/{feature}/crawl/crawl-summary.json  # Structured summary
-docs/PRPs/{feature}/crawl/spec/COMMANDS.md    # Domain commands
-docs/PRPs/{feature}/crawl/spec/MUTATIONS.md   # Behavior specs
-docs/PRPs/{feature}/crawl/spec/schema.sql     # Database schema
-docs/PRPs/{feature}/crawl/spec/FORMS.md       # UI form specs
+node scripts/procore-docs-query.js "<query>"
+node scripts/procore-docs-query.js "<query>" 12   # topK=12 for broad topics
 ```
 
-**If crawl-summary.json exists**, read it first - it contains:
+#### Mandatory queries for every feature
 
-- Stats (pages captured, commands promoted, etc.)
-- List of domain commands with descriptions
-- UI components (tables, forms, dropdowns, buttons, modals)
-- Screenshot paths for all captured pages
-- Paths to all spec artifacts
+Always run these four — they catch things that topic-specific queries miss:
 
-**If crawl data exists but no crawl-summary.json**, run:
-
-```typescript
-cd scripts/screenshot-capture && PROCORE_MODULE={feature} node scripts/generate-crawl-summary.js
+```bash
+node scripts/procore-docs-query.js "$ARGUMENTS toolbar actions create button options"
+node scripts/procore-docs-query.js "$ARGUMENTS export pdf csv print"
+node scripts/procore-docs-query.js "$ARGUMENTS list view tabs navigation"
+node scripts/procore-docs-query.js "$ARGUMENTS row actions menu options"
 ```
 
-**Raw crawl data includes**:
+#### Score thresholds
 
-- **Screenshots** (`pages/*/screenshot.png`) - Visual reference for UI implementation
-- **DOM snapshots** (`pages/*/dom.html`) - Actual HTML structure to replicate
-- **Metadata** (`pages/*/metadata.json`) - Links, dropdowns, table structures, form fields
-- **Reports** (`reports/`) - Sitemap, link graph, detailed analysis
+| Score | Action |
+|-------|--------|
+| ≥ 80% | Authoritative. Use directly. |
+| 60–79% | Good. Use with article title as context. |
+| 40–59% | Partial. Supplement with Tier 3 (WebFetch). |
+| < 40% | Rephrase, then escalate to WebFetch. |
 
-**Spec artifacts include**:
+#### Feature-specific queries to run
 
-- **COMMANDS.md** - Canonical domain commands (what operations the feature supports)
-- **MUTATIONS.md** - Detailed behavior specifications for each command
-- **schema.sql** - Database schema derived from Procore analysis
-- **FORMS.md** - UI form requirements (may be intentionally incomplete)
+Spawn subagents to run these in parallel. For `$ARGUMENTS`, run at minimum:
 
-**MUST integrate into PRP**:
+```bash
+# Statuses and workflows
+node scripts/procore-docs-query.js "what statuses does a $ARGUMENTS go through"
+node scripts/procore-docs-query.js "$ARGUMENTS approval workflow steps"
+node scripts/procore-docs-query.js "$ARGUMENTS status transitions allowed"
 
-- Use COMMANDS.md to populate Implementation Tasks
-- Use MUTATIONS.md for behavior specifications in context
-- Use schema.sql as starting point for data model section
-- Include screenshot paths for UI components to build
-- Extract form fields and validation rules from metadata
-- Document table columns and data structures from DOM analysis
-- Add "Procore Crawl Data Reference" section (see format below)
+# Fields and validation
+node scripts/procore-docs-query.js "what fields are required when creating a $ARGUMENTS"
+node scripts/procore-docs-query.js "$ARGUMENTS field definitions and descriptions"
 
-## Procore Crawl Data Reference
+# Relationships to other tools
+node scripts/procore-docs-query.js "how does $ARGUMENTS relate to budget"
+node scripts/procore-docs-query.js "how does $ARGUMENTS relate to change orders"
+node scripts/procore-docs-query.js "how does $ARGUMENTS relate to prime contracts"
 
-This section contains all crawl data files, sitemap, and screenshots from the Procore feature analysis. Add this section to the PRP with a consolidated table of all crawl files:
+# Financial/calculation rules (if applicable)
+node scripts/procore-docs-query.js "$ARGUMENTS financial calculations markup"
+node scripts/procore-docs-query.js "$ARGUMENTS budget impact when approved"
 
-### Sitemap
-
-| Page | URL | Screenshot |
-|------|-----|------------|
-| {PageName} | [Procore {Feature} Tool]({url}) | [View](#main-{feature}-view) |
-
-### Crawl Data Files
-
-| Category | File | Path | Description |
-|----------|------|------|-------------|
-| Summary | Crawl Summary | `crawl-summary.json` | Structured JSON with all crawl data |
-| Summary | README | `README.md` | Module overview |
-| Reports | Sitemap | `reports/sitemap-table.md` | Page URLs and structure |
-| Reports | Detailed Report | `reports/detailed-report.json` | Full crawl analysis |
-| Spec | Commands | `spec/COMMANDS.md` | Domain commands |
-| Spec | Mutations | `spec/MUTATIONS.md` | Behavior specifications |
-| Spec | Schema | `spec/schema.sql` | Database tables |
-| Spec | Forms | `spec/FORMS.md` | UI form field definitions |
-| Pages | Screenshot | `pages/{page}/screenshot.png` | Main view screenshot |
-| Pages | DOM | `pages/{page}/dom.html` | Full DOM snapshot |
-| Pages | Metadata | `pages/{page}/metadata.json` | Links, dropdowns, system actions |
-
-**Base Path**: `docs/PRPs/{feature}/crawl/`
-
-### Screenshots
-
-#### Main {Feature} View
-
-![Procore {Feature} Screenshot](crawl/pages/{page}/screenshot.png)
-
-**Key UI Elements to Replicate:**
-
-- List key UI elements observed in screenshot
-- Include layout structure, toolbars, panels
-- Note any context menus or modals
-
-### UI Components Detected
-
-| Label | Command Key |
-|-------|-------------|
-| {Label from metadata} | `{command_key}` |
-
-If no crawl data exists, run `/feature-crawl {feature} <procore-url>` first.
-
-### TypeScript/React Codebase Analysis in depth
-
-- Create clear todos and spawn subagents to search the codebase for similar features/patterns Think hard and plan your approach
-- Identify all the necessary TypeScript files to reference in the PRP
-- Note all existing TypeScript/React conventions to follow
-- Check existing component patterns, hook patterns, and API route patterns
-- Analyze TypeScript interface definitions and type usage patterns
-- Check existing test patterns for React components and TypeScript code validation approach
-- Use the batch tools to spawn subagents to search the codebase for similar features/patterns
-
-### TypeScript/React External Research at scale
-
-- Create clear todos and spawn with instructions subagents to do deep research for similar features/patterns online and include urls to documentation and examples
-- TypeScript documentation (include specific URLs with version compatibility)
-- React/Next.js documentation (include specific URLs for App Router, Server Components, etc.)
-- For critical pieces of documentation add a .md file to PRPs/docs and reference it in the PRP with clear reasoning and instructions
-- Implementation examples (GitHub/StackOverflow/blogs) specific to TypeScript/React/Next.js
-- Best practices and common pitfalls found during research (TypeScript compilation issues, React hydration, Next.js gotchas)
-- Use the batch tools to spawn subagents to search for similar features/patterns online and include urls to documentation and examples
-
-### User Clarification
-
-- Ask for clarification if you need it
-
-## PRP Generation Process
-
-### Step 1: Choose Template
-
-Use `.claude/templates/TEMPLATE-PRP.md` as your template structure - it contains all necessary sections and formatting specific to TypeScript/React development.
-
-### Step 2: Context Completeness Validation
-
-Before writing, apply the **"No Prior Knowledge" test** from the template:
-
-_"If someone knew nothing about this TypeScript/React codebase, would they have everything needed to implement this successfully?"_
-
-### Step 3: Research Integration
-
-Transform your research findings into the template sections:
-
-**Goal Section**: Use research to define specific, measurable Feature Goal and concrete Deliverable (component, API route, integration, etc.)
-
-**Context Section**: Populate YAML structure with your research findings - specific TypeScript/React URLs, file patterns, gotchas
-
-**Implementation Tasks**: Create dependency-ordered tasks using information-dense keywords from TypeScript/React codebase analysis
-
-**Validation Gates**: Use TypeScript/React-specific validation commands that you've verified work in this codebase
-
-### Step 4: TypeScript/React Information Density Standards
-
-Ensure every reference is **specific and actionable** for TypeScript development:
-
-- URLs include section anchors, not just domain names (React docs, TypeScript handbook, Next.js docs)
-- File references include specific TypeScript patterns to follow (interfaces, component props, hook patterns)
-- Task specifications include exact TypeScript naming conventions and placement (PascalCase components, camelCase props, etc.)
-- Validation commands are TypeScript/React-specific and executable (tsc, eslint with TypeScript rules, React Testing Library)
-
-### Step 5: ULTRATHINK Before Writing
-
-After research completion, create comprehensive PRP writing plan using TodoWrite tool:
-
-- Plan how to structure each template section with your TypeScript/React research findings
-- Identify gaps that need additional TypeScript/React research
-- Create systematic approach to filling template with actionable TypeScript context
-- Consider TypeScript compilation dependencies and React component hierarchies
-
-#### Create the following files with this File Structure:
-
-```text
-PRPs/{feature-name}/
-├── prp-{feature-name}.md      # Main PRP document (static reference)
-├── TASKS.md                    # Implementation checklist (live progress tracker)
-└── prp-{feature-name}.html    # Browser-viewable PRP (auto-generated)
+# Permissions and roles
+node scripts/procore-docs-query.js "$ARGUMENTS permissions who can create edit approve"
 ```
 
-### Step 6: Generate TASKS.md
+Add more queries based on what gaps you found in the planning artifacts (Step 1).
 
-After completing the PRP markdown, generate `TASKS.md` from the Implementation Tasks section:
+#### What to extract from RAG results
 
-1. Use template from `.claude/templates/tasks_template.md`
-2. Extract all tasks from PRP's Implementation Tasks section
-3. Organize into phases (Data Layer → API Layer → UI Layer → Integration → Testing)
-4. Include progress summary at top
-5. Add Session Log section for AI progress tracking
+- Exact status names and allowed transitions
+- Business rules (what triggers what)
+- Field validation rules (required conditions, format rules)
+- Financial calculation logic
+- Integration points with other Procore tools
+- Procore's exact terminology (use it verbatim in the PRP)
 
-### Step 7: Generate HTML Output
+---
 
-Generate `prp-{feature-name}.html` for browser viewing:
+### Step 4: WebFetch — Fill Remaining Gaps (Tier 3)
 
-1. Run the HTML converter: `node .claude/scripts/prp-to-html.js PRPs/{feature-name}/prp-{feature-name}.md`
-2. Or manually create HTML with:
-   - Clean modern styling (system fonts, responsive layout)
-   - Table of contents with anchor links
-   - Syntax highlighting for code blocks
-   - Collapsible sections for long code
-   - Screenshot references from crawl data
-   - Print-friendly styles
+If RAG results are partial (< 60%) for any critical topic, fetch the full article:
+
+```bash
+WebFetch <URL from RAG result>
+```
+
+Or browse the Procore support site directly:
+
+```bash
+WebFetch https://v2.support.procore.com/
+```
+
+Use this for: complex workflows that got cut off in RAG chunks, specific calculation
+formulas, or edge cases not covered by manifest or RAG.
+
+---
+
+### Step 5: Synthesize Research
+
+Before writing, consolidate your findings:
+
+1. **Reconcile conflicts** — if manifest says one thing and RAG says another, RAG wins for
+   business rules; manifest wins for UI structure. Note any conflicts.
+2. **Identify gaps** — topics where neither manifest nor RAG gave strong answers.
+   Mark these explicitly in the PRP as "unclear / needs verification."
+3. **Use Procore's exact terminology** — copy field names, status names, and tab names
+   verbatim from the manifest and RAG results.
+
+---
+
+## PRP Generation
+
+### Template
+
+Use `.claude/templates/prp_template_procore.md` as the base structure.
+
+### Required Sections
+
+#### 1. Feature Overview
+- What this tool does in Procore (1-2 paragraphs using RAG findings)
+- How it fits into the broader Procore workflow
+- Key relationships to other tools (budget, change orders, prime contracts, etc.)
+
+#### 2. Procore Data Model
+- All entities and their fields (from manifest + RAG)
+- Field names (exact labels from manifest), types, required/optional
+- Status values and transitions
+- Do NOT map to our DB schema — that's prp-audit's job
+
+#### 3. List View Specification
+- Columns (exact labels, data shown, sortable?)
+- Tabs (names, what filter/scope each applies)
+- Toolbar actions (Create options, Export, Import, Print, Bulk)
+- Row actions (Edit, Delete, Duplicate, status changes, etc.)
+- Filters available
+
+#### 4. Create / Edit Form Specification
+- All form sections (exact section names from manifest)
+- Every field: label, type, required, options/placeholder
+- Conditional fields (shown only when X is true)
+- Validation rules (from RAG)
+
+#### 5. Detail View Specification
+- Header/summary fields
+- Tabs and their content
+- Actions available on detail view
+
+#### 6. Workflows & Business Rules
+- Status lifecycle (diagram or list)
+- Allowed status transitions
+- What triggers budget impact / financial changes
+- Integration points with other tools
+- Permission rules (who can do what)
+
+#### 7. User Flows
+- Step-by-step: Create a {feature}
+- Step-by-step: Edit / update
+- Step-by-step: Status change workflows
+- Any approval flows
+
+#### 8. Procore Research Sources
+- Which RAG queries returned strong results (≥ 80%)
+- Which manifest sections were used
+- Any WebFetch URLs consulted
+- Any gaps / uncertainties explicitly noted
 
 ### Output Files
 
-- **prp-{feature-name}.md** - Main PRP (static reference for requirements/context)
-- **TASKS.md** - Live checklist (AI updates this during implementation)
-- **prp-{feature-name}.html** - Browser-viewable version (auto-generated)
+```
+PRPs/{feature-name}/
+├── prp-{feature-name}.md      # Main PRP (static reference — what Procore does)
+└── TASKS.md                    # Placeholder (populated by prp-audit)
+```
 
-## PRP Quality Gates
+---
 
-### Mandatory Prerequisites (MUST BE COMPLETED FIRST)
+## Quality Gates
 
-- [ ] **Supabase schema reviewed via MCP/CLI** (Step 0 completed)
-  - [ ] Relevant table schemas queried and analyzed
-  - [ ] All feature-related table structures documented in PRP
-  - [ ] FK type requirements identified (INTEGER vs UUID)
-  - [ ] "Database Schema" section added to PRP context
-- [ ] **Pattern review completed** (Step 1 completed)
-  - [ ] INCIDENT-LOG.md reviewed for critical/warning incidents
-  - [ ] Relevant pattern files read based on feature type
-  - [ ] Common mistakes and prevention rules extracted
-  - [ ] "Known Pitfalls & Prevention" section added to PRP
-  - [ ] Historical errors specific to this feature domain documented
+Before marking complete:
 
-### Context Completeness Check
+- [ ] Manifest read and all key sections verified non-empty
+- [ ] Mandatory 4 RAG queries run + feature-specific queries
+- [ ] Every list column documented with exact label
+- [ ] Every form field documented: label, type, required, options
+- [ ] Every detail tab documented with content description
+- [ ] All status values and transitions documented
+- [ ] Financial/calculation rules documented (if applicable)
+- [ ] Relationships to other tools documented
+- [ ] Gaps and uncertainties explicitly noted in PRP
+- [ ] Procore's exact terminology used throughout (not paraphrased)
+- [ ] `prp-{feature}.md` created
+- [ ] Ready for `/prp:prp-audit`
 
-- [ ] Passes "No Prior Knowledge" test from TypeScript template
-- [ ] All YAML references are specific and accessible (TypeScript/React docs, component examples)
-- [ ] Implementation tasks include exact TypeScript naming and placement guidance
-- [ ] Validation commands are TypeScript/React-specific and verified working
-- [ ] TypeScript interface definitions and component prop types are specified
-- [ ] Database schema section includes FK type requirements from schema queries
-- [ ] Known pitfalls section includes prevention rules from pattern analysis
+## Confidence Score
 
-### Template Structure Compliance
-
-- [ ] All required TypeScript template sections completed
-- [ ] Goal section has specific Feature Goal, Deliverable, Success Definition
-- [ ] Implementation Tasks follow TypeScript dependency ordering (types → components → pages → tests)
-- [ ] Final Validation Checklist includes TypeScript/React-specific validation
-
-### TypeScript/React Information Density Standards
-
-- [ ] No generic references - all are specific to TypeScript/React patterns
-- [ ] File patterns include specific TypeScript examples to follow (interfaces, components, hooks)
-- [ ] URLs include section anchors for exact TypeScript/React guidance
-- [ ] Task specifications use information-dense keywords from TypeScript/React codebase
-- [ ] Component patterns specify Server vs Client component usage
-- [ ] Type definitions are comprehensive and follow existing patterns
-
-## Success Metrics
-
-**Confidence Score**: Rate 1-10 for one-pass TypeScript implementation success likelihood
-
-**Quality Standard**: Minimum 8/10 required before PRP approval
-
-**Validation**: The completed PRP should enable an AI agent unfamiliar with the TypeScript/React codebase to implement the feature successfully using only the PRP content and codebase access, with full type safety and React best practices.
-
-## Output Checklist
-
-Before marking PRP creation complete, verify:
-
-### Mandatory Prerequisites Completed
-
-- [ ] **Step 0: Supabase schema reviewed via MCP/CLI**
-  - [ ] Relevant table schemas queried (via MCP, CLI, or existing types file)
-  - [ ] Feature-related tables analyzed for columns, types, and relationships
-  - [ ] Database Schema section added to PRP
-  - [ ] FK type requirements (INTEGER vs UUID) documented
-
-- [ ] **Step 1: Pattern review completed**
-  - [ ] INCIDENT-LOG.md reviewed
-  - [ ] Relevant pattern files (database-issues.md, api-routing-errors.md, etc.) reviewed
-  - [ ] Known Pitfalls & Prevention section added to PRP
-  - [ ] Historical errors documented with prevention rules
-
-### PRP Content Completeness
-
-- [ ] `prp-{feature-name}.md` created with all template sections
-- [ ] `TASKS.md` generated with all implementation tasks as checkboxes
-- [ ] `prp-{feature-name}.html` generated for browser viewing
-- [ ] Crawl data integrated (if available): commands, screenshots, schema
-- [ ] Database Schema section includes current table structures and FK requirements
-- [ ] Known Pitfalls & Prevention section includes applicable historical errors
-- [ ] Confidence score documented (minimum 8/10)
-- [ ] Ready for `/prp-quality` validation
+Rate 1–10: how completely does this PRP capture Procore's actual functionality?
+**Minimum 8/10 required.** If lower, identify what's missing and run more queries.

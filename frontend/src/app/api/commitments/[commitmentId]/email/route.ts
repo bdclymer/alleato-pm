@@ -152,23 +152,61 @@ export const POST = withApiGuardrails<{ commitmentId: string }>(
       : user.email?.split("@")[0] || "Alleato User";
     const senderEmail = senderProfile?.email || user.email || "noreply@alleato.com";
 
-    // Generate email content for the downstream mail transport integration.
+    // Generate email content
     const emailHTML = generateEmailHTML(commitmentData, emailParams, senderName);
-    void senderEmail;
-    void emailHTML;
 
-    // In a production environment, you would send the email here using a service like:
-    // - SendGrid
-    // - AWS SES
-    // - Resend
-    // - Postmark
-    //
-    // For now, return a transport-ready success response without writing to a dead audit table.
+    // Optionally generate a PDF attachment
+    let pdfBase64: string | null = null;
+    if (emailParams.attach_pdf) {
+      try {
+        const { renderPdfFromHtml } = await import("@/lib/documents/pdf");
+        const pdfBuffer = await renderPdfFromHtml(emailHTML);
+        pdfBase64 = Buffer.from(pdfBuffer).toString("base64");
+      } catch (pdfError) {
+        console.error("[commitment/email] PDF generation failed, sending without attachment:", pdfError);
+      }
+    }
+
+    // Send via Resend
+    const { Resend } = await import("resend");
+    const resend = new Resend(process.env.RESEND_API_KEY);
+
+    const toAddresses = emailParams.recipients.map((r) =>
+      r.name ? `${r.name} <${r.email}>` : r.email
+    );
+
+    const { data: sendResult, error: sendError } = await resend.emails.send({
+      from:
+        process.env.EMAIL_FROM_ADDRESS ??
+        "Alleato <notifications@alleato.app>",
+      to: toAddresses,
+      subject: emailParams.subject,
+      html: emailHTML,
+      ...(pdfBase64
+        ? {
+            attachments: [
+              {
+                filename: `commitment-${commitmentData.number}.pdf`,
+                content: pdfBase64,
+              },
+            ],
+          }
+        : {}),
+    });
+
+    if (sendError) {
+      console.error("[commitment/email] Resend error:", sendError);
+      return NextResponse.json(
+        { error: "Failed to send email. Please try again." },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({
       success: true,
       message: `Email sent to ${emailParams.recipients.length} recipient(s)`,
       recipients: emailParams.recipients.map((r) => r.email),
+      id: sendResult?.id,
     });
     },
 );

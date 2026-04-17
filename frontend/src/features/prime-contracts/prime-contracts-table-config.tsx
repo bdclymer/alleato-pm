@@ -297,6 +297,7 @@ export interface PcoSummary {
   title: string | null;
   status: string | null;
   total_amount: number | null;
+  prime_contract_id: string | null;
 }
 
 export interface ListChangeOrderData {

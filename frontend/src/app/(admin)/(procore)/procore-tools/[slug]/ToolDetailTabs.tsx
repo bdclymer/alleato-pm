@@ -49,7 +49,7 @@ export function ToolDetailTabs({ slug, description }: Props) {
 
         {/* Natural-height tabs — scroll with the page */}
         <TabsContent value="scenarios" className="m-0">
-          <TestCasesTab slug={slug} type="scenario" depth="broad" />
+          <TestCasesTab slug={slug} type="scenario" depth="all" />
         </TabsContent>
 
         <TabsContent value="test-matrix" className="m-0">

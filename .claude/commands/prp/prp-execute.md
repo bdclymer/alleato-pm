@@ -45,6 +45,8 @@ PRPs enable working TypeScript/React code on the first attempt through:
    - Apply TypeScript naming conventions from the task specifications and CLAUDE.md
    - Ensure proper TypeScript typing throughout (interfaces, props, return types)
    - Follow Next.js App Router patterns for file-based routing
+   - **For any Supabase-related tasks** (migrations, RLS policies, queries, schema changes, types): invoke the `supabase-postgres-best-practices` skill before implementing. This covers migrations, type generation, RLS, query patterns, and client usage.
+   - **Audit existing Supabase code**: Before writing new Supabase code, use the `supabase-postgres-best-practices` skill to audit any previously implemented Supabase code in the affected feature area (hooks, API routes, migrations, RLS policies). Fix violations found before proceeding with new implementation.
 
 4. **Progressive Validation**
 

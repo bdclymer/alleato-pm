@@ -182,7 +182,45 @@ export default function ProjectsPage() {
   };
 
   const handleExport = (format: "pdf" | "csv") => {
-    // TODO: implement export
+    if (format === "pdf") {
+      window.print();
+      return;
+    }
+
+    const headers = ["Job #", "Name", "Client", "Phase", "Category", "Status", "Start Date", "State", "Est. Revenue", "Est. Profit"];
+    const rows = filteredProjects.map((p) => [
+      p.jobNumber,
+      p.name,
+      p.client ?? "",
+      p.phase ?? "",
+      p.category ?? "",
+      p.status,
+      p.startDate ?? "",
+      p.state ?? "",
+      p.estRevenue != null ? String(p.estRevenue) : "",
+      p.estProfit != null ? String(p.estProfit) : "",
+    ]);
+
+    const escape = (cell: string | undefined) => {
+      const s = cell ?? "";
+      return s.includes(",") || s.includes('"') || s.includes("\n")
+        ? `"${s.replace(/"/g, '""')}"`
+        : s;
+    };
+
+    const csv = [headers, ...rows]
+      .map((row) => row.map(escape).join(","))
+      .join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `projects-${new Date().toISOString().split("T")[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    URL.revokeObjectURL(url);
+    document.body.removeChild(link);
   };
 
   const handleClearFilters = () => {

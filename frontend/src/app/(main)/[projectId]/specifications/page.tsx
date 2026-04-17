@@ -5,8 +5,18 @@ import type { ReactElement } from "react";
 import { useState } from "react";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
-import { Download, Eye, FileText, Pencil, Plus, Trash2 } from "lucide-react";
+import {
+  Archive,
+  Download,
+  Eye,
+  FileText,
+  Mail,
+  Pencil,
+  Plus,
+  Bell,
+} from "lucide-react";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api-client";
 
 import {
   TableRowActionsMenu,
@@ -18,17 +28,29 @@ import {
 } from "@/components/tables/unified";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { StatusBadge } from "@/components/ds";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 import {
   SpecificationUploadDialog,
   SpecificationEditModal,
 } from "@/components/specifications";
-import { useSpecifications, useDeleteSpecification } from "@/hooks/use-specifications";
+import {
+  useArchiveSpecification,
+  useProjectSpecificationRevisions,
+  useSpecifications,
+  useToggleSpecificationSubscription,
+  type ProjectSpecificationRevision,
+} from "@/hooks/use-specifications";
 import { useSpecificationAreas } from "@/hooks/use-specification-areas";
 import type { SpecificationWithRevision } from "@/types/specifications.types";
 
 type StatusFilter = "active" | "archived" | "superseded";
+type SpecificationsTab = "specifications" | "revisions" | "recycle";
 type SpecFilterState = Record<string, FilterValue>;
 
 const EMPTY_FILTERS: SpecFilterState = {
@@ -36,7 +58,7 @@ const EMPTY_FILTERS: SpecFilterState = {
   area_id: undefined,
 };
 
-const DEFAULT_VISIBLE = [
+const DEFAULT_VISIBLE_SPEC_COLUMNS = [
   "section_number",
   "title",
   "status",
@@ -46,29 +68,80 @@ const DEFAULT_VISIBLE = [
   "areas",
 ];
 
+const DEFAULT_VISIBLE_REVISION_COLUMNS = [
+  "section_number",
+  "section_title",
+  "revision",
+  "file_name",
+  "file_size",
+  "uploaded_at",
+];
+
 function formatFileSize(bytes: number) {
-  if (bytes < 1024) return bytes + " B";
-  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
-  return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function SpecStatusBadge({ status }: { status: string }) {
-  switch (status) {
-    case "active":
-      return <Badge variant="default">Active</Badge>;
-    case "archived":
-      return <Badge variant="secondary">Archived</Badge>;
-    case "superseded":
-      return <Badge variant="outline">Superseded</Badge>;
-    default:
-      return <Badge variant="secondary">{status}</Badge>;
+function escapeCsv(value: string | number | null | undefined): string {
+  const normalized = value == null ? "" : String(value);
+  if (/[",\n]/.test(normalized)) {
+    return `"${normalized.replace(/"/g, '""')}"`;
   }
+  return normalized;
 }
 
-function renderSpecCard(
-  spec: SpecificationWithRevision,
-  onView: (id: number) => void,
-): ReactElement {
+function downloadTextFile(filename: string, content: string, mimeType: string) {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+function openPrintWindow(title: string, tableHeaders: string[], tableRows: string[][]) {
+  const popup = window.open("", "_blank", "noopener,noreferrer");
+  if (!popup) {
+    toast.error("Popup blocked. Allow popups to export PDF.");
+    return;
+  }
+
+  const headerHtml = tableHeaders.map((header) => `<th>${header}</th>`).join("");
+  const rowsHtml = tableRows
+    .map((row) => `<tr>${row.map((cell) => `<td>${cell}</td>`).join("")}</tr>`)
+    .join("");
+
+  popup.document.write(`
+    <html>
+      <head>
+        <title>${title}</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 24px; }
+          h1 { font-size: 20px; margin-bottom: 12px; }
+          table { width: 100%; border-collapse: collapse; font-size: 12px; }
+          th, td { border: 1px solid #ddd; padding: 8px; text-align: left; vertical-align: top; }
+          th { background: #f5f5f5; font-weight: 600; }
+        </style>
+      </head>
+      <body>
+        <h1>${title}</h1>
+        <table>
+          <thead><tr>${headerHtml}</tr></thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+      </body>
+    </html>
+  `);
+  popup.document.close();
+  popup.focus();
+  popup.print();
+}
+
+function renderSpecCard(spec: SpecificationWithRevision, onView: (id: number) => void): ReactElement {
   return (
     <div
       className="cursor-pointer rounded-lg border border-border p-4 transition-colors hover:bg-muted/50"
@@ -77,32 +150,13 @@ function renderSpecCard(
       <div className="mb-2 flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium">{spec.title}</p>
-          <p className="mt-0.5 font-mono text-xs text-muted-foreground">
-            {spec.section_number}
-          </p>
+          <p className="mt-0.5 font-mono text-xs text-muted-foreground">{spec.section_number}</p>
         </div>
-        <StatusBadge status={spec.status} />
+        <Badge variant={spec.status === "active" ? "default" : "secondary"}>{spec.status}</Badge>
       </div>
-      {spec.description && (
-        <p className="mb-2 line-clamp-2 text-xs text-muted-foreground">
-          {spec.description}
-        </p>
-      )}
       <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-        {spec.current_revision && (
-          <span className="flex items-center gap-1">
-            <FileText className="h-3 w-3" />
-            Rev {spec.current_revision.revision_number}
-          </span>
-        )}
-        {spec.current_revision && (
-          <span>{formatFileSize(spec.current_revision.file_size)}</span>
-        )}
-        {spec.area_count > 0 && (
-          <span>
-            {spec.area_count} area{spec.area_count !== 1 ? "s" : ""}
-          </span>
-        )}
+        {spec.current_revision && <span>Rev {spec.current_revision.revision_number}</span>}
+        {spec.current_revision && <span>{formatFileSize(spec.current_revision.file_size)}</span>}
         <span>
           {formatDistanceToNow(new Date(spec.updated_at || spec.created_at), {
             addSuffix: true,
@@ -113,10 +167,7 @@ function renderSpecCard(
   );
 }
 
-function renderSpecList(
-  spec: SpecificationWithRevision,
-  onView: (id: number) => void,
-): ReactElement {
+function renderSpecList(spec: SpecificationWithRevision, onView: (id: number) => void): ReactElement {
   return (
     <div
       className="flex cursor-pointer items-center justify-between px-4 py-2.5 transition-colors hover:bg-muted/50"
@@ -124,32 +175,17 @@ function renderSpecList(
     >
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <span className="font-mono text-xs text-muted-foreground">
-            {spec.section_number}
-          </span>
+          <span className="font-mono text-xs text-muted-foreground">{spec.section_number}</span>
           <span className="truncate text-sm font-medium">{spec.title}</span>
         </div>
         <p className="mt-0.5 text-xs text-muted-foreground">
-          {[
-            spec.current_revision
-              ? `Rev ${spec.current_revision.revision_number}`
-              : null,
-            spec.current_revision
-              ? formatFileSize(spec.current_revision.file_size)
-              : null,
-            spec.area_count > 0
-              ? `${spec.area_count} area${spec.area_count !== 1 ? "s" : ""}`
-              : null,
-            formatDistanceToNow(new Date(spec.updated_at || spec.created_at), {
-              addSuffix: true,
-            }),
-          ]
-            .filter(Boolean)
-            .join(" · ")}
+          {formatDistanceToNow(new Date(spec.updated_at || spec.created_at), {
+            addSuffix: true,
+          })}
         </p>
       </div>
       <div className="ml-3 shrink-0">
-        <StatusBadge status={spec.status} />
+        <Badge variant={spec.status === "active" ? "default" : "secondary"}>{spec.status}</Badge>
       </div>
     </div>
   );
@@ -162,10 +198,14 @@ export default function ProjectSpecificationsPage() {
   const searchParams = useSearchParams();
   const projectId = params.projectId;
 
+  const activeTab = (searchParams.get("spec_tab") as SpecificationsTab) || "specifications";
+
   const [editingSpec, setEditingSpec] = useState<SpecificationWithRevision | null>(null);
+  const [subscribedSectionIds, setSubscribedSectionIds] = useState<Record<number, boolean>>({});
 
   const { data: areas } = useSpecificationAreas(projectId);
-  const deleteMutation = useDeleteSpecification(projectId);
+  const archiveMutation = useArchiveSpecification(projectId);
+  const toggleSubscriptionMutation = useToggleSpecificationSubscription(projectId);
 
   const initialFilters: SpecFilterState = {
     status: searchParams.get("status") ?? undefined,
@@ -173,19 +213,20 @@ export default function ProjectSpecificationsPage() {
   };
 
   const tableState = useUnifiedTableState({
-    entityKey: "specifications",
+    entityKey: activeTab === "revisions" ? "specification-revisions" : "specifications",
     searchParams,
     pathname,
     router,
     defaults: {
-      view: "table",
-      allowedViews: ["table", "card", "list"],
+      view: activeTab === "revisions" ? "table" : "table",
+      allowedViews: activeTab === "revisions" ? ["table"] : ["table", "card", "list"],
       page: 1,
       perPage: 25,
       search: "",
-      sortBy: "section_number",
-      sortDirection: "asc",
-      visibleColumns: DEFAULT_VISIBLE,
+      sortBy: activeTab === "revisions" ? "uploaded_at" : "section_number",
+      sortDirection: activeTab === "revisions" ? "desc" : "asc",
+      visibleColumns:
+        activeTab === "revisions" ? DEFAULT_VISIBLE_REVISION_COLUMNS : DEFAULT_VISIBLE_SPEC_COLUMNS,
       filters: initialFilters,
     },
   });
@@ -194,19 +235,56 @@ export default function ProjectSpecificationsPage() {
   const statusFilter = typeof activeFilters.status === "string" ? activeFilters.status : undefined;
   const areaFilter = typeof activeFilters.area_id === "string" ? activeFilters.area_id : undefined;
 
+  const effectiveStatus =
+    activeTab === "recycle"
+      ? "archived"
+      : (statusFilter as StatusFilter | undefined);
+
   const { data, isLoading, isFetching } = useSpecifications(projectId, {
     search: tableState.debouncedSearch || undefined,
-    status: statusFilter as StatusFilter | undefined,
-    area_id: areaFilter ? parseInt(areaFilter) : undefined,
+    status: activeTab === "revisions" ? undefined : effectiveStatus,
+    area_id: areaFilter ? parseInt(areaFilter, 10) : undefined,
     page: tableState.page,
     page_size: tableState.perPage,
   });
 
-  const specifications = React.useMemo(
-    () => data?.specifications ?? [],
-    [data?.specifications],
-  );
-  const totalCount = data?.total_count || 0;
+  const {
+    data: revisionsData,
+    isLoading: isLoadingRevisions,
+    isFetching: isFetchingRevisions,
+  } = useProjectSpecificationRevisions(projectId);
+
+  const specifications = React.useMemo(() => {
+    const rows = data?.specifications ?? [];
+    if (activeTab === "specifications") {
+      return rows.filter((spec) => spec.status !== "archived");
+    }
+    if (activeTab === "recycle") {
+      return rows.filter((spec) => spec.status === "archived");
+    }
+    return rows;
+  }, [activeTab, data?.specifications]);
+
+  const revisions = React.useMemo(() => {
+    const rows = revisionsData?.revisions ?? [];
+    const search = tableState.debouncedSearch.trim().toLowerCase();
+    if (!search) return rows;
+    return rows.filter((revision) => {
+      const haystack = [
+        revision.section_number,
+        revision.section_title,
+        revision.file_name,
+        revision.notes ?? "",
+      ]
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(search);
+    });
+  }, [revisionsData?.revisions, tableState.debouncedSearch]);
+
+  React.useEffect(() => {
+    tableState.setSelectedIds([]);
+  }, [activeTab]);
 
   const handleView = (specId: number) => {
     router.push(`/${projectId}/specifications/${specId}`);
@@ -214,25 +292,209 @@ export default function ProjectSpecificationsPage() {
 
   const handleDownload = async (specId: number, revisionId: number) => {
     try {
-      const response = await fetch(
+      const { url } = await apiFetch<{ url: string }>(
         `/api/projects/${projectId}/specifications/${specId}/revisions/${revisionId}/download`,
       );
-      if (!response.ok) throw new Error("Failed to generate download URL");
-      const { url } = await response.json();
       window.open(url, "_blank");
     } catch {
       toast.error("Failed to download file");
     }
   };
 
-  const columns = React.useMemo<TableColumn<SpecificationWithRevision>[]>(
+  const sendSpecificationEmail = (spec: SpecificationWithRevision) => {
+    const subject = encodeURIComponent(`Specification: ${spec.section_number} ${spec.title}`);
+    const body = encodeURIComponent(
+      `Specification details:\n\nSection: ${spec.section_number}\nTitle: ${spec.title}\nStatus: ${spec.status}\n\nLink: ${window.location.origin}/${projectId}/specifications/${spec.id}`,
+    );
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+  };
+
+  const sendRevisionEmail = (revision: ProjectSpecificationRevision) => {
+    const subject = encodeURIComponent(
+      `Specification Revision: ${revision.section_number} Rev ${revision.revision_number}`,
+    );
+    const body = encodeURIComponent(
+      `Revision details:\n\nSection: ${revision.section_number}\nTitle: ${revision.section_title}\nRevision: ${revision.revision_number}\nFile: ${revision.file_name}`,
+    );
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+  };
+
+  const handleArchive = async (spec: SpecificationWithRevision) => {
+    await archiveMutation.mutateAsync(spec);
+  };
+
+  const handleToggleSubscribe = async (sectionId: number) => {
+    const currentlySubscribed = subscribedSectionIds[sectionId] === true;
+    await toggleSubscriptionMutation.mutateAsync({
+      sectionId,
+      subscribe: !currentlySubscribed,
+    });
+    setSubscribedSectionIds((prev) => ({ ...prev, [sectionId]: !currentlySubscribed }));
+  };
+
+  const handleExportCsv = () => {
+    if (activeTab === "revisions") {
+      const headers = ["Section #", "Title", "Revision", "File Name", "File Size", "Uploaded"];
+      const lines = revisions.map((revision) =>
+        [
+          escapeCsv(revision.section_number),
+          escapeCsv(revision.section_title),
+          escapeCsv(revision.revision_number),
+          escapeCsv(revision.file_name),
+          escapeCsv(formatFileSize(revision.file_size)),
+          escapeCsv(new Date(revision.uploaded_at).toLocaleString()),
+        ].join(","),
+      );
+      downloadTextFile(
+        `specification-revisions-${projectId}.csv`,
+        [headers.join(","), ...lines].join("\n"),
+        "text/csv;charset=utf-8",
+      );
+      return;
+    }
+
+    const headers = ["Section #", "Title", "Status", "Revision", "File Size", "Last Updated"];
+    const lines = specifications.map((spec) =>
+      [
+        escapeCsv(spec.section_number),
+        escapeCsv(spec.title),
+        escapeCsv(spec.status),
+        escapeCsv(spec.current_revision?.revision_number ?? ""),
+        escapeCsv(spec.current_revision ? formatFileSize(spec.current_revision.file_size) : ""),
+        escapeCsv(new Date(spec.updated_at || spec.created_at).toLocaleString()),
+      ].join(","),
+    );
+
+    downloadTextFile(
+      `specifications-${projectId}.csv`,
+      [headers.join(","), ...lines].join("\n"),
+      "text/csv;charset=utf-8",
+    );
+  };
+
+  const handleExportPdf = () => {
+    if (activeTab === "revisions") {
+      openPrintWindow(
+        "Specification Revisions",
+        ["Section #", "Title", "Revision", "File Name", "File Size", "Uploaded"],
+        revisions.map((revision) => [
+          revision.section_number,
+          revision.section_title,
+          `Rev ${revision.revision_number}`,
+          revision.file_name,
+          formatFileSize(revision.file_size),
+          new Date(revision.uploaded_at).toLocaleString(),
+        ]),
+      );
+      return;
+    }
+
+    openPrintWindow(
+      activeTab === "recycle" ? "Specifications Recycle Bin" : "Specifications",
+      ["Section #", "Title", "Status", "Revision", "File Size", "Last Updated"],
+      specifications.map((spec) => [
+        spec.section_number,
+        spec.title,
+        spec.status,
+        spec.current_revision ? `Rev ${spec.current_revision.revision_number}` : "—",
+        spec.current_revision ? formatFileSize(spec.current_revision.file_size) : "—",
+        formatDistanceToNow(new Date(spec.updated_at || spec.created_at), { addSuffix: true }),
+      ]),
+    );
+  };
+
+  const tabs = React.useMemo(() => {
+    const baseParams = new URLSearchParams(searchParams.toString());
+    const createHref = (tab: SpecificationsTab) => {
+      const nextParams = new URLSearchParams(baseParams.toString());
+      nextParams.set("spec_tab", tab);
+      nextParams.set("page", "1");
+      if (tab === "revisions") {
+        nextParams.delete("status");
+        nextParams.delete("area_id");
+      }
+      return `${pathname}?${nextParams.toString()}`;
+    };
+
+    return [
+      { label: "Specifications", href: createHref("specifications"), isActive: activeTab === "specifications" },
+      { label: "All Revisions", href: createHref("revisions"), isActive: activeTab === "revisions" },
+      { label: "Recycle Bin", href: createHref("recycle"), isActive: activeTab === "recycle" },
+    ];
+  }, [activeTab, pathname, searchParams]);
+
+  const headerActions = (
+    <div className="flex items-center gap-2">
+      <SpecificationUploadDialog projectId={projectId}>
+        <Button size="sm">
+          <Plus className="h-4 w-4" />
+          Upload
+        </Button>
+      </SpecificationUploadDialog>
+
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button size="sm" variant="outline">
+            <Download className="h-4 w-4" />
+            Export
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={handleExportPdf}>Export as PDF</DropdownMenuItem>
+          <DropdownMenuItem onClick={handleExportCsv}>Export as CSV</DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  );
+
+  const handleFilterChange = (next: SpecFilterState) => {
+    tableState.setActiveFilters(next);
+    tableState.setSearchParams({
+      status: typeof next.status === "string" ? next.status : null,
+      area_id: typeof next.area_id === "string" ? next.area_id : null,
+      page: "1",
+    });
+    tableState.setPage(1);
+  };
+
+  const specFilters = React.useMemo(
+    () => [
+      ...(activeTab !== "recycle"
+        ? [
+            {
+              id: "status",
+              label: "Status",
+              type: "select" as const,
+              options: [
+                { value: "active", label: "Active" },
+                { value: "superseded", label: "Superseded" },
+              ],
+            },
+          ]
+        : []),
+      ...(areas && areas.length > 0
+        ? [
+            {
+              id: "area_id",
+              label: "Area",
+              type: "select" as const,
+              options: (areas as { id: number; name: string }[]).map((area) => ({
+                value: area.id.toString(),
+                label: area.name,
+              })),
+            },
+          ]
+        : []),
+    ],
+    [activeTab, areas],
+  );
+
+  const specColumns = React.useMemo<TableColumn<SpecificationWithRevision>[]>(
     () => [
       {
         id: "section_number",
         label: "Section #",
-        render: (spec) => (
-          <span className="font-mono font-medium">{spec.section_number}</span>
-        ),
+        render: (spec) => <span className="font-mono font-medium">{spec.section_number}</span>,
         sortValue: (spec) => spec.section_number,
         sortable: true,
       },
@@ -246,9 +508,7 @@ export default function ProjectSpecificationsPage() {
               <span className="font-medium">{spec.title}</span>
             </div>
             {spec.description && (
-              <p className="mt-1 line-clamp-1 text-sm text-muted-foreground">
-                {spec.description}
-              </p>
+              <p className="mt-1 line-clamp-1 text-sm text-muted-foreground">{spec.description}</p>
             )}
           </div>
         ),
@@ -258,7 +518,7 @@ export default function ProjectSpecificationsPage() {
       {
         id: "status",
         label: "Status",
-        render: (spec) => <SpecStatusBadge status={spec.status} />,
+        render: (spec) => <Badge variant={spec.status === "active" ? "default" : "secondary"}>{spec.status}</Badge>,
         sortValue: (spec) => spec.status,
         sortable: true,
       },
@@ -311,67 +571,198 @@ export default function ProjectSpecificationsPage() {
     [],
   );
 
-  const handleFilterChange = (next: SpecFilterState) => {
-    tableState.setActiveFilters(next);
-    tableState.setSearchParams({
-      status: typeof next.status === "string" ? next.status : null,
-      area_id: typeof next.area_id === "string" ? next.area_id : null,
-      page: "1",
-    });
-    tableState.setPage(1);
-  };
-
-  const isFiltered =
-    Boolean(tableState.searchInput) || Boolean(statusFilter) || Boolean(areaFilter);
-
-  const filters = React.useMemo(
+  const revisionColumns = React.useMemo<TableColumn<ProjectSpecificationRevision>[]>(
     () => [
       {
-        id: "status",
-        label: "Status",
-        type: "select" as const,
-        options: [
-          { value: "active", label: "Active" },
-          { value: "archived", label: "Archived" },
-          { value: "superseded", label: "Superseded" },
-        ],
+        id: "section_number",
+        label: "Section #",
+        render: (revision) => <span className="font-mono font-medium">{revision.section_number}</span>,
+        sortValue: (revision) => revision.section_number,
+        sortable: true,
       },
-      ...(areas && areas.length > 0
-        ? [
-            {
-              id: "area_id",
-              label: "Area",
-              type: "select" as const,
-              options: (areas as { id: number; name: string }[]).map((a) => ({
-                value: a.id.toString(),
-                label: a.name,
-              })),
-            },
-          ]
-        : []),
+      {
+        id: "section_title",
+        label: "Title",
+        render: (revision) => <span className="font-medium">{revision.section_title}</span>,
+        sortValue: (revision) => revision.section_title,
+        sortable: true,
+      },
+      {
+        id: "revision",
+        label: "Revision",
+        render: (revision) => <span>Rev {revision.revision_number}</span>,
+        sortValue: (revision) => revision.revision_number,
+        sortable: true,
+      },
+      {
+        id: "file_name",
+        label: "File Name",
+        render: (revision) => <span className="text-sm">{revision.file_name}</span>,
+        sortValue: (revision) => revision.file_name,
+        sortable: true,
+      },
+      {
+        id: "file_size",
+        label: "File Size",
+        render: (revision) => <span className="text-sm">{formatFileSize(revision.file_size)}</span>,
+        sortValue: (revision) => revision.file_size,
+        sortable: true,
+      },
+      {
+        id: "uploaded_at",
+        label: "Uploaded",
+        render: (revision) => (
+          <span className="text-sm text-muted-foreground">
+            {formatDistanceToNow(new Date(revision.uploaded_at), {
+              addSuffix: true,
+            })}
+          </span>
+        ),
+        sortValue: (revision) => new Date(revision.uploaded_at).getTime(),
+        sortable: true,
+      },
     ],
-    [areas],
+    [],
   );
+
+  const specSelectedIds = tableState.selectedIds;
+  const handleSelectAllSpecs = (checked: boolean) => {
+    tableState.setSelectedIds(checked ? specifications.map((item) => String(item.id)) : []);
+  };
+  const handleSelectSpecRow = (id: string, checked: boolean) => {
+    tableState.setSelectedIds(
+      checked
+        ? [...tableState.selectedIds, id]
+        : tableState.selectedIds.filter((selectedId) => selectedId !== id),
+    );
+  };
+
+  const handleSelectAllRevisions = (checked: boolean) => {
+    tableState.setSelectedIds(
+      checked ? revisions.map((revision) => `revision-${revision.id}`) : [],
+    );
+  };
+  const handleSelectRevisionRow = (id: string, checked: boolean) => {
+    tableState.setSelectedIds(
+      checked
+        ? [...tableState.selectedIds, id]
+        : tableState.selectedIds.filter((selectedId) => selectedId !== id),
+    );
+  };
+
+  if (activeTab === "revisions") {
+    return (
+      <UnifiedTablePage
+        header={{
+          title: "Specifications",
+          description: "Track every specification revision across this project",
+          actions: headerActions,
+        }}
+        tabs={tabs}
+        toolbar={{
+          totalItems: revisions.length,
+          filteredItems: revisions.length,
+          selectedCount: specSelectedIds.length,
+          searchValue: tableState.searchInput,
+          onSearchChange: tableState.setSearchInput,
+          searchPlaceholder: "Search revisions...",
+          currentView: "table",
+          onViewChange: () => undefined,
+          enabledViews: ["table"],
+          filters: [],
+          activeFilters: {},
+          onFilterChange: () => undefined,
+          onClearFilters: () => undefined,
+          columns: revisionColumns.map((column) => ({ id: column.id, label: column.label })),
+          visibleColumns: tableState.visibleColumns,
+          onColumnVisibilityChange: tableState.setVisibleColumns,
+        }}
+        data={{
+          items: revisions,
+          isLoading: isLoadingRevisions,
+          isFetching: isFetchingRevisions,
+        }}
+        table={{
+          columns: revisionColumns,
+          getRowId: (item) => `revision-${item.id}`,
+          onRowClick: (item) => handleView(item.section_id),
+          rowActions: (item) => {
+            const actions: TableRowActionItem[] = [
+              {
+                key: "open-section",
+                label: "View Section",
+                icon: Eye,
+                onSelect: () => handleView(item.section_id),
+              },
+              {
+                key: "download",
+                label: "Download",
+                icon: Download,
+                onSelect: () => handleDownload(item.section_id, item.id),
+              },
+              {
+                key: "email",
+                label: "Email",
+                icon: Mail,
+                onSelect: () => sendRevisionEmail(item),
+              },
+            ];
+            return <TableRowActionsMenu items={actions} />;
+          },
+        }}
+        selection={{
+          selectedIds: tableState.selectedIds,
+          onSelectAll: handleSelectAllRevisions,
+          onSelectRow: handleSelectRevisionRow,
+        }}
+        sorting={{
+          sortBy: tableState.sortBy,
+          sortDirection: tableState.sortDirection,
+          onSortChange: (sortBy, direction) => {
+            tableState.setSortBy(sortBy);
+            tableState.setSortDirection(direction);
+            tableState.setSearchParams({ sort: sortBy, sort_dir: direction });
+          },
+        }}
+        emptyState={{
+          title: "No revisions",
+          description: "No specification revisions have been uploaded yet.",
+          filteredDescription: "Try adjusting your search.",
+          isFiltered: Boolean(tableState.searchInput),
+        }}
+        pagination={{
+          page: tableState.page,
+          perPage: tableState.perPage,
+          totalPages: 1,
+          onPageChange: () => undefined,
+          onPerPageChange: () => undefined,
+          clientSide: true,
+        }}
+        features={{
+          enableExport: false,
+          enableBulkDelete: false,
+          enableRowSelection: true,
+        }}
+      />
+    );
+  }
 
   return (
     <>
       <UnifiedTablePage
         header={{
           title: "Specifications",
-          description: "Manage project specifications and revisions",
-          actions: (
-            <SpecificationUploadDialog projectId={projectId}>
-              <Button size="sm">
-                <Plus />
-                Upload Specification
-              </Button>
-            </SpecificationUploadDialog>
-          ),
+          description:
+            activeTab === "recycle"
+              ? "Archived specifications in recycle bin"
+              : "Manage project specifications",
+          actions: headerActions,
         }}
+        tabs={tabs}
         toolbar={{
-          totalItems: totalCount,
+          totalItems: specifications.length,
           filteredItems: specifications.length,
-          selectedCount: tableState.selectedIds.length,
+          selectedCount: specSelectedIds.length,
           searchValue: tableState.searchInput,
           onSearchChange: tableState.setSearchInput,
           searchPlaceholder: "Search by section number or title...",
@@ -381,11 +772,11 @@ export default function ProjectSpecificationsPage() {
             tableState.setSearchParams({ view });
           },
           enabledViews: ["table", "card", "list"],
-          filters,
+          filters: specFilters,
           activeFilters,
           onFilterChange: handleFilterChange,
           onClearFilters: () => handleFilterChange(EMPTY_FILTERS),
-          columns: columns.map((c) => ({ id: c.id, label: c.label })),
+          columns: specColumns.map((column) => ({ id: column.id, label: column.label })),
           visibleColumns: tableState.visibleColumns,
           onColumnVisibilityChange: tableState.setVisibleColumns,
         }}
@@ -395,16 +786,23 @@ export default function ProjectSpecificationsPage() {
           isFetching,
         }}
         table={{
-          columns,
+          columns: specColumns,
           getRowId: (item) => String(item.id),
           onRowClick: (item) => handleView(item.id),
           rowActions: (item) => {
-            const items: TableRowActionItem[] = [
+            const isSubscribed = subscribedSectionIds[item.id] === true;
+            const actions: TableRowActionItem[] = [
               {
-                key: "view",
-                label: "View Details",
-                icon: Eye,
-                onSelect: () => handleView(item.id),
+                key: "edit",
+                label: "Edit",
+                icon: Pencil,
+                onSelect: () => setEditingSpec(item),
+              },
+              {
+                key: "email",
+                label: "Email",
+                icon: Mail,
+                onSelect: () => sendSpecificationEmail(item),
               },
               ...(item.current_revision
                 ? [
@@ -412,27 +810,31 @@ export default function ProjectSpecificationsPage() {
                       key: "download",
                       label: "Download",
                       icon: Download,
-                      onSelect: () =>
-                        handleDownload(item.id, item.current_revision!.id),
+                      onSelect: () => handleDownload(item.id, item.current_revision!.id),
                     } satisfies TableRowActionItem,
                   ]
                 : []),
               {
-                key: "edit",
-                label: "Edit Metadata",
-                icon: Pencil,
-                onSelect: () => setEditingSpec(item),
+                key: "subscribe",
+                label: isSubscribed ? "Unsubscribe" : "Subscribe",
+                icon: Bell,
+                onSelect: () => handleToggleSubscribe(item.id),
               },
               {
-                key: "delete",
-                label: "Delete",
-                icon: Trash2,
-                onSelect: () => deleteMutation.mutate(item.id.toString()),
-                destructive: true,
+                key: "archive",
+                label: item.status === "archived" ? "Archived" : "Archive",
+                icon: Archive,
+                onSelect: () => handleArchive(item),
+                disabled: item.status === "archived",
               },
             ];
-            return <TableRowActionsMenu items={items} />;
+            return <TableRowActionsMenu items={actions} />;
           },
+        }}
+        selection={{
+          selectedIds: tableState.selectedIds,
+          onSelectAll: handleSelectAllSpecs,
+          onSelectRow: handleSelectSpecRow,
         }}
         views={{
           card: (item) => renderSpecCard(item, handleView),
@@ -450,7 +852,7 @@ export default function ProjectSpecificationsPage() {
         pagination={{
           page: tableState.page,
           perPage: tableState.perPage,
-          totalPages: Math.max(1, Math.ceil(totalCount / tableState.perPage)),
+          totalPages: Math.max(1, Math.ceil((data?.total_count || 0) / tableState.perPage)),
           onPageChange: (page) => {
             tableState.setPage(page);
             tableState.setSearchParams({ page: page.toString() });
@@ -463,22 +865,25 @@ export default function ProjectSpecificationsPage() {
           },
         }}
         emptyState={{
-          title: "No specifications",
-          description: "Get started by uploading a new specification document.",
+          title: activeTab === "recycle" ? "Recycle bin is empty" : "No specifications",
+          description:
+            activeTab === "recycle"
+              ? "Archived specifications will appear here."
+              : "Get started by uploading specifications.",
           filteredDescription: "Try adjusting your search or filters.",
-          isFiltered,
+          isFiltered: Boolean(tableState.searchInput) || Boolean(statusFilter) || Boolean(areaFilter),
           action: (
             <SpecificationUploadDialog projectId={projectId}>
               <Button size="sm">
-                <Plus />
-                Upload Specification
+                <Plus className="h-4 w-4" />
+                Upload
               </Button>
             </SpecificationUploadDialog>
           ),
         }}
         features={{
-          enableExport: true,
-          enableBulkDelete: true,
+          enableExport: false,
+          enableBulkDelete: false,
           enableRowSelection: true,
         }}
       />

@@ -21,6 +21,7 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { PageShell } from "@/components/layout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { testingFeatureFlags } from "@/lib/testing/feature-flags";
 import Link from "next/link";
 import {
   CheckCircle2,
@@ -121,8 +122,34 @@ interface ManagedCase {
   scenario_depth: string;
 }
 
+interface TesterActivityRow {
+  result_id: string;
+  run_id: string;
+  run_date: string;
+  status: TestStatus;
+  notes: string | null;
+  test_case_id: string | null;
+  test_number: string | null;
+  test_name: string | null;
+  screenshot_url: string | null;
+  screenshot_label: string | null;
+}
+
+interface TesterActivityScenario {
+  tool_name: string;
+  display_name: string;
+  rows: TesterActivityRow[];
+}
+
+const TESTER_ACTIVITY_USERS = [
+  { key: "tester-1", label: "Tester 1", email: "testadmin1@mail.com" },
+  { key: "tester-2", label: "Tester 2", email: "testadmin2@mail.com" },
+  { key: "tester-3", label: "Tester 3", email: "testadmin3@mail.com" },
+] as const;
+
 const DEFAULT_TEST_PROJECT_ID = "891";
 const TESTING_PROJECT_ID_STORAGE_KEY = "testing-default-project-id";
+const ENABLE_SCENARIO_DEPTH_FILTER = testingFeatureFlags.scenarioDepthFilterEnabled;
 
 // ─── View States ─────────────────────────────────────────────────────────────
 
@@ -139,6 +166,14 @@ function depthLabel(depth: ScenarioDepth): string {
   if (depth === "broad") return "Broad";
   if (depth === "detailed") return "Detailed";
   return "All";
+}
+
+/** Maps stored test status values to user-facing tester activity labels. */
+function statusLabel(status: TestStatus): string {
+  if (status === "pass") return "Passed";
+  if (status === "fail") return "Failed";
+  if (status === "skip") return "Skipped";
+  return "Incomplete";
 }
 
 // Converts unknown thrown values into a message that is safe to show in the UI.
@@ -195,7 +230,7 @@ export default function TestingPage() {
     branch: "main",
     notes: "",
     projectId: "",
-    scenarioDepth: "broad" as ScenarioDepth,
+    scenarioDepth: "all" as ScenarioDepth,
   });
   const [activeRunId, setActiveRunId] = useState<string | null>(null);
   const [results, setResults] = useState<TestResult[]>([]);
@@ -249,8 +284,13 @@ export default function TestingPage() {
     steps: "", setup_steps: "", context_note: "", expected_result: "", start_url: "",
   });
   const [addSaving, setAddSaving] = useState(false);
+  const [activeTesterEmail, setActiveTesterEmail] = useState<string>(TESTER_ACTIVITY_USERS[0].email);
+  const [testerActivityLoading, setTesterActivityLoading] = useState(false);
+  const [testerActivity, setTesterActivity] = useState<TesterActivityScenario[]>([]);
+  const [expandedTesterScenarios, setExpandedTesterScenarios] = useState<Record<string, boolean>>({});
 
-  const detailedUnavailable = selectedSuite?.detailed_scenario_count === 0;
+  const detailedUnavailable =
+    ENABLE_SCENARIO_DEPTH_FILTER && selectedSuite?.detailed_scenario_count === 0;
 
   // ── Load suites + pre-fill tester name from session ──
   useEffect(() => {
@@ -381,6 +421,36 @@ export default function TestingPage() {
     setRunDetailLoading(false);
   };
 
+  // Loads scenario test activity for a specific tester email.
+  const loadTesterActivity = useCallback(async (testerEmail: string) => {
+    setUiError(null);
+    setTesterActivityLoading(true);
+    try {
+      const response = await apiFetch<{ scenarios?: TesterActivityScenario[] }>(
+        `/api/testing/tester-activity?tester=${encodeURIComponent(testerEmail)}`,
+      );
+      const loadedScenarios = response.scenarios ?? [];
+      setTesterActivity(loadedScenarios);
+      setExpandedTesterScenarios((prev) => {
+        const next: Record<string, boolean> = {};
+        for (const scenario of loadedScenarios) {
+          const key = `${testerEmail}:${scenario.tool_name}`;
+          next[key] = prev[key] ?? false;
+        }
+        return next;
+      });
+    } catch (error) {
+      setTesterActivity([]);
+      setUiError(formatActionError(error, "Unable to load tester activity."));
+    } finally {
+      setTesterActivityLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadTesterActivity(activeTesterEmail);
+  }, [activeTesterEmail, loadTesterActivity]);
+
   // ── Manage Cases: load cases for a suite + depth ──
   const loadManagedCases = useCallback(async (suite: Suite, depth: "broad" | "detailed") => {
     setUiError(null);
@@ -390,7 +460,7 @@ export default function TestingPage() {
     setManageEditId(null);
     try {
       const d = await apiFetch<{ grouped?: Record<string, ManagedCase[]> }>(
-        `/api/testing/suites/${suite.tool_name}/cases?type=scenario&depth=${depth}`,
+        `/api/testing/suites/${suite.tool_name}/cases?type=scenario&depth=${ENABLE_SCENARIO_DEPTH_FILTER ? depth : "all"}`,
       );
       const all: ManagedCase[] = Object.values(d.grouped ?? {}).flat() as ManagedCase[];
       setManageCases(all);
@@ -405,7 +475,7 @@ export default function TestingPage() {
   }, [manageSuite, manageDepth, loadManagedCases]);
 
   useEffect(() => {
-    if (detailedUnavailable && runForm.scenarioDepth === "detailed") {
+    if (ENABLE_SCENARIO_DEPTH_FILTER && detailedUnavailable && runForm.scenarioDepth === "detailed") {
       setRunForm((f) => ({ ...f, scenarioDepth: "broad" }));
     }
   }, [detailedUnavailable, runForm.scenarioDepth]);
@@ -503,7 +573,12 @@ export default function TestingPage() {
         "/api/testing/runs",
         {
           method: "POST",
-          body: JSON.stringify({ suite: selectedSuite.tool_name, testType: "scenario", ...runForm }),
+          body: JSON.stringify({
+            suite: selectedSuite.tool_name,
+            testType: "scenario",
+            ...runForm,
+            scenarioDepth: ENABLE_SCENARIO_DEPTH_FILTER ? runForm.scenarioDepth : "all",
+          }),
         },
       );
       if (effective_depth && effective_depth !== runForm.scenarioDepth) {
@@ -515,13 +590,7 @@ export default function TestingPage() {
       );
       const loaded = d2.results ?? [];
       if (loaded.length === 0) {
-        setStartError(
-          runForm.scenarioDepth === "broad"
-            ? detailedUnavailable
-              ? "No broad scenarios are available for this suite yet. Seed scenario cases before starting a run."
-              : "No broad scenarios found for this tool yet. Switch to Detailed or seed broad scenarios."
-            : "No scenario test cases found for this tool. Check that the test suite has been seeded."
-        );
+        setStartError("No active scenario test cases were found for this tool. Check that cases are seeded and not marked inactive.");
       } else {
         setResults(loaded);
         setCursor(0);
@@ -543,7 +612,7 @@ export default function TestingPage() {
     if (!suite) return;
     setSelectedSuite(suite);
     setActiveRunId(run.id);
-    setRunForm((f) => ({ ...f, scenarioDepth: run.scenario_depth ?? "broad" }));
+    setRunForm((f) => ({ ...f, scenarioDepth: run.scenario_depth ?? "all" }));
     let loaded: TestResult[] = [];
     try {
       const d = await apiFetch<{ results?: TestResult[] }>(
@@ -938,6 +1007,7 @@ export default function TestingPage() {
                 </span>
               )}
             </TabsTrigger>
+            <TabsTrigger value="tester-activity">Tester Activity</TabsTrigger>
             <TabsTrigger value="manage">Manage Cases</TabsTrigger>
           </TabsList>
           {uiError && (
@@ -1202,6 +1272,132 @@ export default function TestingPage() {
             )}
           </TabsContent>
 
+          {/* ── Tab: Tester Activity ── */}
+          <TabsContent value="tester-activity" className="m-0">
+            <div className="space-y-4">
+              <div className="flex flex-wrap gap-2">
+                {TESTER_ACTIVITY_USERS.map((tester) => (
+                  <button
+                    key={tester.key}
+                    type="button"
+                    onClick={() => setActiveTesterEmail(tester.email)}
+                    className={cn(
+                      "rounded-lg border px-3 py-2 text-left text-xs transition-colors",
+                      activeTesterEmail === tester.email
+                        ? "border-primary bg-primary/5 text-primary"
+                        : "border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground",
+                    )}
+                  >
+                    <p className="font-medium">{tester.label}</p>
+                    <p className="mt-0.5 text-[11px]">{tester.email}</p>
+                  </button>
+                ))}
+              </div>
+
+              {testerActivityLoading && (
+                <p className="py-12 text-center text-sm text-muted-foreground">Loading tester activity…</p>
+              )}
+
+              {!testerActivityLoading && testerActivity.length === 0 && (
+                <p className="py-12 text-center text-sm text-muted-foreground">
+                  No tester activity found for {activeTesterEmail}.
+                </p>
+              )}
+
+              {!testerActivityLoading && testerActivity.length > 0 && (
+                <div className="space-y-3">
+                  {testerActivity.map((scenario) => {
+                    const scenarioKey = `${activeTesterEmail}:${scenario.tool_name}`;
+                    const isOpen = expandedTesterScenarios[scenarioKey] ?? false;
+                    return (
+                      <section key={scenario.tool_name} className="rounded-lg border border-border bg-card">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setExpandedTesterScenarios((prev) => ({
+                              ...prev,
+                              [scenarioKey]: !isOpen,
+                            }))
+                          }
+                          className="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-muted/20"
+                        >
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium">{scenario.display_name}</p>
+                            <p className="mt-0.5 text-xs text-muted-foreground">{scenario.rows.length} test case results</p>
+                          </div>
+                          <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", isOpen && "rotate-180")} />
+                        </button>
+
+                        {isOpen && (
+                          <div className="border-t border-border px-4 py-3">
+                            <div className="overflow-x-auto">
+                              <table className="w-full min-w-[860px] text-sm">
+                                <thead className="bg-muted/40">
+                                  <tr>
+                                    <th style={{ fontSize: "10px" }} className="px-3 py-2 text-left font-semibold uppercase tracking-wider text-foreground">Name</th>
+                                    <th style={{ fontSize: "10px" }} className="px-3 py-2 text-left font-semibold uppercase tracking-wider text-foreground">Number</th>
+                                    <th style={{ fontSize: "10px" }} className="px-3 py-2 text-left font-semibold uppercase tracking-wider text-foreground">Status</th>
+                                    <th style={{ fontSize: "10px" }} className="px-3 py-2 text-left font-semibold uppercase tracking-wider text-foreground">Notes</th>
+                                    <th style={{ fontSize: "10px" }} className="px-3 py-2 text-left font-semibold uppercase tracking-wider text-foreground">Screenshot</th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-border">
+                                  {scenario.rows.map((row) => (
+                                    <tr key={row.result_id}>
+                                      <td className="px-3 py-2 align-top">
+                                        <p className="font-medium text-foreground">{row.test_name ?? "Untitled test"}</p>
+                                        <p className="mt-0.5 text-xs text-muted-foreground">
+                                          Run {new Date(row.run_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                                        </p>
+                                      </td>
+                                      <td className="px-3 py-2 align-top text-muted-foreground">{row.test_number ?? "—"}</td>
+                                      <td className="px-3 py-2 align-top">
+                                        <span
+                                          className={cn(
+                                            "inline-flex rounded-full px-2 py-0.5 text-xs font-medium",
+                                            row.status === "pass" && "bg-green-100 text-green-700 dark:bg-green-950/30 dark:text-green-300",
+                                            row.status === "fail" && "bg-red-100 text-red-700 dark:bg-red-950/30 dark:text-red-300",
+                                            row.status === "skip" && "bg-amber-100 text-amber-700 dark:bg-amber-950/30 dark:text-amber-300",
+                                            row.status === "not_tested" && "bg-muted text-muted-foreground",
+                                          )}
+                                        >
+                                          {statusLabel(row.status)}
+                                        </span>
+                                      </td>
+                                      <td className="px-3 py-2 align-top text-muted-foreground">
+                                        <p className="max-w-[360px] whitespace-pre-wrap break-words text-xs">
+                                          {row.notes?.trim() ? row.notes : "—"}
+                                        </p>
+                                      </td>
+                                      <td className="px-3 py-2 align-top">
+                                        {row.screenshot_url ? (
+                                          <a
+                                            href={row.screenshot_url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-xs font-medium text-primary hover:underline"
+                                          >
+                                            {row.screenshot_label?.trim() || "View screenshot"}
+                                          </a>
+                                        ) : (
+                                          <span className="text-xs text-muted-foreground">—</span>
+                                        )}
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        )}
+                      </section>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </TabsContent>
+
           {/* ── Tab: Manage Cases ── */}
           <TabsContent value="manage" className="m-0">
             <div className="space-y-4">
@@ -1225,7 +1421,7 @@ export default function TestingPage() {
                     </button>
                   ))}
                 </div>
-                {manageSuite && (
+                {manageSuite && ENABLE_SCENARIO_DEPTH_FILTER && (
                   <div className="flex gap-1.5 ml-auto shrink-0">
                     {(["broad", "detailed"] as const).map((d) => (
                       <button
@@ -1266,6 +1462,9 @@ export default function TestingPage() {
                       Add case
                     </button>
                   </div>
+                  {!showAddCase && !ENABLE_SCENARIO_DEPTH_FILTER && (
+                    <p className="text-xs text-muted-foreground">Scenario depth filtering is temporarily disabled; all active cases are shown.</p>
+                  )}
 
                   {/* Add case form */}
                   {showAddCase && (
@@ -1335,7 +1534,7 @@ export default function TestingPage() {
 
                   {/* Cases list */}
                   {!manageCasesLoading && manageCases.length === 0 && (
-                    <p className="text-sm text-muted-foreground text-center py-10">No {manageDepth} cases found for {manageSuite.display_name}.</p>
+                    <p className="text-sm text-muted-foreground text-center py-10">No active cases found for {manageSuite.display_name}.</p>
                   )}
                   <div className="space-y-1">
                     {manageCases.map((c) => {
@@ -1549,40 +1748,44 @@ export default function TestingPage() {
                 placeholder="e.g. 67"
               />
             </div>
-            <div className="space-y-1.5">
-              <Label>Scenario depth</Label>
-              <div className="grid grid-cols-2 gap-2">
-                {([
-                  { value: "broad" as const, label: "Broad", hint: "Fastest, high-signal workflows" },
-                  { value: "detailed" as const, label: "Detailed", hint: "Longer, deeper checks" },
-                ]).map((option) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => {
-                      if (option.value === "detailed" && detailedUnavailable) return;
-                      setRunForm((f) => ({ ...f, scenarioDepth: option.value }));
-                    }}
-                    disabled={option.value === "detailed" && detailedUnavailable}
-                    className={cn(
-                      "rounded-lg border px-3 py-2 text-left transition-colors",
-                      option.value === "detailed" && detailedUnavailable && "cursor-not-allowed opacity-50",
-                      runForm.scenarioDepth === option.value
-                        ? "border-primary bg-primary/5"
-                        : "border-border hover:border-foreground/30"
-                    )}
-                  >
-                    <p className="text-sm font-medium">{option.label}</p>
-                    <p className="text-[11px] text-muted-foreground mt-0.5">{option.hint}</p>
-                  </button>
-                ))}
+            {ENABLE_SCENARIO_DEPTH_FILTER ? (
+              <div className="space-y-1.5">
+                <Label>Scenario depth</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {([
+                    { value: "broad" as const, label: "Broad", hint: "Fastest, high-signal workflows" },
+                    { value: "detailed" as const, label: "Detailed", hint: "Longer, deeper checks" },
+                  ]).map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => {
+                        if (option.value === "detailed" && detailedUnavailable) return;
+                        setRunForm((f) => ({ ...f, scenarioDepth: option.value }));
+                      }}
+                      disabled={option.value === "detailed" && detailedUnavailable}
+                      className={cn(
+                        "rounded-lg border px-3 py-2 text-left transition-colors",
+                        option.value === "detailed" && detailedUnavailable && "cursor-not-allowed opacity-50",
+                        runForm.scenarioDepth === option.value
+                          ? "border-primary bg-primary/5"
+                          : "border-border hover:border-foreground/30"
+                      )}
+                    >
+                      <p className="text-sm font-medium">{option.label}</p>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">{option.hint}</p>
+                    </button>
+                  ))}
+                </div>
+                {detailedUnavailable && (
+                  <p className="text-xs text-amber-700 dark:text-amber-300">
+                    Detailed mode is disabled because this suite has no detailed scenarios in Supabase yet.
+                  </p>
+                )}
               </div>
-              {detailedUnavailable && (
-                <p className="text-xs text-amber-700 dark:text-amber-300">
-                  Detailed mode is disabled because this suite has no detailed scenarios in Supabase yet.
-                </p>
-              )}
-            </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">Scenario depth is currently not used. This run will include all active scenario cases.</p>
+            )}
           </div>
 
           {startError && (

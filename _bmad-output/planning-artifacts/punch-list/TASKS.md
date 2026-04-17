@@ -1,122 +1,151 @@
-# Punch List Implementation Tasks
+# Punch List — Implementation Tasks
 
-**Status**: Complete | **Last Updated**: 2026-02-02
-
-## Progress Summary
-
-| Metric | Count |
-|--------|-------|
-| Total Tasks | 20 |
-| Completed | 20 (100%) |
-| In Progress | 0 |
-| Remaining | 0 |
+_Last updated: 2026-04-17_
 
 ---
 
-## Tasks
+## Phase 1: Data Model & Backend
 
-### Phase 1: Fix Broken (Critical)
-
-- [x] Fix: Main page `(main)/[projectId]/punch-list/page.tsx` uses deprecated `ProjectToolPage` -- must replace with `ProjectPageHeader` + `PageContainer` pattern (per Page Header Consistency Gate)
-- [x] Fix: Main page is a placeholder ("Coming soon") with no data or functionality -- needs full implementation
-
-### Phase 2: Data Layer (Database)
-
-- [x] Create `punch_items` table migration with all fields from PRP (title, description, status, priority, assignee fields, dates, location, trade, type, reference, etc.) -- use scaffold `migration.sql` as base with `project_id INTEGER` FK
-- [x] Apply migration via Supabase MCP
-- [x] Run `npm run db:types` to regenerate TypeScript types
-- [x] Verify types in `database.types.ts` match schema
-
-### Phase 3: API Layer
-
-- [x] Create service: `frontend/src/services/PunchItemService.ts` -- CRUD operations with pagination, filtering, sorting (follow `SpecificationService` pattern)
-- [x] Create hook: `frontend/src/hooks/use-punch-items.ts` -- React Query wrapper for punch items (follow `use-rfis.ts` pattern)
-- [x] Create API route: `frontend/src/app/api/projects/[projectId]/punch-items/route.ts` -- GET (list with filters) and POST (create)
-- [x] Create API route: `frontend/src/app/api/projects/[projectId]/punch-items/[punchItemId]/route.ts` -- GET (detail), PATCH (update), DELETE (soft delete)
-- [x] Test all Supabase queries with `node -e` before claiming they work
-
-### Phase 4: UI Layer
-
-- [x] Rebuild main page `(main)/[projectId]/punch-list/page.tsx` using `ProjectPageHeader` + `PageContainer` pattern, connected to real data via hook
-- [x] Create punch list client component `punch-list-client.tsx` with DataTable, summary cards, tab views (All Items / Recycle Bin)
-- [x] Create punch item form dialog component for Create/Edit operations (follow existing form dialog patterns)
-- [x] Create status badge component with color-coded status workflow (Draft, Work Required, Initiated, Closed)
-- [x] Update `(tables)/punch-list/page.tsx` to use real data instead of mock data
-
-### Phase 5: Testing & Validation
-
-- [x] Run type check: `npx tsc --noEmit` -- zero punch-list errors (32 pre-existing errors in other files)
-- [x] Run linting: `npm run lint` -- zero punch-list warnings (2 pre-existing errors in other files)
-- [x] Run route check: `npm run check:routes` -- no conflicts
-- [x] Test Supabase queries with `node -e` -- INSERT, SELECT, DELETE all pass
-- [ ] Create E2E test: `tests/e2e/punch-list.spec.ts` (deferred -- requires running dev server)
+- [x] **Database migration** — `supabase/migrations/20260413000000_create_punch_items.sql`
+- [x] **Seed test data** — `supabase/migrations/20260408000008_seed_punch-list_test_scenarios.sql`
+- [x] **PunchItemService** — `frontend/src/services/PunchItemService.ts`
+- [x] **React Query hooks** — `frontend/src/hooks/use-punch-items.ts` (usePunchItems, useCreatePunchItem, useUpdatePunchItem, useDeletePunchItem, useRestorePunchItem)
+- [ ] **API route handlers** — `frontend/src/app/api/projects/[projectId]/punch-items/` (list, create, update, delete, restore, bulk)
+- [ ] **Status transition endpoint** — `PATCH /api/.../punch-items/[id]/status`
+- [ ] **Change history / audit log table + API**
+- [ ] **Comments table + API**
+- [ ] **Attachments table + API**
+- [ ] **AssigneeTracker table** (date_notified, date_ready_for_review, date_resolved, response_status)
+- [ ] **Stats / analytics endpoint** (by status, by company, overdue count, avg response time)
+- [ ] **Recycle bin restore endpoint**
+- [ ] **Soft delete with 30-day retention enforcement**
 
 ---
 
-## Session Log
+## Phase 2: List View Page
 
-### 2026-02-02 16:30
-
-- Started: Audit and gap analysis
-- PRP: `docs/PRPs/punch-list/prp-punch-list-fix.md`
-- Findings: Feature is ~5% implemented. Two placeholder pages exist (one mock-data table view, one "Coming soon" stub). No database table, no API routes, no hooks, no services, no components, no tests.
-- Next: Begin Phase 1 tasks (fix broken pages), then Phase 2 (database)
-
-### 2026-02-02 (Implementation Session)
-
-- Applied `punch_items` table migration via Supabase MCP (all fields, indexes, trigger, RLS policies)
-- Regenerated Supabase types -- verified `project_id` is INTEGER (matches `projects.id`)
-- Created `PunchItemService.ts` with list, getById, create, update, softDelete, restore methods
-- Created `use-punch-items.ts` hook with React Query (usePunchItems, useCreatePunchItem, useUpdatePunchItem, useDeletePunchItem, useRestorePunchItem)
-- Created API routes: GET/POST at `/api/projects/[projectId]/punch-items/` and GET/PATCH/DELETE at `/api/projects/[projectId]/punch-items/[punchItemId]/`
-- Rebuilt main page using `ProjectPageHeader` + `PageContainer` (removed deprecated `ProjectToolPage`)
-- Created client component with DataTable, summary cards, tab views (All Items / Recycle Bin)
-- Created form dialog for Create/Edit with React Hook Form + Zod validation
-- Created status badge and priority badge components
-- Updated tables page to fetch real data from API
-- All validation gates pass: tsc (0 new errors), lint (0 new errors), route check (no conflicts), query tests (all pass)
-
----
-
-## Quick Reference
-
-**PRP Document**: `docs/PRPs/punch-list/prp-punch-list-fix.md`
-**Original PRP**: `docs/PRPs/punch-list/punch-list/index.mdx`
-**Execution Plan**: `docs/PRPs/punch-list/execution-plan-punch-list/index.mdx`
-**Crawl Data**: `docs/PRPs/punch-list/crawl/`
-
-### Key Commands
-
-```bash
-# Validate types
-cd frontend && npx tsc --noEmit
-
-# Run linting
-cd frontend && npm run lint
-
-# Check routes
-npm run check:routes
-
-# Generate DB types
-cd frontend && npm run db:types
-
-# Run E2E tests
-cd frontend && npx playwright test tests/e2e/punch-list.spec.ts --headed
-
-# Build production
-cd frontend && npm run build
-
-# Start dev server
-npm run dev
-```
+- [x] **List page shell** — `frontend/src/app/(main)/[projectId]/punch-list/page.tsx`
+- [x] **PunchListClient component** — `punch-list-client.tsx` (UnifiedTablePage wrapper)
+- [x] **Column definitions** — #, Title, Status, Priority, Assignee, Location, Trade, Due Date
+- [x] **StatusBadge + PriorityBadge components** — `punch-item-status-badge.tsx`
+- [x] **Tabs: All Items / My Items / Recycle Bin** (URL-driven via `?tab=`)
+- [x] **Search** — debounced client-side across title, number, assignee, location, trade
+- [x] **Filter: Status + Priority** — multi-select dropdowns persisted in URL
+- [x] **Column visibility toggle** — per-user column chooser wired to UnifiedTablePage
+- [x] **Sort** — click-to-sort on all columns, asc/desc, URL-persisted
+- [x] **Card view + List view** — toggle wired to UnifiedTablePage
+- [x] **Row actions** — View/Edit (router.push to detail), Quick Edit (dialog), Delete
+- [x] **Recycle Bin restore action** per row
+- [x] **CSV export** — filtered items exported with all visible fields
+- [x] **Create Punch Item button** → opens PunchItemFormDialog
+- [x] **Empty states** — per-tab messages
+- [ ] **Bulk actions** — checkboxes + bulk delete / close / reopen / assign
+- [ ] **PDF export** (basic + with descriptions + with photos)
+- [ ] **Pagination controls** — page numbers, next/prev, page size selector, total count
+- [ ] **Advanced filters** — Assignee, Ball In Court, Closed By, Creator, Date ranges, Final Approver, Location, Trade, Type, Punch Item Manager
+- [ ] **Missing columns** — Ball In Court, Assignee Name, Assignee Company, Assignee Response, Date Notified, Date Resolved, Creator, Date Created, Punch Item Manager, Final Approver, Closed By, Date Closed, Type, Trade, Location, Reference, Description
+- [ ] **Customizable column order** (drag & drop)
+- [ ] **Per-user column preference persistence** (server-side or localStorage)
+- [ ] **"My Items" tab** — server-side filter by current user's assignments
 
 ---
 
-## How to Update This File
+## Phase 3: Create / Edit Form
 
-When completing a task:
+- [x] **PunchItemFormDialog** — `frontend/src/components/domain/punch-items/punch-item-form-dialog.tsx`
+- [x] **Mode: create / edit** with defaultValues support
+- [x] **Core fields wired**: Title, Status, Priority, Location, Trade, Due Date, Description, Reference, Assignee Company
+- [ ] **Punch Item Manager** field (required, user picker)
+- [ ] **Final Approver** field (required, user picker)
+- [ ] **Assignees** multi-select with company affiliation display
+- [ ] **Type** dropdown (configurable item types)
+- [ ] **Distribution List** dropdown
+- [ ] **Schedule Impact** dropdown
+- [ ] **Cost Impact** dropdown
+- [ ] **Cost Codes** searchable dropdown
+- [ ] **Private** checkbox
+- [ ] **Attachments** file upload with drag & drop
+- [ ] **Linked Drawings** reference field
+- [ ] **Auto-generated sequential number** on create (server-side)
+- [ ] **"Save & Create New"** button (create form)
+- [ ] **Email notification trigger** on save (sets Date Notified + Email Sent)
 
-1. Change `- [ ]` to `- [x]`
-2. Update the Progress Summary counts
-3. Add an entry to Session Log
-4. Update the Status badge if changing phases
+---
+
+## Phase 4: Detail View
+
+- [x] **Detail page** — `frontend/src/app/(main)/[projectId]/punch-list/[punchItemId]/page.tsx`
+- [x] **PunchItemDetail component** — `punch-item-detail.tsx`
+- [x] **Field display** — renders all available DB columns
+- [x] **Edit dialog launch** from detail view
+- [x] **Back navigation** to list
+- [ ] **Tabs: General / Related Items / Emails / Change History**
+- [ ] **Activity feed** (right panel) — comments, attachments, status timeline
+- [ ] **Add Comment** with expandable textarea + attachment button
+- [ ] **Change History tab** — sortable table (Date, Action By, Changed, From, To)
+- [ ] **Assignee Tracker table** in General tab (Date Notified, Date Ready for Review, Date Work Not Accepted, Date Resolved, Response, Comments)
+- [ ] **Status action buttons** (Work Required / Initiated / Closed / Reopen) with role-permission guard
+- [ ] **"Closed" status auto-populates** Date Closed + Closed By
+- [ ] **Reopen clears** Date Closed + Closed By
+- [ ] **Ball In Court** computed field display
+- [ ] **Per-item PDF export** button
+- [ ] **Copy link** icon button
+- [ ] **Related Items tab** (count badge, link to other punch items)
+- [ ] **Emails tab** (count badge, email delivery history)
+- [ ] **Breadcrumb** — Punch List > #N > Title
+
+---
+
+## Phase 5: Dashboard / Analytics
+
+- [ ] **Dashboard widget page or section** embedded in punch list
+- [ ] **Status donut chart** — Work Required / Initiated / Closed percentages
+- [ ] **Company bar chart** — items by Assignee Company (Overdue/Open/Closed counts)
+- [ ] **KPI: Average Response Time** (days to response, link to overdue list)
+- [ ] **KPI: Total Overdue Items** count card
+
+---
+
+## Phase 6: Workflows & Automation
+
+- [ ] **Email notification** on create/assign (Date Notified auto-populated, Email Sent → true)
+- [ ] **Email notification** on status change
+- [ ] **Email notification** on due date change
+- [ ] **In-app notifications** for assignments and status updates
+- [ ] **Ball-in-court auto-calculation** (derives current responsible party from status + roles)
+- [ ] **Overdue calculation** (due_date < today AND status != closed)
+
+---
+
+## Phase 7: Permissions & Security
+
+- [ ] **RBAC enforcement** — Admin / Standard / Read Only / Custom roles
+- [ ] **Field-level editability by role** (e.g., only Final Approver can close)
+- [ ] **Private item visibility** (only creator + assignees)
+- [ ] **30-day recycle bin retention** (cron or trigger to hard-delete)
+- [ ] **Audit trail** — every field change logged to change_history
+
+---
+
+## Phase 8: Testing
+
+- [ ] Create item with all field combinations
+- [ ] Edit each field individually
+- [ ] Status workflow: Draft → Work Required → Initiated → Closed
+- [ ] Reopen closed items
+- [ ] Bulk select + bulk operations
+- [ ] Search with various keywords
+- [ ] Apply each filter individually and combined
+- [ ] CSV export
+- [ ] PDF export (basic, with descriptions, with photos)
+- [ ] Verify change history entries per action
+- [ ] Comment + attachment functionality
+- [ ] Email notification triggers
+- [ ] Permission enforcement by role
+- [ ] Recycle bin recovery
+- [ ] Private item visibility
+- [ ] Mobile responsiveness
+- [ ] Rich text editor formatting
+- [ ] File upload / drag-drop
+- [ ] Pagination navigation
+- [ ] Dashboard widget calculations

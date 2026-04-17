@@ -2,6 +2,7 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { NextResponse } from "next/server";
 
 import { apiErrorResponse } from "@/lib/api-error";
+import { getNormalizedSubmittalTypeCatalog } from "@/lib/submittals/submittal-type-catalog";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -13,15 +14,11 @@ export const GET = withApiGuardrails(
   async () => {
     const supabase = await createClient();
 
-    const { data, error } = await supabase
-      .from("submittal_types")
-      .select("id, name, category, description")
-      .order("name");
-
-    if (error) {
+    try {
+      const data = await getNormalizedSubmittalTypeCatalog(supabase);
+      return NextResponse.json(data ?? []);
+    } catch (error) {
       return apiErrorResponse(error);
     }
-
-    return NextResponse.json(data ?? []);
   },
 );

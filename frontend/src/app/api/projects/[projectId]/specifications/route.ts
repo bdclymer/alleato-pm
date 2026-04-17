@@ -8,8 +8,33 @@ import {
   uploadSpecificationSchema,
   type UploadSpecificationFormData,
 } from "@/lib/schemas/specification-schemas";
+import type { UploadSpecificationData } from "@/types/specifications.types";
 import type { SpecificationFilters } from "@/types/specifications.types";
 import { apiErrorResponse } from "@/lib/api-error";
+
+// Generates a numeric section number placeholder that satisfies existing DB constraints.
+function buildGeneratedSectionNumber(): string {
+  const randomSuffix = Math.floor(Math.random() * 1000)
+    .toString()
+    .padStart(3, "0");
+  return `${Date.now()}${randomSuffix}`;
+}
+
+// Persists advanced upload metadata safely inside revision notes until schema support is added.
+function buildSpecificationMetadataNotes(data: UploadSpecificationFormData): string {
+  const metadataLines = [
+    `Specification Set: ${data.specification_set_name}`,
+    `Format: ${data.format}`,
+    `Specifications Language: ${data.specifications_language}`,
+    `Default Issue Date: ${data.default_issue_date || "Not provided"}`,
+    `Default Receive Date: ${data.default_receive_date || "Not provided"}`,
+    `Default Revision Instructions: ${data.default_revision_instruction || "Not provided"}`,
+    `Number to Ignore: ${data.number_to_ignore || "Not provided"}`,
+    `Specification Set Instructions: ${data.specification_set_instructions || "Not provided"}`,
+  ];
+
+  return `Upload Metadata\n${metadataLines.join("\n")}`;
+}
 
 /**
  * GET /api/projects/[projectId]/specifications
@@ -73,11 +98,24 @@ export const POST = withApiGuardrails<{ projectId: string }>(
     const formData = await request.formData();
 
     const uploadData: UploadSpecificationFormData = {
-      section_number: formData.get("section_number") as string,
-      title: formData.get("title") as string,
-      description: (formData.get("description") as string) || undefined,
+      specification_set_name: formData.get("specification_set_name") as string,
+      specification_set_instructions:
+        (formData.get("specification_set_instructions") as string) || undefined,
+      format: formData.get("format") as
+        | "masterformat_csi"
+        | "ncs_natspec"
+        | "no_or_other_format",
+      default_issue_date: (formData.get("default_issue_date") as string) || undefined,
+      default_receive_date: (formData.get("default_receive_date") as string) || undefined,
+      default_revision_instruction:
+        (formData.get("default_revision_instruction") as string) || undefined,
+      number_to_ignore: (formData.get("number_to_ignore") as string) || undefined,
+      specifications_language: formData.get("specifications_language") as
+        | "english"
+        | "spanish"
+        | "french"
+        | "portuguese",
       file: formData.get("file") as File,
-      notes: (formData.get("notes") as string) || undefined,
       area_ids: formData.get("area_ids")
         ? JSON.parse(formData.get("area_ids") as string)
         : undefined,
@@ -88,12 +126,23 @@ export const POST = withApiGuardrails<{ projectId: string }>(
 
     // Validate with Zod
     const validated = uploadSpecificationSchema.parse(uploadData);
+    const metadataNotes = buildSpecificationMetadataNotes(validated);
+
+    const servicePayload: UploadSpecificationData = {
+      section_number: buildGeneratedSectionNumber(),
+      title: validated.specification_set_name.trim(),
+      description: validated.specification_set_instructions?.trim() || undefined,
+      file: validated.file,
+      notes: metadataNotes,
+      area_ids: validated.area_ids,
+      subscriber_ids: validated.subscriber_ids,
+    };
 
     // Use service role client for write operations (bypasses RLS)
     // Auth is already verified above via cookie-based client
     const serviceClient = createServiceClient();
     const service = new SpecificationService(serviceClient);
-    const result = await service.create(projectId, validated, user.id);
+    const result = await service.create(projectId, servicePayload, user.id);
 
     if (result.error) {
       const statusCode =

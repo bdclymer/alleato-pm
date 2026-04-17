@@ -14,6 +14,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
+import { apiFetchBlob } from "@/lib/api-client";
 
 /**
  * ExportDialog props interface
@@ -76,49 +78,31 @@ export function ExportDialog({
         filters: {},
       };
 
-      const response = await fetch(
+      const blob = await apiFetchBlob(
         `/api/projects/${projectId}/direct-costs/export`,
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
           body: JSON.stringify(exportParams),
         }
       );
 
-      if (!response.ok) {
-        throw new Error(`Export failed with status ${response.status}`);
-      }
-
-      // Get filename from Content-Disposition or create default
-      const contentDisposition = response.headers.get("Content-Disposition");
-      let filename = `direct-costs-${new Date().toISOString().split("T")[0]}.${format}`;
-
-      if (contentDisposition) {
-        const filenameMatch = contentDisposition.match(/filename="?(.+)"?/i);
-        if (filenameMatch?.[1]) {
-          filename = filenameMatch[1];
-        }
-      }
-
-      // Download file
-      const blob = await response.blob();
+      const ext = format === "excel" ? "xlsx" : format;
+      const filename = `direct-costs-${new Date().toISOString().split("T")[0]}.${ext}`;
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
       link.download = filename;
       document.body.appendChild(link);
       link.click();
-
-      // Cleanup
       window.URL.revokeObjectURL(url);
       document.body.removeChild(link);
 
-      // Close dialog on success
+      toast.success(`Direct costs exported as ${format.toUpperCase()}`);
       onOpenChange(false);
     } catch (error) {
-      // Error handling could be improved with toast notifications
+      toast.error(
+        error instanceof Error ? error.message : "Failed to export direct costs"
+      );
     } finally {
       setIsExporting(false);
     }

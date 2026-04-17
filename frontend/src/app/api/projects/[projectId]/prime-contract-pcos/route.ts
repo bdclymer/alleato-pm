@@ -63,6 +63,7 @@ const createPcoSchema = z.object({
 const pcoQuerySchema = z.object({
   status: z.enum(["draft", "pending", "approved", "void"]).optional(),
   search: z.string().optional(),
+  prime_contract_id: z.string().uuid().optional(),
 });
 
 // ---------------------------------------------------------------------------
@@ -112,6 +113,10 @@ export const GET = withApiGuardrails(
     // Apply optional filters
     if (queryParams.status) {
       query = query.eq("status", queryParams.status);
+    }
+
+    if (queryParams.prime_contract_id) {
+      query = query.eq("prime_contract_id", queryParams.prime_contract_id);
     }
 
     if (queryParams.search) {

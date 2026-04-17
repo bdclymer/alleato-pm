@@ -93,7 +93,7 @@ interface RespondFormProps {
   projectId: number;
   submittalId: string;
   stepId: string;
-  onDone: () => void;
+  onDone: (didSubmit?: boolean) => void;
 }
 
 function RespondForm({ projectId, submittalId, stepId, onDone }: RespondFormProps) {
@@ -105,7 +105,7 @@ function RespondForm({ projectId, submittalId, stepId, onDone }: RespondFormProp
     e.preventDefault();
     if (!status) return;
     await mutation.mutateAsync({ response_status: status, comments: comments || null });
-    onDone();
+    onDone(true);
   }
 
   return (
@@ -139,7 +139,7 @@ function RespondForm({ projectId, submittalId, stepId, onDone }: RespondFormProp
         <Button type="submit" size="sm" disabled={!status || mutation.isPending}>
           Submit
         </Button>
-        <Button type="button" variant="ghost" size="sm" onClick={onDone}>
+        <Button type="button" variant="ghost" size="sm" onClick={() => onDone(false)}>
           Cancel
         </Button>
       </div>
@@ -540,7 +540,12 @@ export function SubmittalDetailClient({ submittal, projectId }: SubmittalDetailC
                               projectId={projectId}
                               submittalId={submittal.id}
                               stepId={step.id}
-                              onDone={() => setRespondingStep(null)}
+                              onDone={(didSubmit) => {
+                                setRespondingStep(null);
+                                if (didSubmit) {
+                                  router.refresh();
+                                }
+                              }}
                             />
                           )}
                         </div>

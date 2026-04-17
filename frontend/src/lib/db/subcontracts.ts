@@ -13,29 +13,28 @@ type SubcontractInsert = Database["public"]["Tables"]["subcontracts"]["Insert"];
 
 const DB_SUBCONTRACT_STATUSES = [
   "Draft",
-  "Sent",
-  "Pending",
+  "Out for Bid",
+  "Out for Signature",
   "Approved",
-  "Executed",
-  "Closed",
-  "Void",
+  "Complete",
+  "Terminated",
 ] as const;
 
 const LEGACY_TO_DB_STATUS: Record<string, (typeof DB_SUBCONTRACT_STATUSES)[number]> = {
-  "out for bid": "Sent",
-  out_for_bid: "Sent",
-  "out for signature": "Pending",
-  out_for_signature: "Pending",
-  complete: "Closed",
-  completed: "Closed",
-  terminated: "Void",
   draft: "Draft",
-  sent: "Sent",
-  pending: "Pending",
+  sent: "Out for Bid",
+  "out for bid": "Out for Bid",
+  out_for_bid: "Out for Bid",
+  pending: "Out for Signature",
+  "out for signature": "Out for Signature",
+  out_for_signature: "Out for Signature",
   approved: "Approved",
-  executed: "Executed",
-  closed: "Closed",
-  void: "Void",
+  executed: "Approved",
+  complete: "Complete",
+  completed: "Complete",
+  closed: "Complete",
+  terminated: "Terminated",
+  void: "Terminated",
 };
 
 function isDbSubcontractStatus(

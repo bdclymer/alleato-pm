@@ -4,8 +4,7 @@
 
 | Situation | Workflow |
 |-----------|----------|
-| Building a brand new feature from scratch | **Workflow A: New Feature** |
-| Feature has existing code but is broken or incomplete | **Workflow B: Fix / Complete** |
+| Building a feature (new or existing) | **Workflow A: Procore-First** |
 | Just need to run and fix tests for an existing feature | Run `/prp-test <feature>` directly |
 | **Want hands-off automation (recommended)** | **`/prp-pipeline <feature-name>`** |
 
@@ -13,18 +12,16 @@
 
 ## Automated: `/prp-pipeline <feature-name>`
 
-**One command, no babysitting.** Auto-detects whether to run Workflow A or B, then executes all phases using separate sub-agents with gate checks between each.
+**One command, no babysitting.** Runs all phases using separate sub-agents with gate checks between each.
 
 ```
 You run:     /prp-pipeline punch-list
              ↓
-Orchestrator detects: no existing code → Workflow A
-             ↓
-Phase 1:     Sub-agent runs /prp-create        → gate: PRP file exists?
-Phase 2:     Sub-agent runs /prp-quality        → gate: score ≥ 8/10?
-Phase 3:     Sub-agent runs /prp-execute        → gate: TASKS.md complete, tsc clean?
-Phase 4:     Sub-agent runs /prp-test           → gate: all tests passing?
-Phase 5:     Sub-agent runs /prp-validate       → gate: PASSED?
+Phase 1:     Sub-agent runs /prp-create           → gate: PRP file exists, score ≥ 8/10?
+Phase 2:     Sub-agent runs /prp-test-scenarios   → gate: TEST-SCENARIOS.md exists?
+Phase 3:     Sub-agent runs /prp-audit            → gate: AUDIT.md + TASKS.md exist?
+Phase 4:     Sub-agent runs /prp-execute          → gate: TASKS.md complete, tsc clean?
+Phase 5:     Sub-agent runs /prp-validate         → gate: PASSED?
              ↓
 Pipeline complete — summary report produced
 ```
@@ -33,36 +30,35 @@ Pipeline complete — summary report produced
 
 ---
 
-## Workflow A: New Feature
+## Workflow A: Procore-First (All Features)
 
-Use when there is no existing code for this feature.
+Use this workflow for all features — new or existing.
 
-```plain text
-Step 1    /prp-create <feature-name>
+```
+Step 1    /prp-create <feature-name>         ← What does Procore do?
           ↓
-Step 2    /prp-quality <path/to/prp.md>
+Step 2    /prp-test-scenarios <feature-name> ← What should users be able to do?
           ↓
-Step 3    /prp-execute <path/to/prp.md>
+Step 3    /prp-audit <feature-name>          ← What's built vs what's missing?
           ↓
-Step 4    /prp-test <feature-name>
+Step 4    /prp-execute PRPs/<feature>/prp-<feature>.md
           ↓
-Step 5    /prp-validate <path/to/prp.md>
+Step 5    /prp-validate PRPs/<feature>/prp-<feature>.md
 ```
 
 ### Step 1: `/prp-create <feature-name>`
 
-**What it does:** Researches the codebase and creates a comprehensive PRP document.
+**What it does:** Researches Procore functionality and creates the feature spec.
 
-- Generates fresh Supabase types and reviews the database schema
-- Reads the incident log for past mistakes related to this feature type
-- Checks for Procore crawl data in `docs/PRPs/<feature>/crawl/`
-- Explores the codebase for similar features to use as patterns
-- Produces three files in `docs/PRPs/<feature>/`:
-  - `prp-<feature>.md` — the full PRP document
-  - `TASKS.md` — implementation checklist (live tracker)
+- Reads planning artifacts (`_bmad-output/planning-artifacts/<feature>/`) as supplemental context
+- Reads Procore manifest (`.claude/procore-manifests/<feature>/`) as primary UI structure source
+- Runs `procore-docs-rag` queries for business rules, workflows, and statuses
+- WebFetches Procore support articles for anything still unclear
+- Produces in `PRPs/<feature>/`:
+  - `prp-<feature>.md` — what Procore does and what we need to build
   - `prp-<feature>.html` — browser-viewable version
 
-**Output:** PRP document ready for quality review.
+**Output:** PRP answering "what to build" based on Procore. No codebase analysis.
 
 ### Step 2: `/prp-quality <path/to/prp.md>`
 
@@ -169,11 +165,10 @@ Step 4    /prp-validate <path/to/fix-prp.md>
 | Command | Purpose | Input | Output |
 |---------|---------|-------|--------|
 | **`/prp-pipeline`** | **Full automated workflow** | **Feature name** | **Everything — hands-off** |
-| `/prp-create` | Research + write PRP | Feature name | PRP + TASKS.md + HTML |
-| `/prp-quality` | Validate PRP completeness | Path to PRP | APPROVED or NEEDS REVISION |
-| `/prp-audit` | Audit existing feature | Feature name | Gap analysis + fix PRP + TASKS.md |
-| `/prp-execute` | Implement from PRP | Path to PRP | Working code + updated TASKS.md |
-| `/prp-test` | Run tests + fix failures | Feature name | All tests passing |
+| `/prp-create` | Procore research → feature spec | Feature name | `prp-<f>.md` + HTML |
+| `/prp-test-scenarios` | Generate user-facing test cases | Feature name | `TEST-SCENARIOS.md` |
+| `/prp-audit` | Gap analysis: built vs missing | Feature name | `AUDIT.md` + `TASKS.md` |
+| `/prp-execute` | Implement from PRP + audit | Path to PRP | Working code + updated TASKS.md |
 | `/prp-validate` | Final verification | Path to PRP | Validation report |
 
 ---

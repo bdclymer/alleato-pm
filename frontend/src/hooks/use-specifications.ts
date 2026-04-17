@@ -14,6 +14,23 @@ import type {
   EditSpecificationFormData,
 } from "@/lib/schemas/specification-schemas";
 
+export interface ProjectSpecificationRevision {
+  id: number;
+  section_id: number;
+  section_number: string;
+  section_title: string;
+  revision_number: number;
+  file_name: string;
+  file_size: number;
+  uploaded_at: string;
+  uploaded_by: string;
+  notes: string | null;
+}
+
+interface ProjectSpecificationRevisionsResponse {
+  revisions: ProjectSpecificationRevision[];
+}
+
 /**
  * React Query hook for fetching specifications list
  */
@@ -59,6 +76,20 @@ export function useSpecification(projectId: string, sectionId: string) {
 }
 
 /**
+ * React Query hook for fetching all revisions across a project.
+ */
+export function useProjectSpecificationRevisions(projectId: string) {
+  return useQuery<ProjectSpecificationRevisionsResponse>({
+    queryKey: ["project-specification-revisions", projectId],
+    queryFn: async () =>
+      apiFetch<ProjectSpecificationRevisionsResponse>(
+        `/api/projects/${projectId}/specifications/revisions`,
+      ),
+    enabled: !!projectId,
+  });
+}
+
+/**
  * React Query mutation for creating a specification
  */
 export function useCreateSpecification(projectId: string) {
@@ -67,11 +98,19 @@ export function useCreateSpecification(projectId: string) {
   return useMutation({
     mutationFn: async (data: UploadSpecificationFormData) => {
       const formData = new FormData();
-      formData.append("section_number", data.section_number);
-      formData.append("title", data.title);
-      if (data.description) formData.append("description", data.description);
+      formData.append("specification_set_name", data.specification_set_name);
+      if (data.specification_set_instructions) {
+        formData.append("specification_set_instructions", data.specification_set_instructions);
+      }
+      formData.append("format", data.format);
+      if (data.default_issue_date) formData.append("default_issue_date", data.default_issue_date);
+      if (data.default_receive_date) formData.append("default_receive_date", data.default_receive_date);
+      if (data.default_revision_instruction) {
+        formData.append("default_revision_instruction", data.default_revision_instruction);
+      }
+      if (data.number_to_ignore) formData.append("number_to_ignore", data.number_to_ignore);
+      formData.append("specifications_language", data.specifications_language);
       formData.append("file", data.file);
-      if (data.notes) formData.append("notes", data.notes);
       if (data.area_ids)
         formData.append("area_ids", JSON.stringify(data.area_ids));
       if (data.subscriber_ids)
@@ -153,6 +192,71 @@ export function useDeleteSpecification(projectId: string) {
     },
     onError: (error: Error) => {
       toast.error("Could not delete specification", {
+        description: error.message,
+      });
+    },
+  });
+}
+
+/**
+ * React Query mutation for archiving a specification (move to recycle bin).
+ */
+export function useArchiveSpecification(projectId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (specification: SpecificationWithRevision) =>
+      apiFetch<SpecificationWithAreas>(
+        `/api/projects/${projectId}/specifications/${specification.id}`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({
+            section_number: specification.section_number,
+            title: specification.title,
+            description: specification.description ?? "",
+            status: "archived",
+          } satisfies EditSpecificationFormData),
+        },
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["specifications", projectId],
+      });
+      toast.success("Moved to recycle bin");
+    },
+    onError: (error: Error) => {
+      toast.error("Could not archive specification", {
+        description: error.message,
+      });
+    },
+  });
+}
+
+/**
+ * React Query mutation for subscribing or unsubscribing the current user from a specification.
+ */
+export function useToggleSpecificationSubscription(projectId: string) {
+  return useMutation({
+    mutationFn: async ({
+      sectionId,
+      subscribe,
+    }: {
+      sectionId: number;
+      subscribe: boolean;
+    }) =>
+      apiFetch<{ subscribed: boolean }>(
+        `/api/projects/${projectId}/specifications/${sectionId}/subscribe`,
+        {
+          method: subscribe ? "POST" : "DELETE",
+        },
+      ),
+    onSuccess: (_, variables) => {
+      toast.success(
+        variables.subscribe ? "Subscribed to revisions" : "Unsubscribed from revisions",
+      );
+    },
+    onError: (error: Error) => {
+      toast.error("Could not update subscription", {
         description: error.message,
       });
     },

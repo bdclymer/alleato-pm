@@ -18,6 +18,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api-client";
 import { useCompanyContacts } from "@/hooks/use-company-contacts";
 
 /**
@@ -171,11 +172,8 @@ export function EmailCommitmentDialog({
     setEmailError(null);
 
     try {
-      const response = await fetch(`/api/commitments/${commitmentId}/email`, {
+      await apiFetch(`/api/commitments/${commitmentId}/email`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify({
           recipients: recipients.map((r) => ({
             email: r.email,
@@ -187,13 +185,6 @@ export function EmailCommitmentDialog({
           include_sov_items: includeSovItems,
         }),
       });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Failed to send email`);
-      }
-
-      const result = await response.json();
 
       toast.success(
         `Email sent successfully to ${recipients.length} recipient${recipients.length > 1 ? "s" : ""}`

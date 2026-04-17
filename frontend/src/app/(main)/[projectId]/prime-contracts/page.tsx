@@ -156,9 +156,13 @@ export default function ProjectContractsPage(): ReactElement {
             return linkedContractId == null || String(linkedContractId) === String(contractId);
           });
 
+          const filteredPcos = allPcos.filter(
+            (p) => !p.prime_contract_id || String(p.prime_contract_id) === String(contractId),
+          );
+
           setPccoCache((prev) => ({
             ...prev,
-            [contractId]: { loading: false, data: filteredPccos, pcos: allPcos },
+            [contractId]: { loading: false, data: filteredPccos, pcos: filteredPcos },
           }));
         } catch {
           setPccoCache((prev) => ({ ...prev, [contractId]: { loading: false, data: [], pcos: [] } }));

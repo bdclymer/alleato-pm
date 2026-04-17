@@ -21,7 +21,8 @@ export const GET = withApiGuardrails(
       .order("display_name"),
     supabase
       .from("test_cases")
-      .select("id, suite_id, test_type, priority, scenario_depth"),
+      .select("id, suite_id, test_type, priority, scenario_depth")
+      .filter("status", "neq", "inactive"),
   ]);
 
   if (suitesRes.error) {

@@ -1,10 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Upload, X, FileText } from "lucide-react";
+import { Check, ChevronsUpDown, FileText, Loader2, Plus, Upload, X } from "lucide-react";
 
 import {
   Dialog,
@@ -17,19 +17,34 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
-  FormDescription,
 } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 
-import { useCreateSpecification } from "@/hooks/use-specifications";
-import { useSpecificationAreas } from "@/hooks/use-specification-areas";
+import { useCreateSpecification, useSpecifications } from "@/hooks/use-specifications";
 import {
   uploadSpecificationSchema,
   type UploadSpecificationFormData,
@@ -48,29 +63,51 @@ export function SpecificationUploadDialog({
 }: SpecificationUploadDialogProps) {
   const [open, setOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [setPickerOpen, setSetPickerOpen] = useState(false);
 
-  const { data: areas } = useSpecificationAreas(projectId);
   const createMutation = useCreateSpecification(projectId);
+  const { data: existingSpecifications } = useSpecifications(projectId, {
+    page: 1,
+    page_size: 200,
+  });
+
+  const existingSets = useMemo(() => {
+    const uniqueTitles = new Set<string>();
+    for (const spec of existingSpecifications?.specifications ?? []) {
+      const title = spec.title?.trim();
+      if (title) uniqueTitles.add(title);
+    }
+    return Array.from(uniqueTitles).sort((a, b) => a.localeCompare(b));
+  }, [existingSpecifications?.specifications]);
 
   const form = useForm<UploadSpecificationFormData>({
     resolver: zodResolver(uploadSpecificationSchema),
     reValidateMode: "onBlur",
     defaultValues: {
-      section_number: "",
-      title: "",
-      description: "",
-      notes: "",
+      specification_set_name: "",
+      specification_set_instructions: "",
+      format: "masterformat_csi",
+      default_issue_date: "",
+      default_receive_date: "",
+      default_revision_instruction: "",
+      number_to_ignore: "",
+      specifications_language: "english",
       area_ids: [],
       subscriber_ids: [],
     },
   });
 
+  const selectedFormat = form.watch("format");
+  const watchedSetName = form.watch("specification_set_name");
+  const normalizedWatchedSetName = watchedSetName.trim().toLowerCase();
+  const hasExactSetMatch = existingSets.some(
+    (setName) => setName.trim().toLowerCase() === normalizedWatchedSetName
+  );
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file size
     if (file.size > 50 * 1024 * 1024) {
       form.setError("file", {
         type: "manual",
@@ -82,58 +119,31 @@ export function SpecificationUploadDialog({
     setSelectedFile(file);
     form.setValue("file", file);
     form.clearErrors("file");
-
-    // Create preview URL (will show PDF icon, not actual preview)
-    // CRITICAL: URL.createObjectURL creates memory leak if not revoked
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-    }
-    const url = URL.createObjectURL(file);
-    setPreviewUrl(url);
   };
 
   const removeFile = () => {
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-    }
     setSelectedFile(null);
-    setPreviewUrl(null);
-    form.setValue("file", undefined as any);
+    form.resetField("file");
   };
 
   const handleSubmit = async (data: UploadSpecificationFormData) => {
     try {
       await createMutation.mutateAsync(data);
-
-      // Cleanup
-      if (previewUrl) {
-        URL.revokeObjectURL(previewUrl);
-      }
       form.reset();
       setSelectedFile(null);
-      setPreviewUrl(null);
+      setSetPickerOpen(false);
       setOpen(false);
       onUploadComplete?.();
     } catch (error) {
-      // Error already handled by mutation
       console.error("Upload failed:", error);
     }
   };
 
   const formatFileSize = (bytes: number) => {
-    if (bytes < 1024) return bytes + " B";
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
-    return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
-
-  // Cleanup on unmount
-  React.useEffect(() => {
-    return () => {
-      if (previewUrl) {
-        URL.revokeObjectURL(previewUrl);
-      }
-    };
-  }, [previewUrl]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -145,28 +155,27 @@ export function SpecificationUploadDialog({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-3xl max-h-screen overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Upload Specification</DialogTitle>
+          <DialogTitle>Upload Specifications</DialogTitle>
           <DialogDescription>
-            Upload a specification document with metadata. Max file size is 50MB.
+            Upload attached files and set the default import configuration. Max file size is 50MB.
           </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-            {/* File Upload */}
             <FormField
               control={form.control}
               name="file"
-              render={({ field }) => (
+              render={() => (
                 <FormItem>
-                  <FormLabel>File *</FormLabel>
+                  <FormLabel>Attached Files *</FormLabel>
                   <FormControl>
                     <div className="space-y-4">
                       {!selectedFile ? (
                         <div className="border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-border transition-colors">
-                          <input
+                          <Input
                             type="file"
                             accept="*/*"
                             onChange={handleFileChange}
@@ -184,9 +193,7 @@ export function SpecificationUploadDialog({
                               </span>{" "}
                               or drag and drop
                             </div>
-                            <p className="text-xs text-muted-foreground">
-                              Any file type (max 50MB)
-                            </p>
+                            <p className="text-xs text-muted-foreground">Any file type (max 50MB)</p>
                           </label>
                         </div>
                       ) : (
@@ -200,12 +207,7 @@ export function SpecificationUploadDialog({
                               </p>
                             </div>
                           </div>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={removeFile}
-                          >
+                          <Button type="button" variant="ghost" size="sm" onClick={removeFile}>
                             <X className="h-4 w-4" />
                           </Button>
                         </div>
@@ -217,56 +219,98 @@ export function SpecificationUploadDialog({
               )}
             />
 
-            {/* Section Number */}
             <FormField
               control={form.control}
-              name="section_number"
+              name="specification_set_name"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Section Number *</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="03 30 00"
-                      {...field}
-                    />
-                  </FormControl>
+                <FormItem className="flex flex-col">
+                  <FormLabel>Specification Set *</FormLabel>
+                  <Popover open={setPickerOpen} onOpenChange={setSetPickerOpen}>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          role="combobox"
+                          className={cn(
+                            "justify-between",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          <span className="truncate">{field.value || "Select or create a specification set"}</span>
+                          <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
+                      <Command>
+                        <CommandInput
+                          placeholder="Search for a set or type a new name"
+                          value={field.value}
+                          onValueChange={(value) => field.onChange(value)}
+                        />
+                        <CommandList>
+                          {normalizedWatchedSetName.length > 0 && !hasExactSetMatch && (
+                            <CommandGroup heading="Create">
+                              <CommandItem
+                                value={`create-${watchedSetName}`}
+                                onSelect={() => {
+                                  field.onChange(watchedSetName.trim());
+                                  setSetPickerOpen(false);
+                                }}
+                              >
+                                <Plus className="mr-2 h-4 w-4" />
+                                {`Create "${watchedSetName.trim()}"`}
+                              </CommandItem>
+                            </CommandGroup>
+                          )}
+                          <CommandEmpty>
+                            <div className="px-2 py-3 text-sm">
+                              No matches. Keep typing to create a new set.
+                            </div>
+                          </CommandEmpty>
+                          <CommandGroup>
+                            {existingSets.map((setName) => (
+                              <CommandItem
+                                key={setName}
+                                value={setName}
+                                onSelect={(value) => {
+                                  field.onChange(value);
+                                  setSetPickerOpen(false);
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    field.value === setName ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                {setName}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                   <FormDescription>
-                    CSI format with numbers and spaces only (e.g., "03 30 00")
+                    Search an existing set or type a new set name.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            {/* Title */}
             <FormField
               control={form.control}
-              name="title"
+              name="specification_set_instructions"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Title *</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Cast-in-Place Concrete"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Description */}
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
+                  <FormLabel>Specification Set Instructions</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Brief description of the specification..."
-                      className="min-h-[80px]"
+                      placeholder="Enter instructions for this specification set"
+                      className="min-h-20"
                       {...field}
                     />
                   </FormControl>
@@ -275,75 +319,142 @@ export function SpecificationUploadDialog({
               )}
             />
 
-            {/* Areas */}
-            {areas && areas.length > 0 && (
+            <FormField
+              control={form.control}
+              name="format"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Format *</FormLabel>
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a format" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="masterformat_csi">MasterFormat, by CSI (USA/Canada)</SelectItem>
+                      <SelectItem value="ncs_natspec">NCS, by NATSPEC (AUSTRALIA)</SelectItem>
+                      <SelectItem value="no_or_other_format">NO FORMAT/OTHER FORMAT</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="grid gap-4 md:grid-cols-2">
               <FormField
                 control={form.control}
-                name="area_ids"
+                name="default_issue_date"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Areas</FormLabel>
+                    <FormLabel>Default Issue Date</FormLabel>
                     <FormControl>
-                      <div className="space-y-2">
-                        {areas.map((area) => (
-                          <label
-                            key={area.id}
-                            className="flex items-center space-x-2 cursor-pointer"
-                          >
-                            <input
-                              type="checkbox"
-                              value={area.id}
-                              checked={field.value?.includes(area.id) || false}
-                              onChange={(e) => {
-                                const currentValue = field.value || [];
-                                if (e.target.checked) {
-                                  field.onChange([...currentValue, area.id]);
-                                } else {
-                                  field.onChange(
-                                    currentValue.filter((id) => id !== area.id)
-                                  );
-                                }
-                              }}
-                              className="rounded border-border"
-                            />
-                            <span className="text-sm">{area.name}</span>
-                            <Badge variant="secondary" className="text-xs">
-                              {area.section_count} specs
-                            </Badge>
-                          </label>
-                        ))}
-                      </div>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="default_receive_date"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Default Receive Date</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <section className="space-y-4">
+              <div className="space-y-1">
+                <h3 className="text-sm font-semibold text-foreground">Advanced Options</h3>
+              </div>
+
+              <FormField
+                control={form.control}
+                name="default_revision_instruction"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Default Revision Instructions</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Enter your specification set default revision number or letter"
+                        {...field}
+                      />
                     </FormControl>
                     <FormDescription>
-                      Assign this specification to one or more areas
+                      Enter your specification set default revision number or letter, if applicable.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-            )}
 
-            {/* Notes */}
-            <FormField
-              control={form.control}
-              name="notes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Notes</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Upload notes or comments..."
-                      className="min-h-[60px]"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              <FormField
+                control={form.control}
+                name="number_to_ignore"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Number to Ignore</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Enter a number to ignore as a spec section number"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Enter any number here that should be ignored as a spec section number.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            {/* Actions */}
-            <div className="flex justify-end space-x-4 pt-4">
+              <FormField
+                control={form.control}
+                name="specifications_language"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Specifications Language</FormLabel>
+                    <Select
+                      value={field.value}
+                      onValueChange={field.onChange}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select language" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="english">English</SelectItem>
+                        <SelectItem value="spanish" disabled={selectedFormat !== "masterformat_csi"}>
+                          Spanish
+                        </SelectItem>
+                        <SelectItem value="french" disabled={selectedFormat !== "masterformat_csi"}>
+                          French
+                        </SelectItem>
+                        <SelectItem value="portuguese" disabled={selectedFormat !== "masterformat_csi"}>
+                          Portuguese
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>
+                      Only CSI MasterFormat supports languages other than English.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </section>
+
+            <div className="flex justify-end space-x-4 pt-2">
               <Button
                 type="button"
                 variant="outline"
@@ -352,14 +463,11 @@ export function SpecificationUploadDialog({
               >
                 Cancel
               </Button>
-              <Button
-                type="submit"
-                disabled={createMutation.isPending || !selectedFile}
-              >
+              <Button type="submit" disabled={createMutation.isPending || !selectedFile}>
                 {createMutation.isPending && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 )}
-                Upload Specification
+                Upload
               </Button>
             </div>
           </form>

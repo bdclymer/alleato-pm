@@ -30,6 +30,7 @@ export const commitmentColumns: ColumnConfig[] = [
   { id: "contract_company", label: "Contract Company", defaultVisible: true },
   { id: "title", label: "Title", defaultVisible: true },
   { id: "type", label: "Type", defaultVisible: true },
+  { id: "erp_status", label: "ERP Status", defaultVisible: true },
   { id: "status", label: "Status", defaultVisible: true },
   { id: "executed", label: "Executed", defaultVisible: true },
   { id: "ssov_status", label: "SSOV Status", defaultVisible: true },
@@ -62,13 +63,12 @@ export const commitmentFilters: FilterConfig[] = [
     label: "Status",
     type: "select",
     options: [
-      { value: "draft", label: "Draft" },
-      { value: "out_for_bid", label: "Out for Bid" },
-      { value: "out_for_signature", label: "Out for Signature" },
-      { value: "approved", label: "Approved" },
-      { value: "complete", label: "Complete" },
-      { value: "terminated", label: "Terminated" },
-      { value: "void", label: "Void" },
+      { value: "Draft", label: "Draft" },
+      { value: "Out for Bid", label: "Out for Bid" },
+      { value: "Out for Signature", label: "Out for Signature" },
+      { value: "Approved", label: "Approved" },
+      { value: "Complete", label: "Complete" },
+      { value: "Terminated", label: "Terminated" },
     ],
   },
   {
@@ -133,12 +133,20 @@ function formatDate(value: string | null | undefined): string {
 // e.g., "out_for_signature" → "out for signature"
 const STATUS_LABELS: Record<string, string> = {
   draft: "Draft",
-  out_for_bid: "Out for Bid",
-  out_for_signature: "Out for Signature",
+  "out for bid": "Out for Bid",
+  "out for signature": "Out for Signature",
   approved: "Approved",
   complete: "Complete",
   terminated: "Terminated",
-  void: "Void",
+};
+
+const ERP_STATUS_LABELS: Record<string, string> = {
+  synced: "Synced",
+  not_synced: "Not Synced",
+  sync_error: "Sync Error",
+  pending: "Pending",
+  failed: "Failed",
+  resyncing: "Resyncing",
 };
 
 function statusLabel(status: string | null | undefined): string {
@@ -217,6 +225,16 @@ export function buildCommitmentTableColumns(
       ),
       csvValue: (item) => item.type,
       sortValue: (item) => item.type,
+    },
+    erp_status: {
+      render: (item) => {
+        const label = item.erp_status
+          ? (ERP_STATUS_LABELS[item.erp_status.toLowerCase()] ?? item.erp_status)
+          : null;
+        return label ? <StatusBadge status={label} /> : <span className="text-muted-foreground">—</span>;
+      },
+      csvValue: (item) => item.erp_status ?? "",
+      sortValue: (item) => item.erp_status ?? "",
     },
     status: {
       render: (item) => {

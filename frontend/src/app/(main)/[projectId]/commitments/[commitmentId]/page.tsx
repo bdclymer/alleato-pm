@@ -1046,7 +1046,11 @@ export default function CommitmentDetailPage() {
         )}
 
         {activeTab === "payments" && (
-          <PaymentsIssuedTab commitmentId={commitment.id} />
+          <PaymentsIssuedTab
+            commitmentId={commitment.id}
+            projectId={projectId}
+            commitmentType={commitment.type as "subcontract" | "purchase_order"}
+          />
         )}
 
         {activeTab === "emails" && (

@@ -7,6 +7,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
 type ResultRow = {
+  case_id?: string;
   test_cases: {
     test_number: string | null;
     test_type: string | null;
@@ -33,8 +34,8 @@ export const GET = withApiGuardrails<{ runId: string }>(
 
   const withDepth = await supabase
     .from("test_results")
-    .select(`
-      id, status, notes, updated_at,
+      .select(`
+      id, case_id, status, notes, updated_at,
       test_cases (
         id, test_number, category, subcategory, test_name,
         steps, setup_steps, context_note, expected_result, priority,
@@ -50,7 +51,7 @@ export const GET = withApiGuardrails<{ runId: string }>(
     const fallback = await supabase
       .from("test_results")
       .select(`
-        id, status, notes, updated_at,
+        id, case_id, status, notes, updated_at,
         test_cases (
           id, test_number, category, subcategory, test_name,
           steps, setup_steps, context_note, expected_result, priority,
@@ -66,24 +67,41 @@ export const GET = withApiGuardrails<{ runId: string }>(
     data = fallback.data as unknown as ResultRow[] | null;
   }
 
-  // Filter by test_type in JS (PostgREST .eq on embedded resources filters embedded rows, not parents)
-  const filtered = typeFilter
-    ? (data ?? []).filter(
-        (row) => normalizeTestCase(row.test_cases)?.test_type === typeFilter,
-      )
-    : (data ?? []);
+  const caseIds = (data ?? []).map((row) => row.case_id).filter((id): id is string => Boolean(id));
+  const inactiveCaseIds = new Set<string>();
+  if (caseIds.length > 0) {
+    const { data: inactiveCases, error: inactiveCasesErr } = await supabase
+      .from("test_cases")
+      .select("id")
+      .in("id", caseIds)
+      .filter("status", "eq", "inactive");
+    if (inactiveCasesErr) {
+      return NextResponse.json({ error: inactiveCasesErr.message }, { status: 500 });
+    }
+    for (const row of inactiveCases ?? []) {
+      inactiveCaseIds.add(row.id);
+    }
+  }
 
-  // Sort by test_number (e.g. "1.1.2" < "1.1.10")
+  // Filter by active case first, then by test_type in JS (embedded .eq filters child rows, not parents).
+  const activeOnly = (data ?? []).filter((row) => {
+    if (!row.case_id) return true;
+    return !inactiveCaseIds.has(row.case_id);
+  });
+
+  const filtered = typeFilter
+    ? activeOnly.filter((row) => normalizeTestCase(row.test_cases)?.test_type === typeFilter)
+    : activeOnly;
+
+  // Sort by mixed test_number formats (e.g. "1.1.2", "10.1", "M.001") naturally.
+  const testNumberCollator = new Intl.Collator(undefined, {
+    numeric: true,
+    sensitivity: "base",
+  });
   const sorted = filtered.sort((a: ResultRow, b: ResultRow) => {
     const numA = normalizeTestCase(a.test_cases)?.test_number ?? "";
     const numB = normalizeTestCase(b.test_cases)?.test_number ?? "";
-    const partsA = numA.split(".").map(Number);
-    const partsB = numB.split(".").map(Number);
-    for (let i = 0; i < Math.max(partsA.length, partsB.length); i++) {
-      const diff = (partsA[i] ?? 0) - (partsB[i] ?? 0);
-      if (diff !== 0) return diff;
-    }
-    return 0;
+    return testNumberCollator.compare(numA, numB);
   });
 
   return NextResponse.json({ results: sorted });

@@ -166,7 +166,7 @@ function TestCaseCard({ tc }: { tc: TestCase }) {
 
 // ─── TestCasesTab ─────────────────────────────────────────────────────────────
 
-export function TestCasesTab({ slug, type = "scenario", depth = "broad" }: Props) {
+export function TestCasesTab({ slug, type = "scenario", depth = "all" }: Props) {
   const [data, setData] = React.useState<CasesPayload | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -213,14 +213,14 @@ export function TestCasesTab({ slug, type = "scenario", depth = "broad" }: Props
     return (
       <div className="py-12 text-center space-y-2 text-sm text-muted-foreground">
         <p>
-          No {type === "scenario" ? `${depth} scenarios` : "feature test cases"} found for{" "}
+          No {type === "scenario" ? "active scenarios" : "feature test cases"} found for{" "}
           <strong>{slug}</strong>.
         </p>
         {type === "scenario" && (
           <p className="text-xs">
             Run{" "}
             <code className="rounded bg-muted px-1 py-0.5">
-              /test-scenario-writer-broad {slug}
+              /test-scenario-writer {slug}
             </code>{" "}
             to generate them.
           </p>

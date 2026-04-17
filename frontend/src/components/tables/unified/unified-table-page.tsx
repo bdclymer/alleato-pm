@@ -215,11 +215,11 @@ export interface UnifiedTablePageProps<T> {
     content: ReactNode;
     widthClassName?: string;
     columnClassName?: string;
-    /** Initial width in px (default: 416 = 26rem) */
+    /** Initial width in px (default: 560 = 35rem) */
     defaultWidth?: number;
-    /** Minimum drag width in px (default: 280) */
+    /** Minimum drag width in px (default: 480) */
     minWidth?: number;
-    /** Maximum drag width in px (default: 640) */
+    /** Maximum drag width in px (default: 960) */
     maxWidth?: number;
     /** Show collapse toggle (default: true) */
     collapsible?: boolean;
@@ -377,9 +377,9 @@ export function UnifiedTablePage<T>({
 
   // ── Side panel collapse & resize state ───────────────────────────────
   const panelStorageKey = sidePanel?.storageKey ?? "unified-table-side-panel";
-  const panelDefaultWidth = sidePanel?.defaultWidth ?? 416;
-  const panelMinWidth = sidePanel?.minWidth ?? 280;
-  const panelMaxWidth = sidePanel?.maxWidth ?? 640;
+  const panelDefaultWidth = sidePanel?.defaultWidth ?? 560;
+  const panelMinWidth = sidePanel?.minWidth ?? 480;
+  const panelMaxWidth = sidePanel?.maxWidth ?? 960;
   const panelCollapsible = sidePanel?.collapsible !== false;
   const panelResizable = sidePanel?.resizable !== false;
   const panelSticky = sidePanel?.sticky === true;
@@ -400,11 +400,14 @@ export function UnifiedTablePage<T>({
       if (stored) {
         const parsed = JSON.parse(stored) as { collapsed?: boolean; width?: number };
         if (typeof parsed.collapsed === "boolean") setPanelCollapsed(parsed.collapsed);
-        if (typeof parsed.width === "number") setPanelWidth(parsed.width);
+        if (typeof parsed.width === "number") {
+          const clampedWidth = Math.max(panelMinWidth, Math.min(panelMaxWidth, parsed.width));
+          setPanelWidth(clampedWidth);
+        }
       }
     } catch { /* ignore */ }
     setPanelMounted(true);
-  }, [panelStorageKey, sidePanel]);
+  }, [panelMaxWidth, panelMinWidth, panelStorageKey, sidePanel]);
 
   const persistPanel = React.useCallback(
     (collapsed: boolean, width: number) => {
@@ -459,7 +462,7 @@ export function UnifiedTablePage<T>({
       if (!state) return;
       // Dragging left = wider panel (handle is on left edge)
       const delta = state.startX - event.clientX;
-      const maxAllowed = Math.min(panelMaxWidth, window.innerWidth * 0.6);
+      const maxAllowed = Math.min(panelMaxWidth, window.innerWidth * 0.75);
       const next = Math.max(panelMinWidth, Math.min(maxAllowed, state.startWidth + delta));
       setPanelWidth(next);
     };
@@ -1632,13 +1635,18 @@ export function UnifiedTablePage<T>({
       >
         {sidePanel ? (
           <>
-            {aboveTableContent}
+            <div className={cn(containerPadding && "pr-4 sm:pr-6 lg:pr-8")}>
+              {aboveTableContent}
+            </div>
             <div
               ref={gridRef}
               className={cn(
                 "relative grid grid-cols-1",
-                isFullBleedTable && "-mx-4 sm:-mx-6 lg:-mx-8",
-                !panelMounted && "lg:grid-cols-[minmax(0,1fr)_26rem]",
+                isFullBleedTable &&
+                  (sidePanel
+                    ? "-ml-4 sm:-ml-6 lg:-ml-8"
+                    : "-mx-4 sm:-mx-6 lg:-mx-8"),
+                !panelMounted && "lg:grid-cols-[minmax(0,1fr)_35rem]",
                 !panelMounted && sidePanel.columnClassName,
               )}
               style={
@@ -1659,7 +1667,7 @@ export function UnifiedTablePage<T>({
               {/* Side panel with resize handle */}
               <aside
                 className={cn(
-                  "hidden lg:flex lg:flex-col bg-background border-b border-l border-border/50 relative",
+                  "hidden lg:flex lg:flex-col bg-muted border-b border-l border-border/50 relative",
                   panelSticky
                     ? "lg:sticky lg:top-12 lg:max-h-[calc(100dvh-3rem)]"
                     : "lg:relative lg:max-h-none",

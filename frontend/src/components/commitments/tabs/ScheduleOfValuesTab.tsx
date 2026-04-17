@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowDown, ArrowUp, Plus, Trash2, Save } from "lucide-react";
+import { ArrowDown, ArrowUp, Lock, Plus, Trash2, Save } from "lucide-react";
 import { toast } from "sonner";
 
 import { Text } from "@/components/ds/text";
@@ -40,6 +40,7 @@ interface LineItem {
   description?: string | null;
   amount?: number | null;
   billed_to_date?: number | null;
+  retainage_percent?: number | null;
   isNew?: boolean;
   isDirty?: boolean;
 }
@@ -121,16 +122,26 @@ export function ScheduleOfValuesTab({
     setHasUnsavedChanges(true);
   };
 
+  const isLocked = (item: LineItem) => Number(item.billed_to_date ?? 0) > 0;
+
   const updateItem = (
     id: string,
-    field: "budget_code" | "description" | "amount",
+    field: "budget_code" | "description" | "amount" | "retainage_percent",
     value: string | number | undefined,
   ) => {
     setItems((prev) =>
       prev.map((item) => {
         if (item.id !== id) return item;
         if (field === "amount") {
+          if (isLocked(item)) return item;
           return { ...item, amount: value === undefined ? null : Number(value), isDirty: true };
+        }
+        if (field === "retainage_percent") {
+          return {
+            ...item,
+            retainage_percent: value === undefined || value === "" ? null : Number(value),
+            isDirty: true,
+          };
         }
         return { ...item, [field]: typeof value === "string" ? value : "", isDirty: true };
       }),
@@ -139,7 +150,14 @@ export function ScheduleOfValuesTab({
   };
 
   const handleDelete = (id: string) => {
-    setItems((prev) => prev.filter((item) => item.id !== id));
+    setItems((prev) => {
+      const target = prev.find((item) => item.id === id);
+      if (target && isLocked(target)) {
+        toast.error("Cannot delete an invoiced SOV line. Remove the invoice first.");
+        return prev;
+      }
+      return prev.filter((item) => item.id !== id);
+    });
     setHasUnsavedChanges(true);
   };
 
@@ -170,6 +188,7 @@ export function ScheduleOfValuesTab({
               description: item.description,
               amount: item.amount,
               billed_to_date: item.billed_to_date,
+              retainage_percent: item.retainage_percent,
             })),
             commitmentType,
           }),
@@ -332,6 +351,7 @@ export function ScheduleOfValuesTab({
             <InlineTableHeaderCell>Budget Code</InlineTableHeaderCell>
             <InlineTableHeaderCell>Description</InlineTableHeaderCell>
             <InlineTableHeaderCell align="right">Amount</InlineTableHeaderCell>
+            <InlineTableHeaderCell align="right">Retainage %</InlineTableHeaderCell>
             <InlineTableHeaderCell align="right">Billed to Date</InlineTableHeaderCell>
             <InlineTableHeaderCell align="right">Remaining</InlineTableHeaderCell>
             <InlineTableHeaderCell className="w-px" />
@@ -342,11 +362,20 @@ export function ScheduleOfValuesTab({
             const amount = Number(item.amount ?? 0);
             const billed = Number(item.billed_to_date ?? 0);
             const remaining = Math.max(amount - billed, 0);
+            const locked = isLocked(item);
 
             return (
               <InlineTableRow key={item.id}>
                 <InlineTableCell className="text-muted-foreground text-xs">
-                  {index + 1}
+                  <div className="flex items-center gap-1">
+                    {index + 1}
+                    {locked ? (
+                      <Lock
+                        className="size-3 text-muted-foreground"
+                        aria-label="Invoiced — amount locked"
+                      />
+                    ) : null}
+                  </div>
                 </InlineTableCell>
                 <InlineTableCell className="whitespace-nowrap min-w-50">
                   <Select
@@ -388,6 +417,26 @@ export function ScheduleOfValuesTab({
                     showCurrency={false}
                     value={item.amount ?? undefined}
                     onChange={(value) => updateItem(item.id, "amount", value)}
+                    disabled={locked}
+                  />
+                </InlineTableCell>
+                <InlineTableCell align="right">
+                  <Input
+                    type="number"
+                    min={0}
+                    max={100}
+                    step="0.01"
+                    className="text-right w-24 ml-auto"
+                    aria-label={`Retainage percent ${index + 1}`}
+                    value={item.retainage_percent ?? ""}
+                    placeholder="—"
+                    onChange={(e) =>
+                      updateItem(
+                        item.id,
+                        "retainage_percent",
+                        e.target.value === "" ? undefined : e.target.value,
+                      )
+                    }
                   />
                 </InlineTableCell>
                 <InlineTableCell align="right" numeric className="text-muted-foreground">
@@ -421,6 +470,7 @@ export function ScheduleOfValuesTab({
                       size="icon-xs"
                       aria-label={`Delete line ${index + 1}`}
                       onClick={() => handleDelete(item.id)}
+                      disabled={locked}
                       className="text-destructive hover:text-destructive"
                     >
                       <Trash2 />
@@ -435,6 +485,7 @@ export function ScheduleOfValuesTab({
           <InlineTableFooterRow type="totals">
             <InlineTableFooterCell align="right" colSpan={3}>Totals</InlineTableFooterCell>
             <InlineTableFooterCell align="right" numeric>{formatCurrency(totals.amount)}</InlineTableFooterCell>
+            <InlineTableFooterCell />
             <InlineTableFooterCell align="right" numeric>{formatCurrency(totals.billed)}</InlineTableFooterCell>
             <InlineTableFooterCell align="right" numeric>{formatCurrency(amountRemaining)}</InlineTableFooterCell>
             <InlineTableFooterCell />
