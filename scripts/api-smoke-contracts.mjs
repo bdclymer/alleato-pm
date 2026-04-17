@@ -39,6 +39,10 @@ const ENDPOINTS = [
   ["GET", `/api/projects/${PROJECT_ID}/budget/history`, "Budget history", [200, 401]],
   ["GET", `/api/projects/${PROJECT_ID}/budget/forecast`, "Budget forecast", [200, 401]],
   ["GET", `/api/projects/${PROJECT_ID}/budget/snapshots`, "Budget snapshots", [200, 401]],
+  // POST must return 401 (unauthenticated), never 403 from RLS.
+  // Issue #204: budget_snapshots lacked INSERT RLS policy — authenticated users
+  // got "New Row violates Row-level security policy" (403-equivalent) instead.
+  ["POST", `/api/projects/${PROJECT_ID}/budget/snapshots`, "Budget snapshots create (auth check)", [401]],
   ["GET", `/api/projects/${PROJECT_ID}/budget/direct-costs`, "Budget direct costs", [200, 401]],
   ["GET", `/api/projects/${PROJECT_ID}/budget-codes`, "Budget codes", [200, 401]],
   ["GET", `/api/projects/${PROJECT_ID}/budget/export?format=csv`, "Budget export CSV", [200, 401]],
