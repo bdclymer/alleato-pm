@@ -239,7 +239,7 @@ export function BudgetModificationModal({
                 step="0.01"
                 value={formData.amount}
                 onChange={(e) => handleChange("amount", e.target.value)}
-                placeholder="0.00"
+                placeholder=""
                 required
               />
               <p className="text-xs text-muted-foreground">

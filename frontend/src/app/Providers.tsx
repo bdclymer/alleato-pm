@@ -30,6 +30,7 @@ export function Providers({ children }: { children: ReactNode }) {
   return (
     <LiveblocksProvider
       authEndpoint="/api/liveblocks-auth"
+      badgeLocation="bottom-left"
       resolveUsers={({ userIds }) =>
         safeResolverFetch(
           `/api/liveblocks/users?userIds=${userIds.join(",")}`,

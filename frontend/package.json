@@ -10,8 +10,8 @@
   },
   "scripts": {
     "postinstall": "rm -rf .next 2>/dev/null || true",
-    "dev": "rm -rf .next && next dev --turbopack",
-    "dev:clean": "rm -rf .next && next dev --turbopack",
+    "dev": "pkill -f \"next dev --turbopack\" >/dev/null 2>&1 || true; rm -rf .next 2>/dev/null || true; next dev --turbopack",
+    "dev:clean": "pkill -f \"next dev --turbopack\" >/dev/null 2>&1 || true; rm -rf .next 2>/dev/null || true; next dev --turbopack",
     "build": "NODE_OPTIONS='--max-old-space-size=7168' next build",
     "start": "next start",
     "email:preview": "email dev --dir src/emails --port 3030",

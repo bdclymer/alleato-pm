@@ -151,6 +151,7 @@ export const GET = withApiGuardrails(
 
     const budgetData = (await budgetResponse.json()) as {
       lineItems?: Array<{
+        id?: string;
         originalBudgetAmount?: number;
         revisedBudget?: number;
         projectedBudget?: number;
@@ -160,6 +161,8 @@ export const GET = withApiGuardrails(
         estimatedCostAtCompletion?: number;
         forecastStartDate?: string | null;
         forecastEndDate?: string | null;
+        forecastMethod?: ForecastMethod;
+        forecastNotes?: string | null;
         costCode?: string;
         costCodeDescription?: string;
       }>;
@@ -174,8 +177,11 @@ export const GET = withApiGuardrails(
     let totalRevisedBudget = 0;
 
     const forecastByCostCode: Array<{
+      budgetLineId: string;
       costCode: string;
       costCodeName: string;
+      forecastMethod: ForecastMethod;
+      notes: string | null;
       projectedBudget: number;
       projectedCosts: number;
       projectedCostToComplete: number;
@@ -206,8 +212,11 @@ export const GET = withApiGuardrails(
 
       if (line.costCode) {
         forecastByCostCode.push({
+          budgetLineId: line.id ?? "",
           costCode: line.costCode,
           costCodeName: line.costCodeDescription || "",
+          forecastMethod: (line.forecastMethod as ForecastMethod) || "automatic",
+          notes: line.forecastNotes ?? null,
           projectedBudget,
           projectedCosts,
           projectedCostToComplete,

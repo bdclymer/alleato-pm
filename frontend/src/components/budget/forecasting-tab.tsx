@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { ForecastToCompleteModal } from "@/components/budget/modals/ForecastToCompleteModal";
+import { apiFetch } from "@/lib/api-client";
 
 interface ForecastingTabProps {
   projectId: string;
@@ -30,8 +32,11 @@ interface ForecastData {
     variancePercentage: number;
   };
   forecastByCostCode: Array<{
+    budgetLineId: string;
     costCode: string;
     costCodeName: string;
+    forecastMethod: "automatic" | "manual" | "lump_sum" | "monitored_resources";
+    notes: string | null;
     projectedBudget: number;
     projectedCosts: number;
     projectedCostToComplete: number;
@@ -144,6 +149,9 @@ export function ForecastingTab({ projectId }: ForecastingTabProps) {
   const [loading, setLoading] = React.useState(true);
   const [recalculating, setRecalculating] = React.useState(false);
   const [forecast, setForecast] = React.useState<ForecastData | null>(null);
+  const [selectedLine, setSelectedLine] =
+    React.useState<ForecastData["forecastByCostCode"][number] | null>(null);
+  const [showFtcEditor, setShowFtcEditor] = React.useState(false);
 
   const fetchForecast = React.useCallback(
     async (showRecalc = false) => {
@@ -151,11 +159,9 @@ export function ForecastingTab({ projectId }: ForecastingTabProps) {
         if (showRecalc) setRecalculating(true);
         else setLoading(true);
 
-        const response = await fetch(
-          `/api/projects/${projectId}/budget/forecast`
+        const data = await apiFetch<ForecastData>(
+          `/api/projects/${projectId}/budget/forecast`,
         );
-        if (!response.ok) throw new Error("Failed to fetch forecast");
-        const data = await response.json();
         setForecast(data);
         if (showRecalc) toast.success("Forecast updated");
       } catch {
@@ -229,6 +235,39 @@ export function ForecastingTab({ projectId }: ForecastingTabProps) {
     </div>
   );
 
+  const handleForecastSave = React.useCallback(
+    async (data: {
+      budgetLineId: string;
+      forecastMethod: string;
+      forecastAmount: number;
+      notes?: string | null;
+      lineItems?: Array<{
+        id?: string;
+        description: string;
+        quantity: number;
+        units: string;
+        unitCost: number;
+        utilizationRate?: number | null;
+        startDate?: string | null;
+        endDate?: string | null;
+        unitsRemainingMode?: "weeks" | "months";
+        sortOrder?: number;
+      }>;
+    }) => {
+      await apiFetch(`/api/projects/${projectId}/budget/forecast`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      toast.success("Forecast saved");
+      await fetchForecast();
+    },
+    [projectId, fetchForecast],
+  );
+
   if (loading) return <LoadingSkeleton />;
 
   return (
@@ -252,9 +291,9 @@ export function ForecastingTab({ projectId }: ForecastingTabProps) {
           />
         ) : (
           <div className="overflow-x-auto rounded-lg border border-border bg-card">
-            <div className="min-w-[1100px]">
+            <div className="w-max min-w-full">
               {/* Table header */}
-              <div className="grid grid-cols-[minmax(220px,1fr)_repeat(4,120px)_repeat(2,110px)_120px] gap-4 border-b border-border bg-muted/40 px-5 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <div className="grid grid-cols-[minmax(220px,1fr)_repeat(4,120px)_repeat(2,110px)_110px_120px] gap-4 border-b border-border bg-muted/40 px-5 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                 <span>Cost Code</span>
                 <span className="text-right">Projected Budget</span>
                 <span className="text-right">Projected Costs</span>
@@ -262,6 +301,7 @@ export function ForecastingTab({ projectId }: ForecastingTabProps) {
                 <span className="text-right">Est. at Completion</span>
                 <span className="text-right">Forecast Start</span>
                 <span className="text-right">Forecast End</span>
+                <span className="text-right">Method</span>
                 <span className="text-right">Variance</span>
               </div>
 
@@ -275,8 +315,8 @@ export function ForecastingTab({ projectId }: ForecastingTabProps) {
 
                   return (
                     <div
-                      key={item.costCode}
-                      className="grid grid-cols-[minmax(220px,1fr)_repeat(4,120px)_repeat(2,110px)_120px] gap-4 px-5 py-3.5 items-center hover:bg-muted/30 transition-colors"
+                      key={item.budgetLineId || `${item.costCode}-${item.costCodeName}`}
+                      className="grid grid-cols-[minmax(220px,1fr)_repeat(4,120px)_repeat(2,110px)_110px_120px] gap-4 px-5 py-3.5 items-center hover:bg-muted/30 transition-colors"
                     >
                       {/* Code + name */}
                       <div className="min-w-0 space-y-1">
@@ -327,9 +367,27 @@ export function ForecastingTab({ projectId }: ForecastingTabProps) {
                         {formatDate(item.forecastEndDate)}
                       </div>
 
+                      {/* Method */}
+                      <div className="text-right text-xs text-muted-foreground capitalize">
+                        {item.forecastMethod.replace("_", " ")}
+                      </div>
+
                       {/* Variance */}
-                      <div className="text-right text-sm">
+                      <div className="text-right text-sm flex items-center justify-end gap-2">
                         <VarianceCell value={item.projectedVariance} />
+                        {item.budgetLineId && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedLine(item);
+                              setShowFtcEditor(true);
+                            }}
+                          >
+                            Edit
+                          </Button>
+                        )}
                       </div>
                     </div>
                   );
@@ -338,7 +396,7 @@ export function ForecastingTab({ projectId }: ForecastingTabProps) {
 
               {/* Footer summary */}
               {items.length > 0 && (
-                <div className="grid grid-cols-[minmax(220px,1fr)_repeat(4,120px)_repeat(2,110px)_120px] gap-4 border-t border-border bg-muted/40 px-5 py-3 text-sm font-semibold">
+                <div className="grid grid-cols-[minmax(220px,1fr)_repeat(4,120px)_repeat(2,110px)_110px_120px] gap-4 border-t border-border bg-muted/40 px-5 py-3 text-sm font-semibold">
                   <span className="text-muted-foreground">Total</span>
                   <span className="text-right tabular-nums">
                     {formatCurrency(summary?.totalProjectedBudget ?? 0)}
@@ -352,6 +410,7 @@ export function ForecastingTab({ projectId }: ForecastingTabProps) {
                   <span className="text-right tabular-nums">
                     {formatCurrency(summary?.totalEstimatedCostAtCompletion ?? 0)}
                   </span>
+                  <span className="text-right text-xs text-muted-foreground">—</span>
                   <span className="text-right text-xs text-muted-foreground">—</span>
                   <span className="text-right text-xs text-muted-foreground">—</span>
                   <div className="text-right">
@@ -375,6 +434,27 @@ export function ForecastingTab({ projectId }: ForecastingTabProps) {
           </p>
         )}
       </div>
+
+      {selectedLine && (
+        <ForecastToCompleteModal
+          open={showFtcEditor}
+          onClose={() => {
+            setShowFtcEditor(false);
+            setSelectedLine(null);
+          }}
+          budgetLineId={selectedLine.budgetLineId}
+          projectId={projectId}
+          costCode={selectedLine.costCode}
+          currentData={{
+            forecastMethod: selectedLine.forecastMethod,
+            forecastAmount: selectedLine.projectedCostToComplete,
+            projectedBudget: selectedLine.projectedBudget,
+            projectedCosts: selectedLine.projectedCosts,
+            notes: selectedLine.notes ?? undefined,
+          }}
+          onSave={handleForecastSave}
+        />
+      )}
     </div>
   );
 }

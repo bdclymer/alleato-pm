@@ -11,6 +11,7 @@ export function Providers({ children }: PropsWithChildren) {
     <InboxProvider>
       <LiveblocksProvider
         authEndpoint={authWithRandomUser("/api/liveblocks-auth")}
+        badgeLocation="bottom-left"
         // Get users' info from their ID
         resolveUsers={async ({ userIds }) => {
           const searchParams = new URLSearchParams(

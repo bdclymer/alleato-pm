@@ -7,6 +7,14 @@ import { createClient } from "@/lib/supabase/client";
 import { ToolReferencePanel } from "@/components/domain/testing/ToolReferencePanel";
 import { FileUploadField } from "@/components/forms";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -157,6 +165,22 @@ function resolveScenarioStartPath(startUrl: string | null, projectId: string): s
   return `/${effectiveProjectId}/${path}`;
 }
 
+/** Converts a screenshot file into a data URL for admin feedback submissions. */
+function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        resolve(reader.result);
+        return;
+      }
+      reject(new Error("Unable to read screenshot file."));
+    };
+    reader.onerror = () => reject(new Error("Unable to read screenshot file."));
+    reader.readAsDataURL(file);
+  });
+}
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function TestingPage() {
@@ -170,7 +194,6 @@ export default function TestingPage() {
     notes: "",
     projectId: "",
     scenarioDepth: "broad" as ScenarioDepth,
-    autoSubmitFeedback: true,
   });
   const [activeRunId, setActiveRunId] = useState<string | null>(null);
   const [results, setResults] = useState<TestResult[]>([]);
@@ -195,6 +218,14 @@ export default function TestingPage() {
   const [editingCase, setEditingCase] = useState(false);
   const [editSaving, setEditSaving] = useState(false);
   const [editForm, setEditForm] = useState({ steps: "", setup_steps: "", context_note: "", expected_result: "", start_url: "" });
+  const [issueModalOpen, setIssueModalOpen] = useState(false);
+  const [issueSubmitting, setIssueSubmitting] = useState(false);
+  const [issueSubmitError, setIssueSubmitError] = useState<string | null>(null);
+  const [issueForm, setIssueForm] = useState<{ notes: string; screenshotDataUrl: string | null; screenshotName: string | null }>({
+    notes: "",
+    screenshotDataUrl: null,
+    screenshotName: null,
+  });
 
   // ── Manage Cases tab state ──
   const [manageSuite, setManageSuite] = useState<Suite | null>(null);
@@ -520,13 +551,16 @@ export default function TestingPage() {
     setView("running");
   };
 
-  // ── Send a failed test result to the feedback inbox ──
-  const sendToFeedback = useCallback(async (result: TestResult) => {
+  // Sends failed scenario details to admin feedback and includes hidden scenario context metadata.
+  const sendToFeedback = useCallback(async (
+    result: TestResult,
+    options?: { notes?: string; screenshotDataUrl?: string | null }
+  ) => {
     const tc = result.test_cases;
     if (feedbackSentIds.has(result.id)) return;
     setFeedbackSendingIds((prev) => new Set([...prev, result.id]));
 
-    const notes = notesMap[result.id] || null;
+    const notes = options?.notes ?? notesMap[result.id] ?? null;
     const sev = severityMap[result.id] || null;
     const feedbackSeverity: "low" | "medium" | "high" =
       sev === "critical" || sev === "major" ? "high" :
@@ -562,12 +596,20 @@ export default function TestingPage() {
             suite_display: selectedSuite?.display_name,
             tester: runForm.tester,
             source: "test-runner",
+            scenario_context: {
+              setup_steps: tc.setup_steps,
+              steps: tc.steps,
+              context_note: tc.context_note,
+              expected_result: tc.expected_result,
+              start_url: tc.start_url,
+              category: tc.category,
+              subcategory: tc.subcategory,
+            },
           },
+          screenshotDataUrl: options?.screenshotDataUrl ?? null,
         }),
       });
       setFeedbackSentIds((prev) => new Set([...prev, result.id]));
-    } catch {
-      // non-blocking — don't surface errors for background sends
     } finally {
       setFeedbackSendingIds((prev) => {
         const next = new Set(prev);
@@ -596,10 +638,6 @@ export default function TestingPage() {
       setResults((prev) =>
         prev.map((r) => r.id === current.id ? updatedResult : r)
       );
-      // Auto-send to feedback inbox on fail if toggle is on
-      if (status === "fail" && runForm.autoSubmitFeedback) {
-        void sendToFeedback(updatedResult);
-      }
       if (cursor < results.length - 1) {
         setCursor((c) => c + 1);
       } else {
@@ -609,7 +647,76 @@ export default function TestingPage() {
       setUiError(formatActionError(error, "Unable to save this test result."));
     }
     setSaving(false);
-  }, [current, activeRunId, notesMap, severityMap, cursor, results.length, runForm.autoSubmitFeedback, sendToFeedback]);
+  }, [current, activeRunId, notesMap, severityMap, cursor, results.length]);
+
+  // Opens the issue report modal prefilled with the current case notes.
+  const openIssueModal = useCallback(() => {
+    if (!current) return;
+    setIssueSubmitError(null);
+    setIssueForm({
+      notes: notesMap[current.id] ?? "",
+      screenshotDataUrl: null,
+      screenshotName: null,
+    });
+    setIssueModalOpen(true);
+  }, [current, notesMap]);
+
+  // Sensitive: writes test_results status and creates admin feedback/GitHub issue records.
+  const submitIssueReport = useCallback(async () => {
+    if (!current || !activeRunId) return;
+    setIssueSubmitError(null);
+    setUiError(null);
+    setIssueSubmitting(true);
+
+    const notes = issueForm.notes.trim() || null;
+    const severity = severityMap[current.id] || null;
+
+    try {
+      const { result } = await apiFetch<{ result: TestResult }>(
+        `/api/testing/runs/${activeRunId}/results/${current.id}`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({ status: "fail", notes, severity }),
+        },
+      );
+      const updatedResult = { ...current, status: result.status, notes: result.notes };
+      setResults((prev) => prev.map((r) => (r.id === current.id ? updatedResult : r)));
+      setNotesMap((prev) => ({ ...prev, [current.id]: issueForm.notes }));
+
+      await sendToFeedback(updatedResult, {
+        notes: issueForm.notes,
+        screenshotDataUrl: issueForm.screenshotDataUrl,
+      });
+
+      setIssueModalOpen(false);
+      if (cursor < results.length - 1) {
+        setCursor((c) => c + 1);
+      } else {
+        setView("complete");
+      }
+    } catch (error) {
+      setIssueSubmitError(formatActionError(error, "Unable to submit issue report."));
+    } finally {
+      setIssueSubmitting(false);
+    }
+  }, [current, activeRunId, issueForm, severityMap, sendToFeedback, cursor, results.length]);
+
+  // Reads and stores the selected screenshot so it can be uploaded with the issue report.
+  const handleIssueScreenshotSelected = useCallback((files: File[]) => {
+    const file = files[0];
+    if (!file) return;
+    void fileToDataUrl(file)
+      .then((dataUrl) => {
+        setIssueForm((prev) => ({
+          ...prev,
+          screenshotDataUrl: dataUrl,
+          screenshotName: file.name,
+        }));
+      })
+      .catch((error) => {
+        setIssueSubmitError(formatActionError(error, "Unable to read screenshot file."));
+      });
+  }, []);
 
   // ── Screenshot upload ──
   const handleFile = useCallback(async (file: File) => {
@@ -653,7 +760,7 @@ export default function TestingPage() {
         case "i":
         case "I":
           e.preventDefault();
-          void record("fail");
+          openIssueModal();
           break;
         case "s":
         case "S":
@@ -677,7 +784,7 @@ export default function TestingPage() {
     };
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
-  }, [view, record, results.length]);
+  }, [view, record, results.length, openIssueModal]);
 
   // ── Sync edit form when navigating to a new test case ──
   useEffect(() => {
@@ -1379,30 +1486,9 @@ export default function TestingPage() {
             <p className="text-xs text-center text-muted-foreground">Enter your name above to begin</p>
           )}
 
-          {/* Auto-submit feedback toggle */}
-          <label className="flex items-start gap-3 cursor-pointer group">
-            <div className="relative mt-0.5 shrink-0">
-              <input
-                type="checkbox"
-                className="sr-only peer"
-                checked={runForm.autoSubmitFeedback}
-                onChange={(e) => setRunForm((f) => ({ ...f, autoSubmitFeedback: e.target.checked }))}
-              />
-              <div className={cn(
-                "h-5 w-9 rounded-full border-2 transition-colors",
-                runForm.autoSubmitFeedback ? "bg-primary border-primary" : "bg-muted border-border"
-              )}>
-                <div className={cn(
-                  "absolute top-0.5 h-3.5 w-3.5 rounded-full bg-white shadow-xs transition-transform duration-150",
-                  runForm.autoSubmitFeedback ? "translate-x-4" : "translate-x-0.5"
-                )} />
-              </div>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-foreground">Auto-submit failures to feedback inbox</p>
-              <p className="text-xs text-muted-foreground mt-0.5">When you mark a test as &quot;Issue found&quot;, it&apos;s automatically sent to the admin feedback inbox and creates a GitHub issue.</p>
-            </div>
-          </label>
+          <p className="text-xs text-muted-foreground">
+            Selecting <span className="font-medium text-foreground">Issue found</span> opens a report form so notes and screenshots can be attached before submission.
+          </p>
         </div>
       </PageShell>
     );
@@ -1452,7 +1538,11 @@ export default function TestingPage() {
                     ) : (
                       <button
                         type="button"
-                        onClick={() => void sendToFeedback(r)}
+                        onClick={() => {
+                          void sendToFeedback(r).catch((error) => {
+                            setUiError(formatActionError(error, "Unable to send this failed test to feedback inbox."));
+                          });
+                        }}
                         disabled={feedbackSendingIds.has(r.id)}
                         className="flex items-center gap-1 text-xs text-orange-600 hover:text-orange-700 shrink-0 mt-0.5 transition-colors"
                       >
@@ -1929,8 +2019,8 @@ export default function TestingPage() {
                   Passed
                 </Button>
                 <Button
-                  onClick={() => void record("fail")}
-                  disabled={saving}
+                  onClick={openIssueModal}
+                  disabled={saving || issueSubmitting}
                   variant="destructive"
                   className="gap-2 h-11 text-sm font-semibold"
                 >
@@ -1965,7 +2055,7 @@ export default function TestingPage() {
                 }}
               />
 
-              {current.status === "fail" && !runForm.autoSubmitFeedback && (
+              {current.status === "fail" && (
                 feedbackSentIds.has(current.id) ? (
                   <span className="flex items-center gap-1 text-xs text-green-600">
                     <CheckCircle2 className="h-3.5 w-3.5" />
@@ -1974,7 +2064,11 @@ export default function TestingPage() {
                 ) : (
                   <button
                     type="button"
-                    onClick={() => void sendToFeedback(current)}
+                    onClick={() => {
+                      void sendToFeedback(current).catch((error) => {
+                        setUiError(formatActionError(error, "Unable to send this failed test to feedback inbox."));
+                      });
+                    }}
                     disabled={feedbackSendingIds.has(current.id)}
                     className="w-full flex items-center justify-center gap-1.5 text-xs text-orange-600 hover:text-orange-700 transition-colors rounded-md border border-border px-3 py-2 hover:bg-orange-50 dark:hover:bg-orange-950/20"
                   >
@@ -1982,13 +2076,6 @@ export default function TestingPage() {
                     {feedbackSendingIds.has(current.id) ? "Sending…" : "Send to feedback inbox"}
                   </button>
                 )
-              )}
-
-              {current.status === "fail" && runForm.autoSubmitFeedback && feedbackSentIds.has(current.id) && (
-                <span className="flex items-center gap-1 text-xs text-green-600">
-                  <CheckCircle2 className="h-3.5 w-3.5" />
-                  Sent to feedback inbox
-                </span>
               )}
             </section>
           </section>
@@ -2002,6 +2089,83 @@ export default function TestingPage() {
           <ToolReferencePanel toolName={selectedSuite.tool_name} />
         </div>
       )}
+
+      <Dialog open={issueModalOpen} onOpenChange={setIssueModalOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Report Issue Found</DialogTitle>
+            <DialogDescription>
+              Add notes and an optional screenshot. Scenario details are attached automatically in the background.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="issue-notes">Notes</Label>
+              <Textarea
+                id="issue-notes"
+                value={issueForm.notes}
+                onChange={(e) =>
+                  setIssueForm((prev) => ({ ...prev, notes: e.target.value }))
+                }
+                placeholder="Describe what failed and what you observed."
+                className="h-28 resize-none text-sm"
+                autoFocus
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Screenshot (optional)</Label>
+              <FileUploadField
+                label={<span className="text-xs text-muted-foreground">Upload screenshot for this issue report</span>}
+                accept="image/*"
+                multiple={false}
+                maxFiles={1}
+                maxSize={4 * 1024 * 1024}
+                variant="minimal"
+                showMetaText
+                disabled={issueSubmitting}
+                onFilesSelected={handleIssueScreenshotSelected}
+              />
+              {issueForm.screenshotDataUrl && (
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground">{issueForm.screenshotName ?? "Screenshot selected"}</p>
+                  <img
+                    src={issueForm.screenshotDataUrl}
+                    alt="Issue screenshot preview"
+                    className="max-h-48 w-full rounded-md border border-border object-contain"
+                  />
+                </div>
+              )}
+            </div>
+
+            {issueSubmitError && (
+              <p className="rounded-md bg-red-50 px-3 py-2 text-xs text-red-600 dark:bg-red-950/30 dark:text-red-300">
+                {issueSubmitError}
+              </p>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIssueModalOpen(false)}
+              disabled={issueSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => void submitIssueReport()}
+              disabled={issueSubmitting}
+            >
+              {issueSubmitting ? "Submitting…" : "Submit Issue"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </PageShell>
   );
 }
