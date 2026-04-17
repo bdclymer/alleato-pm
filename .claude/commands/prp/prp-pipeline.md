@@ -2,11 +2,12 @@
 
 ## Which Workflow Do I Use?
 
-| Situation | Workflow |
-|-----------|----------|
-| Building a feature (new or existing) | **Workflow A: Procore-First** |
-| Just need to run and fix tests for an existing feature | Run `/prp-test <feature>` directly |
-| **Want hands-off automation (recommended)** | **`/prp-pipeline <feature-name>`** |
+All features — new or existing — use the same Procore-First workflow.
+
+| Situation | Command |
+|-----------|---------|
+| **Hands-off automation (recommended)** | **`/prp-pipeline <feature-name>`** |
+| Step-by-step manual | Run each step below in order |
 
 ---
 
@@ -30,7 +31,7 @@ Pipeline complete — summary report produced
 
 ---
 
-## Workflow A: Procore-First (All Features)
+## Workflow: Procore-First (All Features)
 
 Use this workflow for all features — new or existing.
 
@@ -50,113 +51,62 @@ Step 5    /prp-validate PRPs/<feature>/prp-<feature>.md
 
 **What it does:** Researches Procore functionality and creates the feature spec.
 
-- Reads planning artifacts (`_bmad-output/planning-artifacts/<feature>/`) as supplemental context
+- Reads planning artifacts (`_bmad-output/planning-artifacts/<feature>/`) as supplemental context only
 - Reads Procore manifest (`.claude/procore-manifests/<feature>/`) as primary UI structure source
 - Runs `procore-docs-rag` queries for business rules, workflows, and statuses
 - WebFetches Procore support articles for anything still unclear
-- Produces in `PRPs/<feature>/`:
-  - `prp-<feature>.md` — what Procore does and what we need to build
-  - `prp-<feature>.html` — browser-viewable version
+- Produces `PRPs/<feature>/prp-<feature>.md` — what Procore does and what we need to build
 
-**Output:** PRP answering "what to build" based on Procore. No codebase analysis.
+**Output:** PRP answering "what to build" based on Procore. No codebase analysis. No schema analysis.
 
-### Step 2: `/prp-quality <path/to/prp.md>`
+### Step 2: `/prp-test-scenarios <feature-name>`
 
-**What it does:** Validates the PRP is complete enough for one-pass implementation.
+**What it does:** Generates human-readable Given/When/Then test scenarios from the PRP.
 
-- Checks all template sections are filled (Goal, Why, What, Context, Tasks, Validation)
-- Runs the "No Prior Knowledge" test
-- Verifies file references exist and URLs are accessible
-- Scores 1-10 on context completeness, information density, implementation readiness, validation quality
-- Minimum 8/10 required to proceed
+- Reads `PRPs/<feature>/prp-<feature>.md` as the source of truth
+- Reads `PRPs/<feature>/AUDIT.md` if it exists (to know what's already implemented)
+- Produces scenarios across 10 groups: Navigation, Create, Edit, Detail View, Status Workflows, List Features, Row Actions, Business Rules, Integrations, Error States
+- Marks each scenario "Ready to test" or "Blocked (requires: {item})"
 
-**Output:** APPROVED (proceed to Step 3) or NEEDS REVISION (fix and re-run Step 2).
+**Output:** `PRPs/<feature>/TEST-SCENARIOS.md` — acceptance criteria for the feature, not Playwright scripts.
 
-### Step 3: `/prp-execute <path/to/prp.md>`
+### Step 3: `/prp-audit <feature-name>`
 
-**What it does:** Implements the feature following the PRP.
+**What it does:** Compares the PRP spec against the current implementation.
 
-- Reads TASKS.md, CLAUDE.md, and all relevant project rules
+- Reviews database schema — tables, columns, FK types (INTEGER vs UUID)
+- Analyzes codebase — pages, API routes, components, hooks
+- Reviews incident log for applicable guardrails
+- Categorizes every PRP requirement as ✅ implemented / 🟡 partial / 🔴 missing
+
+**Output:** `PRPs/<feature>/AUDIT.md` (gap analysis) + `PRPs/<feature>/TASKS.md` (ordered implementation tasks).
+
+### Step 4: `/prp-execute PRPs/<feature>/prp-<feature>.md`
+
+**What it does:** Implements the feature following the PRP and TASKS.md.
+
+- Reads TASKS.md, AUDIT.md, CLAUDE.md, and all relevant project rules
+- Invokes `supabase-postgres-best-practices` skill for any Supabase-related tasks
+- Audits existing Supabase code before writing new code
 - Uses `/create-feature` scaffold for new CRUD entities (never writes from scratch)
 - Generates Supabase types before any database code
-- Follows PRP task order, updates TASKS.md after each completed task
-- Runs progressive validation (TypeScript, lint, route checks, query tests)
-- Writes E2E tests meeting project standards (Create, Read, Edit, Delete, Validation)
+- Follows TASKS.md phase order, checks off tasks as completed
+- Runs progressive validation (TypeScript, lint, route checks)
 
-**Output:** Implemented feature code with TASKS.md updated. Tests are written but not yet run.
+**Output:** Implemented feature code with TASKS.md updated (all items checked).
 
-### Step 4: `/prp-test <feature-name>`
+### Step 5: `/prp-validate PRPs/<feature>/prp-<feature>.md`
 
-**What it does:** Runs ALL tests, fixes failures, re-runs until everything passes.
+**What it does:** Final verification — both technical correctness AND Procore behavioral compliance.
 
-- Starts the dev server
-- Runs TypeScript compilation and lint
-- Runs route conflict check
-- Runs Playwright E2E tests with actual output shown
-- If any test fails: diagnoses, fixes, re-runs (up to 3 attempts per failure)
-- Verifies E2E tests meet standards (not smoke tests)
-- Runs production build
+- **Technical gates:** TASKS.md complete, TypeScript errors = 0, lint errors = 0, routes clean
+- **Procore compliance:** RAG spot-check + manifest spot-check (status values, required fields, list columns)
+- **Browser verification:** screenshots + videos required (minimum 4 each) via agent-browser
+  - Required videos: `create-happy-path.webm`, `edit-prefill.webm`, `validation-errors.webm`, `status-workflow.webm`
+- **DB field-level validation:** every field checked after create (not just "record exists")
+- **Edit pre-fill check:** all dropdowns must show saved values, not "Select..."
 
-**Output:** All tests passing with actual Playwright output in the conversation. Fix history documented.
-
-### Step 5: `/prp-validate <path/to/prp.md>`
-
-**What it does:** Final verification that everything is complete and correct.
-
-- Checks TASKS.md — all tasks must be marked `[x]`
-- Runs TypeScript, lint, route check, Supabase types freshness, production build
-- Tests Supabase queries with actual `node -e` execution
-- Confirms `/prp-test` was already run (does NOT run tests itself)
-- Verifies E2E test coverage meets CRUD standards
-- Checks code pattern compliance (page headers, route naming, file organization)
-- Produces structured validation report
-
-**Output:** Validation report with PASSED / FAILED status and confidence score.
-
----
-
-## Workflow B: Fix / Complete Existing Feature
-
-Use when the feature has existing code that is broken, incomplete, or both.
-
-```
-Step 1    /prp-audit <feature-name>
-          ↓
-Step 2    /prp-execute <path/to/fix-prp.md>
-          ↓
-Step 3    /prp-test <feature-name>
-          ↓
-Step 4    /prp-validate <path/to/fix-prp.md>
-```
-
-### Step 1: `/prp-audit <feature-name>`
-
-**What it does:** Audits the existing code to find what works, what's broken, and what's missing.
-
-- Discovers all existing artifacts (pages, routes, components, hooks, tests, PRP docs, DB tables)
-- Runs every validation check (TypeScript, lint, routes, query tests, E2E tests, dev server)
-- Categorizes everything into Working / Broken / Missing
-- Generates a targeted fix PRP (`prp-<feature>-fix.md`) that only covers gaps
-- Generates TASKS.md with only fix/completion tasks (nothing for what already works)
-
-**Output:** Gap analysis + targeted fix PRP + TASKS.md. No `/prp-quality` needed — the audit itself is the quality check.
-
-### Step 2: `/prp-execute <path/to/fix-prp.md>`
-
-**Same as Workflow A Step 3**, but with fix PRP behavior:
-
-- Reads the "Working (DO NOT TOUCH)" section and leaves those files alone
-- Uses existing working code as pattern reference instead of scaffolds
-- Only creates new files if explicitly called for in the "Missing" section
-- Focuses on fixing broken items first, then building missing items
-
-### Step 3: `/prp-test <feature-name>`
-
-**Same as Workflow A Step 4.** Runs all tests, fixes failures, re-runs until passing.
-
-### Step 4: `/prp-validate <path/to/fix-prp.md>`
-
-**Same as Workflow A Step 5.** Final verification.
+**Output:** `PRPs/<feature>/VALIDATION-REPORT.md` with PASS / FAIL status and confidence score.
 
 ---
 
@@ -165,11 +115,11 @@ Step 4    /prp-validate <path/to/fix-prp.md>
 | Command | Purpose | Input | Output |
 |---------|---------|-------|--------|
 | **`/prp-pipeline`** | **Full automated workflow** | **Feature name** | **Everything — hands-off** |
-| `/prp-create` | Procore research → feature spec | Feature name | `prp-<f>.md` + HTML |
+| `/prp-create` | Procore research → feature spec | Feature name | `prp-<feature>.md` |
 | `/prp-test-scenarios` | Generate user-facing test cases | Feature name | `TEST-SCENARIOS.md` |
 | `/prp-audit` | Gap analysis: built vs missing | Feature name | `AUDIT.md` + `TASKS.md` |
 | `/prp-execute` | Implement from PRP + audit | Path to PRP | Working code + updated TASKS.md |
-| `/prp-validate` | Final verification | Path to PRP | Validation report |
+| `/prp-validate` | Final verification with browser evidence | Path to PRP | `VALIDATION-REPORT.md` |
 
 ---
 
@@ -177,18 +127,19 @@ Step 4    /prp-validate <path/to/fix-prp.md>
 
 | File | Location |
 |------|----------|
-| PRP documents | `docs/PRPs/<feature>/` |
-| TASKS.md | `docs/PRPs/<feature>/TASKS.md` |
-| Crawl data | `docs/PRPs/<feature>/crawl/` |
-| Fix PRPs | `docs/PRPs/<feature>/prp-<feature>-fix.md` |
+| PRP documents | `PRPs/<feature>/` |
+| TASKS.md | `PRPs/<feature>/TASKS.md` |
+| AUDIT.md | `PRPs/<feature>/AUDIT.md` |
+| TEST-SCENARIOS.md | `PRPs/<feature>/TEST-SCENARIOS.md` |
+| VALIDATION-REPORT.md | `PRPs/<feature>/VALIDATION-REPORT.md` |
+| Verify output (screenshots/videos) | `verify-output/<feature>/` |
 | Scaffolds | `.claude/scaffolds/crud-resource/` |
 | PRP template | `.claude/templates/TEMPLATE-PRP.md` |
-| Tasks template | `.claude/templates/tasks_template.md` |
 | Incident log | `docs/patterns/INCIDENT-LOG.md` |
 | Pattern files | `docs/patterns/` |
 | Project rules | `.claude/rules/` |
-| E2E tests | `frontend/tests/e2e/` |
-| Playwright auth | `frontend/tests/.auth/user.json` |
+| Procore manifests | `.claude/procore-manifests/<feature>/` |
+| Planning artifacts | `_bmad-output/planning-artifacts/<feature>/` |
 
 ---
 
@@ -202,5 +153,5 @@ These are enforced by CLAUDE.md and `.claude/rules/`. Every command inherits the
 4. **Authentication Gate** — Playwright auth is automatic. Never ask user to log in
 5. **Next.js Cache Gate** — Clear `.next` cache when creating new routes
 6. **Root Cause Gate** — Gather runtime evidence before modifying code
-7. **E2E Testing Standards** — Tests must be real CRUD workflows, not smoke tests
+7. **Design System Gate** — Read DESIGN.md before building any UI
 8. **Use Available Tools** — Use MCP/CLI tools, don't tell user to run things manually
