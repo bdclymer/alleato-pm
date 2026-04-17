@@ -376,17 +376,12 @@ export const POST = withApiGuardrails(
       .delete()
       .eq("budget_line_id", budgetLineId);
 
-    if (deleteDetailItemsError) {
-      if (isMissingTableError(deleteDetailItemsError, "budget_forecast_line_items")) {
-        throw new GuardrailError({
-          code: "INTERNAL_ERROR",
-          where,
-          message:
-            "Forecast detail table is missing. Apply the latest Supabase migrations before saving monitored/manual forecast line items.",
-          status: 500,
-          severity: "high",
-        });
-      }
+    // If the table doesn't exist yet there is nothing to delete — skip silently.
+    // Only propagate unexpected errors (e.g. RLS, network).
+    if (
+      deleteDetailItemsError &&
+      !isMissingTableError(deleteDetailItemsError, "budget_forecast_line_items")
+    ) {
       throw deleteDetailItemsError;
     }
 
