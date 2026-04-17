@@ -233,6 +233,14 @@ export default function ProjectChangeEventsPage(): ReactElement {
     [projectId, refetchChangeEvents, deleteDialog],
   );
 
+  const handleSendRfqsForItem = React.useCallback(
+    (item: ChangeEvent) => {
+      tableState.setSelectedIds([String(item.id)]);
+      setShowRfqSheet(true);
+    },
+    [tableState],
+  );
+
   const handleBulkDelete = React.useCallback(() => {
     const selectedIds = tableState.selectedIds;
     if (selectedIds.length === 0) {
@@ -687,7 +695,7 @@ export default function ProjectChangeEventsPage(): ReactElement {
         getRowId: (item) => String(item.id),
         onRowClick: handleView,
         rowActions: (item) =>
-          renderChangeEventRowActions(item, handleView, handleEdit, handleDelete),
+          renderChangeEventRowActions(item, handleView, handleEdit, handleDelete, handleSendRfqsForItem),
         renderExpandedRow,
       }}
       sorting={{

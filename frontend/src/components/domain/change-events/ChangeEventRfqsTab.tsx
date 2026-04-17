@@ -7,6 +7,8 @@ import { StatusBadge, EmptyState } from "@/components/ds";
 import { Button } from "@/components/ui/button";
 import type { ChangeEventRfq } from "@/types/change-events";
 
+type RfqWithResponseCount = ChangeEventRfq & { response_count?: number };
+
 interface ChangeEventRfqsTabProps {
   projectId: number;
   changeEventId: string;
@@ -41,7 +43,7 @@ export function ChangeEventRfqsTab({
   changeEventId,
   onSendRfq,
 }: ChangeEventRfqsTabProps) {
-  const [rfqs, setRfqs] = useState<ChangeEventRfq[]>([]);
+  const [rfqs, setRfqs] = useState<RfqWithResponseCount[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchRfqs = useCallback(async () => {
@@ -52,7 +54,7 @@ export function ChangeEventRfqsTab({
       );
       if (!res.ok) return;
       const json = await res.json();
-      const data: ChangeEventRfq[] = Array.isArray(json)
+      const data: RfqWithResponseCount[] = Array.isArray(json)
         ? json
         : (json.data ?? []);
       setRfqs(data);
@@ -83,14 +85,7 @@ export function ChangeEventRfqsTab({
         icon={<Send />}
         title="No RFQs"
         description="Send a Request for Quote to vendors for this change event."
-        action={
-          onSendRfq ? (
-            <Button size="sm" onClick={onSendRfq}>
-              <Send className="mr-2 h-4 w-4" />
-              Send RFQ
-            </Button>
-          ) : undefined
-        }
+        action={onSendRfq ? { label: "Send RFQ", onClick: onSendRfq } : undefined}
       />
     );
   }
@@ -138,7 +133,7 @@ export function ChangeEventRfqsTab({
                   {formatMoney(rfq.estimated_total_amount)}
                 </td>
                 <td className="px-4 py-3 text-right tabular-nums text-muted-foreground">
-                  {(rfq as ChangeEventRfq & { response_count?: number }).response_count ?? 0}
+                  {rfq.response_count ?? 0}
                 </td>
               </tr>
             ))}

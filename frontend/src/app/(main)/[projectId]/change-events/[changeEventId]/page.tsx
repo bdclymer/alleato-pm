@@ -65,6 +65,9 @@ import { ChangeEventPrimePCOsSection } from "@/components/domain/change-events/C
 import { ChangeEventCommitmentPCOsSection } from "@/components/domain/change-events/ChangeEventCommitmentPCOsSection";
 import { EntityComments } from "@/components/comments/entity-comments";
 import { EntityRoom } from "@/components/comments/entity-room";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { ChangeEventRfqForm } from "@/components/domain/change-events/ChangeEventRfqForm";
+import type { ChangeEventRfqFormValues } from "@/components/domain/change-events/ChangeEventRfqForm";
 
 /* ── Helpers ──────────────────────────────────────────────────────── */
 
@@ -140,6 +143,30 @@ export default function ChangeEventDetailPage() {
   } = useChangeEventDetail(projectId, changeEventId);
 
   const [showRfqSheet, setShowRfqSheet] = useState(false);
+  const [isCreatingRfq, setIsCreatingRfq] = useState(false);
+
+  const handleSendRfq = useCallback(async (values: ChangeEventRfqFormValues) => {
+    setIsCreatingRfq(true);
+    try {
+      await apiFetch(`/api/projects/${projectId}/change-events/rfqs`, {
+        method: "POST",
+        body: JSON.stringify({
+          changeEventId,
+          title: values.title.trim() || undefined,
+          dueDate: values.dueDate || undefined,
+          includeAttachments: values.includeAttachments,
+          notes: values.requestDetails.trim() || undefined,
+        }),
+      });
+      toast.success("RFQ created");
+      setShowRfqSheet(false);
+      void actions.refetch();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to create RFQ");
+    } finally {
+      setIsCreatingRfq(false);
+    }
+  }, [projectId, changeEventId, actions]);
 
   const { markupRows } = useVerticalMarkup(projectId);
 
@@ -786,6 +813,24 @@ export default function ChangeEventDetailPage() {
           void refreshLineage();
         }}
       />
+
+      <Sheet open={showRfqSheet} onOpenChange={setShowRfqSheet}>
+        <SheetContent className="overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Send Request for Quote</SheetTitle>
+          </SheetHeader>
+          <div className="px-8 pb-8">
+            {changeEvent && (
+              <ChangeEventRfqForm
+                changeEvent={changeEvent}
+                isSubmitting={isCreatingRfq}
+                onSubmit={handleSendRfq}
+                onCancel={() => setShowRfqSheet(false)}
+              />
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>

@@ -1,4 +1,4 @@
-import { ChevronRight, Eye, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { ChevronRight, Eye, MoreHorizontal, Pencil, Send, Trash2 } from "lucide-react";
 import type { ReactElement } from "react";
 
 import { StatusBadge } from "@/components/ds";
@@ -32,6 +32,7 @@ const SCOPE_FILTER_OPTIONS = [
   { value: "tbd", label: "TBD" },
   { value: "in_scope", label: "In Scope" },
   { value: "out_of_scope", label: "Out of Scope" },
+  { value: "allowance", label: "Allowance" },
 ];
 
 const TYPE_FILTER_OPTIONS = [
@@ -361,6 +362,7 @@ export function renderChangeEventRowActions(
   onView: (item: ChangeEvent) => void,
   onEdit: (item: ChangeEvent) => void,
   onDelete: (item: ChangeEvent) => void,
+  onSendRfqs?: (item: ChangeEvent) => void,
 ): ReactElement {
   return (
     <div className="flex items-center gap-1">
@@ -384,6 +386,12 @@ export function renderChangeEventRowActions(
             <Pencil className="mr-2 h-4 w-4" />
             Edit
           </DropdownMenuItem>
+          {onSendRfqs && (
+            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onSendRfqs(item); }}>
+              <Send className="mr-2 h-4 w-4" />
+              Send RFQs
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem className="text-destructive" onClick={() => onDelete(item)}>
             <Trash2 className="mr-2 h-4 w-4" />
             Delete
