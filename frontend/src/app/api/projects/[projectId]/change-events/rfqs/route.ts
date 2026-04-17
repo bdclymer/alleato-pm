@@ -21,13 +21,19 @@ const createRfqSchema = z.object({
 
 const DATE_FORMAT_LENGTH = 10;
 
-async function buildRfqPayload(projectId: number) {
+async function buildRfqPayload(projectId: number, changeEventId?: string) {
   const supabase = await createClient();
-  const { data: rfqs, error } = await supabase
+  let query = supabase
     .from("change_event_rfqs")
     .select("*")
     .eq("project_id", projectId)
     .order("created_at", { ascending: false });
+
+  if (changeEventId) {
+    query = query.eq("change_event_id", changeEventId);
+  }
+
+  const { data: rfqs, error } = await query;
 
   if (error) {
     throw new Error(error.message);
@@ -114,7 +120,10 @@ export const GET = withApiGuardrails(
       );
     }
 
-    const payload = await buildRfqPayload(numericProjectId);
+    const { searchParams } = new URL(request.url);
+    const changeEventId = searchParams.get("changeEventId") ?? undefined;
+
+    const payload = await buildRfqPayload(numericProjectId, changeEventId);
     return NextResponse.json({ data: payload });
     },
 );
