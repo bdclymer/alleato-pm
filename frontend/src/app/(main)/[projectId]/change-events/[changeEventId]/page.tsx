@@ -62,7 +62,8 @@ import { ChangeEventHistoryTab } from "@/components/domain/change-events/ChangeE
 import { ChangeEventRelatedItemsTab } from "@/components/domain/change-events/ChangeEventRelatedItemsTab";
 import { ChangeEventPrimePCOsSection } from "@/components/domain/change-events/ChangeEventPrimePCOsSection";
 import { ChangeEventCommitmentPCOsSection } from "@/components/domain/change-events/ChangeEventCommitmentPCOsSection";
-import { EntityComments, EntityRoom } from "@/components/comments/entity-comments";
+import { EntityComments } from "@/components/comments/entity-comments";
+import { EntityRoom } from "@/components/comments/entity-room";
 
 /* ── Helpers ──────────────────────────────────────────────────────── */
 

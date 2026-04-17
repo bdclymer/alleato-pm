@@ -94,6 +94,21 @@ export const POST = withApiGuardrails<{ projectId: string }>(
     }));
 
     const supabase = await createClient();
+    const runtimeSettingsClient = supabase as unknown as {
+      from: (table: "project_budget_settings") => {
+        select: (query: string) => {
+          eq: (
+            column: "project_id",
+            value: number,
+          ) => {
+            maybeSingle: () => Promise<{
+              data: { autocalculate_forecast_to_complete: boolean } | null;
+              error: unknown;
+            }>;
+          };
+        };
+      };
+    };
     const runtimeSupabase = supabase as unknown as {
       rpc: (
         fn: string,
@@ -113,6 +128,16 @@ export const POST = withApiGuardrails<{ projectId: string }>(
         { status: 401 },
       );
     }
+
+    // Applies project-level FTC defaults to newly created budget lines.
+    const { data: settings } = await runtimeSettingsClient
+      .from("project_budget_settings")
+      .select("autocalculate_forecast_to_complete")
+      .eq("project_id", projectIdNum)
+      .maybeSingle();
+    const defaultFtcMethod = settings?.autocalculate_forecast_to_complete === false
+      ? "manual"
+      : "automatic";
 
     // Look up cost code IDs from the code strings or IDs
     const costCodes = Array.from(
@@ -215,6 +240,20 @@ export const POST = withApiGuardrails<{ projectId: string }>(
       }
 
       results.push(budgetLine);
+
+      // Sensitive financial behavior: ensure line-level default FTC method follows project settings.
+      const { error: defaultMethodError } = await supabase
+        .from("budget_lines")
+        .update({
+          default_ftc_method: defaultFtcMethod,
+          forecasting_enabled: true,
+          updated_by: user.id,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", budgetLine.id);
+      if (defaultMethodError) {
+        return apiErrorResponse(defaultMethodError);
+      }
     }
 
     // Recalculate budget summary once (single aggregate query) after all writes.

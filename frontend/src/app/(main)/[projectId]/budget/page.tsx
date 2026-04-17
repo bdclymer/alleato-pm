@@ -799,6 +799,18 @@ function BudgetPageContent() {
     forecastMethod: string;
     forecastAmount: number;
     notes?: string | null;
+    lineItems?: Array<{
+      id?: string;
+      description: string;
+      quantity: number;
+      units: string;
+      unitCost: number;
+      utilizationRate?: number | null;
+      startDate?: string | null;
+      endDate?: string | null;
+      unitsRemainingMode?: "weeks" | "months";
+      sortOrder?: number;
+    }>;
   }) => {
     try {
       await apiFetch(`/api/projects/${projectId}/budget/forecast`, {

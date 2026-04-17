@@ -102,6 +102,21 @@ interface CostForecastEntry {
   created_at: string | null;
 }
 
+interface ForecastDetailRow {
+  budget_line_id: string;
+  method: "manual" | "monitored_resources";
+  description: string | null;
+  quantity: number | null;
+  units: string | null;
+  unit_cost: number | null;
+  utilization_rate: number | null;
+  start_date: string | null;
+  end_date: string | null;
+  units_remaining_mode: "weeks" | "months" | null;
+  forecast_date: string;
+  sort_order: number | null;
+}
+
 // ---------------------------------------------------------------------------
 // Budget-row fetch with v_budget_lines → budget_lines fallback
 // ---------------------------------------------------------------------------
@@ -160,6 +175,22 @@ type RuntimeCommitmentsLookupClient = {
           column: "id",
           values: string[],
         ) => Promise<{ data: Array<{ id: string }> | null; error: unknown }>;
+      };
+    };
+  };
+};
+
+type RuntimeForecastDetailClient = {
+  from: (table: "budget_forecast_line_items") => {
+    select: (query: string) => {
+      in: (
+        column: "budget_line_id",
+        values: string[],
+      ) => {
+        order: (
+          column: "forecast_date" | "sort_order",
+          options?: { ascending?: boolean },
+        ) => Promise<{ data: ForecastDetailRow[] | null; error: unknown }>;
       };
     };
   };
@@ -543,15 +574,23 @@ export async function computeBudgetGrandTotals(
     throw new BudgetFetchError(approvedCommitmentCOsRes.error);
   }
 
-  const budgetLineIds = (budgetRowsResult.data || [])
-    .map((row) => row.id)
-    .filter((id): id is string => typeof id === "string" && id.length > 0);
+  const budgetLineIds: string[] = [];
+  for (const row of budgetRowsResult.data || []) {
+    const id = row.id;
+    if (typeof id === "string" && id.length > 0) {
+      budgetLineIds.push(id);
+    }
+  }
 
   const defaultMethodByLineId = new Map<string, ForecastMethod>();
   const forecastEntryByLineId = new Map<string, CostForecastEntry>();
+  const forecastDetailRowsByLineId = new Map<string, ForecastDetailRow[]>();
 
   if (budgetLineIds.length > 0) {
-    const [lineConfigRes, costForecastRes] = await Promise.all([
+    const runtimeForecastDetailClient =
+      supabase as unknown as RuntimeForecastDetailClient;
+
+    const [lineConfigRes, costForecastRes, detailRowsRes] = await Promise.all([
       supabase
         .from("budget_lines")
         .select("id, default_ftc_method")
@@ -562,6 +601,13 @@ export async function computeBudgetGrandTotals(
         .in("budget_item_id", budgetLineIds)
         .order("forecast_date", { ascending: false })
         .order("created_at", { ascending: false }),
+      runtimeForecastDetailClient
+        .from("budget_forecast_line_items")
+        .select(
+          "budget_line_id, method, description, quantity, units, unit_cost, utilization_rate, start_date, end_date, units_remaining_mode, forecast_date, sort_order",
+        )
+        .in("budget_line_id", budgetLineIds)
+        .order("forecast_date", { ascending: false }),
     ]);
 
     if (lineConfigRes.error) {
@@ -569,6 +615,16 @@ export async function computeBudgetGrandTotals(
     }
     if (costForecastRes.error) {
       throw new BudgetFetchError(costForecastRes.error);
+    }
+    if (detailRowsRes.error) {
+      const serialized = JSON.stringify(detailRowsRes.error);
+      const isMissingDetailTable =
+        serialized.includes("budget_forecast_line_items") ||
+        serialized.includes("PGRST205") ||
+        serialized.includes("schema cache");
+      if (!isMissingDetailTable) {
+        throw new BudgetFetchError(detailRowsRes.error);
+      }
     }
 
     for (const row of lineConfigRes.data || []) {
@@ -581,6 +637,22 @@ export async function computeBudgetGrandTotals(
       const lineId = entry.budget_item_id;
       if (!lineId || forecastEntryByLineId.has(lineId)) continue;
       forecastEntryByLineId.set(lineId, entry);
+    }
+
+    const latestDateByLineId = new Map<string, string>();
+    for (const row of detailRowsRes.data || []) {
+      const lineId = row.budget_line_id;
+      const latestDate = latestDateByLineId.get(lineId);
+      if (!latestDate) {
+        latestDateByLineId.set(lineId, row.forecast_date);
+      }
+      if (latestDateByLineId.get(lineId) !== row.forecast_date) {
+        continue;
+      }
+      const existing = forecastDetailRowsByLineId.get(lineId) || [];
+      existing.push(row);
+      existing.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+      forecastDetailRowsByLineId.set(lineId, existing);
     }
   }
 
@@ -725,11 +797,18 @@ export async function computeBudgetGrandTotals(
         defaultMethodByLineId.get(lineId) ?? ("automatic" as ForecastMethod);
       const autoForecast = Math.max(0, projectedBudget - projectedCosts);
       const forecastEntry = forecastEntryByLineId.get(lineId);
+      const detailRows = forecastDetailRowsByLineId.get(lineId) || [];
+      const detailForecastAmount = computeDetailForecastAmount(
+        forecastMethod,
+        detailRows,
+      );
       const savedForecast = Number(forecastEntry?.forecast_to_complete ?? NaN);
       const hasSavedForecast = Number.isFinite(savedForecast);
       const forecastToComplete =
         forecastMethod === "automatic"
           ? autoForecast
+          : detailForecastAmount !== null
+            ? detailForecastAmount
           : hasSavedForecast
             ? savedForecast
             : autoForecast;
@@ -776,4 +855,86 @@ export async function computeBudgetGrandTotals(
     grandTotals,
     source: budgetRowsResult.source,
   };
+}
+
+// Computes FTC from persisted detail rows when method uses line-item detail.
+function computeDetailForecastAmount(
+  method: ForecastMethod,
+  detailRows: ForecastDetailRow[],
+): number | null {
+  if (detailRows.length === 0) {
+    return null;
+  }
+
+  if (method === "manual") {
+    return detailRows.reduce((sum, row) => {
+      const quantity = Math.max(0, Number(row.quantity) || 0);
+      const unitCost = Math.max(0, Number(row.unit_cost) || 0);
+      return sum + quantity * unitCost;
+    }, 0);
+  }
+
+  if (method === "monitored_resources") {
+    const today = new Date();
+    return detailRows.reduce((sum, row) => {
+      const utilization =
+        row.utilization_rate == null ? 100 : Math.max(0, Number(row.utilization_rate));
+      const calculatedUnitCost =
+        Math.max(0, Number(row.unit_cost) || 0) * (utilization / 100);
+      const start = row.start_date ? new Date(`${row.start_date}T00:00:00Z`) : null;
+      const end = row.end_date ? new Date(`${row.end_date}T00:00:00Z`) : null;
+      const mode = row.units_remaining_mode ?? "weeks";
+      if (
+        !start ||
+        !end ||
+        Number.isNaN(start.getTime()) ||
+        Number.isNaN(end.getTime()) ||
+        end < start
+      ) {
+        return sum + calculatedUnitCost;
+      }
+
+      const totalUnits =
+        mode === "months"
+          ? monitoredMonthUnitsInclusive(start, end)
+          : monitoredWeekUnitsInclusive(start, end);
+      const elapsedUnits =
+        mode === "months"
+          ? monitoredElapsedMonthUnits(start, today)
+          : monitoredElapsedWeekUnits(start, today);
+      const unitsRemaining = Math.max(0, totalUnits - elapsedUnits);
+      return sum + calculatedUnitCost * unitsRemaining;
+    }, 0);
+  }
+
+  return null;
+}
+
+// Computes non-prorated monitored week units (8 days -> 2 weeks).
+function monitoredWeekUnitsInclusive(start: Date, end: Date): number {
+  const msPerDay = 24 * 60 * 60 * 1000;
+  const dayCount = Math.floor((end.getTime() - start.getTime()) / msPerDay) + 1;
+  return Math.max(1, Math.ceil(dayCount / 7));
+}
+
+// Computes elapsed full monitored week units since start date.
+function monitoredElapsedWeekUnits(start: Date, today: Date): number {
+  if (today <= start) return 0;
+  const msPerWeek = 7 * 24 * 60 * 60 * 1000;
+  return Math.max(0, Math.floor((today.getTime() - start.getTime()) / msPerWeek));
+}
+
+// Computes non-prorated monitored month units.
+function monitoredMonthUnitsInclusive(start: Date, end: Date): number {
+  const years = end.getUTCFullYear() - start.getUTCFullYear();
+  const months = end.getUTCMonth() - start.getUTCMonth();
+  return Math.max(1, years * 12 + months + 1);
+}
+
+// Computes elapsed full monitored month units since start date.
+function monitoredElapsedMonthUnits(start: Date, today: Date): number {
+  if (today <= start) return 0;
+  const years = today.getUTCFullYear() - start.getUTCFullYear();
+  const months = today.getUTCMonth() - start.getUTCMonth();
+  return Math.max(0, years * 12 + months);
 }

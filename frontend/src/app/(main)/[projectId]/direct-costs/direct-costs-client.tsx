@@ -128,6 +128,14 @@ export function DirectCostsClient({
   const [isExportDialogOpen, setIsExportDialogOpen] = React.useState(false);
   const [isSyncing, setIsSyncing] = React.useState(false);
   const [isMobileViewport, setIsMobileViewport] = React.useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
+  const [directCostToDelete, setDirectCostToDelete] = React.useState<DirectCostRow | null>(null);
+  const [editingCostId, setEditingCostId] = React.useState<string | null>(null);
+  const [isEditSheetOpen, setIsEditSheetOpen] = React.useState(false);
+  const [isEditLoading, setIsEditLoading] = React.useState(false);
+  const [editingInitialData, setEditingInitialData] = React.useState<DirectCostUpdate | undefined>(undefined);
+  const [updatingStatusId, setUpdatingStatusId] = React.useState<string | null>(null);
+  const [bulkAction, setBulkAction] = React.useState<"approve" | "revise" | "delete" | null>(null);
 
   React.useEffect(() => {
     if (summaryTab !== "summary") return;

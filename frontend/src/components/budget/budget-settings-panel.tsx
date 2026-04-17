@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { SectionHeader } from "@/components/ds";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api-client";
 
 interface BudgetSettingsPanelProps {
   projectId: string;
@@ -26,11 +27,38 @@ const DEFAULTS: BudgetSettings = {
 };
 
 export function BudgetSettingsPanel({ projectId: _projectId }: BudgetSettingsPanelProps) {
+  const projectId = _projectId;
   const [settings, setSettings] = useState<BudgetSettings>(DEFAULTS);
   const [saved, setSaved] = useState<BudgetSettings>(DEFAULTS);
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const isDirty = JSON.stringify(settings) !== JSON.stringify(saved);
+
+  // Loads settings state from the project budget settings endpoint.
+  const loadSettings = async () => {
+    try {
+      setLoading(true);
+      const data = await apiFetch<BudgetSettings>(
+        `/api/projects/${projectId}/budget/settings`,
+      );
+      setSettings(data);
+      setSaved(data);
+    } catch (error) {
+      toast.error("Failed to load budget settings", {
+        description:
+          error instanceof Error ? error.message : "An unexpected error occurred.",
+      });
+      setSettings(DEFAULTS);
+      setSaved(DEFAULTS);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadSettings();
+  }, [projectId]);
 
   const handleToggle = (key: keyof BudgetSettings) => {
     setSettings((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -39,10 +67,18 @@ export function BudgetSettingsPanel({ projectId: _projectId }: BudgetSettingsPan
   const handleSave = async () => {
     setSaving(true);
     try {
-      // TODO: persist to project_budget_settings table once schema lands
-      await new Promise((r) => setTimeout(r, 300));
+      await apiFetch(`/api/projects/${projectId}/budget/settings`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(settings),
+      });
       setSaved(settings);
       toast.success("Budget settings saved");
+    } catch (error) {
+      toast.error("Failed to save budget settings", {
+        description:
+          error instanceof Error ? error.message : "An unexpected error occurred.",
+      });
     } finally {
       setSaving(false);
     }
@@ -85,7 +121,7 @@ export function BudgetSettingsPanel({ projectId: _projectId }: BudgetSettingsPan
         <Button variant="outline" onClick={handleCancel} disabled={!isDirty || saving}>
           Cancel
         </Button>
-        <Button onClick={handleSave} disabled={!isDirty || saving}>
+        <Button onClick={handleSave} disabled={loading || !isDirty || saving}>
           {saving ? "Saving…" : "Save Changes"}
         </Button>
       </div>

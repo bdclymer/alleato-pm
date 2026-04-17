@@ -1,6 +1,8 @@
 "use client";
 
 import * as React from "react";
+import { LiveList, LiveObject } from "@liveblocks/client";
+import { RoomProvider, ClientSideSuspense } from "@liveblocks/react/suspense";
 import { MessageSquare, X } from "lucide-react";
 import { useParams, usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -8,7 +10,7 @@ import { EntityComments } from "@/components/comments/entity-comments";
 import {
   CollaborationEntityProvider,
 } from "@/components/comments/entity-context";
-import { type CommentableEntityType } from "@/lib/liveblocks/rooms";
+import { getRoomId, type CommentableEntityType } from "@/lib/liveblocks/rooms";
 import { useCommentsSidebarStore } from "@/lib/stores/comments-sidebar-store";
 import { cn } from "@/lib/utils";
 
@@ -97,6 +99,7 @@ export function useEntityContext(): EntityContext | null {
     // ── Project-scoped routes ────────────────────────────────────────────────
     const projectId = params.projectId as string | undefined;
     if (!projectId) return getPageEntityContext(pathname);
+    const numericProjectId = Number.parseInt(projectId, 10);
 
     const segments = pathname.split("/").filter(Boolean);
     const projectIndex = segments.indexOf(projectId);
@@ -271,11 +274,13 @@ export function CommentsSidebarPanel() {
                   initialPresence={{ cursor: null }}
                   initialStorage={INITIAL_STORAGE}
                 >
-                  <div className="flex min-h-0 w-full flex-1 p-4">
-                    <EntityComments title="" stickyComposer />
-                  </div>
+                  <ClientSideSuspense fallback={<div className="flex min-h-0 w-full flex-1 p-4" />}>
+                    <div className="flex min-h-0 w-full flex-1 p-4">
+                      <EntityComments title="" stickyComposer />
+                    </div>
+                  </ClientSideSuspense>
                 </RoomProvider>
-              </ClientSideSuspense>
+              </CollaborationEntityProvider>
             </CommentsErrorBoundary>
           )}
         </div>

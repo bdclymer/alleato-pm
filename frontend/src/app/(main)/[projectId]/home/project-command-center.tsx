@@ -558,7 +558,7 @@ function PrimeContractSection({
                     </p>
                     <p className={cn(
                       "mt-0.5 text-sm font-medium",
-                      isPast(new Date(primary.end_date)) && primary.status !== "Closed"
+                      isPast(new Date(primary.end_date)) && primary.status !== "complete"
                         ? "text-destructive"
                         : "text-foreground"
                     )}>

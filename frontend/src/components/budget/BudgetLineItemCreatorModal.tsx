@@ -582,7 +582,7 @@ export function BudgetLineItemCreatorModal({
         open={isOpen}
         onClose={onClose}
         title="Add Budget Line Items"
-        size="full"
+        size="xl"
       >
         <SidebarBody className="min-h-0 px-6 pb-4">
           {/* Smart Copy UOM Toggle */}

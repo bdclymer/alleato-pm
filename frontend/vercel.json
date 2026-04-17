@@ -5,6 +5,6 @@
   "crons": [
     { "path": "/api/cron/decay-memories", "schedule": "0 4 * * 0" },
     { "path": "/api/cron/daily-flags", "schedule": "0 6 * * *" },
-    { "path": "/api/cron/acumatica-sync", "schedule": "0 */12 * * *" }
+    { "path": "/api/cron/acumatica-sync", "schedule": "0 12 * * *" }
   ]
 }

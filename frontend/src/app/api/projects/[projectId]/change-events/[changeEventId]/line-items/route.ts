@@ -115,20 +115,69 @@ export const GET = withApiGuardrails(
       (lineItems || []).map(i => i.commitment_id).filter(Boolean)
     )] as string[];
 
-    const commitmentMap = new Map<string, { id: string; contract_number: string | null; title: string | null; company_name: string | null; display_name?: string | null }>();
+    const commitmentMap = new Map<
+      string,
+      {
+        id: string;
+        contract_number: string | null;
+        title: string | null;
+        company_name: string | null;
+        display_name?: string | null;
+      }
+    >();
     if (commitmentIds.length > 0) {
       const [{ data: pos }, { data: subs }] = await Promise.all([
         supabase
           .from('purchase_orders')
-          .select('id, contract_number, title, company_name')
+          .select('id, contract_number, title, contract_company_id')
           .in('id', commitmentIds),
         supabase
           .from('subcontracts')
-          .select('id, contract_number, title, company_name')
+          .select('id, contract_number, title, contract_company_id')
           .in('id', commitmentIds),
       ]);
-      for (const po of pos || []) commitmentMap.set(po.id, po);
-      for (const sub of subs || []) commitmentMap.set(sub.id, sub);
+
+      const companyIds = [
+        ...new Set(
+          [...(pos || []), ...(subs || [])]
+            .map((record) => record.contract_company_id)
+            .filter((value): value is string => Boolean(value)),
+        ),
+      ];
+
+      const companyNameById = new Map<string, string | null>();
+      if (companyIds.length > 0) {
+        const { data: companies } = await supabase
+          .from('companies')
+          .select('id, name')
+          .in('id', companyIds);
+
+        for (const company of companies || []) {
+          companyNameById.set(company.id, company.name ?? null);
+        }
+      }
+
+      for (const po of pos || []) {
+        commitmentMap.set(po.id, {
+          id: po.id,
+          contract_number: po.contract_number,
+          title: po.title,
+          company_name: po.contract_company_id
+            ? (companyNameById.get(po.contract_company_id) ?? null)
+            : null,
+        });
+      }
+
+      for (const sub of subs || []) {
+        commitmentMap.set(sub.id, {
+          id: sub.id,
+          contract_number: sub.contract_number,
+          title: sub.title,
+          company_name: sub.contract_company_id
+            ? (companyNameById.get(sub.contract_company_id) ?? null)
+            : null,
+        });
+      }
     }
 
     // Format response

@@ -17,7 +17,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { ApiError, apiFetch } from "@/lib/api-client";
 import { getGravatarUrlClient } from "@/lib/gravatar";
-import { apiFetch, ApiError } from "@/lib/api-client";
 
 interface ProfileImageUploadProps {
   currentImage?: string;

@@ -11,7 +11,7 @@
     "grepInvert": null,
     "maxFailures": 0,
     "metadata": {
-      "actualWorkers": 5
+      "actualWorkers": 1
     },
     "preserveOutput": "always",
     "projects": [
@@ -20,7 +20,7 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 5
+          "actualWorkers": 1
         },
         "id": "setup",
         "name": "setup",
@@ -36,7 +36,7 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 5
+          "actualWorkers": 1
         },
         "id": "chromium",
         "name": "chromium",
@@ -52,7 +52,7 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 5
+          "actualWorkers": 1
         },
         "id": "debug",
         "name": "debug",
@@ -70,7 +70,7 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 5
+          "actualWorkers": 1
         },
         "id": "no-auth",
         "name": "no-auth",
@@ -142,16 +142,16 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 824,
+                  "duration": 582,
                   "errors": [],
                   "stdout": [
                     {
-                      "text": "Existing auth session is still valid — skipping re-authentication\n"
+                      "text": "Auth setup complete — session saved for test1@mail.com\n"
                     }
                   ],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-04-14T22:22:22.609Z",
+                  "startTime": "2026-04-17T09:57:41.277Z",
                   "annotations": [],
                   "attachments": [
                     {
@@ -176,237 +176,15 @@
           "column": 6
         }
       ]
-    },
-    {
-      "title": "supabase-e2e/studio/features/_global.setup.ts",
-      "file": "supabase-e2e/studio/features/_global.setup.ts",
-      "column": 0,
-      "line": 0,
-      "specs": [
-        {
-          "title": "Global Setup",
-          "ok": false,
-          "tags": [],
-          "tests": [
-            {
-              "timeout": 60000,
-              "annotations": [],
-              "expectedStatus": "passed",
-              "projectId": "setup",
-              "projectName": "setup",
-              "results": [
-                {
-                  "workerIndex": 1,
-                  "parallelIndex": 1,
-                  "status": "failed",
-                  "duration": 292,
-                  "error": {
-                    "message": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:8082/\nCall log:\n\u001b[2m  - navigating to \"http://localhost:8082/\", waiting until \"load\"\u001b[22m\n",
-                    "stack": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:8082/\nCall log:\n\u001b[2m  - navigating to \"http://localhost:8082/\", waiting until \"load\"\u001b[22m\n\n    at /Users/meganharrison/Documents/github/alleato-pm/frontend/tests/supabase-e2e/studio/features/_global.setup.ts:37:14",
-                    "location": {
-                      "file": "/Users/meganharrison/Documents/github/alleato-pm/frontend/tests/supabase-e2e/studio/features/_global.setup.ts",
-                      "column": 14,
-                      "line": 37
-                    },
-                    "snippet": "  35 |   const apiUrl = env.API_URL\n  36 |\n> 37 |   await page.goto(studioUrl).catch((err) => {\n     |              ^\n  38 |     console.error(\n  39 |       `\\n 🚨 Setup Error \n  40 | Studio is not available at: ${studioUrl}"
-                  },
-                  "errors": [
-                    {
-                      "location": {
-                        "file": "/Users/meganharrison/Documents/github/alleato-pm/frontend/tests/supabase-e2e/studio/features/_global.setup.ts",
-                        "column": 14,
-                        "line": 37
-                      },
-                      "message": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:8082/\nCall log:\n\u001b[2m  - navigating to \"http://localhost:8082/\", waiting until \"load\"\u001b[22m\n\n\n  35 |   const apiUrl = env.API_URL\n  36 |\n> 37 |   await page.goto(studioUrl).catch((err) => {\n     |              ^\n  38 |     console.error(\n  39 |       `\\n 🚨 Setup Error \n  40 | Studio is not available at: ${studioUrl}\n    at /Users/meganharrison/Documents/github/alleato-pm/frontend/tests/supabase-e2e/studio/features/_global.setup.ts:37:14"
-                    }
-                  ],
-                  "stdout": [
-                    {
-                      "text": "\n 🧪 Setting up test environment.\n    - Studio URL: http://localhost:8082\n    - API URL: https://localhost:8080\n    - Auth: disabled\n    - Is Platform: undefined\n    \n"
-                    }
-                  ],
-                  "stderr": [
-                    {
-                      "text": "\n 🚨 Setup Error \nStudio is not available at: http://localhost:8082\n\nPlease ensure:\n  1. Studio is running in the expected URL\n  2. You have proper network access\n\n"
-                    }
-                  ],
-                  "retry": 0,
-                  "startTime": "2026-04-14T22:22:22.828Z",
-                  "annotations": [],
-                  "attachments": [
-                    {
-                      "name": "screenshot",
-                      "contentType": "image/png",
-                      "path": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results/supabase-e2e-studio-features-_global.setup.ts-Global-Setup-setup/test-failed-1.png"
-                    },
-                    {
-                      "name": "video",
-                      "contentType": "video/webm",
-                      "path": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results/supabase-e2e-studio-features-_global.setup.ts-Global-Setup-setup/video.webm"
-                    }
-                  ],
-                  "errorLocation": {
-                    "file": "/Users/meganharrison/Documents/github/alleato-pm/frontend/tests/supabase-e2e/studio/features/_global.setup.ts",
-                    "column": 14,
-                    "line": 37
-                  }
-                }
-              ],
-              "status": "unexpected"
-            }
-          ],
-          "id": "35a4828c96b1a2fe5cab-ed2cb4a27969102ec80d",
-          "file": "supabase-e2e/studio/features/_global.setup.ts",
-          "line": 22,
-          "column": 1
-        }
-      ]
-    },
-    {
-      "title": "e2e/change-events/change-events-quick-verify.spec.ts",
-      "file": "e2e/change-events/change-events-quick-verify.spec.ts",
-      "column": 0,
-      "line": 0,
-      "specs": [],
-      "suites": [
-        {
-          "title": "Change Events - Quick Verification",
-          "file": "e2e/change-events/change-events-quick-verify.spec.ts",
-          "line": 10,
-          "column": 6,
-          "specs": [
-            {
-              "title": "List page loads without webpack errors",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 60000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [],
-                  "status": "skipped"
-                }
-              ],
-              "id": "ba2afd852b040153fdc2-7240d3240324a58f30ff",
-              "file": "e2e/change-events/change-events-quick-verify.spec.ts",
-              "line": 11,
-              "column": 7
-            },
-            {
-              "title": "Create form page loads without webpack errors",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 60000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [],
-                  "status": "skipped"
-                }
-              ],
-              "id": "ba2afd852b040153fdc2-366b2c0132bacdae1edd",
-              "file": "e2e/change-events/change-events-quick-verify.spec.ts",
-              "line": 36,
-              "column": 7
-            },
-            {
-              "title": "API endpoint returns without errors",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 60000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [],
-                  "status": "skipped"
-                }
-              ],
-              "id": "ba2afd852b040153fdc2-69cf9831b2c1826becea",
-              "file": "e2e/change-events/change-events-quick-verify.spec.ts",
-              "line": 64,
-              "column": 7
-            },
-            {
-              "title": "List page loads without webpack errors",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 60000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "debug",
-                  "projectName": "debug",
-                  "results": [],
-                  "status": "skipped"
-                }
-              ],
-              "id": "ba2afd852b040153fdc2-45297fda36c4b372fb6b",
-              "file": "e2e/change-events/change-events-quick-verify.spec.ts",
-              "line": 11,
-              "column": 7
-            },
-            {
-              "title": "Create form page loads without webpack errors",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 60000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "debug",
-                  "projectName": "debug",
-                  "results": [],
-                  "status": "skipped"
-                }
-              ],
-              "id": "ba2afd852b040153fdc2-0fa17f664d5585947d00",
-              "file": "e2e/change-events/change-events-quick-verify.spec.ts",
-              "line": 36,
-              "column": 7
-            },
-            {
-              "title": "API endpoint returns without errors",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 60000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "debug",
-                  "projectName": "debug",
-                  "results": [],
-                  "status": "skipped"
-                }
-              ],
-              "id": "ba2afd852b040153fdc2-3d3743ddcae46dc76f72",
-              "file": "e2e/change-events/change-events-quick-verify.spec.ts",
-              "line": 64,
-              "column": 7
-            }
-          ]
-        }
-      ]
     }
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-04-14T22:22:20.868Z",
-    "duration": 20479.681,
+    "startTime": "2026-04-17T09:57:39.812Z",
+    "duration": 2684.739,
     "expected": 1,
-    "skipped": 6,
-    "unexpected": 1,
+    "skipped": 0,
+    "unexpected": 0,
     "flaky": 0
   }
 }

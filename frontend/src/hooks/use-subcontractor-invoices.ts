@@ -121,6 +121,7 @@ export interface SubcontractorInvoiceDetailData {
   percent_complete?: number | null;
   approved_at?: string | null;
   submitted_at?: string | null;
+  is_retainage_release?: boolean | null;
   attachments?: Array<{ id?: string | number; file_name?: string | null; url?: string | null }> | null;
   subcontractor_invoice_line_items?: SubcontractorInvoiceLineItem[] | null;
   rollup?: SubcontractorInvoiceRollup | null;
