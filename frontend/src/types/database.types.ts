@@ -15500,6 +15500,87 @@ export type Database = {
           },
         ]
       }
+      procore_feature_implementations: {
+        Row: {
+          api_routes: string[]
+          component_paths: string[]
+          created_at: string
+          db_tables: string[]
+          feature_id: string
+          frontend_route: string | null
+          linked_test_case_id: string | null
+          mapping_status: string
+          notes: string | null
+          owner: string | null
+          tool_id: number | null
+          updated_at: string
+        }
+        Insert: {
+          api_routes?: string[]
+          component_paths?: string[]
+          created_at?: string
+          db_tables?: string[]
+          feature_id: string
+          frontend_route?: string | null
+          linked_test_case_id?: string | null
+          mapping_status?: string
+          notes?: string | null
+          owner?: string | null
+          tool_id?: number | null
+          updated_at?: string
+        }
+        Update: {
+          api_routes?: string[]
+          component_paths?: string[]
+          created_at?: string
+          db_tables?: string[]
+          feature_id?: string
+          frontend_route?: string | null
+          linked_test_case_id?: string | null
+          mapping_status?: string
+          notes?: string | null
+          owner?: string | null
+          tool_id?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "procore_feature_implementations_feature_id_fkey"
+            columns: ["feature_id"]
+            isOneToOne: true
+            referencedRelation: "procore_feature_mapping_gaps"
+            referencedColumns: ["feature_id"]
+          },
+          {
+            foreignKeyName: "procore_feature_implementations_feature_id_fkey"
+            columns: ["feature_id"]
+            isOneToOne: true
+            referencedRelation: "procore_features"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "procore_feature_implementations_linked_test_case_id_fkey"
+            columns: ["linked_test_case_id"]
+            isOneToOne: false
+            referencedRelation: "procore_test_traceability_gaps"
+            referencedColumns: ["case_id"]
+          },
+          {
+            foreignKeyName: "procore_feature_implementations_linked_test_case_id_fkey"
+            columns: ["linked_test_case_id"]
+            isOneToOne: false
+            referencedRelation: "test_cases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "procore_feature_implementations_tool_id_fkey"
+            columns: ["tool_id"]
+            isOneToOne: false
+            referencedRelation: "procore_tools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       procore_features: {
         Row: {
           ai_enhancement_notes: string | null
@@ -15702,6 +15783,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "procore_pages_feature_id_fkey"
+            columns: ["feature_id"]
+            isOneToOne: false
+            referencedRelation: "procore_feature_mapping_gaps"
+            referencedColumns: ["feature_id"]
+          },
           {
             foreignKeyName: "procore_pages_feature_id_fkey"
             columns: ["feature_id"]
@@ -22466,10 +22554,16 @@ export type Database = {
           context_note: string | null
           created_at: string
           expected_result: string | null
+          gap_type: string
           id: string
           priority: string
+          procore_feature_id: string | null
           scenario_depth: string
           setup_steps: string | null
+          source_article_id: number | null
+          source_chunk_id: number | null
+          source_manifest_path: string | null
+          source_url: string | null
           start_url: string | null
           steps: string | null
           subcategory: string | null
@@ -22485,10 +22579,16 @@ export type Database = {
           context_note?: string | null
           created_at?: string
           expected_result?: string | null
+          gap_type?: string
           id?: string
           priority?: string
+          procore_feature_id?: string | null
           scenario_depth?: string
           setup_steps?: string | null
+          source_article_id?: number | null
+          source_chunk_id?: number | null
+          source_manifest_path?: string | null
+          source_url?: string | null
           start_url?: string | null
           steps?: string | null
           subcategory?: string | null
@@ -22504,10 +22604,16 @@ export type Database = {
           context_note?: string | null
           created_at?: string
           expected_result?: string | null
+          gap_type?: string
           id?: string
           priority?: string
+          procore_feature_id?: string | null
           scenario_depth?: string
           setup_steps?: string | null
+          source_article_id?: number | null
+          source_chunk_id?: number | null
+          source_manifest_path?: string | null
+          source_url?: string | null
           start_url?: string | null
           steps?: string | null
           subcategory?: string | null
@@ -22519,6 +22625,34 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "test_cases_procore_feature_id_fkey"
+            columns: ["procore_feature_id"]
+            isOneToOne: false
+            referencedRelation: "procore_feature_mapping_gaps"
+            referencedColumns: ["feature_id"]
+          },
+          {
+            foreignKeyName: "test_cases_procore_feature_id_fkey"
+            columns: ["procore_feature_id"]
+            isOneToOne: false
+            referencedRelation: "procore_features"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "test_cases_source_article_id_fkey"
+            columns: ["source_article_id"]
+            isOneToOne: false
+            referencedRelation: "support_articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "test_cases_source_chunk_id_fkey"
+            columns: ["source_chunk_id"]
+            isOneToOne: false
+            referencedRelation: "support_article_chunks"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "test_cases_suite_id_fkey"
             columns: ["suite_id"]
@@ -22567,6 +22701,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "test_results_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "procore_test_traceability_gaps"
+            referencedColumns: ["case_id"]
+          },
           {
             foreignKeyName: "test_results_case_id_fkey"
             columns: ["case_id"]
@@ -24771,12 +24912,99 @@ export type Database = {
         }
         Relationships: []
       }
+      procore_coverage_summary: {
+        Row: {
+          feature_mapping_percent: number | null
+          high_traceability_percent: number | null
+          matched_rebuild_features: number | null
+          total_high_tests: number | null
+          total_rebuild_features: number | null
+          traced_high_tests: number | null
+          uncovered_rebuild_features: number | null
+        }
+        Relationships: []
+      }
+      procore_feature_mapping_gaps: {
+        Row: {
+          feature_id: string | null
+          feature_name: string | null
+          feature_priority: string | null
+          feature_slug: string | null
+          feature_status: string | null
+          include_in_rebuild: boolean | null
+          mapping_status: string | null
+          tool_id: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "procore_feature_implementations_tool_id_fkey"
+            columns: ["tool_id"]
+            isOneToOne: false
+            referencedRelation: "procore_tools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       procore_rebuild_estimate: {
         Row: {
           category: string | null
           module_count: number | null
         }
         Relationships: []
+      }
+      procore_test_traceability_gaps: {
+        Row: {
+          case_id: string | null
+          gap_type: string | null
+          priority: string | null
+          procore_feature_id: string | null
+          source_article_id: number | null
+          source_chunk_id: number | null
+          source_manifest_path: string | null
+          source_url: string | null
+          suite_id: string | null
+          test_name: string | null
+          test_number: string | null
+          test_type: string | null
+          tool_name: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "test_cases_procore_feature_id_fkey"
+            columns: ["procore_feature_id"]
+            isOneToOne: false
+            referencedRelation: "procore_feature_mapping_gaps"
+            referencedColumns: ["feature_id"]
+          },
+          {
+            foreignKeyName: "test_cases_procore_feature_id_fkey"
+            columns: ["procore_feature_id"]
+            isOneToOne: false
+            referencedRelation: "procore_features"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "test_cases_source_article_id_fkey"
+            columns: ["source_article_id"]
+            isOneToOne: false
+            referencedRelation: "support_articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "test_cases_source_chunk_id_fkey"
+            columns: ["source_chunk_id"]
+            isOneToOne: false
+            referencedRelation: "support_article_chunks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "test_cases_suite_id_fkey"
+            columns: ["suite_id"]
+            isOneToOne: false
+            referencedRelation: "test_suites"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       project_activity_view: {
         Row: {
@@ -25401,6 +25629,14 @@ export type Database = {
       archive_task: {
         Args: { archived_by_param?: string; task_id_param: string }
         Returns: boolean
+      }
+      assert_procore_coverage_gate: {
+        Args: {
+          allowed_uncovered_features?: number
+          min_feature_mapping_percent?: number
+          min_high_traceability_percent?: number
+        }
+        Returns: undefined
       }
       auto_archive_old_chats: { Args: never; Returns: number }
       backfill_meeting_participants_to_contacts: {

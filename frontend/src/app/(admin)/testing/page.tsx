@@ -252,7 +252,7 @@ export default function TestingPage() {
   useEffect(() => {
     apiFetch<{ suites?: Suite[] }>("/api/testing/suites")
       .then((d) => {
-        const loaded: Suite[] = (d.suites ?? []).filter((s: Suite) => s.scenario_count > 0);
+        const loaded: Suite[] = d.suites ?? [];
         setSuites(loaded);
 
         // Fetch in-progress runs for each suite
