@@ -43,6 +43,7 @@ import {
   KpiRow,
   DataTable,
   SectionHeader,
+  AttachmentUploadPanel,
   Eyebrow,
   DateAvatar,
   AvatarStack,
@@ -335,6 +336,35 @@ export default function DesignSystemComponentsPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [attachmentDemoFiles, setAttachmentDemoFiles] = useState([
+    {
+      id: "a1",
+      name: "Metaballs_Presentation_2.pdf",
+      sizeBytes: 446 * 1024,
+      uploadedAtLabel: "2 days ago",
+      downloadUrl: "#",
+    },
+    {
+      id: "a2",
+      name: "Metaballs_Presentation_1.pdf",
+      sizeBytes: 446 * 1024,
+      uploadedAtLabel: "2 days ago",
+      downloadUrl: "#",
+    },
+  ]);
+
+  /** Simulates an attachment upload and appends it into the demo attachment list. */
+  async function handleAttachmentDemoUpload(file: File) {
+    await new Promise((resolve) => setTimeout(resolve, 900));
+    const demoFile = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      name: file.name,
+      sizeBytes: file.size,
+      uploadedAtLabel: "just now",
+      downloadUrl: "#",
+    };
+    setAttachmentDemoFiles((current) => [demoFile, ...current]);
+  }
 
   const NAV_SECTIONS = [
     { group: "Tokens", items: [
@@ -2024,6 +2054,25 @@ export default function DesignSystemComponentsPage() {
                 { label: "Submit for review", onClick: () => {} },
                 { label: "Submit & notify owner", onClick: () => {} },
               ]}
+            />
+          </div>
+        </div>
+
+        <Separator />
+
+        {/* AttachmentUploadPanel */}
+        <div className="space-y-3">
+          <p className="text-sm font-semibold text-foreground">AttachmentUploadPanel</p>
+          <p className="text-xs text-muted-foreground">
+            Reusable upload-and-attach surface with drag/drop, queue, and attached-file list.
+            Use for record attachments and document uploads.
+          </p>
+          <div className="max-w-2xl">
+            <AttachmentUploadPanel
+              title="Upload and attach file"
+              description="Attachments will be a part of this project."
+              files={attachmentDemoFiles}
+              onUploadFile={handleAttachmentDemoUpload}
             />
           </div>
         </div>

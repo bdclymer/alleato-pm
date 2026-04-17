@@ -244,6 +244,33 @@ export function useDuplicateSubmittal(projectId: number) {
   });
 }
 
+/**
+ * Uploads a file and creates a submittal attachment record.
+ */
+export function useUploadSubmittalAttachment(projectId: number, submittalId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (file: File): Promise<SubmittalDetail["submittal_attachments"][number]> => {
+      const formData = new FormData();
+      formData.append("file", file);
+      return apiFetch<SubmittalDetail["submittal_attachments"][number]>(
+        `/api/projects/${projectId}/submittals/${submittalId}/attachments`,
+        {
+          method: "POST",
+          body: formData,
+        },
+      );
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: submittalKeys.detail(projectId, submittalId) });
+      toast.success("Attachment uploaded");
+    },
+    onError: (err: Error) => {
+      toast.error("Could not upload attachment", { description: err.message });
+    },
+  });
+}
+
 export function useAddWorkflowStep(projectId: number, submittalId: string) {
   const qc = useQueryClient();
   return useMutation({

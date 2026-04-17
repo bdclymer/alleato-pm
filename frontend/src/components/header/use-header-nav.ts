@@ -50,6 +50,7 @@ const changeEventTitleCache = new Map<string, string>();
 const primeCoTitleCache = new Map<string, string>();
 const invoiceTitleCache = new Map<string, string>();
 const rfiTitleCache = new Map<string, string>();
+const submittalTitleCache = new Map<string, string>();
 const settingsUserTitleCache = new Map<string, string>();
 const subcontractorInvoiceTitleCache = new Map<string, { commitmentLabel: string; invoiceLabel: string }>();
 const drawingTitleCache = new Map<string, string>();
@@ -82,6 +83,7 @@ export function useHeaderNav(): UseHeaderNavReturn {
   const [primeCoTitle, setPrimeCoTitle] = useState<string | null>(null);
   const [invoiceTitle, setInvoiceTitle] = useState<string | null>(null);
   const [rfiTitle, setRfiTitle] = useState<string | null>(null);
+  const [submittalTitle, setSubmittalTitle] = useState<string | null>(null);
   const [settingsUserTitle, setSettingsUserTitle] = useState<string | null>(null);
   const [subcontractorInvoiceInfo, setSubcontractorInvoiceInfo] = useState<{ commitmentLabel: string; invoiceLabel: string } | null>(null);
   const [drawingTitle, setDrawingTitle] = useState<string | null>(null);
@@ -233,6 +235,13 @@ export function useHeaderNav(): UseHeaderNavReturn {
       /^\d+$/.test(segments[0]) &&
       segments[1] === "rfis" &&
       segments[2] !== "new";
+    const isSubmittalDetailRoute =
+      segments.length >= 3 &&
+      /^\d+$/.test(segments[0]) &&
+      segments[1] === "submittals" &&
+      segments[2] !== "new" &&
+      segments[2] !== "recycle-bin" &&
+      segments[2] !== "settings";
     const isSettingsUserDetailRoute =
       segments.length >= 3 &&
       segments[0] === "settings" &&
@@ -326,6 +335,8 @@ export function useHeaderNav(): UseHeaderNavReturn {
         label = companyTitle || "Company";
       } else if (isRfiDetailRoute && index === 2) {
         label = rfiTitle || "RFI";
+      } else if (isSubmittalDetailRoute && index === 2) {
+        label = submittalTitle || "Submittal";
       } else if (isSettingsUserDetailRoute && index === 2) {
         label = settingsUserTitle || "User";
       } else if (isSubcontractorInvoiceDetailRoute && index === 2) {
@@ -385,7 +396,7 @@ export function useHeaderNav(): UseHeaderNavReturn {
     });
 
     return crumbs;
-  }, [pathname, companyTitle, vendorTitle, contactTitle, currentProject, meetingTitle, globalMeetingTitle, primeContractTitle, commitmentTitle, primePcoTitle, changeEventTitle, primeCoTitle, invoiceTitle, rfiTitle, settingsUserTitle, subcontractorInvoiceInfo, drawingTitle]);
+  }, [pathname, companyTitle, vendorTitle, contactTitle, currentProject, meetingTitle, globalMeetingTitle, primeContractTitle, commitmentTitle, primePcoTitle, changeEventTitle, primeCoTitle, invoiceTitle, rfiTitle, submittalTitle, settingsUserTitle, subcontractorInvoiceInfo, drawingTitle]);
   useEffect(() => {
     const segments = pathname?.split("/").filter(Boolean) ?? [];
     const isMeetingDetailRoute =
@@ -1098,6 +1109,71 @@ export function useHeaderNav(): UseHeaderNavReturn {
     };
 
     fetchRfiTitle();
+    return () => {
+      isActive = false;
+    };
+  }, [pathname]);
+
+  // Fetch title for submittal detail routes ([projectId]/submittals/[submittalId]).
+  useEffect(() => {
+    const segments = pathname?.split("/").filter(Boolean) ?? [];
+    const isSubmittalDetailRoute =
+      segments.length >= 3 &&
+      /^\d+$/.test(segments[0]) &&
+      segments[1] === "submittals" &&
+      segments[2] !== "new" &&
+      segments[2] !== "recycle-bin" &&
+      segments[2] !== "settings";
+
+    if (!isSubmittalDetailRoute) {
+      setSubmittalTitle(null);
+      return;
+    }
+
+    const projectId = segments[0];
+    const submittalId = segments[2];
+    const cacheKey = `${projectId}:${submittalId}`;
+    const cached = submittalTitleCache.get(cacheKey);
+    if (cached) {
+      setSubmittalTitle(cached);
+      return;
+    }
+
+    let isActive = true;
+    const fetchSubmittalTitle = async () => {
+      // Resolve breadcrumb label from submittal number + title to avoid raw UUID crumbs.
+      try {
+        const response = await fetch(
+          `/api/projects/${projectId}/submittals/${submittalId}`,
+        );
+        if (!response.ok) return;
+        const contentType = response.headers.get("content-type") || "";
+        if (!contentType.includes("application/json")) return;
+        const data = await response.json();
+        const number =
+          typeof data?.submittal_number === "string" &&
+          data.submittal_number.trim().length > 0
+            ? data.submittal_number.trim()
+            : null;
+        const title =
+          typeof data?.title === "string" && data.title.trim().length > 0
+            ? data.title.trim()
+            : null;
+        const resolvedTitle = number && title ? `${number} — ${title}` : (title ?? number);
+
+        if (!isActive) return;
+        if (resolvedTitle) {
+          submittalTitleCache.set(cacheKey, resolvedTitle);
+          setSubmittalTitle(resolvedTitle);
+        } else {
+          setSubmittalTitle(null);
+        }
+      } catch {
+        // Best-effort only
+      }
+    };
+
+    fetchSubmittalTitle();
     return () => {
       isActive = false;
     };
