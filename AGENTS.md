@@ -391,7 +391,17 @@ npx playwright test tests/e2e/budget-line-item-validation.spec.ts --headed
 - Required evidence per run: `session.webm`, before/after screenshots, snapshots, action log, `VERIFICATION_SUMMARY.md`
 - Optional scripted actions file template: `scripts/templates/agent-browser-actions.example.txt`
 
-**Auth is pre-configured.** Playwright uses saved session at `tests/.auth/user.json`. Never add login code to individual tests. If the session expires, run `npx playwright test tests/auth.setup.ts` once to refresh it. Credentials are in `.env` as `PROCORE_USER` / `PROCORE_PASSWORD`.
+**Auth is pre-configured.** Playwright uses saved session at `tests/.auth/user.json`. Never add login code to individual tests. If the session expires, run `npx playwright test tests/auth.setup.ts` once to refresh it.
+
+**Credential source of truth:**
+- For Alleato app login (`projects.alleatogroup.com`, local app auth pages, Playwright auth refresh), use `.env` `TEST_USER_1` / `TEST_PASSWORD_1`. `APP_USERNAME` / `APP_PASSWORD` are equivalent aliases.
+- For Procore login and Procore crawl scripts, use `.env` `PROCORE_USER` / `PROCORE_PASSWORD`.
+- Never use `PROCORE_USER` / `PROCORE_PASSWORD` to log into the Alleato app unless the user explicitly says the app is configured to share those credentials.
+
+**Agent-browser auth rule:** when `agent-browser` hits an authenticated page and redirects to login, do not treat auth as a blocker. Choose credentials based on the target system:
+- Alleato app -> `TEST_USER_1` / `TEST_PASSWORD_1`
+- Procore -> `PROCORE_USER` / `PROCORE_PASSWORD`
+If the first login attempt fails, verify that the correct credential family was used before reporting an auth blocker.
 
 ---
 

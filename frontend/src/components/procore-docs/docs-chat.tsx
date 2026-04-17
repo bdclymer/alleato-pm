@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { apiFetch } from "@/lib/api-client";
 
 interface Message {
   role: "user" | "assistant";
@@ -121,24 +122,18 @@ export function DocsChat() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/procore-docs/ask", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: input }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => null) as Record<string, unknown> | null;
-        const message = (errorData?.error_message ?? errorData?.error ?? "Failed to get response") as string;
-        throw new Error(message);
-      }
-
-      const data = await response.json();
+      const data = await apiFetch<{ answer: string; sources?: Message["sources"] }>(
+        "/api/procore-docs/ask",
+        {
+          method: "POST",
+          body: JSON.stringify({ query: input }),
+        },
+      );
 
       const assistantMessage: Message = {
         role: "assistant",
-        content: data.answer,
-        sources: data.sources,
+        content: data?.answer ?? "",
+        sources: data?.sources,
       };
 
       setMessages((prev) => [...prev, assistantMessage]);

@@ -20,6 +20,7 @@ Leader reviews all pending handoffs here.
 | `docs/ops/handoffs/2026-04-14-S9-directory-members-company.md` | S9 | ORCH-011 | 2026-04-14 | Yes | Pending Review | Added company column to live project members table and cleared targeted directory page warnings; eslint now returns 0 warnings, 0 errors |
 | `docs/ops/handoffs/2026-04-14-SC-budget-regression-coverage.md` | SC | ORCH-012 | 2026-04-14 | Yes | Pending Review | Replaced skipped/stale budget regression coverage with current-UI create/edit failure-message specs; browser runtime rerun still hangs and is documented as the remaining gap |
 | `docs/ops/handoffs/2026-04-14-S11-route-guardrails.md` | S11 | ORCH-013 | 2026-04-14 | Yes | Pending Review | Changed-route raw-error debt now blocks touched routes; predeploy now runs changed-file API-client enforcement before route/build stages |
+| `docs/ops/handoffs/2026-04-14-SD-punch-list-smoke.md` | SD | ORCH-014 | 2026-04-14 | Yes | Pending Review | Follow-up fix completed: shared punch-item write schema now normalizes blank optional fields, targeted route tests pass (10/10), and live required-fields-only create succeeds in the UI. |
 
 ## Disposition Rules
 

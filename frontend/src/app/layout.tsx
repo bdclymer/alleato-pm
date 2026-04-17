@@ -43,7 +43,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className="font-sans">
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className="font-sans"
+      data-scroll-behavior="smooth"
+    >
       <body
         className="font-sans antialiased text-foreground"
         suppressHydrationWarning

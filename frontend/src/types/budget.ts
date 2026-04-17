@@ -1,3 +1,9 @@
+export type ForecastMethod =
+  | "automatic"
+  | "manual"
+  | "lump_sum"
+  | "monitored_resources";
+
 export interface BudgetLineItem {
   id: string;
   costCode: string;
@@ -23,6 +29,8 @@ export interface BudgetLineItem {
   forecastToComplete: number;
   estimatedCostAtCompletion: number;
   projectedOverUnder: number;
+  forecastMethod?: ForecastMethod;
+  forecastNotes?: string | null;
   children?: BudgetLineItem[];
   expanded?: boolean;
 }

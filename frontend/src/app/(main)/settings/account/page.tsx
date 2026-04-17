@@ -24,6 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { apiFetch } from "@/lib/api-client";
 
 function SectionCard({
   icon: Icon,
@@ -64,21 +65,14 @@ export default function AccountSettingsPage() {
       const formData = new FormData();
       formData.append("file", file);
 
-      const res = await fetch("/api/company/logo", {
+      const data = await apiFetch<{ logoUrl: string }>("/api/company/logo", {
         method: "POST",
         body: formData,
       });
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        setLogoError(data.error || "Upload failed");
-        return;
-      }
-
       setLogoUrl(data.logoUrl);
-    } catch {
-      setLogoError("Upload failed. Please try again.");
+    } catch (err) {
+      setLogoError(err instanceof Error ? err.message : "Upload failed. Please try again.");
     } finally {
       setLogoUploading(false);
       // Reset input so re-selecting the same file triggers onChange

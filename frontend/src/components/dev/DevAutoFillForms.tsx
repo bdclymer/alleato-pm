@@ -307,6 +307,7 @@ export function DevAutoFillForms() {
       return;
     }
 
+    // Delay DOM mutation until after hydration so dev tooling does not create false mismatch errors.
     const enhanceAllForms = () => {
       if (DISABLED_PATHS.has(window.location.pathname)) {
         return;
@@ -316,8 +317,6 @@ export function DevAutoFillForms() {
         enhanceForm(form);
       }
     };
-
-    enhanceAllForms();
 
     const handleAutoFillRequest = (event: Event) => {
       const customEvent = event as CustomEvent<{ selector?: string }>;
@@ -332,19 +331,25 @@ export function DevAutoFillForms() {
       }
     };
 
-    const observer = new MutationObserver(() => {
+    let observer: MutationObserver | null = null;
+    const rafId = window.requestAnimationFrame(() => {
       enhanceAllForms();
-    });
 
-    observer.observe(document.body, {
-      subtree: true,
-      childList: true,
+      observer = new MutationObserver(() => {
+        enhanceAllForms();
+      });
+
+      observer.observe(document.body, {
+        subtree: true,
+        childList: true,
+      });
     });
 
     window.addEventListener(AUTOFILL_EVENT, handleAutoFillRequest);
 
     return () => {
-      observer.disconnect();
+      window.cancelAnimationFrame(rafId);
+      observer?.disconnect();
       window.removeEventListener(AUTOFILL_EVENT, handleAutoFillRequest);
     };
   }, []);

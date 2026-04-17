@@ -839,7 +839,7 @@ function InvoicesPaymentsSection({
 
   return (
     <section>
-      <SectionHeading action={<ViewAllLink href={`/${projectId}/invoicing`} label="View All" />}>
+      <SectionHeading action={<ViewAllLink href={`/${projectId}/invoices`} label="View All" />}>
         Invoices &amp; Payments
       </SectionHeading>
       {!hasAny ? (
@@ -887,7 +887,7 @@ function InvoicesPaymentsSection({
             </div>
           )}
           <Link
-            href={`/${projectId}/invoicing`}
+            href={`/${projectId}/invoices`}
             className="flex items-center gap-2 text-xs text-primary transition-colors hover:text-primary/80"
           >
             <Receipt className="h-3.5 w-3.5" />

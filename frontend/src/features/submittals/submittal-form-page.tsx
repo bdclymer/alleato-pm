@@ -27,6 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { apiFetch } from "@/lib/api-client";
 import { createClient } from "@/lib/supabase/client";
 import { useProjectCompanies } from "@/hooks/use-project-companies";
 import { useAuthUsers } from "@/hooks/use-auth-users";
@@ -145,11 +146,10 @@ export function SubmittalFormPage({
   const { data: submittalTypes, isLoading: typesLoading } = useSubmittalTypes();
   const { data: packages, isLoading: packagesLoading } = useQuery({
     queryKey: ["submittal-packages", projectId],
-    queryFn: async () => {
-      const res = await fetch(`/api/projects/${projectId}/submittals/packages`);
-      if (!res.ok) throw new Error("Failed to load packages");
-      return res.json() as Promise<{ id: string; name: string }[]>;
-    },
+    queryFn: async () =>
+      apiFetch<{ id: string; name: string }[]>(
+        `/api/projects/${projectId}/submittals/packages`,
+      ),
   });
 
   const form = useForm<SubmittalFormValues>({

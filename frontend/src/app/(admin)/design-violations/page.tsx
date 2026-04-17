@@ -14,6 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { apiFetch } from "@/lib/api-client";
 
 type Violation = {
   id: string;
@@ -68,11 +69,12 @@ export default function DesignViolationsPage() {
     setLoading(true);
     try {
       const status = filter === "all" ? "open,in_progress,fixed,wont_fix" : filter;
-      const res = await fetch(`/api/dev/violations?status=${status}`);
-      if (res.ok) {
-        const { violations: data } = await res.json();
-        setViolations(data ?? []);
-      }
+      const { violations: data } = await apiFetch<{ violations?: Violation[] }>(
+        `/api/dev/violations?status=${status}`,
+      );
+      setViolations(data ?? []);
+    } catch {
+      // Keep previous state on error
     } finally {
       setLoading(false);
     }
@@ -81,9 +83,8 @@ export default function DesignViolationsPage() {
   useEffect(() => { fetchViolations(); }, [fetchViolations]);
 
   async function updateStatus(id: string, status: string) {
-    await fetch("/api/dev/violations", {
+    await apiFetch("/api/dev/violations", {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, status }),
     });
     setSelected(null);

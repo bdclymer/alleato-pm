@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 import { DevAutoFillButton } from "@/hooks/use-dev-autofill";
 import { Input } from "@/components/ui/input";
+import { apiFetch, ApiError } from "@/lib/api-client";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -192,19 +193,18 @@ export default function NewBudgetLineItemPage() {
 
       try {
         setLoadingCodes(true);
-        const response = await fetch(`/api/projects/${projectId}/budget-codes`);
-
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error?.error || "Failed to load budget codes");
-        }
-
-        const { budgetCodes } = (await response.json()) as {
-          budgetCodes: BudgetCode[];
-        };
-
+        const { budgetCodes } = await apiFetch<{ budgetCodes: BudgetCode[] }>(
+          `/api/projects/${projectId}/budget-codes`,
+        );
         setBudgetCodes(budgetCodes || []);
       } catch (error) {
+        // Non-fatal: form can still work; users just won't see existing codes.
+        // Log to console so the failure isn't invisible (Rule 1 — no silent
+        // failures). apiFetch puts the real server message on ApiError.
+        console.error(
+          "Failed to load budget codes:",
+          error instanceof ApiError ? error.message : error,
+        );
         setBudgetCodes([]);
       } finally {
         setLoadingCodes(false);
@@ -251,26 +251,16 @@ export default function NewBudgetLineItemPage() {
       }
 
       // API call to create budget code
-      const response = await fetch(`/api/projects/${projectId}/budget-codes`, {
+      const { budgetCode: createdCode } = await apiFetch<{
+        budgetCode: BudgetCode;
+      }>(`/api/projects/${projectId}/budget-codes`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify({
           cost_code_id: newCodeData.costCodeId,
           cost_type_id: newCodeData.costType, // Send 'L', 'M', 'E', 'S', or 'O' directly
           description: selectedCostCode.title,
         }),
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(
-          error.details || error.error || "Failed to create budget code",
-        );
-      }
-
-      const { budgetCode: createdCode } = await response.json();
 
       // Add the new code to the list
       setBudgetCodes([...budgetCodes, createdCode]);
@@ -279,7 +269,9 @@ export default function NewBudgetLineItemPage() {
       setShowCreateCodeModal(false);
       setNewCodeData({ costCodeId: "", costType: "L" });
     } catch (error) {
-      alert(
+      // apiFetch throws ApiError with the real server message — surface it
+      // to the user instead of a generic fallback (Rule 2).
+      toast.error(
         `Failed to create budget code: ${
           error instanceof Error ? error.message : "Unknown error"
         }`,
@@ -387,29 +379,19 @@ export default function NewBudgetLineItemPage() {
         };
       });
 
-      const response = await fetch(`/api/projects/${projectId}/budget`, {
+      await apiFetch(`/api/projects/${projectId}/budget`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify({
           lineItems: lineItemsToSubmit,
         }),
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(
-          error.details || error.error || "Failed to create budget line items",
-        );
-      }
-
-      await response.json();
-
       // Navigate back to project budget page
       router.push(`/${projectId}/budget`);
     } catch (error) {
-      alert(
+      // apiFetch throws ApiError with the real server message — surface it
+      // to the user instead of a generic fallback (Rule 2).
+      toast.error(
         `Failed to create budget line items: ${
           error instanceof Error ? error.message : "Unknown error"
         }`,
@@ -461,7 +443,7 @@ export default function NewBudgetLineItemPage() {
                   <th className="px-4 py-4 text-left text-xs font-medium text-foreground w-12">
                     #
                   </th>
-                  <th className="px-4 py-4 text-left text-xs font-medium text-foreground min-w-[300px]">
+                  <th className="px-4 py-4 text-left text-xs font-medium text-foreground min-w-80">
                     Budget Code*
                   </th>
                   <th className="px-4 py-4 text-left text-xs font-medium text-foreground w-24">
@@ -600,20 +582,26 @@ export default function NewBudgetLineItemPage() {
           <DevAutoFillButton
             formType="budgetLineItem"
             onAutoFill={(data) => {
+              const autoFillData = data as {
+                amount?: number;
+                quantity?: number;
+                unit?: string;
+                unit_cost?: number;
+              };
               const firstBudgetCode = budgetCodes[0];
               setRows([
                 {
                   id: "1",
                   budgetCodeId: firstBudgetCode?.id || "",
                   budgetCodeLabel: firstBudgetCode?.fullLabel || "",
-                  qty: data.quantity?.toString() || "1",
-                  uom: data.unit || "EA",
-                  unitCost: data.unit_cost?.toString() || "",
+                  qty: autoFillData.quantity?.toString() || "1",
+                  uom: autoFillData.unit || "EA",
+                  unitCost: autoFillData.unit_cost?.toString() || "",
                   amount:
-                    data.amount?.toString() ||
+                    autoFillData.amount?.toString() ||
                     calculateAmount(
-                      data.quantity?.toString() || "1",
-                      data.unit_cost?.toString() || "0",
+                      autoFillData.quantity?.toString() || "1",
+                      autoFillData.unit_cost?.toString() || "0",
                     ),
                 },
               ]);
@@ -624,7 +612,7 @@ export default function NewBudgetLineItemPage() {
 
       {/* Create Budget Code Modal */}
       <Modal open={showCreateCodeModal} onOpenChange={setShowCreateCodeModal}>
-        <ModalContent className="sm:max-w-[500px]">
+        <ModalContent className="sm:max-w-lg">
           <ModalHeader>
             <ModalTitle>Create New Budget Code</ModalTitle>
             <ModalDescription>
@@ -640,7 +628,7 @@ export default function NewBudgetLineItemPage() {
                   Loading cost codes...
                 </div>
               ) : (
-                <div className="border rounded-md max-h-[400px] overflow-y-auto">
+                <div className="border rounded-md max-h-96 overflow-y-auto">
                   {Object.entries(groupedCostCodes)
                     .sort(([a], [b]) => a.localeCompare(b))
                     .map(([division]) => (

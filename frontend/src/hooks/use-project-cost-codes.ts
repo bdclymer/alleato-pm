@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api-client";
 
 // =============================================================================
 // Types
@@ -116,6 +117,12 @@ export interface BudgetLineAmount {
   original_amount: number;
 }
 
+interface BulkSyncCostCodesResponse {
+  added: number;
+  activated: number;
+  deactivated: number;
+}
+
 /**
  * Fetch existing budget line amounts for a project (cost_code_id + cost_type_id → original_amount).
  * Used to pre-populate the amount field on the cost-codes tab.
@@ -153,26 +160,17 @@ export function useBulkSyncCostCodes(projectId: string) {
     }: {
       costTypeId: string;
       costCodeIds: string[];
-    }) => {
-      const res = await fetch(
+    }) =>
+      apiFetch<BulkSyncCostCodesResponse>(
         `/api/projects/${projectId}/budget-codes/bulk`,
         {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             cost_type_id: costTypeId,
             cost_code_ids: costCodeIds,
           }),
         },
-      );
-
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Failed to sync cost codes");
-      }
-
-      return res.json();
-    },
+      ),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: keys.all(projectId) });
       queryClient.invalidateQueries({ queryKey: ["budget-codes", projectId] });

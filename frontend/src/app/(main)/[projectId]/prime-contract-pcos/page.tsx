@@ -301,18 +301,24 @@ export default function PrimeContractPcosPage(): ReactElement {
 
   /* ── Handlers ───────────────────────────────────────────────────── */
 
+  const getPcoPath = React.useCallback(
+    (item: PrimeContractPco) =>
+      `/${projectId}/prime-contracts/${item.prime_contract_id}/change-orders/pcos/${item.id}`,
+    [projectId],
+  );
+
   const handleView = React.useCallback(
     (item: PrimeContractPco) => {
-      router.push(`/${projectId}/prime-contract-pcos/${item.id}`);
+      router.push(getPcoPath(item));
     },
-    [projectId, router],
+    [router, getPcoPath],
   );
 
   const handleEdit = React.useCallback(
     (item: PrimeContractPco) => {
-      router.push(`/${projectId}/prime-contract-pcos/${item.id}?edit=1`);
+      router.push(`${getPcoPath(item)}?edit=1`);
     },
-    [projectId, router],
+    [router, getPcoPath],
   );
 
   const handleDelete = React.useCallback(

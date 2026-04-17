@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
+import { ApiError, apiFetch } from "@/lib/api-client";
 import { getGravatarUrlClient } from "@/lib/gravatar";
 import { apiFetch, ApiError } from "@/lib/api-client";
 
@@ -100,12 +101,15 @@ export function ProfileImageUpload({
       const formData = new FormData();
       formData.append("file", selectedFile);
 
-      const payload = await apiFetch<{ avatarUrl?: string }>("/api/profile/avatar", {
-        method: "POST",
-        body: formData,
-      });
+      const payload = await apiFetch<{ avatarUrl?: string }>(
+        "/api/profile/avatar",
+        {
+          method: "POST",
+          body: formData,
+        },
+      );
 
-      const publicUrl = payload.avatarUrl;
+      const publicUrl = payload?.avatarUrl;
       if (!publicUrl) {
         throw new Error("Upload succeeded but no image URL was returned");
       }
@@ -121,7 +125,7 @@ export function ProfileImageUpload({
       window.location.reload();
     } catch (error) {
       if (error instanceof ApiError) {
-        setApiError(error.body);
+        setApiError(error.body as AvatarApiError);
       }
       const message =
         error instanceof Error
@@ -135,7 +139,7 @@ export function ProfileImageUpload({
 
   const handleRemove = async () => {
     try {
-      await apiFetch<{ success: boolean }>("/api/profile/avatar", {
+      await apiFetch("/api/profile/avatar", {
         method: "DELETE",
       });
 
@@ -146,7 +150,7 @@ export function ProfileImageUpload({
       window.location.reload();
     } catch (error) {
       if (error instanceof ApiError) {
-        setApiError(error.body);
+        setApiError(error.body as AvatarApiError);
       }
       const message =
         error instanceof Error ? error.message : "Failed to remove image";

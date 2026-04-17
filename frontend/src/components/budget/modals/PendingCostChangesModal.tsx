@@ -48,6 +48,7 @@ export function PendingCostChangesModal({
   const [activeTab, setActiveTab] = useState<"pending" | "summary">("pending");
   const [changes, setChanges] = useState<PendingCostChange[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [typeFilter, setTypeFilter] = useState<
     "all" | "commitment" | "change_order"
   >("all");
@@ -60,15 +61,20 @@ export function PendingCostChangesModal({
 
   const fetchPendingCostChanges = async () => {
     setLoading(true);
+    setError(null);
     try {
       const url = `/api/projects/${projectId}/budget/pending-cost-changes?budgetLineId=${budgetLineId}${typeFilter !== "all" ? `&type=${typeFilter}` : ""}`;
       const response = await fetch(url);
-      if (response.ok) {
-        const data = await response.json();
-        setChanges(data.changes || []);
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error || "Failed to fetch pending cost changes");
       }
+      const data = await response.json();
+      setChanges(data.changes || []);
     } catch (error) {
       console.error("Failed to fetch pending cost changes:", error);
+      setError(error instanceof Error ? error.message : "Failed to fetch pending cost changes");
+      setChanges([]);
     } finally {
       setLoading(false);
     }
@@ -238,6 +244,15 @@ export function PendingCostChangesModal({
                       className="px-3 py-10 text-center text-muted-foreground"
                     >
                       Loading pending cost changes...
+                    </td>
+                  </tr>
+                ) : error ? (
+                  <tr>
+                    <td
+                      colSpan={6}
+                      className="px-3 py-10 text-center text-destructive"
+                    >
+                      {error}
                     </td>
                   </tr>
                 ) : changes.length === 0 ? (

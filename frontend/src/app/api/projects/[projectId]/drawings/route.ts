@@ -7,6 +7,23 @@ import { DrawingService } from "@/services/DrawingService";
 import type { DrawingFilters } from "@/services/DrawingService";
 import { apiErrorResponse } from "@/lib/api-error";
 
+interface FinalizeDrawingUploadRequest {
+  drawing_number: string;
+  title: string;
+  discipline?: string;
+  drawing_type?: string;
+  area_id?: string;
+  revision_number: string;
+  received_date: string;
+  drawing_date?: string;
+  description?: string;
+  drawing_set_id?: string;
+  upload_path: string;
+  file_name: string;
+  file_size: number;
+  file_type: string;
+}
+
 /**
  * GET /api/projects/[projectId]/drawings
  * List drawings with optional filters
@@ -72,33 +89,106 @@ export const POST = withApiGuardrails<{ projectId: string }>(
     throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/drawings#POST", message: "Authentication required." });
   }
 
+  const serviceClient = createServiceClient();
+  const service = new DrawingService(serviceClient);
+
+  /** Removes an uploaded object when the DB write path fails. */
+  const cleanupUploadedFile = async (uploadPath: string | undefined) => {
+    if (!uploadPath) return;
+    await serviceClient.storage.from("project-files").remove([uploadPath]);
+  };
+
   try {
-    // Parse multipart form data
-    const formData = await request.formData();
+    const contentType = request.headers.get("content-type") || "";
+    const isMultipart = contentType.includes("multipart/form-data");
 
-    const drawingNumber = formData.get("drawing_number") as string;
-    const title = formData.get("title") as string;
-    const discipline = (formData.get("discipline") as string) || undefined;
-    const drawingType = (formData.get("drawing_type") as string) || undefined;
-    const areaId = (formData.get("area_id") as string) || undefined;
-    const revisionNumber = formData.get("revision_number") as string;
-    const receivedDate = formData.get("received_date") as string;
-    const drawingDate = (formData.get("drawing_date") as string) || undefined;
-    const description = (formData.get("description") as string) || undefined;
-    const file = formData.get("file") as File;
+    let drawingNumber = "";
+    let title = "";
+    let discipline: string | undefined;
+    let drawingType: string | undefined;
+    let areaId: string | undefined;
+    let revisionNumber = "";
+    let receivedDate = "";
+    let drawingDate: string | undefined;
+    let description: string | undefined;
+    let drawingSetId: string | undefined;
+    let fileName = "";
+    let fileSize = 0;
+    let fileType = "";
+    let uploadPath: string | undefined;
+    let fileUrl = "";
+    let uploadFile: File | undefined;
 
-    // Validate required fields
-    if (!drawingNumber || !title || !revisionNumber || !receivedDate || !file) {
-      return NextResponse.json(
-        {
-          error: "Missing required fields: drawing_number, title, revision_number, received_date, file",
-        },
-        { status: 400 },
-      );
+    if (isMultipart) {
+      const formData = await request.formData();
+      const file = formData.get("file") as File;
+
+      drawingNumber = formData.get("drawing_number") as string;
+      title = formData.get("title") as string;
+      discipline = (formData.get("discipline") as string) || undefined;
+      drawingType = (formData.get("drawing_type") as string) || undefined;
+      areaId = (formData.get("area_id") as string) || undefined;
+      revisionNumber = formData.get("revision_number") as string;
+      receivedDate = formData.get("received_date") as string;
+      drawingDate = (formData.get("drawing_date") as string) || undefined;
+      description = (formData.get("description") as string) || undefined;
+      drawingSetId = (formData.get("drawing_set_id") as string) || undefined;
+
+      if (!drawingNumber || !title || !revisionNumber || !receivedDate || !file) {
+        return NextResponse.json(
+          {
+            error: "Missing required fields: drawing_number, title, revision_number, received_date, file",
+          },
+          { status: 400 },
+        );
+      }
+
+      fileName = file.name;
+      fileSize = file.size;
+      fileType = file.type;
+      uploadFile = file;
+    } else {
+      const body = (await request.json()) as FinalizeDrawingUploadRequest;
+
+      drawingNumber = body.drawing_number;
+      title = body.title;
+      discipline = body.discipline;
+      drawingType = body.drawing_type;
+      areaId = body.area_id;
+      revisionNumber = body.revision_number;
+      receivedDate = body.received_date;
+      drawingDate = body.drawing_date;
+      description = body.description;
+      drawingSetId = body.drawing_set_id;
+      uploadPath = body.upload_path;
+      fileName = body.file_name;
+      fileSize = body.file_size;
+      fileType = body.file_type;
+
+      if (
+        !drawingNumber ||
+        !title ||
+        !revisionNumber ||
+        !receivedDate ||
+        !uploadPath ||
+        !fileName ||
+        !Number.isFinite(fileSize) ||
+        fileSize <= 0
+      ) {
+        return NextResponse.json(
+          {
+            error:
+              "Missing required fields: drawing_number, title, revision_number, received_date, upload_path, file_name, file_size",
+          },
+          { status: 400 },
+        );
+      }
+
+      const { data: publicUrlData } = serviceClient.storage
+        .from("project-files")
+        .getPublicUrl(uploadPath);
+      fileUrl = publicUrlData.publicUrl;
     }
-
-    const serviceClient = createServiceClient();
-    const service = new DrawingService(serviceClient);
 
     // Duplicate detection: check if drawing_number already exists in this project
     const { data: existing } = await serviceClient
@@ -109,6 +199,9 @@ export const POST = withApiGuardrails<{ projectId: string }>(
       .maybeSingle();
 
     if (existing) {
+      if (!isMultipart) {
+        await cleanupUploadedFile(uploadPath);
+      }
       return NextResponse.json(
         { error: "DUPLICATE_DRAWING_NUMBER", existing_drawing: existing },
         { status: 409 },
@@ -129,23 +222,30 @@ export const POST = withApiGuardrails<{ projectId: string }>(
     );
 
     if (createResult.error) {
-      const statusCode =
-        createResult.error.type === "DUPLICATE_DRAWING_NUMBER" ? 409 : 500;
+      if (!isMultipart) {
+        await cleanupUploadedFile(uploadPath);
+      }
       return apiErrorResponse(createResult.error);
     }
 
     const drawing = createResult.data;
 
-    // Step 2: Upload the file
-    const uploadResult = await service.uploadFile(projectId, drawing.id, file);
+    if (isMultipart) {
+      if (!uploadFile) {
+        await service.delete(projectId, drawing.id);
+        return NextResponse.json(
+          { error: "Missing upload file for multipart request" },
+          { status: 400 },
+        );
+      }
 
-    if (uploadResult.error) {
-      // Rollback: delete the drawing if file upload fails
-      await service.delete(projectId, drawing.id);
-
-      const statusCode =
-        uploadResult.error.type === "FILE_TOO_LARGE" ? 400 : 500;
-      return apiErrorResponse(uploadResult.error);
+      const uploadResult = await service.uploadFile(projectId, drawing.id, uploadFile);
+      if (uploadResult.error) {
+        await service.delete(projectId, drawing.id);
+        return apiErrorResponse(uploadResult.error);
+      }
+      fileUrl = uploadResult.data.url;
+      uploadPath = uploadResult.data.path;
     }
 
     // Step 3: Create the first revision with the uploaded file
@@ -153,13 +253,14 @@ export const POST = withApiGuardrails<{ projectId: string }>(
       drawing.id,
       {
         revision_number: revisionNumber,
+        drawing_set_id: drawingSetId,
         drawing_date: drawingDate,
         received_date: receivedDate,
         status: "approved",
-        file_url: uploadResult.data.url,
-        file_name: file.name,
-        file_size: file.size,
-        file_type: file.type,
+        file_url: fileUrl,
+        file_name: fileName,
+        file_size: fileSize,
+        file_type: fileType,
         description,
       },
       user.id,
@@ -168,6 +269,9 @@ export const POST = withApiGuardrails<{ projectId: string }>(
     if (revisionResult.error) {
       // Rollback: delete the drawing and file if revision creation fails
       await service.delete(projectId, drawing.id);
+      if (!isMultipart) {
+        await cleanupUploadedFile(uploadPath);
+      }
 
       return apiErrorResponse(revisionResult.error);
     }

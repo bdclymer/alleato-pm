@@ -167,20 +167,23 @@ export function buildCommitmentTableColumns(
       render: (item) => (
         <div className="flex items-center gap-1.5">
           {onToggleExpand && (
-            <button
+            <Button
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 onToggleExpand(item.id);
               }}
-              className="flex h-5 w-5 items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              variant="ghost"
+              size="icon"
+              className="h-5 w-5 text-muted-foreground hover:bg-muted hover:text-foreground"
+              aria-label={expandedIds?.has(item.id) ? "Collapse commitment" : "Expand commitment"}
             >
               <ChevronRight
                 className={`h-3.5 w-3.5 transition-transform ${
                   expandedIds?.has(item.id) ? "rotate-90" : ""
                 }`}
               />
-            </button>
+            </Button>
           )}
           <span className="font-medium">{item.number}</span>
         </div>

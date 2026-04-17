@@ -16,6 +16,7 @@ import {
 } from "react";
 import { toast } from "sonner";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
+import { ApiError, apiFetch } from "@/lib/api-client";
 import {
   ModelSelector,
   ModelSelectorContent,
@@ -188,25 +189,28 @@ function PureMultimodalInput({
     formData.append("file", file);
 
     try {
-      const response = await fetch("/api/files/upload", {
+      const data = await apiFetch<{
+        url: string;
+        pathname: string;
+        contentType: string;
+      }>("/api/files/upload", {
         method: "POST",
         body: formData,
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        const { url, pathname, contentType } = data;
-
+      if (data) {
         return {
-          url,
-          name: pathname,
-          contentType,
+          url: data.url,
+          name: data.pathname,
+          contentType: data.contentType,
         };
       }
-      const { error } = await response.json();
-      toast.error(error);
-    } catch (_error) {
-      toast.error("Failed to upload file, please try again!");
+    } catch (error) {
+      if (error instanceof ApiError) {
+        toast.error(error.message);
+      } else {
+        toast.error("Failed to upload file, please try again!");
+      }
     }
   }, []);
 

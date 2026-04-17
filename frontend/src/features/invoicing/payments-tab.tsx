@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useQuery } from "@tanstack/react-query";
 import { MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react";
+import { apiFetch } from "@/lib/api-client";
 
 import {
   AlertDialog,
@@ -150,9 +151,10 @@ function useOwnerInvoiceOptions(projectId: string, enabled: boolean) {
   return useQuery<InvoiceOption[]>({
     queryKey: ["payment-form", "owner-invoices", projectId],
     queryFn: async () => {
-      const res = await fetch(`/api/projects/${projectId}/invoicing/owner`);
-      if (!res.ok) throw new Error("Failed to load owner invoices");
-      const json = await res.json();
+      const json = await apiFetch<{ data?: Array<{
+        id: number;
+        invoice_number: string | null;
+      }> }>(`/api/projects/${projectId}/invoicing/owner`);
       const rows = (json.data ?? []) as Array<{
         id: number;
         invoice_number: string | null;
@@ -170,11 +172,13 @@ function useSubcontractorInvoiceOptions(projectId: string, enabled: boolean) {
   return useQuery<InvoiceOption[]>({
     queryKey: ["payment-form", "subcontractor-invoices", projectId],
     queryFn: async () => {
-      const res = await fetch(
+      const json = await apiFetch<{ data?: Array<{
+        id: number | string;
+        invoice_number: string | null;
+        contract_number?: string | null;
+      }> }>(
         `/api/projects/${projectId}/invoicing/subcontractor`,
       );
-      if (!res.ok) return [];
-      const json = await res.json();
       const rows = (json.data ?? []) as Array<{
         id: number | string;
         invoice_number: string | null;

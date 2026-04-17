@@ -7,6 +7,7 @@ import {
   keepPreviousData,
 } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api-client";
 
 // =============================================================================
 // Types
@@ -47,6 +48,10 @@ export interface UpdateBillingPeriodInput {
   is_closed?: boolean;
 }
 
+interface BillingPeriodsApiResponse<T> {
+  data?: T;
+}
+
 // =============================================================================
 // Query Keys
 // =============================================================================
@@ -85,16 +90,9 @@ export function useBillingPeriodsList(
         params.set("is_closed", String(filters.is_closed));
       }
       const qs = params.toString();
-      const response = await fetch(
+      const data = await apiFetch<BillingPeriodsApiResponse<BillingPeriod[]>>(
         `/api/projects/${projectId}/invoicing/billing-periods${qs ? `?${qs}` : ""}`,
       );
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new Error(
-          error.error || `Server returned ${response.status} when loading billing periods`,
-        );
-      }
-      const data = await response.json();
       return data.data ?? [];
     },
     enabled: !!projectId,
@@ -115,23 +113,14 @@ export function useCreateBillingPeriod(projectId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (input: CreateBillingPeriodInput) => {
-      const response = await fetch(
+    mutationFn: async (input: CreateBillingPeriodInput) =>
+      apiFetch<BillingPeriodsApiResponse<BillingPeriod>>(
         `/api/projects/${projectId}/invoicing/billing-periods`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(input),
         },
-      );
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.error || `Server returned ${response.status} — the billing period could not be created`,
-        );
-      }
-      return response.json();
-    },
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: billingPeriodKeys.lists() });
       toast.success("Billing period created successfully");
@@ -150,23 +139,14 @@ export function useUpdateBillingPeriod(projectId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ periodId, ...fields }: UpdateBillingPeriodInput) => {
-      const response = await fetch(
+    mutationFn: async ({ periodId, ...fields }: UpdateBillingPeriodInput) =>
+      apiFetch<BillingPeriodsApiResponse<BillingPeriod>>(
         `/api/projects/${projectId}/invoicing/billing-periods/${periodId}`,
         {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(fields),
         },
-      );
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.error || `Server returned ${response.status} — the billing period could not be updated`,
-        );
-      }
-      return response.json();
-    },
+      ),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: billingPeriodKeys.lists() });
       queryClient.invalidateQueries({
@@ -189,19 +169,11 @@ export function useDeleteBillingPeriod(projectId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (periodId: string) => {
-      const response = await fetch(
+    mutationFn: async (periodId: string) =>
+      apiFetch(
         `/api/projects/${projectId}/invoicing/billing-periods/${periodId}`,
         { method: "DELETE" },
-      );
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.message || errorData.error || `Server returned ${response.status} — the billing period could not be deleted`,
-        );
-      }
-      return response.json();
-    },
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: billingPeriodKeys.lists() });
       toast.success("Billing period deleted successfully");

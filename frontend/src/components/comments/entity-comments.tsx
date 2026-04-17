@@ -12,6 +12,8 @@ import { cn } from "@/lib/utils";
 interface EntityCommentsProps {
   title?: string;
   className?: string;
+  /** Keep the composer visible at the bottom while scrolling thread history. */
+  stickyComposer?: boolean;
 }
 
 function getInitials(name: string) {
@@ -57,55 +59,16 @@ export function EntityComments({ title = "Comments", className }: EntityComments
 function EntityCommentsInner({
   title,
   className,
-  entity,
-}: {
-  title: string;
-  className?: string;
-  entity: NonNullable<ReturnType<typeof useCollaborationEntityContext>>;
-}) {
-  const [newComment, setNewComment] = React.useState("");
-  const [replyTarget, setReplyTarget] = React.useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
-
-  const { comments, isLoading, error, createComment } = useCollaborationComments({
-    entityType: entity.entityType,
-    entityId: entity.entityId,
-    projectId: entity.projectId,
-  });
-
-  const rootComments = comments.filter((comment) => !comment.parentCommentId);
-  const childrenByParent = comments.reduce<Record<string, typeof comments>>((acc, comment) => {
-    if (!comment.parentCommentId) return acc;
-    if (!acc[comment.parentCommentId]) {
-      acc[comment.parentCommentId] = [];
-    }
-    acc[comment.parentCommentId].push(comment);
-    return acc;
-  }, {});
-
-  const submitComment = async () => {
-    const body = newComment.trim();
-    if (!body) return;
-
-    setIsSubmitting(true);
-    try {
-      await createComment({
-        body,
-        parentCommentId: replyTarget,
-      });
-      setNewComment("");
-      setReplyTarget(null);
-    } catch (submitError) {
-      console.error("[EntityComments] Failed to create comment", submitError);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  stickyComposer = false,
+}: EntityCommentsProps) {
+  const hasTitle = Boolean(title?.trim());
 
   return (
-    <div className={cn("space-y-5", className)}>
-      {title ? (
-        <div className="mb-2 flex items-center gap-2.5">
+    <div
+      className={`alleato-comments ${stickyComposer ? "flex h-full min-h-0 w-full flex-col" : "w-full"} ${className ?? ""}`.trim()}
+    >
+      {hasTitle ? (
+        <div className="mb-6 flex items-center gap-2.5">
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
             <MessageSquarePlus className="h-4 w-4 text-primary" />
           </div>
@@ -132,7 +95,38 @@ function EntityCommentsInner({
                 <div className="h-3 w-4/5 animate-pulse rounded bg-muted" />
               </div>
             </div>
-          ))}
+          }
+        >
+          <div className={stickyComposer ? "min-h-0 flex-1 overflow-y-auto pr-1" : undefined}>
+            <ThreadList centeredEmpty={stickyComposer} />
+          </div>
+          <div
+            className={
+              stickyComposer
+                ? "sticky bottom-0 mt-4 w-full border-t border-border/60 bg-card/95 pt-3 backdrop-blur supports-[backdrop-filter]:bg-card/80"
+                : "mt-6"
+            }
+          >
+            <Composer className="lb-composer-alleato" />
+          </div>
+        </ClientSideSuspense>
+      </CommentsErrorBoundary>
+    </div>
+  );
+}
+
+// ── Thread list ──────────────────────────────────────────────────────────────
+
+function ThreadList({ centeredEmpty = false }: { centeredEmpty?: boolean }) {
+  const { threads } = useThreads();
+
+  if (threads.length === 0) {
+    return (
+      <div
+        className={`flex flex-col items-center text-center ${centeredEmpty ? "h-full justify-center py-8" : "py-8"}`}
+      >
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted/50 mb-3">
+          <MessageSquarePlus className="h-5 w-5 text-muted-foreground/50" />
         </div>
       ) : rootComments.length === 0 ? (
         <div className="rounded-md border border-dashed border-border p-6 text-center">

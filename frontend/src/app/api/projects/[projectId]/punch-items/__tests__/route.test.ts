@@ -20,10 +20,11 @@ process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "test-anon-key";
 
 import { NextRequest } from "next/server";
 import { POST } from "../route";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 
 jest.mock("@/lib/supabase/server", () => ({
   createClient: jest.fn(),
+  getApiRouteUser: jest.fn(),
 }));
 
 const punchItemServiceMock = {
@@ -36,6 +37,7 @@ jest.mock("@/services/PunchItemService", () => ({
 }));
 
 const createClientMock = createClient as jest.Mock;
+const getApiRouteUserMock = getApiRouteUser as jest.Mock;
 
 describe("punch-items POST route", () => {
   let supabaseMock: { auth: { getUser: jest.Mock } };
@@ -51,6 +53,7 @@ describe("punch-items POST route", () => {
       },
     };
     createClientMock.mockResolvedValue(supabaseMock);
+    getApiRouteUserMock.mockResolvedValue({ id: "user-123" });
   });
 
   // ── REGRESSION: invalid status must be rejected at the API boundary ─────────
@@ -140,5 +143,68 @@ describe("punch-items POST route", () => {
     expect(response.status).toBe(201);
     const call = punchItemServiceMock.create.mock.calls[0][1];
     expect(call.status).toBe("draft");
+  });
+
+  it("normalizes blank optional fields to null before create", async () => {
+    punchItemServiceMock.create.mockResolvedValue({
+      data: { id: "abc", title: "Test", status: "draft", number: 1, project_id: 67 },
+      error: null,
+    });
+
+    const request = new NextRequest(
+      "http://localhost/api/projects/67/punch-items",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          title: "Test item",
+          due_date: "",
+          description: "",
+          assignee_company: "",
+          ball_in_court: "",
+          location: "",
+          trade: "",
+          type: "",
+          reference: "",
+          drawing_reference: "",
+        }),
+        headers: { "Content-Type": "application/json" },
+      },
+    );
+    const response = await POST(request, { params: Promise.resolve({ projectId: "67" }) });
+
+    expect(response.status).toBe(201);
+    expect(punchItemServiceMock.create).toHaveBeenCalledTimes(1);
+    expect(punchItemServiceMock.create).toHaveBeenCalledWith(
+      67,
+      expect.objectContaining({
+        due_date: null,
+        description: null,
+        assignee_company: null,
+        ball_in_court: null,
+        location: null,
+        trade: null,
+        type: null,
+        reference: null,
+        drawing_reference: null,
+      }),
+      "user-123",
+    );
+  });
+
+  it("returns 400 for invalid due_date instead of leaking a database error", async () => {
+    const request = new NextRequest(
+      "http://localhost/api/projects/67/punch-items",
+      {
+        method: "POST",
+        body: JSON.stringify({ title: "Test item", due_date: "04/14/2026" }),
+        headers: { "Content-Type": "application/json" },
+      },
+    );
+    const response = await POST(request, { params: Promise.resolve({ projectId: "67" }) });
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body.error_message).toBe("Request payload is invalid.");
+    expect(punchItemServiceMock.create).not.toHaveBeenCalled();
   });
 });

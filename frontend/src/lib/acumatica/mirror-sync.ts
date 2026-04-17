@@ -310,6 +310,7 @@ const apBillConfig: EntityConfig<FlatBill> = {
     document_type: aStr(r.Type),
     vendor_id: aStr(r.Vendor),
     vendor_ref: aStr(r.VendorRef),
+    project_code: aStr(r.Project) ?? aStr(r.Details?.find((line) => line.ProjectID)?.ProjectID),
     date: aDate(r.Date),
     due_date: aDate(r.DueDate),
     post_period: aStr(r.FinancialPeriod),
@@ -856,6 +857,7 @@ export async function syncAllMirrorEntities(
   // Post-sync enrichment: backfill customer_name on AR invoices from acumatica_customers
   // (Acumatica's Invoice entity doesn't return CustomerName, only Customer ID)
   await enrichInvoiceCustomerNames(db);
+  await enrichApBillProjectLinks(db);
 
   return results;
 }
@@ -900,6 +902,70 @@ async function enrichInvoiceCustomerNames(db: SupabaseClient): Promise<void> {
     }
   } catch (err) {
     console.error("[mirror-sync] Failed to enrich invoice customer names:", err);
+  }
+}
+
+/**
+ * Backfill local project FK on AP bills by matching project_code to projects.acumatica_project_id.
+ */
+async function enrichApBillProjectLinks(db: SupabaseClient): Promise<void> {
+  try {
+    const [{ data: projects, error: projectsError }, { data: bills, error: billsError }] =
+      await Promise.all([
+        db
+          .from("projects")
+          .select("id, acumatica_project_id")
+          .not("acumatica_project_id", "is", null),
+        db
+          .from("acumatica_ap_bills")
+          .select("id, project_code, project_id")
+          .not("project_code", "is", null),
+      ]);
+
+    if (projectsError || billsError) {
+      console.error("[mirror-sync] Failed to fetch AP bill project link datasets:", {
+        projectsError: projectsError?.message,
+        billsError: billsError?.message,
+      });
+      return;
+    }
+
+    if (!projects?.length || !bills?.length) return;
+
+    const localProjectIdByAcumaticaCode = new Map<string, number>();
+    for (const project of projects) {
+      if (project.acumatica_project_id) {
+        localProjectIdByAcumaticaCode.set(project.acumatica_project_id, project.id);
+      }
+    }
+
+    let updated = 0;
+    for (const bill of bills) {
+      if (!bill.project_code) continue;
+      const resolvedProjectId = localProjectIdByAcumaticaCode.get(bill.project_code) ?? null;
+      if ((bill.project_id ?? null) === resolvedProjectId) continue;
+
+      const { error: updateError } = await db
+        .from("acumatica_ap_bills")
+        .update({ project_id: resolvedProjectId })
+        .eq("id", bill.id);
+
+      if (updateError) {
+        console.error("[mirror-sync] Failed to update AP bill project link:", {
+          billId: bill.id,
+          projectCode: bill.project_code,
+          reason: updateError.message,
+        });
+        continue;
+      }
+      updated++;
+    }
+
+    if (updated > 0) {
+      console.log(`[mirror-sync] Enriched ${updated} AP bill(s) with local project links`);
+    }
+  } catch (err) {
+    console.error("[mirror-sync] Failed to enrich AP bill project links:", err);
   }
 }
 

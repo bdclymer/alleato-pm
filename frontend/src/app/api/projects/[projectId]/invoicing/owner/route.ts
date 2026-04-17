@@ -5,12 +5,22 @@ import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
 
+// Normalize optional request values so Postgres sees nulls instead of empty strings.
+function normalizeOptionalField<T extends string | null | undefined>(value: T): T | null {
+  return typeof value === "string" && value.trim() === "" ? null : value ?? null;
+}
+
+// Persist the same fallback invoice number that the UI displays so downstream exports stay consistent.
+function buildGeneratedInvoiceNumber(invoiceId: number): string {
+  return `INV-${invoiceId}`;
+}
+
 // POST /api/projects/[projectId]/invoicing/owner
 // Create a new owner invoice for a project
 export const POST = withApiGuardrails<{ projectId: string }>(
   "projects/[projectId]/invoicing/owner#POST",
   async ({ request, params }) => {
-  
+    const where = "projects/[projectId]/invoicing/owner#POST";
     const { projectId } = params;
     const projectIdNum = parseInt(projectId, 10);
 
@@ -23,10 +33,12 @@ export const POST = withApiGuardrails<{ projectId: string }>(
 
     // Validate required fields
     if (!prime_contract_id) {
-      return NextResponse.json(
-        { error: "prime_contract_id is required" },
-        { status: 400 },
-      );
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where,
+        message: "prime_contract_id is required.",
+        details: [{ path: "prime_contract_id", message: "Prime contract is required." }],
+      });
     }
 
     // Verify the prime contract belongs to this project
@@ -38,33 +50,48 @@ export const POST = withApiGuardrails<{ projectId: string }>(
       .single();
 
     if (contractError || !contract) {
-      return NextResponse.json(
-        { error: "Contract not found or does not belong to this project" },
-        { status: 404 },
-      );
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where,
+        message: "Contract not found or does not belong to this project.",
+        status: 404,
+        severity: "low",
+      });
     }
 
     // Insert the new owner invoice
+    // Sensitive: this write creates a billable owner invoice record in the project's ledger.
     const { data: invoice, error: insertError } = await supabase
       .from("owner_invoices")
       .insert({
         prime_contract_id,
-        invoice_number: invoice_number ?? null,
-        period_start: period_start ?? null,
-        period_end: period_end ?? null,
-        billing_period_id: billing_period_id ?? null,
-        billing_date: billing_date === "" ? null : (billing_date ?? null),
+        invoice_number: normalizeOptionalField(invoice_number),
+        period_start: normalizeOptionalField(period_start),
+        period_end: normalizeOptionalField(period_end),
+        billing_period_id: normalizeOptionalField(billing_period_id),
+        billing_date: normalizeOptionalField(billing_date),
         status: status ?? "draft",
-        payment_application_id: payment_application_id ?? null,
+        payment_application_id: normalizeOptionalField(payment_application_id),
       })
       .select()
       .single();
 
     if (insertError) {
-      return NextResponse.json(
-        { error: "Failed to create owner invoice", details: insertError.message },
-        { status: 500 },
-      );
+      return apiErrorResponse(insertError);
+    }
+
+    if (!invoice.invoice_number) {
+      const generatedInvoiceNumber = buildGeneratedInvoiceNumber(invoice.id);
+      const { error: updateError } = await supabase
+        .from("owner_invoices")
+        .update({ invoice_number: generatedInvoiceNumber })
+        .eq("id", invoice.id);
+
+      if (updateError) {
+        return apiErrorResponse(updateError);
+      }
+
+      invoice.invoice_number = generatedInvoiceNumber;
     }
 
     return NextResponse.json({ data: invoice }, { status: 201 });
@@ -76,7 +103,7 @@ export const POST = withApiGuardrails<{ projectId: string }>(
 export const GET = withApiGuardrails<{ projectId: string }>(
   "projects/[projectId]/invoicing/owner#GET",
   async ({ request, params }) => {
-  
+    const where = "projects/[projectId]/invoicing/owner#GET";
     const supabase = await createClient();
     const { projectId } = params;
 
@@ -87,14 +114,11 @@ export const GET = withApiGuardrails<{ projectId: string }>(
     } = await supabase.auth.getUser();
 
     if (authError) {
-      return NextResponse.json(
-        { error: "Authentication failed", details: authError.message },
-        { status: 401 },
-      );
+      return apiErrorResponse(authError);
     }
 
     if (!user) {
-      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/invoicing/owner#GET", message: "Authentication required." });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where, message: "Authentication required." });
     }
 
     const projectIdNum = parseInt(projectId, 10);
@@ -129,10 +153,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
     const { data: invoices, error: invoicesError } = await query;
 
     if (invoicesError) {
-      return NextResponse.json(
-        { error: "Failed to fetch owner invoices", details: invoicesError.message },
-        { status: 500 },
-      );
+      return apiErrorResponse(invoicesError);
     }
 
     // Batch-fetch approved prime contract change orders for all contracts in result set

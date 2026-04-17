@@ -2,6 +2,7 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { verifyProjectAccess, isAuthError } from "@/lib/supabase/auth-guard";
+import { requirePermission } from "@/lib/permissions-guard";
 import type {
   BudgetDetailLineItem,
   DetailType,
@@ -65,6 +66,9 @@ export const GET = withApiGuardrails(
         { status: 400 },
       );
     }
+
+    const guard = await requirePermission(projectIdNum, "budget", "read");
+    if (guard.denied) return guard.response;
 
     const authResult = await verifyProjectAccess(projectIdNum);
     if (isAuthError(authResult)) return authResult;

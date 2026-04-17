@@ -12,6 +12,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { apiFetch } from "@/lib/api-client";
 
 type ViolationType =
   | "wrong_button" | "bg_white" | "card_trap" | "wrong_text_hierarchy"
@@ -94,9 +95,10 @@ export function DesignViolationOverlay() {
 
   const fetchStats = useCallback(async () => {
     try {
-      const res = await fetch("/api/dev/violations?status=open,in_progress,fixed");
-      if (!res.ok) return;
-      const { violations: data } = await res.json();
+      const result = await apiFetch<{ violations?: Violation[] }>(
+        "/api/dev/violations?status=open,in_progress,fixed",
+      );
+      const data = result?.violations;
       const s = { open: 0, in_progress: 0, fixed: 0 };
       const allViolations: Violation[] = [];
       for (const v of data ?? []) {
@@ -236,9 +238,8 @@ export function DesignViolationOverlay() {
     setSubmitting(true);
     try {
       await Promise.all(selected.map(type =>
-        fetch("/api/dev/violations", {
+        apiFetch("/api/dev/violations", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             route: pathname,
             elementDescription: menu.label,
@@ -261,9 +262,8 @@ export function DesignViolationOverlay() {
     if (!panelNotes.trim()) return;
     setPanelSubmitting(true);
     try {
-      const res = await fetch("/api/dev/violations", {
+      await apiFetch("/api/dev/violations", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           route: pathname,
           elementDescription: null,
@@ -272,13 +272,13 @@ export function DesignViolationOverlay() {
           notes: panelNotes.trim(),
         }),
       });
-      if (res.ok) {
-        setPanelNotes("");
-        setPanelType("other");
-        setToast("Violation flagged");
-        setTimeout(() => setToast(null), 3000);
-        fetchStats();
-      }
+      setPanelNotes("");
+      setPanelType("other");
+      setToast("Violation flagged");
+      setTimeout(() => setToast(null), 3000);
+      fetchStats();
+    } catch {
+      // Silent — keep user's notes to retry
     } finally {
       setPanelSubmitting(false);
     }

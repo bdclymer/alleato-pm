@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { PageShell } from "@/components/layout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { apiFetch } from "@/lib/api-client";
 
 type AuditOperation = "create" | "update" | "skip" | "error";
 
@@ -92,13 +93,9 @@ export default function AcumaticaSyncLogsPage() {
       setLoading(true);
       setError(null);
       try {
-        const response = await fetch("/api/admin/acumatica-outbound-logs?days=365&rowLimit=10000");
-        if (!response.ok) {
-          const payload = (await response.json().catch(() => ({}))) as { error?: string };
-          throw new Error(payload.error ?? "Failed to load Acumatica outbound logs.");
-        }
-
-        const payload = (await response.json()) as ApiResponse;
+        const payload = await apiFetch<ApiResponse>(
+          "/api/admin/acumatica-outbound-logs?days=365&rowLimit=10000",
+        );
         setData(payload);
         setSelectedRunId(payload.selectedRunId ?? payload.runs[0]?.runId ?? null);
       } catch (loadError) {

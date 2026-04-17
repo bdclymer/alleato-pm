@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api-client";
 import type { AreaWithSectionCount } from "@/types/specifications.types";
 import type { SpecificationAreaFormData } from "@/lib/schemas/specification-schemas";
 
@@ -11,18 +12,10 @@ import type { SpecificationAreaFormData } from "@/lib/schemas/specification-sche
 export function useSpecificationAreas(projectId: string) {
   return useQuery<AreaWithSectionCount[]>({
     queryKey: ["specification-areas", projectId],
-    queryFn: async () => {
-      const response = await fetch(
+    queryFn: async () =>
+      apiFetch<AreaWithSectionCount[]>(
         `/api/projects/${projectId}/specifications/areas`,
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to fetch areas");
-      }
-
-      return response.json();
-    },
+      ),
     enabled: !!projectId,
   });
 }
@@ -33,18 +26,10 @@ export function useSpecificationAreas(projectId: string) {
 export function useSpecificationArea(projectId: string, areaId: string) {
   return useQuery<AreaWithSectionCount>({
     queryKey: ["specification-area", projectId, areaId],
-    queryFn: async () => {
-      const response = await fetch(
+    queryFn: async () =>
+      apiFetch<AreaWithSectionCount>(
         `/api/projects/${projectId}/specifications/areas/${areaId}`,
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to fetch area");
-      }
-
-      return response.json();
-    },
+      ),
     enabled: !!projectId && !!areaId,
   });
 }
@@ -56,23 +41,14 @@ export function useCreateArea(projectId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: SpecificationAreaFormData) => {
-      const response = await fetch(
+    mutationFn: async (data: SpecificationAreaFormData) =>
+      apiFetch<AreaWithSectionCount[]>(
         `/api/projects/${projectId}/specifications/areas`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),
         },
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to create area");
-      }
-
-      return response.json();
-    },
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["specification-areas", projectId],
@@ -94,23 +70,14 @@ export function useUpdateArea(projectId: string, areaId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: SpecificationAreaFormData) => {
-      const response = await fetch(
+    mutationFn: async (data: SpecificationAreaFormData) =>
+      apiFetch<AreaWithSectionCount>(
         `/api/projects/${projectId}/specifications/areas/${areaId}`,
         {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),
         },
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to update area");
-      }
-
-      return response.json();
-    },
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["specification-areas", projectId],
@@ -135,21 +102,13 @@ export function useDeleteArea(projectId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (areaId: string) => {
-      const response = await fetch(
+    mutationFn: async (areaId: string) =>
+      apiFetch(
         `/api/projects/${projectId}/specifications/areas/${areaId}`,
         {
           method: "DELETE",
         },
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to delete area");
-      }
-
-      return response.json();
-    },
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["specification-areas", projectId],

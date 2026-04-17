@@ -165,6 +165,10 @@ const ENDPOINTS = [
 
   // Other project-scoped
   ["GET", `/api/projects/${PROJECT_ID}/vendors`, "Vendors", [200, 401]],
+  // POST /vendors is used by AddCompanyModal in change-events form. Before
+  // this was added the endpoint 404'd silently. Unauthenticated calls should
+  // be 401, never 404 or 500 (401 = handler exists and is protected).
+  ["POST", `/api/projects/${PROJECT_ID}/vendors`, "Vendors create (unauthenticated)", [401]],
   ["GET", `/api/projects/${PROJECT_ID}/employees`, "Project employees", [200, 401]],
   ["GET", `/api/projects/${PROJECT_ID}/subcontracts`, "Subcontracts", [200, 401]],
   ["GET", `/api/projects/${PROJECT_ID}/purchase-orders`, "Purchase orders", [200, 401]],

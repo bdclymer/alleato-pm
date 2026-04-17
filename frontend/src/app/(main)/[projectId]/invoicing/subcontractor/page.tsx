@@ -9,7 +9,7 @@ export default function SubcontractorInvoicingRedirect() {
   const projectId = params.projectId as string;
 
   useEffect(() => {
-    router.replace(`/${projectId}/invoicing?tab=subcontractor`);
+    router.replace(`/${projectId}/invoices?tab=subcontractor`);
   }, [router, projectId]);
 
   return null;

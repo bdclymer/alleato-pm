@@ -15,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ds";
+import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useUploadPhotos } from "@/hooks/use-photos";
@@ -111,7 +112,7 @@ export function PhotoUploadDialog({
                 JPG, PNG, GIF, WEBP — multiple files supported
               </p>
             </div>
-            <input
+            <Input
               ref={inputRef}
               id="photo-file-input"
               type="file"
@@ -137,14 +138,16 @@ export function PhotoUploadDialog({
                   <span className="flex-1 truncate text-foreground">
                     {file.name}
                   </span>
-                  <button
+                  <Button
                     type="button"
                     onClick={() => removeFile(i)}
-                    className="shrink-0 rounded p-0.5 text-muted-foreground transition-colors hover:text-foreground"
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 shrink-0 text-muted-foreground hover:text-foreground"
                     aria-label={`Remove ${file.name}`}
                   >
                     <X className="h-3.5 w-3.5" />
-                  </button>
+                  </Button>
                 </li>
               ))}
             </ul>

@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { useState } from "react";
+import { apiFetch } from "@/lib/api-client";
 import { createAuthClient } from "@/lib/supabase/client-auth";
 import { validateCallbackUrl } from "@/lib/validation/callback-url";
 import { toast } from "sonner";
@@ -72,9 +73,10 @@ export function LoginForm({
         destination = validateCallbackUrl(redirectTo);
       } else {
         try {
-          const res = await fetch("/api/auth/post-login-redirect");
-          const { redirect } = await res.json();
-          destination = redirect || "/";
+          const result = await apiFetch<{ redirect?: string }>(
+            "/api/auth/post-login-redirect",
+          );
+          destination = result?.redirect || "/";
         } catch {
           destination = "/";
         }

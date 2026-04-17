@@ -172,6 +172,18 @@ export function ChangeEventConvertDialog({
     setIsConverting(true);
 
     try {
+      if (conversionType === "prime_pco") {
+        const query = new URLSearchParams({
+          contractId: targetContractId,
+          changeEventIds: changeEventId,
+        });
+        const formPath = `/${projectId}/prime-contracts/${targetContractId}/change-orders/pcos/new?${query.toString()}`;
+        toast.success("Opening prime potential change order form");
+        onOpenChange(false);
+        router.push(formPath);
+        return;
+      }
+
       const selectedContract = contracts.find((contract) => contract.id === targetContractId);
       const pcoTitle = selectedContract
         ? `PCO for change event — ${selectedContract.title || selectedContract.contract_number}`
@@ -209,9 +221,7 @@ export function ChangeEventConvertDialog({
 
       if (result?.pco?.id) {
         const path =
-          conversionType === "prime_pco"
-            ? `/${projectId}/prime-contract-pcos/${result.pco.id}`
-            : `/${projectId}/commitment-pcos/${result.pco.id}`;
+          `/${projectId}/commitment-pcos/${result.pco.id}`;
         router.push(path);
       }
     } catch {

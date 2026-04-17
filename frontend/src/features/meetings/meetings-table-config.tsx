@@ -3,6 +3,14 @@ import type { ReactElement } from "react";
 import { ArrowUpRight, FileText, Flame, Pencil, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Tooltip,
   TooltipContent,
@@ -189,7 +197,7 @@ function EditableCellWrapper({
   }
   return (
     <div
-      className="inline-flex items-center cursor-pointer rounded px-1 -mx-1 min-h-[28px] hover:bg-accent/20 transition-colors"
+      className="inline-flex min-h-7 cursor-pointer items-center rounded px-1 -mx-1 transition-colors hover:bg-accent/20"
       onClick={onClickToEdit}
     >
       {displayContent}
@@ -211,7 +219,7 @@ function InlineTextInput({
   placeholder?: string;
 }) {
   return (
-    <input
+    <Input
       type="text"
       value={value}
       onChange={(e) => onChange(e.target.value)}
@@ -235,7 +243,7 @@ function InlineTextInput({
       onClick={(e) => e.stopPropagation()}
       autoFocus
       placeholder={placeholder}
-      className="h-7 w-full min-w-[120px] rounded bg-accent/25 px-2 text-sm text-foreground focus:outline-none"
+      className="h-7 min-w-32 border-0 bg-accent/25 px-2 text-sm text-foreground focus-visible:ring-1"
     />
   );
 }
@@ -252,7 +260,7 @@ function InlineDateInput({
   onCancel: () => void;
 }) {
   return (
-    <input
+    <Input
       type="date"
       value={value}
       onChange={(e) => onChange(e.target.value)}
@@ -277,7 +285,7 @@ function InlineDateInput({
       autoFocus
       aria-label="Edit date"
       title="Edit date"
-      className="h-7 rounded bg-accent/25 px-2 text-sm text-foreground focus:outline-none"
+      className="h-7 w-auto border-0 bg-accent/25 px-2 text-sm text-foreground focus-visible:ring-1"
     />
   );
 }
@@ -293,37 +301,44 @@ function InlineProjectSelect({
   onSave: (v: string, move?: "next" | "prev") => void;
   onCancel: () => void;
 }) {
+  // Preserve the pre-Radix behavior where Tab / Shift-Tab commits the current
+  // value and moves edit focus to the next / previous cell. The raw <select>
+  // had this via onKeyDown; <Select> opens a portal dropdown that swallows
+  // arrow keys but *not* Tab when the trigger itself is focused, so we handle
+  // it on the wrapping div (which captures Tab before the trigger blurs).
   return (
-    <select
-      value={value}
-      onChange={(e) => {
-        onSave(e.target.value);
-      }}
-      onBlur={onCancel}
+    <div
+      onClick={(e) => e.stopPropagation()}
       onKeyDown={(e) => {
         if (e.key === "Tab") {
           e.preventDefault();
           onSave(value, e.shiftKey ? "prev" : "next");
-          return;
-        }
-        if (e.key === "Escape") {
-          e.preventDefault();
-          onCancel();
         }
       }}
-      onClick={(e) => e.stopPropagation()}
-      autoFocus
-      aria-label="Select project"
-      title="Select project"
-      className="h-7 rounded bg-accent/25 px-2 text-sm text-foreground focus:outline-none"
     >
-      <option value="">No project</option>
-      {projectOptions.map((opt) => (
-        <option key={opt.value} value={opt.value}>
-          {opt.label}
-        </option>
-      ))}
-    </select>
+      <Select
+        value={value || "__none__"}
+        onValueChange={(nextValue) => {
+          onSave(nextValue === "__none__" ? "" : nextValue);
+        }}
+      >
+        <SelectTrigger
+          aria-label="Select project"
+          title="Select project"
+          className="h-7 min-w-32 border-0 bg-accent/25 px-2 text-sm text-foreground focus:ring-1"
+        >
+          <SelectValue placeholder="No project" />
+        </SelectTrigger>
+        <SelectContent onEscapeKeyDown={onCancel}>
+          <SelectItem value="__none__">No project</SelectItem>
+          {projectOptions.map((opt) => (
+            <SelectItem key={opt.value} value={opt.value}>
+              {opt.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
   );
 }
 
@@ -466,11 +481,11 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <span className="text-xs text-muted-foreground max-w-[200px] truncate block">
+                <span className="block max-w-48 truncate text-xs text-muted-foreground">
                   {description}
                 </span>
               </TooltipTrigger>
-              <TooltipContent className="max-w-[420px] border bg-popover p-3 text-popover-foreground shadow-sm">
+              <TooltipContent className="max-w-96 border bg-popover p-3 text-popover-foreground shadow-sm">
                 <p className="text-xs leading-relaxed text-foreground whitespace-pre-wrap">
                   {description}
                 </p>

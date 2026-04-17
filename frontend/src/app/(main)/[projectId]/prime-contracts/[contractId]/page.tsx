@@ -42,7 +42,6 @@ import { apiFetch } from "@/lib/api-client";
 import { handleFormError } from "@/lib/handle-form-error";
 import {
   usePaymentApplications,
-  useCreatePaymentApplication,
   useDeletePaymentApplication,
   paymentApplicationKeys,
 } from "@/hooks/use-payment-applications";
@@ -210,10 +209,8 @@ export default function ProjectContractDetailPage() {
 
   // ── Invoices (React Query) ──────────────────────────────────────────────
   const { data: paymentApplications = [], isLoading: paymentsLoading } = usePaymentApplications(Number(projectId), contractId);
-  const createPaymentApp = useCreatePaymentApplication(Number(projectId), contractId);
   const deletePaymentApp = useDeletePaymentApplication(Number(projectId), contractId);
   const queryClient = useQueryClient();
-  const [billingPeriods, setBillingPeriods] = useState<Array<{ id: string; start_date: string; end_date: string; name: string | null; period_number: number }>>([]);
 
   // ── Payments received ───────────────────────────────────────────────────
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -317,11 +314,17 @@ export default function ProjectContractDetailPage() {
     const fetchChangeOrders = async () => {
       try {
         const ccoResponse = await fetchWithTransientRouteRetry(
-          `/api/projects/${projectId}/contracts/${contractId}/change-orders`,
+          `/api/projects/${projectId}/prime-contract-change-orders`,
         );
-        const ccos: PrimeContractCO[] = ccoResponse.ok ? await ccoResponse.json() : [];
+        const payload: { data?: PrimeContractCO[] } | PrimeContractCO[] =
+          ccoResponse.ok ? await ccoResponse.json() : [];
+        const ccos: PrimeContractCO[] = Array.isArray(payload)
+          ? payload
+          : payload.data ?? [];
         // Keep the Change Orders tab scoped to actual change orders; PCOs render in the dedicated section below.
-        setChangeOrders(ccos);
+        setChangeOrders(
+          ccos.filter((co) => String(co.contract_id ?? "") === String(contractId)),
+        );
       } catch (err) {
         toast.error(
           err instanceof Error ? err.message : "Failed to load change orders",
@@ -330,17 +333,6 @@ export default function ProjectContractDetailPage() {
     };
     fetchChangeOrders();
   }, [contract, contractId, projectId]);
-
-  useEffect(() => {
-    if (activeTab === "invoices") {
-      fetchWithTransientRouteRetry(`/api/projects/${projectId}/billing-periods`)
-        .then((r) => r.json())
-        .then((data) =>
-          setBillingPeriods(Array.isArray(data) ? data : data.items ?? []),
-        )
-        .catch(() => {});
-    }
-  }, [activeTab, projectId]);
 
   useEffect(() => {
     if (activeTab !== "payments" || !contract) return;
@@ -450,21 +442,6 @@ export default function ProjectContractDetailPage() {
   const handleBack = () => router.push(`/${projectId}/prime-contracts`);
 
   // ── Invoice CRUD ────────────────────────────────────────────────────────
-
-  const handleCreateInvoiceSubmit = async (data: {
-    application_number: string;
-    billing_period_id?: string;
-    period_from?: string;
-    period_to?: string;
-    billing_date?: string;
-    status: string;
-    notes?: string;
-    amount: number;
-    retention_amount: number;
-  }) => {
-    await createPaymentApp.mutateAsync(data as Partial<PaymentApplication>);
-    toast.success("Invoice created successfully");
-  };
 
   const handleDeleteInvoice = async (applicationId: string) => {
     if (!confirm("Delete this invoice? This cannot be undone.")) return;
@@ -579,9 +556,9 @@ export default function ProjectContractDetailPage() {
     if (!coForm.change_order_number || !coForm.description || !coForm.amount) { toast.error("CO number, description, and amount are required"); return; }
     setIsSubmittingCo(true);
     try {
-      const newCo = await apiFetch<PrimeContractCO>(`/api/projects/${projectId}/contracts/${contractId}/change-orders`, {
+      const newCo = await apiFetch<PrimeContractCO>(`/api/projects/${projectId}/prime-contract-change-orders`, {
         method: "POST",
-        body: JSON.stringify({ contract_id: contractId, change_order_number: coForm.change_order_number, description: coForm.description, amount: parseFloat(coForm.amount), status: coForm.status }),
+        body: JSON.stringify({ contract_id: contractId, prime_contract_id: contractId, title: coForm.description, description: coForm.description, total_amount: parseFloat(coForm.amount), status: coForm.status }),
       });
       setChangeOrders((prev) => [...prev, newCo]);
       setShowNewCoDialog(false);
@@ -600,9 +577,9 @@ export default function ProjectContractDetailPage() {
     if (!editCoForm.change_order_number || !editCoForm.description || !editCoForm.amount) { toast.error("CO number, description, and amount are required"); return; }
     setIsUpdatingCo(true);
     try {
-      const updated = await apiFetch<PrimeContractCO>(`/api/projects/${projectId}/contracts/${contractId}/change-orders/${editingCo.id}`, {
+      const updated = await apiFetch<PrimeContractCO>(`/api/projects/${projectId}/prime-contract-change-orders/${editingCo.id}`, {
         method: "PUT",
-        body: JSON.stringify({ change_order_number: editCoForm.change_order_number, description: editCoForm.description, amount: parseFloat(editCoForm.amount) }),
+        body: JSON.stringify({ pcco_number: editCoForm.change_order_number, title: editCoForm.description, description: editCoForm.description, total_amount: parseFloat(editCoForm.amount) }),
       });
       setChangeOrders((prev) => prev.map((co) => (co.id === editingCo.id ? { ...co, ...updated } : co)));
       setEditingCo(null);
@@ -614,7 +591,7 @@ export default function ProjectContractDetailPage() {
     if (!deletingCo) return;
     setIsDeletingCo(true);
     try {
-      await apiFetch(`/api/projects/${projectId}/contracts/${contractId}/change-orders/${deletingCo.id}`, { method: "DELETE" });
+      await apiFetch(`/api/projects/${projectId}/prime-contract-change-orders/${deletingCo.id}`, { method: "DELETE" });
       setChangeOrders((prev) => prev.filter((co) => co.id !== deletingCo.id));
       setDeletingCo(null);
       toast.success("Change order deleted");
@@ -625,7 +602,7 @@ export default function ProjectContractDetailPage() {
     if (!rejectingCoId || !rejectionReason.trim()) { toast.error("Rejection reason is required"); return; }
     setIsRejectingCo(true);
     try {
-      await apiFetch(`/api/projects/${projectId}/contracts/${contractId}/change-orders/${rejectingCoId}/reject`, {
+      await apiFetch(`/api/projects/${projectId}/prime-contract-change-orders/${rejectingCoId}/reject`, {
         method: "POST",
         body: JSON.stringify({ rejection_reason: rejectionReason }),
       });
@@ -843,7 +820,7 @@ export default function ProjectContractDetailPage() {
 
   return (
     <PageShell
-      variant="dashboard"
+      variant={activeTab === "financial-markup" ? "detail" : "dashboard"}
       title={`#${contract.contract_number || contract.id.slice(0, 8)} — ${contract.title}`}
       description={contract.contractor ? `Contractor: ${contract.contractor.name}` : contract.vendor ? `Contractor: ${contract.vendor.name}` : "No contractor assigned"}
       onBack={() => router.push(`/${projectId}/prime-contracts`)}
@@ -958,7 +935,7 @@ export default function ProjectContractDetailPage() {
         {activeTab === "invoices" && (
           <PrimeContractInvoicesTab
             projectId={projectId} contractId={contractId} contract={contract} paymentApplications={paymentApplications}
-            paymentsLoading={paymentsLoading} billingPeriods={billingPeriods} onCreateInvoice={handleCreateInvoiceSubmit}
+            paymentsLoading={paymentsLoading}
             onDeleteInvoice={handleDeleteInvoice} formatCurrency={formatCurrency}
           />
         )}

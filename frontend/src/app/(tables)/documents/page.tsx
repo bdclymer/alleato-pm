@@ -41,6 +41,7 @@ import {
   renderDocumentRowActions,
 } from "@/features/documents/documents-table-config";
 import { useSupabaseUpload } from "@/hooks/use-supabase-upload";
+import { apiFetch } from "@/lib/api-client";
 
 type DocumentFilterState = Record<string, FilterValue>;
 
@@ -231,11 +232,10 @@ export default function DocumentsPage() {
   const refreshDocuments = React.useCallback(async () => {
     setIsLoading(true);
     try {
-      const resp = await fetch("/api/documents/status", { cache: "no-store" });
-      const result = await resp.json();
-      if (!resp.ok) {
-        throw new Error(result?.error || "Failed to load documents");
-      }
+      const result = await apiFetch<{ documents?: PipelineDoc[] }>(
+        "/api/documents/status",
+        { cache: "no-store" },
+      );
       setDocuments((result.documents || []) as PipelineDoc[]);
     } catch (error) {
       const message =
@@ -249,14 +249,13 @@ export default function DocumentsPage() {
   // ── Fetch projects (for assignment) ────────────────────────────
   const fetchProjects = React.useCallback(async () => {
     try {
-      const resp = await fetch("/api/projects?fields=id,name", {
-        cache: "no-store",
-      });
-      if (!resp.ok) return;
-      const result = await resp.json();
-      setProjects(
-        (result.data || result.projects || result || []) as SimpleProject[],
-      );
+      const result = await apiFetch<
+        { data?: SimpleProject[]; projects?: SimpleProject[] } | SimpleProject[]
+      >("/api/projects?fields=id,name", { cache: "no-store" });
+      const list = Array.isArray(result)
+        ? result
+        : (result.data ?? result.projects ?? []);
+      setProjects(list as SimpleProject[]);
     } catch {
       // Non-critical — assignment will still work with IDs
     }
@@ -271,15 +270,10 @@ export default function DocumentsPage() {
   const handleAssignProject = React.useCallback(
     async (docId: string, projectId: number | null) => {
       try {
-        const resp = await fetch(`/api/documents/${docId}/assign-project`, {
+        await apiFetch(`/api/documents/${docId}/assign-project`, {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ project_id: projectId }),
         });
-        if (!resp.ok) {
-          const result = await resp.json();
-          throw new Error(result?.error || "Failed to assign project");
-        }
         toast.success(
           projectId ? "Document assigned to project" : "Project assignment removed",
         );
@@ -303,15 +297,10 @@ export default function DocumentsPage() {
             ? value ? Number(value) : null
             : value || null;
 
-        const resp = await fetch(`/api/documents/${docId}/assign-project`, {
+        await apiFetch(`/api/documents/${docId}/assign-project`, {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ [field]: parsedValue }),
         });
-        if (!resp.ok) {
-          const result = await resp.json();
-          throw new Error(result?.error || "Failed to update");
-        }
         // Optimistically update local state
         setDocuments((prev) =>
           prev.map((d) =>
@@ -407,8 +396,7 @@ export default function DocumentsPage() {
   const handleDeleteDocument = React.useCallback(
     async (doc: PipelineDoc) => {
       try {
-        const resp = await fetch(`/api/documents/${doc.id}`, { method: "DELETE" });
-        if (!resp.ok) throw new Error("Failed to delete document");
+        await apiFetch(`/api/documents/${doc.id}`, { method: "DELETE" });
         toast.success("Document deleted");
         void refreshDocuments();
       } catch {

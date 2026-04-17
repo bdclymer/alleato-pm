@@ -36,7 +36,7 @@ export function DocumentDetailsSheet({
       <SheetTrigger asChild>{trigger}</SheetTrigger>
       <SheetContent
         side="right"
-        className="flex flex-col w-[400px] sm:w-[540px]"
+        className="flex flex-col"
       >
         <SheetHeader className="gap-1">
           <SheetTitle>Document #{document.id}</SheetTitle>
@@ -127,14 +127,14 @@ export function DocumentDetailsSheet({
                   <Textarea
                     id="content"
                     defaultValue={document.content}
-                    className="min-h-[200px]"
+                    className="min-h-48"
                   />
                 </div>
               )}
             </form>
           </div>
         </div>
-        <SheetFooter className="mt-auto flex gap-2 sm:flex-col sm:space-x-0">
+        <SheetFooter className="mt-auto flex flex-col gap-2 sm:flex-row">
           <Button className="w-full">Save Changes</Button>
           <SheetClose asChild>
             <Button variant="outline" className="w-full">

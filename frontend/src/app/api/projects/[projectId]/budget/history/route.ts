@@ -3,6 +3,7 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
+import { requirePermission } from "@/lib/permissions-guard";
 
 interface HistoryParams {
   params: Promise<{
@@ -20,6 +21,14 @@ export const GET = withApiGuardrails(
   async ({ request, params }) => {
   
     const { projectId } = await params;
+    const projectIdNum = parseInt(projectId, 10);
+    if (Number.isNaN(projectIdNum)) {
+      return NextResponse.json({ error: "Invalid project ID" }, { status: 400 });
+    }
+
+    const guard = await requirePermission(projectIdNum, "budget", "read");
+    if (guard.denied) return guard.response;
+
     const supabase = await createClient();
 
     // Check authentication
@@ -55,7 +64,7 @@ export const GET = withApiGuardrails(
         )
       `,
       )
-      .eq("project_id", parseInt(projectId, 10))
+      .eq("project_id", projectIdNum)
       .order("changed_at", { ascending: false })
       .limit(100);
 

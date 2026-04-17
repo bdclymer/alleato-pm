@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Camera, Calendar, Download, History, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api-client";
 
 interface SnapshotsTabProps {
   projectId: string;
@@ -47,18 +48,15 @@ export function SnapshotsTab({ projectId }: SnapshotsTabProps) {
   const fetchSnapshots = React.useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch(
+      const data = await apiFetch<SnapshotsData>(
         `/api/projects/${projectId}/budget/snapshots`,
       );
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch snapshots");
-      }
-
-      const data = await response.json();
       setSnapshotsData(data);
     } catch (error) {
-      toast.error("Failed to load snapshots");
+      toast.error("Failed to load snapshots", {
+        description:
+          error instanceof Error ? error.message : "An unexpected error occurred.",
+      });
     } finally {
       setLoading(false);
     }
@@ -67,7 +65,7 @@ export function SnapshotsTab({ projectId }: SnapshotsTabProps) {
   const createSnapshot = React.useCallback(async () => {
     try {
       setCreating(true);
-      const response = await fetch(
+      await apiFetch(
         `/api/projects/${projectId}/budget/snapshots`,
         {
           method: "POST",
@@ -81,14 +79,13 @@ export function SnapshotsTab({ projectId }: SnapshotsTabProps) {
         },
       );
 
-      if (!response.ok) {
-        throw new Error("Failed to create snapshot");
-      }
-
       toast.success("Snapshot created successfully");
-      fetchSnapshots();
+      await fetchSnapshots();
     } catch (error) {
-      toast.error("Failed to create snapshot");
+      toast.error("Failed to create snapshot", {
+        description:
+          error instanceof Error ? error.message : "An unexpected error occurred.",
+      });
     } finally {
       setCreating(false);
     }

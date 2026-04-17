@@ -333,9 +333,11 @@ export function renderPrimeContractList(
             <span className="text-muted-foreground">-</span>
           )}
           {changeOrderData && (
-            <button
+            <Button
               type="button"
-              className="flex h-6 w-6 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground"
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 text-muted-foreground hover:bg-muted hover:text-foreground"
               onClick={(e) => {
                 e.stopPropagation();
                 changeOrderData.onToggle(item.id);
@@ -345,7 +347,7 @@ export function renderPrimeContractList(
               <ChevronDown
                 className={cn("h-3.5 w-3.5 transition-transform duration-150", changeOrderData.isExpanded && "rotate-180")}
               />
-            </button>
+            </Button>
           )}
         </div>
       </div>

@@ -97,6 +97,9 @@ export default function MeetingPrepPage() {
 
     try {
       const result = await generatePrep.mutateAsync();
+      if (!result.data?.content) {
+        throw new Error("Meeting prep generation returned no content");
+      }
       setContent(result.data.content);
     } catch {
       // Error handled by mutation onError

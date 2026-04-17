@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, XCircle, RefreshCw, Shield } from "lucide-react";
 import { Text } from "@/components/ds/text";
+import { apiFetch, ApiError } from "@/lib/api-client";
 
 interface AdminCheckResponse {
   authenticated: boolean;
@@ -33,13 +34,14 @@ export default function AdminCheckPage() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch("/api/auth/admin-check");
-      const json = await response.json();
+      const json = await apiFetch<AdminCheckResponse>("/api/auth/admin-check");
       setData(json);
-      if (!response.ok) {
-        setError(json.error || "Failed to check admin status");
-      }
     } catch (err) {
+      if (err instanceof ApiError) {
+        // Preserve the parsed body so the UI can show details/hint fields
+        const body = err.body as AdminCheckResponse;
+        setData(body);
+      }
       setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
       setLoading(false);

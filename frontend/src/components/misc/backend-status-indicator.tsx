@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { apiFetch } from "@/lib/api-client";
 
 interface HealthStatus {
   status: "healthy" | "error" | "loading";
@@ -21,20 +22,13 @@ export function BackendStatusIndicator() {
   useEffect(() => {
     const checkHealth = async () => {
       try {
-        const response = await fetch("/api/health", {
+        const data = await apiFetch<HealthStatus>("/api/health", {
           cache: "no-store",
         });
-        const data = await response.json();
 
-        if (!response.ok) {
-          throw new Error(
-            typeof data?.error === "string"
-              ? data.error
-              : "Failed to check backend status",
-          );
+        if (data) {
+          setHealth(data);
         }
-
-        setHealth(data);
       } catch (error) {
         setHealth({
           status: "error",

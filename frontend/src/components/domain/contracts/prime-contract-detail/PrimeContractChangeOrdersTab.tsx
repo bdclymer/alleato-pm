@@ -74,7 +74,7 @@ export function PrimeContractChangeOrdersTab({
   const handleApproveCo = useCallback(async (coId: string) => {
     try {
       await apiFetch(
-        `/api/projects/${projectId}/contracts/${contractId}/change-orders/${coId}/approve`,
+        `/api/projects/${projectId}/prime-contract-change-orders/${coId}/approve`,
         { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) },
       );
       setChangeOrders((prev) =>

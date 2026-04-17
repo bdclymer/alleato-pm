@@ -1,9 +1,10 @@
-import { withApiGuardrails } from "@/lib/guardrails/api";
+import { withApiGuardrails, parseJsonBody } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { PunchItemService } from "@/services/PunchItemService";
 import { apiErrorResponse } from "@/lib/api-error";
+import { updatePunchItemSchema } from "../payload";
 
 /**
  * GET /api/projects/[projectId]/punch-items/[punchItemId]
@@ -48,39 +49,25 @@ export const PATCH = withApiGuardrails<{ projectId: string; punchItemId: string 
     throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/punch-items/[punchItemId]#PATCH", message: "Authentication required." });
   }
 
-  try {
-    const body = await request.json();
+  const body = await parseJsonBody(
+    request,
+    updatePunchItemSchema,
+    "projects/[projectId]/punch-items/[punchItemId]#PATCH",
+  );
 
-    // Normalize empty strings for nullable date/string fields
-    const sanitized = { ...body };
-    if (sanitized.due_date === "") sanitized.due_date = null;
-    if (sanitized.description === "") sanitized.description = null;
-    if (sanitized.assignee_company === "") sanitized.assignee_company = null;
-    if (sanitized.ball_in_court === "") sanitized.ball_in_court = null;
-    if (sanitized.location === "") sanitized.location = null;
-    if (sanitized.trade === "") sanitized.trade = null;
-    if (sanitized.type === "") sanitized.type = null;
-    if (sanitized.reference === "") sanitized.reference = null;
+  const service = new PunchItemService(supabase);
+  const result = await service.update(
+    numericProjectId,
+    punchItemId,
+    body,
+    user.id,
+  );
 
-    const service = new PunchItemService(supabase);
-    const result = await service.update(
-      numericProjectId,
-      punchItemId,
-      sanitized,
-      user.id,
-    );
-
-    if (result.error) {
-      return apiErrorResponse(result.error);
-    }
-
-    return NextResponse.json(result.data);
-  } catch {
-    return NextResponse.json(
-      { error: "Failed to update punch item" },
-      { status: 500 },
-    );
+  if (result.error) {
+    return apiErrorResponse(result.error);
   }
+
+  return NextResponse.json(result.data);
   },
 );
 

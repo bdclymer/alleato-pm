@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api-client";
 
 export interface Employee {
   id: string;
@@ -37,22 +38,15 @@ const QUERY_KEY = ["initiative-cards"];
 export function useInitiativeCards() {
   return useQuery<InitiativeCard[]>({
     queryKey: QUERY_KEY,
-    queryFn: async () => {
-      const res = await fetch("/api/initiative-cards");
-      if (!res.ok) throw new Error("Failed to fetch cards");
-      return res.json();
-    },
+    queryFn: ({ signal }) =>
+      apiFetch<InitiativeCard[]>("/api/initiative-cards", { signal }),
   });
 }
 
 export function useEmployees() {
   return useQuery<Employee[]>({
     queryKey: ["employees"],
-    queryFn: async () => {
-      const res = await fetch("/api/employees");
-      if (!res.ok) throw new Error("Failed to fetch employees");
-      return res.json();
-    },
+    queryFn: ({ signal }) => apiFetch<Employee[]>("/api/employees", { signal }),
     staleTime: 5 * 60 * 1000, // Cache for 5 min
   });
 }
@@ -60,18 +54,14 @@ export function useEmployees() {
 export function useCreateCard() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (card: Partial<InitiativeCard>) => {
-      const res = await fetch("/api/initiative-cards", {
+    mutationFn: (card: Partial<InitiativeCard>) =>
+      apiFetch<InitiativeCard>("/api/initiative-cards", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(card),
-      });
-      if (!res.ok) throw new Error("Failed to create card");
-      return res.json();
-    },
+      }),
     onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEY }),
     onError: (error: Error) => {
-      toast.error(error.message || "Failed to create card");
+      toast.error(error.message);
     },
   });
 }
@@ -79,21 +69,17 @@ export function useCreateCard() {
 export function useUpdateCard() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({
+    mutationFn: ({
       id,
       ...updates
-    }: Partial<InitiativeCard> & { id: string }) => {
-      const res = await fetch(`/api/initiative-cards/${id}`, {
+    }: Partial<InitiativeCard> & { id: string }) =>
+      apiFetch<InitiativeCard>(`/api/initiative-cards/${id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updates),
-      });
-      if (!res.ok) throw new Error("Failed to update card");
-      return res.json();
-    },
+      }),
     onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEY }),
     onError: (error: Error) => {
-      toast.error(error.message || "Failed to update card");
+      toast.error(error.message);
     },
   });
 }
@@ -101,16 +87,11 @@ export function useUpdateCard() {
 export function useDeleteCard() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (id: string) => {
-      const res = await fetch(`/api/initiative-cards/${id}`, {
-        method: "DELETE",
-      });
-      if (!res.ok) throw new Error("Failed to delete card");
-      return res.json();
-    },
+    mutationFn: (id: string) =>
+      apiFetch(`/api/initiative-cards/${id}`, { method: "DELETE" }),
     onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEY }),
     onError: (error: Error) => {
-      toast.error(error.message || "Failed to delete card");
+      toast.error(error.message);
     },
   });
 }
@@ -118,20 +99,16 @@ export function useDeleteCard() {
 export function useReorderCards() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (
+    mutationFn: (
       cards: { id: string; status: string; sort_order: number }[],
-    ) => {
-      const res = await fetch("/api/initiative-cards", {
+    ) =>
+      apiFetch("/api/initiative-cards", {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ cards }),
-      });
-      if (!res.ok) throw new Error("Failed to reorder cards");
-      return res.json();
-    },
+      }),
     onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEY }),
     onError: (error: Error) => {
-      toast.error(error.message || "Failed to reorder cards");
+      toast.error(error.message);
     },
   });
 }
@@ -139,21 +116,16 @@ export function useReorderCards() {
 export function useDispatchCard() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (cardId: string) => {
-      const res = await fetch(`/api/initiative-cards/${cardId}/dispatch`, {
-        method: "POST",
-      });
-      if (!res.ok) throw new Error("Failed to dispatch card");
-      return res.json() as Promise<{
+    mutationFn: (cardId: string) =>
+      apiFetch<{
         success: boolean;
         prompt: string;
         cliCommand: string;
         message: string;
-      }>;
-    },
+      }>(`/api/initiative-cards/${cardId}/dispatch`, { method: "POST" }),
     onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEY }),
     onError: (error: Error) => {
-      toast.error(error.message || "Failed to dispatch card");
+      toast.error(error.message);
     },
   });
 }

@@ -43,6 +43,7 @@ import {
 } from "@/hooks/use-commitments-query";
 import type { CommitmentListItem } from "@/lib/validation/commitments";
 import { formatCurrency } from "@/lib/utils";
+import { apiFetch } from "@/lib/api-client";
 import {
   buildCommitmentTableColumns,
   commitmentColumns,
@@ -87,8 +88,7 @@ function CommitmentChangeOrdersRow({
     let cancelled = false;
     setIsLoading(true);
 
-    fetch(`/api/commitments/${commitmentId}/change-orders`)
-      .then((res) => res.json())
+    apiFetch<{ data?: CommitmentChangeOrder[] }>(`/api/commitments/${commitmentId}/change-orders`)
       .then((json) => {
         if (!cancelled) {
           setChangeOrders(json.data ?? []);
@@ -331,8 +331,7 @@ export default function ProjectCommitmentsPage(): ReactElement {
     let cancelled = false;
     setIsLoadingProjectCOs(true);
 
-    fetch(`/api/projects/${projectId}/commitment-change-orders`)
-      .then((res) => res.json())
+    apiFetch<{ data?: CommitmentChangeOrder[] }>(`/api/projects/${projectId}/commitment-change-orders`)
       .then((json) => {
         if (!cancelled) {
           setProjectChangeOrders(json.data ?? []);
@@ -380,13 +379,10 @@ export default function ProjectCommitmentsPage(): ReactElement {
   const handleStatusChange = React.useCallback(
     async (id: string, status: string) => {
       try {
-        const resp = await fetch(`/api/commitments/${id}`, {
+        await apiFetch(`/api/commitments/${id}`, {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ status }),
         });
-        const data = await resp.json();
-        if (!resp.ok) throw new Error(data.error ?? "Failed to update status");
         toast.success("Status updated");
         await queryClient.invalidateQueries({ queryKey: ["commitments", projectId] });
       } catch (err) {
@@ -399,13 +395,12 @@ export default function ProjectCommitmentsPage(): ReactElement {
   const handleErpSync = React.useCallback(async () => {
     setIsSyncing(true);
     try {
-      const resp = await fetch("/api/sync/acumatica/commitments", {
+      const data = await apiFetch<{
+        result: { created: number; updated: number; errors: unknown[] };
+      }>("/api/sync/acumatica/commitments", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ projectId: Number(projectId) }),
       });
-      const data = await resp.json();
-      if (!resp.ok) throw new Error(data.error ?? "Sync failed");
       const { result } = data;
       toast.success(
         `Commitments sync complete: ${result.created} created, ${result.updated} updated` +
@@ -545,22 +540,15 @@ export default function ProjectCommitmentsPage(): ReactElement {
 
       for (const id of ids) {
         try {
-          const response = await fetch(`/api/commitments/${id}`, {
+          await apiFetch(`/api/commitments/${id}`, {
             method: "DELETE",
           });
-
-          if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            const item = commitmentMap.get(id);
-            const label = item?.number || item?.title || id;
-            failures.push(
-              `${label}: ${errorData.message || errorData.error || "Failed to delete commitment"}`,
-            );
-          }
-        } catch {
+        } catch (err) {
           const item = commitmentMap.get(id);
           const label = item?.number || item?.title || id;
-          failures.push(`${label}: Network error`);
+          failures.push(
+            `${label}: ${err instanceof Error ? err.message : "Failed to delete commitment"}`,
+          );
         }
       }
 

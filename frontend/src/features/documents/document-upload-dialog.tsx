@@ -179,7 +179,7 @@ export function DocumentUploadDialog({
                   </p>
                 </>
               )}
-              <input
+              <Input
                 ref={fileInputRef}
                 type="file"
                 className="hidden"

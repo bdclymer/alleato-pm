@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api-client";
 
 export interface InvoicingSettings {
   id: number | null;
@@ -24,6 +25,10 @@ export type UpdateInvoicingSettingsInput = Partial<
   Omit<InvoicingSettings, "id" | "project_id" | "created_at" | "updated_at">
 >;
 
+interface InvoicingSettingsApiResponse {
+  data: InvoicingSettings;
+}
+
 export const invoicingSettingsKeys = {
   all: ["invoicing-settings"] as const,
   detail: (projectId: string) =>
@@ -34,17 +39,9 @@ export function useInvoicingSettings(projectId: string) {
   return useQuery<InvoicingSettings>({
     queryKey: invoicingSettingsKeys.detail(projectId),
     queryFn: async () => {
-      const response = await fetch(
+      const payload = await apiFetch<InvoicingSettingsApiResponse>(
         `/api/projects/${projectId}/invoicing/settings`,
       );
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new Error(
-          error.error ||
-            `Server returned ${response.status} when loading invoicing settings`,
-        );
-      }
-      const payload = await response.json();
       return payload.data as InvoicingSettings;
     },
     enabled: !!projectId,
@@ -56,24 +53,14 @@ export function useUpdateInvoicingSettings(projectId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (input: UpdateInvoicingSettingsInput) => {
-      const response = await fetch(
+    mutationFn: async (input: UpdateInvoicingSettingsInput) =>
+      apiFetch<InvoicingSettingsApiResponse>(
         `/api/projects/${projectId}/invoicing/settings`,
         {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(input),
         },
-      );
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.error ||
-            `Server returned ${response.status} — settings could not be updated`,
-        );
-      }
-      return response.json();
-    },
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: invoicingSettingsKeys.detail(projectId),

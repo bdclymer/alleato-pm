@@ -233,27 +233,28 @@ export function buildDocumentTableColumns(opts?: {
           onOpenChange={(open) => {
             if (!open) onCancel();
           }}
-        >
-          <PopoverTrigger asChild>
-            <button
-              type="button"
-              className="h-7 w-full rounded border border-border bg-background px-2 text-left text-sm -my-0.5"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {item.project_id
-                ? (projectNames?.get(item.project_id) ??
-                  `Project #${item.project_id}`)
-                : "Select project..."}
-            </button>
-          </PopoverTrigger>
+          >
+            <PopoverTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                className="h-7 w-full -my-0.5 justify-start px-2 text-left text-sm"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {item.project_id
+                  ? (projectNames?.get(item.project_id) ??
+                    `Project #${item.project_id}`)
+                  : "Select project..."}
+              </Button>
+            </PopoverTrigger>
           <PopoverContent
-            className="w-[240px] p-0"
+            className="w-60 p-0"
             align="start"
             onOpenAutoFocus={(e) => e.preventDefault()}
           >
             <Command>
               <CommandInput placeholder="Search projects..." />
-              <CommandList className="max-h-[200px] overflow-y-auto">
+              <CommandList className="max-h-48 overflow-y-auto">
                 <CommandEmpty>No projects found.</CommandEmpty>
                 <CommandGroup>
                   <CommandItem
@@ -378,9 +379,10 @@ export function renderDocumentCard(
   onView: (item: PipelineDoc) => void,
 ): ReactElement {
   return (
-    <button
+    <Button
       type="button"
-      className="flex flex-col gap-2 rounded-lg border border-border p-4 text-left transition-colors hover:bg-muted/50"
+      variant="ghost"
+      className="h-auto flex flex-col gap-2 rounded-lg border border-border p-4 text-left hover:bg-muted/50"
       onClick={() => onView(item)}
     >
       <div className="flex items-start justify-between gap-2">
@@ -409,7 +411,7 @@ export function renderDocumentCard(
           {item.error_message}
         </span>
       )}
-    </button>
+    </Button>
   );
 }
 
@@ -418,9 +420,10 @@ export function renderDocumentList(
   onView: (item: PipelineDoc) => void,
 ): ReactElement {
   return (
-    <button
+    <Button
       type="button"
-      className="flex w-full items-center justify-between gap-4 rounded-md px-3 py-2.5 text-left transition-colors hover:bg-muted/50"
+      variant="ghost"
+      className="h-auto flex w-full items-center justify-between gap-4 rounded-md px-3 py-2.5 text-left hover:bg-muted/50"
       onClick={() => onView(item)}
     >
       <div className="min-w-0 flex-1">
@@ -443,7 +446,7 @@ export function renderDocumentList(
               : "warning"
         }
       />
-    </button>
+    </Button>
   );
 }
 

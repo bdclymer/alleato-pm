@@ -16,6 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { apiFetch } from "@/lib/api-client";
 
 interface FormattedTranscriptProps {
   content: string;
@@ -236,11 +237,8 @@ export function FormattedTranscript({
 
     setIsSaving(true);
     try {
-      const response = await fetch("/api/notes/highlight", {
+      const payload = await apiFetch<{ title?: string }>("/api/notes/highlight", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify({
           meetingId,
           selectedText,
@@ -248,12 +246,6 @@ export function FormattedTranscript({
           noteBody: noteBody.trim() || undefined,
         }),
       });
-
-      const payload: { error?: string; title?: string } = await response.json();
-      if (!response.ok) {
-        toast.error(payload.error || "Failed to save note");
-        return;
-      }
 
       toast.success("Highlight saved as note", {
         description: payload.title || meetingTitle || "Meeting note created",

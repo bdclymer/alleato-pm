@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams } from "next/navigation";
+import { apiFetch } from "@/lib/api-client";
 import { PageShell } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -128,13 +129,15 @@ export default function TestingPage() {
 
   // ── Load runs list ──
   const loadRuns = useCallback(async () => {
-    const res = await fetch(`/api/testing/runs?suite=${SUITE}`);
-    if (!res.ok) return;
-    const data = await res.json();
-    setRuns(data.runs ?? []);
-    // Auto-select most recent run
-    if (!activeRunId && data.runs?.length > 0) {
-      setActiveRunId(data.runs[0].id);
+    try {
+      const data = await apiFetch<{ runs?: Run[] }>(`/api/testing/runs?suite=${SUITE}`);
+      setRuns(data.runs ?? []);
+      // Auto-select most recent run
+      if (!activeRunId && data.runs && data.runs.length > 0) {
+        setActiveRunId(data.runs[0].id);
+      }
+    } catch {
+      // Keep previous state on error
     }
   }, [activeRunId, SUITE]);
 
@@ -151,12 +154,14 @@ export default function TestingPage() {
   useEffect(() => {
     if (!activeRunId) return;
     setLoading(true);
-    fetch(`/api/testing/runs/${activeRunId}/results`)
-      .then((r) => r.json())
+    apiFetch<{ results?: TestResult[] }>(`/api/testing/runs/${activeRunId}/results`)
       .then((data) => {
         setResults(data.results ?? []);
         setCursor(0);
         setNotesDraft("");
+      })
+      .catch(() => {
+        // Keep previous state on error
       })
       .finally(() => setLoading(false));
   }, [activeRunId]);
@@ -181,16 +186,14 @@ export default function TestingPage() {
   const markResult = useCallback(async (status: TestStatus) => {
     if (!current) return;
     setSavingId(current.id);
-    const res = await fetch(
-      `/api/testing/runs/${activeRunId}/results/${current.id}`,
-      {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status, notes: notesDraft || null }),
-      }
-    );
-    if (res.ok) {
-      const { result } = await res.json();
+    try {
+      const { result } = await apiFetch<{ result: TestResult }>(
+        `/api/testing/runs/${activeRunId}/results/${current.id}`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({ status, notes: notesDraft || null }),
+        },
+      );
       setResults((prev) =>
         prev.map((r) => r.id === current.id ? { ...r, status: result.status, notes: result.notes } : r)
       );
@@ -198,6 +201,8 @@ export default function TestingPage() {
       const next = filteredResults.findIndex((r, i) => i > cursor && r.status === "not_tested");
       if (next !== -1) setCursor(next);
       else if (cursor < filteredResults.length - 1) setCursor(cursor + 1);
+    } catch {
+      // Keep current result on error
     }
     setSavingId(null);
   }, [current, activeRunId, notesDraft, cursor, filteredResults]);
@@ -205,13 +210,12 @@ export default function TestingPage() {
   // ── Save notes only ──
   const saveNotes = useCallback(async () => {
     if (!current || notesDraft === (current.notes ?? "")) return;
-    await fetch(
+    await apiFetch(
       `/api/testing/runs/${activeRunId}/results/${current.id}`,
       {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ notes: notesDraft || null }),
-      }
+      },
     );
     setResults((prev) =>
       prev.map((r) => r.id === current.id ? { ...r, notes: notesDraft || null } : r)
@@ -244,16 +248,14 @@ export default function TestingPage() {
     const reader = new FileReader();
     reader.onload = async () => {
       const dataUrl = reader.result as string;
-      const res = await fetch(
-        `/api/testing/runs/${activeRunId}/results/${current.id}/screenshots`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ dataUrl, label: file.name }),
-        }
-      );
-      if (res.ok) {
-        const { screenshot } = await res.json();
+      try {
+        const { screenshot } = await apiFetch<{ screenshot: TestResult["test_screenshots"][number] }>(
+          `/api/testing/runs/${activeRunId}/results/${current.id}/screenshots`,
+          {
+            method: "POST",
+            body: JSON.stringify({ dataUrl, label: file.name }),
+          },
+        );
         setResults((prev) =>
           prev.map((r) =>
             r.id === current.id
@@ -261,6 +263,8 @@ export default function TestingPage() {
               : r
           )
         );
+      } catch {
+        // Screenshot upload failed; preserve state
       }
     };
     reader.readAsDataURL(file);
@@ -268,17 +272,17 @@ export default function TestingPage() {
 
   // ── Create new run ──
   const createRun = async () => {
-    const res = await fetch("/api/testing/runs", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ suite: SUITE, ...newRunForm }),
-    });
-    if (res.ok) {
-      const { run_id } = await res.json();
+    try {
+      const { run_id } = await apiFetch<{ run_id: string }>("/api/testing/runs", {
+        method: "POST",
+        body: JSON.stringify({ suite: SUITE, ...newRunForm }),
+      });
       setNewRunOpen(false);
       setNewRunForm({ tester: "", environment: "localhost:3000", branch: "", notes: "" });
       await loadRuns();
       setActiveRunId(run_id);
+    } catch {
+      // Failed to create run; keep dialog open
     }
   };
 

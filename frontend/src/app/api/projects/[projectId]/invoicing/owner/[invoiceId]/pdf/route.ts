@@ -12,11 +12,16 @@ import {
 // Node runtime required by @react-pdf/renderer
 export const runtime = "nodejs";
 
+type InvoicePdfFetchResult =
+  | { data: InvoicePdfData; error: null }
+  | { data: null; error: null | { code?: string; message: string } };
+
+// Fetch the invoice PDF payload and preserve query errors so the route can fail accurately.
 export async function fetchInvoicePdfData(
   supabase: Awaited<ReturnType<typeof createClient>>,
   projectIdNum: number,
   invoiceIdNum: number,
-): Promise<InvoicePdfData | null> {
+): Promise<InvoicePdfFetchResult> {
   const { data: invoice, error } = await supabase
     .from("owner_invoices")
     .select(
@@ -28,7 +33,7 @@ export async function fetchInvoicePdfData(
         retention_percentage,
         contract_number,
         title,
-        company_id
+        contract_company_id
       )
     `,
     )
@@ -36,7 +41,13 @@ export async function fetchInvoicePdfData(
     .eq("prime_contracts.project_id", projectIdNum)
     .single();
 
-  if (error || !invoice) return null;
+  if (error) {
+    return { data: null, error: { code: error.code, message: error.message } };
+  }
+
+  if (!invoice) {
+    return { data: null, error: null };
+  }
 
   const { data: projectRow } = await supabase
     .from("projects")
@@ -61,11 +72,11 @@ export async function fetchInvoicePdfData(
     : invoice.prime_contracts;
 
   let companyName: string | null = null;
-  if (contractJoin?.company_id) {
+  if (contractJoin?.contract_company_id) {
     const { data: company } = await supabase
       .from("companies")
       .select("name")
-      .eq("id", contractJoin.company_id)
+      .eq("id", contractJoin.contract_company_id)
       .single();
     companyName = company?.name ?? null;
   }
@@ -99,28 +110,31 @@ export async function fetchInvoicePdfData(
   lineItems.sort((a, b) => a.id - b.id);
 
   return {
-    id: invoice.id,
-    invoice_number: invoice.invoice_number,
-    status: invoice.status ?? "draft",
-    billing_date: invoice.billing_date,
-    period_start: invoice.period_start,
-    period_end: invoice.period_end,
-    notes: invoice.notes ?? null,
-    lineItems,
-    project: project ?? null,
-    contract: {
-      contract_number: contractJoin?.contract_number ?? null,
-      contract_title: contractJoin?.title ?? null,
-      company_name: companyName,
-      retention_percentage: contractJoin?.retention_percentage ?? null,
+    data: {
+      id: invoice.id,
+      invoice_number: invoice.invoice_number,
+      status: invoice.status ?? "draft",
+      billing_date: invoice.billing_date,
+      period_start: invoice.period_start,
+      period_end: invoice.period_end,
+      notes: invoice.notes ?? null,
+      lineItems,
+      project: project ?? null,
+      contract: {
+        contract_number: contractJoin?.contract_number ?? null,
+        contract_title: contractJoin?.title ?? null,
+        company_name: companyName,
+        retention_percentage: contractJoin?.retention_percentage ?? null,
+      },
     },
+    error: null,
   };
 }
 
 export const GET = withApiGuardrails<{ projectId: string; invoiceId: string }>(
   "projects/[projectId]/invoicing/owner/[invoiceId]/pdf#GET",
   async ({ request, params }) => {
-  
+    const where = "projects/[projectId]/invoicing/owner/[invoiceId]/pdf#GET";
     const supabase = await createClient();
     const { projectId, invoiceId } = params;
 
@@ -130,17 +144,37 @@ export const GET = withApiGuardrails<{ projectId: string; invoiceId: string }>(
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/invoicing/owner/[invoiceId]/pdf#GET", message: "Authentication required." });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where, message: "Authentication required." });
     }
 
     const projectIdNum = parseInt(projectId, 10);
     const invoiceIdNum = parseInt(invoiceId, 10);
 
-    const data = await fetchInvoicePdfData(supabase, projectIdNum, invoiceIdNum);
-    if (!data) {
-      return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
+    const result = await fetchInvoicePdfData(supabase, projectIdNum, invoiceIdNum);
+    if (result.error) {
+      if (result.error.code === "PGRST116") {
+        throw new GuardrailError({
+          code: "INTERNAL_ERROR",
+          where,
+          message: "Invoice not found.",
+          status: 404,
+          severity: "low",
+        });
+      }
+      return apiErrorResponse(result.error);
     }
 
+    if (!result.data) {
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where,
+        message: "Invoice not found.",
+        status: 404,
+        severity: "low",
+      });
+    }
+
+    const data = result.data;
     const pdfBuffer = await renderInvoicePdfBuffer(data);
     const filename = `invoice-${data.invoice_number || data.id}.pdf`;
 

@@ -9,6 +9,7 @@ import type {
 } from "@/components/tables/unified";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { apiFetch } from "@/lib/api-client";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -286,9 +287,14 @@ function DrawingGridCard({ item, onClick, selected, onSelect }: DrawingGridCardP
 
   useEffect(() => {
     if (!item.fileUrl) return;
-    fetch(`/api/projects/${item.projectId}/drawings/${item.id}/download`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => { if (data?.downloadUrl) setPreviewUrl(data.downloadUrl); })
+    apiFetch<{ downloadUrl?: string }>(
+      `/api/projects/${item.projectId}/drawings/${item.id}/download`,
+    )
+      .then((data) => {
+        if (data?.downloadUrl) {
+          setPreviewUrl(data.downloadUrl);
+        }
+      })
       .catch(() => {});
   }, [item.id, item.projectId, item.fileUrl]);
 
@@ -302,9 +308,10 @@ function DrawingGridCard({ item, onClick, selected, onSelect }: DrawingGridCardP
   const dimmed = item.isObsolete || !item.isPublished;
 
   return (
-    <button
+    <Button
       type="button"
-      className={`group/card relative w-full cursor-pointer rounded-lg border text-left transition-all hover:shadow-sm overflow-hidden bg-card${dimmed ? " opacity-60" : ""}${selected ? " border-primary ring-1 ring-primary" : " border-border"}`}
+      variant="ghost"
+      className={`group/card relative h-auto w-full overflow-hidden rounded-lg border bg-background p-0 text-left transition-all hover:bg-muted/40${dimmed ? " opacity-60" : ""}${selected ? " border-primary ring-1 ring-primary" : " border-border"}`}
       onClick={() => onClick(item)}
     >
       {/* Selection checkbox */}
@@ -313,7 +320,7 @@ function DrawingGridCard({ item, onClick, selected, onSelect }: DrawingGridCardP
           className={`absolute top-1.5 left-1.5 z-20 transition-opacity ${selected ? "opacity-100" : "opacity-0 group-hover/card:opacity-100"}`}
           onClick={(e) => { e.stopPropagation(); onSelect(item.id, !selected); }}
         >
-          <div className={`h-4.5 w-4.5 rounded border-2 flex items-center justify-center text-white transition-colors ${selected ? "bg-primary border-primary" : "bg-card/80 border-muted-foreground/40 backdrop-blur-sm"}`}>
+          <div className={`flex h-4.5 w-4.5 items-center justify-center rounded border-2 text-primary-foreground transition-colors ${selected ? "border-primary bg-primary" : "border-muted-foreground/40 bg-background/80 backdrop-blur-sm"}`}>
             {selected && (
               <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
             )}
@@ -363,7 +370,7 @@ function DrawingGridCard({ item, onClick, selected, onSelect }: DrawingGridCardP
           {item.revisionNumber ? ` · Rev ${item.revisionNumber}` : ""}
         </p>
       </div>
-    </button>
+    </Button>
   );
 }
 
@@ -446,9 +453,10 @@ export function renderDrawingList(
         </div>
       )}
 
-      <button
+      <Button
         type="button"
-        className={`flex w-full cursor-pointer items-center justify-between rounded-md px-4 py-2 text-left transition-colors hover:bg-muted/50${onDelete ? " pr-12" : ""}`}
+        variant="ghost"
+        className={`h-auto flex w-full items-center justify-between rounded-md px-4 py-2 text-left hover:bg-muted/50${onDelete ? " pr-12" : ""}`}
         onClick={() => onClick(item)}
       >
         <div>
@@ -473,7 +481,7 @@ export function renderDrawingList(
             </Badge>
           )}
         </div>
-      </button>
+      </Button>
     </div>
   );
 }

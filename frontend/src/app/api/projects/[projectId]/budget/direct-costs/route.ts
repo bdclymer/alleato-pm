@@ -3,6 +3,7 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
+import { requirePermission } from "@/lib/permissions-guard";
 
 /**
  * Direct Costs API Endpoint
@@ -80,6 +81,9 @@ export const GET = withApiGuardrails<{ projectId: string }>(
         { status: 400 },
       );
     }
+
+    const guard = await requirePermission(projectIdNum, "budget", "read");
+    if (guard.denied) return guard.response;
 
     const { searchParams } = new URL(request.url);
     const budgetLineId = searchParams.get("budgetLineId");

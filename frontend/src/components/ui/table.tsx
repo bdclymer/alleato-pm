@@ -70,7 +70,7 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
     <th
       data-slot="table-head"
       className={cn(
-        "text-primary px-4 pb-2.5 pt-2.5 text-left align-middle text-[10px] font-semibold uppercase tracking-[0.04em] whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+        "text-primary px-3 pb-2.5 pt-2.5 text-left align-middle text-[10px] font-semibold uppercase tracking-[0.04em] whitespace-nowrap sm:px-4 [&:has([role=checkbox])]:overflow-visible [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
         className,
       )}
       {...props}
@@ -85,7 +85,7 @@ function TableCell({ className, ...props }: React.ComponentProps<"td">) {
       className={cn(
         // Table baseline: keep data dense and scannable with single-line cells.
         // Avoid stacking multiple lines in table cells; use dedicated columns instead.
-        "px-4 py-2.5 align-middle text-sm text-foreground/80 whitespace-nowrap max-w-[280px] overflow-hidden text-ellipsis [&:has([role=checkbox])]:max-w-none [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+        "px-3 py-2.5 align-middle text-sm text-foreground/80 whitespace-nowrap max-w-[220px] overflow-hidden text-ellipsis sm:px-4 sm:max-w-[280px] [&:has([role=checkbox])]:max-w-none [&:has([role=checkbox])]:overflow-visible [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
         className,
       )}
       {...props}

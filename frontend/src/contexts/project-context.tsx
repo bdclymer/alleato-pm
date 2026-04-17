@@ -8,6 +8,7 @@ import React, {
   useCallback,
 } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { apiFetch } from "@/lib/api-client";
 
 interface Project {
   id: number;
@@ -73,24 +74,8 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
 
       try {
         setIsLoading(true);
-        const response = await fetch(`/api/projects/${projectIdFromUrl}`, {
-          credentials: "include",
-        });
-
-        if (response.ok) {
-          const contentType = response.headers.get("content-type") || "";
-
-          if (contentType.includes("application/json")) {
-            const project = await response.json();
-            setSelectedProjectState(project);
-          } else {
-            const fallbackBody = await response.text();
-            console.error('Failed to fetch project:', fallbackBody.slice(0, 200));
-            setSelectedProjectState(null);
-          }
-        } else {
-          setSelectedProjectState(null);
-        }
+        const project = await apiFetch<Project>(`/api/projects/${projectIdFromUrl}`);
+        setSelectedProjectState(project);
       } catch (error) {
         console.error("Failed to fetch project details:", error);
         setSelectedProjectState(null);

@@ -25,6 +25,8 @@ export { KpiBlock, KpiRow } from "./kpi";
 export type { KpiBlockProps } from "./kpi";
 
 export { SectionHeader } from "./section-header";
+export { AttachmentUploadPanel } from "./attachment-upload-panel";
+export type { AttachmentUploadItem, AttachmentUploadPanelProps } from "./attachment-upload-panel";
 export { AvatarStack } from "./avatar-stack";
 export { DateAvatar } from "./date-avatar";
 export { DataTable } from "./data-table";

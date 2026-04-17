@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { apiFetch, ApiError } from "@/lib/api-client";
 import { RagChatKitPanel } from "@/components/chat/rag-chatkit-panel";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
@@ -21,20 +22,17 @@ type RagStateResult<T = RagStatePayload> = {
 
 async function fetchRagBootstrapState(): Promise<RagStateResult> {
   try {
-    const res = await fetch("/api/rag-chatkit/bootstrap");
-    if (!res.ok) {
-      const errorData = (await res.json().catch(() => null)) as {
-        message?: string;
-      } | null;
+    const data = await apiFetch<RagStatePayload>("/api/rag-chatkit/bootstrap");
+    return { data, errorMessage: null };
+  } catch (err) {
+    if (err instanceof ApiError) {
+      const body = err.body as { message?: string } | null;
       return {
         data: null,
         errorMessage:
-          errorData?.message || "Unable to initialize AI chat bootstrap state.",
+          body?.message || "Unable to initialize AI chat bootstrap state.",
       };
     }
-    const data = (await res.json()) as RagStatePayload;
-    return { data, errorMessage: null };
-  } catch {
     return {
       data: null,
       errorMessage: "Unable to connect to the AI backend.",
@@ -44,19 +42,18 @@ async function fetchRagBootstrapState(): Promise<RagStateResult> {
 
 async function fetchRagThreadState(threadId: string): Promise<RagStateResult> {
   try {
-    const res = await fetch(`/api/rag-chatkit/state?thread_id=${threadId}`);
-    if (!res.ok) {
-      const errorData = (await res.json().catch(() => null)) as {
-        message?: string;
-      } | null;
+    const data = await apiFetch<RagStatePayload>(
+      `/api/rag-chatkit/state?thread_id=${threadId}`,
+    );
+    return { data, errorMessage: null };
+  } catch (err) {
+    if (err instanceof ApiError) {
+      const body = err.body as { message?: string } | null;
       return {
         data: null,
-        errorMessage: errorData?.message || "Unable to load AI chat thread state.",
+        errorMessage: body?.message || "Unable to load AI chat thread state.",
       };
     }
-    const data = (await res.json()) as RagStatePayload;
-    return { data, errorMessage: null };
-  } catch {
     return {
       data: null,
       errorMessage: "Unable to connect to the AI backend.",

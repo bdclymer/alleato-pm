@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
+import { apiFetch } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import type { UIMessage } from "ai";
 import { useProjects } from "@/hooks/use-projects";
@@ -839,9 +840,8 @@ export function ChatArea({
       );
       // Persist feedback to database for AI observability
       if (sessionId) {
-        fetch("/api/ai-assistant/feedback", {
+        apiFetch("/api/ai-assistant/feedback", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             sessionId,
             feedback: type,
@@ -893,12 +893,9 @@ export function ChatArea({
   );
 
   const handleForgetMemory = useCallback(async (memoryId: string) => {
-    const response = await fetch(`/api/ai-assistant/memories/${memoryId}`, {
+    await apiFetch(`/api/ai-assistant/memories/${memoryId}`, {
       method: "DELETE",
     });
-    if (!response.ok) {
-      throw new Error("Failed to forget memory");
-    }
   }, []);
 
   const hasMessages = messages.length > 0;

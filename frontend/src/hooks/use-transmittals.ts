@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api-client";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -64,14 +65,13 @@ export const transmittalKeys = {
 export function useTransmittals(projectId: number, status?: string) {
   return useQuery({
     queryKey: transmittalKeys.list(projectId, status),
-    queryFn: async (): Promise<TransmittalSummary[]> => {
+    queryFn: ({ signal }): Promise<TransmittalSummary[]> => {
       const params = new URLSearchParams();
       if (status) params.set("tab", status);
-      const res = await fetch(
+      return apiFetch<TransmittalSummary[]>(
         `/api/projects/${projectId}/transmittals?${params.toString()}`,
+        { signal },
       );
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return res.json();
     },
     enabled: Boolean(projectId),
   });
@@ -80,13 +80,11 @@ export function useTransmittals(projectId: number, status?: string) {
 export function useTransmittal(projectId: number, transmittalId: string) {
   return useQuery({
     queryKey: transmittalKeys.detail(projectId, transmittalId),
-    queryFn: async (): Promise<TransmittalSummary> => {
-      const res = await fetch(
+    queryFn: ({ signal }): Promise<TransmittalSummary> =>
+      apiFetch<TransmittalSummary>(
         `/api/projects/${projectId}/transmittals/${transmittalId}`,
-      );
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return res.json();
-    },
+        { signal },
+      ),
     enabled: Boolean(projectId) && Boolean(transmittalId),
   });
 }
@@ -94,18 +92,11 @@ export function useTransmittal(projectId: number, transmittalId: string) {
 export function useCreateTransmittal(projectId: number) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: CreateTransmittalInput): Promise<TransmittalSummary> => {
-      const res = await fetch(`/api/projects/${projectId}/transmittals`, {
+    mutationFn: (input: CreateTransmittalInput): Promise<TransmittalSummary> =>
+      apiFetch<TransmittalSummary>(`/api/projects/${projectId}/transmittals`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(input),
-      });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? `HTTP ${res.status}`);
-      }
-      return res.json();
-    },
+      }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: transmittalKeys.all(projectId) });
       toast.success("Transmittal created");
@@ -119,21 +110,14 @@ export function useCreateTransmittal(projectId: number) {
 export function useUpdateTransmittal(projectId: number, transmittalId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: UpdateTransmittalInput): Promise<TransmittalSummary> => {
-      const res = await fetch(
+    mutationFn: (input: UpdateTransmittalInput): Promise<TransmittalSummary> =>
+      apiFetch<TransmittalSummary>(
         `/api/projects/${projectId}/transmittals/${transmittalId}`,
         {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(input),
         },
-      );
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? `HTTP ${res.status}`);
-      }
-      return res.json();
-    },
+      ),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: transmittalKeys.all(projectId) });
       toast.success("Transmittal updated");
@@ -147,16 +131,11 @@ export function useUpdateTransmittal(projectId: number, transmittalId: string) {
 export function useDeleteTransmittal(projectId: number) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (transmittalId: string): Promise<void> => {
-      const res = await fetch(
+    mutationFn: (transmittalId: string): Promise<unknown> =>
+      apiFetch(
         `/api/projects/${projectId}/transmittals/${transmittalId}`,
         { method: "DELETE" },
-      );
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? `HTTP ${res.status}`);
-      }
-    },
+      ),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: transmittalKeys.all(projectId) });
       toast.success("Transmittal moved to Recycle Bin");

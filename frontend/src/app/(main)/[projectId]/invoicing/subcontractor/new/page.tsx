@@ -443,9 +443,9 @@ export default function NewSubcontractorInvoicePage() {
       title="Create New Invoice"
       description={subtitle}
       onBack={() =>
-        router.push(`/${projectId}/invoicing?tab=subcontractor`)
+        router.push(`/${projectId}/invoices?tab=subcontractor`)
       }
-      backLabel="Back to Invoicing"
+      backLabel="Back to Invoices"
     >
       <div className="space-y-8">
         {CommitmentPicker}
@@ -747,7 +747,7 @@ export default function NewSubcontractorInvoicePage() {
               type="button"
               variant="ghost"
               onClick={() =>
-                router.push(`/${projectId}/invoicing?tab=subcontractor`)
+                router.push(`/${projectId}/invoices?tab=subcontractor`)
               }
               disabled={submitting}
             >

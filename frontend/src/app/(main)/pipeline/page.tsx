@@ -33,6 +33,7 @@ import {
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { PageContainer } from "@/components/layout/PageContainer";
+import { apiFetch } from "@/lib/api-client";
 
 
 interface Document {
@@ -122,29 +123,21 @@ export default function DocumentPipelinePage() {
 
   const fetchDocuments = async () => {
     try {
-      const response = await fetch("/api/documents/status");
-      if (response.ok) {
-        const data = await response.json();
-        setDocuments(data.documents);
-      } else {
-        toast.error("Failed to fetch documents");
-      }
+      const data = await apiFetch<{ documents: Document[] }>("/api/documents/status");
+      setDocuments(data.documents);
     } catch (error) {
-      toast.error("Failed to fetch documents");
+      toast.error(error instanceof Error ? error.message : "Failed to fetch documents");
     }
   };
 
   const fetchPhaseCounts = async () => {
     try {
-      const response = await fetch("/api/documents/trigger-pipeline");
-      if (response.ok) {
-        const data = await response.json();
-        setPhaseCounts(data.phaseCounts);
-      }
+      const data = await apiFetch<{ phaseCounts: PhaseCount[] }>(
+        "/api/documents/trigger-pipeline",
+      );
+      setPhaseCounts(data.phaseCounts);
     } catch (error) {
-
       console.error("Failed to process pipeline data:", error);
-
     }
   };
 
@@ -173,29 +166,23 @@ export default function DocumentPipelinePage() {
     );
 
     try {
-      const response = await fetch("/api/documents/trigger-pipeline", {
+      const data = await apiFetch<{ message?: string }>("/api/documents/trigger-pipeline", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ phase }),
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        toast.success(data.message || "Pipeline triggered successfully", {
-          id: `trigger-${phase}`, // Replaces the loading toast
-        });
-        // Refresh data to show updated status
-        await loadData();
-      } else {
-        toast.error(data.error || "Failed to trigger pipeline", {
-          id: `trigger-${phase}`, // Replaces the loading toast
-        });
-      }
-    } catch (error) {
-      toast.error("Failed to trigger pipeline phase", {
+      toast.success(data.message || "Pipeline triggered successfully", {
         id: `trigger-${phase}`, // Replaces the loading toast
       });
+      // Refresh data to show updated status
+      await loadData();
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to trigger pipeline phase",
+        {
+          id: `trigger-${phase}`, // Replaces the loading toast
+        },
+      );
     } finally {
       setTriggering(null);
     }

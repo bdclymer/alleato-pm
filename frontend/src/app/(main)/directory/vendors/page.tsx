@@ -34,6 +34,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { StatusBadge } from "@/components/ds";
+import { apiFetch } from "@/lib/api-client";
 
 type Vendor = Database["public"]["Tables"]["companies"]["Row"];
 
@@ -489,22 +490,16 @@ export default function DirectoryVendorsPage(): ReactElement {
         params.set("payment_method", activeFilters.payment_method);
       }
 
-      const response = await fetch(`/api/directory/vendors?${params.toString()}`, {
-        signal: controller.signal,
-      });
-      const payload = (await response.json()) as {
+      const payload = await apiFetch<{
         data?: Vendor[];
         pagination?: { page: number; per_page: number; total: number; total_pages: number };
-        error?: string;
-      };
+      }>(`/api/directory/vendors?${params.toString()}`, {
+        signal: controller.signal,
+      });
 
       // Ignore stale responses from older, slower requests.
       if (requestId !== latestRequestIdRef.current) {
         return;
-      }
-
-      if (!response.ok) {
-        throw new Error(payload.error || "Failed to load vendors");
       }
 
       setVendors(payload.data || []);
@@ -556,9 +551,15 @@ export default function DirectoryVendorsPage(): ReactElement {
   const handleErpSync = React.useCallback(async () => {
     setIsSyncing(true);
     try {
-      const resp = await fetch("/api/sync/acumatica/vendors", { method: "POST" });
-      const data = await resp.json();
-      if (!resp.ok) throw new Error(data.error ?? "Sync failed");
+      const data = await apiFetch<{
+        result: {
+          created: number;
+          updated: number;
+          companiesCreated?: number;
+          companiesUpdated?: number;
+          errors: unknown[];
+        };
+      }>("/api/sync/acumatica/vendors", { method: "POST" });
       const { result } = data;
       toast.success(
         `ERP sync complete: ${result.created} vendors created, ${result.updated} vendors updated, ` +

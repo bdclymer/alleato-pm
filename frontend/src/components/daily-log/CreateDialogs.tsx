@@ -13,6 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { apiFetch } from "@/lib/api-client";
 import { toast } from "sonner";
 
 type DailyLogSummary = { id: string; log_date: string };
@@ -23,13 +24,13 @@ export function CreateDailyLogButton({ projectId }: { projectId: number }) {
 
   const handleCreate = async () => {
     if (!date) return;
-    const res = await fetch("/api/table-insert", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ table: "daily_logs", data: { project_id: projectId, log_date: date } }),
-    });
-    if (!res.ok) {
-      toast.error("Failed to create daily log");
+    try {
+      await apiFetch("/api/table-insert", {
+        method: "POST",
+        body: JSON.stringify({ table: "daily_logs", data: { project_id: projectId, log_date: date } }),
+      });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to create daily log");
       return;
     }
     toast.success("Daily log created");
@@ -69,13 +70,13 @@ export function CreateManpowerButton({ dailyLogs }: { dailyLogs: DailyLogSummary
       trade: trade || null,
       workers_count: Number(workers) || 0,
     };
-    const res = await fetch("/api/table-insert", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ table: "daily_log_manpower", data: payload }),
-    });
-    if (!res.ok) {
-      toast.error("Failed to create manpower entry");
+    try {
+      await apiFetch("/api/table-insert", {
+        method: "POST",
+        body: JSON.stringify({ table: "daily_log_manpower", data: payload }),
+      });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to create manpower entry");
       return;
     }
     toast.success("Manpower entry created");
@@ -125,13 +126,13 @@ export function CreateEquipmentButton({ dailyLogs }: { dailyLogs: DailyLogSummar
 
   const handleCreate = async () => {
     const payload = { daily_log_id: logId, equipment_name: name };
-    const res = await fetch("/api/table-insert", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ table: "daily_log_equipment", data: payload }),
-    });
-    if (!res.ok) {
-      toast.error("Failed to create equipment entry");
+    try {
+      await apiFetch("/api/table-insert", {
+        method: "POST",
+        body: JSON.stringify({ table: "daily_log_equipment", data: payload }),
+      });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to create equipment entry");
       return;
     }
     toast.success("Equipment entry created");
@@ -177,13 +178,13 @@ export function CreateNoteButton({ dailyLogs }: { dailyLogs: DailyLogSummary[] }
 
   const handleCreate = async () => {
     const payload = { daily_log_id: logId, description };
-    const res = await fetch("/api/table-insert", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ table: "daily_log_notes", data: payload }),
-    });
-    if (!res.ok) {
-      toast.error("Failed to create note");
+    try {
+      await apiFetch("/api/table-insert", {
+        method: "POST",
+        body: JSON.stringify({ table: "daily_log_notes", data: payload }),
+      });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to create note");
       return;
     }
     toast.success("Note created");

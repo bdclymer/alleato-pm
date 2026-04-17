@@ -53,9 +53,9 @@ export default function MainLayout({
       {!isDrawingViewer && <AppSidebar />}
       <SidebarInset className="h-svh overflow-hidden">
         <CreateProjectDevConfigProvider>
-          {!isDrawingViewer && <SiteHeader />}
           <div className="flex min-h-0 flex-1 overflow-hidden">
             <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+              {!isDrawingViewer && <SiteHeader />}
               <main
                 className="flex flex-1 flex-col overflow-auto scrollbar-hide min-w-0 min-h-0"
                 {...feedbackTargetProps("app.main-content")}

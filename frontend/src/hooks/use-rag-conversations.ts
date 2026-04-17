@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api-client";
 
 export interface RagConversation {
   session_id: string;
@@ -16,10 +17,11 @@ const QUERY_KEY = ["rag-conversations"];
 export function useRagConversations() {
   return useQuery<RagConversation[]>({
     queryKey: QUERY_KEY,
-    queryFn: async () => {
-      const res = await fetch("/api/ai-assistant/conversations");
-      if (!res.ok) throw new Error("Failed to fetch conversations");
-      const data = await res.json();
+    queryFn: async ({ signal }) => {
+      const data = await apiFetch<{ conversations: RagConversation[] }>(
+        "/api/ai-assistant/conversations",
+        { signal },
+      );
       return data.conversations;
     },
   });
@@ -30,19 +32,14 @@ export function useCreateConversation() {
 
   return useMutation({
     mutationFn: async (title: string) => {
-      const res = await fetch("/api/ai-assistant/conversations", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title }),
-      });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        const details = body?.details ?? body?.error ?? "unknown error";
-        console.error("[useCreateConversation] API error", res.status, body);
-        throw new Error(details);
-      }
-      const data = await res.json();
-      return data.conversation as RagConversation;
+      const data = await apiFetch<{ conversation: RagConversation }>(
+        "/api/ai-assistant/conversations",
+        {
+          method: "POST",
+          body: JSON.stringify({ title }),
+        },
+      );
+      return data.conversation;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
@@ -57,28 +54,22 @@ export function useRenameConversation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
+    mutationFn: ({
       sessionId,
       title,
     }: {
       sessionId: string;
       title: string;
-    }) => {
-      const res = await fetch(
-        `/api/ai-assistant/conversations/${sessionId}`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ title }),
-        },
-      );
-      if (!res.ok) throw new Error("Failed to rename conversation");
-    },
+    }) =>
+      apiFetch(`/api/ai-assistant/conversations/${sessionId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ title }),
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
     },
-    onError: () => {
-      toast.error("Failed to rename conversation");
+    onError: (err: Error) => {
+      toast.error(err.message);
     },
   });
 }
@@ -87,18 +78,15 @@ export function useDeleteConversation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (sessionId: string) => {
-      const res = await fetch(
-        `/api/ai-assistant/conversations/${sessionId}`,
-        { method: "DELETE" },
-      );
-      if (!res.ok) throw new Error("Failed to delete conversation");
-    },
+    mutationFn: (sessionId: string) =>
+      apiFetch(`/api/ai-assistant/conversations/${sessionId}`, {
+        method: "DELETE",
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
     },
-    onError: () => {
-      toast.error("Failed to delete conversation");
+    onError: (err: Error) => {
+      toast.error(err.message);
     },
   });
 }

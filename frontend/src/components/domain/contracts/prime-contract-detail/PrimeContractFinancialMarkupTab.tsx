@@ -2,25 +2,26 @@
 
 import { useState, useMemo, useEffect } from "react";
 import {
-  Check,
-  Pencil,
+  MoreVertical,
   Plus,
-  Trash2,
-  X,
 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
-  Modal,
-  ModalContent,
-  ModalDescription,
-  ModalFooter,
-  ModalHeader,
-  ModalTitle,
-} from "@/components/ui/unified-modal";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   InlineTable,
   InlineTableHeader,
@@ -92,30 +93,13 @@ export function PrimeContractFinancialMarkupTab({
   const [isSavingMarkupTable, setIsSavingMarkupTable] = useState(false);
   const [isSubmittingMarkup, setIsSubmittingMarkup] = useState(false);
   const [deletingMarkupId, setDeletingMarkupId] = useState<string | null>(null);
-  const [showAddMarkupDialog, setShowAddMarkupDialog] = useState(false);
-  const [editingMarkup, setEditingMarkup] = useState<VerticalMarkup | null>(null);
-  const [markupForm, setMarkupForm] = useState({
-    markup_type: "",
-    percentage: "",
-    compound: false,
-  });
   const [markupMapsToById, setMarkupMapsToById] = useState<Record<string, string>>({});
+  const [savedMarkupMapsToById, setSavedMarkupMapsToById] = useState<Record<string, string>>({});
   const [markupDisplayById, setMarkupDisplayById] = useState<Record<string, "horizontal" | "vertical">>({});
+  const [savedMarkupDisplayById, setSavedMarkupDisplayById] = useState<Record<string, "horizontal" | "vertical">>({});
   const [editingMarkupRowIds, setEditingMarkupRowIds] = useState<Record<string, boolean>>({});
-  const [markupRowDrafts, setMarkupRowDrafts] = useState<
-    Record<
-      string,
-      {
-        markup_type: string;
-        percentage: number;
-        compound: boolean;
-        displayIn: "horizontal" | "vertical";
-        mapsTo: string;
-      }
-    >
-  >({});
 
-  // Load local "maps to budget code" selections for markup rows
+  // Persisted preferences are saved only when the table is saved, matching the primary save flow.
   useEffect(() => {
     if (!projectId) return;
     const storageKey = `prime-contract-markup-maps:${projectId}`;
@@ -125,21 +109,12 @@ export function PrimeContractFinancialMarkupTab({
       const parsed = JSON.parse(raw) as Record<string, string>;
       if (parsed && typeof parsed === "object") {
         setMarkupMapsToById(parsed);
+        setSavedMarkupMapsToById(parsed);
       }
     } catch {
       // ignore localStorage parse issues
     }
   }, [projectId]);
-
-  useEffect(() => {
-    if (!projectId) return;
-    const storageKey = `prime-contract-markup-maps:${projectId}`;
-    try {
-      localStorage.setItem(storageKey, JSON.stringify(markupMapsToById));
-    } catch {
-      // ignore localStorage write failures
-    }
-  }, [projectId, markupMapsToById]);
 
   useEffect(() => {
     if (!projectId) return;
@@ -150,24 +125,39 @@ export function PrimeContractFinancialMarkupTab({
       const parsed = JSON.parse(raw) as Record<string, "horizontal" | "vertical">;
       if (parsed && typeof parsed === "object") {
         setMarkupDisplayById(parsed);
+        setSavedMarkupDisplayById(parsed);
       }
     } catch {
       // ignore localStorage parse issues
     }
   }, [projectId]);
 
-  useEffect(() => {
+  // Save local-only markup preferences once the explicit table save succeeds.
+  const persistMarkupPreferences = (
+    nextMapsToById: Record<string, string>,
+    nextDisplayById: Record<string, "horizontal" | "vertical">,
+  ) => {
     if (!projectId) return;
-    const storageKey = `prime-contract-markup-display:${projectId}`;
     try {
-      localStorage.setItem(storageKey, JSON.stringify(markupDisplayById));
+      localStorage.setItem(
+        `prime-contract-markup-maps:${projectId}`,
+        JSON.stringify(nextMapsToById),
+      );
+      localStorage.setItem(
+        `prime-contract-markup-display:${projectId}`,
+        JSON.stringify(nextDisplayById),
+      );
     } catch {
       // ignore localStorage write failures
     }
-  }, [projectId, markupDisplayById]);
+  };
 
   const hasUnsavedMarkupChanges = useMemo(() => {
-    const normalize = (rows: VerticalMarkup[]) =>
+    const normalize = (
+      rows: VerticalMarkup[],
+      mapsToById: Record<string, string>,
+      displayById: Record<string, "horizontal" | "vertical">,
+    ) =>
       [...rows]
         .sort((a, b) => a.calculation_order - b.calculation_order)
         .map((row) => ({
@@ -175,65 +165,28 @@ export function PrimeContractFinancialMarkupTab({
           markup_type: row.markup_type.trim(),
           percentage: Number(row.percentage),
           compound: Boolean(row.compound),
+          maps_to_budget_code_id:
+            mapsToById[row.id] ?? row.maps_to_budget_code_id ?? "all",
+          display_in: displayById[row.id] ?? "horizontal",
         }));
-    return JSON.stringify(normalize(verticalMarkups)) !== JSON.stringify(normalize(savedVerticalMarkups));
-  }, [verticalMarkups, savedVerticalMarkups]);
-
-  const resetMarkupForm = () => {
-    setMarkupForm({ markup_type: "", percentage: "", compound: false });
-    setEditingMarkup(null);
-  };
-
-  const handleSubmitMarkup = async () => {
-    if (!markupForm.markup_type.trim() || !markupForm.percentage) {
-      toast.error("Markup name and percentage are required");
-      return;
-    }
-
-    const pct = parseFloat(markupForm.percentage);
-    if (Number.isNaN(pct) || pct < 0 || pct > 100) {
-      toast.error("Percentage must be between 0 and 100");
-      return;
-    }
-
-    setIsSubmittingMarkup(true);
-    try {
-      if (editingMarkup) {
-        const updatedMarkups = verticalMarkups.map((m) =>
-          m.id === editingMarkup.id
-            ? { ...m, markup_type: markupForm.markup_type.trim(), percentage: pct, compound: markupForm.compound }
-            : m,
-        );
-        const data = await apiFetch<{ markups?: VerticalMarkup[] }>(`/api/projects/${projectId}/vertical-markup`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ markups: updatedMarkups }),
-        });
-        const normalized = normalizeVerticalMarkupRows(data.markups || []);
-        setVerticalMarkups(normalized);
-        setSavedVerticalMarkups(normalized);
-        toast.success("Markup updated");
-      } else {
-        const data = await apiFetch<{ data: VerticalMarkup }>(`/api/projects/${projectId}/vertical-markup`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            markup_type: markupForm.markup_type.trim(),
-            percentage: pct,
-            compound: markupForm.compound,
-          }),
-        });
-        setVerticalMarkups((prev) => [...prev, data.data]);
-        toast.success("Markup added");
-      }
-      setShowAddMarkupDialog(false);
-      resetMarkupForm();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to save markup");
-    } finally {
-      setIsSubmittingMarkup(false);
-    }
-  };
+    return (
+      JSON.stringify(normalize(verticalMarkups, markupMapsToById, markupDisplayById)) !==
+      JSON.stringify(
+        normalize(
+          savedVerticalMarkups,
+          savedMarkupMapsToById,
+          savedMarkupDisplayById,
+        ),
+      )
+    );
+  }, [
+    markupDisplayById,
+    markupMapsToById,
+    savedMarkupDisplayById,
+    savedMarkupMapsToById,
+    savedVerticalMarkups,
+    verticalMarkups,
+  ]);
 
   const handleDeleteMarkup = async (markupId: string) => {
     setDeletingMarkupId(markupId);
@@ -242,18 +195,25 @@ export function PrimeContractFinancialMarkupTab({
         `/api/projects/${projectId}/vertical-markup?markupId=${markupId}`,
         { method: "DELETE" },
       );
+      const nextMapsToById = Object.fromEntries(
+        Object.entries(markupMapsToById).filter(([key]) => key !== markupId),
+      );
+      const nextDisplayById = Object.fromEntries(
+        Object.entries(markupDisplayById).filter(([key]) => key !== markupId),
+      ) as Record<string, "horizontal" | "vertical">;
+
       setVerticalMarkups((prev) => prev.filter((m) => m.id !== markupId));
       setSavedVerticalMarkups((prev) => prev.filter((m) => m.id !== markupId));
-      setMarkupMapsToById((prev) => {
+      setMarkupMapsToById(nextMapsToById);
+      setSavedMarkupMapsToById(nextMapsToById);
+      setMarkupDisplayById(nextDisplayById);
+      setSavedMarkupDisplayById(nextDisplayById);
+      setEditingMarkupRowIds((prev) => {
         const next = { ...prev };
         delete next[markupId];
         return next;
       });
-      setMarkupDisplayById((prev) => {
-        const next = { ...prev };
-        delete next[markupId];
-        return next;
-      });
+      persistMarkupPreferences(nextMapsToById, nextDisplayById);
       toast.success("Markup deleted");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to delete markup");
@@ -283,6 +243,7 @@ export function PrimeContractFinancialMarkupTab({
       const newMarkup: VerticalMarkup = data.data;
       setVerticalMarkups((prev) => [...prev, newMarkup]);
       setSavedVerticalMarkups((prev) => [...prev, newMarkup]);
+      setEditingMarkupRowIds((prev) => ({ ...prev, [newMarkup.id]: true }));
       toast.success("Markup row added");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to add markup");
@@ -292,75 +253,25 @@ export function PrimeContractFinancialMarkupTab({
   };
 
   const handleStartMarkupRowEdit = (markup: VerticalMarkup) => {
-    const displayIn = markupDisplayById[markup.id] ?? "horizontal";
-    const mapsTo = markupMapsToById[markup.id] ?? "all";
-    setMarkupRowDrafts((prev) => ({
-      ...prev,
-      [markup.id]: {
-        markup_type: markup.markup_type,
-        percentage: Number(markup.percentage) || 0,
-        compound: Boolean(markup.compound),
-        displayIn,
-        mapsTo,
-      },
-    }));
     setEditingMarkupRowIds((prev) => ({ ...prev, [markup.id]: true }));
   };
 
-  const handleCancelMarkupRowEdit = (markupId: string) => {
-    setEditingMarkupRowIds((prev) => {
-      const next = { ...prev };
-      delete next[markupId];
-      return next;
-    });
-    setMarkupRowDrafts((prev) => {
-      const next = { ...prev };
-      delete next[markupId];
-      return next;
-    });
-  };
-
-  const handleSaveMarkupRowEdit = async (markupId: string) => {
-    const draft = markupRowDrafts[markupId];
-    if (!draft) return;
-
-    const updatedMarkups = verticalMarkups.map((row) =>
-      row.id === markupId
-        ? {
-            ...row,
-            markup_type: draft.markup_type,
-            percentage: Number(draft.percentage) || 0,
-            compound: Boolean(draft.compound),
-          }
-        : row,
+  // Apply an inline row edit to the working draft so the top-level save is the only commit step.
+  const handleMarkupFieldChange = <K extends keyof Pick<VerticalMarkup, "markup_type" | "percentage" | "compound">>(
+    markupId: string,
+    field: K,
+    value: VerticalMarkup[K],
+  ) => {
+    setVerticalMarkups((prev) =>
+      prev.map((row) =>
+        row.id === markupId
+          ? {
+              ...row,
+              [field]: value,
+            }
+          : row,
+      ),
     );
-
-    setVerticalMarkups(updatedMarkups);
-    setMarkupDisplayById((prev) => ({ ...prev, [markupId]: draft.displayIn }));
-    setMarkupMapsToById((prev) => ({ ...prev, [markupId]: draft.mapsTo }));
-    handleCancelMarkupRowEdit(markupId);
-
-    // Persist immediately so the user doesn't have to hit "Save Changes"
-    try {
-      const markupsToPersist = [...updatedMarkups]
-        .sort((a, b) => a.calculation_order - b.calculation_order)
-        .map((markup, index) => ({
-          ...markup,
-          markup_type: markup.markup_type.trim(),
-          percentage: Number(markup.percentage),
-          calculation_order: index + 1,
-        }));
-      const data = await apiFetch<{ markups?: VerticalMarkup[] }>(`/api/projects/${projectId}/vertical-markup`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ markups: markupsToPersist }),
-      });
-      const normalized = normalizeVerticalMarkupRows(data.markups || []);
-      setVerticalMarkups(normalized);
-      setSavedVerticalMarkups(normalized);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to save markup");
-    }
   };
 
   const handleSaveMarkupTable = async () => {
@@ -416,6 +327,10 @@ export function PrimeContractFinancialMarkupTab({
       );
       setVerticalMarkups(updatedMarkups);
       setSavedVerticalMarkups(updatedMarkups);
+      setSavedMarkupMapsToById({ ...markupMapsToById });
+      setSavedMarkupDisplayById({ ...markupDisplayById });
+      setEditingMarkupRowIds({});
+      persistMarkupPreferences(markupMapsToById, markupDisplayById);
       toast.success("Markup changes saved");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to save markup table");
@@ -434,17 +349,26 @@ export function PrimeContractFinancialMarkupTab({
       </section>
 
       <section className="space-y-4">
-        <div className="flex flex-wrap items-center justify-end gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-muted-foreground">
+            Use the row menu to edit a markup. Changes are only applied after you click Save Changes.
+          </p>
           <div className="flex items-center gap-2">
+            {hasUnsavedMarkupChanges ? (
+              <Button
+                size="sm"
+                onClick={handleSaveMarkupTable}
+                disabled={isSavingMarkupTable}
+              >
+                {isSavingMarkupTable ? "Saving..." : "Save Changes"}
+              </Button>
+            ) : null}
             <Button
               size="sm"
-              variant="outline"
-              onClick={handleSaveMarkupTable}
-              disabled={isSavingMarkupTable || !hasUnsavedMarkupChanges}
+              variant="secondary"
+              onClick={handleAddMarkupInline}
+              disabled={isSubmittingMarkup}
             >
-              {isSavingMarkupTable ? "Saving..." : "Save Changes"}
-            </Button>
-            <Button size="sm" onClick={handleAddMarkupInline} disabled={isSubmittingMarkup}>
               <Plus />
               {isSubmittingMarkup ? "Adding..." : "Add Markup"}
             </Button>
@@ -480,7 +404,6 @@ export function PrimeContractFinancialMarkupTab({
                 .sort((a, b) => a.calculation_order - b.calculation_order)
                 .map((markup) => {
                   const isEditingRow = Boolean(editingMarkupRowIds[markup.id]);
-                  const rowDraft = markupRowDrafts[markup.id];
                   const displayIn = markupDisplayById[markup.id] ?? "horizontal";
                   const mapsTo = markupMapsToById[markup.id] ?? "all";
                   const mapsToLabel =
@@ -492,91 +415,77 @@ export function PrimeContractFinancialMarkupTab({
                     <InlineTableRow key={markup.id}>
                       <InlineTableCell>
                         {isEditingRow ? (
-                          <select
-                            value={rowDraft?.markup_type ?? markup.markup_type}
-                            onChange={(e) =>
-                              setMarkupRowDrafts((prev) => ({
-                                ...prev,
-                                [markup.id]: {
-                                  ...(prev[markup.id] ?? {
-                                    markup_type: markup.markup_type,
-                                    percentage: Number(markup.percentage) || 0,
-                                    compound: Boolean(markup.compound),
-                                    displayIn,
-                                    mapsTo,
-                                  }),
-                                  markup_type: e.target.value,
-                                },
-                              }))
+                          <Select
+                            value={markup.markup_type}
+                            onValueChange={(value) =>
+                              handleMarkupFieldChange(
+                                markup.id,
+                                "markup_type",
+                                value,
+                              )
                             }
-                            className="flex h-8 w-full rounded-md border border-input bg-background px-2 py-1 text-xs shadow-xs transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                           >
-                            <option value="insurance">Insurance</option>
-                            <option value="bond">Bond</option>
-                            <option value="fee">Fee</option>
-                            <option value="overhead">Overhead</option>
-                            <option value="custom">Custom</option>
-                          </select>
+                            <SelectTrigger size="sm" className="w-full text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="insurance">Insurance</SelectItem>
+                              <SelectItem value="bond">Bond</SelectItem>
+                              <SelectItem value="fee">Fee</SelectItem>
+                              <SelectItem value="overhead">Overhead</SelectItem>
+                              <SelectItem value="custom">Custom</SelectItem>
+                            </SelectContent>
+                          </Select>
                         ) : (
                           <span className="text-sm text-foreground capitalize">{markup.markup_type}</span>
                         )}
                       </InlineTableCell>
                       <InlineTableCell>
                         {isEditingRow ? (
-                          <select
-                            value={rowDraft?.displayIn ?? displayIn}
-                            onChange={(e) =>
-                              setMarkupRowDrafts((prev) => ({
+                          <Select
+                            value={displayIn}
+                            onValueChange={(value) =>
+                              setMarkupDisplayById((prev) => ({
                                 ...prev,
-                                [markup.id]: {
-                                  ...(prev[markup.id] ?? {
-                                    markup_type: markup.markup_type,
-                                    percentage: Number(markup.percentage) || 0,
-                                    compound: Boolean(markup.compound),
-                                    displayIn,
-                                    mapsTo,
-                                  }),
-                                  displayIn: e.target.value as "horizontal" | "vertical",
-                                },
+                                [markup.id]: value as "horizontal" | "vertical",
                               }))
                             }
-                            className="flex h-8 w-full rounded-md border border-input bg-background px-2 py-1 text-xs shadow-xs transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                           >
-                            <option value="horizontal">Horizontal</option>
-                            <option value="vertical">Vertical</option>
-                          </select>
+                            <SelectTrigger size="sm" className="w-full text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="horizontal">Horizontal</SelectItem>
+                              <SelectItem value="vertical">Vertical</SelectItem>
+                            </SelectContent>
+                          </Select>
                         ) : (
                           <span className="text-sm text-foreground capitalize">{displayIn}</span>
                         )}
                       </InlineTableCell>
                       <InlineTableCell>
                         {isEditingRow ? (
-                          <select
-                            value={rowDraft?.mapsTo ?? mapsTo}
-                            onChange={(e) =>
-                              setMarkupRowDrafts((prev) => ({
+                          <Select
+                            value={mapsTo}
+                            onValueChange={(value) =>
+                              setMarkupMapsToById((prev) => ({
                                 ...prev,
-                                [markup.id]: {
-                                  ...(prev[markup.id] ?? {
-                                    markup_type: markup.markup_type,
-                                    percentage: Number(markup.percentage) || 0,
-                                    compound: Boolean(markup.compound),
-                                    displayIn,
-                                    mapsTo,
-                                  }),
-                                  mapsTo: e.target.value,
-                                },
+                                [markup.id]: value,
                               }))
                             }
-                            className="flex h-8 w-full rounded-md border border-input bg-background px-2 py-1 text-xs shadow-xs transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                           >
-                            <option value="all">All Budget Codes</option>
-                            {budgetCodes.map((code) => (
-                              <option key={code.id} value={code.id}>
-                                {code.fullLabel}
-                              </option>
-                            ))}
-                          </select>
+                            <SelectTrigger size="sm" className="w-full text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">All Budget Codes</SelectItem>
+                              {budgetCodes.map((code) => (
+                                <SelectItem key={code.id} value={code.id}>
+                                  {code.fullLabel}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         ) : (
                           <span className="text-sm text-foreground">{mapsToLabel}</span>
                         )}
@@ -588,21 +497,13 @@ export function PrimeContractFinancialMarkupTab({
                             min="0"
                             max="100"
                             step="0.001"
-                            value={String(rowDraft?.percentage ?? markup.percentage)}
+                            value={String(markup.percentage)}
                             onChange={(e) =>
-                              setMarkupRowDrafts((prev) => ({
-                                ...prev,
-                                [markup.id]: {
-                                  ...(prev[markup.id] ?? {
-                                    markup_type: markup.markup_type,
-                                    percentage: Number(markup.percentage) || 0,
-                                    compound: Boolean(markup.compound),
-                                    displayIn,
-                                    mapsTo,
-                                  }),
-                                  percentage: Number(e.target.value || 0),
-                                },
-                              }))
+                              handleMarkupFieldChange(
+                                markup.id,
+                                "percentage",
+                                Number(e.target.value || 0),
+                              )
                             }
                             className="h-8 text-right"
                           />
@@ -612,28 +513,24 @@ export function PrimeContractFinancialMarkupTab({
                       </InlineTableCell>
                       <InlineTableCell>
                         {isEditingRow ? (
-                          <select
-                            value={(rowDraft?.compound ?? markup.compound) ? "compound" : "basic"}
-                            onChange={(e) =>
-                              setMarkupRowDrafts((prev) => ({
-                                ...prev,
-                                [markup.id]: {
-                                  ...(prev[markup.id] ?? {
-                                    markup_type: markup.markup_type,
-                                    percentage: Number(markup.percentage) || 0,
-                                    compound: Boolean(markup.compound),
-                                    displayIn,
-                                    mapsTo,
-                                  }),
-                                  compound: e.target.value === "compound",
-                                },
-                              }))
+                          <Select
+                            value={markup.compound ? "compound" : "basic"}
+                            onValueChange={(value) =>
+                              handleMarkupFieldChange(
+                                markup.id,
+                                "compound",
+                                value === "compound",
+                              )
                             }
-                            className="flex h-8 w-full rounded-md border border-input bg-background px-2 py-1 text-xs shadow-xs transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                           >
-                            <option value="basic">Basic Calculation</option>
-                            <option value="compound">Compounds All Above</option>
-                          </select>
+                            <SelectTrigger size="sm" className="w-full text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="basic">Basic Calculation</SelectItem>
+                              <SelectItem value="compound">Compounds All Above</SelectItem>
+                            </SelectContent>
+                          </Select>
                         ) : (
                           <span className="text-sm text-foreground">
                             {markup.compound ? "Compounds All Above" : "Basic Calculation"}
@@ -641,46 +538,29 @@ export function PrimeContractFinancialMarkupTab({
                         )}
                       </InlineTableCell>
                       <InlineTableCell align="right">
-                        <div className="flex items-center justify-end gap-1">
-                          {isEditingRow ? (
-                            <>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-7 px-2"
-                                onClick={() => handleSaveMarkupRowEdit(markup.id)}
-                              >
-                                <Check className="h-3.5 w-3.5" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-7 px-2"
-                                onClick={() => handleCancelMarkupRowEdit(markup.id)}
-                              >
-                                <X className="h-3.5 w-3.5" />
-                              </Button>
-                            </>
-                          ) : (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
                             <Button
                               variant="ghost"
-                              size="sm"
-                              className="h-7 px-2"
-                              onClick={() => handleStartMarkupRowEdit(markup)}
+                              size="icon-sm"
+                              aria-label={`Open actions for ${markup.markup_type}`}
                             >
-                              <Pencil className="h-3.5 w-3.5" />
+                              <MoreVertical className="h-4 w-4" />
                             </Button>
-                          )}
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 px-2 text-destructive hover:text-destructive"
-                            onClick={() => handleDeleteMarkup(markup.id)}
-                            disabled={deletingMarkupId === markup.id}
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
-                        </div>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleStartMarkupRowEdit(markup)}>
+                              {isEditingRow ? "Continue editing" : "Edit"}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="text-destructive focus:text-destructive"
+                              onClick={() => handleDeleteMarkup(markup.id)}
+                              disabled={deletingMarkupId === markup.id}
+                            >
+                              {deletingMarkupId === markup.id ? "Deleting..." : "Delete"}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </InlineTableCell>
                     </InlineTableRow>
                   );
@@ -689,94 +569,6 @@ export function PrimeContractFinancialMarkupTab({
           </InlineTableBody>
         </InlineTable>
       </section>
-
-      {/* Add/Edit Markup Dialog */}
-      <Modal open={showAddMarkupDialog} onOpenChange={(open) => {
-        if (!open) {
-          setShowAddMarkupDialog(false);
-          resetMarkupForm();
-        }
-      }}>
-        <ModalContent>
-          <ModalHeader>
-            <ModalTitle>{editingMarkup ? "Edit Markup" : "Add Markup"}</ModalTitle>
-            <ModalDescription>
-              {editingMarkup
-                ? "Update the markup name, percentage, and calculation type."
-                : "Add a percentage-based markup such as tax, overhead, profit, or insurance."}
-            </ModalDescription>
-          </ModalHeader>
-          <div className="space-y-4 px-6 py-2">
-            <div className="space-y-2">
-              <Label htmlFor="markup-name">Markup Type</Label>
-              <select
-                id="markup-name"
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                value={markupForm.markup_type}
-                onChange={(e) =>
-                  setMarkupForm((prev) => ({ ...prev, markup_type: e.target.value }))
-                }
-              >
-                <option value="">Select markup type...</option>
-                <option value="insurance">Insurance</option>
-                <option value="bond">Bond</option>
-                <option value="fee">Fee</option>
-                <option value="overhead">Overhead</option>
-                <option value="custom">Custom</option>
-              </select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="markup-percentage">Percentage (%)</Label>
-              <Input
-                id="markup-percentage"
-                type="number"
-                step="0.001"
-                min="0"
-                max="100"
-                placeholder="e.g., 10.000"
-                value={markupForm.percentage}
-                onChange={(e) =>
-                  setMarkupForm((prev) => ({ ...prev, percentage: e.target.value }))
-                }
-              />
-            </div>
-            <div className="flex items-center gap-3">
-              <input
-                id="markup-compound"
-                type="checkbox"
-                className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
-                checked={markupForm.compound}
-                onChange={(e) =>
-                  setMarkupForm((prev) => ({ ...prev, compound: e.target.checked }))
-                }
-              />
-              <div>
-                <Label htmlFor="markup-compound" className="cursor-pointer">Compound Markup</Label>
-                <p className="text-xs text-muted-foreground">
-                  When enabled, this markup is calculated on the subtotal plus all previous markups.
-                </p>
-              </div>
-            </div>
-          </div>
-          <ModalFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setShowAddMarkupDialog(false);
-                resetMarkupForm();
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSubmitMarkup}
-              disabled={isSubmittingMarkup || !markupForm.markup_type.trim() || !markupForm.percentage}
-            >
-              {isSubmittingMarkup ? "Saving..." : editingMarkup ? "Update" : "Add Markup"}
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
     </div>
   );
 }

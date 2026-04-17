@@ -41,6 +41,7 @@ const createNewSchema = z.object({
   reference: z.string().optional().nullable(),
   paid_in_full: z.boolean().optional(),
   promoted_to_co_id: z.number().int().optional().nullable(),
+  schedule_impact: z.number().int().optional().nullable(),
 });
 
 const bodySchema = z
@@ -176,6 +177,7 @@ export const POST = withApiGuardrails(
             signed_co_received_date: create_new.signed_co_received_date ?? null,
             request_received_from: create_new.request_received_from ?? null,
             location: create_new.location ?? null,
+            schedule_impact: create_new.schedule_impact ?? null,
             field_change: create_new.field_change ?? false,
             reference: create_new.reference ?? null,
             paid_in_full: create_new.paid_in_full ?? false,

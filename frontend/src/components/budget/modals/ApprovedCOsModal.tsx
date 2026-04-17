@@ -50,6 +50,7 @@ export function ApprovedCOsModal({
   );
   const [changeOrders, setChangeOrders] = useState<ChangeOrder[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (open) {
@@ -59,15 +60,20 @@ export function ApprovedCOsModal({
 
   const fetchChangeOrders = async () => {
     setLoading(true);
+    setError(null);
     try {
       const url = `/api/projects/${projectId}/budget/change-orders?budgetLineId=${budgetLineId}&status=approved`;
       const response = await fetch(url);
-      if (response.ok) {
-        const data = await response.json();
-        setChangeOrders(data.changeOrders || []);
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error || "Failed to fetch approved change orders");
       }
+      const data = await response.json();
+      setChangeOrders(data.changeOrders || []);
     } catch (error) {
       console.error("Failed to fetch approved change orders:", error);
+      setError(error instanceof Error ? error.message : "Failed to fetch approved change orders");
+      setChangeOrders([]);
     } finally {
       setLoading(false);
     }
@@ -175,6 +181,15 @@ export function ApprovedCOsModal({
                       className="px-3 py-10 text-center text-muted-foreground"
                     >
                       Loading change orders...
+                    </td>
+                  </tr>
+                ) : error ? (
+                  <tr>
+                    <td
+                      colSpan={6}
+                      className="px-3 py-10 text-center text-destructive"
+                    >
+                      {error}
                     </td>
                   </tr>
                 ) : changeOrders.length === 0 ? (

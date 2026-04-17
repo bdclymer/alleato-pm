@@ -33,6 +33,7 @@ import {
   useRestoreDrawing,
   usePermanentDeleteDrawing,
 } from "@/hooks/use-drawings";
+import type { DeletedDrawingRow } from "@/hooks/use-drawings";
 
 const tabs = (projectId: string) => [
   { label: "Current Drawings", href: `/${projectId}/drawings`, isActive: false },
@@ -83,22 +84,22 @@ export default function DrawingRecycleBinPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {deletedDrawings.map((drawing: Record<string, unknown>) => (
-                <TableRow key={drawing.id as string} className="opacity-70">
+              {deletedDrawings.map((drawing: DeletedDrawingRow) => (
+                <TableRow key={drawing.id} className="opacity-70">
                   <TableCell className="font-medium">
-                    {drawing.drawing_number as string}
+                    {drawing.drawingNumber}
                   </TableCell>
-                  <TableCell>{(drawing.title as string) || "Untitled"}</TableCell>
+                  <TableCell>{drawing.title || "Untitled"}</TableCell>
                   <TableCell>
                     {drawing.discipline ? (
-                      <Badge variant="outline">{drawing.discipline as string}</Badge>
+                      <Badge variant="outline">{drawing.discipline}</Badge>
                     ) : (
                       <span className="text-muted-foreground">—</span>
                     )}
                   </TableCell>
                   <TableCell className="text-muted-foreground text-sm">
-                    {drawing.deleted_at
-                      ? formatDistanceToNow(new Date(drawing.deleted_at as string), {
+                    {drawing.deletedAt
+                      ? formatDistanceToNow(new Date(drawing.deletedAt), {
                           addSuffix: true,
                         })
                       : "—"}
@@ -108,9 +109,7 @@ export default function DrawingRecycleBinPage() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() =>
-                          restoreDrawing.mutate(drawing.id as string)
-                        }
+                        onClick={() => restoreDrawing.mutate(drawing.id)}
                         disabled={restoreDrawing.isPending}
                       >
                         <RotateCcw className="h-3.5 w-3.5 mr-1" />
@@ -122,11 +121,8 @@ export default function DrawingRecycleBinPage() {
                         className="text-destructive hover:text-destructive"
                         onClick={() =>
                           setDeleteTarget({
-                            id: drawing.id as string,
-                            title:
-                              (drawing.drawing_number as string) ||
-                              (drawing.title as string) ||
-                              "this drawing",
+                            id: drawing.id,
+                            title: drawing.drawingNumber || drawing.title || "this drawing",
                           })
                         }
                       >

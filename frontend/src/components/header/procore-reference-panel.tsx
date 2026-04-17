@@ -23,6 +23,7 @@ import { GapsTab } from "@/components/dev-panel/GapsTab";
 import { SchemaTab } from "@/components/dev-panel/SchemaTab";
 import { ScreenshotsTab } from "@/components/dev-panel/ScreenshotsTab";
 import { SpecTab } from "@/components/dev-panel/SpecTab";
+import { apiFetch } from "@/lib/api-client";
 import { featureFromPathname } from "@/lib/procore-route-map";
 import { createClient } from "@/lib/supabase/client";
 import { useProcorePanelStore } from "@/lib/stores/procore-panel-store";
@@ -109,16 +110,21 @@ async function copyClaudeContext(feature: string | null) {
 
   try {
     const [specRes, gapsRes] = await Promise.all([
-      fetch(`/api/dev-panel/spec/${feature}`).then((r) => r.json()),
-      fetch(`/api/dev-panel/gaps/${feature}`).then((r) => r.json()),
+      apiFetch<{
+        tool?: { name?: string; status?: string; description?: string };
+        manifestStates?: Record<string, { columns?: { label: string }[] }>;
+      }>(`/api/dev-panel/spec/${feature}`),
+      apiFetch<{ findings?: { status: string; gap_id: string; severity: string; layer: string; description?: string }[] }>(
+        `/api/dev-panel/gaps/${feature}`,
+      ),
     ]);
 
-    if (specRes.tool) {
+    if (specRes?.tool) {
       parts.push(`## Tool: ${specRes.tool.name} (${specRes.tool.status})`);
       if (specRes.tool.description) parts.push(specRes.tool.description);
     }
 
-    const states = Object.entries(specRes.manifestStates ?? {}) as [string, { columns?: {label:string}[] }][];
+    const states = Object.entries(specRes?.manifestStates ?? {}) as [string, { columns?: {label:string}[] }][];
     if (states.length) {
       parts.push(`\n## Procore views (${states.length})`);
       states.forEach(([id, s]) => {
@@ -126,7 +132,7 @@ async function copyClaudeContext(feature: string | null) {
       });
     }
 
-    const openGaps = (gapsRes.findings ?? []).filter((f: {status:string}) => f.status === "open");
+    const openGaps = (gapsRes?.findings ?? []).filter((f: {status:string}) => f.status === "open");
     if (openGaps.length) {
       parts.push(`\n## Open gaps (${openGaps.length})`);
       openGaps.forEach((f: {gap_id:string; severity:string; layer:string; description?:string}) => {
@@ -256,23 +262,20 @@ export function ProcoreReferencePanel() {
   React.useEffect(() => {
     if (!feature || !open) return;
 
-    fetch(`/api/dev-panel/gaps/${feature}`)
-      .then((r) => r.json())
-      .then((d: { findings?: { status: string }[] }) => {
-        setGapCount((d.findings ?? []).filter((f) => f.status === "open").length);
+    apiFetch<{ findings?: { status: string }[] }>(`/api/dev-panel/gaps/${feature}`)
+      .then((d) => {
+        setGapCount((d?.findings ?? []).filter((f) => f.status === "open").length);
       })
       .catch(() => {});
 
-    fetch(`/api/dev-panel/feedback/${feature}`)
-      .then((r) => r.json())
-      .then((d: { feedback?: { status: string }[] }) => {
-        setFeedbackCount((d.feedback ?? []).filter((f) => f.status === "open").length);
+    apiFetch<{ feedback?: { status: string }[] }>(`/api/dev-panel/feedback/${feature}`)
+      .then((d) => {
+        setFeedbackCount((d?.feedback ?? []).filter((f) => f.status === "open").length);
       })
       .catch(() => {});
 
-    fetch(`/api/dev-panel/comments/${feature}`)
-      .then((r) => r.json())
-      .then((d: { comments?: unknown[] }) => setCommentCount((d.comments ?? []).length))
+    apiFetch<{ comments?: unknown[] }>(`/api/dev-panel/comments/${feature}`)
+      .then((d) => setCommentCount((d?.comments ?? []).length))
       .catch(() => {});
   }, [feature, open]);
 
@@ -286,27 +289,30 @@ export function ProcoreReferencePanel() {
   // ── Quick actions ────────────────────────────────────────────────────────
   const clearCache = async () => {
     try {
-      const res = await fetch("/api/dev-tools/clear-cache", { method: "POST" });
-      const d = await res.json();
-      toast[d.success ? "success" : "error"](d.success ? "Cache cleared — refresh the page." : (d.message ?? "Failed"));
-    } catch { toast.error("Failed to clear cache"); }
+      const d = await apiFetch<{ success?: boolean; message?: string }>(
+        "/api/dev-tools/clear-cache",
+        { method: "POST" },
+      );
+      toast[d?.success ? "success" : "error"](d?.success ? "Cache cleared — refresh the page." : (d?.message ?? "Failed"));
+    } catch (err) { toast.error(err instanceof Error ? err.message : "Failed to clear cache"); }
   };
 
   const regenTypes = async () => {
     try {
-      const res = await fetch("/api/dev-tools/regenerate-types", { method: "POST" });
-      const d = await res.json();
-      toast[d.success ? "success" : "error"](d.success ? "Types regenerated successfully." : (d.message ?? "Failed"));
-    } catch { toast.error("Failed to regenerate types"); }
+      const d = await apiFetch<{ success?: boolean; message?: string }>(
+        "/api/dev-tools/regenerate-types",
+        { method: "POST" },
+      );
+      toast[d?.success ? "success" : "error"](d?.success ? "Types regenerated successfully." : (d?.message ?? "Failed"));
+    } catch (err) { toast.error(err instanceof Error ? err.message : "Failed to regenerate types"); }
   };
 
   const checkRoutes = async () => {
     setIsCheckingRoutes(true);
     try {
-      const res = await fetch("/api/dev-tools/check-routes");
-      const d = await res.json();
-      toast.info(d.conflicts ?? "No route conflicts found");
-    } catch { toast.error("Route check failed"); }
+      const d = await apiFetch<{ conflicts?: string }>("/api/dev-tools/check-routes");
+      toast.info(d?.conflicts ?? "No route conflicts found");
+    } catch (err) { toast.error(err instanceof Error ? err.message : "Route check failed"); }
     finally { setIsCheckingRoutes(false); }
   };
 

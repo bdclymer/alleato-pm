@@ -14,12 +14,13 @@
  * ```
  */
 
-import { useCallback } from "react";
+import { useCallback, type ReactNode } from "react";
 import {
   getAutoFillData,
   isDevelopment,
   autoFillPresets,
 } from "@/lib/dev-autofill";
+import { Button } from "@/components/ui/button";
 import { Wand2 } from "lucide-react";
 
 type FormType = keyof typeof autoFillPresets;
@@ -39,9 +40,9 @@ interface UseDevAutoFillOptions {
   onAutoFill?: () => void;
 }
 
-export function useDevAutoFill<T extends Record<string, any>>(
+export function useDevAutoFill<T extends Record<string, unknown>>(
   formType: FormType,
-  setValue: (name: keyof T, value: any) => void,
+  setValue: (name: keyof T, value: unknown) => void,
   options: UseDevAutoFillOptions = {},
 ) {
   const { buttonText = "Auto-Fill", buttonClassName, onAutoFill } = options;
@@ -79,7 +80,7 @@ export function useDevAutoFill<T extends Record<string, any>>(
     }
 
     return (
-      <button
+      <Button
         type="button"
         onClick={autoFill}
         className={
@@ -87,10 +88,11 @@ export function useDevAutoFill<T extends Record<string, any>>(
           "inline-flex items-center gap-2 px-3 py-1.5 text-sm bg-info/10 text-info hover:bg-info/20 rounded-md transition-colors border border-info/30"
         }
         title="Development only: Fill form with test data"
+        variant="ghost"
       >
         <Wand2 className="w-4 h-4" />
         {buttonText}
-      </button>
+      </Button>
     );
   };
 
@@ -111,9 +113,9 @@ export function DevAutoFillButton({
   children = "Auto-Fill",
 }: {
   formType: FormType;
-  onAutoFill: (data: Record<string, any>) => void;
+  onAutoFill: (data: Record<string, unknown>) => void;
   className?: string;
-  children?: React.ReactNode;
+  children?: ReactNode;
 }) {
   if (!isDevelopment) {
     return null;
@@ -128,7 +130,7 @@ export function DevAutoFillButton({
   };
 
   return (
-    <button
+    <Button
       type="button"
       onClick={handleClick}
       className={
@@ -136,9 +138,10 @@ export function DevAutoFillButton({
         "inline-flex items-center gap-2 px-3 py-1.5 text-sm bg-info/10 text-info hover:bg-info/20 rounded-md transition-colors border border-info/30"
       }
       title="Development only: Fill form with test data"
+      variant="ghost"
     >
       <Wand2 className="w-4 h-4" />
       {children}
-    </button>
+    </Button>
   );
 }

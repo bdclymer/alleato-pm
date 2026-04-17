@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/client";
 import { useCallback, useEffect, useState } from "react";
+import { ApiError, apiFetch } from "@/lib/api-client";
 
 export interface CommitmentChangeOrder {
   id: string;
@@ -67,6 +68,25 @@ interface UseCommitmentChangeOrdersReturn {
   approveChangeOrder: (
     changeOrderId: string
   ) => Promise<{ success: boolean; totals?: CommitmentChangeOrderTotals }>;
+}
+
+interface CommitmentChangeOrdersResponse {
+  data?: Record<string, unknown>[];
+}
+
+interface CommitmentChangeOrderResponse {
+  data?: Record<string, unknown>;
+}
+
+interface ApproveChangeOrderResponse {
+  data?: {
+    totals?: {
+      approved?: number;
+      pending?: number;
+      draft?: number;
+      total?: number;
+    };
+  };
 }
 
 /**
@@ -158,29 +178,9 @@ export function useCommitmentChangeOrders(
     setError(null);
 
     try {
-      const response = await fetch(
+      const data = await apiFetch<CommitmentChangeOrdersResponse>(
         `/api/commitments/${commitmentId}/change-orders`
       );
-
-      if (!response.ok) {
-        if (response.status === 404) {
-          setChangeOrders([]);
-          setTotals({
-            approved: 0,
-            pending: 0,
-            draft: 0,
-            executed: 0,
-            void: 0,
-            total: 0,
-            count: 0,
-          });
-          return;
-        }
-        const body = await response.json().catch(() => ({}));
-        throw new Error(body.error || `Server returned ${response.status}`);
-      }
-
-      const data = await response.json();
       const orders: CommitmentChangeOrder[] = (data.data || []).map(
         (co: Record<string, unknown>) => ({
           id: String(co.id),
@@ -202,6 +202,19 @@ export function useCommitmentChangeOrders(
       setChangeOrders(orders);
       setTotals(calculateTotals(orders));
     } catch (err) {
+      if (err instanceof ApiError && err.status === 404) {
+        setChangeOrders([]);
+        setTotals({
+          approved: 0,
+          pending: 0,
+          draft: 0,
+          executed: 0,
+          void: 0,
+          total: 0,
+          count: 0,
+        });
+        return;
+      }
       const detail = err instanceof Error ? err.message : "an unexpected error occurred";
       setError(new Error(`Could not load change orders: ${detail}`));
     } finally {
@@ -219,23 +232,13 @@ export function useCommitmentChangeOrders(
       input: CreateChangeOrderInput
     ): Promise<CommitmentChangeOrder | null> => {
       try {
-        const response = await fetch(
+        const data = await apiFetch<Record<string, unknown>>(
           `/api/commitments/${commitmentId}/change-orders`,
           {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
             body: JSON.stringify(input),
           }
         );
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || `Server returned ${response.status}`);
-        }
-
-        const data = await response.json();
 
         // Refetch to update the list
         await fetchChangeOrders();
@@ -271,24 +274,16 @@ export function useCommitmentChangeOrders(
       input: UpdateChangeOrderInput
     ): Promise<CommitmentChangeOrder | null> => {
       try {
-        const response = await fetch(
+        const result = await apiFetch<CommitmentChangeOrderResponse | Record<string, unknown>>(
           `/api/commitments/${commitmentId}/change-orders/${changeOrderId}`,
           {
             method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
             body: JSON.stringify(input),
           }
         );
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || `Server returned ${response.status}`);
-        }
-
-        const result = await response.json();
-        const data = result.data || result;
+        const data = (
+          "data" in result && result.data ? result.data : result
+        ) as Record<string, unknown>;
 
         // Refetch to update the list
         await fetchChangeOrders();
@@ -321,17 +316,12 @@ export function useCommitmentChangeOrders(
   const deleteChangeOrder = useCallback(
     async (changeOrderId: string): Promise<boolean> => {
       try {
-        const response = await fetch(
+        await apiFetch(
           `/api/commitments/${commitmentId}/change-orders/${changeOrderId}`,
           {
             method: "DELETE",
           }
         );
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || `Server returned ${response.status}`);
-        }
 
         // Refetch to update the list
         await fetchChangeOrders();
@@ -351,19 +341,12 @@ export function useCommitmentChangeOrders(
       changeOrderId: string
     ): Promise<{ success: boolean; totals?: CommitmentChangeOrderTotals }> => {
       try {
-        const response = await fetch(
+        const result = await apiFetch<ApproveChangeOrderResponse>(
           `/api/commitments/${commitmentId}/change-orders/${changeOrderId}/approve`,
           {
             method: "POST",
           }
         );
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || `Server returned ${response.status}`);
-        }
-
-        const result = await response.json();
 
         // Refetch to update the list
         await fetchChangeOrders();

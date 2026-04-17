@@ -1,4 +1,5 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 
 import { apiErrorResponse } from "@/lib/api-error";
@@ -16,7 +17,12 @@ export const GET = withApiGuardrails(
     const projectId = Number.parseInt(projectIdParam, 10);
 
     if (Number.isNaN(projectId) || projectId <= 0) {
-      return NextResponse.json({ error: "Invalid project ID" }, { status: 400 });
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: "projects/[projectId]/commitment-options#GET",
+        message: "Invalid project ID.",
+        details: [{ path: "projectId", message: "Project ID must be a positive number." }],
+      });
     }
 
     const supabase = await createClient();

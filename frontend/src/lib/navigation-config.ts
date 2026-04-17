@@ -91,7 +91,7 @@ export const coreTools: NavigationTool[] = [
   { name: "Documents", path: "documents", icon: FolderOpen, requiresProject: true, module: "documents" },
   { name: "Directory", path: "directory", icon: Users, requiresProject: true, module: "directory" },
   { name: "Tables Directory", path: "tables-directory", icon: Table, requiresProject: false, adminOnly: true },
-  { name: "Settings", path: "settings/plugins", icon: Settings, requiresProject: false, adminOnly: true },
+  { name: "Settings", path: "settings", icon: Settings, requiresProject: false, adminOnly: true },
   { name: "Admin", path: "admin", icon: Shield, requiresProject: true, adminOnly: true },
 ];
 
@@ -620,7 +620,7 @@ export const adminSettingsTools: HeaderNavigationTool[] = [
   },
   {
     name: "Settings",
-    path: "settings/plugins",
+    path: "settings",
     requiresProject: false,
     icon: Settings,
     description: "App configuration",

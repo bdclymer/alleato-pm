@@ -82,36 +82,20 @@ export function AddToPrimePCODialog({
 
     setIsSubmitting(true);
     try {
-      // Find the first selected CE's title for the PCO name
-      const selectedContract = contracts.find((c) => c.id === selectedContractId);
-      const pcoTitle = `PCO for ${count} change event${count === 1 ? "" : "s"} — ${selectedContract?.title || selectedContract?.contract_number || ""}`.trim();
+      const query = new URLSearchParams({
+        contractId: selectedContractId,
+        changeEventIds: selectedChangeEventIds.join(","),
+      });
+      const formPath = `/${projectId}/prime-contracts/${selectedContractId}/change-orders/pcos/new?${query.toString()}`;
 
-      const result = await apiFetch<{ pco?: { id?: string } }>(
-        `/api/projects/${projectId}/change-events/add-to-pco`,
-        {
-          method: "POST",
-          body: JSON.stringify({
-            change_event_ids: selectedChangeEventIds,
-            pco_type: "prime",
-            create_new: {
-              title: pcoTitle,
-              prime_contract_id: selectedContractId,
-            },
-          }),
-        },
-      );
-
-      toast.success("Prime Contract PCO created successfully");
+      toast.success("Opening Prime Contract PCO form");
       onSuccess();
       onClose();
-
-      // Navigate to the newly created PCO detail page
-      const pcoId = result?.pco?.id;
-      if (pcoId) {
-        router.push(`/${projectId}/prime-contract-pcos/${pcoId}`);
-      }
+      router.push(formPath);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to create PCOs");
+      toast.error(
+        err instanceof Error ? err.message : "Failed to open Prime PCO form",
+      );
     } finally {
       setIsSubmitting(false);
     }

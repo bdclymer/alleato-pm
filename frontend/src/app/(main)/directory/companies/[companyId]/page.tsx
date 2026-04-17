@@ -49,6 +49,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Database } from "@/types/database.types";
+import { apiFetch } from "@/lib/api-client";
 
 type Company = Database["public"]["Tables"]["companies"]["Row"];
 type Contact = Database["public"]["Tables"]["people"]["Row"];
@@ -294,18 +295,10 @@ export default function CompanyDetailsPage() {
       setIsLoading(true);
       setError(null);
 
-      const response = await fetch(`/api/directory/companies/${companyId}/details`, {
-        cache: "no-store",
-      });
-
-      if (!response.ok) {
-        const payload = (await response.json().catch(() => null)) as
-          | { error?: string; message?: string }
-          | null;
-        throw new Error(payload?.message || payload?.error || "Failed to fetch company details");
-      }
-
-      const payload = (await response.json()) as CompanyDetailsResponse;
+      const payload = await apiFetch<CompanyDetailsResponse>(
+        `/api/directory/companies/${companyId}/details`,
+        { cache: "no-store" },
+      );
       setData(payload);
       setCompanyForm({
         name: payload.company.name || "",
@@ -346,17 +339,15 @@ export default function CompanyDetailsPage() {
   }, [data?.company.id]);
 
   const loadProjects = React.useCallback(async () => {
-    const response = await fetch("/api/projects?limit=200&archived=false", {
-      cache: "no-store",
-    });
-
-    if (!response.ok) {
-      toast.error("Failed to load projects");
-      return;
+    try {
+      const payload = await apiFetch<{ data: ProjectOption[] }>(
+        "/api/projects?limit=200&archived=false",
+        { cache: "no-store" },
+      );
+      setProjects(payload.data || []);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to load projects");
     }
-
-    const payload = (await response.json()) as { data: ProjectOption[] };
-    setProjects(payload.data || []);
   }, []);
 
   const openAddContactModal = React.useCallback(async () => {
@@ -375,9 +366,8 @@ export default function CompanyDetailsPage() {
 
     try {
       setIsSavingCompany(true);
-      const response = await fetch(`/api/directory/companies/${data.company.id}`, {
+      await apiFetch(`/api/directory/companies/${data.company.id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: companyForm.name.trim(),
           address: companyForm.address || null,
@@ -387,11 +377,6 @@ export default function CompanyDetailsPage() {
           status: companyForm.status || "ACTIVE",
         }),
       });
-
-      if (!response.ok) {
-        const payload = (await response.json().catch(() => null)) as { message?: string; error?: string } | null;
-        throw new Error(payload?.message || payload?.error || "Failed to update company");
-      }
 
       toast.success("Company updated");
       setEditOpen(false);
@@ -548,16 +533,10 @@ export default function CompanyDetailsPage() {
 
     try {
       setIsAddingToProject(true);
-      const response = await fetch(`/api/directory/companies/${data.company.id}/add-to-project`, {
+      await apiFetch(`/api/directory/companies/${data.company.id}/add-to-project`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ project_id: Number(selectedProjectId) }),
       });
-
-      if (!response.ok) {
-        const payload = (await response.json().catch(() => null)) as { message?: string; error?: string } | null;
-        throw new Error(payload?.message || payload?.error || "Failed to add company to project");
-      }
 
       toast.success("Company added to project");
       setAddToProjectOpen(false);

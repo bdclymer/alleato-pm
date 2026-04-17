@@ -112,10 +112,10 @@ const APP_ROUTES: Record<string, Record<string, string>> = {
     "detail": "/:projectId/direct-costs",
   },
   "invoicing": {
-    "list-owner": "/:projectId/invoicing?tab=owner",
-    "list-subcontractor": "/:projectId/invoicing?tab=subcontractor",
-    "po-invoices-list": "/:projectId/invoicing?tab=po",
-    "create-form": "/:projectId/invoicing/new",
+    "list-owner": "/:projectId/invoices",
+    "list-subcontractor": "/:projectId/invoices?tab=subcontractor",
+    "po-invoices-list": "/:projectId/invoices?tab=subcontractor",
+    "create-form": "/:projectId/invoices/new?tab=owner",
     "upload-form": "/:projectId/invoicing/upload",
   },
   "prime-contracts": {

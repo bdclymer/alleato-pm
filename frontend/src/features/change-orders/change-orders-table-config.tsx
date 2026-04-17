@@ -180,7 +180,7 @@ export function buildPrimeTableColumns(): TableColumn<PrimeContractCO>[] {
       width: 100,
       render: (item) =>
         item.executed ? (
-          <span className="text-[hsl(var(--status-success))]">Yes</span>
+          <span className="text-success">Yes</span>
         ) : (
           <span className="text-muted-foreground">No</span>
         ),
@@ -435,9 +435,10 @@ export function renderPrimeCard(
   onClick: (item: PrimeContractCO) => void,
 ): ReactElement {
   return (
-    <button
+    <Button
       type="button"
-      className="w-full cursor-pointer rounded-lg border p-4 text-left transition-colors hover:bg-muted/50"
+      variant="ghost"
+      className="h-auto w-full justify-start rounded-lg border p-4 text-left hover:bg-muted/50"
       onClick={() => onClick(item)}
     >
       <div className="mb-2 flex items-start justify-between gap-4">
@@ -450,7 +451,7 @@ export function renderPrimeCard(
       <p className="mt-2 text-sm text-muted-foreground">
         {formatCurrency(item.total_amount)}
       </p>
-    </button>
+    </Button>
   );
 }
 
@@ -459,9 +460,10 @@ export function renderPrimeList(
   onClick: (item: PrimeContractCO) => void,
 ): ReactElement {
   return (
-    <button
+    <Button
       type="button"
-      className="flex w-full cursor-pointer items-center justify-between rounded-md px-4 py-2 text-left transition-colors hover:bg-muted/50"
+      variant="ghost"
+      className="h-auto flex w-full items-center justify-between rounded-md px-4 py-2 text-left hover:bg-muted/50"
       onClick={() => onClick(item)}
     >
       <div className="min-w-0 flex-1">
@@ -472,7 +474,7 @@ export function renderPrimeList(
         <span className="text-sm text-muted-foreground">{formatCurrency(item.total_amount)}</span>
         <StatusBadge status={statusLabel(item.status)} />
       </div>
-    </button>
+    </Button>
   );
 }
 
@@ -481,9 +483,10 @@ export function renderCommitmentCard(
   onClick: (item: CommitmentCO) => void,
 ): ReactElement {
   return (
-    <button
+    <Button
       type="button"
-      className="w-full cursor-pointer rounded-lg border p-4 text-left transition-colors hover:bg-muted/50"
+      variant="ghost"
+      className="h-auto w-full justify-start rounded-lg border p-4 text-left hover:bg-muted/50"
       onClick={() => onClick(item)}
     >
       <div className="mb-2 flex items-start justify-between gap-4">
@@ -496,7 +499,7 @@ export function renderCommitmentCard(
         <StatusBadge status={statusLabel(item.status)} />
       </div>
       <p className="mt-2 text-sm text-muted-foreground">{formatCurrency(item.amount)}</p>
-    </button>
+    </Button>
   );
 }
 
@@ -505,9 +508,10 @@ export function renderCommitmentList(
   onClick: (item: CommitmentCO) => void,
 ): ReactElement {
   return (
-    <button
+    <Button
       type="button"
-      className="flex w-full cursor-pointer items-center justify-between rounded-md px-4 py-2 text-left transition-colors hover:bg-muted/50"
+      variant="ghost"
+      className="h-auto flex w-full items-center justify-between rounded-md px-4 py-2 text-left hover:bg-muted/50"
       onClick={() => onClick(item)}
     >
       <div className="min-w-0 flex-1">
@@ -520,6 +524,6 @@ export function renderCommitmentList(
         <span className="text-sm text-muted-foreground">{formatCurrency(item.amount)}</span>
         <StatusBadge status={statusLabel(item.status)} />
       </div>
-    </button>
+    </Button>
   );
 }

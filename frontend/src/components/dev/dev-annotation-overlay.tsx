@@ -25,6 +25,7 @@ import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { apiFetch } from "@/lib/api-client";
 
 type Annotation = {
   id: string;
@@ -51,11 +52,10 @@ export function DevAnnotationOverlay() {
   // Poll for annotation updates every 20s when panel is open
   const fetchAnnotations = useCallback(async () => {
     try {
-      const res = await fetch("/api/dev/annotate?status=all");
-      if (res.ok) {
-        const { annotations: data } = await res.json();
-        setAnnotations(data ?? []);
-      }
+      const result = await apiFetch<{ annotations?: Annotation[] }>(
+        "/api/dev/annotate?status=all",
+      );
+      setAnnotations(result?.annotations ?? []);
     } catch {
       // Silent fail — non-critical
     }
@@ -98,9 +98,8 @@ export function DevAnnotationOverlay() {
     if (!comment.trim()) return;
     setSubmitting(true);
     try {
-      const res = await fetch("/api/dev/annotate", {
+      await apiFetch("/api/dev/annotate", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           route: pathname,
           comment: comment.trim(),
@@ -108,12 +107,12 @@ export function DevAnnotationOverlay() {
           componentHint: null,
         }),
       });
-      if (res.ok) {
-        setComment("");
-        setScreenshotData(null);
-        setTab("history");
-        await fetchAnnotations();
-      }
+      setComment("");
+      setScreenshotData(null);
+      setTab("history");
+      await fetchAnnotations();
+    } catch {
+      // Silent — keep user's comment so they can retry
     } finally {
       setSubmitting(false);
     }

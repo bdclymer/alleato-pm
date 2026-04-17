@@ -97,7 +97,7 @@ function FieldRenderer<T extends Record<string, unknown>>({
           onChange={(e) => onChange(e.target.value)}
           placeholder={field.placeholder}
           disabled={!isEditable}
-          className="min-h-[80px] resize-none"
+          className="min-h-20 resize-none"
         />
       );
 
@@ -326,8 +326,8 @@ export function DetailPanel<T extends Record<string, unknown>>({
         </SheetHeader>
 
         {/* Form content */}
-        <ScrollArea className="flex-1 bg-[#FAFCFF]">
-          <div className="p-4 space-y-4 bg-[#FAFCFF]">
+        <ScrollArea className="flex-1 bg-muted/20">
+          <div className="space-y-4 bg-muted/20 p-4">
             {fields.map((field) => (
               <div
                 key={field.id}
@@ -356,16 +356,18 @@ export function DetailPanel<T extends Record<string, unknown>>({
                     Related
                   </Label>
                   {relatedSections.map((section) => (
-                    <button
+                    <Button
                       key={section.id}
+                      type="button"
+                      variant="ghost"
                       onClick={section.onClick}
-                      className="w-full flex items-center justify-between py-2 px-4 rounded-md hover:bg-muted/50 transition-colors text-sm"
+                      className="h-auto w-full justify-between rounded-md px-4 py-2 text-sm hover:bg-muted/50"
                     >
                       <span>{section.label}</span>
                       <span className="text-muted-foreground">
                         {section.count}
                       </span>
-                    </button>
+                    </Button>
                   ))}
                 </div>
               </>
@@ -374,7 +376,7 @@ export function DetailPanel<T extends Record<string, unknown>>({
         </ScrollArea>
 
         {/* Footer */}
-        <div className="px-4 py-4 border-t flex items-center justify-between flex-shrink-0 bg-[#FAFCFF]">
+        <div className="flex flex-shrink-0 items-center justify-between border-t bg-muted/20 px-4 py-4">
           {onDelete ? (
             <AlertDialog>
               <AlertDialogTrigger asChild>

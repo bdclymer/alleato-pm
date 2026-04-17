@@ -50,7 +50,7 @@ const coreTools = [
   { name: "360 Reporting", path: "reporting", icon: IconChartBar, requiresProject: true },
   { name: "Documents", path: "documents", icon: IconFolders, requiresProject: true },
   { name: "Directory", path: "directory", icon: IconUsers, requiresProject: true },
-  { name: "Settings", path: "settings/plugins", icon: IconSettings, requiresProject: false },
+  { name: "Settings", path: "settings", icon: IconSettings, requiresProject: false },
   { name: "Tasks", path: "tasks", icon: IconCheckbox, requiresProject: true },
 ];
 

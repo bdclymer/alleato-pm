@@ -33,14 +33,16 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { FileUploadField } from "@/components/forms/FileUploadField";
+import { RHFDateField } from "@/components/forms/fields/RHFDateField";
 
 import { useDrawingUpload } from "@/hooks/use-drawing-upload";
 import { useDrawingSets } from "@/hooks/use-drawing-sets";
-import { useUploadRevision } from "@/hooks/use-drawings";
 import {
   uploadDrawingFormSchema,
   type UploadDrawingFormData,
 } from "@/lib/schemas/drawing-schemas";
+import { ApiError, apiFetch } from "@/lib/api-client";
+import { createClient as createSupabaseClient } from "@/lib/supabase/client";
 import {
   DRAWING_DISCIPLINES,
   DRAWING_TYPES,
@@ -97,7 +99,6 @@ export function DrawingUploadDialog({
 
   const { data: sets = [] } = useDrawingSets(projectId);
   const { uploadMultipleDrawings, isUploading, errors, clearErrors } = useDrawingUpload(projectId);
-  const uploadRevision = useUploadRevision(projectId);
 
   const form = useForm<UploadDrawingFormData>({
     resolver: zodResolver(uploadDrawingFormSchema),
@@ -129,17 +130,18 @@ export function DrawingUploadDialog({
       toast.error("Please enter a name for the new drawing set");
       return null;
     }
-    const res = await fetch(`/api/projects/${projectId}/drawings/sets`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: newSetName.trim(), issued_at: new Date().toISOString() }),
-    });
-    if (!res.ok) {
-      toast.error("Failed to create drawing set");
+    try {
+      const newSet = await apiFetch<{ id: string }>(`/api/projects/${projectId}/drawings/sets`, {
+        method: "POST",
+        body: JSON.stringify({ name: newSetName.trim(), issued_at: new Date().toISOString() }),
+      });
+      return newSet.id;
+    } catch (error) {
+      toast.error("Failed to create drawing set", {
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
+      });
       return null;
     }
-    const newSet = await res.json();
-    return newSet.id as string;
   };
 
   const handleUpload = async (data: UploadDrawingFormData) => {
@@ -158,35 +160,62 @@ export function DrawingUploadDialog({
       const uploadData = { ...data, drawing_set_id: setId };
 
       if (selectedFiles.length === 1) {
-        // Build FormData manually so we can inspect a 409 before the hook swallows it
         const file = selectedFiles[0].file;
         const fileName = file.name.replace(/\.[^/.]+$/, "");
-        const fd = new FormData();
-        fd.append("file", file);
-        fd.append("drawing_number", uploadData.drawing_number || fileName);
-        fd.append("title", uploadData.title || fileName);
-        if (uploadData.discipline) fd.append("discipline", uploadData.discipline);
-        if (uploadData.drawing_type) fd.append("drawing_type", uploadData.drawing_type);
-        fd.append("revision_number", uploadData.revision_number || "A");
-        if (uploadData.drawing_date) fd.append("drawing_date", uploadData.drawing_date);
-        fd.append("received_date", uploadData.received_date || new Date().toISOString());
-        if (uploadData.drawing_set_id) fd.append("drawing_set_id", uploadData.drawing_set_id);
-        if (uploadData.description) fd.append("description", uploadData.description);
 
-        const res = await fetch(`/api/projects/${projectId}/drawings`, {
-          method: "POST",
-          body: fd,
-        });
+        try {
+          const signedUpload = await apiFetch<{ path: string; token: string }>(
+            `/api/projects/${projectId}/drawings/upload-url`,
+            {
+              method: "POST",
+              body: JSON.stringify({
+                file_name: file.name,
+                file_size: file.size,
+                file_type: file.type,
+              }),
+            },
+          );
 
-        if (res.status === 409) {
-          const body = await res.json();
-          setDuplicateDrawing(body.existing_drawing ?? null);
-          return;
-        }
+          const supabase = createSupabaseClient();
+          const { error: directUploadError } = await supabase.storage
+            .from("project-files")
+            .uploadToSignedUrl(signedUpload.path, signedUpload.token, file, {
+              contentType: file.type,
+              upsert: false,
+            });
+          if (directUploadError) {
+            throw new Error(`Failed to upload file to storage: ${directUploadError.message}`);
+          }
 
-        if (!res.ok) {
-          const body = await res.json();
-          toast.error("Upload failed", { description: body.error || "An unexpected error occurred" });
+          await apiFetch(`/api/projects/${projectId}/drawings`, {
+            method: "POST",
+            body: JSON.stringify({
+              drawing_number: uploadData.drawing_number || fileName,
+              title: uploadData.title || fileName,
+              discipline: uploadData.discipline,
+              drawing_type: uploadData.drawing_type,
+              revision_number: uploadData.revision_number || "A",
+              drawing_date: uploadData.drawing_date,
+              received_date: uploadData.received_date || new Date().toISOString(),
+              drawing_set_id: uploadData.drawing_set_id,
+              description: uploadData.description,
+              area_id: uploadData.area_id,
+              upload_path: signedUpload.path,
+              file_name: file.name,
+              file_size: file.size,
+              file_type: file.type,
+            }),
+          });
+        } catch (error) {
+          if (error instanceof ApiError && error.status === 409) {
+            const duplicate = (error.body as { existing_drawing?: DuplicateDrawing }).existing_drawing;
+            setDuplicateDrawing(duplicate ?? null);
+            return;
+          }
+
+          toast.error("Upload failed", {
+            description: error instanceof Error ? error.message : "An unexpected error occurred",
+          });
           return;
         }
       } else {
@@ -223,15 +252,43 @@ export function DrawingUploadDialog({
       }
 
       const file = selectedFiles[0].file;
-      const fd = new FormData();
-      fd.append("file", file);
-      fd.append("revision_number", data.revision_number || "A");
-      fd.append("received_date", data.received_date || new Date().toISOString());
-      if (data.drawing_date) fd.append("drawing_date", data.drawing_date);
-      if (setId) fd.append("drawing_set_id", setId);
-      if (data.description) fd.append("description", data.description);
+      const signedUpload = await apiFetch<{ path: string; token: string }>(
+        `/api/projects/${projectId}/drawings/${duplicateDrawing.id}/revisions/upload-url`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            file_name: file.name,
+            file_size: file.size,
+            file_type: file.type,
+          }),
+        },
+      );
 
-      await uploadRevision.mutateAsync({ drawingId: duplicateDrawing.id, formData: fd });
+      const supabase = createSupabaseClient();
+      const { error: directUploadError } = await supabase.storage
+        .from("project-files")
+        .uploadToSignedUrl(signedUpload.path, signedUpload.token, file, {
+          contentType: file.type,
+          upsert: false,
+        });
+      if (directUploadError) {
+        throw new Error(`Failed to upload file to storage: ${directUploadError.message}`);
+      }
+
+      await apiFetch(`/api/projects/${projectId}/drawings/${duplicateDrawing.id}/revisions`, {
+        method: "POST",
+        body: JSON.stringify({
+          revision_number: data.revision_number || "A",
+          received_date: data.received_date || new Date().toISOString(),
+          drawing_date: data.drawing_date,
+          drawing_set_id: setId,
+          description: data.description,
+          upload_path: signedUpload.path,
+          file_name: file.name,
+          file_size: file.size,
+          file_type: file.type,
+        }),
+      });
 
       toast.success("New revision uploaded successfully");
       handleClose();
@@ -368,46 +425,20 @@ export function DrawingUploadDialog({
 
             {/* Dates */}
             <div className="grid grid-cols-2 gap-6">
-              <FormField
+              <RHFDateField
                 control={form.control}
                 name="drawing_date"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Default Drawing Date</FormLabel>
-                    <p className="text-sm text-muted-foreground -mt-1">
-                      Enter the date the drawing was authored.
-                    </p>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        type="date"
-                        disabled={isUploading}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                label="Default Drawing Date"
+                disabled={isUploading}
+                placeholder="Pick drawing date"
               />
 
-              <FormField
+              <RHFDateField
                 control={form.control}
                 name="received_date"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Default Received Date</FormLabel>
-                    <p className="text-sm text-muted-foreground -mt-1">
-                      Enter the date the drawings were received from the design team.
-                    </p>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        type="date"
-                        disabled={isUploading}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                label="Default Received Date"
+                disabled={isUploading}
+                placeholder="Pick received date"
               />
             </div>
 

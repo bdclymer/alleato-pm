@@ -7,6 +7,7 @@ import {
   keepPreviousData,
 } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api-client";
 
 // =============================================================================
 // Types
@@ -28,6 +29,103 @@ export interface CreateSubcontractorInvoiceInput {
   period_end?: string;
   billing_date?: string;
   notes?: string;
+}
+
+interface SubcontractorInvoiceApiResponse<T> {
+  data?: T;
+}
+
+interface SubcontractorInvoiceLineItem {
+  id: number;
+  sort_order?: number | null;
+  budget_code?: string | null;
+  description?: string | null;
+  line_item_type?: string | null;
+  commitment_value?: number | null;
+  change_value?: number | null;
+  scheduled_value?: number | null;
+  work_completed_previous?: number | null;
+  work_completed_previous_pct?: number | null;
+  work_completed_period?: number | null;
+  materials_stored?: number | null;
+  total_completed_stored?: number | null;
+  work_completed_pct?: number | null;
+  balance_to_finish?: number | null;
+  retainage_pct?: number | null;
+  retainage_amount?: number | null;
+  materials_retainage_pct?: number | null;
+  materials_retainage_amount?: number | null;
+  previous_work_retainage?: number | null;
+  previous_materials_retainage?: number | null;
+  work_retainage_released?: number | null;
+  materials_retainage_released?: number | null;
+  net_amount_this_period?: number | null;
+}
+
+interface SubcontractorInvoiceTabCounts {
+  related_items: number;
+  emails: number;
+  change_history: number;
+}
+
+interface SubcontractorInvoiceRollup {
+  original_contract_sum: number;
+  net_change_by_change_orders: number;
+  contract_sum_to_date: number;
+  total_completed_and_stored: number;
+  total_work_retainage?: number;
+  total_materials_retainage?: number;
+  total_retainage: number;
+  total_earned_less_retainage: number;
+  less_previous_certificates: number;
+  current_payment_due: number;
+  balance_to_finish_including_retainage: number;
+}
+
+interface SubcontractorInvoiceCoSummary {
+  additions: number;
+  deductions: number;
+  net: number;
+}
+
+export interface SubcontractorInvoiceDetailData {
+  id: number;
+  invoice_number?: string | null;
+  subcontract_id?: number | null;
+  purchase_order_id?: number | null;
+  status?: string | null;
+  notes?: string | null;
+  contract_number?: string | null;
+  contract_title?: string | null;
+  contract_company_name?: string | null;
+  contract_company_address?: string | null;
+  contract_company_city?: string | null;
+  contract_company_state?: string | null;
+  contract_company_zip?: string | null;
+  contract_date?: string | null;
+  gc_company_name?: string | null;
+  gc_company_address?: string | null;
+  gc_company_city?: string | null;
+  gc_company_state?: string | null;
+  gc_company_zip?: string | null;
+  project_name?: string | null;
+  project_number?: string | null;
+  project_address?: string | null;
+  application_number?: number | null;
+  billing_period_name?: string | null;
+  billing_period_start?: string | null;
+  billing_period_end?: string | null;
+  period_start?: string | null;
+  period_end?: string | null;
+  billing_date?: string | null;
+  percent_complete?: number | null;
+  approved_at?: string | null;
+  submitted_at?: string | null;
+  attachments?: Array<{ id?: string | number; file_name?: string | null; url?: string | null }> | null;
+  subcontractor_invoice_line_items?: SubcontractorInvoiceLineItem[] | null;
+  rollup?: SubcontractorInvoiceRollup | null;
+  co_summary?: SubcontractorInvoiceCoSummary | null;
+  tab_counts?: SubcontractorInvoiceTabCounts | null;
 }
 
 // =============================================================================
@@ -69,14 +167,9 @@ export function useSubcontractorInvoicesList(
       if (filters?.purchase_order_id) params.set("purchase_order_id", filters.purchase_order_id);
       if (filters?.status) params.set("status", filters.status);
       const qs = params.toString();
-      const response = await fetch(
+      const data = await apiFetch<SubcontractorInvoiceApiResponse<unknown[]>>(
         `/api/projects/${projectId}/invoicing/subcontractor/invoices${qs ? `?${qs}` : ""}`,
       );
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new Error(error.error || `Server returned ${response.status} when loading subcontractor invoices`);
-      }
-      const data = await response.json();
       return data.data ?? [];
     },
     enabled: !!projectId,
@@ -96,17 +189,14 @@ export function useSubcontractorInvoiceDetail(
   projectId: string,
   invoiceId: number | null | undefined,
 ) {
-  return useQuery({
+  return useQuery<SubcontractorInvoiceDetailData | null>({
     queryKey: subInvoiceKeys.detail(projectId, invoiceId ?? 0),
     queryFn: async () => {
-      const response = await fetch(
+      const data = await apiFetch<
+        SubcontractorInvoiceApiResponse<SubcontractorInvoiceDetailData | null>
+      >(
         `/api/projects/${projectId}/invoicing/subcontractor/invoices/${invoiceId}`,
       );
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new Error(error.error || `Server returned ${response.status} when loading invoice`);
-      }
-      const data = await response.json();
       return data.data ?? null;
     },
     enabled: !!projectId && !!invoiceId,
@@ -126,21 +216,14 @@ export function useCreateSubcontractorInvoice(projectId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (input: CreateSubcontractorInvoiceInput) => {
-      const response = await fetch(
+    mutationFn: async (input: CreateSubcontractorInvoiceInput) =>
+      apiFetch<SubcontractorInvoiceApiResponse<unknown>>(
         `/api/projects/${projectId}/invoicing/subcontractor/invoices`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(input),
         },
-      );
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Server returned ${response.status} — the invoice could not be created`);
-      }
-      return response.json();
-    },
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: subInvoiceKeys.lists() });
       toast.success("Subcontractor invoice created");
@@ -161,21 +244,14 @@ export function useUpdateSubcontractorInvoice(projectId: string) {
     mutationFn: async ({
       invoiceId,
       ...fields
-    }: { invoiceId: number } & Record<string, unknown>) => {
-      const response = await fetch(
+    }: { invoiceId: number } & Record<string, unknown>) =>
+      apiFetch<SubcontractorInvoiceApiResponse<unknown>>(
         `/api/projects/${projectId}/invoicing/subcontractor/invoices/${invoiceId}`,
         {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(fields),
         },
-      );
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || "Failed to update invoice");
-      }
-      return response.json();
-    },
+      ),
     onSuccess: (_data, vars) => {
       queryClient.invalidateQueries({
         queryKey: subInvoiceKeys.detail(projectId, vars.invoiceId),
@@ -203,21 +279,14 @@ export function useSubcontractorInvoiceStatusChange(projectId: string) {
       invoiceId: number;
       status: string;
       notes?: string;
-    }) => {
-      const response = await fetch(
+    }) =>
+      apiFetch<SubcontractorInvoiceApiResponse<unknown>>(
         `/api/projects/${projectId}/invoicing/subcontractor/invoices/${invoiceId}`,
         {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ status, ...(notes !== undefined && { notes }) }),
         },
-      );
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || "Failed to update status");
-      }
-      return response.json();
-    },
+      ),
     onSuccess: (_data, vars) => {
       queryClient.invalidateQueries({
         queryKey: subInvoiceKeys.detail(projectId, vars.invoiceId),
@@ -244,17 +313,11 @@ export function useSubcontractorInvoiceTransition(projectId: string) {
     }: {
       invoiceId: number;
       action: "approve-as-noted" | "pending-owner-approval";
-    }) => {
-      const response = await fetch(
+    }) =>
+      apiFetch<SubcontractorInvoiceApiResponse<unknown>>(
         `/api/projects/${projectId}/invoicing/subcontractor/invoices/${invoiceId}/${action}`,
         { method: "POST" },
-      );
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || "Failed to update invoice");
-      }
-      return response.json();
-    },
+      ),
     onSuccess: (_data, vars) => {
       queryClient.invalidateQueries({
         queryKey: subInvoiceKeys.detail(projectId, vars.invoiceId),
@@ -285,21 +348,14 @@ export function useUpdateSubcontractorLineItems(
         retainage_pct: number;
         materials_retainage_pct: number;
       }>,
-    ) => {
-      const response = await fetch(
+    ) =>
+      apiFetch<SubcontractorInvoiceApiResponse<unknown>>(
         `/api/projects/${projectId}/invoicing/subcontractor/invoices/${invoiceId}/line-items`,
         {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ updates }),
         },
-      );
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || "Failed to save line items");
-      }
-      return response.json();
-    },
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: subInvoiceKeys.detail(projectId, invoiceId),
@@ -323,17 +379,11 @@ export function useDeleteSubcontractorInvoice(projectId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (invoiceId: number) => {
-      const response = await fetch(
+    mutationFn: async (invoiceId: number) =>
+      apiFetch(
         `/api/projects/${projectId}/invoicing/subcontractor/invoices/${invoiceId}`,
         { method: "DELETE" },
-      );
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `Server returned ${response.status} — the invoice could not be deleted`);
-      }
-      return response.json();
-    },
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: subInvoiceKeys.lists() });
       toast.success("Invoice deleted successfully");

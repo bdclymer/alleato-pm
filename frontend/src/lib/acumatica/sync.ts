@@ -11,6 +11,8 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { createAcumaticaClient } from "./client";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/types/database.types";
 import type {
   FlatInvoice,
   FlatPayment,
@@ -20,6 +22,8 @@ import type {
   FlatSubcontract,
   FlatVendor,
 } from "./types";
+
+type DbClient = SupabaseClient<Database>;
 
 export interface VendorSyncResult {
   created: number;
@@ -55,7 +59,7 @@ function toCompanyVendorFields(v: FlatVendor, now: string) {
  *
  * Conflict resolution uses acumatica_vendor_id (unique where not null).
  */
-export async function syncVendors(): Promise<VendorSyncResult> {
+export async function syncVendors(supabaseClient?: DbClient): Promise<VendorSyncResult> {
   const result: VendorSyncResult = {
     created: 0,
     updated: 0,
@@ -72,7 +76,7 @@ export async function syncVendors(): Promise<VendorSyncResult> {
 
   const activeVendors = acuVendors.filter((v) => v.Status === "Active");
 
-  const supabase = await createClient();
+  const supabase = supabaseClient ?? (await createClient());
   const now = new Date().toISOString();
 
   for (const acuVendor of activeVendors) {
@@ -179,10 +183,11 @@ function normalizeCostCode(value?: string): string | null {
 export async function syncDirectCosts(
   projectId: number,
   userId: string,
+  supabaseClient?: DbClient,
 ): Promise<DirectCostSyncResult> {
   const result: DirectCostSyncResult = { created: 0, updated: 0, errors: [] };
 
-  const supabase = await createClient();
+  const supabase = supabaseClient ?? (await createClient());
 
   // 1. Resolve this project's Acumatica project ID
   const { data: project, error: projError } = await supabase
@@ -505,6 +510,7 @@ function mapInvoiceStatus(acuStatus: string): string {
 export async function syncARInvoices(
   projectId: number,
   _userId: string,
+  supabaseClient?: DbClient,
 ): Promise<SyncResult> {
   const result: SyncResult = { created: 0, updated: 0, errors: [] };
 
@@ -517,7 +523,7 @@ export async function syncARInvoices(
     $expand: "Details",
   });
 
-  const supabase = await createClient();
+  const supabase = supabaseClient ?? (await createClient());
 
   // We need a contract_id to associate invoices. Get the project's primary prime contract.
   const { data: primeContract } = await supabase
@@ -663,10 +669,11 @@ export async function syncARInvoices(
 export async function syncARPayments(
   projectId: number,
   _userId: string,
+  supabaseClient?: DbClient,
 ): Promise<SyncResult> {
   const result: SyncResult = { created: 0, updated: 0, errors: [] };
 
-  const supabase = await createClient();
+  const supabase = supabaseClient ?? (await createClient());
 
   // Get the project's primary prime contract and its associated company's customer_id
   const { data: primeContract } = await supabase

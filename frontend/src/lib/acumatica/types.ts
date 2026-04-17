@@ -152,6 +152,7 @@ export interface RawBill {
   Type?: AcuField<string>;
   Vendor: AcuField<string>;
   VendorRef?: AcuField<string>;
+  Project?: AcuField<string>;
   Date: AcuField<string>;
   DueDate?: AcuField<string>;
   FinancialPeriod?: AcuField<string>;
@@ -188,6 +189,7 @@ export interface FlatBill {
   Type?: string;
   Vendor: string;
   VendorRef?: string;
+  Project?: string;
   Date: string;
   DueDate?: string;
   FinancialPeriod?: string;

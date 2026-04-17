@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api-client";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -126,14 +127,13 @@ export const submittalKeys = {
 export function useSubmittals(projectId: number, tab?: string) {
   return useQuery({
     queryKey: submittalKeys.list(projectId, tab),
-    queryFn: async (): Promise<SubmittalSummary[]> => {
+    queryFn: ({ signal }): Promise<SubmittalSummary[]> => {
       const params = new URLSearchParams();
       if (tab) params.set("tab", tab);
-      const res = await fetch(
+      return apiFetch<SubmittalSummary[]>(
         `/api/projects/${projectId}/submittals?${params.toString()}`,
+        { signal },
       );
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return res.json();
     },
     enabled: Boolean(projectId),
   });
@@ -142,13 +142,11 @@ export function useSubmittals(projectId: number, tab?: string) {
 export function useSubmittal(projectId: number, submittalId: string) {
   return useQuery({
     queryKey: submittalKeys.detail(projectId, submittalId),
-    queryFn: async (): Promise<SubmittalDetail> => {
-      const res = await fetch(
+    queryFn: ({ signal }): Promise<SubmittalDetail> =>
+      apiFetch<SubmittalDetail>(
         `/api/projects/${projectId}/submittals/${submittalId}`,
-      );
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return res.json();
-    },
+        { signal },
+      ),
     enabled: Boolean(projectId) && Boolean(submittalId),
   });
 }
@@ -156,18 +154,11 @@ export function useSubmittal(projectId: number, submittalId: string) {
 export function useCreateSubmittal(projectId: number) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: CreateSubmittalInput): Promise<SubmittalSummary> => {
-      const res = await fetch(`/api/projects/${projectId}/submittals`, {
+    mutationFn: (input: CreateSubmittalInput): Promise<SubmittalSummary> =>
+      apiFetch<SubmittalSummary>(`/api/projects/${projectId}/submittals`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(input),
-      });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? `HTTP ${res.status}`);
-      }
-      return res.json();
-    },
+      }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: submittalKeys.all(projectId) });
       toast.success("Submittal created");
@@ -181,21 +172,14 @@ export function useCreateSubmittal(projectId: number) {
 export function useUpdateSubmittal(projectId: number, submittalId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: UpdateSubmittalInput): Promise<SubmittalSummary> => {
-      const res = await fetch(
+    mutationFn: (input: UpdateSubmittalInput): Promise<SubmittalSummary> =>
+      apiFetch<SubmittalSummary>(
         `/api/projects/${projectId}/submittals/${submittalId}`,
         {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(input),
         },
-      );
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? `HTTP ${res.status}`);
-      }
-      return res.json();
-    },
+      ),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: submittalKeys.all(projectId) });
       toast.success("Submittal updated");
@@ -209,16 +193,11 @@ export function useUpdateSubmittal(projectId: number, submittalId: string) {
 export function useDeleteSubmittal(projectId: number) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (submittalId: string): Promise<void> => {
-      const res = await fetch(
+    mutationFn: (submittalId: string): Promise<unknown> =>
+      apiFetch(
         `/api/projects/${projectId}/submittals/${submittalId}`,
         { method: "DELETE" },
-      );
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? `HTTP ${res.status}`);
-      }
-    },
+      ),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: submittalKeys.all(projectId) });
       toast.success("Submittal moved to Recycle Bin");
@@ -232,17 +211,11 @@ export function useDeleteSubmittal(projectId: number) {
 export function useRestoreSubmittal(projectId: number) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (submittalId: string): Promise<SubmittalSummary> => {
-      const res = await fetch(
+    mutationFn: (submittalId: string): Promise<SubmittalSummary> =>
+      apiFetch<SubmittalSummary>(
         `/api/projects/${projectId}/submittals/${submittalId}/restore`,
         { method: "PATCH" },
-      );
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? `HTTP ${res.status}`);
-      }
-      return res.json();
-    },
+      ),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: submittalKeys.all(projectId) });
       toast.success("Submittal restored");
@@ -256,17 +229,11 @@ export function useRestoreSubmittal(projectId: number) {
 export function useDuplicateSubmittal(projectId: number) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (submittalId: string): Promise<SubmittalSummary> => {
-      const res = await fetch(
+    mutationFn: (submittalId: string): Promise<SubmittalSummary> =>
+      apiFetch<SubmittalSummary>(
         `/api/projects/${projectId}/submittals/${submittalId}/duplicate`,
         { method: "POST" },
-      );
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? `HTTP ${res.status}`);
-      }
-      return res.json();
-    },
+      ),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: submittalKeys.all(projectId) });
       toast.success("Submittal duplicated");
@@ -277,28 +244,48 @@ export function useDuplicateSubmittal(projectId: number) {
   });
 }
 
+/**
+ * Uploads a file and creates a submittal attachment record.
+ */
+export function useUploadSubmittalAttachment(projectId: number, submittalId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (file: File): Promise<SubmittalDetail["submittal_attachments"][number]> => {
+      const formData = new FormData();
+      formData.append("file", file);
+      return apiFetch<SubmittalDetail["submittal_attachments"][number]>(
+        `/api/projects/${projectId}/submittals/${submittalId}/attachments`,
+        {
+          method: "POST",
+          body: formData,
+        },
+      );
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: submittalKeys.detail(projectId, submittalId) });
+      toast.success("Attachment uploaded");
+    },
+    onError: (err: Error) => {
+      toast.error("Could not upload attachment", { description: err.message });
+    },
+  });
+}
+
 export function useAddWorkflowStep(projectId: number, submittalId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: {
+    mutationFn: (input: {
       user_id: string;
       step_type: string;
       required?: boolean;
-    }): Promise<{ id: string; step_order: number; step_type: string }> => {
-      const res = await fetch(
+    }): Promise<{ id: string; step_order: number; step_type: string }> =>
+      apiFetch<{ id: string; step_order: number; step_type: string }>(
         `/api/projects/${projectId}/submittals/${submittalId}/workflow-steps`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(input),
         },
-      );
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? `HTTP ${res.status}`);
-      }
-      return res.json();
-    },
+      ),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: submittalKeys.all(projectId) });
       toast.success("Workflow step added");
@@ -316,24 +303,17 @@ export function useRespondToWorkflowStep(
 ) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: {
+    mutationFn: (input: {
       response_status: string;
       comments?: string | null;
-    }): Promise<{ id: string; response_status: string }> => {
-      const res = await fetch(
+    }): Promise<{ id: string; response_status: string }> =>
+      apiFetch<{ id: string; response_status: string }>(
         `/api/projects/${projectId}/submittals/${submittalId}/workflow-steps/${stepId}/respond`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(input),
         },
-      );
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? `HTTP ${res.status}`);
-      }
-      return res.json();
-    },
+      ),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: submittalKeys.all(projectId) });
       toast.success("Response recorded");

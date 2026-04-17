@@ -232,20 +232,27 @@ export function buildChangeEventTableColumns(
       render: (item) => (
         <div className="flex items-center gap-1.5">
           {onToggleExpand && (
-            <button
+            <Button
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 onToggleExpand(String(item.id));
               }}
-              className="flex h-5 w-5 items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              variant="ghost"
+              size="icon"
+              className="h-5 w-5 text-muted-foreground hover:bg-muted hover:text-foreground"
+              aria-label={
+                expandedIds?.has(String(item.id))
+                  ? "Collapse change event"
+                  : "Expand change event"
+              }
             >
               <ChevronRight
                 className={`h-3.5 w-3.5 transition-transform ${
                   expandedIds?.has(String(item.id)) ? "rotate-90" : ""
                 }`}
               />
-            </button>
+            </Button>
           )}
           <Tooltip>
             <TooltipTrigger asChild>
@@ -392,9 +399,10 @@ export function renderChangeEventCard(
   onClick: (item: ChangeEvent) => void,
 ): ReactElement {
   return (
-    <button
+    <Button
       type="button"
-      className="w-full cursor-pointer rounded-lg border p-4 text-left transition-colors hover:bg-muted/50"
+      variant="ghost"
+      className="h-auto w-full justify-start rounded-lg border p-4 text-left hover:bg-muted/50"
       onClick={() => onClick(item)}
     >
       <div className="mb-2 flex items-start justify-between gap-4">
@@ -405,7 +413,7 @@ export function renderChangeEventCard(
         <StatusBadge status={statusLabel(item.status)} />
       </div>
       <p className="text-sm text-muted-foreground">{scopeLabel(item.scope)} · {typeLabel(item.type)}</p>
-    </button>
+    </Button>
   );
 }
 
@@ -414,9 +422,10 @@ export function renderChangeEventList(
   onClick: (item: ChangeEvent) => void,
 ): ReactElement {
   return (
-    <button
+    <Button
       type="button"
-      className="flex w-full cursor-pointer items-center justify-between rounded-md px-4 py-2 text-left transition-colors hover:bg-muted/50"
+      variant="ghost"
+      className="h-auto flex w-full items-center justify-between rounded-md px-4 py-2 text-left hover:bg-muted/50"
       onClick={() => onClick(item)}
     >
       <div>
@@ -424,7 +433,7 @@ export function renderChangeEventList(
         <p className="text-xs text-muted-foreground">{item.title || "Untitled Change Event"}</p>
       </div>
       <StatusBadge status={statusLabel(item.status)} />
-    </button>
+    </Button>
   );
 }
 

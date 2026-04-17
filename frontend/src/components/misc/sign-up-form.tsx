@@ -15,6 +15,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api-client";
 import { getPasswordChecks, isPasswordValid } from "@/lib/validation/password";
 
 export function SignUpForm({
@@ -47,17 +48,10 @@ export function SignUpForm({
     }
 
     try {
-      const response = await fetch("/api/auth/signup", {
+      await apiFetch("/api/auth/signup", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password, name }),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to create account");
-      }
 
       toast.success("Account created! Check your email to confirm.");
       router.push("/auth/sign-up-success");

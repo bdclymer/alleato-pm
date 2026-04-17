@@ -14,6 +14,7 @@ import {
   type FeedbackTargetSnapshot,
 } from "@/lib/admin-feedback/targeting";
 import { useCurrentUserProfile } from "@/hooks/use-current-user-profile";
+import { apiFetch } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -326,11 +327,11 @@ export function AdminFeedbackWidget() {
 
     void (async () => {
       try {
-        const response = await fetch("/api/admin/feedback", {
+        const payload = await apiFetch<{
+          githubIssue?: { url?: string };
+          githubWarning?: unknown;
+        }>("/api/admin/feedback", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
           body: JSON.stringify({
             title: form.title.trim() || undefined,
             comment: form.comment.trim(),
@@ -361,15 +362,9 @@ export function AdminFeedbackWidget() {
           }),
         });
 
-        const payload = await response.json();
-
-        if (!response.ok) {
-          throw new Error(payload?.error || "Feedback submission failed");
-        }
-
-        if (payload.githubIssue?.url) {
+        if (payload?.githubIssue?.url) {
           toast.success("Feedback submitted and GitHub issue created.");
-        } else if (payload.githubWarning) {
+        } else if (payload?.githubWarning) {
           toast.success(
             "Feedback saved, but GitHub issue creation needs configuration.",
           );

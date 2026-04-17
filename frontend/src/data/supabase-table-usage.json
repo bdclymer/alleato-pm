@@ -87,12 +87,6 @@
       ]
     },
     {
-      "file": "frontend/src/lib/plugins/plugin-manager.ts",
-      "tables": [
-        "plugin_storage"
-      ]
-    },
-    {
       "file": "frontend/src/lib/services/direct-cost-service.ts",
       "tables": [
         "direct_cost_audit_log",
@@ -195,12 +189,6 @@
       "table": "notes",
       "files": [
         "frontend/src/components/tutorial/fetch-data-steps.tsx"
-      ]
-    },
-    {
-      "table": "plugin_storage",
-      "files": [
-        "frontend/src/lib/plugins/plugin-manager.ts"
       ]
     },
     {

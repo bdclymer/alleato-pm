@@ -601,7 +601,12 @@ export default function ProjectContractsPage(): ReactElement {
                                 <tr
                                   key={pco.id}
                                   className="cursor-pointer border-t border-border/50 hover:bg-muted/50"
-                                  onClick={(e) => { e.stopPropagation(); router.push(`/${projectId}/prime-contract-pcos/${pco.id}`); }}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    router.push(
+                                      `/${projectId}/prime-contracts/${item.id}/change-orders/pcos/${pco.id}`,
+                                    );
+                                  }}
                                 >
                                   <td className="py-1.5 pr-4 font-medium">{pco.pco_number || "—"}</td>
                                   <td className="max-w-md truncate py-1.5 pr-4">{pco.title || "—"}</td>

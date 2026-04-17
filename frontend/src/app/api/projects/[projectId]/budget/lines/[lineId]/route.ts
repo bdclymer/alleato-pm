@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { z } from "zod";
 import { requirePermission } from "@/lib/permissions-guard";
+import { apiErrorResponse } from "@/lib/api-error";
 
 // Zod schema for budget line PATCH updates
 // All fields optional since PATCH allows partial updates
@@ -46,20 +47,31 @@ const budgetLinePatchSchema = z
     },
   );
 
+// Parse the project id route param once so invalid ids fail through the shared envelope.
+function parseProjectId(projectId: string, where: string): number {
+  const projectIdNum = parseInt(projectId, 10);
+  if (Number.isNaN(projectIdNum)) {
+    throw new GuardrailError({
+      code: "INVALID_PAYLOAD",
+      where,
+      message: "Invalid project ID.",
+      details: [{ path: "projectId", message: "Project ID must be a number." }],
+    });
+  }
+  return projectIdNum;
+}
+
 // GET /api/projects/[id]/budget/lines/[lineId] - Fetch a single budget line item
 export const GET = withApiGuardrails<{ projectId: string; lineId: string }>(
   "projects/[projectId]/budget/lines/[lineId]#GET",
   async ({ request, params }) => {
-  
     const { projectId, lineId } = await params;
-    const projectIdNum = parseInt(projectId, 10);
+    const where = "projects/[projectId]/budget/lines/[lineId]#GET";
+    const projectIdNum = parseProjectId(projectId, where);
 
-    if (Number.isNaN(projectIdNum)) {
-      return NextResponse.json(
-        { error: "Invalid project ID" },
-        { status: 400 },
-      );
-    }
+    // Permission check: reading budget lines requires "read" on budget
+    const guard = await requirePermission(projectIdNum, "budget", "read");
+    if (guard.denied) return guard.response;
 
     const supabase = await createClient();
 
@@ -70,10 +82,11 @@ export const GET = withApiGuardrails<{ projectId: string; lineId: string }>(
     } = await supabase.auth.getUser();
 
     if (userError || !user) {
-      return NextResponse.json(
-        { error: "Unauthorized - please log in" },
-        { status: 401 },
-      );
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where,
+        message: "Authentication required.",
+      });
     }
 
     // TODO: Add project membership validation when project_team_members table exists
@@ -120,23 +133,24 @@ export const GET = withApiGuardrails<{ projectId: string; lineId: string }>(
 
     if (lineError) {
       if (lineError.code === "PGRST116") {
-        return NextResponse.json(
-          { error: "Budget line item not found" },
-          { status: 404 },
-        );
+        throw new GuardrailError({
+          code: "INTERNAL_ERROR",
+          where,
+          message: "Budget line item not found.",
+          status: 404,
+          severity: "low",
+        });
       }
-      return NextResponse.json(
-        { error: "Failed to fetch budget line", details: lineError.message },
-        { status: 500 },
-      );
+      return apiErrorResponse(lineError);
     }
 
     // Verify the budget line belongs to the specified project
     if (budgetLine.project_id !== projectIdNum) {
-      return NextResponse.json(
-        { error: "Budget line does not belong to this project" },
-        { status: 403 },
-      );
+      throw new GuardrailError({
+        code: "AUTH_FORBIDDEN",
+        where,
+        message: "Budget line does not belong to this project.",
+      });
     }
 
     // Return the budget line with enriched data
@@ -171,14 +185,8 @@ export const PATCH = withApiGuardrails<{ projectId: string; lineId: string }>(
   "projects/[projectId]/budget/lines/[lineId]#PATCH",
   async ({ request, params }) => {
     const { projectId, lineId } = await params;
-    const projectIdNum = parseInt(projectId, 10);
-
-    if (Number.isNaN(projectIdNum)) {
-      return NextResponse.json(
-        { error: "Invalid project ID" },
-        { status: 400 },
-      );
-    }
+    const where = "projects/[projectId]/budget/lines/[lineId]#PATCH";
+    const projectIdNum = parseProjectId(projectId, where);
 
     // Permission check: editing budget lines requires "write" on budget
     const guard = await requirePermission(projectIdNum, "budget", "write");
@@ -191,10 +199,11 @@ export const PATCH = withApiGuardrails<{ projectId: string; lineId: string }>(
     } = await supabase.auth.getUser();
 
     if (userError || !user) {
-      return NextResponse.json(
-        { error: "Unauthorized - please log in" },
-        { status: 401 },
-      );
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where,
+        message: "Authentication required.",
+      });
     }
 
     // Parse and validate request body
@@ -202,13 +211,12 @@ export const PATCH = withApiGuardrails<{ projectId: string; lineId: string }>(
     const validation = budgetLinePatchSchema.safeParse(body);
 
     if (!validation.success) {
-      return NextResponse.json(
-        {
-          error: "Validation failed",
-          details: validation.error.flatten(),
-        },
-        { status: 400 },
-      );
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where,
+        message: "Validation failed.",
+        details: validation.error.flatten(),
+      });
     }
 
     const { quantity, unit_cost, description, original_amount } =
@@ -225,17 +233,15 @@ export const PATCH = withApiGuardrails<{ projectId: string; lineId: string }>(
       .single();
 
     if (projectError) {
-      return NextResponse.json(
-        { error: "Failed to verify project status" },
-        { status: 500 },
-      );
+      return apiErrorResponse(projectError);
     }
 
     if (project.budget_locked) {
-      return NextResponse.json(
-        { error: "Budget is locked and cannot be edited" },
-        { status: 403 },
-      );
+      throw new GuardrailError({
+        code: "AUTH_FORBIDDEN",
+        where,
+        message: "Budget is locked and cannot be edited.",
+      });
     }
 
     // Verify the budget line exists and belongs to this project
@@ -248,17 +254,21 @@ export const PATCH = withApiGuardrails<{ projectId: string; lineId: string }>(
       .single();
 
     if (lineError || !existingLine) {
-      return NextResponse.json(
-        { error: "Budget line item not found" },
-        { status: 404 },
-      );
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where,
+        message: "Budget line item not found.",
+        status: 404,
+        severity: "low",
+      });
     }
 
     if (existingLine.project_id !== projectIdNum) {
-      return NextResponse.json(
-        { error: "Budget line does not belong to this project" },
-        { status: 403 },
-      );
+      throw new GuardrailError({
+        code: "AUTH_FORBIDDEN",
+        where,
+        message: "Budget line does not belong to this project.",
+      });
     }
 
     // Build update object
@@ -323,10 +333,7 @@ export const PATCH = withApiGuardrails<{ projectId: string; lineId: string }>(
       .single();
 
     if (updateError) {
-      return NextResponse.json(
-        { error: "Failed to update budget line", details: updateError.message },
-        { status: 500 },
-      );
+      return apiErrorResponse(updateError);
     }
 
     return NextResponse.json({
@@ -348,16 +355,9 @@ export const PATCH = withApiGuardrails<{ projectId: string; lineId: string }>(
 export const DELETE = withApiGuardrails<{ projectId: string; lineId: string }>(
   "projects/[projectId]/budget/lines/[lineId]#DELETE",
   async ({ request, params }) => {
-  
     const { projectId, lineId } = await params;
-    const projectIdNum = parseInt(projectId, 10);
-
-    if (Number.isNaN(projectIdNum)) {
-      return NextResponse.json(
-        { error: "Invalid project ID" },
-        { status: 400 },
-      );
-    }
+    const where = "projects/[projectId]/budget/lines/[lineId]#DELETE";
+    const projectIdNum = parseProjectId(projectId, where);
 
     // Permission check: deleting budget lines requires "admin" on budget
     const guard = await requirePermission(projectIdNum, "budget", "admin");
@@ -373,21 +373,17 @@ export const DELETE = withApiGuardrails<{ projectId: string; lineId: string }>(
       .single();
 
     if (projectError) {
-      return NextResponse.json(
-        { error: "Failed to verify project status" },
-        { status: 500 },
-      );
+      return apiErrorResponse(projectError);
     }
 
     if (project.budget_locked) {
       // Procore-parity rule (test 1.3.3): delete blocked when budget is locked.
-      return NextResponse.json(
-        {
-          error: "Budget is locked. Unlock the budget before deleting line items.",
-          code: "BUDGET_LOCKED",
-        },
-        { status: 403 },
-      );
+      throw new GuardrailError({
+        code: "AUTH_FORBIDDEN",
+        where,
+        message: "Budget is locked. Unlock the budget before deleting line items.",
+        details: { code: "BUDGET_LOCKED" },
+      });
     }
 
     // Verify the budget line exists and belongs to this project
@@ -398,17 +394,21 @@ export const DELETE = withApiGuardrails<{ projectId: string; lineId: string }>(
       .single();
 
     if (lineError || !existingLine) {
-      return NextResponse.json(
-        { error: "Budget line item not found" },
-        { status: 404 },
-      );
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where,
+        message: "Budget line item not found.",
+        status: 404,
+        severity: "low",
+      });
     }
 
     if (existingLine.project_id !== projectIdNum) {
-      return NextResponse.json(
-        { error: "Budget line does not belong to this project" },
-        { status: 403 },
-      );
+      throw new GuardrailError({
+        code: "AUTH_FORBIDDEN",
+        where,
+        message: "Budget line does not belong to this project.",
+      });
     }
 
     // Procore-parity rule (test 1.3.2): delete is only allowed when the
@@ -416,17 +416,18 @@ export const DELETE = withApiGuardrails<{ projectId: string; lineId: string }>(
     // changes must flow through a budget modification rather than a delete.
     const originalAmount = Number(existingLine.original_amount ?? 0);
     if (originalAmount !== 0) {
-      return NextResponse.json(
-        {
-          error:
-            `Budget line cannot be deleted because its original budget is ${originalAmount.toLocaleString("en-US", { style: "currency", currency: "USD" })}. ` +
-            "Only line items with an original budget of $0 may be deleted. " +
-            "Use a budget modification to remove or zero out funded lines.",
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where,
+        message:
+          `Budget line cannot be deleted because its original budget is ${originalAmount.toLocaleString("en-US", { style: "currency", currency: "USD" })}. ` +
+          "Only line items with an original budget of $0 may be deleted. Use a budget modification to remove or zero out funded lines.",
+        details: {
           code: "LINE_HAS_BUDGET",
           originalAmount,
         },
-        { status: 409 },
-      );
+        status: 409,
+      });
     }
 
     // Procore-parity rule (test 1.3.4): delete blocked when an active
@@ -439,21 +440,17 @@ export const DELETE = withApiGuardrails<{ projectId: string; lineId: string }>(
       .eq("budget_mod_lines.cost_code_id", existingLine.cost_code_id);
 
     if (modCheckError) {
-      return NextResponse.json(
-        {
-          error: "Failed to verify active budget modifications",
-          details: modCheckError.message,
-        },
-        { status: 500 },
-      );
+      return apiErrorResponse(modCheckError);
     }
 
     if (blockingMods && blockingMods.length > 0) {
-      return NextResponse.json(
-        {
-          error:
-            `Budget line cannot be deleted because ${blockingMods.length} active budget modification${blockingMods.length === 1 ? "" : "s"} reference${blockingMods.length === 1 ? "s" : ""} its cost code. ` +
-            "Delete or void each modification first.",
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where,
+        message:
+          `Budget line cannot be deleted because ${blockingMods.length} active budget modification${blockingMods.length === 1 ? "" : "s"} reference${blockingMods.length === 1 ? "s" : ""} its cost code. ` +
+          "Delete or void each modification first.",
+        details: {
           code: "LINE_HAS_ACTIVE_MODIFICATIONS",
           modifications: blockingMods.map((m) => ({
             id: m.id,
@@ -461,8 +458,8 @@ export const DELETE = withApiGuardrails<{ projectId: string; lineId: string }>(
             status: m.status,
           })),
         },
-        { status: 409 },
-      );
+        status: 409,
+      });
     }
 
     // Delete the budget line
@@ -472,10 +469,7 @@ export const DELETE = withApiGuardrails<{ projectId: string; lineId: string }>(
       .eq("id", lineId);
 
     if (deleteError) {
-      return NextResponse.json(
-        { error: "Failed to delete budget line", details: deleteError.message },
-        { status: 500 },
-      );
+      return apiErrorResponse(deleteError);
     }
 
     return NextResponse.json({

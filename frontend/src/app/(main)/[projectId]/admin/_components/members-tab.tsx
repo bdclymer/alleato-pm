@@ -19,6 +19,7 @@ import {
 import { ChevronDown } from "lucide-react";
 import { EmptyState } from "@/components/ds";
 import type { PermissionTemplate, PermissionModule, PermissionLevel } from "@/lib/permissions-shared";
+import { apiFetch } from "@/lib/api-client";
 
 const MODULES: { key: PermissionModule; label: string }[] = [
   { key: "directory",     label: "Directory" },
@@ -54,9 +55,9 @@ export function MembersTab({ projectId }: Props) {
   const { data: members = [], isLoading: membersLoading } = useQuery<Member[]>({
     queryKey: ["project-members-permissions", projectId],
     queryFn: async () => {
-      const res = await fetch(`/api/projects/${projectId}/directory/permissions`);
-      if (!res.ok) throw new Error("Failed to load members");
-      const { data } = await res.json();
+      const { data } = await apiFetch<{ data: Member[] }>(
+        `/api/projects/${projectId}/directory/permissions`,
+      );
       return data;
     },
   });
@@ -64,24 +65,19 @@ export function MembersTab({ projectId }: Props) {
   const { data: templates = [] } = useQuery<PermissionTemplate[]>({
     queryKey: ["permission-templates"],
     queryFn: async () => {
-      const res = await fetch("/api/permissions/templates");
-      if (!res.ok) throw new Error("Failed to load templates");
-      const { data } = await res.json();
+      const { data } = await apiFetch<{ data: PermissionTemplate[] }>(
+        "/api/permissions/templates",
+      );
       return data;
     },
   });
 
   const assignMutation = useMutation({
     mutationFn: async ({ personId, templateId }: { personId: string; templateId: string }) => {
-      const res = await fetch(`/api/projects/${projectId}/permissions/assign`, {
+      await apiFetch(`/api/projects/${projectId}/permissions/assign`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ person_id: personId, template_id: templateId }),
       });
-      if (!res.ok) {
-        const { error } = await res.json();
-        throw new Error(error ?? "Failed to assign template");
-      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["project-members-permissions", projectId] });
@@ -99,18 +95,15 @@ export function MembersTab({ projectId }: Props) {
       level: PermissionLevel | "reset";
     }) => {
       if (level === "reset") {
-        const res = await fetch(
+        await apiFetch(
           `/api/projects/${projectId}/permissions/override?person_id=${personId}&module=${module}`,
-          { method: "DELETE" }
+          { method: "DELETE" },
         );
-        if (!res.ok) throw new Error("Failed to reset override");
       } else {
-        const res = await fetch(`/api/projects/${projectId}/permissions/override`, {
+        await apiFetch(`/api/projects/${projectId}/permissions/override`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ person_id: personId, module, level }),
         });
-        if (!res.ok) throw new Error("Failed to set override");
       }
     },
     onSuccess: () => {

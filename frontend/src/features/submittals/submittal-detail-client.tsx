@@ -2,12 +2,11 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Copy, MoreHorizontal, Trash2 } from "lucide-react";
+import { Copy, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 
 import { PageShell } from "@/components/layout";
-import { StatusBadge, EmptyState } from "@/components/ds";
+import { AttachmentUploadPanel, StatusBadge, EmptyState } from "@/components/ds";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
@@ -32,6 +31,7 @@ import {
   useDeleteSubmittal,
   useDuplicateSubmittal,
   useRespondToWorkflowStep,
+  useUploadSubmittalAttachment,
   type SubmittalDetail,
 } from "@/hooks/use-submittals";
 
@@ -66,11 +66,13 @@ function resolveUserName(users: AuthUser[], id: string): string {
 
 function FieldRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div>
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+    <div className="grid grid-cols-[13rem_minmax(0,1fr)] items-start gap-x-3">
+      <p className="pt-0.5 whitespace-nowrap text-xs font-semibold uppercase tracking-wider text-muted-foreground">
         {label}
       </p>
-      <div className="mt-0.5 text-sm text-foreground">{value ?? "—"}</div>
+      <div className="min-w-0 text-sm leading-6 text-foreground break-words">
+        {value ?? "—"}
+      </div>
     </div>
   );
 }
@@ -235,13 +237,14 @@ export function SubmittalDetailClient({ submittal, projectId }: SubmittalDetailC
   const router = useRouter();
   const deleteMutation = useDeleteSubmittal(projectId);
   const duplicateMutation = useDuplicateSubmittal(projectId);
+  const uploadAttachmentMutation = useUploadSubmittalAttachment(projectId, submittal.id);
   const [respondingStep, setRespondingStep] = React.useState<string | null>(null);
+  const [attachments, setAttachments] = React.useState(submittal.submittal_attachments ?? []);
 
   const { users } = useAuthUsers(String(projectId));
 
   const workflowSteps = submittal.submittal_workflow_steps ?? [];
   const distributions = submittal.submittal_distributions ?? [];
-  const attachments = submittal.submittal_attachments ?? [];
   const history = submittal.submittal_history ?? [];
   const linkedDrawings = submittal.submittal_linked_drawings ?? [];
 
@@ -256,15 +259,24 @@ export function SubmittalDetailClient({ submittal, projectId }: SubmittalDetailC
     router.push(`/${projectId}/submittals/${newRecord.id}`);
   }
 
+  /** Uploads one attachment and prepends it to the local attachment list on success. */
+  async function handleUploadAttachment(file: File) {
+    const uploadedAttachment = await uploadAttachmentMutation.mutateAsync(file);
+    setAttachments((current) => [uploadedAttachment, ...current]);
+  }
+
   const actions = (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon">
+        <Button variant="ghost" size="icon" className="h-8 w-8">
           <MoreHorizontal className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => router.push(`/${projectId}/submittals/${submittal.id}/edit`)}>Edit</DropdownMenuItem>
+        <DropdownMenuItem onClick={() => router.push(`/${projectId}/submittals/${submittal.id}/edit`)}>
+          <Pencil className="mr-2 h-4 w-4" />
+          Edit
+        </DropdownMenuItem>
         <DropdownMenuItem onClick={handleDuplicate} disabled={duplicateMutation.isPending}>
           <Copy className="mr-2 h-4 w-4" />
           Duplicate
@@ -289,13 +301,23 @@ export function SubmittalDetailClient({ submittal, projectId }: SubmittalDetailC
   return (
     <PageShell
         variant="detail"
+        className="pt-6 sm:pt-10"
         title={`${submittal.submittal_number} — ${submittal.title}`}
+        titleContent={
+          <div className="space-y-1">
+            <h1 className="text-xl sm:text-2xl lg:text-[1.75rem] font-medium text-foreground/90 line-clamp-2 wrap-break-word">
+              {submittal.submittal_number} — {submittal.title}
+            </h1>
+            <div className="flex w-full items-center justify-between gap-2">
+              <StatusBadge status={submittal.status} />
+              {actions}
+            </div>
+          </div>
+        }
         description={[specSection, submittal.is_private ? "Private" : null]
           .filter(Boolean)
           .join(" · ") || undefined}
-        statusBadge={<StatusBadge status={submittal.status} />}
         onBack={() => router.push(`/${projectId}/submittals`)}
-        actions={actions}
       >
         <Tabs defaultValue="general" className="space-y-4">
           <TabsList>
@@ -311,9 +333,9 @@ export function SubmittalDetailClient({ submittal, projectId }: SubmittalDetailC
 
           {/* ── General ── */}
           <TabsContent value="general" className="space-y-6">
-            <div className="grid gap-6 md:grid-cols-3">
+            <div className="grid gap-8 lg:gap-10 md:grid-cols-[minmax(0,1fr)_22rem] lg:grid-cols-[minmax(0,1fr)_24rem]">
               {/* Left: content */}
-              <div className="md:col-span-2 space-y-4">
+              <div className="space-y-4">
                 {submittal.description && (
                   <div className="rounded-lg bg-muted/50 p-5">
                     <SectionLabel>Description</SectionLabel>
@@ -323,109 +345,95 @@ export function SubmittalDetailClient({ submittal, projectId }: SubmittalDetailC
                   </div>
                 )}
 
-                <div className="rounded-lg bg-muted/50 p-5">
-                  <SectionLabel>
-                    Attachments{attachments.length > 0 ? ` (${attachments.length})` : ""}
-                  </SectionLabel>
-                  {attachments.length === 0 ? (
-                    <EmptyState
-                      title="No attachments"
-                      description="Attach files to this submittal to share with your team."
-                    />
-                  ) : (
-                    <ul className="space-y-2">
-                      {attachments.map((att) => (
-                        <li key={att.id} className="flex items-center gap-3">
-                          <a
-                            href={att.file_url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-sm text-primary hover:underline flex-1 truncate"
-                          >
-                            {att.file_name}
-                          </a>
-                          {att.is_current && (
-                            <StatusBadge status="Current" variant="success" />
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
+                <AttachmentUploadPanel
+                  title="Attachments"
+                  description=""
+                  headerVariant="muted"
+                  files={attachments.map((attachment) => ({
+                    id: attachment.id,
+                    name: attachment.file_name,
+                    sizeBytes: attachment.file_size,
+                    uploadedAtLabel: attachment.created_at
+                      ? formatDate(attachment.created_at)
+                      : null,
+                    downloadUrl: attachment.file_url,
+                  }))}
+                  onUploadFile={handleUploadAttachment}
+                  emptyTitle="No attachments"
+                  emptyDescription="Attach files to this submittal to share with your team."
+                />
               </div>
 
               {/* Right: metadata sidebar */}
               <div className="space-y-4">
-                <Card>
-                  <CardContent className="p-5 space-y-4">
-                    <FieldRow
-                      label="Type"
-                      value={
-                        typeof submittal.submittal_type === "object"
-                          ? (submittal.submittal_type as { name?: string } | null)?.name
-                          : submittal.submittal_type
-                      }
-                    />
-                    <FieldRow
-                      label="Package"
-                      value={
-                        (submittal.submittal_package as { name?: string } | null)?.name
-                      }
-                    />
-                    <FieldRow
-                      label="Ball in Court"
-                      value={
-                        submittal.ball_in_court
-                          ? resolveUserName(users, submittal.ball_in_court)
-                          : null
-                      }
-                    />
-                    <FieldRow
-                      label="Final Due Date"
-                      value={formatDate(submittal.final_due_date)}
-                    />
-                    <FieldRow
-                      label="Lead Time"
-                      value={
-                        submittal.lead_time != null
-                          ? `${submittal.lead_time} days`
-                          : null
-                      }
-                    />
-                    <FieldRow
-                      label="Required On-Site"
-                      value={formatDate(submittal.required_on_site_date)}
-                    />
-                    <FieldRow
-                      label="Responsible Contractor"
-                      value={submittal.responsible_contractor?.name}
-                    />
-                    <FieldRow
-                      label="Received From"
-                      value={
-                        submittal.received_from_id
-                          ? resolveUserName(users, submittal.received_from_id)
-                          : null
-                      }
-                    />
-                    <FieldRow
-                      label="Submittal Manager"
-                      value={
-                        submittal.submittal_manager_id
-                          ? resolveUserName(users, submittal.submittal_manager_id)
-                          : null
-                      }
-                    />
-                    <FieldRow
-                      label="Sent Date"
-                      value={formatDate(submittal.sent_date)}
-                    />
-                    <FieldRow
-                      label="Visibility"
-                      value={submittal.is_private ? "Private" : "Public"}
-                    />
-                  </CardContent>
-                </Card>
+                <div className="space-y-4">
+                  <FieldRow
+                    label="Type"
+                    value={
+                      typeof submittal.submittal_type === "object"
+                        ? (submittal.submittal_type as { name?: string } | null)?.name
+                        : submittal.submittal_type
+                    }
+                  />
+                  <FieldRow
+                    label="Package"
+                    value={
+                      (submittal.submittal_package as { name?: string } | null)?.name
+                    }
+                  />
+                  <FieldRow
+                    label="Ball in Court"
+                    value={
+                      submittal.ball_in_court
+                        ? resolveUserName(users, submittal.ball_in_court)
+                        : null
+                    }
+                  />
+                  <FieldRow
+                    label="Final Due Date"
+                    value={formatDate(submittal.final_due_date)}
+                  />
+                  <FieldRow
+                    label="Lead Time"
+                    value={
+                      submittal.lead_time != null
+                        ? `${submittal.lead_time} days`
+                        : null
+                    }
+                  />
+                  <FieldRow
+                    label="Required On-Site"
+                    value={formatDate(submittal.required_on_site_date)}
+                  />
+                  <FieldRow
+                    label="Responsible Contractor"
+                    value={submittal.responsible_contractor?.name}
+                  />
+                  <FieldRow
+                    label="Received From"
+                    value={
+                      submittal.received_from_id
+                        ? resolveUserName(users, submittal.received_from_id)
+                        : null
+                    }
+                  />
+                  <FieldRow
+                    label="Submittal Manager"
+                    value={
+                      submittal.submittal_manager_id
+                        ? resolveUserName(users, submittal.submittal_manager_id)
+                        : null
+                    }
+                  />
+                  <FieldRow
+                    label="Sent Date"
+                    value={formatDate(submittal.sent_date)}
+                  />
+                  <FieldRow
+                    label="Visibility"
+                    value={submittal.is_private ? "Private" : "Public"}
+                  />
+                </div>
 
                 {distributions.length > 0 && (
                   <div className="rounded-lg bg-muted/50 p-5">

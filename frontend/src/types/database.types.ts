@@ -4398,6 +4398,13 @@ export type Database = {
             foreignKeyName: "cco_attachments_cco_id_fkey"
             columns: ["cco_id"]
             isOneToOne: false
+            referencedRelation: "commitment_change_orders_with_scope"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cco_attachments_cco_id_fkey"
+            columns: ["cco_id"]
+            isOneToOne: false
             referencedRelation: "contract_change_orders"
             referencedColumns: ["id"]
           },
@@ -6184,6 +6191,13 @@ export type Database = {
             foreignKeyName: "commitment_pcos_promoted_to_co_id_fkey"
             columns: ["promoted_to_co_id"]
             isOneToOne: false
+            referencedRelation: "commitment_change_orders_with_scope"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commitment_pcos_promoted_to_co_id_fkey"
+            columns: ["promoted_to_co_id"]
+            isOneToOne: false
             referencedRelation: "contract_change_orders"
             referencedColumns: ["id"]
           },
@@ -6695,6 +6709,7 @@ export type Database = {
           paid_in_full: boolean | null
           parallel_mode: boolean
           prime_change_order_id: number | null
+          project_id: number | null
           reference: string | null
           rejection_reason: string | null
           request_received_from: string | null
@@ -6732,6 +6747,7 @@ export type Database = {
           paid_in_full?: boolean | null
           parallel_mode?: boolean
           prime_change_order_id?: number | null
+          project_id?: number | null
           reference?: string | null
           rejection_reason?: string | null
           request_received_from?: string | null
@@ -6769,6 +6785,7 @@ export type Database = {
           paid_in_full?: boolean | null
           parallel_mode?: boolean
           prime_change_order_id?: number | null
+          project_id?: number | null
           reference?: string | null
           rejection_reason?: string | null
           request_received_from?: string | null
@@ -6781,7 +6798,57 @@ export type Database = {
           title?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "contract_change_orders_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "contract_change_orders_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contract_change_orders_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contract_change_orders_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "contract_change_orders_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contract_change_orders_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contract_change_orders_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       contract_documents: {
         Row: {
@@ -13299,6 +13366,13 @@ export type Database = {
           work_completed_this_period?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "payment_application_line_items_change_order_id_fkey"
+            columns: ["change_order_id"]
+            isOneToOne: false
+            referencedRelation: "commitment_change_orders_with_scope"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "payment_application_line_items_change_order_id_fkey"
             columns: ["change_order_id"]
@@ -22327,6 +22401,30 @@ export type Database = {
           },
         ]
       }
+      team_chat_channels: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+          topic: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id: string
+          name: string
+          topic?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          topic?: string
+        }
+        Relationships: []
+      }
       team_chat_messages: {
         Row: {
           channel_id: string
@@ -22352,7 +22450,15 @@ export type Database = {
           user_id?: string | null
           user_name?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "team_chat_messages_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "team_chat_channels"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       test_cases: {
         Row: {
@@ -23860,6 +23966,100 @@ export type Database = {
           },
           {
             foreignKeyName: "change_events_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      commitment_change_orders_with_scope: {
+        Row: {
+          amount: number | null
+          approved_by: string | null
+          approved_date: string | null
+          change_order_number: string | null
+          change_reason: string | null
+          commitment_number: string | null
+          commitment_status: string | null
+          commitment_title: string | null
+          commitment_type: string | null
+          contract_company: string | null
+          contract_id: string | null
+          contract_type: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          designated_reviewer: string | null
+          due_date: string | null
+          executed: boolean | null
+          field_change: boolean | null
+          id: string | null
+          invoiced_date: string | null
+          is_private: boolean | null
+          location: string | null
+          paid_date: string | null
+          paid_in_full: boolean | null
+          parallel_mode: boolean | null
+          prime_change_order_id: number | null
+          project_id: number | null
+          reference: string | null
+          rejection_reason: string | null
+          request_received_from: string | null
+          requested_by: string | null
+          requested_date: string | null
+          revision: number | null
+          schedule_impact: number | null
+          signed_co_received_date: string | null
+          status: string | null
+          title: string | null
+          updated_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_change_orders_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "contract_change_orders_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contract_change_orders_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contract_change_orders_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "contract_change_orders_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contract_change_orders_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contract_change_orders_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "submittal_project_dashboard"

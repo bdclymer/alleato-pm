@@ -1688,6 +1688,8 @@
   border-radius: 14px !important;
   background: hsl(var(--background) / 0.95) !important;
   box-shadow: none !important;
+  width: 100% !important;
+  max-width: 100% !important;
   padding: 4px !important;
   transition: border-color 0.2s ease;
 }

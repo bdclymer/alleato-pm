@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Check, Edit, MoreHorizontal, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -24,6 +24,7 @@ import {
 import { useMasterCostCodes, useCostCodeTypes } from "@/hooks/use-project-cost-codes";
 import { useVerticalMarkup } from "@/hooks/use-vertical-markup";
 import { ContentSectionStack, LabelValueRow, PageShell, SectionRuleHeading } from "@/components/layout";
+import { apiFetch } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -167,6 +168,7 @@ export default function CommitmentCODetailPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const params = useParams();
+  const attachmentInputRef = useRef<HTMLInputElement>(null);
   const projectId = params.projectId as string;
   const commitmentCoId = params.commitmentCoId as string;
 
@@ -280,18 +282,11 @@ export default function CommitmentCODetailPage() {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const res = await fetch(
+        const data = await apiFetch<CommitmentCOData>(
           `/api/projects/${projectId}/commitment-change-orders/${commitmentCoId}`,
         );
-
-        if (res.ok) {
-          const data = await res.json();
-          setCo(data);
-          setContractId(data.contract_id);
-          return;
-        }
-
-        throw new Error("Failed to fetch change order");
+        setCo(data);
+        setContractId(data.contract_id);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load");
       } finally {
@@ -305,11 +300,9 @@ export default function CommitmentCODetailPage() {
   const fetchLineItemsFn = useCallback(async () => {
     setLineItemsLoading(true);
     try {
-      const res = await fetch(
+      const json = await apiFetch<{ data?: LineItem[] }>(
         `/api/projects/${projectId}/commitment-change-orders/${commitmentCoId}/line-items`,
       );
-      if (!res.ok) throw new Error("Failed to fetch line items");
-      const json = await res.json();
       setLineItems(json.data ?? []);
     } catch {
       setLineItems([]);
@@ -329,9 +322,8 @@ export default function CommitmentCODetailPage() {
     const amount = parseFloat(lineItemDraft.amount) || 0;
     setLineItemSaving(true);
     try {
-      const res = await fetch(lineItemApiBase, {
+      await apiFetch(lineItemApiBase, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           description: lineItemDraft.description || null,
           amount,
@@ -339,10 +331,6 @@ export default function CommitmentCODetailPage() {
           cost_type_id: lineItemDraft.cost_type_id || null,
         }),
       });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error((err as { error?: string }).error || "Failed to create line item");
-      }
       toast.success("Line item added");
       setAddingLineItem(false);
       setLineItemDraft(emptyDraft);
@@ -359,9 +347,8 @@ export default function CommitmentCODetailPage() {
     const amount = parseFloat(lineItemDraft.amount) || 0;
     setLineItemSaving(true);
     try {
-      const res = await fetch(`${lineItemApiBase}/${editingLineItemId}`, {
+      await apiFetch(`${lineItemApiBase}/${editingLineItemId}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           description: lineItemDraft.description || null,
           amount,
@@ -369,10 +356,6 @@ export default function CommitmentCODetailPage() {
           cost_type_id: lineItemDraft.cost_type_id || null,
         }),
       });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error((err as { error?: string }).error || "Failed to update line item");
-      }
       toast.success("Line item updated");
       setEditingLineItemId(null);
       setLineItemDraft(emptyDraft);
@@ -388,10 +371,9 @@ export default function CommitmentCODetailPage() {
     async (lineItemId: string) => {
       if (!confirm("Delete this line item?")) return;
       try {
-        const res = await fetch(`${lineItemApiBase}/${lineItemId}`, {
+        await apiFetch(`${lineItemApiBase}/${lineItemId}`, {
           method: "DELETE",
         });
-        if (!res.ok) throw new Error("Failed to delete line item");
         toast.success("Line item deleted");
         fetchLineItemsFn();
       } catch {
@@ -484,18 +466,10 @@ export default function CommitmentCODetailPage() {
     setAttachmentsLoading(true);
     setAttachmentsError(null);
     try {
-      const res = await fetch(
+      const json = await apiFetch<{ data?: Attachment[] }>(
         `/api/projects/${projectId}/commitment-change-orders/${commitmentCoId}/attachments`,
       );
-      if (res.ok) {
-        const json = await res.json();
-        setAttachments(json.data ?? []);
-      } else {
-        const errJson = await res.json().catch(() => null);
-        throw new Error(
-          (errJson as { error?: string } | null)?.error ?? "Failed to fetch attachments",
-        );
-      }
+      setAttachments(json.data ?? []);
     } catch (err) {
       console.error("Failed to fetch attachments:", err);
       setAttachmentsError(
@@ -517,11 +491,10 @@ export default function CommitmentCODetailPage() {
       const formData = new FormData();
       formData.append("file", file);
       try {
-        const res = await fetch(
+        await apiFetch(
           `/api/projects/${projectId}/commitment-change-orders/${commitmentCoId}/attachments`,
           { method: "POST", body: formData },
         );
-        if (!res.ok) throw new Error("Upload failed");
         toast.success(`${file.name} uploaded`);
         fetchAttachmentsFn();
       } catch {
@@ -536,11 +509,10 @@ export default function CommitmentCODetailPage() {
     async (attachmentId: string) => {
       if (!confirm("Delete this attachment?")) return;
       try {
-        const res = await fetch(
+        await apiFetch(
           `/api/projects/${projectId}/commitment-change-orders/${commitmentCoId}/attachments/${attachmentId}`,
           { method: "DELETE" },
         );
-        if (!res.ok) throw new Error("Delete failed");
         toast.success("Attachment deleted");
         setAttachments((prev) => prev.filter((a) => a.id !== attachmentId));
       } catch {
@@ -589,11 +561,10 @@ export default function CommitmentCODetailPage() {
     }
     setIsSaving(true);
     try {
-      const res = await fetch(
+      const updated = await apiFetch<CommitmentCOData>(
         `/api/commitments/${contractId}/change-orders/${commitmentCoId}`,
         {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             change_order_number: data.change_order_number,
             title: data.title || null,
@@ -615,13 +586,7 @@ export default function CommitmentCODetailPage() {
           }),
         },
       );
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error((err as { error?: string }).error || "Failed to update");
-      }
-      const updated = await res.json();
-      // The PUT route returns { data: updatedCO }
-      setCo(updated.data ?? updated);
+      setCo(updated);
       setIsEditing(false);
       toast.success("Change order updated");
     } catch (err) {
@@ -635,14 +600,10 @@ export default function CommitmentCODetailPage() {
     if (!co || !contractId) return;
     if (!confirm(`Delete change order ${co.change_order_number}?`)) return;
     try {
-      const res = await fetch(
+      await apiFetch(
         `/api/commitments/${contractId}/change-orders/${commitmentCoId}`,
         { method: "DELETE" },
       );
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error((err as { error?: string }).error || "Failed to delete");
-      }
       toast.success("Change order deleted");
       router.push(`/${projectId}/change-orders?tab=commitment`);
     } catch (err) {
@@ -653,16 +614,11 @@ export default function CommitmentCODetailPage() {
   const handleApprove = useCallback(async () => {
     if (!co || !contractId) return;
     try {
-      const res = await fetch(
+      const updated = await apiFetch<CommitmentCOData>(
         `/api/commitments/${contractId}/change-orders/${commitmentCoId}/approve`,
         { method: "POST" },
       );
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error((err as { error?: string }).error || "Failed to approve");
-      }
-      const updated = await res.json();
-      setCo(updated.data ?? updated);
+      setCo(updated);
       toast.success("Change order approved");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to approve");
@@ -678,21 +634,14 @@ export default function CommitmentCODetailPage() {
       return;
     }
     try {
-      // reject route does not exist at canonical path — use the projects path
-      const res = await fetch(
-        `/api/projects/${projectId}/contracts/${contractId}/change-orders/${commitmentCoId}/reject`,
+      const updated = await apiFetch<CommitmentCOData>(
+        `/api/projects/${projectId}/commitment-change-orders/${commitmentCoId}/reject`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ rejection_reason: rejectionReason }),
         },
       );
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error((err as { error?: string }).error || "Failed to reject");
-      }
-      const updated = await res.json();
-      setCo(updated.data ?? updated);
+      setCo(updated);
       setShowRejectDialog(false);
       setRejectionReason("");
       toast.success("Change order rejected");
@@ -1463,13 +1412,12 @@ export default function CommitmentCODetailPage() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() =>
-                  document.getElementById("cco-attachment-upload")?.click()
-                }
+                onClick={() => attachmentInputRef.current?.click()}
               >
                 Upload File
               </Button>
-              <input
+              <Input
+                ref={attachmentInputRef}
                 id="cco-attachment-upload"
                 type="file"
                 className="hidden"

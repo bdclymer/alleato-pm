@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import type { UpdateBudgetViewRequest } from "@/types/budget-views";
 import { apiErrorResponse } from "@/lib/api-error";
+import { requirePermission } from "@/lib/permissions-guard";
 
 // GET /api/projects/[id]/budget/views/[viewId]
 // Fetch a single budget view
@@ -16,7 +17,14 @@ export const GET = withApiGuardrails<{ projectId: string; viewId: string }>(
     if (authError || !user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/budget/views/[viewId]#GET", message: "Authentication required." });
     }
-    const { viewId } = params;
+    const { projectId, viewId } = await params;
+    const projectIdNum = parseInt(projectId, 10);
+    if (Number.isNaN(projectIdNum)) {
+      return NextResponse.json({ error: "Invalid project ID" }, { status: 400 });
+    }
+
+    const guard = await requirePermission(projectIdNum, "budget", "read");
+    if (guard.denied) return guard.response;
 
     const { data: view, error } = await supabase
       .from("budget_views")
@@ -27,6 +35,7 @@ export const GET = withApiGuardrails<{ projectId: string; viewId: string }>(
       `,
       )
       .eq("id", viewId)
+      .eq("project_id", projectIdNum)
       .single();
 
     if (error) {
@@ -76,7 +85,14 @@ export const PATCH = withApiGuardrails<{ projectId: string; viewId: string }>(
     if (authError || !user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/budget/views/[viewId]#PATCH", message: "Authentication required." });
     }
-    const { viewId } = params;
+    const { projectId, viewId } = await params;
+    const projectIdNum = parseInt(projectId, 10);
+    if (Number.isNaN(projectIdNum)) {
+      return NextResponse.json({ error: "Invalid project ID" }, { status: 400 });
+    }
+
+    const guard = await requirePermission(projectIdNum, "budget", "write");
+    if (guard.denied) return guard.response;
     const body: UpdateBudgetViewRequest = await request.json();
 
     // Check if view is a system view
@@ -84,6 +100,7 @@ export const PATCH = withApiGuardrails<{ projectId: string; viewId: string }>(
       .from("budget_views")
       .select("is_system")
       .eq("id", viewId)
+      .eq("project_id", projectIdNum)
       .single();
 
     if (fetchError) {
@@ -119,7 +136,8 @@ export const PATCH = withApiGuardrails<{ projectId: string; viewId: string }>(
       const { error: updateError } = await supabase
         .from("budget_views")
         .update(updateData)
-        .eq("id", viewId);
+        .eq("id", viewId)
+        .eq("project_id", projectIdNum);
 
       if (updateError) {
         return NextResponse.json(
@@ -186,6 +204,7 @@ export const PATCH = withApiGuardrails<{ projectId: string; viewId: string }>(
       `,
       )
       .eq("id", viewId)
+      .eq("project_id", projectIdNum)
       .single();
 
     if (fetchUpdatedError) {
@@ -222,13 +241,21 @@ export const DELETE = withApiGuardrails<{ projectId: string; viewId: string }>(
     if (authError || !user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/budget/views/[viewId]#DELETE", message: "Authentication required." });
     }
-    const { viewId } = params;
+    const { projectId, viewId } = await params;
+    const projectIdNum = parseInt(projectId, 10);
+    if (Number.isNaN(projectIdNum)) {
+      return NextResponse.json({ error: "Invalid project ID" }, { status: 400 });
+    }
+
+    const guard = await requirePermission(projectIdNum, "budget", "admin");
+    if (guard.denied) return guard.response;
 
     // Check if view is a system view
     const { data: existingView, error: fetchError } = await supabase
       .from("budget_views")
       .select("is_system, is_default")
       .eq("id", viewId)
+      .eq("project_id", projectIdNum)
       .single();
 
     if (fetchError) {
@@ -256,7 +283,8 @@ export const DELETE = withApiGuardrails<{ projectId: string; viewId: string }>(
     const { error: deleteError } = await supabase
       .from("budget_views")
       .delete()
-      .eq("id", viewId);
+      .eq("id", viewId)
+      .eq("project_id", projectIdNum);
 
     if (deleteError) {
       return NextResponse.json(

@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api-client";
 
 // =============================================================================
 // Types
@@ -99,14 +100,12 @@ interface ChangeEventSummary {
 export function useProjectPCOs(projectId: string) {
   return useQuery<PCO[]>({
     queryKey: ["pcos", projectId],
-    queryFn: async () => {
-      const res = await fetch(`/api/projects/${projectId}/pcos`);
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to fetch PCOs");
-      }
-      const payload = await res.json();
-      return payload.data ?? payload;
+    queryFn: async ({ signal }) => {
+      const payload = await apiFetch<PCO[] | { data: PCO[] }>(
+        `/api/projects/${projectId}/pcos`,
+        { signal },
+      );
+      return Array.isArray(payload) ? payload : payload.data;
     },
     enabled: !!projectId,
   });
@@ -118,14 +117,8 @@ export function useProjectPCOs(projectId: string) {
 export function usePCO(projectId: string, pcoId: string) {
   return useQuery<PCO>({
     queryKey: ["pco", projectId, pcoId],
-    queryFn: async () => {
-      const res = await fetch(`/api/projects/${projectId}/pcos/${pcoId}`);
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to fetch PCO");
-      }
-      return res.json();
-    },
+    queryFn: ({ signal }) =>
+      apiFetch<PCO>(`/api/projects/${projectId}/pcos/${pcoId}`, { signal }),
     enabled: !!projectId && !!pcoId,
   });
 }
@@ -136,16 +129,12 @@ export function usePCO(projectId: string, pcoId: string) {
 export function usePCOLineItems(projectId: string, pcoId: string) {
   return useQuery<PCOLineItem[]>({
     queryKey: ["pco-line-items", projectId, pcoId],
-    queryFn: async () => {
-      const res = await fetch(
+    queryFn: async ({ signal }) => {
+      const payload = await apiFetch<PCOLineItem[] | { data: PCOLineItem[] }>(
         `/api/projects/${projectId}/pcos/${pcoId}/line-items`,
+        { signal },
       );
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to fetch PCO line items");
-      }
-      const payload = await res.json();
-      return payload.data ?? payload;
+      return Array.isArray(payload) ? payload : payload.data;
     },
     enabled: !!projectId && !!pcoId,
   });
@@ -162,24 +151,17 @@ export function useCreatePCO(projectId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: Partial<PCO>) => {
-      const res = await fetch(`/api/projects/${projectId}/pcos`, {
+    mutationFn: (data: Partial<PCO>) =>
+      apiFetch<PCO>(`/api/projects/${projectId}/pcos`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to create PCO");
-      }
-      return res.json();
-    },
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pcos", projectId] });
       toast.success("PCO created successfully");
     },
     onError: (error: Error) => {
-      toast.error(`Failed to create PCO: ${error.message}`);
+      toast.error(error.message);
     },
   });
 }
@@ -191,18 +173,11 @@ export function useUpdatePCO(projectId: string, pcoId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: Partial<PCO>) => {
-      const res = await fetch(`/api/projects/${projectId}/pcos/${pcoId}`, {
+    mutationFn: (data: Partial<PCO>) =>
+      apiFetch<PCO>(`/api/projects/${projectId}/pcos/${pcoId}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to update PCO");
-      }
-      return res.json();
-    },
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pcos", projectId] });
       queryClient.invalidateQueries({
@@ -211,7 +186,7 @@ export function useUpdatePCO(projectId: string, pcoId: string) {
       toast.success("PCO updated successfully");
     },
     onError: (error: Error) => {
-      toast.error(`Failed to update PCO: ${error.message}`);
+      toast.error(error.message);
     },
   });
 }
@@ -223,21 +198,11 @@ export function useGroupChangeEvent(projectId: string, pcoId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (changeEventId: string) => {
-      const res = await fetch(
-        `/api/projects/${projectId}/pcos/${pcoId}/change-events`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ change_event_id: changeEventId }),
-        },
-      );
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to add change event to PCO");
-      }
-      return res.json();
-    },
+    mutationFn: (changeEventId: string) =>
+      apiFetch(`/api/projects/${projectId}/pcos/${pcoId}/change-events`, {
+        method: "POST",
+        body: JSON.stringify({ change_event_id: changeEventId }),
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pcos", projectId] });
       queryClient.invalidateQueries({
@@ -249,7 +214,7 @@ export function useGroupChangeEvent(projectId: string, pcoId: string) {
       toast.success("Change event added to PCO");
     },
     onError: (error: Error) => {
-      toast.error(`Failed to add change event: ${error.message}`);
+      toast.error(error.message);
     },
   });
 }
@@ -261,21 +226,11 @@ export function useUngroupChangeEvent(projectId: string, pcoId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (changeEventId: string) => {
-      const res = await fetch(
+    mutationFn: (changeEventId: string) =>
+      apiFetch(
         `/api/projects/${projectId}/pcos/${pcoId}/change-events/${changeEventId}`,
-        {
-          method: "DELETE",
-        },
-      );
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(
-          err.error || "Failed to remove change event from PCO",
-        );
-      }
-      return res.json();
-    },
+        { method: "DELETE" },
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pcos", projectId] });
       queryClient.invalidateQueries({
@@ -287,7 +242,7 @@ export function useUngroupChangeEvent(projectId: string, pcoId: string) {
       toast.success("Change event removed from PCO");
     },
     onError: (error: Error) => {
-      toast.error(`Failed to remove change event: ${error.message}`);
+      toast.error(error.message);
     },
   });
 }
@@ -299,20 +254,10 @@ export function useSubmitPCO(projectId: string, pcoId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async () => {
-      const res = await fetch(
-        `/api/projects/${projectId}/pcos/${pcoId}/submit`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-        },
-      );
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to submit PCO");
-      }
-      return res.json();
-    },
+    mutationFn: () =>
+      apiFetch(`/api/projects/${projectId}/pcos/${pcoId}/submit`, {
+        method: "POST",
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pcos", projectId] });
       queryClient.invalidateQueries({
@@ -321,7 +266,7 @@ export function useSubmitPCO(projectId: string, pcoId: string) {
       toast.success("PCO submitted to client");
     },
     onError: (error: Error) => {
-      toast.error(`Failed to submit PCO: ${error.message}`);
+      toast.error(error.message);
     },
   });
 }
@@ -333,24 +278,14 @@ export function useClientDecision(projectId: string, pcoId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: {
+    mutationFn: (data: {
       decision: "approved" | "revision_requested";
       note?: string;
-    }) => {
-      const res = await fetch(
-        `/api/projects/${projectId}/pcos/${pcoId}/decision`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-        },
-      );
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to record client decision");
-      }
-      return res.json();
-    },
+    }) =>
+      apiFetch(`/api/projects/${projectId}/pcos/${pcoId}/decision`, {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["pcos", projectId] });
       queryClient.invalidateQueries({
@@ -361,7 +296,7 @@ export function useClientDecision(projectId: string, pcoId: string) {
       toast.success(`PCO ${label}`);
     },
     onError: (error: Error) => {
-      toast.error(`Failed to record decision: ${error.message}`);
+      toast.error(error.message);
     },
   });
 }
@@ -373,21 +308,14 @@ export function useCreatePCOLineItem(projectId: string, pcoId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: Partial<PCOLineItem>) => {
-      const res = await fetch(
+    mutationFn: (data: Partial<PCOLineItem>) =>
+      apiFetch<PCOLineItem>(
         `/api/projects/${projectId}/pcos/${pcoId}/line-items`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),
         },
-      );
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to create line item");
-      }
-      return res.json();
-    },
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["pco-line-items", projectId, pcoId],
@@ -399,7 +327,7 @@ export function useCreatePCOLineItem(projectId: string, pcoId: string) {
       toast.success("Line item added");
     },
     onError: (error: Error) => {
-      toast.error(`Failed to create line item: ${error.message}`);
+      toast.error(error.message);
     },
   });
 }
@@ -411,27 +339,20 @@ export function useUpdatePCOLineItem(projectId: string, pcoId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
+    mutationFn: ({
       lineItemId,
       data,
     }: {
       lineItemId: number;
       data: Partial<PCOLineItem>;
-    }) => {
-      const res = await fetch(
+    }) =>
+      apiFetch<PCOLineItem>(
         `/api/projects/${projectId}/pcos/${pcoId}/line-items/${lineItemId}`,
         {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),
         },
-      );
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to update line item");
-      }
-      return res.json();
-    },
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["pco-line-items", projectId, pcoId],
@@ -443,7 +364,7 @@ export function useUpdatePCOLineItem(projectId: string, pcoId: string) {
       toast.success("Line item updated");
     },
     onError: (error: Error) => {
-      toast.error(`Failed to update line item: ${error.message}`);
+      toast.error(error.message);
     },
   });
 }
@@ -455,19 +376,11 @@ export function useDeletePCOLineItem(projectId: string, pcoId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (lineItemId: number) => {
-      const res = await fetch(
+    mutationFn: (lineItemId: number) =>
+      apiFetch(
         `/api/projects/${projectId}/pcos/${pcoId}/line-items/${lineItemId}`,
-        {
-          method: "DELETE",
-        },
-      );
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to delete line item");
-      }
-      return res.json();
-    },
+        { method: "DELETE" },
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["pco-line-items", projectId, pcoId],
@@ -479,7 +392,7 @@ export function useDeletePCOLineItem(projectId: string, pcoId: string) {
       toast.success("Line item deleted");
     },
     onError: (error: Error) => {
-      toast.error(`Failed to delete line item: ${error.message}`);
+      toast.error(error.message);
     },
   });
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { apiFetch } from "@/lib/api-client";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -111,11 +112,7 @@ export default function TablesDirectoryPage() {
   useEffect(() => {
     const fetchTables = async () => {
       try {
-        const response = await fetch("/api/table-metadata");
-        if (!response.ok) {
-          throw new Error("Failed to fetch table metadata");
-        }
-        const data = await response.json();
+        const data = await apiFetch<TableMetadata[]>("/api/table-metadata");
         setTables(data);
       } catch (err) {
         setError(err instanceof Error ? err.message : "An error occurred");

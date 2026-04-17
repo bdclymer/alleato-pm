@@ -25,6 +25,7 @@ interface BudgetModificationLine {
   id: string;
   costCodeId: string;
   costTypeId: string;
+  costTypeCode?: string;
   subJobId: string | null;
   amount: number;
   description: string | null;
@@ -79,9 +80,19 @@ export function BudgetModificationsModal({
       if (response.ok) {
         const data = await response.json();
         setModifications(data.modifications || []);
+      } else {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(
+          errorData?.error || "Failed to fetch budget modifications",
+        );
       }
     } catch (error) {
       console.error("Failed to fetch budget modifications:", error);
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to load budget modifications",
+      );
     } finally {
       setLoading(false);
     }
@@ -217,6 +228,52 @@ export function BudgetModificationsModal({
     .filter((m) => m.status === "pending")
     .reduce((sum, m) => sum + m.amount, 0);
 
+  // Build a human-readable budget code label for transfer table cells.
+  const formatBudgetLineLabel = (line: BudgetModificationLine | null): string => {
+    if (!line) return "-";
+    const codeWithType = line.costTypeCode
+      ? `${line.costCodeId}.${line.costTypeCode}`
+      : line.costCodeId;
+    return line.costCodeTitle
+      ? `${codeWithType}-${line.costCodeTitle}`
+      : codeWithType;
+  };
+
+  type TransferRow = {
+    id: string;
+    date: string;
+    from: string;
+    to: string;
+    notes: string;
+    amount: number;
+  };
+
+  // Normalize modifications into transfer-like rows: Date | From | To | Notes | Amount.
+  const transferRows: TransferRow[] = modifications.map((mod) => {
+    const negativeLine =
+      mod.lines.find((line) => line.amount < 0) || null;
+    const positiveLine =
+      mod.lines.find((line) => line.amount > 0) || null;
+
+    const sourceLine = negativeLine || (positiveLine && mod.lines.length === 1 ? positiveLine : null);
+    const destinationLine = positiveLine || (negativeLine && mod.lines.length === 1 ? negativeLine : null);
+
+    const amount = positiveLine
+      ? Math.abs(positiveLine.amount)
+      : negativeLine
+        ? Math.abs(negativeLine.amount)
+        : Math.abs(mod.amount);
+
+    return {
+      id: mod.id,
+      date: formatDate(mod.effectiveDate || mod.createdAt),
+      from: formatBudgetLineLabel(sourceLine),
+      to: formatBudgetLineLabel(destinationLine),
+      notes: (mod.reason || mod.title || "-").trim(),
+      amount,
+    };
+  });
+
   const tabs = [
     { id: "summary", label: "Summary" },
     { id: "details", label: "Details" },
@@ -289,14 +346,13 @@ export function BudgetModificationsModal({
               ))}
             </div>
 
-            {/* Modifications List */}
-            <div className="space-y-3">
+            <div className="rounded-lg border border-border overflow-hidden">
               {loading ? (
                 <div className="text-center py-10 text-muted-foreground">
                   <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
                   Loading modifications...
                 </div>
-              ) : modifications.length === 0 ? (
+              ) : transferRows.length === 0 ? (
                 <div className="text-center py-10 text-muted-foreground">
                   No budget modifications found
                   {statusFilter !== "all"
@@ -305,83 +361,44 @@ export function BudgetModificationsModal({
                   .
                 </div>
               ) : (
-                modifications.map((mod) => {
-                  const actions = getAvailableActions(mod.status);
-                  const isLoading = actionLoading === mod.id;
-
-                  return (
-                    <div
-                      key={mod.id}
-                      className="rounded-lg border border-border bg-background transition-shadow"
-                    >
-                      <div className="p-4">
-                        <div className="flex items-start justify-between mb-2">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <span className="font-semibold text-primary">
-                                {mod.number}
-                              </span>
-                              {getStatusBadge(mod.status)}
-                            </div>
-                            <p className="text-sm text-foreground mt-1">
-                              {mod.title}
-                            </p>
-                            {mod.reason && (
-                              <p className="text-xs text-muted-foreground mt-1 italic">
-                                {mod.reason}
-                              </p>
-                            )}
-                          </div>
-                          <div className="text-right ml-4">
-                            <p
-                              className={cn(
-                                "text-lg font-bold tabular-nums",
-                                mod.amount < 0
-                                  ? "text-destructive"
-                                  : "text-foreground",
-                              )}
-                            >
-                              {formatCurrency(mod.amount)}
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center justify-between mt-4 pt-4 border-t border-border">
-                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                            <span>
-                              Effective: {formatDate(mod.effectiveDate)}
-                            </span>
-                            <span>Created: {formatDate(mod.createdAt)}</span>
-                          </div>
-
-                          {actions.length > 0 && (
-                            <div className="flex items-center gap-2">
-                              {actions.map(
-                                ({ action, label, icon, variant }) => (
-                                  <Button
-                                    key={action}
-                                    size="sm"
-                                    variant={variant}
-                                    onClick={() => handleAction(mod.id, action)}
-                                    disabled={isLoading}
-                                    className="h-7 text-xs gap-1"
-                                  >
-                                    {isLoading ? (
-                                      <Loader2 className="h-3 w-3 animate-spin" />
-                                    ) : (
-                                      icon
-                                    )}
-                                    {label}
-                                  </Button>
-                                ),
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })
+                <InlineTable variant="read">
+                  <InlineTableHeader>
+                    <InlineTableHeaderRow>
+                      <InlineTableHeaderCell className="w-28">Date</InlineTableHeaderCell>
+                      <InlineTableHeaderCell>From</InlineTableHeaderCell>
+                      <InlineTableHeaderCell>To</InlineTableHeaderCell>
+                      <InlineTableHeaderCell>Notes</InlineTableHeaderCell>
+                      <InlineTableHeaderCell align="right" className="w-40">
+                        Amount
+                      </InlineTableHeaderCell>
+                    </InlineTableHeaderRow>
+                  </InlineTableHeader>
+                  <InlineTableBody>
+                    {transferRows.map((row) => (
+                      <InlineTableRow key={row.id}>
+                        <InlineTableCell className="whitespace-nowrap">
+                          {row.date}
+                        </InlineTableCell>
+                        <InlineTableCell className="truncate max-w-[300px]">
+                          {row.from}
+                        </InlineTableCell>
+                        <InlineTableCell className="truncate max-w-[300px]">
+                          {row.to}
+                        </InlineTableCell>
+                        <InlineTableCell className="truncate max-w-[260px]">
+                          {row.notes}
+                        </InlineTableCell>
+                        <InlineTableCell
+                          align="right"
+                          numeric
+                          className="font-semibold tabular-nums"
+                        >
+                          {formatCurrency(row.amount)}
+                        </InlineTableCell>
+                      </InlineTableRow>
+                    ))}
+                  </InlineTableBody>
+                </InlineTable>
               )}
             </div>
           </div>
@@ -435,12 +452,14 @@ export function BudgetModificationsModal({
                       <InlineTable variant="read">
                         <InlineTableHeader>
                           <InlineTableHeaderRow>
-                            <InlineTableHeaderCell>Cost Code</InlineTableHeaderCell>
-                            <InlineTableHeaderCell>Description</InlineTableHeaderCell>
-                            <InlineTableHeaderCell align="right">Amount</InlineTableHeaderCell>
-                          </InlineTableHeaderRow>
-                        </InlineTableHeader>
-                        <InlineTableBody>
+                          <InlineTableHeaderCell>Cost Code</InlineTableHeaderCell>
+                          <InlineTableHeaderCell>Description</InlineTableHeaderCell>
+                          <InlineTableHeaderCell align="right">Amount</InlineTableHeaderCell>
+                          <InlineTableHeaderCell>Status</InlineTableHeaderCell>
+                          <InlineTableHeaderCell align="right">Actions</InlineTableHeaderCell>
+                        </InlineTableHeaderRow>
+                      </InlineTableHeader>
+                      <InlineTableBody>
                           {mod.lines.map((line) => (
                             <InlineTableRow key={line.id}>
                               <InlineTableCell className="font-medium">
@@ -460,6 +479,30 @@ export function BudgetModificationsModal({
                                 )}
                               >
                                 {formatCurrency(line.amount)}
+                              </InlineTableCell>
+                              <InlineTableCell>{getStatusBadge(mod.status)}</InlineTableCell>
+                              <InlineTableCell align="right">
+                                <div className="flex justify-end gap-2">
+                                  {getAvailableActions(mod.status).map(
+                                    ({ action, label, icon, variant }) => (
+                                      <Button
+                                        key={action}
+                                        size="sm"
+                                        variant={variant}
+                                        onClick={() => handleAction(mod.id, action)}
+                                        disabled={actionLoading === mod.id}
+                                        className="h-7 text-xs gap-1"
+                                      >
+                                        {actionLoading === mod.id ? (
+                                          <Loader2 className="h-3 w-3 animate-spin" />
+                                        ) : (
+                                          icon
+                                        )}
+                                        {label}
+                                      </Button>
+                                    ),
+                                  )}
+                                </div>
                               </InlineTableCell>
                             </InlineTableRow>
                           ))}

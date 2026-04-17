@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api-client";
 import type {
   DrawingArea,
   DrawingAreaWithCount,
@@ -14,18 +15,11 @@ import type {
 export function useDrawingAreas(projectId: string) {
   return useQuery<DrawingAreaWithCount[]>({
     queryKey: ["drawing-areas", projectId],
-    queryFn: async () => {
-      const response = await fetch(
+    queryFn: ({ signal }) =>
+      apiFetch<DrawingAreaWithCount[]>(
         `/api/projects/${projectId}/drawings/areas`,
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to fetch drawing areas");
-      }
-
-      return response.json();
-    },
+        { signal },
+      ),
     enabled: !!projectId,
   });
 }
@@ -36,16 +30,11 @@ export function useDrawingAreas(projectId: string) {
 export function useDrawingArea(projectId: string, areaId: string) {
   return useQuery<DrawingArea>({
     queryKey: ["drawing-area", projectId, areaId],
-    queryFn: async () => {
-      const response = await fetch(`/api/projects/${projectId}/drawings/areas/${areaId}`);
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to fetch drawing area");
-      }
-
-      return response.json();
-    },
+    queryFn: ({ signal }) =>
+      apiFetch<DrawingArea>(
+        `/api/projects/${projectId}/drawings/areas/${areaId}`,
+        { signal },
+      ),
     enabled: !!areaId,
   });
 }
@@ -57,23 +46,14 @@ export function useCreateDrawingArea(projectId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: DrawingAreaFormData) => {
-      const response = await fetch(
+    mutationFn: (data: DrawingAreaFormData) =>
+      apiFetch<DrawingArea>(
         `/api/projects/${projectId}/drawings/areas`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),
         },
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to create drawing area");
-      }
-
-      return response.json();
-    },
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["drawing-areas", projectId],
@@ -95,29 +75,20 @@ export function useUpdateDrawingArea(projectId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
+    mutationFn: ({
       areaId,
       data,
     }: {
       areaId: string;
       data: Partial<DrawingAreaFormData>;
-    }) => {
-      const response = await fetch(
+    }) =>
+      apiFetch<DrawingArea>(
         `/api/projects/${projectId}/drawings/areas/${areaId}`,
         {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),
         },
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to update drawing area");
-      }
-
-      return response.json();
-    },
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["drawing-areas", projectId],
@@ -139,21 +110,11 @@ export function useDeleteDrawingArea(projectId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (areaId: string) => {
-      const response = await fetch(
+    mutationFn: (areaId: string) =>
+      apiFetch(
         `/api/projects/${projectId}/drawings/areas/${areaId}`,
-        {
-          method: "DELETE",
-        },
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to delete drawing area");
-      }
-
-      return response.json();
-    },
+        { method: "DELETE" },
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["drawing-areas", projectId],

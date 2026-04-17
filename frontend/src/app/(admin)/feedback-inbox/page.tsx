@@ -38,6 +38,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import { apiFetch } from "@/lib/api-client";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -625,11 +626,9 @@ function CommentsSection({
 
   const fetchComments = useCallback(async () => {
     try {
-      const res = await fetch(
+      const data = await apiFetch<{ comments?: FeedbackComment[] }>(
         `/api/admin/feedback/comments?feedbackItemId=${feedbackItemId}`,
       );
-      if (!res.ok) throw new Error("Fetch failed");
-      const data = await res.json();
       setComments(data.comments ?? []);
     } catch {
       // silent
@@ -640,10 +639,12 @@ function CommentsSection({
 
   const fetchUsers = useCallback(async () => {
     try {
-      const res = await fetch("/api/users");
-      if (!res.ok) return;
-      const data = await res.json();
-      const userList = Array.isArray(data) ? data : data.users ?? data.data ?? [];
+      const data = await apiFetch<
+        UserProfile[] | { users?: UserProfile[]; data?: UserProfile[] }
+      >("/api/users");
+      const userList = Array.isArray(data)
+        ? data
+        : data.users ?? data.data ?? [];
       setUsers(userList);
     } catch {
       // silent
@@ -668,25 +669,25 @@ function CommentsSection({
   async function handleSubmit(body: string, mentions: string[], screenshotDataUrl: string | null) {
     setSubmitting(true);
     try {
-      const res = await fetch("/api/admin/feedback/comments", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          feedbackItemId,
-          body,
-          mentions,
-          screenshotDataUrl,
-        }),
-      });
-      if (!res.ok) throw new Error("Failed to add comment");
-      const data = await res.json();
+      const data = await apiFetch<{ comment: FeedbackComment }>(
+        "/api/admin/feedback/comments",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            feedbackItemId,
+            body,
+            mentions,
+            screenshotDataUrl,
+          }),
+        },
+      );
       setComments((prev) => [...prev, data.comment]);
       scrollToBottom();
       if (mentions.length > 0) {
         toast.success(`Comment added and ${mentions.length} user${mentions.length > 1 ? "s" : ""} notified`);
       }
-    } catch {
-      toast.error("Failed to add comment");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to add comment");
     } finally {
       setSubmitting(false);
     }
@@ -785,14 +786,9 @@ function GitHubActivitySection({ issueNumber }: { issueNumber: number }) {
 
   const fetchComments = useCallback(async () => {
     try {
-      const res = await fetch(
+      const data = await apiFetch<{ comments?: GitHubComment[] }>(
         `/api/admin/feedback/github-comments?issueNumber=${issueNumber}`,
       );
-      if (!res.ok) {
-        const data = await res.json().catch(() => null);
-        throw new Error(data?.error ?? `HTTP ${res.status}`);
-      }
-      const data = await res.json();
       setComments(data.comments ?? []);
       setError(null);
     } catch (err) {
@@ -1158,20 +1154,24 @@ function ToolContextSection({ item }: { item: FeedbackItem }) {
       setLoading(true);
       try {
         // Fetch tools list and auto-match in parallel
-        const [toolsRes, matchRes] = await Promise.all([
-          fetch("/api/admin/feedback/tools?action=list"),
-          fetch(`/api/admin/feedback/tools?action=match&feedbackId=${item.id}`),
+        const [toolsResult, matchResult] = await Promise.allSettled([
+          apiFetch<{ tools?: ToolOption[] }>(
+            "/api/admin/feedback/tools?action=list",
+          ),
+          apiFetch<{
+            match?: { id: number };
+            context?: ToolContextData | null;
+          }>(`/api/admin/feedback/tools?action=match&feedbackId=${item.id}`),
         ]);
 
         if (cancelled) return;
 
-        if (toolsRes.ok) {
-          const data = await toolsRes.json();
-          setTools(data.tools ?? []);
+        if (toolsResult.status === "fulfilled") {
+          setTools(toolsResult.value.tools ?? []);
         }
 
-        if (matchRes.ok) {
-          const data = await matchRes.json();
+        if (matchResult.status === "fulfilled") {
+          const data = matchResult.value;
           if (data.match) {
             setAssignedToolId(data.match.id);
             setContext(data.context ?? null);
@@ -1204,23 +1204,23 @@ function ToolContextSection({ item }: { item: FeedbackItem }) {
     setShowDropdown(false);
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/feedback/tools", {
+      await apiFetch("/api/admin/feedback/tools", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ feedbackId: item.id, toolId }),
       });
-      if (res.ok) {
-        setAssignedToolId(toolId);
-        // Fetch resolved context
-        const ctxRes = await fetch(`/api/admin/feedback/tools?action=resolve&toolId=${toolId}`);
-        if (ctxRes.ok) {
-          const data = await ctxRes.json();
-          setContext(data.context ?? null);
-        }
-        toast.success("Tool assigned");
+      setAssignedToolId(toolId);
+      // Fetch resolved context
+      try {
+        const data = await apiFetch<{ context?: ToolContextData | null }>(
+          `/api/admin/feedback/tools?action=resolve&toolId=${toolId}`,
+        );
+        setContext(data.context ?? null);
+      } catch {
+        // Non-fatal — assignment succeeded even if context load failed
       }
-    } catch {
-      toast.error("Failed to assign tool");
+      toast.success("Tool assigned");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to assign tool");
     } finally {
       setLoading(false);
     }
@@ -1229,29 +1229,31 @@ function ToolContextSection({ item }: { item: FeedbackItem }) {
   async function handleAutoMatch() {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/feedback/tools", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ feedbackId: item.id, toolId: null, auto: true }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const newToolId = data.item?.tool_id;
-        setAssignedToolId(newToolId ?? null);
-        if (newToolId) {
-          const ctxRes = await fetch(`/api/admin/feedback/tools?action=resolve&toolId=${newToolId}`);
-          if (ctxRes.ok) {
-            const ctxData = await ctxRes.json();
-            setContext(ctxData.context ?? null);
-          }
-          toast.success("Tool auto-matched");
-        } else {
-          setContext(null);
-          toast("No matching tool found", { description: "Assign one manually." });
+      const data = await apiFetch<{ item?: { tool_id?: number | null } }>(
+        "/api/admin/feedback/tools",
+        {
+          method: "POST",
+          body: JSON.stringify({ feedbackId: item.id, toolId: null, auto: true }),
+        },
+      );
+      const newToolId = data.item?.tool_id;
+      setAssignedToolId(newToolId ?? null);
+      if (newToolId) {
+        try {
+          const ctxData = await apiFetch<{ context?: ToolContextData | null }>(
+            `/api/admin/feedback/tools?action=resolve&toolId=${newToolId}`,
+          );
+          setContext(ctxData.context ?? null);
+        } catch {
+          // Non-fatal
         }
+        toast.success("Tool auto-matched");
+      } else {
+        setContext(null);
+        toast("No matching tool found", { description: "Assign one manually." });
       }
-    } catch {
-      toast.error("Auto-match failed");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Auto-match failed");
     } finally {
       setLoading(false);
     }
@@ -1264,19 +1266,15 @@ function ToolContextSection({ item }: { item: FeedbackItem }) {
 
     setCrawling(true);
     try {
-      const res = await fetch("/api/admin/feedback/crawl", {
+      await apiFetch("/api/admin/feedback/crawl", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ slug }),
       });
-      if (res.ok) {
-        toast.success("Procore crawl complete", { description: `Manifest saved for ${slug}` });
-      } else {
-        const data = await res.json().catch(() => null);
-        toast.error("Crawl failed", { description: data?.hint ?? data?.error ?? "Unknown error" });
-      }
-    } catch {
-      toast.error("Crawl request failed");
+      toast.success("Procore crawl complete", { description: `Manifest saved for ${slug}` });
+    } catch (err) {
+      toast.error("Crawl failed", {
+        description: err instanceof Error ? err.message : "Unknown error",
+      });
     } finally {
       setCrawling(false);
     }
@@ -1693,13 +1691,13 @@ export default function FeedbackInboxPage() {
           params.set("status", filter);
         }
       }
-      const res = await fetch(`/api/admin/feedback?${params.toString()}`);
-      if (!res.ok) throw new Error("Fetch failed");
-      const data = await res.json();
+      const data = await apiFetch<{ items?: FeedbackItem[]; total?: number }>(
+        `/api/admin/feedback?${params.toString()}`,
+      );
       setItems(data.items ?? []);
       setTotal(data.total ?? 0);
-    } catch {
-      toast.error("Failed to load feedback items");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to load feedback items");
     } finally {
       setLoading(false);
     }
@@ -1796,15 +1794,10 @@ export default function FeedbackInboxPage() {
   async function updateStatus(id: string, status: DisplayStatus) {
     setUpdatingId(id);
     try {
-      const res = await fetch("/api/admin/feedback", {
+      await apiFetch("/api/admin/feedback", {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, status }),
       });
-      if (!res.ok) {
-        const data = await res.json().catch(() => null);
-        throw new Error(data?.error ?? data?.details ?? `HTTP ${res.status}`);
-      }
       const statusLabel = STATUS_OPTIONS.find((option) => option.value === status)?.label ?? status;
       toast.success(`Marked as ${statusLabel}`);
       fetchItems();
@@ -1821,16 +1814,13 @@ export default function FeedbackInboxPage() {
   async function sendToGitHub(id: string) {
     setSendingToGitHub(true);
     try {
-      const res = await fetch("/api/admin/feedback", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => null);
-        throw new Error(data?.error ?? "Failed to create GitHub issue");
-      }
-      const data = await res.json();
+      const data = await apiFetch<{ githubIssue?: { number?: number } }>(
+        "/api/admin/feedback",
+        {
+          method: "PUT",
+          body: JSON.stringify({ id }),
+        },
+      );
       toast.success(
         `Created GitHub issue #${data.githubIssue?.number ?? ""}`,
       );
@@ -1848,20 +1838,18 @@ export default function FeedbackInboxPage() {
   async function deleteItem(id: string) {
     setDeletingId(id);
     try {
-      const res = await fetch("/api/admin/feedback", {
+      await apiFetch("/api/admin/feedback", {
         method: "DELETE",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id }),
       });
-      if (!res.ok) throw new Error("Delete failed");
       toast.success("Feedback item deleted");
       if (selectedId === id) {
         setSelectedId(null);
         setMobileShowDetail(false);
       }
       fetchItems();
-    } catch {
-      toast.error("Failed to delete feedback item");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to delete feedback item");
     } finally {
       setDeletingId(null);
     }

@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
+import { getScopedCommitmentChangeOrder } from "@/lib/change-orders/commitment-change-orders";
 
 interface RouteParams {
   params: Promise<{ projectId: string; commitmentCoId: string }>;
@@ -17,7 +18,6 @@ interface RouteParams {
 export const POST = withApiGuardrails(
   "projects/[projectId]/commitment-change-orders/[commitmentCoId]/reject#POST",
   async ({ request, params }) => {
-  
     const { projectId, commitmentCoId } = await params;
     const projectIdNum = Number(projectId);
     const supabase = await createClient();
@@ -28,7 +28,12 @@ export const POST = withApiGuardrails(
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/commitment-change-orders/[commitmentCoId]/reject#POST", message: "Authentication required." });
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where:
+          "projects/[projectId]/commitment-change-orders/[commitmentCoId]/reject#POST",
+        message: "Authentication required.",
+      });
     }
 
     const guard = await requirePermission(projectIdNum, "contracts", "admin");
@@ -48,30 +53,17 @@ export const POST = withApiGuardrails(
       );
     }
 
-    // Fetch the CCO
-    const { data: co, error: coError } = await supabase
-      .from("contract_change_orders")
-      .select("id, status, contract_id")
-      .eq("id", commitmentCoId)
-      .single();
+    const scoped = await getScopedCommitmentChangeOrder(
+      supabase,
+      projectIdNum,
+      commitmentCoId,
+    );
 
-    if (coError || !co) {
+    if (!scoped) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    // Verify the linked commitment belongs to this project
-    const { data: commitment } = await supabase
-      .from("commitments_unified")
-      .select("id, project_id")
-      .eq("id", co.contract_id)
-      .is("deleted_at", null)
-      .single();
-
-    if (!commitment || commitment.project_id !== projectIdNum) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
-    }
-
-    if (co.status === "rejected") {
+    if (scoped.status === "rejected") {
       return NextResponse.json(
         { error: "Already rejected" },
         { status: 400 },
@@ -97,5 +89,5 @@ export const POST = withApiGuardrails(
     }
 
     return NextResponse.json(updated);
-    },
+  },
 );

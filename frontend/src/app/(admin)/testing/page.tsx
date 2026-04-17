@@ -2,8 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { apiFetch } from "@/lib/api-client";
 import { createClient } from "@/lib/supabase/client";
 import { ToolReferencePanel } from "@/components/domain/testing/ToolReferencePanel";
+import { FileUploadField } from "@/components/forms";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -16,7 +18,6 @@ import {
   CheckCircle2,
   XCircle,
   MinusCircle,
-  Camera,
   ChevronLeft,
   BookOpen,
   Play,
@@ -110,6 +111,9 @@ interface ManagedCase {
   scenario_depth: string;
 }
 
+const DEFAULT_TEST_PROJECT_ID = "891";
+const TESTING_PROJECT_ID_STORAGE_KEY = "testing-default-project-id";
+
 // ─── View States ─────────────────────────────────────────────────────────────
 
 type View = "home" | "start-run" | "running" | "complete" | "history" | "run-detail";
@@ -125,6 +129,32 @@ function depthLabel(depth: ScenarioDepth): string {
   if (depth === "broad") return "Broad";
   if (depth === "detailed") return "Detailed";
   return "All";
+}
+
+// Converts unknown thrown values into a message that is safe to show in the UI.
+function formatActionError(error: unknown, fallback: string): string {
+  return error instanceof Error && error.message.trim() ? error.message : fallback;
+}
+
+// Resolves a scenario start path and guarantees a project-scoped URL path.
+function resolveScenarioStartPath(startUrl: string | null, projectId: string): string {
+  const effectiveProjectId = projectId.trim() || DEFAULT_TEST_PROJECT_ID;
+  const rawInput = startUrl?.trim() || "/testing";
+  let path = rawInput;
+
+  try {
+    path = new URL(rawInput).pathname || "/testing";
+  } catch {
+    path = rawInput;
+  }
+
+  if (/^\/\d+\//.test(path)) {
+    return path.replace(/^\/\d+\//, `/${effectiveProjectId}/`);
+  }
+  if (path.startsWith("/")) {
+    return `/${effectiveProjectId}${path}`;
+  }
+  return `/${effectiveProjectId}/${path}`;
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -152,13 +182,13 @@ export default function TestingPage() {
   const [severityMap, setSeverityMap] = useState<Record<string, Severity>>({});
   const [checkedSteps, setCheckedSteps] = useState<Record<number, boolean>>({});
   const [uploadingScreenshot, setUploadingScreenshot] = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
   const notesRef = useRef<HTMLTextAreaElement>(null);
   const [historyRuns, setHistoryRuns] = useState<HistoryRun[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [runDetail, setRunDetail] = useState<RunDetailResult[]>([]);
   const [runDetailLoading, setRunDetailLoading] = useState(false);
   const [startError, setStartError] = useState<string | null>(null);
+  const [uiError, setUiError] = useState<string | null>(null);
   const [showJumpList, setShowJumpList] = useState(false);
   const [inProgressRuns, setInProgressRuns] = useState<{ run: HistoryRun; suiteName: string; suiteDisplayName: string }[]>([]);
   const jumpListRef = useRef<HTMLDivElement>(null);
@@ -185,10 +215,11 @@ export default function TestingPage() {
   });
   const [addSaving, setAddSaving] = useState(false);
 
+  const detailedUnavailable = selectedSuite?.detailed_scenario_count === 0;
+
   // ── Load suites + pre-fill tester name from session ──
   useEffect(() => {
-    fetch("/api/testing/suites")
-      .then((r) => r.json())
+    apiFetch<{ suites?: Suite[] }>("/api/testing/suites")
       .then((d) => {
         const loaded: Suite[] = (d.suites ?? []).filter((s: Suite) => s.scenario_count > 0);
         setSuites(loaded);
@@ -196,8 +227,7 @@ export default function TestingPage() {
         // Fetch in-progress runs for each suite
         Promise.all(
           loaded.map((suite) =>
-            fetch(`/api/testing/runs?suite=${suite.tool_name}`)
-              .then((r) => r.ok ? r.json() : { runs: [] })
+            apiFetch<{ runs?: HistoryRun[] }>(`/api/testing/runs?suite=${suite.tool_name}`)
               .then((data) => {
                 const incomplete = (data.runs ?? []).filter((run: HistoryRun) => run.not_tested > 0);
                 return incomplete.map((run: HistoryRun) => ({
@@ -206,12 +236,18 @@ export default function TestingPage() {
                   suiteDisplayName: suite.display_name,
                 }));
               })
-              .catch(() => [])
+              .catch((error) => {
+                setUiError(formatActionError(error, "Unable to load in-progress test runs."));
+                return [] as Array<{ run: HistoryRun; suiteName: string; suiteDisplayName: string }>;
+              })
           )
         ).then((results) => {
           const flat = results.flat();
           setInProgressRuns(flat);
         });
+      })
+      .catch((error) => {
+        setUiError(formatActionError(error, "Unable to load test suites."));
       });
 
     const supabase = createClient();
@@ -225,7 +261,30 @@ export default function TestingPage() {
         "";
       setRunForm((f) => ({ ...f, tester: name }));
     });
+
+    try {
+      const storedProjectId = localStorage.getItem(TESTING_PROJECT_ID_STORAGE_KEY);
+      if (storedProjectId?.trim()) {
+        setRunForm((f) => ({ ...f, projectId: storedProjectId.trim() }));
+      }
+    } catch {
+      // ignore storage access errors
+    }
   }, []);
+
+  // Persist project id so future test runs reuse the same project context.
+  useEffect(() => {
+    try {
+      const normalized = runForm.projectId.trim();
+      if (normalized) {
+        localStorage.setItem(TESTING_PROJECT_ID_STORAGE_KEY, normalized);
+      } else {
+        localStorage.removeItem(TESTING_PROJECT_ID_STORAGE_KEY);
+      }
+    } catch {
+      // ignore storage access errors
+    }
+  }, [runForm.projectId]);
 
   // ── Restore notes from localStorage when runId changes ──
   useEffect(() => {
@@ -242,42 +301,50 @@ export default function TestingPage() {
 
   // ── Load history for a suite ──
   const openHistory = async (suite: Suite) => {
+    setUiError(null);
     setSelectedSuite(suite);
     setHistoryLoading(true);
     setHistoryRuns([]);
     setView("history");
-    const res = await fetch(`/api/testing/runs?suite=${suite.tool_name}`);
-    if (res.ok) {
-      const d = await res.json();
+    try {
+      const d = await apiFetch<{ runs?: HistoryRun[] }>(`/api/testing/runs?suite=${suite.tool_name}`);
       setHistoryRuns(d.runs ?? []);
+    } catch (error) {
+      setUiError(formatActionError(error, "Unable to load run history."));
     }
     setHistoryLoading(false);
   };
 
   // ── Load detail for a single run ──
   const openRunDetail = async (runId: string) => {
+    setUiError(null);
     setRunDetailLoading(true);
     setRunDetail([]);
     setView("run-detail");
-    const res = await fetch(`/api/testing/runs/${runId}/results`);
-    if (res.ok) {
-      const d = await res.json();
+    try {
+      const d = await apiFetch<{ results?: TestResult[] }>(`/api/testing/runs/${runId}/results`);
       setRunDetail(d.results ?? []);
+    } catch (error) {
+      setUiError(formatActionError(error, "Unable to load run details."));
     }
     setRunDetailLoading(false);
   };
 
   // ── Manage Cases: load cases for a suite + depth ──
   const loadManagedCases = useCallback(async (suite: Suite, depth: "broad" | "detailed") => {
+    setUiError(null);
     setManageCasesLoading(true);
     setManageCases([]);
     setExpandedCase(null);
     setManageEditId(null);
-    const res = await fetch(`/api/testing/suites/${suite.tool_name}/cases?type=scenario&depth=${depth}`);
-    if (res.ok) {
-      const d = await res.json();
+    try {
+      const d = await apiFetch<{ grouped?: Record<string, ManagedCase[]> }>(
+        `/api/testing/suites/${suite.tool_name}/cases?type=scenario&depth=${depth}`,
+      );
       const all: ManagedCase[] = Object.values(d.grouped ?? {}).flat() as ManagedCase[];
       setManageCases(all);
+    } catch (error) {
+      setUiError(formatActionError(error, "Unable to load test cases."));
     }
     setManageCasesLoading(false);
   }, []);
@@ -286,29 +353,42 @@ export default function TestingPage() {
     if (manageSuite) void loadManagedCases(manageSuite, manageDepth);
   }, [manageSuite, manageDepth, loadManagedCases]);
 
+  useEffect(() => {
+    if (detailedUnavailable && runForm.scenarioDepth === "detailed") {
+      setRunForm((f) => ({ ...f, scenarioDepth: "broad" }));
+    }
+  }, [detailedUnavailable, runForm.scenarioDepth]);
+
   // ── Manage Cases: save inline edit ──
   const saveManageEdit = async (caseId: string) => {
+    setUiError(null);
     setManageEditSaving(true);
-    const res = await fetch(`/api/testing/cases/${caseId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(manageEditForm),
-    });
-    if (res.ok) {
-      const { case: updated } = await res.json();
+    try {
+      const { case: updated } = await apiFetch<{ case: ManagedCase }>(
+        `/api/testing/cases/${caseId}`,
+        {
+          method: "PATCH",
+          body: JSON.stringify(manageEditForm),
+        },
+      );
       setManageCases((prev) => prev.map((c) => c.id === caseId ? { ...c, ...updated } : c));
       setManageEditId(null);
+    } catch (error) {
+      setUiError(formatActionError(error, "Unable to save test case changes."));
     }
     setManageEditSaving(false);
   };
 
   // ── Manage Cases: delete ──
   const deleteCase = async (caseId: string) => {
+    setUiError(null);
     setManageDeleting(caseId);
-    const res = await fetch(`/api/testing/cases/${caseId}`, { method: "DELETE" });
-    if (res.ok) {
+    try {
+      await apiFetch(`/api/testing/cases/${caseId}`, { method: "DELETE" });
       setManageCases((prev) => prev.filter((c) => c.id !== caseId));
       if (expandedCase === caseId) setExpandedCase(null);
+    } catch (error) {
+      setUiError(formatActionError(error, "Unable to delete the test case."));
     }
     setManageDeleting(null);
   };
@@ -316,14 +396,13 @@ export default function TestingPage() {
   // ── Manage Cases: add new ──
   const addCase = async () => {
     if (!manageSuite) return;
+    setUiError(null);
     setAddSaving(true);
-    const res = await fetch("/api/testing/cases", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ suite_id: manageSuite.id, ...addForm }),
-    });
-    if (res.ok) {
-      const { case: created } = await res.json();
+    try {
+      const { case: created } = await apiFetch<{ case: ManagedCase }>("/api/testing/cases", {
+        method: "POST",
+        body: JSON.stringify({ suite_id: manageSuite.id, ...addForm }),
+      });
       setManageCases((prev) => [...prev, created]);
       setShowAddCase(false);
       setAddForm({
@@ -331,6 +410,8 @@ export default function TestingPage() {
         priority: "MEDIUM", scenario_depth: "broad",
         steps: "", setup_steps: "", context_note: "", expected_result: "", start_url: "",
       });
+    } catch (error) {
+      setUiError(formatActionError(error, "Unable to add the test case."));
     }
     setAddSaving(false);
   };
@@ -363,26 +444,31 @@ export default function TestingPage() {
   // ── Start a run ──
   const startRun = async () => {
     if (!selectedSuite) return;
+    setUiError(null);
     setStartError(null);
     setSaving(true);
-    const res = await fetch("/api/testing/runs", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ suite: selectedSuite.tool_name, testType: "scenario", ...runForm }),
-    });
-    if (res.ok) {
-      const { run_id, effective_depth } = await res.json();
+    try {
+      const { run_id, effective_depth } = await apiFetch<{ run_id: string; effective_depth?: string }>(
+        "/api/testing/runs",
+        {
+          method: "POST",
+          body: JSON.stringify({ suite: selectedSuite.tool_name, testType: "scenario", ...runForm }),
+        },
+      );
       if (effective_depth && effective_depth !== runForm.scenarioDepth) {
         setRunForm((f) => ({ ...f, scenarioDepth: effective_depth as ScenarioDepth }));
       }
       setActiveRunId(run_id);
-      const r2 = await fetch(`/api/testing/runs/${run_id}/results?type=scenario`);
-      const d2 = await r2.json();
+      const d2 = await apiFetch<{ results?: TestResult[] }>(
+        `/api/testing/runs/${run_id}/results?type=scenario`,
+      );
       const loaded = d2.results ?? [];
       if (loaded.length === 0) {
         setStartError(
           runForm.scenarioDepth === "broad"
-            ? "No broad scenarios found for this tool yet. Switch to Detailed or All, or seed broad scenarios."
+            ? detailedUnavailable
+              ? "No broad scenarios are available for this suite yet. Seed scenario cases before starting a run."
+              : "No broad scenarios found for this tool yet. Switch to Detailed or seed broad scenarios."
             : "No scenario test cases found for this tool. Check that the test suite has been seeded."
         );
       } else {
@@ -392,23 +478,31 @@ export default function TestingPage() {
         setSeverityMap({});
         setView("running");
       }
-    } else {
-      const err = await res.json().catch(() => ({}));
-      setStartError(err.error ?? "Failed to create test run. Please try again.");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to create test run. Please try again.";
+      setStartError(message);
     }
     setSaving(false);
   };
 
   // ── Resume an in-progress run ──
   const resumeRun = async (run: HistoryRun, suiteName: string) => {
+    setUiError(null);
     const suite = suites.find((s) => s.tool_name === suiteName);
     if (!suite) return;
     setSelectedSuite(suite);
     setActiveRunId(run.id);
     setRunForm((f) => ({ ...f, scenarioDepth: run.scenario_depth ?? "broad" }));
-    const res = await fetch(`/api/testing/runs/${run.id}/results?type=scenario`);
-    const d = await res.json();
-    const loaded: TestResult[] = d.results ?? [];
+    let loaded: TestResult[] = [];
+    try {
+      const d = await apiFetch<{ results?: TestResult[] }>(
+        `/api/testing/runs/${run.id}/results?type=scenario`,
+      );
+      loaded = d.results ?? [];
+    } catch (error) {
+      loaded = [];
+      setUiError(formatActionError(error, "Unable to resume this run."));
+    }
     setResults(loaded);
     const firstUntested = loaded.findIndex((r) => r.status === "not_tested");
     setCursor(firstUntested >= 0 ? firstUntested : 0);
@@ -438,20 +532,15 @@ export default function TestingPage() {
       sev === "critical" || sev === "major" ? "high" :
       sev === "minor" ? "medium" : "low";
 
-    const startPath = (() => {
-      const raw = tc.start_url ?? "/testing";
-      if (runForm.projectId) return raw.replace(/^\/\d+\//, `/${runForm.projectId}/`);
-      return raw;
-    })();
+    const startPath = resolveScenarioStartPath(tc.start_url, runForm.projectId);
     const pageUrl =
       typeof window !== "undefined"
         ? `${window.location.origin}${startPath}`
         : startPath;
 
     try {
-      await fetch("/api/admin/feedback", {
+      await apiFetch("/api/admin/feedback", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: `[Test] ${tc.test_name}`,
           comment: notes ?? `Test failed: ${tc.test_name}`,
@@ -491,16 +580,18 @@ export default function TestingPage() {
   // ── Record outcome ──
   const record = useCallback(async (status: TestStatus) => {
     if (!current || !activeRunId) return;
+    setUiError(null);
     setSaving(true);
     const notes = notesMap[current.id] || null;
     const severity = severityMap[current.id] || null;
-    const res = await fetch(`/api/testing/runs/${activeRunId}/results/${current.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status, notes, severity }),
-    });
-    if (res.ok) {
-      const { result } = await res.json();
+    try {
+      const { result } = await apiFetch<{ result: TestResult }>(
+        `/api/testing/runs/${activeRunId}/results/${current.id}`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({ status, notes, severity }),
+        },
+      );
       const updatedResult = { ...current, status: result.status, notes: result.notes };
       setResults((prev) =>
         prev.map((r) => r.id === current.id ? updatedResult : r)
@@ -514,6 +605,8 @@ export default function TestingPage() {
       } else {
         setView("complete");
       }
+    } catch (error) {
+      setUiError(formatActionError(error, "Unable to save this test result."));
     }
     setSaving(false);
   }, [current, activeRunId, notesMap, severityMap, cursor, results.length, runForm.autoSubmitFeedback, sendToFeedback]);
@@ -521,17 +614,25 @@ export default function TestingPage() {
   // ── Screenshot upload ──
   const handleFile = useCallback(async (file: File) => {
     if (!current || !activeRunId) return;
+    setUiError(null);
     setUploadingScreenshot(true);
     const reader = new FileReader();
     reader.onload = async () => {
-      await fetch(`/api/testing/runs/${activeRunId}/results/${current.id}/screenshots`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dataUrl: reader.result, label: file.name }),
-      });
-      const r2 = await fetch(`/api/testing/runs/${activeRunId}/results`);
-      const d2 = await r2.json();
-      setResults(d2.results ?? []);
+      try {
+        await apiFetch(
+          `/api/testing/runs/${activeRunId}/results/${current.id}/screenshots`,
+          {
+            method: "POST",
+            body: JSON.stringify({ dataUrl: reader.result, label: file.name }),
+          },
+        );
+        const d2 = await apiFetch<{ results?: TestResult[] }>(
+          `/api/testing/runs/${activeRunId}/results`,
+        );
+        setResults(d2.results ?? []);
+      } catch (error) {
+        setUiError(formatActionError(error, "Unable to upload the screenshot."));
+      }
       setUploadingScreenshot(false);
     };
     reader.readAsDataURL(file);
@@ -594,14 +695,16 @@ export default function TestingPage() {
   // ── Save edited test case ──
   const saveEdit = async () => {
     if (!current) return;
+    setUiError(null);
     setEditSaving(true);
-    const res = await fetch(`/api/testing/cases/${current.test_cases.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(editForm),
-    });
-    if (res.ok) {
-      const { case: updated } = await res.json();
+    try {
+      const { case: updated } = await apiFetch<{ case: Partial<TestResult["test_cases"]> }>(
+        `/api/testing/cases/${current.test_cases.id}`,
+        {
+          method: "PATCH",
+          body: JSON.stringify(editForm),
+        },
+      );
       setResults((prev) =>
         prev.map((r) =>
           r.id === current.id
@@ -610,6 +713,8 @@ export default function TestingPage() {
         )
       );
       setEditingCase(false);
+    } catch (error) {
+      setUiError(formatActionError(error, "Unable to save scenario edits."));
     }
     setEditSaving(false);
   };
@@ -679,6 +784,11 @@ export default function TestingPage() {
             </TabsTrigger>
             <TabsTrigger value="manage">Manage Cases</TabsTrigger>
           </TabsList>
+          {uiError && (
+            <p className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-950/30 dark:text-red-300">
+              {uiError}
+            </p>
+          )}
 
           {/* ── Tab: Test Scenarios ── */}
           <TabsContent value="scenarios" className="m-0">
@@ -1177,13 +1287,11 @@ export default function TestingPage() {
         onBack={() => setView("home")}
       >
         <div className="space-y-6">
-          <div className="text-sm text-muted-foreground space-y-1">
-            <p className="font-medium text-foreground">Before you start</p>
-            <p>Make sure you&apos;re logged into the app you&apos;re testing.</p>
-            <p>Each test takes 1–3 minutes. You&apos;ll follow step-by-step instructions and mark each test passed, failed, or skipped.</p>
-            <p><span className="font-medium text-foreground">Broad</span> is recommended for fast team testing. Use Detailed later for deeper coverage.</p>
-          </div>
-
+          {uiError && (
+            <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-950/30 dark:text-red-300">
+              {uiError}
+            </p>
+          )}
           <div className="space-y-4">
             <div className="space-y-1.5">
               <Label>Your name</Label>
@@ -1228,9 +1336,14 @@ export default function TestingPage() {
                   <button
                     key={option.value}
                     type="button"
-                    onClick={() => setRunForm((f) => ({ ...f, scenarioDepth: option.value }))}
+                    onClick={() => {
+                      if (option.value === "detailed" && detailedUnavailable) return;
+                      setRunForm((f) => ({ ...f, scenarioDepth: option.value }));
+                    }}
+                    disabled={option.value === "detailed" && detailedUnavailable}
                     className={cn(
                       "rounded-lg border px-3 py-2 text-left transition-colors",
+                      option.value === "detailed" && detailedUnavailable && "cursor-not-allowed opacity-50",
                       runForm.scenarioDepth === option.value
                         ? "border-primary bg-primary/5"
                         : "border-border hover:border-foreground/30"
@@ -1241,6 +1354,11 @@ export default function TestingPage() {
                   </button>
                 ))}
               </div>
+              {detailedUnavailable && (
+                <p className="text-xs text-amber-700 dark:text-amber-300">
+                  Detailed mode is disabled because this suite has no detailed scenarios in Supabase yet.
+                </p>
+              )}
             </div>
           </div>
 
@@ -1373,6 +1491,11 @@ export default function TestingPage() {
         onBack={() => setView("home")}
       >
         <div className="space-y-3">
+          {uiError && (
+            <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-950/30 dark:text-red-300">
+              {uiError}
+            </p>
+          )}
           {historyLoading && <p className="text-sm text-muted-foreground py-8 text-center">Loading…</p>}
           {!historyLoading && historyRuns.length === 0 && (
             <p className="text-sm text-muted-foreground py-8 text-center">No runs yet. Click Run to start the first session.</p>
@@ -1432,6 +1555,11 @@ export default function TestingPage() {
         onBack={() => setView("history")}
       >
         <div className="space-y-6">
+          {uiError && (
+            <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-950/30 dark:text-red-300">
+              {uiError}
+            </p>
+          )}
           {runDetailLoading && <p className="text-sm text-muted-foreground py-8 text-center">Loading…</p>}
           {!runDetailLoading && Object.entries(grouped).map(([category, items]) => (
             <div key={category}>
@@ -1461,425 +1589,409 @@ export default function TestingPage() {
   // ─── View: RUNNING ─────────────────────────────────────────────────────────
   if (!current) return null;
   const tc = current.test_cases;
+  const passCount = results.filter((r) => r.status === "pass").length;
+  const failCount = results.filter((r) => r.status === "fail").length;
+  const skipCount = results.filter((r) => r.status === "skip").length;
+  const pendingCount = results.length - passCount - failCount - skipCount;
+  const startPath = tc.start_url ? resolveScenarioStartPath(tc.start_url, runForm.projectId) : null;
 
   return (
     <PageShell variant="content" title="" showHeader={false}>
-      {/* Progress bar — spans full container */}
-      <div className="h-1.5 bg-muted -mt-2 mb-0">
+      {/* Progress bar for quick run completion visibility. */}
+      <div className="h-1.5 bg-muted -mt-2">
         <div
           className="h-full bg-primary transition-all duration-500"
           style={{ width: `${pct}%` }} // eslint-disable-line react/forbid-component-props
         />
       </div>
 
-      {/* Run header */}
-      <div className="flex items-center justify-between border-b border-border py-3 mb-4">
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            aria-label="Previous scenario"
-            onClick={() => setCursor((c) => Math.max(c - 1, 0))}
-            disabled={cursor === 0}
-            className="text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors"
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </button>
-          {/* Jump-to-test popover */}
-          <div className="relative" ref={jumpListRef}>
-            <button
-              type="button"
-              onClick={() => setShowJumpList((v) => !v)}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors px-1 py-0.5 rounded"
-            >
-              <span className="font-medium text-foreground">{cursor + 1}</span> / {results.length}
-            </button>
-            {showJumpList && (
-              <div className="absolute top-full left-0 mt-1 z-50 w-72 max-h-80 overflow-y-auto rounded-xl border border-border bg-card shadow-sm">
-                {results.map((r, i) => (
-                  <button
-                    key={r.id}
-                    type="button"
-                    onClick={() => { setCursor(i); setShowJumpList(false); }}
-                    className={cn(
-                      "w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-muted/40 transition-colors",
-                      i === cursor && "bg-muted/60"
-                    )}
-                  >
-                    {statusIcon(r.status)}
-                    <span className="text-xs text-muted-foreground font-mono shrink-0">#{r.test_cases?.test_number}</span>
-                    <span className="text-xs truncate">{r.test_cases?.test_name}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-        <p className="text-sm font-medium">{selectedSuite?.display_name}</p>
-        <div className="flex items-center gap-3 text-xs text-muted-foreground">
-          <span className="rounded-full border border-border px-2 py-0.5">
-            {depthLabel(runForm.scenarioDepth)}
-          </span>
-          <span className="text-green-600 font-medium">{results.filter((r) => r.status === "pass").length} ✓</span>
-          <span className="text-red-500 font-medium">{results.filter((r) => r.status === "fail").length} ✗</span>
-        </div>
-      </div>
-
-      <div className="space-y-6 pb-12">
-
-        {/* Category chip + test number + edit toggle */}
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs bg-muted text-muted-foreground rounded-full px-2.5 py-0.5 font-medium">
-              {tc.category}{tc.subcategory ? ` · ${tc.subcategory}` : ""}
-            </span>
-            <span className="text-xs text-muted-foreground font-mono">#{tc.test_number}</span>
-            {tc.priority === "HIGH" && (
-              <span className="text-xs bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400 rounded-full px-2.5 py-0.5 font-medium">
-                High priority
-              </span>
-            )}
-          </div>
-          <button
-            type="button"
-            onClick={() => setEditingCase((v) => !v)}
-            title="Edit test instructions"
-            className={cn(
-              "flex items-center gap-1 text-xs px-2 py-1 rounded-md border transition-colors shrink-0",
-              editingCase
-                ? "border-primary bg-primary/5 text-primary"
-                : "border-border text-muted-foreground hover:text-foreground hover:border-foreground/30"
-            )}
-          >
-            <Pencil className="h-3 w-3" />
-            {editingCase ? "Editing" : "Edit"}
-          </button>
-        </div>
-
-        {/* Title */}
-        <h2 className="text-lg sm:text-xl font-semibold leading-snug tracking-tight">{tc.test_name}</h2>
-
-        {/* Project ID */}
-        <div className="flex items-center gap-3 rounded-lg border border-border px-4 py-3">
-          <span className="text-sm font-medium text-primary shrink-0">Project ID</span>
-          <input
-            id="runner-project-id"
-            type="text"
-            value={runForm.projectId}
-            onChange={(e) => setRunForm((f) => ({ ...f, projectId: e.target.value }))}
-            placeholder="Enter project ID (e.g. 890)"
-            className="flex-1 rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/40"
-          />
-          {runForm.projectId && (
-            <span className="text-xs text-muted-foreground font-mono shrink-0">
-              /{runForm.projectId}/…
-            </span>
-          )}
-        </div>
-
-        {/* ── Edit mode ── */}
-        {editingCase ? (
-          <div className="space-y-4 rounded-xl border border-primary/20 bg-primary/5 px-4 py-4">
-            <p className="text-xs font-semibold text-primary uppercase tracking-wide">Editing test instructions</p>
-
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">What this checks (context note)</Label>
-              <Textarea
-                value={editForm.context_note}
-                onChange={(e) => setEditForm((f) => ({ ...f, context_note: e.target.value }))}
-                placeholder="Plain English description of what this test verifies…"
-                className="resize-none h-16 text-sm"
-              />
+      <div className="space-y-8 pt-6 pb-12">
+        {/* Run summary header for orientation and quick health checks. */}
+        <section className="space-y-5 pb-5">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="space-y-1">
+              <p className="text-[11px] uppercase tracking-widest text-muted-foreground">Active Test Run</p>
+              <p className="text-lg font-semibold text-foreground">{selectedSuite?.display_name}</p>
+              <p className="text-sm text-muted-foreground">
+                Scenario <span className="font-medium text-foreground">{cursor + 1}</span> of {results.length}
+              </p>
             </div>
-
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Before you start (setup steps)</Label>
-              <Textarea
-                value={editForm.setup_steps}
-                onChange={(e) => setEditForm((f) => ({ ...f, setup_steps: e.target.value }))}
-                placeholder="Prerequisites, one per line…"
-                className="resize-none h-16 text-sm"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Start URL</Label>
-              <Input
-                value={editForm.start_url}
-                onChange={(e) => setEditForm((f) => ({ ...f, start_url: e.target.value }))}
-                placeholder="/67/budget"
-                className="text-sm font-mono"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Steps (one per line, no leading numbers)</Label>
-              <Textarea
-                value={editForm.steps}
-                onChange={(e) => setEditForm((f) => ({ ...f, steps: e.target.value }))}
-                placeholder="Click the Create button&#10;Fill in the Name field&#10;Click Save"
-                className="resize-none h-40 text-sm font-mono"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">What should happen (expected result)</Label>
-              <Textarea
-                value={editForm.expected_result}
-                onChange={(e) => setEditForm((f) => ({ ...f, expected_result: e.target.value }))}
-                placeholder="The record appears in the list…"
-                className="resize-none h-16 text-sm"
-              />
-            </div>
-
-            <div className="flex gap-2">
-              <Button type="button" size="sm" onClick={saveEdit} disabled={editSaving} className="flex-1">
-                {editSaving ? "Saving…" : "Save instructions"}
-              </Button>
-              <Button type="button" size="sm" variant="outline" onClick={() => setEditingCase(false)} disabled={editSaving}>
-                Cancel
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <>
-            {/* Context note (plain English "what this tests") */}
-            {tc.context_note && (
-              <div className="bg-blue-50 dark:bg-blue-950/30 rounded-xl px-4 py-3 text-sm text-blue-800 dark:text-blue-300">
-                <span className="font-medium">What this checks: </span>{tc.context_note}
-              </div>
-            )}
-
-            {/* Setup steps ("Before you start") */}
-            {tc.setup_steps && (
-              <div className="bg-amber-50 dark:bg-amber-950/20 rounded-xl px-4 py-3 space-y-1">
-                <p className="text-sm font-semibold text-amber-900 dark:text-amber-300">Before you start</p>
-                {parseSteps(tc.setup_steps).map((s) => (
-                  <p key={s} className="text-sm text-amber-900 dark:text-amber-300">· {s}</p>
-                ))}
-              </div>
-            )}
-
-            {/* Open in app button */}
-            {tc.start_url && (
-              <a
-                href={(() => {
-                  try {
-                    const raw = new URL(tc.start_url ?? "").pathname;
-                    if (runForm.projectId) {
-                      return raw.replace(/^\/\d+\//, `/${runForm.projectId}/`);
-                    }
-                    return raw;
-                  } catch {
-                    const raw = tc.start_url ?? "#";
-                    if (runForm.projectId) {
-                      return raw.replace(/^\/\d+\//, `/${runForm.projectId}/`);
-                    }
-                    return raw;
-                  }
-                })()}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm font-medium text-primary hover:underline"
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                aria-label="Previous scenario"
+                onClick={() => setCursor((c) => Math.max(c - 1, 0))}
+                disabled={cursor === 0}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:text-foreground disabled:opacity-30"
               >
-                Open the app at the right page →
-              </a>
-            )}
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              {/* Jump-to-scenario menu for non-linear navigation. */}
+              <div className="relative" ref={jumpListRef}>
+                <button
+                  type="button"
+                  onClick={() => setShowJumpList((v) => !v)}
+                  className="h-8 rounded-md border border-border px-3 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <span className="font-medium text-foreground">{cursor + 1}</span> / {results.length}
+                </button>
+                {showJumpList && (
+                  <div className="absolute top-full left-0 mt-1 z-50 w-80 max-h-80 overflow-y-auto rounded-md border border-border bg-background">
+                    {results.map((r, i) => (
+                      <button
+                        key={r.id}
+                        type="button"
+                        onClick={() => { setCursor(i); setShowJumpList(false); }}
+                        className={cn(
+                          "w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-muted/40 transition-colors",
+                          i === cursor && "bg-muted/60"
+                        )}
+                      >
+                        {statusIcon(r.status)}
+                        <span className="text-xs text-muted-foreground font-mono shrink-0">#{r.test_cases?.test_number}</span>
+                        <span className="text-xs truncate">{r.test_cases?.test_name}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <button
+                type="button"
+                aria-label="Next scenario"
+                onClick={() => setCursor((c) => Math.min(c + 1, results.length - 1))}
+                disabled={cursor >= results.length - 1}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:text-foreground disabled:opacity-30"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+            <div className="rounded-md border border-border px-3 py-2">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Depth</p>
+              <p className="text-sm font-medium text-foreground">{depthLabel(runForm.scenarioDepth)}</p>
+            </div>
+            <div className="rounded-md border border-border px-3 py-2">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Passed</p>
+              <p className="text-sm font-medium text-green-600">{passCount}</p>
+            </div>
+            <div className="rounded-md border border-border px-3 py-2">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Issues</p>
+              <p className="text-sm font-medium text-red-500">{failCount}</p>
+            </div>
+            <div className="rounded-md border border-border px-3 py-2">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Skipped</p>
+              <p className="text-sm font-medium text-muted-foreground">{skipCount}</p>
+            </div>
+            <div className="rounded-md border border-border px-3 py-2">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Remaining</p>
+              <p className="text-sm font-medium text-foreground">{pendingCount}</p>
+            </div>
+          </div>
+        </section>
 
-            {/* Steps */}
-            <div className="space-y-3 pt-2">
-              <p className="text-base font-semibold text-foreground">Steps</p>
-              {steps.map((step, i) => (
-                <label
-                  key={step}
+        {uiError && (
+          <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-950/30 dark:text-red-300">
+            {uiError}
+          </p>
+        )}
+
+        <div className="space-y-8">
+          <section className="space-y-7">
+            {/* Scenario heading and controls. */}
+            <div className="space-y-2">
+              <div className="flex items-start justify-between gap-3">
+                <h2 className="text-xl font-semibold leading-snug tracking-tight text-foreground">
+                  {tc.test_number} {tc.test_name}
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => setEditingCase((v) => !v)}
+                  title="Edit test instructions"
                   className={cn(
-                    "flex items-start gap-3 cursor-pointer py-1.5 transition-all select-none",
-                    checkedSteps[i] && "opacity-70"
+                    "flex items-center gap-1 text-xs px-2 py-1 rounded-md border transition-colors shrink-0",
+                    editingCase
+                      ? "border-primary bg-primary/5 text-primary"
+                      : "border-border text-muted-foreground hover:text-foreground hover:border-foreground/30"
                   )}
                 >
-                  <div className={cn(
-                    "mt-0.5 h-5 w-5 shrink-0 rounded-full border-2 flex items-center justify-center transition-all",
-                    checkedSteps[i] ? "border-green-500 bg-green-500" : "border-muted-foreground/40"
-                  )}>
-                    {checkedSteps[i] && <CheckCircle2 className="h-4 w-4 text-white" />}
-                  </div>
-                  <input
-                    type="checkbox"
-                    className="sr-only"
-                    checked={!!checkedSteps[i]}
-                    onChange={(e) => setCheckedSteps((prev) => ({ ...prev, [i]: e.target.checked }))}
-                  />
-                  <span className={cn(
-                    "text-sm leading-relaxed",
-                    checkedSteps[i] && "line-through text-muted-foreground"
-                  )}>
-                    <span className="font-medium text-muted-foreground mr-2">{i + 1}.</span>
-                    {step}
-                  </span>
-                </label>
-              ))}
+                  <Pencil className="h-3 w-3" />
+                  {editingCase ? "Editing" : "Edit"}
+                </button>
+              </div>
             </div>
 
-            {/* Expected result */}
-            {tc.expected_result && (
-              <div className="space-y-2">
-                <p className="text-sm font-semibold text-foreground">What should happen</p>
-                <p className="text-sm leading-relaxed text-muted-foreground">
-                  {tc.expected_result}
-                </p>
+            {/* Project context row to keep deep-link navigation accurate per project. */}
+            <div className="space-y-2">
+              <Label htmlFor="runner-project-id" className="text-xs text-muted-foreground">Project ID (for links)</Label>
+              <div className="flex items-center gap-3">
+                <input
+                  id="runner-project-id"
+                  type="text"
+                  value={runForm.projectId}
+                  onChange={(e) => setRunForm((f) => ({ ...f, projectId: e.target.value }))}
+                  placeholder="Enter project ID (e.g. 890)"
+                  className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/40"
+                />
+                {runForm.projectId && (
+                  <span className="text-xs text-muted-foreground font-mono shrink-0">
+                    /{runForm.projectId}/…
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Editable scenario form for maintaining test case quality in place. */}
+            {editingCase ? (
+              <div className="space-y-4 rounded-md border border-border px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Editing test instructions</p>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">What this checks (context note)</Label>
+                  <Textarea
+                    value={editForm.context_note}
+                    onChange={(e) => setEditForm((f) => ({ ...f, context_note: e.target.value }))}
+                    placeholder="Plain English description of what this test verifies…"
+                    className="resize-none h-16 text-sm"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">Before you start (setup steps)</Label>
+                  <Textarea
+                    value={editForm.setup_steps}
+                    onChange={(e) => setEditForm((f) => ({ ...f, setup_steps: e.target.value }))}
+                    placeholder="Prerequisites, one per line…"
+                    className="resize-none h-16 text-sm"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">Start URL</Label>
+                  <Input
+                    value={editForm.start_url}
+                    onChange={(e) => setEditForm((f) => ({ ...f, start_url: e.target.value }))}
+                    placeholder="/67/budget"
+                    className="text-sm font-mono"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">Steps (one per line, no leading numbers)</Label>
+                  <Textarea
+                    value={editForm.steps}
+                    onChange={(e) => setEditForm((f) => ({ ...f, steps: e.target.value }))}
+                    placeholder="Click the Create button&#10;Fill in the Name field&#10;Click Save"
+                    className="resize-none h-40 text-sm font-mono"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">What should happen (expected result)</Label>
+                  <Textarea
+                    value={editForm.expected_result}
+                    onChange={(e) => setEditForm((f) => ({ ...f, expected_result: e.target.value }))}
+                    placeholder="The record appears in the list…"
+                    className="resize-none h-16 text-sm"
+                  />
+                </div>
+
+                <div className="flex gap-2">
+                  <Button type="button" size="sm" onClick={saveEdit} disabled={editSaving} className="flex-1">
+                    {editSaving ? "Saving…" : "Save instructions"}
+                  </Button>
+                  <Button type="button" size="sm" variant="outline" onClick={() => setEditingCase(false)} disabled={editSaving}>
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-7">
+                {tc.context_note && (
+                  <section className="space-y-1.5">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Context</p>
+                    <p className="text-sm leading-relaxed text-foreground">{tc.context_note}</p>
+                  </section>
+                )}
+
+                {tc.setup_steps && (
+                  <section className="space-y-2 border-l border-border pl-4">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Before You Start</p>
+                    <div className="space-y-1">
+                      {parseSteps(tc.setup_steps).map((s) => (
+                        <p key={s} className="text-sm text-foreground">• {s}</p>
+                      ))}
+                    </div>
+                  </section>
+                )}
+
+                {/* Checklist keeps each validation step explicit and easy to track. */}
+                <section className="space-y-3">
+                  <p className="text-base font-semibold text-foreground">Steps</p>
+                  <div className="space-y-2">
+                    {steps.map((step, i) => (
+                      <label
+                        key={step}
+                        className={cn(
+                          "flex items-start gap-3 cursor-pointer rounded-md border border-transparent px-1.5 py-2 transition-all",
+                          checkedSteps[i] ? "opacity-70" : "hover:border-border"
+                        )}
+                      >
+                        <div className={cn(
+                          "mt-0.5 h-5 w-5 shrink-0 rounded-full border-2 flex items-center justify-center transition-all",
+                          checkedSteps[i] ? "border-green-500 bg-green-500" : "border-muted-foreground/40"
+                        )}>
+                          {checkedSteps[i] && <CheckCircle2 className="h-4 w-4 text-white" />}
+                        </div>
+                        <input
+                          type="checkbox"
+                          className="sr-only"
+                          checked={!!checkedSteps[i]}
+                          onChange={(e) => setCheckedSteps((prev) => ({ ...prev, [i]: e.target.checked }))}
+                        />
+                        <span className={cn(
+                          "text-sm leading-relaxed",
+                          checkedSteps[i] && "line-through text-muted-foreground"
+                        )}>
+                          <span className="font-medium text-muted-foreground mr-2">{i + 1}.</span>
+                          {step}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </section>
+
+                {startPath && (
+                  <a
+                    href={startPath}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex text-sm font-medium text-primary hover:underline"
+                  >
+                    Open the app at the right page →
+                  </a>
+                )}
+
+                {tc.expected_result && (
+                  <section className="pt-2 space-y-2">
+                    <p className="text-sm font-semibold text-foreground">What should happen</p>
+                    <p className="text-sm leading-relaxed text-muted-foreground">{tc.expected_result}</p>
+                  </section>
+                )}
+
+                {current.test_screenshots.length > 0 && (
+                  <section className="space-y-2">
+                    <p className="text-sm font-semibold text-foreground">Screenshots</p>
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                      {current.test_screenshots.map((s) => (
+                        <a key={s.id} href={s.public_url ?? "#"} target="_blank" rel="noopener noreferrer">
+                          <img
+                            src={s.public_url ?? ""}
+                            alt={s.label ?? "screenshot"}
+                            className="h-24 w-full rounded-md border border-border object-cover hover:opacity-80 transition-opacity"
+                          />
+                        </a>
+                      ))}
+                    </div>
+                  </section>
+                )}
               </div>
             )}
-          </>
-        )}
+          </section>
 
-        {/* Screenshots */}
-        {current.test_screenshots.length > 0 && (
-          <div className="space-y-2">
-            <p className="text-sm font-semibold text-foreground">Screenshots</p>
-            <div className="flex flex-wrap gap-2">
-              {current.test_screenshots.map((s) => (
-                <a key={s.id} href={s.public_url ?? "#"} target="_blank" rel="noopener noreferrer">
-                  <img
-                    src={s.public_url ?? ""}
-                    alt={s.label ?? "screenshot"}
-                    className="h-24 w-auto rounded-lg border border-border object-cover hover:opacity-80 transition-opacity"
-                  />
-                </a>
-              ))}
-            </div>
-          </div>
-        )}
+          {/* Action section in single-column flow for easier reading. */}
+          <section className="space-y-4 pt-6">
+            <section className="space-y-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">
+                  Notes <span className="font-normal">(optional)</span>
+                </Label>
+                <Textarea
+                  ref={notesRef}
+                  value={notesMap[current.id] ?? ""}
+                  onChange={(e) => updateNote(current.id, e.target.value)}
+                  placeholder="Optional notes, observations, or anything unexpected…"
+                  className="resize-none h-24 text-sm"
+                />
+              </div>
 
-        {/* ── Notes + Severity + Verdict ── */}
-        <div className="pt-2 space-y-3">
+            </section>
 
-          {/* Always-visible notes */}
-          <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">
-              Notes <span className="font-normal">(optional)</span>
-            </Label>
-            <Textarea
-              ref={notesRef}
-              value={notesMap[current.id] ?? ""}
-              onChange={(e) => updateNote(current.id, e.target.value)}
-              placeholder="Optional notes, observations, or anything unexpected…"
-              className="resize-none h-20 text-sm"
-            />
-          </div>
+            <section className="space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Result</p>
+              <div className="grid grid-cols-3 gap-2">
+                <Button
+                  onClick={() => void record("pass")}
+                  disabled={saving}
+                  className="gap-2 bg-green-600 hover:bg-green-700 text-white h-11 text-sm font-semibold"
+                >
+                  <CheckCircle2 className="h-4 w-4" />
+                  Passed
+                </Button>
+                <Button
+                  onClick={() => void record("fail")}
+                  disabled={saving}
+                  variant="destructive"
+                  className="gap-2 h-11 text-sm font-semibold"
+                >
+                  <XCircle className="h-4 w-4" />
+                  Issue found
+                </Button>
+                <Button
+                  onClick={() => void record("skip")}
+                  disabled={saving}
+                  variant="outline"
+                  className="gap-2 h-11 text-sm font-semibold"
+                >
+                  <MinusCircle className="h-4 w-4" />
+                  Skip
+                </Button>
+              </div>
+            </section>
 
-          {/* Severity selector */}
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-xs text-muted-foreground">Severity:</span>
-            {(["critical", "major", "minor", "cosmetic"] as const).map((s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => setSeverityMap((prev) => ({ ...prev, [current.id]: prev[current.id] === s ? "" : s }))}
-                className={cn(
-                  "text-xs px-2 py-0.5 rounded-md border transition-colors",
-                  severityMap[current.id] === s
-                    ? s === "critical"
-                      ? "bg-red-600 text-white border-red-600"
-                      : s === "major"
-                      ? "bg-orange-500 text-white border-orange-500"
-                      : s === "minor"
-                      ? "bg-yellow-500 text-white border-yellow-500"
-                      : "bg-muted text-foreground border-border"
-                    : "bg-transparent text-muted-foreground border-border hover:border-foreground"
-                )}
-              >
-                {s.charAt(0).toUpperCase() + s.slice(1)}
-              </button>
-            ))}
-          </div>
+            <section className="space-y-2 pt-3">
+              <FileUploadField
+                label={<span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Attachments</span>}
+                accept="image/*"
+                multiple={false}
+                maxFiles={1}
+                maxSize={10 * 1024 * 1024}
+                disabled={uploadingScreenshot}
+                variant="minimal"
+                showMetaText
+                onFilesSelected={(files) => {
+                  const file = files[0];
+                  if (file) void handleFile(file);
+                }}
+              />
 
-          {/* Keyboard hint bar */}
-          <div className="flex items-center gap-4 text-[10px] text-muted-foreground/60 pb-1">
-            <span><kbd className="font-mono">P</kbd> Pass</span>
-            <span><kbd className="font-mono">I</kbd> Issue</span>
-            <span><kbd className="font-mono">S</kbd> Skip</span>
-            <span><kbd className="font-mono">N</kbd> Notes</span>
-            <span><kbd className="font-mono">←→</kbd> Navigate</span>
-          </div>
+              {current.status === "fail" && !runForm.autoSubmitFeedback && (
+                feedbackSentIds.has(current.id) ? (
+                  <span className="flex items-center gap-1 text-xs text-green-600">
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    Sent to feedback inbox
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => void sendToFeedback(current)}
+                    disabled={feedbackSendingIds.has(current.id)}
+                    className="w-full flex items-center justify-center gap-1.5 text-xs text-orange-600 hover:text-orange-700 transition-colors rounded-md border border-border px-3 py-2 hover:bg-orange-50 dark:hover:bg-orange-950/20"
+                  >
+                    <Send className="h-3.5 w-3.5" />
+                    {feedbackSendingIds.has(current.id) ? "Sending…" : "Send to feedback inbox"}
+                  </button>
+                )
+              )}
 
-          {/* Verdict buttons */}
-          <div className="grid grid-cols-3 gap-2">
-            <Button
-              onClick={() => void record("pass")}
-              disabled={saving}
-              className="gap-2 bg-green-600 hover:bg-green-700 text-white h-12 text-sm font-semibold"
-            >
-              <CheckCircle2 className="h-4 w-4" />
-              Passed
-            </Button>
-            <Button
-              onClick={() => void record("fail")}
-              disabled={saving}
-              variant="destructive"
-              className="gap-2 h-12 text-sm font-semibold"
-            >
-              <XCircle className="h-4 w-4" />
-              Issue found
-            </Button>
-            <Button
-              onClick={() => void record("skip")}
-              disabled={saving}
-              variant="outline"
-              className="gap-2 h-12 text-sm font-semibold"
-            >
-              <MinusCircle className="h-4 w-4" />
-              Skip
-            </Button>
-          </div>
-
-          {/* Screenshot upload */}
-          <div className="flex items-center gap-3 flex-wrap">
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/*"
-              aria-label="Upload screenshot"
-              title="Upload screenshot"
-              className="hidden"
-              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ""; }}
-            />
-            <button
-              type="button"
-              onClick={() => fileRef.current?.click()}
-              disabled={uploadingScreenshot}
-              className="flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 transition-colors px-2 py-1.5 rounded-md hover:bg-primary/10"
-            >
-              <Camera className="h-3.5 w-3.5" />
-              {uploadingScreenshot ? "Uploading…" : "Attach screenshot"}
-            </button>
-
-            {/* Manual send-to-feedback — shown when this test is already marked fail */}
-            {current.status === "fail" && !runForm.autoSubmitFeedback && (
-              feedbackSentIds.has(current.id) ? (
+              {current.status === "fail" && runForm.autoSubmitFeedback && feedbackSentIds.has(current.id) && (
                 <span className="flex items-center gap-1 text-xs text-green-600">
                   <CheckCircle2 className="h-3.5 w-3.5" />
                   Sent to feedback inbox
                 </span>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => void sendToFeedback(current)}
-                  disabled={feedbackSendingIds.has(current.id)}
-                  className="flex items-center gap-1.5 text-xs text-orange-600 hover:text-orange-700 transition-colors px-2 py-1.5 rounded-md hover:bg-orange-50 dark:hover:bg-orange-950/20"
-                >
-                  <Send className="h-3.5 w-3.5" />
-                  {feedbackSendingIds.has(current.id) ? "Sending…" : "Send to feedback inbox"}
-                </button>
-              )
-            )}
-
-            {/* Auto-submit confirmation — shown when auto-submit is on and test is already fail */}
-            {current.status === "fail" && runForm.autoSubmitFeedback && feedbackSentIds.has(current.id) && (
-              <span className="flex items-center gap-1 text-xs text-green-600">
-                <CheckCircle2 className="h-3.5 w-3.5" />
-                Sent to feedback inbox
-              </span>
-            )}
-          </div>
+              )}
+            </section>
+          </section>
         </div>
 
       </div>

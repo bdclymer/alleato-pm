@@ -8,6 +8,8 @@ import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
+const relativePathPattern = /^\/[^\s]*$/;
+
 const patchSchema = z.object({
   test_number: z.string().trim().min(1).max(20).optional(),
   category: z.string().trim().min(1).max(100).optional(),
@@ -19,8 +21,15 @@ const patchSchema = z.object({
   setup_steps: z.string().nullable().optional(),
   context_note: z.string().nullable().optional(),
   expected_result: z.string().nullable().optional(),
-  start_url: z.string().nullable().optional(),
+  start_url: z.string().trim().max(500).nullable().optional(),
 });
+
+// Normalizes optional text fields so blank strings do not get persisted as content.
+function normalizeOptionalText(value: string | null | undefined): string | null {
+  if (value == null) return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
 
 export const PATCH = withApiGuardrails<{ caseId: string }>(
   "testing/cases/[caseId]#PATCH",
@@ -35,10 +44,75 @@ export const PATCH = withApiGuardrails<{ caseId: string }>(
       );
     }
 
+    const payload = {
+      ...parsed.data,
+      subcategory: normalizeOptionalText(parsed.data.subcategory),
+      steps: normalizeOptionalText(parsed.data.steps),
+      setup_steps: normalizeOptionalText(parsed.data.setup_steps),
+      context_note: normalizeOptionalText(parsed.data.context_note),
+      expected_result: normalizeOptionalText(parsed.data.expected_result),
+      start_url: normalizeOptionalText(parsed.data.start_url),
+    };
+
     const supabase = await createClient();
+    const { data: existing, error: existingError } = await supabase
+      .from("test_cases")
+      .select("test_type, scenario_depth, steps, setup_steps, expected_result, start_url")
+      .eq("id", caseId)
+      .single();
+
+    if (existingError || !existing) {
+      return NextResponse.json(
+        { error: existingError?.message ?? "Case not found", code: "NOT_FOUND", where: "testing/cases PATCH" },
+        { status: 404 }
+      );
+    }
+
+    const nextValues = {
+      test_type: existing.test_type,
+      scenario_depth: payload.scenario_depth ?? existing.scenario_depth,
+      steps: payload.steps ?? existing.steps,
+      setup_steps: payload.setup_steps ?? existing.setup_steps,
+      expected_result: payload.expected_result ?? existing.expected_result,
+      start_url: payload.start_url ?? existing.start_url,
+    };
+
+    if (nextValues.test_type === "scenario") {
+      if (!nextValues.steps?.trim()) {
+        return NextResponse.json(
+          { error: "Scenario test cases require non-empty steps.", code: "VALIDATION_FAILED", where: "testing/cases PATCH" },
+          { status: 400 }
+        );
+      }
+      if (!nextValues.expected_result?.trim()) {
+        return NextResponse.json(
+          { error: "Scenario test cases require an expected result.", code: "VALIDATION_FAILED", where: "testing/cases PATCH" },
+          { status: 400 }
+        );
+      }
+      if (!nextValues.start_url?.trim()) {
+        return NextResponse.json(
+          { error: "Scenario test cases require a start URL.", code: "VALIDATION_FAILED", where: "testing/cases PATCH" },
+          { status: 400 }
+        );
+      }
+      if (!relativePathPattern.test(nextValues.start_url.trim())) {
+        return NextResponse.json(
+          { error: "Scenario start URL must be a relative path beginning with '/'.", code: "VALIDATION_FAILED", where: "testing/cases PATCH" },
+          { status: 400 }
+        );
+      }
+      if (nextValues.scenario_depth === "detailed" && !nextValues.setup_steps?.trim()) {
+        return NextResponse.json(
+          { error: "Detailed scenarios require setup steps.", code: "VALIDATION_FAILED", where: "testing/cases PATCH" },
+          { status: 400 }
+        );
+      }
+    }
+
     const { data, error } = await supabase
       .from("test_cases")
-      .update(parsed.data)
+      .update(payload)
       .eq("id", caseId)
       .select(
         "id, test_number, category, subcategory, test_name, context_note, setup_steps, steps, expected_result, priority, start_url, test_type, scenario_depth"

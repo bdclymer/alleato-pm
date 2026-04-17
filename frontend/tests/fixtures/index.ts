@@ -64,6 +64,11 @@ interface AuthFixtures {
   ) => Promise<void>;
 }
 
+interface AuthStateData {
+  token: string | null;
+  cookieHeader: string | null;
+}
+
 // ============================================================================
 // Auth Token Extraction
 // ============================================================================
@@ -72,7 +77,7 @@ interface AuthFixtures {
  * Extracts the Supabase access token from stored auth state.
  * Handles multiple token name formats and storage locations used by Supabase.
  */
-function getAuthToken(): string | null {
+function getAuthState(): AuthStateData {
   try {
     // Try multiple possible auth file locations
     const possiblePaths = [
@@ -91,7 +96,7 @@ function getAuthToken(): string | null {
 
     if (!authPath) {
       console.warn('Auth state file not found. Run auth setup first.');
-      return null;
+      return { token: null, cookieHeader: null };
     }
 
     const auth = JSON.parse(fs.readFileSync(authPath, 'utf-8'));
@@ -105,6 +110,11 @@ function getAuthToken(): string | null {
         (cookie.name.includes('sb-') && cookie.name.includes('-auth'))
     );
 
+    const cookieHeader =
+      cookies.length > 0
+        ? cookies.map((cookie: { name: string; value: string }) => `${cookie.name}=${cookie.value}`).join('; ')
+        : null;
+
     if (authCookie) {
       // Cookie value is base64-encoded JSON prefixed with "base64-"
       let cookieValue = authCookie.value;
@@ -115,14 +125,14 @@ function getAuthToken(): string | null {
         const decoded = Buffer.from(cookieValue, 'base64').toString('utf-8');
         const parsed = JSON.parse(decoded);
         if (parsed.access_token) {
-          return parsed.access_token;
+          return { token: parsed.access_token, cookieHeader };
         }
       } catch {
         // Try parsing directly if not base64
         try {
           const parsed = JSON.parse(cookieValue);
           if (parsed.access_token) {
-            return parsed.access_token;
+            return { token: parsed.access_token, cookieHeader };
           }
         } catch {
           // Not JSON, might be raw token
@@ -144,20 +154,20 @@ function getAuthToken(): string | null {
 
     if (!tokenItem) {
       console.warn('Auth token not found in storage state (checked cookies and localStorage)');
-      return null;
+      return { token: null, cookieHeader };
     }
 
     // Token value might be JSON (contains access_token) or raw string
     try {
       const parsed = JSON.parse(tokenItem.value);
-      return parsed.access_token || parsed.token || null;
+      return { token: parsed.access_token || parsed.token || null, cookieHeader };
     } catch {
       // Value is likely the raw token
-      return tokenItem.value;
+      return { token: tokenItem.value, cookieHeader };
     }
   } catch (error) {
     console.error('Error reading auth token:', error);
-    return null;
+    return { token: null, cookieHeader: null };
   }
 }
 
@@ -170,8 +180,8 @@ export const test = base.extend<AuthFixtures>({
    * Raw auth token for custom use cases
    */
   authToken: async ({}, use) => {
-    const token = getAuthToken();
-    await use(token);
+    const authState = getAuthState();
+    await use(authState.token);
   },
 
   /**
@@ -186,10 +196,14 @@ export const test = base.extend<AuthFixtures>({
    * ```
    */
   authenticatedRequest: async ({}, use) => {
-    const token = getAuthToken();
-    const authHeaders: Record<string, string> = token
-      ? { Authorization: `Bearer ${token}` }
+    const authState = getAuthState();
+    const authHeaders: Record<string, string> = authState.token
+      ? { Authorization: `Bearer ${authState.token}` }
       : {};
+
+    if (authState.cookieHeader) {
+      authHeaders.Cookie = authState.cookieHeader;
+    }
 
     // Create a context with the base URL
     const baseURL = process.env.BASE_URL || 'http://localhost:3000';

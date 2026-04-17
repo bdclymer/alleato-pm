@@ -37,6 +37,7 @@ import { useCommitments } from "@/hooks/use-commitments-query";
 import { PageShell } from "@/components/layout";
 import { FormSection } from "@/components/forms";
 import { FormActions } from "@/components/forms/FormActions";
+import { apiFetch } from "@/lib/api-client";
 
 
 interface LineItem {
@@ -222,11 +223,8 @@ export default function NewInvoicePage() {
     setLoading(true);
 
     try {
-      const response = await fetch("/api/invoices", {
+      await apiFetch("/api/invoices", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify({
           invoice_number: invoiceData.invoiceNumber,
           project_id: Number.isNaN(parseInt(projectId, 10))
@@ -251,11 +249,6 @@ export default function NewInvoicePage() {
           notes: invoiceData.description,
         }),
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to create invoice");
-      }
 
       router.push(`/${projectId}/invoices`);
     } catch (error) {
