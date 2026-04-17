@@ -60,6 +60,7 @@ import { ChangeEventLineagePanel } from "@/components/domain/change-events/Chang
 import { ChangeEventLineItemsTable } from "@/components/domain/change-events/ChangeEventLineItemsTable";
 import { ChangeEventHistoryTab } from "@/components/domain/change-events/ChangeEventHistoryTab";
 import { ChangeEventRelatedItemsTab } from "@/components/domain/change-events/ChangeEventRelatedItemsTab";
+import { ChangeEventRfqsTab } from "@/components/domain/change-events/ChangeEventRfqsTab";
 import { ChangeEventPrimePCOsSection } from "@/components/domain/change-events/ChangeEventPrimePCOsSection";
 import { ChangeEventCommitmentPCOsSection } from "@/components/domain/change-events/ChangeEventCommitmentPCOsSection";
 import { EntityComments } from "@/components/comments/entity-comments";
@@ -132,10 +133,13 @@ export default function ChangeEventDetailPage() {
     attachments,
     historyEntries,
     relatedItems,
+    rfqCount,
     isLoading,
     error,
     actions,
   } = useChangeEventDetail(projectId, changeEventId);
+
+  const [showRfqSheet, setShowRfqSheet] = useState(false);
 
   const { markupRows } = useVerticalMarkup(projectId);
 
@@ -656,6 +660,7 @@ export default function ChangeEventDetailPage() {
             General
           </TabsTrigger>
           <TabsTrigger value="lineage">Lineage ({lineageCount})</TabsTrigger>
+          <TabsTrigger value="rfqs">RFQs ({rfqCount})</TabsTrigger>
 <TabsTrigger value="related-items">
             Related Items ({relatedItems.length})
           </TabsTrigger>
@@ -705,6 +710,14 @@ export default function ChangeEventDetailPage() {
               projectId={projectId}
               changeEventId={changeEventId}
               refreshSignal={lineageRefreshSignal}
+            />
+          </TabsContent>
+
+          <TabsContent value="rfqs">
+            <ChangeEventRfqsTab
+              projectId={projectId}
+              changeEventId={changeEventId}
+              onSendRfq={() => setShowRfqSheet(true)}
             />
           </TabsContent>
 
