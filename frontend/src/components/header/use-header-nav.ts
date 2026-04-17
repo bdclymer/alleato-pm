@@ -281,6 +281,21 @@ export function useHeaderNav(): UseHeaderNavReturn {
       let href = `/${segments.slice(0, index + 1).join("/")}`;
       let label: string;
 
+      // Keep nested prime-contract PCO breadcrumbs on valid routes.
+      if (isNestedPrimePcoDetailRoute) {
+        const nestedProjectId = segments[0];
+        const nestedContractId = segments[2];
+        const nestedPcoId = segments[5];
+
+        if (index === 3) {
+          href = `/${nestedProjectId}/prime-contracts/change-orders`;
+        } else if (index === 4) {
+          href = `/${nestedProjectId}/prime-contracts/${nestedContractId}`;
+        } else if (index === 5) {
+          href = `/${nestedProjectId}/prime-contracts/${nestedContractId}/change-orders/pcos/${nestedPcoId}`;
+        }
+      }
+
       if (index === 0 && !/^\d+$/.test(segment)) {
         const globalMultiSegmentTool = allTools.find((tool) => {
           if (tool.requiresProject || !tool.path.includes("/")) return false;

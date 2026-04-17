@@ -46,6 +46,8 @@ const EMPTY_FILTERS: ChangeEventFilterState = {
   budget: undefined,
   budget_code_segments: undefined,
 };
+const CHANGE_EVENTS_VISIBLE_COLUMNS_MIGRATION_KEY =
+  "change-events:visibleColumns:migrate-2026-04-17-all-default";
 
 function formatDateValue(dateValue: string | null | undefined): string {
   if (!dateValue) return "";
@@ -101,6 +103,22 @@ export default function ProjectChangeEventsPage(): ReactElement {
       filters: initialFilters,
     },
   });
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!tableState.visibleColumns.length) return;
+
+    const hasMigrated = window.localStorage.getItem(
+      CHANGE_EVENTS_VISIBLE_COLUMNS_MIGRATION_KEY,
+    );
+    if (hasMigrated === "1") return;
+
+    tableState.setVisibleColumns(changeEventDefaultVisibleColumns);
+    window.localStorage.setItem(
+      CHANGE_EVENTS_VISIBLE_COLUMNS_MIGRATION_KEY,
+      "1",
+    );
+  }, [tableState.visibleColumns.length, tableState.setVisibleColumns]);
 
   React.useEffect(() => {
     const nextStatus = searchParams.get("status") ?? "";

@@ -1,6 +1,8 @@
 "use client";
 
+import { useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { Save } from "lucide-react";
 
@@ -17,12 +19,15 @@ import {
 } from "@/components/ui/form";
 import { FormActions } from "@/components/forms/FormActions";
 import { FormGrid, FormSection } from "@/components/forms";
+import { RHFComboboxField } from "@/components/forms/fields/RHFComboboxField";
 import { RHFDateField } from "@/components/forms/fields/RHFDateField";
 import { RHFSelectField } from "@/components/forms/fields/RHFSelectField";
 import { RHFTextField } from "@/components/forms/fields/RHFTextField";
 import { RHFTextareaField } from "@/components/forms/fields/RHFTextareaField";
 import { Input } from "@/components/ui/input";
+import { useProjectUsers } from "@/hooks/use-project-users";
 import { useCreateRfi } from "@/hooks/use-rfis";
+import { apiFetch } from "@/lib/api-client";
 import {
   rfiDraftSchema,
   rfiOpenSchema,
@@ -30,11 +35,93 @@ import {
   type RfiFormValues,
 } from "@/lib/schemas/rfi-schema";
 
+interface ProjectTeamMember {
+  name?: string;
+  full_name?: string;
+  first_name?: string;
+  last_name?: string;
+}
+
+interface ProjectWithTeamMembers {
+  team_members?: unknown[] | null;
+}
+
+/** Returns a normalized display name from a raw project team-member payload. */
+function getTeamMemberName(rawMember: unknown): string | null {
+  const parsed =
+    typeof rawMember === "string"
+      ? (() => {
+          try {
+            return JSON.parse(rawMember) as unknown;
+          } catch {
+            return { name: rawMember };
+          }
+        })()
+      : rawMember;
+
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return null;
+
+  const member = parsed as ProjectTeamMember;
+  const fullName = member.full_name?.trim() || member.name?.trim();
+  if (fullName) return fullName;
+
+  const firstName = member.first_name?.trim() || "";
+  const lastName = member.last_name?.trim() || "";
+  const combined = `${firstName} ${lastName}`.trim();
+  return combined || null;
+}
+
 export default function NewRfiPage() {
   const router = useRouter();
   const params = useParams();
   const projectId = Number(params.projectId);
   const createRfi = useCreateRfi(projectId);
+  const normalizedProjectId =
+    Number.isFinite(projectId) && projectId > 0 ? String(projectId) : "";
+  const { users: projectUsers, isLoading: isLoadingProjectUsers } = useProjectUsers(
+    normalizedProjectId,
+    { type: "all" },
+  );
+  const { data: project, isLoading: isLoadingProject } = useQuery({
+    queryKey: ["project", projectId, "team-members"],
+    queryFn: () => apiFetch<ProjectWithTeamMembers>(`/api/projects/${projectId}`),
+    enabled: Number.isFinite(projectId) && projectId > 0,
+  });
+
+  const rfiManagerOptions = useMemo(() => {
+    const optionMap = new Map<string, { value: string; label: string; keywords: string[] }>();
+
+    for (const person of projectUsers) {
+      const first = person.first_name?.trim() || "";
+      const last = person.last_name?.trim() || "";
+      const fullName = `${first} ${last}`.trim();
+      if (!fullName) continue;
+
+      optionMap.set(fullName.toLowerCase(), {
+        value: fullName,
+        label: fullName,
+        keywords: [person.email || "", person.company?.name || ""].filter(Boolean),
+      });
+    }
+
+    for (const rawMember of project?.team_members || []) {
+      const fullName = getTeamMemberName(rawMember);
+      if (!fullName) continue;
+
+      const key = fullName.toLowerCase();
+      if (!optionMap.has(key)) {
+        optionMap.set(key, {
+          value: fullName,
+          label: fullName,
+          keywords: [],
+        });
+      }
+    }
+
+    return Array.from(optionMap.values()).sort((a, b) =>
+      a.label.localeCompare(b.label),
+    );
+  }, [project?.team_members, projectUsers]);
 
   const form = useForm<RfiFormValues>({
     defaultValues: {
@@ -119,11 +206,15 @@ export default function NewRfiPage() {
                 nullable
               />
 
-              <RHFTextField
+              <RHFComboboxField
                 control={form.control}
                 name="rfi_manager"
                 label="RFI Manager"
-                placeholder="Enter RFI manager name"
+                placeholder="Select RFI manager"
+                searchPlaceholder="Search project members..."
+                emptyMessage="No matching project member found."
+                options={rfiManagerOptions}
+                disabled={isLoadingProjectUsers || isLoadingProject}
               />
             </FormGrid>
           </FormSection>

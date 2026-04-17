@@ -678,6 +678,7 @@ export default function ChangeEventDetailPage() {
             />
             <div className="mt-10">
               <ChangeEventLineItemsTable
+                projectId={projectId}
                 lineItems={lineItems}
                 markupRows={markupRows}
                 expectingRevenue={(changeEvent.expectingRevenue ?? changeEvent.expecting_revenue) !== false}

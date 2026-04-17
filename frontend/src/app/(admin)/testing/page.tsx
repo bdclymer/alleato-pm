@@ -91,6 +91,8 @@ interface HistoryRun {
   not_tested: number;
 }
 
+type RunListItem = { run: HistoryRun; suiteName: string; suiteDisplayName: string };
+
 interface RunDetailResult {
   id: string;
   status: TestStatus;
@@ -213,7 +215,9 @@ export default function TestingPage() {
   const [startError, setStartError] = useState<string | null>(null);
   const [uiError, setUiError] = useState<string | null>(null);
   const [showJumpList, setShowJumpList] = useState(false);
-  const [inProgressRuns, setInProgressRuns] = useState<{ run: HistoryRun; suiteName: string; suiteDisplayName: string }[]>([]);
+  const [inProgressRuns, setInProgressRuns] = useState<RunListItem[]>([]);
+  const [completedRuns, setCompletedRuns] = useState<RunListItem[]>([]);
+  const [deletingRunId, setDeletingRunId] = useState<string | null>(null);
   const jumpListRef = useRef<HTMLDivElement>(null);
   const [editingCase, setEditingCase] = useState(false);
   const [editSaving, setEditSaving] = useState(false);
@@ -260,21 +264,37 @@ export default function TestingPage() {
           loaded.map((suite) =>
             apiFetch<{ runs?: HistoryRun[] }>(`/api/testing/runs?suite=${suite.tool_name}`)
               .then((data) => {
-                const incomplete = (data.runs ?? []).filter((run: HistoryRun) => run.not_tested > 0);
-                return incomplete.map((run: HistoryRun) => ({
-                  run,
-                  suiteName: suite.tool_name,
-                  suiteDisplayName: suite.display_name,
-                }));
+                const suiteRuns = data.runs ?? [];
+                const inProgress = suiteRuns
+                  .filter((run: HistoryRun) => run.not_tested > 0)
+                  .map((run: HistoryRun) => ({
+                    run,
+                    suiteName: suite.tool_name,
+                    suiteDisplayName: suite.display_name,
+                  }));
+                const completed = suiteRuns
+                  .filter((run: HistoryRun) => run.not_tested === 0 && run.total > 0)
+                  .map((run: HistoryRun) => ({
+                    run,
+                    suiteName: suite.tool_name,
+                    suiteDisplayName: suite.display_name,
+                  }));
+                return { inProgress, completed };
               })
               .catch((error) => {
                 setUiError(formatActionError(error, "Unable to load in-progress test runs."));
-                return [] as Array<{ run: HistoryRun; suiteName: string; suiteDisplayName: string }>;
+                return { inProgress: [] as RunListItem[], completed: [] as RunListItem[] };
               })
           )
         ).then((results) => {
-          const flat = results.flat();
-          setInProgressRuns(flat);
+          const inProgress = results
+            .flatMap((result) => result.inProgress)
+            .sort((a, b) => new Date(b.run.run_date).getTime() - new Date(a.run.run_date).getTime());
+          const completed = results
+            .flatMap((result) => result.completed)
+            .sort((a, b) => new Date(b.run.run_date).getTime() - new Date(a.run.run_date).getTime());
+          setInProgressRuns(inProgress);
+          setCompletedRuns(completed);
         });
       })
       .catch((error) => {
@@ -550,6 +570,27 @@ export default function TestingPage() {
     setSeverityMap({});
     setView("running");
   };
+
+  // Removes a deleted run from all relevant local run collections.
+  const removeRunFromLocalState = useCallback((runId: string) => {
+    setInProgressRuns((prev) => prev.filter(({ run }) => run.id !== runId));
+    setCompletedRuns((prev) => prev.filter(({ run }) => run.id !== runId));
+    setHistoryRuns((prev) => prev.filter((run) => run.id !== runId));
+  }, []);
+
+  // Deletes a test run and updates the local UI state to prevent stale in-progress rows.
+  const deleteInProgressRun = useCallback(async (runId: string) => {
+    setUiError(null);
+    setDeletingRunId(runId);
+    try {
+      await apiFetch(`/api/testing/runs/${runId}`, { method: "DELETE" });
+      removeRunFromLocalState(runId);
+    } catch (error) {
+      setUiError(formatActionError(error, "Unable to delete this in-progress run."));
+    } finally {
+      setDeletingRunId((currentRunId) => (currentRunId === runId ? null : currentRunId));
+    }
+  }, [removeRunFromLocalState]);
 
   // Sends failed scenario details to admin feedback and includes hidden scenario context metadata.
   const sendToFeedback = useCallback(async (
@@ -889,6 +930,14 @@ export default function TestingPage() {
                 </span>
               )}
             </TabsTrigger>
+            <TabsTrigger value="completed">
+              Completed
+              {completedRuns.length > 0 && (
+                <span className="ml-1.5 rounded-full bg-primary/15 px-1.5 py-0.5 text-[10px] font-medium text-primary leading-none">
+                  {completedRuns.length}
+                </span>
+              )}
+            </TabsTrigger>
             <TabsTrigger value="manage">Manage Cases</TabsTrigger>
           </TabsList>
           {uiError && (
@@ -1055,6 +1104,7 @@ export default function TestingPage() {
                 {inProgressRuns.map(({ run, suiteName, suiteDisplayName }) => {
                   const done = run.pass + run.fail + run.skip;
                   const pctDone = run.total > 0 ? Math.round((done / run.total) * 100) : 0;
+                  const isDeleting = deletingRunId === run.id;
                   return (
                     <div key={run.id} className="flex items-center justify-between gap-4 rounded-lg border border-border bg-card px-5 py-4">
                       <div className="min-w-0 flex-1 space-y-1.5">
@@ -1072,13 +1122,79 @@ export default function TestingPage() {
                           <span className="text-xs text-muted-foreground shrink-0">{done}/{run.total}</span>
                         </div>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => void resumeRun(run, suiteName)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shrink-0"
-                      >
-                        Resume →
-                      </button>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (confirm(`Delete this in-progress run for ${suiteDisplayName}? This cannot be undone.`)) {
+                              void deleteInProgressRun(run.id);
+                            }
+                          }}
+                          disabled={isDeleting}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-lg border border-border text-muted-foreground hover:text-red-600 hover:border-red-300 transition-colors disabled:opacity-60"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                          {isDeleting ? "Deleting…" : "Delete"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void resumeRun(run, suiteName)}
+                          disabled={isDeleting}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-60"
+                        >
+                          Resume →
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* ── Tab: Completed ── */}
+          <TabsContent value="completed" className="m-0">
+            {completedRuns.length === 0 ? (
+              <p className="text-muted-foreground text-sm text-center py-16">No completed scenario runs yet.</p>
+            ) : (
+              <div className="space-y-3">
+                {completedRuns.map(({ run, suiteName, suiteDisplayName }) => {
+                  const passRate = run.total > 0 ? Math.round((run.pass / run.total) * 100) : 0;
+                  return (
+                    <div key={run.id} className="flex items-center justify-between gap-4 rounded-lg border border-border bg-card px-5 py-4">
+                      <div className="min-w-0 flex-1 space-y-1.5">
+                        <p className="text-sm font-medium">{suiteDisplayName}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {run.tester && `${run.tester} · `}
+                          {new Date(run.run_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                          {" · "}
+                          {depthLabel(run.scenario_depth)}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {run.pass} passed · {run.fail} failed · {run.skip} skipped
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <span
+                          className={cn(
+                            "text-sm font-semibold",
+                            passRate === 100 ? "text-green-600" : passRate >= 70 ? "text-amber-500" : "text-red-500",
+                          )}
+                        >
+                          {passRate}%
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const suite = suites.find((s) => s.tool_name === suiteName);
+                            if (suite) setSelectedSuite(suite);
+                            void openRunDetail(run.id);
+                          }}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-border bg-background hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                        >
+                          View details
+                        </button>
+                      </div>
                     </div>
                   );
                 })}

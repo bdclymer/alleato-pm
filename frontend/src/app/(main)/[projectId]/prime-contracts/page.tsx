@@ -52,6 +52,27 @@ type FilterState = Record<string, FilterValue>;
 
 type ContractStatus = NonNullable<PrimeContract["status"]>;
 
+type PrimeContractChangeOrderRow = {
+  id: number;
+  contract_id: string | null;
+  prime_contract_id: string | null;
+  pcco_number: string | null;
+  title: string | null;
+  status: string | null;
+  total_amount: number | null;
+};
+
+type PrimeContractChangeOrdersResponse =
+  | PrimeContractChangeOrderRow[]
+  | { data: PrimeContractChangeOrderRow[] };
+
+/** Normalizes prime contract change order API payloads into a consistent array shape. */
+function normalizePrimeContractChangeOrders(
+  payload: PrimeContractChangeOrdersResponse,
+): PrimeContractChangeOrderRow[] {
+  return Array.isArray(payload) ? payload : payload.data;
+}
+
 export default function ProjectContractsPage(): ReactElement {
   const router = useRouter();
   const pathname = usePathname();
@@ -115,12 +136,30 @@ export default function ProjectContractsPage(): ReactElement {
       if (!pccoCache[contractId]) {
         setPccoCache((prev) => ({ ...prev, [contractId]: { loading: true, data: [], pcos: [] } }));
         try {
-          const [allPccos, allPcos] = await Promise.all([
-            apiFetch<Array<{ id: number; prime_contract_id: string | null; pcco_number: string | null; title: string | null; status: string | null; total_amount: number | null }>>(`/api/projects/${projectId}/prime-contract-change-orders`),
-            apiFetch<Array<{ id: string; prime_contract_id: string | null; pco_number: string | null; title: string | null; status: string | null; total_amount: number | null }>>(`/api/projects/${projectId}/prime-contract-pcos?prime_contract_id=${contractId}`),
+          const [pccosResult, pcosResult] = await Promise.allSettled([
+            apiFetch<PrimeContractChangeOrdersResponse>(
+              `/api/projects/${projectId}/prime-contract-change-orders`,
+            ),
+            apiFetch<PcoSummary[]>(
+              `/api/projects/${projectId}/prime-contract-pcos?prime_contract_id=${encodeURIComponent(contractId)}`,
+            ),
           ]);
-          const filteredPccos = allPccos.filter((p) => p.prime_contract_id == null || String(p.prime_contract_id) === String(contractId));
-          setPccoCache((prev) => ({ ...prev, [contractId]: { loading: false, data: filteredPccos, pcos: allPcos } }));
+
+          const allPccos =
+            pccosResult.status === "fulfilled"
+              ? normalizePrimeContractChangeOrders(pccosResult.value)
+              : [];
+          const allPcos = pcosResult.status === "fulfilled" ? pcosResult.value : [];
+
+          const filteredPccos = allPccos.filter((p) => {
+            const linkedContractId = p.prime_contract_id ?? p.contract_id;
+            return linkedContractId == null || String(linkedContractId) === String(contractId);
+          });
+
+          setPccoCache((prev) => ({
+            ...prev,
+            [contractId]: { loading: false, data: filteredPccos, pcos: allPcos },
+          }));
         } catch {
           setPccoCache((prev) => ({ ...prev, [contractId]: { loading: false, data: [], pcos: [] } }));
         }
@@ -652,6 +691,7 @@ export default function ProjectContractsPage(): ReactElement {
               onToggle: toggleExpand,
               loading: pccoCache[item.id]?.loading ?? false,
               data: pccoCache[item.id]?.data ?? [],
+              pcos: pccoCache[item.id]?.pcos ?? [],
             }),
         }}
         emptyState={{

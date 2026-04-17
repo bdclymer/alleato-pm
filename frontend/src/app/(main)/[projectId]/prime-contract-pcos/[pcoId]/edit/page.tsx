@@ -2,10 +2,10 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
-import { LabelValueRow, PageContainer, ProjectPageHeader } from "@/components/layout";
+import { LabelValueRow, PageShell } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -227,225 +227,222 @@ export default function EditPrimeContractPcoPage() {
 
   if (isLoading) {
     return (
-      <>
-        <ProjectPageHeader title="Edit Prime Contract PCO" />
-        <PageContainer className="space-y-4">
+      <PageShell
+        variant="form"
+        title="Edit Prime Contract PCO"
+        onBack={() => router.push(buildDetailPath(null))}
+      >
+        <div className="space-y-4">
           <Skeleton className="h-8 w-64" />
           <Skeleton className="h-12 w-full" />
           <Skeleton className="h-12 w-full" />
           <Skeleton className="h-12 w-full" />
-        </PageContainer>
-      </>
+        </div>
+      </PageShell>
     );
   }
 
   return (
-    <>
-      <ProjectPageHeader
-        title={`Edit PCO #${formData.pco_number || "--"}`}
-        actions={
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => router.push(buildDetailPath(formData.prime_contract_id))}
-              disabled={isSaving}
+    <PageShell
+      variant="form"
+      title={`Edit PCO #${formData.pco_number || "--"}`}
+      onBack={() => router.push(buildDetailPath(formData.prime_contract_id))}
+      actions={
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => router.push(buildDetailPath(formData.prime_contract_id))}
+            disabled={isSaving}
+          >
+            Cancel
+          </Button>
+          <Button size="sm" onClick={handleSave} disabled={isSaving}>
+            {isSaving ? (
+              <>
+                <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                Saving
+              </>
+            ) : (
+              "Save"
+            )}
+          </Button>
+        </div>
+      }
+    >
+      <section className="space-y-4">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+          General
+        </h2>
+        <dl className="space-y-3">
+          <LabelValueRow label="#">{formData.pco_number || "--"}</LabelValueRow>
+          <LabelValueRow label="Title">
+            <Input
+              value={formData.title}
+              onChange={(event) => setFormData((previous) => ({ ...previous, title: event.target.value }))}
+              placeholder="PCO title"
+            />
+          </LabelValueRow>
+          <LabelValueRow label="Status">
+            <Select
+              value={formData.status}
+              onValueChange={(value) =>
+                setFormData((previous) => ({
+                  ...previous,
+                  status: value as PrimeContractPcoFormData["status"],
+                }))
+              }
             >
-              Cancel
-            </Button>
-            <Button size="sm" onClick={handleSave} disabled={isSaving}>
-              {isSaving ? (
-                <>
-                  <Loader2 className="mr-1 h-4 w-4 animate-spin" />
-                  Saving
-                </>
-              ) : (
-                "Save"
-              )}
-            </Button>
-          </div>
-        }
-      />
-      <PageContainer className="space-y-6">
-        <Button variant="outline" size="sm" onClick={() => router.push(buildDetailPath(formData.prime_contract_id))}>
-          <ArrowLeft className="mr-1 h-4 w-4" />
-          Back
-        </Button>
-
-        <section className="space-y-4">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-            General
-          </h2>
-          <dl className="space-y-3">
-            <LabelValueRow label="#">{formData.pco_number || "--"}</LabelValueRow>
-            <LabelValueRow label="Title">
-              <Input
-                value={formData.title}
-                onChange={(event) => setFormData((previous) => ({ ...previous, title: event.target.value }))}
-                placeholder="PCO title"
-              />
-            </LabelValueRow>
-            <LabelValueRow label="Status">
-              <Select
-                value={formData.status}
-                onValueChange={(value) =>
-                  setFormData((previous) => ({
-                    ...previous,
-                    status: value as PrimeContractPcoFormData["status"],
-                  }))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {STATUS_OPTIONS.map((statusOption) => (
-                    <SelectItem key={statusOption.value} value={statusOption.value}>
-                      {statusOption.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </LabelValueRow>
-            <LabelValueRow label="Revision">
-              <Input
-                type="number"
-                min={0}
-                value={String(formData.revision)}
-                onChange={(event) =>
-                  setFormData((previous) => ({
-                    ...previous,
-                    revision: Number.parseInt(event.target.value || "0", 10) || 0,
-                  }))
-                }
-              />
-            </LabelValueRow>
-            <LabelValueRow label="Change Reason">
-              <Select
-                value={formData.change_reason || "__none__"}
-                onValueChange={(value) =>
-                  setFormData((previous) => ({
-                    ...previous,
-                    change_reason: value === "__none__" ? "" : value,
-                  }))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select reason" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__">None</SelectItem>
-                  {CHANGE_REASONS.map((reason) => (
-                    <SelectItem key={reason} value={reason}>
-                      {reason}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </LabelValueRow>
-            <LabelValueRow label="Private">
-              <Checkbox
-                checked={formData.is_private}
-                onCheckedChange={(checked) =>
-                  setFormData((previous) => ({
-                    ...previous,
-                    is_private: Boolean(checked),
-                  }))
-                }
-              />
-            </LabelValueRow>
-            <LabelValueRow label="Description">
-              <Textarea
-                value={formData.description}
-                onChange={(event) => setFormData((previous) => ({ ...previous, description: event.target.value }))}
-                rows={4}
-              />
-            </LabelValueRow>
-            <LabelValueRow label="Executed">
-              <Checkbox
-                checked={formData.executed}
-                onCheckedChange={(checked) =>
-                  setFormData((previous) => ({ ...previous, executed: Boolean(checked) }))
-                }
-              />
-            </LabelValueRow>
-            <LabelValueRow label="Signed Change Order Received Date">
-              <Input
-                type="date"
-                value={formData.signed_co_received_date}
-                onChange={(event) =>
-                  setFormData((previous) => ({
-                    ...previous,
-                    signed_co_received_date: event.target.value,
-                  }))
-                }
-              />
-            </LabelValueRow>
-            <LabelValueRow label="Request Received From">
-              <Input
-                value={formData.request_received_from}
-                onChange={(event) =>
-                  setFormData((previous) => ({
-                    ...previous,
-                    request_received_from: event.target.value,
-                  }))
-                }
-              />
-            </LabelValueRow>
-            <LabelValueRow label="Location">
-              <Input
-                value={formData.location}
-                onChange={(event) =>
-                  setFormData((previous) => ({ ...previous, location: event.target.value }))
-                }
-              />
-            </LabelValueRow>
-            <LabelValueRow label="Schedule Impact (days)">
-              <Input
-                type="number"
-                min={0}
-                value={formData.schedule_impact}
-                onChange={(event) =>
-                  setFormData((previous) => ({
-                    ...previous,
-                    schedule_impact: event.target.value,
-                  }))
-                }
-              />
-            </LabelValueRow>
-            <LabelValueRow label="Field Change">
-              <Checkbox
-                checked={formData.field_change}
-                onCheckedChange={(checked) =>
-                  setFormData((previous) => ({
-                    ...previous,
-                    field_change: Boolean(checked),
-                  }))
-                }
-              />
-            </LabelValueRow>
-            <LabelValueRow label="Reference">
-              <Input
-                value={formData.reference}
-                onChange={(event) =>
-                  setFormData((previous) => ({ ...previous, reference: event.target.value }))
-                }
-              />
-            </LabelValueRow>
-            <LabelValueRow label="Paid in Full">
-              <Checkbox
-                checked={formData.paid_in_full}
-                onCheckedChange={(checked) =>
-                  setFormData((previous) => ({
-                    ...previous,
-                    paid_in_full: Boolean(checked),
-                  }))
-                }
-              />
-            </LabelValueRow>
-          </dl>
-        </section>
-      </PageContainer>
-    </>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {STATUS_OPTIONS.map((statusOption) => (
+                  <SelectItem key={statusOption.value} value={statusOption.value}>
+                    {statusOption.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </LabelValueRow>
+          <LabelValueRow label="Revision">
+            <Input
+              type="number"
+              min={0}
+              value={String(formData.revision)}
+              onChange={(event) =>
+                setFormData((previous) => ({
+                  ...previous,
+                  revision: Number.parseInt(event.target.value || "0", 10) || 0,
+                }))
+              }
+            />
+          </LabelValueRow>
+          <LabelValueRow label="Change Reason">
+            <Select
+              value={formData.change_reason || "__none__"}
+              onValueChange={(value) =>
+                setFormData((previous) => ({
+                  ...previous,
+                  change_reason: value === "__none__" ? "" : value,
+                }))
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select reason" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">None</SelectItem>
+                {CHANGE_REASONS.map((reason) => (
+                  <SelectItem key={reason} value={reason}>
+                    {reason}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </LabelValueRow>
+          <LabelValueRow label="Private">
+            <Checkbox
+              checked={formData.is_private}
+              onCheckedChange={(checked) =>
+                setFormData((previous) => ({
+                  ...previous,
+                  is_private: Boolean(checked),
+                }))
+              }
+            />
+          </LabelValueRow>
+          <LabelValueRow label="Description">
+            <Textarea
+              value={formData.description}
+              onChange={(event) => setFormData((previous) => ({ ...previous, description: event.target.value }))}
+              rows={4}
+            />
+          </LabelValueRow>
+          <LabelValueRow label="Executed">
+            <Checkbox
+              checked={formData.executed}
+              onCheckedChange={(checked) =>
+                setFormData((previous) => ({ ...previous, executed: Boolean(checked) }))
+              }
+            />
+          </LabelValueRow>
+          <LabelValueRow label="Signed Change Order Received Date">
+            <Input
+              type="date"
+              value={formData.signed_co_received_date}
+              onChange={(event) =>
+                setFormData((previous) => ({
+                  ...previous,
+                  signed_co_received_date: event.target.value,
+                }))
+              }
+            />
+          </LabelValueRow>
+          <LabelValueRow label="Request Received From">
+            <Input
+              value={formData.request_received_from}
+              onChange={(event) =>
+                setFormData((previous) => ({
+                  ...previous,
+                  request_received_from: event.target.value,
+                }))
+              }
+            />
+          </LabelValueRow>
+          <LabelValueRow label="Location">
+            <Input
+              value={formData.location}
+              onChange={(event) =>
+                setFormData((previous) => ({ ...previous, location: event.target.value }))
+              }
+            />
+          </LabelValueRow>
+          <LabelValueRow label="Schedule Impact (days)">
+            <Input
+              type="number"
+              min={0}
+              value={formData.schedule_impact}
+              onChange={(event) =>
+                setFormData((previous) => ({
+                  ...previous,
+                  schedule_impact: event.target.value,
+                }))
+              }
+            />
+          </LabelValueRow>
+          <LabelValueRow label="Field Change">
+            <Checkbox
+              checked={formData.field_change}
+              onCheckedChange={(checked) =>
+                setFormData((previous) => ({
+                  ...previous,
+                  field_change: Boolean(checked),
+                }))
+              }
+            />
+          </LabelValueRow>
+          <LabelValueRow label="Reference">
+            <Input
+              value={formData.reference}
+              onChange={(event) =>
+                setFormData((previous) => ({ ...previous, reference: event.target.value }))
+              }
+            />
+          </LabelValueRow>
+          <LabelValueRow label="Paid in Full">
+            <Checkbox
+              checked={formData.paid_in_full}
+              onCheckedChange={(checked) =>
+                setFormData((previous) => ({
+                  ...previous,
+                  paid_in_full: Boolean(checked),
+                }))
+              }
+            />
+          </LabelValueRow>
+        </dl>
+      </section>
+    </PageShell>
   );
 }

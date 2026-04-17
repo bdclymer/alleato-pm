@@ -188,6 +188,12 @@ export default function ProcoreDocsPage() {
   const { messages, sendMessage, status, error } = useChat({
     transport: new DefaultChatTransport({ api: "/api/procore-docs/chat" }),
   });
+  // Normalizes useChat errors so users see the concrete backend failure reason.
+  const chatErrorMessage = useMemo(() => {
+    if (!error) return null;
+    if (error instanceof Error && error.message.trim()) return error.message;
+    return "Chat request failed. Check login/session, Supabase service-role access, and AI provider env vars.";
+  }, [error]);
 
   const isStreaming = status === "streaming" || status === "submitted";
   const searchTerm = search.trim();
@@ -665,9 +671,9 @@ export default function ProcoreDocsPage() {
                 </div>
               ))}
 
-              {error && (
+              {chatErrorMessage && (
                 <p className="text-xs text-destructive">
-                  Something went wrong. Please try again.
+                  {chatErrorMessage}
                 </p>
               )}
 

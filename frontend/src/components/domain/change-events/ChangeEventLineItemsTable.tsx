@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo, useRef, useState } from "react";
+import Link from "next/link";
 
 import { Columns2, Search, SlidersHorizontal, Trash2, X } from "lucide-react";
 
@@ -27,6 +28,7 @@ import type { VerticalMarkup } from "@/hooks/use-vertical-markup";
 import type { ChangeEventDetailLineItem } from "@/types/change-events";
 
 interface ChangeEventLineItemsTableProps {
+  projectId: number;
   lineItems: ChangeEventDetailLineItem[];
   markupRows: VerticalMarkup[];
   expectingRevenue?: boolean;
@@ -113,6 +115,7 @@ const DEFAULT_COL_WIDTHS: Record<ColWidthKey, number> = {
 };
 
 export function ChangeEventLineItemsTable({
+  projectId,
   lineItems,
   markupRows,
   expectingRevenue = true,
@@ -652,14 +655,44 @@ export function ChangeEventLineItemsTable({
                         {safeDescription(li.description) || "--"}
                       </InlineTableCell>
                       <InlineTableCell className="max-w-22.5 truncate">
-                        {li.vendor?.name || "--"}
+                        {li.vendor?.id && li.vendor?.name ? (
+                          <Link
+                            href={`/directory/companies/${li.vendor.id}`}
+                            className="text-primary hover:underline"
+                            title={li.vendor.name}
+                          >
+                            {li.vendor.name}
+                          </Link>
+                        ) : (
+                          li.vendor?.name || "--"
+                        )}
                       </InlineTableCell>
                       <InlineTableCell className="max-w-22.5 truncate">
-                        {li.contract?.display_name ||
+                        {li.contractId ? (
+                          <Link
+                            href={`/${projectId}/prime-contracts/${li.contractId}`}
+                            className="text-primary hover:underline"
+                            title={
+                              li.contract?.display_name ||
+                              li.contract?.title ||
+                              li.contract?.company_name ||
+                              primeContractDisplayName ||
+                              "--"
+                            }
+                          >
+                            {li.contract?.display_name ||
+                              li.contract?.title ||
+                              li.contract?.company_name ||
+                              primeContractDisplayName ||
+                              "--"}
+                          </Link>
+                        ) : (
+                          li.contract?.display_name ||
                           li.contract?.title ||
                           li.contract?.company_name ||
                           primeContractDisplayName ||
-                          "--"}
+                          "--"
+                        )}
                       </InlineTableCell>
                       <InlineTableCell className="truncate">
                         {li.unitOfMeasure || "--"}
@@ -723,7 +756,18 @@ export function ChangeEventLineItemsTable({
                               undefined)
                             : undefined}
                         >
-                          {li.commitment
+                          {li.commitment?.id ? (
+                            <Link
+                              href={`/${projectId}/commitments/${li.commitment.id}`}
+                              className="text-primary hover:underline"
+                            >
+                              {li.commitment.display_name ||
+                                li.commitment.title ||
+                                li.commitment.company_name ||
+                                li.commitment.contract_number ||
+                                "--"}
+                            </Link>
+                          ) : li.commitment
                             ? (li.commitment.display_name ||
                               li.commitment.title ||
                               li.commitment.company_name ||

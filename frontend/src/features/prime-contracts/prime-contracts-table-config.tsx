@@ -304,6 +304,7 @@ export interface ListChangeOrderData {
   onToggle: (id: string) => void;
   loading: boolean;
   data: PccoSummary[];
+  pcos: PcoSummary[];
 }
 
 export function renderPrimeContractList(
@@ -355,28 +356,54 @@ export function renderPrimeContractList(
         <div className="px-4 pb-3 pt-1">
           {changeOrderData.loading ? (
             <p className="text-xs text-muted-foreground">Loading change orders...</p>
-          ) : changeOrderData.data.length === 0 ? (
-            <p className="text-xs text-muted-foreground">No change orders</p>
+          ) : changeOrderData.data.length === 0 && changeOrderData.pcos.length === 0 ? (
+            <p className="text-xs text-muted-foreground">No change orders or potential change orders</p>
           ) : (
             <div className="space-y-1">
-              <p className="mb-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                Change Orders ({changeOrderData.data.length})
-              </p>
-              {changeOrderData.data.map((co) => (
-                <div
-                  key={co.id}
-                  className="flex items-center justify-between rounded-md bg-muted/40 px-3 py-1.5"
-                >
-                  <div className="min-w-0 flex-1">
-                    <span className="text-xs font-medium">{co.pcco_number || "—"}</span>
-                    <span className="ml-2 text-xs text-muted-foreground line-clamp-1">{co.title || "—"}</span>
-                  </div>
-                  <div className="ml-2 flex shrink-0 items-center gap-2">
-                    <StatusBadge status={co.status || "Unknown"} />
-                    <span className="text-xs tabular-nums text-muted-foreground">{formatCur(co.total_amount)}</span>
-                  </div>
+              {changeOrderData.data.length > 0 && (
+                <div className="space-y-1">
+                  <p className="mb-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    Change Orders ({changeOrderData.data.length})
+                  </p>
+                  {changeOrderData.data.map((co) => (
+                    <div
+                      key={co.id}
+                      className="flex items-center justify-between rounded-md bg-muted/40 px-3 py-1.5"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <span className="text-xs font-medium">{co.pcco_number || "—"}</span>
+                        <span className="ml-2 text-xs text-muted-foreground line-clamp-1">{co.title || "—"}</span>
+                      </div>
+                      <div className="ml-2 flex shrink-0 items-center gap-2">
+                        <StatusBadge status={co.status || "Unknown"} />
+                        <span className="text-xs tabular-nums text-muted-foreground">{formatCur(co.total_amount)}</span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
+              {changeOrderData.pcos.length > 0 && (
+                <div className="space-y-1">
+                  <p className="mb-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    Potential Change Orders ({changeOrderData.pcos.length})
+                  </p>
+                  {changeOrderData.pcos.map((pco) => (
+                    <div
+                      key={pco.id}
+                      className="flex items-center justify-between rounded-md bg-muted/40 px-3 py-1.5"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <span className="text-xs font-medium">{pco.pco_number || "—"}</span>
+                        <span className="ml-2 text-xs text-muted-foreground line-clamp-1">{pco.title || "—"}</span>
+                      </div>
+                      <div className="ml-2 flex shrink-0 items-center gap-2">
+                        <StatusBadge status={pco.status || "Unknown"} />
+                        <span className="text-xs tabular-nums text-muted-foreground">{formatCur(pco.total_amount)}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>
