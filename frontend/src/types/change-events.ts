@@ -124,6 +124,7 @@ export interface ChangeEventDetailLineItem {
   costRom: number | null;
   revenueRom: number | null;
   nonCommittedCost: number | null;
+  latestPrice?: number | null;
   changeEventId: string;
   extendedAmount: number;
   sortOrder: number;

@@ -53,6 +53,7 @@ import { useChangeEventDetail } from "@/hooks/use-change-event-detail";
 import { useVerticalMarkup } from "@/hooks/use-vertical-markup";
 import { AddToCommitmentCODialog } from "@/components/domain/change-events/AddToCommitmentCODialog";
 import { AddToPrimePCODialog } from "@/components/domain/change-events/AddToPrimePCODialog";
+import { AddToBudgetChangeDialog } from "@/components/domain/change-events/AddToBudgetChangeDialog";
 import { ChangeEventEmailDialog } from "@/components/domain/change-events/ChangeEventEmailDialog";
 import { ChangeEventForm } from "@/components/domain/change-events/ChangeEventForm";
 import { ChangeEventGeneralInfoPanel } from "@/components/domain/change-events/ChangeEventGeneralInfoPanel";
@@ -175,6 +176,7 @@ export default function ChangeEventDetailPage() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showCommitmentCODialog, setShowCommitmentCODialog] = useState(false);
   const [showPrimePCODialog, setShowPrimePCODialog] = useState(false);
+  const [showBudgetChangeDialog, setShowBudgetChangeDialog] = useState(false);
   const [showEmailDialog, setShowEmailDialog] = useState(false);
   const [isUploadingAttachment, setIsUploadingAttachment] = useState(false);
   const [lineageCount, setLineageCount] = useState(0);
@@ -624,10 +626,10 @@ export default function ChangeEventDetailPage() {
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger>Add to Commitment</DropdownMenuSubTrigger>
                   <DropdownMenuSubContent>
-                    <DropdownMenuItem onSelect={() => router.push(`/${projectId}/commitments/new?type=purchase_order`)}>
+                    <DropdownMenuItem onSelect={() => router.push(`/${projectId}/commitments/new?type=purchase_order&changeEventId=${changeEventId}`)}>
                       New Purchase Order
                     </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => router.push(`/${projectId}/commitments/new?type=subcontract`)}>
+                    <DropdownMenuItem onSelect={() => router.push(`/${projectId}/commitments/new?type=subcontract&changeEventId=${changeEventId}`)}>
                       New Subcontract
                     </DropdownMenuItem>
                   </DropdownMenuSubContent>
@@ -656,6 +658,9 @@ export default function ChangeEventDetailPage() {
                     )}
                   </DropdownMenuSubContent>
                 </DropdownMenuSub>
+                <DropdownMenuItem onSelect={() => setShowBudgetChangeDialog(true)}>
+                  Add to Budget Change
+                </DropdownMenuItem>
               </DropdownMenuSubContent>
             </DropdownMenuSub>
           )}
@@ -810,6 +815,17 @@ export default function ChangeEventDetailPage() {
         projectId={projectId}
         onSuccess={() => {
           setShowPrimePCODialog(false);
+          void refreshLineage();
+        }}
+      />
+
+      <AddToBudgetChangeDialog
+        open={showBudgetChangeDialog}
+        onClose={() => setShowBudgetChangeDialog(false)}
+        selectedChangeEventIds={[changeEventId]}
+        projectId={projectId}
+        onSuccess={() => {
+          setShowBudgetChangeDialog(false);
           void refreshLineage();
         }}
       />

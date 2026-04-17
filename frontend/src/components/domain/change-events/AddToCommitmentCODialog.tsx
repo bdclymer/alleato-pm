@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -28,6 +28,14 @@ interface Commitment {
   commitment_type: string | null;
 }
 
+interface ExistingPco {
+  id: string;
+  pco_number: string;
+  title: string | null;
+  status: string | null;
+  commitment_id: string | null;
+}
+
 interface AddToCommitmentCODialogProps {
   open: boolean;
   onClose: () => void;
@@ -38,6 +46,8 @@ interface AddToCommitmentCODialogProps {
   commitmentTypeFilter?: "any" | "subcontract" | "purchase_order";
   isBulkDraftMode?: boolean;
 }
+
+type ActionMode = "create_new" | "link_existing";
 
 export function AddToCommitmentCODialog({
   open,
@@ -55,11 +65,21 @@ export function AddToCommitmentCODialog({
   const [selectedCommitmentId, setSelectedCommitmentId] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // "Link to existing" state
+  const [actionMode, setActionMode] = useState<ActionMode>("create_new");
+  const [existingPcos, setExistingPcos] = useState<ExistingPco[]>([]);
+  const [isLoadingPcos, setIsLoadingPcos] = useState(false);
+  const [selectedExistingPcoId, setSelectedExistingPcoId] = useState<string>("");
+
   const count = selectedChangeEventIds.length;
 
+  // Fetch commitments when dialog opens
   useEffect(() => {
     if (!open) {
       setSelectedCommitmentId("");
+      setActionMode("create_new");
+      setExistingPcos([]);
+      setSelectedExistingPcoId("");
       return;
     }
 
@@ -96,7 +116,7 @@ export function AddToCommitmentCODialog({
       }
     };
 
-    fetchCommitments();
+    void fetchCommitments();
   }, [
     open,
     projectId,
@@ -105,9 +125,61 @@ export function AddToCommitmentCODialog({
     commitmentTypeFilter,
   ]);
 
-  const handleCreatePCO = async () => {
+  // Fetch existing PCOs for the selected commitment when "link_existing" mode and commitment selected
+  const fetchExistingPcos = useCallback(async (commitmentId: string) => {
+    if (!commitmentId) {
+      setExistingPcos([]);
+      setSelectedExistingPcoId("");
+      return;
+    }
+    setIsLoadingPcos(true);
+    try {
+      const data = await apiFetch<unknown>(
+        `/api/projects/${projectId}/commitment-pcos?commitment_id=${commitmentId}`,
+      );
+      const items = Array.isArray(data) ? data : (data as { data?: unknown[] }).data ?? [];
+      setExistingPcos(
+        (items as Record<string, unknown>[])
+          .filter((p) => p.status !== "void")
+          .map((p) => ({
+            id: String(p.id),
+            pco_number: String(p.pco_number ?? p.number ?? ""),
+            title: (p.title as string) ?? null,
+            status: (p.status as string) ?? null,
+            commitment_id: (p.commitment_id as string) ?? null,
+          })),
+      );
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not load existing PCOs.");
+      setExistingPcos([]);
+    } finally {
+      setIsLoadingPcos(false);
+    }
+  }, [projectId]);
+
+  // When mode switches to link_existing and a commitment is already selected, fetch PCOs
+  useEffect(() => {
+    if (actionMode === "link_existing" && selectedCommitmentId) {
+      void fetchExistingPcos(selectedCommitmentId);
+    }
+  }, [actionMode, selectedCommitmentId, fetchExistingPcos]);
+
+  // When commitment changes in link_existing mode, refresh PCOs
+  const handleCommitmentChange = (id: string) => {
+    setSelectedCommitmentId(id);
+    setSelectedExistingPcoId("");
+    if (actionMode === "link_existing") {
+      void fetchExistingPcos(id);
+    }
+  };
+
+  const handleSubmit = async () => {
     if (!isBulkDraftMode && !selectedCommitmentId) {
       toast.error("Select a commitment before continuing.");
+      return;
+    }
+    if (actionMode === "link_existing" && !selectedExistingPcoId) {
+      toast.error("Select an existing PCO to link to.");
       return;
     }
 
@@ -167,6 +239,28 @@ export function AddToCommitmentCODialog({
         return;
       }
 
+      if (actionMode === "link_existing") {
+        // Link CE(s) to existing PCO
+        await apiFetch(
+          `/api/projects/${projectId}/change-events/add-to-pco`,
+          {
+            method: "POST",
+            body: JSON.stringify({
+              change_event_ids: selectedChangeEventIds,
+              pco_type: "commitment",
+              existing_pco_id: selectedExistingPcoId,
+            }),
+          },
+        );
+        const pco = existingPcos.find((p) => p.id === selectedExistingPcoId);
+        toast.success(`Linked to PCO ${pco?.pco_number ?? selectedExistingPcoId}`);
+        onSuccess();
+        onClose();
+        router.push(`/${projectId}/commitment-pcos/${selectedExistingPcoId}`);
+        return;
+      }
+
+      // Create new PCO
       const selectedCommitment = commitments.find((c) => c.id === selectedCommitmentId);
       const commitmentType = selectedCommitment?.commitment_type === "purchase_order"
         ? "purchase_order"
@@ -189,21 +283,16 @@ export function AddToCommitmentCODialog({
           }),
         },
       );
-      toast.success(
-        isBulkDraftMode
-          ? "Bulk draft commitment PCO created successfully"
-          : "Commitment PCO created successfully",
-      );
+      toast.success("Commitment PCO created successfully");
       onSuccess();
       onClose();
 
-      // Navigate to the newly created PCO detail page
       const pcoId = result?.pco?.id;
       if (pcoId) {
         router.push(`/${projectId}/commitment-pcos/${pcoId}`);
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to create commitment PCO");
+      toast.error(err instanceof Error ? err.message : "Failed to process commitment PCO");
     } finally {
       setIsSubmitting(false);
     }
@@ -215,6 +304,37 @@ export function AddToCommitmentCODialog({
     }
   };
 
+  function commitmentLabel(commitment: Commitment): string {
+    const typeLabel = commitment.commitment_type === "purchase_order"
+      ? "PO"
+      : commitment.commitment_type === "subcontract"
+        ? "Sub"
+        : "";
+    return [
+      `#${commitment.commitment_number}`,
+      commitment.title,
+      commitment.vendor_name,
+      typeLabel ? `(${typeLabel})` : "",
+    ]
+      .filter(Boolean)
+      .join(" — ");
+  }
+
+  const submitLabel = () => {
+    if (isSubmitting) return "Processing...";
+    if (isBulkDraftMode) return "Create Bulk Draft PCO";
+    if (actionMode === "link_existing") return `Link to existing PCO`;
+    return `Create PCO for ${count} event${count === 1 ? "" : "s"}`;
+  };
+
+  const isSubmitDisabled =
+    isSubmitting ||
+    isLoadingCommitments ||
+    (isBulkDraftMode
+      ? commitments.length === 0
+      : !selectedCommitmentId ||
+        (actionMode === "link_existing" && (!selectedExistingPcoId || isLoadingPcos)));
+
   return (
     <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) handleClose(); }}>
       <DialogContent className="sm:max-w-lg">
@@ -225,14 +345,40 @@ export function AddToCommitmentCODialog({
           <DialogDescription>
             {isBulkDraftMode
               ? `Create one draft Commitment PCO for each matched commitment using ${count === 1 ? "1 selected change event" : `${count} selected change events`}.`
-              : `Select a commitment to create a Potential Change Order for ${count === 1 ? "1 change event" : `${count} change events`}.`}
+              : `Add ${count === 1 ? "1 change event" : `${count} change events`} to a commitment PCO.`}
             {contractScope === "matching_cost_codes"
               ? " Showing contracts that match selected change event cost codes."
               : ""}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="py-2 space-y-3">
+        <div className="py-2 space-y-4">
+          {/* Action mode toggle — only shown in single-select (non-bulk) mode */}
+          {!isBulkDraftMode && (
+            <RadioGroup
+              value={actionMode}
+              onValueChange={(v) => {
+                setActionMode(v as ActionMode);
+                setSelectedExistingPcoId("");
+              }}
+              className="flex gap-4"
+            >
+              <div className="flex items-center gap-2">
+                <RadioGroupItem value="create_new" id="mode-create" />
+                <Label htmlFor="mode-create" className="cursor-pointer text-sm font-normal">
+                  Create new PCO
+                </Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <RadioGroupItem value="link_existing" id="mode-link" />
+                <Label htmlFor="mode-link" className="cursor-pointer text-sm font-normal">
+                  Link to existing PCO
+                </Label>
+              </div>
+            </RadioGroup>
+          )}
+
+          {/* Commitment list */}
           {isLoadingCommitments ? (
             <div className="space-y-2">
               <Skeleton className="h-12 w-full" />
@@ -252,76 +398,94 @@ export function AddToCommitmentCODialog({
             <>
               {isBulkDraftMode ? (
                 <div className="space-y-1 max-h-64 overflow-auto pr-1">
-                  {commitments.map((commitment) => {
-                    const typeLabel = commitment.commitment_type === "purchase_order"
-                      ? "PO"
-                      : commitment.commitment_type === "subcontract"
-                        ? "Sub"
-                        : "";
-                    const label = [
-                      `#${commitment.commitment_number}`,
-                      commitment.title,
-                      commitment.vendor_name,
-                      typeLabel ? `(${typeLabel})` : "",
-                    ]
-                      .filter(Boolean)
-                      .join(" — ");
-
-                    return (
-                      <div
-                        key={commitment.id}
-                        className="flex items-center gap-3 rounded-md border border-border px-3 py-2.5"
-                      >
-                        <Label className="flex-1 text-sm leading-snug">{label}</Label>
-                        {commitment.status ? <StatusBadge status={commitment.status} /> : null}
-                      </div>
-                    );
-                  })}
+                  {commitments.map((commitment) => (
+                    <div
+                      key={commitment.id}
+                      className="flex items-center gap-3 rounded-md border border-border px-3 py-2.5"
+                    >
+                      <Label className="flex-1 text-sm leading-snug">{commitmentLabel(commitment)}</Label>
+                      {commitment.status ? <StatusBadge status={commitment.status} /> : null}
+                    </div>
+                  ))}
                 </div>
               ) : (
-                <RadioGroup
-                  value={selectedCommitmentId}
-                  onValueChange={setSelectedCommitmentId}
-                  className="space-y-1"
-                >
-                  {commitments.map((commitment) => {
-                    const typeLabel = commitment.commitment_type === "purchase_order"
-                      ? "PO"
-                      : commitment.commitment_type === "subcontract"
-                        ? "Sub"
-                        : "";
-                    const label = [
-                      `#${commitment.commitment_number}`,
-                      commitment.title,
-                      commitment.vendor_name,
-                      typeLabel ? `(${typeLabel})` : "",
-                    ]
-                      .filter(Boolean)
-                      .join(" — ");
-
-                    return (
-                      <div
-                        key={commitment.id}
-                        className="flex items-center gap-3 rounded-md border border-border px-3 py-2.5 cursor-pointer hover:bg-muted/50 transition-colors"
-                        onClick={() => setSelectedCommitmentId(commitment.id)}
-                      >
-                        <RadioGroupItem
-                          value={commitment.id}
-                          id={`commitment-${commitment.id}`}
-                        />
-                        <Label
-                          htmlFor={`commitment-${commitment.id}`}
-                          className="flex-1 cursor-pointer text-sm leading-snug"
+                <>
+                  <div>
+                    <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Select commitment
+                    </p>
+                    <RadioGroup
+                      value={selectedCommitmentId}
+                      onValueChange={handleCommitmentChange}
+                      className="space-y-1 max-h-48 overflow-y-auto pr-1"
+                    >
+                      {commitments.map((commitment) => (
+                        <div
+                          key={commitment.id}
+                          className="flex items-center gap-3 rounded-md border border-border px-3 py-2.5 cursor-pointer hover:bg-muted/50 transition-colors"
+                          onClick={() => handleCommitmentChange(commitment.id)}
                         >
-                          {label}
-                        </Label>
-                        {commitment.status && (
-                          <StatusBadge status={commitment.status} />
-                        )}
-                      </div>
-                    );
-                  })}
-                </RadioGroup>
+                          <RadioGroupItem
+                            value={commitment.id}
+                            id={`commitment-${commitment.id}`}
+                          />
+                          <Label
+                            htmlFor={`commitment-${commitment.id}`}
+                            className="flex-1 cursor-pointer text-sm leading-snug"
+                          >
+                            {commitmentLabel(commitment)}
+                          </Label>
+                          {commitment.status && (
+                            <StatusBadge status={commitment.status} />
+                          )}
+                        </div>
+                      ))}
+                    </RadioGroup>
+                  </div>
+
+                  {/* Existing PCO selector — only in link_existing mode */}
+                  {actionMode === "link_existing" && selectedCommitmentId && (
+                    <div>
+                      <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        Select existing PCO
+                      </p>
+                      {isLoadingPcos ? (
+                        <div className="space-y-2">
+                          <Skeleton className="h-10 w-full" />
+                          <Skeleton className="h-10 w-full" />
+                        </div>
+                      ) : existingPcos.length === 0 ? (
+                        <p className="text-sm text-muted-foreground py-2">
+                          No existing PCOs for this commitment. Switch to &ldquo;Create new PCO&rdquo; to create one.
+                        </p>
+                      ) : (
+                        <RadioGroup
+                          value={selectedExistingPcoId}
+                          onValueChange={setSelectedExistingPcoId}
+                          className="space-y-1 max-h-48 overflow-y-auto pr-1"
+                        >
+                          {existingPcos.map((pco) => (
+                            <div
+                              key={pco.id}
+                              className="flex items-center gap-3 rounded-md border border-border px-3 py-2 cursor-pointer hover:bg-muted/50 transition-colors"
+                              onClick={() => setSelectedExistingPcoId(pco.id)}
+                            >
+                              <RadioGroupItem value={pco.id} id={`pco-${pco.id}`} />
+                              <Label
+                                htmlFor={`pco-${pco.id}`}
+                                className="flex-1 cursor-pointer text-sm leading-snug"
+                              >
+                                <span className="font-medium">#{pco.pco_number}</span>
+                                {pco.title ? ` — ${pco.title}` : ""}
+                              </Label>
+                              {pco.status && <StatusBadge status={pco.status} />}
+                            </div>
+                          ))}
+                        </RadioGroup>
+                      )}
+                    </div>
+                  )}
+                </>
               )}
             </>
           )}
@@ -336,18 +500,10 @@ export function AddToCommitmentCODialog({
             Cancel
           </Button>
           <Button
-            onClick={handleCreatePCO}
-            disabled={
-              isSubmitting ||
-              isLoadingCommitments ||
-              (isBulkDraftMode ? commitments.length === 0 : !selectedCommitmentId)
-            }
+            onClick={handleSubmit}
+            disabled={isSubmitDisabled}
           >
-            {isSubmitting
-              ? "Creating..."
-              : isBulkDraftMode
-                ? `Create Bulk Draft PCO`
-                : `Create PCO for ${count} event${count === 1 ? "" : "s"}`}
+            {submitLabel()}
           </Button>
         </DialogFooter>
       </DialogContent>

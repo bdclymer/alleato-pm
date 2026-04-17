@@ -23,6 +23,7 @@ interface ChangeEventSelectionBarProps {
   selectedChangeEventIds: string[];
   projectId: number;
   onSuccess?: () => void;
+  onAddToBudgetChange?: () => void;
 }
 
 export function ChangeEventSelectionBar({
@@ -32,6 +33,7 @@ export function ChangeEventSelectionBar({
   selectedChangeEventIds,
   projectId,
   onSuccess,
+  onAddToBudgetChange,
 }: ChangeEventSelectionBarProps) {
   const router = useRouter();
   if (selectedCount > 0) {
@@ -87,6 +89,12 @@ export function ChangeEventSelectionBar({
               >
                 Add to Prime Contract PCO
               </DropdownMenuItem>
+
+              {onAddToBudgetChange && (
+                <DropdownMenuItem onSelect={onAddToBudgetChange}>
+                  Add to Budget Change
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
 

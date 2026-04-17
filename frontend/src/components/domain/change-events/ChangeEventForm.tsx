@@ -122,6 +122,7 @@ export function ChangeEventForm({
             addFromCommitmentId={addFromCommitmentId}
             setAddFromCommitmentId={setAddFromCommitmentId}
             handleAddAllCommitmentLineItems={handleAddAllCommitmentLineItems}
+            lineItemRevenueSource={formData.lineItemRevenueSource}
           />
 
           <FormSection title="Attachments">

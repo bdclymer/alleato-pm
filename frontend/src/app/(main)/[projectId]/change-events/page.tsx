@@ -31,6 +31,7 @@ import {
 } from "@/features/change-events/change-events-table-config";
 import { ChangeEventRfqForm } from "@/components/domain/change-events/ChangeEventRfqForm";
 import type { ChangeEventRfqFormValues } from "@/components/domain/change-events/ChangeEventRfqForm";
+import { AddToBudgetChangeDialog } from "@/components/domain/change-events/AddToBudgetChangeDialog";
 import { PageShell } from "@/components/layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Text } from "@/components/ds/text";
@@ -201,6 +202,7 @@ export default function ProjectChangeEventsPage(): ReactElement {
 
   const [showRfqSheet, setShowRfqSheet] = React.useState(false);
   const [isCreatingRfq, setIsCreatingRfq] = React.useState(false);
+  const [showBudgetChangeDialog, setShowBudgetChangeDialog] = React.useState(false);
 
   const handleView = React.useCallback(
     (item: ChangeEvent) => {
@@ -658,6 +660,7 @@ export default function ProjectChangeEventsPage(): ReactElement {
               tableState.setSelectedIds([]);
               refetchChangeEvents();
             }}
+            onAddToBudgetChange={() => setShowBudgetChangeDialog(true)}
           />
         ) : undefined
       }
@@ -783,6 +786,17 @@ export default function ProjectChangeEventsPage(): ReactElement {
     />
     {deleteDialog.dialog}
     {bulkDeleteDialog.dialog}
+    <AddToBudgetChangeDialog
+      open={showBudgetChangeDialog}
+      onClose={() => setShowBudgetChangeDialog(false)}
+      selectedChangeEventIds={tableState.selectedIds}
+      projectId={projectId}
+      onSuccess={() => {
+        setShowBudgetChangeDialog(false);
+        tableState.setSelectedIds([]);
+        refetchChangeEvents();
+      }}
+    />
     <Sheet open={showRfqSheet} onOpenChange={setShowRfqSheet}>
       <SheetContent className="overflow-y-auto">
         <SheetHeader>

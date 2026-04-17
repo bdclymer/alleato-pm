@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "13.0.4"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       __drizzle_migrations: {
@@ -3505,6 +3530,112 @@ export type Database = {
           },
         ]
       }
+      budget_changes: {
+        Row: {
+          amount: number | null
+          change_event_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          number: string | null
+          project_id: number
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number | null
+          change_event_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          number?: string | null
+          project_id: number
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number | null
+          change_event_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          number?: string | null
+          project_id?: number
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_changes_change_event_id_fkey"
+            columns: ["change_event_id"]
+            isOneToOne: false
+            referencedRelation: "change_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_changes_change_event_id_fkey"
+            columns: ["change_event_id"]
+            isOneToOne: false
+            referencedRelation: "change_events_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_changes_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "budget_changes_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_changes_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_changes_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "budget_changes_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_changes_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_changes_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       budget_forecast_line_items: {
         Row: {
           budget_line_id: string
@@ -4683,6 +4814,7 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          latest_price: number | null
           non_committed_cost: number | null
           quantity: number | null
           revenue_rom: number | null
@@ -4703,6 +4835,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          latest_price?: number | null
           non_committed_cost?: number | null
           quantity?: number | null
           revenue_rom?: number | null
@@ -4723,6 +4856,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          latest_price?: number | null
           non_committed_cost?: number | null
           quantity?: number | null
           revenue_rom?: number | null
@@ -27782,6 +27916,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       billing_period_status: ["open", "closed", "approved"],

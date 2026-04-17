@@ -34,9 +34,12 @@ function run(cmd) {
 
 function loadTableUnion() {
   const src = readFileSync(TYPES_PATH, "utf8");
-  // Find the public.Tables block and extract its top-level keys
-  // Pattern: `Tables: {\n      table_name: {\n        Row: {...}` repeated
-  const tablesMatch = src.match(/Tables:\s*\{([\s\S]*?)\n\s*Views:/);
+  // Find the public.Tables block and extract its top-level keys.
+  // The generated file has multiple schemas (graphql_public, public) each with a
+  // Tables: block — we must anchor to the `public:` schema, not just the first Tables:.
+  const publicSchemaMatch = src.match(/\bpublic\s*:\s*\{([\s\S]*?)^\s{2}\}/m);
+  const publicSrc = publicSchemaMatch ? publicSchemaMatch[1] : src;
+  const tablesMatch = publicSrc.match(/Tables:\s*\{([\s\S]*?)\n\s*Views:/);
   if (!tablesMatch) {
     console.error("Could not parse Tables union from database.types.ts");
     process.exit(2);

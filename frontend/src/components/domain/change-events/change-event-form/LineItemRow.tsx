@@ -42,6 +42,7 @@ interface LineItemRowProps {
   onCreateBudgetCode: (rowIndex: number) => void;
   handleCommitmentChange: (rowIndex: number, commitmentId: string) => void;
   handleCommitmentLineItemChange: (rowIndex: number, commitmentId: string, sovLineItemId: string) => void;
+  lineItemRevenueSource?: string;
 }
 
 export function LineItemRow({
@@ -58,9 +59,16 @@ export function LineItemRow({
   onCreateBudgetCode,
   handleCommitmentChange,
   handleCommitmentLineItemChange,
+  lineItemRevenueSource = "",
 }: LineItemRowProps) {
   const lineTotal = item.revenueRom || 0;
   const isLinkedToCommitment = Boolean(item.commitmentId);
+
+  const revenueSourceLower = lineItemRevenueSource.toLowerCase();
+  const isRevenueReadOnly =
+    revenueSourceLower !== "" &&
+    revenueSourceLower !== "manual" &&
+    !revenueSourceLower.includes("manual entry");
 
   return (
     <TableRow className="group border-b border-border/60 bg-background transition-colors hover:bg-muted/20">
@@ -200,35 +208,47 @@ export function LineItemRow({
 
       {/* Revenue: Quantity */}
       <TableCell className="w-40 px-1 py-1.5 align-top">
-        <Input
-          type="number"
-          inputMode="numeric"
-          step="1"
-          min="0"
-          className="min-w-[96px] text-right"
-          value={Number.isFinite(item.revenueQuantity) ? Math.trunc(item.revenueQuantity) : 1}
-          onChange={(e) =>
-            updateLineItem(
-              index,
-              "revenueQuantity",
-              e.target.value === "" ? 1 : Math.max(0, parseInt(e.target.value, 10) || 1),
-            )
-          }
-          onFocus={(e) => e.target.select()}
-          placeholder="1"
-        />
+        {isRevenueReadOnly ? (
+          <div className="min-w-[96px] pt-2 text-right text-sm text-muted-foreground">
+            {Number.isFinite(item.revenueQuantity) ? Math.trunc(item.revenueQuantity) : 1}
+          </div>
+        ) : (
+          <Input
+            type="number"
+            inputMode="numeric"
+            step="1"
+            min="0"
+            className="min-w-[96px] text-right"
+            value={Number.isFinite(item.revenueQuantity) ? Math.trunc(item.revenueQuantity) : 1}
+            onChange={(e) =>
+              updateLineItem(
+                index,
+                "revenueQuantity",
+                e.target.value === "" ? 1 : Math.max(0, parseInt(e.target.value, 10) || 1),
+              )
+            }
+            onFocus={(e) => e.target.select()}
+            placeholder="1"
+          />
+        )}
       </TableCell>
 
       {/* Revenue: Unit Cost */}
       <TableCell className="w-56 px-1 py-1.5 align-top">
-        <MoneyField
-          inline
-          label="Revenue Unit Cost"
-          value={item.revenueUnitCost ?? undefined}
-          onChange={(val) => updateLineItem(index, "revenueUnitCost", val ?? 0)}
-          showCurrency={false}
-          className="h-9 min-w-[120px]"
-        />
+        {isRevenueReadOnly ? (
+          <div className="pt-2 text-right text-sm text-muted-foreground">
+            {item.revenueUnitCost != null ? formatCurrency(item.revenueUnitCost) : "--"}
+          </div>
+        ) : (
+          <MoneyField
+            inline
+            label="Revenue Unit Cost"
+            value={item.revenueUnitCost ?? undefined}
+            onChange={(val) => updateLineItem(index, "revenueUnitCost", val ?? 0)}
+            showCurrency={false}
+            className="h-9 min-w-[120px]"
+          />
+        )}
       </TableCell>
 
       {/* Revenue ROM (computed) */}
@@ -236,7 +256,8 @@ export function LineItemRow({
         <div
           className={cn(
             "pt-2 text-right text-sm font-semibold",
-            item.revenueRom > 0 ? "text-foreground" : "text-muted-foreground",
+            isRevenueReadOnly && "text-muted-foreground italic",
+            !isRevenueReadOnly && (item.revenueRom > 0 ? "text-foreground" : "text-muted-foreground"),
           )}
         >
           {formatCurrency(item.revenueRom)}

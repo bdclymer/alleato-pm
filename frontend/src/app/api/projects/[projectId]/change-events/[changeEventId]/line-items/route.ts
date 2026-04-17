@@ -210,6 +210,7 @@ export const GET = withApiGuardrails(
         costRom: item.cost_rom,
         revenueRom: item.revenue_rom,
         nonCommittedCost: item.non_committed_cost,
+        latestPrice: item.latest_price ?? null,
         sortOrder: item.sort_order || 0,
         createdAt: item.created_at,
         updatedAt: item.updated_at,
@@ -401,6 +402,7 @@ export const POST = withApiGuardrails(
         cost_rom: validatedData.costRom !== undefined ? validatedData.costRom : extendedAmount,
         revenue_rom: validatedData.revenueRom || undefined,
         non_committed_cost: validatedData.nonCommittedCost || undefined,
+        latest_price: validatedData.latestPrice || undefined,
         sort_order: validatedData.sortOrder,
       })
       .select(`
@@ -451,6 +453,7 @@ export const POST = withApiGuardrails(
       costRom: data.cost_rom,
       revenueRom: data.revenue_rom,
       nonCommittedCost: data.non_committed_cost,
+      latestPrice: data.latest_price ?? null,
       sortOrder: data.sort_order,
       createdAt: data.created_at,
       updatedAt: data.updated_at,

@@ -147,6 +147,7 @@ export const createLineItemSchema = z.object({
   revenueRom: z.number().nonnegative().optional(),
   costRom: z.number().nonnegative().optional(),
   nonCommittedCost: z.number().optional(), // can be negative when revenue > cost
+  latestPrice: z.number().nonnegative().optional(),
   sortOrder: z.number().int().default(0),
 }); // Update Line Item Schema
 export const updateLineItemSchema = createLineItemSchema.partial(); // Query params schema

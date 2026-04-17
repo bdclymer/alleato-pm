@@ -55,6 +55,7 @@ interface LineItemsSectionProps {
   addFromCommitmentId: string;
   setAddFromCommitmentId: (id: string) => void;
   handleAddAllCommitmentLineItems: (commitmentId: string) => void;
+  lineItemRevenueSource?: string;
 }
 
 export function LineItemsSection({
@@ -75,6 +76,7 @@ export function LineItemsSection({
   addFromCommitmentId,
   setAddFromCommitmentId,
   handleAddAllCommitmentLineItems,
+  lineItemRevenueSource = "",
 }: LineItemsSectionProps) {
   return (
     <FormSection title="Line Items">
@@ -108,6 +110,7 @@ export function LineItemsSection({
                   onCreateBudgetCode={onCreateBudgetCode}
                   handleCommitmentChange={handleCommitmentChange}
                   handleCommitmentLineItemChange={handleCommitmentLineItemChange}
+                  lineItemRevenueSource={lineItemRevenueSource}
                 />
               ))}
               <LineItemsTotalsRow lineItems={lineItems} />

@@ -74,6 +74,7 @@ export const GET = withApiGuardrails(
       costRom: lineItem.cost_rom,
       revenueRom: lineItem.revenue_rom,
       nonCommittedCost: lineItem.non_committed_cost,
+      latestPrice: lineItem.latest_price ?? null,
       sortOrder: lineItem.sort_order || 0,
       createdAt: lineItem.created_at,
       updatedAt: lineItem.updated_at,
@@ -262,6 +263,7 @@ export const PATCH = withApiGuardrails(
     if (validatedData.costRom !== undefined) updates.cost_rom = validatedData.costRom;
     if (validatedData.revenueRom !== undefined) updates.revenue_rom = validatedData.revenueRom;
     if (validatedData.nonCommittedCost !== undefined) updates.non_committed_cost = validatedData.nonCommittedCost;
+    if (validatedData.latestPrice !== undefined) updates.latest_price = validatedData.latestPrice;
 
     // Update the line item
     const { data, error } = await supabase
