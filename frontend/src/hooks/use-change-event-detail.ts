@@ -604,6 +604,7 @@ export function useChangeEventDetail(
     attachments,
     historyEntries,
     relatedItems,
+    rfqCount,
 
     // Loading / error
     isLoading,
