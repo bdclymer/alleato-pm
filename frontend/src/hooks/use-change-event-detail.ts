@@ -84,6 +84,7 @@ export function useChangeEventDetail(
   const [relatedItems, setRelatedItems] = useState<ChangeEventRelatedItem[]>(
     [],
   );
+  const [rfqCount, setRfqCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -180,6 +181,22 @@ export function useChangeEventDetail(
     }
   }, [projectId, changeEventId]);
 
+  /* ── Fetch RFQ count ─────────────────────────────────────────── */
+
+  const fetchRfqCount = useCallback(async () => {
+    try {
+      const res = await fetch(
+        `/api/projects/${projectId}/change-events/rfqs?changeEventId=${changeEventId}`,
+      );
+      if (!res.ok) return;
+      const json = await res.json();
+      const items: unknown[] = Array.isArray(json) ? json : (json.data ?? []);
+      setRfqCount(items.length);
+    } catch {
+      // Non-critical
+    }
+  }, [projectId, changeEventId]);
+
   /* ── Fetch related items ──────────────────────────────────────── */
 
   const fetchRelatedItems = useCallback(async () => {
@@ -206,11 +223,15 @@ export function useChangeEventDetail(
     fetchRelatedItems();
   }, [fetchRelatedItems]);
 
+  useEffect(() => {
+    void fetchRfqCount();
+  }, [fetchRfqCount]);
+
   /* ── Actions ──────────────────────────────────────────────────── */
 
   const refetch = useCallback(async () => {
-    await Promise.all([fetchChangeEventDetails(), fetchRelatedItems()]);
-  }, [fetchChangeEventDetails, fetchRelatedItems]);
+    await Promise.all([fetchChangeEventDetails(), fetchRelatedItems(), fetchRfqCount()]);
+  }, [fetchChangeEventDetails, fetchRelatedItems, fetchRfqCount]);
 
   const updateStatus = useCallback(
     async (newStatus: string) => {
