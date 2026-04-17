@@ -274,7 +274,7 @@ export function CommentsSidebarPanel() {
                   initialPresence={{ cursor: null }}
                   initialStorage={INITIAL_STORAGE}
                 >
-                  <div className="flex min-h-0 flex-1 p-4">
+                  <div className="flex min-h-0 w-full flex-1 p-4">
                     <EntityComments title="" stickyComposer />
                   </div>
                 </RoomProvider>

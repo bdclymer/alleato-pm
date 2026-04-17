@@ -86,7 +86,7 @@ export function EntityComments({
 
   return (
     <div
-      className={`alleato-comments ${stickyComposer ? "flex h-full min-h-0 flex-col" : ""} ${className ?? ""}`.trim()}
+      className={`alleato-comments ${stickyComposer ? "flex h-full min-h-0 w-full flex-col" : "w-full"} ${className ?? ""}`.trim()}
     >
       {hasTitle ? (
         <div className="mb-6 flex items-center gap-2.5">
@@ -120,12 +120,12 @@ export function EntityComments({
           }
         >
           <div className={stickyComposer ? "min-h-0 flex-1 overflow-y-auto pr-1" : undefined}>
-            <ThreadList />
+            <ThreadList centeredEmpty={stickyComposer} />
           </div>
           <div
             className={
               stickyComposer
-                ? "sticky bottom-0 mt-4 border-t border-border/60 bg-card/95 pt-3 backdrop-blur supports-[backdrop-filter]:bg-card/80"
+                ? "sticky bottom-0 mt-4 w-full border-t border-border/60 bg-card/95 pt-3 backdrop-blur supports-[backdrop-filter]:bg-card/80"
                 : "mt-6"
             }
           >
@@ -139,12 +139,14 @@ export function EntityComments({
 
 // ── Thread list ──────────────────────────────────────────────────────────────
 
-function ThreadList() {
+function ThreadList({ centeredEmpty = false }: { centeredEmpty?: boolean }) {
   const { threads } = useThreads();
 
   if (threads.length === 0) {
     return (
-      <div className="flex flex-col items-center py-8 text-center">
+      <div
+        className={`flex flex-col items-center text-center ${centeredEmpty ? "h-full justify-center py-8" : "py-8"}`}
+      >
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted/50 mb-3">
           <MessageSquarePlus className="h-5 w-5 text-muted-foreground/50" />
         </div>

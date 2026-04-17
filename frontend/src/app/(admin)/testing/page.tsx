@@ -1250,16 +1250,6 @@ export default function TestingPage() {
               {uiError}
             </p>
           )}
-          <div className="text-sm text-muted-foreground space-y-1">
-            <p className="font-medium text-foreground">Before you start</p>
-            <p>Make sure you&apos;re logged into the app you&apos;re testing.</p>
-            <p>Each test takes 1–3 minutes. You&apos;ll follow step-by-step instructions and mark each test passed, failed, or skipped.</p>
-            <p>
-              <span className="font-medium text-foreground">Broad</span> is recommended for fast team testing.
-              {detailedUnavailable ? " Detailed scenarios are not available for this suite yet." : " Use Detailed for deeper coverage."}
-            </p>
-          </div>
-
           <div className="space-y-4">
             <div className="space-y-1.5">
               <Label>Your name</Label>

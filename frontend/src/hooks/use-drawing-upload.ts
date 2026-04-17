@@ -4,12 +4,17 @@ import { useState, useCallback } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api-client";
+import { createClient as createSupabaseClient } from "@/lib/supabase/client";
 import type { UploadDrawingFormData } from "@/lib/schemas/drawing-schemas";
 import type {
-  DrawingRevision,
   DrawingUploadProgress,
   DrawingUploadError,
 } from "@/types/drawings.types";
+
+interface UploadedDrawingResult {
+  drawingId: string;
+  revisionId?: string;
+}
 
 /**
  * React Query hook for handling drawing file uploads with progress tracking
@@ -75,26 +80,52 @@ export function useDrawingUpload(projectId: string) {
       ]);
 
       const fileName = file.name.replace(/\.[^/.]+$/, "");
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("drawing_number", metadata.drawing_number || fileName);
-      formData.append("title", metadata.title || fileName);
-      if (metadata.discipline) formData.append("discipline", metadata.discipline);
-      if (metadata.drawing_type) formData.append("drawing_type", metadata.drawing_type);
-      formData.append("revision_number", metadata.revision_number || "A");
-      if (metadata.drawing_date) formData.append("drawing_date", metadata.drawing_date);
-      formData.append("received_date", metadata.received_date || new Date().toISOString());
-      if (metadata.drawing_set_id) formData.append("drawing_set_id", metadata.drawing_set_id);
-      if (metadata.description) formData.append("description", metadata.description);
-      if (metadata.area_id) formData.append("area_id", metadata.area_id);
 
-      const result = await apiFetch<DrawingRevision & { drawing_id?: string | number }>(
-        `/api/projects/${projectId}/drawings`,
+      const signedUpload = await apiFetch<{ path: string; token: string }>(
+        `/api/projects/${projectId}/drawings/upload-url`,
         {
           method: "POST",
-          body: formData,
+          body: JSON.stringify({
+            file_name: file.name,
+            file_size: file.size,
+            file_type: file.type,
+          }),
         },
       );
+
+      const supabase = createSupabaseClient();
+      const { error: directUploadError } = await supabase.storage
+        .from("project-files")
+        .uploadToSignedUrl(signedUpload.path, signedUpload.token, file, {
+          contentType: file.type,
+          upsert: false,
+        });
+      if (directUploadError) {
+        throw new Error(`Failed to upload file to storage: ${directUploadError.message}`);
+      }
+
+      const result = await apiFetch<{
+        id: string;
+        current_revision?: { id: string };
+      }>(`/api/projects/${projectId}/drawings`, {
+        method: "POST",
+        body: JSON.stringify({
+          drawing_number: metadata.drawing_number || fileName,
+          title: metadata.title || fileName,
+          discipline: metadata.discipline,
+          drawing_type: metadata.drawing_type,
+          revision_number: metadata.revision_number || "A",
+          drawing_date: metadata.drawing_date,
+          received_date: metadata.received_date || new Date().toISOString(),
+          drawing_set_id: metadata.drawing_set_id,
+          description: metadata.description,
+          area_id: metadata.area_id,
+          upload_path: signedUpload.path,
+          file_name: file.name,
+          file_size: file.size,
+          file_type: file.type,
+        }),
+      });
 
       // Update progress to completed
       setProgress((prev) =>
@@ -104,14 +135,17 @@ export function useDrawingUpload(projectId: string) {
                 ...p,
                 progress: 100,
                 status: "completed",
-                drawingId: result.drawing_id,
-                revisionId: result.id,
+                drawingId: result.id,
+                revisionId: result.current_revision?.id,
               }
             : p,
         ),
       );
 
-      return result;
+      return {
+        drawingId: result.id,
+        revisionId: result.current_revision?.id,
+      } satisfies UploadedDrawingResult;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -145,7 +179,7 @@ export function useDrawingUpload(projectId: string) {
   });
 
   const uploadDrawing = useCallback(
-    async (file: File, metadata: UploadDrawingFormData): Promise<DrawingRevision> => {
+    async (file: File, metadata: UploadDrawingFormData): Promise<UploadedDrawingResult> => {
       return uploadMutation.mutateAsync({ file, metadata });
     },
     [uploadMutation],
@@ -155,8 +189,8 @@ export function useDrawingUpload(projectId: string) {
     async (
       files: FileList,
       metadata: Partial<UploadDrawingFormData>,
-    ): Promise<DrawingRevision[]> => {
-      const results: DrawingRevision[] = [];
+    ): Promise<UploadedDrawingResult[]> => {
+      const results: UploadedDrawingResult[] = [];
 
       for (const file of Array.from(files)) {
         try {

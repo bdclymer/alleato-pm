@@ -84,6 +84,16 @@ function stringifyErrorDetails(details: ApiErrorBody["details"]): string | undef
 }
 
 function getApiErrorMessage(status: number, body: ApiErrorBody): string {
+  const raw = `${body.error ?? ""} ${body.error_message ?? ""} ${body.message ?? ""}`.toLowerCase();
+  if (
+    status === 413 ||
+    raw.includes("request entity too large") ||
+    raw.includes("payload too large") ||
+    raw.includes("function_payload_too_large")
+  ) {
+    return "Upload is too large for the server request limit. Reduce file size and try again.";
+  }
+
   return (
     stringifyErrorDetails(body.details) ||
     body.error_message ||
@@ -159,9 +169,10 @@ async function performApiFetch<T>(
   }
 
   // Error — parse the JSON error body from our API routes
+  const raw = await response.text().catch(() => "");
   let body: ApiErrorBody;
   try {
-    const json = await response.json();
+    const json = raw ? JSON.parse(raw) : {};
     body = {
       error: json.error,
       details: json.details,
@@ -172,10 +183,9 @@ async function performApiFetch<T>(
       request_id: json.request_id || response.headers.get("x-request-id") || undefined,
     };
   } catch {
-    // Response wasn't JSON — use status text
-    const text = await response.text().catch(() => "");
+    // Response wasn't JSON — preserve raw text so callers see the real server message.
     body = {
-      error: text || `Request failed (HTTP ${response.status})`,
+      error: raw || `Request failed (HTTP ${response.status})`,
       request_id: response.headers.get("x-request-id") || undefined,
     };
   }
@@ -206,9 +216,10 @@ export async function apiFetchBlob(
     return response.blob();
   }
 
+  const raw = await response.text().catch(() => "");
   let body: ApiErrorBody;
   try {
-    const json = await response.json();
+    const json = raw ? JSON.parse(raw) : {};
     body = {
       error: json.error,
       details: json.details,
@@ -219,9 +230,8 @@ export async function apiFetchBlob(
       request_id: json.request_id || response.headers.get("x-request-id") || undefined,
     };
   } catch {
-    const text = await response.text().catch(() => "");
     body = {
-      error: text || `Request failed (HTTP ${response.status})`,
+      error: raw || `Request failed (HTTP ${response.status})`,
       request_id: response.headers.get("x-request-id") || undefined,
     };
   }
