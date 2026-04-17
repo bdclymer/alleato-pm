@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { MoneyField } from "@/components/forms/MoneyField";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { TrendingUp, BarChart3, Calculator } from "lucide-react";
 import {
@@ -22,22 +23,34 @@ interface ForecastToCompleteModalProps {
   projectId: string;
   costCode?: string;
   currentData?: {
-    forecastMethod: "lump_sum" | "manual" | "monitored";
+    forecastMethod:
+      | "automatic"
+      | "lump_sum"
+      | "manual"
+      | "monitored_resources";
     forecastAmount?: number;
     projectedBudget?: number;
     projectedCosts?: number;
+    notes?: string;
   };
   onSave: (data: {
     budgetLineId: string;
     forecastMethod: string;
     forecastAmount: number;
+    notes?: string | null;
   }) => Promise<void>;
 }
 
 const METHODS = [
   {
+    value: "automatic" as const,
+    label: "Automatic Calculation",
+    description: "Projected Budget - Projected Costs.",
+    icon: TrendingUp,
+  },
+  {
     value: "lump_sum" as const,
-    label: "Lump Sum",
+    label: "Lump Sum Entry",
     description: "Fixed amount to complete.",
     icon: Calculator,
   },
@@ -48,10 +61,10 @@ const METHODS = [
     icon: BarChart3,
   },
   {
-    value: "monitored" as const,
-    label: "Monitored",
-    description: "Projected Budget \u2212 Projected Costs.",
-    icon: TrendingUp,
+    value: "monitored_resources" as const,
+    label: "Monitored Resources",
+    description: "Resource-based forecast amount.",
+    icon: BarChart3,
   },
 ];
 
@@ -64,27 +77,33 @@ export function ForecastToCompleteModal({
 }: ForecastToCompleteModalProps) {
   const [activeTab, setActiveTab] = useState("forecast");
   const [forecastMethod, setForecastMethod] = useState<
-    "lump_sum" | "manual" | "monitored"
-  >(currentData?.forecastMethod || "lump_sum");
+    "automatic" | "lump_sum" | "manual" | "monitored_resources"
+  >(currentData?.forecastMethod || "automatic");
   const [forecastAmount, setForecastAmount] = useState<string>(
     currentData?.forecastAmount?.toString() || "",
   );
+  const [forecastNotes, setForecastNotes] = useState(currentData?.notes || "");
   const [isSaving, setIsSaving] = useState(false);
 
   const projectedBudget = currentData?.projectedBudget || 0;
   const projectedCosts = currentData?.projectedCosts || 0;
 
   const calculatedForecast =
-    forecastMethod === "lump_sum" || forecastMethod === "manual"
+    forecastMethod === "automatic"
+      ? Math.max(0, projectedBudget - projectedCosts)
+      : forecastMethod === "lump_sum" ||
+          forecastMethod === "manual" ||
+          forecastMethod === "monitored_resources"
       ? parseFloat(forecastAmount) || 0
-      : Math.max(0, projectedBudget - projectedCosts);
+      : 0;
 
   const estimatedCostAtCompletion = projectedCosts + calculatedForecast;
   const projectedOverUnder = projectedBudget - estimatedCostAtCompletion;
 
   useEffect(() => {
     if (open) {
-      setForecastMethod(currentData?.forecastMethod || "lump_sum");
+      setForecastMethod(currentData?.forecastMethod || "automatic");
+      setForecastNotes(currentData?.notes || "");
       setForecastAmount(currentData?.forecastAmount?.toString() || "");
       setActiveTab("forecast");
     }
@@ -97,6 +116,7 @@ export function ForecastToCompleteModal({
         budgetLineId,
         forecastMethod,
         forecastAmount: calculatedForecast,
+        notes: forecastNotes.trim() || null,
       });
       onClose();
     } catch (error) {
@@ -108,7 +128,8 @@ export function ForecastToCompleteModal({
 
   const hasChanges =
     forecastMethod !== currentData?.forecastMethod ||
-    calculatedForecast !== (currentData?.forecastAmount || 0);
+    calculatedForecast !== (currentData?.forecastAmount || 0) ||
+    forecastNotes !== (currentData?.notes || "");
 
   const handleClose = () => {
     if (hasChanges) {
@@ -225,7 +246,9 @@ export function ForecastToCompleteModal({
             </div>
 
             {/* Amount Input */}
-            {(forecastMethod === "lump_sum" || forecastMethod === "manual") && (
+            {(forecastMethod === "lump_sum" ||
+              forecastMethod === "manual" ||
+              forecastMethod === "monitored_resources") && (
               <div>
                 <Label
                   htmlFor="forecastAmount"
@@ -247,6 +270,22 @@ export function ForecastToCompleteModal({
                 </div>
               </div>
             )}
+
+            <div>
+              <Label
+                htmlFor="forecastNotes"
+                className="text-sm font-medium text-foreground"
+              >
+                Notes
+              </Label>
+              <Textarea
+                id="forecastNotes"
+                value={forecastNotes}
+                onChange={(event) => setForecastNotes(event.target.value)}
+                className="mt-1 min-h-[88px]"
+                placeholder="Add context for this forecast."
+              />
+            </div>
 
             {/* Calculations */}
             <div className="rounded-lg bg-muted/40 border border-border p-4 space-y-2">

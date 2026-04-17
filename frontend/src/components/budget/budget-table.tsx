@@ -515,9 +515,9 @@ export function BudgetTable({
           </div>
         );
       },
-      size: 24,
-      minSize: 24,
-      maxSize: 24,
+      size: 32,
+      minSize: 32,
+      maxSize: 32,
       enableResizing: false,
     },
     {
@@ -553,9 +553,9 @@ export function BudgetTable({
           </Button>
         );
       },
-      size: 24,
-      minSize: 24,
-      maxSize: 24,
+      size: 32,
+      minSize: 32,
+      maxSize: 32,
       enableResizing: false,
     },
     {
@@ -565,18 +565,28 @@ export function BudgetTable({
         const hasChildren = Boolean(
           row.original.children && row.original.children.length > 0);
         const isGroupRow = hasChildren;
-        const { costCodeDescription, costType, description } = row.original;
+        const { costCode, costCodeDescription, costType, description } = row.original;
 
-        // Build the label prefix: "01-3245.X" (code + dot + cost type)
-        const codeLabel = costCodeDescription
-          ? costType
-            ? `${costCodeDescription}.${costType}`
-            : costCodeDescription
+        // Build canonical budget label: "01-3245 - Superintendent.L"
+        const codeLabelBase = costCode
+          ? `${costCode}${costCodeDescription ? ` - ${costCodeDescription}` : ""}`
+          : costCodeDescription || "";
+        const codeLabel = codeLabelBase
+          ? (costType ? `${codeLabelBase}.${costType}` : codeLabelBase)
           : null;
 
-        const fullLabel = codeLabel && description
+        // Hide description when API fallback text duplicates the canonical label.
+        const fallbackDescription = `${costCode}${costCodeDescription ? ` - ${costCodeDescription}` : ""}${costType ? ` (${costType})` : ""}`;
+        const normalizedDescription = description.trim();
+        const showDescription = Boolean(
+          normalizedDescription &&
+          normalizedDescription !== codeLabel &&
+          normalizedDescription !== fallbackDescription,
+        );
+
+        const fullLabel = codeLabel && showDescription
           ? `${codeLabel} ${description}`
-          : description || codeLabel || "";
+          : codeLabel || description || "";
 
         return (
           <div
@@ -592,7 +602,7 @@ export function BudgetTable({
                 {codeLabel}
               </span>
             )}
-            <span className="truncate">{description}</span>
+            {showDescription && <span className="truncate">{description}</span>}
           </div>
         );
       },
@@ -1100,9 +1110,9 @@ export function BudgetTable({
                         className={cn(
                           "relative bg-background py-2 text-center text-[11px] font-semibold text-foreground",
                           header.column.id === "select"
-                            ? "pl-1 pr-0.5"
+                            ? "pl-2 pr-1"
                             : header.column.id === "expander"
-                              ? "px-0.5"
+                              ? "px-1"
                               : "px-1.5",
                         )}
                         style={getColumnSizeStyle(header.column.id)}
@@ -1157,9 +1167,9 @@ export function BudgetTable({
                             className={cn(
                               "py-2 text-sm",
                               cell.column.id === "select"
-                                ? "pl-1 pr-0.5"
+                                ? "pl-2 pr-1"
                                 : cell.column.id === "expander"
-                                  ? "px-0.5"
+                                  ? "px-1"
                                   : "px-1.5",
                               row.depth > 0 && "text-foreground",
                               isDataColumn && "group/cell",
@@ -1209,10 +1219,10 @@ export function BudgetTable({
             {/* Inline Create Row */}
             {!isLocked && showInlineCreate && (
               <TableRow className="bg-primary/5 border-b border-border">
-                <TableCell className="py-2 pl-1 pr-0.5">
+                <TableCell className="py-2 pl-2 pr-1">
                   {/* Empty checkbox cell */}
                 </TableCell>
-                <TableCell className="py-2 px-0.5">
+                <TableCell className="py-2 px-1">
                   {/* Empty expander cell */}
                 </TableCell>
                 <TableCell className="py-2 px-2">
@@ -1309,8 +1319,8 @@ export function BudgetTable({
           >
             <TableFooter className="bg-muted/50 border-t">
               <tr className="bg-muted/50 hover:bg-muted/50 transition-colors">
-                <td className="py-4 pl-1 pr-0.5" style={getColumnSizeStyle("select")} />
-                <td className="py-4 px-0.5" style={getColumnSizeStyle("expander")} />
+                <td className="py-4 pl-2 pr-1" style={getColumnSizeStyle("select")} />
+                <td className="py-4 px-1" style={getColumnSizeStyle("expander")} />
                 <td
                   className="py-4 px-2 text-sm font-semibold text-foreground"
                   style={getColumnSizeStyle("description")}

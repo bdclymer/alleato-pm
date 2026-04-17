@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { apiFetch } from "@/lib/api-client";
 import { createClient } from "@/lib/supabase/client";
 import { ToolReferencePanel } from "@/components/domain/testing/ToolReferencePanel";
+import { FileUploadField } from "@/components/forms";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -17,7 +18,6 @@ import {
   CheckCircle2,
   XCircle,
   MinusCircle,
-  Camera,
   ChevronLeft,
   BookOpen,
   Play,
@@ -111,6 +111,9 @@ interface ManagedCase {
   scenario_depth: string;
 }
 
+const DEFAULT_TEST_PROJECT_ID = "891";
+const TESTING_PROJECT_ID_STORAGE_KEY = "testing-default-project-id";
+
 // ─── View States ─────────────────────────────────────────────────────────────
 
 type View = "home" | "start-run" | "running" | "complete" | "history" | "run-detail";
@@ -131,6 +134,27 @@ function depthLabel(depth: ScenarioDepth): string {
 // Converts unknown thrown values into a message that is safe to show in the UI.
 function formatActionError(error: unknown, fallback: string): string {
   return error instanceof Error && error.message.trim() ? error.message : fallback;
+}
+
+// Resolves a scenario start path and guarantees a project-scoped URL path.
+function resolveScenarioStartPath(startUrl: string | null, projectId: string): string {
+  const effectiveProjectId = projectId.trim() || DEFAULT_TEST_PROJECT_ID;
+  const rawInput = startUrl?.trim() || "/testing";
+  let path = rawInput;
+
+  try {
+    path = new URL(rawInput).pathname || "/testing";
+  } catch {
+    path = rawInput;
+  }
+
+  if (/^\/\d+\//.test(path)) {
+    return path.replace(/^\/\d+\//, `/${effectiveProjectId}/`);
+  }
+  if (path.startsWith("/")) {
+    return `/${effectiveProjectId}${path}`;
+  }
+  return `/${effectiveProjectId}/${path}`;
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -158,7 +182,6 @@ export default function TestingPage() {
   const [severityMap, setSeverityMap] = useState<Record<string, Severity>>({});
   const [checkedSteps, setCheckedSteps] = useState<Record<number, boolean>>({});
   const [uploadingScreenshot, setUploadingScreenshot] = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
   const notesRef = useRef<HTMLTextAreaElement>(null);
   const [historyRuns, setHistoryRuns] = useState<HistoryRun[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
@@ -238,7 +261,30 @@ export default function TestingPage() {
         "";
       setRunForm((f) => ({ ...f, tester: name }));
     });
+
+    try {
+      const storedProjectId = localStorage.getItem(TESTING_PROJECT_ID_STORAGE_KEY);
+      if (storedProjectId?.trim()) {
+        setRunForm((f) => ({ ...f, projectId: storedProjectId.trim() }));
+      }
+    } catch {
+      // ignore storage access errors
+    }
   }, []);
+
+  // Persist project id so future test runs reuse the same project context.
+  useEffect(() => {
+    try {
+      const normalized = runForm.projectId.trim();
+      if (normalized) {
+        localStorage.setItem(TESTING_PROJECT_ID_STORAGE_KEY, normalized);
+      } else {
+        localStorage.removeItem(TESTING_PROJECT_ID_STORAGE_KEY);
+      }
+    } catch {
+      // ignore storage access errors
+    }
+  }, [runForm.projectId]);
 
   // ── Restore notes from localStorage when runId changes ──
   useEffect(() => {
@@ -486,11 +532,7 @@ export default function TestingPage() {
       sev === "critical" || sev === "major" ? "high" :
       sev === "minor" ? "medium" : "low";
 
-    const startPath = (() => {
-      const raw = tc.start_url ?? "/testing";
-      if (runForm.projectId) return raw.replace(/^\/\d+\//, `/${runForm.projectId}/`);
-      return raw;
-    })();
+    const startPath = resolveScenarioStartPath(tc.start_url, runForm.projectId);
     const pageUrl =
       typeof window !== "undefined"
         ? `${window.location.origin}${startPath}`
@@ -1547,430 +1589,409 @@ export default function TestingPage() {
   // ─── View: RUNNING ─────────────────────────────────────────────────────────
   if (!current) return null;
   const tc = current.test_cases;
+  const passCount = results.filter((r) => r.status === "pass").length;
+  const failCount = results.filter((r) => r.status === "fail").length;
+  const skipCount = results.filter((r) => r.status === "skip").length;
+  const pendingCount = results.length - passCount - failCount - skipCount;
+  const startPath = tc.start_url ? resolveScenarioStartPath(tc.start_url, runForm.projectId) : null;
 
   return (
     <PageShell variant="content" title="" showHeader={false}>
-      {/* Progress bar — spans full container */}
-      <div className="h-1.5 bg-muted -mt-2 mb-0">
+      {/* Progress bar for quick run completion visibility. */}
+      <div className="h-1.5 bg-muted -mt-2">
         <div
           className="h-full bg-primary transition-all duration-500"
           style={{ width: `${pct}%` }} // eslint-disable-line react/forbid-component-props
         />
       </div>
 
-      {/* Run header */}
-      <div className="flex items-center justify-between border-b border-border py-3 mb-4">
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            aria-label="Previous scenario"
-            onClick={() => setCursor((c) => Math.max(c - 1, 0))}
-            disabled={cursor === 0}
-            className="text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors"
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </button>
-          {/* Jump-to-test popover */}
-          <div className="relative" ref={jumpListRef}>
-            <button
-              type="button"
-              onClick={() => setShowJumpList((v) => !v)}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors px-1 py-0.5 rounded"
-            >
-              <span className="font-medium text-foreground">{cursor + 1}</span> / {results.length}
-            </button>
-            {showJumpList && (
-              <div className="absolute top-full left-0 mt-1 z-50 w-72 max-h-80 overflow-y-auto rounded-xl border border-border bg-card shadow-sm">
-                {results.map((r, i) => (
-                  <button
-                    key={r.id}
-                    type="button"
-                    onClick={() => { setCursor(i); setShowJumpList(false); }}
-                    className={cn(
-                      "w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-muted/40 transition-colors",
-                      i === cursor && "bg-muted/60"
-                    )}
-                  >
-                    {statusIcon(r.status)}
-                    <span className="text-xs text-muted-foreground font-mono shrink-0">#{r.test_cases?.test_number}</span>
-                    <span className="text-xs truncate">{r.test_cases?.test_name}</span>
-                  </button>
-                ))}
+      <div className="space-y-8 pt-6 pb-12">
+        {/* Run summary header for orientation and quick health checks. */}
+        <section className="space-y-5 pb-5">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="space-y-1">
+              <p className="text-[11px] uppercase tracking-widest text-muted-foreground">Active Test Run</p>
+              <p className="text-lg font-semibold text-foreground">{selectedSuite?.display_name}</p>
+              <p className="text-sm text-muted-foreground">
+                Scenario <span className="font-medium text-foreground">{cursor + 1}</span> of {results.length}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                aria-label="Previous scenario"
+                onClick={() => setCursor((c) => Math.max(c - 1, 0))}
+                disabled={cursor === 0}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:text-foreground disabled:opacity-30"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              {/* Jump-to-scenario menu for non-linear navigation. */}
+              <div className="relative" ref={jumpListRef}>
+                <button
+                  type="button"
+                  onClick={() => setShowJumpList((v) => !v)}
+                  className="h-8 rounded-md border border-border px-3 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <span className="font-medium text-foreground">{cursor + 1}</span> / {results.length}
+                </button>
+                {showJumpList && (
+                  <div className="absolute top-full left-0 mt-1 z-50 w-80 max-h-80 overflow-y-auto rounded-md border border-border bg-background">
+                    {results.map((r, i) => (
+                      <button
+                        key={r.id}
+                        type="button"
+                        onClick={() => { setCursor(i); setShowJumpList(false); }}
+                        className={cn(
+                          "w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-muted/40 transition-colors",
+                          i === cursor && "bg-muted/60"
+                        )}
+                      >
+                        {statusIcon(r.status)}
+                        <span className="text-xs text-muted-foreground font-mono shrink-0">#{r.test_cases?.test_number}</span>
+                        <span className="text-xs truncate">{r.test_cases?.test_name}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
-            )}
+              <button
+                type="button"
+                aria-label="Next scenario"
+                onClick={() => setCursor((c) => Math.min(c + 1, results.length - 1))}
+                disabled={cursor >= results.length - 1}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:text-foreground disabled:opacity-30"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
           </div>
-        </div>
-        <p className="text-sm font-medium">{selectedSuite?.display_name}</p>
-        <div className="flex items-center gap-3 text-xs text-muted-foreground">
-          <span className="rounded-full border border-border px-2 py-0.5">
-            {depthLabel(runForm.scenarioDepth)}
-          </span>
-          <span className="text-green-600 font-medium">{results.filter((r) => r.status === "pass").length} ✓</span>
-          <span className="text-red-500 font-medium">{results.filter((r) => r.status === "fail").length} ✗</span>
-        </div>
-      </div>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+            <div className="rounded-md border border-border px-3 py-2">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Depth</p>
+              <p className="text-sm font-medium text-foreground">{depthLabel(runForm.scenarioDepth)}</p>
+            </div>
+            <div className="rounded-md border border-border px-3 py-2">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Passed</p>
+              <p className="text-sm font-medium text-green-600">{passCount}</p>
+            </div>
+            <div className="rounded-md border border-border px-3 py-2">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Issues</p>
+              <p className="text-sm font-medium text-red-500">{failCount}</p>
+            </div>
+            <div className="rounded-md border border-border px-3 py-2">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Skipped</p>
+              <p className="text-sm font-medium text-muted-foreground">{skipCount}</p>
+            </div>
+            <div className="rounded-md border border-border px-3 py-2">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Remaining</p>
+              <p className="text-sm font-medium text-foreground">{pendingCount}</p>
+            </div>
+          </div>
+        </section>
 
-      <div className="space-y-6 pb-12">
         {uiError && (
           <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-950/30 dark:text-red-300">
             {uiError}
           </p>
         )}
 
-        {/* Category chip + test number + edit toggle */}
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs bg-muted text-muted-foreground rounded-full px-2.5 py-0.5 font-medium">
-              {tc.category}{tc.subcategory ? ` · ${tc.subcategory}` : ""}
-            </span>
-            <span className="text-xs text-muted-foreground font-mono">#{tc.test_number}</span>
-            {tc.priority === "HIGH" && (
-              <span className="text-xs bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400 rounded-full px-2.5 py-0.5 font-medium">
-                High priority
-              </span>
-            )}
-          </div>
-          <button
-            type="button"
-            onClick={() => setEditingCase((v) => !v)}
-            title="Edit test instructions"
-            className={cn(
-              "flex items-center gap-1 text-xs px-2 py-1 rounded-md border transition-colors shrink-0",
-              editingCase
-                ? "border-primary bg-primary/5 text-primary"
-                : "border-border text-muted-foreground hover:text-foreground hover:border-foreground/30"
-            )}
-          >
-            <Pencil className="h-3 w-3" />
-            {editingCase ? "Editing" : "Edit"}
-          </button>
-        </div>
-
-        {/* Title */}
-        <h2 className="text-lg sm:text-xl font-semibold leading-snug tracking-tight">{tc.test_name}</h2>
-
-        {/* Project ID */}
-        <div className="flex items-center gap-3 rounded-lg border border-border px-4 py-3">
-          <span className="text-sm font-medium text-primary shrink-0">Project ID</span>
-          <input
-            id="runner-project-id"
-            type="text"
-            value={runForm.projectId}
-            onChange={(e) => setRunForm((f) => ({ ...f, projectId: e.target.value }))}
-            placeholder="Enter project ID (e.g. 890)"
-            className="flex-1 rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/40"
-          />
-          {runForm.projectId && (
-            <span className="text-xs text-muted-foreground font-mono shrink-0">
-              /{runForm.projectId}/…
-            </span>
-          )}
-        </div>
-
-        {/* ── Edit mode ── */}
-        {editingCase ? (
-          <div className="space-y-4 rounded-xl border border-primary/20 bg-primary/5 px-4 py-4">
-            <p className="text-xs font-semibold text-primary uppercase tracking-wide">Editing test instructions</p>
-
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">What this checks (context note)</Label>
-              <Textarea
-                value={editForm.context_note}
-                onChange={(e) => setEditForm((f) => ({ ...f, context_note: e.target.value }))}
-                placeholder="Plain English description of what this test verifies…"
-                className="resize-none h-16 text-sm"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Before you start (setup steps)</Label>
-              <Textarea
-                value={editForm.setup_steps}
-                onChange={(e) => setEditForm((f) => ({ ...f, setup_steps: e.target.value }))}
-                placeholder="Prerequisites, one per line…"
-                className="resize-none h-16 text-sm"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Start URL</Label>
-              <Input
-                value={editForm.start_url}
-                onChange={(e) => setEditForm((f) => ({ ...f, start_url: e.target.value }))}
-                placeholder="/67/budget"
-                className="text-sm font-mono"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Steps (one per line, no leading numbers)</Label>
-              <Textarea
-                value={editForm.steps}
-                onChange={(e) => setEditForm((f) => ({ ...f, steps: e.target.value }))}
-                placeholder="Click the Create button&#10;Fill in the Name field&#10;Click Save"
-                className="resize-none h-40 text-sm font-mono"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">What should happen (expected result)</Label>
-              <Textarea
-                value={editForm.expected_result}
-                onChange={(e) => setEditForm((f) => ({ ...f, expected_result: e.target.value }))}
-                placeholder="The record appears in the list…"
-                className="resize-none h-16 text-sm"
-              />
-            </div>
-
-            <div className="flex gap-2">
-              <Button type="button" size="sm" onClick={saveEdit} disabled={editSaving} className="flex-1">
-                {editSaving ? "Saving…" : "Save instructions"}
-              </Button>
-              <Button type="button" size="sm" variant="outline" onClick={() => setEditingCase(false)} disabled={editSaving}>
-                Cancel
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <>
-            {/* Context note (plain English "what this tests") */}
-            {tc.context_note && (
-              <div className="bg-blue-50 dark:bg-blue-950/30 rounded-xl px-4 py-3 text-sm text-blue-800 dark:text-blue-300">
-                <span className="font-medium">What this checks: </span>{tc.context_note}
-              </div>
-            )}
-
-            {/* Setup steps ("Before you start") */}
-            {tc.setup_steps && (
-              <div className="bg-amber-50 dark:bg-amber-950/20 rounded-xl px-4 py-3 space-y-1">
-                <p className="text-sm font-semibold text-amber-900 dark:text-amber-300">Before you start</p>
-                {parseSteps(tc.setup_steps).map((s) => (
-                  <p key={s} className="text-sm text-amber-900 dark:text-amber-300">· {s}</p>
-                ))}
-              </div>
-            )}
-
-            {/* Open in app button */}
-            {tc.start_url && (
-              <a
-                href={(() => {
-                  try {
-                    const raw = new URL(tc.start_url ?? "").pathname;
-                    if (runForm.projectId) {
-                      return raw.replace(/^\/\d+\//, `/${runForm.projectId}/`);
-                    }
-                    return raw;
-                  } catch {
-                    const raw = tc.start_url ?? "#";
-                    if (runForm.projectId) {
-                      return raw.replace(/^\/\d+\//, `/${runForm.projectId}/`);
-                    }
-                    return raw;
-                  }
-                })()}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm font-medium text-primary hover:underline"
-              >
-                Open the app at the right page →
-              </a>
-            )}
-
-            {/* Steps */}
-            <div className="space-y-3 pt-2">
-              <p className="text-base font-semibold text-foreground">Steps</p>
-              {steps.map((step, i) => (
-                <label
-                  key={step}
+        <div className="space-y-8">
+          <section className="space-y-7">
+            {/* Scenario heading and controls. */}
+            <div className="space-y-2">
+              <div className="flex items-start justify-between gap-3">
+                <h2 className="text-xl font-semibold leading-snug tracking-tight text-foreground">
+                  {tc.test_number} {tc.test_name}
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => setEditingCase((v) => !v)}
+                  title="Edit test instructions"
                   className={cn(
-                    "flex items-start gap-3 cursor-pointer py-1.5 transition-all select-none",
-                    checkedSteps[i] && "opacity-70"
+                    "flex items-center gap-1 text-xs px-2 py-1 rounded-md border transition-colors shrink-0",
+                    editingCase
+                      ? "border-primary bg-primary/5 text-primary"
+                      : "border-border text-muted-foreground hover:text-foreground hover:border-foreground/30"
                   )}
                 >
-                  <div className={cn(
-                    "mt-0.5 h-5 w-5 shrink-0 rounded-full border-2 flex items-center justify-center transition-all",
-                    checkedSteps[i] ? "border-green-500 bg-green-500" : "border-muted-foreground/40"
-                  )}>
-                    {checkedSteps[i] && <CheckCircle2 className="h-4 w-4 text-white" />}
-                  </div>
-                  <input
-                    type="checkbox"
-                    className="sr-only"
-                    checked={!!checkedSteps[i]}
-                    onChange={(e) => setCheckedSteps((prev) => ({ ...prev, [i]: e.target.checked }))}
-                  />
-                  <span className={cn(
-                    "text-sm leading-relaxed",
-                    checkedSteps[i] && "line-through text-muted-foreground"
-                  )}>
-                    <span className="font-medium text-muted-foreground mr-2">{i + 1}.</span>
-                    {step}
-                  </span>
-                </label>
-              ))}
+                  <Pencil className="h-3 w-3" />
+                  {editingCase ? "Editing" : "Edit"}
+                </button>
+              </div>
             </div>
 
-            {/* Expected result */}
-            {tc.expected_result && (
-              <div className="space-y-2">
-                <p className="text-sm font-semibold text-foreground">What should happen</p>
-                <p className="text-sm leading-relaxed text-muted-foreground">
-                  {tc.expected_result}
-                </p>
+            {/* Project context row to keep deep-link navigation accurate per project. */}
+            <div className="space-y-2">
+              <Label htmlFor="runner-project-id" className="text-xs text-muted-foreground">Project ID (for links)</Label>
+              <div className="flex items-center gap-3">
+                <input
+                  id="runner-project-id"
+                  type="text"
+                  value={runForm.projectId}
+                  onChange={(e) => setRunForm((f) => ({ ...f, projectId: e.target.value }))}
+                  placeholder="Enter project ID (e.g. 890)"
+                  className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/40"
+                />
+                {runForm.projectId && (
+                  <span className="text-xs text-muted-foreground font-mono shrink-0">
+                    /{runForm.projectId}/…
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Editable scenario form for maintaining test case quality in place. */}
+            {editingCase ? (
+              <div className="space-y-4 rounded-md border border-border px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Editing test instructions</p>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">What this checks (context note)</Label>
+                  <Textarea
+                    value={editForm.context_note}
+                    onChange={(e) => setEditForm((f) => ({ ...f, context_note: e.target.value }))}
+                    placeholder="Plain English description of what this test verifies…"
+                    className="resize-none h-16 text-sm"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">Before you start (setup steps)</Label>
+                  <Textarea
+                    value={editForm.setup_steps}
+                    onChange={(e) => setEditForm((f) => ({ ...f, setup_steps: e.target.value }))}
+                    placeholder="Prerequisites, one per line…"
+                    className="resize-none h-16 text-sm"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">Start URL</Label>
+                  <Input
+                    value={editForm.start_url}
+                    onChange={(e) => setEditForm((f) => ({ ...f, start_url: e.target.value }))}
+                    placeholder="/67/budget"
+                    className="text-sm font-mono"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">Steps (one per line, no leading numbers)</Label>
+                  <Textarea
+                    value={editForm.steps}
+                    onChange={(e) => setEditForm((f) => ({ ...f, steps: e.target.value }))}
+                    placeholder="Click the Create button&#10;Fill in the Name field&#10;Click Save"
+                    className="resize-none h-40 text-sm font-mono"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">What should happen (expected result)</Label>
+                  <Textarea
+                    value={editForm.expected_result}
+                    onChange={(e) => setEditForm((f) => ({ ...f, expected_result: e.target.value }))}
+                    placeholder="The record appears in the list…"
+                    className="resize-none h-16 text-sm"
+                  />
+                </div>
+
+                <div className="flex gap-2">
+                  <Button type="button" size="sm" onClick={saveEdit} disabled={editSaving} className="flex-1">
+                    {editSaving ? "Saving…" : "Save instructions"}
+                  </Button>
+                  <Button type="button" size="sm" variant="outline" onClick={() => setEditingCase(false)} disabled={editSaving}>
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-7">
+                {tc.context_note && (
+                  <section className="space-y-1.5">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Context</p>
+                    <p className="text-sm leading-relaxed text-foreground">{tc.context_note}</p>
+                  </section>
+                )}
+
+                {tc.setup_steps && (
+                  <section className="space-y-2 border-l border-border pl-4">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Before You Start</p>
+                    <div className="space-y-1">
+                      {parseSteps(tc.setup_steps).map((s) => (
+                        <p key={s} className="text-sm text-foreground">• {s}</p>
+                      ))}
+                    </div>
+                  </section>
+                )}
+
+                {/* Checklist keeps each validation step explicit and easy to track. */}
+                <section className="space-y-3">
+                  <p className="text-base font-semibold text-foreground">Steps</p>
+                  <div className="space-y-2">
+                    {steps.map((step, i) => (
+                      <label
+                        key={step}
+                        className={cn(
+                          "flex items-start gap-3 cursor-pointer rounded-md border border-transparent px-1.5 py-2 transition-all",
+                          checkedSteps[i] ? "opacity-70" : "hover:border-border"
+                        )}
+                      >
+                        <div className={cn(
+                          "mt-0.5 h-5 w-5 shrink-0 rounded-full border-2 flex items-center justify-center transition-all",
+                          checkedSteps[i] ? "border-green-500 bg-green-500" : "border-muted-foreground/40"
+                        )}>
+                          {checkedSteps[i] && <CheckCircle2 className="h-4 w-4 text-white" />}
+                        </div>
+                        <input
+                          type="checkbox"
+                          className="sr-only"
+                          checked={!!checkedSteps[i]}
+                          onChange={(e) => setCheckedSteps((prev) => ({ ...prev, [i]: e.target.checked }))}
+                        />
+                        <span className={cn(
+                          "text-sm leading-relaxed",
+                          checkedSteps[i] && "line-through text-muted-foreground"
+                        )}>
+                          <span className="font-medium text-muted-foreground mr-2">{i + 1}.</span>
+                          {step}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </section>
+
+                {startPath && (
+                  <a
+                    href={startPath}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex text-sm font-medium text-primary hover:underline"
+                  >
+                    Open the app at the right page →
+                  </a>
+                )}
+
+                {tc.expected_result && (
+                  <section className="pt-2 space-y-2">
+                    <p className="text-sm font-semibold text-foreground">What should happen</p>
+                    <p className="text-sm leading-relaxed text-muted-foreground">{tc.expected_result}</p>
+                  </section>
+                )}
+
+                {current.test_screenshots.length > 0 && (
+                  <section className="space-y-2">
+                    <p className="text-sm font-semibold text-foreground">Screenshots</p>
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                      {current.test_screenshots.map((s) => (
+                        <a key={s.id} href={s.public_url ?? "#"} target="_blank" rel="noopener noreferrer">
+                          <img
+                            src={s.public_url ?? ""}
+                            alt={s.label ?? "screenshot"}
+                            className="h-24 w-full rounded-md border border-border object-cover hover:opacity-80 transition-opacity"
+                          />
+                        </a>
+                      ))}
+                    </div>
+                  </section>
+                )}
               </div>
             )}
-          </>
-        )}
+          </section>
 
-        {/* Screenshots */}
-        {current.test_screenshots.length > 0 && (
-          <div className="space-y-2">
-            <p className="text-sm font-semibold text-foreground">Screenshots</p>
-            <div className="flex flex-wrap gap-2">
-              {current.test_screenshots.map((s) => (
-                <a key={s.id} href={s.public_url ?? "#"} target="_blank" rel="noopener noreferrer">
-                  <img
-                    src={s.public_url ?? ""}
-                    alt={s.label ?? "screenshot"}
-                    className="h-24 w-auto rounded-lg border border-border object-cover hover:opacity-80 transition-opacity"
-                  />
-                </a>
-              ))}
-            </div>
-          </div>
-        )}
+          {/* Action section in single-column flow for easier reading. */}
+          <section className="space-y-4 pt-6">
+            <section className="space-y-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">
+                  Notes <span className="font-normal">(optional)</span>
+                </Label>
+                <Textarea
+                  ref={notesRef}
+                  value={notesMap[current.id] ?? ""}
+                  onChange={(e) => updateNote(current.id, e.target.value)}
+                  placeholder="Optional notes, observations, or anything unexpected…"
+                  className="resize-none h-24 text-sm"
+                />
+              </div>
 
-        {/* ── Notes + Severity + Verdict ── */}
-        <div className="pt-2 space-y-3">
+            </section>
 
-          {/* Always-visible notes */}
-          <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">
-              Notes <span className="font-normal">(optional)</span>
-            </Label>
-            <Textarea
-              ref={notesRef}
-              value={notesMap[current.id] ?? ""}
-              onChange={(e) => updateNote(current.id, e.target.value)}
-              placeholder="Optional notes, observations, or anything unexpected…"
-              className="resize-none h-20 text-sm"
-            />
-          </div>
+            <section className="space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Result</p>
+              <div className="grid grid-cols-3 gap-2">
+                <Button
+                  onClick={() => void record("pass")}
+                  disabled={saving}
+                  className="gap-2 bg-green-600 hover:bg-green-700 text-white h-11 text-sm font-semibold"
+                >
+                  <CheckCircle2 className="h-4 w-4" />
+                  Passed
+                </Button>
+                <Button
+                  onClick={() => void record("fail")}
+                  disabled={saving}
+                  variant="destructive"
+                  className="gap-2 h-11 text-sm font-semibold"
+                >
+                  <XCircle className="h-4 w-4" />
+                  Issue found
+                </Button>
+                <Button
+                  onClick={() => void record("skip")}
+                  disabled={saving}
+                  variant="outline"
+                  className="gap-2 h-11 text-sm font-semibold"
+                >
+                  <MinusCircle className="h-4 w-4" />
+                  Skip
+                </Button>
+              </div>
+            </section>
 
-          {/* Severity selector */}
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-xs text-muted-foreground">Severity:</span>
-            {(["critical", "major", "minor", "cosmetic"] as const).map((s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => setSeverityMap((prev) => ({ ...prev, [current.id]: prev[current.id] === s ? "" : s }))}
-                className={cn(
-                  "text-xs px-2 py-0.5 rounded-md border transition-colors",
-                  severityMap[current.id] === s
-                    ? s === "critical"
-                      ? "bg-red-600 text-white border-red-600"
-                      : s === "major"
-                      ? "bg-orange-500 text-white border-orange-500"
-                      : s === "minor"
-                      ? "bg-yellow-500 text-white border-yellow-500"
-                      : "bg-muted text-foreground border-border"
-                    : "bg-transparent text-muted-foreground border-border hover:border-foreground"
-                )}
-              >
-                {s.charAt(0).toUpperCase() + s.slice(1)}
-              </button>
-            ))}
-          </div>
+            <section className="space-y-2 pt-3">
+              <FileUploadField
+                label={<span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Attachments</span>}
+                accept="image/*"
+                multiple={false}
+                maxFiles={1}
+                maxSize={10 * 1024 * 1024}
+                disabled={uploadingScreenshot}
+                variant="minimal"
+                showMetaText
+                onFilesSelected={(files) => {
+                  const file = files[0];
+                  if (file) void handleFile(file);
+                }}
+              />
 
-          {/* Keyboard hint bar */}
-          <div className="flex items-center gap-4 text-[10px] text-muted-foreground/60 pb-1">
-            <span><kbd className="font-mono">P</kbd> Pass</span>
-            <span><kbd className="font-mono">I</kbd> Issue</span>
-            <span><kbd className="font-mono">S</kbd> Skip</span>
-            <span><kbd className="font-mono">N</kbd> Notes</span>
-            <span><kbd className="font-mono">←→</kbd> Navigate</span>
-          </div>
+              {current.status === "fail" && !runForm.autoSubmitFeedback && (
+                feedbackSentIds.has(current.id) ? (
+                  <span className="flex items-center gap-1 text-xs text-green-600">
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    Sent to feedback inbox
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => void sendToFeedback(current)}
+                    disabled={feedbackSendingIds.has(current.id)}
+                    className="w-full flex items-center justify-center gap-1.5 text-xs text-orange-600 hover:text-orange-700 transition-colors rounded-md border border-border px-3 py-2 hover:bg-orange-50 dark:hover:bg-orange-950/20"
+                  >
+                    <Send className="h-3.5 w-3.5" />
+                    {feedbackSendingIds.has(current.id) ? "Sending…" : "Send to feedback inbox"}
+                  </button>
+                )
+              )}
 
-          {/* Verdict buttons */}
-          <div className="grid grid-cols-3 gap-2">
-            <Button
-              onClick={() => void record("pass")}
-              disabled={saving}
-              className="gap-2 bg-green-600 hover:bg-green-700 text-white h-12 text-sm font-semibold"
-            >
-              <CheckCircle2 className="h-4 w-4" />
-              Passed
-            </Button>
-            <Button
-              onClick={() => void record("fail")}
-              disabled={saving}
-              variant="destructive"
-              className="gap-2 h-12 text-sm font-semibold"
-            >
-              <XCircle className="h-4 w-4" />
-              Issue found
-            </Button>
-            <Button
-              onClick={() => void record("skip")}
-              disabled={saving}
-              variant="outline"
-              className="gap-2 h-12 text-sm font-semibold"
-            >
-              <MinusCircle className="h-4 w-4" />
-              Skip
-            </Button>
-          </div>
-
-          {/* Screenshot upload */}
-          <div className="flex items-center gap-3 flex-wrap">
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/*"
-              aria-label="Upload screenshot"
-              title="Upload screenshot"
-              className="hidden"
-              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ""; }}
-            />
-            <button
-              type="button"
-              onClick={() => fileRef.current?.click()}
-              disabled={uploadingScreenshot}
-              className="flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 transition-colors px-2 py-1.5 rounded-md hover:bg-primary/10"
-            >
-              <Camera className="h-3.5 w-3.5" />
-              {uploadingScreenshot ? "Uploading…" : "Attach screenshot"}
-            </button>
-
-            {/* Manual send-to-feedback — shown when this test is already marked fail */}
-            {current.status === "fail" && !runForm.autoSubmitFeedback && (
-              feedbackSentIds.has(current.id) ? (
+              {current.status === "fail" && runForm.autoSubmitFeedback && feedbackSentIds.has(current.id) && (
                 <span className="flex items-center gap-1 text-xs text-green-600">
                   <CheckCircle2 className="h-3.5 w-3.5" />
                   Sent to feedback inbox
                 </span>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => void sendToFeedback(current)}
-                  disabled={feedbackSendingIds.has(current.id)}
-                  className="flex items-center gap-1.5 text-xs text-orange-600 hover:text-orange-700 transition-colors px-2 py-1.5 rounded-md hover:bg-orange-50 dark:hover:bg-orange-950/20"
-                >
-                  <Send className="h-3.5 w-3.5" />
-                  {feedbackSendingIds.has(current.id) ? "Sending…" : "Send to feedback inbox"}
-                </button>
-              )
-            )}
-
-            {/* Auto-submit confirmation — shown when auto-submit is on and test is already fail */}
-            {current.status === "fail" && runForm.autoSubmitFeedback && feedbackSentIds.has(current.id) && (
-              <span className="flex items-center gap-1 text-xs text-green-600">
-                <CheckCircle2 className="h-3.5 w-3.5" />
-                Sent to feedback inbox
-              </span>
-            )}
-          </div>
+              )}
+            </section>
+          </section>
         </div>
 
       </div>

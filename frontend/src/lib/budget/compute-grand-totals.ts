@@ -21,6 +21,7 @@
  */
 
 import type { createClient } from "@/lib/supabase/server";
+import type { ForecastMethod } from "@/types/budget";
 
 // ---------------------------------------------------------------------------
 // Status + cost-type constants (kept in lock-step with Procore semantics)
@@ -91,6 +92,14 @@ interface ChangeOrderLineItem {
 interface CommitmentChangeOrderLineItem {
   cost_code_id: string | null;
   amount: number | null;
+}
+
+interface CostForecastEntry {
+  budget_item_id: string | null;
+  forecast_to_complete: number;
+  notes: string | null;
+  forecast_date: string;
+  created_at: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -379,6 +388,8 @@ export interface BudgetLineItem {
   forecastToComplete: number;
   estimatedCostAtCompletion: number;
   projectedOverUnder: number;
+  forecastMethod?: ForecastMethod;
+  forecastNotes?: string | null;
 }
 
 export type GrandTotals = Omit<
@@ -391,6 +402,8 @@ export type GrandTotals = Omit<
   | "division"
   | "divisionTitle"
   | "subJob"
+  | "forecastMethod"
+  | "forecastNotes"
 >;
 
 /**
@@ -530,6 +543,47 @@ export async function computeBudgetGrandTotals(
     throw new BudgetFetchError(approvedCommitmentCOsRes.error);
   }
 
+  const budgetLineIds = (budgetRowsResult.data || [])
+    .map((row) => row.id)
+    .filter((id): id is string => typeof id === "string" && id.length > 0);
+
+  const defaultMethodByLineId = new Map<string, ForecastMethod>();
+  const forecastEntryByLineId = new Map<string, CostForecastEntry>();
+
+  if (budgetLineIds.length > 0) {
+    const [lineConfigRes, costForecastRes] = await Promise.all([
+      supabase
+        .from("budget_lines")
+        .select("id, default_ftc_method")
+        .in("id", budgetLineIds),
+      supabase
+        .from("cost_forecasts")
+        .select("budget_item_id, forecast_to_complete, notes, forecast_date, created_at")
+        .in("budget_item_id", budgetLineIds)
+        .order("forecast_date", { ascending: false })
+        .order("created_at", { ascending: false }),
+    ]);
+
+    if (lineConfigRes.error) {
+      throw new BudgetFetchError(lineConfigRes.error);
+    }
+    if (costForecastRes.error) {
+      throw new BudgetFetchError(costForecastRes.error);
+    }
+
+    for (const row of lineConfigRes.data || []) {
+      if (!row.id) continue;
+      const method = (row.default_ftc_method ?? "automatic") as ForecastMethod;
+      defaultMethodByLineId.set(row.id, method);
+    }
+
+    for (const entry of (costForecastRes.data || []) as CostForecastEntry[]) {
+      const lineId = entry.budget_item_id;
+      if (!lineId || forecastEntryByLineId.has(lineId)) continue;
+      forecastEntryByLineId.set(lineId, entry);
+    }
+  }
+
   // ---- Aggregate costs by cost_code_id across all sources ----
   const costsByCode: Record<string, CostAggregation> = {};
   const ensureCostEntry = (codeId: string) => {
@@ -665,7 +719,20 @@ export async function computeBudgetGrandTotals(
         costData.directCosts +
         costData.committedCosts +
         costData.pendingCostChanges;
-      const forecastToComplete = Math.max(0, projectedBudget - projectedCosts);
+
+      const lineId = item.id as string;
+      const forecastMethod =
+        defaultMethodByLineId.get(lineId) ?? ("automatic" as ForecastMethod);
+      const autoForecast = Math.max(0, projectedBudget - projectedCosts);
+      const forecastEntry = forecastEntryByLineId.get(lineId);
+      const savedForecast = Number(forecastEntry?.forecast_to_complete ?? NaN);
+      const hasSavedForecast = Number.isFinite(savedForecast);
+      const forecastToComplete =
+        forecastMethod === "automatic"
+          ? autoForecast
+          : hasSavedForecast
+            ? savedForecast
+            : autoForecast;
       const estimatedCostAtCompletion = projectedCosts + forecastToComplete;
       const projectedOverUnder = projectedBudget - estimatedCostAtCompletion;
 
@@ -696,6 +763,8 @@ export async function computeBudgetGrandTotals(
         forecastToComplete,
         estimatedCostAtCompletion,
         projectedOverUnder,
+        forecastMethod,
+        forecastNotes: forecastEntry?.notes ?? null,
       };
     },
   );

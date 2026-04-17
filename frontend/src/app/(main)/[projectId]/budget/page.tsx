@@ -798,9 +798,25 @@ function BudgetPageContent() {
     budgetLineId: string;
     forecastMethod: string;
     forecastAmount: number;
+    notes?: string | null;
   }) => {
-    // TODO: Implement API call to save forecast data
-    toast.success("Forecast saved successfully");
+    try {
+      await apiFetch(`/api/projects/${projectId}/budget/forecast`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+      toast.success("Forecast saved successfully");
+      await handleLineItemSuccess();
+    } catch (error) {
+      toast.error("Failed to save forecast", {
+        description:
+          error instanceof Error ? error.message : "An unexpected error occurred.",
+      });
+      throw error;
+    }
   };
 
   const handleSelectionChange = React.useCallback((ids: string[]) => {
@@ -1207,10 +1223,11 @@ function BudgetPageContent() {
             budgetLineId={selectedLineItem.id}
             projectId={projectId}
             currentData={{
-              forecastMethod: "lump_sum",
+              forecastMethod: selectedLineItem.forecastMethod ?? "automatic",
               forecastAmount: selectedLineItem.forecastToComplete ?? undefined,
               projectedBudget: selectedLineItem.projectedBudget ?? undefined,
               projectedCosts: selectedLineItem.projectedCosts ?? undefined,
+              notes: selectedLineItem.forecastNotes ?? undefined,
             }}
             onSave={handleForecastSave}
           />

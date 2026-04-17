@@ -42,7 +42,59 @@ export const GET = withApiGuardrails<{ projectId: string }>(
 
     const supabase = await createClient();
 
-    // Build query for budget modifications with their line items
+    // If budgetLineId is provided, first resolve matching modification IDs.
+    // This avoids clipping nested budget_mod_lines to only the matched line.
+    let matchingModificationIds: string[] | null = null;
+    if (budgetLineId) {
+      const { data: budgetLine, error: lineError } = await supabase
+        .from("budget_lines")
+        .select("cost_code_id, cost_type_id, sub_job_id")
+        .eq("id", budgetLineId)
+        .single();
+
+      if (lineError || !budgetLine) {
+        return NextResponse.json(
+          { error: "Budget line not found" },
+          { status: 404 },
+        );
+      }
+
+      let lineMatchQuery = supabase
+        .from("budget_mod_lines")
+        .select("budget_modification_id")
+        .eq("project_id", projectIdNum)
+        .eq("cost_code_id", budgetLine.cost_code_id);
+
+      if (budgetLine.cost_type_id) {
+        lineMatchQuery = lineMatchQuery.eq("cost_type_id", budgetLine.cost_type_id);
+      }
+
+      const { data: matchingLines, error: matchingLinesError } =
+        await lineMatchQuery;
+
+      if (matchingLinesError) {
+        return NextResponse.json(
+          { error: "Failed to resolve matching budget modifications" },
+          { status: 500 },
+        );
+      }
+
+      matchingModificationIds = Array.from(
+        new Set(
+          (matchingLines || [])
+            .map((line) => line.budget_modification_id)
+            .filter((id): id is string => typeof id === "string" && id.length > 0),
+        ),
+      );
+
+      if (matchingModificationIds.length === 0) {
+        return NextResponse.json({
+          modifications: [],
+        });
+      }
+    }
+
+    // Build query for budget modifications with their full line items
     let query = supabase
       .from("budget_modifications")
       .select(
@@ -66,6 +118,9 @@ export const GET = withApiGuardrails<{ projectId: string }>(
           cost_codes (
             id,
             title
+          ),
+          cost_code_types (
+            code
           )
         )
       `,
@@ -78,33 +133,8 @@ export const GET = withApiGuardrails<{ projectId: string }>(
       query = query.eq("status", status);
     }
 
-    // If budgetLineId is provided, filter modifications that have matching budget_mod_lines
-    if (budgetLineId) {
-      // First get the budget line details to match against
-      const { data: budgetLine, error: lineError } = await supabase
-        .from("budget_lines")
-        .select("cost_code_id, cost_type_id, sub_job_id")
-        .eq("id", budgetLineId)
-        .single();
-
-      if (lineError || !budgetLine) {
-        return NextResponse.json(
-          { error: "Budget line not found" },
-          { status: 404 },
-        );
-      }
-
-      // Filter modifications where budget_mod_lines match the budget line's cost code
-      query = query.eq(
-        "budget_mod_lines.cost_code_id",
-        budgetLine.cost_code_id,
-      );
-      if (budgetLine.cost_type_id) {
-        query = query.eq(
-          "budget_mod_lines.cost_type_id",
-          budgetLine.cost_type_id,
-        );
-      }
+    if (matchingModificationIds) {
+      query = query.in("id", matchingModificationIds);
     }
 
     const { data, error } = await query;
@@ -121,6 +151,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
       id: unknown;
       cost_code_id: unknown;
       cost_type_id: unknown;
+      cost_code_types: unknown;
       sub_job_id: unknown;
       amount: unknown;
       description: unknown;
@@ -150,14 +181,22 @@ export const GET = withApiGuardrails<{ projectId: string }>(
             | { id?: string; title?: string }
             | { id?: string; title?: string }[]
             | null;
+          const costCodeTypes = line.cost_code_types as
+            | { code?: string }
+            | { code?: string }[]
+            | null;
           const costCodeTitle = Array.isArray(costCodes)
             ? costCodes[0]?.title || ""
             : costCodes?.title || "";
+          const costTypeCode = Array.isArray(costCodeTypes)
+            ? costCodeTypes[0]?.code || ""
+            : costCodeTypes?.code || "";
 
           return {
             id: String(line.id),
             costCodeId: String(line.cost_code_id),
             costTypeId: String(line.cost_type_id),
+            costTypeCode,
             subJobId: line.sub_job_id ? String(line.sub_job_id) : null,
             amount: Number(line.amount) || 0,
             description: line.description ? String(line.description) : null,
