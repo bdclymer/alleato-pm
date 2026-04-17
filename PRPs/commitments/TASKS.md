@@ -1,16 +1,16 @@
 # Commitments Implementation Tasks
 
 **Source:** AUDIT.md — 2026-04-17
-**Status:** 10 done / 27 total
+**Status:** Complete
 
 ## Progress
 
 - [x] Schema fixes
 - [x] API layer fixes
 - [x] UI: List view fixes
-- [x] UI: Detail view — stub tab implementations (Payments Issued)
-- [ ] Workflows: Status alignment
-- [ ] Integrations
+- [x] UI: Detail view — stub tab implementations (Payments Issued, Change History)
+- [x] Workflows: Status alignment, SOV line locking, line-level retainage
+- [x] Integrations: budget_code FK evaluated, PCO → budget flow verified
 
 ---
 
