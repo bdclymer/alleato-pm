@@ -10,7 +10,7 @@ module.exports = {
     // Then enforce strict design-system rules on changed files only (ratchet-down pattern).
     // Global config keeps many rules at "warn" due to legacy debt, but staged changes
     // must not introduce new drift.
-    `cd ${frontendDir} && ${eslintBin} --rule '{"design-system/require-api-client":"error","design-system/no-hardcoded-colors":"error","design-system/no-arbitrary-spacing":"error","design-system/require-semantic-colors":"error","design-system/no-design-violations":"error","design-system/require-page-shell":"error","design-system/no-oversized-shadows":"error","design-system/no-raw-button":"error","design-system/no-raw-form-controls":"error","design-system/require-money-field":"error"}' ${filenames.join(' ')}`,
+    `cd ${frontendDir} && ${eslintBin} --rule '{"design-system/require-api-client":"error","design-system/no-hardcoded-colors":"error","design-system/no-arbitrary-spacing":"error","design-system/require-semantic-colors":"error","design-system/no-design-violations":"error","design-system/require-page-shell":"error","design-system/no-oversized-shadows":"error","design-system/no-raw-button":"error","design-system/no-raw-form-controls":"error","design-system/require-money-field":"error","no-restricted-imports":["error",{"paths":[{"name":"@/components/ui/dialog","message":"Use \\"@/components/ui/unified-modal\\" for app-level modals to keep animation, positioning, and spacing consistent."}]}]}' ${filenames.join(' ')}`,
     // Block adding new design-system eslint-disable escapes.
     'node frontend/scripts/design-system/check-no-new-disables.mjs',
     // Block any new lint warnings/errors on added lines in staged files.

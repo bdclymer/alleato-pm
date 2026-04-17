@@ -5,18 +5,19 @@ import { CheckCircle2, Download, Loader2, Mail, X } from "lucide-react";
 import { toast } from "sonner";
 
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Modal,
+  ModalContent,
+  ModalDescription,
+  ModalHeader,
+  ModalTitle,
+} from "@/components/ui/unified-modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { apiFetch, apiFetchBlob } from "@/lib/api-client";
 import type { DocumentRecordType } from "@/lib/documents/record-documents";
 
 interface RecipientOption {
@@ -84,19 +85,12 @@ export function DocumentDeliveryDialog({
     const loadRecipients = async () => {
       setIsLoadingRecipients(true);
       try {
-        const response = await fetch(
-          `/api/document-center/${recordType}/${recordId}/recipients`,
-        );
-
-        if (!response.ok) {
-          const data = await response.json().catch(() => ({}));
-          throw new Error(data.error || "Failed to load recipients");
-        }
-
-        const data = (await response.json()) as {
+        const data = await apiFetch<{
           defaultSubject: string;
           recipients: RecipientOption[];
-        };
+        }>(
+          `/api/document-center/${recordType}/${recordId}/recipients`,
+        );
 
         if (!isMounted) return;
 
@@ -178,21 +172,10 @@ export function DocumentDeliveryDialog({
   const handleDownload = React.useCallback(async () => {
     setIsDownloading(true);
     try {
-      const response = await fetch(
+      const blob = await apiFetchBlob(
         `/api/document-center/${recordType}/${recordId}/pdf`,
       );
-
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || "Failed to generate PDF");
-      }
-
-      const blob = await response.blob();
-      const filename =
-        response.headers
-          .get("Content-Disposition")
-          ?.match(/filename="?([^"]+)"?/)?.[1] ||
-        `${number}-${title}.pdf`;
+      const filename = `${number}-${title}.pdf`;
 
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -224,13 +207,10 @@ export function DocumentDeliveryDialog({
 
     setIsSending(true);
     try {
-      const response = await fetch(
+      await apiFetch(
         `/api/document-center/${recordType}/${recordId}/email`,
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
           body: JSON.stringify({
             recipients,
             subject: subject.trim(),
@@ -238,11 +218,6 @@ export function DocumentDeliveryDialog({
           }),
         },
       );
-
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || "Failed to send email");
-      }
 
       toast.success(
         `Email sent to ${recipients.length} recipient${recipients.length === 1 ? "" : "s"}`,
@@ -256,14 +231,14 @@ export function DocumentDeliveryDialog({
   }, [message, onOpenChange, recipients, recordId, recordType, subject]);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>Document Delivery</DialogTitle>
-          <DialogDescription>
+    <Modal open={open} onOpenChange={onOpenChange}>
+      <ModalContent size="2xl">
+        <ModalHeader>
+          <ModalTitle>Document Delivery</ModalTitle>
+          <ModalDescription>
             Generate or email the merged PDF for {number} {title ? `· ${title}` : ""}.
-          </DialogDescription>
-        </DialogHeader>
+          </ModalDescription>
+        </ModalHeader>
 
         <Tabs
           value={activeTab}
@@ -426,7 +401,7 @@ export function DocumentDeliveryDialog({
             </div>
           </TabsContent>
         </Tabs>
-      </DialogContent>
-    </Dialog>
+      </ModalContent>
+    </Modal>
   );
 }
