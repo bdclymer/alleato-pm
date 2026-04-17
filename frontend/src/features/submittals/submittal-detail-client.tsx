@@ -346,8 +346,9 @@ export function SubmittalDetailClient({ submittal, projectId }: SubmittalDetailC
                 )}
 
                 <AttachmentUploadPanel
-                  title="Upload and attach file"
-                  description="Attachments will be a part of this project."
+                  title="Attachments"
+                  description=""
+                  headerVariant="muted"
                   files={attachments.map((attachment) => ({
                     id: attachment.id,
                     name: attachment.file_name,

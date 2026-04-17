@@ -29,6 +29,7 @@ export interface AttachmentUploadPanelProps {
   onRemoveFile?: (fileId: string) => Promise<void> | void;
   title?: string;
   description?: string;
+  headerVariant?: "default" | "muted";
   maxFileSizeMb?: number;
   className?: string;
   emptyTitle?: string;
@@ -63,6 +64,7 @@ export function AttachmentUploadPanel({
   onRemoveFile,
   title = "Upload and attach file",
   description = "Attachments will be a part of this project.",
+  headerVariant = "default",
   maxFileSizeMb = 25,
   className,
   emptyTitle = "No attachments yet",
@@ -177,8 +179,17 @@ export function AttachmentUploadPanel({
   return (
     <div className={cn("space-y-4 rounded-lg bg-muted/50 p-5", className)}>
       <div className="space-y-1">
-        <h3 className="text-2xl font-semibold tracking-tight text-foreground">{title}</h3>
-        <p className="text-sm text-muted-foreground">{description}</p>
+        <h3
+          className={cn(
+            "tracking-tight text-foreground",
+            headerVariant === "muted"
+              ? "text-sm font-medium text-muted-foreground"
+              : "text-2xl font-semibold",
+          )}
+        >
+          {title}
+        </h3>
+        {description ? <p className="text-sm text-muted-foreground">{description}</p> : null}
       </div>
 
       <div
@@ -344,4 +355,3 @@ export function AttachmentUploadPanel({
     </div>
   );
 }
-

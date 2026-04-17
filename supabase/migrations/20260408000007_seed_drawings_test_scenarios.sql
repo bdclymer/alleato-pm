@@ -29,13 +29,13 @@ SELECT
   tc.setup_steps, now(), now()
 FROM suite, (VALUES
 
-  ('1.1', 'Navigation', NULL,
-   'Open the Drawings page',
-   E'1. Make sure you are logged in as test1@mail.com\n2. Go to http://localhost:3000/767/drawings\n3. Wait for the page to stop loading',
-   'The page loads fully. A table (or card grid) of drawings is visible. Columns include Drawing Number, Title, Discipline, and Status. No error messages appear.',
+  ('1.1', 'Upload', NULL,
+   'Upload 3 starter drawing files',
+   E'1. Make sure you are logged in as test1@mail.com\n2. Go to http://localhost:3000/767/drawings\n3. Click Upload\n4. Upload file docs/testing/drawings/3.-2024.02.29-Architectural-Construction-Drawing_Part1.pdf with Drawing Number A-101, Title Architectural Plan — Part 1, Discipline Architectural, Revision 0\n5. Upload file docs/testing/drawings/3.-2024.02.29-Architectural-Construction-Drawing_Part2.pdf with Drawing Number A-102, Title Architectural Plan — Part 2, Discipline Architectural, Revision 0\n6. Upload file docs/testing/drawings/3.-2024.02.29-Architectural-Construction-Drawing_Part3.pdf with Drawing Number A-103, Title Architectural Plan — Part 3, Discipline Architectural, Revision 0\n7. Wait for uploads to finish and return to the list',
+   'All three drawings appear in the list (A-101, A-102, A-103) with the correct titles and uploaded files. No error messages appear.',
    'HIGH', 'scenario', '/767/drawings',
-   'Checks that the Drawings list page loads without errors and shows existing records.',
-   NULL),
+   'Checks core upload flow and creates a baseline dataset for downstream drawing tests.',
+   'Download these files first: docs/testing/drawings/3.-2024.02.29-Architectural-Construction-Drawing_Part1.pdf, docs/testing/drawings/3.-2024.02.29-Architectural-Construction-Drawing_Part2.pdf, docs/testing/drawings/3.-2024.02.29-Architectural-Construction-Drawing_Part3.pdf'),
 
   ('1.2', 'Navigation', NULL,
    'Open a drawing in the viewer',
@@ -54,14 +54,6 @@ FROM suite, (VALUES
    NULL),
 
   ('2.1', 'Upload', NULL,
-   'Upload a new drawing',
-   E'1. Open the Drawings page\n2. Click the Upload button (top right)\n3. Type A-101 in the Drawing Number field\n4. Type First Floor Plan in the Title field\n5. Select Architectural in the Discipline dropdown\n6. Type 0 in the Revision Number field\n7. Set today''s date in the Received Date field\n8. Click the file picker and select any PDF file from your computer\n9. Click Upload (or Submit)\n10. Wait for the upload to complete',
-   'The upload dialog closes. The new drawing "A-101 — First Floor Plan" appears in the drawings list. No error messages appear.',
-   'HIGH', 'scenario', '/767/drawings',
-   'Checks the end-to-end upload flow for a new drawing with required fields.',
-   'Have a small PDF file (under 10 MB) ready to upload.'),
-
-  ('2.2', 'Upload', NULL,
    'Try to upload a drawing without a file attached',
    E'1. Open the Drawings page\n2. Click the Upload button\n3. Fill in Drawing Number: A-999 and Title: No File Test\n4. Do NOT select a file\n5. Click Upload (or Submit)',
    'An error message appears (e.g. "File is required"). The drawing is NOT created. The upload dialog stays open.',
@@ -69,7 +61,7 @@ FROM suite, (VALUES
    'Checks that the form blocks submission when no file is chosen.',
    NULL),
 
-  ('2.3', 'Upload', NULL,
+  ('2.2', 'Upload', NULL,
    'Try to upload a drawing without a Drawing Number',
    E'1. Open the Drawings page\n2. Click the Upload button\n3. Leave Drawing Number blank\n4. Type Missing Number Test in the Title field\n5. Select a PDF file\n6. Click Upload (or Submit)',
    'An error message appears near the Drawing Number field (e.g. "Drawing number is required"). The record is NOT created. The dialog stays open.',

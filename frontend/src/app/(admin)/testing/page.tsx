@@ -128,6 +128,11 @@ function depthLabel(depth: ScenarioDepth): string {
   return "All";
 }
 
+// Converts unknown thrown values into a message that is safe to show in the UI.
+function formatActionError(error: unknown, fallback: string): string {
+  return error instanceof Error && error.message.trim() ? error.message : fallback;
+}
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function TestingPage() {
@@ -160,6 +165,7 @@ export default function TestingPage() {
   const [runDetail, setRunDetail] = useState<RunDetailResult[]>([]);
   const [runDetailLoading, setRunDetailLoading] = useState(false);
   const [startError, setStartError] = useState<string | null>(null);
+  const [uiError, setUiError] = useState<string | null>(null);
   const [showJumpList, setShowJumpList] = useState(false);
   const [inProgressRuns, setInProgressRuns] = useState<{ run: HistoryRun; suiteName: string; suiteDisplayName: string }[]>([]);
   const jumpListRef = useRef<HTMLDivElement>(null);
@@ -186,6 +192,8 @@ export default function TestingPage() {
   });
   const [addSaving, setAddSaving] = useState(false);
 
+  const detailedUnavailable = selectedSuite?.detailed_scenario_count === 0;
+
   // ── Load suites + pre-fill tester name from session ──
   useEffect(() => {
     apiFetch<{ suites?: Suite[] }>("/api/testing/suites")
@@ -205,15 +213,18 @@ export default function TestingPage() {
                   suiteDisplayName: suite.display_name,
                 }));
               })
-              .catch(() => [] as Array<{ run: HistoryRun; suiteName: string; suiteDisplayName: string }>)
+              .catch((error) => {
+                setUiError(formatActionError(error, "Unable to load in-progress test runs."));
+                return [] as Array<{ run: HistoryRun; suiteName: string; suiteDisplayName: string }>;
+              })
           )
         ).then((results) => {
           const flat = results.flat();
           setInProgressRuns(flat);
         });
       })
-      .catch(() => {
-        // Failed to load suites; keep previous state
+      .catch((error) => {
+        setUiError(formatActionError(error, "Unable to load test suites."));
       });
 
     const supabase = createClient();
@@ -244,6 +255,7 @@ export default function TestingPage() {
 
   // ── Load history for a suite ──
   const openHistory = async (suite: Suite) => {
+    setUiError(null);
     setSelectedSuite(suite);
     setHistoryLoading(true);
     setHistoryRuns([]);
@@ -251,28 +263,30 @@ export default function TestingPage() {
     try {
       const d = await apiFetch<{ runs?: HistoryRun[] }>(`/api/testing/runs?suite=${suite.tool_name}`);
       setHistoryRuns(d.runs ?? []);
-    } catch {
-      // keep empty list
+    } catch (error) {
+      setUiError(formatActionError(error, "Unable to load run history."));
     }
     setHistoryLoading(false);
   };
 
   // ── Load detail for a single run ──
   const openRunDetail = async (runId: string) => {
+    setUiError(null);
     setRunDetailLoading(true);
     setRunDetail([]);
     setView("run-detail");
     try {
       const d = await apiFetch<{ results?: TestResult[] }>(`/api/testing/runs/${runId}/results`);
       setRunDetail(d.results ?? []);
-    } catch {
-      // keep empty detail
+    } catch (error) {
+      setUiError(formatActionError(error, "Unable to load run details."));
     }
     setRunDetailLoading(false);
   };
 
   // ── Manage Cases: load cases for a suite + depth ──
   const loadManagedCases = useCallback(async (suite: Suite, depth: "broad" | "detailed") => {
+    setUiError(null);
     setManageCasesLoading(true);
     setManageCases([]);
     setExpandedCase(null);
@@ -283,8 +297,8 @@ export default function TestingPage() {
       );
       const all: ManagedCase[] = Object.values(d.grouped ?? {}).flat() as ManagedCase[];
       setManageCases(all);
-    } catch {
-      // keep empty list
+    } catch (error) {
+      setUiError(formatActionError(error, "Unable to load test cases."));
     }
     setManageCasesLoading(false);
   }, []);
@@ -293,8 +307,15 @@ export default function TestingPage() {
     if (manageSuite) void loadManagedCases(manageSuite, manageDepth);
   }, [manageSuite, manageDepth, loadManagedCases]);
 
+  useEffect(() => {
+    if (detailedUnavailable && runForm.scenarioDepth === "detailed") {
+      setRunForm((f) => ({ ...f, scenarioDepth: "broad" }));
+    }
+  }, [detailedUnavailable, runForm.scenarioDepth]);
+
   // ── Manage Cases: save inline edit ──
   const saveManageEdit = async (caseId: string) => {
+    setUiError(null);
     setManageEditSaving(true);
     try {
       const { case: updated } = await apiFetch<{ case: ManagedCase }>(
@@ -306,21 +327,22 @@ export default function TestingPage() {
       );
       setManageCases((prev) => prev.map((c) => c.id === caseId ? { ...c, ...updated } : c));
       setManageEditId(null);
-    } catch {
-      // keep existing state on error
+    } catch (error) {
+      setUiError(formatActionError(error, "Unable to save test case changes."));
     }
     setManageEditSaving(false);
   };
 
   // ── Manage Cases: delete ──
   const deleteCase = async (caseId: string) => {
+    setUiError(null);
     setManageDeleting(caseId);
     try {
       await apiFetch(`/api/testing/cases/${caseId}`, { method: "DELETE" });
       setManageCases((prev) => prev.filter((c) => c.id !== caseId));
       if (expandedCase === caseId) setExpandedCase(null);
-    } catch {
-      // keep existing state on error
+    } catch (error) {
+      setUiError(formatActionError(error, "Unable to delete the test case."));
     }
     setManageDeleting(null);
   };
@@ -328,6 +350,7 @@ export default function TestingPage() {
   // ── Manage Cases: add new ──
   const addCase = async () => {
     if (!manageSuite) return;
+    setUiError(null);
     setAddSaving(true);
     try {
       const { case: created } = await apiFetch<{ case: ManagedCase }>("/api/testing/cases", {
@@ -341,8 +364,8 @@ export default function TestingPage() {
         priority: "MEDIUM", scenario_depth: "broad",
         steps: "", setup_steps: "", context_note: "", expected_result: "", start_url: "",
       });
-    } catch {
-      // keep dialog open on error
+    } catch (error) {
+      setUiError(formatActionError(error, "Unable to add the test case."));
     }
     setAddSaving(false);
   };
@@ -375,6 +398,7 @@ export default function TestingPage() {
   // ── Start a run ──
   const startRun = async () => {
     if (!selectedSuite) return;
+    setUiError(null);
     setStartError(null);
     setSaving(true);
     try {
@@ -396,7 +420,9 @@ export default function TestingPage() {
       if (loaded.length === 0) {
         setStartError(
           runForm.scenarioDepth === "broad"
-            ? "No broad scenarios found for this tool yet. Switch to Detailed or All, or seed broad scenarios."
+            ? detailedUnavailable
+              ? "No broad scenarios are available for this suite yet. Seed scenario cases before starting a run."
+              : "No broad scenarios found for this tool yet. Switch to Detailed or seed broad scenarios."
             : "No scenario test cases found for this tool. Check that the test suite has been seeded."
         );
       } else {
@@ -415,6 +441,7 @@ export default function TestingPage() {
 
   // ── Resume an in-progress run ──
   const resumeRun = async (run: HistoryRun, suiteName: string) => {
+    setUiError(null);
     const suite = suites.find((s) => s.tool_name === suiteName);
     if (!suite) return;
     setSelectedSuite(suite);
@@ -426,8 +453,9 @@ export default function TestingPage() {
         `/api/testing/runs/${run.id}/results?type=scenario`,
       );
       loaded = d.results ?? [];
-    } catch {
+    } catch (error) {
       loaded = [];
+      setUiError(formatActionError(error, "Unable to resume this run."));
     }
     setResults(loaded);
     const firstUntested = loaded.findIndex((r) => r.status === "not_tested");
@@ -510,6 +538,7 @@ export default function TestingPage() {
   // ── Record outcome ──
   const record = useCallback(async (status: TestStatus) => {
     if (!current || !activeRunId) return;
+    setUiError(null);
     setSaving(true);
     const notes = notesMap[current.id] || null;
     const severity = severityMap[current.id] || null;
@@ -534,8 +563,8 @@ export default function TestingPage() {
       } else {
         setView("complete");
       }
-    } catch {
-      // keep current state on error
+    } catch (error) {
+      setUiError(formatActionError(error, "Unable to save this test result."));
     }
     setSaving(false);
   }, [current, activeRunId, notesMap, severityMap, cursor, results.length, runForm.autoSubmitFeedback, sendToFeedback]);
@@ -543,6 +572,7 @@ export default function TestingPage() {
   // ── Screenshot upload ──
   const handleFile = useCallback(async (file: File) => {
     if (!current || !activeRunId) return;
+    setUiError(null);
     setUploadingScreenshot(true);
     const reader = new FileReader();
     reader.onload = async () => {
@@ -558,8 +588,8 @@ export default function TestingPage() {
           `/api/testing/runs/${activeRunId}/results`,
         );
         setResults(d2.results ?? []);
-      } catch {
-        // keep current state on error
+      } catch (error) {
+        setUiError(formatActionError(error, "Unable to upload the screenshot."));
       }
       setUploadingScreenshot(false);
     };
@@ -623,6 +653,7 @@ export default function TestingPage() {
   // ── Save edited test case ──
   const saveEdit = async () => {
     if (!current) return;
+    setUiError(null);
     setEditSaving(true);
     try {
       const { case: updated } = await apiFetch<{ case: Partial<TestResult["test_cases"]> }>(
@@ -640,8 +671,8 @@ export default function TestingPage() {
         )
       );
       setEditingCase(false);
-    } catch {
-      // keep edit form open on error
+    } catch (error) {
+      setUiError(formatActionError(error, "Unable to save scenario edits."));
     }
     setEditSaving(false);
   };
@@ -711,6 +742,11 @@ export default function TestingPage() {
             </TabsTrigger>
             <TabsTrigger value="manage">Manage Cases</TabsTrigger>
           </TabsList>
+          {uiError && (
+            <p className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-950/30 dark:text-red-300">
+              {uiError}
+            </p>
+          )}
 
           {/* ── Tab: Test Scenarios ── */}
           <TabsContent value="scenarios" className="m-0">
@@ -1209,11 +1245,19 @@ export default function TestingPage() {
         onBack={() => setView("home")}
       >
         <div className="space-y-6">
+          {uiError && (
+            <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-950/30 dark:text-red-300">
+              {uiError}
+            </p>
+          )}
           <div className="text-sm text-muted-foreground space-y-1">
             <p className="font-medium text-foreground">Before you start</p>
             <p>Make sure you&apos;re logged into the app you&apos;re testing.</p>
             <p>Each test takes 1–3 minutes. You&apos;ll follow step-by-step instructions and mark each test passed, failed, or skipped.</p>
-            <p><span className="font-medium text-foreground">Broad</span> is recommended for fast team testing. Use Detailed later for deeper coverage.</p>
+            <p>
+              <span className="font-medium text-foreground">Broad</span> is recommended for fast team testing.
+              {detailedUnavailable ? " Detailed scenarios are not available for this suite yet." : " Use Detailed for deeper coverage."}
+            </p>
           </div>
 
           <div className="space-y-4">
@@ -1260,9 +1304,14 @@ export default function TestingPage() {
                   <button
                     key={option.value}
                     type="button"
-                    onClick={() => setRunForm((f) => ({ ...f, scenarioDepth: option.value }))}
+                    onClick={() => {
+                      if (option.value === "detailed" && detailedUnavailable) return;
+                      setRunForm((f) => ({ ...f, scenarioDepth: option.value }));
+                    }}
+                    disabled={option.value === "detailed" && detailedUnavailable}
                     className={cn(
                       "rounded-lg border px-3 py-2 text-left transition-colors",
+                      option.value === "detailed" && detailedUnavailable && "cursor-not-allowed opacity-50",
                       runForm.scenarioDepth === option.value
                         ? "border-primary bg-primary/5"
                         : "border-border hover:border-foreground/30"
@@ -1273,6 +1322,11 @@ export default function TestingPage() {
                   </button>
                 ))}
               </div>
+              {detailedUnavailable && (
+                <p className="text-xs text-amber-700 dark:text-amber-300">
+                  Detailed mode is disabled because this suite has no detailed scenarios in Supabase yet.
+                </p>
+              )}
             </div>
           </div>
 
@@ -1405,6 +1459,11 @@ export default function TestingPage() {
         onBack={() => setView("home")}
       >
         <div className="space-y-3">
+          {uiError && (
+            <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-950/30 dark:text-red-300">
+              {uiError}
+            </p>
+          )}
           {historyLoading && <p className="text-sm text-muted-foreground py-8 text-center">Loading…</p>}
           {!historyLoading && historyRuns.length === 0 && (
             <p className="text-sm text-muted-foreground py-8 text-center">No runs yet. Click Run to start the first session.</p>
@@ -1464,6 +1523,11 @@ export default function TestingPage() {
         onBack={() => setView("history")}
       >
         <div className="space-y-6">
+          {uiError && (
+            <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-950/30 dark:text-red-300">
+              {uiError}
+            </p>
+          )}
           {runDetailLoading && <p className="text-sm text-muted-foreground py-8 text-center">Loading…</p>}
           {!runDetailLoading && Object.entries(grouped).map(([category, items]) => (
             <div key={category}>
@@ -1557,6 +1621,11 @@ export default function TestingPage() {
       </div>
 
       <div className="space-y-6 pb-12">
+        {uiError && (
+          <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-950/30 dark:text-red-300">
+            {uiError}
+          </p>
+        )}
 
         {/* Category chip + test number + edit toggle */}
         <div className="flex items-center justify-between gap-2">

@@ -15,12 +15,11 @@
 
 | # | Category | Name | Priority |
 |---|----------|------|----------|
-| 1.1 | Navigation | Open the Drawings page | HIGH |
+| 1.1 | Upload | Upload 3 starter drawing files | HIGH |
 | 1.2 | Navigation | Open a drawing in the viewer | HIGH |
 | 1.3 | Navigation | Switch between tabs | MEDIUM |
-| 2.1 | Upload | Upload a new drawing | HIGH |
-| 2.2 | Upload | Try to upload without a file attached | HIGH |
-| 2.3 | Upload | Try to upload without a Drawing Number | HIGH |
+| 2.1 | Upload | Try to upload without a file attached | HIGH |
+| 2.2 | Upload | Try to upload without a Drawing Number | HIGH |
 | 3.1 | Filter / Search | Filter drawings by discipline | HIGH |
 | 3.2 | Filter / Search | Search for a drawing by number | HIGH |
 | 3.3 | Filter / Search | Filter drawings by status | MEDIUM |
@@ -32,17 +31,38 @@
 
 ---
 
-## 1. Navigation
+## 1. Upload + Navigation
 
-### 1.1 — Open the Drawings page
-**What this checks:** The Drawings list page loads without errors and shows existing records.
+### 1.1 — Upload 3 starter drawing files
+**What this checks:** Core upload flow works with realistic inputs and creates a reliable baseline dataset for all remaining drawing scenarios.
+
+**Setup:** Download these three files from the repo folder:
+- `docs/testing/drawings/3.-2024.02.29-Architectural-Construction-Drawing_Part1.pdf`
+- `docs/testing/drawings/3.-2024.02.29-Architectural-Construction-Drawing_Part2.pdf`
+- `docs/testing/drawings/3.-2024.02.29-Architectural-Construction-Drawing_Part3.pdf`
 
 **Steps:**
 1. Make sure you are logged in as test1@mail.com
 2. Go to http://localhost:3000/767/drawings
-3. Wait for the page to stop loading
+3. Click **Upload**
+4. Upload file 1 with:
+   - Drawing Number: **A-101**
+   - Title: **Architectural Plan — Part 1**
+   - Discipline: **Architectural**
+   - Revision: **0**
+5. Repeat upload for file 2 with:
+   - Drawing Number: **A-102**
+   - Title: **Architectural Plan — Part 2**
+   - Discipline: **Architectural**
+   - Revision: **0**
+6. Repeat upload for file 3 with:
+   - Drawing Number: **A-103**
+   - Title: **Architectural Plan — Part 3**
+   - Discipline: **Architectural**
+   - Revision: **0**
+7. Wait for all uploads to complete and return to the drawings list
 
-**Expected result:** The page loads fully. A table (or card grid) of drawings is visible. Columns include Drawing Number, Title, Discipline, and Status. No error messages appear.
+**Expected result:** All three drawings appear in the list (A-101, A-102, A-103) with the correct titles and uploaded files. No error messages appear.
 
 ---
 
@@ -75,28 +95,7 @@
 
 ## 2. Upload
 
-### 2.1 — Upload a new drawing
-**What this checks:** A user can upload a drawing PDF and it appears in the list with the correct number and title.
-
-**Setup:** Have a small PDF file (under 10 MB) ready to upload.
-
-**Steps:**
-1. Open the Drawings page
-2. Click the **Upload** button (top right)
-3. In the dialog, type **A-101** in the Drawing Number field
-4. Type **First Floor Plan** in the Title field
-5. Select **Architectural** in the Discipline dropdown
-6. Type **0** in the Revision Number field
-7. Set today's date in the Received Date field
-8. Click the file picker and select any PDF file from your computer
-9. Click **Upload** (or Submit)
-10. Wait for the upload to complete
-
-**Expected result:** The upload dialog closes. The new drawing "A-101 — First Floor Plan" appears in the drawings list. No error messages appear.
-
----
-
-### 2.2 — Try to upload a drawing without a file attached
+### 2.1 — Try to upload a drawing without a file attached
 **What this checks:** The form prevents saving when no file has been selected.
 
 **Steps:**
@@ -110,7 +109,7 @@
 
 ---
 
-### 2.3 — Try to upload a drawing without a Drawing Number
+### 2.2 — Try to upload a drawing without a Drawing Number
 **What this checks:** Drawing Number is enforced as a required field.
 
 **Steps:**
