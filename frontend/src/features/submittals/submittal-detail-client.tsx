@@ -26,6 +26,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuthUsers, type AuthUser } from "@/hooks/use-auth-users";
+import { createClient } from "@/lib/supabase/client";
 import {
   useAddWorkflowStep,
   useDeleteSubmittal,
@@ -235,10 +236,12 @@ interface SubmittalDetailClientProps {
 
 export function SubmittalDetailClient({ submittal, projectId }: SubmittalDetailClientProps) {
   const router = useRouter();
+  const supabase = createClient();
   const deleteMutation = useDeleteSubmittal(projectId);
   const duplicateMutation = useDuplicateSubmittal(projectId);
   const uploadAttachmentMutation = useUploadSubmittalAttachment(projectId, submittal.id);
   const [respondingStep, setRespondingStep] = React.useState<string | null>(null);
+  const [currentUserId, setCurrentUserId] = React.useState<string | null>(null);
   const [attachments, setAttachments] = React.useState(submittal.submittal_attachments ?? []);
 
   const { users } = useAuthUsers(String(projectId));
@@ -247,6 +250,17 @@ export function SubmittalDetailClient({ submittal, projectId }: SubmittalDetailC
   const distributions = submittal.submittal_distributions ?? [];
   const history = submittal.submittal_history ?? [];
   const linkedDrawings = submittal.submittal_linked_drawings ?? [];
+
+  React.useEffect(() => {
+    let isMounted = true;
+    supabase.auth.getUser().then(({ data }) => {
+      if (!isMounted) return;
+      setCurrentUserId(data.user?.id ?? null);
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [supabase.auth]);
 
   async function handleDelete() {
     if (!window.confirm("Move this submittal to the Recycle Bin?")) return;
@@ -517,7 +531,7 @@ export function SubmittalDetailClient({ submittal, projectId }: SubmittalDetailC
                             </div>
                             <div className="flex flex-col items-end gap-2 shrink-0">
                               <StatusBadge status={resp.response_status} />
-                              {resp.response_status === "Pending" && (
+                              {resp.response_status === "Pending" && resp.responder_id === currentUserId && (
                                 <Button
                                   variant="outline"
                                   size="sm"

@@ -64,8 +64,8 @@ export const POST = withApiGuardrails(
       );
     }
 
-    // Enforce reviewer ownership: only the assigned responder can submit.
-    const { data: existingResponse, error: existingResponseError } = await supabase
+    // Guardrail: only the assigned responder can submit a review on this step.
+    const { data: assignedResponse, error: assignedResponseError } = await supabase
       .from("submittal_responses")
       .select("id")
       .eq("submittal_id", submittalId)
@@ -73,17 +73,20 @@ export const POST = withApiGuardrails(
       .eq("responder_id", user.id)
       .maybeSingle();
 
-    if (existingResponseError) {
-      return apiErrorResponse(existingResponseError);
+    if (assignedResponseError) {
+      return apiErrorResponse(assignedResponseError);
     }
 
-    if (!existingResponse) {
-      return NextResponse.json(
-        { error: "You are not assigned to review this workflow step." },
-        { status: 403 },
-      );
+    if (!assignedResponse) {
+      throw new GuardrailError({
+        code: "SUBMITTAL_WORKFLOW_NOT_ASSIGNED",
+        where: "projects/[projectId]/submittals/[submittalId]/workflow-steps/[stepId]/respond#POST",
+        status: 403,
+        message: "You are not assigned to review this workflow step.",
+      });
     }
 
+    // Update the assigned response for this user on this step.
     const { data: response, error: responseError } = await supabase
       .from("submittal_responses")
       .update({
@@ -91,7 +94,7 @@ export const POST = withApiGuardrails(
         comments: comments ?? null,
         responded_at: new Date().toISOString(),
       })
-      .eq("id", existingResponse.id)
+      .eq("id", assignedResponse.id)
       .select()
       .single();
 
