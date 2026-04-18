@@ -1,186 +1,206 @@
-# PRP Audit: Prime Contracts
+# Prime Contracts — Audit Report
 
-**Phase:** `prp-audit`
-**PRP:** `PRPs/prime-contracts/prp-prime-contracts.md`
-**Audit Date:** 2026-04-17
-
----
-
-## Overall Parity Score: 75/100
-
-The core CRUD loop, form fields, and financial summary are in excellent shape. The main gaps are: a missing `Schedule of Values` tab (SOV is embedded in General instead), missing `ERP Status` column, two placeholder tabs with no real content (Emails, Change History), a non-Procore status value (`out_for_bid`), column label mismatches, and missing non-admin user access list persistence.
+**Date:** 2026-04-17
+**PRP:** PRPs/prime-contracts/prp-prime-contracts.md
+**Audited by:** prp-audit (official skill)
 
 ---
 
-## Gap Analysis
+## Summary
 
-### 1. List View
+- ✅ Fully implemented: 42 items
+- 🟡 Partially implemented: 11 items
+- 🔴 Not implemented: 9 items
+- ⚠️ Schema gaps / issues: 6 items
 
-| # | PRP Requirement | Current State | Gap Severity |
-|---|----------------|--------------|-------------|
-| 1.1 | `ERP Status` column | **Missing** — not in `primeContractColumns` | 🔴 Critical |
-| 1.2 | `Attachments` column (count) | **Missing** — not in table config | 🟡 Moderate |
-| 1.3 | `Original Contract Amount` (exact label) | Label is "Original Amount" | 🟢 Minor |
-| 1.4 | `Approved Change Orders` (exact label) | Label is "Approved COs" | 🟢 Minor |
-| 1.5 | `Revised Contract Amount` (exact label) | Label is "Revised Amount" | 🟢 Minor |
-| 1.6 | `Pending Change Orders` (exact label) | Label is "Pending COs" | 🟢 Minor |
-| 1.7 | `Draft Change Orders` (exact label) | Label is "Draft COs" | 🟢 Minor |
-| 1.8 | `Payments Received` (exact label) | Label is "Payments" — also `defaultVisible: false` | 🟡 Moderate |
-| 1.9 | `% Paid` — visible by default | `defaultVisible: false` | 🟡 Moderate |
-| 1.10 | `Remaining Balance Outstanding` (exact label) | Label is "Balance", `defaultVisible: false` | 🟡 Moderate |
-| 1.11 | `ERP Status` filter | **Missing** — only Status, Executed, Owner/Client filters exist | 🔴 Critical |
-| 1.12 | Toolbar: Export button | ✅ Present (CSV export) | — |
-| 1.13 | Row actions: Edit, Delete | ✅ Present | — |
-
-**Files:** `frontend/src/features/prime-contracts/prime-contracts-table-config.tsx`
+The core CRUD loop (create, list, edit, detail), financial summary panel, SOV line items, Change Orders tab, Invoices tab, Payments tab, Financial Markup, and Advanced Settings are all functional. The main gaps are: ERP Status column + filter missing from list view, Schedule of Values embedded in General tab instead of its own tab, `out_for_bid` status exists in our code but not in Procore, `allowed_user_ids` / non-admin access list has no DB column or UI, column label mismatches on 6 list columns, Related Items tab absent, and Emails/Change History tabs are stubs.
 
 ---
 
-### 2. Create/Edit Form
+## Database Schema
 
-| # | PRP Requirement | Current State | Gap Severity |
-|---|----------------|--------------|-------------|
-| 2.1 | Contract #, Title, Status | ✅ Implemented | — |
-| 2.2 | Owner/Client, Contractor, Architect/Engineer | ✅ Implemented | — |
-| 2.3 | Executed (boolean/required) | ✅ Implemented | — |
-| 2.4 | Default Retainage % | ✅ Implemented (`retention_percentage`) | — |
-| 2.5 | Description (rich text) | ✅ Implemented | — |
-| 2.6 | Attachments (file upload) | ✅ Implemented | — |
-| 2.7 | Inclusions / Exclusions (rich text) | ✅ Implemented | — |
-| 2.8 | All 6 contract date fields | ✅ All implemented | — |
-| 2.9 | Private checkbox | ✅ Implemented (`is_private`) | — |
-| 2.10 | Access for Non-Admin Users (multi-select) | **DB column missing** — no `accessors` array in schema | 🔴 Critical |
-| 2.11 | Allow non-admins to view SOV items (checkbox) | **DB column missing** — no `show_line_items_to_non_admins` in schema | 🟡 Moderate |
-| 2.12 | Status: `out_for_bid` option | **Wrong status** — Procore Prime Contracts does NOT have "Out for Bid"; only Commitments has this. Should be removed. | 🔴 Critical |
+### Tables Found
 
-**Files:** `frontend/src/components/domain/contracts/ContractForm.tsx` (assumed — form referenced from detail page)
+| Table | Status | Notes |
+|-------|--------|-------|
+| `prime_contracts` | ✅ Exists | 30 columns; `project_id` is `bigint` (correct — matches `projects.id`) |
+| `prime_contract_change_orders` | ✅ Exists | 32 columns; `project_id` is `integer` (⚠️ should be `bigint`) |
+| `prime_contract_payments` | ✅ Exists | 14 columns; `project_id` is `integer` (⚠️ minor type width vs `bigint`) |
+| `prime_contract_payment_applications` | ✅ Exists | Owner invoices (not fully audited here) |
+| `prime_contract_line_items` | ⚠️ Not confirmed | Schema query returned 0 rows — API routes exist but table may have a different name; requires verification |
 
----
+### Schema Gaps
 
-### 3. Database Schema
+| Issue | Severity | Required By |
+|-------|----------|-------------|
+| `prime_contracts.erp_status` column absent | 🔴 Critical | List view ERP Status column + filter |
+| `prime_contracts.allowed_user_ids` column absent | 🔴 Critical | Contract privacy: non-admin user access list |
+| `prime_contracts.allow_sov_view` column absent | 🟡 Moderate | Contract privacy: SOV visibility for non-admin users |
+| `prime_contract_status_v2` enum includes `out_for_bid` | 🔴 Critical | Does NOT exist in Procore Prime Contracts; must be removed |
+| `prime_contract_change_orders.status` is plain `text`, not enum | 🟡 Moderate | Should use `prime_contract_co_status` enum (`draft`, `pending`, `approved`, `rejected`, `void`) |
+| `prime_contract_change_orders` has both `contract_id` and `prime_contract_id` FKs | 🟡 Moderate | Duplicate FK to `prime_contracts.id`; `prime_contract_id` should be canonical |
 
-| # | PRP Field | DB Column | Status |
-|---|-----------|-----------|--------|
-| 3.1 | contract_number | `contract_number` | ✅ |
-| 3.2 | vendor / Owner/Client | `client_id` → companies | ✅ |
-| 3.3 | title | `title` | ✅ |
-| 3.4 | status | `status` (enum `prime_contract_status_v2`) | ✅ |
-| 3.5 | executed | `executed` (boolean) | ✅ |
-| 3.6 | retainage_percent | `retention_percentage` | ✅ |
-| 3.7 | contractor | `contractor_id` → companies | ✅ |
-| 3.8 | architect | `architect_engineer_id` → companies | ✅ |
-| 3.9 | description | `description` | ✅ |
-| 3.10 | inclusions | `inclusions` | ✅ |
-| 3.11 | exclusions | `exclusions` | ✅ |
-| 3.12 | start_date | `start_date` | ✅ |
-| 3.13 | est. completion date | `end_date` | ✅ |
-| 3.14 | substantial_completion_date | `substantial_completion_date` | ✅ |
-| 3.15 | actual_completion_date | `actual_completion_date` | ✅ |
-| 3.16 | signed_contract_received_date | `signed_contract_received_date` | ✅ |
-| 3.17 | contract_termination_date | `contract_termination_date` | ✅ |
-| 3.18 | is_private | `is_private` | ✅ |
-| 3.19 | access_policy.accessors (non-admin user list) | **MISSING** — no column | 🔴 Critical |
-| 3.20 | access_policy.show_line_items_to_non_admins | **MISSING** — no column | 🟡 Moderate |
-| 3.21 | `out_for_bid` status value | Present in enum but **not a Procore Prime Contract status** | 🔴 Critical |
+### FK Type Check
+
+| Column | Actual Type | Expected Type | Match? |
+|--------|-------------|---------------|--------|
+| `prime_contracts.project_id` | `bigint` | `bigint` (projects.id) | ✅ |
+| `prime_contract_change_orders.project_id` | `integer` | `bigint` (projects.id) | ⚠️ Width mismatch |
+| `prime_contract_payments.project_id` | `integer` | `bigint` (projects.id) | ⚠️ Width mismatch |
+| `prime_contracts.client_id` | `uuid` | `uuid` (companies.id) | ✅ |
+| `prime_contracts.contractor_id` | `uuid` | `uuid` (companies.id) | ✅ |
+| `prime_contracts.architect_engineer_id` | `uuid` | `uuid` (companies.id) | ✅ |
 
 ---
 
-### 4. Detail View Tabs
+## List View
 
-| # | PRP Tab | Current State | Gap Severity |
-|---|---------|--------------|-------------|
-| 4.1 | General (contract info + Contract Summary) | ✅ Implemented as "General"/"overview" tab | — |
-| 4.2 | Schedule of Values (separate tab) | **Missing as separate tab** — SOV is embedded inside the General/Overview tab | 🔴 Critical |
-| 4.3 | Change Orders | ✅ Implemented | — |
-| 4.4 | Invoices | ✅ Implemented | — |
-| 4.5 | Payments Received | ✅ Implemented | — |
-| 4.6 | Related Items | **Missing** — no tab exists | 🟡 Moderate |
-| 4.7 | Emails | ⚠️ Tab exists but is a **placeholder** (no content) | 🟡 Moderate |
-| 4.8 | Change History | ⚠️ Tab exists but is a **placeholder** (no content) | 🟡 Moderate |
-| 4.9 | Financial Markup | ✅ Implemented | — |
-| 4.10 | Advanced Settings | ✅ Implemented | — |
-| 4.11 | **Extra: Commitments tab** | Present but **not in Procore** — this is an Alleato addition | 🟢 Acceptable addition |
-
-**Files:** `frontend/src/app/(main)/[projectId]/prime-contracts/[contractId]/page.tsx`
-
----
-
-### 5. Contract Summary Panel (Calculated Fields)
-
-| # | PRP Field | Current State | Gap Severity |
-|---|-----------|--------------|-------------|
-| 5.1 | Original Contract Amount | ✅ Present in overview tab | — |
-| 5.2 | Approved Change Orders | ✅ Present | — |
-| 5.3 | Revised Contract Amount | ✅ Present | — |
-| 5.4 | Pending Change Orders | ✅ Present | — |
-| 5.5 | Pending Revised Contract Amount | ⚠️ Not confirmed visible in overview — needs verification | 🟡 Moderate |
-| 5.6 | Draft Change Orders | ✅ Present | — |
-| 5.7 | Invoices total | ✅ Present | — |
-| 5.8 | Payments Received | ✅ Present | — |
-| 5.9 | Percent Paid | ⚠️ Not confirmed visible in summary panel | 🟡 Moderate |
-| 5.10 | Remaining Balance | ✅ Present | — |
-
----
-
-### 6. Advanced Settings / Change Order Tiers
-
-| # | PRP Requirement | Current State | Gap Severity |
-|---|----------------|--------------|-------------|
-| 6.1 | 3-tier change order support | `co_tier_count: 1 | 2` — **tier 3 not supported** | 🟡 Moderate |
-| 6.2 | SOV import from Budget | **Not found** — no "Import from Budget" action on SOV | 🔴 Critical |
+| Requirement | Status | Notes |
+|-------------|--------|-------|
+| Column: Number | ✅ | `contract_number` — clickable link to detail |
+| Column: Owner/Client | ✅ | `client_name` |
+| Column: Title | ✅ | |
+| Column: ERP Status | 🔴 | Not in `primeContractColumns`; no DB column exists |
+| Column: Status | ✅ | StatusBadge with color |
+| Column: Executed | ✅ | |
+| Column: Original Contract Amount | 🟡 | Present but labeled "Original Amount" (Procore: "Original Contract Amount") |
+| Column: Approved Change Orders | 🟡 | Present but labeled "Approved COs" (Procore: "Approved Change Orders") |
+| Column: Revised Contract Amount | 🟡 | Present but labeled "Revised Amount" (Procore: "Revised Contract Amount") |
+| Column: Pending Change Orders | 🟡 | Present but labeled "Pending COs" (Procore: "Pending Change Orders") |
+| Column: Draft Change Orders | 🟡 | Present but labeled "Draft COs" (Procore: "Draft Change Orders") |
+| Column: Invoiced | ✅ | `invoiced_amount` |
+| Column: Payments Received | 🟡 | Present but `defaultVisible: false` — should be visible by default per Procore |
+| Column: % Paid | 🟡 | Present but `defaultVisible: false` — should be visible by default |
+| Column: Remaining Balance Outstanding | 🟡 | Present as "Balance", `defaultVisible: false` — label and visibility wrong |
+| Column: Private | ✅ | `is_private`, defaultVisible: false (acceptable) |
+| Column: Attachments (count) | 🔴 | Not in table config |
+| Filter: Owner/Client | ✅ | |
+| Filter: ERP Status | 🔴 | Missing |
+| Filter: Status | ✅ | |
+| Filter: Executed | ✅ | |
+| Toolbar: Create | ✅ | |
+| Toolbar: Export | ✅ | CSV export |
+| Toolbar: Configure columns | 🟡 | Column toggle in UnifiedTablePage; no separate Configure button |
+| Row action: View (click row) | ✅ | Number cell links to detail |
+| Row action: Edit | ✅ | |
+| Row action: Delete | ✅ | With confirmation dialog |
+| Bulk delete | ✅ | |
+| Expandable sub-rows (PCCOs + PCOs) | ✅ | Lazy-loaded with caching |
+| Footer totals row | ✅ | 8 financial columns have totals |
 
 ---
 
-## Summary of Gaps by Priority
+## Create / Edit Form
 
-### 🔴 Critical (blocks Procore parity)
-
-| ID | Gap | Fix Required |
-|----|-----|-------------|
-| GAP-01 | `ERP Status` column missing from list table | Add `erp_status` column to `primeContractColumns` and `buildPrimeContractTableColumns()` |
-| GAP-02 | `ERP Status` filter missing from list | Add ERP Status filter to `primeContractFilters` |
-| GAP-03 | `Schedule of Values` is not a separate tab | Extract SOV from Overview tab into its own `Schedule of Values` tab |
-| GAP-04 | `out_for_bid` status not a Procore Prime Contract status | Remove from `prime_contract_status_v2` enum; remove from `STATUS_LABELS` |
-| GAP-05 | `access_policy.accessors` DB column missing | Add migration: `allowed_user_ids uuid[] DEFAULT '{}'` on `prime_contracts` |
-| GAP-06 | SOV import from Budget not implemented | Add "Import from Budget" button on SOV tab that calls a bulk-create endpoint |
-
-### 🟡 Moderate (degrades parity)
-
-| ID | Gap | Fix Required |
-|----|-----|-------------|
-| GAP-07 | `Attachments` column missing from list | Add attachment count column to table config |
-| GAP-08 | `Payments Received`, `% Paid`, `Remaining Balance Outstanding` hidden by default | Change `defaultVisible` to `true` for these columns |
-| GAP-09 | `access_policy.show_line_items_to_non_admins` DB column missing | Add migration: `show_sov_to_non_admins boolean DEFAULT false` on `prime_contracts` |
-| GAP-10 | `Related Items` tab missing | Create stub tab (can be empty initially) |
-| GAP-11 | `Emails` tab is placeholder | Implement email history or keep as stub with clear messaging |
-| GAP-12 | `Change History` tab is placeholder | Implement audit log or keep as stub with clear messaging |
-| GAP-13 | `Pending Revised Contract Amount` not confirmed in summary panel | Verify/add to Contract Summary panel in Overview tab |
-| GAP-14 | `Percent Paid` not confirmed in summary panel | Verify/add to Contract Summary panel |
-| GAP-15 | Change order tier 3 not supported | Extend `co_tier_count` to accept 1 | 2 | 3 |
-
-### 🟢 Minor (label/cosmetic)
-
-| ID | Gap | Fix Required |
-|----|-----|-------------|
-| GAP-16 | "Original Amount" → "Original Contract Amount" | Update column label |
-| GAP-17 | "Approved COs" → "Approved Change Orders" | Update column label |
-| GAP-18 | "Revised Amount" → "Revised Contract Amount" | Update column label |
-| GAP-19 | "Pending COs" → "Pending Change Orders" | Update column label |
-| GAP-20 | "Draft COs" → "Draft Change Orders" | Update column label |
-| GAP-21 | "Payments" → "Payments Received" | Update column label |
-| GAP-22 | "Balance" → "Remaining Balance Outstanding" | Update column label |
+| Requirement | Status | Notes |
+|-------------|--------|-------|
+| Field: Contract # (text) | ✅ | |
+| Field: Owner/Client (company select) | ✅ | `client_id` FK to companies |
+| Field: Title (text) | ✅ | |
+| Field: Status (select) | 🟡 | Present but includes `out_for_bid` which doesn't exist in Procore |
+| Field: Executed (boolean, required) | ✅ | |
+| Field: Default Retainage % | ✅ | `retention_percentage` |
+| Field: Contractor (company select) | ✅ | `contractor_id` |
+| Field: Architect/Engineer (company select) | ✅ | `architect_engineer_id` |
+| Field: Description (rich text) | ✅ | |
+| Field: Attachments (file upload) | ✅ | |
+| Field: Inclusions (rich text) | ✅ | |
+| Field: Exclusions (rich text) | ✅ | |
+| Field: Start Date | ✅ | `start_date` |
+| Field: Estimated Completion Date | 🟡 | Stored as `end_date`; label mismatch |
+| Field: Substantial Completion Date | ✅ | |
+| Field: Actual Completion Date | ✅ | |
+| Field: Signed Contract Received Date | ✅ | |
+| Field: Contract Termination Date | ✅ | |
+| Field: Private (checkbox) | ✅ | `is_private` |
+| Field: Access for Non-Admin Users (multi-select) | 🔴 | No `allowed_user_ids` DB column; field absent from form |
+| Field: Allow SOV View (checkbox) | 🔴 | No `allow_sov_view` DB column; field absent from form |
 
 ---
 
-## Files Audited
+## Detail View
 
-| File | Role |
-|------|------|
-| `frontend/src/app/(main)/[projectId]/prime-contracts/page.tsx` | List page |
-| `frontend/src/app/(main)/[projectId]/prime-contracts/[contractId]/page.tsx` | Detail page |
-| `frontend/src/features/prime-contracts/prime-contracts-table-config.tsx` | Column/filter config |
-| `frontend/src/types/database.types.ts` (line 15332) | DB schema |
+| Requirement | Status | Notes |
+|-------------|--------|-------|
+| Tab: General | ✅ | Form fields + Contract Summary financial panel |
+| Tab: Schedule of Values | 🟡 | SOV table exists but embedded in the General/Overview tab, not its own tab |
+| Tab: Change Orders | ✅ | PCCOs + PCOs sub-sections; row actions include approve/reject/delete/PDF |
+| Tab: Invoices | ✅ | Full payment application CRUD |
+| Tab: Payments Received | ✅ | Columns mostly match Procore (note: ERP Status column absent from payments table too) |
+| Tab: Related Items | 🔴 | Missing entirely |
+| Tab: Emails | 🟡 | Tab exists but is a stub — placeholder icon + "Email history will be displayed here" |
+| Tab: Change History | 🟡 | Tab exists but is a stub — placeholder icon + "Change history will be displayed here" |
+| Tab: Financial Markup | ✅ | Markup types: insurance, bond, fee, overhead, custom |
+| Tab: Advanced Settings | ✅ | CO tier config, retainage, PDF options |
+| Contract Summary panel (10 calculated fields) | ✅ | All present and computed from DB view |
+| Detail action: Edit | ✅ | Inline via `?edit=1` query param |
+| Detail action: Create PCCO | ✅ | |
+| Detail action: Create Owner Invoice | ✅ | |
+| Detail action: Add Payment | ✅ | |
+| Detail action: Export | ✅ | Acumatica ERP sync + export actions |
+| Detail action: Delete | ✅ | Admin only |
 
 ---
 
-*Ready for `/prp:prp-execute prime-contracts`*
+## Workflows & Business Rules
+
+| Requirement | Status | Notes |
+|-------------|--------|-------|
+| Status: Draft | ✅ | Default on creation |
+| Status: Out for Signature | ✅ | `out_for_signature` |
+| Status: Approved | ✅ | |
+| Status: Complete | ✅ | |
+| Status: Terminated | ✅ | |
+| Status: Out for Bid | 🔴 | Exists in our enum/code but does NOT exist in Procore Prime Contracts — must be removed |
+| Transition: Draft → Out for Signature | ✅ | |
+| Transition: Out for Signature → Approved | ✅ | |
+| Transition: Draft → Approved | ✅ | |
+| Transition: Approved → Complete | ✅ | |
+| Transition: Any → Terminated | ✅ | |
+| Rule: Approved status required before owner invoices | 🟡 | Not enforced in API or UI |
+| Rule: CO tier locked after first CO created | 🟡 | Setting is configurable but no enforcement guard |
+| Rule: SOV accounting method locked after line items added | 🟡 | Not enforced |
+| Financial calculations (all 8 formulas) | ✅ | Computed by `prime_contract_financial_summary` DB view |
+
+---
+
+## Integrations
+
+| Requirement | Status | Notes |
+|-------------|--------|-------|
+| Change Events → PCOs → PCCOs flow | ✅ | Change Events tab embedded in Change Orders tab |
+| Budget → SOV import | 🟡 | API route `/line-items/import` exists; UI button presence needs browser verification |
+| Invoicing (owner invoices / payment applications) | ✅ | Full CRUD |
+| ERP (Acumatica) sync | 🟡 | Sync/export actions exist; `erp_status` column missing from `prime_contracts` table so sync status not visible |
+| Directory (company selects) | ✅ | All three company FKs wired to company directory |
+
+---
+
+## Known Guardrails (from Incident Log)
+
+1. **🔴 Removing enum values is dangerous** — Before removing `out_for_bid` from `prime_contract_status_v2`, run: `SELECT COUNT(*) FROM prime_contracts WHERE status = 'out_for_bid'`. If any rows exist, migrate them to `draft` first. Reference: `INCIDENT-LOG.md` — enum case sensitivity incident.
+
+2. **🔴 FK type consistency** — `prime_contract_change_orders.project_id` and `prime_contract_payments.project_id` are `integer`; `projects.id` is `bigint`. PostgreSQL allows implicit casting but this is a known source of silent failures. Any new migrations on these tables must use `bigint`. Reference: `INCIDENT-LOG.md` — UUID vs INTEGER FK incident.
+
+3. **🔴 Never claim a Supabase query works without running it** — Verify every new query with `node -e` before marking the task done. TypeScript compiling and the page loading are not evidence. Reference: `INCIDENT-LOG.md` — Direct Costs phantom-fix incident.
+
+4. **🟡 Form FK mismatch** — When `allowed_user_ids` multi-select is implemented, the edit form must inject saved user IDs as synthetic options (users outside the normal scoped set). Follow the pattern in `docs/patterns/form-id-mismatch-prevention.md`.
+
+5. **🟡 Next.js 15 async params** — All new API routes must `await params` before accessing `contractId` or `projectId`. Reference: `INCIDENT-LOG.md` — Next.js 15 params incident.
+
+6. **🟡 Enum case rule** — Status values are lowercase (`draft`, `out_for_signature`, etc.). Before inserting test data, verify: `rg "CHECK.*status" supabase/migrations/`.
+
+---
+
+## Implementation Priority
+
+1. **Remove `out_for_bid` from enum + validation + UI** — Incorrect status that doesn't exist in Procore; any data using it should migrate to `draft`
+2. **Add `erp_status` column to `prime_contracts`** — Prerequisite for items 3 and 4
+3. **Add ERP Status column to list view** — High-visibility Procore parity gap
+4. **Add ERP Status filter** — Dependent on item 2
+5. **Fix 6 column labels + 3 visibility defaults** — Low effort, high parity impact
+6. **Extract Schedule of Values into its own detail tab** — Major UX parity gap
+7. **Add `allowed_user_ids` + `allow_sov_view` schema + form fields** — Privacy feature
+8. **Enforce business rules** — Invoice creation gate on Approved; CO tier lock enforcement
+9. **Related Items tab** — Required for parity but lower priority
+10. **Emails + Change History tabs** — Currently stubs; full implementation is complex
