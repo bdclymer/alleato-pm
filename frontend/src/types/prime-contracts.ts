@@ -5,7 +5,6 @@
 
 export type ContractStatus =
   | "draft"
-  | "out_for_bid"
   | "out_for_signature"
   | "approved"
   | "complete"

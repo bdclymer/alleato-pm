@@ -7,6 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { apiFetch } from "@/lib/api-client";
@@ -44,6 +51,8 @@ interface PrimeContractAdvancedSettingsTabProps {
     billing_schedule: string;
   };
   setContract: React.Dispatch<React.SetStateAction<import("@/app/(main)/[projectId]/prime-contracts/[contractId]/types").Contract | null>>;
+  /** Number of existing change orders — used to lock the CO tier selector */
+  changeOrderCount?: number;
 }
 
 export function PrimeContractAdvancedSettingsTab({
@@ -56,7 +65,9 @@ export function PrimeContractAdvancedSettingsTab({
   setAdvancedSettingsSaving,
   contractAdvancedDraft,
   setContract,
+  changeOrderCount = 0,
 }: PrimeContractAdvancedSettingsTabProps) {
+  const coTierLocked = changeOrderCount > 0;
   const updateAdvancedSetting = <K extends keyof PrimeContractSettings>(
     key: K,
     value: PrimeContractSettings[K],
@@ -278,22 +289,40 @@ export function PrimeContractAdvancedSettingsTab({
                 </TooltipContent>
               </Tooltip>
             </div>
-            <div className="mt-3 max-w-md">
+            <div className="mt-3 max-w-md space-y-2">
               <Label htmlFor="co-tier-count" className="sr-only">Change order workflow</Label>
-              <select
-                id="co-tier-count"
-                value={String(advancedSettings?.co_tier_count ?? 1)}
-                onChange={(e) =>
-                  updateAdvancedSetting(
-                    "co_tier_count",
-                    e.target.value === "1" ? 1 : 2,
-                  )
-                }
-                className="flex h-11 w-full rounded-md border border-input bg-background px-3 text-[16px] shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              >
-                <option value="1">Prime Contract Change Order</option>
-                <option value="2">Line Items in each Potential Change Order (PCO)</option>
-              </select>
+              {coTierLocked ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex h-11 w-full cursor-not-allowed items-center rounded-md border border-input bg-muted px-3 text-[16px] text-muted-foreground">
+                      {advancedSettings?.co_tier_count === 2
+                        ? "Line Items in each Potential Change Order (PCO)"
+                        : "Prime Contract Change Order"}
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>
+                      The CO tier cannot be changed after change orders have been created.
+                      Delete all change orders ({changeOrderCount}) to unlock this setting.
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                <Select
+                  value={String(advancedSettings?.co_tier_count ?? 1)}
+                  onValueChange={(v) =>
+                    updateAdvancedSetting("co_tier_count", v === "1" ? 1 : 2)
+                  }
+                >
+                  <SelectTrigger id="co-tier-count">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">Prime Contract Change Order</SelectItem>
+                    <SelectItem value="2">Line Items in each Potential Change Order (PCO)</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
             </div>
           </section>
 

@@ -13254,7 +13254,6 @@ export type Database = {
         | "not_ready"
       prime_contract_status_v2:
         | "draft"
-        | "out_for_bid"
         | "out_for_signature"
         | "approved"
         | "complete"
@@ -13433,7 +13432,6 @@ export const Constants = {
       ],
       prime_contract_status_v2: [
         "draft",
-        "out_for_bid",
         "out_for_signature",
         "approved",
         "complete",

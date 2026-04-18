@@ -157,7 +157,6 @@ interface ContractFormProps {
 
 const CONTRACT_STATUSES = [
   { value: "draft", label: "Draft" },
-  { value: "out_for_bid", label: "Out for Bid" },
   { value: "out_for_signature", label: "Out for Signature" },
   { value: "approved", label: "Approved" },
   { value: "complete", label: "Complete" },

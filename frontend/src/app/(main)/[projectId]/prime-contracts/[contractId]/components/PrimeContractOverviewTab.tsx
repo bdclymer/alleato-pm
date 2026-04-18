@@ -254,7 +254,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                   <LabelValueRow label="Start Date" labelClassName="w-44">
                     {renderDateOrDash(contract.start_date)}
                   </LabelValueRow>
-                  <LabelValueRow label="Estimated Completion" labelClassName="w-44">
+                  <LabelValueRow label="Estimated Completion Date" labelClassName="w-44">
                     {renderDateOrDash(contract.end_date)}
                   </LabelValueRow>
                   <LabelValueRow label="Substantial Completion" labelClassName="w-44">

@@ -135,7 +135,6 @@ export interface Contract {
   title: string;
   status:
     | "draft"
-    | "out_for_bid"
     | "out_for_signature"
     | "approved"
     | "complete"
@@ -236,11 +235,13 @@ export interface ChangeOrderFormState {
 
 export type ContractTab =
   | "overview"
+  | "schedule-of-values"
   | "change-orders"
   | "commitments"
   | "change-events"
   | "invoices"
   | "payments"
+  | "related-items"
   | "emails"
   | "history"
   | "financial-markup"

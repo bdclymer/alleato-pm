@@ -6,7 +6,6 @@ import { z } from "zod";
 
 export const contractStatusSchema = z.enum([
   "draft",
-  "out_for_bid",
   "out_for_signature",
   "approved",
   "complete",
@@ -68,6 +67,8 @@ export const updateContractSchema = z.object({
   is_private: z.boolean().optional(),
   inclusions: z.string().optional().nullable(),
   exclusions: z.string().optional().nullable(),
+  allowed_user_ids: z.array(z.string().uuid()).optional(),
+  allow_sov_view: z.boolean().optional(),
 });
 
 export type CreateContractInput = z.infer<typeof createContractSchema>;

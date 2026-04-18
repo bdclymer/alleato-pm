@@ -1,6 +1,6 @@
 import * as React from "react";
 import type { ReactElement } from "react";
-import { ChevronDown, Lock, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { ChevronDown, Lock, MoreHorizontal, Paperclip, Pencil, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 import { StatusBadge } from "@/components/ds";
@@ -23,34 +23,50 @@ export const STATUS_LABELS: Record<
   string
 > = {
   draft: "Draft",
-  out_for_bid: "Out for Bid",
   out_for_signature: "Out for Signature",
   approved: "Approved",
   complete: "Complete",
   terminated: "Terminated",
 };
 
+export const ERP_STATUS_LABELS: Record<string, string> = {
+  unsynced: "Unsynced",
+  synced: "Synced",
+  error: "Error",
+};
+
 export const primeContractColumns: ColumnConfig[] = [
   { id: "contract_number", label: "Number", alwaysVisible: true },
   { id: "client_name", label: "Owner/Client", defaultVisible: true },
   { id: "title", label: "Title", defaultVisible: true },
+  { id: "erp_status", label: "ERP Status", defaultVisible: true },
   { id: "status", label: "Status", defaultVisible: true },
   { id: "executed", label: "Executed", defaultVisible: true },
-  { id: "original_contract_value", label: "Original Amount", defaultVisible: true },
-  { id: "approved_change_orders", label: "Approved COs", defaultVisible: true },
-  { id: "revised_contract_value", label: "Revised Amount", defaultVisible: true },
-  { id: "pending_change_orders", label: "Pending COs", defaultVisible: true },
-  { id: "draft_change_orders", label: "Draft COs", defaultVisible: true },
+  { id: "original_contract_value", label: "Original Contract Amount", defaultVisible: true },
+  { id: "approved_change_orders", label: "Approved Change Orders", defaultVisible: true },
+  { id: "revised_contract_value", label: "Revised Contract Amount", defaultVisible: true },
+  { id: "pending_change_orders", label: "Pending Change Orders", defaultVisible: true },
+  { id: "draft_change_orders", label: "Draft Change Orders", defaultVisible: true },
   { id: "invoiced_amount", label: "Invoiced", defaultVisible: true },
-  { id: "payments_received", label: "Payments", defaultVisible: false },
-  { id: "remaining_balance", label: "Balance", defaultVisible: false },
-  { id: "percent_paid", label: "% Paid", defaultVisible: false },
+  { id: "payments_received", label: "Payments Received", defaultVisible: true },
+  { id: "remaining_balance", label: "Remaining Balance Outstanding", defaultVisible: true },
+  { id: "percent_paid", label: "% Paid", defaultVisible: true },
   { id: "is_private", label: "Private", defaultVisible: false },
+  { id: "attachment_count", label: "Attachments", defaultVisible: false },
   { id: "start_date", label: "Start Date", defaultVisible: false },
   { id: "end_date", label: "End Date", defaultVisible: false },
 ];
 
 export const primeContractFilters: FilterConfig[] = [
+  {
+    id: "erp_status",
+    label: "ERP Status",
+    type: "select",
+    options: Object.entries(ERP_STATUS_LABELS).map(([value, label]) => ({
+      value,
+      label,
+    })),
+  },
   {
     id: "status",
     label: "Status",
@@ -96,10 +112,15 @@ function sortValueForDate(value: string | null | undefined): number {
   return Number.isNaN(date.getTime()) ? 0 : date.getTime();
 }
 
+// Map column id → index for safe lookup (avoids hardcoded positional indices)
+const COL = Object.fromEntries(
+  primeContractColumns.map((col, i) => [col.id, i])
+) as Record<string, number>;
+
 export function buildPrimeContractTableColumns(): TableColumn<PrimeContract>[] {
   return [
     {
-      ...primeContractColumns[0],
+      ...primeContractColumns[COL.contract_number],
       width: 220,
       render: (item) => (
         <span className="font-medium text-primary underline decoration-primary/40 underline-offset-4">
@@ -110,7 +131,7 @@ export function buildPrimeContractTableColumns(): TableColumn<PrimeContract>[] {
       sortValue: (item) => item.contract_number ?? "",
     },
     {
-      ...primeContractColumns[1],
+      ...primeContractColumns[COL.client_name],
       render: (item) => (
         <span className="text-muted-foreground">{item.client?.name ?? "-"}</span>
       ),
@@ -118,7 +139,7 @@ export function buildPrimeContractTableColumns(): TableColumn<PrimeContract>[] {
       sortValue: (item) => item.client?.name ?? "",
     },
     {
-      ...primeContractColumns[2],
+      ...primeContractColumns[COL.title],
       render: (item) => (
         <span className="font-medium text-primary underline decoration-primary/40 underline-offset-4">
           {item.title ?? "-"}
@@ -128,7 +149,19 @@ export function buildPrimeContractTableColumns(): TableColumn<PrimeContract>[] {
       sortValue: (item) => item.title ?? "",
     },
     {
-      ...primeContractColumns[3],
+      ...primeContractColumns[COL.erp_status],
+      render: (item) => {
+        const val = (item as { erp_status?: string }).erp_status ?? "unsynced";
+        return <StatusBadge status={ERP_STATUS_LABELS[val] ?? val} />;
+      },
+      csvValue: (item) => {
+        const val = (item as { erp_status?: string }).erp_status ?? "unsynced";
+        return ERP_STATUS_LABELS[val] ?? val;
+      },
+      sortValue: (item) => (item as { erp_status?: string }).erp_status ?? "",
+    },
+    {
+      ...primeContractColumns[COL.status],
       render: (item) =>
         item.status ? (
           <StatusBadge status={STATUS_LABELS[item.status]} />
@@ -139,61 +172,61 @@ export function buildPrimeContractTableColumns(): TableColumn<PrimeContract>[] {
       sortValue: (item) => item.status ?? "",
     },
     {
-      ...primeContractColumns[4],
+      ...primeContractColumns[COL.executed],
       render: (item) => <span>{item.executed ? "Yes" : "No"}</span>,
       csvValue: (item) => (item.executed ? "Yes" : "No"),
       sortValue: (item) => (item.executed ? 1 : 0),
     },
     {
-      ...primeContractColumns[5],
+      ...primeContractColumns[COL.original_contract_value],
       render: (item) => <span>{formatCurrency(item.original_contract_value)}</span>,
       csvValue: (item) => String(item.original_contract_value ?? ""),
       sortValue: (item) => item.original_contract_value ?? 0,
     },
     {
-      ...primeContractColumns[6],
+      ...primeContractColumns[COL.approved_change_orders],
       render: (item) => <span>{formatCurrency(item.approved_change_orders)}</span>,
       csvValue: (item) => String(item.approved_change_orders ?? ""),
       sortValue: (item) => item.approved_change_orders ?? 0,
     },
     {
-      ...primeContractColumns[7],
+      ...primeContractColumns[COL.revised_contract_value],
       render: (item) => <span>{formatCurrency(item.revised_contract_value)}</span>,
       csvValue: (item) => String(item.revised_contract_value ?? ""),
       sortValue: (item) => item.revised_contract_value ?? 0,
     },
     {
-      ...primeContractColumns[8],
+      ...primeContractColumns[COL.pending_change_orders],
       render: (item) => <span>{formatCurrency(item.pending_change_orders)}</span>,
       csvValue: (item) => String(item.pending_change_orders ?? ""),
       sortValue: (item) => item.pending_change_orders ?? 0,
     },
     {
-      ...primeContractColumns[9],
+      ...primeContractColumns[COL.draft_change_orders],
       render: (item) => <span>{formatCurrency(item.draft_change_orders)}</span>,
       csvValue: (item) => String(item.draft_change_orders ?? ""),
       sortValue: (item) => item.draft_change_orders ?? 0,
     },
     {
-      ...primeContractColumns[10],
+      ...primeContractColumns[COL.invoiced_amount],
       render: (item) => <span>{formatCurrency(item.invoiced_amount)}</span>,
       csvValue: (item) => String(item.invoiced_amount ?? ""),
       sortValue: (item) => item.invoiced_amount ?? 0,
     },
     {
-      ...primeContractColumns[11],
+      ...primeContractColumns[COL.payments_received],
       render: (item) => <span>{formatCurrency(item.payments_received)}</span>,
       csvValue: (item) => String(item.payments_received ?? ""),
       sortValue: (item) => item.payments_received ?? 0,
     },
     {
-      ...primeContractColumns[12],
+      ...primeContractColumns[COL.remaining_balance],
       render: (item) => <span>{formatCurrency(item.remaining_balance)}</span>,
       csvValue: (item) => String(item.remaining_balance ?? ""),
       sortValue: (item) => item.remaining_balance ?? 0,
     },
     {
-      ...primeContractColumns[13],
+      ...primeContractColumns[COL.percent_paid],
       render: (item) => (
         <span>{item.percent_paid != null ? `${item.percent_paid.toFixed(1)}%` : "—"}</span>
       ),
@@ -201,7 +234,7 @@ export function buildPrimeContractTableColumns(): TableColumn<PrimeContract>[] {
       sortValue: (item) => item.percent_paid ?? 0,
     },
     {
-      ...primeContractColumns[14],
+      ...primeContractColumns[COL.is_private],
       render: (item) =>
         item.is_private ? (
           <Lock className="h-4 w-4 text-muted-foreground" />
@@ -212,13 +245,29 @@ export function buildPrimeContractTableColumns(): TableColumn<PrimeContract>[] {
       sortValue: (item) => (item.is_private ? 1 : 0),
     },
     {
-      ...primeContractColumns[15],
+      ...primeContractColumns[COL.attachment_count],
+      render: (item) => {
+        const count = (item as { attachment_count?: number }).attachment_count ?? 0;
+        return count > 0 ? (
+          <span className="flex items-center gap-1 text-muted-foreground">
+            <Paperclip className="h-3.5 w-3.5" />
+            {count}
+          </span>
+        ) : (
+          <span className="text-muted-foreground">—</span>
+        );
+      },
+      csvValue: (item) => String((item as { attachment_count?: number }).attachment_count ?? 0),
+      sortValue: (item) => (item as { attachment_count?: number }).attachment_count ?? 0,
+    },
+    {
+      ...primeContractColumns[COL.start_date],
       render: (item) => <span>{formatDate(item.start_date)}</span>,
       csvValue: (item) => item.start_date ?? "",
       sortValue: (item) => sortValueForDate(item.start_date),
     },
     {
-      ...primeContractColumns[16],
+      ...primeContractColumns[COL.end_date],
       render: (item) => <span>{formatDate(item.end_date)}</span>,
       csvValue: (item) => item.end_date ?? "",
       sortValue: (item) => sortValueForDate(item.end_date),

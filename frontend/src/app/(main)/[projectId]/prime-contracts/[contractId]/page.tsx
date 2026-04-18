@@ -25,6 +25,8 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { PageShell } from "@/components/layout";
+import { StatusBadge } from "@/components/ds";
+import { ERP_STATUS_LABELS, STATUS_LABELS } from "@/features/prime-contracts/prime-contracts-table-config";
 import { DocumentDeliveryDialog } from "@/components/documents/DocumentDeliveryDialog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -59,6 +61,7 @@ import {
   PrimeContractPaymentsTab,
   PrimeContractFinancialMarkupTab,
   PrimeContractAdvancedSettingsTab,
+  PrimeContractSovTab,
   useSovEditing,
 } from "@/components/domain/contracts/prime-contract-detail";
 
@@ -144,7 +147,6 @@ const getTextValue = (value: string | null | undefined): { text: string; isMissi
 
 const formatStatusLabel = (status: Contract["status"]) => {
   switch (status) {
-    case "out_for_bid": return "Out for Bid";
     case "out_for_signature": return "Out for Signature";
     default: return status.charAt(0).toUpperCase() + status.slice(1);
   }
@@ -688,6 +690,8 @@ export default function ProjectContractDetailPage() {
           signed_contract_received_date: data.signedContractReceivedDate?.toISOString().split("T")[0] || null, contract_termination_date: data.contractTerminationDate?.toISOString().split("T")[0] || null,
           retention_percentage: data.defaultRetainage || 0, payment_terms: data.paymentTerms || null, billing_schedule: data.billingSchedule || null,
           is_private: data.isPrivate || false, inclusions: data.inclusions || null, exclusions: data.exclusions || null,
+          allowed_user_ids: data.allowedUsers && data.allowedUsers.length > 0 ? data.allowedUsers : [],
+          allow_sov_view: data.allowedUsersCanSeeSov || false,
         }),
       });
       const budgetCodesPayload = await apiFetch<{ budgetCodes: Array<{ id: string; legacyCostCodeId?: string | null }> }>(
@@ -809,7 +813,10 @@ export default function ProjectContractDetailPage() {
       signedContractReceivedDate: contract.signed_contract_received_date ? new Date(contract.signed_contract_received_date) : undefined,
       contractTerminationDate: contract.contract_termination_date ? new Date(contract.contract_termination_date) : undefined,
       defaultRetainage: contract.retention_percentage, paymentTerms: contract.payment_terms || "", billingSchedule: contract.billing_schedule || "",
-      isPrivate: contract.is_private, inclusions: contract.inclusions || "", exclusions: contract.exclusions || "", sovItems,
+      isPrivate: contract.is_private,
+      allowedUsers: (contract as { allowed_user_ids?: string[] }).allowed_user_ids ?? [],
+      allowedUsersCanSeeSov: (contract as { allow_sov_view?: boolean }).allow_sov_view ?? false,
+      inclusions: contract.inclusions || "", exclusions: contract.exclusions || "", sovItems,
     };
     return (
       <PageShell variant="form" title={`Edit: ${contract.contract_number || contract.title}`} description="Update contract details and SOV line items" onBack={() => setIsEditing(false)} backLabel="Cancel Edit"
@@ -824,6 +831,18 @@ export default function ProjectContractDetailPage() {
       variant={activeTab === "financial-markup" ? "detail" : "dashboard"}
       title={`#${contract.contract_number || contract.id.slice(0, 8)} — ${contract.title}`}
       description={contract.contractor ? `Contractor: ${contract.contractor.name}` : contract.vendor ? `Contractor: ${contract.vendor.name}` : "No contractor assigned"}
+      statusBadge={
+        <div className="flex items-center gap-2">
+          {contract.status && (
+            <StatusBadge status={STATUS_LABELS[contract.status] ?? contract.status} />
+          )}
+          {(contract as { erp_status?: string }).erp_status && (
+            <StatusBadge
+              status={ERP_STATUS_LABELS[(contract as { erp_status?: string }).erp_status ?? "unsynced"] ?? "Unsynced"}
+            />
+          )}
+        </div>
+      }
       onBack={() => router.push(`/${projectId}/prime-contracts`)}
       actions={
         <div className="flex items-center gap-2">
@@ -879,10 +898,12 @@ export default function ProjectContractDetailPage() {
         variant="inline"
         tabs={[
           { label: "General", href: "overview", isActive: activeTab === "overview" },
+          { label: "Schedule of Values", href: "schedule-of-values", isActive: activeTab === "schedule-of-values", count: lineItems.length || undefined },
           { label: "Change Orders", href: "change-orders", isActive: activeTab === "change-orders", count: changeOrders.length || undefined },
           { label: "Commitments", href: "commitments", isActive: activeTab === "commitments" },
           { label: "Invoices", href: "invoices", isActive: activeTab === "invoices", count: paymentApplications.length || undefined },
           { label: "Payments Received", href: "payments", isActive: activeTab === "payments", count: payments.length || undefined },
+          { label: "Related Items", href: "related-items", isActive: activeTab === "related-items" },
           { label: "Emails", href: "emails", isActive: activeTab === "emails" },
           { label: "Change History", href: "history", isActive: activeTab === "history" },
           { label: "Financial Markup", href: "financial-markup", isActive: activeTab === "financial-markup" },
@@ -903,6 +924,31 @@ export default function ProjectContractDetailPage() {
             onAddSovLine={sov.handleAddSovLine} onAddSovGroup={sov.handleAddSovGroup} onUpdateSovLine={sov.handleUpdateSovLine}
             onUpdateSovLineBudgetCode={sov.handleUpdateSovLineBudgetCode} onRemoveSovLine={sov.handleRemoveSovLine} onReorderSovLines={sov.handleReorderSovLines}
             onRequestCreateBudgetCode={handleRequestCreateBudgetCodeForSovLine} onDeleteSovLine={sov.handleDeleteSovLine}
+          />
+        )}
+
+        {activeTab === "schedule-of-values" && (
+          <PrimeContractSovTab
+            formatCurrency={formatCurrency}
+            lineItemsLoading={lineItemsLoading}
+            lineItems={lineItems}
+            budgetCodes={budgetCodes}
+            sovDraftBudgetCodeIds={sov.sovDraftBudgetCodeIds}
+            isSovEditing={sov.isSovEditing}
+            isSavingSovChanges={sov.isSavingSovChanges}
+            sovDraftItems={sov.sovDraftItems}
+            onStartSovEdit={sov.handleStartSovEdit}
+            onCancelSovEdit={sov.handleCancelSovEdit}
+            onSaveSovEdit={sov.handleSaveSovEdit}
+            onAddSovLine={sov.handleAddSovLine}
+            onAddSovGroup={sov.handleAddSovGroup}
+            onUpdateSovLine={sov.handleUpdateSovLine}
+            onUpdateSovLineBudgetCode={sov.handleUpdateSovLineBudgetCode}
+            onRemoveSovLine={sov.handleRemoveSovLine}
+            onReorderSovLines={sov.handleReorderSovLines}
+            onRequestCreateBudgetCode={handleRequestCreateBudgetCodeForSovLine}
+            onDeleteSovLine={sov.handleDeleteSovLine}
+            invoicedAmount={contract.invoiced_amount}
           />
         )}
 
@@ -950,32 +996,50 @@ export default function ProjectContractDetailPage() {
           />
         )}
 
+        {activeTab === "related-items" && (
+          <div className="py-8 text-center text-muted-foreground">
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+              <span className="text-xl">🔗</span>
+            </div>
+            <p className="font-medium">Related Items</p>
+            <p className="mt-1 text-sm">
+              Links to related RFIs, Submittals, and other project items will appear here.
+            </p>
+          </div>
+        )}
+
         {activeTab === "emails" && (
-          <div>
-            <div className="bg-background">
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold">Emails</h3>
-                <p className="text-sm text-muted-foreground">Email correspondence related to this contract</p>
-              </div>
-              <div className="text-center py-8 text-muted-foreground">
-                <Mail className="h-12 w-12 mx-auto mb-[var(--group-gap)] opacity-50" />
-                <p>Email history will be displayed here</p>
-              </div>
+          <div className="bg-background">
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold">Emails</h3>
+              <p className="text-sm text-muted-foreground">
+                Email correspondence associated with this prime contract
+              </p>
+            </div>
+            <div className="rounded-lg border border-border py-16 text-center">
+              <Mail className="h-10 w-10 mx-auto mb-3 text-muted-foreground/50" />
+              <p className="text-sm font-medium text-foreground">No emails yet</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Emails sent or received related to this contract will appear here.
+              </p>
             </div>
           </div>
         )}
 
         {activeTab === "history" && (
-          <div>
-            <div className="bg-background">
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold">Change History</h3>
-                <p className="text-sm text-muted-foreground">Track all changes made to this contract</p>
-              </div>
-              <div className="text-center py-8 text-muted-foreground">
-                <History className="h-12 w-12 mx-auto mb-[var(--group-gap)] opacity-50" />
-                <p>Change history will be displayed here</p>
-              </div>
+          <div className="bg-background">
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold">Change History</h3>
+              <p className="text-sm text-muted-foreground">
+                Audit trail of all modifications made to this contract
+              </p>
+            </div>
+            <div className="rounded-lg border border-border py-16 text-center">
+              <History className="h-10 w-10 mx-auto mb-3 text-muted-foreground/50" />
+              <p className="text-sm font-medium text-foreground">No recorded changes</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Field-level change history tracking is not yet enabled for prime contracts.
+              </p>
             </div>
           </div>
         )}
@@ -994,6 +1058,7 @@ export default function ProjectContractDetailPage() {
             setAdvancedSettings={setAdvancedSettings} advancedSettingsLoading={advancedSettingsLoading}
             advancedSettingsSaving={advancedSettingsSaving} setAdvancedSettingsSaving={setAdvancedSettingsSaving}
             contractAdvancedDraft={contractAdvancedDraft} setContract={setContract}
+            changeOrderCount={changeOrders.length}
           />
         )}
       </div>

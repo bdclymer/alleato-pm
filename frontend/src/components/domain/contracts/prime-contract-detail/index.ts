@@ -6,4 +6,6 @@ export { PrimeContractInvoicesTab } from "./PrimeContractInvoicesTab";
 export { PrimeContractPaymentsTab } from "./PrimeContractPaymentsTab";
 export { PrimeContractFinancialMarkupTab } from "./PrimeContractFinancialMarkupTab";
 export { PrimeContractAdvancedSettingsTab } from "./PrimeContractAdvancedSettingsTab";
+export { PrimeContractSovTab } from "./PrimeContractSovTab";
+export type { PrimeContractSovTabProps } from "./PrimeContractSovTab";
 export { useSovEditing } from "./useSovEditing";

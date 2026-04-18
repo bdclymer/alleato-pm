@@ -158,6 +158,7 @@ export const SCOPE_OPTIONS = [
   { value: "In Scope", label: "In Scope" },
   { value: "Out of Scope", label: "Out of Scope" },
   { value: "TBD", label: "TBD" },
+  { value: "Allowance", label: "Allowance" },
 ];
 
 export const REVENUE_SOURCE_OPTIONS = [

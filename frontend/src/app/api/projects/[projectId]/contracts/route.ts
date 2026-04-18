@@ -27,7 +27,20 @@ export const GET = withApiGuardrails(
 
     // Optional filters
     const status = searchParams.get("status");
+    const erpStatus = searchParams.get("erp_status");
     const search = searchParams.get("search");
+
+    const CONTRACT_STATUSES = [
+      "draft",
+      "out_for_signature",
+      "approved",
+      "complete",
+      "terminated",
+    ] as const;
+    type ContractStatus = (typeof CONTRACT_STATUSES)[number];
+
+    const ERP_STATUSES = ["unsynced", "synced", "error"] as const;
+    type ErpStatus = (typeof ERP_STATUSES)[number];
 
     // Build contract query with optional filters
     let contractQuery = supabase
@@ -44,15 +57,6 @@ export const GET = withApiGuardrails(
       .order("created_at", { ascending: false });
 
     if (status) {
-      const CONTRACT_STATUSES = [
-        "draft",
-        "out_for_bid",
-        "out_for_signature",
-        "approved",
-        "complete",
-        "terminated",
-      ] as const;
-      type ContractStatus = (typeof CONTRACT_STATUSES)[number];
       if (!(CONTRACT_STATUSES as readonly string[]).includes(status)) {
         return NextResponse.json(
           {
@@ -64,6 +68,18 @@ export const GET = withApiGuardrails(
       contractQuery = contractQuery.eq("status", status as ContractStatus);
     }
 
+    if (erpStatus) {
+      if (!(ERP_STATUSES as readonly string[]).includes(erpStatus)) {
+        return NextResponse.json(
+          {
+            error: `Invalid erp_status "${erpStatus}". Expected one of: ${ERP_STATUSES.join(", ")}.`,
+          },
+          { status: 400 },
+        );
+      }
+      contractQuery = contractQuery.eq("erp_status", erpStatus as ErpStatus);
+    }
+
     if (search) {
       // Use OR with ilike — GIN trigram indexes (idx_prime_contracts_contract_number_trgm
       // and idx_prime_contracts_title_trgm) make %term% patterns index-scannable.
@@ -72,27 +88,49 @@ export const GET = withApiGuardrails(
       );
     }
 
-    // Fetch contracts and financial summaries in parallel.
-    // prime_contract_financial_summary handles all aggregation in Postgres,
-    // eliminating 3 extra round-trips and JS aggregation over all rows.
-    const [contractsResult, financialResult] = await Promise.all([
+    // Fetch contracts, financial summaries, and attachment counts in parallel.
+    const [contractsResult, financialResult, attachmentCountsResult] = await Promise.all([
       contractQuery,
       supabase
         .from("prime_contract_financial_summary")
         .select("contract_id, approved_change_orders, pending_change_orders, draft_change_orders, revised_contract_amount, invoiced_amount, payments_received, remaining_balance, percent_paid")
         .eq("project_id", projectIdNum),
+      supabase
+        .from("attachments")
+        .select("attached_to_id")
+        .eq("attached_to_table", "prime_contracts"),
     ]);
 
     if (contractsResult.error) {
       return apiErrorResponse(contractsResult.error);
     }
 
-    // Build a lookup map for O(1) merge
+    // Build lookup maps for O(1) merge
     const financialByContractId = new Map(
       (financialResult.data ?? []).map((f) => [f.contract_id, f]),
     );
+    const attachmentCountByContractId = new Map<string, number>();
+    for (const att of attachmentCountsResult.data ?? []) {
+      const id = att.attached_to_id as string;
+      attachmentCountByContractId.set(id, (attachmentCountByContractId.get(id) ?? 0) + 1);
+    }
 
-    const enrichedContracts = (contractsResult.data ?? []).map((contract) => {
+    // Privacy filter: remove private contracts the current user is not allowed to see
+    const { data: { user } } = await supabase.auth.getUser();
+    const currentUserId = user?.id ?? "";
+    const { data: profile } = currentUserId
+      ? await supabase.from("user_profiles").select("is_admin").eq("id", currentUserId).maybeSingle()
+      : { data: null };
+    const currentUserIsAdmin = profile?.is_admin === true;
+
+    const visibleContracts = (contractsResult.data ?? []).filter((contract) => {
+      if (!contract.is_private) return true;
+      if (currentUserIsAdmin) return true;
+      const allowedIds: string[] = (contract as { allowed_user_ids?: string[] }).allowed_user_ids ?? [];
+      return allowedIds.includes(currentUserId);
+    });
+
+    const enrichedContracts = visibleContracts.map((contract) => {
       const fin = financialByContractId.get(contract.id);
       const originalValue = contract.original_contract_value ?? 0;
       // Use contract_company as fallback when client_id is not set
@@ -110,6 +148,7 @@ export const GET = withApiGuardrails(
         payments_received: fin?.payments_received ?? 0,
         remaining_balance: fin?.remaining_balance ?? originalValue,
         percent_paid: fin?.percent_paid ?? 0,
+        attachment_count: attachmentCountByContractId.get(contract.id) ?? 0,
       };
     });
 

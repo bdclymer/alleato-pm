@@ -219,7 +219,6 @@ export const contractsTableConfig: GenericTableConfig = {
       field: "status",
       options: [
         { value: "draft", label: "Draft" },
-        { value: "out_for_bid", label: "Out for Bid" },
         { value: "out_for_signature", label: "Out for Signature" },
         { value: "approved", label: "Approved" },
         { value: "complete", label: "Complete" },
@@ -234,7 +233,6 @@ export const contractsTableConfig: GenericTableConfig = {
  */
 export const contractStatusLabels: Record<string, string> = {
   draft: "Draft",
-  out_for_bid: "Out for Bid",
   out_for_signature: "Out for Signature",
   approved: "Approved",
   complete: "Complete",

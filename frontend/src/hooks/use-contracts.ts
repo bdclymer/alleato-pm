@@ -38,7 +38,7 @@ interface UseContractsOptions {
   // Filter contracts by search term
   search?: string;
   // Filter by status
-  status?: "approved" | "draft" | "terminated" | "complete" | "out_for_bid" | "out_for_signature";
+  status?: "approved" | "draft" | "terminated" | "complete" | "out_for_signature";
   // Filter by project ID
   projectId?: number;
   // Filter by client ID
@@ -153,7 +153,7 @@ export function useContracts(
             client_id: contract.client_id || null,
             project_id: contract.project_id || 0,
             title: contract.title || contract.contract_number || "Untitled Contract",
-            status: (contract.status as "draft" | "out_for_bid" | "out_for_signature" | "approved" | "complete") || "draft",
+            status: (contract.status as "draft" | "out_for_signature" | "approved" | "complete" | "terminated") || "draft",
             original_contract_value: contract.original_contract_value || 0,
             executed: contract.executed || false,
             description: contract.description || null,

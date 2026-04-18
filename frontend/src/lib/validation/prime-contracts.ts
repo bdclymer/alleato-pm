@@ -20,7 +20,6 @@ export const primeContractSchema = z
     status: z
       .enum([
         "draft",
-        "out_for_bid",
         "out_for_signature",
         "approved",
         "complete",
@@ -28,6 +27,10 @@ export const primeContractSchema = z
       ])
       .nullable()
       .optional(),
+    erp_status: z
+      .enum(["unsynced", "synced", "error"])
+      .optional()
+      .default("unsynced"),
     executed: z.boolean().nullable().optional(),
     executed_at: z.string().nullable().optional(),
     original_contract_value: z.number().nullable().optional(),
@@ -49,6 +52,7 @@ export const primeContractSchema = z
     remaining_balance: z.number().nullable().optional(),
     is_private: z.boolean().nullable().optional(),
     percent_paid: z.number().nullable().optional(),
+    attachment_count: z.number().optional().default(0),
   })
   .passthrough();
 

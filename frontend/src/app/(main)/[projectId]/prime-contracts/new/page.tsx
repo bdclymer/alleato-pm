@@ -100,6 +100,8 @@ export default function NewContractPage() {
           is_private: data.isPrivate || false,
           inclusions: data.inclusions || null,
           exclusions: data.exclusions || null,
+          allowed_user_ids: data.allowedUsers && data.allowedUsers.length > 0 ? data.allowedUsers : [],
+          allow_sov_view: data.allowedUsersCanSeeSov || false,
         }),
       });
 

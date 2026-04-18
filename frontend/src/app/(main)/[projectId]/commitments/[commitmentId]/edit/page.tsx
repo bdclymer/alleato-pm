@@ -78,62 +78,21 @@ export default function EditCommitmentPage() {
     const r = rawData as Record<string, unknown>;
     const isPO = r.type === "purchase_order";
 
-    // Normalize status to match schema enum values (Title Case)
+    // Normalize API status (lowercase) to schema Title Case values
     const rawStatus = typeof r.status === "string" ? r.status : "draft";
     const statusKey = rawStatus.toLowerCase().replace(/_/g, " ");
-    const statusMap: Record<string, CreatePurchaseOrderInput["status"] | CreateSubcontractInput["status"] | "Out for Bid" | "Out for Signature"> = {
+    const statusMap: Record<string, CreateSubcontractInput["status"]> = {
       draft: "Draft",
-      "out for signature": "Out for Signature",
       "out for bid": "Out for Bid",
-      closed: "Closed",
-      executed: "Executed",
-      pending: "Pending",
+      "out for signature": "Out for Signature",
       approved: "Approved",
-      complete: "Completed",
-      terminated: "Void",
-      void: "Void",
-      sent: "Sent",
-      acknowledged: "Acknowledged",
-      completed: "Closed",
+      complete: "Complete",
+      terminated: "Terminated",
     };
-    const normalizedStatus = statusMap[statusKey] ?? "Draft";
+    const normalizedStatus: CreateSubcontractInput["status"] = statusMap[statusKey] ?? "Draft";
 
-    const normalizedPurchaseOrderStatus: CreatePurchaseOrderInput["status"] = (() => {
-      if (normalizedStatus === "Out for Signature" || normalizedStatus === "Out for Bid" || normalizedStatus === "Pending" || normalizedStatus === "Completed" || normalizedStatus === "Closed") {
-        if (normalizedStatus === "Completed" || normalizedStatus === "Closed") {
-          return "Completed";
-        }
-        return "Sent";
-      }
-      if (normalizedStatus === "Acknowledged") return "Acknowledged";
-      if (
-        normalizedStatus === "Draft" ||
-        normalizedStatus === "Approved" ||
-        normalizedStatus === "Sent"
-      ) {
-        return normalizedStatus;
-      }
-      return "Draft";
-    })();
-
-    const normalizedSubcontractStatus: CreateSubcontractInput["status"] = (() => {
-      if (normalizedStatus === "Out for Signature") return "Sent";
-      if (normalizedStatus === "Out for Bid") return "Draft";
-      if (
-        normalizedStatus === "Draft" ||
-        normalizedStatus === "Sent" ||
-        normalizedStatus === "Pending" ||
-        normalizedStatus === "Approved" ||
-        normalizedStatus === "Executed" ||
-        normalizedStatus === "Closed" ||
-        normalizedStatus === "Void"
-      ) {
-        return normalizedStatus;
-      }
-      if (normalizedStatus === "Completed") return "Closed";
-      if (normalizedStatus === "Acknowledged") return "Sent";
-      return "Draft";
-    })();
+    const normalizedPurchaseOrderStatus: CreatePurchaseOrderInput["status"] = normalizedStatus;
+    const normalizedSubcontractStatus: CreateSubcontractInput["status"] = normalizedStatus;
 
     // Map line items to SOV format
     const sovLines = Array.isArray(r.line_items)

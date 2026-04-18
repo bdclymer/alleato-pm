@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "13.0.4"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       __drizzle_migrations: {
@@ -15466,6 +15441,8 @@ export type Database = {
       prime_contracts: {
         Row: {
           actual_completion_date: string | null
+          allow_sov_view: boolean
+          allowed_user_ids: string[]
           architect_engineer_id: string | null
           billing_schedule: string | null
           client_id: string | null
@@ -15477,6 +15454,7 @@ export type Database = {
           created_by: string | null
           description: string | null
           end_date: string | null
+          erp_status: string
           exclusions: string | null
           executed: boolean
           executed_at: string | null
@@ -15498,6 +15476,8 @@ export type Database = {
         }
         Insert: {
           actual_completion_date?: string | null
+          allow_sov_view?: boolean
+          allowed_user_ids?: string[]
           architect_engineer_id?: string | null
           billing_schedule?: string | null
           client_id?: string | null
@@ -15509,6 +15489,7 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           end_date?: string | null
+          erp_status?: string
           exclusions?: string | null
           executed?: boolean
           executed_at?: string | null
@@ -15530,6 +15511,8 @@ export type Database = {
         }
         Update: {
           actual_completion_date?: string | null
+          allow_sov_view?: boolean
+          allowed_user_ids?: string[]
           architect_engineer_id?: string | null
           billing_schedule?: string | null
           client_id?: string | null
@@ -15541,6 +15524,7 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           end_date?: string | null
+          erp_status?: string
           exclusions?: string | null
           executed?: boolean
           executed_at?: string | null
@@ -25290,6 +25274,7 @@ export type Database = {
           contract_id: string | null
           contract_number: string | null
           draft_change_orders: number | null
+          erp_status: string | null
           executed: boolean | null
           invoiced_amount: number | null
           original_contract_amount: number | null
@@ -27784,7 +27769,6 @@ export type Database = {
         | "not_ready"
       prime_contract_status_v2:
         | "draft"
-        | "out_for_bid"
         | "out_for_signature"
         | "approved"
         | "complete"
@@ -27916,9 +27900,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       billing_period_status: ["open", "closed", "approved"],
@@ -27975,7 +27956,6 @@ export const Constants = {
       ],
       prime_contract_status_v2: [
         "draft",
-        "out_for_bid",
         "out_for_signature",
         "approved",
         "complete",

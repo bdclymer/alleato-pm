@@ -133,6 +133,27 @@ export const PUT = withApiGuardrails(
       });
     }
 
+    // Business rule: CO tier count is locked once any change order exists for the project
+    const incomingTierCount = payload.project_settings.co_tier_count;
+    const existingTierCount = previousProjectSettings?.co_tier_count;
+    const tierCountIsChanging = existingTierCount !== undefined && existingTierCount !== incomingTierCount;
+    if (tierCountIsChanging) {
+      const { count: coCount } = await supabase
+        .from("prime_contract_change_orders")
+        .select("id", { count: "exact", head: true })
+        .eq("project_id", projectIdNum);
+
+      if ((coCount ?? 0) > 0) {
+        return NextResponse.json(
+          {
+            error: "Cannot change CO tier count",
+            details: `The change order tier cannot be modified after change orders have been created. This project has ${coCount} change order(s). To change the tier, all change orders must be deleted first.`,
+          },
+          { status: 422 },
+        );
+      }
+    }
+
     const { data: savedProjectSettings, error: projectSaveError } = await supabase
       .from("prime_contract_project_settings")
       .upsert(

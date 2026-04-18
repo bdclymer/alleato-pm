@@ -30,8 +30,8 @@
   - Currently FKs to `prime_contracts` — should support `commitments` (purchase orders + subcontracts)
   - `commitment_id` column already exists on the table — FK just needs to be wired correctly, not contract_id
 
-- [ ] Create `budget_changes` table (only if Budget Changes feature is prioritized)
-  - Columns: `id`, `project_id`, `number`, `title`, `status`, `change_event_id`, `budget_line_id`, `amount`, `description`, `created_at`, `updated_at`, `created_by`
+- [x] Create `budget_changes` table — migration applied 2026-04-17
+  - Columns: `id`, `project_id`, `number`, `title`, `status`, `change_event_id`, `amount`, `description`, `created_at`, `updated_at`, `created_by`
   - FK: `change_event_id → change_events.id`, `project_id → projects.id (integer)`
 
 ---

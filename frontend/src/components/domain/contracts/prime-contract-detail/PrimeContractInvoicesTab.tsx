@@ -8,6 +8,12 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/ds";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { DataTable, type DataTableFooterCell } from "@/components/tables/DataTable";
 import type { PaymentApplication, Contract } from "@/app/(main)/[projectId]/prime-contracts/[contractId]/types";
 
@@ -172,17 +178,31 @@ export function PrimeContractInvoicesTab({
               )}
             </p>
           </div>
-          <Button
-            size="sm"
-            onClick={() =>
-              router.push(
-                `/${projectId}/prime-contracts/${contractId}/invoices/new`,
-              )
-            }
-          >
-            <Plus />
-            Create Invoice
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span>
+                  <Button
+                    size="sm"
+                    disabled={contract.status !== "approved"}
+                    onClick={() =>
+                      router.push(
+                        `/${projectId}/prime-contracts/${contractId}/invoices/new`,
+                      )
+                    }
+                  >
+                    <Plus />
+                    Create Invoice
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              {contract.status !== "approved" && (
+                <TooltipContent>
+                  <p>Contract must be in &quot;Approved&quot; status before invoices can be created.</p>
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
         </div>
 
         {paymentsLoading ? (

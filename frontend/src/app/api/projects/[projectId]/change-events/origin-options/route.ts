@@ -1,5 +1,4 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
-import { GuardrailError } from "@/lib/guardrails/errors";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
@@ -40,11 +39,10 @@ export const GET = withApiGuardrails(
     }
 
     const typeParam = request.nextUrl.searchParams.get("type")?.trim().toLowerCase();
+    // Non-linkable origin types (internal, field, owner, etc.) have no associated
+    // records to look up — return an empty list rather than a 400 error.
     if (!typeParam || !isValidOriginType(typeParam)) {
-      return NextResponse.json(
-        { error: "Invalid origin type. Must be one of: emails, meetings, rfis" },
-        { status: 400 },
-      );
+      return NextResponse.json({ data: [] });
     }
 
     const search = request.nextUrl.searchParams.get("search")?.trim() || "";

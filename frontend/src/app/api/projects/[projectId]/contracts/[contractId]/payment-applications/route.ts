@@ -72,16 +72,27 @@ export const POST = withApiGuardrails(
 
     const validatedData = createPaymentApplicationSchema.parse(body);
 
-    // Verify contract exists for this project
+    // Verify contract exists for this project, and enforce approved-status gate
     const { data: contract } = await supabase
       .from("prime_contracts")
-      .select("id")
+      .select("id, status")
       .eq("id", contractId)
       .eq("project_id", parseInt(projectId, 10))
       .single();
 
     if (!contract) {
       return NextResponse.json({ error: "Contract not found" }, { status: 404 });
+    }
+
+    // Business rule: only approved contracts may have invoices/payment applications created
+    if (contract.status !== "approved") {
+      return NextResponse.json(
+        {
+          error: "Cannot create a payment application",
+          details: `Contract must be in 'Approved' status before invoices can be created. Current status: ${contract.status ?? "unknown"}.`,
+        },
+        { status: 422 },
+      );
     }
 
     // Check for duplicate application number
