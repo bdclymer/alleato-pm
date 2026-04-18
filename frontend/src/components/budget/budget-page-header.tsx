@@ -11,6 +11,15 @@ import {
   MoreVertical,
   ChevronDown,
   AlertTriangle,
+  Camera,
+  FilePlus,
+  FileEdit,
+  BarChart2,
+  FileText,
+  Activity,
+  PieChart,
+  Plug,
+  SlidersHorizontal,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -131,9 +140,13 @@ export function BudgetPageHeader({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={onCreateClick}>
+              <FilePlus className="w-4 h-4 mr-2" />
               Budget Line Item
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={onCreateSnapshot}>Snapshot</DropdownMenuItem>
+            <DropdownMenuItem onClick={onCreateSnapshot}>
+              <Camera className="w-4 h-4 mr-2" />
+              Snapshot
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={onImport}>
               <Upload className="w-4 h-4 mr-2" />
@@ -141,18 +154,18 @@ export function BudgetPageHeader({
             </DropdownMenuItem>
             {isLocked && (
               <DropdownMenuItem onClick={onModificationClick}>
+                <FileEdit className="w-4 h-4 mr-2" />
                 Budget Modification
               </DropdownMenuItem>
             )}
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* More Actions Dropdown for Mobile */}
+        {/* More Actions Dropdown for Mobile — icon-only trigger, no border */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="flex-1 min-w-[100px]">
+            <Button variant="ghost" size="icon" aria-label="More actions">
               <MoreVertical />
-              Actions
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
@@ -177,30 +190,40 @@ export function BudgetPageHeader({
               Export to Excel
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => onExport?.("csv")}>
+              <Download className="w-4 h-4 mr-2" />
               Export to CSV
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuSub>
-              <DropdownMenuSubTrigger>Budget Reports</DropdownMenuSubTrigger>
+              <DropdownMenuSubTrigger>
+                <BarChart2 className="w-4 h-4 mr-2" />
+                Budget Reports
+              </DropdownMenuSubTrigger>
               <DropdownMenuSubContent>
                 <DropdownMenuItem onClick={onOpenBuyoutSummaryReport}>
+                  <FileText className="w-4 h-4 mr-2" />
                   Buyout Summary Report
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={onOpenLegacyBudgetDetailReport}>
+                  <FileText className="w-4 h-4 mr-2" />
                   Legacy Budget Detail
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={onOpenMonitoredResourcesReport}>
+                  <Activity className="w-4 h-4 mr-2" />
                   Monitored Resources Report
                 </DropdownMenuItem>
               </DropdownMenuSubContent>
             </DropdownMenuSub>
             <DropdownMenuItem onClick={onOpenCustomReports}>
+              <PieChart className="w-4 h-4 mr-2" />
               Custom Reports
             </DropdownMenuItem>
             <DropdownMenuItem onClick={onOpenErpIntegrations}>
+              <Plug className="w-4 h-4 mr-2" />
               ERP Integrations
             </DropdownMenuItem>
             <DropdownMenuItem onClick={onConfigureBudgetViews}>
+              <SlidersHorizontal className="w-4 h-4 mr-2" />
               Configure Budget Views
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -223,9 +246,13 @@ export function BudgetPageHeader({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={onCreateClick}>
+              <FilePlus className="w-4 h-4 mr-2" />
               Budget Line Item
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={onCreateSnapshot}>Snapshot</DropdownMenuItem>
+            <DropdownMenuItem onClick={onCreateSnapshot}>
+              <Camera className="w-4 h-4 mr-2" />
+              Snapshot
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={onImport}>
               <Upload className="w-4 h-4 mr-2" />
@@ -233,6 +260,7 @@ export function BudgetPageHeader({
             </DropdownMenuItem>
             {isLocked && (
               <DropdownMenuItem onClick={onModificationClick}>
+                <FileEdit className="w-4 h-4 mr-2" />
                 Budget Modification
               </DropdownMenuItem>
             )}
