@@ -101,7 +101,7 @@ export function BudgetOverlay({
       <Drawer open={open} onOpenChange={onOpenChange}>
         <DrawerContent
           className={cn(
-            "max-h-[92dvh] min-h-[72dvh] rounded-t-2xl border-t bg-background p-0",
+            "flex max-h-[92dvh] min-h-[72dvh] flex-col rounded-t-2xl border-t bg-background p-0",
             className,
           )}
         >
@@ -169,7 +169,7 @@ export function BudgetOverlayHeader({
   return (
     <div
       className={cn(
-        "border-b border-border bg-background px-4 py-4 sm:px-6 sm:py-5",
+        "shrink-0 border-b border-border bg-background px-4 py-4 sm:px-6 sm:py-5",
         className,
       )}
     >
@@ -269,7 +269,7 @@ export function BudgetOverlayBody({
   className?: string;
 }) {
   return (
-    <div className={cn("flex-1 overflow-y-auto bg-background", className)}>
+    <div className={cn("min-h-0 flex-1 overflow-y-auto bg-background", className)}>
       {children}
     </div>
   );
@@ -288,7 +288,7 @@ export function BudgetOverlayFooter({
   return (
     <div
       className={cn(
-        "mt-auto border-t border-border bg-muted/40 px-4 py-4 sm:px-6",
+        "mt-auto shrink-0 border-t border-border bg-muted/40 px-4 py-4 sm:px-6",
         "flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-end",
         "pb-[calc(1rem+env(safe-area-inset-bottom))] sm:pb-4",
         className,

@@ -20,6 +20,7 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Check, X, Send, Ban, Loader2 } from "lucide-react";
+import { apiFetch } from "@/lib/api-client";
 
 interface BudgetModificationLine {
   id: string;
@@ -76,16 +77,8 @@ export function BudgetModificationsModal({
       const statusParam =
         statusFilter !== "all" ? `&status=${statusFilter}` : "";
       const url = `/api/projects/${projectId}/budget/modifications?budgetLineId=${budgetLineId}${statusParam}`;
-      const response = await fetch(url);
-      if (response.ok) {
-        const data = await response.json();
-        setModifications(data.modifications || []);
-      } else {
-        const errorData = await response.json().catch(() => null);
-        throw new Error(
-          errorData?.error || "Failed to fetch budget modifications",
-        );
-      }
+      const data = await apiFetch<{ modifications?: BudgetModification[] }>(url);
+      setModifications(data.modifications || []);
     } catch (error) {
       console.error("Failed to fetch budget modifications:", error);
       toast.error(
@@ -110,7 +103,7 @@ export function BudgetModificationsModal({
   ) => {
     setActionLoading(modificationId);
     try {
-      const response = await fetch(
+      const result = await apiFetch<{ message: string }>(
         `/api/projects/${projectId}/budget/modifications`,
         {
           method: "PATCH",
@@ -118,13 +111,6 @@ export function BudgetModificationsModal({
           body: JSON.stringify({ modificationId, action }),
         },
       );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || `Failed to ${action} modification`);
-      }
-
-      const result = await response.json();
       toast.success(result.message);
 
       await fetchModifications();
@@ -379,13 +365,13 @@ export function BudgetModificationsModal({
                         <InlineTableCell className="whitespace-nowrap">
                           {row.date}
                         </InlineTableCell>
-                        <InlineTableCell className="truncate max-w-[300px]">
+                        <InlineTableCell className="max-w-75 truncate">
                           {row.from}
                         </InlineTableCell>
-                        <InlineTableCell className="truncate max-w-[300px]">
+                        <InlineTableCell className="max-w-75 truncate">
                           {row.to}
                         </InlineTableCell>
-                        <InlineTableCell className="truncate max-w-[260px]">
+                        <InlineTableCell className="max-w-65 truncate">
                           {row.notes}
                         </InlineTableCell>
                         <InlineTableCell

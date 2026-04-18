@@ -102,7 +102,7 @@ export function SidebarTabs({
   onTabChange: (tabId: string) => void;
 }) {
   return (
-    <div className="px-4 sm:px-8 flex-shrink-0">
+    <div className="shrink-0 px-4 sm:px-8">
       <Tabs value={activeTab} onValueChange={onTabChange}>
         <TabsList
           variant="line"

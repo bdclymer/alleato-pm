@@ -1002,7 +1002,7 @@ function BudgetPageContent() {
         }
       />
 
-      <div className="flex flex-1 flex-col gap-4 bg-background pl-4 pt-2 pb-6 sm:pl-6 lg:pl-8">
+      <div className="flex min-h-0 flex-1 flex-col gap-4 bg-background px-4 pt-2 pb-6 sm:px-6 lg:px-8">
         {activeTab === "settings" ? (
           <div className="flex-1 p-6">
             <BudgetSettingsPanel projectId={projectId} />
@@ -1024,14 +1024,12 @@ function BudgetPageContent() {
             <ChangeHistoryTab projectId={projectId} />
           </div>
         ) : activeTab === "budget-details" ? (
-          <>
-            <div className="flex-1">
-              <BudgetDetailsTable
-                data={budgetDetailsData}
-                loading={detailsLoading}
-              />
-            </div>
-          </>
+          <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+            <BudgetDetailsTable
+              data={budgetDetailsData}
+              loading={detailsLoading}
+            />
+          </div>
         ) : (
           <div className="flex-1 overflow-x-auto">
             <div className="min-w-full">

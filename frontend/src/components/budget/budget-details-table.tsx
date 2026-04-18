@@ -273,16 +273,16 @@ export function BudgetDetailsTable({ data, loading }: BudgetDetailsTableProps) {
   const hasRows = sortedAndFilteredData.length > 0;
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-md bg-background">
+    <div className="flex min-h-0 flex-col rounded-md bg-background">
       <div className="border-b border-border px-4 py-2">
         <div className="flex items-center gap-2">
           <div className="relative max-w-sm flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Search budget codes, descriptions, vendors..."
+              placeholder="Search budget codes, vendors..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="h-8 pl-9"
+              className="h-9 pl-9 text-base"
             />
           </div>
           {searchQuery ? (
@@ -291,20 +291,85 @@ export function BudgetDetailsTable({ data, loading }: BudgetDetailsTableProps) {
                 variant="ghost"
                 size="sm"
                 onClick={() => setSearchQuery("")}
-                className="h-8"
+                className="h-9 min-w-11"
               >
                 Clear
               </Button>
               <span className="text-sm text-muted-foreground">
-                {sortedAndFilteredData.length} of {data.length} items
+                {sortedAndFilteredData.length} of {data.length}
               </span>
             </>
           ) : null}
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto scrollbar-hide">
-        <Table className="min-w-[2240px] table-fixed bg-background">
+      {/* Mobile card layout — shown only on xs/sm screens */}
+      <div className="block sm:hidden divide-y divide-border">
+        {!hasRows ? (
+          <div className="px-4 py-8 text-sm text-muted-foreground text-center">
+            {searchQuery
+              ? `No budget line items match "${searchQuery}".`
+              : "No budget details found."}
+          </div>
+        ) : (
+          sortedAndFilteredData.map((item) => {
+            const revisedBudget = (item.originalBudgetAmount || 0) + (item.budgetChanges || 0);
+            const variance = revisedBudget - (item.directCosts || 0);
+            return (
+              <div key={item.id} className="px-4 py-3 space-y-2">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="font-medium text-foreground text-sm truncate">{item.budgetCode}</div>
+                    {item.budgetCodeDescription ? (
+                      <div className="text-xs text-muted-foreground truncate">{item.budgetCodeDescription}</div>
+                    ) : null}
+                  </div>
+                  <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full shrink-0">
+                    {getDetailTypeLabel(item.detailType)}
+                  </span>
+                </div>
+                {(item.vendor || item.item) ? (
+                  <div className="text-xs text-muted-foreground">
+                    {[item.vendor, item.item].filter(Boolean).join(" · ")}
+                  </div>
+                ) : null}
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Original</span>
+                    <span className="tabular-nums font-medium"><CurrencyCell value={item.originalBudgetAmount} /></span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Mods</span>
+                    <span className="tabular-nums"><CurrencyCell value={item.budgetChanges} /></span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Committed</span>
+                    <span className="tabular-nums"><CurrencyCell value={item.committedCosts} /></span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Direct Costs</span>
+                    <span className="tabular-nums"><CurrencyCell value={item.directCosts} /></span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Proj. +/-</span>
+                    <span className={cn("tabular-nums", variance < 0 && "text-destructive")}>
+                      <CurrencyCell value={variance} />
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Forecast</span>
+                    <span className="tabular-nums"><CurrencyCell value={item.forecastToComplete} /></span>
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* Desktop table layout — hidden on mobile */}
+      <div className="hidden sm:block overflow-x-auto">
+        <Table className="min-w-560 table-fixed bg-background">
           <TableHeader className="sticky top-0 z-10 bg-background">
             <TableRow className="border-b border-border">
               <SortableHeader
@@ -498,82 +563,117 @@ export function BudgetDetailsTable({ data, loading }: BudgetDetailsTableProps) {
             )}
           </TableBody>
         </Table>
+
+        {hasRows && !searchQuery ? (
+          <div className="border-t border-border">
+            <Table className="min-w-560 table-fixed bg-background">
+              <TableFooter className="bg-muted/50 border-t">
+                <tr className="bg-muted/50 hover:bg-muted/50 transition-colors">
+                  <td
+                    className={cn(
+                      "py-2 px-2 text-sm font-semibold text-foreground",
+                      getWidthClass("budgetCode"),
+                    )}
+                    colSpan={4}
+                  >
+                    Grand Totals
+                  </td>
+                  <td
+                    className={cn(
+                      "py-2 px-1.5 text-right text-sm",
+                      getWidthClass("originalBudgetAmount"),
+                    )}
+                  >
+                    <CurrencyCell value={grandTotals.originalBudgetAmount} />
+                  </td>
+                  <td
+                    className={cn("py-2 px-1.5 text-right text-sm", getWidthClass("budgetChanges"))}
+                  >
+                    <CurrencyCell value={grandTotals.budgetChanges} />
+                  </td>
+                  <td
+                    className={cn(
+                      "py-2 px-1.5 text-right text-sm",
+                      getWidthClass("pendingBudgetChanges"),
+                    )}
+                  >
+                    <CurrencyCell value={grandTotals.pendingBudgetChanges} />
+                  </td>
+                  <td
+                    className={cn("py-2 px-1.5 text-right text-sm", getWidthClass("approvedCOs"))}
+                  >
+                    <CurrencyCell value={grandTotals.approvedCOs} />
+                  </td>
+                  <td
+                    className={cn("py-2 px-1.5 text-right text-sm", getWidthClass("committedCosts"))}
+                  >
+                    <CurrencyCell value={grandTotals.committedCosts} />
+                  </td>
+                  <td
+                    className={cn(
+                      "py-2 px-1.5 text-right text-sm",
+                      getWidthClass("pendingCostChanges"),
+                    )}
+                  >
+                    <CurrencyCell value={grandTotals.pendingCostChanges} />
+                  </td>
+                  <td
+                    className={cn("py-2 px-1.5 text-right text-sm", getWidthClass("directCosts"))}
+                  >
+                    <CurrencyCell value={grandTotals.directCosts} />
+                  </td>
+                  <td
+                    className={cn("py-2 px-1.5 text-right text-sm", getWidthClass("variance"))}
+                  >
+                    <CurrencyCell value={grandTotals.variance} />
+                  </td>
+                  <td
+                    className={cn(
+                      "py-2 px-1.5 text-right text-sm",
+                      getWidthClass("forecastToComplete"),
+                    )}
+                  >
+                    <CurrencyCell value={grandTotals.forecastToComplete} />
+                  </td>
+                </tr>
+              </TableFooter>
+            </Table>
+          </div>
+        ) : null}
       </div>
 
+      {/* Mobile grand totals */}
       {hasRows && !searchQuery ? (
-        <div className="border-t border-border">
-          <Table className="min-w-[2240px] table-fixed bg-background">
-            <TableFooter className="bg-muted/50 border-t">
-              <tr className="bg-muted/50 hover:bg-muted/50 transition-colors">
-                <td
-                  className={cn(
-                    "py-2 px-2 text-sm font-semibold text-foreground",
-                    getWidthClass("budgetCode"),
-                  )}
-                  colSpan={4}
-                >
-                  Grand Totals
-                </td>
-                <td
-                  className={cn(
-                    "py-2 px-1.5 text-right text-sm",
-                    getWidthClass("originalBudgetAmount"),
-                  )}
-                >
-                  <CurrencyCell value={grandTotals.originalBudgetAmount} />
-                </td>
-                <td
-                  className={cn("py-2 px-1.5 text-right text-sm", getWidthClass("budgetChanges"))}
-                >
-                  <CurrencyCell value={grandTotals.budgetChanges} />
-                </td>
-                <td
-                  className={cn(
-                    "py-2 px-1.5 text-right text-sm",
-                    getWidthClass("pendingBudgetChanges"),
-                  )}
-                >
-                  <CurrencyCell value={grandTotals.pendingBudgetChanges} />
-                </td>
-                <td
-                  className={cn("py-2 px-1.5 text-right text-sm", getWidthClass("approvedCOs"))}
-                >
-                  <CurrencyCell value={grandTotals.approvedCOs} />
-                </td>
-                <td
-                  className={cn("py-2 px-1.5 text-right text-sm", getWidthClass("committedCosts"))}
-                >
-                  <CurrencyCell value={grandTotals.committedCosts} />
-                </td>
-                <td
-                  className={cn(
-                    "py-2 px-1.5 text-right text-sm",
-                    getWidthClass("pendingCostChanges"),
-                  )}
-                >
-                  <CurrencyCell value={grandTotals.pendingCostChanges} />
-                </td>
-                <td
-                  className={cn("py-2 px-1.5 text-right text-sm", getWidthClass("directCosts"))}
-                >
-                  <CurrencyCell value={grandTotals.directCosts} />
-                </td>
-                <td
-                  className={cn("py-2 px-1.5 text-right text-sm", getWidthClass("variance"))}
-                >
-                  <CurrencyCell value={grandTotals.variance} />
-                </td>
-                <td
-                  className={cn(
-                    "py-2 px-1.5 text-right text-sm",
-                    getWidthClass("forecastToComplete"),
-                  )}
-                >
-                  <CurrencyCell value={grandTotals.forecastToComplete} />
-                </td>
-              </tr>
-            </TableFooter>
-          </Table>
+        <div className="block sm:hidden border-t border-border bg-muted/50 px-4 py-3">
+          <p className="text-xs font-semibold text-foreground mb-2">Grand Totals</p>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Original</span>
+              <span className="tabular-nums font-medium"><CurrencyCell value={grandTotals.originalBudgetAmount} /></span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Mods</span>
+              <span className="tabular-nums"><CurrencyCell value={grandTotals.budgetChanges} /></span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Committed</span>
+              <span className="tabular-nums"><CurrencyCell value={grandTotals.committedCosts} /></span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Direct Costs</span>
+              <span className="tabular-nums"><CurrencyCell value={grandTotals.directCosts} /></span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Proj. +/-</span>
+              <span className={cn("tabular-nums", grandTotals.variance < 0 && "text-destructive")}>
+                <CurrencyCell value={grandTotals.variance} />
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Forecast</span>
+              <span className="tabular-nums"><CurrencyCell value={grandTotals.forecastToComplete} /></span>
+            </div>
+          </div>
         </div>
       ) : null}
     </div>
