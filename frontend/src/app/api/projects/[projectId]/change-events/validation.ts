@@ -51,23 +51,26 @@ export const ChangeEventScope = createNormalizedEnum(
     out_of_scope: "Out of Scope",
   },
 );
-// Procore-aligned status set. Approval workflow + conversion are tracked in
-// `change_events.workflow_stage` (see migration change_events_workflow_stage),
-// not in this column.
+// Procore-aligned status set — must match DB CHECK constraint on change_events.status.
+// Valid DB values: 'Open', 'Pending Approval', 'Approved', 'Rejected', 'Closed', 'Converted'
 export const ChangeEventStatus = createNormalizedEnum(
   [
-  "Open",
-  "Pending",
-  "Closed",
-  "Void",
+    "Open",
+    "Pending Approval",
+    "Approved",
+    "Rejected",
+    "Closed",
+    "Converted",
   ],
   {
-    pending_approval: "Pending",
-    "pending approval": "Pending",
-    approved: "Pending",
-    rejected: "Closed",
-    converted: "Closed",
+    pending: "Pending Approval",
+    pending_approval: "Pending Approval",
+    "pending approval": "Pending Approval",
+    approved: "Approved",
+    rejected: "Rejected",
+    converted: "Converted",
     close: "Closed",
+    void: "Closed",
   },
 );
 // Procore-aligned change reason set.

@@ -23,9 +23,11 @@ import type { ChangeEvent } from "@/hooks/use-change-events";
 
 const STATUS_FILTER_OPTIONS = [
   { value: "open", label: "Open" },
-  { value: "pending", label: "Pending" },
+  { value: "pending_approval", label: "Pending Approval" },
+  { value: "approved", label: "Approved" },
+  { value: "rejected", label: "Rejected" },
   { value: "closed", label: "Closed" },
-  { value: "void", label: "Void" },
+  { value: "converted", label: "Converted" },
 ];
 
 const SCOPE_FILTER_OPTIONS = [
@@ -144,15 +146,19 @@ export const changeEventDefaultVisibleColumns = changeEventColumns
   .map((column) => column.id);
 
 function statusLabel(status: string | null | undefined): string {
-  switch ((status ?? "").toLowerCase()) {
+  switch ((status ?? "").toLowerCase().replace(/\s+/g, "_")) {
     case "open":
       return "Open";
-    case "pending":
-      return "Pending";
+    case "pending_approval":
+      return "Pending Approval";
+    case "approved":
+      return "Approved";
+    case "rejected":
+      return "Rejected";
     case "closed":
       return "Closed";
-    case "void":
-      return "Void";
+    case "converted":
+      return "Converted";
     default:
       return status || "-";
   }

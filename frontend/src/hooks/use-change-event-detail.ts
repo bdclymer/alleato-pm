@@ -18,8 +18,8 @@ import type { ChangeEventFormData } from "@/components/domain/change-events/Chan
 const STATUS_MAP: Record<string, string> = {
   open: "Open",
   closed: "Closed",
-  void: "Void",
-  pending: "Pending",
+  void: "Closed",
+  pending: "Pending Approval",
   pending_approval: "Pending Approval",
   approved: "Approved",
   rejected: "Rejected",
