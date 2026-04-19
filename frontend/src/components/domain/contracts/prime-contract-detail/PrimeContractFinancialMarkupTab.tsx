@@ -188,6 +188,11 @@ export function PrimeContractFinancialMarkupTab({
     verticalMarkups,
   ]);
 
+  const sortedMarkups = useMemo(
+    () => [...verticalMarkups].sort((a, b) => a.calculation_order - b.calculation_order),
+    [verticalMarkups],
+  );
+
   const handleDeleteMarkup = async (markupId: string) => {
     setDeletingMarkupId(markupId);
     try {
@@ -254,6 +259,15 @@ export function PrimeContractFinancialMarkupTab({
 
   const handleStartMarkupRowEdit = (markup: VerticalMarkup) => {
     setEditingMarkupRowIds((prev) => ({ ...prev, [markup.id]: true }));
+  };
+
+  // Exit edit mode while keeping draft changes; the top-level Save Changes button commits them.
+  const handleFinishMarkupRowEdit = (markupId: string) => {
+    setEditingMarkupRowIds((prev) => {
+      const next = { ...prev };
+      delete next[markupId];
+      return next;
+    });
   };
 
   // Apply an inline row edit to the working draft so the top-level save is the only commit step.
@@ -339,6 +353,156 @@ export function PrimeContractFinancialMarkupTab({
     }
   };
 
+  // Shared field renderers — consumed by both the mobile card view and the desktop table view.
+  // Keeping field logic here once ensures both layouts stay in sync automatically.
+  const renderMarkupTypeField = (markup: VerticalMarkup, isEditing: boolean) =>
+    isEditing ? (
+      <Select
+        value={markup.markup_type}
+        onValueChange={(v) => handleMarkupFieldChange(markup.id, "markup_type", v)}
+      >
+        <SelectTrigger size="sm" className="w-full text-xs">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {ALLOWED_MARKUP_TYPES.map((type) => (
+            <SelectItem key={type} value={type} className="capitalize">
+              {type.charAt(0).toUpperCase() + type.slice(1)}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    ) : (
+      <span className="text-sm capitalize text-foreground">{markup.markup_type}</span>
+    );
+
+  const renderDisplayInField = (
+    markup: VerticalMarkup,
+    isEditing: boolean,
+    displayIn: "horizontal" | "vertical",
+  ) =>
+    isEditing ? (
+      <Select
+        value={displayIn}
+        onValueChange={(v) =>
+          setMarkupDisplayById((prev) => ({
+            ...prev,
+            [markup.id]: v as "horizontal" | "vertical",
+          }))
+        }
+      >
+        <SelectTrigger size="sm" className="w-full text-xs">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="horizontal">Horizontal</SelectItem>
+          <SelectItem value="vertical">Vertical</SelectItem>
+        </SelectContent>
+      </Select>
+    ) : (
+      <span className="text-sm capitalize text-foreground">{displayIn}</span>
+    );
+
+  const renderMapsToField = (
+    markup: VerticalMarkup,
+    isEditing: boolean,
+    mapsTo: string,
+    mapsToLabel: string,
+  ) =>
+    isEditing ? (
+      <Select
+        value={mapsTo}
+        onValueChange={(v) =>
+          setMarkupMapsToById((prev) => ({ ...prev, [markup.id]: v }))
+        }
+      >
+        <SelectTrigger size="sm" className="w-full text-xs">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Budget Codes</SelectItem>
+          {budgetCodes.map((code) => (
+            <SelectItem key={code.id} value={code.id}>
+              {code.fullLabel}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    ) : (
+      <span className="text-sm text-foreground">{mapsToLabel}</span>
+    );
+
+  const renderPercentageField = (markup: VerticalMarkup, isEditing: boolean) =>
+    isEditing ? (
+      <Input
+        type="number"
+        min="0"
+        max="100"
+        step="0.001"
+        value={String(markup.percentage)}
+        onChange={(e) =>
+          handleMarkupFieldChange(markup.id, "percentage", Number(e.target.value || 0))
+        }
+        className="h-8 text-right"
+      />
+    ) : (
+      <span className="text-sm text-foreground">{Number(markup.percentage).toFixed(2)}%</span>
+    );
+
+  const renderCalcTypeField = (markup: VerticalMarkup, isEditing: boolean) =>
+    isEditing ? (
+      <Select
+        value={markup.compound ? "compound" : "basic"}
+        onValueChange={(v) =>
+          handleMarkupFieldChange(markup.id, "compound", v === "compound")
+        }
+      >
+        <SelectTrigger size="sm" className="w-full text-xs">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="basic">Basic Calculation</SelectItem>
+          <SelectItem value="compound">Compounds All Above</SelectItem>
+        </SelectContent>
+      </Select>
+    ) : (
+      <span className="text-sm text-foreground">
+        {markup.compound ? "Compounds All Above" : "Basic Calculation"}
+      </span>
+    );
+
+  const renderActionsMenu = (markup: VerticalMarkup, isEditing: boolean) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label={`Open actions for ${markup.markup_type}`}
+        >
+          <MoreVertical className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        {isEditing ? (
+          <DropdownMenuItem onClick={() => handleFinishMarkupRowEdit(markup.id)}>
+            Done editing
+          </DropdownMenuItem>
+        ) : (
+          <DropdownMenuItem onClick={() => handleStartMarkupRowEdit(markup)}>
+            Edit
+          </DropdownMenuItem>
+        )}
+        <DropdownMenuItem
+          className="text-destructive focus:text-destructive"
+          onClick={() => handleDeleteMarkup(markup.id)}
+          disabled={deletingMarkupId === markup.id}
+        >
+          {deletingMarkupId === markup.id ? "Deleting..." : "Delete"}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+
   return (
     <div className="space-y-8">
       <section className="space-y-2">
@@ -349,16 +513,17 @@ export function PrimeContractFinancialMarkupTab({
       </section>
 
       <section className="space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-col gap-3 md:flex-row md:flex-wrap md:items-center md:justify-between">
           <p className="text-sm text-muted-foreground">
             Use the row menu to edit a markup. Changes are only applied after you click Save Changes.
           </p>
-          <div className="flex items-center gap-2">
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
             {hasUnsavedMarkupChanges ? (
               <Button
                 size="sm"
                 onClick={handleSaveMarkupTable}
                 disabled={isSavingMarkupTable}
+                className="w-full sm:w-auto"
               >
                 {isSavingMarkupTable ? "Saving..." : "Save Changes"}
               </Button>
@@ -368,6 +533,7 @@ export function PrimeContractFinancialMarkupTab({
               variant="secondary"
               onClick={handleAddMarkupInline}
               disabled={isSubmittingMarkup}
+              className="w-full sm:w-auto"
             >
               <Plus />
               {isSubmittingMarkup ? "Adding..." : "Add Markup"}
@@ -375,199 +541,99 @@ export function PrimeContractFinancialMarkupTab({
           </div>
         </div>
 
-        <InlineTable variant="edit">
-          <InlineTableHeader>
-            <InlineTableHeaderRow>
-              <InlineTableHeaderCell>Markup Name</InlineTableHeaderCell>
-              <InlineTableHeaderCell>Display In</InlineTableHeaderCell>
-              <InlineTableHeaderCell>Maps To</InlineTableHeaderCell>
-              <InlineTableHeaderCell align="right">%</InlineTableHeaderCell>
-              <InlineTableHeaderCell>Calculation Type</InlineTableHeaderCell>
-              <InlineTableHeaderCell align="right">Actions</InlineTableHeaderCell>
-            </InlineTableHeaderRow>
-          </InlineTableHeader>
-          <InlineTableBody>
-            {markupsLoading ? (
-              <InlineTableRow>
-                <InlineTableCell colSpan={6} className="py-8 text-center text-muted-foreground">
-                  Loading markup settings...
-                </InlineTableCell>
-              </InlineTableRow>
-            ) : verticalMarkups.length === 0 ? (
-              <InlineTableRow>
-                <InlineTableCell colSpan={6} className="py-8 text-center text-muted-foreground">
-                  No markup items configured. Click &quot;Add Markup&quot; to get started.
-                </InlineTableCell>
-              </InlineTableRow>
-            ) : (
-              [...verticalMarkups]
-                .sort((a, b) => a.calculation_order - b.calculation_order)
-                .map((markup) => {
-                  const isEditingRow = Boolean(editingMarkupRowIds[markup.id]);
-                  const displayIn = markupDisplayById[markup.id] ?? "horizontal";
-                  const mapsTo = markupMapsToById[markup.id] ?? "all";
-                  const mapsToLabel =
-                    mapsTo === "all"
-                      ? "All Budget Codes"
-                      : budgetCodes.find((code) => code.id === mapsTo)?.fullLabel ?? "All Budget Codes";
+        {markupsLoading ? (
+          <div className="rounded-md border border-border/60 py-8 text-center text-sm text-muted-foreground">
+            Loading markup settings...
+          </div>
+        ) : verticalMarkups.length === 0 ? (
+          <div className="rounded-md border border-border/60 py-8 text-center text-sm text-muted-foreground">
+            No markup items configured. Click &quot;Add Markup&quot; to get started.
+          </div>
+        ) : (
+          <>
+            {/* Mobile card view */}
+            <div className="space-y-3 md:hidden">
+              {sortedMarkups.map((markup) => {
+                const isEditingRow = Boolean(editingMarkupRowIds[markup.id]);
+                const displayIn = markupDisplayById[markup.id] ?? "horizontal";
+                const mapsTo = markupMapsToById[markup.id] ?? "all";
+                const mapsToLabel =
+                  mapsTo === "all"
+                    ? "All Budget Codes"
+                    : budgetCodes.find((code) => code.id === mapsTo)?.fullLabel ?? "All Budget Codes";
 
-                  return (
-                    <InlineTableRow key={markup.id}>
-                      <InlineTableCell>
-                        {isEditingRow ? (
-                          <Select
-                            value={markup.markup_type}
-                            onValueChange={(value) =>
-                              handleMarkupFieldChange(
-                                markup.id,
-                                "markup_type",
-                                value,
-                              )
-                            }
-                          >
-                            <SelectTrigger size="sm" className="w-full text-xs">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="insurance">Insurance</SelectItem>
-                              <SelectItem value="bond">Bond</SelectItem>
-                              <SelectItem value="fee">Fee</SelectItem>
-                              <SelectItem value="overhead">Overhead</SelectItem>
-                              <SelectItem value="custom">Custom</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        ) : (
-                          <span className="text-sm text-foreground capitalize">{markup.markup_type}</span>
-                        )}
-                      </InlineTableCell>
-                      <InlineTableCell>
-                        {isEditingRow ? (
-                          <Select
-                            value={displayIn}
-                            onValueChange={(value) =>
-                              setMarkupDisplayById((prev) => ({
-                                ...prev,
-                                [markup.id]: value as "horizontal" | "vertical",
-                              }))
-                            }
-                          >
-                            <SelectTrigger size="sm" className="w-full text-xs">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="horizontal">Horizontal</SelectItem>
-                              <SelectItem value="vertical">Vertical</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        ) : (
-                          <span className="text-sm text-foreground capitalize">{displayIn}</span>
-                        )}
-                      </InlineTableCell>
-                      <InlineTableCell>
-                        {isEditingRow ? (
-                          <Select
-                            value={mapsTo}
-                            onValueChange={(value) =>
-                              setMarkupMapsToById((prev) => ({
-                                ...prev,
-                                [markup.id]: value,
-                              }))
-                            }
-                          >
-                            <SelectTrigger size="sm" className="w-full text-xs">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="all">All Budget Codes</SelectItem>
-                              {budgetCodes.map((code) => (
-                                <SelectItem key={code.id} value={code.id}>
-                                  {code.fullLabel}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        ) : (
-                          <span className="text-sm text-foreground">{mapsToLabel}</span>
-                        )}
-                      </InlineTableCell>
-                      <InlineTableCell align="right">
-                        {isEditingRow ? (
-                          <Input
-                            type="number"
-                            min="0"
-                            max="100"
-                            step="0.001"
-                            value={String(markup.percentage)}
-                            onChange={(e) =>
-                              handleMarkupFieldChange(
-                                markup.id,
-                                "percentage",
-                                Number(e.target.value || 0),
-                              )
-                            }
-                            className="h-8 text-right"
-                          />
-                        ) : (
-                          <span className="text-sm text-foreground">{Number(markup.percentage).toFixed(2)}%</span>
-                        )}
-                      </InlineTableCell>
-                      <InlineTableCell>
-                        {isEditingRow ? (
-                          <Select
-                            value={markup.compound ? "compound" : "basic"}
-                            onValueChange={(value) =>
-                              handleMarkupFieldChange(
-                                markup.id,
-                                "compound",
-                                value === "compound",
-                              )
-                            }
-                          >
-                            <SelectTrigger size="sm" className="w-full text-xs">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="basic">Basic Calculation</SelectItem>
-                              <SelectItem value="compound">Compounds All Above</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        ) : (
-                          <span className="text-sm text-foreground">
-                            {markup.compound ? "Compounds All Above" : "Basic Calculation"}
-                          </span>
-                        )}
-                      </InlineTableCell>
-                      <InlineTableCell align="right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon-sm"
-                              aria-label={`Open actions for ${markup.markup_type}`}
-                            >
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleStartMarkupRowEdit(markup)}>
-                              {isEditingRow ? "Continue editing" : "Edit"}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              className="text-destructive focus:text-destructive"
-                              onClick={() => handleDeleteMarkup(markup.id)}
-                              disabled={deletingMarkupId === markup.id}
-                            >
-                              {deletingMarkupId === markup.id ? "Deleting..." : "Delete"}
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </InlineTableCell>
-                    </InlineTableRow>
-                  );
-                })
-            )}
-          </InlineTableBody>
-        </InlineTable>
+                return (
+                  <div key={markup.id} className="space-y-3 rounded-md border border-border/60 p-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1 space-y-1">
+                        <p className="text-xs uppercase tracking-wide text-muted-foreground">Markup</p>
+                        {renderMarkupTypeField(markup, isEditingRow)}
+                      </div>
+                      {renderActionsMenu(markup, isEditingRow)}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <p className="text-xs uppercase tracking-wide text-muted-foreground">Display In</p>
+                        {renderDisplayInField(markup, isEditingRow, displayIn)}
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-xs uppercase tracking-wide text-muted-foreground">Percent</p>
+                        {renderPercentageField(markup, isEditingRow)}
+                      </div>
+                      <div className="col-span-2 space-y-1">
+                        <p className="text-xs uppercase tracking-wide text-muted-foreground">Maps To</p>
+                        {renderMapsToField(markup, isEditingRow, mapsTo, mapsToLabel)}
+                      </div>
+                      <div className="col-span-2 space-y-1">
+                        <p className="text-xs uppercase tracking-wide text-muted-foreground">Calculation Type</p>
+                        {renderCalcTypeField(markup, isEditingRow)}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Desktop table view */}
+            <div className="hidden md:block">
+              <InlineTable variant="edit">
+                <InlineTableHeader>
+                  <InlineTableHeaderRow>
+                    <InlineTableHeaderCell>Markup Name</InlineTableHeaderCell>
+                    <InlineTableHeaderCell>Display In</InlineTableHeaderCell>
+                    <InlineTableHeaderCell>Maps To</InlineTableHeaderCell>
+                    <InlineTableHeaderCell align="right">%</InlineTableHeaderCell>
+                    <InlineTableHeaderCell>Calculation Type</InlineTableHeaderCell>
+                    <InlineTableHeaderCell align="right">Actions</InlineTableHeaderCell>
+                  </InlineTableHeaderRow>
+                </InlineTableHeader>
+                <InlineTableBody>
+                  {sortedMarkups.map((markup) => {
+                    const isEditingRow = Boolean(editingMarkupRowIds[markup.id]);
+                    const displayIn = markupDisplayById[markup.id] ?? "horizontal";
+                    const mapsTo = markupMapsToById[markup.id] ?? "all";
+                    const mapsToLabel =
+                      mapsTo === "all"
+                        ? "All Budget Codes"
+                        : budgetCodes.find((code) => code.id === mapsTo)?.fullLabel ?? "All Budget Codes";
+
+                    return (
+                      <InlineTableRow key={markup.id}>
+                        <InlineTableCell>{renderMarkupTypeField(markup, isEditingRow)}</InlineTableCell>
+                        <InlineTableCell>{renderDisplayInField(markup, isEditingRow, displayIn)}</InlineTableCell>
+                        <InlineTableCell>{renderMapsToField(markup, isEditingRow, mapsTo, mapsToLabel)}</InlineTableCell>
+                        <InlineTableCell align="right">{renderPercentageField(markup, isEditingRow)}</InlineTableCell>
+                        <InlineTableCell>{renderCalcTypeField(markup, isEditingRow)}</InlineTableCell>
+                        <InlineTableCell align="right">{renderActionsMenu(markup, isEditingRow)}</InlineTableCell>
+                      </InlineTableRow>
+                    );
+                  })}
+                </InlineTableBody>
+              </InlineTable>
+            </div>
+          </>
+        )}
       </section>
     </div>
   );
