@@ -1,6 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
+import { toast } from "sonner";
 
 import { apiFetch } from "@/lib/api-client";
 import { createClient } from "@/lib/supabase/client";
@@ -168,13 +170,6 @@ function depthLabel(depth: ScenarioDepth): string {
   return "All";
 }
 
-/** Maps stored test status values to user-facing tester activity labels. */
-function statusLabel(status: TestStatus): string {
-  if (status === "pass") return "Passed";
-  if (status === "fail") return "Failed";
-  if (status === "skip") return "Skipped";
-  return "Incomplete";
-}
 
 // Converts unknown thrown values into a message that is safe to show in the UI.
 function formatActionError(error: unknown, fallback: string): string {
@@ -284,10 +279,9 @@ export default function TestingPage() {
     steps: "", setup_steps: "", context_note: "", expected_result: "", start_url: "",
   });
   const [addSaving, setAddSaving] = useState(false);
-  const [activeTesterEmail, setActiveTesterEmail] = useState<string>(TESTER_ACTIVITY_USERS[0].email);
-  const [testerActivityLoading, setTesterActivityLoading] = useState(false);
-  const [testerActivity, setTesterActivity] = useState<TesterActivityScenario[]>([]);
-  const [expandedTesterScenarios, setExpandedTesterScenarios] = useState<Record<string, boolean>>({});
+  const [testerMatrixLoading, setTesterMatrixLoading] = useState(false);
+  const [allTesterData, setAllTesterData] = useState<Record<string, TesterActivityScenario[]>>({});
+  const [expandedMatrixRow, setExpandedMatrixRow] = useState<string | null>(null);
 
   const detailedUnavailable =
     ENABLE_SCENARIO_DEPTH_FILTER && selectedSuite?.detailed_scenario_count === 0;
@@ -421,38 +415,38 @@ export default function TestingPage() {
     setRunDetailLoading(false);
   };
 
-  // Loads scenario test activity for a specific tester email.
-  const loadTesterActivity = useCallback(async (testerEmail: string) => {
-    setUiError(null);
-    setTesterActivityLoading(true);
+  // Loads activity for ALL testers simultaneously for the matrix view.
+  const loadAllTesterActivity = useCallback(async () => {
+    setTesterMatrixLoading(true);
     try {
-      const response = await apiFetch<{ scenarios?: TesterActivityScenario[] }>(
-        `/api/testing/tester-activity?tester=${encodeURIComponent(testerEmail)}`,
+      const results = await Promise.allSettled(
+        TESTER_ACTIVITY_USERS.map(async ({ email }) => {
+          const data = await apiFetch<{ scenarios?: TesterActivityScenario[] }>(
+            `/api/testing/tester-activity?tester=${encodeURIComponent(email)}`,
+          );
+          return { email, scenarios: data.scenarios ?? [] };
+        }),
       );
-      const loadedScenarios = response.scenarios ?? [];
-      setTesterActivity(loadedScenarios);
-      setExpandedTesterScenarios((prev) => {
-        const next: Record<string, boolean> = {};
-        for (const scenario of loadedScenarios) {
-          const key = `${testerEmail}:${scenario.tool_name}`;
-          next[key] = prev[key] ?? false;
+      const combined: Record<string, TesterActivityScenario[]> = {};
+      for (const result of results) {
+        if (result.status === "fulfilled") {
+          combined[result.value.email] = result.value.scenarios;
         }
-        return next;
-      });
+      }
+      setAllTesterData(combined);
     } catch (error) {
-      setTesterActivity([]);
       setUiError(formatActionError(error, "Unable to load tester activity."));
     } finally {
-      setTesterActivityLoading(false);
+      setTesterMatrixLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    void loadTesterActivity(activeTesterEmail);
-  }, [activeTesterEmail, loadTesterActivity]);
+    void loadAllTesterActivity();
+  }, [loadAllTesterActivity]);
 
   // ── Manage Cases: load cases for a suite + depth ──
-  const loadManagedCases = useCallback(async (suite: Suite, depth: "broad" | "detailed") => {
+  const loadManagedCases = useCallback(async (suite: Suite) => {
     setUiError(null);
     setManageCasesLoading(true);
     setManageCases([]);
@@ -460,7 +454,7 @@ export default function TestingPage() {
     setManageEditId(null);
     try {
       const d = await apiFetch<{ grouped?: Record<string, ManagedCase[]> }>(
-        `/api/testing/suites/${suite.tool_name}/cases?type=scenario&depth=${ENABLE_SCENARIO_DEPTH_FILTER ? depth : "all"}`,
+        `/api/testing/suites/${suite.tool_name}/cases?type=all`,
       );
       const all: ManagedCase[] = Object.values(d.grouped ?? {}).flat() as ManagedCase[];
       setManageCases(all);
@@ -471,8 +465,8 @@ export default function TestingPage() {
   }, []);
 
   useEffect(() => {
-    if (manageSuite) void loadManagedCases(manageSuite, manageDepth);
-  }, [manageSuite, manageDepth, loadManagedCases]);
+    if (manageSuite) void loadManagedCases(manageSuite);
+  }, [manageSuite, loadManagedCases]);
 
   useEffect(() => {
     if (ENABLE_SCENARIO_DEPTH_FILTER && detailedUnavailable && runForm.scenarioDepth === "detailed") {
@@ -559,8 +553,28 @@ export default function TestingPage() {
 
   const current = results[cursor] ?? null;
   const steps = parseSteps(current?.test_cases?.steps ?? null);
-  const doneCount = results.filter((r) => r.status !== "not_tested").length;
-  const pct = results.length > 0 ? Math.round((doneCount / results.length) * 100) : 0;
+
+  // ── Tester matrix helpers ──
+  // Unique tools across all testers, sorted alphabetically by display name.
+  const allToolNames = useMemo(() => {
+    const seen = new Map<string, string>(); // tool_name -> display_name
+    for (const scenarios of Object.values(allTesterData)) {
+      for (const s of scenarios) {
+        seen.set(s.tool_name, s.display_name);
+      }
+    }
+    return Array.from(seen.entries()).sort(([, a], [, b]) => a.localeCompare(b));
+  }, [allTesterData]);
+
+  function getCellStats(email: string, toolName: string) {
+    const scenario = (allTesterData[email] ?? []).find((s) => s.tool_name === toolName);
+    if (!scenario) return null;
+    const rows = scenario.rows;
+    const pass = rows.filter((r) => r.status === "pass").length;
+    const fail = rows.filter((r) => r.status === "fail").length;
+    const skip = rows.filter((r) => r.status === "skip").length;
+    return { pass, fail, skip, total: rows.length, rows: scenario.rows };
+  }
 
   // ── Start a run ──
   const startRun = async () => {
@@ -575,9 +589,9 @@ export default function TestingPage() {
           method: "POST",
           body: JSON.stringify({
             suite: selectedSuite.tool_name,
-            testType: "scenario",
+            testType: "all",
             ...runForm,
-            scenarioDepth: ENABLE_SCENARIO_DEPTH_FILTER ? runForm.scenarioDepth : "all",
+            scenarioDepth: "all",
           }),
         },
       );
@@ -586,11 +600,11 @@ export default function TestingPage() {
       }
       setActiveRunId(run_id);
       const d2 = await apiFetch<{ results?: TestResult[] }>(
-        `/api/testing/runs/${run_id}/results?type=scenario`,
+        `/api/testing/runs/${run_id}/results`,
       );
       const loaded = d2.results ?? [];
       if (loaded.length === 0) {
-        setStartError("No active scenario test cases were found for this tool. Check that cases are seeded and not marked inactive.");
+        setStartError("No active test cases were found for this tool. Check that cases are seeded and not marked inactive.");
       } else {
         setResults(loaded);
         setCursor(0);
@@ -616,7 +630,7 @@ export default function TestingPage() {
     let loaded: TestResult[] = [];
     try {
       const d = await apiFetch<{ results?: TestResult[] }>(
-        `/api/testing/runs/${run.id}/results?type=scenario`,
+        `/api/testing/runs/${run.id}/results`,
       );
       loaded = d.results ?? [];
     } catch (error) {
@@ -774,11 +788,23 @@ export default function TestingPage() {
   // Sensitive: writes test_results status and creates admin feedback/GitHub issue records.
   const submitIssueReport = useCallback(async () => {
     if (!current || !activeRunId) return;
+
+    // Require a description of the issue.
+    if (!issueForm.notes.trim()) {
+      setIssueSubmitError("Please describe what failed before submitting.");
+      return;
+    }
+    // Require a screenshot so the feedback item has visual context.
+    if (!issueForm.screenshotDataUrl) {
+      setIssueSubmitError("Please upload a screenshot of the issue before submitting.");
+      return;
+    }
+
     setIssueSubmitError(null);
     setUiError(null);
     setIssueSubmitting(true);
 
-    const notes = issueForm.notes.trim() || null;
+    const notes = issueForm.notes.trim();
     const severity = severityMap[current.id] || null;
 
     try {
@@ -799,6 +825,13 @@ export default function TestingPage() {
       });
 
       setIssueModalOpen(false);
+      toast.success("Issue saved to Feedback Inbox", {
+        description: "Review and create a GitHub issue from the Feedback Inbox.",
+        action: {
+          label: "Open Inbox →",
+          onClick: () => window.open("/feedback-inbox", "_blank", "noopener,noreferrer"),
+        },
+      });
       if (cursor < results.length - 1) {
         setCursor((c) => c + 1);
       } else {
@@ -1274,125 +1307,177 @@ export default function TestingPage() {
 
           {/* ── Tab: Tester Activity ── */}
           <TabsContent value="tester-activity" className="m-0">
-            <div className="space-y-4">
-              <div className="flex flex-wrap gap-2">
-                {TESTER_ACTIVITY_USERS.map((tester) => (
-                  <button
-                    key={tester.key}
-                    type="button"
-                    onClick={() => setActiveTesterEmail(tester.email)}
-                    className={cn(
-                      "rounded-lg border px-3 py-2 text-left text-xs transition-colors",
-                      activeTesterEmail === tester.email
-                        ? "border-primary bg-primary/5 text-primary"
-                        : "border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground",
-                    )}
-                  >
-                    <p className="font-medium">{tester.label}</p>
-                    <p className="mt-0.5 text-[11px]">{tester.email}</p>
-                  </button>
-                ))}
+            <div className="space-y-6">
+              {/* Header + refresh */}
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-muted-foreground">
+                  All testers · all tools · most recent result per test
+                </p>
+                <button
+                  type="button"
+                  onClick={() => void loadAllTesterActivity()}
+                  disabled={testerMatrixLoading}
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {testerMatrixLoading ? "Loading…" : "↻ Refresh"}
+                </button>
               </div>
 
-              {testerActivityLoading && (
+              {testerMatrixLoading && (
                 <p className="py-12 text-center text-sm text-muted-foreground">Loading tester activity…</p>
               )}
 
-              {!testerActivityLoading && testerActivity.length === 0 && (
+              {!testerMatrixLoading && allToolNames.length === 0 && (
                 <p className="py-12 text-center text-sm text-muted-foreground">
-                  No tester activity found for {activeTesterEmail}.
+                  No tester activity found yet. Start a test run to see results here.
                 </p>
               )}
 
-              {!testerActivityLoading && testerActivity.length > 0 && (
-                <div className="space-y-3">
-                  {testerActivity.map((scenario) => {
-                    const scenarioKey = `${activeTesterEmail}:${scenario.tool_name}`;
-                    const isOpen = expandedTesterScenarios[scenarioKey] ?? false;
+              {!testerMatrixLoading && allToolNames.length > 0 && (
+                <div className="space-y-2">
+                  {allToolNames.map(([toolName, displayName]) => {
+                    const isOpen = expandedMatrixRow === toolName;
+                    // Collect all failed rows across testers for expanded detail
+                    const allFailedRows = TESTER_ACTIVITY_USERS.flatMap(({ email, label }) => {
+                      const stats = getCellStats(email, toolName);
+                      if (!stats) return [];
+                      return stats.rows
+                        .filter((r) => r.status === "fail")
+                        .map((r) => ({ ...r, testerLabel: label }));
+                    });
+
                     return (
-                      <section key={scenario.tool_name} className="rounded-lg border border-border bg-card">
+                      <section key={toolName} className="rounded-lg bg-card overflow-hidden">
+                        {/* Matrix row — tool name + one cell per tester */}
                         <button
                           type="button"
-                          onClick={() =>
-                            setExpandedTesterScenarios((prev) => ({
-                              ...prev,
-                              [scenarioKey]: !isOpen,
-                            }))
-                          }
-                          className="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-muted/20"
+                          onClick={() => setExpandedMatrixRow(isOpen ? null : toolName)}
+                          className="flex w-full items-center gap-0 text-left transition-colors hover:bg-muted/20"
                         >
-                          <div className="min-w-0">
-                            <p className="text-sm font-medium">{scenario.display_name}</p>
-                            <p className="mt-0.5 text-xs text-muted-foreground">{scenario.rows.length} test case results</p>
+                          {/* Tool label */}
+                          <div className="w-44 shrink-0 px-4 py-3">
+                            <p className="text-sm font-medium text-foreground truncate">{displayName}</p>
                           </div>
-                          <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", isOpen && "rotate-180")} />
+
+                          {/* Tester cells */}
+                          <div className="flex flex-1 divide-x divide-border border-l border-border">
+                            {TESTER_ACTIVITY_USERS.map(({ email, label }) => {
+                              const stats = getCellStats(email, toolName);
+                              if (!stats) {
+                                return (
+                                  <div key={email} className="flex-1 px-4 py-3 text-center">
+                                    <p className="text-xs font-medium text-muted-foreground/40">—</p>
+                                    <p className="mt-0.5 text-[10px] text-muted-foreground/40">{label}</p>
+                                  </div>
+                                );
+                              }
+                              const hasFailures = stats.fail > 0;
+                              return (
+                                <div key={email} className={cn("flex-1 px-4 py-3 text-center", hasFailures && "bg-red-50/50 dark:bg-red-950/10")}>
+                                  <div className="flex items-center justify-center gap-1.5">
+                                    {stats.pass > 0 && (
+                                      <span className="text-xs font-semibold text-green-600">{stats.pass}✓</span>
+                                    )}
+                                    {stats.fail > 0 && (
+                                      <span className="text-xs font-semibold text-red-500">{stats.fail}✗</span>
+                                    )}
+                                    {stats.skip > 0 && (
+                                      <span className="text-xs text-muted-foreground">{stats.skip}–</span>
+                                    )}
+                                    {stats.pass === 0 && stats.fail === 0 && stats.skip === 0 && (
+                                      <span className="text-xs text-muted-foreground">0</span>
+                                    )}
+                                  </div>
+                                  <p className="mt-0.5 text-[10px] text-muted-foreground">{label}</p>
+                                </div>
+                              );
+                            })}
+                          </div>
+
+                          <ChevronDown className={cn("mr-3 h-4 w-4 shrink-0 text-muted-foreground transition-transform", isOpen && "rotate-180")} />
                         </button>
 
+                        {/* Expanded: show failed tests for this tool */}
                         {isOpen && (
-                          <div className="border-t border-border px-4 py-3">
-                            <div className="overflow-x-auto">
-                              <table className="w-full min-w-[860px] text-sm">
-                                <thead className="bg-muted/40">
-                                  <tr>
-                                    <th style={{ fontSize: "10px" }} className="px-3 py-2 text-left font-semibold uppercase tracking-wider text-foreground">Name</th>
-                                    <th style={{ fontSize: "10px" }} className="px-3 py-2 text-left font-semibold uppercase tracking-wider text-foreground">Number</th>
-                                    <th style={{ fontSize: "10px" }} className="px-3 py-2 text-left font-semibold uppercase tracking-wider text-foreground">Status</th>
-                                    <th style={{ fontSize: "10px" }} className="px-3 py-2 text-left font-semibold uppercase tracking-wider text-foreground">Notes</th>
-                                    <th style={{ fontSize: "10px" }} className="px-3 py-2 text-left font-semibold uppercase tracking-wider text-foreground">Screenshot</th>
-                                  </tr>
-                                </thead>
-                                <tbody className="divide-y divide-border">
-                                  {scenario.rows.map((row) => (
-                                    <tr key={row.result_id}>
-                                      <td className="px-3 py-2 align-top">
-                                        <p className="font-medium text-foreground">{row.test_name ?? "Untitled test"}</p>
-                                        <p className="mt-0.5 text-xs text-muted-foreground">
-                                          Run {new Date(row.run_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                                        </p>
-                                      </td>
-                                      <td className="px-3 py-2 align-top text-muted-foreground">{row.test_number ?? "—"}</td>
-                                      <td className="px-3 py-2 align-top">
-                                        <span
-                                          className={cn(
-                                            "inline-flex rounded-full px-2 py-0.5 text-xs font-medium",
-                                            row.status === "pass" && "bg-green-100 text-green-700 dark:bg-green-950/30 dark:text-green-300",
-                                            row.status === "fail" && "bg-red-100 text-red-700 dark:bg-red-950/30 dark:text-red-300",
-                                            row.status === "skip" && "bg-amber-100 text-amber-700 dark:bg-amber-950/30 dark:text-amber-300",
-                                            row.status === "not_tested" && "bg-muted text-muted-foreground",
+                          <div className="border-t border-border">
+                            {/* Per-tester breakdown */}
+                            {TESTER_ACTIVITY_USERS.map(({ email, label }) => {
+                              const stats = getCellStats(email, toolName);
+                              if (!stats || stats.rows.length === 0) return null;
+                              const fails = stats.rows.filter((r) => r.status === "fail");
+                              const passes = stats.rows.filter((r) => r.status === "pass");
+                              const skips = stats.rows.filter((r) => r.status === "skip");
+                              return (
+                                <div key={email} className="px-4 py-3 border-b border-border last:border-0">
+                                  <p className="text-xs font-semibold text-foreground mb-2">{label}</p>
+                                  <div className="space-y-1">
+                                    {fails.map((row) => (
+                                      <div key={row.result_id} className="flex items-start gap-2 rounded-md bg-red-50 dark:bg-red-950/20 px-3 py-2">
+                                        <XCircle className="h-3.5 w-3.5 text-red-500 shrink-0 mt-0.5" />
+                                        <div className="min-w-0 flex-1">
+                                          <p className="text-xs font-medium text-foreground">
+                                            <span className="text-muted-foreground mr-1">{row.test_number}</span>
+                                            {row.test_name ?? "Untitled"}
+                                          </p>
+                                          {row.notes?.trim() && (
+                                            <p className="mt-0.5 text-xs text-muted-foreground">{row.notes}</p>
                                           )}
-                                        >
-                                          {statusLabel(row.status)}
+                                          {row.screenshot_url && (
+                                            <a href={row.screenshot_url} target="_blank" rel="noopener noreferrer"
+                                              className="mt-1 inline-flex items-center gap-1 text-[11px] text-primary hover:underline">
+                                              View screenshot →
+                                            </a>
+                                          )}
+                                        </div>
+                                        <span className="text-[10px] text-muted-foreground shrink-0">
+                                          {new Date(row.run_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                                         </span>
-                                      </td>
-                                      <td className="px-3 py-2 align-top text-muted-foreground">
-                                        <p className="max-w-[360px] whitespace-pre-wrap break-words text-xs">
-                                          {row.notes?.trim() ? row.notes : "—"}
-                                        </p>
-                                      </td>
-                                      <td className="px-3 py-2 align-top">
-                                        {row.screenshot_url ? (
-                                          <a
-                                            href={row.screenshot_url}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-xs font-medium text-primary hover:underline"
-                                          >
-                                            {row.screenshot_label?.trim() || "View screenshot"}
-                                          </a>
-                                        ) : (
-                                          <span className="text-xs text-muted-foreground">—</span>
-                                        )}
-                                      </td>
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
-                            </div>
+                                      </div>
+                                    ))}
+                                    {passes.length > 0 && fails.length === 0 && (
+                                      <p className="text-xs text-green-600 flex items-center gap-1">
+                                        <CheckCircle2 className="h-3.5 w-3.5" />
+                                        {passes.length} test{passes.length !== 1 ? "s" : ""} passed
+                                        {skips.length > 0 && `, ${skips.length} skipped`}
+                                      </p>
+                                    )}
+                                    {passes.length > 0 && fails.length > 0 && (
+                                      <p className="text-xs text-muted-foreground pl-1">
+                                        + {passes.length} passed{skips.length > 0 ? `, ${skips.length} skipped` : ""}
+                                      </p>
+                                    )}
+                                    {passes.length === 0 && fails.length === 0 && skips.length > 0 && (
+                                      <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                        <MinusCircle className="h-3.5 w-3.5" />
+                                        {skips.length} skipped
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+
+                            {allFailedRows.length === 0 && (
+                              <p className="px-4 py-3 text-xs text-green-600 flex items-center gap-1.5">
+                                <CheckCircle2 className="h-3.5 w-3.5" />
+                                No failures recorded for this tool
+                              </p>
+                            )}
                           </div>
                         )}
                       </section>
                     );
                   })}
+                </div>
+              )}
+
+              {/* Column legend */}
+              {!testerMatrixLoading && allToolNames.length > 0 && (
+                <div className="flex items-center gap-4 text-[11px] text-muted-foreground pt-2">
+                  <span className="flex items-center gap-1"><span className="font-semibold text-green-600">N✓</span> passed</span>
+                  <span className="flex items-center gap-1"><span className="font-semibold text-red-500">N✗</span> failed</span>
+                  <span className="flex items-center gap-1"><span>N–</span> skipped</span>
+                  <span className="flex items-center gap-1"><span className="text-muted-foreground/40">—</span> not started</span>
                 </div>
               )}
             </div>
@@ -1882,6 +1967,18 @@ export default function TestingPage() {
               Run again
             </Button>
           </div>
+
+          {failed > 0 && (
+            <a
+              href="/feedback-inbox"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 rounded-lg border border-border bg-background px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+            >
+              <Send className="h-4 w-4 text-muted-foreground" />
+              Review {failed} issue{failed !== 1 ? "s" : ""} in Feedback Inbox →
+            </a>
+          )}
         </div>
       </PageShell>
     );
@@ -2006,12 +2103,21 @@ export default function TestingPage() {
 
   return (
     <PageShell variant="content" title="" showHeader={false}>
-      {/* Progress bar for quick run completion visibility. */}
-      <div className="h-1.5 bg-muted -mt-2">
-        <div
-          className="h-full bg-primary transition-all duration-500"
-          style={{ width: `${pct}%` }} // eslint-disable-line react/forbid-component-props
-        />
+      {/* Segmented progress bar: green=pass, red=fail, muted=skip, bg=pending */}
+      <div className="flex h-2 -mt-2 overflow-hidden bg-muted">
+        {results.length > 0 && (() => {
+          const total = results.length;
+          const passW = Math.round((passCount / total) * 100);
+          const failW = Math.round((failCount / total) * 100);
+          const skipW = Math.round((skipCount / total) * 100);
+          return (
+            <>
+              {passW > 0 && <div className="h-full bg-green-500 transition-all duration-500" style={{ width: `${passW}%` }} />} {/* eslint-disable-line react/forbid-component-props */}
+              {failW > 0 && <div className="h-full bg-red-500 transition-all duration-500" style={{ width: `${failW}%` }} />} {/* eslint-disable-line react/forbid-component-props */}
+              {skipW > 0 && <div className="h-full bg-muted-foreground/30 transition-all duration-500" style={{ width: `${skipW}%` }} />} {/* eslint-disable-line react/forbid-component-props */}
+            </>
+          );
+        })()}
       </div>
 
       <div className="space-y-8 pt-6 pb-12">
@@ -2414,48 +2520,73 @@ export default function TestingPage() {
           <DialogHeader>
             <DialogTitle>Report Issue Found</DialogTitle>
             <DialogDescription>
-              Add notes and an optional screenshot. Scenario details are attached automatically in the background.
+              Both a description and screenshot are required. Scenario details are attached automatically.
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
+            {/* Notes — required */}
             <div className="space-y-1.5">
-              <Label htmlFor="issue-notes">Notes</Label>
+              <Label htmlFor="issue-notes">
+                What failed?{" "}
+                <span className="text-destructive font-normal">*</span>
+              </Label>
               <Textarea
                 id="issue-notes"
                 value={issueForm.notes}
                 onChange={(e) =>
                   setIssueForm((prev) => ({ ...prev, notes: e.target.value }))
                 }
-                placeholder="Describe what failed and what you observed."
+                placeholder="Describe what you did, what you expected, and what actually happened."
                 className="h-28 resize-none text-sm"
                 autoFocus
               />
             </div>
 
+            {/* Screenshot — required */}
             <div className="space-y-2">
-              <Label>Screenshot (optional)</Label>
-              <FileUploadField
-                label={<span className="text-xs text-muted-foreground">Upload screenshot for this issue report</span>}
-                accept="image/*"
-                multiple={false}
-                maxFiles={1}
-                maxSize={4 * 1024 * 1024}
-                variant="minimal"
-                showMetaText
-                disabled={issueSubmitting}
-                onFilesSelected={handleIssueScreenshotSelected}
-              />
-              {issueForm.screenshotDataUrl && (
-                <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground">{issueForm.screenshotName ?? "Screenshot selected"}</p>
+              <Label>
+                Screenshot{" "}
+                <span className="text-destructive font-normal">*</span>
+              </Label>
+              {issueForm.screenshotDataUrl ? (
+                <div className="space-y-2">
                   <img
                     src={issueForm.screenshotDataUrl}
                     alt="Issue screenshot preview"
                     className="max-h-48 w-full rounded-md border border-border object-contain"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setIssueForm((prev) => ({ ...prev, screenshotDataUrl: null, screenshotName: null }))}
+                    className="text-xs text-muted-foreground hover:text-destructive transition-colors"
+                  >
+                    Remove and upload a different screenshot
+                  </button>
                 </div>
+              ) : (
+                <FileUploadField
+                  label={<span className="text-xs text-muted-foreground">Upload a screenshot showing the issue</span>}
+                  accept="image/*"
+                  multiple={false}
+                  maxFiles={1}
+                  maxSize={4 * 1024 * 1024}
+                  variant="minimal"
+                  showMetaText
+                  disabled={issueSubmitting}
+                  onFilesSelected={handleIssueScreenshotSelected}
+                />
               )}
+            </div>
+
+            {/* Status summary */}
+            <div className="flex items-center gap-4 text-xs text-muted-foreground">
+              <span className={issueForm.notes.trim() ? "text-status-success" : ""}>
+                {issueForm.notes.trim() ? "✓ Description added" : "Description required"}
+              </span>
+              <span className={issueForm.screenshotDataUrl ? "text-status-success" : ""}>
+                {issueForm.screenshotDataUrl ? "✓ Screenshot uploaded" : "Screenshot required"}
+              </span>
             </div>
 
             {issueSubmitError && (
@@ -2478,7 +2609,7 @@ export default function TestingPage() {
               type="button"
               variant="destructive"
               onClick={() => void submitIssueReport()}
-              disabled={issueSubmitting}
+              disabled={issueSubmitting || !issueForm.notes.trim() || !issueForm.screenshotDataUrl}
             >
               {issueSubmitting ? "Submitting…" : "Submit Issue"}
             </Button>

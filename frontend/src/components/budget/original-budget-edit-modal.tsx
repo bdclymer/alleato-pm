@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatDistanceToNow } from "date-fns";
+import { apiFetch } from "@/lib/api-client";
 import {
   BaseSidebar,
   SidebarBody,
@@ -163,15 +164,9 @@ export function OriginalBudgetEditModal({
       setError(null);
 
       try {
-        const response = await fetch(
+        const data = await apiFetch<{ history: HistoryEntry[] }>(
           `/api/projects/${projectId}/budget/lines/${lineItem.id}/history`,
         );
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch change history");
-        }
-
-        const data = await response.json();
         setHistory(data.history || []);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load history");

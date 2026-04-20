@@ -152,6 +152,7 @@ export const POST = withApiGuardrails(
       reference: result.data.reference || null,
       is_private: result.data.is_private || false,
       rfi_stage: result.data.rfi_stage || null,
+      drawing_number: result.data.drawing_number || null,
       created_by: user.email || user.id,
       date_initiated: new Date().toISOString().split("T")[0],
       ball_in_court:

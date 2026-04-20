@@ -40,13 +40,15 @@ export const BudgetModificationPayloadSchema = z.object({
   description: optionalString,
   reason: optionalString,
   approver: optionalString,
-  modificationType: optionalString,
+  modificationType: z.enum(["addition", "deduction"]).optional().nullable(),
+  changeEventId: z.string().uuid().optional().nullable(),
 });
 
 // Schema for modification status actions (submit, approve, reject, void)
 export const BudgetModificationActionSchema = z.object({
   modificationId: z.string().uuid("modificationId must be a valid UUID"),
   action: z.enum(["submit", "approve", "reject", "void"]),
+  voidedReason: z.string().min(1).max(1000).optional(),
 });
 
 export type BudgetLineItemPayload = z.infer<

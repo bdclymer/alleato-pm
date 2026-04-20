@@ -127,12 +127,18 @@ ENDPOINTS=(
   "GET /api/projects/${PROJECT_ID}/submittals/packages Submittal packages"
   "GET /api/projects/${PROJECT_ID}/submittals/specs Submittal specs"
 
+  # ─── Submittal Workflow Templates ───
+  "GET /api/projects/${PROJECT_ID}/submittals/workflow-templates Workflow templates list"
+
   # ─── Drawings ───
   "GET /api/projects/${PROJECT_ID}/drawings Drawings list"
   "GET /api/projects/${PROJECT_ID}/drawings/${FAKE_UUID} Drawing detail"
   "GET /api/projects/${PROJECT_ID}/drawings/sets Drawing sets"
   "GET /api/projects/${PROJECT_ID}/drawings/areas Drawing areas"
   "GET /api/projects/${PROJECT_ID}/drawings/recycle-bin Drawings recycle bin"
+  "GET /api/projects/${PROJECT_ID}/drawings/${FAKE_UUID}/related-items Drawing related items"
+  "GET /api/projects/${PROJECT_ID}/drawings/${FAKE_UUID}/change-history Drawing change history"
+  "GET /api/projects/${PROJECT_ID}/drawings/${FAKE_UUID}/qr-code Drawing QR code"
 
   # ─── Specifications ───
   "GET /api/projects/${PROJECT_ID}/specifications Specifications list"

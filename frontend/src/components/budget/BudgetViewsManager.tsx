@@ -23,6 +23,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+import { apiFetch } from "@/lib/api-client";
 import type { BudgetViewDefinition } from "@/types/budget-views";
 import { BudgetViewsModal } from "./BudgetViewsModal";
 
@@ -51,32 +52,10 @@ export function BudgetViewsManager({
   const fetchViews = React.useCallback(async () => {
     setLoading(true);
     try {
-      const response = await fetch(`/api/projects/${projectId}/budget/views`, {
-        signal: AbortSignal.timeout(5000),
-      });
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error("Budget views fetch error:", {
-          status: response.status,
-          statusText: response.statusText,
-          errorData,
-          projectId
-        });
-
-        // Show more specific error message based on status
-        let errorMessage = "Failed to load budget views";
-        if (response.status === 401) {
-          errorMessage = "You don't have permission to access these budget views";
-        } else if (response.status === 404) {
-          errorMessage = "Budget views not found for this project";
-        } else if (response.status >= 500) {
-          errorMessage = "Server error while loading budget views. Please check console for details.";
-        }
-
-        throw new Error(errorMessage);
-      }
-
-      const data = await response.json();
+      const data = await apiFetch<{ views: BudgetViewDefinition[] }>(
+        `/api/projects/${projectId}/budget/views`,
+        { signal: AbortSignal.timeout(5000) },
+      );
       setViews(data.views || []);
 
       // If no current view is selected, select the default one
@@ -119,20 +98,10 @@ export function BudgetViewsManager({
 
   const handleCloneView = async (view: BudgetViewDefinition) => {
     try {
-      const response = await fetch(
-        `/api/projects/${projectId}/budget/views/${view.id}/clone`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            new_name: `${view.name} (Copy)`,
-            new_description: view.description,
-          }),
-        },
-      );
-
-      if (!response.ok) throw new Error("Failed to clone view");
-
+      await apiFetch(`/api/projects/${projectId}/budget/views/${view.id}/clone`, {
+        method: "POST",
+        body: JSON.stringify({ new_name: `${view.name} (Copy)`, new_description: view.description }),
+      });
       toast.success("View cloned successfully");
       fetchViews();
     } catch (error) {
@@ -153,13 +122,7 @@ export function BudgetViewsManager({
     if (!viewToDelete) return;
 
     try {
-      const response = await fetch(
-        `/api/projects/${projectId}/budget/views/${viewToDelete.id}`,
-        { method: "DELETE" },
-      );
-
-      if (!response.ok) throw new Error("Failed to delete view");
-
+      await apiFetch(`/api/projects/${projectId}/budget/views/${viewToDelete.id}`, { method: "DELETE" });
       toast.success("View deleted successfully");
 
       // If we deleted the current view, switch to default
@@ -185,17 +148,10 @@ export function BudgetViewsManager({
     if (view.is_default) return;
 
     try {
-      const response = await fetch(
-        `/api/projects/${projectId}/budget/views/${view.id}`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ is_default: true }),
-        },
-      );
-
-      if (!response.ok) throw new Error("Failed to set default view");
-
+      await apiFetch(`/api/projects/${projectId}/budget/views/${view.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ is_default: true }),
+      });
       toast.success("Default view updated");
       fetchViews();
     } catch (error) {

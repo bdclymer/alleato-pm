@@ -61,9 +61,9 @@ export default function MainLayout({
                 {...feedbackTargetProps("app.main-content")}
               >
                 {children}
+                {!isDrawingViewer && <SiteFooter />}
               </main>
               <ProcoreReferencePanel />
-              {!isDrawingViewer && <SiteFooter />}
             </div>
             <React.Suspense fallback={null}>
               <CommentsSidebarPanel />

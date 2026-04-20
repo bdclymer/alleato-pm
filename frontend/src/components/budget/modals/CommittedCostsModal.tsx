@@ -16,6 +16,7 @@ import {
   InlineTableRow,
   InlineTableCell,
 } from "@/components/ds/inline-table";
+import { apiFetch } from "@/lib/api-client";
 
 interface Commitment {
   id: string;
@@ -59,12 +60,7 @@ export function CommittedCostsModal({
     setError(null);
     try {
       const url = `/api/projects/${projectId}/budget/commitments?budgetLineId=${budgetLineId}&costCode=${encodeURIComponent(costCode)}&status=approved,complete`;
-      const response = await fetch(url);
-      if (!response.ok) {
-        const payload = await response.json().catch(() => ({}));
-        throw new Error(payload.error || "Failed to fetch committed costs");
-      }
-      const data = await response.json();
+      const data = await apiFetch<{ commitments: Commitment[] }>(url);
       setCommitments(data.commitments || []);
     } catch (error) {
       console.error("Failed to fetch committed costs:", error);

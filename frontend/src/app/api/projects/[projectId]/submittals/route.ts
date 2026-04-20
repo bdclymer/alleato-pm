@@ -110,10 +110,38 @@ export const GET = withApiGuardrails(
       }
     }
 
+    // Batch-resolve received_from names from the people table
+    const receivedFromIds = [
+      ...new Set(
+        (data ?? [])
+          .map((s: Record<string, unknown>) => s.received_from_id)
+          .filter(Boolean)
+          .map(String),
+      ),
+    ];
+    let receivedFromMap: Record<string, string> = {};
+    if (receivedFromIds.length > 0) {
+      const { data: people } = await supabase
+        .from("people")
+        .select("id, first_name, last_name")
+        .in("id", receivedFromIds);
+      if (people) {
+        receivedFromMap = Object.fromEntries(
+          people.map((p: { id: string; first_name: string | null; last_name: string | null }) => [
+            p.id,
+            `${p.first_name ?? ""} ${p.last_name ?? ""}`.trim() || p.id,
+          ]),
+        );
+      }
+    }
+
     const enriched = (data ?? []).map((s: Record<string, unknown>) => ({
       ...s,
       responsible_contractor: s.responsible_contractor_id
         ? { id: String(s.responsible_contractor_id), name: companyMap[String(s.responsible_contractor_id)] ?? null }
+        : null,
+      received_from: s.received_from_id
+        ? receivedFromMap[String(s.received_from_id)] ?? null
         : null,
     }));
 
@@ -143,7 +171,7 @@ export const POST = withApiGuardrails(
     }
 
     const validatedData = createSubmittalSchema.parse(body);
-    const submittalTypes = await getNormalizedSubmittalTypeCatalog(supabase);
+    const submittalTypes = await getNormalizedSubmittalTypeCatalog(supabase as unknown as Parameters<typeof getNormalizedSubmittalTypeCatalog>[0]);
     const fallbackType =
       submittalTypes.find((type) => type.name === "Other") ?? submittalTypes[0] ?? null;
     const resolvedSubmittalTypeId =

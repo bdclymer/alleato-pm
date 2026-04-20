@@ -42,6 +42,7 @@ import {
 } from "@/components/ui/budget-overlay";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { apiFetch, ApiError } from "@/lib/api-client";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -133,13 +134,7 @@ export function InlineBudgetLineItemCreator({
 
       try {
         setLoadingCodes(true);
-        const response = await fetch(`/api/projects/${projectId}/budget-codes`);
-
-        if (!response.ok) {
-          throw new Error("Failed to load budget codes");
-        }
-
-        const { budgetCodes } = await response.json();
+        const { budgetCodes } = await apiFetch<{ budgetCodes: BudgetCode[] }>(`/api/projects/${projectId}/budget-codes`);
         setBudgetCodes(budgetCodes || []);
       } catch (error) {
         setBudgetCodes([]);
@@ -320,24 +315,17 @@ export function InlineBudgetLineItemCreator({
         return;
       }
 
-      const response = await fetch(`/api/projects/${projectId}/budget-codes`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const { budgetCode: createdCode } = await apiFetch<{ budgetCode: BudgetCode & { fullLabel: string } }>(
+        `/api/projects/${projectId}/budget-codes`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            cost_code_id: newCodeData.costCodeId,
+            cost_type_id: newCodeData.costType,
+            description: selectedCostCode.title,
+          }),
         },
-        body: JSON.stringify({
-          cost_code_id: newCodeData.costCodeId,
-          cost_type_id: newCodeData.costType,
-          description: selectedCostCode.title,
-        }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to create budget code");
-      }
-
-      const { budgetCode: createdCode } = await response.json();
+      );
 
       setBudgetCodes([...budgetCodes, createdCode]);
 

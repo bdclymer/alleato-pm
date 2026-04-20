@@ -13,6 +13,7 @@ import {
   InlineTableCell,
 } from "@/components/ds/inline-table";
 import { cn } from "@/lib/utils";
+import { apiFetch } from "@/lib/api-client";
 import { Info } from "lucide-react";
 
 interface PendingChangeOrder {
@@ -55,12 +56,7 @@ export function PendingBudgetChangesModal({
     setError(null);
     try {
       const url = `/api/projects/${projectId}/budget/change-orders?budgetLineId=${budgetLineId}&status=pending`;
-      const response = await fetch(url);
-      if (!response.ok) {
-        const payload = await response.json().catch(() => ({}));
-        throw new Error(payload.error || "Failed to fetch pending budget changes");
-      }
-      const data = await response.json();
+      const data = await apiFetch<{ changeOrders: PendingChangeOrder[] }>(url);
       setChangeOrders(data.changeOrders || []);
     } catch (error) {
       console.error("Failed to fetch pending budget changes:", error);

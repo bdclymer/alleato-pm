@@ -22,6 +22,7 @@ export interface SubmittalSummary {
   is_private: boolean;
   final_due_date: string | null;
   sent_date: string | null;
+  received_from?: string | null;  // resolved display name (not UUID)
   deleted_at: string | null;
   created_at: string | null;
   updated_at: string | null;
@@ -320,6 +321,209 @@ export function useRespondToWorkflowStep(
     },
     onError: (err: Error) => {
       toast.error("Could not record response", { description: err.message });
+    },
+  });
+}
+
+// ─── Package types & hooks ────────────────────────────────────────────────────
+
+export interface PackageRow {
+  id: string;
+  name: string;
+  description: string | null;
+}
+
+export function usePackages(projectId: number) {
+  return useQuery({
+    queryKey: ["submittals", projectId, "packages"] as const,
+    queryFn: ({ signal }): Promise<PackageRow[]> =>
+      apiFetch<PackageRow[]>(`/api/projects/${projectId}/submittals/packages`, { signal }),
+    enabled: Boolean(projectId),
+  });
+}
+
+export function useCreatePackage(projectId: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { name: string; description?: string | null }): Promise<PackageRow> =>
+      apiFetch<PackageRow>(`/api/projects/${projectId}/submittals/packages`, {
+        method: "POST",
+        body: JSON.stringify(input),
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: submittalKeys.all(projectId) });
+      qc.invalidateQueries({ queryKey: ["submittals", projectId, "packages"] });
+      toast.success("Package created");
+    },
+    onError: (err: Error) => {
+      toast.error("Could not create package", { description: err.message });
+    },
+  });
+}
+
+export function useUpdatePackage(projectId: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      ...input
+    }: {
+      id: string;
+      name?: string;
+      description?: string | null;
+    }): Promise<PackageRow> =>
+      apiFetch<PackageRow>(`/api/projects/${projectId}/submittals/packages/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(input),
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: submittalKeys.all(projectId) });
+      qc.invalidateQueries({ queryKey: ["submittals", projectId, "packages"] });
+      toast.success("Package updated");
+    },
+    onError: (err: Error) => {
+      toast.error("Could not update package", { description: err.message });
+    },
+  });
+}
+
+export function useDeletePackage(projectId: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (packageId: string): Promise<void> =>
+      apiFetch(`/api/projects/${projectId}/submittals/packages/${packageId}`, {
+        method: "DELETE",
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: submittalKeys.all(projectId) });
+      qc.invalidateQueries({ queryKey: ["submittals", projectId, "packages"] });
+      toast.success("Package deleted");
+    },
+    onError: (err: Error) => {
+      toast.error("Could not delete package", { description: err.message });
+    },
+  });
+}
+
+// ─── Workflow template hooks ──────────────────────────────────────────────────
+
+export interface WorkflowTemplateStep {
+  step_type: string;
+  required: boolean;
+  user_id?: string | null;
+}
+
+export interface WorkflowTemplate {
+  id: string;
+  name: string;
+  description: string | null;
+  steps: WorkflowTemplateStep[];
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export function useWorkflowTemplates(projectId: number) {
+  return useQuery({
+    queryKey: ["submittals", projectId, "workflow-templates"] as const,
+    queryFn: ({ signal }): Promise<WorkflowTemplate[]> =>
+      apiFetch<WorkflowTemplate[]>(
+        `/api/projects/${projectId}/submittals/workflow-templates`,
+        { signal },
+      ),
+    enabled: Boolean(projectId),
+  });
+}
+
+export function useCreateWorkflowTemplate(projectId: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: {
+      name: string;
+      description?: string | null;
+      steps: WorkflowTemplateStep[];
+    }): Promise<WorkflowTemplate> =>
+      apiFetch<WorkflowTemplate>(
+        `/api/projects/${projectId}/submittals/workflow-templates`,
+        { method: "POST", body: JSON.stringify(input) },
+      ),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["submittals", projectId, "workflow-templates"] });
+      toast.success("Template saved");
+    },
+    onError: (err: Error) => {
+      toast.error("Could not save template", { description: err.message });
+    },
+  });
+}
+
+export function useUpdateWorkflowTemplate(projectId: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      ...input
+    }: {
+      id: string;
+      name?: string;
+      description?: string | null;
+      steps?: WorkflowTemplateStep[];
+    }): Promise<WorkflowTemplate> =>
+      apiFetch<WorkflowTemplate>(
+        `/api/projects/${projectId}/submittals/workflow-templates/${id}`,
+        { method: "PUT", body: JSON.stringify(input) },
+      ),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["submittals", projectId, "workflow-templates"] });
+      toast.success("Template updated");
+    },
+    onError: (err: Error) => {
+      toast.error("Could not update template", { description: err.message });
+    },
+  });
+}
+
+export function useDeleteWorkflowTemplate(projectId: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (templateId: string): Promise<void> =>
+      apiFetch(
+        `/api/projects/${projectId}/submittals/workflow-templates/${templateId}`,
+        { method: "DELETE" },
+      ),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["submittals", projectId, "workflow-templates"] });
+      toast.success("Template deleted");
+    },
+    onError: (err: Error) => {
+      toast.error("Could not delete template", { description: err.message });
+    },
+  });
+}
+
+// ─── Distribution hooks ───────────────────────────────────────────────────────
+
+export function useDistributeSubmittal(projectId: number, submittalId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: {
+      recipient_ids: string[];
+      message?: string | null;
+    }): Promise<{ id: string }> =>
+      apiFetch<{ id: string }>(
+        `/api/projects/${projectId}/submittals/${submittalId}/distribute`,
+        {
+          method: "POST",
+          body: JSON.stringify(input),
+        },
+      ),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: submittalKeys.detail(projectId, submittalId) });
+      qc.invalidateQueries({ queryKey: submittalKeys.all(projectId) });
+      toast.success("Submittal distributed");
+    },
+    onError: (err: Error) => {
+      toast.error("Could not distribute submittal", { description: err.message });
     },
   });
 }

@@ -17,6 +17,7 @@ import {
   DollarSign,
 } from "lucide-react";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api-client";
 import {
   useMasterCostCodes,
   useCostCodeTypes,
@@ -593,9 +594,8 @@ export function CostCodesTab({ projectId, onSave }: CostCodesTabProps) {
       }
 
       if (budgetLineItems.length > 0) {
-        const res = await fetch(`/api/projects/${projectId}/budget`, {
+        await apiFetch(`/api/projects/${projectId}/budget`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             lineItems: budgetLineItems.map((item) => ({
               costCodeId: item.costCodeId,
@@ -604,11 +604,6 @@ export function CostCodesTab({ projectId, onSave }: CostCodesTabProps) {
             })),
           }),
         });
-
-        if (!res.ok) {
-          const err = await res.json();
-          throw new Error(err.error || "Failed to create budget lines");
-        }
       }
 
       // Update saved state

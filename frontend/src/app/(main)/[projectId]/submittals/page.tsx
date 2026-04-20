@@ -3,7 +3,7 @@
 import * as React from "react";
 import type { ReactElement, ReactNode } from "react";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
-import { ChevronDown, FileText, Plus, RotateCcw } from "lucide-react";
+import { ChevronDown, FileText, MoreVertical, Plus, RotateCcw } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -30,7 +30,16 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useProjectTitle } from "@/hooks/useProjectTitle";
-import { useSubmittals, useDeleteSubmittal, type SubmittalSummary } from "@/hooks/use-submittals";
+import {
+  useSubmittals,
+  useDeleteSubmittal,
+  usePackages,
+  useCreatePackage,
+  useUpdatePackage,
+  useDeletePackage,
+  type SubmittalSummary,
+  type PackageRow,
+} from "@/hooks/use-submittals";
 import {
   buildSubmittalTableColumns,
   submittalColumns,
@@ -280,7 +289,7 @@ function toTableRow(item: SubmittalSummary): SubmittalTableRow {
         : item.submittal_type ?? null,
     status: item.status ?? "Draft",
     responsible_contractor: responsibleContractor,
-    received_from: null, // TODO: resolve from received_from_id when user join is available
+    received_from: item.received_from ?? null,
     ball_in_court: item.ball_in_court ?? null,
     approvers: approverNames,
     latest_response: latestResponse,
@@ -302,12 +311,14 @@ function GroupedSubmittalView({
   onRowClick,
   visibleColumns,
   extraAction,
+  groupAction,
 }: {
   groups: { label: string; items: SubmittalTableRow[] }[];
   columns: TableColumn<SubmittalTableRow>[];
   onRowClick: (item: SubmittalTableRow) => void;
   visibleColumns: string[];
   extraAction?: (item: SubmittalTableRow) => ReactNode;
+  groupAction?: (label: string) => ReactNode;
 }) {
   const visibleCols = columns.filter((col) => visibleColumns.includes(col.id));
 
@@ -331,6 +342,7 @@ function GroupedSubmittalView({
               <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
                 {group.items.length}
               </span>
+              {groupAction && groupAction(group.label)}
             </div>
 
             {/* Simple table */}
@@ -386,6 +398,89 @@ function GroupedSubmittalView({
 }
 
 // ---------------------------------------------------------------------------
+// PackageManageDialog
+// ---------------------------------------------------------------------------
+
+function PackageManageDialog({
+  mode,
+  initialPackage,
+  onClose,
+  onCreate,
+  onUpdate,
+  isPending,
+}: {
+  mode: "create" | "edit";
+  initialPackage: PackageRow | null;
+  onClose: () => void;
+  onCreate: (name: string, description: string | null) => void;
+  onUpdate: (id: string, name: string, description: string | null) => void;
+  isPending: boolean;
+}) {
+  const [name, setName] = React.useState(initialPackage?.name ?? "");
+  const [description, setDescription] = React.useState(initialPackage?.description ?? "");
+
+  // Reset when dialog opens with a new package
+  React.useEffect(() => {
+    setName(initialPackage?.name ?? "");
+    setDescription(initialPackage?.description ?? "");
+  }, [initialPackage]);
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!name.trim()) return;
+    if (mode === "create") {
+      onCreate(name.trim(), description.trim() || null);
+    } else if (initialPackage) {
+      onUpdate(initialPackage.id, name.trim(), description.trim() || null);
+    }
+  }
+
+  return (
+    <Dialog open onOpenChange={(v) => { if (!v) onClose(); }}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>{mode === "create" ? "New Package" : "Edit Package"}</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="mt-2 space-y-3">
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-foreground" htmlFor="pkg-name">
+              Name <span className="text-destructive">*</span>
+            </label>
+            <Input
+              id="pkg-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. Structural Package"
+              autoFocus
+              required
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-foreground" htmlFor="pkg-desc">
+              Description
+            </label>
+            <Input
+              id="pkg-desc"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Optional description"
+            />
+          </div>
+          <div className="flex items-center justify-end gap-2 pt-1">
+            <Button type="button" variant="ghost" size="sm" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button type="submit" size="sm" disabled={!name.trim() || isPending}>
+              {mode === "create" ? "Create" : "Save"}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Main page
 // ---------------------------------------------------------------------------
 
@@ -404,6 +499,12 @@ export default function SubmittalsPage(): ReactElement {
   const [packagePickerOpen, setPackagePickerOpen] = React.useState(false);
   const [specPickerOpen, setSpecPickerOpen] = React.useState(false);
   const deleteSubmittal = useDeleteSubmittal(projectId);
+  const [packageManageOpen, setPackageManageOpen] = React.useState(false);
+  const [editingPackage, setEditingPackage] = React.useState<PackageRow | null>(null);
+  const { data: allPackages = [] } = usePackages(projectId);
+  const createPackageMutation = useCreatePackage(projectId);
+  const updatePackageMutation = useUpdatePackage(projectId);
+  const deletePackageMutation = useDeletePackage(projectId);
 
   const initialFilters: SubmittalFilterState = {
     status: searchParams.get("status") ?? undefined,
@@ -480,18 +581,48 @@ export default function SubmittalsPage(): ReactElement {
     return m;
   }, [submittals]);
 
+  const packageIdByName = React.useMemo(() => {
+    const m = new Map<string, PackageRow>();
+    // Seed from allPackages first so empty packages are included
+    for (const pkg of allPackages) {
+      m.set(pkg.name, pkg);
+    }
+    // Also seed from submittals data (handles packages not yet in allPackages cache)
+    for (const s of submittals) {
+      const pkg = s.submittal_package;
+      if (pkg?.id && pkg?.name && !m.has(pkg.name)) {
+        m.set(pkg.name, {
+          id: pkg.id,
+          name: pkg.name,
+          description: (pkg as { description?: string | null }).description ?? null,
+        });
+      }
+    }
+    return m;
+  }, [submittals, allPackages]);
+
   const packageGroups = React.useMemo(() => {
     if (activeTab !== "packages") return [];
     const map = new Map<string, SubmittalTableRow[]>();
+    // Seed all known packages (including empty ones) so they appear as group headers
+    for (const pkg of allPackages) {
+      map.set(pkg.name, []);
+    }
+    // "No Package" group always exists
+    map.set("No Package", []);
     for (const row of filteredItems) {
       const key = packageNameById.get(row.id) ?? "No Package";
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(row);
     }
     return Array.from(map.entries())
-      .sort(([a], [b]) => a.localeCompare(b))
+      .sort(([a], [b]) => {
+        if (a === "No Package") return 1;
+        if (b === "No Package") return -1;
+        return a.localeCompare(b);
+      })
       .map(([label, items]) => ({ label, items }));
-  }, [activeTab, filteredItems, packageNameById]);
+  }, [activeTab, filteredItems, packageNameById, allPackages]);
 
   const specSectionGroups = React.useMemo(() => {
     if (activeTab !== "spec-sections") return [];
@@ -617,6 +748,43 @@ export default function SubmittalsPage(): ReactElement {
         columns={tableColumns}
         onRowClick={(item) => router.push(`/${projectId}/submittals/${item.id}`)}
         visibleColumns={tableState.visibleColumns}
+        groupAction={
+          activeTab === "packages"
+            ? (label) => {
+                const pkg = packageIdByName.get(label);
+                if (!pkg) return null;
+                return (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-6 w-6 ml-1" onClick={(e) => e.stopPropagation()}>
+                        <MoreVertical className="h-3.5 w-3.5" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start">
+                      <DropdownMenuItem
+                        onClick={() => {
+                          setEditingPackage(pkg);
+                          setPackageManageOpen(true);
+                        }}
+                      >
+                        Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="text-destructive focus:text-destructive"
+                        onClick={() => {
+                          if (window.confirm(`Delete package "${pkg.name}"? Submittals will be unlinked.`)) {
+                            deletePackageMutation.mutate(pkg.id);
+                          }
+                        }}
+                      >
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                );
+              }
+            : undefined
+        }
       />
     );
   }, [
@@ -629,6 +797,8 @@ export default function SubmittalsPage(): ReactElement {
     tableState.visibleColumns,
     router,
     projectId,
+    packageIdByName,
+    deletePackageMutation,
   ]);
 
   // -------------------------------------------------------------------------
@@ -736,31 +906,78 @@ export default function SubmittalsPage(): ReactElement {
           router.push(`/${projectId}/submittals/new?specification_section=${section}`);
         }}
       />
+      {packageManageOpen && (
+        <PackageManageDialog
+          mode={editingPackage ? "edit" : "create"}
+          initialPackage={editingPackage}
+          onClose={() => {
+            setPackageManageOpen(false);
+            setEditingPackage(null);
+          }}
+          onCreate={(name, description) => {
+            createPackageMutation.mutate(
+              { name, description },
+              {
+                onSuccess: () => {
+                  setPackageManageOpen(false);
+                },
+              },
+            );
+          }}
+          onUpdate={(id, name, description) => {
+            updatePackageMutation.mutate(
+              { id, name, description },
+              {
+                onSuccess: () => {
+                  setPackageManageOpen(false);
+                  setEditingPackage(null);
+                },
+              },
+            );
+          }}
+          isPending={createPackageMutation.isPending || updatePackageMutation.isPending}
+        />
+      )}
       <UnifiedTablePage
         header={{
           title: "Submittals",
           description: "Manage submittal items, packages, and review workflows",
           actions: (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button size="sm" data-testid="submittals-dropdown-create">
+            <div className="flex items-center gap-1.5">
+              {activeTab === "packages" && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setEditingPackage(null);
+                    setPackageManageOpen(true);
+                  }}
+                >
                   <Plus className="h-4 w-4" />
-                  Create
-                  <ChevronDown className="ml-1 h-3.5 w-3.5" />
+                  New Package
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => router.push(`/${projectId}/submittals/new`)}>
-                  Create Submittal
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setPackagePickerOpen(true)}>
-                  Create from Package
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setSpecPickerOpen(true)}>
-                  Create from Specifications
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+              )}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size="sm" data-testid="submittals-dropdown-create">
+                    <Plus className="h-4 w-4" />
+                    Create
+                    <ChevronDown className="ml-1 h-3.5 w-3.5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => router.push(`/${projectId}/submittals/new`)}>
+                    Create Submittal
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setPackagePickerOpen(true)}>
+                    Create from Package
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setSpecPickerOpen(true)}>
+                    Create from Specifications
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           ),
         }}
         tabs={tabs}

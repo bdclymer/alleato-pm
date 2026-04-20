@@ -18,6 +18,7 @@ import {
   InlineTableCell,
 } from "@/components/ds/inline-table";
 import { cn } from "@/lib/utils";
+import { apiFetch } from "@/lib/api-client";
 import { FileText } from "lucide-react";
 
 interface ChangeOrder {
@@ -63,12 +64,7 @@ export function ApprovedCOsModal({
     setError(null);
     try {
       const url = `/api/projects/${projectId}/budget/change-orders?budgetLineId=${budgetLineId}&status=approved`;
-      const response = await fetch(url);
-      if (!response.ok) {
-        const payload = await response.json().catch(() => ({}));
-        throw new Error(payload.error || "Failed to fetch approved change orders");
-      }
-      const data = await response.json();
+      const data = await apiFetch<{ changeOrders: ChangeOrder[] }>(url);
       setChangeOrders(data.changeOrders || []);
     } catch (error) {
       console.error("Failed to fetch approved change orders:", error);

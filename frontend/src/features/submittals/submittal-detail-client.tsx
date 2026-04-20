@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Copy, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { Copy, MoreHorizontal, Send, Trash2 } from "lucide-react";
 
 import { PageShell } from "@/components/layout";
 import { AttachmentUploadPanel, StatusBadge, EmptyState } from "@/components/ds";
@@ -29,12 +29,16 @@ import { useAuthUsers, type AuthUser } from "@/hooks/use-auth-users";
 import { createClient } from "@/lib/supabase/client";
 import {
   useAddWorkflowStep,
+  useCreateWorkflowTemplate,
   useDeleteSubmittal,
   useDuplicateSubmittal,
   useRespondToWorkflowStep,
   useUploadSubmittalAttachment,
+  useWorkflowTemplates,
   type SubmittalDetail,
+  type WorkflowTemplateStep,
 } from "@/hooks/use-submittals";
+import { SubmittalDistributeDialog } from "./submittal-distribute-dialog";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -154,13 +158,18 @@ interface WorkflowBuilderProps {
   projectId: number;
   submittalId: string;
   users: AuthUser[];
+  currentSteps: { step_type: string; required?: boolean; responder_id?: string | null }[];
 }
 
-function WorkflowBuilder({ projectId, submittalId, users }: WorkflowBuilderProps) {
+function WorkflowBuilder({ projectId, submittalId, users, currentSteps }: WorkflowBuilderProps) {
   const [userId, setUserId] = React.useState("");
   const [stepType, setStepType] = React.useState<string>("Approver");
   const [required, setRequired] = React.useState(true);
+  const [templateName, setTemplateName] = React.useState("");
+  const [savingTemplate, setSavingTemplate] = React.useState(false);
   const mutation = useAddWorkflowStep(projectId, submittalId);
+  const { data: templates = [] } = useWorkflowTemplates(projectId);
+  const createTemplate = useCreateWorkflowTemplate(projectId);
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
@@ -171,56 +180,147 @@ function WorkflowBuilder({ projectId, submittalId, users }: WorkflowBuilderProps
     setRequired(true);
   }
 
+  async function handleApplyTemplate(templateId: string) {
+    const tpl = templates.find((t) => t.id === templateId);
+    if (!tpl) return;
+    for (const step of tpl.steps) {
+      await mutation.mutateAsync({
+        user_id: step.user_id ?? "",
+        step_type: step.step_type,
+        required: step.required,
+      });
+    }
+  }
+
+  async function handleSaveTemplate(e: React.FormEvent) {
+    e.preventDefault();
+    if (!templateName.trim() || currentSteps.length === 0) return;
+    const steps: WorkflowTemplateStep[] = currentSteps.map((s) => ({
+      step_type: s.step_type,
+      required: s.required ?? true,
+      user_id: null,
+    }));
+    await createTemplate.mutateAsync({ name: templateName.trim(), steps });
+    setTemplateName("");
+    setSavingTemplate(false);
+  }
+
   return (
-    <div className="rounded-lg bg-muted/50 p-5">
-      <SectionLabel>Add Workflow Step</SectionLabel>
-      <form onSubmit={handleAdd} className="space-y-3">
-        <div className="grid gap-3 sm:grid-cols-3">
-          <div className="space-y-1">
-            <Label className="text-xs">User</Label>
-            <Select value={userId} onValueChange={setUserId}>
-              <SelectTrigger className="h-8 text-xs">
-                <SelectValue placeholder="Select user…" />
-              </SelectTrigger>
-              <SelectContent>
-                {users.map((u) => (
-                  <SelectItem key={u.id} value={u.id} className="text-xs">
-                    {resolveUserName(users, u.id)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1">
-            <Label className="text-xs">Step Type</Label>
-            <Select value={stepType} onValueChange={setStepType}>
-              <SelectTrigger className="h-8 text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {STEP_TYPES.map((t) => (
-                  <SelectItem key={t} value={t} className="text-xs">
-                    {t}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex items-end gap-1.5 pb-0.5">
-            <Checkbox
-              id="workflow-required"
-              checked={required}
-              onCheckedChange={(v) => setRequired(Boolean(v))}
-            />
-            <Label htmlFor="workflow-required" className="text-xs cursor-pointer">
-              Required
-            </Label>
-          </div>
+    <div className="space-y-4">
+      {/* Template actions */}
+      {templates.length > 0 && (
+        <div className="rounded-lg bg-muted/50 p-4 space-y-2">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Apply Template</p>
+          <Select onValueChange={handleApplyTemplate}>
+            <SelectTrigger className="h-8 text-xs">
+              <SelectValue placeholder="Select a template to apply…" />
+            </SelectTrigger>
+            <SelectContent>
+              {templates.map((t) => (
+                <SelectItem key={t.id} value={t.id} className="text-xs">
+                  {t.name}
+                  {t.description ? ` — ${t.description}` : ""}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-        <Button type="submit" size="sm" disabled={!userId || mutation.isPending}>
-          Add Step
-        </Button>
-      </form>
+      )}
+
+      {/* Add step form */}
+      <div className="rounded-lg bg-muted/50 p-5">
+        <SectionLabel>Add Workflow Step</SectionLabel>
+        <form onSubmit={handleAdd} className="space-y-3">
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="space-y-1">
+              <Label className="text-xs">User</Label>
+              <Select value={userId} onValueChange={setUserId}>
+                <SelectTrigger className="h-8 text-xs">
+                  <SelectValue placeholder="Select user…" />
+                </SelectTrigger>
+                <SelectContent>
+                  {users.map((u) => (
+                    <SelectItem key={u.id} value={u.id} className="text-xs">
+                      {resolveUserName(users, u.id)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Step Type</Label>
+              <Select value={stepType} onValueChange={setStepType}>
+                <SelectTrigger className="h-8 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {STEP_TYPES.map((t) => (
+                    <SelectItem key={t} value={t} className="text-xs">
+                      {t}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-end gap-1.5 pb-0.5">
+              <Checkbox
+                id="workflow-required"
+                checked={required}
+                onCheckedChange={(v) => setRequired(Boolean(v))}
+              />
+              <Label htmlFor="workflow-required" className="text-xs cursor-pointer">
+                Required
+              </Label>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button type="submit" size="sm" disabled={!userId || mutation.isPending}>
+              Add Step
+            </Button>
+            {currentSteps.length > 0 && !savingTemplate && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setSavingTemplate(true)}
+              >
+                Save as Template
+              </Button>
+            )}
+          </div>
+        </form>
+
+        {/* Save template inline form */}
+        {savingTemplate && (
+          <form onSubmit={handleSaveTemplate} className="mt-4 flex gap-2 items-end">
+            <div className="flex-1 space-y-1">
+              <Label className="text-xs">Template Name</Label>
+              <input
+                className="w-full h-8 rounded-md border border-border bg-background px-3 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                placeholder="e.g. Standard Approval"
+                value={templateName}
+                onChange={(e) => setTemplateName(e.target.value)}
+                autoFocus
+              />
+            </div>
+            <Button
+              type="submit"
+              size="sm"
+              disabled={!templateName.trim() || createTemplate.isPending}
+            >
+              Save
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => { setSavingTemplate(false); setTemplateName(""); }}
+            >
+              Cancel
+            </Button>
+          </form>
+        )}
+      </div>
     </div>
   );
 }
@@ -243,6 +343,7 @@ export function SubmittalDetailClient({ submittal, projectId }: SubmittalDetailC
   const [respondingStep, setRespondingStep] = React.useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = React.useState<string | null>(null);
   const [attachments, setAttachments] = React.useState(submittal.submittal_attachments ?? []);
+  const [distributeOpen, setDistributeOpen] = React.useState(false);
 
   const { users } = useAuthUsers(String(projectId));
 
@@ -280,32 +381,43 @@ export function SubmittalDetailClient({ submittal, projectId }: SubmittalDetailC
   }
 
   const actions = (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8">
-          <MoreHorizontal className="h-4 w-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => router.push(`/${projectId}/submittals/${submittal.id}/edit`)}>
-          <Pencil className="mr-2 h-4 w-4" />
-          Edit
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={handleDuplicate} disabled={duplicateMutation.isPending}>
-          <Copy className="mr-2 h-4 w-4" />
-          Duplicate
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem
-          className="text-destructive focus:text-destructive"
-          onClick={handleDelete}
-          disabled={deleteMutation.isPending}
+    <div className="flex items-center gap-1.5">
+      {submittal.status !== "Closed" && !submittal.deleted_at && (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setDistributeOpen(true)}
         >
-          <Trash2 className="mr-2 h-4 w-4" />
-          Delete
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+          <Send className="mr-1.5 h-3.5 w-3.5" />
+          Distribute
+        </Button>
+      )}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" className="h-8 w-8">
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => router.push(`/${projectId}/submittals/${submittal.id}/edit`)}>
+            Edit
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={handleDuplicate} disabled={duplicateMutation.isPending}>
+            <Copy className="mr-2 h-4 w-4" />
+            Duplicate
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            className="text-destructive focus:text-destructive"
+            onClick={handleDelete}
+            disabled={deleteMutation.isPending}
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
   );
 
   const specSection = submittal.specification_section
@@ -313,6 +425,13 @@ export function SubmittalDetailClient({ submittal, projectId }: SubmittalDetailC
     : null;
 
   return (
+    <>
+    <SubmittalDistributeDialog
+      projectId={projectId}
+      submittalId={submittal.id}
+      open={distributeOpen}
+      onOpenChange={setDistributeOpen}
+    />
     <PageShell
         variant="detail"
         className="pt-6 sm:pt-10"
@@ -573,6 +692,7 @@ export function SubmittalDetailClient({ submittal, projectId }: SubmittalDetailC
               projectId={projectId}
               submittalId={submittal.id}
               users={users}
+              currentSteps={workflowSteps}
             />
           </TabsContent>
 
@@ -636,5 +756,6 @@ export function SubmittalDetailClient({ submittal, projectId }: SubmittalDetailC
           </TabsContent>
         </Tabs>
       </PageShell>
+    </>
   );
 }

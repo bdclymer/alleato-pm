@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { apiFetch } from "@/lib/api-client";
 import { BaseModal, ModalBody, ModalFooter } from "./modals/BaseModal";
 import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
@@ -49,15 +50,9 @@ export function BudgetLineHistoryModal({
       setError(null);
 
       try {
-        const response = await fetch(
+        const data = await apiFetch<{ history: HistoryEntry[] }>(
           `/api/projects/${projectId}/budget/lines/${lineItem.id}/history`,
         );
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch change history");
-        }
-
-        const data = await response.json();
         setHistory(data.history || []);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Could not load change history — please try again");

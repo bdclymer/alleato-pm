@@ -1,7 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import {
   GenericDataTable,
@@ -12,6 +11,8 @@ import {
   DRAWING_TYPES,
   type DrawingLogTableRow,
 } from "@/types/drawings.types";
+import { DrawingQRCode } from "@/components/drawings/DrawingQRCode";
+import { apiFetch, apiFetchBlob } from "@/lib/api-client";
 
 interface DrawingLogTableProps {
   data: DrawingLogTableRow[];
@@ -23,7 +24,8 @@ interface DrawingLogTableProps {
 
 const createDrawingLogConfig = (
   projectId: string,
-  onBulkAction: (action: string, selectedRows: any[]) => Promise<void>
+  onBulkAction: (action: string, selectedRows: DrawingLogTableRow[]) => Promise<void>,
+  onQrCode: (drawingId: string, drawingNumber: string) => void,
 ): GenericTableConfig => ({
   title: "Drawing Log",
   description: "Manage all drawing revisions and their metadata",
@@ -52,6 +54,9 @@ const createDrawingLogConfig = (
     {
       id: "qrCode",
       label: "QR Code",
+      onClick: (row: Record<string, unknown>) => {
+        onQrCode(String(row.id ?? ""), String(row.drawingNumber ?? "Drawing"));
+      },
     },
     {
       id: "delete",
@@ -270,21 +275,21 @@ const createDrawingLogConfig = (
       id: "bulkDownload",
       label: "Download Selected",
       onClick: async (selectedIds) => {
-        await onBulkAction("bulkDownload", selectedIds as any[]);
+        await onBulkAction("bulkDownload", selectedIds as unknown as DrawingLogTableRow[]);
       },
     },
     {
       id: "bulkExport",
       label: "Export Selected",
       onClick: async (selectedIds) => {
-        await onBulkAction("bulkExport", selectedIds as any[]);
+        await onBulkAction("bulkExport", selectedIds as unknown as DrawingLogTableRow[]);
       },
     },
     {
       id: "bulkStatusUpdate",
       label: "Update Status",
       onClick: async (selectedIds) => {
-        await onBulkAction("bulkStatusUpdate", selectedIds as any[]);
+        await onBulkAction("bulkStatusUpdate", selectedIds as unknown as DrawingLogTableRow[]);
       },
     },
   ],
@@ -297,76 +302,30 @@ export function DrawingLogTable({
   onRefresh,
   onDeleteDrawing,
 }: DrawingLogTableProps) {
-  const router = useRouter();
+  const [qrTarget, setQrTarget] = useState<{ drawingId: string; drawingNumber: string } | null>(null);
 
-  const handleRowAction = useCallback(async (action: string, rowData: any) => {
+  const handleBulkAction = useCallback(async (action: string, selectedRows: DrawingLogTableRow[]) => {
     try {
       switch (action) {
-        case "view":
-          router.push(`/${projectId}/drawings/viewer/${rowData.id}`);
+        case "bulkDownload": {
+          const drawingIds = selectedRows.map((r) => r.id).filter(Boolean);
+          if (drawingIds.length === 0) { toast.error("No drawings selected"); break; }
+          toast.info(`Packaging ${drawingIds.length} drawings…`);
+          const blob = await apiFetchBlob(
+            `/api/projects/${projectId}/drawings/bulk-download`,
+            { method: "POST", body: JSON.stringify({ drawingIds }) },
+          );
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `drawings-${new Date().toISOString().split("T")[0]}.zip`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          toast.success(`Downloaded ${drawingIds.length} drawings`);
           break;
-
-        case "download":
-          // Trigger file download
-          if (rowData.fileUrl) {
-            const link = document.createElement('a');
-            link.href = rowData.fileUrl;
-            link.download = rowData.fileName || 'drawing.pdf';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            toast.success("Download started");
-          } else {
-            toast.error("File not available for download");
-          }
-          break;
-
-        case "edit":
-          router.push(`/${projectId}/drawings/${rowData.id}/edit`);
-          break;
-
-        case "newRevision":
-          router.push(`/${projectId}/drawings/${rowData.id}/new-revision`);
-          break;
-
-        case "qrCode":
-          // Show QR code modal (implement QR code generation)
-          toast.info("QR Code generation coming soon");
-          break;
-
-        case "delete":
-          if (onDeleteDrawing) {
-            await onDeleteDrawing(rowData.id);
-            onRefresh?.();
-          }
-          break;
-
-        default:
-          console.warn(`Unhandled action: ${action}`);
-      }
-    } catch (error) {
-      console.error(`Error handling action ${action}:`, error);
-      toast.error(`Failed to ${action} drawing`);
-    }
-  }, [router, projectId, onDeleteDrawing, onRefresh]);
-
-  const handleBulkAction = useCallback(async (action: string, selectedRows: any[]) => {
-    try {
-      switch (action) {
-        case "bulkDownload":
-          // Implement bulk download
-          selectedRows.forEach(row => {
-            if (row.fileUrl) {
-              const link = document.createElement('a');
-              link.href = row.fileUrl;
-              link.download = row.fileName || `drawing-${row.drawingNumber}.pdf`;
-              document.body.appendChild(link);
-              link.click();
-              document.body.removeChild(link);
-            }
-          });
-          toast.success(`Started download of ${selectedRows.length} drawings`);
-          break;
+        }
 
         case "bulkExport":
           // Export selected rows to CSV
@@ -399,10 +358,22 @@ export function DrawingLogTable({
           toast.success(`Exported ${selectedRows.length} drawings to CSV`);
           break;
 
-        case "bulkStatusUpdate":
-          // Implement bulk status update
-          toast.info("Bulk status update coming soon");
+        case "bulkStatusUpdate": {
+          const drawingIds = selectedRows.map((r) => r.id).filter(Boolean);
+          if (drawingIds.length === 0) { toast.error("No drawings selected"); break; }
+          // Default action: publish all selected
+          const result = await apiFetch<{ succeeded: number; failed: number }>(
+            `/api/projects/${projectId}/drawings/bulk-status`,
+            { method: "PATCH", body: JSON.stringify({ drawingIds, action: "publish" }) },
+          );
+          if (result.failed > 0) {
+            toast.warning(`${result.succeeded} updated, ${result.failed} failed`);
+          } else {
+            toast.success(`Updated ${result.succeeded} drawings`);
+          }
+          onRefresh?.();
           break;
+        }
 
         default:
           console.warn(`Unhandled bulk action: ${action}`);
@@ -411,7 +382,7 @@ export function DrawingLogTable({
       console.error(`Error handling bulk action ${action}:`, error);
       toast.error(`Failed to ${action} selected drawings`);
     }
-  }, []);
+  }, [projectId, onRefresh]);
 
   if (isLoading) {
     return (
@@ -422,13 +393,24 @@ export function DrawingLogTable({
   }
 
   return (
-    <GenericDataTable
-      data={data as unknown as Record<string, unknown>[]}
-      config={createDrawingLogConfig(projectId, handleBulkAction)}
-      onDeleteRow={onDeleteDrawing ? async (id) => {
-        await onDeleteDrawing(String(id));
-        return {};
-      } : undefined}
-    />
+    <>
+      <GenericDataTable
+        data={data as unknown as Record<string, unknown>[]}
+        config={createDrawingLogConfig(projectId, handleBulkAction, (drawingId, drawingNumber) => setQrTarget({ drawingId, drawingNumber }))}
+        onDeleteRow={onDeleteDrawing ? async (id) => {
+          await onDeleteDrawing(String(id));
+          return {};
+        } : undefined}
+      />
+      {qrTarget && (
+        <DrawingQRCode
+          projectId={projectId}
+          drawingId={qrTarget.drawingId}
+          drawingNumber={qrTarget.drawingNumber}
+          isOpen={true}
+          onClose={() => setQrTarget(null)}
+        />
+      )}
+    </>
   );
 }

@@ -4109,11 +4109,13 @@ export type Database = {
         Row: {
           amount: number
           budget_modification_id: string
+          change_event_id: string | null
           cost_code_id: string
           cost_type_id: string
           created_at: string
           description: string | null
           id: string
+          modification_type: string | null
           project_id: number
           sub_job_id: string | null
           updated_at: string
@@ -4121,11 +4123,13 @@ export type Database = {
         Insert: {
           amount?: number
           budget_modification_id: string
+          change_event_id?: string | null
           cost_code_id: string
           cost_type_id: string
           created_at?: string
           description?: string | null
           id?: string
+          modification_type?: string | null
           project_id: number
           sub_job_id?: string | null
           updated_at?: string
@@ -4133,11 +4137,13 @@ export type Database = {
         Update: {
           amount?: number
           budget_modification_id?: string
+          change_event_id?: string | null
           cost_code_id?: string
           cost_type_id?: string
           created_at?: string
           description?: string | null
           id?: string
+          modification_type?: string | null
           project_id?: number
           sub_job_id?: string | null
           updated_at?: string
@@ -4148,6 +4154,20 @@ export type Database = {
             columns: ["budget_modification_id"]
             isOneToOne: false
             referencedRelation: "budget_modifications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_mod_lines_change_event_id_fkey"
+            columns: ["change_event_id"]
+            isOneToOne: false
+            referencedRelation: "change_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_mod_lines_change_event_id_fkey"
+            columns: ["change_event_id"]
+            isOneToOne: false
+            referencedRelation: "change_events_summary"
             referencedColumns: ["id"]
           },
           {
@@ -4238,6 +4258,7 @@ export type Database = {
           id: string
           notes: string | null
           updated_at: string
+          voided_reason: string | null
         }
         Insert: {
           amount: number
@@ -4247,6 +4268,7 @@ export type Database = {
           id?: string
           notes?: string | null
           updated_at?: string
+          voided_reason?: string | null
         }
         Update: {
           amount?: number
@@ -4256,6 +4278,7 @@ export type Database = {
           id?: string
           notes?: string | null
           updated_at?: string
+          voided_reason?: string | null
         }
         Relationships: [
           {
@@ -9332,6 +9355,106 @@ export type Database = {
           },
           {
             foreignKeyName: "drawing_areas_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      drawing_change_history: {
+        Row: {
+          change_type: string
+          changed_at: string
+          changed_by: string
+          drawing_id: string
+          field_name: string
+          id: string
+          new_value: string | null
+          old_value: string | null
+          project_id: number
+        }
+        Insert: {
+          change_type: string
+          changed_at?: string
+          changed_by: string
+          drawing_id: string
+          field_name: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          project_id: number
+        }
+        Update: {
+          change_type?: string
+          changed_at?: string
+          changed_by?: string
+          drawing_id?: string
+          field_name?: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          project_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drawing_change_history_drawing_id_fkey"
+            columns: ["drawing_id"]
+            isOneToOne: false
+            referencedRelation: "drawing_log"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawing_change_history_drawing_id_fkey"
+            columns: ["drawing_id"]
+            isOneToOne: false
+            referencedRelation: "drawings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawing_change_history_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "drawing_change_history_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawing_change_history_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawing_change_history_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "drawing_change_history_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawing_change_history_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawing_change_history_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
@@ -22393,6 +22516,89 @@ export type Database = {
             columns: ["submittal_id"]
             isOneToOne: false
             referencedRelation: "submittals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      submittal_workflow_templates: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          name: string
+          project_id: number
+          steps: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          project_id: number
+          steps?: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          project_id?: number
+          steps?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "submittal_workflow_templates_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "submittal_workflow_templates_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submittal_workflow_templates_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submittal_workflow_templates_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "submittal_workflow_templates_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submittal_workflow_templates_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "submittal_workflow_templates_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
         ]

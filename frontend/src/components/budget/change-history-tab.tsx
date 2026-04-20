@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { FileText, Filter, Download, Clock, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api-client";
 
 interface ChangeHistoryTabProps {
   projectId: string;
@@ -50,13 +51,7 @@ export function ChangeHistoryTab({ projectId }: ChangeHistoryTabProps) {
   const fetchHistory = React.useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/projects/${projectId}/budget/history`);
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch change history");
-      }
-
-      const data = await response.json();
+      const data = await apiFetch<typeof historyData>(`/api/projects/${projectId}/budget/history`);
       setHistoryData(data);
     } catch (error) {
       toast.error("Failed to load change history");

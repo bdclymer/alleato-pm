@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Budget PRP — Alleato</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; line-height: 1.6; color: #1a1a2e; background: #f8f9fa; }
+  .container { max-width: 960px; margin: 0 auto; padding: 2rem; }
+  header { background: #1a1a2e; color: white; padding: 2rem; margin-bottom: 2rem; border-radius: 8px; }
+  header h1 { font-size: 1.8rem; margin-bottom: 0.5rem; }
+  header p { opacity: 0.8; font-size: 0.95rem; }
+  .badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 4px; font-size: 0.8rem; font-weight: 600; margin-right: 0.5rem; }
+  .badge-blue { background: #dbeafe; color: #1d4ed8; }
+  .badge-green { background: #dcfce7; color: #15803d; }
+  h1 { font-size: 1.8rem; margin: 2rem 0 1rem; color: #1a1a2e; }
+  h2 { font-size: 1.4rem; margin: 2rem 0 1rem; color: #1a1a2e; padding-bottom: 0.5rem; border-bottom: 2px solid #e2e8f0; }
+  h3 { font-size: 1.1rem; margin: 1.5rem 0 0.75rem; color: #374151; }
+  h4 { font-size: 1rem; margin: 1rem 0 0.5rem; color: #4b5563; }
+  p { margin: 0.75rem 0; }
+  ul, ol { padding-left: 1.5rem; margin: 0.75rem 0; }
+  li { margin: 0.3rem 0; }
+  li.todo { list-style: none; margin-left: -1.5rem; padding-left: 1.5rem; }
+  li.done { list-style: none; margin-left: -1.5rem; padding-left: 1.5rem; opacity: 0.6; text-decoration: line-through; }
+  code { background: #f1f5f9; padding: 0.15rem 0.4rem; border-radius: 3px; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.85rem; color: #dc2626; }
+  pre { background: #0f172a; border-radius: 8px; padding: 1.25rem; overflow-x: auto; margin: 1rem 0; }
+  pre code { background: none; color: #e2e8f0; font-size: 0.85rem; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9rem; }
+  th { background: #f1f5f9; font-weight: 600; text-align: left; }
+  th, td { padding: 0.6rem 0.8rem; border: 1px solid #e2e8f0; }
+  tr:nth-child(even) { background: #f8fafc; }
+  strong { font-weight: 600; }
+  hr { border: none; border-top: 1px solid #e2e8f0; margin: 2rem 0; }
+  .section { background: white; border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  .toc { background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px; padding: 1.25rem; margin-bottom: 2rem; }
+  .toc h3 { color: #0369a1; margin-top: 0; }
+  .toc a { color: #0369a1; text-decoration: none; display: block; padding: 0.2rem 0; }
+  .toc a:hover { text-decoration: underline; }
+  .confidence { background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 1rem; }
+  .confidence .score { font-size: 2rem; font-weight: 700; color: #15803d; }
+  .confidence p { margin: 0; color: #166534; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>Budget Feature — PRP</h1>
+    <p>
+      <span class="badge badge-blue">80% → 100%</span>
+      <span class="badge badge-green">2026-04-18</span>
+      Alleato Construction PM Platform
+    </p>
+  </header>
+  
+  <div class="confidence">
+    <div class="score">9/10</div>
+    <p>Confidence Score — All existing patterns verified from codebase, DB schemas confirmed from generated types, all gap items have clear implementation paths.</p>
+  </div>
+
+  <div class="toc">
+    <h3>Table of Contents</h3>
+    <a href="#goal">Goal</a>
+    <a href="#deliverables">Deliverables</a>
+    <a href="#database-schema">Database Schema</a>
+    <a href="#context">All Needed Context</a>
+    <a href="#implementation">Implementation Blueprint</a>
+    <a href="#pitfalls">Known Pitfalls & Prevention</a>
+    <a href="#validation">Validation Loop</a>
+    <a href="#checklist">Final Validation Checklist</a>
+  </div>
+
+  <div class="section" id="goal">
+    <p><h1>Budget Feature — PRP</h1></p><p><strong>Status:</strong> 80% complete → targeting 100% Procore parity  
+<strong>Generated:</strong> 2026-04-18  
+<strong>Confidence Score:</strong> 9/10</p><p><hr></p><p><h2>Goal</h2></p><p><strong>Feature Goal:</strong> Close all remaining gaps between Alleato's budget implementation and Procore's specification. The budget module is 80% complete — all 15 core columns, the modification workflow, lock/unlock, and basic forecasting are implemented. This PRP targets the remaining 20%: Export/Import (HIGH), Budget Details tab (MEDIUM), Financial Views UI (MEDIUM), missing DB columns for modifications, sub-job UI, and several low-impact polish items.</p><p><strong>Deliverable:</strong> A fully functional budget module with Export (Excel/CSV), Import from Excel, Budget Details tab, Financial Views selector, modification_type + change_event linkage, sub-job line item picker, snapshot arbitrary comparison, voided_reason on void workflow, red-text row warnings, S-curve visualization, and removal of display limits on forecasting/snapshot tabs.</p><p><strong>Success Definition:</strong>
+<li>Export downloads real budget data as <code>.xlsx</code> with two sheets (line items + grand totals) and <code>.csv</code></li>
+<li>Import parses a CSV/XLSX template and creates budget line items in bulk</li>
+<li>Budget Details tab renders at <code>?tab=details</code> showing project-level budget metadata and sub-job breakdown</li>
+<li>Financial Views modal allows saving/loading named column configurations</li>
+<li>Budget modification form has <code>modification_type</code> (addition/deduction) and <code>change_event_id</code> fields</li>
+<li>Void workflow prompts for <code>voided_reason</code> before saving</li>
+<li>Over-budget rows highlight in red when <code>projectedCosts &gt; revisedBudget</code></li>
+<li>Forecasting tab paginates (not capped at 10 cost codes)</li>
+<li>Snapshots tab paginates (not capped at 5 snapshots)</li></p><p><hr></p><p><h2>Why</h2></p><p>The budget module is the most-used financial tool in Alleato — PMs check it daily for cost tracking. The current export stubs ("coming soon" toasts) block owner reporting and GC billing package workflows, which are the highest-frequency external deliverables for project managers. Import blocks initial project setup from existing spreadsheets. The Financial Views selector is in the DB but has no UI — it was promised as a column customization feature.</p><p><hr></p><p><h2>What — List of Deliverables</h2></p><p><strong>Pages / Tabs</strong>
+<li>Budget Details tab at <code>?tab=budget-details</code> (NEW)</li>
+<li>All existing tabs retain current behavior</li></p><p><strong>Database Migrations (REQUIRED before code changes)</strong>
+<li><code>ALTER TABLE budget_mod_lines ADD COLUMN modification_type TEXT CHECK (modification_type IN ('addition','deduction'))</code></li>
+<li><code>ALTER TABLE budget_mod_lines ADD COLUMN change_event_id UUID REFERENCES change_events(id)</code></li>
+<li><code>ALTER TABLE budget_modification_lines ADD COLUMN voided_reason TEXT</code></li>
+<li><code>ALTER TABLE budget_lines ADD COLUMN vendor_id UUID REFERENCES companies(id)</code> (LOW)</li>
+<li><code>ALTER TABLE budget_lines ADD COLUMN wbs_attributes JSONB</code> (LOW)</li></p><p><strong>API Endpoints</strong>
+<li><code>GET /api/projects/[projectId]/budget/export</code> — full implementation (replace stub)</li>
+<li><code>POST /api/projects/[projectId]/budget/import</code> — full implementation (replace stub)</li>
+<li><code>GET /api/projects/[projectId]/budget/details</code> — full implementation</li>
+<li><code>GET/POST /api/projects/[projectId]/budget/views</code> — verify fully working</li>
+<li><code>PATCH /api/projects/[projectId]/budget/views/[viewId]</code> — verify column update works</li></p><p><strong>Components</strong>
+<li><code>ExportBudgetDropdown</code> — real export logic with <code>xlsx</code> library</li>
+<li><code>ImportBudgetModal</code> — file upload, parse, preview, bulk create</li>
+<li><code>BudgetDetailsTab</code> — new tab component</li>
+<li><code>BudgetViewsModal</code> — confirm working, add column reorder</li>
+<li><code>BudgetModificationModal</code> — add <code>modification_type</code> field, <code>change_event_id</code> field</li>
+<li>Red-text row highlighting in <code>budget-table.tsx</code></li>
+<li><code>SnapshotComparisonSelector</code> — arbitrary snapshot selection (not just sequential)</li>
+<li>Pagination for forecasting tab cost codes</li>
+<li>Pagination for snapshots tab</li></p><p><strong>Frontend Form Fields</strong>
+<li>Budget modification form: <code>modification_type</code> (radio: Addition / Deduction)</li>
+<li>Budget modification form: <code>change_event_id</code> (combobox, optional)</li>
+<li>Void confirmation dialog: <code>voided_reason</code> (textarea, required when voiding)</li></p><p><h3>Success Criteria</h3></p><p><li class="todo"><input type="checkbox" disabled> Export to <code>.xlsx</code> downloads real data (not empty/stub) with cost code, all 15 columns</li>
+<li class="todo"><input type="checkbox" disabled> Export to <code>.csv</code> downloads plain comma-separated line items</li>
+<li class="todo"><input type="checkbox" disabled> Import: upload <code>.xlsx</code> or <code>.csv</code> → preview modal → confirm → lines created</li>
+<li class="todo"><input type="checkbox" disabled> Import rejects files with missing required columns (budget_code, amount)</li>
+<li class="todo"><input type="checkbox" disabled> Budget Details tab renders without errors at <code>?tab=budget-details</code></li>
+<li class="todo"><input type="checkbox" disabled> Financial Views modal: create/save/load a custom view persists to DB and filters columns</li>
+<li class="todo"><input type="checkbox" disabled> Budget modification form shows <code>modification_type</code> field (required) and <code>change_event_id</code> (optional)</li>
+<li class="todo"><input type="checkbox" disabled> Void workflow requires <code>voided_reason</code> text before saving void status</li>
+<li class="todo"><input type="checkbox" disabled> Rows where <code>projectedCosts &gt; revisedBudget</code> display in red text</li>
+<li class="todo"><input type="checkbox" disabled> Forecasting tab shows all cost codes (paginated or scrolled, not capped at 10)</li>
+<li class="todo"><input type="checkbox" disabled> Snapshots tab shows all snapshots (not capped at 5)</li>
+<li class="todo"><input type="checkbox" disabled> Snapshot comparison allows selecting any two snapshots (not just sequential)</li>
+<li class="todo"><input type="checkbox" disabled> All TypeScript strict mode passes: <code>npx tsc --noEmit</code></li>
+<li class="todo"><input type="checkbox" disabled> No ESLint errors: <code>npm run lint</code></li></p><p><hr></p><p><h2>All Needed Context</h2></p><p><h3>Context Completeness Check</h3></p><p><em>This PRP was written after reading every budget API route, component, hook, and DB schema. An agent reading only this PRP should have complete context for all gap implementations.</em></p><p><h3>Documentation &amp; References</h3></p><p><pre><code class="language-yaml">{# MUST READ BEFORE ANY IMPLEMENTATION</p><p><li>file: frontend/src/app/(main)/[projectId]/budget/page.tsx</li>
+  why: Main budget page — 1293 lines, client component. Tab navigation uses URL query params (?tab=). Understand state before modifying tabs.
+  pattern: fetchBudgetData() pattern, tab switching via searchParams, lock state management
+  gotcha: Uses raw useState/useCallback/useEffect — NOT React Query. Data fetching via apiFetch.</p><p><li>file: frontend/src/lib/budget/compute-grand-totals.ts</li>
+  why: Core orchestrator for all budget calculations — fires 10+ parallel Supabase queries. DO NOT bypass this for new features.
+  pattern: How to add new data sources to the budget rollup
+  gotcha: Falls back from v_budget_lines to budget_lines — must handle both view schemas.</p><p><li>file: frontend/src/app/api/projects/[projectId]/budget/route.ts</li>
+  why: GET/POST pattern for budget routes. Shows withApiGuardrails, requirePermission, BudgetFetchError handling.
+  pattern: withApiGuardrails("route-name", handler) wraps ALL routes — follow exactly.
+  gotcha: projectId from params must be parsed to integer via parseInt(projectId, 10).</p><p><li>file: frontend/src/app/api/projects/[projectId]/budget/export/route.ts</li>
+  why: Current export stub — replace this with real xlsx generation using the xlsx library.
+  pattern: GET handler that returns binary file response with Content-Disposition header.</p><p><li>file: frontend/src/app/api/projects/[projectId]/budget/import/route.ts</li>
+  why: Current import stub — replace with multipart form data parsing + bulk insert.
+  pattern: POST handler that accepts multipart/form-data with a file field.</p><p><li>file: frontend/src/lib/schemas/budget.ts</li>
+  why: Zod schemas for all budget payloads — extend these when adding new fields.
+  pattern: BudgetLineItemsPayloadSchema, BudgetModificationPayloadSchema, BudgetModificationActionSchema</p><p><li>file: frontend/src/types/budget.ts</li>
+  why: Frontend TypeScript interfaces for BudgetLineItem, BudgetGrandTotals, BudgetView, BudgetSnapshot.
+  pattern: When adding new fields to modifications (modification_type, change_event_id), add them here first.</p><p><li>file: frontend/src/hooks/use-budget-data.ts</li>
+  why: Primary hook for budget data — uses apiFetch, NOT React Query.
+  pattern: useState + useCallback + useEffect pattern used throughout budget feature.
+  gotcha: "use client" directive required at hook file top.</p><p><li>file: frontend/src/components/budget/budget-modification-modal.tsx</li>
+  why: Current modification form — add modification_type and change_event_id fields here.
+  pattern: Modal form pattern using React Hook Form or controlled state.</p><p><li>file: frontend/src/components/budget/BudgetViewsModal.tsx</li>
+  why: Financial Views modal — verify column save/load works end-to-end.
+  pattern: Dual-list or checkbox approach for 19 configurable columns.</p><p><li>file: frontend/src/components/budget/snapshots-tab.tsx</li>
+  why: Snapshots tab — remove max-5 cap and add arbitrary comparison selector.
+  pattern: How snapshots are fetched and displayed.</p><p><li>file: frontend/src/components/budget/forecasting-tab.tsx</li>
+  why: Forecasting tab — remove max-10 cost code cap; add pagination.
+  pattern: How forecast data is structured.</p><p><li>file: frontend/src/components/budget/budget-table.tsx</li>
+  why: Main TanStack table — add red-text row highlighting when projectedCosts &gt; revisedBudget.
+  pattern: TanStack Table getCoreRowModel + getExpandedRowModel. Row className logic.
+  gotcha: Selection only enabled for leaf nodes (rows without children).</p><p><li>file: frontend/src/lib/budget-filters.ts</li>
+  why: Quick filter logic (over-budget / under-budget / no-activity / all).
+  pattern: applyQuickFilter() — relevant for red-text threshold logic.</p><p><li>url: https://www.npmjs.com/package/xlsx</li>
+  why: xlsx library already installed for export. Use SheetJS/xlsx to build workbooks.
+  critical: Use XLSX.utils.json_to_sheet() for line items, XLSX.write() for binary, return as Buffer.</p><p><li>file: frontend/src/app/api/projects/[projectId]/budget/modifications/route.ts</li>
+  why: POST modification creation — must add modification_type + change_event_id to insert.
+  pattern: PATCH handler for status transitions (draft→pending→approved→void). Calls refresh_budget_rollup RPC on approve.
+  gotcha: Status values MUST be lowercase: 'draft', 'pending', 'approved', 'void'.</p><p><li>file: supabase/migrations/</li>
+  why: Reference migration patterns for ADD COLUMN. Always use IF NOT EXISTS guards.
+  pattern: Migration filename format: YYYYMMDD_HHMMSS_description.sql</p><p><li>file: frontend/src/lib/guardrails/api.ts</li>
+  why: withApiGuardrails() wrapper — all new routes MUST use this.
+  pattern: Handles request-id propagation, error serialization, structured logging.</p><p><li>file: frontend/src/lib/permissions-guard.ts</li>
+  why: requirePermission() pattern for all budget routes.
+  pattern: requirePermission(projectIdNum, "budget", "read"|"write"|"admin")
+}</code></pre></p><p><h3>Current Codebase Tree (Budget Feature)</h3></p><p><pre><code class="language-">{frontend/src/
+├── app/
+│   ├── (main)/[projectId]/budget/
+│   │   ├── page.tsx                        # Main 1293-line client component
+│   │   ├── error.tsx                       # Next.js error boundary
+│   │   ├── setup/
+│   │   │   ├── page.tsx                    # Budget setup page
+│   │   │   └── components/
+│   │   │       ├── BudgetLineItemRow.tsx
+│   │   │       ├── BudgetCodeSelector.tsx
+│   │   │       ├── CreateBudgetCodeModal.tsx
+│   │   │       └── DivisionTree.tsx
+│   │   └── line-item/new/page.tsx
+│   └── api/projects/[projectId]/
+│       ├── budget/
+│       │   ├── route.ts                    # GET/POST main budget data
+│       │   ├── lines/[lineId]/
+│       │   │   ├── route.ts                # GET/PATCH/DELETE individual line
+│       │   │   └── history/route.ts        # GET line audit trail
+│       │   ├── modifications/route.ts      # GET/POST/PATCH/DELETE modifications
+│       │   ├── lock/route.ts              # POST/DELETE lock/unlock
+│       │   ├── snapshots/route.ts         # GET/POST snapshots
+│       │   ├── forecast/route.ts          # GET/POST forecast data
+│       │   ├── settings/route.ts          # GET/PUT per-project settings
+│       │   ├── views/
+│       │   │   ├── route.ts               # GET/POST views
+│       │   │   ├── [viewId]/route.ts      # GET/PATCH/DELETE specific view
+│       │   │   └── [viewId]/clone/route.ts
+│       │   ├── export/route.ts            # GET — STUB (needs real impl)
+│       │   ├── import/route.ts            # POST — STUB (needs real impl)
+│       │   ├── history/route.ts           # GET change history
+│       │   ├── details/route.ts           # GET budget details
+│       │   ├── direct-costs/route.ts
+│       │   ├── commitments/route.ts
+│       │   ├── change-orders/route.ts
+│       │   └── pending-cost-changes/route.ts
+│       ├── budget-codes/route.ts
+│       └── budget-changes/route.ts
+├── components/budget/
+│   ├── index.ts
+│   ├── budget-table.tsx                   # TanStack Table, 16 columns
+│   ├── budget-page-header.tsx
+│   ├── budget-tabs.tsx                    # Tab bar component
+│   ├── budget-filters.tsx
+│   ├── budget-modification-modal.tsx      # Add modification_type, change_event_id
+│   ├── budget-modification-modal-animated.tsx
+│   ├── budget-line-item-modal-animated.tsx
+│   ├── original-budget-edit-modal.tsx
+│   ├── budget-settings-panel.tsx
+│   ├── cost-codes-tab.tsx
+│   ├── forecasting-tab.tsx                # Remove max-10 cap
+│   ├── snapshots-tab.tsx                  # Remove max-5 cap, add comparison selector
+│   ├── change-history-tab.tsx
+│   ├── BudgetViewsModal.tsx               # Financial Views UI
+│   ├── BudgetViewsManager.tsx
+│   ├── ImportBudgetModal.tsx              # STUB — needs real impl
+│   ├── BudgetLineItemCreatorModal.tsx
+│   └── modals/
+│       ├── BaseModal.tsx
+│       ├── BaseSidebar.tsx
+│       └── [10 column-detail modals]
+├── hooks/
+│   └── use-budget-data.ts                 # useState/useCallback/useEffect pattern
+├── lib/
+│   ├── budget/
+│   │   ├── compute-grand-totals.ts        # Core data orchestrator
+│   │   ├── update-budget-line-item.ts
+│   │   └── snapshot-totals.ts
+│   ├── budget-filters.ts
+│   ├── budget-grouping.ts
+│   └── schemas/budget.ts                  # Zod schemas
+└── types/budget.ts                        # TypeScript interfaces
+}</code></pre></p><p><h3>Desired Codebase Tree (Changes Only)</h3></p><p><pre><code class="language-">{NEW/MODIFIED FILES:
+├── supabase/migrations/
+│   ├── 20260418_000000_budget_mod_lines_modification_type.sql    # ADD modification_type
+│   ├── 20260418_000001_budget_mod_lines_change_event_id.sql      # ADD change_event_id FK
+│   ├── 20260418_000002_budget_modification_lines_voided_reason.sql # ADD voided_reason
+│   └── 20260418_000003_budget_lines_vendor_wbs.sql               # ADD vendor_id, wbs_attributes (LOW)
+├── frontend/src/
+│   ├── app/api/projects/[projectId]/budget/
+│   │   ├── export/route.ts                # REWRITE (real xlsx/csv generation)
+│   │   └── import/route.ts               # REWRITE (multipart parse + bulk insert)
+│   ├── components/budget/
+│   │   ├── budget-details-tab.tsx         # NEW — Budget Details tab
+│   │   ├── budget-modification-modal.tsx  # MODIFY — add modification_type, change_event_id
+│   │   ├── budget-table.tsx              # MODIFY — add red-text row highlighting
+│   │   ├── forecasting-tab.tsx           # MODIFY — remove 10-item cap, add pagination
+│   │   ├── snapshots-tab.tsx             # MODIFY — remove 5-item cap, add comparison selector
+│   │   └── ImportBudgetModal.tsx         # REWRITE (real parse + preview)
+│   └── lib/schemas/budget.ts             # MODIFY — add modification_type, change_event_id fields
+}</code></pre></p><p><h3>Known Gotchas of our Codebase &amp; Library Quirks</h3></p><p><pre><code class="language-typescript">{// CRITICAL: ALL budget API routes MUST use withApiGuardrails — never raw NextResponse
+import { withApiGuardrails } from "@/lib/guardrails/api";
+export const GET = withApiGuardrails&lt;{ projectId: string }&gt;("route-name#GET", handler);</p><p>// CRITICAL: projectId is ALWAYS a string in params, ALWAYS parse to integer
+const projectIdNum = parseInt(projectId, 10);
+if (Number.isNaN(projectIdNum)) return NextResponse.json({ error: "Invalid project ID" }, { status: 400 });</p><p>// CRITICAL: budget_modifications.status values MUST be lowercase
+// WRONG: 'Draft', 'Pending', 'Approved', 'Void'
+// RIGHT: 'draft', 'pending', 'approved', 'void'
+// Source: CHECK constraint in migration. Runtime INSERT will fail silently on wrong case.</p><p>// CRITICAL: ALL client-side API calls MUST use apiFetch, not raw fetch
+import { apiFetch } from "@/lib/api-client";
+// NEVER: const data = await fetch('/api/projects/.../budget/...');</p><p>// CRITICAL: FK type for budget tables
+// budget_lines.id = UUID (string) — any FK pointing to it must be UUID
+// projects.id = INTEGER (number) — project_id FK must be number
+// budget_modifications.id = UUID (string)</p><p>// CRITICAL: RLS on every new budget table
+// Pattern: check project_directory_memberships, NOT just auth.uid() IS NOT NULL
+// Reference: budget_lines policies as the gold standard</p><p>// CRITICAL: Run db:types after every migration
+// cd frontend &amp;&amp; npm run db:types
+// Then grep for new columns to confirm they're in the generated types</p><p>// CRITICAL: Clear .next cache after creating new route files
+// cd frontend &amp;&amp; rm -rf .next</p><p>// CRITICAL: Calling refresh_budget_rollup after budget modifications
+// On approval (status → 'approved') or on creation of modifications:
+await supabase.rpc("refresh_budget_rollup", { p_project_id: projectIdNum });</p><p>// CRITICAL: xlsx export pattern
+import <em> as XLSX from "xlsx";
+const ws = XLSX.utils.json_to_sheet(rows);
+const wb = XLSX.utils.book_new();
+XLSX.utils.book_append_sheet(wb, ws, "Budget");
+const buf = XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
+return new NextResponse(buf, {
+  headers: {
+    "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "Content-Disposition": <code>attachment; filename="budget-${projectId}.xlsx"</code>,
+  },
+});</p><p>// CRITICAL: Budget table row styling — use getTanStack row.original to access data
+// In budget-table.tsx, add className logic to &lt;tr&gt;:
+const isOverBudget = row.original.projectedCosts &gt; row.original.revisedBudget;
+// Apply: className={isOverBudget ? "text-destructive" : ""}</p><p>// CRITICAL: Status transitions for budget modifications
+// draft → pending (submit action)
+// pending → approved (approve action) → calls refresh_budget_rollup
+// pending → draft (reject action)
+// approved/pending → void (void action, requires voided_reason)
+// approved lines CANNOT be edited, only voided</p><p>// GOTCHA: Budget line DELETE is blocked at API level when:
+// - original_amount &gt; 0 (non-zero budget)
+// - budget is locked (projects.budget_locked = true)
+// - budget modifications reference that line
+// These are BUSINESS RULES, not DB constraints — enforce at route handler level.</p><p>// GOTCHA: BudgetCodeSelector in forms uses project_cost_codes table for options
+// but budget_lines.cost_code_id FK points to cost_codes table.
+// The EXISTING implementation resolves this via cost_code_id + cost_type_id matching.
+// Do NOT change this resolution logic.</p><p>// GOTCHA: Export route must call computeBudgetGrandTotals() to get the full data
+// — do NOT re-implement the calculation. The view data is authoritative.</p><p>// GOTCHA: Import must validate:
+// - Required columns: at minimum 'cost_code' (or 'budget_code') and 'amount'
+// - amount must be numeric
+// - cost_code must match existing project cost codes
+// - Return a preview object before insert (not auto-insert)</p><p>// GOTCHA: Snapshot comparison selector — current implementation is sequential
+// (each snapshot vs. prior snapshot). New selector allows user to pick any two.
+// Store selectedSnapshotA and selectedSnapshotB in URL query params for shareability.</p><p>// GOTCHA: Financial Views — budget_views.is_system = true rows are READ-ONLY
+// Users cannot modify or delete system views. Enforce at API: PATCH/DELETE must
+// return 403 if is_system = true (error code: BUDGET_SYSTEM_VIEW_READONLY).
+}</code></pre></p><p><hr></p><p><h2>Database Schema</h2></p><p><h3>Verified from <code>database.types.ts</code> (2026-04-18)</h3></p><p><h4><code>budget_lines</code> (confirmed columns)</h4>
+<pre><code class="language-typescript">{{
+  id: string                     // UUID, PK
+  cost_code_id: string           // FK → cost_codes.id (string/text)
+  cost_type_id: string           // FK → cost_code_types.id (string/UUID)
+  project_id: number             // FK → projects.id (INTEGER — critical!)
+  project_budget_code_id: string | null  // FK → project_project_budget_codes.id
+  sub_job_id: string | null      // FK → sub_jobs.id — DB exists, NO UI yet
+  sub_job_key: string | null
+  original_amount: number        // DECIMAL(15,2)
+  quantity: number | null
+  unit_cost: number | null
+  unit_of_measure: string | null
+  description: string | null
+  forecasting_enabled: boolean
+  default_ftc_method: string | null   // enum: manual|automatic|lump_sum|monitored_resources
+  default_curve_id: string | null     // FK → forecasting_curves.id
+  created_by: string | null           // auth.uid()
+  updated_by: string | null
+  created_at: string
+  updated_at: string
+  // NOT IN DB YET — requires migration:
+  // vendor_id: UUID FK → companies.id
+  // wbs_attributes: JSONB
+}
+}</code></pre></p><p><h4><code>budget_modifications</code> (confirmed columns)</h4>
+<pre><code class="language-typescript">{{
+  id: string          // UUID, PK
+  project_id: number  // FK → projects.id (INTEGER)
+  number: string      // modification number (e.g. "MOD-001")
+  title: string
+  status: string      // MUST BE lowercase: 'draft'|'pending'|'approved'|'void'
+  reason: string | null
+  effective_date: string | null
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+}</code></pre></p><p><h4><code>budget_mod_lines</code> (confirmed columns, FK → budget_modifications)</h4>
+<pre><code class="language-typescript">{{
+  id: string
+  budget_modification_id: string  // FK → budget_modifications.id
+  cost_code_id: string            // FK → cost_codes.id
+  cost_type_id: string            // FK → cost_code_types.id
+  project_id: number
+  sub_job_id: string | null       // FK → sub_jobs.id
+  amount: number
+  description: string | null
+  created_at: string
+  updated_at: string
+  // NOT IN DB YET — requires migration:
+  // modification_type: TEXT CHECK IN ('addition','deduction')
+  // change_event_id: UUID FK → change_events.id
+}
+}</code></pre></p><p><h4><code>budget_modification_lines</code> (OLDER table — different from budget_mod_lines)</h4>
+<pre><code class="language-typescript">{{
+  id: string
+  budget_line_id: string           // FK → budget_lines.id
+  budget_modification_id: string   // FK → budget_modifications.id
+  amount: number
+  notes: string | null
+  created_at: string
+  updated_at: string
+  // NOT IN DB YET — requires migration:
+  // voided_reason: TEXT
+}
+}</code></pre></p><p><h4><code>budget_views</code> (confirmed columns)</h4>
+<pre><code class="language-typescript">{{
+  id: string
+  project_id: number
+  name: string
+  description: string | null
+  is_default: boolean | null
+  is_system: boolean | null
+  created_by: string | null
+  created_at: string | null
+  updated_at: string | null
+}
+}</code></pre></p><p><h3>FK Type Requirements (CRITICAL)</h3>
+<tr><td>Column</td><td>Type</td><td>Why</td></tr></p><p><tr><td><code>project_id</code> on any budget table</td><td><code>number</code> (INTEGER)</td><td><code>projects.id</code> is INTEGER, not UUID</td></tr>
+<tr><td><code>budget_lines.id</code> (and any FK to it)</td><td><code>string</code> (UUID)</td><td>budget_lines uses UUID PK</td></tr>
+<tr><td><code>budget_modifications.id</code> (and FKs)</td><td><code>string</code> (UUID)</td><td>UUID PK</td></tr>
+<tr><td><code>cost_code_id</code></td><td><code>string</code> (text, not UUID)</td><td>cost_codes.id is text</td></tr></p><p><h3>Required Migrations (run in order)</h3></p><p><pre><code class="language-sql">{-- Migration 1: modification_type on budget_mod_lines
+ALTER TABLE public.budget_mod_lines
+  ADD COLUMN IF NOT EXISTS modification_type TEXT
+  CHECK (modification_type IN ('addition', 'deduction'));</p><p>-- Migration 2: change_event_id on budget_mod_lines
+ALTER TABLE public.budget_mod_lines
+  ADD COLUMN IF NOT EXISTS change_event_id UUID
+  REFERENCES public.change_events(id) ON DELETE SET NULL;</p><p>-- Migration 3: voided_reason on budget_modification_lines
+ALTER TABLE public.budget_modification_lines
+  ADD COLUMN IF NOT EXISTS voided_reason TEXT;</p><p>-- Migration 4 (LOW priority): vendor_id and wbs_attributes on budget_lines
+ALTER TABLE public.budget_lines
+  ADD COLUMN IF NOT EXISTS vendor_id UUID REFERENCES public.companies(id) ON DELETE SET NULL,
+  ADD COLUMN IF NOT EXISTS wbs_attributes JSONB;</p><p>-- After all migrations, run:
+-- cd frontend &amp;&amp; npm run db:types
+-- Then grep for new columns to confirm they appear in generated types
+}</code></pre></p><p><hr></p><p><h2>Implementation Blueprint</h2></p><p><h3>Data Models and Structure</h3></p><p><pre><code class="language-typescript">{// EXTEND these existing types when adding new fields:</p><p>// frontend/src/lib/schemas/budget.ts — add to BudgetModificationPayloadSchema
+import { z } from "zod";</p><p>const BudgetModificationPayloadSchema = z.object({
+  // existing fields...
+  modification_type: z.enum(["addition", "deduction"]).optional(),
+  change_event_id: z.string().uuid().optional().nullable(),
+  voided_reason: z.string().min(1).max(1000).optional(), // required when action = 'void'
+});</p><p>// frontend/src/types/budget.ts — extend existing interfaces
+export interface BudgetModification {
+  id: string;
+  projectId: number;
+  number: string;
+  title: string;
+  status: "draft" | "pending" | "approved" | "void";
+  reason: string | null;
+  effectiveDate: string | null;
+  modificationType?: "addition" | "deduction";  // NEW
+  changeEventId?: string | null;                  // NEW
+  voidedReason?: string | null;                   // NEW (on budget_modification_lines)
+  lines?: BudgetModLine[];
+}</p><p>export interface BudgetModLine {
+  id: string;
+  costCodeId: string;
+  costTypeId: string;
+  amount: number;
+  description?: string | null;
+  modificationType?: "addition" | "deduction";  // NEW — per line (inherits from parent)
+  changeEventId?: string | null;                 // NEW
+}</p><p>// Export API response type
+export interface BudgetExportOptions {
+  format: "xlsx" | "csv";
+  includeGrandTotals?: boolean;  // default true
+}</p><p>// Import preview type
+export interface BudgetImportPreview {
+  validRows: Array&lt;{
+    costCode: string;
+    amount: number;
+    description?: string;
+  }&gt;;
+  errorRows: Array&lt;{
+    row: number;
+    reason: string;
+  }&gt;;
+  totalValid: number;
+  totalErrors: number;
+}
+}</code></pre></p><p><h3>Implementation Tasks (ordered by dependencies)</h3></p><p><pre><code class="language-yaml">{# ============================================================
+<h1>PHASE 0: Database Migrations (ALWAYS FIRST)</h1>
+<h1>============================================================</h1></p><p>Task 0.1: CREATE supabase/migrations/20260418_000000_budget_mod_lines_modification_type.sql
+  - IMPLEMENT: ADD COLUMN modification_type TEXT CHECK IN ('addition','deduction')
+  - RUN: npx supabase db push (or via Supabase dashboard)
+  - VALIDATE: npm run db:types &amp;&amp; grep "modification_type" frontend/src/types/database.types.ts</p><p>Task 0.2: CREATE supabase/migrations/20260418_000001_budget_mod_lines_change_event_id.sql
+  - IMPLEMENT: ADD COLUMN change_event_id UUID REFERENCES change_events(id) ON DELETE SET NULL
+  - RUN migration
+  - VALIDATE: grep "change_event_id" frontend/src/types/database.types.ts</p><p>Task 0.3: CREATE supabase/migrations/20260418_000002_budget_modification_lines_voided_reason.sql
+  - IMPLEMENT: ADD COLUMN voided_reason TEXT on budget_modification_lines (not budget_mod_lines)
+  - VALIDATE: grep "voided_reason" frontend/src/types/database.types.ts</p><p><h1>============================================================</h1>
+<h1>PHASE 1: Schema Zod Extension</h1>
+<h1>============================================================</h1></p><p>Task 1.1: MODIFY frontend/src/lib/schemas/budget.ts
+  - ADD modification_type field to BudgetModificationPayloadSchema
+  - ADD change_event_id field to BudgetModificationPayloadSchema
+  - ADD voided_reason field to BudgetModificationActionSchema (required when action = 'void')
+  - FOLLOW pattern: existing Zod schemas in this file (z.enum, z.string().uuid().optional())</p><p>Task 1.2: MODIFY frontend/src/types/budget.ts
+  - ADD BudgetModification interface (currently missing from types)
+  - ADD BudgetModLine interface
+  - ADD BudgetExportOptions, BudgetImportPreview types
+  - FOLLOW pattern: existing BudgetLineItem, BudgetGrandTotals interface structure</p><p><h1>============================================================</h1>
+<h1>PHASE 2: API Routes — Export and Import</h1>
+<h1>============================================================</h1></p><p>Task 2.1: REWRITE frontend/src/app/api/projects/[projectId]/budget/export/route.ts
+  - IMPLEMENT real xlsx/csv export using existing xlsx library
+  - CALL computeBudgetGrandTotals(supabase, projectIdNum) for data
+  - SUPPORT format query param: ?format=xlsx (default) or ?format=csv
+  - xlsx: two sheets — "Budget Lines" (all 15 columns) + "Grand Totals" (summary row)
+  - csv: single sheet, same columns
+  - RETURN binary with correct Content-Type and Content-Disposition headers
+  - FOLLOW pattern: withApiGuardrails wrapper, requirePermission("budget", "read")
+  - NAMING: export-{projectId}-{YYYY-MM-DD}.xlsx</p><p>Task 2.2: REWRITE frontend/src/app/api/projects/[projectId]/budget/import/route.ts
+  - IMPLEMENT multipart/form-data file parsing with xlsx library
+  - PARSE uploaded .xlsx or .csv file
+  - VALIDATE: required columns 'cost_code'/'budget_code' and 'amount'
+  - MAP cost_code values to project_budget_code_id via DB lookup
+  - SUPPORT ?preview=true query param — return BudgetImportPreview without inserting
+  - SUPPORT ?preview=false (or absent) — execute actual insert via upsert_budget_line_amount RPC
+  - RETURN errors per-row (not entire reject) — partial success is valid
+  - FOLLOW pattern: withApiGuardrails, requirePermission("budget", "write")</p><p>Task 2.3: MODIFY frontend/src/app/api/projects/[projectId]/budget/modifications/route.ts
+  - ADD modification_type to INSERT payload (from budget_mod_lines schema)
+  - ADD change_event_id to INSERT payload
+  - ADD voided_reason to PATCH void action handler
+  - CALL refresh_budget_rollup RPC on approve action (already implemented — verify still called)
+  - VALIDATE: status must be lowercase on insert/update</p><p><h1>============================================================</h1>
+<h1>PHASE 3: Components — Export / Import</h1>
+<h1>============================================================</h1></p><p>Task 3.1: MODIFY frontend/src/components/budget/budget-page-header.tsx
+  - REPLACE "coming soon" toast on Export button with real download
+  - IMPLEMENT: call apiFetch('/api/projects/${projectId}/budget/export?format=xlsx', {})
+    then trigger browser download via URL.createObjectURL(blob) + a.click()
+  - ADD: Export submenu with "Excel (.xlsx)" and "CSV (.csv)" options
+  - FOLLOW pattern: existing dropdown pattern in this header component</p><p>Task 3.2: REWRITE frontend/src/components/budget/ImportBudgetModal.tsx
+  - IMPLEMENT file upload (accept: .xlsx, .csv)
+  - CALL preview API on file selection: POST /budget/import?preview=true with FormData
+  - DISPLAY preview table: valid rows + error rows from BudgetImportPreview
+  - ADD "Import N line items" confirm button
+  - ON confirm: POST /budget/import (no preview param) → show success toast
+  - ON success: call refetchBudgetData() to refresh table
+  - FOLLOW pattern: existing modal patterns in components/budget/modals/BaseModal.tsx</p><p><h1>============================================================</h1>
+<h1>PHASE 4: Components — Budget Details Tab</h1>
+<h1>============================================================</h1></p><p>Task 4.1: CREATE frontend/src/components/budget/budget-details-tab.tsx
+  - IMPLEMENT new tab showing project-level budget metadata
+  - FETCH from /api/projects/[projectId]/budget/details
+  - DISPLAY: total budget, total modifications, approved COs, revised budget (summary)
+  - DISPLAY: per-cost-code breakdown table (sub-job segmentation if sub_jobs exist)
+  - DISPLAY: budget_locked status, locked_at, locked_by
+  - FOLLOW pattern: existing tab components (cost-codes-tab.tsx, change-history-tab.tsx)
+  - USE PageShell variant="content" inside the tab body</p><p>Task 4.2: MODIFY frontend/src/app/(main)/[projectId]/budget/page.tsx
+  - ADD "budget-details" to tab navigation (budget-tabs.tsx)
+  - ADD conditional render: if (activeTab === "budget-details") → &lt;BudgetDetailsTab&gt;
+  - FOLLOW pattern: existing tab switching logic in page.tsx (searchParams-based)</p><p>Task 4.3: VERIFY frontend/src/app/api/projects/[projectId]/budget/details/route.ts
+  - READ current implementation — if stub, implement real query
+  - QUERY: project budget metadata (budget_locked, locked_at, locked_by from projects table)
+  - QUERY: per-cost-code breakdown joining budget_lines + project_project_budget_codes
+  - RETURN: { isLocked, lockedAt, lockedBy, totalBudget, revisedBudget, costCodeBreakdown[] }</p><p><h1>============================================================</h1>
+<h1>PHASE 5: Components — Budget Modification Form Fields</h1>
+<h1>============================================================</h1></p><p>Task 5.1: MODIFY frontend/src/components/budget/budget-modification-modal.tsx
+  - ADD modification_type radio field: "Addition" / "Deduction" (required)
+  - ADD change_event_id combobox (optional, loads from /api/projects/[projectId]/change-events)
+  - ADD voided_reason textarea (shown only when action = 'void', required)
+  - FOLLOW pattern: existing field patterns in the modal
+  - VALIDATE: modification_type required on create/edit; voided_reason required on void</p><p><h1>============================================================</h1>
+<h1>PHASE 6: Budget Table — Red-Text Row Highlighting</h1>
+<h1>============================================================</h1></p><p>Task 6.1: MODIFY frontend/src/components/budget/budget-table.tsx
+  - ADD className logic to &lt;tr&gt; elements:
+    const isOverBudget = row.original.projectedCosts &gt; row.original.revisedBudget;
+  - APPLY: className="text-destructive" when isOverBudget &amp;&amp; !row.getIsGrouped()
+  - NOTE: Only apply to leaf rows (not group/summary rows)
+  - FOLLOW pattern: existing getCoreRowModel, getExpandedRowModel usage in this file</p><p><h1>============================================================</h1>
+<h1>PHASE 7: Snapshot and Forecast Pagination</h1>
+<h1>============================================================</h1></p><p>Task 7.1: MODIFY frontend/src/components/budget/snapshots-tab.tsx
+  - REMOVE hardcoded max-5 snapshot display limit
+  - ADD pagination or full scrollable list
+  - ADD snapshot comparison selector: two dropdowns (Snapshot A, Snapshot B)
+  - STORE selected snapshot IDs in URL query params: ?snapshotA=uuid&amp;snapshotB=uuid
+  - SHOW diff table when both snapshots are selected</p><p>Task 7.2: MODIFY frontend/src/components/budget/forecasting-tab.tsx
+  - REMOVE hardcoded max-10 cost code display limit
+  - ADD pagination (page size 25) or full virtualized list
+  - FOLLOW pattern: DataTable pagination from components/ds if available</p><p><h1>============================================================</h1>
+<h1>PHASE 8: Financial Views UI (verify and complete)</h1>
+<h1>============================================================</h1></p><p>Task 8.1: VERIFY frontend/src/components/budget/BudgetViewsModal.tsx
+  - READ current implementation — confirm GET/POST/PATCH to budget/views API works
+  - TEST: create a custom view, save it, reload page — verify it persists
+  - IF broken: fix the view column save/load loop (budget_view_columns upsert)
+  - CONFIRM: system views (is_system=true) show lock icon, cannot be edited/deleted</p><p>Task 8.2: VERIFY frontend/src/app/api/projects/[projectId]/budget/views/route.ts
+  - CONFIRM GET returns project's views including system defaults
+  - CONFIRM POST creates new view with column configs in budget_view_columns
+  - CONFIRM PATCH updates column visibility/order in budget_view_columns
+  - CONFIRM DELETE blocked for is_system=true views (returns 403 BUDGET_SYSTEM_VIEW_READONLY)
+}</code></pre></p><p><h3>Implementation Patterns &amp; Key Details</h3></p><p><pre><code class="language-typescript">{// =============================
+// EXPORT ROUTE PATTERN
+// =============================
+import </em> as XLSX from "xlsx";
+import { computeBudgetGrandTotals } from "@/lib/budget/compute-grand-totals";</p><p>export const GET = withApiGuardrails&lt;{ projectId: string }&gt;(
+  "projects/[projectId]/budget/export#GET",
+  async ({ request, params }) =&gt; {
+    const { projectId } = await params;
+    const projectIdNum = parseInt(projectId, 10);
+    if (Number.isNaN(projectIdNum)) return NextResponse.json({ error: "Invalid project ID" }, { status: 400 });</p><p>    const guard = await requirePermission(projectIdNum, "budget", "read");
+    if (guard.denied) return guard.response;</p><p>    const url = new URL(request.url);
+    const format = url.searchParams.get("format") ?? "xlsx";</p><p>    const supabase = await createClient();
+    const { lineItems, grandTotals } = await computeBudgetGrandTotals(supabase, projectIdNum);</p><p>    if (format === "csv") {
+      const csv = lineItems.map(row =&gt; [
+        row.costCode, row.description, row.originalBudgetAmount,
+        row.revisedBudget, row.projectedCosts, row.projectedOverUnder
+      ].join(",")).join("\n");
+      return new NextResponse(<code>Cost Code,Description,Original Budget,Revised Budget,Projected Costs,Over/Under\n${csv}</code>, {
+        headers: {
+          "Content-Type": "text/csv",
+          "Content-Disposition": <code>attachment; filename="budget-${projectId}.csv"</code>,
+        },
+      });
+    }</p><p>    // xlsx
+    const rows = lineItems.map(item =&gt; ({
+      "Cost Code": item.costCode,
+      "Description": item.description,
+      "Original Budget": item.originalBudgetAmount,
+      "Budget Modifications": item.budgetModifications,
+      "Approved COs": item.approvedCOs,
+      "Revised Budget": item.revisedBudget,
+      "Job to Date Cost": item.jobToDateCostDetail,
+      "Direct Costs": item.directCosts,
+      "Pending Budget Changes": item.pendingChanges,
+      "Projected Budget": item.projectedBudget,
+      "Committed Costs": item.committedCosts,
+      "Pending Cost Changes": item.pendingCostChanges,
+      "Projected Costs": item.projectedCosts,
+      "Forecast to Complete": item.forecastToComplete,
+      "EAC": item.estimatedCostAtCompletion,
+      "Projected Over/Under": item.projectedOverUnder,
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Budget Lines");
+    const totalsWs = XLSX.utils.json_to_sheet([{
+      "Original Budget": grandTotals.originalBudgetAmount,
+      "Revised Budget": grandTotals.revisedBudget,
+      "Projected Over/Under": grandTotals.projectedOverUnder,
+    }]);
+    XLSX.utils.book_append_sheet(wb, totalsWs, "Grand Totals");
+    const buf = XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
+    return new NextResponse(buf, {
+      headers: {
+        "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "Content-Disposition": <code>attachment; filename="budget-${projectId}.xlsx"</code>,
+      },
+    });
+  }
+);</p><p>// =============================
+// RED-TEXT ROW PATTERN (budget-table.tsx)
+// =============================
+// Inside the TanStack Table row render:
+&lt;tr
+  key={row.id}
+  className={cn(
+    "hover:bg-muted/50 transition-colors",
+    !row.getIsGrouped() &amp;&amp; row.original.projectedCosts &gt; row.original.revisedBudget
+      ? "text-destructive"
+      : ""
+  )}
+&gt;</p><p>// =============================
+// DOWNLOAD TRIGGER PATTERN (client component)
+// =============================
+const handleExport = async (format: "xlsx" | "csv") =&gt; {
+  const response = await fetch(<code>/api/projects/${projectId}/budget/export?format=${format}</code>);
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = <code>budget-${projectId}.${format}</code>;
+  a.click();
+  URL.revokeObjectURL(url);
+};
+// NOTE: Cannot use apiFetch here — apiFetch assumes JSON response. Use raw fetch for blob.
+// This is the one case where raw fetch is acceptable (binary download, not JSON API call).
+}</code></pre></p><p><h3>Integration Points</h3></p><p><pre><code class="language-yaml">{DATABASE:
+  - Tables written to: budget_mod_lines (new fields), budget_modification_lines (voided_reason)
+  - Tables read from: budget_lines, budget_modifications, v_budget_rollup (via computeBudgetGrandTotals)
+  - RPC called on approve: refresh_budget_rollup(p_project_id)
+  - Budget Views: budget_views, budget_view_columns</p><p>API ROUTES THAT CHANGE BEHAVIOR:
+  - GET /budget/export — replace toast stub with real binary response
+  - POST /budget/import — replace toast stub with real multipart parse + insert
+  - PATCH /budget/modifications — accept new fields modification_type, change_event_id, voided_reason</p><p>EXTERNAL LIBRARIES:
+  - xlsx (already installed) — for export and import parsing
+  - TanStack Table (already installed) — budget-table.tsx row className logic</p><p>RLS POLICIES:
+  - Any new table must add policies matching the budget_lines pattern
+  - Existing budget_mod_lines and budget_modification_lines already have RLS — adding columns is safe</p><p>PERMISSIONS:
+  - Export: requirePermission("budget", "read")
+  - Import: requirePermission("budget", "write")
+  - Financial Views: requirePermission("budget", "read") for GET, "write" for POST/PATCH/DELETE
+}</code></pre></p><p><hr></p><p><h2>Known Pitfalls &amp; Prevention</h2></p><p><h3>From Incident Log (MANDATORY before starting)</h3></p><p><h4>Budget Views RLS Misconfiguration (CRITICAL — happened 2026-01-31)</h4>
+<strong>Error:</strong> <code>budget_views</code> API returned 500 due to RLS policy checking only <code>auth.uid() IS NOT NULL</code> with no project scoping.  
+<strong>Prevention:</strong> Every new budget table migration MUST include project-scoped RLS:
+<pre><code class="language-sql">{CREATE POLICY "project_member_select" ON public.budget_your_table
+  FOR SELECT USING (
+    project_id IN (
+      SELECT project_id FROM public.project_directory_memberships
+      WHERE user_id = auth.uid()
+    )
+  );
+}</code></pre>
+<strong>Verification:</strong> After any budget migration: <code>psql -c "SELECT tablename, policyname FROM pg_policies WHERE tablename LIKE 'budget%';"</code></p><p><h4>Budget Views Column Name Mismatch (WARNING — happened 2026-01-28)</h4>
+<strong>Error:</strong> TypeScript compiled fine but runtime failed because migration renamed <code>display_name</code> → <code>name</code> but code still referenced <code>display_name</code>.  
+<strong>Prevention:</strong> Run <code>npm run db:types</code> immediately after EVERY migration. Then grep for the new column names.  
+<strong>Verification:</strong> <code>grep -A 10 "budget_views:" frontend/src/types/database.types.ts</code></p><p><h4>Route Parameter Conflict (CRITICAL — happened 2026-01-10)</h4>
+<strong>Error:</strong> Using <code>[id]</code> in budget routes caused routing conflicts.  
+<strong>Prevention:</strong> Budget routes MUST use named params:
+<li><code>[projectId]</code> for project</li>
+<li><code>[lineId]</code> for budget lines</li>
+<li><code>[modificationId]</code> for modifications</li>
+<li><code>[viewId]</code> for views</li>
+<li><code>[snapshotId]</code> for snapshots</li>
+<strong>Verification:</strong> <code>npm run check:routes</code> after any new budget route</p><p><h4>Budget Test Suite Disabled (CRITICAL — found 2026-04-14)</h4>
+<strong>Error:</strong> <code>budget-line-item-validation.spec.ts</code> had <code>test.skip(true)</code> — zero regression protection.  
+<strong>Prevention:</strong> NEVER use <code>test.skip(true)</code> on an entire spec file. After any budget UI refactor, update matching Playwright specs.  
+<strong>Verification:</strong> <code>grep -r "test.skip" frontend/tests/</code> before closing any budget PR.</p><p><h4>Raw fetch() in Budget Components (CRITICAL — found 2026-04-14)</h4>
+<strong>Error:</strong> Budget line-item sheet bypassed <code>apiFetch</code>, causing silent error degradation.  
+<strong>Prevention:</strong> ALL budget API calls must use <code>apiFetch</code> from <code>@/lib/api-client</code>.  
+<strong>Exception:</strong> Binary download (blob) responses — raw <code>fetch</code> is acceptable ONLY for this case.  
+<strong>Verification:</strong> ESLint <code>require-api-client</code> rule + <code>npm run lint</code></p><p><h4>FK Budget Code ID Mismatch (CRITICAL — documented in form-id-mismatch-prevention.md)</h4>
+<strong>Error:</strong> <code>budget_code_id</code> FK on change_event_line_items points to <code>budget_lines.id</code>, but dropdown loads from <code>project_cost_codes.id</code> — different UUIDs, Edit form shows blank.  
+<strong>Prevention:</strong> For any form with budget code dropdown: verify both read path (GET maps budget_lines.id → cost_code for display) and write path (POST resolves cost_code back to budget_lines.id).  
+<strong>Verification:</strong> Create record → navigate away → click Edit → ALL dropdowns must show pre-filled values.</p><p><h4>Status Case Sensitivity (WARNING — documented in INCIDENT-LOG.md)</h4>
+<strong>Error:</strong> Inserting budget_modifications with <code>Status='Draft'</code> (capitalized) violates CHECK constraint silently.  
+<strong>Prevention:</strong> ALWAYS use lowercase: <code>'draft'</code>, <code>'pending'</code>, <code>'approved'</code>, <code>'void'</code>.  
+<strong>Verification:</strong> <code>grep "status" supabase/migrations/<em>budget</em></code> to confirm constraint casing.</p><p><h4>Missing <code>vendor_id</code> / <code>wbs_attributes</code> on budget_lines</h4>
+<strong>Error:</strong> If code references <code>budget_lines.vendor_id</code> without migration, runtime silently returns null/undefined.  
+<strong>Prevention:</strong> Do NOT reference these columns in any query until the migration in Task 0 (LOW priority) is applied and <code>db:types</code> is regenerated.</p><p><h4>Billing Completion &gt; 100% (HISTORICAL — affects budget rollup)</h4>
+<strong>Error:</strong> Invoices with completion &gt; 100% corrupted <code>job_to_date_cost_detail</code> in budget rollup.  
+<strong>Prevention:</strong> Import validation must reject amount values that would exceed the budget line's <code>original_amount</code> by more than 200% (configurable threshold).</p><p><hr></p><p><h2>Validation Loop</h2></p><p><h3>Level 1: Syntax &amp; Style (run after each task)</h3></p><p><pre><code class="language-bash">{# From frontend/ directory
+npm run lint                    # ESLint — catches raw fetch, design system violations
+npx tsc --noEmit               # TypeScript — catches type mismatches
+npm run quality                # combined typecheck + lint</p><p><h1>Specific budget linting</h1>
+grep -rn "raw fetch\|import.<em>fetch" frontend/src/components/budget/ | grep -v apiFetch
+grep -rn "test.skip" frontend/tests/e2e/
+}</code></pre></p><p><h3>Level 2: Database Validation (after each migration)</h3></p><p><pre><code class="language-bash">{# Verify migration applied
+cd frontend &amp;&amp; npm run db:types
+grep "modification_type" src/types/database.types.ts    # should appear
+grep "change_event_id" src/types/database.types.ts      # should appear
+grep "voided_reason" src/types/database.types.ts        # should appear</p><p><h1>Verify budget_lines columns match code expectations</h1>
+grep -A 30 "budget_lines:" src/types/database.types.ts | head -35
+}</code></pre></p><p><h3>Level 3: Integration Testing</h3></p><p><pre><code class="language-bash">{# Clear Next.js cache before testing new routes
+cd frontend &amp;&amp; rm -rf .next</p><p><h1>Start dev server</h1>
+npm run dev &gt; /tmp/nextjs-dev.log 2&gt;&amp;1 &amp;
+sleep 10 &amp;&amp; tail -20 /tmp/nextjs-dev.log  # verify "Ready"</p><p><h1>Test export</h1>
+curl -s -I "http://localhost:3000/api/projects/67/budget/export?format=xlsx" \
+  -H "Cookie: $(cat tests/.auth/cookies.txt)" \
+  | grep -E "Content-Type|Content-Disposition|HTTP"
+<h1>Expected: 200, Content-Type: application/vnd.openxmlformats...</h1></p><p><h1>Test export CSV</h1>
+curl -s "http://localhost:3000/api/projects/67/budget/export?format=csv" \
+  -H "Cookie: $(cat tests/.auth/cookies.txt)" | head -3
+<h1>Expected: header row + data rows</h1></p><p><h1>Test import preview</h1>
+curl -s -X POST "http://localhost:3000/api/projects/67/budget/import?preview=true" \
+  -H "Cookie: $(cat tests/.auth/cookies.txt)" \
+  -F "file=@/tmp/test-budget-import.csv" | jq .
+<h1>Expected: { validRows: [...], errorRows: [...] }</h1></p><p><h1>Test budget details</h1>
+curl -s "http://localhost:3000/api/projects/67/budget/details" \
+  -H "Cookie: $(cat tests/.auth/cookies.txt)" | jq .
+<h1>Expected: { isLocked, totalBudget, revisedBudget, costCodeBreakdown }</h1></p><p><h1>Test modification with new fields</h1>
+curl -s -X POST "http://localhost:3000/api/projects/67/budget/modifications" \
+  -H "Content-Type: application/json" \
+  -H "Cookie: $(cat tests/.auth/cookies.txt)" \
+  -d '{"title":"Test Mod","modification_type":"addition","amount":1000}' | jq .
+<h1>Expected: created modification with modification_type field</h1>
+}</code></pre></p><p><h3>Level 4: Browser Verification (MANDATORY before claiming done)</h3></p><p><pre><code class="language-bash">{# Use agent-browser to verify visual changes
+<h1>1. Open budget page</h1>
+<h1>2. Take screenshot of main table — verify red-text rows for over-budget items</h1>
+<h1>3. Click Export → Excel — verify download triggers</h1>
+<h1>4. Click Import — verify modal appears with file picker</h1>
+<h1>5. Click Details tab — verify tab renders without error</h1>
+<h1>6. Verify snapshots tab shows all snapshots (not capped at 5)</h1>
+<h1>7. Verify forecasting tab shows all cost codes (not capped at 10)</h1>
+}</code></pre></p><p><hr></p><p><h2>Final Validation Checklist</h2></p><p><h3>Technical Validation</h3>
+<li class="todo"><input type="checkbox" disabled> All 4 validation levels completed</li>
+<li class="todo"><input type="checkbox" disabled> <code>npx tsc --noEmit</code> — zero errors</li>
+<li class="todo"><input type="checkbox" disabled> <code>npm run lint</code> — zero errors</li>
+<li class="todo"><input type="checkbox" disabled> <code>npm run build</code> — successful production build</li>
+<li class="todo"><input type="checkbox" disabled> All existing budget tests still pass (not skipped): <code>npx playwright test --grep budget</code></li></p><p><h3>Feature Validation — HIGH Priority</h3>
+<li class="todo"><input type="checkbox" disabled> Export Excel: downloads <code>.xlsx</code> with real line item data (not empty, not toast)</li>
+<li class="todo"><input type="checkbox" disabled> Export CSV: downloads <code>.csv</code> with correct headers and data</li>
+<li class="todo"><input type="checkbox" disabled> Import: file upload → preview modal → valid rows shown → confirm → lines created</li>
+<li class="todo"><input type="checkbox" disabled> Import: invalid file → error rows shown with row numbers and reasons</li>
+<li class="todo"><input type="checkbox" disabled> Import: reject files missing required columns</li></p><p><h3>Feature Validation — MEDIUM Priority</h3>
+<li class="todo"><input type="checkbox" disabled> Budget Details tab renders at <code>?tab=budget-details</code></li>
+<li class="todo"><input type="checkbox" disabled> Financial Views: create view → save → reload → view persists</li>
+<li class="todo"><input type="checkbox" disabled> Financial Views: system view shows lock icon, cannot be deleted</li>
+<li class="todo"><input type="checkbox" disabled> Budget modification form: <code>modification_type</code> field present (required)</li>
+<li class="todo"><input type="checkbox" disabled> Budget modification form: <code>change_event_id</code> field present (optional)</li>
+<li class="todo"><input type="checkbox" disabled> Void workflow: <code>voided_reason</code> textarea required, blocks save if empty</li>
+<li class="todo"><input type="checkbox" disabled> Snapshot comparison: can select any two snapshots (not just sequential)</li>
+<li class="todo"><input type="checkbox" disabled> Forecasting tab: shows all cost codes (paginated, not capped at 10)</li>
+<li class="todo"><input type="checkbox" disabled> Snapshots tab: shows all snapshots (paginated, not capped at 5)</li></p><p><h3>Feature Validation — LOW Priority</h3>
+<li class="todo"><input type="checkbox" disabled> Over-budget rows display in <code>text-destructive</code> color</li>
+<li class="todo"><input type="checkbox" disabled> Over-budget highlight applies only to leaf rows (not group/summary rows)</li></p><p><h3>Database &amp; RLS</h3>
+<li class="todo"><input type="checkbox" disabled> <code>modification_type</code> column appears in <code>database.types.ts</code> after migration</li>
+<li class="todo"><input type="checkbox" disabled> <code>change_event_id</code> column appears in <code>database.types.ts</code> after migration</li>
+<li class="todo"><input type="checkbox" disabled> <code>voided_reason</code> column appears in <code>database.types.ts</code> after migration</li>
+<li class="todo"><input type="checkbox" disabled> New migrations do NOT break existing RLS patterns</li>
+<li class="todo"><input type="checkbox" disabled> <code>npm run check:routes</code> passes after any new route files</li></p><p><h3>Code Quality</h3>
+<li class="todo"><input type="checkbox" disabled> No raw <code>fetch()</code> calls in budget components (except binary blob downloads)</li>
+<li class="todo"><input type="checkbox" disabled> All new routes use <code>withApiGuardrails()</code></li>
+<li class="todo"><input type="checkbox" disabled> All new routes use <code>requirePermission()</code></li>
+<li class="todo"><input type="checkbox" disabled> No <code>test.skip(true)</code> in budget test files</li>
+<li class="todo"><input type="checkbox" disabled> Status values lowercase throughout: 'draft', 'pending', 'approved', 'void'</li></p><p><hr></p><p><h2>Anti-Patterns to Avoid</h2></p><p><li>❌ Don't bypass <code>computeBudgetGrandTotals()</code> — it's the authoritative data source</li>
+<li>❌ Don't use <code>[id]</code> as a route parameter — always use <code>[lineId]</code>, <code>[modificationId]</code>, etc.</li>
+<li>❌ Don't use raw <code>fetch()</code> for JSON API calls in budget components — use <code>apiFetch</code></li>
+<li>❌ Don't insert status values with uppercase — always lowercase</li>
+<li>❌ Don't reference <code>vendor_id</code> or <code>wbs_attributes</code> before running the migration</li>
+<li>❌ Don't claim export is working without verifying binary response in browser</li>
+<li>❌ Don't add <code>test.skip(true)</code> to budget test files</li>
+<li>❌ Don't write RLS as <code>auth.uid() IS NOT NULL</code> — always scope to project membership</li>
+<li>❌ Don't re-implement the 15-column formula logic — it lives in <code>v_budget_rollup</code></li>
+<li>❌ Don't use <code>bg-white</code> or hardcoded colors in budget components — use <code>bg-card</code>, <code>text-destructive</code></li></p><p><hr></p><p><h2>Procore Crawl Data Reference</h2></p><p>Source: <code>_bmad-output/planning-artifacts/budget/.archive/</code> (Dec 2025 crawl, 14 unique views)</p><p><h3>Tab Navigation Structure (Procore)</h3></p><p><tr><td>Page</td><td>URL Pattern</td><td>Screenshot</td></tr></p><p><tr><td>Main Budget Table</td><td><code>/tools/budgets</code></td><td>Main 15-column table</td></tr>
+<tr><td>Budget Details</td><td><code>/tools/budgets?tab=details</code></td><td>Sub-job breakdown, metadata</td></tr>
+<tr><td>Forecast</td><td><code>/tools/budgets?tab=forecast</code></td><td>S-curve + FTC by method</td></tr>
+<tr><td>Snapshots</td><td><code>/tools/budgets?tab=snapshots</code></td><td>Scrollable snapshot list</td></tr>
+<tr><td>Change History</td><td><code>/tools/budgets?tab=history</code></td><td>Audit trail</td></tr></p><p><h3>Form Fields Reference (from Procore crawl)</h3></p><p><strong>Budget Modification Form (7 fields total):</strong>
+<li>From Cost Code (combobox, required)</li>
+<li>To Cost Code (combobox, required, must differ)</li>
+<li>Amount (currency, required, &gt; 0)</li>
+<li>Description (textarea, 10-500 chars)</li>
+<li>Effective Date (date, &lt;= today)</li>
+<li>Modification Type (<strong>NEW</strong> radio: Addition / Deduction) — maps to <code>modification_type</code></li>
+<li>Change Event # (<strong>NEW</strong> combobox, optional) — maps to <code>change_event_id</code></li></p><p><strong>Void Dialog (1 field):</strong>
+<li>Void Reason (textarea, required when voiding) — maps to <code>voided_reason</code> on budget_modification_lines</li></p><p><strong>Financial Views — 19 configurable columns:</strong>
+<code>costCode</code>, <code>description</code>, <code>originalBudget</code>, <code>budgetModifications</code>, <code>approvedCOs</code>, <code>revisedBudget</code>, <code>pendingBudgetChanges</code>, <code>projectedBudget</code>, <code>committedCosts</code>, <code>pendingCostChanges</code>, <code>projectedCosts</code>, <code>jtdCostDetail</code>, <code>directCosts</code>, <code>forecastToComplete</code>, <code>projectedOverUnder</code>, <code>costType</code>, <code>unitQty</code>, <code>uom</code>, <code>unitCost</code></p><p><h3>Key Procore Behaviors to Match</h3></p><p>1. <strong>Red-text threshold:</strong> Row turns red when <code>projectedCosts &gt; revisedBudget</code> by any amount (not a configurable threshold in base Procore).
+2. <strong>Export includes all columns</strong> — not just a subset. Match our 15-column structure.
+3. <strong>Import template</strong> — Procore provides a downloadable template. We should offer GET <code>/budget/import/template</code> that returns a blank Excel with the correct column headers.
+4. <strong>Modification Type affects budget math</strong> — "Deduction" is a negative addition. Stored as a negative <code>amount</code> OR as a type flag — use the type flag approach (positive amount + type field) to match Procore's display.
+5. <strong>Snapshot comparison</strong> — Procore shows a diff column highlighting cells that changed between two snapshots. Start with just showing both snapshots side-by-side.</p><p><hr></p><p></em>Confidence Score: 9/10 — all existing patterns are well-documented, all DB schemas verified from generated types, all gap items have clear implementation paths. The 1-point deduction is for the Financial Views UI which may have additional complexity in the column drag-drop reordering that requires in-browser testing to validate.*
+</p>
+  </div>
+</div>
+</body>
+</html>

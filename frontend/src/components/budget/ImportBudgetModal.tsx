@@ -9,6 +9,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { apiFetch } from "@/lib/api-client";
 import {
   BaseModal,
   ModalBody,
@@ -138,20 +139,10 @@ export function ImportBudgetModal({
       const formData = new FormData();
       formData.append("file", file);
 
-      const response = await fetch(`/api/projects/${projectId}/budget/import`, {
+      const result = await apiFetch<ImportResult>(`/api/projects/${projectId}/budget/import`, {
         method: "POST",
         body: formData,
       });
-
-      const result: ImportResult = await response.json();
-
-      if (!response.ok) {
-        setImportResult(result);
-        throw new Error(
-          result.error || result.errors?.[0] || result.message || "Failed to import budget",
-        );
-      }
-
       setImportResult(result);
 
       let message = `Budget imported successfully! ${result.importedCount || 0} line item(s) added.`;

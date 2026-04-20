@@ -5,12 +5,13 @@ import { useParams, useRouter } from "next/navigation";
 import { Plus, Folder, Settings } from "lucide-react";
 import { toast } from "sonner";
 import { DrawingAreaSelector } from "@/components/drawings/DrawingAreaSelector";
+import { DrawingAreaCard } from "@/components/drawings/DrawingAreaCard";
 import { PageShell } from "@/components/layout";
 import { KpiRow } from "@/components/ds";
 
 import { Button } from "@/components/ui/button";
 import { useDrawingAreas, useCreateDrawingArea, useUpdateDrawingArea, useDeleteDrawingArea } from "@/hooks/use-drawing-areas";
-import type { DrawingAreaWithCount } from "@/types/drawings.types";
+import type { DrawingAreaWithCount, DrawingAreaFormData } from "@/types/drawings.types";
 
 export default function DrawingAreasPage() {
   const params = useParams();
@@ -18,6 +19,7 @@ export default function DrawingAreasPage() {
   const projectId = params.projectId as string;
 
   const [selectedAreaId, setSelectedAreaId] = useState<string | null>(null);
+  const [editingArea, setEditingArea] = useState<DrawingAreaWithCount | null>(null);
 
   const { data: areas, isLoading, error } = useDrawingAreas(projectId);
   const createArea = useCreateDrawingArea(projectId);
@@ -45,8 +47,15 @@ export default function DrawingAreasPage() {
     }
   };
 
-  const handleEditArea = async (area: DrawingAreaWithCount) => {
-    toast.info("Edit functionality will be implemented in the DrawingAreaCard component");
+  const handleEditArea = (area: DrawingAreaWithCount) => {
+    setEditingArea(area);
+  };
+
+  const handleSaveArea = async (data: DrawingAreaFormData) => {
+    if (!editingArea) return;
+    await updateArea.mutateAsync({ areaId: editingArea.id, data });
+    toast.success("Drawing area updated");
+    setEditingArea(null);
   };
 
   const handleDeleteArea = async (area: DrawingAreaWithCount) => {
@@ -148,6 +157,14 @@ export default function DrawingAreasPage() {
           )}
         </div>
 
+      {editingArea && (
+        <DrawingAreaCard
+          area={editingArea}
+          isOpen={true}
+          onClose={() => setEditingArea(null)}
+          onSave={handleSaveArea}
+        />
+      )}
     </PageShell>
   );
 }

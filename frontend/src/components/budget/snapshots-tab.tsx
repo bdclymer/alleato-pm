@@ -9,6 +9,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Camera, Calendar, Download, History, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api-client";
@@ -44,6 +51,8 @@ export function SnapshotsTab({ projectId }: SnapshotsTabProps) {
   const [snapshotsData, setSnapshotsData] =
     React.useState<SnapshotsData | null>(null);
   const [creating, setCreating] = React.useState(false);
+  const [compareA, setCompareA] = React.useState<string>("");
+  const [compareB, setCompareB] = React.useState<string>("");
 
   const fetchSnapshots = React.useCallback(async () => {
     try {
@@ -210,7 +219,7 @@ export function SnapshotsTab({ projectId }: SnapshotsTabProps) {
             </CardContent>
           </Card>
         ) : (
-          snapshots.slice(0, 5).map((snapshot) => (
+          snapshots.map((snapshot) => (
             <Card
               key={snapshot.id}
               className="hover:border-border/80 transition-colors cursor-pointer"
@@ -266,7 +275,7 @@ export function SnapshotsTab({ projectId }: SnapshotsTabProps) {
         <CardHeader>
           <CardTitle>Snapshot Comparison</CardTitle>
           <CardDescription>
-            Compare budget states across different project phases
+            Compare any two budget snapshots side by side
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -281,59 +290,79 @@ export function SnapshotsTab({ projectId }: SnapshotsTabProps) {
               </div>
             </div>
           ) : (
-            <div className="space-y-4 max-h-96 overflow-y-auto">
-              {snapshots.map((snapshot, index) => {
-                if (index === 0) return null;
-                const previous = snapshots[index - 1];
-                const budgetChange =
-                  snapshot.total_budget - previous.total_budget;
-                const costChange = snapshot.total_costs - previous.total_costs;
-                const varianceChange = snapshot.variance - previous.variance;
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-1.5">
+                  <span className="text-sm font-medium">Snapshot A</span>
+                  <Select value={compareA} onValueChange={setCompareA}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select snapshot..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {snapshots.map((s) => (
+                        <SelectItem key={s.id} value={s.id}>
+                          {s.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-1.5">
+                  <span className="text-sm font-medium">Snapshot B</span>
+                  <Select value={compareB} onValueChange={setCompareB}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select snapshot..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {snapshots.map((s) => (
+                        <SelectItem key={s.id} value={s.id}>
+                          {s.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
 
+              {(() => {
+                const snapshotA = snapshots.find((s) => s.id === compareA);
+                const snapshotB = snapshots.find((s) => s.id === compareB);
+                if (!snapshotA || !snapshotB || snapshotA.id === snapshotB.id) {
+                  return (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      Select two different snapshots to compare
+                    </p>
+                  );
+                }
+                const budgetChange = snapshotB.total_budget - snapshotA.total_budget;
+                const costChange = snapshotB.total_costs - snapshotA.total_costs;
+                const varianceChange = snapshotB.variance - snapshotA.variance;
                 return (
-                  <div
-                    key={snapshot.id}
-                    className="flex items-center justify-between p-4 border rounded-lg"
-                  >
-                    <div className="flex-1">
-                      <div className="font-medium">{snapshot.name}</div>
-                      <div className="text-sm text-muted-foreground">
-                        vs {previous.name}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        {new Date(snapshot.snapshot_date).toLocaleDateString()}
-                      </div>
+                  <div className="rounded-lg bg-muted/40 p-4 space-y-3">
+                    <div className="grid grid-cols-3 gap-4 text-sm">
+                      <div />
+                      <div className="text-center font-medium">{snapshotA.name}</div>
+                      <div className="text-center font-medium">{snapshotB.name}</div>
                     </div>
-                    <div className="text-right space-y-1">
-                      <div className="text-xs">
-                        <span className="text-muted-foreground">Budget: </span>
-                        <span className={getVarianceColor(budgetChange)}>
-                          {budgetChange > 0 ? "+" : ""}
-                          {formatCurrency(budgetChange)}
-                        </span>
+                    {[
+                      { label: "Total Budget", a: snapshotA.total_budget, b: snapshotB.total_budget, delta: budgetChange },
+                      { label: "Total Costs", a: snapshotA.total_costs, b: snapshotB.total_costs, delta: costChange },
+                      { label: "Variance", a: snapshotA.variance, b: snapshotB.variance, delta: varianceChange },
+                    ].map(({ label, a, b, delta }) => (
+                      <div key={label} className="grid grid-cols-3 gap-4 text-sm">
+                        <div className="text-muted-foreground">{label}</div>
+                        <div className="text-center">{formatCurrency(a)}</div>
+                        <div className="text-center">
+                          {formatCurrency(b)}
+                          <span className={`ml-2 text-xs ${getVarianceColor(delta)}`}>
+                            {delta > 0 ? "+" : ""}{formatCurrency(delta)}
+                          </span>
+                        </div>
                       </div>
-                      <div className="text-xs">
-                        <span className="text-muted-foreground">Costs: </span>
-                        <span className={getVarianceColor(-costChange)}>
-                          {costChange > 0 ? "+" : ""}
-                          {formatCurrency(costChange)}
-                        </span>
-                      </div>
-                      <div className="text-xs">
-                        <span className="text-muted-foreground">
-                          Variance:{" "}
-                        </span>
-                        <span
-                          className={`font-bold ${getVarianceColor(varianceChange)}`}
-                        >
-                          {varianceChange > 0 ? "+" : ""}
-                          {formatCurrency(varianceChange)}
-                        </span>
-                      </div>
-                    </div>
+                    ))}
                   </div>
                 );
-              })}
+              })()}
             </div>
           )}
         </CardContent>

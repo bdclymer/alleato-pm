@@ -248,6 +248,7 @@ export const POST = withApiGuardrails<{ projectId: string }>(
       reason: body.reason,
       approver: body.approver,
       modificationType: body.modificationType ?? body.modification_type,
+      changeEventId: body.changeEventId ?? body.change_event_id,
     });
 
     if (!parsedPayload.success) {
@@ -260,7 +261,7 @@ export const POST = withApiGuardrails<{ projectId: string }>(
       );
     }
 
-    const { budgetItemId, amount, title, description, reason } =
+    const { budgetItemId, amount, title, description, reason, modificationType, changeEventId } =
       parsedPayload.data;
 
     const parsedAmount = amount ? parseFloat(amount) : 0;
@@ -369,6 +370,8 @@ export const POST = withApiGuardrails<{ projectId: string }>(
         sub_job_id: budgetLine.sub_job_id,
         amount: parsedAmount,
         description: description || null,
+        modification_type: modificationType ?? null,
+        change_event_id: changeEventId ?? null,
       });
 
     if (lineInsertError) {
@@ -428,6 +431,7 @@ export const PATCH = withApiGuardrails<{ projectId: string }>(
       modificationId:
         body.modificationId ?? body.modification_id ?? body.modId,
       action: body.action,
+      voidedReason: body.voidedReason ?? body.voided_reason,
     };
 
     const validation = BudgetModificationActionSchema.safeParse(normalizedBody);
@@ -442,7 +446,7 @@ export const PATCH = withApiGuardrails<{ projectId: string }>(
       );
     }
 
-    const { modificationId: modId, action } = validation.data;
+    const { modificationId: modId, action, voidedReason } = validation.data;
 
     const supabase = await createClient();
 
@@ -513,6 +517,20 @@ export const PATCH = withApiGuardrails<{ projectId: string }>(
     // Set effective_date when approved
     if (targetStatus === "approved") {
       updateData.effective_date = new Date().toISOString();
+    }
+
+    // Write voided_reason to all budget_modification_lines when voiding
+    if (targetStatus === "void" && voidedReason) {
+      const { data: modLines } = await supabase
+        .from("budget_modification_lines")
+        .select("id")
+        .eq("budget_modification_id", modId);
+      if (modLines && modLines.length > 0) {
+        await supabase
+          .from("budget_modification_lines")
+          .update({ voided_reason: voidedReason })
+          .eq("budget_modification_id", modId);
+      }
     }
 
     const { data: updatedMod, error: updateError } = await supabase

@@ -311,3 +311,211 @@ export function usePermanentDeleteDrawing(projectId: string) {
     },
   });
 }
+
+// ─── Related Items ─────────────────────────────────────────────────────────
+
+export interface DrawingRelatedItem {
+  id: string;
+  drawing_id: string;
+  related_id: string;
+  related_type: string;
+  created_at: string;
+  created_by: string;
+}
+
+interface RelatedItemsResponse {
+  items: DrawingRelatedItem[];
+}
+
+/**
+ * Fetch all related items linked to a drawing
+ */
+export function useDrawingRelatedItems(projectId: string, drawingId: string) {
+  return useQuery<DrawingRelatedItem[]>({
+    queryKey: ["drawing-related-items", projectId, drawingId],
+    queryFn: async () => {
+      const data = await apiFetch<RelatedItemsResponse>(
+        `/api/projects/${projectId}/drawings/${drawingId}/related-items`,
+      );
+      return data.items;
+    },
+    enabled: !!projectId && !!drawingId,
+  });
+}
+
+/**
+ * Link a related item to a drawing
+ */
+export function useAddRelatedItem(projectId: string, drawingId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { related_id: string; related_type: string }) =>
+      apiFetch<{ item: DrawingRelatedItem }>(
+        `/api/projects/${projectId}/drawings/${drawingId}/related-items`,
+        {
+          method: "POST",
+          body: JSON.stringify(input),
+        },
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["drawing-related-items", projectId, drawingId],
+      });
+      toast.success("Item linked to drawing");
+    },
+    onError: (error: Error) => {
+      toast.error("Could not link item", { description: error.message });
+    },
+  });
+}
+
+/**
+ * Remove a related item link from a drawing
+ */
+export function useRemoveRelatedItem(projectId: string, drawingId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (itemId: string) =>
+      apiFetch(
+        `/api/projects/${projectId}/drawings/${drawingId}/related-items/${itemId}`,
+        { method: "DELETE" },
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["drawing-related-items", projectId, drawingId],
+      });
+      toast.success("Item unlinked from drawing");
+    },
+    onError: (error: Error) => {
+      toast.error("Could not unlink item", { description: error.message });
+    },
+  });
+}
+
+// ─── Sketches ─────────────────────────────────────────────────────────────
+
+export interface DrawingSketchWithUrl {
+  id: string;
+  drawing_revision_id: string;
+  sketch_number: string;
+  name: string;
+  description: string | null;
+  sketch_date: string | null;
+  file_url: string;
+  signed_url: string | null;
+  created_at: string;
+  created_by: string;
+}
+
+interface SketchesResponse {
+  sketches: DrawingSketchWithUrl[];
+}
+
+/**
+ * Fetch all sketches for a drawing revision
+ */
+export function useRevisionSketches(
+  projectId: string,
+  drawingId: string,
+  revisionId: string,
+) {
+  return useQuery<DrawingSketchWithUrl[]>({
+    queryKey: ["drawing-sketches", projectId, drawingId, revisionId],
+    queryFn: async () => {
+      const data = await apiFetch<SketchesResponse>(
+        `/api/projects/${projectId}/drawings/${drawingId}/revisions/${revisionId}/sketches`,
+      );
+      return data.sketches;
+    },
+    enabled: !!projectId && !!drawingId && !!revisionId,
+  });
+}
+
+/**
+ * Upload a new sketch to a drawing revision
+ */
+export function useAddSketch(
+  projectId: string,
+  drawingId: string,
+  revisionId: string,
+) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (formData: FormData) =>
+      apiFetch<{ sketch: DrawingSketchWithUrl }>(
+        `/api/projects/${projectId}/drawings/${drawingId}/revisions/${revisionId}/sketches`,
+        { method: "POST", body: formData },
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["drawing-sketches", projectId, drawingId, revisionId],
+      });
+      toast.success("Sketch uploaded");
+    },
+    onError: (error: Error) => {
+      toast.error("Could not upload sketch", { description: error.message });
+    },
+  });
+}
+
+/**
+ * Delete a sketch from a drawing revision
+ */
+export function useDeleteSketch(
+  projectId: string,
+  drawingId: string,
+  revisionId: string,
+) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (sketchId: string) =>
+      apiFetch(
+        `/api/projects/${projectId}/drawings/${drawingId}/revisions/${revisionId}/sketches/${sketchId}`,
+        { method: "DELETE" },
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["drawing-sketches", projectId, drawingId, revisionId],
+      });
+      toast.success("Sketch deleted");
+    },
+    onError: (error: Error) => {
+      toast.error("Could not delete sketch", { description: error.message });
+    },
+  });
+}
+
+// ─── Change History ────────────────────────────────────────────────────────
+
+export interface DrawingChangeEvent {
+  id: string;
+  drawing_id: string;
+  project_id: number;
+  changed_by: string;
+  changed_by_name: string;
+  changed_at: string;
+  field_name: string;
+  old_value: string | null;
+  new_value: string | null;
+  change_type: string;
+}
+
+interface ChangeHistoryResponse {
+  history: DrawingChangeEvent[];
+}
+
+/**
+ * Fetch the change history audit trail for a drawing
+ */
+export function useDrawingChangeHistory(projectId: string, drawingId: string) {
+  return useQuery<DrawingChangeEvent[]>({
+    queryKey: ["drawing-change-history", projectId, drawingId],
+    queryFn: async () => {
+      const data = await apiFetch<ChangeHistoryResponse>(
+        `/api/projects/${projectId}/drawings/${drawingId}/change-history`,
+      );
+      return data.history;
+    },
+    enabled: !!projectId && !!drawingId,
+  });
+}

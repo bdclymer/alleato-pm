@@ -10,6 +10,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
+import { apiFetch, ApiError } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import { NumberInput } from "@/components/ui/number-input";
 import { MoneyField } from "@/components/forms/MoneyField";
@@ -172,13 +173,7 @@ export function BudgetLineItemCreatorModal({
 
       try {
         setLoadingCodes(true);
-        const response = await fetch(`/api/projects/${projectId}/budget-codes`);
-
-        if (!response.ok) {
-          throw new Error("Failed to load budget codes");
-        }
-
-        const { budgetCodes } = await response.json();
+        const { budgetCodes } = await apiFetch<{ budgetCodes: BudgetCode[] }>(`/api/projects/${projectId}/budget-codes`);
         setBudgetCodes(budgetCodes || []);
       } catch (error) {
         setBudgetCodes([]);
@@ -392,33 +387,28 @@ export function BudgetLineItemCreatorModal({
         return;
       }
 
-      const response = await fetch(`/api/projects/${projectId}/budget-codes`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const { budgetCode: createdCode } = await apiFetch<{ budgetCode: BudgetCode & { fullLabel: string; code: string; costTypeId: string } }>(
+        `/api/projects/${projectId}/budget-codes`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            cost_code_id: newCodeData.costCodeId,
+            cost_type_id: newCodeData.costType,
+            description: selectedCostCode.title,
+          }),
         },
-        body: JSON.stringify({
-          cost_code_id: newCodeData.costCodeId,
-          cost_type_id: newCodeData.costType,
-          description: selectedCostCode.title,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        if (response.status === 409) {
+      ).catch((err: unknown) => {
+        if (err instanceof ApiError && err.status === 409) {
           const costTypeLabel = getCostTypeLabel(newCodeData.costType);
           toast.error(
             `Budget code "${selectedCostCode.title} – ${costTypeLabel}" already exists for this project. Select it from the dropdown instead.`,
           );
           setShowCreateCodeModal(false);
           setNewCodeData({ costCodeId: "", costType: "" });
-          return;
+          return null as never;
         }
-        throw new Error(errorData.error || "Failed to create budget code");
-      }
-
-      const { budgetCode: createdCode } = await response.json();
+        throw err;
+      });
 
       setBudgetCodes((prev) => [...prev, createdCode]);
       setRows((prev) => {

@@ -18,6 +18,7 @@ import {
   InlineTableCell,
 } from "@/components/ds/inline-table";
 import { cn } from "@/lib/utils";
+import { apiFetch } from "@/lib/api-client";
 import { AlertCircle } from "lucide-react";
 
 interface PendingCostChange {
@@ -64,12 +65,7 @@ export function PendingCostChangesModal({
     setError(null);
     try {
       const url = `/api/projects/${projectId}/budget/pending-cost-changes?budgetLineId=${budgetLineId}${typeFilter !== "all" ? `&type=${typeFilter}` : ""}`;
-      const response = await fetch(url);
-      if (!response.ok) {
-        const payload = await response.json().catch(() => ({}));
-        throw new Error(payload.error || "Failed to fetch pending cost changes");
-      }
-      const data = await response.json();
+      const data = await apiFetch<{ changes: PendingCostChange[] }>(url);
       setChanges(data.changes || []);
     } catch (error) {
       console.error("Failed to fetch pending cost changes:", error);

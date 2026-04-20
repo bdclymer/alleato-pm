@@ -79,6 +79,10 @@ import {
 } from "@/components/ui/alert-dialog";
 import { EmptyState } from "@/components/ds";
 import { DrawingComments } from "@/components/drawings/DrawingComments";
+import { DrawingRelatedItemsPanel } from "@/components/drawings/DrawingRelatedItemsPanel";
+import { DrawingSketchPanel } from "@/components/drawings/DrawingSketchPanel";
+import { DrawingChangeHistory } from "@/components/drawings/DrawingChangeHistory";
+import { DrawingDistributeDialog } from "@/components/drawings/DrawingDistributeDialog";
 
 import {
   useDrawing,
@@ -325,6 +329,7 @@ export default function DrawingDetailPage() {
 
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showDistributeDialog, setShowDistributeDialog] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [editForm, setEditForm] = useState<EditFormState>({
@@ -598,7 +603,7 @@ export default function DrawingDetailPage() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem
-                onClick={() => toast.info("Email — coming soon")}
+                onClick={() => setShowDistributeDialog(true)}
               >
                 <Mail className="h-4 w-4 mr-2" />
                 Email
@@ -920,20 +925,19 @@ export default function DrawingDetailPage() {
           {/* SKETCHES TAB                                                      */}
           {/* ---------------------------------------------------------------- */}
           <TabsContent value="sketches">
-            <div className="flex justify-end mb-4">
-              <Button
-                size="sm"
-                onClick={() => toast.info("Add Sketch — coming soon")}
-              >
-                <PenLine />
-                Add Sketch
-              </Button>
-            </div>
-            <EmptyState
-              icon={<PenLine className="h-6 w-6 text-muted-foreground" />}
-              title="No sketches yet"
-              description="Sketches and markups on this drawing will appear here."
-            />
+            {currentRevision ? (
+              <DrawingSketchPanel
+                projectId={projectId}
+                drawingId={drawingId}
+                revisionId={currentRevision.id}
+              />
+            ) : (
+              <EmptyState
+                icon={<PenLine className="h-6 w-6 text-muted-foreground" />}
+                title="No revision yet"
+                description="Upload a drawing revision first to add sketches."
+              />
+            )}
           </TabsContent>
 
           {/* ---------------------------------------------------------------- */}
@@ -951,21 +955,9 @@ export default function DrawingDetailPage() {
           {/* REVISION RELATED ITEMS TAB                                        */}
           {/* ---------------------------------------------------------------- */}
           <TabsContent value="revision-related">
-            <div className="flex justify-end mb-4">
-              <Button
-                size="sm"
-                onClick={() =>
-                  toast.info("Link Related Item — coming soon")
-                }
-              >
-                <Link2 className="h-4 w-4 mr-1.5" />
-                Link Related Item
-              </Button>
-            </div>
-            <EmptyState
-              icon={<Link2 className="h-6 w-6 text-muted-foreground" />}
-              title="No revision related items"
-              description="RFIs, submittals, and other items linked to this revision will appear here."
+            <DrawingRelatedItemsPanel
+              projectId={projectId}
+              drawingId={currentRevision?.id ?? drawingId}
             />
           </TabsContent>
 
@@ -973,21 +965,9 @@ export default function DrawingDetailPage() {
           {/* DRAWING RELATED ITEMS TAB                                         */}
           {/* ---------------------------------------------------------------- */}
           <TabsContent value="drawing-related">
-            <div className="flex justify-end mb-4">
-              <Button
-                size="sm"
-                onClick={() =>
-                  toast.info("Link Related Item — coming soon")
-                }
-              >
-                <Link2 className="h-4 w-4 mr-1.5" />
-                Link Related Item
-              </Button>
-            </div>
-            <EmptyState
-              icon={<FileText className="h-6 w-6 text-muted-foreground" />}
-              title="No drawing related items"
-              description="Change orders, commitments, and other items linked to this drawing will appear here."
+            <DrawingRelatedItemsPanel
+              projectId={projectId}
+              drawingId={drawingId}
             />
           </TabsContent>
 
@@ -998,7 +978,7 @@ export default function DrawingDetailPage() {
             <div className="flex justify-end mb-4">
               <Button
                 size="sm"
-                onClick={() => toast.info("Compose Email — coming soon")}
+                onClick={() => setShowDistributeDialog(true)}
               >
                 <Mail />
                 Compose Email
@@ -1015,11 +995,7 @@ export default function DrawingDetailPage() {
           {/* CHANGE HISTORY TAB                                                */}
           {/* ---------------------------------------------------------------- */}
           <TabsContent value="change-history">
-            <EmptyState
-              icon={<History className="h-6 w-6 text-muted-foreground" />}
-              title="No changes recorded"
-              description="All edits and status changes to this drawing will be tracked here."
-            />
+            <DrawingChangeHistory projectId={projectId} drawingId={drawingId} />
           </TabsContent>
 
           {/* ---------------------------------------------------------------- */}
@@ -1031,6 +1007,14 @@ export default function DrawingDetailPage() {
             </div>
           </TabsContent>
         </Tabs>
+
+      <DrawingDistributeDialog
+        projectId={projectId}
+        drawingId={drawingId}
+        drawingNumber={drawing.drawing_number ?? drawing.title ?? "Drawing"}
+        isOpen={showDistributeDialog}
+        onClose={() => setShowDistributeDialog(false)}
+      />
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>

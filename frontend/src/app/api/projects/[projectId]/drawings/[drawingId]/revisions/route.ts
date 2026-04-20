@@ -191,6 +191,18 @@ export const POST = withApiGuardrails<{ projectId: string; drawingId: string }>(
       return apiErrorResponse(revisionResult.error);
     }
 
+    const projectIdNum = Number(projectId);
+    // Record change history (best-effort — don't fail the request if this errors)
+    void Promise.resolve(supabase.from("drawing_change_history" as Parameters<typeof supabase.from>[0]).insert({
+      drawing_id: drawingId,
+      project_id: projectIdNum,
+      changed_by: user.id,
+      field_name: "revision",
+      old_value: null,
+      new_value: revisionResult.data?.revision_number ?? "new revision",
+      change_type: "revision_added",
+    })).catch(() => {}); // fire-and-forget
+
     return NextResponse.json(revisionResult.data, { status: 201 });
   } catch (err) {
     return NextResponse.json(

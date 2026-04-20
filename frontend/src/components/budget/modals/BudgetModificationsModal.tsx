@@ -17,6 +17,16 @@ import {
   InlineTableRow,
   InlineTableCell,
 } from "@/components/ds/inline-table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Check, X, Send, Ban, Loader2 } from "lucide-react";
@@ -70,6 +80,8 @@ export function BudgetModificationsModal({
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [voidDialogModId, setVoidDialogModId] = useState<string | null>(null);
+  const [voidReason, setVoidReason] = useState("");
 
   const fetchModifications = useCallback(async () => {
     setLoading(true);
@@ -101,6 +113,11 @@ export function BudgetModificationsModal({
     modificationId: string,
     action: "submit" | "approve" | "reject" | "void",
   ) => {
+    if (action === "void") {
+      setVoidDialogModId(modificationId);
+      setVoidReason("");
+      return;
+    }
     setActionLoading(modificationId);
     try {
       const result = await apiFetch<{ message: string }>(
@@ -115,7 +132,7 @@ export function BudgetModificationsModal({
 
       await fetchModifications();
 
-      if (action === "approve" || action === "void") {
+      if (action === "approve") {
         onModificationChanged?.();
       }
     } catch (error) {
@@ -126,6 +143,36 @@ export function BudgetModificationsModal({
       );
     } finally {
       setActionLoading(null);
+    }
+  };
+
+  const handleConfirmVoid = async () => {
+    if (!voidDialogModId || !voidReason.trim()) return;
+    setActionLoading(voidDialogModId);
+    setVoidDialogModId(null);
+    try {
+      const result = await apiFetch<{ message: string }>(
+        `/api/projects/${projectId}/budget/modifications`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            modificationId: voidDialogModId,
+            action: "void",
+            voidedReason: voidReason.trim(),
+          }),
+        },
+      );
+      toast.success(result.message);
+      await fetchModifications();
+      onModificationChanged?.();
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to void modification",
+      );
+    } finally {
+      setActionLoading(null);
+      setVoidReason("");
     }
   };
 
@@ -266,6 +313,7 @@ export function BudgetModificationsModal({
   ];
 
   return (
+    <>
     <BaseSidebar
       open={open}
       onClose={onClose}
@@ -511,5 +559,55 @@ export function BudgetModificationsModal({
         </div>
       </SidebarFooter>
     </BaseSidebar>
+
+    {/* Void Reason Dialog */}
+    <Dialog
+      open={!!voidDialogModId}
+      onOpenChange={(open) => {
+        if (!open) {
+          setVoidDialogModId(null);
+          setVoidReason("");
+        }
+      }}
+    >
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Void Modification</DialogTitle>
+          <DialogDescription>
+            Provide a reason for voiding this modification. This action cannot be undone.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-2 py-2">
+          <Label htmlFor="void-reason">Reason <span className="text-destructive">*</span></Label>
+          <Textarea
+            id="void-reason"
+            value={voidReason}
+            onChange={(e) => setVoidReason(e.target.value)}
+            placeholder="Describe why this modification is being voided..."
+            rows={4}
+            autoFocus
+          />
+        </div>
+        <DialogFooter>
+          <Button
+            variant="outline"
+            onClick={() => {
+              setVoidDialogModId(null);
+              setVoidReason("");
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="destructive"
+            disabled={!voidReason.trim()}
+            onClick={handleConfirmVoid}
+          >
+            Void Modification
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }

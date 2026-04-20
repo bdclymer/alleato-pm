@@ -3,6 +3,7 @@
 import * as React from "react";
 import { X, Plus, Trash2, GripVertical, Eye, EyeOff, Lock } from "lucide-react";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api-client";
 
 import {
   BudgetOverlay,
@@ -209,16 +210,10 @@ export function BudgetViewsModal({
         })),
       };
 
-      const response = await fetch(url, {
+      await apiFetch(url, {
         method,
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to save view");
-      }
 
       toast.success(
         mode === "create"

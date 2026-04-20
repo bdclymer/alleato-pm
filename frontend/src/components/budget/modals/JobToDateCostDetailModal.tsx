@@ -18,6 +18,7 @@ import {
   InlineTableCell,
 } from "@/components/ds/inline-table";
 import { cn } from "@/lib/utils";
+import { apiFetch } from "@/lib/api-client";
 import { DollarSign } from "lucide-react";
 
 interface DirectCostItem {
@@ -59,11 +60,8 @@ export function JobToDateCostDetailModal({
     setLoading(true);
     try {
       const url = `/api/projects/${projectId}/budget/direct-costs?budgetLineId=${budgetLineId}&costCode=${encodeURIComponent(costCode)}&status=approved`;
-      const response = await fetch(url);
-      if (response.ok) {
-        const data = await response.json();
-        setCosts(data.costs || []);
-      }
+      const data = await apiFetch<{ costs: DirectCostItem[] }>(url);
+      setCosts(data.costs || []);
     } catch (error) {
       console.error("Failed to fetch job to date cost details:", error);
     } finally {

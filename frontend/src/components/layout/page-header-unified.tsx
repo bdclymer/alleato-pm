@@ -194,7 +194,7 @@ export function PageHeader({
         ) : null}
 
         {/* Title and Actions */}
-        <div className="flex flex-col justify-between gap-2 pt-1.5 pb-3 min-w-0 sm:flex-row sm:items-center">
+        <div className="flex flex-row items-center justify-between gap-2 pt-1.5 pb-3 min-w-0">
           <div className="min-w-0 flex-1">
             {/* Project Name */}
             {shouldShowProjectName && (
@@ -217,7 +217,7 @@ export function PageHeader({
               titleContent
             ) : (
               <Inline gap="md" align="center">
-                <h1 className="text-xl sm:text-2xl lg:text-[1.75rem] font-medium text-foreground/90 line-clamp-2 wrap-break-word">
+                <h1 className="text-2xl sm:text-3xl lg:text-[2rem] font-medium text-foreground/90 line-clamp-2 wrap-break-word">
                   {title}
                 </h1>
                 {statusBadge}
@@ -228,7 +228,7 @@ export function PageHeader({
 
           {/* Actions */}
           {(actions || showExportButton) && (
-            <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
+            <div className="flex shrink-0 flex-wrap items-center gap-2 justify-end">
               {showExportButton && (onExportCSV || onExportPDF) && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>

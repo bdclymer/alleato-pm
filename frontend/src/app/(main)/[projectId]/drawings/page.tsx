@@ -215,11 +215,30 @@ export default function ProjectDrawingsPage() {
     );
   };
 
-  const handleBulkDownload = () => {
+  const handleBulkDownload = async () => {
     const count = tableState.selectedIds.length;
     if (count === 0) return;
-    toast.info(`Downloading ${count} drawing${count === 1 ? "" : "s"}…`);
-    // TODO: wire to a bulk-download API when available
+    toast.info(`Packaging ${count} drawing${count === 1 ? "" : "s"}…`);
+    try {
+      const res = await fetch(`/api/projects/${projectId}/drawings/bulk-download`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ drawingIds: tableState.selectedIds }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `drawings-${new Date().toISOString().split("T")[0]}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success(`Downloaded ${count} drawing${count === 1 ? "" : "s"}`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Bulk download failed");
+    }
   };
 
   const handleDeleteDrawing = (item: DrawingLogTableRow) => {

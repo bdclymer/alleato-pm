@@ -19,6 +19,7 @@ import {
 } from "@/components/budget/modals/BaseSidebar";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import { apiFetch } from "@/lib/api-client";
 
 interface BudgetLineItem {
   id: string;
@@ -47,7 +48,7 @@ export function BudgetModificationModal({
     budgetItemId: "",
     title: "",
     description: "",
-    type: "adjustment",
+    type: "addition",
     amount: "",
     reason: "",
   });
@@ -55,6 +56,10 @@ export function BudgetModificationModal({
     Array<{ id: string; label: string; costCode: string }>
   >([]);
   const [loadingItems, setLoadingItems] = useState(false);
+  const [changeEvents, setChangeEvents] = useState<
+    Array<{ id: string; label: string }>
+  >([]);
+  const [changeEventId, setChangeEventId] = useState<string | null>(null);
 
   useEffect(() => {
     if (open) {
@@ -71,12 +76,10 @@ export function BudgetModificationModal({
     const fetchBudgetItems = async () => {
       try {
         setLoadingItems(true);
-        const response = await fetch(`/api/projects/${projectId}/budget`);
-        if (!response.ok) throw new Error("Failed to load budget items");
-        const data = await response.json();
+        const data = await apiFetch<{ lineItems?: Array<{ id: string; description: string; costCode: string }> }>(`/api/projects/${projectId}/budget`);
         const options =
           data?.lineItems?.map(
-            (item: { id: string; description: string; costCode: string }) => ({
+            (item) => ({
               id: item.id,
               label: item.description || item.costCode,
               costCode: item.costCode,
@@ -96,6 +99,22 @@ export function BudgetModificationModal({
     if (open) fetchBudgetItems();
   }, [open, projectId, preselectedLineItem]);
 
+  useEffect(() => {
+    if (!open) return;
+    apiFetch<{ changeEvents?: Array<{ id: string; number: string; title: string }> }>(
+      `/api/projects/${projectId}/change-events`,
+    )
+      .then((data) => {
+        setChangeEvents(
+          (data.changeEvents ?? []).map((ce) => ({
+            id: ce.id,
+            label: `#${ce.number} — ${ce.title}`,
+          })),
+        );
+      })
+      .catch(() => {});
+  }, [open, projectId]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -114,27 +133,18 @@ export function BudgetModificationModal({
         description: formData.description,
         reason: formData.reason,
         modificationType: formData.type,
+        changeEventId: changeEventId ?? undefined,
       };
 
-      const response = await fetch(
+      const result = await apiFetch<{ data?: { number?: string } }>(
         `/api/projects/${projectId}/budget/modifications`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         },
       );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(
-          error.details || error.error || "Failed to create budget modification",
-        );
-      }
-
-      const result = await response.json();
       toast.success(
-        `Budget modification ${result.data?.number || ""} created as draft. Submit for approval when ready.`,
+        `Budget modification ${(result as { data?: { number?: string } }).data?.number || ""} created as draft. Submit for approval when ready.`,
       );
       onOpenChange(false);
       onSuccess?.();
@@ -143,10 +153,11 @@ export function BudgetModificationModal({
         budgetItemId: preselectedLineItem?.id || budgetItems[0]?.id || "",
         title: "",
         description: "",
-        type: "adjustment",
+        type: "addition",
         amount: "",
         reason: "",
       });
+      setChangeEventId(null);
     } catch (error) {
       toast.error(
         `Failed to create budget modification: ${
@@ -223,13 +234,33 @@ export function BudgetModificationModal({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="change_order">Change Order</SelectItem>
-                  <SelectItem value="budget_transfer">Budget Transfer</SelectItem>
-                  <SelectItem value="adjustment">Budget Adjustment</SelectItem>
-                  <SelectItem value="revision">Budget Revision</SelectItem>
+                  <SelectItem value="addition">Addition</SelectItem>
+                  <SelectItem value="deduction">Deduction</SelectItem>
                 </SelectContent>
               </Select>
             </div>
+
+            {changeEvents.length > 0 && (
+              <div className="grid gap-2">
+                <Label htmlFor="changeEvent">Link to Change Event <span className="text-muted-foreground text-xs">(optional)</span></Label>
+                <Select
+                  value={changeEventId ?? "none"}
+                  onValueChange={(v) => setChangeEventId(v === "none" ? null : v)}
+                >
+                  <SelectTrigger id="changeEvent">
+                    <SelectValue placeholder="None" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">None</SelectItem>
+                    {changeEvents.map((ce) => (
+                      <SelectItem key={ce.id} value={ce.id}>
+                        {ce.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             <div className="grid gap-2">
               <Label htmlFor="amount">Amount</Label>
