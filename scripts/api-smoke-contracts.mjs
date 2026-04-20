@@ -82,8 +82,9 @@ const ENDPOINTS = [
 
   // Commitments
   ["GET", "/api/commitments", "Commitments list", [200, 401]],
-  // POST without body → 400 (schema validation) or 401 (unauthenticated). Never 500.
   ["POST", `/api/projects/${PROJECT_ID}/commitments/export`, "Commitments export (auth + schema check)", [400, 401]],
+  ["POST", "/api/sync/acumatica/commitments", "Commitments Acumatica sync (unauthenticated)", [401]],
+
 
   // Direct Costs
   ["GET", `/api/projects/${PROJECT_ID}/direct-costs/export`, "Direct costs export", [200, 401]],

@@ -18,6 +18,16 @@ const SyncProjectPayloadSchema = z.object({
 });
 
 export const POST = withApiGuardrails("/api/sync/acumatica/commitments#POST", async ({ request }) => {
+  if (!process.env.ACCOUNTING_USER || !process.env.ACCOUNTING_PASSWORD) {
+    throw new GuardrailError({
+      code: "MISSING_ENV_VAR",
+      where: "/api/sync/acumatica/commitments#POST",
+      message: "Acumatica ERP is not configured on this server. Contact your administrator to set ACCOUNTING_USER and ACCOUNTING_PASSWORD.",
+      status: 503,
+      severity: "high",
+    });
+  }
+
   const supabase = await createClient();
 
   const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -50,12 +60,14 @@ export const POST = withApiGuardrails("/api/sync/acumatica/commitments#POST", as
       syncedAt: new Date().toISOString(),
     });
   } catch (err) {
+    const reason = err instanceof Error ? err.message : "Unknown error";
     throw new GuardrailError({
       code: "UPSTREAM_FAILURE",
       where: "/api/sync/acumatica/commitments#POST",
-      message: "Commitments sync failed.",
-      details: { reason: err instanceof Error ? err.message : "Unknown error" },
+      message: `Commitments sync failed: ${reason}`,
+      details: { reason },
       cause: err instanceof Error ? err : undefined,
+      severity: "high",
     });
   }
 });

@@ -957,7 +957,21 @@ export async function syncPurchaseOrders(
   const acuClient = createAcumaticaClient();
   await acuClient.login();
 
-  const acuPOs = await acuClient.getPurchaseOrders({ $top: 500 });
+  // Page size is kept small (100) because $expand=Details makes payloads large.
+  const acuPOs: FlatPurchaseOrder[] = [];
+  let poSkip = 0;
+  const poPageSize = 100;
+  while (true) {
+    const page = await acuClient.getPurchaseOrders({
+      $top: poPageSize,
+      $skip: poSkip,
+      $expand: "Details",
+    });
+    if (page.length === 0) break;
+    acuPOs.push(...page);
+    if (page.length < poPageSize) break;
+    poSkip += poPageSize;
+  }
 
   const supabase = await createClient();
 
