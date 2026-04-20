@@ -81,15 +81,6 @@ export default function PrpStatusPage() {
           </div>
         )}
 
-        {/* Pipeline legend */}
-        <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs text-muted-foreground border-b border-border pb-4">
-          {COLUMNS.filter((c) => c.tip).map((c) => (
-            <span key={c.key}>
-              <span className="font-medium text-foreground">{c.label}</span> — {c.tip}
-            </span>
-          ))}
-        </div>
-
         {loading ? (
           <div className="space-y-2">
             {Array.from({ length: 8 }).map((_, i) => (
@@ -146,6 +137,15 @@ export default function PrpStatusPage() {
             </TableBody>
           </Table>
         )}
+
+        {/* Pipeline legend */}
+        <div className="space-y-1 pt-2 border-t border-border">
+          {COLUMNS.filter((c) => c.tip).map((c) => (
+            <p key={c.key} className="text-xs text-muted-foreground">
+              <span className="font-medium text-foreground">{c.label}</span> — {c.tip}
+            </p>
+          ))}
+        </div>
       </div>
     </PageShell>
   );
