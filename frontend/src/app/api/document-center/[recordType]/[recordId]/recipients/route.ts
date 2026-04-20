@@ -7,7 +7,6 @@ import {
   getDocumentBundle,
   type DocumentRecordType,
 } from "@/lib/documents/record-documents";
-import { apiErrorResponse } from "@/lib/api-error";
 
 interface RouteParams {
   params: Promise<{

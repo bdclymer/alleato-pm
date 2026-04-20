@@ -1321,8 +1321,8 @@ async function loadCommitmentBundle(
 
   const contactRecipients = await fetchPeopleSuggestions(
     supabase,
-    vendor?.company_id
-      ? [{ companyId: vendor.company_id, role: isSubcontract ? "Subcontractor contact" : "Vendor contact" }]
+    vendor?.id
+      ? [{ companyId: vendor.id, role: isSubcontract ? "Subcontractor contact" : "Vendor contact" }]
       : [],
     base.invoice_contact_ids ?? [],
   );

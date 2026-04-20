@@ -12,7 +12,6 @@ import {
   renderDocumentHtml,
   type DocumentRecordType,
 } from "@/lib/documents/record-documents";
-import { apiErrorResponse } from "@/lib/api-error";
 
 interface RouteParams {
   params: Promise<{
@@ -102,20 +101,22 @@ export const POST = withApiGuardrails(
 
     const emailHtml = renderDocumentEmailHtml(bundle, message, senderName || "Alleato User");
     const emailText = renderDocumentEmailText(bundle, message, senderName || "Alleato User");
-    const documentHtml = renderDocumentHtml(bundle);
-    const pdfBuffer = await renderPdfFromHtml(documentHtml);
+
+    let attachments: Array<{ filename: string; content: string }> = [];
+    try {
+      const documentHtml = renderDocumentHtml(bundle);
+      const pdfBuffer = await renderPdfFromHtml(documentHtml);
+      attachments = [{ filename: bundle.filename, content: pdfBuffer.toString("base64") }];
+    } catch (pdfError) {
+      console.error("[document-center/email] PDF generation failed, sending without attachment:", pdfError);
+    }
 
     const result = await sendDocumentEmail({
       to: recipients.map((recipient) => recipient.email.trim()),
       subject,
       html: emailHtml,
       text: emailText,
-      attachments: [
-        {
-          filename: bundle.filename,
-          content: pdfBuffer.toString("base64"),
-        },
-      ],
+      attachments,
     });
 
     return NextResponse.json({
