@@ -118,8 +118,33 @@ export default function DirectCostDetailPage({
     return (
       <PageShell variant="detail" title="Direct Cost Details" onBack={() => router.back()}>
         <div className="space-y-6">
-          <Skeleton className="h-64 w-full" />
-          <Skeleton className="h-32 w-full" />
+          <div className="space-y-3">
+            <div className="flex items-center gap-4">
+              <Skeleton className="h-4 w-28" />
+              <Skeleton className="h-4 w-48" />
+            </div>
+            <div className="flex items-center gap-4">
+              <Skeleton className="h-4 w-28" />
+              <Skeleton className="h-4 w-36" />
+            </div>
+            <div className="flex items-center gap-4">
+              <Skeleton className="h-4 w-28" />
+              <Skeleton className="h-4 w-52" />
+            </div>
+            <div className="flex items-center gap-4">
+              <Skeleton className="h-4 w-28" />
+              <Skeleton className="h-4 w-32" />
+            </div>
+          </div>
+          <div className="space-y-2">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-4">
+                <Skeleton className="h-4 flex-1" />
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 w-20" />
+              </div>
+            ))}
+          </div>
         </div>
       </PageShell>
     );
@@ -161,7 +186,7 @@ export default function DirectCostDetailPage({
           {/* Cost Information + Record Info */}
           <section>
             <div className="grid grid-cols-[minmax(0,1fr)_minmax(340px,420px)] gap-x-16 gap-y-10">
-              <div className="space-y-6">
+              <div className="space-y-4">
                 <SectionRuleHeading label="Cost Information" className="[&_span]:text-primary" />
                 <div className="flex items-center gap-2">
                   <Badge variant="outline">{directCost.cost_type}</Badge>
@@ -229,7 +254,7 @@ export default function DirectCostDetailPage({
                 </dl>
               </div>
               <div className="space-y-8">
-                <div className="space-y-4">
+                <div>
                   <SectionRuleHeading label="Record Information" className="[&_span]:text-primary" />
                   <div className="rounded-md border border-border bg-muted p-6">
                     <dl className="space-y-3 text-sm">
@@ -252,7 +277,7 @@ export default function DirectCostDetailPage({
           {/* Line Items */}
           {directCost.line_items && directCost.line_items.length > 0 && (
             <section>
-              <div className="space-y-6">
+              <div>
                 <SectionRuleHeading
                   label={`Line Items (${directCost.line_items.length})`}
                   className="[&_span]:text-primary"

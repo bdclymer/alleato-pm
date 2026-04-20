@@ -42,6 +42,7 @@ import type { Database } from '@/types/database.types'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
+import { logger } from "@/lib/logger";
 
 /**
  * Helper to get the appropriate Supabase client based on auth method
@@ -402,9 +403,7 @@ export const GET = withApiGuardrails(
     const droppedContractIds = rawContractIds.length - contractIds.length
 
     if (droppedContractIds > 0) {
-      console.warn(
-        `[change-events GET] Ignored ${droppedContractIds} invalid contract_id value(s) while aggregating commitments for project ${projectId}.`,
-      )
+      logger.warn({ msg: `[change-events GET] Ignored ${droppedContractIds} invalid contract_id value(s) while aggregating commitments for project ${projectId}.` })
     }
 
     const { data: contracts, error: contractsError } = contractIds.length
@@ -461,9 +460,7 @@ export const GET = withApiGuardrails(
     const droppedPrimePcoIds = rawPrimePcoIds.length - primePcoIds.length
 
     if (droppedPrimePcoIds > 0) {
-      console.warn(
-        `[change-events GET] Ignored ${droppedPrimePcoIds} invalid prime PCO id value(s) while building list rows for project ${projectId}.`,
-      )
+      logger.warn({ msg: `[change-events GET] Ignored ${droppedPrimePcoIds} invalid prime PCO id value(s) while building list rows for project ${projectId}.` })
     }
 
     const { data: primePcosData, error: primePcosError } = primePcoIds.length

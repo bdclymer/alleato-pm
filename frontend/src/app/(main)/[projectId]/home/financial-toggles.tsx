@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import {
   ChevronDown,
   ChevronRight,
@@ -11,6 +12,7 @@ import {
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ds";
 import { Database } from "@/types/database.types";
 
 type Project = Database["public"]["Tables"]["projects"]["Row"];
@@ -160,17 +162,17 @@ export function FinancialToggles({
 
           {/* Budget Actions */}
           <div className="flex items-center justify-between pt-2">
-            <a
+            <Link
               href={`/${project.id}/budget`}
               className="text-sm text-link hover:text-link-hover hover:underline"
             >
               View Budget Details →
-            </a>
+            </Link>
             <Button asChild size="sm" className="flex items-center gap-1">
-              <a href={`/${project.id}/budget/new`}>
+              <Link href={`/${project.id}/budget/new`}>
                 <Plus />
                 Create Budget
-              </a>
+              </Link>
             </Button>
           </div>
         </div>
@@ -223,21 +225,25 @@ export function FinancialToggles({
                 ))}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">No prime contracts recorded</p>
+            <EmptyState
+              icon={<FileText />}
+              title="No prime contracts recorded"
+              description="Prime contracts will appear here once added to this project."
+            />
           )}
 
           <div className="flex items-center justify-between pt-2">
-            <a
+            <Link
               href={`/${project.id}/contracts`}
               className="text-sm text-link hover:text-link-hover hover:underline"
             >
               Manage Prime Contracts →
-            </a>
+            </Link>
             <Button asChild size="sm" className="flex items-center gap-1">
-              <a href={`/${project.id}/contracts/new`}>
+              <Link href={`/${project.id}/contracts/new`}>
                 <Plus />
                 Create Contract
-              </a>
+              </Link>
             </Button>
           </div>
         </div>
@@ -294,21 +300,25 @@ export function FinancialToggles({
               ))}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">No commitments recorded</p>
+            <EmptyState
+              icon={<Layers />}
+              title="No commitments recorded"
+              description="Commitments will appear here once added to this project."
+            />
           )}
 
           <div className="flex items-center justify-between pt-2">
-            <a
+            <Link
               href={`/${project.id}/commitments`}
               className="text-sm text-link hover:text-link-hover hover:underline"
             >
               View All Commitments →
-            </a>
+            </Link>
             <Button asChild size="sm" className="flex items-center gap-1">
-              <a href={`/${project.id}/commitments/new`}>
+              <Link href={`/${project.id}/commitments/new`}>
                 <Plus />
                 Create Commitment
-              </a>
+              </Link>
             </Button>
           </div>
         </div>

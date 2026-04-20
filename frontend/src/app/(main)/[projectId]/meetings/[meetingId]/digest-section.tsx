@@ -10,6 +10,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { useMeetingDigest } from "@/hooks/use-meeting-digest";
+import { SectionRuleHeading } from "@/components/layout/spacing";
 import type {
   DigestDecision,
   DigestActionItem,
@@ -50,7 +51,7 @@ export function DigestSection({ projectId, meetingId }: DigestSectionProps) {
     <section className="space-y-4">
       <div className="flex items-center gap-2">
         <Sparkles className="h-4 w-4 text-primary" />
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-foreground">AI Digest</h2>
+        <SectionRuleHeading label="AI Digest" />
       </div>
 
       {hasTakeaways && (
@@ -158,7 +159,7 @@ function DigestList({
     <div className="space-y-2 border-l border-border pl-4">
       <div className="flex items-center gap-2">
         {icon}
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{title}</h3>
+        <SectionRuleHeading label={title} />
       </div>
       <ul className="space-y-2">{children}</ul>
     </div>

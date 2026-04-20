@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/table";
 import { StatusBadge } from "@/components/ds";
 import type { ChangeEvent } from "@/types/change-events";
+import { SectionRuleHeading } from "@/components/layout/spacing";
 
 // =============================================================================
 // Types
@@ -161,9 +162,7 @@ export function PCOWorkspace({
       {/* ── Left Panel: Change Event Pool ── */}
       <div className="lg:col-span-2 space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Available Change Events
-          </h3>
+          <SectionRuleHeading label="Available Change Events" />
           <span className="text-xs tabular-nums text-muted-foreground">
             {filteredCEs.length}
           </span>
@@ -378,9 +377,7 @@ export function PCOWorkspace({
 
         {/* Grouped Change Events */}
         <section className="space-y-3">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Grouped Change Events
-          </h3>
+          <SectionRuleHeading label="Grouped Change Events" />
           {groupedCEs.length === 0 ? (
             <div className="flex flex-col items-center justify-center rounded-md bg-muted/30 py-8">
               <Plus className="mb-2 h-5 w-5 text-muted-foreground/50" />
@@ -421,9 +418,7 @@ export function PCOWorkspace({
         {/* Line Items */}
         <section className="space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Line Items
-            </h3>
+            <SectionRuleHeading label="Line Items" />
             <Button variant="outline" size="sm" onClick={onAddLineItem}>
               <Plus className="mr-1 h-3 w-3" />
               Add Line Item
@@ -545,9 +540,7 @@ export function PCOWorkspace({
 
         {/* Financial Summary */}
         <section className="space-y-3 border-t border-border pt-4">
-          <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Financial Summary
-          </h4>
+          <SectionRuleHeading label="Financial Summary" />
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Subtotal</span>

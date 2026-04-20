@@ -7,6 +7,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 import { PageContainer } from "@/components/layout";
+import { EmptyState } from "@/components/ds";
 import { createClient } from "@/lib/supabase/server";
 
 interface PageProps {
@@ -158,11 +159,11 @@ export default async function SupportArticleDetailPage({ params }: PageProps) {
               {article.markdown_content}
             </ReactMarkdown>
           ) : (
-            <div className="text-center py-12">
-              <FileText className="h-10 w-10 text-muted-foreground/30 mx-auto mb-4" strokeWidth={1.5} />
-              <p className="text-sm font-medium text-foreground">No content available</p>
-              <p className="text-sm text-muted-foreground mt-1">This article has not been crawled yet.</p>
-            </div>
+            <EmptyState
+              icon={<FileText />}
+              title="No content available"
+              description="This article has not been crawled yet."
+            />
           )}
         </article>
 

@@ -8,6 +8,7 @@ import {
   Info,
   AlertTriangle,
   FileText,
+  Plus,
 } from "lucide-react";
 
 export function FeedbackSection() {
@@ -80,11 +81,12 @@ export function FeedbackSection() {
             icon={<FileText className="h-6 w-6 text-muted-foreground" />}
             title="No contracts yet"
             description="Create your first prime contract to start tracking committed costs."
-            action={{
-              label: "Create Contract",
-              onClick: () =>
-                toast.info("This is a demo — no contract created"),
-            }}
+            action={
+              <Button size="sm" variant="outline" onClick={() => toast.info("This is a demo — no contract created")}>
+                <Plus />
+                Create Contract
+              </Button>
+            }
           />
         </div>
       </div>

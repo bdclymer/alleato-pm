@@ -7,6 +7,7 @@ import { createAttachmentSchema } from "../../validation";
 import { ZodError } from "zod";
 import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
+import { logger } from "@/lib/logger";
 
 interface RouteParams {
   params: Promise<{ projectId: string; changeEventId: string }>;
@@ -307,7 +308,7 @@ export const DELETE = withApiGuardrails(
         .remove(filePaths);
 
       if (storageError) {
-        console.error("Storage cleanup error:", storageError.message);
+        logger.error({ msg: "Storage cleanup error:", data: storageError.message });
       }
     }
 

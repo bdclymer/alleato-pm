@@ -1,6 +1,8 @@
 import { ChevronRight, Eye, MoreHorizontal, Pencil, Send, Trash2 } from "lucide-react";
 import type { ReactElement } from "react";
 
+import { formatDate } from "@/lib/format";
+
 import { StatusBadge } from "@/components/ds";
 import type {
   ColumnConfig,
@@ -207,13 +209,6 @@ function typeLabel(type: string | null | undefined): string {
   }
 }
 
-function formatDate(dateValue: string | null | undefined): string {
-  if (!dateValue) return "-";
-  const parsed = new Date(dateValue);
-  if (Number.isNaN(parsed.getTime())) return "-";
-  return parsed.toLocaleDateString();
-}
-
 function formatMoney(value: number | string | null | undefined): string {
   const numeric =
     typeof value === "number"
@@ -412,21 +407,81 @@ export function renderChangeEventCard(
   item: ChangeEvent,
   onClick: (item: ChangeEvent) => void,
 ): ReactElement {
+  const hasPrimePco = Boolean(item.rom && Number(item.rom) !== 0);
+  const hasCostRom = Boolean(item.cost_rom && Number(item.cost_rom) !== 0);
+  const hasCommitment = Boolean(item.commitment && Number(item.commitment) !== 0);
+  const hasFinancials = hasPrimePco || hasCostRom || hasCommitment;
+
   return (
     <Button
       type="button"
       variant="ghost"
-      className="h-auto w-full justify-start rounded-lg border p-4 text-left hover:bg-muted/50"
+      className="h-auto w-full flex-col items-start justify-start gap-0 whitespace-normal rounded-lg border border-border bg-card p-4 text-left shadow-xs hover:bg-muted/40 transition-colors"
       onClick={() => onClick(item)}
     >
-      <div className="mb-2 flex items-start justify-between gap-4">
-        <div>
-          <p className="text-xs uppercase text-muted-foreground">{item.number || `CE-${item.id}`}</p>
-          <h3 className="font-medium">{item.title || "Untitled Change Event"}</h3>
+      {/* Header: CE number + status badge */}
+      <div className="mb-3 flex w-full items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <span className="font-mono text-xs text-muted-foreground">
+            {item.number || `CE-${item.id}`}
+          </span>
+          <p className="mt-1 line-clamp-2 text-sm font-medium leading-snug text-foreground">
+            {item.title || "Untitled Change Event"}
+          </p>
         </div>
-        <StatusBadge status={statusLabel(item.status)} />
+        <div className="shrink-0">
+          <StatusBadge status={statusLabel(item.status)} />
+        </div>
       </div>
-      <p className="text-sm text-muted-foreground">{scopeLabel(item.scope)} · {typeLabel(item.type)}</p>
+
+      {/* Meta: scope · type · origin */}
+      <div className="mb-3 flex w-full flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+        <span>{scopeLabel(item.scope)}</span>
+        {item.type && (
+          <>
+            <span className="opacity-40" aria-hidden>·</span>
+            <span>{typeLabel(item.type)}</span>
+          </>
+        )}
+        {item.origin && (
+          <>
+            <span className="opacity-40" aria-hidden>·</span>
+            <span>{item.origin}</span>
+          </>
+        )}
+      </div>
+
+      {/* Financials: Prime PCO / Cost ROM / Commitment */}
+      {hasFinancials && (
+        <div className="mb-3 grid w-full grid-cols-3 rounded-md bg-muted/50 p-3">
+          <div>
+            <p className="text-xs text-muted-foreground">Prime PCO</p>
+            <p className="mt-1 text-sm font-medium tabular-nums text-foreground">
+              {formatMoney(item.rom)}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Cost ROM</p>
+            <p className="mt-1 text-sm font-medium tabular-nums text-foreground">
+              {formatMoney(item.cost_rom)}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Commitment</p>
+            <p className="mt-1 text-sm font-medium tabular-nums text-foreground">
+              {formatMoney(item.commitment)}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Footer: created date + change reason */}
+      <div className="flex w-full items-center justify-between gap-2 text-xs text-muted-foreground">
+        <span>{item.created_at ? formatDate(item.created_at) : "—"}</span>
+        {item.reason && (
+          <span className="min-w-0 truncate text-right">{item.reason}</span>
+        )}
+      </div>
     </Button>
   );
 }
@@ -439,14 +494,32 @@ export function renderChangeEventList(
     <Button
       type="button"
       variant="ghost"
-      className="h-auto flex w-full items-center justify-between rounded-md px-4 py-2 text-left hover:bg-muted/50"
+      className="h-auto w-full items-center justify-between gap-4 whitespace-normal rounded-md px-4 py-3 text-left hover:bg-muted/50"
       onClick={() => onClick(item)}
     >
-      <div>
-        <p className="text-sm font-medium">{item.number || `CE-${item.id}`}</p>
-        <p className="text-xs text-muted-foreground">{item.title || "Untitled Change Event"}</p>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <span className="font-mono text-xs text-muted-foreground">
+            {item.number || `CE-${item.id}`}
+          </span>
+          {item.scope && (
+            <span className="text-xs text-muted-foreground opacity-60">
+              {scopeLabel(item.scope)}
+            </span>
+          )}
+        </div>
+        <p className="mt-1 truncate text-sm font-medium text-foreground">
+          {item.title || "Untitled Change Event"}
+        </p>
       </div>
-      <StatusBadge status={statusLabel(item.status)} />
+      <div className="flex shrink-0 items-center gap-4">
+        {item.rom ? (
+          <span className="hidden text-sm tabular-nums text-foreground sm:block">
+            {formatMoney(item.rom)}
+          </span>
+        ) : null}
+        <StatusBadge status={statusLabel(item.status)} />
+      </div>
     </Button>
   );
 }

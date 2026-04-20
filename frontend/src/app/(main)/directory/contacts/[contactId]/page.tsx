@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ds/text";
+import { EmptyState } from "@/components/ds";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -294,15 +295,17 @@ export default function ContactDetailsPage() {
                           </div>
                         ))}
                       {contact.memberships.filter(m => m.status === "active").length === 0 && (
-                        <Text tone="muted" className="text-center py-8">
-                          No active project memberships
-                        </Text>
+                        <EmptyState
+                          title="No active project memberships"
+                          description="This contact has no active memberships on any project."
+                        />
                       )}
                     </div>
                   ) : (
-                    <Text tone="muted" className="text-center py-8">
-                      No project memberships found
-                    </Text>
+                    <EmptyState
+                      title="No project memberships found"
+                      description="This contact has not been added to any projects."
+                    />
                   )}
                 </TabsContent>
 
@@ -353,9 +356,10 @@ export default function ContactDetailsPage() {
                       ))}
                     </div>
                   ) : (
-                    <Text tone="muted" className="text-center py-8">
-                      No project memberships found
-                    </Text>
+                    <EmptyState
+                      title="No project memberships found"
+                      description="This contact has not been added to any projects."
+                    />
                   )}
                 </TabsContent>
               </Tabs>

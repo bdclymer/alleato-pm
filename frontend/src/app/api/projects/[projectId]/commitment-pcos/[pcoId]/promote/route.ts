@@ -3,6 +3,7 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
+import { logger } from "@/lib/logger";
 
 interface RouteParams {
   params: Promise<{ projectId: string; pcoId: string }>;
@@ -100,7 +101,7 @@ export const POST = withApiGuardrails(
       .single();
 
     if (coError) {
-      console.error("[commitment-pcos promote] CO creation error:", coError);
+      logger.error({ msg: "[commitment-pcos promote] CO creation error", error: coError.message });
       return apiErrorResponse(coError);
     }
 
@@ -121,7 +122,7 @@ export const POST = withApiGuardrails(
       .single();
 
     if (updateError) {
-      console.error("[commitment-pcos promote] PCO update error, rolling back CO:", updateError);
+      logger.error({ msg: "[commitment-pcos promote] PCO update error, rolling back CO", error: updateError.message });
       // Rollback: delete the created CO
       await supabase.from("contract_change_orders").delete().eq("id", newCo.id);
       return apiErrorResponse(updateError);

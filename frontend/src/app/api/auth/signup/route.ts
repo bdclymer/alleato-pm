@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
 import { z } from "zod";
 import { passwordSchema } from "@/lib/validation/password";
+import { logger } from "@/lib/logger";
 
 // Zod schema for signup request body validation
 // OWASP: Input validation for authentication endpoints (A07:2021 - Identification and Authentication Failures)
@@ -71,7 +72,7 @@ export const POST = withApiGuardrails(
 
     if (signUpError) {
       // Log the real error server-side, but return a generic message to prevent email enumeration
-      console.error("[Signup Error]", signUpError.message);
+      logger.error({ msg: "[Signup Error]", error: signUpError.message });
       return NextResponse.json(
         { message: "If this email is available, a confirmation link has been sent." },
         { status: 200 },

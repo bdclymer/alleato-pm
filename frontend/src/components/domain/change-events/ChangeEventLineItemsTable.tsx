@@ -26,6 +26,7 @@ import { formatCurrency } from "@/config/tables";
 import { cn } from "@/lib/utils";
 import type { VerticalMarkup } from "@/hooks/use-vertical-markup";
 import type { ChangeEventDetailLineItem } from "@/types/change-events";
+import { SectionRuleHeading } from "@/components/layout/spacing";
 
 interface ChangeEventLineItemsTableProps {
   projectId: number;
@@ -288,7 +289,7 @@ export function ChangeEventLineItemsTable({
       {/* Title + toolbar in one row */}
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-baseline gap-2">
-          <h2 className="text-lg font-semibold text-foreground">Line Items</h2>
+          <SectionRuleHeading label="Line Items" />
           <span
             className={cn(
               "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
@@ -649,10 +650,25 @@ export function ChangeEventLineItemsTable({
                   return (
                     <InlineTableRow key={li.id}>
                       <InlineTableCell className="align-top">
-                        <BudgetCodeCell li={li} />
+                        {li.budgetLine ? (
+                          <Link
+                            href={`/${projectId}/budget`}
+                            className="text-primary hover:underline"
+                          >
+                            <BudgetCodeCell li={li} />
+                          </Link>
+                        ) : (
+                          <BudgetCodeCell li={li} />
+                        )}
                       </InlineTableCell>
                       <InlineTableCell className="max-w-30 truncate">
-                        {safeDescription(li.description) || "--"}
+                        <Link
+                          href={`/${projectId}/change-events/${li.changeEventId}/edit`}
+                          className="text-primary hover:underline"
+                          title={safeDescription(li.description) ?? undefined}
+                        >
+                          {safeDescription(li.description) || "--"}
+                        </Link>
                       </InlineTableCell>
                       <InlineTableCell className="max-w-22.5 truncate">
                         {li.vendor?.id && li.vendor?.name ? (

@@ -2,6 +2,7 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { getApiRouteUser } from "@/lib/supabase/server";
+import { logger } from "@/lib/logger";
 import { createServiceClient } from "@/lib/supabase/service";
 import { createAcumaticaClient } from "@/lib/acumatica/client";
 import type { ProjectBudgetSummary } from "@/lib/acumatica/types";
@@ -45,7 +46,7 @@ export const POST = withApiGuardrails(
       .neq("acumatica_project_id", "");
 
     if (projectsError) {
-      console.error("[financial-insights/scan] Failed to fetch projects:", projectsError);
+      logger.error({ msg: "[financial-insights/scan] Failed to fetch projects", error: projectsError.message });
       return NextResponse.json(
         { error: "Failed to fetch projects" },
         { status: 500 },
@@ -67,7 +68,7 @@ export const POST = withApiGuardrails(
     try {
       await acumatica.login();
     } catch (loginErr) {
-      console.error("[financial-insights/scan] Acumatica login failed:", loginErr);
+      logger.error({ msg: "[financial-insights/scan] Acumatica login failed", error: loginErr instanceof Error ? loginErr.message : String(loginErr) });
       return NextResponse.json(
         {
           scanned: 0,
@@ -107,7 +108,7 @@ export const POST = withApiGuardrails(
           acuSummary = await acumatica.getProjectBudgetSummary(acumaticaProjectId);
         } catch (acuErr) {
           const msg = `Acumatica fetch failed for project ${projectName} (${acumaticaProjectId}): ${acuErr instanceof Error ? acuErr.message : String(acuErr)}`;
-          console.error(`[financial-insights/scan] ${msg}`);
+          logger.error({ msg: `[financial-insights/scan] ${msg}` });
           errors.push(msg);
           continue;
         }
@@ -232,7 +233,7 @@ export const POST = withApiGuardrails(
               .eq("id", existing.id);
 
             if (updateError) {
-              console.error(`[financial-insights/scan] Failed to update alert for ${projectName}:`, updateError);
+              logger.error({ msg: `[financial-insights/scan] Failed to update alert for ${projectName}`, error: updateError.message });
               errors.push(`Failed to update alert "${alert.title}": ${updateError.message}`);
             } else {
               alertsGenerated++;
@@ -244,7 +245,7 @@ export const POST = withApiGuardrails(
               .insert(alert);
 
             if (insertError) {
-              console.error(`[financial-insights/scan] Failed to insert alert for ${projectName}:`, insertError);
+              logger.error({ msg: `[financial-insights/scan] Failed to insert alert for ${projectName}`, error: insertError.message });
               errors.push(`Failed to insert alert "${alert.title}": ${insertError.message}`);
             } else {
               alertsGenerated++;
@@ -253,7 +254,7 @@ export const POST = withApiGuardrails(
         }
       } catch (projectErr) {
         const msg = `Unexpected error scanning project ${projectName} (ID: ${project.id}): ${projectErr instanceof Error ? projectErr.message : String(projectErr)}`;
-        console.error(`[financial-insights/scan] ${msg}`);
+        logger.error({ msg: `[financial-insights/scan] ${msg}` });
         errors.push(msg);
       }
     }
@@ -264,7 +265,7 @@ export const POST = withApiGuardrails(
       errors,
     });
   } catch (err) {
-    console.error("[financial-insights/scan] Unexpected error:", err);
+    logger.error({ msg: "[financial-insights/scan] Unexpected error", error: err instanceof Error ? err.message : String(err) });
     return NextResponse.json(
       {
         scanned: scannedCount,

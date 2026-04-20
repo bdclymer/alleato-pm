@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { createAcumaticaClient } from "@/lib/acumatica/client";
+import { logger } from "@/lib/logger";
 
 
 /**
@@ -53,7 +54,7 @@ export const POST = withApiGuardrails(
       .maybeSingle();
 
     if (projectError) {
-      console.error("[financial-insights/cross-reference] Project lookup failed:", projectError);
+      logger.error({ msg: "[financial-insights/cross-reference] Project lookup failed", error: projectError.message });
       return NextResponse.json(
         { error: `Could not look up project: ${projectError.message}` },
         { status: 500 },
@@ -94,7 +95,7 @@ export const POST = withApiGuardrails(
       .eq("project_id", projectId);
 
     if (budgetError) {
-      console.error("[financial-insights/cross-reference] Budget fetch failed:", budgetError);
+      logger.error({ msg: "[financial-insights/cross-reference] Budget fetch failed", error: budgetError.message });
       return NextResponse.json(
         { error: `Could not fetch Alleato budget data: ${budgetError.message}` },
         { status: 500 },
@@ -106,7 +107,7 @@ export const POST = withApiGuardrails(
     try {
       await acumatica.login();
     } catch (loginErr) {
-      console.error("[financial-insights/cross-reference] Acumatica login failed:", loginErr);
+      logger.error({ msg: "[financial-insights/cross-reference] Acumatica login failed", error: loginErr instanceof Error ? loginErr.message : String(loginErr) });
       return NextResponse.json(
         { error: "Unable to connect to Acumatica ERP. Please try again later." },
         { status: 502 },
@@ -117,7 +118,7 @@ export const POST = withApiGuardrails(
     try {
       acuSummary = await acumatica.getProjectBudgetSummary(acumaticaProjectId);
     } catch (acuErr) {
-      console.error("[financial-insights/cross-reference] Acumatica budget fetch failed:", acuErr);
+      logger.error({ msg: "[financial-insights/cross-reference] Acumatica budget fetch failed", error: acuErr instanceof Error ? acuErr.message : String(acuErr) });
       return NextResponse.json(
         {
           error: `Failed to fetch Acumatica budget for project code "${acumaticaProjectId}": ${acuErr instanceof Error ? acuErr.message : String(acuErr)}`,
@@ -244,7 +245,7 @@ export const POST = withApiGuardrails(
       lineItems,
     });
   } catch (err) {
-    console.error("[financial-insights/cross-reference] Unexpected error:", err);
+    logger.error({ msg: "[financial-insights/cross-reference] Unexpected error", error: err instanceof Error ? err.message : String(err) });
     return NextResponse.json(
       { error: "An unexpected error occurred" },
       { status: 500 },

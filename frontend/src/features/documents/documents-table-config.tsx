@@ -1,5 +1,6 @@
 import type { ReactElement } from "react";
 
+import { formatDate } from "@/lib/format";
 import {
   ExternalLink,
   Eye,
@@ -116,13 +117,6 @@ export const documentFilters: FilterConfig[] = [
 export const documentDefaultVisibleColumns = documentColumns
   .filter((column) => column.defaultVisible !== false)
   .map((column) => column.id);
-
-function formatDate(dateValue: string | null | undefined): string {
-  if (!dateValue) return "-";
-  const parsed = new Date(dateValue);
-  if (Number.isNaN(parsed.getTime())) return "-";
-  return parsed.toLocaleDateString();
-}
 
 function stageLabel(stage: string): string {
   switch (stage) {

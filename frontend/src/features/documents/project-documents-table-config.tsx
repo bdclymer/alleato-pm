@@ -1,5 +1,6 @@
 import type { ReactElement } from "react";
 
+import { formatDate } from "@/lib/format";
 import {
   Download,
   Eye,
@@ -96,13 +97,6 @@ export const projectDocumentDefaultVisibleColumns = projectDocumentColumns
 // =============================================================================
 // Helpers
 // =============================================================================
-
-function formatDate(value: string | null | undefined): string {
-  if (!value) return "-";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "-";
-  return date.toLocaleDateString();
-}
 
 function formatFileSize(bytes: number | null | undefined): string {
   if (bytes === null || bytes === undefined) return "-";

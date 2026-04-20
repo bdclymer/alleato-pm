@@ -1,11 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Send } from "lucide-react";
+import { Plus, Send } from "lucide-react";
 
 import { StatusBadge, EmptyState } from "@/components/ds";
 import { Button } from "@/components/ui/button";
 import type { ChangeEventRfq } from "@/types/change-events";
+import { formatDate } from "@/lib/format";
 
 type RfqWithResponseCount = ChangeEventRfq & { response_count?: number };
 
@@ -13,12 +14,6 @@ interface ChangeEventRfqsTabProps {
   projectId: number;
   changeEventId: string;
   onSendRfq?: () => void;
-}
-
-function formatDate(value: string | null | undefined): string {
-  if (!value) return "—";
-  const d = new Date(value);
-  return Number.isNaN(d.getTime()) ? "—" : d.toLocaleDateString();
 }
 
 function formatMoney(value: number | string | null | undefined): string {
@@ -85,7 +80,14 @@ export function ChangeEventRfqsTab({
         icon={<Send />}
         title="No RFQs"
         description="Send a Request for Quote to vendors for this change event."
-        action={onSendRfq ? { label: "Send RFQ", onClick: onSendRfq } : undefined}
+        action={
+          onSendRfq ? (
+            <Button size="sm" variant="outline" onClick={onSendRfq}>
+              <Plus />
+              Send RFQ
+            </Button>
+          ) : undefined
+        }
       />
     );
   }

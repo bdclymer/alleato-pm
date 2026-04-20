@@ -2,7 +2,8 @@
 
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { CircleHelp } from "lucide-react";
+import { CircleHelp, Settings } from "lucide-react";
+import { EmptyState } from "@/components/ds";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -463,9 +464,11 @@ function CreateProjectForm() {
         {effectiveFormSections.length > 0 ? (
           effectiveFormSections.map(renderSection)
         ) : (
-          <div className="rounded-md border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground">
-            No fields are currently visible for the selected template.
-          </div>
+          <EmptyState
+            icon={<Settings />}
+            title="No fields visible"
+            description="No fields are currently visible for the selected template."
+          />
         )}
 
         <FormActions

@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { z, ZodError } from "zod";
 import { apiErrorResponse } from "@/lib/api-error";
+import { logger } from "@/lib/logger";
 
 interface RouteParams {
   params: Promise<{ projectId: string; pcoId: string }>;
@@ -277,7 +278,7 @@ export const DELETE = withApiGuardrails(
       .eq("pco_type", "commitment");
 
     if (linkDeleteError) {
-      console.error("[commitment-pcos DELETE] Failed to delete links:", linkDeleteError);
+      logger.error({ msg: "[commitment-pcos DELETE] Failed to delete links", error: linkDeleteError.message });
       return apiErrorResponse(linkDeleteError);
     }
 
@@ -289,7 +290,7 @@ export const DELETE = withApiGuardrails(
       .eq("pco_type", "commitment");
 
     if (lineItemDeleteError) {
-      console.error("[commitment-pcos DELETE] Failed to delete line items:", lineItemDeleteError);
+      logger.error({ msg: "[commitment-pcos DELETE] Failed to delete line items", error: lineItemDeleteError.message });
       return apiErrorResponse(lineItemDeleteError);
     }
 

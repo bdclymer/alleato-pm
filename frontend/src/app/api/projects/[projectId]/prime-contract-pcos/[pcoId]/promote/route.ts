@@ -17,6 +17,7 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
+import { logger } from "@/lib/logger";
 
 interface RouteParams {
   params: Promise<{ projectId: string; pcoId: string }>;
@@ -124,7 +125,7 @@ export const POST = withApiGuardrails(
       .single();
 
     if (pccoError) {
-      console.error("[POST /promote] Failed to create PCCO:", pccoError);
+      logger.error({ msg: "[POST /promote] Failed to create PCCO:", data: pccoError });
       return apiErrorResponse(pccoError);
     }
 
@@ -143,7 +144,7 @@ export const POST = withApiGuardrails(
       .eq("id", pcoId);
 
     if (updateError) {
-      console.error("[POST /promote] Failed to update PCO:", updateError);
+      logger.error({ msg: "[POST /promote] Failed to update PCO:", data: updateError });
       // Attempt to clean up the created PCCO
       await supabase
         .from("prime_contract_change_orders")
@@ -176,7 +177,7 @@ export const POST = withApiGuardrails(
           .insert(pccoLineItems);
 
         if (lineItemCopyError) {
-          console.error("[POST /promote] Failed to copy line items:", lineItemCopyError);
+          logger.error({ msg: "[POST /promote] Failed to copy line items:", data: lineItemCopyError });
         }
       }
     }

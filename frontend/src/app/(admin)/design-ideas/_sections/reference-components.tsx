@@ -12,7 +12,8 @@ import {
   EmptyState,
   Eyebrow,
 } from "@/components/ds";
-import { FileText } from "lucide-react";
+import { FileText, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 // ---------------------------------------------------------------------------
 // Sample data for table demo
@@ -295,7 +296,12 @@ export function ReferenceComponentsSection() {
             icon={<FileText className="h-6 w-6 text-muted-foreground" />}
             title="No direct costs yet"
             description="Add your first direct cost to start tracking expenses for this project."
-            action={{ label: "Add Direct Cost", onClick: () => {} }}
+            action={
+              <Button size="sm" variant="outline" onClick={() => {}}>
+                <Plus />
+                Add Direct Cost
+              </Button>
+            }
           />
         </div>
       </div>

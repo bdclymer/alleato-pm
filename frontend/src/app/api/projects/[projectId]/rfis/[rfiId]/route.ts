@@ -17,6 +17,7 @@ import { APP_BASE_URL } from "@/lib/email/client";
 import RFIClosedNotification from "@/emails/rfi/RFIClosedNotification";
 import { rfiEditSchema } from "@/lib/schemas/rfi-schema";
 import { ZodError } from "zod";
+import { logger } from "@/lib/logger";
 
 type RouteParams = {
   params: Promise<{ projectId: string; rfiId: string }>;
@@ -42,7 +43,7 @@ export const GET = withApiGuardrails(
       if (error.code === "PGRST116") {
         return NextResponse.json({ error: "RFI not found" }, { status: 404 });
       }
-      console.error("RFI get error:", error);
+      logger.error({ msg: "RFI get error:", error: error instanceof Error ? error.message : String(error) });
       return apiErrorResponse(error);
     }
 
@@ -163,7 +164,7 @@ export const PATCH = withApiGuardrails(
       .single();
 
     if (error) {
-      console.error("RFI update error:", error);
+      logger.error({ msg: "RFI update error:", error: error instanceof Error ? error.message : String(error) });
       return apiErrorResponse(error);
     }
 
@@ -176,7 +177,7 @@ export const PATCH = withApiGuardrails(
         rfiId,
         closedByUserId: user.id,
       }).catch((err) => {
-        console.error("[rfi-close] notification failed", err);
+        logger.error({ msg: "[rfi-close] notification failed", error: err instanceof Error ? err.message : String(err) });
       });
     }
 
@@ -300,7 +301,7 @@ export const DELETE = withApiGuardrails(
     const { error } = await supabase.from("rfis").delete().eq("id", rfiId);
 
     if (error) {
-      console.error("RFI delete error:", error);
+      logger.error({ msg: "RFI delete error:", error: error instanceof Error ? error.message : String(error) });
       return apiErrorResponse(error);
     }
 

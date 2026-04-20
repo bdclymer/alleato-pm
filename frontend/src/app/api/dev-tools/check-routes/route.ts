@@ -4,6 +4,7 @@ import { NextResponse } from "next/server"
 import { exec } from "child_process"
 import { promisify } from "util"
 import path from "path"
+import { logger } from "@/lib/logger";
 
 const execAsync = promisify(exec)
 
@@ -45,7 +46,7 @@ export const GET = withApiGuardrails(
       })
     }
   } catch (error) {
-    console.error("Error checking routes:", error)
+    logger.error({ msg: "Error checking routes:", error: error instanceof Error ? error.message : String(error) })
     return NextResponse.json(
       {
         conflicts: error instanceof Error ? error.message : "Failed to check routes",

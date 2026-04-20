@@ -43,6 +43,7 @@ import {
   InlineTableHeaderCell,
   InlineTableHeaderRow,
 } from "@/components/ds/inline-table";
+import { EmptyState } from "@/components/ds";
 import { getCostTypeLabel } from "@/constants/budget";
 import type { BudgetCode, ContractLineItem } from "@/app/(main)/[projectId]/prime-contracts/[contractId]/types";
 
@@ -127,19 +128,21 @@ export function PrimeContractSovTab({
 
   return (
     <div className="space-y-4 pb-20">
-      <div className="flex items-center justify-between">
-        <SectionRuleHeading label="Schedule of Values" className="[&_span]:text-primary" />
-        {isSovEditing && (
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={onCancelSovEdit}>
-              Cancel
-            </Button>
-            <Button size="sm" onClick={onSaveSovEdit} disabled={isSavingSovChanges}>
-              {isSavingSovChanges ? "Saving..." : "Save"}
-            </Button>
-          </div>
-        )}
-      </div>
+      <SectionRuleHeading
+        label="Schedule of Values"
+        actions={
+          isSovEditing ? (
+            <>
+              <Button variant="ghost" size="sm" onClick={onCancelSovEdit}>
+                Cancel
+              </Button>
+              <Button size="sm" onClick={onSaveSovEdit} disabled={isSavingSovChanges}>
+                {isSavingSovChanges ? "Saving..." : "Save"}
+              </Button>
+            </>
+          ) : undefined
+        }
+      />
 
       <div className="space-y-4">
         {isSovEditing && (
@@ -154,25 +157,24 @@ export function PrimeContractSovTab({
             Loading schedule of values...
           </div>
         ) : displayedSovItems.length === 0 ? (
-          <div className="py-8 text-center text-muted-foreground">
-            <FileText className="mx-auto mb-3 h-12 w-12 opacity-50" />
-            <p>No SOV lines yet</p>
-            <p className="mt-2 text-xs">
-              Add SOV lines with budget codes to track the contract value
-            </p>
-            <Button
-              variant="outline"
-              size="sm"
-              className="mt-4"
-              onClick={() => {
-                onStartSovEdit();
-                onAddSovLine();
-              }}
-            >
-              <Plus />
-              Add SOV Line
-            </Button>
-          </div>
+          <EmptyState
+            icon={<FileText />}
+            title="No SOV lines yet"
+            description="Add SOV lines with budget codes to track the contract value."
+            action={
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  onStartSovEdit();
+                  onAddSovLine();
+                }}
+              >
+                <Plus />
+                Add SOV Line
+              </Button>
+            }
+          />
         ) : (
           <DndContext
             sensors={sensors}

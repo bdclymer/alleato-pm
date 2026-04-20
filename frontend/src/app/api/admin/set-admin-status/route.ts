@@ -3,6 +3,7 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
+import { logger } from "@/lib/logger";
 
 export const POST = withApiGuardrails(
   "admin/set-admin-status#POST",
@@ -51,7 +52,7 @@ export const POST = withApiGuardrails(
       .eq("id", auth_user_id);
 
     if (updateError) {
-      console.error("[SetAdminStatus] Error updating profile:", updateError);
+      logger.error({ msg: "[SetAdminStatus] Error updating profile:", data: updateError });
       return NextResponse.json(
         { error: "Failed to update admin status" },
         { status: 500 }

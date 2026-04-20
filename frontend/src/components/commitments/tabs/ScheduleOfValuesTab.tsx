@@ -18,7 +18,7 @@ import {
   InlineTableRow,
 } from "@/components/ds/inline-table";
 import { SectionRuleHeading } from "@/components/layout";
-import { SectionHeader } from "@/components/ds";
+import { SectionHeader, EmptyState } from "@/components/ds";
 import { formatCurrency } from "@/config/tables";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -315,33 +315,27 @@ export function ScheduleOfValuesTab({
     return (
       <div className="space-y-4">
         {showHeader ? <SectionHeader title="Schedule of Values" /> : null}
-        <div className="text-center py-8">
-          <Text tone="muted" size="sm">
-            No SOV line items for this commitment
-          </Text>
-          <div className="mt-4">
-            <div className="flex flex-wrap justify-center gap-2">
-              <Button size="sm" onClick={handleAdd}>
-                <Plus />
-                Add Line Item
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={handleImport}
-                disabled={isImporting}
-              >
-                {isImporting ? "Importing..." : "Import from Budget"}
-              </Button>
-            </div>
-          </div>
+        <EmptyState
+          title="No SOV line items for this commitment"
+          description="Add line items manually or import them from the budget."
+          action={<Button onClick={handleAdd}><Plus />Add Line Item</Button>}
+        />
+        <div className="flex justify-center -mt-4">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleImport}
+            disabled={isImporting}
+          >
+            {isImporting ? "Importing..." : "Import from Budget"}
+          </Button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-3">
+    <div>
       {showHeader ? <SectionRuleHeading label="Schedule of Values" className="[&_span]:text-primary" /> : null}
 
       <InlineTable variant="edit">

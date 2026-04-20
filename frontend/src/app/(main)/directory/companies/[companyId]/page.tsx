@@ -6,9 +6,13 @@ import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Calendar, Check, ChevronsUpDown, FolderOpen, MoreHorizontal, Plus, Users } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { formatDate } from "@/lib/format";
 import { createClient } from "@/lib/supabase/client";
+import { useConfirm } from "@/hooks/use-confirm";
 import { createContact, updateContact } from "@/app/(main)/actions/table-actions";
 import { PageShell } from "@/components/layout";
+import { ErrorState } from "@/components/ds";
+import { EmptyState as DsEmptyState } from "@/components/ds";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -121,13 +125,6 @@ interface CompanyDetailsResponse {
   };
 }
 
-function formatDate(value: string | null | undefined): string {
-  if (!value) return "-";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "-";
-  return date.toLocaleDateString();
-}
-
 function formatCurrency(value: number | null | undefined): string {
   const amount = typeof value === "number" ? value : 0;
   return new Intl.NumberFormat("en-US", {
@@ -188,13 +185,6 @@ function SectionHeader({ title, description }: { title: string; description?: st
   );
 }
 
-function EmptyState({ message }: { message: string }) {
-  return (
-    <div className="rounded-md border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground">
-      {message}
-    </div>
-  );
-}
 
 function DetailField({ label, value }: { label: string; value: React.ReactNode }) {
   return (
@@ -209,6 +199,7 @@ export default function CompanyDetailsPage() {
   const router = useRouter();
   const params = useParams();
   const companyId = params.companyId as string;
+  const { confirm, ConfirmDialog } = useConfirm();
 
   const [data, setData] = React.useState<CompanyDetailsResponse | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
@@ -497,9 +488,10 @@ export default function CompanyDetailsPage() {
   async function handleRemoveContactFromCompany(contact: Contact) {
     if (!data?.company.id) return;
 
-    const confirmed = window.confirm(
-      `Remove ${contact.first_name || ""} ${contact.last_name || ""} from ${data.company.name}?`,
-    );
+    const confirmed = await confirm({
+      description: `Remove ${contact.first_name || ""} ${contact.last_name || ""} from ${data.company.name}?`,
+      confirmLabel: "Remove",
+    });
     if (!confirmed) return;
 
     try {
@@ -571,18 +563,10 @@ export default function CompanyDetailsPage() {
   if (error || !data) {
     return (
       <PageShell variant="detail" title="Company Details" description="Unable to load company details" onBack={() => router.back()}>
-        <section className="space-y-4">
-          <SectionHeader title="Request failed" description="The company detail endpoint returned an error." />
-          <div className="rounded-md border border-border px-4 py-4">
-            <p className="text-sm text-destructive">{error || "Company not found"}</p>
-            <div className="mt-4">
-              <Button variant="outline" onClick={() => router.push("/directory/companies")}>
-                <ArrowLeft />
-                Back to Companies
-              </Button>
-            </div>
-          </div>
-        </section>
+        <ErrorState
+          error={error ?? "Company not found"}
+          onRetry={() => router.push("/directory/companies")}
+        />
       </PageShell>
     );
   }
@@ -654,7 +638,7 @@ export default function CompanyDetailsPage() {
                 </button>
               </div>
               {contacts.length === 0 ? (
-                <EmptyState message="No contacts associated with this company." />
+                <DsEmptyState title="No contacts associated with this company" description="Add contacts to track people associated with this company." />
               ) : (
                 <div className="max-w-3xl">
                   <ul className="divide-y divide-border">
@@ -734,7 +718,7 @@ export default function CompanyDetailsPage() {
                 </button>
               </div>
               {associatedProjects.length === 0 ? (
-                <EmptyState message="No projects associated with this company." />
+                <DsEmptyState title="No projects associated with this company" description="Projects will appear here once this company is added to a project." />
               ) : (
                 <Table>
                   <TableHeader>
@@ -787,12 +771,9 @@ export default function CompanyDetailsPage() {
                 </Tabs>
               </div>
               {filteredInvoices.length === 0 ? (
-                <EmptyState
-                  message={
-                    invoiceFilter === "open"
-                      ? "No open invoices found for associated projects."
-                      : "No invoices found for associated projects."
-                  }
+                <DsEmptyState
+                  title={invoiceFilter === "open" ? "No open invoices found" : "No invoices found"}
+                  description="Invoices from associated projects will appear here."
                 />
               ) : (
                 <Table>
@@ -831,7 +812,7 @@ export default function CompanyDetailsPage() {
             <section className="space-y-4">
               <SectionHeader title="Meetings" />
               {meetingsByProject.length === 0 ? (
-                <EmptyState message="No meetings found for this company's projects." />
+                <DsEmptyState title="No meetings found" description="No meetings have been recorded for this company's projects." />
               ) : (
                 <Table>
                   <TableHeader>
@@ -1305,6 +1286,7 @@ export default function CompanyDetailsPage() {
           </ModalFooter>
         </ModalContent>
       </Modal>
+      {ConfirmDialog}
     </PageShell>
   );
 }

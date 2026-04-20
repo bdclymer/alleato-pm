@@ -8,6 +8,8 @@ import { useForm, type SubmitHandler } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
+import { formatDate } from "@/lib/format";
+
 import {
   InlineTable,
   InlineTableBody,
@@ -20,11 +22,14 @@ import {
   InlineTableHeaderRow,
   InlineTableRow,
   StatusBadge,
+  EmptyState,
+  ErrorState,
 } from "@/components/ds";
 import { useMasterCostCodes, useCostCodeTypes } from "@/hooks/use-project-cost-codes";
 import { useVerticalMarkup } from "@/hooks/use-vertical-markup";
 import { ContentSectionStack, LabelValueRow, PageShell, SectionRuleHeading } from "@/components/layout";
 import { apiFetch } from "@/lib/api-client";
+import { useConfirm } from "@/hooks/use-confirm";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -143,14 +148,6 @@ function formatCurrency(amount: number | null): string {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount);
 }
 
-function formatDate(dateStr: string | null): string {
-  if (!dateStr) return "—";
-  return new Date(dateStr).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-}
 
 function statusLabel(status: string | null): string {
   if (!status) return "Unknown";
@@ -172,6 +169,7 @@ export default function CommitmentCODetailPage() {
   const projectId = params.projectId as string;
   const commitmentCoId = params.commitmentCoId as string;
 
+  const { confirm, ConfirmDialog } = useConfirm();
   const [isLoading, setIsLoading] = useState(true);
   const [co, setCo] = useState<CommitmentCOData | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -369,7 +367,12 @@ export default function CommitmentCODetailPage() {
 
   const handleDeleteLineItem = useCallback(
     async (lineItemId: string) => {
-      if (!confirm("Delete this line item?")) return;
+      const ok = await confirm({
+        description: "Delete this line item?",
+        variant: "destructive",
+        confirmLabel: "Delete",
+      });
+      if (!ok) return;
       try {
         await apiFetch(`${lineItemApiBase}/${lineItemId}`, {
           method: "DELETE",
@@ -380,7 +383,7 @@ export default function CommitmentCODetailPage() {
         toast.error("Failed to delete line item");
       }
     },
-    [lineItemApiBase, fetchLineItemsFn],
+    [lineItemApiBase, fetchLineItemsFn, confirm],
   );
 
   const startEditLineItem = useCallback(
@@ -507,7 +510,12 @@ export default function CommitmentCODetailPage() {
 
   const handleDeleteAttachment = useCallback(
     async (attachmentId: string) => {
-      if (!confirm("Delete this attachment?")) return;
+      const ok = await confirm({
+        description: "Delete this attachment?",
+        variant: "destructive",
+        confirmLabel: "Delete",
+      });
+      if (!ok) return;
       try {
         await apiFetch(
           `/api/projects/${projectId}/commitment-change-orders/${commitmentCoId}/attachments/${attachmentId}`,
@@ -519,7 +527,7 @@ export default function CommitmentCODetailPage() {
         toast.error("Failed to delete attachment");
       }
     },
-    [projectId, commitmentCoId],
+    [projectId, commitmentCoId, confirm],
   );
 
   useEffect(() => {
@@ -598,7 +606,12 @@ export default function CommitmentCODetailPage() {
 
   const handleDelete = useCallback(async () => {
     if (!co || !contractId) return;
-    if (!confirm(`Delete change order ${co.change_order_number}?`)) return;
+    const ok = await confirm({
+      description: `Delete change order ${co.change_order_number}?`,
+      variant: "destructive",
+      confirmLabel: "Delete",
+    });
+    if (!ok) return;
     try {
       await apiFetch(
         `/api/commitments/${contractId}/change-orders/${commitmentCoId}`,
@@ -609,7 +622,7 @@ export default function CommitmentCODetailPage() {
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to delete");
     }
-  }, [co, contractId, projectId, commitmentCoId, router]);
+  }, [co, contractId, projectId, commitmentCoId, router, confirm]);
 
   const handleApprove = useCallback(async () => {
     if (!co || !contractId) return;
@@ -674,13 +687,10 @@ export default function CommitmentCODetailPage() {
         description="Failed to load change order"
         onBack={handleBack}
       >
-        <div className="text-center text-destructive">{error || "Not found"}</div>
-        <div className="mt-4 flex justify-center">
-          <Button onClick={handleBack}>
-            <ArrowLeft />
-            Back to Change Orders
-          </Button>
-        </div>
+        <ErrorState
+          error={error ?? "Change order not found"}
+          onRetry={handleBack}
+        />
       </PageShell>
     );
   }
@@ -1083,7 +1093,7 @@ export default function CommitmentCODetailPage() {
           <section>
             <div className="grid grid-cols-1 gap-x-16 gap-y-10 lg:grid-cols-[minmax(0,1fr)_minmax(300px,380px)]">
               {/* Left: main details */}
-              <div className="space-y-6">
+              <div>
                 <SectionRuleHeading label="Details" className="[&_span]:text-primary" />
                 <dl className="space-y-4 text-sm">
                   <LabelValueRow label="CO Number">
@@ -1161,7 +1171,7 @@ export default function CommitmentCODetailPage() {
 
               {/* Right: key dates */}
               <div className="space-y-8">
-                <div className="space-y-4">
+                <div>
                   <SectionRuleHeading label="Key Dates" className="[&_span]:text-primary" />
                   <div className="rounded-md border border-border bg-muted p-6">
                     <dl className="space-y-3 text-sm">
@@ -1199,7 +1209,17 @@ export default function CommitmentCODetailPage() {
           <section className="space-y-4">
             <SectionRuleHeading label="Line Items" className="[&_span]:text-primary" />
             {lineItemsLoading ? (
-              <Skeleton className="h-20 w-full" />
+              <div className="space-y-2">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="flex items-center gap-4">
+                    <Skeleton className="h-4 flex-1" />
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-4 w-20" />
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-4 w-16" />
+                  </div>
+                ))}
+              </div>
             ) : (
               <InlineTable variant="read">
                 <InlineTableHeader>
@@ -1427,11 +1447,22 @@ export default function CommitmentCODetailPage() {
               />
             </div>
             {attachmentsLoading ? (
-              <Skeleton className="h-20 w-full" />
+              <div className="space-y-2">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <Skeleton className="h-4 w-4" />
+                    <Skeleton className="h-4 w-48" />
+                    <Skeleton className="h-4 w-20 ml-auto" />
+                  </div>
+                ))}
+              </div>
             ) : attachmentsError ? (
-              <p className="text-sm text-destructive">{attachmentsError}</p>
+              <ErrorState error={attachmentsError} onRetry={fetchAttachmentsFn} />
             ) : attachments.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No attachments yet.</p>
+              <EmptyState
+                title="No attachments yet"
+                description="Upload files to attach them to this change order."
+              />
             ) : (
               <div className="space-y-2">
                 {attachments.map((att) => (
@@ -1464,7 +1495,7 @@ export default function CommitmentCODetailPage() {
 
           {/* Rejection reason */}
           {co.rejection_reason && (
-            <section className="space-y-4">
+            <section>
               <SectionRuleHeading
                 label="Rejection Reason"
                 className="[&_span]:text-destructive"
@@ -1474,6 +1505,8 @@ export default function CommitmentCODetailPage() {
           )}
         </ContentSectionStack>
       </PageShell>
+
+      {ConfirmDialog}
 
       {/* Rejection dialog */}
       {showRejectDialog && (

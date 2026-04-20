@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+import { formatDate } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -39,6 +40,7 @@ import {
   LabelValueRow,
   PageShell,
 } from "@/components/layout";
+import { SectionRuleHeading } from "@/components/layout/spacing";
 import { StatusBadge, EmptyState } from "@/components/ds";
 import {
   InlineTable,
@@ -144,12 +146,6 @@ function formatMoney(value: number): string {
   }).format(value);
 }
 
-function formatDate(dateValue: string | null | undefined): string {
-  if (!dateValue) return "--";
-  const parsed = new Date(dateValue);
-  if (Number.isNaN(parsed.getTime())) return "--";
-  return parsed.toLocaleDateString();
-}
 
 function formatDateTime(dateValue: string | null | undefined): string {
   if (!dateValue) return "--";
@@ -456,9 +452,7 @@ export default function PrimeContractPcoDetailPage() {
 
       <div className="space-y-8">
         <section className="space-y-4">
-          <h2 className="text-sm font-semibold text-foreground">
-            General Information
-          </h2>
+          <SectionRuleHeading label="General Information" />
           <div className="grid grid-cols-1 gap-x-20 gap-y-0 lg:grid-cols-2">
             <dl className="space-y-4 text-sm">
               <LabelValueRow label="#">{pco.pco_number || "--"}</LabelValueRow>
@@ -527,9 +521,7 @@ export default function PrimeContractPcoDetailPage() {
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-sm font-semibold text-foreground">
-            Attachments
-          </h2>
+          <SectionRuleHeading label="Attachments" />
           {pco.attachments?.length ? (
             <div className="space-y-2">
               {pco.attachments.map((attachment) => (
@@ -548,16 +540,15 @@ export default function PrimeContractPcoDetailPage() {
               ))}
             </div>
           ) : (
-            <p className="py-4 text-sm text-muted-foreground">
-              No attachments yet.
-            </p>
+            <EmptyState
+              title="No attachments yet"
+              description="Upload files to attach them to this PCO."
+            />
           )}
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-sm font-semibold text-foreground">
-            Line Items
-          </h2>
+          <SectionRuleHeading label="Line Items" />
           {lineItems.length === 0 ? (
             <EmptyState
               icon={<Inbox />}
@@ -630,9 +621,7 @@ export default function PrimeContractPcoDetailPage() {
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-sm font-semibold text-foreground">
-            Source Change Events
-          </h2>
+          <SectionRuleHeading label="Source Change Events" />
           {changeEventLinks.length === 0 ? (
             <EmptyState
               icon={<Link2 />}

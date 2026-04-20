@@ -8,6 +8,7 @@ import { ArrowLeft, Check, Mail, MoreVertical, Phone } from "lucide-react";
 import type { Database } from "@/types/database.types";
 import { createClient } from "@/lib/supabase/client";
 import { LabelValueRow, PageShell } from "@/components/layout";
+import { ErrorState } from "@/components/ds";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/ds";
@@ -246,13 +247,10 @@ export default function VendorDetailPage() {
         description="Unable to load vendor details"
         onBack={() => router.push("/directory/vendors")}
       >
-        <section className="space-y-4">
-          <p className="text-sm text-destructive">{error || "Vendor not found"}</p>
-          <Button variant="outline" onClick={() => router.push("/directory/vendors")}>
-            <ArrowLeft />
-            Back to Vendors
-          </Button>
-        </section>
+        <ErrorState
+          error={error ?? "Vendor not found"}
+          onRetry={() => router.push("/directory/vendors")}
+        />
       </PageShell>
     );
   }

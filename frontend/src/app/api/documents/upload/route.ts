@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { v4 as uuidv4 } from "uuid";
 import { apiErrorResponse } from "@/lib/api-error";
+import { logger } from "@/lib/logger";
 
 /**
  * POST /api/documents/upload
@@ -102,7 +103,7 @@ export const POST = withApiGuardrails(
       });
 
     if (uploadError) {
-      console.error("Storage upload error:", uploadError);
+      logger.error({ msg: "Storage upload error:", data: uploadError });
       return NextResponse.json(
         { error: `Failed to upload file: ${uploadError.message}` },
         { status: 500 },
@@ -131,7 +132,7 @@ export const POST = withApiGuardrails(
       .single();
 
     if (insertError) {
-      console.error("Metadata insert error:", insertError);
+      logger.error({ msg: "Metadata insert error:", data: insertError });
       // Clean up uploaded file
       await supabase.storage.from("documents").remove([storagePath]);
       return NextResponse.json(

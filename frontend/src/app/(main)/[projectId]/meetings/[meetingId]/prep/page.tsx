@@ -12,6 +12,7 @@ import {
 import Link from "next/link";
 
 import { PageShell } from "@/components/layout";
+import { EmptyState } from "@/components/ds";
 import { Button } from "@/components/ui/button";
 import { Editor } from "@/components/text-editor";
 import { useMeeting } from "@/hooks/use-meetings";
@@ -20,6 +21,7 @@ import {
   useSaveMeetingPrep,
   useGenerateMeetingPrep,
 } from "@/hooks/use-meeting-prep";
+import { useConfirm } from "@/hooks/use-confirm";
 
 export default function MeetingPrepPage() {
   const router = useRouter();
@@ -37,6 +39,7 @@ export default function MeetingPrepPage() {
   );
   const savePrep = useSaveMeetingPrep(projectId, meetingId);
   const generatePrep = useGenerateMeetingPrep(projectId, meetingId);
+  const { confirm, ConfirmDialog } = useConfirm();
 
   const meeting = meetingResult?.data;
   const prep = prepResult?.data;
@@ -86,13 +89,12 @@ export default function MeetingPrepPage() {
 
   // AI generation handler
   const handleGenerate = async () => {
-    if (
-      content &&
-      !window.confirm(
-        "This will replace your current meeting prep. Continue?"
-      )
-    ) {
-      return;
+    if (content) {
+      const ok = await confirm({
+        description: "This will replace your current meeting prep. Continue?",
+        confirmLabel: "Continue",
+      });
+      if (!ok) return;
     }
 
     try {
@@ -181,32 +183,25 @@ export default function MeetingPrepPage() {
               />
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-20 rounded-md border border-dashed">
-              <FileText className="h-12 w-12 text-muted-foreground/40 mb-4" />
-              <h3 className="text-lg font-medium mb-1">
-                No meeting prep yet
-              </h3>
-              <p className="text-sm text-muted-foreground mb-6 max-w-md text-center">
-                Generate an AI-powered meeting prep that analyzes your project
-                data, last meeting insights, and current status — or start
-                writing from scratch.
-              </p>
-              <div className="flex items-center gap-3">
-                <Button onClick={handleGenerate}>
-                  <Sparkles />
-                  Generate Meeting Prep
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setContent(
-                      `# Meeting Prep: ${meeting.title}\n\n## Agenda\n\n- \n\n## Notes\n\n`
-                    );
-                  }}
-                >
-                  Start from Scratch
-                </Button>
-              </div>
+            <div className="flex flex-col items-center">
+              <EmptyState
+                icon={<FileText />}
+                title="No meeting prep yet"
+                description="Generate an AI-powered meeting prep that analyzes your project data, last meeting insights, and current status — or start writing from scratch."
+                action={<Button onClick={handleGenerate} disabled={generatePrep.isPending}><Sparkles />Generate Meeting Prep</Button>}
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                className="-mt-2"
+                onClick={() => {
+                  setContent(
+                    `# Meeting Prep: ${meeting.title}\n\n## Agenda\n\n- \n\n## Notes\n\n`
+                  );
+                }}
+              >
+                Start from Scratch
+              </Button>
             </div>
           )}
 
@@ -286,6 +281,7 @@ export default function MeetingPrepPage() {
           )}
         </aside>
       </div>
+      {ConfirmDialog}
     </PageShell>
   );
 }

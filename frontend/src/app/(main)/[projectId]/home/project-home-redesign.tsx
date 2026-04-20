@@ -17,6 +17,8 @@ import { useBudgetData } from "@/hooks/use-budget-data";
 import { useProjectUsers } from "@/hooks/use-project-users";
 import type { Database } from "@/types/database.types";
 import { cn } from "@/lib/utils";
+import { EmptyState } from "@/components/ds";
+import { CalendarX, MessageSquare, FileText, Users } from "lucide-react";
 
 /* ─────────────────────────────────────────────────────────────
    Types (identical to project-home-client2.tsx)
@@ -165,7 +167,13 @@ function DirectoryContactList({ projectId }: { projectId: number }) {
   const contacts = (users || []).slice(0, 8);
 
   if (contacts.length === 0) {
-    return <p className="text-sm text-muted-foreground">No project contacts yet.</p>;
+    return (
+      <EmptyState
+        icon={<Users />}
+        title="No project contacts yet"
+        description="Add team members to this project to see them here."
+      />
+    );
   }
 
   return (
@@ -744,9 +752,11 @@ export function ProjectHomeRedesign({
                   })}
                 </div>
               ) : (
-                <div className="px-2 py-2">
-                  <p className="text-sm text-muted-foreground">No meetings recorded yet.</p>
-                </div>
+                <EmptyState
+                  icon={<CalendarX />}
+                  title="No meetings recorded yet"
+                  description="Meetings will appear here once scheduled for this project."
+                />
               )}
             </section>
 
@@ -793,9 +803,11 @@ export function ProjectHomeRedesign({
                 </h2>
                 <span className="text-xs text-muted-foreground">Live discussion feed</span>
               </div>
-              <div className="rounded-lg bg-card px-4 py-4">
-                <p className="text-sm text-muted-foreground">No comments yet.</p>
-              </div>
+              <EmptyState
+                icon={<MessageSquare />}
+                title="No comments yet"
+                description="Project comments will appear here."
+              />
             </section>
 
           {/* ── LIVE BLOCKS ── */}
@@ -846,9 +858,11 @@ export function ProjectHomeRedesign({
                   })}
                 </div>
               ) : (
-                <div className="py-2">
-                  <p className="text-sm text-muted-foreground">No daily log entries yet.</p>
-                </div>
+                <EmptyState
+                  icon={<FileText />}
+                  title="No daily log entries yet"
+                  description="Daily log reports will appear here once filed."
+                />
               )}
             </section>
           </div>

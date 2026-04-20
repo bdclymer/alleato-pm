@@ -2,6 +2,8 @@ import type { ReactElement } from "react";
 import { useState, useEffect } from "react";
 import { FileText, MoreHorizontal } from "lucide-react";
 
+import { formatDate } from "@/lib/format";
+
 import type {
   ColumnConfig,
   FilterConfig,
@@ -93,14 +95,6 @@ export const drawingFilters: FilterConfig[] = [
     ],
   },
 ];
-
-// ─── Date formatter ─────────────────────────────────────────────────────────
-
-function formatDate(v: string | null | undefined): string {
-  if (!v) return "-";
-  const d = new Date(v);
-  return Number.isNaN(d.getTime()) ? "-" : d.toLocaleDateString();
-}
 
 // ─── Table columns ──────────────────────────────────────────────────────────
 

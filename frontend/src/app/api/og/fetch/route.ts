@@ -3,6 +3,7 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
+import { logger } from "@/lib/logger";
 
 function decodeHTMLEntities(text: string): string {
   return text.replace(/&(#?[a-zA-Z0-9]+);/g, (match, entity) => {
@@ -100,9 +101,7 @@ export const GET = withApiGuardrails(
       url,
     });
   } catch (error) {
-    console.error(
-      "Error fetching metadata:",
-      error instanceof Error ? error.message : String(error),
+    logger.error({ msg: "Error fetching metadata:", error: error instanceof Error ? error.message : String(error instanceof Error ? error instanceof Error ? error.message : String(error.message : String(error instanceof Error ? error.message : String(error) }),
     );
 
     return apiErrorResponse(error);

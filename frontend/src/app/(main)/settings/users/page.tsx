@@ -31,10 +31,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DataTable, type TableColumn } from "@/components/ds";
+import { DataTable, ErrorState, type TableColumn } from "@/components/ds";
 import { PageShell } from "@/components/layout";
 import { createClient } from "@/lib/supabase/client";
 import { apiFetch } from "@/lib/api-client";
+import { useConfirm } from "@/hooks/use-confirm";
 
 const ROLES = [
   { value: "project_manager", label: "Project Manager" },
@@ -75,6 +76,7 @@ function getInitials(profile: UserProfileRow): string {
 
 export default function UsersSettingsPage() {
   const router = useRouter();
+  const { confirm, ConfirmDialog } = useConfirm();
   const [rows, setRows] = React.useState<UserProfileRow[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -122,7 +124,12 @@ export default function UsersSettingsPage() {
   }, [loadUsers]);
 
   const handleDelete = React.useCallback(async (profile: UserProfileRow) => {
-    if (!confirm(`Delete ${getDisplayName(profile)}? This cannot be undone.`)) return;
+    const ok = await confirm({
+      description: `Delete ${getDisplayName(profile)}? This cannot be undone.`,
+      variant: "destructive",
+      confirmLabel: "Delete",
+    });
+    if (!ok) return;
     try {
       await apiFetch(`/api/settings/users/${profile.id}`, { method: "DELETE" });
       toast.success("User deleted");
@@ -130,7 +137,7 @@ export default function UsersSettingsPage() {
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to delete user");
     }
-  }, [loadUsers]);
+  }, [loadUsers, confirm]);
 
   const handleSendInvite = async () => {
     if (!inviteEmail.trim()) return;
@@ -305,7 +312,7 @@ export default function UsersSettingsPage() {
           {isLoading ? (
             <p className="py-8 text-center text-sm text-muted-foreground">Loading users...</p>
           ) : error ? (
-            <p className="py-8 text-center text-sm text-destructive">{error}</p>
+            <ErrorState error={error} onRetry={() => void loadUsers()} />
           ) : (
             <DataTable
               columns={columns}
@@ -321,6 +328,8 @@ export default function UsersSettingsPage() {
           )}
         </div>
       </PageShell>
+
+      {ConfirmDialog}
 
       {/* Invite user dialog */}
       <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>

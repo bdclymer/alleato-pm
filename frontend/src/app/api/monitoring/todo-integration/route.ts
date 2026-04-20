@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
 import { createClient } from "@/lib/supabase/server";
+import { logger } from "@/lib/logger";
 
 /**
  * TodoWrite integration endpoint
@@ -217,7 +218,7 @@ async function triggerVerificationProcess(todoId: string, notes?: string) {
     // For demo purposes, we'll just log this
     // exec(`node ${scriptPath} "${JSON.stringify(todoData)}"`);
   } catch (error) {
-    console.error("Failed to trigger auto-verification:", error);
+    logger.error({ msg: "Failed to trigger auto-verification:", error: error instanceof Error ? error.message : String(error) });
     // Intentionally swallowed: auto-verification is optional
   }
 }
@@ -277,7 +278,7 @@ async function updateMonitoringWithTodo(
 
     await fs.writeFile(monitoringPath, content);
   } catch (error) {
-    console.error("Failed to update monitoring file:", error);
+    logger.error({ msg: "Failed to update monitoring file:", error: error instanceof Error ? error.message : String(error) });
     // Intentionally swallowed: monitoring file updates are non-critical
   }
 }

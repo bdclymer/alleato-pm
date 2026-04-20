@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import type { ColumnDef } from "@tanstack/react-table";
 
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ds";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -22,6 +23,7 @@ import {
   type DataTableFooterCell,
 } from "@/components/tables/DataTable";
 import { apiFetch } from "@/lib/api-client";
+import { SectionRuleHeading } from "@/components/layout/spacing";
 import type {
   Payment,
   PaymentApplication,
@@ -203,32 +205,37 @@ export function PrimeContractPaymentsTab({
     [formatCurrency, totalPaymentsReceived],
   );
 
+  const createButton = (
+    <Button size="sm" onClick={() => setShowAddPaymentDialog(true)}>
+      <Plus />
+      Record Payment
+    </Button>
+  );
+
   return (
     <div>
       <div className="bg-background">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h3 className="text-lg font-semibold">Payments Received</h3>
-            <p className="text-sm text-muted-foreground">
-              {payments.length} payment{payments.length === 1 ? "" : "s"} •{" "}
-              Total received: {formatCurrency(totalPaymentsReceived)}
-            </p>
-          </div>
-          <Button size="sm" onClick={() => setShowAddPaymentDialog(true)}>
-            <Plus />
-            Record Payment
-          </Button>
+        <div className="flex items-center justify-between">
+          <SectionRuleHeading label="Payments Received" className="flex-1" />
+          {payments.length > 0 && createButton}
         </div>
+        <p className="text-sm text-muted-foreground -mt-3 mb-4">
+          {payments.length} payment{payments.length === 1 ? "" : "s"} •{" "}
+          Total received: {formatCurrency(totalPaymentsReceived)}
+        </p>
 
         {paymentsReceivedLoading ? (
           <div className="text-center py-8 text-muted-foreground">
             <p>Loading payments...</p>
           </div>
         ) : payments.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            <DollarSign className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>No payments recorded yet</p>
-            <p className="text-xs mt-2">Record a payment when funds are received</p>
+          <div className="flex flex-col items-center">
+            <EmptyState
+              icon={<DollarSign />}
+              title="No payments recorded yet"
+              description="Record a payment when funds are received."
+            />
+            {createButton}
           </div>
         ) : (
           <DataTable

@@ -40,6 +40,7 @@ import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import type { CreateSubcontractInput } from "@/lib/schemas/create-subcontract-schema";
 import type { Database } from "@/types/database.types";
+import { SectionRuleHeading } from "@/components/layout/spacing";
 
 interface InvoiceContactsSectionProps {
   isSubmitting: boolean;
@@ -147,7 +148,7 @@ export function InvoiceContactsSection({
   return (
     <section className="space-y-4">
       <div className="flex items-center gap-2">
-        <h2 className="text-lg font-semibold text-foreground">Invoice Contacts</h2>
+        <SectionRuleHeading label="Invoice Contacts" />
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>

@@ -3,6 +3,7 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import {
+import { logger } from "@/lib/logger";
   notifyCriticalIssue,
   notifyDeadline,
   notifyStatusChange,
@@ -93,7 +94,7 @@ export const POST = withApiGuardrails(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("[notifications/trigger] Error:", error);
+    logger.error({ msg: "[notifications/trigger] Error:", error: error instanceof Error ? error.message : String(error) });
     return NextResponse.json(
       { error: "Failed to send notification" },
       { status: 500 }

@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDate } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface ApprovalRecord {
   id: string;
@@ -189,12 +190,18 @@ export function ChangeEventApprovalWorkflow({
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Approval Workflow</CardTitle>
-          <CardDescription>Loading approval workflow...</CardDescription>
+          <Skeleton className="h-5 w-36" />
+          <Skeleton className="h-4 w-56 mt-1" />
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-center py-8">
-            <Clock className="h-6 w-6 animate-spin text-muted-foreground" />
+          <div className="space-y-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-3">
+                <Skeleton className="h-6 w-6 rounded-full" />
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-4 w-20 ml-auto" />
+              </div>
+            ))}
           </div>
         </CardContent>
       </Card>

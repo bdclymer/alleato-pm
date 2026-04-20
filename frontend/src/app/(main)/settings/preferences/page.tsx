@@ -3,6 +3,7 @@
 import * as React from "react";
 import { Bell, Globe, Calendar, DollarSign } from "lucide-react";
 import { PageShell } from "@/components/layout";
+import { SectionRuleHeading } from "@/components/layout/spacing";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -51,7 +52,7 @@ function SectionCard({
       <div>
         <div className="flex items-center gap-2">
           <Icon className="h-4 w-4 text-muted-foreground" />
-          <h3 className="text-sm font-semibold">{title}</h3>
+          <SectionRuleHeading label={title} />
         </div>
       </div>
       <div className="rounded-lg border border-border px-5 divide-y divide-border">

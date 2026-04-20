@@ -20,6 +20,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal, Mail, Edit, UserX } from "lucide-react";
+import { EmptyState } from "@/components/ds";
 import { formatDistanceToNow } from "date-fns";
 import type { AuthUser } from "@/hooks/use-auth-users";
 
@@ -181,9 +182,10 @@ export function ResponsiveAuthUsersTable({
         </TableBody>
       </Table>
       {users.length === 0 && (
-        <div className="text-center py-12 text-muted-foreground">
-          No authenticated users found for this project.
-        </div>
+        <EmptyState
+          title="No authenticated users found"
+          description="No authenticated users are associated with this project."
+        />
       )}
     </div>
   );

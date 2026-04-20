@@ -6,6 +6,7 @@ import { updateLineItemSchema } from '../../../validation';
 import { ZodError } from 'zod';
 import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
+import { logger } from "@/lib/logger";
 
 interface RouteParams {
   params: Promise<{
@@ -203,10 +204,7 @@ export const PATCH = withApiGuardrails(
             if (newBudgetLine) {
               resolvedBudgetCodeId = newBudgetLine.id;
             } else {
-              console.error(
-                `[line-items PATCH] Failed to auto-create budget_line for project_cost_code ${validatedData.budgetCodeId}:`,
-                createError?.message,
-              );
+              logger.error({ msg: `[line-items PATCH] Failed to auto-create budget_line for project_cost_code ${validatedData.budgetCodeId}:`, data: createError?.message, });
               return NextResponse.json(
                 { error: 'Failed to resolve budget code', details: `Could not create budget line for cost code. ${createError?.message || ''}` },
                 { status: 400 },

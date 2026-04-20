@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import type { CreateSubcontractInput } from "@/lib/schemas/create-subcontract-schema";
+import { SectionRuleHeading } from "@/components/layout/spacing";
 
 interface PrivacySectionProps {
   isSubmitting: boolean;
@@ -45,9 +46,7 @@ export function PrivacySection({
 
   return (
     <section className="space-y-4 border-b border-border/70 pb-8">
-      <h2 className="text-lg font-semibold text-foreground">
-        Contract Privacy
-      </h2>
+      <SectionRuleHeading label="Contract Privacy" />
       <div className="space-y-4">
         <p className="text-sm text-muted-foreground">
           Privacy restricts access to project admins and selected non-admin users.

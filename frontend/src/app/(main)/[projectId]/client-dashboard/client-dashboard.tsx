@@ -13,6 +13,7 @@ import {
   MessageSquare,
 } from "lucide-react";
 import { format } from "date-fns";
+import { EmptyState } from "@/components/ds";
 import {
   Card,
   CardContent,
@@ -468,9 +469,11 @@ export default function ClientDashboard({
                     </TableBody>
                   </Table>
                 ) : (
-                  <p className="text-sm text-muted-foreground text-center py-8">
-                    No schedule milestones available
-                  </p>
+                  <EmptyState
+                    icon={<Milestone />}
+                    title="No schedule milestones available"
+                    description="Milestones will appear here once added to the project schedule."
+                  />
                 )}
               </CardContent>
             </Card>
@@ -541,9 +544,11 @@ export default function ClientDashboard({
                     </TableBody>
                   </Table>
                 ) : (
-                  <p className="text-sm text-muted-foreground text-center py-8">
-                    No documents available
-                  </p>
+                  <EmptyState
+                    icon={<FileText />}
+                    title="No documents available"
+                    description="Project documents will appear here once uploaded."
+                  />
                 )}
               </CardContent>
             </Card>

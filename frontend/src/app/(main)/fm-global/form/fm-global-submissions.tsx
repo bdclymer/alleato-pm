@@ -4,8 +4,9 @@ import type { ReactElement } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Text } from "@/components/ds/text";
+import { Text, EmptyState } from "@/components/ds";
 import type { FmGlobalSpecInput, FmGlobalSubmissionSummary } from "@/types/fm-global";
+import { formatDate } from "@/lib/format";
 
 interface FmGlobalSubmissionsProps {
   submissions: FmGlobalSubmissionSummary[];
@@ -30,9 +31,10 @@ export function FmGlobalSubmissions({
       </CardHeader>
       <CardContent className="space-y-4">
         {submissions.length === 0 && (
-          <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
-            No submissions yet. Run your first match to save a submission.
-          </div>
+          <EmptyState
+            title="No submissions yet"
+            description="Run your first match to save a submission."
+          />
         )}
         {submissions.map((submission) => (
           <div
@@ -45,9 +47,7 @@ export function FmGlobalSubmissions({
                 : "Unknown input"}
             </Text>
             <Text size="sm" tone="muted">
-              {submission.created_at
-                ? new Date(submission.created_at).toLocaleString()
-                : "—"}
+              {formatDate(submission.created_at)}
             </Text>
             <div className="mt-4 flex flex-wrap gap-2">
               <Button

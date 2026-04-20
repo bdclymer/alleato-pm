@@ -8,6 +8,7 @@ import { ZodError } from "zod";
 import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
 import {
+import { logger } from "@/lib/logger";
   formatHistoryFieldName,
   formatHistoryFieldValue,
   generateHistoryDescription,
@@ -390,7 +391,7 @@ export const GET = withApiGuardrails(
             creator = { id: authUser.id, email: authUser.email, first_name: null, last_name: null };
           }
         } catch (err) {
-          console.error("[change-events#GET] Failed to resolve creator email:", err);
+          logger.error({ msg: "[change-events#GET] Failed to resolve creator email:", error: err instanceof Error ? err.message : String(err) });
         }
       }
     }

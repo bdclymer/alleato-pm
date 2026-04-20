@@ -15,6 +15,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // Shape returned by GET /api/projects/[projectId]/budget lineItems[]
 interface BudgetLineItem {
@@ -191,11 +192,15 @@ export function ImportFromBudgetModal({
 
           <div className="flex-1 overflow-hidden border rounded-lg">
             {isLoading ? (
-              <div className="flex items-center justify-center h-full min-h-[200px]">
-                <div className="text-center">
-                  <div className="w-8 h-8 border-2 border-border border-t-primary rounded-full animate-spin mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground">Loading budget lines...</p>
-                </div>
+              <div className="space-y-2 p-4 min-h-[200px]">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <Skeleton className="h-4 w-4 rounded" />
+                    <Skeleton className="h-4 w-20" />
+                    <Skeleton className="h-4 flex-1" />
+                    <Skeleton className="h-4 w-24" />
+                  </div>
+                ))}
               </div>
             ) : error ? (
               <div className="flex items-center justify-center h-full min-h-[200px]">

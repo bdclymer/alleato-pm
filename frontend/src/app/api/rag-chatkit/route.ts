@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
+import { logger } from "@/lib/logger";
 
 // This route proxies requests to the Python backend RAG ChatKit endpoint
 // NOTE: This is NOT a ChatKit-compatible API - it's a generic proxy to /rag-chatkit
@@ -57,14 +58,11 @@ export async function POST(request: NextRequest) {
       data = await jsonResponse.json();
     } catch (error) {
       const text = await response.text();
-      console.error(
-        "[RAG-ChatKit API] Failed to parse JSON response:",
-        (error as Error).message,
-      );
-      console.error(
-        "[RAG-ChatKit API] Raw response:",
-        text.substring(0, 200),
-      );
+      logger.error({
+        msg: "[RAG-ChatKit API] Failed to parse JSON response",
+        error: (error as Error).message,
+        rawResponse: text.substring(0, 200),
+      });
       return NextResponse.json(
         {
           error: "Invalid Backend Response",
@@ -79,7 +77,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (!response.ok) {
-      console.error("[RAG-ChatKit API] Backend error:", data);
+      logger.error({ msg: "[RAG-ChatKit API] Backend error", data });
       return NextResponse.json(
         {
           error: "Backend Error",
@@ -92,16 +90,14 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(data);
   } catch (error: any) {
-    console.error("[RAG-ChatKit API] Error:", error.message);
+    logger.error({ msg: "[RAG-ChatKit API] Error", error: error.message });
 
     // Check if it's a connection error (backend not running)
     if (
       error.code === "ECONNREFUSED" ||
       error.message.includes("fetch failed")
     ) {
-      console.error(
-        "[RAG-ChatKit API] Connection refused - Python backend is not running",
-      );
+      logger.error({ msg: "[RAG-ChatKit API] Connection refused - Python backend is not running" });
 
       return NextResponse.json(
         {
@@ -156,10 +152,10 @@ export async function GET(request: NextRequest) {
     try {
       data = text ? JSON.parse(text) : null;
     } catch {
-      console.error(
-        "[RAG-ChatKit API] GET response is not JSON:",
-        text.substring(0, 200),
-      );
+      logger.error({
+        msg: "[RAG-ChatKit API] GET response is not JSON",
+        rawResponse: text.substring(0, 200),
+      });
       return NextResponse.json(
         {
           error: "Invalid Backend Response",
@@ -171,7 +167,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(data);
   } catch (error: any) {
-    console.error("[RAG-ChatKit API] GET Error:", error.message);
+    logger.error({ msg: "[RAG-ChatKit API] GET Error", error: error.message });
 
     if (
       error.code === "ECONNREFUSED" ||

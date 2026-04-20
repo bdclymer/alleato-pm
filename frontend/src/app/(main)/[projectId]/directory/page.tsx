@@ -65,6 +65,7 @@ import { usePermissionTemplates } from "@/hooks/use-permissions";
 import { createClient } from "@/lib/supabase/client";
 import { apiFetch, ApiError } from "@/lib/api-client";
 import { filterProjectMembers } from "@/lib/directory/project-members";
+import { useConfirm } from "@/hooks/use-confirm";
 import { cn } from "@/lib/utils";
 import {
   type PermissionModule,
@@ -903,6 +904,7 @@ function ProjectTeamSection({
 }) {
   const { roles, isLoading, updateRoleMembers, createRole, deleteRole } =
     useProjectRoles(projectId);
+  const { confirm: confirmTeam, ConfirmDialog: TeamConfirmDialog } = useConfirm();
   const [search, setSearch] = React.useState("");
   const [assignDialog, setAssignDialog] = React.useState<{
     open: boolean;
@@ -928,10 +930,12 @@ function ProjectTeamSection({
     : rows;
 
   const handleDeleteRole = async (role: ProjectRole) => {
-    const confirmed = window.confirm(
-      `Delete role "${role.role_name}"? This will remove all assignments for this role.`,
-    );
-    if (!confirmed) return;
+    const ok = await confirmTeam({
+      description: `Delete role "${role.role_name}"? This will remove all assignments for this role.`,
+      variant: "destructive",
+      confirmLabel: "Delete",
+    });
+    if (!ok) return;
     try {
       await deleteRole(role.id);
       toast.success("Role deleted");
@@ -1072,6 +1076,7 @@ function ProjectTeamSection({
         onOpenChange={setCreateRoleOpen}
         onSave={async (name) => { await createRole(name); }}
       />
+      {TeamConfirmDialog}
     </>
   );
 }
@@ -1409,6 +1414,7 @@ function ExternalMembersSection({
     error,
     refetch,
   } = useProjectUsers(projectId, { type: "all" });
+  const { confirm: confirmMember, ConfirmDialog: MemberConfirmDialog } = useConfirm();
   const [search, setSearch] = React.useState("");
   const [activeFilters, setActiveFilters] = React.useState<Record<string, string | undefined>>({});
   const [removingPersonId, setRemovingPersonId] = React.useState<string | null>(null);
@@ -1419,8 +1425,12 @@ function ExternalMembersSection({
 
   const handleRemoveMember = async (personId: string) => {
     if (removingPersonId) return;
-    const confirmed = window.confirm("Remove this member from the project directory?");
-    if (!confirmed) return;
+    const ok = await confirmMember({
+      description: "Remove this member from the project directory?",
+      variant: "destructive",
+      confirmLabel: "Remove",
+    });
+    if (!ok) return;
     try {
       setRemovingPersonId(personId);
       await apiFetch(
@@ -1525,6 +1535,7 @@ function ExternalMembersSection({
           />
         )}
       </div>
+      {MemberConfirmDialog}
     </>
   );
 }
@@ -1544,12 +1555,17 @@ function VendorsSection({
   onAddVendorClick: () => void;
   onRemoveVendor: (id: string) => Promise<void>;
 }) {
+  const { confirm: confirmVendor, ConfirmDialog: VendorConfirmDialog } = useConfirm();
   const [removingId, setRemovingId] = React.useState<string | null>(null);
 
   const handleRemove = async (pv: (typeof vendors)[0]) => {
     const name = pv.companies?.name ?? "this vendor";
-    const confirmed = window.confirm(`Remove "${name}" from this project?`);
-    if (!confirmed) return;
+    const ok = await confirmVendor({
+      description: `Remove "${name}" from this project?`,
+      variant: "destructive",
+      confirmLabel: "Remove",
+    });
+    if (!ok) return;
 
     try {
       setRemovingId(pv.id);
@@ -1586,6 +1602,7 @@ function VendorsSection({
   }
 
   return (
+    <>
     <div className="rounded-md border border-border/50 overflow-hidden">
       <Table>
         <TableHeader>
@@ -1643,6 +1660,8 @@ function VendorsSection({
         </TableBody>
       </Table>
     </div>
+    {VendorConfirmDialog}
+    </>
   );
 }
 
@@ -1668,15 +1687,18 @@ function CompaniesSection({
   onAssignClick: () => void;
   onRefetch: () => void;
 }) {
+  const { confirm: confirmCompany, ConfirmDialog: CompanyConfirmDialog } = useConfirm();
   const [search, setSearch] = React.useState("");
   const [removingCompanyId, setRemovingCompanyId] = React.useState<string | null>(null);
 
   const handleRemoveCompany = async (companyId: string, companyName: string) => {
     if (removingCompanyId) return;
-    const confirmed = window.confirm(
-      `Remove ${companyName} from this project directory?`,
-    );
-    if (!confirmed) return;
+    const ok = await confirmCompany({
+      description: `Remove ${companyName} from this project directory?`,
+      variant: "destructive",
+      confirmLabel: "Remove",
+    });
+    if (!ok) return;
     try {
       setRemovingCompanyId(companyId);
       await apiFetch(
@@ -1816,6 +1838,7 @@ function CompaniesSection({
           />
         )}
       </div>
+      {CompanyConfirmDialog}
     </>
   );
 }

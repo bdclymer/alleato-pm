@@ -15,6 +15,7 @@ import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
+import { logger } from "@/lib/logger";
 
 interface RouteParams {
   params: Promise<{ projectId: string; pcoId: string }>;
@@ -113,7 +114,7 @@ export const POST = withApiGuardrails(
       .eq("version", submittedVersion);
 
     if (versionUpdateError) {
-      console.error("Failed to update version decision:", versionUpdateError);
+      logger.error({ msg: "Failed to update version decision:", data: versionUpdateError });
     }
 
     const updates: Record<string, unknown> = {
@@ -138,7 +139,7 @@ export const POST = withApiGuardrails(
       .single();
 
     if (updateError) {
-      console.error("Failed to update PCO:", updateError);
+      logger.error({ msg: "Failed to update PCO:", data: updateError });
       return NextResponse.json(
         { error: "Failed to record decision", details: updateError.message },
         { status: 400 }

@@ -21,6 +21,7 @@ import {
 } from "@/lib/integrations/email-notifications";
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
+import { logger } from "@/lib/logger";
 
 // ── Clients ───────────────────────────────────────────────────────────────────
 
@@ -248,7 +249,7 @@ async function handleCommentCreated({
     });
     aiText = response.choices[0]?.message?.content ?? "I'm not sure how to help with that.";
   } catch (error) {
-    console.error("[liveblocks-webhook] OpenAI error", error);
+    logger.error({ msg: "[liveblocks-webhook] OpenAI error", error: error instanceof Error ? error.message : String(error) });
     aiText = "Sorry, I ran into an error. Please try again.";
   }
 

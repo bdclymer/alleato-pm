@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { PageShell } from "@/components/layout";
+import { EmptyState } from "@/components/ds";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -209,9 +210,11 @@ export default async function MyWorkPage({
         {/* SOV Section */}
         <SectionCard icon={FileText} title="Schedule of Values">
           {sovSubmissions.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              No schedule of values found for your company on this project.
-            </p>
+            <EmptyState
+              icon={<FileText />}
+              title="No schedule of values found"
+              description="No schedule of values has been assigned to your company on this project."
+            />
           ) : (
             <div className="flex flex-col gap-3">
               {sovSubmissions.map((sov) => {

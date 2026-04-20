@@ -17,8 +17,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { formatDate } from "@/lib/format";
 import { createClient } from "@/lib/supabase/client";
 import { Database } from "@/types/database.types";
+import { EmptyState } from "@/components/ds";
 
 type DocumentMetadata =
   Database["public"]["Tables"]["document_metadata"]["Row"];
@@ -30,14 +32,6 @@ interface DocumentMetadataModalProps {
   projectId: string;
 }
 
-function formatDate(date: string | null): string {
-  if (!date) return "-";
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(new Date(date));
-}
 
 function formatDuration(minutes: number | null): string {
   if (!minutes) return "-";
@@ -129,10 +123,11 @@ export function DocumentMetadataModal({
           )}
 
           {!isLoading && !error && documents.length === 0 && (
-            <div className="text-center py-12 text-muted-foreground">
-              <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>No documents found</p>
-            </div>
+            <EmptyState
+              icon={<FileText />}
+              title="No documents found"
+              description="No documents are attached to this item yet."
+            />
           )}
 
           {!isLoading && !error && documents.length > 0 && (

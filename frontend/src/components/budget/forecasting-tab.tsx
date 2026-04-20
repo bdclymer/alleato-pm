@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { formatDate } from "@/lib/format";
 import { ForecastToCompleteModal } from "@/components/budget/modals/ForecastToCompleteModal";
 import { apiFetch } from "@/lib/api-client";
 
@@ -46,13 +47,6 @@ interface ForecastData {
     forecastEndDate: string | null;
   }>;
   generatedAt: string;
-}
-
-function formatDate(value: string | null) {
-  if (!value) return "—";
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
 function formatCurrency(amount: number) {

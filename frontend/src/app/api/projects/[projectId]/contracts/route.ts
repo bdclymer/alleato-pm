@@ -6,6 +6,7 @@ import { createContractSchema } from "./validation";
 import { ZodError } from "zod";
 import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
+import { logger } from "@/lib/logger";
 
 interface RouteParams {
   params: Promise<{ projectId: string }>;
@@ -219,7 +220,7 @@ export const POST = withApiGuardrails(
       .single();
 
     if (error) {
-      console.error("[POST /contracts] DB insert error:", error);
+      logger.error({ msg: "[POST /contracts] DB insert error:", error: error instanceof Error ? error.message : String(error) });
       return NextResponse.json(
         {
           error: "Failed to create contract",

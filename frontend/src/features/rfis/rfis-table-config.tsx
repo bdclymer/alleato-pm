@@ -2,6 +2,8 @@ import * as React from "react";
 import type { ReactElement } from "react";
 import { Eye, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 
+import { formatDate } from "@/lib/format";
+
 import type {
   ColumnConfig,
   FilterConfig,
@@ -131,13 +133,6 @@ export const rfiFilters: FilterConfig[] = [
 function formatStatus(status: string | null | undefined): string {
   if (!status) return "-";
   return status.charAt(0).toUpperCase() + status.slice(1);
-}
-
-function formatDate(value: string | null | undefined): string {
-  if (!value) return "-";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return "-";
-  return parsed.toLocaleDateString();
 }
 
 function statusVariant(

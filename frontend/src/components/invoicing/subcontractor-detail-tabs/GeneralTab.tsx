@@ -39,6 +39,7 @@ import {
   type LineItemEdits,
   type SovLineItem,
 } from "./shared";
+import { SectionRuleHeading } from "@/components/layout/spacing";
 
 /* ─── Date helpers ─── */
 
@@ -633,9 +634,7 @@ export function GeneralTab({
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-sm font-semibold text-foreground">
-              Line Items
-            </h2>
+            <SectionRuleHeading label="Line Items" />
             <p className="text-xs text-muted-foreground">
               {lineItems.length} line item
               {lineItems.length !== 1 ? "s" : ""}
@@ -1073,9 +1072,7 @@ export function GeneralTab({
       {/* ── G702 Application for Payment rollup ── */}
       {invoice.rollup && (
         <section className="space-y-4">
-          <h2 className="text-sm font-semibold text-foreground">
-            Application for Payment
-          </h2>
+          <SectionRuleHeading label="Application for Payment" />
           <dl className="divide-y divide-border text-sm">
             {[
               {

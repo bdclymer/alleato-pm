@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn, formatCurrency } from "@/lib/utils";
 import type { PaymentApplicationLineItem } from "@/app/(main)/[projectId]/prime-contracts/[contractId]/types";
+import { SectionRuleHeading } from "@/components/layout/spacing";
 
 interface InvoiceScheduleOfValuesProps {
   lineItems: PaymentApplicationLineItem[];
@@ -178,9 +179,7 @@ export function InvoiceScheduleOfValues({
       )}
     >
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-base font-semibold text-foreground">
-          Schedule of Values
-        </h3>
+        <SectionRuleHeading label="Schedule of Values" />
         <div className="flex items-center gap-1.5">
           {!isReadOnly && (
             <>

@@ -22,7 +22,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { DateAvatar } from "@/components/ds";
+import { DateAvatar, EmptyState } from "@/components/ds";
 import { PageContainer } from "@/components/layout";
 import { AttendeeAvatarStack } from "@/components/meetings/attendee-avatar-stack";
 import type { Database } from "@/types/database.types";
@@ -455,18 +455,11 @@ export function MeetingDetailContent({
 
           {/* Empty state */}
           {!transcriptContent && segments.length === 0 && (
-            <section className="py-12 text-center">
-              <FileText
-                className="h-10 w-10 text-muted-foreground/30 mx-auto mb-4"
-                strokeWidth={1.5}
-              />
-              <p className="text-sm font-medium text-foreground">
-                No transcript available
-              </p>
-              <p className="text-sm text-muted-foreground mt-1">
-                This meeting has not been processed yet.
-              </p>
-            </section>
+            <EmptyState
+              icon={<FileText />}
+              title="No transcript available"
+              description="This meeting has not been processed yet."
+            />
           )}
         </div>
 

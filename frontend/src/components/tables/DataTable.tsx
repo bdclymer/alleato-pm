@@ -178,7 +178,7 @@ export function DataTable<TData, TValue>({
       ) : (
         <div>
           <Table>
-            <TableHeader>
+            <TableHeader className="[&_tr]:hover:bg-transparent">
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
                   {headerGroup.headers.map((header) => {

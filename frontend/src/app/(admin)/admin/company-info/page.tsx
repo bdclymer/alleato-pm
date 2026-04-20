@@ -11,6 +11,7 @@ import {
   TextareaField,
 } from "@/components/forms";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ds";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -433,10 +434,10 @@ function KnowledgeArticlesTab() {
           Loading articles...
         </div>
       ) : !articles?.length ? (
-        <div className="text-sm text-muted-foreground py-12 text-center">
-          No knowledge articles yet. Add your first one to start building your
-          AI&apos;s understanding of your company.
-        </div>
+        <EmptyState
+          title="No knowledge articles yet"
+          description="Add your first one to start building your AI's understanding of your company."
+        />
       ) : (
         <div className="space-y-2">
           {articles.map((article) => (
@@ -801,16 +802,11 @@ function DocumentsTab() {
           Loading documents...
         </div>
       ) : !documents.length ? (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <FileIcon className="h-10 w-10 text-muted-foreground/40 mb-3" />
-          <p className="text-sm text-muted-foreground">
-            No documents uploaded yet. Upload PDFs, DOCX, or text files to
-            build your AI knowledge base.
-          </p>
-          <p className="text-xs text-muted-foreground mt-1">
-            Supported: .pdf, .docx, .doc, .txt, .md
-          </p>
-        </div>
+        <EmptyState
+          icon={<FileIcon />}
+          title="No documents uploaded yet"
+          description="Upload PDFs, DOCX, or text files to build your AI knowledge base. Supported: .pdf, .docx, .doc, .txt, .md"
+        />
       ) : (
         <div className="space-y-2">
           {documents.map((doc) => (

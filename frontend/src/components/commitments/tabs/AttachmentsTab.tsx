@@ -8,6 +8,7 @@ import { useDropzone } from "react-dropzone";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ds/text";
 import { cn } from "@/lib/utils";
+import { formatDate } from "@/lib/format";
 
 type Attachment = {
   id: string;
@@ -20,13 +21,6 @@ interface AttachmentsTabProps {
   commitmentId: string;
 }
 
-function formatDate(dateString: string) {
-  return new Date(dateString).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
 
 export const AttachmentsTab = memo(function AttachmentsTab({ commitmentId }: AttachmentsTabProps) {
   const [attachments, setAttachments] = useState<Attachment[]>([]);

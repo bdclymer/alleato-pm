@@ -3,6 +3,7 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 import { type NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
+import { logger } from "@/lib/logger";
 
 /**
  * GET /api/directory/companies
@@ -78,7 +79,7 @@ export const GET = withApiGuardrails(
     const { data: companies, error, count } = await query;
 
     if (error) {
-      console.error("Error fetching companies:", error);
+      logger.error({ msg: "Error fetching companies:", error: error instanceof Error ? error.message : String(error) });
       return apiErrorResponse(error);
     }
 
@@ -161,7 +162,7 @@ export const POST = withApiGuardrails(
       .single();
 
     if (error) {
-      console.error("Error creating company:", error);
+      logger.error({ msg: "Error creating company:", error: error instanceof Error ? error.message : String(error) });
       // Check for duplicate company
       if (error.code === "23505") {
         return NextResponse.json(

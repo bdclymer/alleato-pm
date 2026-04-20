@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 
 import { apiErrorResponse } from "@/lib/api-error";
 import { createClient } from "@/lib/supabase/server";
+import { logger } from "@/lib/logger";
 
 interface RouteParams {
   params: Promise<{ projectId: string }>;
@@ -76,7 +77,7 @@ export const POST = withApiGuardrails(
         });
 
       if (uploadError) {
-        console.error("Storage upload error:", uploadError);
+        logger.error({ msg: "Storage upload error:", data: uploadError });
         continue;
       }
 
@@ -110,7 +111,7 @@ export const POST = withApiGuardrails(
         .single();
 
       if (insertError) {
-        console.error("Insert error:", insertError);
+        logger.error({ msg: "Insert error:", data: insertError });
         continue;
       }
 

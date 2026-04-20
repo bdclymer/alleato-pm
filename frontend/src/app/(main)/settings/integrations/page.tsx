@@ -4,6 +4,7 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 import { CheckCircle2, AlertCircle, ExternalLink, RefreshCw } from "lucide-react";
 import { PageShell } from "@/components/layout";
+import { SectionRuleHeading } from "@/components/layout/spacing";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
@@ -230,7 +231,7 @@ export default function IntegrationsSettingsPage() {
             <div className="grid grid-cols-1 gap-0 md:grid-cols-[220px_1fr]">
               {/* Group label */}
               <div className="pb-3 md:pb-0 md:pr-6">
-                <h3 className="text-sm font-semibold">{group.title}</h3>
+                <SectionRuleHeading label={group.title} />
                 <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
                   {group.description}
                 </p>

@@ -52,7 +52,7 @@ export function ChangeEventGeneralInfoPanel({
           <div className="space-y-8">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-14 gap-y-8">
               {/* Details */}
-              <div className="space-y-6">
+              <div className="space-y-4">
                 <SectionRuleHeading label="Details" className="[&_span]:text-primary" />
                 <dl className="space-y-4 text-sm">
                   <LabelValueRow label="Number">
@@ -161,7 +161,7 @@ export function ChangeEventGeneralInfoPanel({
               </div>
 
               {/* Reason for Change */}
-              <div className="space-y-6">
+              <div>
                 <SectionRuleHeading label="Reason for Change" className="[&_span]:text-primary" />
                 <dl className="space-y-4 text-sm">
                   <LabelValueRow label="Origin" missing={!changeEvent.origin}>
@@ -187,7 +187,7 @@ export function ChangeEventGeneralInfoPanel({
 
           {/* Right sidebar: Totals */}
           <div className="space-y-8">
-            <div className="space-y-4">
+            <div>
               <SectionRuleHeading label="Totals" className="[&_span]:text-primary" />
               <div className="rounded-md border border-border bg-muted p-6">
                 <dl className="space-y-3 text-sm">

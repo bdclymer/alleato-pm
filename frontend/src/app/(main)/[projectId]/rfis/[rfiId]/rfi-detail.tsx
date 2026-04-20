@@ -21,6 +21,7 @@ import {
   SelectValue,
   StatusBadge,
   Textarea,
+  EmptyState,
 } from "@/components/ds";
 import { RfiResponses } from "@/components/rfis/rfi-responses";
 import { useUpdateRfi } from "@/hooks/use-rfis";
@@ -30,19 +31,11 @@ import {
   type RfiEditValues,
 } from "@/lib/schemas/rfi-schema";
 import type { RFI } from "@/types/database-extensions";
+import { formatDate } from "@/lib/format";
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-function formatDate(dateStr: string | null | undefined): string {
-  if (!dateStr) return "—";
-  return new Date(dateStr).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-}
 
 function formatStatusLabel(status: string): string {
   if (status === "closed-draft") return "Closed (Draft)";
@@ -115,9 +108,10 @@ export function RfiDetail({ rfi, projectId, isEditing = false }: RfiDetailProps)
 
   if (!rfi) {
     return (
-      <div className="py-16 text-center text-sm text-muted-foreground">
-        RFI not found.
-      </div>
+      <EmptyState
+        title="RFI not found"
+        description="This RFI could not be found or may have been deleted."
+      />
     );
   }
 

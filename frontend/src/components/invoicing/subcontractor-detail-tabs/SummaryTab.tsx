@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { formatCurrency, formatDate, type InvoiceRollup } from "./shared";
+import { SectionRuleHeading } from "@/components/layout/spacing";
 
 const DATE_FORMATS = [
   "MM/dd/yyyy",
@@ -262,9 +263,7 @@ export function SummaryTab({
 
       {/* ── Section 1: General Information ── */}
       <section className="space-y-4">
-        <h2 className="text-sm font-semibold text-foreground">
-          General Information
-        </h2>
+        <SectionRuleHeading label="General Information" />
         <div className="grid grid-cols-2 gap-x-20 gap-y-0">
           <dl className="space-y-4 text-sm">
             <LabelValueRow label="Period Start" missing={!editing && !invoice.period_start}>
@@ -360,9 +359,7 @@ export function SummaryTab({
 
       {/* ── Section 2: Summary Preview (AIA G702-style) ── */}
       <section className="space-y-6">
-        <h2 className="text-sm font-semibold text-foreground">
-          Summary Preview
-        </h2>
+        <SectionRuleHeading label="Summary Preview" />
 
         {/* TO / FROM address blocks (stacked) + Project metadata (right column) */}
         <div className="grid grid-cols-2 gap-x-20 gap-y-0">
@@ -418,9 +415,7 @@ export function SummaryTab({
         {/* Subcontractor's Application for Payment (G702 rollup) */}
         {invoice.rollup && (
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-foreground">
-              Subcontractor&apos;s Application for Payment
-            </h3>
+            <SectionRuleHeading label="Subcontractor's Application for Payment" />
             <dl className="divide-y divide-border text-sm">
               {[
                 {
@@ -502,9 +497,7 @@ export function SummaryTab({
         {/* Change Order Summary Table */}
         {coSummary && (coSummary.additions !== 0 || coSummary.deductions !== 0) && (
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-foreground">
-              Change Order Summary
-            </h3>
+            <SectionRuleHeading label="Change Order Summary" />
             <Table>
               <TableHeader>
                 <TableRow>
@@ -536,9 +529,7 @@ export function SummaryTab({
       {/* ── Section 3: Attachments ── */}
       <section className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-foreground">
-            Attachments
-          </h2>
+          <SectionRuleHeading label="Attachments" />
           {editing && (
             <Button size="sm" variant="outline" disabled>
               <Upload className="h-4 w-4 mr-1" /> Upload

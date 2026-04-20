@@ -12,6 +12,7 @@ import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
 import { rfiDraftSchema, rfiOpenSchema } from "@/lib/schemas/rfi-schema";
 import { ZodError } from "zod";
+import { logger } from "@/lib/logger";
 
 type RouteParams = {
   params: Promise<{ projectId: string }>;
@@ -64,7 +65,7 @@ export const GET = withApiGuardrails(
     const { data, error, count } = await query;
 
     if (error) {
-      console.error("RFI list error:", error);
+      logger.error({ msg: "RFI list error:", error: error instanceof Error ? error.message : String(error) });
       return apiErrorResponse(error);
     }
 
@@ -168,7 +169,7 @@ export const POST = withApiGuardrails(
       .single();
 
     if (error) {
-      console.error("RFI create error:", error);
+      logger.error({ msg: "RFI create error:", error: error instanceof Error ? error.message : String(error) });
       return apiErrorResponse(error);
     }
 

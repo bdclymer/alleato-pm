@@ -1,6 +1,7 @@
 import * as React from "react";
 import type { ReactElement } from "react";
 import { Eye, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { formatCurrency, formatDate } from "@/lib/format";
 
 import type {
   ColumnConfig,
@@ -90,24 +91,8 @@ export interface OwnerInvoice {
 // Helpers
 // =============================================================================
 
-export function formatCurrency(value: number | null | undefined): string {
-  if (value === null || value === undefined) return "$0.00";
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(value);
-}
-
-export function formatDate(dateStr: string | null | undefined): string {
-  if (!dateStr) return "—";
-  const d = new Date(dateStr);
-  if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
+// re-exported from @/lib/format for callers that import them from here
+export { formatCurrency, formatDate };
 
 function formatPercent(value: number | null | undefined): string {
   if (value === null || value === undefined) return "0%";

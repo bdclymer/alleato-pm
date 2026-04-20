@@ -4,6 +4,7 @@ import { parseJsonBody, withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { isBackendOfflineError } from "../rag-chatkit/utils";
+import { logger } from "@/lib/logger";
 
 /**
  * Simple RAG Chat API Route
@@ -46,7 +47,8 @@ export const POST = withApiGuardrails("/api/rag-chat#POST", async ({ request }) 
   const validBody: ChatRequestBody = body;
 
   // Log incoming request for debugging
-  console.warn("[RAG-Chat API] Incoming request:", {
+  logger.debug({
+    msg: "[RAG-Chat API] Incoming request",
     message: validBody.message.substring(0, 100),
     hasHistory: !!(validBody.history && validBody.history.length > 0),
   });
@@ -66,11 +68,11 @@ export const POST = withApiGuardrails("/api/rag-chat#POST", async ({ request }) 
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(
-        "[RAG-Chat API] Backend error:",
-        response.status,
-        errorText,
-      );
+      logger.error({
+        msg: "[RAG-Chat API] Backend error",
+        status: response.status,
+        error: errorText,
+      });
       throw new GuardrailError({
         code: "UPSTREAM_FAILURE",
         where: "/api/rag-chat#POST",
@@ -85,7 +87,7 @@ export const POST = withApiGuardrails("/api/rag-chat#POST", async ({ request }) 
 
     const data = await response.json();
 
-    console.warn("[RAG-Chat API] Success in", elapsed, "ms");
+    logger.info({ msg: "[RAG-Chat API] Success", elapsedMs: elapsed });
 
     return NextResponse.json({
       response: data.response || data.reply || "",

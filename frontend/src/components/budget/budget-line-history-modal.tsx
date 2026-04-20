@@ -5,6 +5,7 @@ import { apiFetch } from "@/lib/api-client";
 import { BaseModal, ModalBody, ModalFooter } from "./modals/BaseModal";
 import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
+import { EmptyState } from "@/components/ds";
 
 interface HistoryEntry {
   id: string;
@@ -116,9 +117,10 @@ export function BudgetLineHistoryModal({
         )}
 
         {!loading && !error && history.length === 0 && (
-          <div className="text-center py-8 text-muted-foreground">
-            <p className="text-sm">No changes recorded yet</p>
-          </div>
+          <EmptyState
+            title="No changes recorded yet"
+            description="Changes to this budget line will appear here."
+          />
         )}
 
         {!loading && !error && history.length > 0 && (

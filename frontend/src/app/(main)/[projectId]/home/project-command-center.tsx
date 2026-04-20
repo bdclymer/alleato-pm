@@ -24,7 +24,7 @@ import { useBudgetData } from "@/hooks/use-budget-data";
 import { useCurrentUserName } from "@/hooks/use-current-user-name";
 import { useProjectRoles, type ProjectRole } from "@/hooks/use-project-roles";
 import { AssignMemberDialog } from "@/components/domain/directory/AssignMemberDialog";
-import { KpiRow, StatusBadge, Skeleton } from "@/components/ds";
+import { KpiRow, StatusBadge, Skeleton, EmptyState } from "@/components/ds";
 import { ContentSectionStack } from "@/components/layout";
 import {
   Sheet,
@@ -425,7 +425,11 @@ function RecentMeetingsSection({
       </SectionHeading>
 
       {meetings.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No meetings recorded</p>
+        <EmptyState
+          icon={<Calendar />}
+          title="No meetings recorded"
+          description="Meetings will appear here once scheduled for this project."
+        />
       ) : (
         <div className="space-y-1">
           {meetings.map((m) => {

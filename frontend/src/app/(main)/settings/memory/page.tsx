@@ -3,6 +3,7 @@
 import * as React from "react";
 import { Brain, Trash2, Pencil, Check, X, RefreshCw } from "lucide-react";
 import { PageShell } from "@/components/layout";
+import { EmptyState } from "@/components/ds";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
+import { formatDate } from "@/lib/format";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -149,11 +151,7 @@ function MemoryRow({
           {!editing && (
             <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
               <span>
-                {new Date(memory.created_at).toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                  year: "numeric",
-                })}
+                {formatDate(memory.created_at)}
               </span>
               <span>·</span>
               <span>Importance {Math.round(memory.importance * 100)}%</span>
@@ -317,14 +315,11 @@ export default function MemorySettingsPage() {
           Loading memories…
         </div>
       ) : memories.length === 0 ? (
-        <div className="py-12 text-center">
-          <Brain className="h-8 w-8 text-muted-foreground/30 mx-auto mb-3" />
-          <p className="text-sm text-muted-foreground">
-            {typeFilter === "all"
-              ? "No memories yet. They'll appear here as you use the AI assistant."
-              : `No ${typeFilter} memories yet.`}
-          </p>
-        </div>
+        <EmptyState
+          icon={<Brain />}
+          title={typeFilter === "all" ? "No memories yet" : `No ${typeFilter} memories yet`}
+          description="They'll appear here as you use the AI assistant."
+        />
       ) : (
         <div className="space-y-6">
           {typeOrder.map((type) => {

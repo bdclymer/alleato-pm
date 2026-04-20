@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import type { UpdateBudgetViewRequest } from "@/types/budget-views";
 import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
+import { logger } from "@/lib/logger";
 
 // GET /api/projects/[id]/budget/views/[viewId]
 // Fetch a single budget view
@@ -39,11 +40,11 @@ export const GET = withApiGuardrails<{ projectId: string; viewId: string }>(
       .single();
 
     if (error) {
-      console.error("Budget view fetch error:", {
+      logger.error({ msg: "Budget view fetch error:", data: {
         error,
         viewId,
         userId: user.id
-      });
+      } });
 
       // Handle specific error cases
       if (error.code === 'PGRST116') {

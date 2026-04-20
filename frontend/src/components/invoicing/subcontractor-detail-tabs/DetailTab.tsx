@@ -27,6 +27,7 @@ import {
   type LineItemEdits,
   type SovLineItem,
 } from "./shared";
+import { SectionRuleHeading } from "@/components/layout/spacing";
 
 /* ─── Bulk Retainage Sidebar ─── */
 
@@ -297,9 +298,7 @@ export function DetailTab({
       )}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-sm font-semibold text-foreground">
-            Schedule of Values (G703)
-          </h2>
+          <SectionRuleHeading label="Schedule of Values (G703)" />
           <p className="text-xs text-muted-foreground">
             {lineItems.length} line item
             {lineItems.length !== 1 ? "s" : ""}

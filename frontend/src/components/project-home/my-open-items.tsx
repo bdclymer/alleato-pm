@@ -18,6 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { formatDate } from "@/lib/format";
 
 interface MyOpenItemsProps {
   items: MyOpenItem[];
@@ -31,14 +32,6 @@ const iconMap: Record<string, LucideIcon> = {
   ClipboardCheck,
 };
 
-function formatDate(date: Date | undefined): string {
-  if (!date) return "";
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(date);
-}
 
 export function MyOpenItems({ items, projectId }: MyOpenItemsProps) {
   return (

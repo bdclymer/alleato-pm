@@ -3,6 +3,8 @@ import type { ReactElement } from "react";
 import Link from "next/link";
 import { ChevronRight, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 
+import { formatDate } from "@/lib/format";
+
 import { StatusBadge } from "@/components/ds";
 import { Button } from "@/components/ui/button";
 import {
@@ -120,13 +122,6 @@ function formatCurrency(value: number | null | undefined): string {
     style: "currency",
     currency: "USD",
   }).format(value);
-}
-
-function formatDate(value: string | null | undefined): string {
-  if (!value) return "-";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "-";
-  return date.toLocaleDateString();
 }
 
 // Converts snake_case DB values to display strings that StatusBadge can look up.

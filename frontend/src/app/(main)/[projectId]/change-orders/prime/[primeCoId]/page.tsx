@@ -37,6 +37,7 @@ import {
   StatusBadge,
 } from "@/components/ds";
 import { useVerticalMarkup } from "@/hooks/use-vertical-markup";
+import { useConfirm } from "@/hooks/use-confirm";
 import {
   ContentSectionStack,
   LabelValueRow,
@@ -85,6 +86,7 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { formatDate } from "@/lib/format";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -197,14 +199,6 @@ function formatCurrency(amount: number | null | undefined): string {
   }).format(amount);
 }
 
-function formatDate(dateStr: string | null | undefined): string {
-  if (!dateStr) return "—";
-  return new Date(dateStr).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-}
 
 const STATUS_OPTIONS = [
   "draft",
@@ -244,6 +238,7 @@ export default function PrimeContractCODetailPage() {
   const projectId = params.projectId as string;
   const primeCoId = params.primeCoId as string;
 
+  const { confirm, ConfirmDialog } = useConfirm();
   const [isLoading, setIsLoading] = useState(true);
   const [co, setCo] = useState<PrimeCO | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -616,8 +611,13 @@ export default function PrimeContractCODetailPage() {
   };
 
   const handleDelete = useCallback(async () => {
-    if (!co || !confirm(`Delete change order ${co.pcco_number || co.title}?`))
-      return;
+    if (!co) return;
+    const ok = await confirm({
+      description: `Delete change order ${co.pcco_number || co.title}?`,
+      variant: "destructive",
+      confirmLabel: "Delete",
+    });
+    if (!ok) return;
     try {
       const res = await fetch(apiBase, { method: "DELETE" });
       if (!res.ok) {
@@ -629,7 +629,7 @@ export default function PrimeContractCODetailPage() {
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to delete");
     }
-  }, [co, apiBase, router, projectId]);
+  }, [co, apiBase, router, projectId, confirm]);
 
   const handleApprove = useCallback(async () => {
     if (!co) return;
@@ -774,7 +774,7 @@ export default function PrimeContractCODetailPage() {
             className="space-y-8"
           >
             {/* General Information */}
-            <section className="space-y-6">
+            <section className="space-y-4">
               <SectionRuleHeading
                 label="General Information"
                 className="[&_span]:text-primary"
@@ -955,7 +955,7 @@ export default function PrimeContractCODetailPage() {
             </section>
 
             {/* Financial & Schedule */}
-            <section className="space-y-6">
+            <section className="space-y-4">
               <SectionRuleHeading
                 label="Financial & Schedule"
                 className="[&_span]:text-primary"
@@ -1171,7 +1171,7 @@ export default function PrimeContractCODetailPage() {
             </section>
 
             {/* Flags */}
-            <section className="space-y-6">
+            <section className="space-y-4">
               <SectionRuleHeading
                 label="Flags"
                 className="[&_span]:text-primary"
@@ -1348,7 +1348,7 @@ export default function PrimeContractCODetailPage() {
                 <div className="grid grid-cols-1 gap-x-16 gap-y-10 lg:grid-cols-[minmax(0,1fr)_minmax(340px,420px)]">
                   <div className="space-y-8">
                     <div className="grid grid-cols-1 gap-x-14 gap-y-8 sm:grid-cols-2">
-                      <div className="space-y-6">
+                      <div>
                         <SectionRuleHeading
                           label="Details"
                           className="[&_span]:text-primary"
@@ -1388,7 +1388,7 @@ export default function PrimeContractCODetailPage() {
                         </dl>
                       </div>
 
-                      <div className="space-y-6">
+                      <div>
                         <SectionRuleHeading
                           label="Attributes"
                           className="[&_span]:text-primary"
@@ -1454,7 +1454,7 @@ export default function PrimeContractCODetailPage() {
                   </div>
 
                   <div className="space-y-8">
-                    <div className="space-y-4">
+                    <div>
                       <SectionRuleHeading
                         label="Financial Summary"
                         className="[&_span]:text-primary"
@@ -1495,7 +1495,7 @@ export default function PrimeContractCODetailPage() {
                       </div>
                     </div>
 
-                    <div className="space-y-4">
+                    <div>
                       <SectionRuleHeading
                         label="Key Dates"
                         className="[&_span]:text-primary"
@@ -1547,7 +1547,18 @@ export default function PrimeContractCODetailPage() {
                 </div>
 
                 {lineItemsLoading ? (
-                  <Skeleton className="h-24 w-full" />
+                  <div className="space-y-2">
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <div key={i} className="flex items-center gap-4">
+                        <Skeleton className="h-4 w-6" />
+                        <Skeleton className="h-4 flex-1" />
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-4 w-12" />
+                        <Skeleton className="h-4 w-16" />
+                        <Skeleton className="h-4 w-24" />
+                      </div>
+                    ))}
+                  </div>
                 ) : lineItems.length > 0 || addingLineItem ? (
                   <InlineTable variant="read">
                     <InlineTableHeader>
@@ -1869,10 +1880,12 @@ export default function PrimeContractCODetailPage() {
                     icon={<List />}
                     title="No line items"
                     description="Add cost line items to this change order"
-                    action={{
-                      label: "Add Line Item",
-                      onClick: startAddLineItem,
-                    }}
+                    action={
+                      <Button size="sm" variant="outline" onClick={startAddLineItem}>
+                        <Plus />
+                        Add Line Item
+                      </Button>
+                    }
                   />
                 )}
               </section>
@@ -1903,7 +1916,15 @@ export default function PrimeContractCODetailPage() {
                   )}
                 </div>
                 {attachmentsLoading ? (
-                  <Skeleton className="h-16 w-full" />
+                  <div className="space-y-2">
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <div key={i} className="flex items-center gap-3">
+                        <Skeleton className="h-4 w-4" />
+                        <Skeleton className="h-4 w-48" />
+                        <Skeleton className="h-4 w-20 ml-auto" />
+                      </div>
+                    ))}
+                  </div>
                 ) : attachmentsError ? (
                   <p className="text-sm text-destructive">{attachmentsError}</p>
                 ) : attachments.length === 0 ? (
@@ -1911,13 +1932,12 @@ export default function PrimeContractCODetailPage() {
                     icon={<Paperclip />}
                     title="No attachments"
                     description="Upload files related to this change order"
-                    action={{
-                      label: "Upload File",
-                      onClick: () =>
-                        document
-                          .getElementById("attachment-upload-empty")
-                          ?.click(),
-                    }}
+                    action={
+                      <Button size="sm" variant="outline" onClick={() => document.getElementById("attachment-upload-empty")?.click()}>
+                        <Plus />
+                        Upload File
+                      </Button>
+                    }
                   />
                 ) : (
                   <div className="space-y-2">
@@ -1989,6 +2009,8 @@ export default function PrimeContractCODetailPage() {
           </TabsContent>
         </Tabs>
       </PageShell>
+
+      {ConfirmDialog}
 
       {/* Rejection dialog */}
       <Dialog

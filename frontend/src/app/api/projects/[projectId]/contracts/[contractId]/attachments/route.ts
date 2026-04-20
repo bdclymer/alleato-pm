@@ -6,6 +6,7 @@ import { apiErrorResponse } from "@/lib/api-error";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requirePermission } from "@/lib/permissions-guard";
+import { logger } from "@/lib/logger";
 
 interface RouteParams {
   params: Promise<{ projectId: string; contractId: string }>;
@@ -202,7 +203,7 @@ export const POST = withApiGuardrails(
       .single();
 
     if (attachmentError || !attachment) {
-      console.error("Failed to insert attachment record:", attachmentError);
+      logger.error({ msg: "Failed to insert attachment record:", data: attachmentError });
       await serviceClient.storage.from("project-files").remove([storagePath]);
       return NextResponse.json(
         {

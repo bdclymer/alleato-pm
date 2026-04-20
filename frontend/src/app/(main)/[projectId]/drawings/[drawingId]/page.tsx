@@ -906,14 +906,11 @@ export default function DrawingDetailPage() {
                         </Button>
                       </div>
                     ) : (
-                      <div className="flex flex-col items-center justify-center py-10 text-center">
-                        <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-3">
-                          <ImageOff className="h-5 w-5 text-muted-foreground" />
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          No preview available
-                        </p>
-                      </div>
+                      <EmptyState
+                        icon={<ImageOff />}
+                        title="No preview available"
+                        description="Upload a drawing revision to see a preview here."
+                      />
                     )}
                   </CardContent>
                 </Card>

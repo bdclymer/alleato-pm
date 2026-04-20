@@ -2,6 +2,7 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { logger } from "@/lib/logger";
 
 /**
  * GET /api/permissions/users
@@ -41,7 +42,7 @@ export const GET = withApiGuardrails(
       .order("last_name", { ascending: true });
 
     if (peopleError) {
-      console.error("Error loading people:", peopleError);
+      logger.error({ msg: "Error loading people:", data: peopleError });
       return NextResponse.json({ error: "Failed to load users" }, { status: 500 });
     }
 

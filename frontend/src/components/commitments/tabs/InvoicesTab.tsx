@@ -15,6 +15,7 @@ import { EmptyState } from "@/components/ds";
 import { InvoiceStatusBadge } from "@/components/invoicing/InvoiceStatusBadge";
 import { formatCurrency } from "@/config/tables";
 import { apiFetch } from "@/lib/api-client";
+import { formatDate } from "@/lib/format";
 
 interface CommitmentInvoiceRow {
   id: number;
@@ -44,17 +45,6 @@ interface EnrichedInvoice extends CommitmentInvoiceRow {
   revised_contract_sum: number;
   total_earned_less_retainage: number;
   balance_to_finish: number;
-}
-
-function formatDate(value: string | null): string {
-  if (!value) return "—";
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
 }
 
 function formatInvoiceDates(start: string | null, end: string | null): string {
@@ -333,10 +323,12 @@ export const InvoicesTab = memo(function InvoicesTab({
           icon={<FileText />}
           title="No invoices yet"
           description="Invoices submitted against this contract will appear here."
-          action={{
-            label: "Create Retainage Release Invoice",
-            onClick: createRetainageReleaseInvoice,
-          }}
+          action={
+            <Button size="sm" variant="outline" onClick={createRetainageReleaseInvoice}>
+              <Plus />
+              Create Retainage Release Invoice
+            </Button>
+          }
         />
       ) : (
         <>

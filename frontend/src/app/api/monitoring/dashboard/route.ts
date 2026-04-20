@@ -4,6 +4,7 @@ import path from "path";
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
+import { logger } from "@/lib/logger";
 // Types for monitoring data
 interface Initiative {
   id: string;
@@ -68,8 +69,8 @@ async function parseMonitoringData(): Promise<{
     const aiInsights = generateAIInsights(initiatives, activityLog);
     return { initiatives, systemHealth, activityLog, aiInsights };
   } catch (error) {
-    console.error("[monitoring/dashboard] Failed to parse monitoring data", {
-      reason: error instanceof Error ? error.message : String(error),
+    logger.error({ msg: "[monitoring/dashboard] Failed to parse monitoring data", data: {
+      reason: error instanceof Error ? error.message : String(error }),
     });
     return {
       initiatives: [],

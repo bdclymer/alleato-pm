@@ -2,7 +2,7 @@
 
 import React, { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
-import { Download, MoreVertical } from "lucide-react";
+import { Download, MoreVertical, Plus } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -67,9 +67,12 @@ export function FinancialDataTable<T extends { id?: string | number }>({
         title={emptyMessage}
         description=""
         action={
-          emptyActionLabel && onEmptyAction
-            ? { label: emptyActionLabel, onClick: onEmptyAction }
-            : undefined
+          emptyActionLabel && onEmptyAction ? (
+            <Button size="sm" variant="outline" onClick={onEmptyAction}>
+              <Plus />
+              {emptyActionLabel}
+            </Button>
+          ) : undefined
         }
       />
     );

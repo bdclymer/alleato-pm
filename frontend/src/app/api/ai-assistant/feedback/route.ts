@@ -3,6 +3,7 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { ingestThumbsFeedbackLearning } from "@/lib/ai/services/agent-learning-service";
+import { logger } from "@/lib/logger";
 
 /**
  * POST /api/ai-assistant/feedback
@@ -51,7 +52,7 @@ export const POST = withApiGuardrails("/api/ai-assistant/feedback#POST", async (
   try {
     await ingestThumbsFeedbackLearning({ sessionId, feedback, messageContent });
   } catch (learningError) {
-    console.error("[Feedback] Learning ingestion failed:", learningError);
+    logger.error({ msg: "[Feedback] Learning ingestion failed:", data: learningError });
   }
 
   return Response.json({ success: true });

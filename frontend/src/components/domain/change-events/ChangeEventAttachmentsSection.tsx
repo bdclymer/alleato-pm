@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Upload, X, FileText, Download, Loader2 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -213,8 +214,15 @@ export function ChangeEventAttachmentsSection({
 
         {/* Attachments List */}
         {isLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          <div className="space-y-2">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-3">
+                <Skeleton className="h-4 w-4" />
+                <Skeleton className="h-4 w-48" />
+                <Skeleton className="h-4 w-20 ml-auto" />
+                <Skeleton className="h-4 w-16" />
+              </div>
+            ))}
           </div>
         ) : attachments.length === 0 ? (
           <div className="py-8 text-center text-sm text-muted-foreground">

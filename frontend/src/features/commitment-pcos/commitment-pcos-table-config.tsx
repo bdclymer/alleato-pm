@@ -1,6 +1,8 @@
 import { ArrowRight, Eye, MoreHorizontal, SquarePen, Trash2 } from "lucide-react";
 import type { ReactElement } from "react";
 
+import { formatDate } from "@/lib/format";
+
 import { StatusBadge } from "@/components/ds";
 import type {
   ColumnConfig,
@@ -134,13 +136,6 @@ function commitmentTypeLabel(type: string | null | undefined): string {
     default:
       return type || "-";
   }
-}
-
-function formatDate(dateValue: string | null | undefined): string {
-  if (!dateValue) return "-";
-  const parsed = new Date(dateValue);
-  if (Number.isNaN(parsed.getTime())) return "-";
-  return parsed.toLocaleDateString();
 }
 
 export function formatMoney(value: number | string | null | undefined): string {

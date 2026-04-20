@@ -35,6 +35,53 @@
 @layer base {
   :root {
     /* ================================================================
+       TIER 0 — PRIMITIVE COLOR PALETTE
+       Raw HSL values only. Nothing else should use these directly.
+       All semantic tokens below MUST reference a primitive.
+       Changing a primitive here propagates everywhere instantly.
+       ================================================================ */
+
+    /* Purple scale (primary brand) */
+    --purple-300: 260 50% 78%;
+    --purple-400: 260 45% 68%;
+    --purple-500: 260 37% 59%;
+    --purple-600: 260 37% 50%;
+    --purple-700: 260 37% 40%;
+
+    /* Indigo scale (dark-mode primary) */
+    --indigo-400: 245 58% 70%;
+    --indigo-500: 245 58% 62%;
+    --indigo-600: 245 58% 52%;
+
+    /* Neutral scale */
+    --neutral-50:  0 0% 98%;
+    --neutral-100: 240 5% 96%;
+    --neutral-200: 240 5% 91%;
+    --neutral-300: 0 0% 90%;
+    --neutral-400: 240 4% 70%;
+    --neutral-500: 240 4% 54%;
+    --neutral-600: 240 4% 40%;
+    --neutral-700: 240 6% 25%;
+    --neutral-800: 240 6% 15%;
+    --neutral-900: 240 6% 9%;
+
+    /* Carbon scale (dark surfaces) */
+    --carbon-800: 240 5% 13%;
+    --carbon-900: 240 6% 9%;
+
+    /* Semantic status primitives */
+    --green-500:  152 69% 37%;
+    --green-600:  152 69% 30%;
+    --amber-500:  38 92% 50%;
+    --red-500:    0 72% 51%;
+    --red-600:    0 72% 42%;
+    --blue-500:   217 91% 60%;
+
+    /* Orange (Procore brand) */
+    --orange-500: 29 71% 52%;
+    --orange-600: 29 71% 45%;
+
+    /* ================================================================
        SNOW THEME (Light) — Superhuman-inspired v2
        ================================================================ */
 
@@ -60,7 +107,7 @@
     /* Muted */
     --muted: 260 30% 97%;
     --muted-subtle: 240 5% 97%;
-    --muted-foreground: 240 4% 46%;
+    --muted-foreground: 240 4% 40%;
 
     /* Accent */
     --accent: 260 30% 95%;
@@ -178,6 +225,49 @@
     --duration-fast: 150ms;
     --duration-normal: 250ms;
     --duration-slow: 400ms;
+
+    /* ================================================================
+       COMPONENT-LEVEL TOKENS
+       These reference semantic tokens above, so they auto-adapt to
+       dark mode without needing .dark overrides.
+       Use these when you need to retheme a single component type.
+       ================================================================ */
+
+    /* Button */
+    --btn-primary-bg: var(--primary);
+    --btn-primary-fg: var(--primary-foreground);
+    --btn-destructive-bg: var(--destructive);
+    --btn-destructive-fg: var(--destructive-foreground);
+
+    /* Input / Form */
+    --input-bg: var(--card);
+    --input-border: var(--border);
+    --input-border-focus: var(--primary);
+    --input-ring: var(--ring);
+    --input-radius: var(--radius-sm);
+    --input-placeholder: var(--muted-foreground);
+
+    /* Card / Surface */
+    --card-bg: var(--card);
+    --card-border: var(--border);
+    --card-radius: var(--radius);
+    --card-shadow: var(--shadow-sm);
+
+    /* Table */
+    --table-header-bg: var(--muted);
+    --table-row-hover: hsl(var(--muted) / 0.6);
+    --table-border: var(--border);
+
+    /* Badge / Status (reference --status-* tokens) */
+    --badge-success-bg: var(--status-success);
+    --badge-warning-bg: var(--status-warning);
+    --badge-error-bg: var(--status-error);
+    --badge-info-bg: var(--status-info);
+
+    /* Sidebar */
+    --nav-item-hover: hsl(var(--accent));
+    --nav-item-active: hsl(var(--primary) / 0.12);
+    --nav-item-active-fg: hsl(var(--primary));
   }
 
   .dark {
@@ -199,7 +289,7 @@
     --secondary-foreground: 0 0% 92%;
     --muted: 240 5% 16%;
     --muted-subtle: 240 5% 12%;
-    --muted-foreground: 0 0% 65%;
+    --muted-foreground: 0 0% 58%;
     --accent: 245 30% 20%;
     --accent-foreground: 245 58% 75%;
     --light: 245 15% 60%;
@@ -250,6 +340,23 @@
   --color-sidebar-ring: var(--sidebar-ring);
   --color-surface-alt: hsl(var(--surface-alt));
   --color-light: hsl(var(--light));
+}
+
+/* ============================================================================
+   REDUCED MOTION — Accessibility (WCAG 2.1 AA)
+   Collapses all animations and transitions to near-zero for users who
+   have enabled "Reduce motion" at the OS level.
+   ============================================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* ============================================================================

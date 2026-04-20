@@ -11,6 +11,7 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { logger } from "@/lib/logger";
 
 interface EmailRecipient {
   email: string;
@@ -163,7 +164,7 @@ export const POST = withApiGuardrails<{ commitmentId: string }>(
         const pdfBuffer = await renderPdfFromHtml(emailHTML);
         pdfBase64 = Buffer.from(pdfBuffer).toString("base64");
       } catch (pdfError) {
-        console.error("[commitment/email] PDF generation failed, sending without attachment:", pdfError);
+        logger.error({ msg: "[commitment/email] PDF generation failed, sending without attachment", error: pdfError instanceof Error ? pdfError.message : String(pdfError) });
       }
     }
 
@@ -195,7 +196,7 @@ export const POST = withApiGuardrails<{ commitmentId: string }>(
     });
 
     if (sendError) {
-      console.error("[commitment/email] Resend error:", sendError);
+      logger.error({ msg: "[commitment/email] Resend error", error: sendError.message });
       return NextResponse.json(
         { error: "Failed to send email. Please try again." },
         { status: 500 }

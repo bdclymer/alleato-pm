@@ -20,6 +20,7 @@ import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
+import { logger } from "@/lib/logger";
 
 interface RouteParams {
   params: Promise<{ projectId: string; pcoId: string }>;
@@ -48,7 +49,7 @@ export const GET = withApiGuardrails(
       .order("id", { ascending: true });
 
     if (error) {
-      console.error("Failed to fetch PCO line items:", error);
+      logger.error({ msg: "Failed to fetch PCO line items:", error: error instanceof Error ? error.message : String(error) });
       return apiErrorResponse(error);
     }
 
@@ -132,7 +133,7 @@ export const POST = withApiGuardrails(
       .single();
 
     if (error) {
-      console.error("Failed to add PCO line item:", error);
+      logger.error({ msg: "Failed to add PCO line item:", error: error instanceof Error ? error.message : String(error) });
       return apiErrorResponse(error);
     }
 
@@ -247,7 +248,7 @@ export const PATCH = withApiGuardrails(
       .single();
 
     if (error) {
-      console.error("Failed to update PCO line item:", error);
+      logger.error({ msg: "Failed to update PCO line item:", error: error instanceof Error ? error.message : String(error) });
       return apiErrorResponse(error);
     }
 

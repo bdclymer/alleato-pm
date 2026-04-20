@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Edit, X } from "lucide-react";
+import { ArrowLeft, Edit, X, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ds";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -106,13 +107,12 @@ export function PunchItemDetail({ item, projectId, punchItemId }: PunchItemDetai
 
   if (!item) {
     return (
-      <div className="flex flex-col items-center gap-4 py-16 text-center">
-        <p className="text-muted-foreground">Punch item not found.</p>
-        <Button variant="outline" onClick={() => router.push(`/${projectId}/punch-list`)}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Punch List
-        </Button>
-      </div>
+      <EmptyState
+        icon={<ClipboardList />}
+        title="Punch item not found"
+        description="This punch item could not be found or may have been deleted."
+        action={<Button variant="outline" onClick={() => router.push(`/${projectId}/punch-list`)}><ArrowLeft />Back to Punch List</Button>}
+      />
     );
   }
 

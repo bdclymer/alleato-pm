@@ -18,6 +18,7 @@ import { NextResponse } from "next/server";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { logEvent } from "@/lib/guardrails/observability";
+import { logger } from "@/lib/logger";
 
 export const maxDuration = 120;
 
@@ -252,7 +253,7 @@ export const POST = withApiGuardrails("/api/cron/daily-flags#POST", async ({ req
           .insert(insight);
 
         if (insertError) {
-          console.error(`[cron/daily-flags] Failed to insert insight for project ${project.id}:`, insertError);
+          logger.error({ msg: `[cron/daily-flags] Failed to insert insight for project ${project.id}:`, data: insertError });
           continue;
         }
 

@@ -3,6 +3,7 @@
 import * as React from "react";
 import type { ReactElement } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { formatDate } from "@/lib/format";
 import {
   ArrowUpRight,
   Building2,
@@ -21,6 +22,7 @@ import {
 import { toast } from "sonner";
 
 import { createClient } from "@/lib/supabase/client";
+import { useConfirm } from "@/hooks/use-confirm";
 import { getDirectoryTabs } from "@/config/directory-tabs";
 import type { Database } from "@/types/database.types";
 import { ContactFormDialog } from "@/components/domain/contacts/ContactFormDialog";
@@ -95,17 +97,6 @@ const contactColumns: ColumnConfig[] = [
 const contactDefaultVisibleColumns = contactColumns
   .filter((column) => column.defaultVisible !== false)
   .map((column) => column.id);
-
-function formatDate(value: string | null): string {
-  if (!value) return "-";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return "-";
-  return parsed.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
 
 function escapeCsvValue(value: string): string {
   if (value.includes(",") || value.includes("\"") || value.includes("\n")) {
@@ -393,6 +384,7 @@ export default function DirectoryContactsPage(): ReactElement {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { confirm, ConfirmDialog } = useConfirm();
 
   const initialType = searchParams.get("type") ?? "";
   const initialAdmin = searchParams.get("is_admin") ?? "";
@@ -693,7 +685,11 @@ export default function DirectoryContactsPage(): ReactElement {
   }, []);
 
   const handleDeleteContact = async (contact: ContactTableRow) => {
-    const confirmed = window.confirm(`Delete ${contact.full_name}?`);
+    const confirmed = await confirm({
+      description: `Delete ${contact.full_name}? This cannot be undone.`,
+      variant: "destructive",
+      confirmLabel: "Delete",
+    });
     if (!confirmed) return;
 
     const deleted = await deleteContacts([contact.id]);
@@ -710,7 +706,11 @@ export default function DirectoryContactsPage(): ReactElement {
     const selectedIds = tableState.selectedIds;
     if (selectedIds.length === 0) return;
 
-    const confirmed = window.confirm(`Delete ${selectedIds.length} selected contact(s)?`);
+    const confirmed = await confirm({
+      description: `Delete ${selectedIds.length} selected contact(s)? This cannot be undone.`,
+      variant: "destructive",
+      confirmLabel: "Delete",
+    });
     if (!confirmed) return;
 
     const deleted = await deleteContacts(selectedIds);
@@ -946,6 +946,7 @@ export default function DirectoryContactsPage(): ReactElement {
       />
 
       <ContactFormDialog open={dialogOpen} onOpenChange={setDialogOpen} onSuccess={fetchContacts} />
+      {ConfirmDialog}
     </>
   );
 }

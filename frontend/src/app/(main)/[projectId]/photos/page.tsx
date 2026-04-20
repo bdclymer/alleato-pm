@@ -286,9 +286,12 @@ export default function ProjectPhotosPage() {
                         : "Drag and drop images here, or click Upload Photo to get started."
                   }
                   action={
-                    !search && !albumFilter && !isStarred
-                      ? { label: "Upload Photo", onClick: () => setUploadOpen(true) }
-                      : undefined
+                    !search && !albumFilter && !isStarred ? (
+                      <Button size="sm" variant="outline" onClick={() => setUploadOpen(true)}>
+                        <Plus />
+                        Upload Photo
+                      </Button>
+                    ) : undefined
                   }
                 />
               </div>

@@ -39,6 +39,7 @@ import { Badge } from "@/components/ui/badge";
 import { useDeleteSpecification } from "@/hooks/use-specifications";
 import type { SpecificationWithRevision } from "@/types/specifications.types";
 import { toast } from "sonner";
+import { EmptyState } from "@/components/ds";
 
 interface SpecificationListTableProps {
   projectId: string;
@@ -241,15 +242,11 @@ export function SpecificationListTable({
 
   if (specifications.length === 0) {
     return (
-      <div className="text-center py-12 border border-dashed rounded-lg">
-        <FileText className="mx-auto h-12 w-12 text-muted-foreground" />
-        <h3 className="mt-2 text-sm font-semibold text-foreground">
-          No specifications
-        </h3>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Get started by uploading a new specification document.
-        </p>
-      </div>
+      <EmptyState
+        icon={<FileText />}
+        title="No specifications"
+        description="Get started by uploading a new specification document."
+      />
     );
   }
 

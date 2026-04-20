@@ -4,6 +4,7 @@ import * as React from "react";
 import type { ReactElement } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { formatDate } from "@/lib/format";
 import {
   ArrowUpRight,
   Building2,
@@ -66,13 +67,6 @@ const vendorColumns: ColumnConfig[] = [
 const vendorDefaultVisibleColumns = vendorColumns
   .filter((col) => col.defaultVisible !== false)
   .map((col) => col.id);
-
-function formatDate(value: string | null | undefined): string {
-  if (!value) return "-";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return "-";
-  return parsed.toLocaleDateString();
-}
 
 function normalizeVendorField(value: string | null | undefined): string {
   if (!value) return "";
@@ -396,6 +390,15 @@ function VendorPreviewPane({
             ))}
           </div>
         </div>
+      </div>
+
+      {/* Footer action */}
+      <div className="px-4 py-3 border-t border-border shrink-0">
+        <Button asChild className="w-full" variant="outline" size="sm">
+          <Link href={`/directory/vendors/${encodeURIComponent(vendor.id)}`}>
+            View Details
+          </Link>
+        </Button>
       </div>
     </div>
   );

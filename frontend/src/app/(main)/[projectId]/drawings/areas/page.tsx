@@ -7,10 +7,11 @@ import { toast } from "sonner";
 import { DrawingAreaSelector } from "@/components/drawings/DrawingAreaSelector";
 import { DrawingAreaCard } from "@/components/drawings/DrawingAreaCard";
 import { PageShell } from "@/components/layout";
-import { KpiRow } from "@/components/ds";
+import { KpiRow, EmptyState } from "@/components/ds";
 
 import { Button } from "@/components/ui/button";
 import { useDrawingAreas, useCreateDrawingArea, useUpdateDrawingArea, useDeleteDrawingArea } from "@/hooks/use-drawing-areas";
+import { useConfirm } from "@/hooks/use-confirm";
 import type { DrawingAreaWithCount, DrawingAreaFormData } from "@/types/drawings.types";
 
 export default function DrawingAreasPage() {
@@ -18,6 +19,7 @@ export default function DrawingAreasPage() {
   const router = useRouter();
   const projectId = params.projectId as string;
 
+  const { confirm, ConfirmDialog } = useConfirm();
   const [selectedAreaId, setSelectedAreaId] = useState<string | null>(null);
   const [editingArea, setEditingArea] = useState<DrawingAreaWithCount | null>(null);
 
@@ -59,9 +61,12 @@ export default function DrawingAreasPage() {
   };
 
   const handleDeleteArea = async (area: DrawingAreaWithCount) => {
-    if (!confirm(`Are you sure you want to delete "${area.name}"? This action cannot be undone.`)) {
-      return;
-    }
+    const ok = await confirm({
+      description: `Are you sure you want to delete "${area.name}"? This action cannot be undone.`,
+      variant: "destructive",
+      confirmLabel: "Delete",
+    });
+    if (!ok) return;
 
     try {
       await deleteArea.mutateAsync(area.id);
@@ -138,24 +143,16 @@ export default function DrawingAreasPage() {
               isLoading={createArea.isPending || updateArea.isPending || deleteArea.isPending}
             />
           ) : (
-            <div className="text-center py-12">
-              <Folder className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-foreground mb-2">
-                No drawing areas found
-              </h3>
-              <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
-                Create your first drawing area to start organizing your project drawings
-              </p>
-              <Button
-                onClick={() => handleCreateArea()}
-                disabled={createArea.isPending}
-              >
-                <Plus />
-                Create First Area
-              </Button>
-            </div>
+            <EmptyState
+              icon={<Folder />}
+              title="No drawing areas found"
+              description="Create your first drawing area to start organizing your project drawings."
+              action={<Button onClick={() => handleCreateArea()}><Plus />Create First Area</Button>}
+            />
           )}
         </div>
+
+      {ConfirmDialog}
 
       {editingArea && (
         <DrawingAreaCard

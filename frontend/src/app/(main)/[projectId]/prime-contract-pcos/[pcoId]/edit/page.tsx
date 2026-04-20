@@ -6,6 +6,7 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { LabelValueRow, PageShell } from "@/components/layout";
+import { SectionRuleHeading } from "@/components/layout/spacing";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -271,9 +272,7 @@ export default function EditPrimeContractPcoPage() {
       }
     >
       <section className="space-y-4">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-          General
-        </h2>
+        <SectionRuleHeading label="General" />
         <dl className="space-y-3">
           <LabelValueRow label="#">{formData.pco_number || "--"}</LabelValueRow>
           <LabelValueRow label="Title">

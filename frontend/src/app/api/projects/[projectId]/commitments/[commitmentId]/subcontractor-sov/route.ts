@@ -2,6 +2,7 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { logger } from "@/lib/logger";
 
 import { apiErrorResponse } from "@/lib/api-error";
 import { sendEmail } from "@/lib/email/send";
@@ -268,7 +269,7 @@ async function sendSsovInviteEmail(args: {
         });
 
         if (linkError || !linkData?.properties?.action_link) {
-          console.error(`[ssov-invite] Failed to generate invite link for ${recipient.email}:`, linkError);
+          logger.error({ msg: `[ssov-invite] Failed to generate invite link for ${recipient.email}`, error: linkError instanceof Error ? linkError.message : String(linkError) });
           // Fall back to sending a regular notification with the direct (auth-required) link
           return sendEmail({
             template: "sov-invitation",
@@ -945,7 +946,7 @@ export const POST = withApiGuardrails(
         commitmentNumber: commitment.contract_number || null,
         commitmentTitle: commitment.title || null,
       }).catch((err) => {
-        console.error("[ssov-submit] PM review todos failed", err);
+        logger.error({ msg: "[ssov-submit] PM review todos failed", error: err instanceof Error ? err.message : String(err) });
       });
 
       notifyPMsOfSsovSubmission({
@@ -957,7 +958,7 @@ export const POST = withApiGuardrails(
         contractAmount: targetAmount,
         submissionId: submission.id,
       }).catch((err) => {
-        console.error("[ssov-submit] PM email notification failed", err);
+        logger.error({ msg: "[ssov-submit] PM email notification failed", error: err instanceof Error ? err.message : String(err) });
       });
 
       return NextResponse.json({

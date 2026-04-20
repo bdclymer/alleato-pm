@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { z, ZodError } from "zod";
 import { apiErrorResponse } from "@/lib/api-error";
 import { createClient, getApiRouteUser } from "@/lib/supabase/server";
+import { logger } from "@/lib/logger";
 
 interface RouteParams {
   params: Promise<{ projectId: string }>;
@@ -74,7 +75,7 @@ export const GET = withApiGuardrails(
     const { data, error } = await query;
 
     if (error) {
-      console.error("Error fetching emails:", error);
+      logger.error({ msg: "Error fetching emails:", error: error instanceof Error ? error.message : String(error) });
       return NextResponse.json(
         { error: "Failed to fetch emails" },
         { status: 500 },
@@ -116,7 +117,7 @@ export const POST = withApiGuardrails(
       .single();
 
     if (error) {
-      console.error("Error creating email:", error);
+      logger.error({ msg: "Error creating email:", error: error instanceof Error ? error.message : String(error) });
       return apiErrorResponse(error);
     }
 

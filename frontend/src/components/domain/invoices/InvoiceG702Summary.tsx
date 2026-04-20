@@ -5,6 +5,7 @@ import type {
   PaymentApplication,
   PaymentApplicationLineItem,
 } from "@/app/(main)/[projectId]/prime-contracts/[contractId]/types";
+import { SectionRuleHeading } from "@/components/layout/spacing";
 
 interface ContractSummary {
   original_contract_value: number;
@@ -142,9 +143,7 @@ export function InvoiceG702Summary({
 
   return (
     <div className="space-y-3">
-      <h3 className="text-sm font-semibold text-foreground">
-        AIA G702 — Contractor&apos;s Application for Payment
-      </h3>
+      <SectionRuleHeading label="AIA G702 — Contractor's Application for Payment" />
 
       <div className="overflow-hidden rounded-lg border border-border">
         <table className="w-full text-sm">

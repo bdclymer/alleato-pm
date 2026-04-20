@@ -31,6 +31,7 @@ import {
   SectionRuleHeading,
   SummaryValueRow,
 } from "@/components/layout";
+import { EmptyState } from "@/components/ds";
 import { BudgetCodeSelector } from "@/components/budget/budget-code-selector";
 import { Button } from "@/components/ui/button";
 import {
@@ -41,6 +42,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MoneyField } from "@/components/forms/MoneyField";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   InlineTable,
   InlineTableBody,
@@ -208,10 +210,10 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(340px,420px)] gap-x-16 gap-y-10">
           {/* Left column with inner rows */}
           <div className="space-y-8">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-14 gap-y-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-20 gap-y-10">
               {/* Details */}
-              <div className="space-y-6">
-                <SectionRuleHeading label="Details" className="[&_span]:text-primary" />
+              <div>
+                <SectionRuleHeading label="Details"  />
                 <dl className="space-y-4 text-sm">
                   <LabelValueRow label="Contract #" labelClassName="w-44">
                     {contract.contract_number || "Not set"}
@@ -226,7 +228,14 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                     {contract.executed ? formatDate(contract.executed_at) || "Yes" : "No"}
                   </LabelValueRow>
                   <LabelValueRow label="Contractor" labelClassName="w-44" missing={!contract.contractor?.name}>
-                    {contract.contractor?.name || "Not set"}
+                    {contract.contractor?.name && contract.contractor?.id ? (
+                      <Link
+                        href={`/directory/companies/${contract.contractor.id}`}
+                        className="text-primary hover:underline font-medium"
+                      >
+                        {contract.contractor.name}
+                      </Link>
+                    ) : (contract.contractor?.name || "Not set")}
                   </LabelValueRow>
                   <LabelValueRow label="Architect" labelClassName="w-44" missing={!contract.architect_engineer?.name}>
                     {contract.architect_engineer?.name || "Not set"}
@@ -248,8 +257,8 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
               </div>
 
               {/* Key Dates + Attachments */}
-              <div className="space-y-6">
-                <SectionRuleHeading label="Key Dates" className="[&_span]:text-primary" />
+              <div className="space-y-4">
+                <SectionRuleHeading label="Key Dates"  />
                 <dl className="space-y-4 text-sm">
                   <LabelValueRow label="Start Date" labelClassName="w-44">
                     {renderDateOrDash(contract.start_date)}
@@ -273,9 +282,17 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
 
                 {/* Attachments */}
                 <div className="space-y-3 pt-2">
-                  <SectionRuleHeading label="Attachments" className="[&_span]:text-primary" />
+                  <SectionRuleHeading label="Attachments"  />
                   {attachmentsLoading ? (
-                    <p className="text-sm italic text-muted-foreground">Loading...</p>
+                    <div className="space-y-2">
+                      {Array.from({ length: 3 }).map((_, i) => (
+                        <div key={i} className="flex items-center gap-3">
+                          <Skeleton className="h-4 w-4" />
+                          <Skeleton className="h-4 w-48" />
+                          <Skeleton className="h-4 w-16 ml-auto" />
+                        </div>
+                      ))}
+                    </div>
                   ) : attachments.length === 0 ? (
                     <label className="cursor-pointer">
                       <input
@@ -384,7 +401,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
           {/* Right sidebar: Financial Summary */}
           <div className="space-y-8">
             <div className="space-y-4">
-              <SectionRuleHeading label="Financial Summary" className="[&_span]:text-primary" />
+              <SectionRuleHeading label="Financial Summary"  />
               <div className="rounded-md border border-border bg-muted p-6">
                 <dl className="space-y-3 text-sm">
                   <SummaryValueRow label="Original Contract Amount" value={formatCurrency(displayedSovTotal)} />
@@ -406,7 +423,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
 
       {/* ─── Schedule of Values ─── */}
       <section>
-        <SectionRuleHeading label="Schedule of Values" className="[&_span]:text-primary" />
+        <SectionRuleHeading label="Schedule of Values"  />
 
         {isSovEditing && (
           <div className="mt-4 flex items-center justify-end gap-2">
@@ -419,7 +436,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
           </div>
         )}
 
-        <div className="mt-4 space-y-4">
+        <div className="space-y-4">
           {isSovEditing && (
             <div className="rounded-md border-l-4 border-primary bg-muted p-4 text-sm">
               <p className="font-semibold">Any changes will only apply to future invoices</p>
@@ -432,25 +449,11 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
               Loading schedule of values...
             </div>
           ) : displayedSovItems.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <FileText className="h-12 w-12 mx-auto mb-[var(--group-gap)] opacity-50" />
-              <p>No SOV lines yet</p>
-              <p className="text-xs mt-2">
-                Add SOV lines with budget codes to track the contract value
-              </p>
-              <Button
-                variant="outline"
-                size="sm"
-                className="mt-4"
-                onClick={() => {
-                  onStartSovEdit();
-                  onAddSovLine();
-                }}
-              >
-                <Plus />
-                Add SOV Line
-              </Button>
-            </div>
+            <EmptyState
+              icon={<FileText />}
+              title="No SOV lines yet"
+              description="Add SOV lines with budget codes to track the contract value."
+            />
           ) : (
             <DndContext
               sensors={sensors}
@@ -757,21 +760,21 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
             </DndContext>
           )}
 
-          <div className="pt-2">
+          <div className="flex justify-start pt-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-1.5">
+                <Button variant="default" size="sm" className="gap-1.5">
                   <Plus />
                   Add
                   <ChevronDown className="text-muted-foreground" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start">
-                <DropdownMenuItem onClick={onAddSovLine}>
+                <DropdownMenuItem onClick={() => { onStartSovEdit(); onAddSovLine(); }}>
                   <Plus className="mr-2 h-4 w-4" />
                   Line Item
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={onAddSovGroup}>
+                <DropdownMenuItem onClick={() => { onStartSovEdit(); onAddSovGroup(); }}>
                   <Rows3 className="mr-2 h-4 w-4" />
                   Group
                 </DropdownMenuItem>

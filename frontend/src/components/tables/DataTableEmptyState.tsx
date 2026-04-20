@@ -6,6 +6,7 @@
 import * as React from "react";
 import { FileX2 } from "lucide-react";
 import { EmptyState } from "@/components/ds";
+import { Button } from "@/components/ui/button";
 
 interface DataTableEmptyStateProps {
   icon?: React.ElementType;
@@ -34,7 +35,7 @@ export function DataTableEmptyState({
       icon={<Icon />}
       title={title}
       description={description ?? ""}
-      action={action}
+      action={action ? <Button size="sm" onClick={action.onClick}>{action.label}</Button> : undefined}
       className={className}
     />
   );

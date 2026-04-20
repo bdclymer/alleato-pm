@@ -29,6 +29,7 @@ import {
 } from "@/features/change-orders/change-orders-table-config";
 
 import { PageActions } from "./page-actions";
+import { formatCurrency } from "@/lib/format";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -49,12 +50,6 @@ const EMPTY_FILTERS: COFilterState = { status: undefined };
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(
-    value,
-  );
-}
 
 function matchesStatus(itemStatus: string | null, filter: string): boolean {
   const normalized = (itemStatus ?? "").toLowerCase();

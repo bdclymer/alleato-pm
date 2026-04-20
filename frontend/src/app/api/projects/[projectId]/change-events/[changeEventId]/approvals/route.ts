@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
+import { logger } from "@/lib/logger";
 
 type RouteParams = {
   params: Promise<{ projectId: string; changeEventId: string }>;
@@ -52,7 +53,7 @@ export const GET = withApiGuardrails(
       .order("created_at", { ascending: false });
 
     if (error) {
-      console.error("Error fetching approvals:", error);
+      logger.error({ msg: "Error fetching approvals:", error: error instanceof Error ? error.message : String(error) });
       return apiErrorResponse(error);
     }
 
@@ -126,7 +127,7 @@ export const POST = withApiGuardrails(
       .single();
 
     if (error) {
-      console.error("Error creating approval:", error);
+      logger.error({ msg: "Error creating approval:", error: error instanceof Error ? error.message : String(error) });
       return apiErrorResponse(error);
     }
 
@@ -220,7 +221,7 @@ export const PATCH = withApiGuardrails(
       .single();
 
     if (error) {
-      console.error("Error updating approval:", error);
+      logger.error({ msg: "Error updating approval:", error: error instanceof Error ? error.message : String(error) });
       return apiErrorResponse(error);
     }
 

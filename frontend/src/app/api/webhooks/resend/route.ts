@@ -12,6 +12,7 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { getResend } from "@/lib/email/client";
 import { createServiceClient } from "@/lib/supabase/service";
+import { logger } from "@/lib/logger";
 
 export const runtime = "nodejs";
 
@@ -31,7 +32,7 @@ export const POST = withApiGuardrails(
   async ({ request }) => {
   const secret = process.env.RESEND_WEBHOOK_SECRET;
   if (!secret) {
-    console.error("[resend-webhook] RESEND_WEBHOOK_SECRET not set");
+    logger.error({ msg: "[resend-webhook] RESEND_WEBHOOK_SECRET not set" });
     return NextResponse.json({ error: "not configured" }, { status: 500 });
   }
 
@@ -58,7 +59,7 @@ export const POST = withApiGuardrails(
     });
     event = verified as unknown as { type: string; data: Record<string, unknown> };
   } catch (err) {
-    console.error("[resend-webhook] signature verification failed", err);
+    logger.error({ msg: "[resend-webhook] signature verification failed", error: err instanceof Error ? err.message : String(err) });
     throw new GuardrailError({ code: "AUTH_EXPIRED", where: "webhooks/resend#POST", message: "Authentication required." });
   }
 

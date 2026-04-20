@@ -37,6 +37,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Plus, Trash2, AlertCircle, Building, User } from "lucide-react";
+import { EmptyState } from "@/components/ds";
 import { StepComponentProps } from "./project-setup-wizard";
 import type { Database } from "@/types/database.types";
 
@@ -360,9 +361,10 @@ export function ProjectDirectorySetup({
             </TableBody>
           </Table>
         ) : (
-          <div className="text-center py-8 text-muted-foreground">
-            No people added to the project yet
-          </div>
+          <EmptyState
+            title="No people added yet"
+            description="Add people to give them access to this project."
+          />
         )}
 
         {/* Add Person Button */}

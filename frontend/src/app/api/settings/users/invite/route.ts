@@ -1,6 +1,7 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
+import { logger } from "@/lib/logger";
 
 import { createClient } from "@/lib/supabase/server";
 import { sendEmail } from "@/lib/email/send";
@@ -112,7 +113,7 @@ export const POST = withApiGuardrails(
 
     if (emailError) {
       // Don't fail the request — Supabase already sent the magic link
-      console.error("Resend error (non-fatal):", emailError.message);
+      logger.error({ msg: "Resend error (non-fatal)", error: emailError.message });
     }
 
     return NextResponse.json({ success: true });

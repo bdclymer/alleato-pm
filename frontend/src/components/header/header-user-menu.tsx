@@ -102,7 +102,7 @@ export function HeaderUserMenu({
         {/* eslint-disable-next-line design-system/no-design-violations -- avatar trigger for dropdown menu */}
         <button
           type="button"
-          className="flex items-center rounded-full border-2 border-zinc-300 p-0.5 transition-all hover:scale-105 hover:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-400 focus:ring-offset-2 focus:ring-offset-background"
+          className="flex items-center rounded-full p-0.5 transition-all hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:ring-offset-2 focus:ring-offset-background"
           aria-label="Open user menu"
         >
           <Avatar className="h-7 w-7 sm:h-8 sm:w-8 rounded-full">

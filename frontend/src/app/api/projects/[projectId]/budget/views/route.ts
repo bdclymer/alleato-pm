@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import type { CreateBudgetViewRequest } from "@/types/budget-views";
 import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
+import { logger } from "@/lib/logger";
 
 // GET /api/projects/[id]/budget/views
 // Fetch all budget views for a project
@@ -60,11 +61,11 @@ export const GET = withApiGuardrails<{ projectId: string }>(
       .order("created_at", { ascending: true });
 
     if (viewsError) {
-      console.error("Budget views fetch error:", {
+      logger.error({ msg: "Budget views fetch error:", data: {
         error: viewsError,
         projectId: projectIdNum,
         userId: user.id
-      });
+      } });
       return NextResponse.json(
         {
           error: "Failed to fetch budget views",
@@ -147,12 +148,12 @@ export const POST = withApiGuardrails<{ projectId: string }>(
       .single();
 
     if (viewError) {
-      console.error("Budget view creation error:", {
+      logger.error({ msg: "Budget view creation error:", data: {
         error: viewError,
         projectId: projectIdNum,
         userId: user.id,
         viewName: name
-      });
+      } });
       return NextResponse.json(
         {
           error: "Failed to create budget view",
@@ -181,11 +182,11 @@ export const POST = withApiGuardrails<{ projectId: string }>(
       .select();
 
     if (columnsError) {
-      console.error("Budget view columns creation error:", {
+      logger.error({ msg: "Budget view columns creation error:", data: {
         error: columnsError,
         viewId: view.id,
         columns: columnsToInsert
-      });
+      } });
       // Rollback: delete the view
       await supabase.from("budget_views").delete().eq("id", view.id);
       return NextResponse.json(

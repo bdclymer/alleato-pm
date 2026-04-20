@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { buildLiveblocksUserInfo } from "@/lib/liveblocks/user-info";
 import { AI_USER_ID, AI_USER_INFO } from "@/lib/liveblocks/ai-user";
+import { logger } from "@/lib/logger";
 
 /**
  * GET /api/liveblocks/users?userIds=id1,id2
@@ -53,7 +54,7 @@ export const GET = withApiGuardrails(
 
     return NextResponse.json(users);
   } catch (error) {
-    console.error("[liveblocks/users] Error resolving users:", error);
+    logger.error({ msg: "[liveblocks/users] Error resolving users:", error: error instanceof Error ? error.message : String(error) });
     return NextResponse.json([]);
   }
   },

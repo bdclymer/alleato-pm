@@ -3,6 +3,7 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
+import { logger } from "@/lib/logger";
 
 // Default settings to return when no custom settings are saved
 const DEFAULT_SETTINGS = {
@@ -92,7 +93,7 @@ export const GET = withApiGuardrails<{ commitmentId: string }>(
       .single();
 
     if (error) {
-      console.error("Error fetching advanced settings:", error);
+      logger.error({ msg: "Error fetching advanced settings", error: error.message });
       return NextResponse.json(
         { error: "Failed to load settings", details: error.message },
         { status: 500 },
@@ -188,7 +189,7 @@ export const PUT = withApiGuardrails<{ commitmentId: string }>(
     if (error) {
       // If the column doesn't exist, we need to handle gracefully
       // For now, just return success since the UI uses local state
-      console.error("Error saving advanced settings:", error);
+      logger.error({ msg: "Error saving advanced settings", error: error.message });
 
       // Check if it's a column missing error
       if (error.message?.includes("advanced_settings")) {

@@ -45,6 +45,7 @@ import {
   useRouter,
   useSearchParams,
 } from "next/navigation";
+import { useConfirm } from "@/hooks/use-confirm";
 
 const PROJECT_COLUMNS: ColumnConfig[] = [
   { id: "name", label: "Project", alwaysVisible: true },
@@ -409,6 +410,7 @@ export default function PortfolioPage() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { confirm, ConfirmDialog } = useConfirm();
   const [projects, setProjects] = React.useState<Project[]>([]);
   const [isAdmin, setIsAdmin] = React.useState(false);
   const [loading, setLoading] = React.useState(true);
@@ -965,7 +967,11 @@ export default function PortfolioPage() {
       return;
     }
 
-    const confirmed = window.confirm(`Delete ${selectedIds.length} selected project(s)?`);
+    const confirmed = await confirm({
+      description: `Delete ${selectedIds.length} selected project(s)? This cannot be undone.`,
+      variant: "destructive",
+      confirmLabel: "Delete",
+    });
     if (!confirmed) return;
 
     const deleteResults = await Promise.allSettled(
@@ -1137,6 +1143,7 @@ export default function PortfolioPage() {
           }}
         />
       )}
+      {ConfirmDialog}
     </>
   );
 }

@@ -6,12 +6,14 @@ import {
   AlertCircle,
   ArrowLeft,
   ChevronDown,
+  Clock,
   CreditCard,
   DollarSign,
   Download,
   FileText,
   GitBranch,
   History,
+  Link2,
   Mail,
   MoreVertical,
   Pencil,
@@ -25,7 +27,8 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { PageShell } from "@/components/layout";
-import { StatusBadge } from "@/components/ds";
+import { SectionRuleHeading } from "@/components/layout/spacing";
+import { EmptyState, StatusBadge } from "@/components/ds";
 import { ERP_STATUS_LABELS, STATUS_LABELS } from "@/features/prime-contracts/prime-contracts-table-config";
 import { DocumentDeliveryDialog } from "@/components/documents/DocumentDeliveryDialog";
 import { Button } from "@/components/ui/button";
@@ -42,7 +45,9 @@ import { PageTabs } from "@/components/layout/PageTabs";
 import { useProjectTitle } from "@/hooks/useProjectTitle";
 import { fetchWithTransientRouteRetry } from "@/lib/fetch-with-transient-route-retry";
 import { apiFetch } from "@/lib/api-client";
+import { useConfirm } from "@/hooks/use-confirm";
 import { handleFormError } from "@/lib/handle-form-error";
+import { formatCurrency, formatDate } from "@/lib/format";
 import {
   usePaymentApplications,
   useDeletePaymentApplication,
@@ -115,16 +120,6 @@ const normalizeVerticalMarkupRows = (rows: VerticalMarkup[]): VerticalMarkup[] =
     calculation_order: Number.isFinite(Number(row.calculation_order)) ? Number(row.calculation_order) : 0,
   }));
 
-const formatCurrency = (value: number | null | undefined) => {
-  if (value === null || value === undefined) return "$0.00";
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
-};
-
-const formatDate = (dateString: string | null | undefined) => {
-  if (!dateString) return "Not set";
-  return new Date(dateString).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-};
-
 const parseBulletList = (value: string | null | undefined): string[] => {
   if (!value) return [];
   const plainText = value
@@ -162,6 +157,7 @@ export default function ProjectContractDetailPage() {
   const params = useParams();
   const projectId = params.projectId as string;
   const contractId = params.contractId as string;
+  const { confirm, ConfirmDialog } = useConfirm();
 
   useProjectTitle("Prime Contract");
 
@@ -447,7 +443,12 @@ export default function ProjectContractDetailPage() {
   // ── Invoice CRUD ────────────────────────────────────────────────────────
 
   const handleDeleteInvoice = async (applicationId: string) => {
-    if (!confirm("Delete this invoice? This cannot be undone.")) return;
+    const ok = await confirm({
+      description: "Delete this invoice? This cannot be undone.",
+      variant: "destructive",
+      confirmLabel: "Delete",
+    });
+    if (!ok) return;
     await deletePaymentApp.mutateAsync(applicationId);
   };
 
@@ -771,7 +772,7 @@ export default function ProjectContractDetailPage() {
 
   if (loading) {
     return (
-      <PageShell variant="detail" title="Prime Contract" description="Loading contract details...">
+      <PageShell variant="detailWide" title="Prime Contract" description="Loading contract details...">
         <Skeleton className="h-96" />
       </PageShell>
     );
@@ -779,7 +780,7 @@ export default function ProjectContractDetailPage() {
 
   if (error || !contract) {
     return (
-      <PageShell variant="detail" title="Prime Contract" description="Unable to load contract" onBack={handleBack}>
+      <PageShell variant="detailWide" title="Prime Contract" description="Unable to load contract" onBack={handleBack}>
         <Card className="p-[var(--card-padding)]">
           <div className="flex items-center gap-4 text-destructive">
             <AlertCircle className="h-5 w-5" />
@@ -828,7 +829,7 @@ export default function ProjectContractDetailPage() {
 
   return (
     <PageShell
-      variant={activeTab === "financial-markup" ? "detail" : "dashboard"}
+      variant="detailWide"
       title={`#${contract.contract_number || contract.id.slice(0, 8)} — ${contract.title}`}
       description={contract.contractor ? `Contractor: ${contract.contractor.name}` : contract.vendor ? `Contractor: ${contract.vendor.name}` : "No contractor assigned"}
       statusBadge={
@@ -863,7 +864,7 @@ export default function ProjectContractDetailPage() {
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon" aria-label="More actions">
+                <Button variant="ghost" size="icon" aria-label="More actions">
                   <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
@@ -997,50 +998,29 @@ export default function ProjectContractDetailPage() {
         )}
 
         {activeTab === "related-items" && (
-          <div className="py-8 text-center text-muted-foreground">
-            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-              <span className="text-xl">🔗</span>
-            </div>
-            <p className="font-medium">Related Items</p>
-            <p className="mt-1 text-sm">
-              Links to related RFIs, Submittals, and other project items will appear here.
-            </p>
-          </div>
+          <EmptyState
+            icon={<Link2 />}
+            title="No related items"
+            description="Links to related RFIs, Submittals, and other project items will appear here."
+          />
         )}
 
         {activeTab === "emails" && (
-          <div className="bg-background">
-            <div className="mb-4">
-              <h3 className="text-lg font-semibold">Emails</h3>
-              <p className="text-sm text-muted-foreground">
-                Email correspondence associated with this prime contract
-              </p>
-            </div>
-            <div className="rounded-lg border border-border py-16 text-center">
-              <Mail className="h-10 w-10 mx-auto mb-3 text-muted-foreground/50" />
-              <p className="text-sm font-medium text-foreground">No emails yet</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Emails sent or received related to this contract will appear here.
-              </p>
-            </div>
-          </div>
+          <EmptyState
+            icon={<Mail />}
+            title="No emails yet"
+            description="Emails sent or received related to this contract will appear here."
+          />
         )}
 
         {activeTab === "history" && (
-          <div className="bg-background">
-            <div className="mb-4">
-              <h3 className="text-lg font-semibold">Change History</h3>
-              <p className="text-sm text-muted-foreground">
-                Audit trail of all modifications made to this contract
-              </p>
-            </div>
-            <div className="rounded-lg border border-border py-16 text-center">
-              <History className="h-10 w-10 mx-auto mb-3 text-muted-foreground/50" />
-              <p className="text-sm font-medium text-foreground">No recorded changes</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Field-level change history tracking is not yet enabled for prime contracts.
-              </p>
-            </div>
+          <div>
+            <SectionRuleHeading label="Change History" />
+            <EmptyState
+              icon={<Clock />}
+              title="No changes recorded"
+              description="Field-level change history tracking is not yet enabled for prime contracts."
+            />
           </div>
         )}
 
@@ -1086,6 +1066,7 @@ export default function ProjectContractDetailPage() {
           recordType="prime-contract" recordId={contract.id} number={contract.contract_number || "Prime Contract"} title={contract.title}
         />
       ) : null}
+      {ConfirmDialog}
     </PageShell>
   );
   // #endregion

@@ -6,6 +6,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { sendEmail } from "@/lib/email/send";
 import InvoiceSubmittedToPM from "@/emails/subcontractor/InvoiceSubmittedToPM";
 import { APP_BASE_URL } from "@/lib/email/client";
+import { logger } from "@/lib/logger";
 
 // POST /api/projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/submit
 // Transition invoice to under_review. Pre-condition: must be draft or revise_and_resubmit.
@@ -111,7 +112,7 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
       projectId: projectIdNum,
       invoiceId: invoiceIdNum,
     }).catch((err) => {
-      console.error("[invoice-submit] PM notification failed", err);
+      logger.error({ msg: "[invoice-submit] PM notification failed", error: err instanceof Error ? err.message : String(err) });
     });
 
     return NextResponse.json({

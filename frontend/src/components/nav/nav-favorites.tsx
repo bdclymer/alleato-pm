@@ -1,5 +1,6 @@
 "use client";
 
+import NextLink from "next/link";
 import {
   ArrowUpRight,
   Link,
@@ -43,10 +44,10 @@ export function NavFavorites({
         {favorites.map((item) => (
           <SidebarMenuItem key={item.name}>
             <SidebarMenuButton asChild>
-              <a href={item.url} title={item.name}>
+              <NextLink href={item.url} title={item.name}>
                 <span>{item.emoji}</span>
                 <span>{item.name}</span>
-              </a>
+              </NextLink>
             </SidebarMenuButton>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

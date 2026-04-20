@@ -4,6 +4,7 @@ import { Controller, useFormContext } from "react-hook-form";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { CreateSubcontractInput } from "@/lib/schemas/create-subcontract-schema";
+import { SectionRuleHeading } from "@/components/layout/spacing";
 
 interface InclusionsExclusionsSectionProps {
   isSubmitting: boolean;
@@ -16,9 +17,7 @@ export function InclusionsExclusionsSection({
 
   return (
     <section className="space-y-4 border-b border-border/70 pb-8">
-      <h2 className="text-lg font-semibold text-foreground">
-        Inclusions & Exclusions
-      </h2>
+      <SectionRuleHeading label="Inclusions & Exclusions" />
       <div className="space-y-4">
         <div className="space-y-1.5">
           <Label>Inclusions</Label>

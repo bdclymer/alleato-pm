@@ -79,8 +79,8 @@ export default function ProjectChangeEventsPage(): ReactElement {
   const hasValidProjectId = Number.isFinite(parsedProjectId) && parsedProjectId > 0;
   const projectId = hasValidProjectId ? parsedProjectId : 0;
 
-  // Tab state — matches Procore tabs: Line Items, No Line Items, RFQs, Recycle Bin
-  const activeTab = searchParams.get("tab") ?? "line_items";
+  // Tab state — All | Line Items | No Line Items | RFQs | Recycle Bin
+  const activeTab = searchParams.get("tab") ?? "all";
 
   const initialStatus = searchParams.get("status") ?? "";
   const initialScope = searchParams.get("scope") ?? "";
@@ -501,9 +501,17 @@ export default function ProjectChangeEventsPage(): ReactElement {
   const totalItems = serverTotal;
   const filteredItems = filteredEvents.length;
 
-  // Procore-style tabs: Line Items | No Line Items | RFQs | Recycle Bin
+  // Tabs: All | Line Items | No Line Items | RFQs | Recycle Bin
   const tabs = React.useMemo(
     () => [
+      {
+        label: "All",
+        href: `/${projectId}/change-events?tab=all`,
+        count: lineItemsCount + noLineItemsCount,
+        isActive: activeTab === "all",
+        testId: "change-events-tab-all",
+        countTestId: "change-events-count-all",
+      },
       {
         label: "Line Items",
         href: `/${projectId}/change-events?tab=line_items`,
@@ -734,7 +742,9 @@ export default function ProjectChangeEventsPage(): ReactElement {
         title: activeTab === "recycle_bin" ? "Recycle bin is empty" : "No change events found",
         description: activeTab === "recycle_bin"
           ? "Deleted change events will appear here."
-          : "Create your first change event to start tracking scope changes.",
+          : activeTab === "all"
+            ? "Create your first change event to start tracking scope changes."
+            : "No change events match this filter.",
         filteredDescription: "Try adjusting your search or filters.",
         isFiltered,
         action: activeTab !== "recycle_bin" ? (

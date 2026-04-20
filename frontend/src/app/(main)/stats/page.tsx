@@ -64,6 +64,7 @@ import {
   Sun,
   Sunrise,
 } from "lucide-react";
+import { EmptyState } from "@/components/ds";
 
 // Types
 interface Meeting {
@@ -206,17 +207,11 @@ function MeetingCard({
 function TodaysMeetings({ meetings }: { meetings: Meeting[] }) {
   if (meetings.length === 0) {
     return (
-      <Card className="border-dashed bg-muted/30">
-        <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-          <div className="rounded-full bg-primary/10 p-4 mb-4">
-            <Sun className="h-8 w-8 text-primary" />
-          </div>
-          <h3 className="font-semibold text-lg mb-1">No meetings today</h3>
-          <p className="text-sm text-muted-foreground">
-            Enjoy your meeting-free day! Check upcoming meetings below.
-          </p>
-        </CardContent>
-      </Card>
+      <EmptyState
+        icon={<Sun />}
+        title="No meetings today"
+        description="Enjoy your meeting-free day! Check upcoming meetings below."
+      />
     );
   }
 
@@ -257,14 +252,11 @@ function UpcomingMeetings({ meetings }: { meetings: Meeting[] }) {
 
   if (meetings.length === 0) {
     return (
-      <Card className="border-dashed bg-muted/30">
-        <CardContent className="flex flex-col items-center justify-center py-8 text-center">
-          <CalendarDays className="h-8 w-8 text-muted-foreground mb-2" />
-          <p className="text-sm text-muted-foreground">
-            No upcoming meetings this week
-          </p>
-        </CardContent>
-      </Card>
+      <EmptyState
+        icon={<CalendarDays />}
+        title="No upcoming meetings this week"
+        description="No meetings are scheduled for the current week."
+      />
     );
   }
 

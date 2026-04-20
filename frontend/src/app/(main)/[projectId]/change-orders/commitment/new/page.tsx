@@ -39,6 +39,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Text } from "@/components/ds/text";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -590,9 +591,19 @@ export default function NewCommitmentCOPage() {
       }
     >
       {isLoading ? (
-        <div className="flex items-center justify-center py-12 gap-2 text-muted-foreground">
-          <Loader2 className="h-5 w-5 animate-spin" />
-          <Text tone="muted">Loading…</Text>
+        <div className="space-y-6 py-4">
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-28" />
+            <Skeleton className="h-9 w-full" />
+          </div>
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-20" />
+            <Skeleton className="h-9 w-full" />
+          </div>
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-20 w-full" />
+          </div>
         </div>
       ) : (
         <Form {...form}>
@@ -600,7 +611,7 @@ export default function NewCommitmentCOPage() {
 
             {/* Source Change Events */}
             {hasChangeEvents && changeEvents.length > 0 && (
-              <section className="space-y-4">
+              <section>
                 <SectionRuleHeading
                   label={`Source Change Event${changeEvents.length === 1 ? "" : "s"} (${changeEvents.length})`}
                   className="[&_span]:text-primary"
@@ -627,7 +638,7 @@ export default function NewCommitmentCOPage() {
             )}
 
             {/* General Information */}
-            <section className="space-y-6">
+            <section className="space-y-4">
               <SectionRuleHeading label="General Information" className="[&_span]:text-primary" />
               <div className="grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-2">
 
@@ -923,7 +934,7 @@ export default function NewCommitmentCOPage() {
             </section>
 
             {/* Details */}
-            <section className="space-y-6">
+            <section className="space-y-4">
               <SectionRuleHeading label="Details" className="[&_span]:text-primary" />
               <div className="grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-2">
 
@@ -1071,7 +1082,7 @@ export default function NewCommitmentCOPage() {
             </section>
 
             {/* Attachments placeholder */}
-            <section className="space-y-4">
+            <section>
               <SectionRuleHeading label="Attachments" className="[&_span]:text-primary" />
               <div className="flex items-center justify-center rounded-md border border-dashed border-border bg-muted/30 px-6 py-10 text-center">
                 <div className="space-y-1">

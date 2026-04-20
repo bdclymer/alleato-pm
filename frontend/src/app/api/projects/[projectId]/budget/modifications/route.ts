@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
+import { logger } from "@/lib/logger";
 
 // Valid status transitions for the modification workflow
 const VALID_TRANSITIONS: Record<string, string[]> = {
@@ -555,13 +556,13 @@ export const PATCH = withApiGuardrails<{ projectId: string }>(
         p_project_id: projectIdNum,
       });
       if (refreshError) {
-        console.error("Budget rollup refresh failed after modification status update", {
+        logger.error({ msg: "Budget rollup refresh failed after modification status update", data: {
           projectId: projectIdNum,
           modificationId: modId,
           previousStatus: currentMod.status,
           targetStatus,
           error: refreshError.message,
-        });
+        } });
         refreshWarning =
           "Modification status saved, but budget totals refresh failed. Totals may be temporarily stale.";
       }

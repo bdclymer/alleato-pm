@@ -15,6 +15,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { cn, formatCurrency } from "@/lib/utils";
 import type { PaymentApplicationLineItem } from "@/app/(main)/[projectId]/prime-contracts/[contractId]/types";
+import { SectionRuleHeading } from "@/components/layout/spacing";
 
 interface InvoiceG703DetailProps {
   lineItems: PaymentApplicationLineItem[];
@@ -345,9 +346,7 @@ export function InvoiceG703Detail({
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-4">
         <div className="space-y-1">
-          <h3 className="text-sm font-semibold text-foreground">
-            AIA G703 — Schedule of Values
-          </h3>
+          <SectionRuleHeading label="AIA G703 — Schedule of Values" />
           {!isReadOnly && !canEditRetainage && retainageEditBlockReason ? (
             <p className="text-xs text-muted-foreground">
               {retainageEditBlockReason}

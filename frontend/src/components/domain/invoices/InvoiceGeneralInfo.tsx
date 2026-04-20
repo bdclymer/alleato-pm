@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { PaymentApplication } from "@/app/(main)/[projectId]/prime-contracts/[contractId]/types";
+import { SectionRuleHeading } from "@/components/layout/spacing";
 
 interface BillingPeriod {
   id: string;
@@ -154,9 +155,7 @@ export function InvoiceGeneralInfo({
     return (
       <section>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-base font-semibold text-foreground">
-            General Information
-          </h3>
+          <SectionRuleHeading label="General Information" />
           <div className="flex items-center gap-1.5">
             <Button
               variant="ghost"
@@ -278,9 +277,7 @@ export function InvoiceGeneralInfo({
   return (
     <section>
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-base font-semibold text-foreground">
-          General Information
-        </h3>
+        <SectionRuleHeading label="General Information" />
         <Button variant="ghost" size="sm" onClick={handleEdit}>
           <Pencil className="mr-1 h-3.5 w-3.5" />
           Edit

@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { requirePermission } from "@/lib/permissions-guard";
 import { renderPdfFromHtml, buildChangeEventHtml } from "@/lib/documents/pdf";
+import { logger } from "@/lib/logger";
 
 // Puppeteer requires the Node.js runtime — Edge runtime does not support it.
 export const runtime = "nodejs";
@@ -157,7 +158,7 @@ export const POST = withApiGuardrails(
     });
 
     if (sendError) {
-      console.error("[email/route] Resend error:", sendError);
+      logger.error({ msg: "[email/route] Resend error:", data: sendError });
       return NextResponse.json(
         { error: sendError.message || "Failed to send email" },
         { status: 500 },

@@ -5,6 +5,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { NextResponse } from 'next/server';
 import { apiErrorResponse } from "@/lib/api-error";
 import {
+import { logger } from "@/lib/logger";
   formatHistoryFieldName,
   formatHistoryFieldValue,
   generateHistoryDescription,
@@ -91,7 +92,7 @@ export const GET = withApiGuardrails(
         "change-events/history#GET",
       );
     } catch (err) {
-      console.error("[change-events/history#GET] Service client unavailable, skipping email enrichment:", err);
+      logger.error({ msg: "[change-events/history#GET] Service client unavailable, skipping email enrichment:", error: err instanceof Error ? err.message : String(err) });
     }
 
     // Format history entries

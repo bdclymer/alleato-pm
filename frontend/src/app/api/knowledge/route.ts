@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import OpenAI from "openai";
 import { apiErrorResponse } from "@/lib/api-error";
+import { logger } from "@/lib/logger";
 
 // ---------------------------------------------------------------------------
 // Lazy OpenAI client for embeddings
@@ -112,7 +113,7 @@ export const POST = withApiGuardrails(
     const embeddingText = `${body.title}\n\n${body.content}`;
     embedding = await generateEmbedding(embeddingText);
   } catch (err) {
-    console.error("Failed to generate embedding for knowledge article:", err);
+    logger.error({ msg: "Failed to generate embedding for knowledge article:", error: err instanceof Error ? err.message : String(err) });
     // Continue without embedding — can be backfilled later
   }
 
@@ -184,7 +185,7 @@ export const PATCH = withApiGuardrails(
         updates.embedding = JSON.stringify(embedding);
       }
     } catch (err) {
-      console.error("Failed to re-generate embedding:", err);
+      logger.error({ msg: "Failed to re-generate embedding:", error: err instanceof Error ? err.message : String(err) });
     }
   }
 

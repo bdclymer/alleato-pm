@@ -15,6 +15,7 @@ import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 interface RouteParams {
   params: Promise<{ projectId: string }>;
@@ -153,7 +154,7 @@ export const POST = withApiGuardrails(
       });
 
       if (rpcError) {
-        console.error("[add-to-pco] generate_pco_number RPC error:", rpcError);
+        logger.error({ msg: "[add-to-pco] generate_pco_number RPC error:", data: rpcError });
         return NextResponse.json(
           { error: "Failed to generate PCO number", details: rpcError.message },
           { status: 500 },
@@ -188,7 +189,7 @@ export const POST = withApiGuardrails(
           .single();
 
         if (insertError || !pco) {
-          console.error("[add-to-pco] prime_contract_pcos insert error:", insertError);
+          logger.error({ msg: "[add-to-pco] prime_contract_pcos insert error:", data: insertError });
           return NextResponse.json(
             { error: "Failed to create prime PCO", details: insertError?.message },
             { status: 500 },
@@ -215,7 +216,7 @@ export const POST = withApiGuardrails(
           .single();
 
         if (insertError || !pco) {
-          console.error("[add-to-pco] commitment_pcos insert error:", insertError);
+          logger.error({ msg: "[add-to-pco] commitment_pcos insert error:", data: insertError });
           return NextResponse.json(
             { error: "Failed to create commitment PCO", details: insertError?.message },
             { status: 500 },
@@ -350,7 +351,7 @@ export const POST = withApiGuardrails(
         .eq("id", event.id);
 
       if (updateError) {
-        console.error(`[add-to-pco] Failed to update tracking for CE ${event.id}:`, updateError);
+        logger.error({ msg: `[add-to-pco] Failed to update tracking for CE ${event.id}:`, data: updateError });
       }
 
       linkResults.push({
@@ -388,7 +389,7 @@ export const POST = withApiGuardrails(
         .order("calculation_order", { ascending: true });
 
       if (markupError) {
-        console.error("[add-to-pco] Failed to fetch vertical markup rows:", markupError);
+        logger.error({ msg: "[add-to-pco] Failed to fetch vertical markup rows:", data: markupError });
       } else if (markupRows && markupRows.length > 0) {
         let runningBase = lineItemsBaseAmount;
         let markupTotal = 0;
@@ -410,7 +411,7 @@ export const POST = withApiGuardrails(
       .eq("id", pcoId);
 
     if (totalUpdateError) {
-      console.error("[add-to-pco] Failed to update PCO total_amount:", totalUpdateError);
+      logger.error({ msg: "[add-to-pco] Failed to update PCO total_amount:", data: totalUpdateError });
     }
 
     // ── Fetch the final PCO with its line items to return ───────────────

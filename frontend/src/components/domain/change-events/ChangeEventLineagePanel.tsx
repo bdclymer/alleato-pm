@@ -5,6 +5,7 @@ import Link from "next/link";
 
 import { StatusBadge } from "@/components/ds";
 import { apiFetch } from "@/lib/api-client";
+import { formatDate } from "@/lib/format";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -48,13 +49,6 @@ function formatCurrency(value: number | null): string {
     currency: "USD",
     minimumFractionDigits: 2,
   }).format(value);
-}
-
-function formatDate(value: string | null): string {
-  if (!value) return "—";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "—";
-  return date.toLocaleDateString();
 }
 
 export function ChangeEventLineagePanel({

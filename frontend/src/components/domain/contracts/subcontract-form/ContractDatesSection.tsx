@@ -3,6 +3,7 @@
 import { Controller, useFormContext } from "react-hook-form";
 import { DateField } from "@/components/forms/DateField";
 import type { CreateSubcontractInput } from "@/lib/schemas/create-subcontract-schema";
+import { SectionRuleHeading } from "@/components/layout/spacing";
 
 interface ContractDatesSectionProps {
   isSubmitting: boolean;
@@ -16,9 +17,7 @@ export function ContractDatesSection({ isSubmitting }: ContractDatesSectionProps
 
   return (
     <section className="space-y-4 border-b border-border/70 pb-8">
-      <h2 className="text-lg font-semibold text-foreground">
-        Contract Dates
-      </h2>
+      <SectionRuleHeading label="Contract Dates" />
       <div className="space-y-4">
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           <Controller

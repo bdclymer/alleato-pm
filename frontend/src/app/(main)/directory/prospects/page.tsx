@@ -3,6 +3,7 @@
 import * as React from "react";
 import type { ReactElement } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { formatDate } from "@/lib/format";
 import {
   ArrowUpRight,
   Building2,
@@ -60,13 +61,6 @@ const prospectColumns: ColumnConfig[] = [
 const prospectDefaultVisibleColumns = prospectColumns
   .filter((col) => col.defaultVisible !== false)
   .map((col) => col.id);
-
-function formatDate(value: string | null | undefined): string {
-  if (!value) return "-";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return "-";
-  return parsed.toLocaleDateString();
-}
 
 function formatCurrency(value: number | null | undefined): string {
   if (value == null) return "-";

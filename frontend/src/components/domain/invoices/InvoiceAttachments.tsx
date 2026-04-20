@@ -1,26 +1,21 @@
 "use client";
 
 import { Upload } from "lucide-react";
+import { EmptyState } from "@/components/ds";
 import { Button } from "@/components/ui/button";
+import { SectionRuleHeading } from "@/components/layout/spacing";
 
 export function InvoiceAttachments() {
   return (
     <section>
-      <h3 className="text-base font-semibold text-foreground mb-4">
-        Attachments
-      </h3>
+      <SectionRuleHeading label="Attachments" />
 
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <div className="rounded-full bg-muted p-4 mb-4">
-          <Upload className="h-8 w-8 text-muted-foreground" />
-        </div>
-        <p className="text-sm text-muted-foreground mb-4">
-          Once you or your team upload attachments, you can view them here.
-        </p>
-        <Button variant="outline" size="sm">
-          Upload Attachments
-        </Button>
-      </div>
+      <EmptyState
+        icon={<Upload />}
+        title="No attachments yet"
+        description="Once you or your team upload attachments, you can view them here."
+        action={<Button variant="outline"><Upload />Upload Attachments</Button>}
+      />
     </section>
   );
 }

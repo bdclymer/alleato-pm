@@ -3,6 +3,7 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import type { ZodError } from "@/app/api/types";
+import { logger } from "@/lib/logger";
 import { z } from "zod";
 import { apiErrorResponse } from "@/lib/api-error";
 import { normalizeSubcontractStatus } from "@/lib/db/subcontracts";
@@ -189,7 +190,7 @@ export const GET = withApiGuardrails<{ commitmentId: string }>(
     const { data: changeOrders } = coResult;
 
     if (error) {
-      console.error("[commitments/[commitmentId] GET] base query error:", error);
+      logger.error({ msg: "[commitments/[commitmentId] GET] base query error", error: error.message, code: error.code });
       if (error.code === "PGRST116") {
         return NextResponse.json(
           { error: "Commitment not found" },

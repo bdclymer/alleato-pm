@@ -8,6 +8,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { PageShell } from "@/components/layout";
+import { EmptyState } from "@/components/ds";
 
 import {
   Table,
@@ -18,6 +19,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useProjectTitle } from "@/hooks/useProjectTitle";
+import { formatCurrency } from "@/lib/format";
 
 // Contract Line Item interface
 interface ContractLineItem {
@@ -117,15 +119,6 @@ export default function ProjectSOVPage() {
     },
     [sortColumn, sortDirection],
   );
-
-  const formatCurrency = (amount: number | null | undefined) => {
-    if (amount === null || amount === undefined) return "$0.00";
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 2,
-    }).format(amount);
-  };
 
   // Flatten all line items from all contracts
   const allLineItems = useMemo(() => {
@@ -299,18 +292,12 @@ export default function ProjectSOVPage() {
             </p>
           </div>
         ) : allLineItems.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground mb-4">
-              No schedule of values found
-            </p>
-            <p className="text-sm text-muted-foreground mb-6">
-              Create a contract and add line items to get started
-            </p>
-            <Button onClick={() => router.push(`/${projectId}/contracts/new`)}>
-              <Plus />
-              Create Contract
-            </Button>
-          </div>
+          <EmptyState
+            icon={<FileDown />}
+            title="No schedule of values found"
+            description="Create a contract and add line items to get started."
+            action={<Button onClick={() => router.push(`/${projectId}/contracts/new`)}><Plus />Create Contract</Button>}
+          />
         ) : (
           <div className="overflow-x-auto">
             <Table>

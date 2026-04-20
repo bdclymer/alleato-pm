@@ -5,7 +5,7 @@ import { useMemo } from "react";
 import Link from "next/link";
 
 import { StatusBadge } from "@/components/ds";
-import { SectionHeader } from "@/components/ds/section-header";
+import { SectionRuleHeading } from "@/components/layout/spacing";
 import { UnifiedTablePage, type TableColumn } from "@/components/tables/unified/unified-table-page";
 import { useChangeEvents } from "@/hooks/use-change-events";
 import type { ChangeEvent } from "@/types/change-events";
@@ -96,10 +96,7 @@ export function PrimeContractChangeEventsTab({
 
   return (
     <div className="space-y-3">
-      <SectionHeader
-        title="Change Events"
-        count={rows.length}
-      />
+      <SectionRuleHeading label="Change Events" />
       <UnifiedTablePage
         header={{ title: "" }}
         toolbar={{

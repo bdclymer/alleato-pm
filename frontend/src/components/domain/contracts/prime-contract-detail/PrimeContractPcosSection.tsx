@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
-import { SectionHeader } from "@/components/ds/section-header";
+import { SectionRuleHeading } from "@/components/layout/spacing";
 import { StatusBadge } from "@/components/ds/status-badge";
 import { UnifiedTablePage, type TableColumn } from "@/components/tables/unified/unified-table-page";
 import { formatDate } from "@/lib/table-config/formatters";
@@ -193,10 +193,7 @@ export function PrimeContractPcosSection({
 
   return (
     <div className="space-y-3">
-      <SectionHeader
-        title="Potential Change Orders"
-        count={pcos.length}
-      />
+      <SectionRuleHeading label="Potential Change Orders" />
       <UnifiedTablePage
         header={{ title: "" }}
         toolbar={{

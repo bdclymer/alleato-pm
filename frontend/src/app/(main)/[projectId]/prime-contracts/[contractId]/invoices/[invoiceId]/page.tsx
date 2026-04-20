@@ -3,7 +3,7 @@
 import { use, useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
-import { Trash2, FileSpreadsheet } from "lucide-react";
+import { Plus, Trash2, FileSpreadsheet } from "lucide-react";
 import { toast } from "sonner";
 import { PageShell } from "@/components/layout";
 import { StatusBadge } from "@/components/ds";
@@ -22,6 +22,7 @@ import { InvoiceGeneralSettings } from "@/components/domain/invoices/InvoiceGene
 import { InvoiceG702Summary } from "@/components/domain/invoices/InvoiceG702Summary";
 import { InvoiceG703Detail } from "@/components/domain/invoices/InvoiceG703Detail";
 import { apiFetch } from "@/lib/api-client";
+import { useConfirm } from "@/hooks/use-confirm";
 import type {
   PaymentApplication,
   PaymentApplicationLineItem,
@@ -54,6 +55,7 @@ export default function InvoiceDetailPage({
   const { projectId, contractId, invoiceId } = use(params);
   const router = useRouter();
   const numericProjectId = parseInt(projectId, 10);
+  const { confirm, ConfirmDialog } = useConfirm();
 
   const [activeTab, setActiveTab] = useState("summary");
   const [contract, setContract] = useState<Contract | null>(null);
@@ -163,7 +165,12 @@ export default function InvoiceDetailPage({
   }, [populateSOV]);
 
   const handleDelete = useCallback(async () => {
-    if (!confirm("Are you sure you want to delete this invoice?")) return;
+    const ok = await confirm({
+      description: "Are you sure you want to delete this invoice? This cannot be undone.",
+      variant: "destructive",
+      confirmLabel: "Delete",
+    });
+    if (!ok) return;
     try {
       await deleteMutation.mutateAsync(invoiceId);
       router.push(
@@ -172,7 +179,7 @@ export default function InvoiceDetailPage({
     } catch {
       toast.error("Failed to delete invoice");
     }
-  }, [deleteMutation, invoiceId, projectId, contractId, router]);
+  }, [confirm, deleteMutation, invoiceId, projectId, contractId, router]);
 
   // Page title and subtitle
   const pageTitle = invoice
@@ -236,6 +243,8 @@ export default function InvoiceDetailPage({
       };
 
   return (
+    <>
+    {ConfirmDialog}
     <PageShell
       variant="detail"
       title={pageTitle}
@@ -290,12 +299,12 @@ export default function InvoiceDetailPage({
               icon={<FileSpreadsheet className="h-10 w-10" />}
               title="No schedule of values"
               description="Populate the schedule of values from the contract line items to start billing."
-              action={{
-                label: populateSOV.isPending
-                  ? "Populating..."
-                  : "Populate SOV from Contract",
-                onClick: handlePopulateSOV,
-              }}
+              action={
+                <Button size="sm" variant="outline" onClick={handlePopulateSOV} disabled={populateSOV.isPending}>
+                  <Plus />
+                  {populateSOV.isPending ? "Populating..." : "Populate SOV from Contract"}
+                </Button>
+              }
             />
           ) : (
             <InvoiceG703Detail
@@ -315,5 +324,6 @@ export default function InvoiceDetailPage({
         </TabsContent>
       </Tabs>
     </PageShell>
+    </>
   );
 }

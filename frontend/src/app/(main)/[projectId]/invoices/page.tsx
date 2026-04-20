@@ -44,6 +44,7 @@ import {
   renderInvoiceRowActions,
   type OwnerInvoice,
 } from "@/features/invoicing/invoicing-table-config";
+import { formatCurrency, formatDate } from "@/lib/format";
 
 type TabKey = "owner" | "subcontractor" | "billing-periods";
 type FilterState = Record<string, FilterValue>;
@@ -105,24 +106,6 @@ const subcontractorColumnConfig: ColumnConfig[] = [
 const subcontractorDefaultVisibleColumns = subcontractorColumnConfig
   .filter((column) => column.defaultVisible !== false || column.alwaysVisible)
   .map((column) => column.id);
-
-function formatCurrency(value: number | null | undefined): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(value ?? 0);
-}
-
-function formatDate(dateStr: string | null | undefined): string {
-  if (!dateStr) return "-";
-  const date = new Date(dateStr);
-  if (Number.isNaN(date.getTime())) return "-";
-  return date.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
 
 function sortItems<T>(
   items: T[],

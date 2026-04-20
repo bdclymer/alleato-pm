@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 
 import { PageShell } from "@/components/layout";
+import { EmptyState } from "@/components/ds";
+import { CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -123,13 +125,11 @@ export default function DesignViolationsPage() {
       {loading && <p className="text-sm text-muted-foreground py-4">Loading...</p>}
 
       {!loading && violations.length === 0 && (
-        <div className="text-center py-16">
-          <div className="text-4xl mb-3">🎨</div>
-          <p className="text-sm font-medium text-foreground">No violations</p>
-          <p className="text-xs text-muted-foreground mt-1">
-            Right-click any element in dev mode to flag a design violation
-          </p>
-        </div>
+        <EmptyState
+          icon={<CheckCircle />}
+          title="No violations"
+          description="Right-click any element in dev mode to flag a design violation."
+        />
       )}
 
       {!loading && violations.length > 0 && (

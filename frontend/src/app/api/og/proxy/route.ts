@@ -2,6 +2,7 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { logger } from "@/lib/logger";
 
 export const GET = withApiGuardrails(
   "og/proxy#GET",
@@ -47,7 +48,7 @@ export const GET = withApiGuardrails(
       },
     });
   } catch (error) {
-    console.error("Error proxying image:", error);
+    logger.error({ msg: "Error proxying image:", error: error instanceof Error ? error.message : String(error) });
     return NextResponse.json({ error: "Failed to proxy image" }, { status: 500 });
   }
   },

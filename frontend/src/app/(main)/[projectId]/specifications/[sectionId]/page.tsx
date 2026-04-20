@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 
 import { PageShell } from "@/components/layout";
+import { EmptyState } from "@/components/ds";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -222,7 +223,10 @@ export default function SpecificationDetailPage() {
             {revisionsLoading ? (
               <p className="text-muted-foreground">Loading revisions...</p>
             ) : revisions.length === 0 ? (
-              <p className="text-muted-foreground">No revisions yet</p>
+              <EmptyState
+                title="No revisions yet"
+                description="Upload a revision to start tracking changes to this specification section."
+              />
             ) : (
               <div className="rounded-md border">
                 <Table>

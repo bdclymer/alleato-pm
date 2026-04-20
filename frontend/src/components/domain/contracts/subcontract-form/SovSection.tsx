@@ -43,6 +43,7 @@ import { formatCurrency } from "@/lib/utils";
 import type { SovLineItem } from "@/lib/schemas/create-subcontract-schema";
 import { calculateSOVTotals, type BudgetCode } from "./types";
 import { SovGroupRow, SovLineItemRow } from "./SovTableRows";
+import { SectionRuleHeading } from "@/components/layout/spacing";
 
 interface SovSectionProps {
   sovLines: SovLineItem[];
@@ -185,7 +186,7 @@ export function SovSection({
     <section className="border-b pb-8" data-testid="sov-section">
       <input ref={csvInputRef} type="file" accept=".csv" className="hidden" onChange={handleCSVImport} />
 
-      <h2 className="text-lg font-semibold text-foreground">Schedule of Values</h2>
+      <SectionRuleHeading label="Schedule of Values" />
       <div className="space-y-6 pt-4">
         <p className="text-sm text-muted-foreground">
           This contract&apos;s default accounting method is{" "}
@@ -203,7 +204,7 @@ export function SovSection({
         </p>
 
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-foreground">Line Items</h3>
+          <SectionRuleHeading label="Line Items" />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button type="button" variant="outline" size="sm" className="h-9 gap-1.5">

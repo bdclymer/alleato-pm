@@ -15,6 +15,7 @@ import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
+import { logger } from "@/lib/logger";
 
 interface RouteParams {
   params: Promise<{ projectId: string; pcoId: string }>;
@@ -223,7 +224,7 @@ export const PATCH = withApiGuardrails(
       .single();
 
     if (error) {
-      console.error("Failed to update PCO:", error);
+      logger.error({ msg: "Failed to update PCO:", error: error instanceof Error ? error.message : String(error) });
       return apiErrorResponse(error);
     }
 

@@ -531,7 +531,7 @@ export default function NewPrimeContractPcoPage() {
           >
             {/* Source Change Events */}
             {hasChangeEvents && changeEvents.length > 0 && (
-              <section className="space-y-4">
+              <section>
                 <SectionRuleHeading
                   label={`Source Change Event${changeEvents.length === 1 ? "" : "s"} (${changeEvents.length})`}
                   className="[&_span]:text-primary"
@@ -560,7 +560,7 @@ export default function NewPrimeContractPcoPage() {
             )}
 
             {/* General Information */}
-            <section className="space-y-6">
+            <section className="space-y-4">
               <SectionRuleHeading
                 label="General Information"
                 className="[&_span]:text-primary"
@@ -759,7 +759,7 @@ export default function NewPrimeContractPcoPage() {
             </section>
 
             {/* Prime Contract Change Order */}
-            <section className="space-y-4">
+            <section>
               <SectionRuleHeading
                 label="Prime Contract Change Order"
                 className="[&_span]:text-primary"
@@ -832,7 +832,7 @@ export default function NewPrimeContractPcoPage() {
             </section>
 
             {/* Details */}
-            <section className="space-y-6">
+            <section className="space-y-4">
               <SectionRuleHeading
                 label="Details"
                 className="[&_span]:text-primary"

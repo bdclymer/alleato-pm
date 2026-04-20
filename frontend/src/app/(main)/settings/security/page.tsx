@@ -3,6 +3,7 @@
 import * as React from "react";
 import { Shield, Smartphone, Clock, Key } from "lucide-react";
 import { PageShell } from "@/components/layout";
+import { SectionRuleHeading } from "@/components/layout/spacing";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -79,9 +80,7 @@ export default function SecuritySettingsPage() {
       <div className="space-y-8">
         {/* Authentication */}
         <section>
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-widest mb-1">
-            Authentication
-          </h2>
+          <SectionRuleHeading label="Authentication" />
           <div className="rounded-lg border border-border bg-card divide-y divide-border">
             <div className="px-5">
               <SettingsRow
@@ -159,9 +158,7 @@ export default function SecuritySettingsPage() {
         <section>
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-widest mb-1">
-                Active Sessions
-              </h2>
+              <SectionRuleHeading label="Active Sessions" />
               <p className="text-xs text-muted-foreground">
                 Devices currently signed in to your account.
               </p>

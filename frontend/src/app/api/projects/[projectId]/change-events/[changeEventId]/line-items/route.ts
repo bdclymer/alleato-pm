@@ -6,6 +6,7 @@ import { createLineItemSchema, updateLineItemSchema } from '../../validation';
 import { ZodError } from 'zod';
 import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
+import { logger } from "@/lib/logger";
 
 interface RouteParams {
   params: Promise<{
@@ -346,10 +347,7 @@ export const POST = withApiGuardrails(
             if (newBudgetLine) {
               resolvedBudgetCodeId = newBudgetLine.id;
             } else {
-              console.error(
-                `[line-items POST] Failed to auto-create budget_line for project_cost_code ${validatedData.budgetCodeId}:`,
-                createError?.message,
-              );
+              logger.error({ msg: `[line-items POST] Failed to auto-create budget_line for project_cost_code ${validatedData.budgetCodeId}:`, data: createError?.message, });
               throw new GuardrailError({
                 code: "INVALID_PAYLOAD",
                 where: "projects/[projectId]/change-events/[changeEventId]/line-items#POST",

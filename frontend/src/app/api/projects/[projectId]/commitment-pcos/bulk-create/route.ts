@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { z, ZodError } from "zod";
 import { apiErrorResponse } from "@/lib/api-error";
+import { logger } from "@/lib/logger";
 
 interface RouteParams {
   params: Promise<{ projectId: string }>;
@@ -189,7 +190,7 @@ export const POST = withApiGuardrails(
           .select("*");
 
         if (linkError) {
-          console.error("[bulk-create] Link creation error:", linkError);
+          logger.error({ msg: "[bulk-create] Link creation error", error: linkError.message });
           // Non-fatal — PCO was created, links failed
         } else {
           createdLinks.push(...(links || []));
@@ -202,10 +203,7 @@ export const POST = withApiGuardrails(
           .in("id", group.change_event_ids);
 
         if (ceUpdateError) {
-          console.error(
-            "[bulk-create] CE update error:",
-            ceUpdateError,
-          );
+          logger.error({ msg: "[bulk-create] CE update error", error: ceUpdateError.message });
         }
       } catch (groupError) {
         errors.push({

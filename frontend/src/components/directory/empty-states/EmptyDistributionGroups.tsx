@@ -1,5 +1,6 @@
-import { Users2 } from "lucide-react";
+import { Plus, Users2 } from "lucide-react";
 import { EmptyState } from "@/components/ds";
+import { Button } from "@/components/ui/button";
 
 interface EmptyDistributionGroupsProps {
   onAddGroup?: () => void;
@@ -19,9 +20,12 @@ export function EmptyDistributionGroups({
         title="No groups found"
         description="No distribution groups match your current filters. Try adjusting your search or filter criteria."
         action={
-          onClearFilters
-            ? { label: "Clear Filters", onClick: onClearFilters }
-            : undefined
+          onClearFilters ? (
+            <Button size="sm" variant="outline" onClick={onClearFilters}>
+              <Plus />
+              Clear Filters
+            </Button>
+          ) : undefined
         }
       />
     );
@@ -33,9 +37,12 @@ export function EmptyDistributionGroups({
       title="No distribution groups yet"
       description="Create distribution groups to organize and communicate with team members more efficiently."
       action={
-        onAddGroup
-          ? { label: "Create Group", onClick: onAddGroup }
-          : undefined
+        onAddGroup ? (
+          <Button size="sm" variant="outline" onClick={onAddGroup}>
+            <Plus />
+            Create Group
+          </Button>
+        ) : undefined
       }
     />
   );

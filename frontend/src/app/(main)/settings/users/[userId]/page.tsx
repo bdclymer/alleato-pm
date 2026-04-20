@@ -29,6 +29,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { PageShell } from "@/components/layout";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface UserProfile {
   id: string;
@@ -201,7 +202,20 @@ export default function UserDetailPage() {
   if (isLoading) {
     return (
       <PageShell variant="form" title="User" onBack={() => router.push("/settings/users")}>
-        <p className="text-sm text-muted-foreground">Loading...</p>
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-4 w-48" />
+          </div>
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-4 w-36" />
+          </div>
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-4 w-52" />
+          </div>
+        </div>
       </PageShell>
     );
   }

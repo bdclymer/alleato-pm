@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { ShieldCheck } from "lucide-react";
+import { Plus, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { KpiRow, SectionHeader, EmptyState } from "@/components/ds";
+import { Button } from "@/components/ui/button";
 import {
   useFinancialAlerts,
   useScanPortfolio,
@@ -139,10 +140,12 @@ export default function FinancialInsightsPage() {
             }
             title="No financial alerts"
             description="Run a portfolio scan to detect budget discrepancies and financial red flags across your projects."
-            action={{
-              label: "Run First Scan",
-              onClick: handleScan,
-            }}
+            action={
+              <Button size="sm" variant="outline" onClick={handleScan}>
+                <Plus />
+                Run First Scan
+              </Button>
+            }
           />
         ) : (
           <AlertsTable

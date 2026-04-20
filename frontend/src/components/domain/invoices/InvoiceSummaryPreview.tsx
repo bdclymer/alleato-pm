@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { format } from "date-fns";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { cn, formatCurrency } from "@/lib/utils";
+import { formatDate } from "@/lib/format";
 import type {
   PaymentApplication,
   PaymentApplicationLineItem,
 } from "@/app/(main)/[projectId]/prime-contracts/[contractId]/types";
+import { SectionRuleHeading } from "@/components/layout/spacing";
 
 interface ContractSummary {
   original_contract_value: number;
@@ -24,14 +25,6 @@ interface InvoiceSummaryPreviewProps {
   previousPaymentDue: number;
 }
 
-function formatDate(dateStr: string | null): string {
-  if (!dateStr) return "—";
-  try {
-    return format(new Date(dateStr), "MMMM d, yyyy");
-  } catch {
-    return "—";
-  }
-}
 
 function LineRow({
   number,
@@ -204,7 +197,7 @@ export function InvoiceSummaryPreview({
                   Period To
                 </span>
                 <p className="mt-0.5 text-sm font-medium text-foreground">
-                  {formatDate(invoice.period_to)}
+                  {formatDate(invoice.period_to, "long")}
                 </p>
               </div>
             </div>
@@ -287,9 +280,7 @@ export function InvoiceSummaryPreview({
             {/* ── Change Order Summary ─────────────────────────────── */}
             <div className="border-t border-border">
               <div className="px-6 py-4">
-                <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Change Order Summary
-                </h4>
+                <SectionRuleHeading label="Change Order Summary" />
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-border">

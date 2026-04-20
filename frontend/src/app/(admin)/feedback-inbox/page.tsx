@@ -39,6 +39,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { apiFetch } from "@/lib/api-client";
+import { useConfirm } from "@/hooks/use-confirm";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -895,6 +896,7 @@ function ListItemContextMenu({
 }) {
   const [contextPos, setContextPos] = useState<{ x: number; y: number } | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const { confirm: confirmDelete, ConfirmDialog: ListItemConfirmDialog } = useConfirm();
 
   function handleContextMenu(e: React.MouseEvent) {
     e.preventDefault();
@@ -925,7 +927,7 @@ function ListItemContextMenu({
   const displayStatus = toDisplayStatus(item.status);
   const isResolved = displayStatus === "resolved";
 
-  function handleAction(action: string) {
+  async function handleAction(action: string) {
     setContextPos(null);
     switch (action) {
       case "resolve":
@@ -950,11 +952,15 @@ function ListItemContextMenu({
         navigator.clipboard.writeText(item.id);
         toast.success("ID copied to clipboard");
         break;
-      case "delete":
-        if (window.confirm("Delete this feedback item? This cannot be undone.")) {
-          onDelete(item.id);
-        }
+      case "delete": {
+        const ok = await confirmDelete({
+          description: "Delete this feedback item? This cannot be undone.",
+          variant: "destructive",
+          confirmLabel: "Delete",
+        });
+        if (ok) onDelete(item.id);
         break;
+      }
     }
   }
 
@@ -1060,6 +1066,7 @@ function ListItemContextMenu({
           </Button>
         </div>
       )}
+      {ListItemConfirmDialog}
     </>
   );
 }
@@ -1436,8 +1443,11 @@ function FeedbackDetail({
   commentInputRef?: React.RefObject<HTMLTextAreaElement | null>;
 }) {
   const displayStatus = toDisplayStatus(item.status);
+  const { confirm: confirmDetailDelete, ConfirmDialog: DetailConfirmDialog } = useConfirm();
 
   return (
+    <>
+    {DetailConfirmDialog}
     <div className="mx-auto max-w-4xl space-y-6 px-6 py-6 lg:px-10 lg:py-8">
       {/* Mobile back button */}
       {onBack && (
@@ -1510,10 +1520,13 @@ function FeedbackDetail({
             size="icon-sm"
             variant="ghost"
             className="shrink-0 text-muted-foreground hover:text-status-error hover:bg-status-error/10"
-            onClick={() => {
-              if (window.confirm("Delete this feedback item? This cannot be undone.")) {
-                onDelete(item.id);
-              }
+            onClick={async () => {
+              const ok = await confirmDetailDelete({
+                description: "Delete this feedback item? This cannot be undone.",
+                variant: "destructive",
+                confirmLabel: "Delete",
+              });
+              if (ok) onDelete(item.id);
             }}
             disabled={deletingId === item.id}
           >
@@ -1646,6 +1659,7 @@ function FeedbackDetail({
         <GitHubActivitySection issueNumber={item.github_issue_number} />
       )}
     </div>
+    </>
   );
 }
 

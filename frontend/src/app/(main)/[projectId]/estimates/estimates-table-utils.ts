@@ -35,6 +35,7 @@ export function formatDate(date: string | null): string {
   });
 }
 
+// custom formatting: rounds to whole dollars (no cents) for estimate display
 export function formatCurrency(amount: number | null): string {
   if (amount === null || amount === undefined) return "$0.00";
   return new Intl.NumberFormat("en-US", {

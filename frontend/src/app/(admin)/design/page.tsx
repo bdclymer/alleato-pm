@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   List,
   PenLine,
+  Plus,
   Search,
   Settings,
   AlertTriangle,
@@ -1217,7 +1218,12 @@ export default function DesignSystemComponentsPage() {
           icon={<FolderOpen />}
           title="No contracts yet"
           description="Create your first contract to start tracking commitments and change orders."
-          action={{ label: "New Contract", onClick: () => {} }}
+          action={
+            <Button size="sm" variant="outline" onClick={() => {}}>
+              <Plus />
+              New Contract
+            </Button>
+          }
         />
       </SubSection>
 

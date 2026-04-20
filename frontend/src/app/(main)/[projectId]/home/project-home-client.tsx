@@ -12,7 +12,6 @@ import {
   Sparkles,
   TrendingUp,
   ArrowRight,
-  Loader2,
   Phone,
   Mail,
   CheckCircle2,
@@ -48,6 +47,8 @@ import type { ProjectRole } from "@/hooks/use-project-roles";
 import type { Database } from "@/types/database.types";
 import type { Project as PortfolioProject } from "@/types/portfolio";
 import { cn } from "@/lib/utils";
+import { EmptyState } from "@/components/ds";
+import { Skeleton } from "@/components/ui/skeleton";
 import { buildToolUrl, isActivePath, sidebarNavGroups } from "@/lib/navigation-config";
 
 /* =============================================================================
@@ -411,7 +412,14 @@ function DirectorySubSection({
               <CommandInput placeholder="Search people..." value={searchValue} onValueChange={setSearchValue} className="h-9" />
               <CommandList>
                 {peopleLoading ? (
-                  <div className="py-6 text-center"><p className="text-xs text-muted-foreground">Loading...</p></div>
+                  <div className="space-y-2 px-2 py-3">
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <div key={i} className="flex items-center gap-2">
+                        <Skeleton className="h-6 w-6 rounded-full flex-shrink-0" />
+                        <Skeleton className="h-3.5 w-28" />
+                      </div>
+                    ))}
+                  </div>
                 ) : filteredPeople.length === 0 ? (
                   <CommandEmpty>
                     <div className="py-3 text-center">
@@ -1068,7 +1076,11 @@ export function ProjectHomeClient({
                 )}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">No tasks yet. Tasks are captured from meetings and AI assistant.</p>
+              <EmptyState
+                icon={<CheckCircle2 />}
+                title="No tasks yet"
+                description="Tasks are captured from meetings and the AI assistant."
+              />
             )}
           </div>
         </Section>
@@ -1130,11 +1142,11 @@ export function ProjectHomeClient({
 
         {/* ── EMPTY STATE ── */}
         {meetings.length === 0 && openRfis.length === 0 && changeOrders.length === 0 && tasks.length === 0 && teamMembers.length === 0 && !hasBudgetData && (
-          <div className="py-16 text-center">
-            <TrendingUp className="h-8 w-8 text-muted-foreground/20 mx-auto mb-3" />
-            <p className="text-sm text-muted-foreground">No project activity yet.</p>
-            <p className="text-xs text-muted-foreground/50 mt-1">Add budget, meetings, RFIs, and tasks to populate this dashboard.</p>
-          </div>
+          <EmptyState
+            icon={<TrendingUp />}
+            title="No project activity yet"
+            description="Add budget, meetings, RFIs, and tasks to populate this dashboard."
+          />
         )}
           </div>
           <ProjectToolsSidebar projectId={project.id} />

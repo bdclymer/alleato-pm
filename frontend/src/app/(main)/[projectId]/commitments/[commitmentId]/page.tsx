@@ -33,6 +33,7 @@ import { SubcontractorSovTab } from "@/components/commitments/tabs/Subcontractor
 import { DocumentDeliveryDialog } from "@/components/documents/DocumentDeliveryDialog";
 import { KpiBlock } from "@/components/ds/kpi";
 import { StatusBadge } from "@/components/ds/status-badge";
+import { ErrorState } from "@/components/ds";
 import { ToggleField } from "@/components/forms";
 import {
   ContentSectionStack,
@@ -61,6 +62,7 @@ import {
 } from "@/hooks/use-commitments-query";
 import { useProjectTitle } from "@/hooks/useProjectTitle";
 import { apiFetch } from "@/lib/api-client";
+import { useConfirm } from "@/hooks/use-confirm";
 import { formatCurrency } from "@/lib/utils";
 import { formatDate } from "@/lib/table-config/formatters";
 import type { Commitment } from "@/types/financial";
@@ -398,7 +400,7 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
         <div className="grid gap-x-16 gap-y-10 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.85fr)]">
           <div className="space-y-10">
             <div className="grid gap-x-16 gap-y-10 lg:grid-cols-2">
-              <div className="space-y-6">
+              <div>
                 <SectionRuleHeading label="Details" />
                 <dl className="space-y-4 text-sm">
                   <LabelValueRow label={isPO ? "PO #" : "Subcontract #"} missing={!safeNumber(commitment.number)}>
@@ -449,7 +451,7 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
                 </dl>
               </div>
 
-              <div className="space-y-6">
+              <div>
                 <SectionRuleHeading label="Contract Settings" />
                 <dl className="space-y-4 text-sm">
                   <LabelValueRow label="Default Retainage">
@@ -477,7 +479,7 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
               </div>
             </div>
 
-            <div className="space-y-5">
+            <div>
               <SectionRuleHeading label="Inclusions and Exclusions" />
               <dl className="space-y-4 text-sm">
                 <LabelValueRow
@@ -541,7 +543,7 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
           </div>
 
           <div className="space-y-10">
-            <div className="space-y-4">
+            <div>
               <SectionRuleHeading label="Key Dates" />
               <dl className="space-y-3 text-sm">
                 {!isPO && (
@@ -567,7 +569,7 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
               </dl>
             </div>
 
-            <div className="space-y-5">
+            <div>
               <SectionRuleHeading label="Access and Visibility" />
               <div className="space-y-4">
                 <ToggleField
@@ -589,7 +591,7 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
       </section>
 
       {/* Schedule of Values */}
-      <div className="space-y-6">
+      <div>
         <SectionRuleHeading label="Schedule of Values" />
         <ScheduleOfValuesTab
           lineItems={commitment.line_items || []}
@@ -602,13 +604,13 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
       </div>
 
       {/* Contract Summary Report */}
-      <div className="space-y-4">
+      <div>
         <SectionRuleHeading label="Contract Summary" />
         <ContractSummaryReportHorizontal commitment={commitment} />
       </div>
 
       {/* Attachments */}
-      <div className="space-y-6">
+      <div>
         <SectionRuleHeading label="Attachments" />
         <AttachmentsTab commitmentId={commitmentId} />
       </div>
@@ -741,6 +743,7 @@ export default function CommitmentDetailPage() {
   const commitmentId = params.commitmentId as string;
   const queryClient = useQueryClient();
 
+  const { confirm, ConfirmDialog } = useConfirm();
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
   const [documentDialogTab, setDocumentDialogTab] = useState<
@@ -816,13 +819,13 @@ export default function CommitmentDetailPage() {
   }, [searchParams]);
 
   const handleDelete = useCallback(async () => {
-    if (
-      !commitment ||
-      !confirm(
-        `Are you sure you want to delete commitment ${commitment.number}?`,
-      )
-    )
-      return;
+    if (!commitment) return;
+    const ok = await confirm({
+      description: `Are you sure you want to delete commitment ${commitment.number}?`,
+      variant: "destructive",
+      confirmLabel: "Delete",
+    });
+    if (!ok) return;
 
     try {
       await apiFetch(`/api/commitments/${commitmentId}`, {
@@ -839,7 +842,7 @@ export default function CommitmentDetailPage() {
         err instanceof Error ? err.message : "Failed to delete commitment",
       );
     }
-  }, [commitment, commitmentId, projectId, router, queryClient]);
+  }, [commitment, commitmentId, projectId, router, queryClient, confirm]);
 
   const handleExport = useCallback(() => {
     setDocumentDialogTab("download");
@@ -879,7 +882,7 @@ export default function CommitmentDetailPage() {
   if (error || !commitment) {
     return (
       <PageShell variant="dashboard" title="Commitment Details" description="Not found" onBack={() => router.back()}>
-        <p className="text-sm text-destructive">{error || "Commitment not found"}</p>
+        <ErrorState error={error ?? "Commitment not found"} onRetry={() => void fetchCommitment()} />
       </PageShell>
     );
   }
@@ -933,7 +936,7 @@ export default function CommitmentDetailPage() {
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="icon" aria-label="More actions">
+          <Button variant="ghost" size="icon" aria-label="More actions">
             <MoreVertical className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
@@ -1089,6 +1092,8 @@ export default function CommitmentDetailPage() {
           />
         )}
       </div>
+
+      {ConfirmDialog}
 
       <DocumentDeliveryDialog
         open={isExportDialogOpen || isEmailDialogOpen}

@@ -39,6 +39,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import type { VendorOption } from "./types";
+import { SectionRuleHeading } from "@/components/layout/spacing";
 
 interface GeneralInfoSectionProps {
   isSubmitting: boolean;
@@ -72,9 +73,7 @@ export function GeneralInfoSection({
 
   return (
     <section className="space-y-6 border-b border-border/70 pb-8">
-      <h2 className="text-lg font-semibold text-foreground">
-        General Information
-      </h2>
+      <SectionRuleHeading label="General Information" />
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <div className="space-y-2">

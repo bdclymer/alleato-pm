@@ -31,17 +31,7 @@ import {
   useBillingPeriodsList,
   type BillingPeriod,
 } from "@/hooks/use-billing-periods";
-
-// =============================================================================
-// Helpers
-// =============================================================================
-
-function formatDate(dateStr: string | null | undefined): string {
-  if (!dateStr) return "—";
-  const d = new Date(dateStr);
-  if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-}
+import { formatDate } from "@/lib/format";
 
 // =============================================================================
 // Column Configs

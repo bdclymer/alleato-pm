@@ -16,6 +16,7 @@ import {
   XCircle,
   Lightbulb,
 } from "lucide-react";
+import { EmptyState } from "@/components/ds";
 import Link from "next/link";
 import { format } from "date-fns";
 
@@ -185,9 +186,11 @@ export function ProjectAccordions({
                     </div>
                   ))
                 ) : (
-                  <p className="text-sm text-muted-foreground p-4">
-                    No AI insights generated yet
-                  </p>
+                  <EmptyState
+                    icon={<Lightbulb />}
+                    title="No AI insights generated yet"
+                    description="Insights will appear here as project data is analyzed."
+                  />
                 )}
               </div>
             </AccordionContent>

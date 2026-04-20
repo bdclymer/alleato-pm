@@ -4,6 +4,7 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 import { Search, UserPlus, Settings, Link, Shield, Trash2 } from "lucide-react";
 import { PageShell } from "@/components/layout";
+import { EmptyState } from "@/components/ds";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -264,9 +265,10 @@ export default function AuditLogPage() {
 
       {/* Event groups */}
       {grouped.length === 0 ? (
-        <div className="rounded-lg border border-border px-5 py-12 text-center">
-          <p className="text-sm text-muted-foreground">No events found.</p>
-        </div>
+        <EmptyState
+          title="No events found"
+          description="Audit events will appear here as actions are taken in the system."
+        />
       ) : (
         <div className="space-y-5">
           {grouped.map((group) => (

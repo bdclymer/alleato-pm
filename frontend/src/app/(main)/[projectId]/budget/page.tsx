@@ -58,6 +58,7 @@ import {
   apiFetchBlob,
   summarizeBulkResults,
 } from "@/lib/api-client";
+import { useConfirm } from "@/hooks/use-confirm";
 import {
   applyQuickFilter,
   loadQuickFilterPreference,
@@ -124,6 +125,7 @@ function BudgetTableSkeleton() {
 function BudgetPageContent() {
   const router = useRouter();
   const params = useParams();
+  const { confirm, ConfirmDialog } = useConfirm();
   const searchParams = useSearchParams();
   const projectId = params.projectId as string;
   useProjectTitle("Budget");
@@ -858,11 +860,12 @@ function BudgetPageContent() {
         return;
       }
       const label = lineItem.description || lineItem.costCode || "this line item";
-      const confirmed =
-        typeof window !== "undefined"
-          ? window.confirm(`Delete "${label}"? This cannot be undone.`)
-          : true;
-      if (!confirmed) return;
+      const ok = await confirm({
+        description: `Delete "${label}"? This cannot be undone.`,
+        variant: "destructive",
+        confirmLabel: "Delete",
+      });
+      if (!ok) return;
 
       try {
         await apiFetch(
@@ -880,7 +883,7 @@ function BudgetPageContent() {
         });
       }
     },
-    [isLocked, projectId, handleLineItemSuccess],
+    [confirm, isLocked, projectId, handleLineItemSuccess],
   );
 
   const confirmDeleteSelected = async () => {
@@ -1279,6 +1282,7 @@ function BudgetPageContent() {
         mode="create"
         onSuccess={() => setShowViewsModal(false)}
       />
+      {ConfirmDialog}
     </>
   );
 }

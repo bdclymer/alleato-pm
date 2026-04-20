@@ -101,7 +101,7 @@ export function AlbumsTab({ projectId }: AlbumsTabProps) {
             icon={<FolderOpen />}
             title="No albums yet"
             description="Create albums to organise your photos by trade, phase, or location."
-            action={{ label: "New Album", onClick: () => setCreateOpen(true) }}
+            action={<Button onClick={() => setCreateOpen(true)}><FolderPlus />New Album</Button>}
           />
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">

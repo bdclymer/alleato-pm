@@ -1,6 +1,7 @@
 import * as React from "react";
 import type { ReactElement } from "react";
 import { ChevronDown, Lock, MoreHorizontal, Paperclip, Pencil, Trash2 } from "lucide-react";
+import { formatCurrency, formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 import { StatusBadge } from "@/components/ds";
@@ -91,20 +92,8 @@ export const primeContractDefaultVisibleColumns = primeContractColumns
   .filter((column) => column.defaultVisible !== false)
   .map((column) => column.id);
 
-export function formatCurrency(value: number | null | undefined): string {
-  if (value === null || value === undefined) return "-";
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(value);
-}
-
-function formatDate(value: string | null | undefined): string {
-  if (!value) return "-";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "-";
-  return date.toLocaleDateString();
-}
+// formatCurrency re-exported from @/lib/format for callers that import it from here
+export { formatCurrency };
 
 function sortValueForDate(value: string | null | undefined): number {
   if (!value) return 0;
@@ -362,10 +351,7 @@ export function renderPrimeContractList(
   onClick: (contract: PrimeContract) => void,
   changeOrderData?: ListChangeOrderData,
 ): ReactElement {
-  const formatCur = (v: number | null) =>
-    v == null
-      ? "—"
-      : new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(v);
+  const formatCur = (v: number | null) => formatCurrency(v);
 
   return (
     <div className="rounded-md">

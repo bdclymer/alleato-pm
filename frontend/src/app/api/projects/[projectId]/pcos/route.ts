@@ -23,6 +23,7 @@ import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
+import { logger } from "@/lib/logger";
 
 interface RouteParams {
   params: Promise<{ projectId: string }>;
@@ -82,7 +83,7 @@ export const GET = withApiGuardrails(
     const { data, error, count } = await query;
 
     if (error) {
-      console.error("Failed to fetch PCOs:", error);
+      logger.error({ msg: "Failed to fetch PCOs:", error: error instanceof Error ? error.message : String(error) });
       return apiErrorResponse(error);
     }
 
@@ -231,7 +232,7 @@ export const POST = withApiGuardrails(
       .single();
 
     if (error) {
-      console.error("Failed to create PCO:", error);
+      logger.error({ msg: "Failed to create PCO:", error: error instanceof Error ? error.message : String(error) });
       return apiErrorResponse(error);
     }
 

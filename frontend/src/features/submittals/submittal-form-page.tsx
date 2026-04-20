@@ -31,6 +31,7 @@ import { apiFetch } from "@/lib/api-client";
 import { useProjectCompanies } from "@/hooks/use-project-companies";
 import { useAuthUsers } from "@/hooks/use-auth-users";
 import { useCreateSubmittal, useUpdateSubmittal, type SubmittalSummary } from "@/hooks/use-submittals";
+import { SectionRuleHeading } from "@/components/layout/spacing";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -201,9 +202,7 @@ export function SubmittalFormPage({
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           {/* ── General Information ── */}
           <section className="space-y-4">
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-              General Information
-            </h3>
+            <SectionRuleHeading label="General Information" />
 
             <div className="grid grid-cols-2 gap-4">
               <FormField
@@ -382,9 +381,7 @@ export function SubmittalFormPage({
 
           {/* ── People & Companies ── */}
           <section className="space-y-4">
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-              People &amp; Companies
-            </h3>
+            <SectionRuleHeading label="People & Companies" />
 
             <FormField
               control={form.control}
@@ -496,9 +493,7 @@ export function SubmittalFormPage({
 
           {/* ── Distribution & Scheduling ── */}
           <section className="space-y-4">
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-              Distribution &amp; Scheduling
-            </h3>
+            <SectionRuleHeading label="Distribution & Scheduling" />
 
             <div className="grid grid-cols-2 gap-4">
               <FormField
@@ -593,9 +588,7 @@ export function SubmittalFormPage({
 
           {/* ── Content ── */}
           <section className="space-y-4">
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-              Content
-            </h3>
+            <SectionRuleHeading label="Content" />
 
             <FormField
               control={form.control}

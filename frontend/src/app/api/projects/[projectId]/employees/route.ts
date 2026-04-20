@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
+import { logger } from "@/lib/logger";
 
 /**
  * GET /api/projects/[projectId]/employees
@@ -34,7 +35,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
       .order("last_name", { ascending: true });
 
     if (error) {
-      console.error("Error fetching employees:", error);
+      logger.error({ msg: "Error fetching employees:", error: error instanceof Error ? error.message : String(error) });
       return apiErrorResponse(error);
     }
 

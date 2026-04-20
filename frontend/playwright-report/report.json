@@ -10,18 +10,14 @@
     "grep": {},
     "grepInvert": null,
     "maxFailures": 0,
-    "metadata": {
-      "actualWorkers": 2
-    },
+    "metadata": {},
     "preserveOutput": "always",
     "projects": [
       {
         "outputDir": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results",
         "repeatEach": 1,
         "retries": 0,
-        "metadata": {
-          "actualWorkers": 2
-        },
+        "metadata": {},
         "id": "setup",
         "name": "setup",
         "testDir": "/Users/meganharrison/Documents/alleato-pm/frontend/tests",
@@ -35,9 +31,7 @@
         "outputDir": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results",
         "repeatEach": 1,
         "retries": 0,
-        "metadata": {
-          "actualWorkers": 2
-        },
+        "metadata": {},
         "id": "chromium",
         "name": "chromium",
         "testDir": "/Users/meganharrison/Documents/alleato-pm/frontend/tests",
@@ -51,9 +45,7 @@
         "outputDir": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results",
         "repeatEach": 1,
         "retries": 0,
-        "metadata": {
-          "actualWorkers": 2
-        },
+        "metadata": {},
         "id": "debug",
         "name": "debug",
         "testDir": "/Users/meganharrison/Documents/alleato-pm/frontend/tests",
@@ -69,9 +61,7 @@
         "outputDir": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results",
         "repeatEach": 1,
         "retries": 0,
-        "metadata": {
-          "actualWorkers": 2
-        },
+        "metadata": {},
         "id": "no-auth",
         "name": "no-auth",
         "testDir": "/Users/meganharrison/Documents/alleato-pm/frontend/tests",
@@ -137,37 +127,8 @@
               "expectedStatus": "passed",
               "projectId": "setup",
               "projectName": "setup",
-              "results": [
-                {
-                  "workerIndex": 0,
-                  "parallelIndex": 0,
-                  "status": "passed",
-                  "duration": 117,
-                  "errors": [],
-                  "stdout": [
-                    {
-                      "text": "Existing auth session is still valid — skipping re-authentication\n"
-                    }
-                  ],
-                  "stderr": [],
-                  "retry": 0,
-                  "startTime": "2026-04-20T14:37:08.067Z",
-                  "annotations": [],
-                  "attachments": [
-                    {
-                      "name": "screenshot",
-                      "contentType": "image/png",
-                      "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/auth.setup.ts-authenticate-setup/test-finished-1.png"
-                    },
-                    {
-                      "name": "video",
-                      "contentType": "video/webm",
-                      "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/auth.setup.ts-authenticate-setup/video.webm"
-                    }
-                  ]
-                }
-              ],
-              "status": "expected"
+              "results": [],
+              "status": "skipped"
             }
           ],
           "id": "17e3fe6f4d9d8bd79c6b-60f085b113a677673906",
@@ -185,7 +146,7 @@
       "specs": [
         {
           "title": "Global Setup",
-          "ok": false,
+          "ok": true,
           "tags": [],
           "tests": [
             {
@@ -194,65 +155,8 @@
               "expectedStatus": "passed",
               "projectId": "setup",
               "projectName": "setup",
-              "results": [
-                {
-                  "workerIndex": 1,
-                  "parallelIndex": 1,
-                  "status": "failed",
-                  "duration": 172,
-                  "error": {
-                    "message": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:8082/\nCall log:\n\u001b[2m  - navigating to \"http://localhost:8082/\", waiting until \"load\"\u001b[22m\n",
-                    "stack": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:8082/\nCall log:\n\u001b[2m  - navigating to \"http://localhost:8082/\", waiting until \"load\"\u001b[22m\n\n    at /Users/meganharrison/Documents/alleato-pm/frontend/tests/supabase-e2e/studio/features/_global.setup.ts:37:14",
-                    "location": {
-                      "file": "/Users/meganharrison/Documents/alleato-pm/frontend/tests/supabase-e2e/studio/features/_global.setup.ts",
-                      "column": 14,
-                      "line": 37
-                    },
-                    "snippet": "  35 |   const apiUrl = env.API_URL\n  36 |\n> 37 |   await page.goto(studioUrl).catch((err) => {\n     |              ^\n  38 |     console.error(\n  39 |       `\\n 🚨 Setup Error \n  40 | Studio is not available at: ${studioUrl}"
-                  },
-                  "errors": [
-                    {
-                      "location": {
-                        "file": "/Users/meganharrison/Documents/alleato-pm/frontend/tests/supabase-e2e/studio/features/_global.setup.ts",
-                        "column": 14,
-                        "line": 37
-                      },
-                      "message": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:8082/\nCall log:\n\u001b[2m  - navigating to \"http://localhost:8082/\", waiting until \"load\"\u001b[22m\n\n\n  35 |   const apiUrl = env.API_URL\n  36 |\n> 37 |   await page.goto(studioUrl).catch((err) => {\n     |              ^\n  38 |     console.error(\n  39 |       `\\n 🚨 Setup Error \n  40 | Studio is not available at: ${studioUrl}\n    at /Users/meganharrison/Documents/alleato-pm/frontend/tests/supabase-e2e/studio/features/_global.setup.ts:37:14"
-                    }
-                  ],
-                  "stdout": [
-                    {
-                      "text": "\n 🧪 Setting up test environment.\n    - Studio URL: http://localhost:8082\n    - API URL: https://localhost:8080\n    - Auth: disabled\n    - Is Platform: undefined\n    \n"
-                    }
-                  ],
-                  "stderr": [
-                    {
-                      "text": "\n 🚨 Setup Error \nStudio is not available at: http://localhost:8082\n\nPlease ensure:\n  1. Studio is running in the expected URL\n  2. You have proper network access\n\n"
-                    }
-                  ],
-                  "retry": 0,
-                  "startTime": "2026-04-20T14:37:08.166Z",
-                  "annotations": [],
-                  "attachments": [
-                    {
-                      "name": "screenshot",
-                      "contentType": "image/png",
-                      "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/supabase-e2e-studio-features-_global.setup.ts-Global-Setup-setup/test-failed-1.png"
-                    },
-                    {
-                      "name": "video",
-                      "contentType": "video/webm",
-                      "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/supabase-e2e-studio-features-_global.setup.ts-Global-Setup-setup/video.webm"
-                    }
-                  ],
-                  "errorLocation": {
-                    "file": "/Users/meganharrison/Documents/alleato-pm/frontend/tests/supabase-e2e/studio/features/_global.setup.ts",
-                    "column": 14,
-                    "line": 37
-                  }
-                }
-              ],
-              "status": "unexpected"
+              "results": [],
+              "status": "skipped"
             }
           ],
           "id": "35a4828c96b1a2fe5cab-ed2cb4a27969102ec80d",
@@ -263,20 +167,20 @@
       ]
     },
     {
-      "title": "e2e/budget/budget-comprehensive.spec.ts",
-      "file": "e2e/budget/budget-comprehensive.spec.ts",
+      "title": "e2e/budget/budget.regression.spec.ts",
+      "file": "e2e/budget/budget.regression.spec.ts",
       "column": 0,
       "line": 0,
       "specs": [],
       "suites": [
         {
-          "title": "Budget Page - Display and Navigation",
-          "file": "e2e/budget/budget-comprehensive.spec.ts",
-          "line": 6,
+          "title": "Budget Form Validation",
+          "file": "e2e/budget/budget.regression.spec.ts",
+          "line": 21,
           "column": 6,
           "specs": [
             {
-              "title": "loads budget page and key controls",
+              "title": "shows specific validation errors for empty required fields",
               "ok": true,
               "tags": [],
               "tests": [
@@ -290,9 +194,246 @@
                   "status": "skipped"
                 }
               ],
-              "id": "002ac83b9abb74f135dc-22f835ce062a73e4a5d8",
-              "file": "e2e/budget/budget-comprehensive.spec.ts",
-              "line": 12,
+              "id": "47eb143a67e5ec41f643-14e367c2e1206af088c1",
+              "file": "e2e/budget/budget.regression.spec.ts",
+              "line": 51,
+              "column": 7
+            },
+            {
+              "title": "prevents invalid amount values with specific error messages",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "47eb143a67e5ec41f643-0dd71a606d91ea54daff",
+              "file": "e2e/budget/budget.regression.spec.ts",
+              "line": 167,
+              "column": 7
+            },
+            {
+              "title": "accepts valid budget line item data without errors",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "47eb143a67e5ec41f643-7df0ac4fb0d465a88f5c",
+              "file": "e2e/budget/budget.regression.spec.ts",
+              "line": 271,
+              "column": 7
+            },
+            {
+              "title": "shows specific validation errors for empty required fields",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "debug",
+                  "projectName": "debug",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "47eb143a67e5ec41f643-16c50ecf828de46e8970",
+              "file": "e2e/budget/budget.regression.spec.ts",
+              "line": 51,
+              "column": 7
+            },
+            {
+              "title": "prevents invalid amount values with specific error messages",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "debug",
+                  "projectName": "debug",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "47eb143a67e5ec41f643-5d603dbbc00ab34db5d6",
+              "file": "e2e/budget/budget.regression.spec.ts",
+              "line": 167,
+              "column": 7
+            },
+            {
+              "title": "accepts valid budget line item data without errors",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "debug",
+                  "projectName": "debug",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "47eb143a67e5ec41f643-eb698a169cf5bedf927d",
+              "file": "e2e/budget/budget.regression.spec.ts",
+              "line": 271,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "e2e/budget/budget.smoke.spec.ts",
+      "file": "e2e/budget/budget.smoke.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Budget Core",
+          "file": "e2e/budget/budget.smoke.spec.ts",
+          "line": 14,
+          "column": 6,
+          "specs": [
+            {
+              "title": "loads budget page with seeded line items",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "6d8c818cfe0a76be5b14-60361cf353d569702c1b",
+              "file": "e2e/budget/budget.smoke.spec.ts",
+              "line": 24,
+              "column": 7
+            },
+            {
+              "title": "opens the budget line item creation modal",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "6d8c818cfe0a76be5b14-b1210e86d39def35d4bb",
+              "file": "e2e/budget/budget.smoke.spec.ts",
+              "line": 36,
+              "column": 7
+            },
+            {
+              "title": "opens budget column detail modal",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "6d8c818cfe0a76be5b14-388aebcd39655e113671",
+              "file": "e2e/budget/budget.smoke.spec.ts",
+              "line": 54,
+              "column": 7
+            },
+            {
+              "title": "loads budget page with seeded line items",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "debug",
+                  "projectName": "debug",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "6d8c818cfe0a76be5b14-ac815c2eec44e3b878b1",
+              "file": "e2e/budget/budget.smoke.spec.ts",
+              "line": 24,
+              "column": 7
+            },
+            {
+              "title": "opens the budget line item creation modal",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "debug",
+                  "projectName": "debug",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "6d8c818cfe0a76be5b14-5876501c8f552bc4e987",
+              "file": "e2e/budget/budget.smoke.spec.ts",
+              "line": 36,
+              "column": 7
+            },
+            {
+              "title": "opens budget column detail modal",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "debug",
+                  "projectName": "debug",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "6d8c818cfe0a76be5b14-64f2299d4565782e2795",
+              "file": "e2e/budget/budget.smoke.spec.ts",
+              "line": 54,
               "column": 7
             }
           ]
@@ -302,11 +443,11 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-04-20T14:37:07.101Z",
-    "duration": 1445.1480000000001,
-    "expected": 1,
-    "skipped": 1,
-    "unexpected": 1,
+    "startTime": "2026-04-20T18:45:27.497Z",
+    "duration": 326.1110000000001,
+    "expected": 0,
+    "skipped": 14,
+    "unexpected": 0,
     "flaky": 0
   }
 }

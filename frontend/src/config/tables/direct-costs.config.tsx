@@ -3,6 +3,7 @@ import { StatusBadge } from "@/components/misc/status-badge";
 import type { SummaryCard } from "@/components/ds/summary-card-grid";
 import type { FilterOption } from "@/components/templates";
 import { formatCurrencyValue } from "@/components/ds/summary-card-grid";
+import { formatDate } from "@/lib/format";
 
 /**
  * Direct Costs Table Configuration
@@ -49,17 +50,6 @@ export function formatCurrency(amount: number | null | undefined): string {
   }).format(amount);
 }
 
-/**
- * Format date for display
- */
-export function formatDate(date: string | null | undefined): string {
-  if (!date) return "—";
-  return new Date(date).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
 
 /**
  * Format cost type label

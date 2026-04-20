@@ -17,6 +17,7 @@ import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
+import { logger } from "@/lib/logger";
 
 interface RouteParams {
   params: Promise<{ projectId: string; pcoId: string }>;
@@ -108,7 +109,7 @@ export const POST = withApiGuardrails(
       });
 
     if (versionError) {
-      console.error("Failed to create PCO version:", versionError);
+      logger.error({ msg: "Failed to create PCO version:", data: versionError });
       return NextResponse.json(
         { error: "Failed to create version snapshot", details: versionError.message },
         { status: 400 }
@@ -130,7 +131,7 @@ export const POST = withApiGuardrails(
       .single();
 
     if (updateError) {
-      console.error("Failed to update PCO status:", updateError);
+      logger.error({ msg: "Failed to update PCO status:", data: updateError });
       return NextResponse.json(
         { error: "Failed to submit PCO", details: updateError.message },
         { status: 400 }

@@ -5,6 +5,7 @@ import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { CreateSubcontractSchema } from "@/lib/schemas/create-subcontract-schema";
 import { mapFormToInsert } from "@/lib/db/subcontracts";
 import { apiErrorResponse } from "@/lib/api-error";
+import { logger } from "@/lib/logger";
 
 /**
  * GET /api/projects/[id]/subcontracts
@@ -30,7 +31,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
       .order("created_at", { ascending: false });
 
     if (error) {
-      console.error("Error fetching subcontracts:", error);
+      logger.error({ msg: "Error fetching subcontracts", error: error.message });
       return NextResponse.json(
         { error: "Failed to fetch subcontracts" },
         { status: 500 },
@@ -49,40 +50,30 @@ export const POST = withApiGuardrails<{ projectId: string }>(
   "projects/[projectId]/subcontracts#POST",
   async ({ request, params }) => {
   const { projectId } = await params;
-  console.warn(
-    `[Subcontracts API] POST /api/projects/${projectId}/subcontracts - Starting`,
-  );
+  logger.info({ msg: `[Subcontracts API] POST /api/projects/${projectId}/subcontracts - Starting` });
 
   try {
     const supabase = await createClient();
 
     const user = await getApiRouteUser();
     if (!user) {
-      console.error("[Subcontracts API] No authenticated user found");
+      logger.error({ msg: "[Subcontracts API] No authenticated user found" });
       return NextResponse.json(
         { error: "Unauthorized - no user session. Please log in again." },
         { status: 401 },
       );
     }
 
-    console.warn(
-      `[Subcontracts API] Authenticated user: ${user.email ?? "unknown"} (${user.id})`,
-    );
+    logger.debug({ msg: "[Subcontracts API] Authenticated user", email: user.email ?? "unknown", userId: user.id });
 
     // Parse and validate request body
     const body = await request.json();
-    console.warn(
-      "[Subcontracts API] Request body received:",
-      JSON.stringify(body, null, 2),
-    );
+    logger.debug({ msg: "[Subcontracts API] Request body received" });
 
     const validationResult = CreateSubcontractSchema.safeParse(body);
 
     if (!validationResult.success) {
-      console.error(
-        "[Subcontracts API] Validation failed:",
-        validationResult.error.issues,
-      );
+      logger.error({ msg: "[Subcontracts API] Validation failed", issues: validationResult.error.issues });
       return NextResponse.json(
         {
           error: "Validation failed - please check your input",
@@ -101,10 +92,7 @@ export const POST = withApiGuardrails<{ projectId: string }>(
     // If you get schema errors, fix them in src/lib/db/subcontracts.ts
     const subcontractData = mapFormToInsert(data, parseInt(projectId), user.id);
 
-    console.warn(
-      "[Subcontracts API] Inserting subcontract:",
-      JSON.stringify(subcontractData, null, 2),
-    );
+    logger.debug({ msg: "[Subcontracts API] Inserting subcontract" });
 
     const { data: subcontract, error: subcontractError } = await supabase
       .from("subcontracts")
@@ -113,10 +101,7 @@ export const POST = withApiGuardrails<{ projectId: string }>(
       .single();
 
     if (subcontractError) {
-      console.error(
-        "[Subcontracts API] Database insert error:",
-        subcontractError,
-      );
+      logger.error({ msg: "[Subcontracts API] Database insert error", error: subcontractError.message, code: subcontractError.code });
 
       // Provide more helpful error messages based on error code
       let userMessage = "Failed to create subcontract";
@@ -144,16 +129,11 @@ export const POST = withApiGuardrails<{ projectId: string }>(
       );
     }
 
-    console.warn(
-      "[Subcontracts API] Subcontract created successfully:",
-      subcontract.id,
-    );
+    logger.info({ msg: "[Subcontracts API] Subcontract created successfully", subcontractId: subcontract.id });
 
     // Create SOV line items if provided
     if (data.sov && data.sov.length > 0) {
-      console.warn(
-        `[Subcontracts API] Creating ${data.sov.length} SOV line items`,
-      );
+      logger.info({ msg: `[Subcontracts API] Creating ${data.sov.length} SOV line items` });
       const toNumber = (v: unknown): number => {
         if (typeof v === "number") return v;
         if (typeof v === "string") {
@@ -178,7 +158,7 @@ export const POST = withApiGuardrails<{ projectId: string }>(
         .insert(sovItems);
 
       if (sovError) {
-        console.error("[Subcontracts API] Error creating SOV items:", sovError);
+        logger.error({ msg: "[Subcontracts API] Error creating SOV items", error: sovError.message });
         // Rollback: delete the subcontract we just created
         await supabase.from("subcontracts").delete().eq("id", subcontract.id);
         return NextResponse.json(
@@ -192,7 +172,7 @@ export const POST = withApiGuardrails<{ projectId: string }>(
           { status: 500 },
         );
       }
-      console.warn("[Subcontracts API] SOV items created successfully");
+      logger.info({ msg: "[Subcontracts API] SOV items created successfully" });
     }
 
     // Fetch the complete subcontract with totals
@@ -203,19 +183,16 @@ export const POST = withApiGuardrails<{ projectId: string }>(
       .single();
 
     if (fetchError) {
-      console.error(
-        "[Subcontracts API] Error fetching complete subcontract:",
-        fetchError,
-      );
+      logger.error({ msg: "[Subcontracts API] Error fetching complete subcontract", error: fetchError.message });
       // Don't fail here, we already created successfully
-      console.warn("[Subcontracts API] Returning basic subcontract data");
+      logger.warn({ msg: "[Subcontracts API] Returning basic subcontract data" });
       return NextResponse.json({
         data: subcontract,
         message: "Subcontract created successfully",
       });
     }
 
-    console.warn("[Subcontracts API] Request completed successfully");
+    logger.info({ msg: "[Subcontracts API] Request completed successfully" });
     return NextResponse.json({
       data: completeSubcontract,
       message: "Subcontract created successfully",

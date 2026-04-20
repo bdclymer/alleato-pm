@@ -1,6 +1,7 @@
 import * as React from "react";
 import type { ReactElement } from "react";
 
+import { formatDate } from "@/lib/format";
 import type {
   ColumnConfig,
   FilterConfig,
@@ -80,12 +81,6 @@ export const transmittalFilters: FilterConfig[] = [
 ];
 
 // ─── Table columns ────────────────────────────────────────────────────────────
-
-function formatDate(v: string | null | undefined): string {
-  if (!v) return "-";
-  const d = new Date(v);
-  return Number.isNaN(d.getTime()) ? "-" : d.toLocaleDateString();
-}
 
 export function buildTransmittalTableColumns(): TableColumn<TransmittalTableRow>[] {
   return [

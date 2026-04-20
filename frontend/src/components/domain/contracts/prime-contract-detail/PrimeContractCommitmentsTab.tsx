@@ -3,8 +3,9 @@
 import * as React from "react";
 import type { ReactNode } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+
+import { Skeleton } from "@/components/ui/skeleton";
 
 import {
   AlertDialog,
@@ -90,9 +91,16 @@ function CommitmentChangeOrdersRow({
       <td colSpan={colSpan} className="p-0">
         <div className="bg-muted/40 border-y border-border px-6 py-3">
           {isLoading ? (
-            <div className="flex items-center gap-2 py-2 text-sm text-muted-foreground">
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              Loading change orders…
+            <div className="space-y-1.5 py-2">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-6">
+                  <Skeleton className="h-3.5 w-8" />
+                  <Skeleton className="h-3.5 w-40" />
+                  <Skeleton className="h-3.5 w-16" />
+                  <Skeleton className="h-3.5 w-20 ml-auto" />
+                  <Skeleton className="h-3.5 w-20" />
+                </div>
+              ))}
             </div>
           ) : changeOrders.length === 0 ? (
             <p className="py-2 text-sm text-muted-foreground">No change orders</p>

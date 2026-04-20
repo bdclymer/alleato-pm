@@ -3,7 +3,7 @@
 import * as React from "react";
 import type { ReactElement, ReactNode } from "react";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
-import { ChevronDown, Loader2, Plus, RefreshCw } from "lucide-react";
+import { ChevronDown, Plus, RefreshCw, FileText } from "lucide-react";
 import { toast } from "sonner";
 
 import { PermissionGate } from "@/components/domain/permissions/PermissionGate";
@@ -53,6 +53,8 @@ import {
   renderCommitmentList,
   renderCommitmentRowActions,
 } from "@/features/commitments/commitments-table-config";
+import { EmptyState } from "@/components/ds";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const EMPTY_FILTERS: Record<string, FilterValue> = {
   status: undefined,
@@ -118,9 +120,16 @@ function CommitmentChangeOrdersRow({
       <td colSpan={colSpan} className="p-0">
         <div className="bg-muted/40 border-y border-border px-6 py-3">
           {isLoading ? (
-            <div className="flex items-center gap-2 py-2 text-sm text-muted-foreground">
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              Loading change orders…
+            <div className="space-y-1.5 py-2">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-6">
+                  <Skeleton className="h-3.5 w-8" />
+                  <Skeleton className="h-3.5 w-40" />
+                  <Skeleton className="h-3.5 w-16" />
+                  <Skeleton className="h-3.5 w-20 ml-auto" />
+                  <Skeleton className="h-3.5 w-20" />
+                </div>
+              ))}
             </div>
           ) : changeOrders.length === 0 ? (
             <p className="py-2 text-sm text-muted-foreground">No change orders</p>
@@ -187,18 +196,26 @@ function ProjectChangeOrdersTable({
 
   if (isLoading) {
     return (
-      <div className="flex items-center gap-2 py-8 text-sm text-muted-foreground">
-        <Loader2 className="h-4 w-4 animate-spin" />
-        Loading change orders…
+      <div className="space-y-2 py-4">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="flex items-center gap-6">
+            <Skeleton className="h-4 w-8" />
+            <Skeleton className="h-4 w-48" />
+            <Skeleton className="h-4 w-20" />
+            <Skeleton className="h-4 w-24 ml-auto" />
+          </div>
+        ))}
       </div>
     );
   }
 
   if (changeOrders.length === 0) {
     return (
-      <p className="py-8 text-sm text-muted-foreground text-center">
-        No change orders for this project.
-      </p>
+      <EmptyState
+        icon={<FileText />}
+        title="No change orders for this project"
+        description="Commitment change orders will appear here once created."
+      />
     );
   }
 

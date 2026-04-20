@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Plus, ArrowRight, FolderOpen } from "lucide-react";
 import { toast } from "sonner";
+import { formatDate } from "@/lib/format";
 
 import { PageShell } from "@/components/layout";
 import { Button } from "@/components/ui/button";
@@ -28,14 +29,6 @@ const tabs = (projectId: string) => [
   { label: "Recycle Bin", href: `/${projectId}/drawings/recycle-bin`, isActive: false },
 ];
 
-function formatDate(dateStr: string | null | undefined) {
-  if (!dateStr) return "—";
-  return new Date(dateStr).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
 
 export default function DrawingSetsPage() {
   const params = useParams<{ projectId: string }>();
@@ -176,10 +169,12 @@ export default function DrawingSetsPage() {
                       icon={<FolderOpen className="h-8 w-8 text-muted-foreground" />}
                       title="No drawing sets"
                       description="Create a set to group drawings issued together."
-                      action={{
-                        label: "New Set",
-                        onClick: () => setShowCreateRow(true),
-                      }}
+                      action={
+                        <Button size="sm" variant="outline" onClick={() => setShowCreateRow(true)}>
+                          <Plus />
+                          New Set
+                        </Button>
+                      }
                     />
                   </TableCell>
                 </TableRow>

@@ -60,6 +60,7 @@ import {
 } from "@/features/invoicing/invoicing-table-config";
 import { Separator } from "@/components/ui/separator";
 import { Text } from "@/components/ds/text";
+import { EmptyState } from "@/components/ds";
 import { FormGrid, FormSection } from "@/components/forms";
 import { FormActions } from "@/components/forms/FormActions";
 import { RHFDateField } from "@/components/forms/fields/RHFDateField";
@@ -244,9 +245,10 @@ interface SovTableProps {
 function SovTable({ lineItems, editable, draftMap, onDraftChange }: SovTableProps) {
   if (lineItems.length === 0) {
     return (
-      <div className="text-center py-8">
-        <Text tone="muted">No line items found</Text>
-      </div>
+      <EmptyState
+        title="No line items found"
+        description="No schedule of values line items have been added to this invoice."
+      />
     );
   }
 

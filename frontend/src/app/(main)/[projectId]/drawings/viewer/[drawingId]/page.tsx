@@ -39,6 +39,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageShell } from "@/components/layout";
+import { EmptyState } from "@/components/ds";
 import {
   Tooltip,
   TooltipContent,
@@ -1010,10 +1011,11 @@ export default function DrawingViewerPage() {
                   </div>
                   <div className="flex-1 overflow-y-auto">
                     {filteredDrawings.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center py-8 px-3 text-center">
-                        <FileText className="h-8 w-8 text-muted-foreground/60 mb-2" />
-                        <p className="text-xs text-muted-foreground/80">No drawings match your search</p>
-                      </div>
+                      <EmptyState
+                        icon={<FileText />}
+                        title="No drawings match your search"
+                        description="Try a different search term."
+                      />
                     ) : (
                       filteredDrawings.map((d) => (
                         <Button

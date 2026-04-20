@@ -6,6 +6,7 @@ import { ArrowLeft, ChevronDown, ChevronRight, Edit2, Plus, Trash2 } from "lucid
 import { toast } from "sonner";
 
 import { PageContainer, ProjectPageHeader } from "@/components/layout";
+import { EmptyState } from "@/components/ds";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -537,9 +538,10 @@ export function EstimateDetailClient({
               </div>
               <div className="divide-y divide-border/50">
                 {effectiveDivisionTotals.length === 0 ? (
-                  <p className="px-4 py-3 text-xs text-muted-foreground">
-                    No costs yet.
-                  </p>
+                  <EmptyState
+                    title="No costs yet"
+                    description="Add cost items to this estimate to see the division summary."
+                  />
                 ) : (
                   effectiveDivisionTotals.map((dt) => (
                     <div

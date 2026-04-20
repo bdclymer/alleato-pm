@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { ProjectInfo } from "@/types/project-home";
 import { cn } from "@/lib/utils";
+import { formatDate } from "@/lib/format";
 
 interface ProjectInfoCardProps {
   project: ProjectInfo;
@@ -25,14 +26,6 @@ function formatCurrency(amount: number): string {
   }).format(amount);
 }
 
-function formatDate(date: Date | undefined): string {
-  if (!date) return "-";
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(date);
-}
 
 export function ProjectInfoCard({ project }: ProjectInfoCardProps) {
   const stageColors: Record<string, string> = {

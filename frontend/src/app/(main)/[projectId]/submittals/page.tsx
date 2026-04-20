@@ -13,6 +13,7 @@ import {
   type FilterValue,
   type TableColumn,
 } from "@/components/tables/unified";
+import { EmptyState } from "@/components/ds";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -49,6 +50,8 @@ import {
   renderSubmittalList,
   type SubmittalTableRow,
 } from "@/features/submittals/submittals-table-config";
+import { useConfirm } from "@/hooks/use-confirm";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type SubmittalFilterState = Record<string, FilterValue>;
 
@@ -119,7 +122,11 @@ function PackagePickerDialog({
         />
         <ScrollArea className="mt-2 h-64">
           {loading ? (
-            <p className="py-6 text-center text-sm text-muted-foreground">Loading...</p>
+            <div className="space-y-1.5 px-1 py-3">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} className="h-8 w-full rounded" />
+              ))}
+            </div>
           ) : filtered.length === 0 ? (
             <p className="py-6 text-center text-sm text-muted-foreground">
               {packages.length === 0 ? "No packages found for this project." : "No packages match your search."}
@@ -205,7 +212,11 @@ function SpecPickerDialog({
         />
         <ScrollArea className="mt-2 h-64">
           {loading ? (
-            <p className="py-6 text-center text-sm text-muted-foreground">Loading...</p>
+            <div className="space-y-1.5 px-1 py-3">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} className="h-8 w-full rounded" />
+              ))}
+            </div>
           ) : filtered.length === 0 ? (
             <p className="py-6 text-center text-sm text-muted-foreground">
               {specs.length === 0 ? "No specifications found for this project." : "No sections match your search."}
@@ -324,9 +335,11 @@ function GroupedSubmittalView({
 
   if (groups.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-sm text-muted-foreground">
-        No items found.
-      </div>
+      <EmptyState
+        icon={<FileText />}
+        title="No items found"
+        description="No submittals match the current filters."
+      />
     );
   }
 
@@ -496,6 +509,7 @@ export default function SubmittalsPage(): ReactElement {
 
   useProjectTitle("Submittals");
 
+  const { confirm, ConfirmDialog } = useConfirm();
   const [packagePickerOpen, setPackagePickerOpen] = React.useState(false);
   const [specPickerOpen, setSpecPickerOpen] = React.useState(false);
   const deleteSubmittal = useDeleteSubmittal(projectId);
@@ -771,8 +785,13 @@ export default function SubmittalsPage(): ReactElement {
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         className="text-destructive focus:text-destructive"
-                        onClick={() => {
-                          if (window.confirm(`Delete package "${pkg.name}"? Submittals will be unlinked.`)) {
+                        onClick={async () => {
+                          const ok = await confirm({
+                            description: `Delete package "${pkg.name}"? Submittals will be unlinked.`,
+                            variant: "destructive",
+                            confirmLabel: "Delete",
+                          });
+                          if (ok) {
                             deletePackageMutation.mutate(pkg.id);
                           }
                         }}
@@ -799,6 +818,7 @@ export default function SubmittalsPage(): ReactElement {
     projectId,
     packageIdByName,
     deletePackageMutation,
+    confirm,
   ]);
 
   // -------------------------------------------------------------------------
@@ -938,6 +958,7 @@ export default function SubmittalsPage(): ReactElement {
           isPending={createPackageMutation.isPending || updatePackageMutation.isPending}
         />
       )}
+      {ConfirmDialog}
       <UnifiedTablePage
         header={{
           title: "Submittals",

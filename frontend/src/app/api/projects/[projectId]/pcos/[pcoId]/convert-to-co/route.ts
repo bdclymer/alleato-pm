@@ -21,6 +21,7 @@ import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
+import { logger } from "@/lib/logger";
 
 interface RouteParams {
   params: Promise<{ projectId: string; pcoId: string }>;
@@ -142,7 +143,7 @@ export const POST = withApiGuardrails(
       .single();
 
     if (createError || !primeCO) {
-      console.error("Failed to create Prime CO:", createError);
+      logger.error({ msg: "Failed to create Prime CO:", data: createError });
       return NextResponse.json(
         {
           error: "Failed to create Change Order",
@@ -164,7 +165,7 @@ export const POST = withApiGuardrails(
       .eq("id", numericPcoId);
 
     if (updatePcoError) {
-      console.error("Failed to update PCO with CO link:", updatePcoError);
+      logger.error({ msg: "Failed to update PCO with CO link:", data: updatePcoError });
       // Compensating action: delete the orphaned Prime CO
       await supabase
         .from("prime_contract_change_orders")
@@ -282,9 +283,7 @@ export const POST = withApiGuardrails(
           .is("deleted_at", null);
 
         if (!commitments || commitments.length === 0) {
-          console.warn(
-            `No subcontract found for subcontractor ${subcontractorId} on project ${numericProjectId}, skipping commitment CO`
-          );
+          logger.warn({ msg: `No subcontract found for subcontractor ${subcontractorId} on project ${numericProjectId}, skipping commitment CO` });
           commitmentErrors.push({
             subcontractorId,
             error: "No subcontract found for this subcontractor on the project",
@@ -319,10 +318,7 @@ export const POST = withApiGuardrails(
             .single();
 
           if (commitmentError) {
-            console.error(
-              `Failed to create commitment CO for subcontractor ${subcontractorId} (subcontract ${commitment.id}):`,
-              commitmentError
-            );
+            logger.error({ msg: `Failed to create commitment CO for subcontractor ${subcontractorId} (subcontract ${commitment.id}):`, error: commitmentError.message });
             commitmentErrors.push({
               subcontractorId,
               error: commitmentError.message,

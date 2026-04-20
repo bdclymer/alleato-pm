@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { sendDocumentEmail } from "@/lib/documents/email";
 import { renderPdfFromHtml } from "@/lib/documents/pdf";
 import {
+import { logger } from "@/lib/logger";
   getDocumentBundle,
   renderDocumentEmailHtml,
   renderDocumentEmailText,
@@ -108,7 +109,7 @@ export const POST = withApiGuardrails(
       const pdfBuffer = await renderPdfFromHtml(documentHtml);
       attachments = [{ filename: bundle.filename, content: pdfBuffer.toString("base64") }];
     } catch (pdfError) {
-      console.error("[document-center/email] PDF generation failed, sending without attachment:", pdfError);
+      logger.error({ msg: "[document-center/email] PDF generation failed, sending without attachment:", data: pdfError });
     }
 
     const result = await sendDocumentEmail({

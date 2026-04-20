@@ -3,6 +3,7 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { AI_USER_ID, AI_USER_INFO } from "@/lib/liveblocks/ai-user";
+import { logger } from "@/lib/logger";
 
 /**
  * GET /api/liveblocks/users/search?text=john
@@ -47,7 +48,7 @@ export const GET = withApiGuardrails(
 
     return NextResponse.json(userIds);
   } catch (error) {
-    console.error("[liveblocks/users/search] Error:", error);
+    logger.error({ msg: "[liveblocks/users/search] Error:", error: error instanceof Error ? error.message : String(error) });
     return NextResponse.json([]);
   }
   },

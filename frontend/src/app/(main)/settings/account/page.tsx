@@ -25,6 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { apiFetch } from "@/lib/api-client";
+import { SectionRuleHeading } from "@/components/layout/spacing";
 
 function SectionCard({
   icon: Icon,
@@ -40,7 +41,7 @@ function SectionCard({
       <div>
         <div className="flex items-center gap-2">
           <Icon className="h-4 w-4 text-muted-foreground" />
-          <h3 className="text-sm font-semibold">{title}</h3>
+          <SectionRuleHeading label={title} />
         </div>
       </div>
       <div>{children}</div>

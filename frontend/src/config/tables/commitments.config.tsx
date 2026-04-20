@@ -4,6 +4,7 @@ import { StatusBadge } from "@/components/misc/status-badge";
 import type { SummaryCard } from "@/components/ds/summary-card-grid";
 import type { TabConfig, FilterOption } from "@/components/templates";
 import { formatCurrencyValue } from "@/components/ds/summary-card-grid";
+import { formatCurrency } from "@/lib/format";
 
 /**
  * Commitments Table Configuration
@@ -12,16 +13,8 @@ import { formatCurrencyValue } from "@/components/ds/summary-card-grid";
  * including columns, filters, summary cards, and tabs.
  */
 
-/**
- * Format currency for display
- */
-export function formatCurrency(amount: number | null | undefined): string {
-  if (amount === null || amount === undefined) return "$0.00";
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(amount);
-}
+// formatCurrency re-exported from @/lib/format for callers that import it from here
+export { formatCurrency };
 
 /**
  * Column definitions for the commitments table

@@ -72,6 +72,7 @@
     "@types/pg": "^8.16.0",
     "autoprefixer": "^10.4.23",
     "chokidar": "^5.0.0",
+    "chromatic": "^16.3.0",
     "concurrently": "^9.1.2",
     "dotenv": "^17.2.3",
     "js-yaml": "^4.1.1",

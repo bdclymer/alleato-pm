@@ -291,7 +291,7 @@ export function SubcontractorSovTab({
   const colSpanFull = isLocked ? 5 : 6;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <SectionRuleHeading label="Subcontractor Schedule of Values" className="[&_span]:text-primary" />
 
       {/* Status + meta */}

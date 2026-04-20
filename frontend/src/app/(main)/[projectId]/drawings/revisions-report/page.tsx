@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { Download, FileText } from "lucide-react";
 
 import { PageShell } from "@/components/layout";
+import { formatDate } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -28,14 +29,6 @@ const tabs = (projectId: string) => [
   { label: "Recycle Bin", href: `/${projectId}/drawings/recycle-bin`, isActive: false },
 ];
 
-function formatDate(dateStr: string | null | undefined) {
-  if (!dateStr) return "—";
-  return new Date(dateStr).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
 
 export default function DrawingsRevisionsReportPage() {
   const params = useParams<{ projectId: string }>();

@@ -817,10 +817,12 @@ function TemplatesTab({
         icon={<ShieldCheck className="h-6 w-6" />}
         title={emptyTitle}
         description={emptyDescription}
-        action={{
-          label: `New ${scope === "company" ? "Company" : "Project"} Template`,
-          onClick: onCreateEmpty,
-        }}
+        action={
+          <Button size="sm" variant="outline" onClick={onCreateEmpty}>
+            <Plus className="mr-1.5 h-4 w-4" />
+            New {scope === "company" ? "Company" : "Project"} Template
+          </Button>
+        }
       />
     );
   }

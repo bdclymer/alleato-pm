@@ -14,6 +14,7 @@ import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
+import { logger } from "@/lib/logger";
 
 interface RouteParams {
   params: Promise<{ projectId: string; pcoId: string }>;
@@ -42,7 +43,7 @@ export const GET = withApiGuardrails(
       .order("sort_order", { ascending: true });
 
     if (error) {
-      console.error("Failed to fetch PCO change events:", error);
+      logger.error({ msg: "Failed to fetch PCO change events:", error: error instanceof Error ? error.message : String(error) });
       return apiErrorResponse(error);
     }
 
@@ -180,7 +181,7 @@ export const POST = withApiGuardrails(
       .single();
 
     if (error) {
-      console.error("Failed to group change event:", error);
+      logger.error({ msg: "Failed to group change event:", error: error instanceof Error ? error.message : String(error) });
       return apiErrorResponse(error);
     }
 

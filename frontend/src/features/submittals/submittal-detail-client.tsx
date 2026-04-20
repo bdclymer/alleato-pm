@@ -38,6 +38,7 @@ import {
   type SubmittalDetail,
   type WorkflowTemplateStep,
 } from "@/hooks/use-submittals";
+import { formatDate } from "@/lib/format";
 import { SubmittalDistributeDialog } from "./submittal-distribute-dialog";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -53,12 +54,6 @@ const RESPONSE_STATUSES = [
 const STEP_TYPES = ["Approver", "Submitter", "Reviewer"] as const;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function formatDate(v: string | null | undefined): string {
-  if (!v) return "—";
-  const d = new Date(v);
-  return Number.isNaN(d.getTime()) ? "—" : d.toLocaleDateString();
-}
 
 function resolveUserName(users: AuthUser[], id: string): string {
   const u = users.find((u) => u.id === id);

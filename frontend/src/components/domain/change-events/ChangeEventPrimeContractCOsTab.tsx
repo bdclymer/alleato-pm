@@ -5,6 +5,7 @@ import { FileText, ExternalLink } from "lucide-react";
 import Link from "next/link";
 
 import { EmptyState, StatusBadge } from "@/components/ds";
+import { formatDate } from "@/lib/format";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -45,14 +46,6 @@ function formatCurrency(value: number | null): string {
   }).format(value);
 }
 
-function formatDate(value: string | null): string {
-  if (!value) return "—";
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(new Date(value));
-}
 
 /* ── Component ──────────────────────────────────────────────────────── */
 

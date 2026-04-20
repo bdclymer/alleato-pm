@@ -2,6 +2,7 @@
 
 import { TrendingUp, TrendingDown, ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { formatCurrency } from "@/lib/format";
 
 interface HeroMetricsProps {
   projectId: string;
@@ -27,15 +28,6 @@ export function HeroMetrics({
   const budgetUtilization = totalBudget > 0 ? (spent / totalBudget) * 100 : 0;
   const variance = totalBudget - forecastedCost;
   const variancePercent = totalBudget > 0 ? (variance / totalBudget) * 100 : 0;
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
 
   return (
     <div className="flex flex-col gap-4 md:flex-row md:gap-6 lg:mb-12 mb-8">

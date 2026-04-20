@@ -32,6 +32,7 @@ import {
   InlineTableCell,
 } from "@/components/ds/inline-table";
 import { apiFetch } from "@/lib/api-client";
+import { SectionRuleHeading } from "@/components/layout/spacing";
 import type { BudgetCode, VerticalMarkup } from "@/app/(main)/[projectId]/prime-contracts/[contractId]/types";
 
 const ALLOWED_MARKUP_TYPES = ["insurance", "bond", "fee", "overhead", "custom"] as const;
@@ -504,15 +505,12 @@ export function PrimeContractFinancialMarkupTab({
   );
 
   return (
-    <div className="space-y-8">
-      <section className="space-y-2">
-        <h3 className="text-xl font-semibold">Financial Markup</h3>
-        <p className="text-sm text-muted-foreground">
-          Add percentage-based markups (e.g., tax, overhead, profit, insurance) to contract values.
-        </p>
-      </section>
+    <div className="space-y-4">
+      <SectionRuleHeading label="Financial Markup" />
+      <p className="text-sm text-muted-foreground mb-4">
+        Add percentage-based markups (e.g., tax, overhead, profit, insurance) to contract values.
+      </p>
 
-      <section className="space-y-4">
         <div className="flex flex-col gap-3 md:flex-row md:flex-wrap md:items-center md:justify-between">
           <p className="text-sm text-muted-foreground">
             Use the row menu to edit a markup. Changes are only applied after you click Save Changes.
@@ -634,7 +632,6 @@ export function PrimeContractFinancialMarkupTab({
             </div>
           </>
         )}
-      </section>
     </div>
   );
 }

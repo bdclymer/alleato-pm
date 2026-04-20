@@ -18,6 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { apiFetch } from "@/lib/api-client";
 import { handleFormError } from "@/lib/handle-form-error";
+import { SectionRuleHeading } from "@/components/layout/spacing";
 
 interface PrimeContractSettings {
   project_id: number;
@@ -120,19 +121,15 @@ export function PrimeContractAdvancedSettingsTab({
   return (
     <div className="space-y-8">
       {advancedSettingsLoading ? (
-        <div className="space-y-4">
+        <div className="max-w-xl space-y-4">
           <Skeleton className="h-20 w-full" />
           <Skeleton className="h-20 w-full" />
           <Skeleton className="h-20 w-full" />
         </div>
       ) : (
-        <div className="max-w-xl space-y-0 bg-background">
-          <section>
-            <h3 className="text-xl font-semibold tracking-tight">Advanced Settings</h3>
-          </section>
-
-          <section className="py-6">
-            <h4 className="text-lg font-semibold text-foreground">Financial Markup</h4>
+        <div className="max-w-xl space-y-6">
+          <div>
+            <SectionRuleHeading label="Financial Markup" />
             <div className="mt-4 flex items-center gap-3">
               <Checkbox
                 id="enable-financial-markups"
@@ -141,52 +138,50 @@ export function PrimeContractAdvancedSettingsTab({
                   updateAdvancedSetting("show_markup_on_co_pdf", !!checked)
                 }
               />
-              <Label htmlFor="enable-financial-markups" className="text-[15px] font-medium">
+              <Label htmlFor="enable-financial-markups" className="text-sm font-medium">
                 Enable Financial Markups
               </Label>
             </div>
-          </section>
+          </div>
 
-          <section className="py-4">
-            <h4 className="text-lg font-semibold text-foreground">Owner Invoices</h4>
+          <div>
+            <SectionRuleHeading label="Owner Invoices" />
             <div className="mt-4 space-y-5">
               <div className="flex items-center gap-3">
                 <Checkbox id="enable-owner-invoices" checked disabled />
-                <Label htmlFor="enable-owner-invoices" className="text-[15px] font-medium text-foreground">
+                <Label htmlFor="enable-owner-invoices" className="text-sm font-medium text-foreground">
                   Enable Owner Invoices
                 </Label>
               </div>
               <div className="flex items-center gap-3">
                 <Checkbox id="approve-sub-invoices" checked={false} disabled />
-                <Label htmlFor="approve-sub-invoices" className="text-[15px] text-muted-foreground">
+                <Label htmlFor="approve-sub-invoices" className="text-sm text-muted-foreground">
                   Approve Subcontractor Invoices when Owner Approves Owner Invoice
                 </Label>
               </div>
             </div>
-          </section>
+          </div>
 
-          <section className="py-4">
-            <div className="flex items-center gap-2">
-              <h4 className="text-lg font-semibold text-foreground">Retainage</h4>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-4 w-4 p-0 text-muted-foreground hover:bg-transparent"
-                    aria-label="Retainage settings info"
-                  >
-                    <AlertCircle className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent className="max-w-lg text-left">
-                  Retainage defaults control how work completed and stored materials are
-                  billed on prime contract payment applications.
-                </TooltipContent>
-              </Tooltip>
-            </div>
-            <p className="mt-1 text-[15px] text-muted-foreground">
+          <div>
+            <SectionRuleHeading label="Retainage" />
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="-mt-2 h-4 w-4 p-0 text-muted-foreground hover:bg-transparent"
+                  aria-label="Retainage settings info"
+                >
+                  <AlertCircle className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-lg text-left">
+                Retainage defaults control how work completed and stored materials are
+                billed on prime contract payment applications.
+              </TooltipContent>
+            </Tooltip>
+            <p className="mt-1 text-sm text-muted-foreground">
               Configure the default retainage rules used when payment applications are
               populated.
             </p>
@@ -201,7 +196,7 @@ export function PrimeContractAdvancedSettingsTab({
                 />
                 <Label
                   htmlFor="enable-completed-work-retainage"
-                  className="text-[15px] font-medium text-foreground"
+                  className="text-sm font-medium text-foreground"
                 >
                   Enable Completed Work Retainage
                 </Label>
@@ -216,13 +211,13 @@ export function PrimeContractAdvancedSettingsTab({
                 />
                 <Label
                   htmlFor="enable-stored-materials-retainage"
-                  className="text-[15px] font-medium text-foreground"
+                  className="text-sm font-medium text-foreground"
                 >
                   Enable Stored Materials Retainage
                 </Label>
               </div>
               <div className="max-w-xs space-y-2">
-                <Label htmlFor="default-retainage-percent" className="text-[15px] font-medium text-foreground">
+                <Label htmlFor="default-retainage-percent" className="text-sm font-medium text-foreground">
                   Default Retainage Percent
                 </Label>
                 <div className="flex items-center gap-2">
@@ -245,11 +240,11 @@ export function PrimeContractAdvancedSettingsTab({
                 </div>
               </div>
             </div>
-          </section>
+          </div>
 
-          <section className="py-4">
-            <h4 className="text-lg font-semibold text-foreground">PDF Export</h4>
-            <p className="mt-1 text-[15px] text-muted-foreground">
+          <div>
+            <SectionRuleHeading label="PDF Export" />
+            <p className="mt-1 text-sm text-muted-foreground">
               Choose what items are displayed on exported invoice PDFs.
             </p>
             <div className="mt-4 flex items-center gap-3">
@@ -260,41 +255,39 @@ export function PrimeContractAdvancedSettingsTab({
                   updateAdvancedSetting("show_markup_on_invoice_pdf", !!checked)
                 }
               />
-              <Label htmlFor="show-budget-code" className="text-[15px] font-medium text-foreground">
+              <Label htmlFor="show-budget-code" className="text-sm font-medium text-foreground">
                 Show Budget Code
               </Label>
             </div>
-          </section>
+          </div>
 
-          <section className="py-4">
-            <div className="flex items-center gap-2">
-              <h4 className="text-lg font-semibold text-foreground">Change Orders</h4>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-4 w-4 p-0 text-muted-foreground hover:bg-transparent"
-                    aria-label="Change orders level of detail info"
-                  >
-                    <AlertCircle className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent className="max-w-lg text-left">
-                  The level of detail that is selected here determines how change orders will
-                  be displayed on the detail page of the Invoice when being viewed or printed
-                  from Procore. The entry and editing of this information will always occur at
-                  the line item level of detail.
-                </TooltipContent>
-              </Tooltip>
-            </div>
+          <div>
+            <SectionRuleHeading label="Change Orders" />
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="-mt-2 h-4 w-4 p-0 text-muted-foreground hover:bg-transparent"
+                  aria-label="Change orders level of detail info"
+                >
+                  <AlertCircle className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-lg text-left">
+                The level of detail that is selected here determines how change orders will
+                be displayed on the detail page of the Invoice when being viewed or printed
+                from Procore. The entry and editing of this information will always occur at
+                the line item level of detail.
+              </TooltipContent>
+            </Tooltip>
             <div className="mt-3 max-w-md space-y-2">
               <Label htmlFor="co-tier-count" className="sr-only">Change order workflow</Label>
               {coTierLocked ? (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <div className="flex h-11 w-full cursor-not-allowed items-center rounded-md border border-input bg-muted px-3 text-[16px] text-muted-foreground">
+                    <div className="flex h-11 w-full cursor-not-allowed items-center rounded-md border border-input bg-muted px-3 text-sm text-muted-foreground">
                       {advancedSettings?.co_tier_count === 2
                         ? "Line Items in each Potential Change Order (PCO)"
                         : "Prime Contract Change Order"}
@@ -324,23 +317,23 @@ export function PrimeContractAdvancedSettingsTab({
                 </Select>
               )}
             </div>
-          </section>
+          </div>
 
-          <section className="py-4">
-            <h4 className="text-lg font-semibold text-foreground">Payments Received</h4>
+          <div>
+            <SectionRuleHeading label="Payments Received" />
             <div className="mt-4 flex items-center gap-3">
               <Checkbox id="enable-payments" checked disabled />
-              <Label htmlFor="enable-payments" className="text-[15px] font-medium text-foreground">
+              <Label htmlFor="enable-payments" className="text-sm font-medium text-foreground">
                 Enable Payments
               </Label>
             </div>
-          </section>
+          </div>
 
-          <section className="flex py-6">
+          <div className="flex">
             <Button onClick={saveAdvancedSettings} disabled={advancedSettingsSaving || !advancedSettings}>
               {advancedSettingsSaving ? "Saving..." : "Save Advanced Settings"}
             </Button>
-          </section>
+          </div>
         </div>
       )}
     </div>

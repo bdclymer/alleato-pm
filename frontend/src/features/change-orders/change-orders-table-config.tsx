@@ -1,6 +1,8 @@
 import type { ReactElement } from "react";
 import { Eye, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 
+import { formatDate } from "@/lib/format";
+
 import type {
   ColumnConfig,
   FilterConfig,
@@ -71,13 +73,6 @@ function formatCurrency(value: number | null | undefined): string {
     style: "currency",
     currency: "USD",
   }).format(value);
-}
-
-function formatDate(value: string | null | undefined): string {
-  if (!value) return "-";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return "-";
-  return parsed.toLocaleDateString();
 }
 
 function statusLabel(status: string | null | undefined): string {

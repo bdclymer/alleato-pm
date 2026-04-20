@@ -6,8 +6,6 @@ import { useForm, type SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { z } from "zod";
-import { Loader2 } from "lucide-react";
-
 import { PageShell, SectionRuleHeading } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -30,6 +28,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Text } from "@/components/ds/text";
 import { apiFetch } from "@/lib/api-client";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -247,9 +246,19 @@ export default function NewCommitmentPcoPage() {
       }
     >
       {isLoading ? (
-        <div className="flex items-center justify-center py-12 gap-2 text-muted-foreground">
-          <Loader2 className="h-5 w-5 animate-spin" />
-          <Text tone="muted">Loading…</Text>
+        <div className="space-y-6 py-4">
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-28" />
+            <Skeleton className="h-9 w-full" />
+          </div>
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-20" />
+            <Skeleton className="h-9 w-full" />
+          </div>
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-20 w-full" />
+          </div>
         </div>
       ) : (
         <Form {...form}>
@@ -258,7 +267,7 @@ export default function NewCommitmentPcoPage() {
             className="space-y-8"
           >
             {/* Contract Information (read-only) */}
-            <section className="space-y-6">
+            <section className="space-y-4">
               <SectionRuleHeading
                 label="Contract Information"
                 className="[&_span]:text-primary"
@@ -288,7 +297,7 @@ export default function NewCommitmentPcoPage() {
             </section>
 
             {/* General Information */}
-            <section className="space-y-6">
+            <section className="space-y-4">
               <SectionRuleHeading
                 label="General Information"
                 className="[&_span]:text-primary"
@@ -475,7 +484,7 @@ export default function NewCommitmentPcoPage() {
             </section>
 
             {/* Dates & Details */}
-            <section className="space-y-6">
+            <section className="space-y-4">
               <SectionRuleHeading
                 label="Dates & Details"
                 className="[&_span]:text-primary"

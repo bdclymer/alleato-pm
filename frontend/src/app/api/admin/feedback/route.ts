@@ -19,6 +19,7 @@ import { ingestAdminFeedbackLearning } from "@/lib/ai/services/agent-learning-se
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import type { Database } from "@/types/database.types";
+import { logger } from "@/lib/logger";
 
 const feedbackPayloadSchema = z.object({
   title: z.string().trim().min(1).max(200).optional(),
@@ -355,7 +356,7 @@ export const POST = withApiGuardrails("/api/admin/feedback#POST", async ({ reque
       status: "candidate",
     });
   } catch (learningError) {
-    console.error("[AdminFeedback] Candidate learning ingestion failed", learningError);
+    logger.error({ msg: "[AdminFeedback] Candidate learning ingestion failed", data: learningError });
   }
 
   let githubIssue: { number: number; url: string; state: string } | null = null;
@@ -596,7 +597,7 @@ export const PATCH = withApiGuardrails("/api/admin/feedback#PATCH", async ({ req
         });
       }
     } catch (learningError) {
-      console.error("[AdminFeedback] Resolved learning ingestion failed", learningError);
+      logger.error({ msg: "[AdminFeedback] Resolved learning ingestion failed", data: learningError });
     }
   }
 

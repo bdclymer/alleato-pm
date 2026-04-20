@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { format } from "date-fns";
-import { Clock, Users } from "lucide-react";
+import { Clock, Users, CalendarX } from "lucide-react";
+import { EmptyState } from "@/components/ds";
 import type { Database } from "@/types/database.types";
 
 type Meeting = Database["public"]["Tables"]["document_metadata"]["Row"];
@@ -144,7 +145,11 @@ export function MeetingsSection({
           })}
         </div>
       ) : (
-        <p className="text-sm text-muted-foreground">No meetings yet</p>
+        <EmptyState
+          icon={<CalendarX />}
+          title="No meetings yet"
+          description="Meetings will appear here once scheduled for this project."
+        />
       )}
 
     </div>

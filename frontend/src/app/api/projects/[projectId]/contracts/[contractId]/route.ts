@@ -7,6 +7,7 @@ import { NextResponse } from "next/server";
 import { updateContractSchema } from "../validation";
 import { ZodError } from "zod";
 import { requirePermission } from "@/lib/permissions-guard";
+import { logger } from "@/lib/logger";
 
 interface RouteParams {
   params: Promise<{ projectId: string; contractId: string }>;
@@ -244,7 +245,7 @@ export const DELETE = withApiGuardrails(
     }
 
     if (error) {
-      console.error("[DELETE /contracts/:id] Supabase error:", error);
+      logger.error({ msg: "[DELETE /contracts/:id] Supabase error:", error: error instanceof Error ? error.message : String(error) });
       const classified = classifyError(error);
       return NextResponse.json(
         { error: classified.message },

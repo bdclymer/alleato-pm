@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { apiFetch } from "@/lib/api-client";
+import { EmptyState } from "@/components/ds";
 import { createClient } from "@/lib/supabase/client";
 import { ToolReferencePanel } from "@/components/domain/testing/ToolReferencePanel";
 import { FileUploadField } from "@/components/forms";
@@ -39,6 +40,7 @@ import {
   Plus,
   Trash2,
   ChevronRight,
+  FlaskConical,
 } from "lucide-react";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -1089,7 +1091,11 @@ export default function TestingPage() {
               })()}
 
               {suites.length === 0 && (
-                <p className="text-muted-foreground text-sm text-center py-12">No test scenarios available yet.</p>
+                <EmptyState
+                  icon={<FlaskConical />}
+                  title="No test scenarios available yet"
+                  description="Test scenarios will appear here once configured."
+                />
               )}
               {order.filter((cat) => grouped[cat]?.length).map((cat) => (
                 <div key={cat} className="space-y-3">

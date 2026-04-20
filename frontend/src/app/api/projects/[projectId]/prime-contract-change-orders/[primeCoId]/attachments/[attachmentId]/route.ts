@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
+import { logger } from "@/lib/logger";
 
 interface RouteParams {
   params: Promise<{ projectId: string; primeCoId: string; attachmentId: string }>;
@@ -65,7 +66,7 @@ export const DELETE = withApiGuardrails(
       .remove([attachment.file_path]);
 
     if (storageError) {
-      console.error("Storage cleanup failed for PCCO attachment:", storageError.message);
+      logger.error({ msg: "Storage cleanup failed for PCCO attachment:", data: storageError.message });
     }
 
     return NextResponse.json({ message: "Attachment deleted successfully" });

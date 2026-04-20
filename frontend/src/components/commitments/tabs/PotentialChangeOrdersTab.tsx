@@ -391,12 +391,12 @@ export const PotentialChangeOrdersTab = memo(function PotentialChangeOrdersTab({
           title="No potential change orders yet"
           description="Add a PCO to track potential scope changes before they become commitment change orders."
           action={
-            !isReadOnly
-              ? {
-                  label: 'Add PCO',
-                  onClick: () => router.push(`/${projectId}/commitments/${commitmentId}/pcos/new`),
-                }
-              : undefined
+            !isReadOnly ? (
+              <Button size="sm" variant="outline" onClick={() => router.push(`/${projectId}/commitments/${commitmentId}/pcos/new`)}>
+                <Plus />
+                Add PCO
+              </Button>
+            ) : undefined
           }
         />
       ) : (

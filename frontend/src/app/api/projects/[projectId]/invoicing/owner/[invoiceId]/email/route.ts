@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { renderInvoicePdfBuffer } from "@/lib/invoice-pdf";
 import { fetchInvoicePdfData } from "../pdf/route";
 import { requirePermission } from "@/lib/permissions-guard";
+import { logger } from "@/lib/logger";
 
 // Node runtime required by @react-pdf/renderer
 export const runtime = "nodejs";
@@ -139,7 +140,7 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
     });
 
     if (sendError) {
-      console.error("[invoice email] Resend error:", sendError);
+      logger.error({ msg: "[invoice email] Resend error:", data: sendError });
       throw new GuardrailError({
         code: "INTERNAL_ERROR",
         where: "projects/[projectId]/invoicing/owner/[invoiceId]/email#POST",

@@ -3,6 +3,7 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { PageShell } from "@/components/layout";
+import { EmptyState } from "@/components/ds";
 import {
   Sparkles,
   Zap,
@@ -604,10 +605,11 @@ export default function UpdatesPage() {
 
       {/* Release timeline */}
       {filteredReleases.length === 0 ? (
-        <div className="rounded-lg border border-border bg-card px-5 py-12 text-center">
-          <Sparkles className="h-8 w-8 text-muted-foreground/30 mx-auto mb-3" />
-          <p className="text-sm text-muted-foreground">No updates match your filters.</p>
-        </div>
+        <EmptyState
+          icon={<Sparkles />}
+          title="No updates match your filters"
+          description="Try adjusting the filters to find what you're looking for."
+        />
       ) : (
         <div className="space-y-6">
           {filteredReleases.map(({ release, entries }) => (

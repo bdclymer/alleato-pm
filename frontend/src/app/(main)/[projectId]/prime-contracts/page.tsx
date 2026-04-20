@@ -41,6 +41,7 @@ import { type PrimeContract } from "@/lib/validation/prime-contracts";
 import { fetchWithTransientRouteRetry } from "@/lib/fetch-with-transient-route-retry";
 import { apiFetch, summarizeBulkResults } from "@/lib/api-client";
 import { usePrimeContracts } from "@/hooks/use-prime-contracts";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const EMPTY_FILTERS: Record<string, FilterValue> = {
   status: undefined,
@@ -589,7 +590,16 @@ export default function ProjectContractsPage(): ReactElement {
               <TableRow className="bg-muted/30 hover:bg-muted/30">
                 <TableCell colSpan={colSpan} className="px-8 py-3">
                   {!cached || cached.loading ? (
-                    <p className="text-sm text-muted-foreground">Loading...</p>
+                    <div className="space-y-1.5">
+                      {Array.from({ length: 3 }).map((_, i) => (
+                        <div key={i} className="flex items-center gap-4">
+                          <Skeleton className="h-3.5 w-8" />
+                          <Skeleton className="h-3.5 w-40" />
+                          <Skeleton className="h-3.5 w-16" />
+                          <Skeleton className="h-3.5 w-20 ml-auto" />
+                        </div>
+                      ))}
+                    </div>
                   ) : cached.data.length === 0 && cached.pcos.length === 0 ? (
                     <p className="text-sm text-muted-foreground">No change orders or potential change orders</p>
                   ) : (

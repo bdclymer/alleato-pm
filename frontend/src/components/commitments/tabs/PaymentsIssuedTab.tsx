@@ -10,6 +10,7 @@ import { EmptyState } from "@/components/ds/empty-state";
 import { Text } from "@/components/ds/text";
 import { InvoiceStatusBadge } from "@/components/invoicing/InvoiceStatusBadge";
 import { formatCurrency } from "@/config/tables";
+import { formatDate } from "@/lib/format";
 
 interface PaymentRow {
   id: number;
@@ -28,13 +29,6 @@ interface PaymentsIssuedTabProps {
   commitmentId: string;
   projectId: string | number;
   commitmentType: "subcontract" | "purchase_order";
-}
-
-function formatDate(value: string | null): string {
-  if (!value) return "—";
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
 }
 
 const PAID_STATUSES = new Set(["paid", "approved", "approved_as_noted"]);

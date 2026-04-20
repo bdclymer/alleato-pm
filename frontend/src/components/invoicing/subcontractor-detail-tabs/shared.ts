@@ -46,12 +46,7 @@ export function formatCurrency(value?: number | null) {
   return currencyFmt.format(value ?? 0);
 }
 
-export function formatDate(value?: string | null) {
-  if (!value) return "—";
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString();
-}
+export { formatDate } from "@/lib/format";
 
 export function formatDateTime(value?: string | null) {
   if (!value) return "—";

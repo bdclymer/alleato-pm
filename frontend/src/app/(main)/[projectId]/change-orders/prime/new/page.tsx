@@ -185,7 +185,7 @@ export default function NewPrimeContractCOPage() {
           className="space-y-8"
         >
           {/* General Information */}
-          <section className="space-y-6">
+          <section className="space-y-4">
             <SectionRuleHeading
               label="General Information"
               className="[&_span]:text-primary"
@@ -361,7 +361,7 @@ export default function NewPrimeContractCOPage() {
           </section>
 
           {/* Financial & Schedule */}
-          <section className="space-y-6">
+          <section className="space-y-4">
             <SectionRuleHeading
               label="Financial & Schedule"
               className="[&_span]:text-primary"
@@ -472,7 +472,7 @@ export default function NewPrimeContractCOPage() {
           </section>
 
           {/* Options */}
-          <section className="space-y-6">
+          <section className="space-y-4">
             <SectionRuleHeading
               label="Options"
               className="[&_span]:text-primary"

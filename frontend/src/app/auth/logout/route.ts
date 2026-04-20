@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { logger } from "@/lib/logger";
 
 async function handleLogout() {
   const supabase = await createClient();
@@ -14,7 +15,7 @@ export async function POST() {
   try {
     return await handleLogout();
   } catch (error) {
-    console.error("[Logout] Error:", error);
+    logger.error({ msg: "[Logout] Error", error: error instanceof Error ? error.message : String(error) });
     return NextResponse.json({ error: "Failed to logout" }, { status: 500 });
   }
 }
@@ -32,7 +33,7 @@ export async function GET() {
       ),
     );
   } catch (error) {
-    console.error("[Logout] Error:", error);
+    logger.error({ msg: "[Logout] Error", error: error instanceof Error ? error.message : String(error) });
     return NextResponse.json({ error: "Failed to logout" }, { status: 500 });
   }
 }

@@ -9,6 +9,7 @@ import { notFound } from "next/navigation";
 import { ChevronRight, FileText, FolderOpen, Home } from "lucide-react";
 
 import { MarkdownRenderer } from "@/components/docs/markdown-renderer";
+import { EmptyState } from "@/components/ds";
 
 const DOCS_ROOT = path.join(process.cwd(), "../docs");
 
@@ -189,7 +190,11 @@ export default async function DocPage({ params }: DocPageProps) {
         )}
 
         {directories.length === 0 && files.length === 0 && (
-          <p className="py-12 text-center text-sm text-muted-foreground">No documentation files found.</p>
+          <EmptyState
+            icon={<FolderOpen />}
+            title="No documentation files found"
+            description="Add markdown files to the docs directory to see them here."
+          />
         )}
       </div>
     );

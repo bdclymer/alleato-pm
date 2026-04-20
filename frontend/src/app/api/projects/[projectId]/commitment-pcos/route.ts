@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { z, ZodError } from "zod";
 import { apiErrorResponse } from "@/lib/api-error";
+import { logger } from "@/lib/logger";
 
 interface RouteParams {
   params: Promise<{ projectId: string }>;
@@ -149,7 +150,7 @@ export const POST = withApiGuardrails(
     );
 
     if (rpcError) {
-      console.error("[commitment-pcos POST] RPC error:", rpcError);
+      logger.error({ msg: "[commitment-pcos POST] RPC error", error: rpcError.message });
       return NextResponse.json(
         { error: "Failed to generate PCO number", details: rpcError.message },
         { status: 500 },
@@ -176,7 +177,7 @@ export const POST = withApiGuardrails(
       .single();
 
     if (error) {
-      console.error("[commitment-pcos POST] Insert error:", error);
+      logger.error({ msg: "[commitment-pcos POST] Insert error", error: error.message });
       return apiErrorResponse(error);
     }
 
