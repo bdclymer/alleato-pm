@@ -9,7 +9,6 @@ export interface ToolPrpStatus {
   hasPrp: boolean;
   hasAudit: boolean;
   hasTasks: boolean;
-  tasksComplete: boolean | null; // null = no TASKS.md
   hasTestScenarios: boolean;
   hasValidationReport: boolean;
   validationPassed: boolean | null; // null = no report
@@ -72,13 +71,6 @@ function countRoutes(apiPath: string): number {
   return countInDir(base);
 }
 
-function checkTasksComplete(tasksPath: string): boolean | null {
-  if (!fs.existsSync(tasksPath)) return null;
-  const content = fs.readFileSync(tasksPath, "utf-8");
-  const unchecked = (content.match(/^- \[ \]/gm) || []).length;
-  return unchecked === 0;
-}
-
 function checkValidationPassed(reportPath: string): boolean | null {
   if (!fs.existsSync(reportPath)) return null;
   const content = fs.readFileSync(reportPath, "utf-8");
@@ -121,7 +113,6 @@ export async function GET() {
       hasPrp,
       hasAudit: dirExists && fs.existsSync(auditPath),
       hasTasks: dirExists && fs.existsSync(tasksPath),
-      tasksComplete: dirExists ? checkTasksComplete(tasksPath) : null,
       hasTestScenarios: dirExists && fs.existsSync(scenariosPath),
       hasValidationReport: dirExists && fs.existsSync(reportPath),
       validationPassed: dirExists ? checkValidationPassed(reportPath) : null,

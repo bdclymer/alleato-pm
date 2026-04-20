@@ -38,7 +38,6 @@ const COLUMNS = [
   { key: "hasPrp",           label: "PRP",            tip: "prp-create — feature spec written" },
   { key: "hasAudit",         label: "Audit",          tip: "prp-audit — gap analysis + AUDIT.md" },
   { key: "hasTasks",         label: "Tasks",          tip: "TASKS.md generated from audit" },
-  { key: "tasksComplete",    label: "Impl",           tip: "All TASKS.md items checked off" },
   { key: "hasTestScenarios", label: "Scenarios",      tip: "prp-test-scenarios — TEST-SCENARIOS.md" },
   { key: "hasValidationReport", label: "Validated",   tip: "prp-validate — VALIDATION-REPORT.md exists" },
   { key: "validationPassed", label: "Pass",           tip: "Validation result: PASS ✅" },
@@ -94,9 +93,6 @@ export default function PrpStatusPage() {
                     </TableCell>
                     <TableCell className="text-center">
                       <Check value={row.hasTasks} />
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Check value={row.tasksComplete} />
                     </TableCell>
                     <TableCell className="text-center">
                       <Check value={row.hasTestScenarios} />
