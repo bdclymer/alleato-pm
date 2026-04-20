@@ -76,6 +76,7 @@ export function ChangeHistoryTab({
   return (
     <section className="space-y-4">
       <div>
+        {/* eslint-disable-next-line design-system/no-raw-heading */}
         <h2 className="text-sm font-semibold text-foreground">
           Change History
         </h2>

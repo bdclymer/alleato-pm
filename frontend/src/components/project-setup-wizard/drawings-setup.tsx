@@ -241,6 +241,7 @@ export function DrawingsSetup({
 
         {uploadingFiles.length > 0 && (
           <div className="space-y-2">
+            {/* eslint-disable-next-line design-system/no-raw-heading */}
             <h4 className="font-medium">Uploading Files</h4>
             {uploadingFiles.map((file) => (
               <div
@@ -288,6 +289,7 @@ export function DrawingsSetup({
 
         {uploadedDocuments.length > 0 && (
           <div className="space-y-2">
+            {/* eslint-disable-next-line design-system/no-raw-heading */}
             <h4 className="font-medium">Uploaded Drawings</h4>
             <Table>
               <TableHeader>

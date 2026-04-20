@@ -19,6 +19,7 @@ export function SidebarProjectAddress({
 }: SidebarProjectAddressProps) {
   return (
     <div className="bg-background rounded-md border border-border p-4">
+      {/* eslint-disable-next-line design-system/no-raw-heading */}
       <h3 className="text-sm font-semibold text-foreground mb-2">
         Project Address
       </h3>

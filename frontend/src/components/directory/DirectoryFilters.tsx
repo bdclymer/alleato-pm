@@ -23,6 +23,7 @@ import { X } from "lucide-react";
 import { useSupabase } from "@/hooks/useSupabase";
 import type { DirectorySavedFilter } from "@/services/directoryPreferencesService";
 import type { Database } from "@/types/database.types";
+import { SectionRuleHeading } from "@/components/layout/spacing";
 
 type Tables = Database["public"]["Tables"];
 type Company = Tables["companies"]["Row"];
@@ -350,7 +351,7 @@ export function DirectoryFilters({
 
         {/* View Options */}
         <div className="space-y-4">
-          <h4 className="text-sm font-medium">View Options</h4>
+          <SectionRuleHeading label="View Options" />
 
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
@@ -373,7 +374,7 @@ export function DirectoryFilters({
 
         {/* Sort Options */}
         <div className="space-y-4">
-          <h4 className="text-sm font-medium">Sort By</h4>
+          <SectionRuleHeading label="Sort By" />
 
           <div className="space-y-2">
             <Select

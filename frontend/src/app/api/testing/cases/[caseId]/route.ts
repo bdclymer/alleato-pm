@@ -17,7 +17,6 @@ const patchSchema = z.object({
   test_name: z.string().trim().min(1).max(300).optional(),
   priority: z.enum(["HIGH", "MEDIUM", "LOW"]).optional(),
   test_type: z.string().trim().min(1).max(50).optional(),
-  scenario_depth: z.enum(["broad", "detailed"]).optional(),
   gap_type: z.string().trim().min(1).max(100).optional(),
   suite_id: z.string().trim().min(1).max(100).optional(),
   tool: z.number().int().nullable().optional(),
@@ -69,7 +68,7 @@ export const PATCH = withApiGuardrails<{ caseId: string }>(
     const supabase = await createClient();
     const { data: existing, error: existingError } = await supabase
       .from("test_cases")
-      .select("test_type, scenario_depth, steps, setup_steps, expected_result, start_url")
+      .select("test_type, steps, setup_steps, expected_result, start_url")
       .eq("id", caseId)
       .single();
 
@@ -82,7 +81,6 @@ export const PATCH = withApiGuardrails<{ caseId: string }>(
 
     const nextValues = {
       test_type: payload.test_type ?? existing.test_type,
-      scenario_depth: payload.scenario_depth ?? existing.scenario_depth,
       steps: payload.steps ?? existing.steps,
       setup_steps: payload.setup_steps ?? existing.setup_steps,
       expected_result: payload.expected_result ?? existing.expected_result,
@@ -111,12 +109,6 @@ export const PATCH = withApiGuardrails<{ caseId: string }>(
       if (!relativePathPattern.test(nextValues.start_url.trim())) {
         return NextResponse.json(
           { error: "Scenario start URL must be a relative path beginning with '/'.", code: "VALIDATION_FAILED", where: "testing/cases PATCH" },
-          { status: 400 }
-        );
-      }
-      if (nextValues.scenario_depth === "detailed" && !nextValues.setup_steps?.trim()) {
-        return NextResponse.json(
-          { error: "Detailed scenarios require setup steps.", code: "VALIDATION_FAILED", where: "testing/cases PATCH" },
           { status: 400 }
         );
       }

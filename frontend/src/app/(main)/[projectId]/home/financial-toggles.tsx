@@ -69,6 +69,7 @@ function ToggleSection({
       >
         <div className="flex items-center gap-4">
           {icon}
+          {/* eslint-disable-next-line design-system/no-raw-heading */}
           <h3 className="text-lg font-semibold">{title}</h3>
         </div>
         {isOpen ? (

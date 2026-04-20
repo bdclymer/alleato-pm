@@ -155,6 +155,7 @@ export function renderTransmittalCard(
           <p className="text-xs uppercase text-muted-foreground">
             {item.number}
           </p>
+          {/* eslint-disable-next-line design-system/no-raw-heading */}
           <h3 className="font-medium">{item.subject || "Untitled"}</h3>
         </div>
         <Badge variant={statusVariantMap[item.status] ?? "outline"}>

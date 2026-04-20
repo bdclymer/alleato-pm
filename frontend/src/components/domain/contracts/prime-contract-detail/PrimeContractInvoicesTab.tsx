@@ -7,14 +7,8 @@ import type { ColumnDef } from "@tanstack/react-table";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { StatusBadge } from "@/components/ds";
+import { EmptyState, StatusBadge } from "@/components/ds";
 import { SectionRuleHeading } from "@/components/layout/spacing";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { DataTable, type DataTableFooterCell } from "@/components/tables/DataTable";
 import type { PaymentApplication, Contract } from "@/app/(main)/[projectId]/prime-contracts/[contractId]/types";
 import { formatDate } from "@/lib/format";
@@ -161,31 +155,18 @@ export function PrimeContractInvoicesTab({
   );
 
   const createButton = (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span>
-            <Button
-              size="sm"
-              disabled={contract.status !== "approved"}
-              onClick={() =>
-                router.push(
-                  `/${projectId}/prime-contracts/${contractId}/invoices/new`,
-                )
-              }
-            >
-              <Plus />
-              Create Invoice
-            </Button>
-          </span>
-        </TooltipTrigger>
-        {contract.status !== "approved" && (
-          <TooltipContent>
-            <p>Contract must be in &quot;Approved&quot; status before invoices can be created.</p>
-          </TooltipContent>
-        )}
-      </Tooltip>
-    </TooltipProvider>
+    <Button
+      size="sm"
+      disabled={contract.status !== "approved"}
+      onClick={() =>
+        router.push(
+          `/${projectId}/prime-contracts/${contractId}/invoices/new`,
+        )
+      }
+    >
+      <Plus />
+      Create Invoice
+    </Button>
   );
 
   return (
@@ -198,14 +179,16 @@ export function PrimeContractInvoicesTab({
           />
           {paymentApplications.length > 0 && createButton}
         </div>
-        <p className="text-sm text-muted-foreground -mt-3 mb-4">
-          Total invoiced:{" "}
-          {formatCurrency(
-            paymentApplications
-              .filter((a) => a.status === "approved")
-              .reduce((sum, a) => sum + a.amount, 0),
-          )}
-        </p>
+        {paymentApplications.length > 0 ? (
+          <p className="text-sm text-muted-foreground -mt-3 mb-4">
+            Total invoiced:{" "}
+            {formatCurrency(
+              paymentApplications
+                .filter((a) => a.status === "approved")
+                .reduce((sum, a) => sum + a.amount, 0),
+            )}
+          </p>
+        ) : null}
 
         {paymentsLoading ? (
           <div className="space-y-2">
@@ -214,16 +197,12 @@ export function PrimeContractInvoicesTab({
             <Skeleton className="h-10 w-full" />
           </div>
         ) : paymentApplications.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-muted-foreground gap-4">
-            <FileText className="h-12 w-12 opacity-50" />
-            <div className="text-center">
-              <p>No invoices yet</p>
-              <p className="text-xs mt-1">
-                Create an invoice to track payment applications
-              </p>
-            </div>
-            {createButton}
-          </div>
+          <EmptyState
+            icon={<FileText />}
+            title="No invoices yet"
+            description="Create an invoice to track payment applications"
+            action={createButton}
+          />
         ) : (
           <DataTable
             columns={columns}

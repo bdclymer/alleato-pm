@@ -62,6 +62,7 @@ export default function ProfilePage() {
               </Avatar>
               <div className="space-y-2 min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
+                  {/* eslint-disable-next-line design-system/no-raw-heading */}
                   <h2 className="text-lg font-semibold text-foreground break-words">
                     {profile?.fullName || (isLoading ? "Loading..." : "Unknown user")}
                   </h2>

@@ -36,6 +36,7 @@ import {
   useUpdateTransmittal,
   type TransmittalSummary,
 } from "@/hooks/use-transmittals";
+import { SectionRuleHeading } from "@/components/layout/spacing";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -173,9 +174,7 @@ export function TransmittalFormDialog({
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             {/* ── General Information ── */}
             <section className="space-y-4">
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                General Information
-              </h3>
+              <SectionRuleHeading label="General Information" />
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <FormField
@@ -240,9 +239,7 @@ export function TransmittalFormDialog({
 
             {/* ── Sender & Recipient ── */}
             <section className="space-y-4">
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                Sender &amp; Recipient
-              </h3>
+              <SectionRuleHeading label="Sender &amp; Recipient" />
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <FormField
@@ -321,9 +318,7 @@ export function TransmittalFormDialog({
 
             {/* ── Delivery & Dates ── */}
             <section className="space-y-4">
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                Delivery &amp; Dates
-              </h3>
+              <SectionRuleHeading label="Delivery &amp; Dates" />
 
               <FormField
                 control={form.control}
@@ -393,9 +388,7 @@ export function TransmittalFormDialog({
 
             {/* ── Content ── */}
             <section className="space-y-4">
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                Content
-              </h3>
+              <SectionRuleHeading label="Content" />
 
               <FormField
                 control={form.control}

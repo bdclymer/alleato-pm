@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Inter } from "next/font/google";
 import { Suspense } from "react";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { QueryProvider } from "@/components/providers/query-provider";
@@ -16,6 +17,12 @@ import { AdminFeedbackWidget } from "@/components/admin-feedback/AdminFeedbackWi
 import { ChunkLoadErrorRecovery } from "@/components/providers/chunk-error-recovery";
 import "./globals.css";
 import "swagger-ui-dist/swagger-ui.css";
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
 
 const defaultUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
@@ -46,7 +53,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className="font-sans"
+      className={`${inter.variable} font-sans`}
       data-scroll-behavior="smooth"
     >
       <body

@@ -36,6 +36,99 @@
   - `frontend/tests/_archive/2026-04-20/budget/top-level/*`
   - `frontend/tests/_archive/2026-04-20/budget/e2e-budget/*`
   - `frontend/tests/_archive/2026-04-20/budget/e2e-root/*`
+- `directory` pilot completed on 2026-04-20.
+- Canonical suites created:
+  - `frontend/tests/e2e/directory/directory.smoke.spec.ts`
+  - `frontend/tests/e2e/directory/directory.regression.spec.ts` (moved from `directory-users.spec.ts`)
+  - `frontend/tests/e2e/directory/directory.api.spec.ts` (copied from top-level `directory-api.spec.ts`)
+- Archived directory fragmented suites:
+  - `frontend/tests/_archive/2026-04-20/directory/top-level/*`
+  - `frontend/tests/_archive/2026-04-20/directory/e2e/*`
+- `prime-contracts` pilot completed on 2026-04-20.
+- Canonical suites created:
+  - `frontend/tests/e2e/prime-contracts/prime-contracts.smoke.spec.ts` (copied from `contracts/contract-smoke.spec.ts`)
+  - `frontend/tests/e2e/prime-contracts/prime-contracts.regression.spec.ts` (copied from `contracts/contracts-comprehensive.spec.ts`)
+  - `frontend/tests/e2e/prime-contracts/prime-contracts.api.spec.ts` (copied from `prime-contracts/api-crud.spec.ts`)
+- Archived prime-contracts fragmented suites:
+  - `frontend/tests/_archive/2026-04-20/prime-contracts/contracts/*`
+  - `frontend/tests/_archive/2026-04-20/prime-contracts/prime-contracts/*`
+  - `frontend/tests/_archive/2026-04-20/prime-contracts/e2e-root/*`
+- `invoices` pilot completed on 2026-04-20.
+- Canonical suites created:
+  - `frontend/tests/e2e/invoices/invoices.smoke.spec.ts` (copied from `invoices-ui.spec.ts`)
+  - `frontend/tests/e2e/invoices/invoices.regression.spec.ts` (copied from `invoices-comprehensive.spec.ts`)
+  - `frontend/tests/e2e/invoices/invoices.api.spec.ts` (new consolidated API checks)
+- Archived invoices fragmented suites:
+  - `frontend/tests/_archive/2026-04-20/invoices/e2e-invoices/*`
+  - `frontend/tests/_archive/2026-04-20/invoices/e2e-root/*`
+  - `frontend/tests/_archive/2026-04-20/invoices/e2e-financial/*`
+- `schedule` pilot completed on 2026-04-20.
+- Canonical suites created:
+  - `frontend/tests/e2e/schedule/schedule.smoke.spec.ts` (new)
+  - `frontend/tests/e2e/schedule/schedule.regression.spec.ts` (copied from `schedule-crud.spec.ts`)
+- Archived schedule fragmented suites:
+  - `frontend/tests/_archive/2026-04-20/schedule/e2e-schedule/*`
+- `documents` pilot completed on 2026-04-20.
+- Canonical suites created:
+  - `frontend/tests/e2e/documents/documents.smoke.spec.ts` (copied from `document-pipeline.spec.ts`)
+  - `frontend/tests/e2e/documents/documents.regression.spec.ts` (copied from `document-pipeline-ui-test.spec.ts`)
+  - `frontend/tests/e2e/documents/documents.api.spec.ts` (new consolidated API checks)
+- Archived documents fragmented suites:
+  - `frontend/tests/_archive/2026-04-20/documents/e2e-documents/*`
+- `meetings` pilot completed on 2026-04-20.
+- Canonical suites created:
+  - `frontend/tests/e2e/meetings/meetings.smoke.spec.ts` (new)
+  - `frontend/tests/e2e/meetings/meetings.regression.spec.ts` (copied from `meetings-crud.spec.ts`)
+- Archived meetings fragmented suites:
+  - `frontend/tests/_archive/2026-04-20/meetings/e2e-meetings/*`
+- `daily-log` pilot completed on 2026-04-20.
+- Canonical suites created:
+  - `frontend/tests/e2e/daily-logs/daily-logs.smoke.spec.ts` (new)
+  - `frontend/tests/e2e/daily-logs/daily-logs.regression.spec.ts` (copied from `daily-logs-crud.spec.ts`)
+- Archived daily-log fragmented suites:
+  - `frontend/tests/_archive/2026-04-20/daily-log/e2e-daily-logs/*`
+- `submittals` pilot completed on 2026-04-20.
+- Canonical suites created:
+  - `frontend/tests/e2e/submittals/submittals.smoke.spec.ts` (existing canonical)
+  - `frontend/tests/e2e/submittals/submittals.regression.spec.ts` (copied from `submittals.spec.ts`)
+- Archived submittals fragmented suites:
+  - `frontend/tests/_archive/2026-04-20/submittals/e2e-submittals/*`
+- `drawings` pilot completed on 2026-04-20.
+- Canonical suites created:
+  - `frontend/tests/e2e/documents/drawings.smoke.spec.ts` (new)
+  - `frontend/tests/e2e/documents/drawings.regression.spec.ts` (copied from `drawings-e2e.spec.ts`)
+- Archived drawings fragmented suites:
+  - `frontend/tests/_archive/2026-04-20/drawings/e2e-documents/*`
+- `photos` pilot completed on 2026-04-20.
+- Canonical suites created:
+  - `frontend/tests/e2e/documents/photos.smoke.spec.ts` (new)
+  - `frontend/tests/e2e/documents/photos.regression.spec.ts` (copied from `photos-page.spec.ts`)
+- Archived photos fragmented suites:
+  - `frontend/tests/_archive/2026-04-20/photos/e2e-documents/*`
+- `specifications` pilot completed on 2026-04-20.
+- Canonical suites created:
+  - `frontend/tests/e2e/documents/specifications.smoke.spec.ts` (new)
+  - `frontend/tests/e2e/documents/specifications.regression.spec.ts` (copied from `specifications-extended.spec.ts`)
+- Archived specifications fragmented suites:
+  - `frontend/tests/_archive/2026-04-20/specifications/e2e-documents/*`
+- `rfis` pilot completed on 2026-04-20.
+- Canonical suites created:
+  - `frontend/tests/e2e/rfis/rfis.smoke.spec.ts` (new)
+  - `frontend/tests/e2e/rfis/rfis.regression.spec.ts` (copied from `frontend/tests/financial/rfis.spec.ts`)
+- Archived rfis fragmented suites:
+  - `frontend/tests/_archive/2026-04-20/rfis/financial/*`
+- `punch-list` pilot completed on 2026-04-20.
+- Canonical suites created:
+  - `frontend/tests/e2e/punch-list/punch-list.smoke.spec.ts` (new)
+  - `frontend/tests/e2e/punch-list/punch-list.regression.spec.ts` (copied from root `punch-list.spec.ts`)
+- Archived punch-list fragmented suites:
+  - `frontend/tests/_archive/2026-04-20/punch-list/e2e-root/*`
+- `project-lifecycle` pilot completed on 2026-04-20.
+- Canonical suites created:
+  - `frontend/tests/e2e/project/project-lifecycle.smoke.spec.ts` (copied from `project-bootstrap.spec.ts`)
+  - `frontend/tests/e2e/project/project-lifecycle.regression.spec.ts` (copied from `project-homepage.spec.ts`)
+- Archived project-lifecycle fragmented suites:
+  - `frontend/tests/_archive/2026-04-20/project-lifecycle/e2e-project/*`
 
 ## Documentation Files (`docs/testing`)
 

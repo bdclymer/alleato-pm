@@ -74,6 +74,7 @@ function SectionCard({
     <div className="rounded-xl bg-card p-6">
       <div className="mb-4 flex items-center gap-2.5">
         <Icon className="h-4 w-4 text-primary" strokeWidth={1.5} />
+        {/* eslint-disable-next-line design-system/no-raw-heading */}
         <h2 className="text-sm font-semibold text-foreground">{title}</h2>
       </div>
       {children}

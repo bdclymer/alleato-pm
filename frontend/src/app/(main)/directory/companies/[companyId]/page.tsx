@@ -179,6 +179,7 @@ function CompactStatRow({
 function SectionHeader({ title, description }: { title: string; description?: string }) {
   return (
     <div className="space-y-1">
+      {/* eslint-disable-next-line design-system/no-raw-heading */}
       <h2 className="text-lg font-semibold text-foreground">{title}</h2>
       {description ? <p className="text-sm text-muted-foreground">{description}</p> : null}
     </div>

@@ -316,6 +316,7 @@ export function renderRfiCard(item: RFI, onClick: (item: RFI) => void): ReactEle
       <div className="mb-2 flex items-start justify-between gap-4">
         <div>
           <p className="text-xs uppercase text-muted-foreground">RFI #{item.number}</p>
+          {/* eslint-disable-next-line design-system/no-raw-heading */}
           <h3 className="font-medium">{item.subject || "Untitled RFI"}</h3>
         </div>
         <Badge variant={statusVariant(item.status)}>{formatStatusLabel(item.status)}</Badge>

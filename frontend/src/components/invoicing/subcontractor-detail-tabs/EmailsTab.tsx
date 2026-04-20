@@ -53,6 +53,7 @@ export function EmailsTab({
   return (
     <section className="space-y-4">
       <div>
+        {/* eslint-disable-next-line design-system/no-raw-heading */}
         <h2 className="text-sm font-semibold text-foreground">Emails</h2>
         <p className="text-xs text-muted-foreground">
           History of emails sent for this invoice.

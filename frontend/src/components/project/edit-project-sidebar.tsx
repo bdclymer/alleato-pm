@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { Eyebrow } from "@/components/ds";
 import { useRouter } from "next/navigation";
 import type { Database } from "@/types/database.types";
 import { useCompanies } from "@/hooks/use-companies";
@@ -321,9 +322,9 @@ export function EditProjectSidebar({ project, open, onOpenChange }: EditProjectS
 
             {/* General Information */}
             <section className="space-y-3">
-              <h3 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">
+              <Eyebrow className="text-primary">
                 General Information
-              </h3>
+              </Eyebrow>
               <div className="grid grid-cols-2 gap-3">
                 <TextField id="edit-name" label="Project Name" value={form.name} onChange={(v) => set("name", v)} required />
                 <TextField id="edit-job" label="Job Number" value={form.job_number} onChange={(v) => set("job_number", v)} required />
@@ -415,9 +416,9 @@ export function EditProjectSidebar({ project, open, onOpenChange }: EditProjectS
 
             {/* Project Metrics */}
             <section className="space-y-3">
-              <h3 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">
+              <Eyebrow className="text-primary">
                 Project Metrics
-              </h3>
+              </Eyebrow>
               <div className="grid grid-cols-2 gap-3">
                 <TextField id="edit-sqft" label="Square Footage" value={form.square_footage} onChange={(v) => set("square_footage", v)} type="number" />
                 <MoneyField
@@ -431,9 +432,9 @@ export function EditProjectSidebar({ project, open, onOpenChange }: EditProjectS
 
             {/* Logo */}
             <section className="space-y-3">
-              <h3 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">
+              <Eyebrow className="text-primary">
                 Logo
-              </h3>
+              </Eyebrow>
               <div className="grid grid-cols-2 gap-3">
                 <FileUploadField
                   label="Project Logo"
@@ -470,9 +471,9 @@ export function EditProjectSidebar({ project, open, onOpenChange }: EditProjectS
 
             {/* Location */}
             <section className="space-y-3">
-              <h3 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">
+              <Eyebrow className="text-primary">
                 Location
-              </h3>
+              </Eyebrow>
               <div className="grid grid-cols-2 gap-3">
                 <SelectField
                   id="edit-office"
@@ -528,9 +529,9 @@ export function EditProjectSidebar({ project, open, onOpenChange }: EditProjectS
 
             {/* Dates */}
             <section className="space-y-3">
-              <h3 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">
+              <Eyebrow className="text-primary">
                 Dates
-              </h3>
+              </Eyebrow>
               <div className="grid grid-cols-2 gap-3">
                 <TextField id="edit-start" label="Start Date" value={form.start_date} onChange={(v) => set("start_date", v)} type="date" />
                 <TextField id="edit-end" label="Completion Date" value={form.completion_date} onChange={(v) => set("completion_date", v)} type="date" />
@@ -539,9 +540,9 @@ export function EditProjectSidebar({ project, open, onOpenChange }: EditProjectS
 
             {/* Status & Flags */}
             <section className="space-y-3">
-              <h3 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">
+              <Eyebrow className="text-primary">
                 Status & Flags
-              </h3>
+              </Eyebrow>
               <div className="space-y-2.5">
                 <label className="flex items-center gap-2.5 cursor-pointer">
                   <Checkbox checked={form.active} onCheckedChange={(c) => set("active", Boolean(c))} />

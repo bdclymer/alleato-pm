@@ -34,7 +34,6 @@ interface TestCasePatchPayload {
   test_name?: string;
   priority?: string;
   test_type?: string;
-  scenario_depth?: string;
   tool?: number | null;
   steps?: string | null;
   setup_steps?: string | null;
@@ -55,7 +54,6 @@ type EditableColumnId =
   | "subcategory"
   | "priority"
   | "test_type"
-  | "scenario_depth"
   | "tool"
   | "start_url"
   | "source_url"
@@ -78,7 +76,6 @@ const COLUMN_CONFIG: ColumnConfig[] = [
   { id: "subcategory", label: "Subcategory", defaultVisible: true },
   { id: "priority", label: "Priority", defaultVisible: true },
   { id: "test_type", label: "Type", defaultVisible: true },
-  { id: "scenario_depth", label: "Scenario Depth", defaultVisible: true },
   { id: "tool", label: "Tool", defaultVisible: true },
   { id: "start_url", label: "Start URL", defaultVisible: false },
   { id: "source_url", label: "Source URL", defaultVisible: false },
@@ -102,7 +99,6 @@ const EMPTY_FILTERS: Record<string, FilterValue> = {
   category: undefined,
   priority: undefined,
   test_type: undefined,
-  scenario_depth: undefined,
   tool: undefined,
 };
 
@@ -206,13 +202,6 @@ function buildPatchPayload(
     }
     case "test_type":
       return { test_type: toRequiredTextInput(rawValue, "Type") };
-    case "scenario_depth": {
-      const normalized = toRequiredTextInput(rawValue, "Scenario depth").toLowerCase();
-      if (!["broad", "detailed"].includes(normalized)) {
-        throw new Error("Scenario depth must be broad or detailed.");
-      }
-      return { scenario_depth: normalized };
-    }
     case "tool":
       return { tool: toToolIdInput(rawValue, toolNameToId) };
     case "start_url":
@@ -252,7 +241,6 @@ function matchesSearch(row: TestCaseRow, searchTerm: string): boolean {
     row.subcategory,
     row.priority,
     row.test_type,
-    row.scenario_depth,
     row.tool_name,
     row.start_url,
     row.source_url,
@@ -272,12 +260,11 @@ function matchesSearch(row: TestCaseRow, searchTerm: string): boolean {
 // Returns true when a row satisfies all active select filters.
 function matchesFilters(
   row: TestCaseRow,
-  filters: { category?: string; priority?: string; test_type?: string; scenario_depth?: string; tool?: string },
+  filters: { category?: string; priority?: string; test_type?: string; tool?: string },
 ): boolean {
   if (filters.category && row.category !== filters.category) return false;
   if (filters.priority && row.priority !== filters.priority) return false;
   if (filters.test_type && row.test_type !== filters.test_type) return false;
-  if (filters.scenario_depth && row.scenario_depth !== filters.scenario_depth) return false;
   if (filters.tool && row.tool_name !== filters.tool) return false;
   return true;
 }
@@ -374,16 +361,6 @@ function buildColumns(
       sortValue: (row) => row.test_type,
       render: (row) => <CellBadge value={row.test_type} />,
       csvValue: (row) => row.test_type,
-    },
-    {
-      ...columnById("scenario_depth"),
-      editable: true,
-      editValue: (row) => row.scenario_depth,
-      onEdit: (row, value) => onEditField(row, "scenario_depth", value),
-      sortable: true,
-      sortValue: (row) => row.scenario_depth,
-      render: (row) => <CellBadge value={row.scenario_depth} />,
-      csvValue: (row) => row.scenario_depth,
     },
     {
       ...columnById("tool"),
@@ -674,12 +651,6 @@ export function TestCasesTableClient({ initialRows }: TestCasesTableClientProps)
         options: buildFilterOptions(rows, (row) => row.test_type),
       },
       {
-        id: "scenario_depth",
-        label: "Scenario Depth",
-        type: "select",
-        options: buildFilterOptions(rows, (row) => row.scenario_depth),
-      },
-      {
         id: "tool",
         label: "Tool",
         type: "select",
@@ -694,14 +665,12 @@ export function TestCasesTableClient({ initialRows }: TestCasesTableClientProps)
       category: toSelectedFilterValue(tableFilters.category),
       priority: toSelectedFilterValue(tableFilters.priority),
       test_type: toSelectedFilterValue(tableFilters.test_type),
-      scenario_depth: toSelectedFilterValue(tableFilters.scenario_depth),
       tool: toSelectedFilterValue(tableFilters.tool),
     }),
     [
       tableFilters.category,
       tableFilters.priority,
       tableFilters.test_type,
-      tableFilters.scenario_depth,
       tableFilters.tool,
     ],
   );
@@ -763,7 +732,6 @@ export function TestCasesTableClient({ initialRows }: TestCasesTableClientProps)
         category: toSelectedFilterValue(nextFilters.category),
         priority: toSelectedFilterValue(nextFilters.priority),
         test_type: toSelectedFilterValue(nextFilters.test_type),
-        scenario_depth: toSelectedFilterValue(nextFilters.scenario_depth),
         tool: toSelectedFilterValue(nextFilters.tool),
       });
       setPage(1);
@@ -800,7 +768,6 @@ export function TestCasesTableClient({ initialRows }: TestCasesTableClientProps)
       Boolean(activeFilters.category) ||
       Boolean(activeFilters.priority) ||
       Boolean(activeFilters.test_type) ||
-      Boolean(activeFilters.scenario_depth) ||
       Boolean(activeFilters.tool),
     [activeFilters, debouncedSearch],
   );

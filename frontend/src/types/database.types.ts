@@ -1735,6 +1735,57 @@ export type Database = {
           },
         ]
       }
+      acumatica_sync_runs: {
+        Row: {
+          created_at: string
+          cursor: string | null
+          entity_name: string
+          error_message: string | null
+          errors: number | null
+          fetched: number | null
+          finished_at: string | null
+          id: number
+          projected: number | null
+          skipped: number | null
+          started_at: string
+          stats: Json | null
+          status: string
+          upserted: number | null
+        }
+        Insert: {
+          created_at?: string
+          cursor?: string | null
+          entity_name: string
+          error_message?: string | null
+          errors?: number | null
+          fetched?: number | null
+          finished_at?: string | null
+          id?: number
+          projected?: number | null
+          skipped?: number | null
+          started_at: string
+          stats?: Json | null
+          status: string
+          upserted?: number | null
+        }
+        Update: {
+          created_at?: string
+          cursor?: string | null
+          entity_name?: string
+          error_message?: string | null
+          errors?: number | null
+          fetched?: number | null
+          finished_at?: string | null
+          id?: number
+          projected?: number | null
+          skipped?: number | null
+          started_at?: string
+          stats?: Json | null
+          status?: string
+          upserted?: number | null
+        }
+        Relationships: []
+      }
       acumatica_sync_state: {
         Row: {
           entity_name: string
@@ -23193,7 +23244,6 @@ export type Database = {
           id: string
           priority: string
           procore_feature_id: string | null
-          scenario_depth: string
           setup_steps: string | null
           source_article_id: number | null
           source_chunk_id: number | null
@@ -23220,7 +23270,6 @@ export type Database = {
           id?: string
           priority?: string
           procore_feature_id?: string | null
-          scenario_depth?: string
           setup_steps?: string | null
           source_article_id?: number | null
           source_chunk_id?: number | null
@@ -23247,7 +23296,6 @@ export type Database = {
           id?: string
           priority?: string
           procore_feature_id?: string | null
-          scenario_depth?: string
           setup_steps?: string | null
           source_article_id?: number | null
           source_chunk_id?: number | null
@@ -23373,7 +23421,7 @@ export type Database = {
           id: string
           notes: string | null
           run_date: string
-          scenario_depth: string
+          scenario_depth: string | null
           suite_id: string
           tester: string | null
         }
@@ -23384,7 +23432,7 @@ export type Database = {
           id?: string
           notes?: string | null
           run_date?: string
-          scenario_depth?: string
+          scenario_depth?: string | null
           suite_id: string
           tester?: string | null
         }
@@ -23395,7 +23443,7 @@ export type Database = {
           id?: string
           notes?: string | null
           run_date?: string
-          scenario_depth?: string
+          scenario_depth?: string | null
           suite_id?: string
           tester?: string | null
         }
@@ -23451,6 +23499,7 @@ export type Database = {
           id: string
           last_generated_at: string
           source_doc_count: number
+          suite_type: string
           tool_id: number | null
           tool_name: string
           total_cases: number
@@ -23461,6 +23510,7 @@ export type Database = {
           id?: string
           last_generated_at?: string
           source_doc_count?: number
+          suite_type?: string
           tool_id?: number | null
           tool_name: string
           total_cases?: number
@@ -23471,6 +23521,7 @@ export type Database = {
           id?: string
           last_generated_at?: string
           source_doc_count?: number
+          suite_type?: string
           tool_id?: number | null
           tool_name?: string
           total_cases?: number

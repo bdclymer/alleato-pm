@@ -305,6 +305,7 @@ export function renderPrimeContractCard(
       <div className="flex items-start justify-between mb-2">
         <div>
           <p className="text-xs uppercase text-muted-foreground">{item.contract_number ?? "-"}</p>
+          {/* eslint-disable-next-line design-system/no-raw-heading */}
           <h3 className="font-medium">{item.title ?? "Untitled Contract"}</h3>
         </div>
         {item.status ? (

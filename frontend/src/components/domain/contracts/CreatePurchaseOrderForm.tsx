@@ -756,6 +756,7 @@ export function CreatePurchaseOrderForm({
 
         {/* SOV Table — always shown */}
         <div className="flex items-center justify-between">
+          {/* eslint-disable-next-line design-system/no-raw-heading */}
           <h3 className="text-sm font-semibold text-foreground">Line Items</h3>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

@@ -1,3 +1,4 @@
+/* eslint-disable design-system/no-raw-heading */
 "use client";
 
 import { useRouter } from "next/navigation";

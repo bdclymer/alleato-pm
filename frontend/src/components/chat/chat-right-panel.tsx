@@ -55,6 +55,7 @@ export function ChatRightPanel({
     <div className="flex h-full flex-col bg-background">
       <div className="flex h-14 items-center justify-between px-4">
         <div className="min-w-0">
+          {/* eslint-disable-next-line design-system/no-raw-heading */}
           <h3 className="truncate text-sm font-semibold text-foreground">Thread</h3>
           <p className="truncate text-xs text-muted-foreground">#{channel.name}</p>
         </div>

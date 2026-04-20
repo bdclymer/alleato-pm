@@ -439,6 +439,7 @@ export function renderPrimeCard(
       <div className="mb-2 flex items-start justify-between gap-4">
         <div>
           <p className="text-xs uppercase text-muted-foreground">{item.pcco_number || "-"}</p>
+          {/* eslint-disable-next-line design-system/no-raw-heading */}
           <h3 className="font-medium line-clamp-2">{item.title || "Untitled"}</h3>
         </div>
         <StatusBadge status={statusLabel(item.status)} />
@@ -489,6 +490,7 @@ export function renderCommitmentCard(
           <p className="text-xs uppercase text-muted-foreground">
             {item.change_order_number || "-"}
           </p>
+          {/* eslint-disable-next-line design-system/no-raw-heading */}
           <h3 className="font-medium line-clamp-2">{item.title || item.description || "Untitled"}</h3>
         </div>
         <StatusBadge status={statusLabel(item.status)} />

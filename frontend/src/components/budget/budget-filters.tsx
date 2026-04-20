@@ -93,6 +93,7 @@ export function BudgetFilters({
             <div className="space-y-5 px-4 py-4">
               <section className="space-y-2">
                 <div className="flex items-center justify-between">
+                  {/* eslint-disable-next-line design-system/no-raw-heading */}
                   <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     Snapshot
                   </h3>
@@ -114,6 +115,7 @@ export function BudgetFilters({
 
               <section className="space-y-2">
                 <div className="flex items-center justify-between">
+                  {/* eslint-disable-next-line design-system/no-raw-heading */}
                   <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     Grouping
                   </h3>
@@ -135,6 +137,7 @@ export function BudgetFilters({
 
               <section className="space-y-2">
                 <div className="flex items-center justify-between">
+                  {/* eslint-disable-next-line design-system/no-raw-heading */}
                   <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     Filters
                   </h3>

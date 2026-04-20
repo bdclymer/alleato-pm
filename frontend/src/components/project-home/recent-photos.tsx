@@ -149,6 +149,7 @@ export function RecentPhotos({ projectId }: RecentPhotosProps) {
 
                 {/* Photo Info */}
                 <div className="p-4 space-y-1">
+                  {/* eslint-disable-next-line design-system/no-raw-heading */}
                   <h4 className="text-sm font-medium text-foreground line-clamp-1">
                     {photo.title}
                   </h4>
@@ -189,6 +190,7 @@ export function RecentPhotos({ projectId }: RecentPhotosProps) {
                   {/* Photo Details */}
                   <div className="space-y-4">
                     <div>
+                      {/* eslint-disable-next-line design-system/no-raw-heading */}
                       <h3 className="text-lg font-semibold text-foreground">
                         {selectedPhoto.title}
                       </h3>

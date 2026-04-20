@@ -69,9 +69,21 @@ function main() {
     .split("\n")
     .filter((line) => line.startsWith("+") && !line.startsWith("+++"));
 
-  const violations = addedLines.filter((line) =>
-    /eslint-disable(?:-next-line|-line)?[^\n]*design-system\//.test(line),
-  );
+  // Rules that permit disable comments — these are legitimate documented exceptions,
+  // not new debt. Add a rule here only after verifying all real violations are fixed
+  // and the rule is escalated to 'error' globally.
+  const ALLOWED_DISABLE_RULES = new Set([
+    "design-system/no-raw-heading", // escalated to error 2026-04-20; exceptions are annotated
+  ]);
+
+  const violations = addedLines.filter((line) => {
+    if (!/eslint-disable(?:-next-line|-line)?[^\n]*design-system\//.test(line)) return false;
+    // Allow disables for rules in the exception list
+    for (const rule of ALLOWED_DISABLE_RULES) {
+      if (line.includes(rule)) return false;
+    }
+    return true;
+  });
 
   if (violations.length > 0) {
     console.error("New design-system eslint-disable comments are not allowed:");

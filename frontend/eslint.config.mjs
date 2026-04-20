@@ -84,9 +84,17 @@ const config = [
       // ENFORCED as ERROR on changed files via lint-staged (.lintstagedrc.js).
       'design-system/require-api-client': 'warn',
       'design-system/require-empty-state': 'warn',
-      'design-system/no-raw-heading': 'warn',
+      'design-system/no-raw-heading': 'error',
       'design-system/no-inline-currency': 'warn',
       'design-system/require-error-state': 'warn',
+    },
+  },
+  // Admin pages: relax heading rule — these are internal tools used only by the Alleato team.
+  // Layout consistency is nice-to-have here; focus enforcement on customer-facing pages.
+  {
+    files: ['src/app/(admin)/**/*.tsx', 'src/app/(admin)/**/*.ts'],
+    rules: {
+      'design-system/no-raw-heading': 'off',
     },
   },
 ]

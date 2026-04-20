@@ -437,6 +437,7 @@ export function PermissionTemplateDialog({
                     <TabsContent key={category} value={category} className="space-y-4">
                       <div className="flex items-center justify-between pb-2 border-b">
                         <div>
+                          {/* eslint-disable-next-line design-system/no-raw-heading */}
                           <h4 className="font-medium">{category}</h4>
                           <p className="text-sm text-muted-foreground">{config.description}</p>
                         </div>

@@ -109,7 +109,12 @@ export default function ParityPage() {
   }, [report]);
 
   return (
-    <PageShell variant="content" title="Procore Parity Report">
+    <PageShell
+      variant="content"
+      title="Procore Parity Report"
+      onBack={() => (window.location.href = "/testing")}
+      backLabel="All tests"
+    >
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">Priority:</span>
@@ -209,7 +214,7 @@ export default function ParityPage() {
                       </TableCell>
                       <TableCell>
                         <Link
-                          href={`/testing?suite=${s.tool_name}`}
+                          href={`/testing/${s.tool_name}`}
                           className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
                           onClick={(e) => e.stopPropagation()}
                         >
@@ -284,12 +289,12 @@ function KpiCard({
     muted: "text-muted-foreground",
   }[tone];
   return (
-    <div className="border border-border rounded-md p-4 bg-card">
+    <div className="space-y-1">
       <div className="text-xs text-muted-foreground uppercase tracking-wide">
         {label}
       </div>
-      <div className={cn("text-3xl font-semibold mt-1", toneClasses)}>{value}</div>
-      {subtitle && <div className="text-xs text-muted-foreground mt-1">{subtitle}</div>}
+      <div className={cn("text-3xl font-semibold", toneClasses)}>{value}</div>
+      {subtitle && <div className="text-xs text-muted-foreground">{subtitle}</div>}
     </div>
   );
 }

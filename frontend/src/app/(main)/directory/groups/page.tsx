@@ -258,6 +258,7 @@ function GroupPreviewPane({
               <Users className="h-5 w-5" />
             </div>
             <div className="min-w-0 flex-1">
+              {/* eslint-disable-next-line design-system/no-raw-heading */}
               <h3 className="text-sm font-semibold leading-tight truncate">{group.name}</h3>
               {group.status && (
                 <div className="mt-1.5">

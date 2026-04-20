@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable design-system/no-raw-heading */
 
 import * as React from "react";
 import { Database, ExternalLink, FileText, LayoutList } from "lucide-react";

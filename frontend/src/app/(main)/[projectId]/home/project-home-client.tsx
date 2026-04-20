@@ -228,6 +228,7 @@ function Section({
     <div className={cn("", className)}>
       {title && (
         <div className="flex items-center justify-between mb-3">
+          {/* eslint-disable-next-line design-system/no-raw-heading */}
           <h2 className="heading-section">{title}</h2>
           {action}
         </div>
@@ -770,6 +771,7 @@ function ProjectToolsSidebar({ projectId }: { projectId: number }) {
     <aside className="xl:sticky xl:top-6 xl:self-start">
       <div className="space-y-4 border-l border-border/70 pl-4">
         <div>
+          {/* eslint-disable-next-line design-system/no-raw-heading */}
           <h2 className="heading-tiny-caps">
             Tools
           </h2>
@@ -780,6 +782,7 @@ function ProjectToolsSidebar({ projectId }: { projectId: number }) {
 
         {groupedTools.map((group) => (
           <section key={group.id} className="space-y-1.5">
+            {/* eslint-disable-next-line design-system/no-raw-heading */}
             <h3 className="heading-micro">{group.label}</h3>
             <div className="space-y-0.5">
               {group.tools.map((tool) => {

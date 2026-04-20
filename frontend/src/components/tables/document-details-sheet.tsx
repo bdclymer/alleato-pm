@@ -17,6 +17,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import type { Database } from "@/types/database.types";
+import { SectionRuleHeading } from "@/components/layout/spacing";
 
 type Document = Database["public"]["Tables"]["documents"]["Row"];
 
@@ -48,7 +49,7 @@ export function DocumentDetailsSheet({
           <div className="space-y-4">
             {/* Document Overview */}
             <div>
-              <h3 className="font-semibold mb-2">Document Information</h3>
+              <SectionRuleHeading label="Document Information" />
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">ID:</span>
@@ -83,7 +84,7 @@ export function DocumentDetailsSheet({
             {document.content && (
               <>
                 <div>
-                  <h3 className="font-semibold mb-2">Content Preview</h3>
+                  <SectionRuleHeading label="Content Preview" />
                   <div className="bg-muted p-4 rounded-lg max-h-40 overflow-y-auto">
                     <p className="text-sm whitespace-pre-wrap">
                       {document.content.length > 500
@@ -100,7 +101,7 @@ export function DocumentDetailsSheet({
             {Object.keys(metadata).length > 0 && (
               <>
                 <div>
-                  <h3 className="font-semibold mb-2">Metadata</h3>
+                  <SectionRuleHeading label="Metadata" />
                   <div className="bg-muted p-4 rounded-lg">
                     <pre className="text-xs overflow-x-auto">
                       {JSON.stringify(metadata, null, 2)}

@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable design-system/no-raw-heading */
 
 import type { ToolUIPart } from "ai";
 import {

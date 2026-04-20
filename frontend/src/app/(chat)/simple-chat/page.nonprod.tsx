@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable design-system/no-raw-heading */
 
 import { useState, useRef, useEffect } from "react";
 import { apiFetch } from "@/lib/api-client";

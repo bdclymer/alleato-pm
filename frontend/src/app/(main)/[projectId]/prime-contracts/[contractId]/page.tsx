@@ -993,24 +993,32 @@ export default function ProjectContractDetailPage() {
         {activeTab === "payments" && (
           <PrimeContractPaymentsTab
             projectId={projectId} contractId={contractId} payments={payments} paymentsReceivedLoading={paymentsReceivedLoading}
-            paymentApplications={paymentApplications} setPayments={setPayments} setContract={setContract} formatCurrency={formatCurrency}
+            setPayments={setPayments} setContract={setContract} formatCurrency={formatCurrency}
           />
         )}
 
         {activeTab === "related-items" && (
-          <EmptyState
-            icon={<Link2 />}
-            title="No related items"
-            description="Links to related RFIs, Submittals, and other project items will appear here."
-          />
+          <div>
+            <SectionRuleHeading label="Related Items" />
+            <EmptyState
+              icon={<Link2 />}
+              title="No related items"
+              description="Links to related RFIs, Submittals, and other project items will appear here."
+              action={<Button size="sm" onClick={() => {}}>Link an Item</Button>}
+            />
+          </div>
         )}
 
         {activeTab === "emails" && (
-          <EmptyState
-            icon={<Mail />}
-            title="No emails yet"
-            description="Emails sent or received related to this contract will appear here."
-          />
+          <div>
+            <SectionRuleHeading label="Emails" />
+            <EmptyState
+              icon={<Mail />}
+              title="No emails yet"
+              description="Emails sent or received related to this contract will appear here."
+              action={<Button size="sm" onClick={() => {}}>Send Email</Button>}
+            />
+          </div>
         )}
 
         {activeTab === "history" && (

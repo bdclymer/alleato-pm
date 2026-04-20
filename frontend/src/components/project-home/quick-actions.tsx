@@ -21,6 +21,7 @@ const iconMap: Record<string, LucideIcon> = {
 export function QuickActions({ actions, projectId }: QuickActionsProps) {
   return (
     <div className="bg-background rounded-md border border-border p-6">
+      {/* eslint-disable-next-line design-system/no-raw-heading */}
       <h3 className="text-sm font-semibold text-foreground mb-4">
         Quick Actions
       </h3>

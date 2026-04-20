@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable design-system/no-raw-heading */
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";

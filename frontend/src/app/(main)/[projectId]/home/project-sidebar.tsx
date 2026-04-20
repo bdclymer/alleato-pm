@@ -9,6 +9,7 @@ import {
   SidebarRail,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
+import { Eyebrow } from "@/components/ds";
 import {
   ProjectSetupStepper,
   type Step,
@@ -94,9 +95,7 @@ export function ProjectSidebar({
       <SidebarContent className="px-4 pt-6">
         {/* Project Setup Heading */}
         <div>
-          <h3 className="text-xs font-semibold tracking-[0.15em] uppercase text-muted-foreground">
-            Project Setup
-          </h3>
+          <Eyebrow>Project Setup</Eyebrow>
           <p className="text-xs text-muted-foreground mt-1">
             Complete these steps to get started
           </p>

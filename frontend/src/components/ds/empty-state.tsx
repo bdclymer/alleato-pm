@@ -81,7 +81,7 @@ export function EmptyState({
           className="mb-5 relative"
         >
           {/* Ambient glow */}
-          <div className="absolute inset-0 rounded-full bg-primary/6 blur-xl scale-150 pointer-events-none" />
+          <div className="absolute inset-0 rounded-full bg-primary/10 blur-xl scale-150 pointer-events-none" />
 
           {/* Floating icon wrapper */}
           <motion.div
@@ -89,17 +89,13 @@ export function EmptyState({
             className={cn(
               "relative flex items-center justify-center",
               "size-14 rounded-2xl",
-              "bg-muted/60",
-              "shadow-xs",
-              "[box-shadow:inset_0_1px_0_0_hsl(var(--border)/0.5)]",
-              "[&_svg]:size-6 text-muted-foreground/60"
+              "bg-primary/10",
+              "[&_svg]:size-6 text-primary"
             )}
           >
             {icon}
           </motion.div>
 
-          {/* Accent dot */}
-          <span className="absolute -top-0.5 -right-0.5 size-2 rounded-full bg-primary/40 ring-2 ring-background" />
         </motion.div>
       ) : null}
 

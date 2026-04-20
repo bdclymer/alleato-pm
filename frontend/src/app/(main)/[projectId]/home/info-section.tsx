@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { LucideIcon } from "lucide-react";
+import { Eyebrow } from "@/components/ds";
 
 interface InfoSectionItem {
   id: string | number;
@@ -34,9 +35,7 @@ export function InfoSection({
       <div className="flex items-start justify-between mb-6">
         <div className="flex items-center gap-2">
           <Icon className="h-5 w-5 text-brand" />
-          <h3 className="text-2xs font-semibold tracking-[0.15em] uppercase text-brand">
-            {title}
-          </h3>
+          <Eyebrow>{title}</Eyebrow>
         </div>
         {viewAllHref && (
           <Link

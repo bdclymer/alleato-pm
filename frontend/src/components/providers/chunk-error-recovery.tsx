@@ -126,6 +126,7 @@ export class ChunkLoadErrorRecovery extends Component<Props, State> {
               />
             </svg>
           </div>
+          {/* eslint-disable-next-line design-system/no-raw-heading */}
           <h2 className="text-xl font-semibold text-foreground">
             New version available
           </h2>

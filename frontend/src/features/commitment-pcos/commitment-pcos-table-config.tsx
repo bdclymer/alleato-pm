@@ -305,6 +305,7 @@ export function renderPcoCard(
       <div className="mb-2 flex items-start justify-between gap-4">
         <div>
           <p className="text-xs uppercase text-muted-foreground">{item.pco_number}</p>
+          {/* eslint-disable-next-line design-system/no-raw-heading */}
           <h3 className="font-medium">{item.title || "Untitled PCO"}</h3>
         </div>
         <StatusBadge status={statusLabel(item.status)} />

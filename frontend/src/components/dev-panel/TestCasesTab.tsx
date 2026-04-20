@@ -21,7 +21,6 @@ interface TestCase {
   priority: "HIGH" | "MEDIUM" | "LOW";
   start_url: string | null;
   test_type: string;
-  scenario_depth: string | null;
 }
 
 interface CasesPayload {
@@ -34,7 +33,7 @@ interface CasesPayload {
 interface Props {
   slug: string;
   type?: "scenario" | "feature" | "all";
-  depth?: "broad" | "detailed" | "all";
+  suiteType?: "smoke" | "feature";
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -166,7 +165,7 @@ function TestCaseCard({ tc }: { tc: TestCase }) {
 
 // ─── TestCasesTab ─────────────────────────────────────────────────────────────
 
-export function TestCasesTab({ slug, type = "all", depth = "all" }: Props) {
+export function TestCasesTab({ slug, type = "all", suiteType = "feature" }: Props) {
   const [data, setData] = React.useState<CasesPayload | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -177,7 +176,7 @@ export function TestCasesTab({ slug, type = "all", depth = "all" }: Props) {
     setError(null);
     setCategoryFilter("ALL");
 
-    const params = new URLSearchParams({ type, depth });
+    const params = new URLSearchParams({ type, suiteType });
     fetch(`/api/testing/suites/${slug}/cases?${params}`)
       .then((r) => r.json())
       .then((d) => {
@@ -186,7 +185,7 @@ export function TestCasesTab({ slug, type = "all", depth = "all" }: Props) {
       })
       .catch((e: unknown) => setError(e instanceof Error ? e.message : "Failed to load"))
       .finally(() => setLoading(false));
-  }, [slug, type, depth]);
+  }, [slug, type, suiteType]);
 
   // ── Loading ──
   if (loading) {

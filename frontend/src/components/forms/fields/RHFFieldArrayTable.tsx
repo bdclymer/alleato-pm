@@ -75,6 +75,7 @@ export function RHFFieldArrayTable<
     <div className="space-y-4">
       {(label || description) && (
         <div className="space-y-1">
+          {/* eslint-disable-next-line design-system/no-raw-heading */}
           {label && <h3 className="text-sm font-medium">{label}</h3>}
           {description && (
             <p className="text-sm text-muted-foreground">{description}</p>

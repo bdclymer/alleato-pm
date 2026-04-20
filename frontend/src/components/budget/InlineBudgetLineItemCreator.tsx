@@ -424,6 +424,7 @@ export function InlineBudgetLineItemCreator({
       <div className="bg-blue-50 border-y-2 border-blue-200 p-4">
         <div className="space-y-4">
           <div className="flex items-center justify-between">
+            {/* eslint-disable-next-line design-system/no-raw-heading */}
             <h3 className="text-sm font-semibold text-foreground">
               Add Budget Line Items
             </h3>

@@ -170,6 +170,7 @@ export function ProjectSetupWizard({ projectId }: ProjectSetupWizardProps) {
           {/* Step Content */}
           <div className="lg:col-span-4 xl:col-span-5">
             <div className="p-0">
+              {/* eslint-disable-next-line design-system/no-raw-heading */}
               <h2 className="text-2xl font-semibold mb-4">
                 {setupSteps[currentStep].title}
               </h2>

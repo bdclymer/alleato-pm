@@ -54,6 +54,7 @@ export function ProjectToolsGrid({
 }: ProjectToolsGridProps) {
   return (
     <div className="bg-background rounded-md border border-border p-6">
+      {/* eslint-disable-next-line design-system/no-raw-heading */}
       <h3 className="text-sm font-semibold text-foreground mb-4">{title}</h3>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {tools.map((tool) => {

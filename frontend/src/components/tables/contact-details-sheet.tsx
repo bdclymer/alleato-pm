@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/sheet";
 import { Facebook, Instagram, Linkedin, Mail, Phone } from "lucide-react";
 import type { Database } from "@/types/database.types";
+import { SectionRuleHeading } from "@/components/layout/spacing";
 
 type Contact = Database["public"]["Tables"]["people"]["Row"];
 type Company = Database["public"]["Tables"]["companies"]["Row"];
@@ -55,7 +56,7 @@ export function ContactDetailsSheet({
           <div className="space-y-4">
             {/* Contact Information */}
             <div>
-              <h3 className="font-semibold mb-2">Contact Information</h3>
+              <SectionRuleHeading label="Contact Information" />
               <div className="space-y-2">
                 {contact.email && (
                   <div className="flex items-center gap-2">
@@ -90,7 +91,7 @@ export function ContactDetailsSheet({
 
             {/* Company & Role */}
             <div>
-              <h3 className="font-semibold mb-2">Professional Information</h3>
+              <SectionRuleHeading label="Professional Information" />
               <div className="space-y-2">
                 {contact.company && (
                   <div className="flex justify-between">
@@ -107,7 +108,7 @@ export function ContactDetailsSheet({
             {contact.notes && (
               <>
                 <div>
-                  <h3 className="font-semibold mb-2">Notes</h3>
+                  <SectionRuleHeading label="Notes" />
                   <div className="bg-muted p-2 rounded">
                     <p className="text-sm">{contact.notes}</p>
                   </div>

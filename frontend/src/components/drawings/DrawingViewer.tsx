@@ -798,6 +798,7 @@ export function DrawingViewer({
         )}
       >
         <AlertCircle className="h-12 w-12 text-destructive mb-4" />
+        {/* eslint-disable-next-line design-system/no-raw-heading */}
         <h3 className="text-lg font-semibold mb-2">Failed to load PDF</h3>
         <p className="text-sm text-muted-foreground text-center max-w-md">{loadError}</p>
         <Button variant="outline" className="mt-4" onClick={() => window.location.reload()}>

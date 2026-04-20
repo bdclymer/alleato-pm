@@ -223,6 +223,7 @@ export function renderSubmittalCard(
           <p className="text-xs uppercase text-muted-foreground">
             {item.submittal_number} Rev.&nbsp;{item.revision ?? 0}
           </p>
+          {/* eslint-disable-next-line design-system/no-raw-heading */}
           <h3 className="font-medium">{item.title || "Untitled"}</h3>
         </div>
         <Badge variant={statusVariantMap[item.status] ?? "outline"}>

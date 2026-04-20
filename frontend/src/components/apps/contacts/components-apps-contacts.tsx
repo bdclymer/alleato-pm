@@ -1,3 +1,4 @@
+/* eslint-disable design-system/no-raw-heading */
 'use client';
 import IconFacebook from '@/components/icon/icon-facebook';
 import IconInstagram from '@/components/icon/icon-instagram';

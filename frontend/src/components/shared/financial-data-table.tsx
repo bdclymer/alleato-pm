@@ -82,6 +82,7 @@ export function FinancialDataTable<T extends { id?: string | number }>({
     <div className={className}>
       {(title || onExport) && (
         <div className="flex items-center justify-between mb-4">
+          {/* eslint-disable-next-line design-system/no-raw-heading */}
           {title && <h3 className="text-lg font-semibold">{title}</h3>}
           {onExport && (
             <DropdownMenu>

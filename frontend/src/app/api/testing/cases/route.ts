@@ -17,7 +17,6 @@ const schema = z.object({
   test_name: z.string().trim().min(1).max(300),
   priority: z.enum(["HIGH", "MEDIUM", "LOW"]).default("MEDIUM"),
   test_type: z.enum(["scenario", "feature"]).default("scenario"),
-  scenario_depth: z.enum(["broad", "detailed"]).default("broad"),
   steps: z.string().nullable().optional(),
   setup_steps: z.string().nullable().optional(),
   context_note: z.string().nullable().optional(),
@@ -51,13 +50,6 @@ const schema = z.object({
       code: z.ZodIssueCode.custom,
       message: "Scenario start URL must be a relative path beginning with '/'.",
       path: ["start_url"],
-    });
-  }
-  if (data.scenario_depth === "detailed" && !data.setup_steps?.trim()) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: "Detailed scenarios require setup steps.",
-      path: ["setup_steps"],
     });
   }
 });
@@ -96,7 +88,7 @@ export const POST = withApiGuardrails(
       .from("test_cases")
       .insert(payload)
       .select(
-        "id, test_number, category, subcategory, test_name, context_note, setup_steps, steps, expected_result, priority, start_url, test_type, scenario_depth"
+        "id, test_number, category, subcategory, test_name, context_note, setup_steps, steps, expected_result, priority, start_url, test_type"
       )
       .single();
 

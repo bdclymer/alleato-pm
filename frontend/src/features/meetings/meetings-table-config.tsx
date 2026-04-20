@@ -675,6 +675,7 @@ export function renderMeetingCard(item: Meeting, onClick: (meeting: Meeting) => 
       <div className="flex items-start justify-between mb-2">
         <div>
           <TableDateValue value={item.date} className="uppercase text-muted-foreground" />
+          {/* eslint-disable-next-line design-system/no-raw-heading */}
           <h3 className="font-medium">{item.title ?? "Untitled Meeting"}</h3>
         </div>
         <TableTagBadge label={item.type} variant="secondary" />

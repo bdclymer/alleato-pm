@@ -1,3 +1,4 @@
+/* eslint-disable design-system/no-raw-heading */
 import clsx from "clsx";
 
 import { Button } from "@/components/ui/button";

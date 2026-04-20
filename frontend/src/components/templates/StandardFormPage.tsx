@@ -1,3 +1,4 @@
+/* eslint-disable design-system/no-raw-heading */
 /**
  * =============================================================================
  * STANDARD FORM PAGE TEMPLATE

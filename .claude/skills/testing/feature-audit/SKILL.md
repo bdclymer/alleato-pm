@@ -156,7 +156,7 @@ agent-browser --session audit-<tool> open http://localhost:3000/$PROJECT_ID/<too
 agent-browser --session audit-<tool> wait --load networkidle
 ```
 
-Authenticate if redirected (same pattern as smoke-test).
+Authenticate if redirected (same login-once pattern used by `/test-scenario-run`).
 
 ### 2.1 Execute Test Matrix (HIGH + MEDIUM priority)
 

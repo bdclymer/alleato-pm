@@ -17,7 +17,7 @@ export default async function TestCasesPage() {
   const { data, error } = await supabase
     .from("test_cases")
     .select(
-      "id, test_number, test_name, category, subcategory, priority, test_type, scenario_depth, gap_type, suite_id, tool, start_url, source_url, context_note, setup_steps, steps, expected_result, source_manifest_path, source_article_id, source_chunk_id, procore_feature_id, created_at, updated_at, test_suites(tool_name)",
+      "id, test_number, test_name, category, subcategory, priority, test_type, gap_type, suite_id, tool, start_url, source_url, context_note, setup_steps, steps, expected_result, source_manifest_path, source_article_id, source_chunk_id, procore_feature_id, created_at, updated_at, test_suites(tool_name)",
     )
     .order("test_number", { ascending: true })
     .order("updated_at", { ascending: false });

@@ -50,6 +50,7 @@ export function EpicSection({
               isOpen && "rotate-90"
             )}
           />
+          {/* eslint-disable-next-line design-system/no-raw-heading */}
           <h3 className="text-base font-semibold text-foreground tracking-tight">
             {name}
           </h3>

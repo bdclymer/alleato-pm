@@ -1,3 +1,4 @@
+/* eslint-disable design-system/no-raw-heading */
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";

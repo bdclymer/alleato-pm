@@ -18,6 +18,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import type { Database } from "@/types/database.types";
+import { SectionRuleHeading } from "@/components/layout/spacing";
 
 type Company = Database["public"]["Tables"]["companies"]["Row"];
 
@@ -47,7 +48,7 @@ export function CompanyDetailsSheet({
           <div className="space-y-4">
             {/* Company Overview */}
             <div>
-              <h3 className="font-semibold mb-2">Company Information</h3>
+              <SectionRuleHeading label="Company Information" />
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Name:</span>
@@ -83,7 +84,7 @@ export function CompanyDetailsSheet({
             {(company.address || company.city || company.state) && (
               <>
                 <div>
-                  <h3 className="font-semibold mb-2">Location</h3>
+                  <SectionRuleHeading label="Location" />
                   <div className="space-y-2">
                     {company.address && (
                       <div>
@@ -113,7 +114,7 @@ export function CompanyDetailsSheet({
             {company.notes && (
               <>
                 <div>
-                  <h3 className="font-semibold mb-2">Notes</h3>
+                  <SectionRuleHeading label="Notes" />
                   <p className="text-sm whitespace-pre-wrap">{company.notes}</p>
                 </div>
                 <Separator />
@@ -122,7 +123,7 @@ export function CompanyDetailsSheet({
 
             {/* Timestamps */}
             <div>
-              <h3 className="font-semibold mb-2">Timestamps</h3>
+              <SectionRuleHeading label="Timestamps" />
               <div className="space-y-2">
                 {company.created_at && (
                   <div className="flex justify-between">

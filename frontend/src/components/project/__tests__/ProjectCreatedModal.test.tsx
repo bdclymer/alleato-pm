@@ -11,6 +11,7 @@ jest.mock("framer-motion", () => ({
   motion: {
     div: ({ children, ...props }: HTMLAttributes<HTMLDivElement>) => <div {...props}>{children}</div>,
     p: ({ children, ...props }: HTMLAttributes<HTMLParagraphElement>) => <p {...props}>{children}</p>,
+    // eslint-disable-next-line design-system/no-raw-heading
     h2: ({ children, ...props }: HTMLAttributes<HTMLHeadingElement>) => <h2 {...props}>{children}</h2>,
   },
   useReducedMotion: () => true,

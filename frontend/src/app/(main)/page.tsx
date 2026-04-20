@@ -302,6 +302,7 @@ function ProjectCard({
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
+          {/* eslint-disable-next-line design-system/no-raw-heading */}
           <h3 className="line-clamp-2 font-medium text-foreground leading-tight">
             {project.name}
           </h3>

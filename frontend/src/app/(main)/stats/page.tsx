@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable design-system/no-raw-heading */
 
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";

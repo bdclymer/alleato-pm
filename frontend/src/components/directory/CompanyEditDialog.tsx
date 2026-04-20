@@ -27,6 +27,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Loader2, Building2 } from "lucide-react";
 import type { Database } from "@/types/database.types";
+import { SectionRuleHeading } from "@/components/layout/spacing";
 
 type Company = Database["public"]["Tables"]["companies"]["Row"];
 
@@ -226,7 +227,7 @@ export function CompanyEditDialog({
             </div>
 
             <div className="space-y-4">
-              <h3 className="text-sm font-medium">Address</h3>
+              <SectionRuleHeading label="Address" />
 
               <FormField
                 control={form.control}
@@ -304,7 +305,7 @@ export function CompanyEditDialog({
             </div>
 
             <div className="space-y-4">
-              <h3 className="text-sm font-medium">Contact Information</h3>
+              <SectionRuleHeading label="Contact Information" />
 
               <div className="grid grid-cols-2 gap-4">
                 <FormField

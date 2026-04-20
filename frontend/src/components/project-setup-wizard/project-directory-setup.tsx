@@ -461,6 +461,7 @@ export function ProjectDirectorySetup({
             </div>
           ) : (
             <div className="space-y-4">
+              {/* eslint-disable-next-line design-system/no-raw-heading */}
               <h4 className="font-medium">Create New Person</h4>
 
               <div>

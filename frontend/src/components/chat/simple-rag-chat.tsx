@@ -187,6 +187,7 @@ export function SimpleRagChat({
             {councilMode ? (
               <>
                 <div className="text-2xl">⚡</div>
+                {/* eslint-disable-next-line design-system/no-raw-heading */}
                 <h3 className="text-base font-semibold text-foreground">
                   Council Mode
                 </h3>
@@ -196,6 +197,7 @@ export function SimpleRagChat({
               </>
             ) : (
               <>
+                {/* eslint-disable-next-line design-system/no-raw-heading */}
                 <h3 className="text-base font-semibold text-foreground">
                   Alleato AI Assistant
                 </h3>

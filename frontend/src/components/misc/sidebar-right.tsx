@@ -1,6 +1,7 @@
 import * as React from "react";
 import { CheckCircle2, Circle } from "lucide-react";
 
+import { Eyebrow } from "@/components/ds";
 import { NavUser } from "@/components/nav/nav-user";
 import {
   Sidebar,
@@ -46,9 +47,7 @@ export function SidebarRight({
       <SidebarContent className="px-4 py-6">
         {/* Project Setup Heading */}
         <div className="mb-6">
-          <h3 className="text-xs font-semibold tracking-[0.15em] uppercase text-muted-foreground">
-            Project Setup
-          </h3>
+          <Eyebrow>Project Setup</Eyebrow>
           <p className="text-xs text-muted-foreground mt-1">
             Complete these steps to get started
           </p>

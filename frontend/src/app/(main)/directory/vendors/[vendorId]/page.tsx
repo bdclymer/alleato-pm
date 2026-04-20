@@ -369,6 +369,7 @@ export default function VendorDetailPage() {
 
           {(contactName || phone || email) && (
             <div className="space-y-3 border-b border-border pb-8">
+              {/* eslint-disable-next-line design-system/no-raw-heading */}
               <h3 className="text-sm font-semibold text-foreground">Primary Contact</h3>
               <div className="space-y-2">
                 {contactName ? <p className="text-sm font-medium">{contactName}</p> : null}
@@ -417,6 +418,7 @@ export default function VendorDetailPage() {
 
           <section className="space-y-4">
             <div className="flex items-center justify-between">
+              {/* eslint-disable-next-line design-system/no-raw-heading */}
               <h3 className="text-sm font-semibold text-foreground">Company Contacts</h3>
               <Popover
                 open={addContactComboboxOpen}
@@ -540,6 +542,7 @@ export default function VendorDetailPage() {
           </section>
           {/* Projects & Activity */}
           <section className="space-y-6">
+            {/* eslint-disable-next-line design-system/no-raw-heading */}
             <h3 className="text-sm font-semibold text-foreground">Projects & Activity</h3>
 
             {isLoadingProjects ? (

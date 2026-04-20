@@ -97,6 +97,10 @@ Signal = useful data. Noise = decorative clutter.
 
 Examples of noise: unnecessary icons, extra cards, empty rows, excessive spacing, labels that repeat column names.
 
+Empty-state-specific noise to remove:
+- Do not show computed summary metrics that are guaranteed to be zero or placeholder-only in an empty state (example: showing `Total invoiced: $0.00` above a "No invoices yet" state).
+- In empty states, keep only what helps the user move forward: a clear title, a short explanation, and a primary action.
+
 ### Progressive Disclosure
 
 Don't show everything at once.

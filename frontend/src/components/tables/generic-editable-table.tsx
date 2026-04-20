@@ -449,6 +449,7 @@ export function GenericEditableTable<T extends { id: string | number }>({
                     />
                   )}
                   <div className="flex-1 min-w-0">
+                    {/* eslint-disable-next-line design-system/no-raw-heading */}
                     <h3 className="font-medium truncate">
                       {renderCellValue(primaryColumn, row)}
                     </h3>
@@ -514,6 +515,7 @@ export function GenericEditableTable<T extends { id: string | number }>({
             )}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-4">
+                {/* eslint-disable-next-line design-system/no-raw-heading */}
                 <h3 className="font-medium truncate flex-1">
                   {renderCellValue(primaryColumn, row)}
                 </h3>

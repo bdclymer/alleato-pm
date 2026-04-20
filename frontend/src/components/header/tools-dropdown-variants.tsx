@@ -74,6 +74,7 @@ function ToolLink({
 // Section header
 function SectionHeader({ label }: { label: string }) {
   return (
+    {/* eslint-disable-next-line design-system/no-raw-heading */}
     <h3 className="text-[11px] font-semibold uppercase tracking-widest text-zinc-700 mb-3 px-2.5">
       {label}
     </h3>

@@ -285,6 +285,7 @@ function CompanyPreviewPane({
         {/* Company header */}
         <div className="space-y-2">
           <div className="min-w-0">
+            {/* eslint-disable-next-line design-system/no-raw-heading */}
             <h3 className="text-sm font-semibold leading-tight truncate">{displayName}</h3>
             <div className="mt-1.5 flex flex-wrap items-center gap-2">
               {typeLabel && (

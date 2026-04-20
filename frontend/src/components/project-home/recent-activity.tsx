@@ -58,6 +58,7 @@ function formatRelativeTime(date: Date): string {
 export function RecentActivity({ activities, projectId }: RecentActivityProps) {
   return (
     <div className="bg-background rounded-md border border-border p-6">
+      {/* eslint-disable-next-line design-system/no-raw-heading */}
       <h3 className="text-sm font-semibold text-foreground mb-4">
         Recent Activity
       </h3>

@@ -60,6 +60,7 @@ export function ProjectRolesTab({ projectId }: ProjectRolesTabProps) {
   return (
     <div className="bg-background rounded-lg border border-border">
       <div className="px-6 py-4 border-b border-border">
+        {/* eslint-disable-next-line design-system/no-raw-heading */}
         <h2 className="text-lg font-semibold text-foreground">Project Roles</h2>
       </div>
 

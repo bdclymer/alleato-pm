@@ -337,6 +337,7 @@ export function renderCompanyCard(
       onClick={() => onClick(item)}
     >
       <div className="flex items-start justify-between mb-2">
+        {/* eslint-disable-next-line design-system/no-raw-heading */}
         <h3 className="font-medium">
           {String(getCompanyNestedValue(item, "company.name") || "")}
         </h3>

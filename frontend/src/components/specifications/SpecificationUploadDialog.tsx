@@ -44,6 +44,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
+import { SectionRuleHeading } from "@/components/layout/spacing";
 import { useCreateSpecification, useSpecifications } from "@/hooks/use-specifications";
 import {
   uploadSpecificationSchema,
@@ -374,7 +375,7 @@ export function SpecificationUploadDialog({
 
             <section className="space-y-4">
               <div className="space-y-1">
-                <h3 className="text-sm font-semibold text-foreground">Advanced Options</h3>
+                <SectionRuleHeading label="Advanced Options" />
               </div>
 
               <FormField

@@ -20,6 +20,7 @@ export function RouteErrorPage({ error, reset }: RouteErrorPageProps) {
         <AlertCircle className="h-7 w-7 text-destructive" />
       </div>
       <div className="space-y-2">
+        {/* eslint-disable-next-line design-system/no-raw-heading */}
         <h2 className="text-lg font-semibold text-foreground">Something went wrong</h2>
         <p className="text-sm text-muted-foreground max-w-md">
           {error.message || "An unexpected error occurred while loading this page."}

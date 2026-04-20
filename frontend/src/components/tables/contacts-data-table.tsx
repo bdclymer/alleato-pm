@@ -281,6 +281,7 @@ export function ContactsDataTable({
   return (
     <div className="flex w-full flex-col justify-start gap-6">
       <div className="flex items-center justify-between px-4 lg:px-6">
+        {/* eslint-disable-next-line design-system/no-raw-heading */}
         <h2 className="text-xl font-semibold">
           {showEmployeesOnly ? "Employees" : "Contacts"}
         </h2>

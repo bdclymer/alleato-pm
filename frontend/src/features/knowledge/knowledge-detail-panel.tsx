@@ -35,6 +35,7 @@ export function KnowledgeDetailPanel({
       {/* Header */}
       <div className="flex items-start justify-between gap-2 p-4">
         <div className="min-w-0 flex-1">
+          {/* eslint-disable-next-line design-system/no-raw-heading */}
           <h3 className="text-sm font-semibold text-foreground leading-tight">
             {article.title}
           </h3>

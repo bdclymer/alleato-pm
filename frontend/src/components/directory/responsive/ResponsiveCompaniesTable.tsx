@@ -124,6 +124,7 @@ export function ResponsiveCompaniesTable({
           <div key={company.id} className="border rounded-lg p-4 space-y-4">
             <div className="flex items-start justify-between">
               <div className="flex-1">
+                {/* eslint-disable-next-line design-system/no-raw-heading */}
                 <h3 className="font-medium">
                   {companyDetails?.name || "Unnamed Company"}
                 </h3>

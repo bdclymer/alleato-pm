@@ -22,6 +22,7 @@ export function ProjectTeam({ team, projectId }: ProjectTeamProps) {
   return (
     <div className="bg-background rounded-md border border-border">
       <div className="px-6 py-4 border-b border-border flex items-center justify-between">
+        {/* eslint-disable-next-line design-system/no-raw-heading */}
         <h2 className="text-base font-semibold text-foreground">Project Team</h2>
         <Link
           href={`/${projectId}/directory/settings`}

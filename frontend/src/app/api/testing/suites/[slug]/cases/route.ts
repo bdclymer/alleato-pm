@@ -1,8 +1,7 @@
 /**
  * /api/testing/suites/[slug]/cases
- * GET ?type=scenario|feature&depth=broad|detailed|all
- *   — returns all active (non-inactive) test cases for a tool, grouped by category.
- *     The depth param is accepted for backward compatibility but not applied.
+ * GET ?suiteType=smoke|feature&type=scenario|feature
+ *   — returns active test cases for a tool + suite_type, grouped by category.
  */
 import { NextResponse } from "next/server";
 
@@ -15,25 +14,27 @@ export const GET = withApiGuardrails<{ slug: string }>(
     const { slug } = await params;
     const { searchParams } = new URL(request.url);
     const typeFilter = searchParams.get("type") ?? "all";
+    const suiteTypeRaw = searchParams.get("suiteType") ?? searchParams.get("type_suite");
+    const suiteType: "smoke" | "feature" =
+      suiteTypeRaw === "smoke" || suiteTypeRaw === "feature" ? suiteTypeRaw : "feature";
 
     const supabase = await createClient();
 
     const { data: suite, error: suiteErr } = await supabase
       .from("test_suites")
-      .select("id, tool_name, display_name")
+      .select("id, tool_name, display_name, suite_type")
       .eq("tool_name", slug)
-      .single();
+      .eq("suite_type", suiteType)
+      .maybeSingle();
 
     if (suiteErr || !suite) {
       return NextResponse.json({ error: "Suite not found" }, { status: 404 });
     }
 
-    // Use "or" so that cases with status=null (not yet explicitly set) are included,
-    // and only rows explicitly marked status='inactive' are excluded.
     let query = supabase
       .from("test_cases")
       .select(
-        "id, test_number, category, subcategory, test_name, context_note, setup_steps, steps, expected_result, priority, start_url, test_type, scenario_depth"
+        "id, test_number, category, subcategory, test_name, context_note, setup_steps, steps, expected_result, priority, start_url, test_type"
       )
       .eq("suite_id", suite.id)
       .or("status.is.null,status.neq.inactive");
@@ -69,7 +70,11 @@ export const GET = withApiGuardrails<{ slug: string }>(
     }
 
     return NextResponse.json({
-      suite: { tool_name: suite.tool_name, display_name: suite.display_name },
+      suite: {
+        tool_name: suite.tool_name,
+        display_name: suite.display_name,
+        suite_type: (suite as { suite_type?: "smoke" | "feature" }).suite_type ?? "smoke",
+      },
       total: cases?.length ?? 0,
       categories: categoryOrder,
       grouped,

@@ -84,6 +84,7 @@ export function PermissionsTableTab({ projectId }: PermissionsTableTabProps) {
       {/* Main table */}
       <div className="flex-1 bg-background rounded-lg border border-border">
         <div className="px-6 py-4 border-b border-border">
+          {/* eslint-disable-next-line design-system/no-raw-heading */}
           <h2 className="text-lg font-semibold text-foreground">
             User Permissions for Directory
           </h2>
@@ -132,6 +133,7 @@ export function PermissionsTableTab({ projectId }: PermissionsTableTabProps) {
       {/* Search sidebar */}
       <div className="w-64 shrink-0">
         <div className="bg-background rounded-lg border border-border p-4">
+          {/* eslint-disable-next-line design-system/no-raw-heading */}
           <h3 className="text-sm font-semibold text-foreground mb-4">
             SEARCH PERMISSIONS
           </h3>

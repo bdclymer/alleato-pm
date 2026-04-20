@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable design-system/no-raw-heading */
 
 import { useMemo, useState } from "react";
 import { Plus, Search, Shield, Trash2 } from "lucide-react";

@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable design-system/no-raw-heading */
 
 import { useEffect, useState } from "react";
 import { ChevronDown, ChevronUp, BookOpen } from "lucide-react";

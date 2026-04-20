@@ -238,6 +238,7 @@ function ProspectPreviewPane({
               <Building2 className="h-5 w-5" />
             </div>
             <div className="min-w-0 flex-1">
+              {/* eslint-disable-next-line design-system/no-raw-heading */}
               <h3 className="text-sm font-semibold leading-tight truncate">{prospect.company_name}</h3>
               {prospect.contact_name && (
                 <p className="mt-0.5 text-xs text-muted-foreground truncate">{prospect.contact_name}</p>

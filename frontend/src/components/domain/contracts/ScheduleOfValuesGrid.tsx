@@ -5,6 +5,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScheduleOfValuesRow } from "./ScheduleOfValuesRow";
 import { cn } from "@/lib/utils";
+import { SectionRuleHeading } from "@/components/layout/spacing";
 import {
   InlineTable,
   InlineTableHeader,
@@ -81,7 +82,7 @@ export function ScheduleOfValuesGrid({
   return (
     <div className={cn("space-y-4", className)}>
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Schedule of Values</h3>
+        <SectionRuleHeading label="Schedule of Values" />
         <Button onClick={addRow} size="sm">
           <Plus />
           Add Line Item

@@ -74,6 +74,7 @@ export function AddCompanyModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/90">
       <div className="w-full max-w-md rounded-lg bg-card p-6 shadow-sm">
+        {/* eslint-disable-next-line design-system/no-raw-heading */}
         <h3 className="text-lg font-semibold">Add Company to Directory</h3>
         <p className="mt-1 text-sm text-muted-foreground">
           Add a new company to the project directory so it can be selected as a vendor.

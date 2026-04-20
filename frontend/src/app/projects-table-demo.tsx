@@ -1,4 +1,5 @@
 'use client';
+/* eslint-disable design-system/no-raw-heading */
 
 import React, { useState } from 'react';
 import { Search, Menu, Bell, Globe, FileText, Users, Settings, CheckCircle, X, ChevronLeft, ChevronRight } from 'lucide-react';

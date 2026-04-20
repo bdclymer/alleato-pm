@@ -75,6 +75,7 @@ function AdminDropdown() {
           <div className="flex gap-8">
             {adminSections.map((section) => (
               <div key={section.label} className="shrink-0">
+                {/* eslint-disable-next-line design-system/no-raw-heading */}
                 <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
                   {section.label}
                 </h3>

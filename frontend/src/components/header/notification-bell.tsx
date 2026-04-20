@@ -128,6 +128,7 @@ export function NotificationBell() {
               </span>
             ) : null}
           </div>
+          {/* eslint-disable-next-line design-system/no-raw-heading */}
           <h3 className="text-base font-semibold">Notifications</h3>
           <div className="ml-auto flex items-center gap-1">
             {notifications.length > 0 ? (

@@ -37,6 +37,7 @@ export function ChatHeader({
       {/* Channel name + topic */}
       <div className="flex min-w-0 flex-1 items-center gap-2">
         <div className="min-w-0">
+          {/* eslint-disable-next-line design-system/no-raw-heading */}
           <h2 className="truncate text-sm font-semibold text-foreground">{channelName}</h2>
           <p className="truncate text-xs text-muted-foreground">{topic}</p>
         </div>

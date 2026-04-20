@@ -193,6 +193,7 @@ export function renderEmailCard(
             {item.is_starred && (
               <Star className="h-3.5 w-3.5 shrink-0 fill-current text-status-warning" />
             )}
+            {/* eslint-disable-next-line design-system/no-raw-heading */}
             <h3 className="font-medium truncate">{item.subject || "No Subject"}</h3>
           </div>
           <p className="text-xs text-muted-foreground mt-0.5">

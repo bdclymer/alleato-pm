@@ -46,6 +46,7 @@ export function FormSection({
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-0.5">
+          {/* eslint-disable-next-line design-system/no-raw-heading */}
           <h2 className="text-lg font-semibold tracking-tight text-foreground">
             {title}
           </h2>

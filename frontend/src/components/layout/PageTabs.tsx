@@ -47,22 +47,26 @@ export function PageTabs({
   const navClasses =
     variant === "inline"
       ? "-mb-px flex overflow-x-auto scrollbar-hide"
-      : "-mb-px flex overflow-x-auto scrollbar-hide border-b border-border";
+      : "-mb-px flex overflow-x-auto scrollbar-hide";
   const buttonClasses =
     variant === "inline"
-      ? "group inline-flex min-h-11 items-center gap-2 whitespace-nowrap border-b-2 px-2 py-2 text-sm transition-colors"
-      : "group inline-flex min-h-11 items-center gap-2 whitespace-nowrap border-b-2 px-2 py-3 text-sm transition-colors";
+      ? "group relative inline-flex min-h-10 items-center gap-2 whitespace-nowrap px-2 py-1.5 text-sm transition-colors"
+      : "group relative inline-flex min-h-11 items-center gap-2 whitespace-nowrap px-2 py-3 text-sm transition-colors";
 
   return (
     <div className={cn(wrapperClasses, "mb-4 md:mb-6", className)}>
       <nav className={navClasses} aria-label="Tabs">
         <div className="flex min-w-max space-x-4 md:space-x-6">
-          {tabs.map((tab) => {
+          {tabs.map((tab, index) => {
             const isActive =
               tab.isActive ??
               (hasExactHrefMatch
                 ? tab.href === currentPath
                 : pathname === tab.href);
+            const displayCount =
+              tab.count !== undefined && tab.count > 99 ? "99+" : tab.count;
+            const countText = displayCount !== undefined ? String(displayCount) : "";
+            const isSingleDigitCount = /^\d$/.test(countText);
 
             return (
               <React.Fragment key={tab.href}>
@@ -76,9 +80,10 @@ export function PageTabs({
                   data-testid={tab.testId}
                   className={cn(
                     buttonClasses,
+                    variant === "inline" && index === 0 && "pl-0",
                     isActive
-                      ? "border-primary text-primary font-semibold"
-                      : "border-transparent text-foreground/60 font-medium hover:text-foreground",
+                      ? "text-primary font-medium"
+                      : "text-foreground/70 font-medium hover:text-foreground/90",
                   )}
                   aria-current={isActive ? "page" : undefined}
                 >
@@ -86,16 +91,25 @@ export function PageTabs({
                   {tab.count !== undefined && (
                     <span
                       className={cn(
-                        "rounded-full px-2.5 py-0.5 text-xs font-medium",
+                        "inline-flex h-5 items-center justify-center rounded-full text-[10px] font-semibold leading-none",
+                        isSingleDigitCount ? "w-5" : "min-w-5 px-1.5",
+                        displayCount === "99+" && "text-[9px]",
                         isActive
                           ? "bg-primary/10 text-primary"
                           : "bg-muted text-foreground",
                       )}
                       data-testid={tab.countTestId}
                     >
-                      {tab.count}
+                      {displayCount}
                     </span>
                   )}
+                  <span
+                    aria-hidden="true"
+                    className={cn(
+                      "pointer-events-none absolute bottom-0 left-0 right-0 h-0.5 rounded-full transition-colors",
+                      isActive ? "bg-primary" : "bg-transparent",
+                    )}
+                  />
                 </button>
               </React.Fragment>
             );

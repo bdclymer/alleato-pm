@@ -133,6 +133,7 @@ export function SnapshotsTab({ projectId }: SnapshotsTabProps) {
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
         <div>
+          {/* eslint-disable-next-line design-system/no-raw-heading */}
           <h2 className="text-2xl font-bold tracking-tight">
             Project Status Snapshots
           </h2>

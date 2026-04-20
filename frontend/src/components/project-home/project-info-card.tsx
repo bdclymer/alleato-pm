@@ -40,6 +40,7 @@ export function ProjectInfoCard({ project }: ProjectInfoCardProps) {
     <div className="bg-background rounded-md border border-border p-6">
       <div className="flex items-start justify-between mb-4">
         <div>
+          {/* eslint-disable-next-line design-system/no-raw-heading */}
           <h2 className="text-lg font-semibold text-foreground">
             {project.name}
           </h2>

@@ -1,12 +1,26 @@
 ---
 name: test-scenario-writer
 description: >
-  Write exhaustive plain-English test scenarios for every feature of any Alleato
-  tool, seeded directly into Supabase so they appear immediately in the scenario
-  runner at /testing. Use when: "write test scenarios for [tool]", "create manual
-  tests for [tool]", "generate testing scenarios for [tool]", or any request to
-  produce guided tests for non-technical testers.
+  DEPRECATED — use /test-scenario-audit instead.
 argument-hint: <tool-name>
+---
+
+> **DEPRECATED — use `/test-scenario-audit` instead.**
+>
+> This skill is superseded by `/test-scenario-audit`, which produces BOTH a
+> smoke suite (5–15 critical-path cases) AND a feature suite (20–40
+> consolidated CRUD + workflow cases) per tool, seeded into Supabase with the
+> new `test_suites.suite_type` column and emitted as markdown files under
+> `docs/testing/scenarios/`.
+>
+> This skill:
+> - References `scenario_depth` (removed from the schema on 2026-04-20)
+> - Produces 50–120 exhaustive cases (too many; no longer the target)
+> - Has no smoke/feature split
+>
+> Do not invoke this skill. Run `/test-scenario-audit <tool>` instead.
+> Definition: `.claude/skills/testing/test-scenario-audit/SKILL.md`.
+
 ---
 
 # Test Scenario Writer

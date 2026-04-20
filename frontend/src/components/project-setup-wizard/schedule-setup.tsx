@@ -242,6 +242,7 @@ export function ScheduleSetup({
 
         {uploadingFiles.length > 0 && (
           <div className="space-y-2">
+            {/* eslint-disable-next-line design-system/no-raw-heading */}
             <h4 className="font-medium">Uploading Files</h4>
             {uploadingFiles.map((file) => (
               <div
@@ -289,6 +290,7 @@ export function ScheduleSetup({
 
         {uploadedDocuments.length > 0 && (
           <div className="space-y-2">
+            {/* eslint-disable-next-line design-system/no-raw-heading */}
             <h4 className="font-medium">Uploaded Schedules</h4>
             <Table>
               <TableHeader>

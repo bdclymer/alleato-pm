@@ -31,6 +31,7 @@ export function DocumentPreviewModal({
                   ? "HTML document"
                   : "File preview"}
             </p>
+            {/* eslint-disable-next-line design-system/no-raw-heading */}
             <h3 className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
               {document.title}
             </h3>

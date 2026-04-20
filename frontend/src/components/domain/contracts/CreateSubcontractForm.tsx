@@ -20,6 +20,7 @@ import {
   SovSection,
 } from "./subcontract-form";
 import { useSubcontractFormState } from "./subcontract-form/useSubcontractFormState";
+import { SectionRuleHeading } from "@/components/layout/spacing";
 
 interface CreateSubcontractFormProps {
   projectId: number;
@@ -140,7 +141,7 @@ export function CreateSubcontractForm({
 
             <section className="space-y-4 border-b border-border/70 pb-8">
               <div className="space-y-1">
-                <h2 className="text-lg font-semibold text-foreground">Attachments</h2>
+                <SectionRuleHeading label="Attachments" />
                 <p className="text-sm text-muted-foreground">
                   Attach contract documents, plans, or other relevant files
                 </p>

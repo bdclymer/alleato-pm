@@ -1,33 +1,18 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { DollarSign, Plus, X } from "lucide-react";
+import { DollarSign, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import type { ColumnDef } from "@tanstack/react-table";
 
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ds";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Modal,
-  ModalContent,
-  ModalDescription,
-  ModalFooter,
-  ModalHeader,
-  ModalTitle,
-} from "@/components/ui/unified-modal";
-import {
-  DataTable,
-  type DataTableFooterCell,
-} from "@/components/tables/DataTable";
+import { DataTable, type DataTableFooterCell } from "@/components/tables/DataTable";
 import { apiFetch } from "@/lib/api-client";
 import { SectionRuleHeading } from "@/components/layout/spacing";
+import { formatDate } from "@/lib/format";
 import type {
   Payment,
-  PaymentApplication,
-  PaymentFormState,
   Contract,
 } from "@/app/(main)/[projectId]/prime-contracts/[contractId]/types";
 
@@ -36,7 +21,6 @@ interface PrimeContractPaymentsTabProps {
   contractId: string;
   payments: Payment[];
   paymentsReceivedLoading: boolean;
-  paymentApplications: PaymentApplication[];
   setPayments: React.Dispatch<React.SetStateAction<Payment[]>>;
   setContract: React.Dispatch<React.SetStateAction<Contract | null>>;
   formatCurrency: (value: number | null | undefined) => string;
@@ -47,85 +31,40 @@ export function PrimeContractPaymentsTab({
   contractId,
   payments,
   paymentsReceivedLoading,
-  paymentApplications,
   setPayments,
   setContract,
   formatCurrency,
 }: PrimeContractPaymentsTabProps) {
-  const [showAddPaymentDialog, setShowAddPaymentDialog] = useState(false);
-  const [paymentForm, setPaymentForm] = useState<PaymentFormState>({
-    amount: "",
-    payment_date: "",
-    payment_application_id: "",
-    payment_number: "",
-    method: "",
-    reference_number: "",
-    notes: "",
-  });
-  const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+
   const totalPaymentsReceived = useMemo(
     () => payments.reduce((sum, payment) => sum + payment.amount, 0),
     [payments],
   );
-  const refreshContract = async () => {
-    const nextContract = await apiFetch<Contract>(`/api/projects/${projectId}/contracts/${contractId}`);
-    setContract(nextContract);
-  };
 
-  const handleCreatePayment = async () => {
-    if (!paymentForm.amount || !paymentForm.payment_date) return;
+  const handleSyncERP = async () => {
     try {
-      setIsSubmittingPayment(true);
-      const newPayment = await apiFetch<Payment>(
-        `/api/projects/${projectId}/contracts/${contractId}/payments`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            amount: parseFloat(paymentForm.amount),
-            payment_date: paymentForm.payment_date,
-            payment_application_id: paymentForm.payment_application_id || null,
-            payment_number: paymentForm.payment_number || null,
-            method: paymentForm.method || null,
-            reference_number: paymentForm.reference_number || null,
-            notes: paymentForm.notes || null,
-          }),
-        },
+      setIsSyncing(true);
+      const result = await apiFetch<{ payments: Payment[]; contract: Contract }>(
+        `/api/projects/${projectId}/contracts/${contractId}/sync-payments`,
+        { method: "POST" },
       );
-      setPayments((prev) => [newPayment, ...prev]);
-      setShowAddPaymentDialog(false);
-      setPaymentForm({
-        amount: "",
-        payment_date: "",
-        payment_application_id: "",
-        payment_number: "",
-        method: "",
-        reference_number: "",
-        notes: "",
-      });
-      toast.success("Payment recorded successfully");
-      await refreshContract();
+      setPayments(result.payments);
+      setContract(result.contract);
+      toast.success("Payments synced from Acumatica");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to record payment");
+      toast.error(error instanceof Error ? error.message : "Failed to sync payments from ERP");
     } finally {
-      setIsSubmittingPayment(false);
+      setIsSyncing(false);
     }
   };
 
-  const handleDeletePayment = async (paymentId: string) => {
-    if (!confirm("Delete this payment record? This cannot be undone.")) return;
-    try {
-      await apiFetch(
-        `/api/projects/${projectId}/contracts/${contractId}/payments/${paymentId}`,
-        { method: "DELETE" },
-      );
-      setPayments((prev) => prev.filter((p) => p.id !== paymentId));
-      toast.success("Payment deleted");
-      await refreshContract();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to delete payment");
-    }
-  };
+  const syncButton = (
+    <Button size="sm" onClick={handleSyncERP} disabled={isSyncing}>
+      <RefreshCw className={isSyncing ? "animate-spin" : undefined} />
+      {isSyncing ? "Syncing..." : "Sync with ERP"}
+    </Button>
+  );
 
   const columns: ColumnDef<Payment>[] = useMemo(
     () => [
@@ -139,7 +78,7 @@ export function PrimeContractPaymentsTab({
       {
         accessorKey: "payment_date",
         header: "Date",
-        cell: ({ row }) => <div>{new Date(row.original.payment_date).toLocaleDateString()}</div>,
+        cell: ({ row }) => <div>{formatDate(row.original.payment_date)}</div>,
       },
       {
         accessorKey: "amount",
@@ -173,25 +112,6 @@ export function PrimeContractPaymentsTab({
           </div>
         ),
       },
-      {
-        id: "actions",
-        header: "",
-        cell: ({ row }) => (
-          <div className="flex justify-end">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-destructive hover:text-destructive"
-              onClick={(event) => {
-                event.stopPropagation();
-                void handleDeletePayment(row.original.id);
-              }}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-        ),
-      },
     ],
     [formatCurrency],
   );
@@ -200,16 +120,9 @@ export function PrimeContractPaymentsTab({
     () => [
       { value: "Total Received", colSpan: 2, align: "left" },
       { value: formatCurrency(totalPaymentsReceived) },
-      { value: "", colSpan: 4 },
+      { value: "", colSpan: 3 },
     ],
     [formatCurrency, totalPaymentsReceived],
-  );
-
-  const createButton = (
-    <Button size="sm" onClick={() => setShowAddPaymentDialog(true)}>
-      <Plus />
-      Record Payment
-    </Button>
   );
 
   return (
@@ -217,26 +130,26 @@ export function PrimeContractPaymentsTab({
       <div className="bg-background">
         <div className="flex items-center justify-between">
           <SectionRuleHeading label="Payments Received" className="flex-1" />
-          {payments.length > 0 && createButton}
+          {payments.length > 0 && syncButton}
         </div>
-        <p className="text-sm text-muted-foreground -mt-3 mb-4">
-          {payments.length} payment{payments.length === 1 ? "" : "s"} •{" "}
-          Total received: {formatCurrency(totalPaymentsReceived)}
-        </p>
+        {payments.length > 0 ? (
+          <p className="text-sm text-muted-foreground -mt-3 mb-4">
+            {payments.length} payment{payments.length === 1 ? "" : "s"} •{" "}
+            Total received: {formatCurrency(totalPaymentsReceived)}
+          </p>
+        ) : null}
 
         {paymentsReceivedLoading ? (
           <div className="text-center py-8 text-muted-foreground">
             <p>Loading payments...</p>
           </div>
         ) : payments.length === 0 ? (
-          <div className="flex flex-col items-center">
-            <EmptyState
-              icon={<DollarSign />}
-              title="No payments recorded yet"
-              description="Record a payment when funds are received."
-            />
-            {createButton}
-          </div>
+          <EmptyState
+            icon={<DollarSign />}
+            title="No payments synced yet"
+            description="Payments are synced automatically from Acumatica. Use the button below to pull the latest data."
+            action={syncButton}
+          />
         ) : (
           <DataTable
             columns={columns}
@@ -247,131 +160,6 @@ export function PrimeContractPaymentsTab({
           />
         )}
       </div>
-
-      {/* Record Payment Dialog */}
-      <Modal open={showAddPaymentDialog} onOpenChange={setShowAddPaymentDialog}>
-        <ModalContent className="max-w-lg">
-          <ModalHeader>
-            <ModalTitle>Record Payment Received</ModalTitle>
-            <ModalDescription>
-              Log a payment received against this prime contract.
-            </ModalDescription>
-          </ModalHeader>
-          <div className="space-y-4 py-2">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="pmt-amount">Amount *</Label>
-                <Input
-                  id="pmt-amount"
-                  type="number"
-                  placeholder=""
-                  value={paymentForm.amount}
-                  onChange={(e) =>
-                    setPaymentForm((f) => ({ ...f, amount: e.target.value }))
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="pmt-date">Payment Date *</Label>
-                <Input
-                  id="pmt-date"
-                  type="date"
-                  value={paymentForm.payment_date}
-                  onChange={(e) =>
-                    setPaymentForm((f) => ({ ...f, payment_date: e.target.value }))
-                  }
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="pmt-method">Method</Label>
-                <select
-                  id="pmt-method"
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-4 py-1 text-sm shadow-sm"
-                  value={paymentForm.method}
-                  onChange={(e) =>
-                    setPaymentForm((f) => ({ ...f, method: e.target.value }))
-                  }
-                >
-                  <option value="">Select method</option>
-                  <option value="check">Check</option>
-                  <option value="wire">Wire Transfer</option>
-                  <option value="ach">ACH</option>
-                  <option value="credit_card">Credit Card</option>
-                  <option value="cash">Cash</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="pmt-ref">Reference / Check #</Label>
-                <Input
-                  id="pmt-ref"
-                  placeholder="e.g. 12345"
-                  value={paymentForm.reference_number}
-                  onChange={(e) =>
-                    setPaymentForm((f) => ({ ...f, reference_number: e.target.value }))
-                  }
-                />
-              </div>
-            </div>
-            {paymentApplications.length > 0 && (
-              <div className="space-y-2">
-                <Label htmlFor="pmt-app">Linked Invoice (optional)</Label>
-                <select
-                  id="pmt-app"
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-4 py-1 text-sm shadow-sm"
-                  value={paymentForm.payment_application_id}
-                  onChange={(e) =>
-                    setPaymentForm((f) => ({
-                      ...f,
-                      payment_application_id: e.target.value,
-                    }))
-                  }
-                >
-                  <option value="">None</option>
-                  {paymentApplications.map((app) => (
-                    <option key={app.id} value={app.id}>
-                      App #{app.application_number} — {formatCurrency(app.amount)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-            <div className="space-y-2">
-              <Label htmlFor="pmt-notes">Notes</Label>
-              <Textarea
-                id="pmt-notes"
-                placeholder="Optional notes..."
-                rows={3}
-                value={paymentForm.notes}
-                onChange={(e) =>
-                  setPaymentForm((f) => ({ ...f, notes: e.target.value }))
-                }
-              />
-            </div>
-          </div>
-          <ModalFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowAddPaymentDialog(false)}
-              disabled={isSubmittingPayment}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleCreatePayment}
-              disabled={
-                isSubmittingPayment ||
-                !paymentForm.amount ||
-                !paymentForm.payment_date
-              }
-            >
-              {isSubmittingPayment ? "Recording..." : "Record Payment"}
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
     </div>
   );
 }

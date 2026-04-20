@@ -164,6 +164,7 @@ export function CreateBudgetLineItemsModal({
                   <Plus className="h-8 w-8" />
                 </div>
               </div>
+              {/* eslint-disable-next-line design-system/no-raw-heading */}
               <h3 className="text-lg font-medium text-foreground mb-2">
                 You Have No Line Items Yet
               </h3>

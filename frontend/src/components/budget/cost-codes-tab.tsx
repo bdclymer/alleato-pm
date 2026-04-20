@@ -690,6 +690,7 @@ export function CostCodesTab({ projectId, onSave }: CostCodesTabProps) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
+          {/* eslint-disable-next-line design-system/no-raw-heading */}
           <h2 className="text-lg font-semibold text-foreground">
             Project Cost Codes
           </h2>

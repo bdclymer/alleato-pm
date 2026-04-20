@@ -261,6 +261,7 @@ export const InlineCitationSource = ({
 }: InlineCitationSourceProps) => (
   <div className={cn("space-y-1", className)} {...props}>
     {title && (
+      // eslint-disable-next-line design-system/no-raw-heading
       <h4 className="truncate font-medium text-sm leading-tight">{title}</h4>
     )}
     {url && (

@@ -376,6 +376,7 @@ export function renderCommitmentCard(
       <div className="flex items-start justify-between mb-2">
         <div>
           <p className="text-xs uppercase text-muted-foreground">{item.number}</p>
+          {/* eslint-disable-next-line design-system/no-raw-heading */}
           <h3 className="font-medium">{item.title ?? "Untitled Commitment"}</h3>
         </div>
         <StatusBadge status={statusLabel(item.status)} />

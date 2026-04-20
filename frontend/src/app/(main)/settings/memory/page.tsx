@@ -329,6 +329,7 @@ export default function MemorySettingsPage() {
             return (
               <div key={type}>
                 <div className="flex items-center gap-2 mb-1">
+                  {/* eslint-disable-next-line design-system/no-raw-heading */}
                   <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                     {TYPE_LABELS[type]}
                   </h2>

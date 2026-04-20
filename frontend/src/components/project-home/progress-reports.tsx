@@ -116,6 +116,7 @@ export function ProgressReports({ projectId }: ProgressReportsProps) {
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-4 mb-2">
+                    {/* eslint-disable-next-line design-system/no-raw-heading */}
                     <h4 className="text-sm font-semibold text-foreground">
                       {report.title}
                     </h4>

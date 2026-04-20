@@ -60,6 +60,7 @@ export function EstimatesHubClient({ stats }: Props) {
                   <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
                 </div>
 
+                {/* eslint-disable-next-line design-system/no-raw-heading */}
                 <h3 className="text-base font-semibold text-foreground">
                   {EstimateTypeLabels[type]}
                 </h3>

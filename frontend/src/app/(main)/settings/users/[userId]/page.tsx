@@ -251,6 +251,7 @@ export default function UserDetailPage() {
         {/* Profile */}
         <section>
           <div className="mb-2">
+            {/* eslint-disable-next-line design-system/no-raw-heading */}
             <h2 className="text-sm font-semibold text-foreground">Profile</h2>
             <p className="text-xs text-muted-foreground">Basic account details.</p>
           </div>
@@ -299,6 +300,7 @@ export default function UserDetailPage() {
         {/* Permissions */}
         <section>
           <div className="mb-2">
+            {/* eslint-disable-next-line design-system/no-raw-heading */}
             <h2 className="text-sm font-semibold text-foreground">Permissions</h2>
             <p className="text-xs text-muted-foreground">
               Selecting a role applies its default permissions. Override individual permissions below.
@@ -339,6 +341,7 @@ export default function UserDetailPage() {
         {/* Account Info */}
         <section>
           <div className="mb-2">
+            {/* eslint-disable-next-line design-system/no-raw-heading */}
             <h2 className="text-sm font-semibold text-foreground">Account Info</h2>
           </div>
           <dl className="divide-y divide-border">
@@ -358,6 +361,7 @@ export default function UserDetailPage() {
         {/* Danger zone */}
         <section>
           <div className="mb-2">
+            {/* eslint-disable-next-line design-system/no-raw-heading */}
             <h2 className="text-sm font-semibold text-destructive">Danger zone</h2>
           </div>
           <div className="py-2">

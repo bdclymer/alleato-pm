@@ -68,6 +68,10 @@ export function PrimeContractAdvancedSettingsTab({
   setContract,
   changeOrderCount = 0,
 }: PrimeContractAdvancedSettingsTabProps) {
+  const checkboxRowClassName = "flex items-start gap-3";
+  const checkboxLabelClassName = "pt-0.5 text-sm font-medium text-foreground leading-5";
+  const checkboxMutedLabelClassName = "pt-0.5 text-sm text-muted-foreground leading-5";
+
   const coTierLocked = changeOrderCount > 0;
   const updateAdvancedSetting = <K extends keyof PrimeContractSettings>(
     key: K,
@@ -130,7 +134,7 @@ export function PrimeContractAdvancedSettingsTab({
         <div className="max-w-xl space-y-6">
           <div>
             <SectionRuleHeading label="Financial Markup" />
-            <div className="mt-4 flex items-center gap-3">
+            <div className={`mt-4 ${checkboxRowClassName}`}>
               <Checkbox
                 id="enable-financial-markups"
                 checked={advancedSettings?.show_markup_on_co_pdf ?? true}
@@ -138,7 +142,7 @@ export function PrimeContractAdvancedSettingsTab({
                   updateAdvancedSetting("show_markup_on_co_pdf", !!checked)
                 }
               />
-              <Label htmlFor="enable-financial-markups" className="text-sm font-medium">
+              <Label htmlFor="enable-financial-markups" className={checkboxLabelClassName}>
                 Enable Financial Markups
               </Label>
             </div>
@@ -147,15 +151,15 @@ export function PrimeContractAdvancedSettingsTab({
           <div>
             <SectionRuleHeading label="Owner Invoices" />
             <div className="mt-4 space-y-5">
-              <div className="flex items-center gap-3">
+              <div className={checkboxRowClassName}>
                 <Checkbox id="enable-owner-invoices" checked disabled />
-                <Label htmlFor="enable-owner-invoices" className="text-sm font-medium text-foreground">
+                <Label htmlFor="enable-owner-invoices" className={checkboxLabelClassName}>
                   Enable Owner Invoices
                 </Label>
               </div>
-              <div className="flex items-center gap-3">
+              <div className={checkboxRowClassName}>
                 <Checkbox id="approve-sub-invoices" checked={false} disabled />
-                <Label htmlFor="approve-sub-invoices" className="text-sm text-muted-foreground">
+                <Label htmlFor="approve-sub-invoices" className={checkboxMutedLabelClassName}>
                   Approve Subcontractor Invoices when Owner Approves Owner Invoice
                 </Label>
               </div>
@@ -164,29 +168,31 @@ export function PrimeContractAdvancedSettingsTab({
 
           <div>
             <SectionRuleHeading label="Retainage" />
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="-mt-2 h-4 w-4 p-0 text-muted-foreground hover:bg-transparent"
-                  aria-label="Retainage settings info"
-                >
-                  <AlertCircle className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent className="max-w-lg text-left">
-                Retainage defaults control how work completed and stored materials are
-                billed on prime contract payment applications.
-              </TooltipContent>
-            </Tooltip>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Configure the default retainage rules used when payment applications are
-              populated.
-            </p>
+            <div className="mt-1 flex items-start gap-2">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-4 w-4 p-0 text-muted-foreground hover:bg-transparent"
+                    aria-label="Retainage settings info"
+                  >
+                    <AlertCircle className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-lg text-left">
+                  Retainage defaults control how work completed and stored materials are
+                  billed on prime contract payment applications.
+                </TooltipContent>
+              </Tooltip>
+              <p className="text-sm text-muted-foreground">
+                Configure the default retainage rules used when payment applications are
+                populated.
+              </p>
+            </div>
             <div className="mt-4 space-y-5">
-              <div className="flex items-center gap-3">
+              <div className={checkboxRowClassName}>
                 <Checkbox
                   id="enable-completed-work-retainage"
                   checked={advancedSettings?.enable_completed_work_retainage ?? true}
@@ -196,12 +202,12 @@ export function PrimeContractAdvancedSettingsTab({
                 />
                 <Label
                   htmlFor="enable-completed-work-retainage"
-                  className="text-sm font-medium text-foreground"
+                  className={checkboxLabelClassName}
                 >
                   Enable Completed Work Retainage
                 </Label>
               </div>
-              <div className="flex items-center gap-3">
+              <div className={checkboxRowClassName}>
                 <Checkbox
                   id="enable-stored-materials-retainage"
                   checked={advancedSettings?.enable_stored_materials_retainage ?? false}
@@ -211,7 +217,7 @@ export function PrimeContractAdvancedSettingsTab({
                 />
                 <Label
                   htmlFor="enable-stored-materials-retainage"
-                  className="text-sm font-medium text-foreground"
+                  className={checkboxLabelClassName}
                 >
                   Enable Stored Materials Retainage
                 </Label>
@@ -247,7 +253,7 @@ export function PrimeContractAdvancedSettingsTab({
             <p className="mt-1 text-sm text-muted-foreground">
               Choose what items are displayed on exported invoice PDFs.
             </p>
-            <div className="mt-4 flex items-center gap-3">
+            <div className={`mt-4 ${checkboxRowClassName}`}>
               <Checkbox
                 id="show-budget-code"
                 checked={advancedSettings?.show_markup_on_invoice_pdf ?? true}
@@ -255,7 +261,7 @@ export function PrimeContractAdvancedSettingsTab({
                   updateAdvancedSetting("show_markup_on_invoice_pdf", !!checked)
                 }
               />
-              <Label htmlFor="show-budget-code" className="text-sm font-medium text-foreground">
+              <Label htmlFor="show-budget-code" className={checkboxLabelClassName}>
                 Show Budget Code
               </Label>
             </div>
@@ -263,25 +269,30 @@ export function PrimeContractAdvancedSettingsTab({
 
           <div>
             <SectionRuleHeading label="Change Orders" />
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="-mt-2 h-4 w-4 p-0 text-muted-foreground hover:bg-transparent"
-                  aria-label="Change orders level of detail info"
-                >
-                  <AlertCircle className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent className="max-w-lg text-left">
-                The level of detail that is selected here determines how change orders will
-                be displayed on the detail page of the Invoice when being viewed or printed
-                from Procore. The entry and editing of this information will always occur at
-                the line item level of detail.
-              </TooltipContent>
-            </Tooltip>
+            <div className="mt-1 flex items-start gap-2">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-4 w-4 p-0 text-muted-foreground hover:bg-transparent"
+                    aria-label="Change orders level of detail info"
+                  >
+                    <AlertCircle className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-lg text-left">
+                  The level of detail that is selected here determines how change orders will
+                  be displayed on the detail page of the Invoice when being viewed or printed
+                  from Procore. The entry and editing of this information will always occur at
+                  the line item level of detail.
+                </TooltipContent>
+              </Tooltip>
+              <p className="text-sm text-muted-foreground">
+                Set how change order detail appears on invoice views and printed output.
+              </p>
+            </div>
             <div className="mt-3 max-w-md space-y-2">
               <Label htmlFor="co-tier-count" className="sr-only">Change order workflow</Label>
               {coTierLocked ? (
@@ -321,9 +332,9 @@ export function PrimeContractAdvancedSettingsTab({
 
           <div>
             <SectionRuleHeading label="Payments Received" />
-            <div className="mt-4 flex items-center gap-3">
+            <div className={`mt-4 ${checkboxRowClassName}`}>
               <Checkbox id="enable-payments" checked disabled />
-              <Label htmlFor="enable-payments" className="text-sm font-medium text-foreground">
+              <Label htmlFor="enable-payments" className={checkboxLabelClassName}>
                 Enable Payments
               </Label>
             </div>

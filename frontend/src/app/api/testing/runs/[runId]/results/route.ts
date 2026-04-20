@@ -32,40 +32,24 @@ export const GET = withApiGuardrails<{ runId: string }>(
   const typeFilter = searchParams.get("type"); // "scenario" | "feature" | null (all)
   const supabase = await createClient();
 
-  const withDepth = await supabase
+  const resultsRes = await supabase
     .from("test_results")
-      .select(`
+    .select(`
       id, case_id, status, notes, updated_at,
       test_cases (
         id, test_number, category, subcategory, test_name,
         steps, setup_steps, context_note, expected_result, priority,
-        test_type, start_url, scenario_depth
+        test_type, start_url
       ),
       test_screenshots (id, public_url, label, created_at)
     `)
     .eq("run_id", runId)
     .order("id");
 
-  let data: ResultRow[] | null = withDepth.data as unknown as ResultRow[] | null;
-  if (withDepth.error) {
-    const fallback = await supabase
-      .from("test_results")
-      .select(`
-        id, case_id, status, notes, updated_at,
-        test_cases (
-          id, test_number, category, subcategory, test_name,
-          steps, setup_steps, context_note, expected_result, priority,
-          test_type, start_url
-        ),
-        test_screenshots (id, public_url, label, created_at)
-      `)
-      .eq("run_id", runId)
-      .order("id");
-    if (fallback.error) {
-      return NextResponse.json({ error: fallback.error.message }, { status: 500 });
-    }
-    data = fallback.data as unknown as ResultRow[] | null;
+  if (resultsRes.error) {
+    return NextResponse.json({ error: resultsRes.error.message }, { status: 500 });
   }
+  const data: ResultRow[] | null = resultsRes.data as unknown as ResultRow[] | null;
 
   const caseIds = (data ?? []).map((row) => row.case_id).filter((id): id is string => Boolean(id));
   const inactiveCaseIds = new Set<string>();

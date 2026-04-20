@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable design-system/no-raw-heading */
 
 import { useState } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";

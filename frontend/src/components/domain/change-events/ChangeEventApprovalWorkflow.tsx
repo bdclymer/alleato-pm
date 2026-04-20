@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable design-system/no-raw-heading */
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";

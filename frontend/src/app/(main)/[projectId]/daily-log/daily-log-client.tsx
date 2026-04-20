@@ -207,6 +207,7 @@ export function DailyLogClient({ projectId, dailyLogs }: DailyLogClientProps) {
         card: (item) => (
           <div className="rounded-lg border p-4">
             <p className="text-xs uppercase text-muted-foreground">Daily Log</p>
+            {/* eslint-disable-next-line design-system/no-raw-heading */}
             <h3 className="mt-1 font-medium">
               {item.log_date
                 ? new Date(item.log_date).toLocaleDateString("en-US", {

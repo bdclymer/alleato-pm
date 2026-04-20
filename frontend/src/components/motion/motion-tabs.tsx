@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable design-system/no-raw-heading */
 import React, { useState } from "react";
 import { TransitionPanel } from "@/components/ui/transition-panel";
 

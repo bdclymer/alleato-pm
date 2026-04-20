@@ -303,6 +303,7 @@ function ContactPreviewPane({
               <User className="h-5 w-5" />
             </div>
             <div className="min-w-0 flex-1">
+              {/* eslint-disable-next-line design-system/no-raw-heading */}
               <h3 className="text-sm font-semibold leading-tight truncate">{contact.full_name}</h3>
               <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                 {typeLabel && (

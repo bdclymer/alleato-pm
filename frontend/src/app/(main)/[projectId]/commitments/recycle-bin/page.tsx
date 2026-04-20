@@ -242,6 +242,7 @@ export default function CommitmentsRecycleBinPage() {
         ) : deletedCommitments.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 text-center">
             <Trash2 className="h-12 w-12 text-muted-foreground/50 mb-4" />
+            {/* eslint-disable-next-line design-system/no-raw-heading */}
             <h3 className="text-lg font-medium">Recycle bin is empty</h3>
             <p className="text-sm text-muted-foreground mt-1">
               Deleted commitments will appear here

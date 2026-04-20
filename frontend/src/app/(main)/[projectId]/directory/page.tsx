@@ -241,6 +241,7 @@ function SectionRow({
     <div className="flex items-center justify-between gap-4">
       {/* Left: title */}
       <div className="flex items-center gap-3 min-w-0">
+        {/* eslint-disable-next-line design-system/no-raw-heading */}
         <h2 className="text-lg font-semibold text-foreground shrink-0">{title}</h2>
       </div>
 

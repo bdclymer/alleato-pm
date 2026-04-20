@@ -111,6 +111,7 @@ export function ResponsiveUsersTable({
           <div key={user.id} className="border rounded-lg p-4 space-y-4">
             <div className="flex items-start justify-between">
               <div className="flex-1">
+                {/* eslint-disable-next-line design-system/no-raw-heading */}
                 <h3 className="font-medium">
                   {user.first_name} {user.last_name}
                 </h3>

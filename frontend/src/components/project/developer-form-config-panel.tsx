@@ -123,6 +123,7 @@ export function DeveloperFormConfigPanel() {
             return (
               <div key={`dev-section-${section.id}`} className="rounded-md border p-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
+                  {/* eslint-disable-next-line design-system/no-raw-heading */}
                   <h4 className="text-sm font-semibold text-foreground">
                     {section.title}
                   </h4>

@@ -462,6 +462,7 @@ export function PunchListClient({ projectId }: PunchListClientProps) {
               <div className="mb-2 flex items-start justify-between gap-4">
                 <div>
                   <p className="text-xs uppercase text-muted-foreground">Punch #{item.number}</p>
+                  {/* eslint-disable-next-line design-system/no-raw-heading */}
                   <h3 className="font-medium">{item.title || "Untitled Punch Item"}</h3>
                 </div>
                 <PunchItemStatusBadge status={item.status} />

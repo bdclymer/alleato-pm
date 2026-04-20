@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect } from "react";
 import {
   MoreVertical,
   Plus,
+  Percent,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -31,6 +32,7 @@ import {
   InlineTableRow,
   InlineTableCell,
 } from "@/components/ds/inline-table";
+import { EmptyState } from "@/components/ds";
 import { apiFetch } from "@/lib/api-client";
 import { SectionRuleHeading } from "@/components/layout/spacing";
 import type { BudgetCode, VerticalMarkup } from "@/app/(main)/[projectId]/prime-contracts/[contractId]/types";
@@ -71,6 +73,13 @@ const getNextAvailableMarkupType = (rows: VerticalMarkup[]): string | null => {
   }
   return null;
 };
+
+const toMarkupLabel = (value: string): string =>
+  value
+    .split("_")
+    .filter(Boolean)
+    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+    .join(" ");
 
 interface PrimeContractFinancialMarkupTabProps {
   projectId: string;
@@ -505,53 +514,96 @@ export function PrimeContractFinancialMarkupTab({
   );
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <SectionRuleHeading label="Financial Markup" />
-      <p className="text-sm text-muted-foreground mb-4">
+      <p className="max-w-3xl text-sm text-muted-foreground">
         Add percentage-based markups (e.g., tax, overhead, profit, insurance) to contract values.
       </p>
-
-        <div className="flex flex-col gap-3 md:flex-row md:flex-wrap md:items-center md:justify-between">
-          <p className="text-sm text-muted-foreground">
-            Use the row menu to edit a markup. Changes are only applied after you click Save Changes.
-          </p>
-          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
-            {hasUnsavedMarkupChanges ? (
-              <Button
-                size="sm"
-                onClick={handleSaveMarkupTable}
-                disabled={isSavingMarkupTable}
-                className="w-full sm:w-auto"
-              >
-                {isSavingMarkupTable ? "Saving..." : "Save Changes"}
-              </Button>
-            ) : null}
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={handleAddMarkupInline}
-              disabled={isSubmittingMarkup}
-              className="w-full sm:w-auto"
-            >
-              <Plus />
-              {isSubmittingMarkup ? "Adding..." : "Add Markup"}
-            </Button>
+      <div className="space-y-4 border-y border-border/60 py-4">
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-1">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Vertical markup
+            </p>
+            <p className="text-sm text-foreground">
+              Adds a separate markup line in calculations. Markups run in order from top to
+              bottom, so row order matters.
+            </p>
+          </div>
+          <div className="space-y-1">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Horizontal markup
+            </p>
+            <p className="text-sm text-foreground">
+              Folds markup into line-item values instead of showing a separate markup row.
+              Use this when you want markup distributed across scoped costs.
+            </p>
           </div>
         </div>
+        <div className="grid gap-3 text-sm text-muted-foreground md:grid-cols-2">
+          <p>
+            <span className="font-medium text-foreground">Maps To:</span> choose whether the
+            rule applies to all budget codes or only one cost bucket.
+          </p>
+          <p>
+            <span className="font-medium text-foreground">Calculation Type:</span> Basic uses
+            the base amount only; Compound includes prior markup rows above it.
+          </p>
+        </div>
+      </div>
 
         {markupsLoading ? (
-          <div className="rounded-md border border-border/60 py-8 text-center text-sm text-muted-foreground">
-            Loading markup settings...
-          </div>
+          <p className="py-10 text-sm text-muted-foreground">Loading markup settings...</p>
         ) : verticalMarkups.length === 0 ? (
-          <div className="rounded-md border border-border/60 py-8 text-center text-sm text-muted-foreground">
-            No markup items configured. Click &quot;Add Markup&quot; to get started.
-          </div>
+          <EmptyState
+            icon={<Percent />}
+            title="No financial markups configured"
+            description="Add your first markup to define fees, overhead, insurance, or profit calculations."
+            action={
+              <Button
+                size="sm"
+                onClick={handleAddMarkupInline}
+                disabled={isSubmittingMarkup}
+              >
+                <Plus />
+                {isSubmittingMarkup ? "Adding..." : "Add Markup"}
+              </Button>
+            }
+          />
         ) : (
           <>
+            <div className="flex flex-col gap-3 border-y border-border/60 py-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center justify-between text-xs text-muted-foreground sm:gap-6">
+                <span>{sortedMarkups.length} markup rule{sortedMarkups.length === 1 ? "" : "s"}</span>
+                <span>Applied in top-to-bottom calculation order</span>
+              </div>
+              <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+                {hasUnsavedMarkupChanges ? (
+                  <Button
+                    size="sm"
+                    onClick={handleSaveMarkupTable}
+                    disabled={isSavingMarkupTable}
+                    className="w-full sm:w-auto"
+                  >
+                    {isSavingMarkupTable ? "Saving..." : "Save Changes"}
+                  </Button>
+                ) : null}
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={handleAddMarkupInline}
+                  disabled={isSubmittingMarkup}
+                  className="w-full sm:w-auto"
+                >
+                  <Plus />
+                  {isSubmittingMarkup ? "Adding..." : "Add Markup"}
+                </Button>
+              </div>
+            </div>
+
             {/* Mobile card view */}
             <div className="space-y-3 md:hidden">
-              {sortedMarkups.map((markup) => {
+              {sortedMarkups.map((markup, index) => {
                 const isEditingRow = Boolean(editingMarkupRowIds[markup.id]);
                 const displayIn = markupDisplayById[markup.id] ?? "horizontal";
                 const mapsTo = markupMapsToById[markup.id] ?? "all";
@@ -564,8 +616,10 @@ export function PrimeContractFinancialMarkupTab({
                   <div key={markup.id} className="space-y-3 rounded-md border border-border/60 p-3">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0 flex-1 space-y-1">
-                        <p className="text-xs uppercase tracking-wide text-muted-foreground">Markup</p>
-                        {renderMarkupTypeField(markup, isEditingRow)}
+                        <p className="text-xs uppercase tracking-wide text-muted-foreground">Markup {index + 1}</p>
+                        {isEditingRow ? renderMarkupTypeField(markup, isEditingRow) : (
+                          <span className="text-sm text-foreground">{toMarkupLabel(markup.markup_type)}</span>
+                        )}
                       </div>
                       {renderActionsMenu(markup, isEditingRow)}
                     </div>
@@ -598,6 +652,7 @@ export function PrimeContractFinancialMarkupTab({
               <InlineTable variant="edit">
                 <InlineTableHeader>
                   <InlineTableHeaderRow>
+                    <InlineTableHeaderCell align="right">#</InlineTableHeaderCell>
                     <InlineTableHeaderCell>Markup Name</InlineTableHeaderCell>
                     <InlineTableHeaderCell>Display In</InlineTableHeaderCell>
                     <InlineTableHeaderCell>Maps To</InlineTableHeaderCell>
@@ -607,7 +662,7 @@ export function PrimeContractFinancialMarkupTab({
                   </InlineTableHeaderRow>
                 </InlineTableHeader>
                 <InlineTableBody>
-                  {sortedMarkups.map((markup) => {
+                  {sortedMarkups.map((markup, index) => {
                     const isEditingRow = Boolean(editingMarkupRowIds[markup.id]);
                     const displayIn = markupDisplayById[markup.id] ?? "horizontal";
                     const mapsTo = markupMapsToById[markup.id] ?? "all";
@@ -618,7 +673,12 @@ export function PrimeContractFinancialMarkupTab({
 
                     return (
                       <InlineTableRow key={markup.id}>
-                        <InlineTableCell>{renderMarkupTypeField(markup, isEditingRow)}</InlineTableCell>
+                        <InlineTableCell align="right">{index + 1}</InlineTableCell>
+                        <InlineTableCell>
+                          {isEditingRow ? renderMarkupTypeField(markup, isEditingRow) : (
+                            <span className="text-sm text-foreground">{toMarkupLabel(markup.markup_type)}</span>
+                          )}
+                        </InlineTableCell>
                         <InlineTableCell>{renderDisplayInField(markup, isEditingRow, displayIn)}</InlineTableCell>
                         <InlineTableCell>{renderMapsToField(markup, isEditingRow, mapsTo, mapsToLabel)}</InlineTableCell>
                         <InlineTableCell align="right">{renderPercentageField(markup, isEditingRow)}</InlineTableCell>

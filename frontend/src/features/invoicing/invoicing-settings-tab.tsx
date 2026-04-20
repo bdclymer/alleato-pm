@@ -106,6 +106,7 @@ export function InvoicingSettingsTab({ projectId }: Props) {
     <form onSubmit={handleSubmit(onSubmit)} className="px-6 py-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
+          {/* eslint-disable-next-line design-system/no-raw-heading */}
           <h2 className="text-lg font-semibold text-foreground">
             Invoicing Settings
           </h2>
@@ -126,6 +127,7 @@ export function InvoicingSettingsTab({ projectId }: Props) {
       {/* Billing Period Defaults */}
       <section className="bg-card border border-border rounded-lg p-6 space-y-4">
         <div>
+          {/* eslint-disable-next-line design-system/no-raw-heading */}
           <h3 className="text-base font-semibold text-foreground">
             Billing Period Defaults
           </h3>
@@ -201,6 +203,7 @@ export function InvoicingSettingsTab({ projectId }: Props) {
       {/* Notifications */}
       <section className="bg-card border border-border rounded-lg p-6 space-y-4">
         <div>
+          {/* eslint-disable-next-line design-system/no-raw-heading */}
           <h3 className="text-base font-semibold text-foreground">Notifications</h3>
           <p className="text-sm text-muted-foreground">
             Control when subcontractors and internal users receive emails.
@@ -285,6 +288,7 @@ export function InvoicingSettingsTab({ projectId }: Props) {
       {/* Documents */}
       <section className="bg-card border border-border rounded-lg p-6 space-y-4">
         <div>
+          {/* eslint-disable-next-line design-system/no-raw-heading */}
           <h3 className="text-base font-semibold text-foreground">Documents</h3>
           <p className="text-sm text-muted-foreground">
             Text included on generated PDFs and subcontractor invitations.

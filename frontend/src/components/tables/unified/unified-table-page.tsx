@@ -1547,6 +1547,7 @@ export function UnifiedTablePage<T>({
             <div className="mt-4 space-y-6">
               {Array.from(groups.entries()).map(([label, items]) => (
                 <div key={label}>
+                  {/* eslint-disable-next-line design-system/no-raw-heading */}
                   <h3 className="text-sm font-semibold text-foreground mb-3 px-0.5">{label}</h3>
                   <div className={gridCls}>
                     {items.map((item) => (

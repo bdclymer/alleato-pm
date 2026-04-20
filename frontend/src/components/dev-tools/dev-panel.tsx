@@ -1,4 +1,5 @@
 "use client"
+/* eslint-disable design-system/no-raw-heading */
 
 import { useState, useEffect } from "react"
 import { Code, Database, Zap, RefreshCw, ExternalLink, CheckCircle2, XCircle, Loader2 } from "lucide-react"
