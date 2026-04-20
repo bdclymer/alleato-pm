@@ -40,6 +40,8 @@ interface UseChangeEventsOptions {
   projectId?: number;
   // Filter by status
   status?: string;
+  // Filter by scope (e.g. "out_of_scope", "in_scope", "tbd")
+  scope?: string;
   // Limit results
   limit?: number;
   // Page number (1-based) for server-side pagination
@@ -74,7 +76,7 @@ interface UseChangeEventsReturn {
 export function useChangeEvents(
   options: UseChangeEventsOptions = {},
 ): UseChangeEventsReturn {
-  const { projectId, status, limit = 100, page, perPage, tab, enabled = true } = options;
+  const { projectId, status, scope, limit = 100, page, perPage, tab, enabled = true } = options;
   const { includeDeleted = false } = options;
   const [changeEvents, setChangeEvents] = useState<ChangeEvent[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -101,6 +103,7 @@ export function useChangeEvents(
           searchParams.set("limit", String(limit));
         }
         if (status) searchParams.set("status", status);
+        if (scope) searchParams.set("scope", scope);
         if (includeDeleted) searchParams.set("includeDeleted", "true");
         if (tab) searchParams.set("tab", tab);
 
@@ -148,7 +151,7 @@ export function useChangeEvents(
     } finally {
       setIsLoading(false);
     }
-  }, [projectId, status, limit, page, perPage, tab, enabled, includeDeleted]);
+  }, [projectId, status, scope, limit, page, perPage, tab, enabled, includeDeleted]);
 
   useEffect(() => {
     fetchChangeEvents();

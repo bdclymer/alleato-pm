@@ -39,6 +39,10 @@ import { PermissionGate } from "@/components/domain/permissions/PermissionGate";
 
 type ChangeEventFilterState = Record<string, FilterValue>;
 
+// Normalize scope values for comparison: "Out of Scope" and "out_of_scope" both → "out_of_scope".
+// The DB stores human-readable scope ("Out of Scope") but filter options use snake_case.
+const normalizeScope = (s: string) => s.trim().toLowerCase().replace(/[\s-]+/g, "_");
+
 const EMPTY_FILTERS: ChangeEventFilterState = {
   status: undefined,
   scope: undefined,
@@ -149,9 +153,12 @@ export default function ProjectChangeEventsPage(): ReactElement {
   const statusParam =
     searchParams.get("status") ??
     (typeof activeFilters.status === "string" ? activeFilters.status : "");
+  const scopeParam =
+    searchParams.get("scope") ??
+    (typeof activeFilters.scope === "string" ? activeFilters.scope : "");
 
-  // Server-side pagination: pass page + perPage + tab to the API.
-  // The API handles tab filtering and returns paginated results + tab counts in meta.
+  // Server-side pagination: pass page + perPage + tab + scope to the API.
+  // The API handles tab/scope filtering and returns paginated results + tab counts in meta.
   const {
     changeEvents: tabFilteredEvents,
     isLoading,
@@ -161,6 +168,7 @@ export default function ProjectChangeEventsPage(): ReactElement {
     refetch: refetchChangeEvents,
   } = useProjectChangeEvents(projectId, {
     status: statusParam || undefined,
+    scope: scopeParam || undefined,
     page: tableState.page,
     perPage: tableState.perPage,
     tab: activeTab as "line_items" | "no_line_items" | "rfqs" | "recycle_bin" | "all",
@@ -364,7 +372,7 @@ export default function ProjectChangeEventsPage(): ReactElement {
   const filteredEvents = React.useMemo(() => {
     const searchTerm = tableState.debouncedSearch.trim().toLowerCase();
     const scopeFilter =
-      typeof activeFilters.scope === "string" ? activeFilters.scope.toLowerCase() : "";
+      typeof activeFilters.scope === "string" ? normalizeScope(activeFilters.scope) : "";
     const conversionStateFilter =
       typeof activeFilters.conversion_state === "string"
         ? activeFilters.conversion_state
@@ -379,7 +387,7 @@ export default function ProjectChangeEventsPage(): ReactElement {
         : "";
 
     return tabFilteredEvents.filter((event) => {
-      if (scopeFilter && (event.scope ?? "").toLowerCase() !== scopeFilter) {
+      if (scopeFilter && normalizeScope(event.scope ?? "") !== scopeFilter) {
         return false;
       }
 
