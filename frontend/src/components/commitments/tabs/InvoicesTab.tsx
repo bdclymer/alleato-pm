@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { memo, useEffect, useMemo, useState } from "react";
-import { Paperclip, Plus } from "lucide-react";
+import { FileText, Paperclip, Plus } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { toast } from "sonner";
 
@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DataTable, type DataTableFooterCell } from "@/components/tables/DataTable";
 import { Text } from "@/components/ds/text";
+import { EmptyState } from "@/components/ds";
 import { InvoiceStatusBadge } from "@/components/invoicing/InvoiceStatusBadge";
 import { formatCurrency } from "@/config/tables";
 import { apiFetch } from "@/lib/api-client";
@@ -101,9 +102,7 @@ export const InvoicesTab = memo(function InvoicesTab({
         const filterKey =
           commitmentType === "subcontract" ? "subcontract_id" : "purchase_order_id";
         const url = `/api/projects/${projectId}/invoicing/subcontractor/invoices?${filterKey}=${encodeURIComponent(commitmentId)}`;
-        const response = await fetch(url, { signal: controller.signal });
-        if (!response.ok) throw new Error("Failed to load invoices");
-        const payload = (await response.json()) as { data?: CommitmentInvoiceRow[] };
+        const payload = await apiFetch<{ data?: CommitmentInvoiceRow[] }>(url, { signal: controller.signal });
         const rows = payload.data ?? [];
 
         const enriched: EnrichedInvoice[] = rows.map((row) => {
@@ -329,25 +328,38 @@ export const InvoicesTab = memo(function InvoicesTab({
 
   return (
     <div className="space-y-3">
-      <div className="flex justify-end">
-        <Button
-          size="sm"
-          onClick={createRetainageReleaseInvoice}
-          disabled={isCreating}
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          {isCreating ? "Creating..." : "Create Retainage Release Invoice"}
-        </Button>
-      </div>
-      <DataTable
-        columns={columns}
-        data={invoices}
-        showToolbar={false}
-        showPagination={invoices.length > 25}
-        rowHover={false}
-        emptyMessage={null}
-        footerRow={invoices.length > 0 ? footerRow : undefined}
-      />
+      {invoices.length === 0 ? (
+        <EmptyState
+          icon={<FileText />}
+          title="No invoices yet"
+          description="Invoices submitted against this contract will appear here."
+          action={{
+            label: "Create Retainage Release Invoice",
+            onClick: createRetainageReleaseInvoice,
+          }}
+        />
+      ) : (
+        <>
+          <div className="flex justify-end">
+            <Button
+              size="sm"
+              onClick={createRetainageReleaseInvoice}
+              disabled={isCreating}
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              {isCreating ? "Creating..." : "Create Retainage Release Invoice"}
+            </Button>
+          </div>
+          <DataTable
+            columns={columns}
+            data={invoices}
+            showToolbar={false}
+            showPagination={invoices.length > 25}
+            rowHover={false}
+            footerRow={footerRow}
+          />
+        </>
+      )}
     </div>
   );
 });
