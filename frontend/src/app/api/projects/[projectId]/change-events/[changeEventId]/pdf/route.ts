@@ -58,7 +58,7 @@ export const GET = withApiGuardrails(
 
     const { data: project } = await supabase
       .from("projects")
-      .select("id, name, number, address, city, state")
+      .select("id, name, project_number, address, state")
       .eq("id", projectIdNum)
       .single();
 
@@ -80,7 +80,8 @@ export const GET = withApiGuardrails(
     }
 
     const lineItems = changeEvent.change_event_line_items || [];
-    const htmlContent = buildChangeEventHtml({ ...changeEvent, creator }, lineItems, project);
+    const mappedProject = project ? { ...project, number: project.project_number } : null;
+    const htmlContent = buildChangeEventHtml({ ...changeEvent, creator }, lineItems, mappedProject);
     const pdfBuffer = await renderPdfFromHtml(htmlContent);
 
     const ceNumber = changeEvent.number || changeEvent.id;

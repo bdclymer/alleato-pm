@@ -212,13 +212,6 @@ export function mapFormToInsert(
     allow_non_admin_view_sov_items:
       formData.privacy?.allowNonAdminViewSovItems ?? false,
 
-    // Accounting method - validated against allowlist; unsafe cast would silently accept bad values
-    accounting_method: (VALID_ACCOUNTING_METHODS as readonly string[]).includes(
-      formData.accountingMethod ?? "",
-    )
-      ? (formData.accountingMethod as DbAccountingMethod)
-      : "amount_based",
-
     // Other fields
     invoice_contact_ids: formData.invoiceContactIds || [],
     created_by: userId,
@@ -239,7 +232,6 @@ export function mapRowToDisplay(row: SubcontractRow) {
     status: row.status,
     executed: row.executed,
     defaultRetainagePercent: row.default_retainage_percent,
-    accountingMethod: row.accounting_method,
     description: row.description,
     inclusions: row.inclusions,
     exclusions: row.exclusions,

@@ -15,7 +15,7 @@ export const GET = withApiGuardrails(
     const supabase = await createClient();
 
     try {
-      const data = await getNormalizedSubmittalTypeCatalog(supabase);
+      const data = await getNormalizedSubmittalTypeCatalog(supabase as unknown as Parameters<typeof getNormalizedSubmittalTypeCatalog>[0]);
       return NextResponse.json(data ?? []);
     } catch (error) {
       return apiErrorResponse(error);

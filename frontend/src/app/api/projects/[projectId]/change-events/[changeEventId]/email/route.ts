@@ -87,10 +87,9 @@ export const POST = withApiGuardrails(
       return NextResponse.json({ error: "Change event not found" }, { status: 404 });
     }
 
-    // Select number (not project_number) and include city for the shared buildChangeEventHtml
     const { data: project } = await supabase
       .from("projects")
-      .select("id, name, number, address, city, state")
+      .select("id, name, project_number, address, state")
       .eq("id", projectIdNum)
       .single();
 
@@ -112,7 +111,8 @@ export const POST = withApiGuardrails(
     }
 
     const lineItems = changeEvent.change_event_line_items || [];
-    const htmlContent = buildChangeEventHtml({ ...changeEvent, creator }, lineItems, project);
+    const mappedProject = project ? { ...project, number: project.project_number } : null;
+    const htmlContent = buildChangeEventHtml({ ...changeEvent, creator }, lineItems, mappedProject);
     const pdfBuffer = await renderPdfFromHtml(htmlContent);
 
     const ceNumber = changeEvent.number || changeEvent.id;
@@ -130,7 +130,7 @@ export const POST = withApiGuardrails(
         <div style="padding:24px;">
           <h2 style="font-size:16px;margin-bottom:8px;">Change Event #${escHtml(String(ceNumber))}: ${escHtml(changeEvent.title) || "Untitled"}</h2>
           <p style="color:#666;font-size:13px;margin-bottom:16px;">
-            Project: ${escHtml(project?.name) || "Unknown Project"}${project?.number ? ` (${escHtml(String(project.number))})` : ""}
+            Project: ${escHtml(project?.name) || "Unknown Project"}${project?.project_number ? ` (${escHtml(String(project.project_number))})` : ""}
           </p>
           ${messageHtml}
           <p style="font-size:13px;color:#444;">Please find the change event details attached as a PDF.</p>
