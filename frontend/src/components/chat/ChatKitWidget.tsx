@@ -54,7 +54,7 @@ export function ChatKitWidget() {
     <>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 hover:scale-110 transition-all duration-200 flex items-center justify-center"
+        className="fixed bottom-16 right-6 z-50 h-14 w-14 rounded-full bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 hover:scale-110 transition-all duration-200 flex items-center justify-center sm:bottom-6"
         aria-label={isOpen ? "Close chat" : "Open chat"}
       >
         {isOpen ? (
@@ -89,7 +89,7 @@ export function ChatKitWidget() {
       </button>
 
       {isOpen && (
-        <div className="fixed bottom-24 right-6 z-50 shadow-sm rounded-lg overflow-hidden border border-border">
+        <div className="fixed bottom-32 right-6 z-50 shadow-sm rounded-lg overflow-hidden border border-border sm:bottom-24">
           <ChatKit
             control={chatkit.control}
             className="h-[600px] w-[400px] max-w-[calc(100vw-3rem)]"

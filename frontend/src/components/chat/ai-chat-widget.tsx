@@ -29,7 +29,7 @@ export function AIChatWidget() {
       {!isOpen && (
         <button
           onClick={toggleWidget}
-          className="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full shadow-sm transition-all duration-200 hover:scale-105"
+          className="fixed bottom-16 right-6 z-50 flex items-center justify-center w-14 h-14 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full shadow-sm transition-all duration-200 hover:scale-105 sm:bottom-6"
           aria-label="Open chat"
         >
           <MessageSquare className="w-6 h-6" />
@@ -41,8 +41,8 @@ export function AIChatWidget() {
         <div
           className={`fixed z-50 bg-background rounded-2xl shadow-sm transition-all duration-300 ease-in-out overflow-hidden ${
             isMinimized
-              ? "bottom-6 right-6 w-80 h-14"
-              : "bottom-6 right-6 w-[420px] h-[660px]"
+              ? "bottom-16 right-6 w-80 h-14 sm:bottom-6"
+              : "bottom-16 right-6 w-[420px] h-[660px] sm:bottom-6"
           }`}
           style={{ maxHeight: isMinimized ? "56px" : "calc(100vh - 80px)" }}
         >

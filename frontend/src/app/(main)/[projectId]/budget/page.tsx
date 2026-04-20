@@ -13,6 +13,7 @@ import {
   BudgetTable,
   BudgetDetailsTable,
   BudgetModificationModal,
+  BudgetViewsModal,
   CostCodesTab,
   OriginalBudgetEditModal,
   ForecastingTab,
@@ -171,6 +172,7 @@ function BudgetPageContent() {
     React.useState(false);
   const [isFullscreen, setIsFullscreen] = React.useState(false);
   const [snapshotsRefreshToken, setSnapshotsRefreshToken] = React.useState(0);
+  const [showViewsModal, setShowViewsModal] = React.useState(false);
 
   // Budget lock state
   const [isLocked, setIsLocked] = React.useState(false);
@@ -557,9 +559,8 @@ function BudgetPageContent() {
   }, []);
 
   const handleConfigureBudgetViews = React.useCallback(() => {
-    router.push(`/${projectId}/budget`);
-    toast.info("Budget view configuration is available in the actions menu.");
-  }, [router, projectId]);
+    setShowViewsModal(true);
+  }, []);
 
   const handleLineItemSuccess = React.useCallback(() => {
     // Refresh budget data after creating line items
@@ -1032,7 +1033,7 @@ function BudgetPageContent() {
           </div>
         ) : (
           <div className="flex-1 overflow-x-auto">
-            <div className="min-w-full">
+            <div className="min-w-[800px]">
               {/* Selection action bar */}
               {selectedIds.length > 0 && (
                 <div className="flex items-center gap-4 px-4 py-2 mb-4 bg-primary/5 border border-primary/20 rounded-lg">
@@ -1268,6 +1269,15 @@ function BudgetPageContent() {
         onOpenChange={setShowUnlockDialog}
         projectId={projectId}
         onUnlockSuccess={handleUnlockSuccess}
+      />
+
+      {/* Financial Views Modal */}
+      <BudgetViewsModal
+        open={showViewsModal}
+        onOpenChange={setShowViewsModal}
+        projectId={projectId}
+        mode="create"
+        onSuccess={() => setShowViewsModal(false)}
       />
     </>
   );

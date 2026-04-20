@@ -1091,9 +1091,9 @@ export function BudgetTable({
   };
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-md bg-background">
-      {/* Hide scrollbar while maintaining scroll functionality */}
-      <div className="flex-1 overflow-auto scrollbar-hide">
+    <div className="flex h-full flex-col rounded-md bg-background">
+      {/* Horizontal scroll container — allows the wide budget table to scroll on mobile */}
+      <div className="flex-1 overflow-auto scrollbar-hide min-w-0">
         <Table
           className="table-fixed bg-background"
           style={{ width: `${tableWidth}px`, minWidth: "100%" }}
@@ -1152,6 +1152,10 @@ export function BudgetTable({
                         "border-b border-border transition-colors",
                         "hover:bg-muted/20",
                         row.getIsSelected() && "bg-primary/5",
+                        !row.getIsGrouped() &&
+                          row.original.projectedCosts > row.original.revisedBudget
+                          ? "text-destructive"
+                          : "",
                       )}
                     >
                       {row.getVisibleCells().map((cell) => {
@@ -1311,8 +1315,8 @@ export function BudgetTable({
         </Table>
       </div>
 
-      {/* Grand Totals Row - Fixed at bottom */}
-      <div className="sticky bottom-0 border-t border-border bg-background">
+      {/* Grand Totals Row - scrolls horizontally in sync with the table above */}
+      <div className="overflow-x-auto scrollbar-hide border-t border-border bg-background">
           <table
             className="w-full caption-bottom text-sm table-fixed"
             style={{ width: `${tableWidth}px`, minWidth: "100%" }}

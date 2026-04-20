@@ -127,7 +127,7 @@ export function DevAnnotationOverlay() {
   return (
     <>
       {/* Floating trigger button */}
-      <div className="fixed bottom-4 right-4 z-[9999] flex flex-col items-end gap-2">
+      <div className="fixed bottom-16 right-4 z-[9999] flex flex-col items-end gap-2 sm:bottom-4">
         {repliedCount > 0 && !open && (
           <div className="border border-status-info/20 bg-status-info/10 text-status-info text-xs rounded-full px-2 py-0.5 animate-pulse">
             {repliedCount} reply{repliedCount > 1 ? " replies" : ""} from Claude
@@ -154,7 +154,7 @@ export function DevAnnotationOverlay() {
       {/* Panel */}
       {open && (
         <div
-          className="fixed bottom-16 right-4 z-[9999] w-96 bg-background border border-border rounded-xl shadow-sm flex flex-col overflow-hidden"
+          className="fixed bottom-28 right-4 z-[9999] w-96 bg-background border border-border rounded-xl shadow-sm flex flex-col overflow-hidden sm:bottom-16"
           style={{ maxHeight: "70vh" }}
         >
           {/* Header */}

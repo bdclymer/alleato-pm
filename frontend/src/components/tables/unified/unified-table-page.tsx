@@ -977,7 +977,7 @@ export function UnifiedTablePage<T>({
         </div>
       )}
 
-      {topContent && <div className="mt-4 space-y-4">{topContent}</div>}
+      {topContent && !data.isLoading && !data.error && <div className="mt-4 space-y-4">{topContent}</div>}
 
       {showEmptyState && (
         <div className="mt-4">

@@ -3,7 +3,7 @@
 import * as React from "react";
 import type { ReactElement } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { MoreHorizontal, RefreshCw } from "lucide-react";
+import { MoreHorizontal, Plus, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { UnifiedTablePage, useUnifiedTableState, type FilterValue } from "@/components/tables/unified";
 import { Badge } from "@/components/ui/badge";
@@ -127,7 +127,9 @@ export function DirectCostsClient({
 
   const [isExportDialogOpen, setIsExportDialogOpen] = React.useState(false);
   const [isSyncing, setIsSyncing] = React.useState(false);
-  const [isMobileViewport, setIsMobileViewport] = React.useState(false);
+  // Start as null = "not yet detected". Treated as mobile until first measurement to
+  // prevent the desktop fallback (auto-selecting first row) from briefly firing on mobile.
+  const [isMobileViewport, setIsMobileViewport] = React.useState<boolean | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [directCostToDelete, setDirectCostToDelete] = React.useState<DirectCostRow | null>(null);
   const [editingCostId, setEditingCostId] = React.useState<string | null>(null);
@@ -302,7 +304,13 @@ export function DirectCostsClient({
   const selectedDirectCost = detailParam
     ? filteredSummaryItems.find((item) => item.id === detailParam) ?? null
     : null;
-  const activeDirectCostId = selectedDirectCost?.id ?? filteredSummaryItems[0]?.id ?? null;
+  // On mobile (or before viewport detection), never auto-select the first row — only
+  // highlight an explicitly chosen record. This prevents the mobile detail overlay from
+  // covering the list on initial page load.
+  const isDesktop = isMobileViewport === false;
+  const activeDirectCostId = isDesktop
+    ? (selectedDirectCost?.id ?? filteredSummaryItems[0]?.id ?? null)
+    : (selectedDirectCost?.id ?? null);
 
   const applyFilters = (nextFilters: DirectCostFilterState): void => {
     tableState.setActiveFilters(nextFilters);
@@ -700,6 +708,16 @@ export function DirectCostsClient({
       <UnifiedTablePage
         header={{
           title: "Direct Costs",
+          actions: (
+            <Button
+              onClick={() => router.push(`/${projectId}/direct-costs/new`)}
+              size="sm"
+            >
+              <Plus className="h-4 w-4" />
+              <span className="hidden sm:inline">Add Direct Cost</span>
+              <span className="sm:hidden">Add</span>
+            </Button>
+          ),
         }}
         layout={{
           headerAlignment: "left",

@@ -40,7 +40,7 @@ export function BudgetTabs({
         className="-mb-px flex items-end justify-between gap-4 border-b border-border"
         aria-label="Budget Tabs"
       >
-        <div className="flex min-w-0 flex-1 overflow-x-auto">
+        <div className="flex min-w-0 flex-1 overflow-x-auto scrollbar-hide">
           <div className="flex min-w-max space-x-4 md:space-x-6">
             {tabs.map((tab) => {
               const isActive = activeTab === tab.id;
