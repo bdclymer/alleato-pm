@@ -224,6 +224,7 @@ export interface DrawingRowActionCallbacks {
   onPublish: (drawingId: string, publish: boolean) => void;
   onObsolete: (drawingId: string, obsolete: boolean) => void;
   onDelete: (item: DrawingLogTableRow) => void;
+  onQrCode?: (drawingId: string, drawingNumber: string) => void;
 }
 
 /**
@@ -256,6 +257,16 @@ export function buildDrawingRowActions(callbacks: DrawingRowActionCallbacks) {
         >
           {item.isObsolete ? "Restore" : "Mark Obsolete"}
         </DropdownMenuItem>
+        {callbacks.onQrCode && (
+          <DropdownMenuItem
+            onClick={(e) => {
+              e.stopPropagation();
+              callbacks.onQrCode!(item.id, item.drawingNumber ?? "Drawing");
+            }}
+          >
+            QR Code
+          </DropdownMenuItem>
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem
           className="text-destructive focus:text-destructive"

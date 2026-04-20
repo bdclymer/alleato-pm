@@ -30,6 +30,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { DrawingUploadDialog } from "@/components/drawings/DrawingUploadDialog";
+import { DrawingQRCode } from "@/components/drawings/DrawingQRCode";
 import { useDrawings, useDeleteDrawing, usePublishDrawing, useObsoleteDrawing, useUpdateDrawing } from "@/hooks/use-drawings";
 import type { DrawingLogTableRow } from "@/types/drawings.types";
 import { DRAWING_DISCIPLINES } from "@/types/drawings.types";
@@ -72,6 +73,9 @@ export default function ProjectDrawingsPage() {
 
   // Delete confirmation state
   const [deleteTarget, setDeleteTarget] = useState<DrawingLogTableRow | null>(null);
+
+  // QR code state
+  const [qrTarget, setQrTarget] = useState<{ drawingId: string; drawingNumber: string } | null>(null);
 
   // Bulk edit state
   const [bulkDisciplineSearch, setBulkDisciplineSearch] = useState("");
@@ -473,6 +477,7 @@ export default function ProjectDrawingsPage() {
           onPublish: (drawingId, publish) => publishDrawing.mutate({ drawingId, publish }),
           onObsolete: (drawingId, obsolete) => obsoleteDrawing.mutate({ drawingId, obsolete }),
           onDelete: handleDeleteDrawing,
+          onQrCode: (drawingId, drawingNumber) => setQrTarget({ drawingId, drawingNumber }),
         }),
       }}
       selection={{
@@ -558,6 +563,16 @@ export default function ProjectDrawingsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {qrTarget && (
+        <DrawingQRCode
+          projectId={projectId}
+          drawingId={qrTarget.drawingId}
+          drawingNumber={qrTarget.drawingNumber}
+          isOpen={true}
+          onClose={() => setQrTarget(null)}
+        />
+      )}
     </div>
   );
 }

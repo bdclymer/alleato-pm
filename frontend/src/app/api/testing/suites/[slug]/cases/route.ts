@@ -14,7 +14,7 @@ export const GET = withApiGuardrails<{ slug: string }>(
   async ({ request, params }) => {
     const { slug } = await params;
     const { searchParams } = new URL(request.url);
-    const typeFilter = searchParams.get("type") ?? "scenario";
+    const typeFilter = searchParams.get("type") ?? "all";
 
     const supabase = await createClient();
 
@@ -28,13 +28,15 @@ export const GET = withApiGuardrails<{ slug: string }>(
       return NextResponse.json({ error: "Suite not found" }, { status: 404 });
     }
 
+    // Use "or" so that cases with status=null (not yet explicitly set) are included,
+    // and only rows explicitly marked status='inactive' are excluded.
     let query = supabase
       .from("test_cases")
       .select(
         "id, test_number, category, subcategory, test_name, context_note, setup_steps, steps, expected_result, priority, start_url, test_type, scenario_depth"
       )
       .eq("suite_id", suite.id)
-      .filter("status", "neq", "inactive");
+      .or("status.is.null,status.neq.inactive");
 
     if (typeFilter !== "all") {
       query = query.eq("test_type", typeFilter);

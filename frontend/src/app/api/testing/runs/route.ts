@@ -126,7 +126,7 @@ export const POST = withApiGuardrails(
     .from("test_cases")
     .select("id, test_type, scenario_depth")
     .eq("suite_id", suiteRow.id)
-    .filter("status", "neq", "inactive");
+    .or("status.is.null,status.neq.inactive");
 
   let cases = withDepthCases.data;
   let caseDepthAvailable = !withDepthCases.error;
@@ -136,7 +136,7 @@ export const POST = withApiGuardrails(
       .from("test_cases")
       .select("id, test_type")
       .eq("suite_id", suiteRow.id)
-      .filter("status", "neq", "inactive");
+      .or("status.is.null,status.neq.inactive");
     if (fallbackCases.error) {
       return NextResponse.json({ error: fallbackCases.error.message }, { status: 500 });
     }

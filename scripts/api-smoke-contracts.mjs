@@ -146,6 +146,9 @@ const ENDPOINTS = [
   ["GET", `/api/projects/${PROJECT_ID}/drawings/sets`, "Drawing sets", [200, 401]],
   ["GET", `/api/projects/${PROJECT_ID}/drawings/areas`, "Drawing areas", [200, 401]],
   ["GET", `/api/projects/${PROJECT_ID}/drawings/recycle-bin`, "Drawings recycle bin", [200, 401]],
+  ["GET", `/api/projects/${PROJECT_ID}/drawings/${FAKE_UUID}/related-items`, "Drawing related items", [200, 401, 404]],
+  ["GET", `/api/projects/${PROJECT_ID}/drawings/${FAKE_UUID}/change-history`, "Drawing change history", [200, 401, 404]],
+  ["GET", `/api/projects/${PROJECT_ID}/drawings/${FAKE_UUID}/qr-code`, "Drawing QR code", [200, 401, 404]],
 
   // Specifications
   ["GET", `/api/projects/${PROJECT_ID}/specifications`, "Specifications list", [200, 401]],

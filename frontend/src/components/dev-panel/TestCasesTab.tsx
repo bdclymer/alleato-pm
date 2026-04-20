@@ -33,7 +33,7 @@ interface CasesPayload {
 
 interface Props {
   slug: string;
-  type?: "scenario" | "feature";
+  type?: "scenario" | "feature" | "all";
   depth?: "broad" | "detailed" | "all";
 }
 
@@ -166,7 +166,7 @@ function TestCaseCard({ tc }: { tc: TestCase }) {
 
 // ─── TestCasesTab ─────────────────────────────────────────────────────────────
 
-export function TestCasesTab({ slug, type = "scenario", depth = "all" }: Props) {
+export function TestCasesTab({ slug, type = "all", depth = "all" }: Props) {
   const [data, setData] = React.useState<CasesPayload | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -213,18 +213,11 @@ export function TestCasesTab({ slug, type = "scenario", depth = "all" }: Props) 
     return (
       <div className="py-12 text-center space-y-2 text-sm text-muted-foreground">
         <p>
-          No {type === "scenario" ? "active scenarios" : "feature test cases"} found for{" "}
-          <strong>{slug}</strong>.
+          No active test cases found for <strong>{slug}</strong>.
         </p>
-        {type === "scenario" && (
-          <p className="text-xs">
-            Run{" "}
-            <code className="rounded bg-muted px-1 py-0.5">
-              /test-scenario-writer {slug}
-            </code>{" "}
-            to generate them.
-          </p>
-        )}
+        <p className="text-xs text-muted-foreground/60">
+          Cases may not be seeded yet, or all cases are marked inactive.
+        </p>
       </div>
     );
   }
