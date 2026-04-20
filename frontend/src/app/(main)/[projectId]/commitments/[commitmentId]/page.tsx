@@ -208,9 +208,11 @@ const normalizeCommitment = (raw: unknown): CommitmentDetail | null => {
     start_date:
       typeof record.start_date === "string" ? record.start_date : undefined,
     substantial_completion_date:
-      typeof record.substantial_completion_date === "string"
-        ? record.substantial_completion_date
-        : undefined,
+      typeof record.estimated_completion_date === "string"
+        ? record.estimated_completion_date
+        : typeof record.substantial_completion_date === "string"
+          ? record.substantial_completion_date
+          : undefined,
     accounting_method: accountingMethod,
     retention_percentage: Number(record.default_retainage_percent ?? record.retention_percentage ?? 0),
     vendor_invoice_number:
