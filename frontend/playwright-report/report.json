@@ -1,7 +1,7 @@
 {
   "config": {
-    "configFile": "/Users/meganharrison/Documents/github/alleato-pm/frontend/playwright.config.ts",
-    "rootDir": "/Users/meganharrison/Documents/github/alleato-pm/frontend/tests",
+    "configFile": "/Users/meganharrison/Documents/alleato-pm/frontend/playwright.config.ts",
+    "rootDir": "/Users/meganharrison/Documents/alleato-pm/frontend/tests",
     "forbidOnly": false,
     "fullyParallel": true,
     "globalSetup": null,
@@ -11,20 +11,20 @@
     "grepInvert": null,
     "maxFailures": 0,
     "metadata": {
-      "actualWorkers": 1
+      "actualWorkers": 2
     },
     "preserveOutput": "always",
     "projects": [
       {
-        "outputDir": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results",
+        "outputDir": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results",
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 1
+          "actualWorkers": 2
         },
         "id": "setup",
         "name": "setup",
-        "testDir": "/Users/meganharrison/Documents/github/alleato-pm/frontend/tests",
+        "testDir": "/Users/meganharrison/Documents/alleato-pm/frontend/tests",
         "testIgnore": [],
         "testMatch": [
           "/.*\\.setup\\.ts/"
@@ -32,15 +32,15 @@
         "timeout": 60000
       },
       {
-        "outputDir": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results",
+        "outputDir": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results",
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 1
+          "actualWorkers": 2
         },
         "id": "chromium",
         "name": "chromium",
-        "testDir": "/Users/meganharrison/Documents/github/alleato-pm/frontend/tests",
+        "testDir": "/Users/meganharrison/Documents/alleato-pm/frontend/tests",
         "testIgnore": [],
         "testMatch": [
           "**/*.@(spec|test).?(c|m)[jt]s?(x)"
@@ -48,15 +48,15 @@
         "timeout": 60000
       },
       {
-        "outputDir": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results",
+        "outputDir": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results",
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 1
+          "actualWorkers": 2
         },
         "id": "debug",
         "name": "debug",
-        "testDir": "/Users/meganharrison/Documents/github/alleato-pm/frontend/tests",
+        "testDir": "/Users/meganharrison/Documents/alleato-pm/frontend/tests",
         "testIgnore": [
           "/prime-contracts-settings\\.spec\\.ts/"
         ],
@@ -66,15 +66,15 @@
         "timeout": 60000
       },
       {
-        "outputDir": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results",
+        "outputDir": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results",
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 1
+          "actualWorkers": 2
         },
         "id": "no-auth",
         "name": "no-auth",
-        "testDir": "/Users/meganharrison/Documents/github/alleato-pm/frontend/tests",
+        "testDir": "/Users/meganharrison/Documents/alleato-pm/frontend/tests",
         "testIgnore": [],
         "testMatch": [
           "/sidebar-collapse-verification\\.spec\\.ts/"
@@ -112,7 +112,7 @@
     "updateSnapshots": "missing",
     "updateSourceMethod": "patch",
     "version": "1.58.1",
-    "workers": 5,
+    "workers": 7,
     "webServer": {
       "command": "npm run dev",
       "url": "http://localhost:3000",
@@ -142,27 +142,27 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 582,
+                  "duration": 117,
                   "errors": [],
                   "stdout": [
                     {
-                      "text": "Auth setup complete — session saved for test1@mail.com\n"
+                      "text": "Existing auth session is still valid — skipping re-authentication\n"
                     }
                   ],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-04-17T09:57:41.277Z",
+                  "startTime": "2026-04-20T14:37:08.067Z",
                   "annotations": [],
                   "attachments": [
                     {
                       "name": "screenshot",
                       "contentType": "image/png",
-                      "path": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results/auth.setup.ts-authenticate-setup/test-finished-1.png"
+                      "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/auth.setup.ts-authenticate-setup/test-finished-1.png"
                     },
                     {
                       "name": "video",
                       "contentType": "video/webm",
-                      "path": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results/auth.setup.ts-authenticate-setup/video.webm"
+                      "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/auth.setup.ts-authenticate-setup/video.webm"
                     }
                   ]
                 }
@@ -176,15 +176,137 @@
           "column": 6
         }
       ]
+    },
+    {
+      "title": "supabase-e2e/studio/features/_global.setup.ts",
+      "file": "supabase-e2e/studio/features/_global.setup.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "Global Setup",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "setup",
+              "projectName": "setup",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "failed",
+                  "duration": 172,
+                  "error": {
+                    "message": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:8082/\nCall log:\n\u001b[2m  - navigating to \"http://localhost:8082/\", waiting until \"load\"\u001b[22m\n",
+                    "stack": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:8082/\nCall log:\n\u001b[2m  - navigating to \"http://localhost:8082/\", waiting until \"load\"\u001b[22m\n\n    at /Users/meganharrison/Documents/alleato-pm/frontend/tests/supabase-e2e/studio/features/_global.setup.ts:37:14",
+                    "location": {
+                      "file": "/Users/meganharrison/Documents/alleato-pm/frontend/tests/supabase-e2e/studio/features/_global.setup.ts",
+                      "column": 14,
+                      "line": 37
+                    },
+                    "snippet": "  35 |   const apiUrl = env.API_URL\n  36 |\n> 37 |   await page.goto(studioUrl).catch((err) => {\n     |              ^\n  38 |     console.error(\n  39 |       `\\n 🚨 Setup Error \n  40 | Studio is not available at: ${studioUrl}"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/Users/meganharrison/Documents/alleato-pm/frontend/tests/supabase-e2e/studio/features/_global.setup.ts",
+                        "column": 14,
+                        "line": 37
+                      },
+                      "message": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:8082/\nCall log:\n\u001b[2m  - navigating to \"http://localhost:8082/\", waiting until \"load\"\u001b[22m\n\n\n  35 |   const apiUrl = env.API_URL\n  36 |\n> 37 |   await page.goto(studioUrl).catch((err) => {\n     |              ^\n  38 |     console.error(\n  39 |       `\\n 🚨 Setup Error \n  40 | Studio is not available at: ${studioUrl}\n    at /Users/meganharrison/Documents/alleato-pm/frontend/tests/supabase-e2e/studio/features/_global.setup.ts:37:14"
+                    }
+                  ],
+                  "stdout": [
+                    {
+                      "text": "\n 🧪 Setting up test environment.\n    - Studio URL: http://localhost:8082\n    - API URL: https://localhost:8080\n    - Auth: disabled\n    - Is Platform: undefined\n    \n"
+                    }
+                  ],
+                  "stderr": [
+                    {
+                      "text": "\n 🚨 Setup Error \nStudio is not available at: http://localhost:8082\n\nPlease ensure:\n  1. Studio is running in the expected URL\n  2. You have proper network access\n\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-04-20T14:37:08.166Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/supabase-e2e-studio-features-_global.setup.ts-Global-Setup-setup/test-failed-1.png"
+                    },
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/supabase-e2e-studio-features-_global.setup.ts-Global-Setup-setup/video.webm"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/Users/meganharrison/Documents/alleato-pm/frontend/tests/supabase-e2e/studio/features/_global.setup.ts",
+                    "column": 14,
+                    "line": 37
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "35a4828c96b1a2fe5cab-ed2cb4a27969102ec80d",
+          "file": "supabase-e2e/studio/features/_global.setup.ts",
+          "line": 22,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "e2e/budget/budget-comprehensive.spec.ts",
+      "file": "e2e/budget/budget-comprehensive.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Budget Page - Display and Navigation",
+          "file": "e2e/budget/budget-comprehensive.spec.ts",
+          "line": 6,
+          "column": 6,
+          "specs": [
+            {
+              "title": "loads budget page and key controls",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "002ac83b9abb74f135dc-22f835ce062a73e4a5d8",
+              "file": "e2e/budget/budget-comprehensive.spec.ts",
+              "line": 12,
+              "column": 7
+            }
+          ]
+        }
+      ]
     }
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-04-17T09:57:39.812Z",
-    "duration": 2684.739,
+    "startTime": "2026-04-20T14:37:07.101Z",
+    "duration": 1445.1480000000001,
     "expected": 1,
-    "skipped": 0,
-    "unexpected": 0,
+    "skipped": 1,
+    "unexpected": 1,
     "flaky": 0
   }
 }

@@ -132,6 +132,7 @@ const ENDPOINTS = [
   // RFIs
   ["GET", `/api/projects/${PROJECT_ID}/rfis`, "RFIs list", [200, 401]],
   ["GET", `/api/projects/${PROJECT_ID}/rfis/${FAKE_UUID}`, "RFI detail (fake id)", [200, 401, 404]],
+  // Regression: drawing_number must be included in POST insertData (was silently dropped — fixed 2026-04-20)
 
   // Submittals
   ["GET", `/api/projects/${PROJECT_ID}/submittals`, "Submittals list", [200, 401]],
