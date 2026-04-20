@@ -2,9 +2,30 @@
 
 **Trigger:** Any time you are creating or editing a page or UI component.
 
-## Before writing ANY UI code
+## Step 0 — MANDATORY before any JSX
 
-### Building a page?
+```bash
+ls frontend/src/components/ds/
+```
+
+Read the output. If the component you are about to write is in that list — **use it instead**. Do not write a single line of JSX for a UI pattern that already exists as a component.
+
+**Component lookup rule:** If you are about to write any of these patterns, use the component:
+
+| Pattern you're about to hand-roll | Use this instead |
+|-----------------------------------|-----------------|
+| flex + icon + text with tinted bg | `<InfoAlert>` from `@/components/ds/InfoAlert` |
+| "No X yet" / empty list state | `<EmptyState>` from `@/components/ds/empty-state` |
+| Status-colored badge/pill | `<StatusBadge>` from `@/components/ds/status-badge` |
+| Error/failed load state | `<ErrorState>` from `@/components/ds/error-state` |
+| Label + value pair in detail view | `<DetailField>` from `@/components/ds/DetailField` |
+| Delete confirmation modal | `<ConfirmDeleteDialog>` from `@/components/ds/ConfirmDeleteDialog` |
+| Save/cancel action bar | `<EditModeActions>` from `@/components/ds/EditModeActions` |
+| KPI / metric number display | `<KpiBlock>` / `<KpiRow>` from `@/components/ds/kpi` |
+
+Usage for every component: `frontend/src/components/ds/GOLDEN-EXAMPLES.tsx`
+
+## Building a page?
 
 ```tsx
 import { PageShell } from "@/components/layout";

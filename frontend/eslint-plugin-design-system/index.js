@@ -22,9 +22,11 @@ const noInlineSpinner = require('./rules/no-inline-spinner');
 const noRawHeading = require('./rules/no-raw-heading');
 const noInlineCurrency = require('./rules/no-inline-currency');
 const requireErrorState = require('./rules/require-error-state');
+const requireInfoAlert = require('./rules/require-info-alert');
 
 module.exports = {
   rules: {
+    'require-info-alert': requireInfoAlert,
     'no-hardcoded-colors': noHardcodedColors,
     'no-arbitrary-spacing': noArbitrarySpacing,
     'require-semantic-colors': requireSemanticColors,

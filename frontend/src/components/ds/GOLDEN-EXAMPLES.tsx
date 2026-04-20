@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageShell } from "@/components/layout";
 import { StatusBadge, KpiRow, SectionHeader, EmptyState, DataTable } from "@/components/ds";
+import { InfoAlert } from "@/components/ds/InfoAlert";
 import { Plus } from "lucide-react";
 import type { ReactNode } from "react";
 
@@ -28,7 +29,57 @@ import type { ReactNode } from "react";
 // ❌ hex colors in className    → always use CSS variables / semantic tokens
 // ❌ <div className="bg-card rounded-lg border border-border p-6"> everywhere
 //    → this is the Card Trap. Use tonal elevation or SectionCard instead.
+// ❌ <div className="flex gap-2 bg-muted/50 rounded-lg ..."><Info />...</div>
+//    → this is a hand-rolled callout. Use <InfoAlert> instead.
 // ─────────────────────────────────────────────────────────────────────────────
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 0. CALLOUT / INFO BOXES — Always use InfoAlert. Never flex + Info icon + bg-*.
+// ═══════════════════════════════════════════════════════════════════════════
+
+export function GoldenCallouts() {
+  return (
+    <div className="space-y-3">
+      {/* ✅ Info — light purple bg, primary icon. Use for tips, explanations, legends. */}
+      <InfoAlert variant="info">
+        This field is calculated automatically from the contract value.
+      </InfoAlert>
+
+      {/* ✅ With header — pass a fragment with a bold label as first child */}
+      <InfoAlert variant="info">
+        <div>
+          <p className="font-medium text-sm mb-0.5">Column key</p>
+          <p className="text-xs opacity-80">PRP — feature spec written by prp-create</p>
+        </div>
+      </InfoAlert>
+
+      {/* ✅ Warning */}
+      <InfoAlert variant="warning">
+        Submitting will notify all distribution list members.
+      </InfoAlert>
+
+      {/* ✅ Success */}
+      <InfoAlert variant="success">
+        All tasks complete. Ready to validate.
+      </InfoAlert>
+
+      {/* ✅ Error */}
+      <InfoAlert variant="error">
+        Validation failed — see issues below.
+      </InfoAlert>
+
+      {/*
+        ❌ NEVER hand-roll a callout like this:
+        <div className="flex gap-3 bg-muted/50 rounded-lg px-4 py-3">
+          <Info className="h-4 w-4 text-muted-foreground" />
+          <p className="text-xs text-muted-foreground">Some info text</p>
+        </div>
+
+        The ESLint rule `design-system/require-info-alert` will block this at commit time.
+      */}
+    </div>
+  );
+}
 
 // ═══════════════════════════════════════════════════════════════════════════
 // 1. PAGE SHELL — Every page uses this. No exceptions.

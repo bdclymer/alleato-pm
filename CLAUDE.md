@@ -195,11 +195,20 @@ import { PageShell } from "@/components/layout";
 
 ### 7. Design System Gate
 
-**BEFORE building ANY UI:**
+**BEFORE building ANY UI element, run this first:**
 
-1. Read `docs/design/DESIGN.md` — single source of truth
-2. Import from `@/components/ds` or `@/components/ui` (both valid)
-3. Copy patterns from `frontend/src/components/ds/GOLDEN-EXAMPLES.tsx`
+```bash
+ls frontend/src/components/ds/
+```
+
+Read what exists. If the thing you're about to build is in that list — **stop and use it**. Do not write a single line of JSX for a component that already exists.
+
+**Then:**
+1. Copy the exact usage from `frontend/src/components/ds/GOLDEN-EXAMPLES.tsx`
+2. If the pattern isn't in GOLDEN-EXAMPLES, check `docs/design/DESIGN.md`
+3. If it's not there either, ask before inventing anything
+
+**ZERO HAND-ROLLING RULE:** If something can be expressed as a component — it must be. No inline flex+icon+text callouts. No inline status colors. No inline empty states. No inline error states. No raw headings. If you find yourself writing layout patterns with semantic meaning, stop and find the component.
 
 **The 4 rules that catch 80% of violations:**
 1. Never `<button>` — always `<Button>` from `@/components/ui/button`
@@ -209,7 +218,7 @@ import { PageShell } from "@/components/layout";
 
 **Color tokens only:** `bg-background`, `bg-card`, `bg-muted`, `text-foreground`, `text-muted-foreground`, `border-border`, `bg-primary`. Zero hex codes. Zero `gray-*`/`blue-*` classes.
 
-**ESLint enforces this:** 3 rules active as ERRORS — `no-hardcoded-colors`, `no-arbitrary-spacing`, `require-semantic-colors`. Violations block the build.
+**ESLint enforces this:** Rules active as ERRORS — `no-hardcoded-colors`, `no-arbitrary-spacing`, `require-semantic-colors`, `require-info-alert`, `require-empty-state`, `no-raw-button`, `no-raw-form-controls`. Violations block the build.
 
 **Component architecture:**
 - `@/components/ui/` = Pure shadcn primitives ONLY
@@ -217,14 +226,28 @@ import { PageShell } from "@/components/layout";
 - `@/components/layout/` = Page structure (PageShell, PageContainer)
 - `@/components/domain/` = Domain-specific components
 
-| Component | Purpose |
-|-----------|---------|
-| `StatusBadge` | Pass status string → correct colors automatically |
-| `StatusDot` | Minimal inline dot + label for tables |
-| `KpiBlock` / `KpiRow` | Metric display |
-| `DataTable` | Premium table with correct styling |
-| `SectionHeader` | Title + count + action link |
-| `EmptyState` | Icon + title + description + action |
+**All `@/components/ds` components — check this list before writing any UI:**
+
+| Component | Import | Purpose |
+|-----------|--------|---------|
+| `StatusBadge` | `@/components/ds/status-badge` | Status string → correct colors. Never hand-roll status colors. |
+| `EmptyState` | `@/components/ds/empty-state` | Empty list/section state. Never `<p>No X yet</p>`. |
+| `InfoAlert` | `@/components/ds/InfoAlert` | Callouts/info boxes. variants: `info` (purple), `warning`, `success`, `error`. Never flex+icon+bg div. |
+| `ErrorState` | `@/components/ds/error-state` | Error display for failed loads. |
+| `KpiBlock` / `KpiRow` | `@/components/ds/kpi` | Metric display. |
+| `SectionHeader` | `@/components/ds/section-header` | Title + count + action link. |
+| `DataTable` | `@/components/ds/data-table` | Premium table with correct styling. |
+| `DetailField` | `@/components/ds/DetailField` | Label + value pair in detail views. |
+| `ConfirmDeleteDialog` | `@/components/ds/ConfirmDeleteDialog` | Standard delete confirmation modal. |
+| `SectionCard` | `@/components/ds/section-card` | Content section with optional header. |
+| `IconBadge` | `@/components/ds/icon-badge` | Colored icon container. |
+| `PageBadge` | `@/components/ds/page-badge` | Status badge in page headers. |
+| `SplitButton` | `@/components/ds/SplitButton` | Primary action + dropdown. |
+| `EditModeActions` | `@/components/ds/EditModeActions` | Save/Cancel action bar for edit mode. |
+| `DetailActions` | `@/components/ds/DetailActions` | Action buttons for detail pages. |
+| `BackButton` | `@/components/ds/BackButton` | Navigation back button. |
+| `InlineTable` | `@/components/ds/inline-table` | Compact table inside a detail panel. |
+| `AvatarStack` | `@/components/ds/avatar-stack` | Overlapping user avatars. |
 
 ### 8. Browser Verification Gate
 
