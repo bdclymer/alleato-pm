@@ -245,6 +245,7 @@ export function CreatePurchaseOrderForm({
       shipVia: initialData?.shipVia || "",
       paymentTerms: initialData?.paymentTerms || "",
       dates: initialData?.dates || {},
+      defaultRetainagePercent: initialData?.defaultRetainagePercent,
     },
   });
 
@@ -741,10 +742,10 @@ export function CreatePurchaseOrderForm({
         )}
 
         {budgetCodesLoaded && unbudgetedLines.length > 0 && (
-          <Alert className="border-yellow-200 bg-yellow-50 text-yellow-900">
+          <Alert>
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Unbudgeted line items</AlertTitle>
-            <AlertDescription className="text-yellow-800">
+            <AlertDescription>
               Line items{" "}
               {unbudgetedLines.map((line) => `${line.lineNumber} (${line.code})`).join(", ")}{" "}
               are not on the project budget. Add them to the budget or update these line items
@@ -905,7 +906,7 @@ export function CreatePurchaseOrderForm({
                     variant="ghost"
                     size="sm"
                     onClick={() => removeSOVLine(index)}
-                    className="h-8 w-8 p-0 text-muted-foreground hover:text-red-600"
+                    className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
                   >
                     &times;
                   </Button>
@@ -1154,7 +1155,7 @@ export function CreatePurchaseOrderForm({
       <FormServerError message={errors.root?.message} />
 
       <FormActions
-        submitLabel="Create Purchase Order"
+        submitLabel={mode === "edit" ? "Save Changes" : "Create Purchase Order"}
         onCancel={onCancel}
         isSubmitting={isSubmitting}
       >

@@ -120,6 +120,10 @@ export default function EditCommitmentPage() {
         executed: typeof r.executed === "boolean" ? r.executed : false,
         defaultRetainagePercent: typeof r.default_retainage_percent === "number" ? r.default_retainage_percent : undefined,
         description: typeof r.description === "string" ? r.description : undefined,
+        billTo: typeof r.bill_to === "string" ? r.bill_to : undefined,
+        shipTo: typeof r.ship_to === "string" ? r.ship_to : undefined,
+        shipVia: typeof r.ship_via === "string" ? r.ship_via : undefined,
+        paymentTerms: typeof r.payment_terms === "string" ? r.payment_terms : undefined,
         dates: {
           contractDate: typeof r.contract_date === "string" ? r.contract_date : undefined,
           deliveryDate: typeof r.delivery_date === "string" ? r.delivery_date : undefined,
@@ -269,14 +273,21 @@ export default function EditCommitmentPage() {
         title: data.title,
         contract_company_id: data.contractCompanyId || null,
         status: data.status,
+        executed: data.executed ?? false,
         description: data.description || null,
         assigned_to: data.assignedTo || null,
+        bill_to: data.billTo || null,
+        ship_to: data.shipTo || null,
+        ship_via: data.shipVia || null,
+        payment_terms: data.paymentTerms || null,
         is_private: data.privacy?.isPrivate ?? true,
         non_admin_user_ids: data.privacy?.nonAdminUserIds || [],
         allow_non_admin_view_sov_items: data.privacy?.allowNonAdminViewSovItems ?? false,
         invoice_contact_ids: data.invoiceContactIds || [],
         contract_date: data.dates?.contractDate || null,
         delivery_date: data.dates?.deliveryDate || null,
+        signed_po_received_date: data.dates?.signedPoReceivedDate || null,
+        default_retainage_percent: data.defaultRetainagePercent ?? null,
       }),
     });
 
@@ -294,7 +305,7 @@ export default function EditCommitmentPage() {
   const title = isSubcontract ? "Edit Subcontract" : "Edit Purchase Order";
   const description = isSubcontract ? "Update subcontract details" : "Update purchase order details";
 
-  if (isLoading || attachmentsLoading) {
+  if (isLoading || (isSubcontract && attachmentsLoading)) {
     return (
       <PageShell
         variant="form"
