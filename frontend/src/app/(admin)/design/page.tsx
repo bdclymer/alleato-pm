@@ -1214,17 +1214,38 @@ export default function DesignSystemComponentsPage() {
 
       {/* EmptyState */}
       <SubSection title="EmptyState">
-        <EmptyState
-          icon={<FolderOpen />}
-          title="No contracts yet"
-          description="Create your first contract to start tracking commitments and change orders."
-          action={
-            <Button size="sm" variant="outline" onClick={() => {}}>
-              <Plus />
-              New Contract
-            </Button>
-          }
-        />
+        <div className="space-y-6">
+          <p className="text-sm text-muted-foreground">
+            EmptyState visuals are primitive-controlled. The action button style is caller-controlled via{" "}
+            <code>Button variant</code> and should match product context.
+          </p>
+
+          <div className="grid gap-6 md:grid-cols-2">
+            <EmptyState
+              icon={<FolderOpen />}
+              title="No contracts yet"
+              description="Create your first contract to start tracking commitments and change orders."
+              action={
+                <Button size="sm" onClick={() => {}}>
+                  <Plus />
+                  Create Contract
+                </Button>
+              }
+            />
+
+            <EmptyState
+              icon={<FolderOpen />}
+              title="No SOV lines yet"
+              description="Add SOV lines with budget codes to track the contract value."
+              action={
+                <Button size="sm" variant="outline" onClick={() => {}}>
+                  <Plus />
+                  Add SOV Line
+                </Button>
+              }
+            />
+          </div>
+        </div>
       </SubSection>
 
       {/* Skeleton */}

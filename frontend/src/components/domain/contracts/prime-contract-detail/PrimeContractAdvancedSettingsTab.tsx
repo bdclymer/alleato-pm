@@ -68,9 +68,9 @@ export function PrimeContractAdvancedSettingsTab({
   setContract,
   changeOrderCount = 0,
 }: PrimeContractAdvancedSettingsTabProps) {
-  const checkboxRowClassName = "flex items-start gap-3";
-  const checkboxLabelClassName = "pt-0.5 text-sm font-medium text-foreground leading-5";
-  const checkboxMutedLabelClassName = "pt-0.5 text-sm text-muted-foreground leading-5";
+  const checkboxRowClassName = "flex items-center gap-3";
+  const checkboxLabelClassName = "text-sm font-medium text-foreground leading-5";
+  const checkboxMutedLabelClassName = "text-sm text-muted-foreground leading-5";
 
   const coTierLocked = changeOrderCount > 0;
   const updateAdvancedSetting = <K extends keyof PrimeContractSettings>(
@@ -168,7 +168,7 @@ export function PrimeContractAdvancedSettingsTab({
 
           <div>
             <SectionRuleHeading label="Retainage" />
-            <div className="mt-1 flex items-start gap-2">
+            <div className="mt-1 flex items-center gap-2">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -269,7 +269,7 @@ export function PrimeContractAdvancedSettingsTab({
 
           <div>
             <SectionRuleHeading label="Change Orders" />
-            <div className="mt-1 flex items-start gap-2">
+            <div className="mt-1 flex items-center gap-2">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button

@@ -65,6 +65,8 @@ interface RelatedItemsTabProps {
   commitmentId: string;
   projectId: number;
   commitmentType?: string;
+  apiBasePath?: string;
+  entityLabel?: string;
 }
 
 async function fetchSearchOptions(
@@ -98,7 +100,14 @@ async function fetchSearchOptions(
   }
 }
 
-export function RelatedItemsTab({ commitmentId, projectId, commitmentType = "subcontract" }: RelatedItemsTabProps) {
+export function RelatedItemsTab({
+  commitmentId,
+  projectId,
+  commitmentType = "subcontract",
+  apiBasePath,
+  entityLabel = "commitment",
+}: RelatedItemsTabProps) {
+  const resolvedApiBasePath = apiBasePath ?? `/api/commitments/${commitmentId}/related-items`;
   const [items, setItems] = useState<RelatedItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
@@ -112,7 +121,7 @@ export function RelatedItemsTab({ commitmentId, projectId, commitmentType = "sub
 
   const fetchItems = useCallback(async () => {
     try {
-      const res = await fetch(`/api/commitments/${commitmentId}/related-items`);
+      const res = await fetch(resolvedApiBasePath);
       if (!res.ok) return;
       const payload = await res.json() as { data?: RelatedItem[] };
       setItems(payload.data ?? []);
@@ -121,7 +130,7 @@ export function RelatedItemsTab({ commitmentId, projectId, commitmentType = "sub
     } finally {
       setIsLoading(false);
     }
-  }, [commitmentId]);
+  }, [resolvedApiBasePath]);
 
   useEffect(() => {
     void fetchItems();
@@ -158,7 +167,7 @@ export function RelatedItemsTab({ commitmentId, projectId, commitmentType = "sub
 
     setIsLinking(true);
     try {
-      const res = await fetch(`/api/commitments/${commitmentId}/related-items`, {
+      const res = await fetch(resolvedApiBasePath, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -187,10 +196,7 @@ export function RelatedItemsTab({ commitmentId, projectId, commitmentType = "sub
   const handleUnlink = async (itemId: string) => {
     setDeletingIds((prev) => new Set(prev).add(itemId));
     try {
-      const res = await fetch(
-        `/api/commitments/${commitmentId}/related-items?id=${itemId}`,
-        { method: "DELETE" },
-      );
+      const res = await fetch(`${resolvedApiBasePath}?id=${encodeURIComponent(itemId)}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Failed to unlink");
       setItems((prev) => prev.filter((i) => i.id !== itemId));
       toast.success("Related item removed");
@@ -283,7 +289,7 @@ export function RelatedItemsTab({ commitmentId, projectId, commitmentType = "sub
           <DialogHeader>
             <DialogTitle>Link Related Item</DialogTitle>
             <DialogDescription>
-              Search for a record to link to this commitment.
+              Search for a record to link to this {entityLabel}.
             </DialogDescription>
           </DialogHeader>
 

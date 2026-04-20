@@ -28,6 +28,14 @@ Execute a test suite stored in Supabase (`test_suites` → `test_cases`) against
 
 Flags combine: `/test-scenario-run budget feature --priority HIGH`.
 
+## Watch Mode (default: ON)
+
+The runner **defaults to headed** so the user can watch execution live. Every `agent-browser open` call in this skill uses `--headed`. This opens a visible Chromium window on the user's machine.
+
+- To run without a visible window (CI, remote): add `--no-watch` to the invocation and strip `--headed` from every `open` call in this skill.
+- Between steps, insert a short `sleep 0.5` to make actions human-readable.
+- Announce to the user at start: "Opening browser in watch mode — a Chromium window will appear. Leave it on top to watch execution."
+
 ## Preflight
 
 ### 1. Platform + dev server
@@ -85,7 +93,7 @@ Convert each file path to an endpoint path by stripping `frontend/src/app` and r
 If the agent-browser session is not yet open, do a one-time login to capture the Supabase session cookie:
 
 ```bash
-agent-browser open http://localhost:3000/login
+agent-browser open http://localhost:3000/login --headed
 agent-browser snapshot -i
 agent-browser fill @<emailInput> "$TEST_USER"
 agent-browser fill @<passwordInput> "$TEST_PASSWORD"
@@ -235,7 +243,7 @@ Record a local start timestamp for duration reporting.
 ### Step 4 — Open browser once, authenticate once
 
 ```
-agent-browser open http://localhost:3000/login
+agent-browser open http://localhost:3000/login --headed
 agent-browser snapshot -i
 agent-browser fill @<emailInput> "$TEST_USER"
 agent-browser fill @<passwordInput> "$TEST_PASSWORD"

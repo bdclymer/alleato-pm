@@ -982,17 +982,15 @@ export function UnifiedTablePage<T>({
       {showEmptyState && (
         <div className="mt-4">
           <EmptyState
-            icon={<Inbox />}
+            icon={emptyState.icon ?? <Inbox />}
             title={emptyState.title}
             description={
               emptyState.isFiltered
                 ? emptyState.filteredDescription
                 : emptyState.description
             }
+            action={!emptyState.isFiltered ? emptyState.action : undefined}
           />
-          {!emptyState.isFiltered && emptyState.action && (
-            <div className="flex justify-center mt-3">{emptyState.action}</div>
-          )}
         </div>
       )}
 
@@ -1574,7 +1572,7 @@ export function UnifiedTablePage<T>({
       })()}
 
       {showTable && canRenderListView && (
-        <div className="mt-4 space-y-1">
+        <div className="mt-4 flex flex-col gap-2">
           {rowOrderedItems.map((item) => {
             const ListView = views?.list;
             return (

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
+import { createServiceClient } from "@/lib/supabase/service";
 
 export interface ToolPrpStatus {
   tool: string;
@@ -12,6 +13,10 @@ export interface ToolPrpStatus {
   hasTestScenarios: boolean;
   hasValidationReport: boolean;
   validationPassed: boolean | null; // null = no report
+  // Test scenario audit (`/test-scenario-audit <tool>`): smoke + feature suites seeded in Supabase.
+  smokeCases: number;     // 0 if no smoke suite seeded
+  featureCases: number;   // 0 if no feature suite seeded
+  hasTestAudit: boolean;  // true only when BOTH smoke and feature suites exist with >0 cases
   prpDir: string | null;
 }
 
@@ -77,8 +82,29 @@ function checkValidationPassed(reportPath: string): boolean | null {
   return content.includes("PASS");
 }
 
+async function loadTestSuiteCounts(): Promise<Map<string, { smoke: number; feature: number }>> {
+  const counts = new Map<string, { smoke: number; feature: number }>();
+  try {
+    const supabase = createServiceClient();
+    const { data, error } = await supabase
+      .from("test_suites")
+      .select("tool_name, suite_type, total_cases");
+    if (error || !data) return counts;
+    for (const row of data as Array<{ tool_name: string; suite_type: string; total_cases: number | null }>) {
+      const current = counts.get(row.tool_name) ?? { smoke: 0, feature: 0 };
+      if (row.suite_type === "smoke") current.smoke = row.total_cases ?? 0;
+      if (row.suite_type === "feature") current.feature = row.total_cases ?? 0;
+      counts.set(row.tool_name, current);
+    }
+  } catch {
+    // Swallow — environments without SUPABASE_SERVICE_ROLE_KEY just report zeros.
+  }
+  return counts;
+}
+
 export async function GET() {
   const prpBase = path.join(process.cwd(), "..", "docs", "PRPs");
+  const testSuiteCounts = await loadTestSuiteCounts();
 
   const results: ToolPrpStatus[] = TOOLS.map(({ slug, label, apiPath }) => {
     const prpDir = path.join(prpBase, slug);
@@ -105,6 +131,8 @@ export async function GET() {
     const reportPath = path.join(prpDir, "VALIDATION-REPORT.md");
 
     const apiRoutes = apiPath ? countRoutes(apiPath) : 0;
+    const suiteCounts = testSuiteCounts.get(slug) ?? { smoke: 0, feature: 0 };
+    const hasTestAudit = suiteCounts.smoke > 0 && suiteCounts.feature > 0;
 
     return {
       tool: slug,
@@ -116,6 +144,9 @@ export async function GET() {
       hasTestScenarios: dirExists && fs.existsSync(scenariosPath),
       hasValidationReport: dirExists && fs.existsSync(reportPath),
       validationPassed: dirExists ? checkValidationPassed(reportPath) : null,
+      smokeCases: suiteCounts.smoke,
+      featureCases: suiteCounts.feature,
+      hasTestAudit,
       prpDir: dirExists ? slug : null,
     };
   });

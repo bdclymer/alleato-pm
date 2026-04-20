@@ -33,6 +33,33 @@ function RouteCount({ count }: { count: number }) {
   return <span className="text-xs tabular-nums text-muted-foreground">{count}</span>;
 }
 
+function TestAuditCell({
+  smokeCases,
+  featureCases,
+}: {
+  smokeCases: number;
+  featureCases: number;
+}) {
+  const hasBoth = smokeCases > 0 && featureCases > 0;
+  const hasNone = smokeCases === 0 && featureCases === 0;
+
+  if (hasNone) {
+    return <Minus className="mx-auto h-4 w-4 text-muted-foreground/40" />;
+  }
+
+  const Icon = hasBoth ? CheckCircle2 : Circle;
+  const iconClass = hasBoth ? "text-green-500" : "text-muted-foreground/60";
+
+  return (
+    <div className="flex items-center justify-center gap-1.5">
+      <Icon className={`h-4 w-4 ${iconClass}`} />
+      <span className="text-[11px] tabular-nums text-muted-foreground">
+        {smokeCases} / {featureCases}
+      </span>
+    </div>
+  );
+}
+
 const COLUMNS = [
   { key: "label",            label: "Tool",           tip: null },
   { key: "apiRoutes",        label: "Routes",         tip: "API route count" },
@@ -40,6 +67,7 @@ const COLUMNS = [
   { key: "hasAudit",         label: "Audit",          tip: "prp-audit — gap analysis + AUDIT.md" },
   { key: "hasTasks",         label: "Tasks",          tip: "TASKS.md generated from audit" },
   { key: "hasTestScenarios", label: "Scenarios",      tip: "prp-test-scenarios — TEST-SCENARIOS.md" },
+  { key: "hasTestAudit",     label: "Test Audit",     tip: "test-scenario-audit — smoke + feature suites seeded in Supabase (shows smoke / feature case counts)" },
   { key: "hasValidationReport", label: "Validated",   tip: "prp-validate — VALIDATION-REPORT.md exists" },
   { key: "validationPassed", label: "Pass",           tip: "Validation result: PASS ✅" },
 ] as const;
@@ -97,6 +125,12 @@ export default function PrpStatusPage() {
                     </TableCell>
                     <TableCell className="text-center">
                       <Check value={row.hasTestScenarios} />
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <TestAuditCell
+                        smokeCases={row.smokeCases}
+                        featureCases={row.featureCases}
+                      />
                     </TableCell>
                     <TableCell className="text-center">
                       <Check value={row.hasValidationReport} />

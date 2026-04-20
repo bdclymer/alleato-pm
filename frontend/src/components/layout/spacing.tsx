@@ -77,13 +77,13 @@ export function LabelValueRow({
   return (
     <div
       className={cn(
-        "flex flex-col items-start gap-1.5 sm:flex-row sm:gap-4",
+        "flex flex-row items-start gap-4",
         className,
       )}
     >
       <dt
         className={cn(
-          "w-full shrink-0 pt-0.5 text-xs text-muted-foreground sm:w-48",
+          "w-36 shrink-0 pt-0.5 text-xs text-muted-foreground",
           labelClassName,
         )}
       >

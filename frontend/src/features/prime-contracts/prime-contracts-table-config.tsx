@@ -355,14 +355,14 @@ export function renderPrimeContractList(
   const formatCur = (v: number | null) => formatCurrency(v);
 
   return (
-    <div className="rounded-md">
+    <div className="rounded-lg border border-border bg-card overflow-hidden">
       <div
-        className="flex cursor-pointer items-center justify-between px-4 py-2 transition-colors hover:bg-muted/50"
+        className="flex cursor-pointer items-center justify-between px-4 py-3.5 transition-colors hover:bg-muted/40 active:bg-muted/60"
         onClick={() => onClick(item)}
       >
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium">{item.contract_number ?? "-"}</p>
-          <p className="truncate text-xs text-muted-foreground">{item.title ?? "Untitled Contract"}</p>
+          <p className="text-sm font-semibold text-foreground">{item.contract_number ?? "-"}</p>
+          <p className="truncate text-xs text-muted-foreground mt-0.5">{item.title ?? "Untitled Contract"}</p>
         </div>
         <div className="ml-3 flex shrink-0 items-center gap-2">
           {item.status ? (

@@ -42,11 +42,11 @@ export function PageTabs({
 
   const wrapperClasses =
     variant === "inline"
-      ? "flex min-w-0 w-full items-center"
+      ? "relative flex min-w-0 w-full items-center"
       : "px-4 sm:px-6 lg:px-8";
   const navClasses =
     variant === "inline"
-      ? "-mb-px flex overflow-x-auto scrollbar-hide"
+      ? "-mb-px flex-1 min-w-0 flex overflow-x-auto scrollbar-hide"
       : "-mb-px flex overflow-x-auto scrollbar-hide";
   const buttonClasses =
     variant === "inline"
@@ -55,6 +55,9 @@ export function PageTabs({
 
   return (
     <div className={cn(wrapperClasses, "mb-4 md:mb-6", className)}>
+      {variant === "inline" && (
+        <div className="pointer-events-none absolute right-0 top-0 h-full w-8 bg-gradient-to-l from-background to-transparent z-10" />
+      )}
       <nav className={navClasses} aria-label="Tabs">
         <div className="flex min-w-max space-x-4 md:space-x-6">
           {tabs.map((tab, index) => {

@@ -2,6 +2,13 @@ import React from "react";
 import type { Preview } from "@storybook/react";
 import "../src/app/globals.css";
 
+// Polyfill `process` for Storybook/Vite — browser has no process global.
+// Supabase and other libs reference process.env at module init time.
+if (typeof globalThis.process === "undefined") {
+  // @ts-expect-error – intentional browser polyfill
+  globalThis.process = { env: { NODE_ENV: "development" } };
+}
+
 const preview: Preview = {
   parameters: {
     controls: {

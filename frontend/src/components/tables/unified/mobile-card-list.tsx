@@ -52,7 +52,7 @@ export function MobileCardList<T>({
 }: MobileCardListProps<T>) {
   return (
     <div className={cn("sm:hidden", isFetching && "opacity-70")}>
-      <div className="divide-y divide-border">
+      <div className="flex flex-col gap-2">
         {items.map((item) => {
           const rowId = getRowId(item);
           const isActive = activeRowId === rowId;
@@ -68,7 +68,7 @@ export function MobileCardList<T>({
               role={isClickable ? "button" : undefined}
               tabIndex={isClickable ? 0 : undefined}
               className={cn(
-                "flex items-center gap-2 px-4 py-3 min-h-[3.25rem] transition-colors",
+                "flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-3.5 transition-colors",
                 isClickable &&
                   "cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
                 isActive ? "bg-muted" : isClickable && "active:bg-muted/60",

@@ -13,7 +13,6 @@ import {
   FileText,
   GitBranch,
   History,
-  Link2,
   Mail,
   MoreVertical,
   Pencil,
@@ -57,6 +56,7 @@ import {
 import { PrimeContractOverviewTab } from "./components/PrimeContractOverviewTab";
 import { PrimeContractDialogs } from "./components/PrimeContractDialogs";
 import { ContractForm } from "@/components/domain/contracts";
+import { RelatedItemsTab } from "@/components/commitments/tabs/RelatedItemsTab";
 import {
   PrimeContractChangeEventsTab,
   PrimeContractChangeOrdersTab,
@@ -145,6 +145,12 @@ const formatStatusLabel = (status: Contract["status"]) => {
     case "out_for_signature": return "Out for Signature";
     default: return status.charAt(0).toUpperCase() + status.slice(1);
   }
+};
+
+const formatDateTime = (value: string): string => {
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "Unknown date";
+  return d.toLocaleString();
 };
 
 // #endregion
@@ -433,6 +439,40 @@ export default function ProjectContractDetailPage() {
     () => new Map(lineItems.map((item) => [item.id, item.cost_code_id ?? null])),
     [lineItems],
   );
+  const historyEntries = useMemo(() => {
+    if (!contract) return [] as Array<{ id: string; label: string; details: string; at: string }>;
+
+    const entries: Array<{ id: string; label: string; details: string; at: string }> = [
+      {
+        id: "created",
+        label: "Prime contract created",
+        details: "Initial contract record was created.",
+        at: contract.created_at,
+      },
+    ];
+
+    if (contract.executed_at) {
+      entries.push({
+        id: "executed",
+        label: "Prime contract executed",
+        details: "Contract execution was recorded.",
+        at: contract.executed_at,
+      });
+    }
+
+    const createdAt = new Date(contract.created_at).getTime();
+    const updatedAt = new Date(contract.updated_at).getTime();
+    if (Number.isFinite(createdAt) && Number.isFinite(updatedAt) && updatedAt - createdAt > 1000) {
+      entries.push({
+        id: "updated",
+        label: "Prime contract updated",
+        details: "Contract details were updated.",
+        at: contract.updated_at,
+      });
+    }
+
+    return entries.sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
+  }, [contract]);
 
   // #endregion
 
@@ -899,7 +939,7 @@ export default function ProjectContractDetailPage() {
         variant="inline"
         tabs={[
           { label: "General", href: "overview", isActive: activeTab === "overview" },
-          { label: "Schedule of Values", href: "schedule-of-values", isActive: activeTab === "schedule-of-values", count: lineItems.length || undefined },
+          { label: "SOV", href: "schedule-of-values", isActive: activeTab === "schedule-of-values", count: lineItems.length || undefined },
           { label: "Change Orders", href: "change-orders", isActive: activeTab === "change-orders", count: changeOrders.length || undefined },
           { label: "Commitments", href: "commitments", isActive: activeTab === "commitments" },
           { label: "Invoices", href: "invoices", isActive: activeTab === "invoices", count: paymentApplications.length || undefined },
@@ -998,15 +1038,13 @@ export default function ProjectContractDetailPage() {
         )}
 
         {activeTab === "related-items" && (
-          <div>
-            <SectionRuleHeading label="Related Items" />
-            <EmptyState
-              icon={<Link2 />}
-              title="No related items"
-              description="Links to related RFIs, Submittals, and other project items will appear here."
-              action={<Button size="sm" onClick={() => {}}>Link an Item</Button>}
-            />
-          </div>
+          <RelatedItemsTab
+            commitmentId={contractId}
+            projectId={projectId}
+            commitmentType="subcontract"
+            apiBasePath={`/api/projects/${projectId}/contracts/${contractId}/related-items`}
+            entityLabel="prime contract"
+          />
         )}
 
         {activeTab === "emails" && (
@@ -1016,7 +1054,17 @@ export default function ProjectContractDetailPage() {
               icon={<Mail />}
               title="No emails yet"
               description="Emails sent or received related to this contract will appear here."
-              action={<Button size="sm" onClick={() => {}}>Send Email</Button>}
+              action={
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    setDocumentDialogTab("email");
+                    setIsDocumentDialogOpen(true);
+                  }}
+                >
+                  Send Email
+                </Button>
+              }
             />
           </div>
         )}
@@ -1024,11 +1072,25 @@ export default function ProjectContractDetailPage() {
         {activeTab === "history" && (
           <div>
             <SectionRuleHeading label="Change History" />
-            <EmptyState
-              icon={<Clock />}
-              title="No changes recorded"
-              description="Field-level change history tracking is not yet enabled for prime contracts."
-            />
+            {historyEntries.length === 0 ? (
+              <EmptyState
+                icon={<History />}
+                title="No changes recorded"
+                description="No lifecycle events are available for this contract yet."
+              />
+            ) : (
+              <div className="divide-y divide-border rounded-md border border-border">
+                {historyEntries.map((entry) => (
+                  <div key={entry.id} className="space-y-1 px-4 py-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-sm font-medium text-foreground">{entry.label}</p>
+                      <p className="text-xs text-muted-foreground">{formatDateTime(entry.at)}</p>
+                    </div>
+                    <p className="text-sm text-muted-foreground">{entry.details}</p>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 

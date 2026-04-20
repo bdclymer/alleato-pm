@@ -181,10 +181,10 @@ export function AttachmentUploadPanel({
       <div className="space-y-1">
         <h3
           className={cn(
-            "tracking-tight text-foreground",
+            "text-foreground",
             headerVariant === "muted"
               ? "text-sm font-medium text-muted-foreground"
-              : "text-2xl font-semibold",
+              : "text-base font-semibold",
           )}
         >
           {title}
@@ -258,14 +258,16 @@ export function AttachmentUploadPanel({
                           {item.error ? ` · ${item.error}` : ""}
                         </p>
                       </div>
-                      <button
+                      <Button
                         type="button"
+                        size="icon-xs"
+                        variant="ghost"
                         className="text-muted-foreground hover:text-foreground"
                         onClick={() => removeQueuedItem(item.id)}
                         aria-label="Remove queued file"
                       >
                         <X className="h-4 w-4" />
-                      </button>
+                      </Button>
                     </div>
                     <div className="mt-2 flex items-center gap-3">
                       <Progress value={statusProgress(item.status)} className="h-2 flex-1" />
@@ -321,16 +323,18 @@ export function AttachmentUploadPanel({
                       </p>
                     </div>
                     {onRemoveFile ? (
-                      <button
+                      <Button
                         type="button"
+                        size="icon-xs"
+                        variant="ghost"
                         className="text-muted-foreground hover:text-destructive"
                         onClick={() => void onRemoveFile(file.id)}
                         aria-label="Remove attachment"
                       >
                         <Trash2 className="h-4 w-4" />
-                      </button>
+                      </Button>
                     ) : (
-                      <CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-500" />
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 text-status-success" />
                     )}
                   </div>
                 </div>

@@ -18,13 +18,6 @@ interface RelatedCompanyConfig {
   defaultSelected?: boolean;
 }
 
-interface PrimeContractClientRelation {
-  id: number;
-  name: string | null;
-  company_id: string | null;
-  company_name: string | null;
-}
-
 interface PrimeContractCompanyRelation {
   id: string;
   name: string | null;
@@ -58,7 +51,7 @@ interface PrimeContractRow {
   billing_schedule: string | null;
   inclusions: string | null;
   exclusions: string | null;
-  client: PrimeContractClientRelation | PrimeContractClientRelation[] | null;
+  client: PrimeContractCompanyRelation | PrimeContractCompanyRelation[] | null;
   contract_company: PrimeContractCompanyRelation | PrimeContractCompanyRelation[] | null;
   contractor: PrimeContractCompanyRelation | PrimeContractCompanyRelation[] | null;
   architect_engineer: PrimeContractCompanyRelation | PrimeContractCompanyRelation[] | null;
@@ -1095,7 +1088,7 @@ async function loadPrimeContractBundle(
     .select(
       `
         *,
-        client:clients(id, name, company_id, company_name),
+        client:companies!prime_contracts_client_company_id_fkey(id, name),
         contract_company:companies!prime_contracts_contract_company_id_fkey(id, name),
         contractor:companies!prime_contracts_contractor_id_fkey(id, name),
         architect_engineer:companies!prime_contracts_architect_engineer_id_fkey(id, name),
@@ -1141,8 +1134,8 @@ async function loadPrimeContractBundle(
   const recipients = await fetchPeopleSuggestions(
     supabase,
     [
-      ...(client?.company_id
-        ? [{ companyId: client.company_id, role: "Owner contact", defaultSelected: true }]
+      ...(client?.id
+        ? [{ companyId: client.id, role: "Owner contact", defaultSelected: true }]
         : []),
       ...(ownerCompany?.id
         ? [{ companyId: ownerCompany.id, role: "Owner company contact", defaultSelected: true }]
@@ -1621,7 +1614,7 @@ async function loadPrimeContractChangeOrderBundle(
         title,
         original_contract_value,
         revised_contract_value,
-        client:clients(id, name, company_id, company_name),
+        client:companies!prime_contracts_client_company_id_fkey(id, name),
         contract_company:companies!prime_contracts_contract_company_id_fkey(id, name),
         contractor:companies!prime_contracts_contractor_id_fkey(id, name)
       `,
@@ -1641,8 +1634,8 @@ async function loadPrimeContractChangeOrderBundle(
   const recipients = await fetchPeopleSuggestions(
     supabase,
     [
-      ...(client?.company_id
-        ? [{ companyId: client.company_id, role: "Owner contact", defaultSelected: true }]
+      ...(client?.id
+        ? [{ companyId: client.id, role: "Owner contact", defaultSelected: true }]
         : []),
       ...(ownerCompany?.id
         ? [{ companyId: ownerCompany.id, role: "Owner company contact", defaultSelected: true }]

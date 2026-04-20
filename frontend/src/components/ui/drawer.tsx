@@ -45,11 +45,17 @@ function DrawerOverlay({
   );
 }
 
+interface DrawerContentProps
+  extends React.ComponentProps<typeof DrawerPrimitive.Content> {
+  contentClassName?: string;
+}
+
 function DrawerContent({
   className,
+  contentClassName,
   children,
   ...props
-}: React.ComponentProps<typeof DrawerPrimitive.Content>) {
+}: DrawerContentProps) {
   return (
     <DrawerPortal data-slot="drawer-portal">
       <DrawerOverlay />
@@ -66,7 +72,18 @@ function DrawerContent({
         {...props}
       >
         <div className="bg-muted mx-auto mt-4 hidden h-2 w-[100px] shrink-0 rounded-full group-data-[vaul-drawer-direction=bottom]/drawer-content:block" />
-        {children}
+        <div
+          data-slot="drawer-inner"
+          className={cn(
+            "w-full",
+            // Constrain readable line-length for top/bottom drawers.
+            "group-data-[vaul-drawer-direction=top]/drawer-content:mx-auto group-data-[vaul-drawer-direction=top]/drawer-content:max-w-3xl",
+            "group-data-[vaul-drawer-direction=bottom]/drawer-content:mx-auto group-data-[vaul-drawer-direction=bottom]/drawer-content:max-w-3xl",
+            contentClassName,
+          )}
+        >
+          {children}
+        </div>
       </DrawerPrimitive.Content>
     </DrawerPortal>
   );

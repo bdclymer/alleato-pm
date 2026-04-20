@@ -5,8 +5,8 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { sendDocumentEmail } from "@/lib/documents/email";
 import { renderPdfFromHtml } from "@/lib/documents/pdf";
-import {
 import { logger } from "@/lib/logger";
+import {
   getDocumentBundle,
   renderDocumentEmailHtml,
   renderDocumentEmailText,

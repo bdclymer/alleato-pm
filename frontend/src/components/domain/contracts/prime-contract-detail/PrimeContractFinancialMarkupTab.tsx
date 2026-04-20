@@ -35,6 +35,7 @@ import {
 import { EmptyState } from "@/components/ds";
 import { apiFetch } from "@/lib/api-client";
 import { SectionRuleHeading } from "@/components/layout/spacing";
+import { InfoBox } from "@/components/misc/info-box";
 import type { BudgetCode, VerticalMarkup } from "@/app/(main)/[projectId]/prime-contracts/[contractId]/types";
 
 const ALLOWED_MARKUP_TYPES = ["insurance", "bond", "fee", "overhead", "custom"] as const;
@@ -519,37 +520,41 @@ export function PrimeContractFinancialMarkupTab({
       <p className="max-w-3xl text-sm text-muted-foreground">
         Add percentage-based markups (e.g., tax, overhead, profit, insurance) to contract values.
       </p>
-      <div className="space-y-4 border-y border-border/60 py-4">
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="space-y-1">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Vertical markup
+      <div className="grid gap-4 md:grid-cols-2">
+        <InfoBox
+          icon={<Percent className="h-4 w-4 text-muted-foreground" />}
+          title="Vertical Markup"
+          className="p-4"
+        >
+          <div className="space-y-2 text-sm leading-6 text-muted-foreground">
+            <p>
+              Adds markup as a separate calculation layer. Rules run top to bottom, so row order directly changes results.
             </p>
-            <p className="text-sm text-foreground">
-              Adds a separate markup line in calculations. Markups run in order from top to
-              bottom, so row order matters.
+            <p>
+              Use <span className="font-medium text-foreground">Maps To</span> to target all budget codes or one code.
             </p>
-          </div>
-          <div className="space-y-1">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Horizontal markup
-            </p>
-            <p className="text-sm text-foreground">
-              Folds markup into line-item values instead of showing a separate markup row.
-              Use this when you want markup distributed across scoped costs.
+            <p>
+              <span className="font-medium text-foreground">Calculation Type:</span> Basic uses the base amount. Compound includes prior markup rows above it.
             </p>
           </div>
-        </div>
-        <div className="grid gap-3 text-sm text-muted-foreground md:grid-cols-2">
-          <p>
-            <span className="font-medium text-foreground">Maps To:</span> choose whether the
-            rule applies to all budget codes or only one cost bucket.
-          </p>
-          <p>
-            <span className="font-medium text-foreground">Calculation Type:</span> Basic uses
-            the base amount only; Compound includes prior markup rows above it.
-          </p>
-        </div>
+        </InfoBox>
+        <InfoBox
+          icon={<Percent className="h-4 w-4 text-muted-foreground" />}
+          title="Horizontal Markup"
+          className="p-4"
+        >
+          <div className="space-y-2 text-sm leading-6 text-muted-foreground">
+            <p>
+              Pushes markup into line-item values instead of presenting a separate markup row in outputs.
+            </p>
+            <p>
+              Use horizontal display when markup should be distributed across scoped costs for reporting.
+            </p>
+            <p>
+              Keep display type consistent across related rules to avoid mixed output behavior.
+            </p>
+          </div>
+        </InfoBox>
       </div>
 
         {markupsLoading ? (

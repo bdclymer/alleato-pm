@@ -194,7 +194,8 @@ export function PageHeader({
         ) : null}
 
         {/* Title and Actions */}
-        <div className="flex flex-row items-center justify-between gap-2 pt-1.5 pb-3 min-w-0">
+        <div className="flex flex-col gap-2 pt-1.5 pb-3 min-w-0 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+          {/* Left: title + badges (desktop only) */}
           <div className="min-w-0 flex-1">
             {/* Project Name */}
             {shouldShowProjectName && (
@@ -216,42 +217,55 @@ export function PageHeader({
             {titleContent ? (
               titleContent
             ) : (
-              <Inline gap="md" align="center">
-                <h1 className="text-2xl sm:text-3xl lg:text-[2rem] font-medium text-foreground/90 line-clamp-2 wrap-break-word">
-                  {title}
-                </h1>
-                {statusBadge}
-              </Inline>
+              <h1 className="text-2xl sm:text-3xl lg:text-[2rem] font-medium text-foreground/90 break-words">
+                {title}
+              </h1>
             )}
 
+            {/* Status badges — desktop: below title */}
+            {statusBadge && (
+              <div className="hidden sm:flex flex-wrap items-center gap-2 mt-2">
+                {statusBadge}
+              </div>
+            )}
           </div>
 
-          {/* Actions */}
-          {(actions || showExportButton) && (
-            <div className="flex shrink-0 flex-wrap items-center gap-2 justify-end">
-              {showExportButton && (onExportCSV || onExportPDF) && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm">
-                      <Download />
-                      {exportLabel}
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    {onExportCSV && (
-                      <DropdownMenuItem onClick={onExportCSV}>
-                        Export as CSV
-                      </DropdownMenuItem>
-                    )}
-                    {onExportPDF && (
-                      <DropdownMenuItem onClick={onExportPDF}>
-                        Export as PDF
-                      </DropdownMenuItem>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+          {/* Right: actions + badges below (mobile) */}
+          {(actions || showExportButton || statusBadge) && (
+            <div className="flex flex-col gap-2 shrink-0 sm:items-end">
+              {(actions || showExportButton) && (
+                <div className="flex flex-wrap items-center gap-2">
+                  {showExportButton && (onExportCSV || onExportPDF) && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm">
+                          <Download />
+                          {exportLabel}
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        {onExportCSV && (
+                          <DropdownMenuItem onClick={onExportCSV}>
+                            Export as CSV
+                          </DropdownMenuItem>
+                        )}
+                        {onExportPDF && (
+                          <DropdownMenuItem onClick={onExportPDF}>
+                            Export as PDF
+                          </DropdownMenuItem>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
+                  {actions}
+                </div>
               )}
-              {actions}
+              {/* Status badges — mobile: below actions */}
+              {statusBadge && (
+                <div className="flex sm:hidden flex-wrap items-center gap-2">
+                  {statusBadge}
+                </div>
+              )}
             </div>
           )}
         </div>

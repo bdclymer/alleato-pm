@@ -17,19 +17,12 @@ const patchSchema = z.object({
   test_name: z.string().trim().min(1).max(300).optional(),
   priority: z.enum(["HIGH", "MEDIUM", "LOW"]).optional(),
   test_type: z.string().trim().min(1).max(50).optional(),
-  gap_type: z.string().trim().min(1).max(100).optional(),
   suite_id: z.string().trim().min(1).max(100).optional(),
-  tool: z.number().int().nullable().optional(),
   steps: z.string().nullable().optional(),
   setup_steps: z.string().nullable().optional(),
   context_note: z.string().nullable().optional(),
   expected_result: z.string().nullable().optional(),
   start_url: z.string().trim().max(500).nullable().optional(),
-  source_url: z.string().trim().max(500).nullable().optional(),
-  source_manifest_path: z.string().trim().max(1000).nullable().optional(),
-  source_article_id: z.number().int().nullable().optional(),
-  source_chunk_id: z.number().int().nullable().optional(),
-  procore_feature_id: z.string().trim().max(100).nullable().optional(),
 });
 
 // Normalizes optional text fields so blank strings do not get persisted as content.
@@ -60,9 +53,6 @@ export const PATCH = withApiGuardrails<{ caseId: string }>(
       context_note: normalizeOptionalText(parsed.data.context_note),
       expected_result: normalizeOptionalText(parsed.data.expected_result),
       start_url: normalizeOptionalText(parsed.data.start_url),
-      source_url: normalizeOptionalText(parsed.data.source_url),
-      source_manifest_path: normalizeOptionalText(parsed.data.source_manifest_path),
-      procore_feature_id: normalizeOptionalText(parsed.data.procore_feature_id),
     };
 
     const supabase = await createClient();
