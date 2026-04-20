@@ -193,7 +193,7 @@ export function buildCommitmentTableColumns(
               />
             </Button>
           )}
-          <span className="font-medium">{item.number}</span>
+          <span className="font-medium max-w-[120px] truncate" title={item.number}>{item.number}</span>
         </div>
       ),
       csvValue: (item) => item.number,

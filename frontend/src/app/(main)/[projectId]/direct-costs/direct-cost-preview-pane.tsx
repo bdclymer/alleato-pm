@@ -1,7 +1,7 @@
 "use client";
 
-import type { ReactElement } from "react";
-import { ArrowUpRight, CalendarClock, FileText, Keyboard, ReceiptText } from "lucide-react";
+import { useState, type ReactElement } from "react";
+import { ArrowUpRight, CalendarClock, Check, Copy, FileText, Keyboard, ReceiptText } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,16 @@ export function DirectCostPreviewPane({
   directCost,
   onOpenDirectCostPage,
 }: DirectCostPreviewPaneProps): ReactElement {
+  const [copied, setCopied] = useState(false);
+
+  function handleCopyId() {
+    if (!directCost) return;
+    void navigator.clipboard.writeText(directCost.id).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
+  }
+
   if (!directCost) {
     return (
       <div className="p-6 space-y-4">
@@ -111,7 +121,20 @@ export function DirectCostPreviewPane({
           IDs
         </p>
         <div className="space-y-1.5 text-xs text-muted-foreground">
-          <p>Cost ID: {directCost.id}</p>
+          <p className="flex items-center gap-1.5">
+              <span>Cost ID:</span>
+              <span className="font-mono" title={directCost.id}>{directCost.id.slice(0, 8)}…</span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-4 w-4 text-muted-foreground hover:text-foreground"
+                onClick={handleCopyId}
+                aria-label="Copy cost ID"
+              >
+                {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+              </Button>
+            </p>
           <p>Invoice: {directCost.invoice_number ?? "None"}</p>
         </div>
       </section>

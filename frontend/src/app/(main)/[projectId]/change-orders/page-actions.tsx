@@ -48,34 +48,20 @@ export function PageActions({ projectId, tab = "prime" }: PageActionsProps) {
   };
 
   return (
-    <>
-      <div className="hidden items-center gap-2 sm:flex">
-        <Button variant="outline" size="sm" onClick={handleExport}>
-          <Download />
-          Export CSV
+    <div className="flex items-center gap-2">
+      <Button variant="outline" size="sm" onClick={handleExport} className="hidden sm:flex">
+        <Download />
+        Export CSV
+      </Button>
+      <PermissionGate projectId={projectId} module="change_orders" level="write">
+        <Button asChild size="sm" data-testid="change-orders-create-button">
+          <Link href={createHref}>
+            <Plus />
+            <span className="hidden sm:inline">{label}</span>
+            <span className="sm:hidden">Create</span>
+          </Link>
         </Button>
-        <PermissionGate projectId={projectId} module="change_orders" level="write">
-          <Button asChild size="sm" data-testid="change-orders-create-button">
-            <Link href={createHref}>{label}</Link>
-          </Button>
-        </PermissionGate>
-      </div>
-
-      <div className="flex items-center gap-2 sm:hidden">
-        <PermissionGate projectId={projectId} module="change_orders" level="write">
-          <Button
-            asChild
-            size="sm"
-            variant="outline"
-            className="h-9 w-9 rounded-full border-brand p-0 text-brand hover:bg-brand/10"
-            aria-label="Create change order"
-          >
-            <Link href={createHref}>
-              <Plus />
-            </Link>
-          </Button>
-        </PermissionGate>
-      </div>
-    </>
+      </PermissionGate>
+    </div>
   );
 }
