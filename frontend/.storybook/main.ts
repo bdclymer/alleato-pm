@@ -1,5 +1,6 @@
 import type { StorybookConfig } from "@storybook/react-vite";
 import tailwindcss from "@tailwindcss/vite";
+import react from "@vitejs/plugin-react";
 import path from "path";
 
 const config: StorybookConfig = {
@@ -16,8 +17,13 @@ const config: StorybookConfig = {
       ...viteConfig.resolve.alias,
       "@": path.resolve(__dirname, "../src"),
     };
-    // Add Tailwind v4 Vite plugin so `@import "tailwindcss"` works
-    viteConfig.plugins = [...(viteConfig.plugins ?? []), tailwindcss()];
+    // React plugin with automatic JSX runtime — eliminates "React is not defined" errors
+    // Tailwind v4 Vite plugin for `@import "tailwindcss"` support
+    viteConfig.plugins = [
+      ...( viteConfig.plugins ?? []),
+      react({ jsxRuntime: "automatic" }),
+      tailwindcss(),
+    ];
     // Polyfill `process.env` — Vite doesn't provide it, but many libs reference it
     viteConfig.define = {
       ...viteConfig.define,
