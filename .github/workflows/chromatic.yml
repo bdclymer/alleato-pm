@@ -1,54 +1,39 @@
-name: Chromatic Visual Regression
+name: Chromatic
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
   chromatic:
-    name: Storybook → Chromatic
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-
+    defaults:
+      run:
+        working-directory: frontend
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
-          # Chromatic needs full git history for baselines
           fetch-depth: 0
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: pnpm/action-setup@v4
         with:
-          node-version: "20"
+          version: 10
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
         with:
-          version: "10.13.1"
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
 
-      - name: Install frontend dependencies
-        run: pnpm --dir frontend install --frozen-lockfile
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
-      - name: Build Storybook
-        run: pnpm --dir frontend build-storybook
-        env:
-          NODE_OPTIONS: "--max-old-space-size=4096"
-
-      - name: Run Chromatic
+      - name: Publish to Chromatic
         uses: chromaui/action@latest
         with:
+          workingDir: frontend
           projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
-          storybookBuildDir: frontend/storybook-static
-          # Auto-accept changes on main branch (treated as new baseline)
-          autoAcceptChanges: "main"
-          # Exit with non-zero code if visual changes detected on PRs
-          exitZeroOnChanges: false
-          # Only fail on actual regressions, not new components
-          exitOnceUploaded: false
-          # Link Chromatic builds to PRs
-          onlyChanged: true
+          buildScriptName: build-storybook
+          exitOnceUploaded: true
