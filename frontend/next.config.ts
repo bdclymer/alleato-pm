@@ -14,13 +14,40 @@ const nextConfig: NextConfig = {
   experimental: {
     webpackMemoryOptimizations: true,
     serverSourceMaps: false,
+    // Prevent webpack from barrel-importing entire icon/component libraries.
+    // Without this, lucide-react (511 icons), @tabler/icons-react (3000+ icons),
+    // and react-icons cause the webpack worker to OOM on Vercel's 8 GB build machines.
+    optimizePackageImports: [
+      "lucide-react",
+      "@tabler/icons-react",
+      "react-icons",
+      "@radix-ui/react-icons",
+      "framer-motion",
+      "motion",
+      "recharts",
+      "@liveblocks/react",
+      "@liveblocks/react-ui",
+      "@liveblocks/react-lexical",
+      "date-fns",
+      "lodash",
+    ],
   },
   serverExternalPackages: [
     "@mermaid-js/parser",
     "mermaid",
     "@streamdown/mermaid",
     "puppeteer",
+    // Heavy doc/API packages only used in specific admin routes
+    "redoc",
+    "swagger-ui-dist",
   ],
+  webpack: (config) => {
+    // Limit webpack worker parallelism to prevent OOM on Vercel's 8 GB build machines.
+    // Default is (cpuCount - 1) workers; at 2 cores that's already 1, but explicit cap
+    // prevents memory spikes when multiple heavy modules compile simultaneously.
+    config.parallelism = 1;
+    return config;
+  },
   images: {
     remotePatterns: [
       {
