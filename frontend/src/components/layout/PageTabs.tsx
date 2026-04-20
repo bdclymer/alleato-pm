@@ -54,7 +54,7 @@ export function PageTabs({
       : "group inline-flex min-h-11 items-center gap-2 whitespace-nowrap border-b-2 px-2 py-3 text-sm transition-colors";
 
   return (
-    <div className={cn(wrapperClasses, className)}>
+    <div className={cn(wrapperClasses, "mb-4 md:mb-6", className)}>
       <nav className={navClasses} aria-label="Tabs">
         <div className="flex min-w-max space-x-4 md:space-x-6">
           {tabs.map((tab) => {

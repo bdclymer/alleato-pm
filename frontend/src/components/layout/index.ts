@@ -54,3 +54,13 @@ export type { InlineProps } from "./inline";
 // ── Shell-level components (not page-level, don't use inside pages) ───────────
 export { AppHeader } from "./AppHeader";
 export { default as Footer } from "./Footer";
+
+// ── Shared error boundary UI ─────────────────────────────────────────────────
+export { RouteErrorPage } from "./RouteErrorPage";
+
+// ── Route loading skeletons (for loading.tsx files) ──────────────────────────
+export {
+  TablePageLoading,
+  DetailPageLoading,
+  FormPageLoading,
+} from "./PageLoading";

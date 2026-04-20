@@ -40,16 +40,19 @@ export function DetailThreeColumnGrid({
 export interface SectionRuleHeadingProps {
   label: string;
   className?: string;
+  actions?: React.ReactNode;
 }
 
 export function SectionRuleHeading({
   label,
   className,
+  actions,
 }: SectionRuleHeadingProps) {
   return (
-    <div className={cn("flex items-center gap-3 pb-1", className)}>
-      <Eyebrow>{label}</Eyebrow>
+    <div className={cn("flex items-center gap-3 pb-1 mb-4", className)}>
+      <Eyebrow className="text-primary">{label}</Eyebrow>
       <div className="h-px flex-1 bg-border/60" />
+      {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
     </div>
   );
 }
@@ -80,7 +83,7 @@ export function LabelValueRow({
     >
       <dt
         className={cn(
-          "w-full shrink-0 pt-0.5 text-xs text-muted-foreground sm:w-36",
+          "w-full shrink-0 pt-0.5 text-xs text-muted-foreground sm:w-48",
           labelClassName,
         )}
       >
