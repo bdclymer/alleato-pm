@@ -19,6 +19,7 @@ const nextConfig: NextConfig = {
     "@mermaid-js/parser",
     "mermaid",
     "@streamdown/mermaid",
+    "puppeteer",
   ],
   images: {
     remotePatterns: [

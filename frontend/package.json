@@ -259,6 +259,7 @@
     "redoc": "^2.5.2",
     "remark-breaks": "^4.0.0",
     "remark-gfm": "^4.0.1",
+    "puppeteer": "^24.36.1",
     "resend": "^6.9.4",
     "resumable-stream": "^2.2.10",
     "sanitize-html": "^2.17.1",
@@ -331,7 +332,7 @@
     "otpauth": "^9.5.0",
     "playwright": "^1.58.1",
     "postcss": "^8.5.6",
-    "puppeteer": "^24.36.1",
+
     "react-email": "^5.2.10",
     "tailwind-scrollbar-hide": "^4.0.0",
     "tailwindcss": "^4.2.2",
