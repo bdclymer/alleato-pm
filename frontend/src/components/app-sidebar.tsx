@@ -21,10 +21,14 @@ import {
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarHeader,
   SidebarRail,
   useSidebar,
 } from "@/components/ui/sidebar"
+import { HeaderUserMenu } from "@/components/header/header-user-menu"
+import { createClient } from "@/lib/supabase/client"
+import type { User } from "@supabase/supabase-js"
 
 import {
   sidebarNavGroups,
@@ -276,6 +280,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const router = useRouter()
   const { state, toggleSidebar, isMobile } = useSidebar()
   const [isHovering, setIsHovering] = React.useState(false)
+  const [user, setUser] = React.useState<User | null>(null)
+
+  React.useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data }) => setUser(data.user ?? null))
+    const { data } = supabase.auth.onAuthStateChange((_e, session) => setUser(session?.user ?? null))
+    return () => data.subscription.unsubscribe()
+  }, [])
   const hoverTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Hover-to-peek: when collapsed, hovering expands temporarily
@@ -502,6 +514,20 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </div>
         )}
       </SidebarContent>
+
+      {/* User avatar — mobile sidebar only */}
+      {isMobile && (
+        <SidebarFooter className="border-t border-border/50 px-4 py-3">
+          <HeaderUserMenu
+            user={user}
+            projectId={projectId}
+            activeToolName=""
+            permissions={permissions}
+            isAppAdmin={isAppAdmin}
+            userType={userType}
+          />
+        </SidebarFooter>
+      )}
 
       <SidebarRail />
     </Sidebar>

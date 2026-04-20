@@ -211,10 +211,16 @@ export function SiteHeader() {
         open={mobileNavOpen}
         onClose={() => setMobileNavOpen(false)}
         projectId={nav.projectId}
+        currentProject={nav.currentProject}
+        projects={nav.projects}
+        loadingProjects={nav.loadingProjects}
+        onFetchProjects={nav.fetchProjects}
+        onProjectSelect={nav.handleProjectSelect}
         activeToolName={nav.activeToolName}
         permissions={permissions}
         isAppAdmin={isAppAdmin}
         userType={userType}
+        user={user}
       />
     </header>
   );
@@ -224,18 +230,30 @@ function MobileNavOverlay({
   open,
   onClose,
   projectId,
+  currentProject,
+  projects,
+  loadingProjects,
+  onFetchProjects,
+  onProjectSelect,
   activeToolName,
   permissions,
   isAppAdmin,
   userType,
+  user,
 }: {
   open: boolean;
   onClose: () => void;
   projectId: number | null;
+  currentProject: { id: number; name: string | null; "job number": string | null } | null;
+  projects: { id: number; name: string | null; "job number": string | null }[];
+  loadingProjects: boolean;
+  onFetchProjects: () => void;
+  onProjectSelect: (projectId: number) => void;
   activeToolName: string;
   permissions: Record<string, string[]>;
   isAppAdmin: boolean;
   userType: string | null;
+  user: User | null;
 }) {
   const [mounted, setMounted] = React.useState(false);
 
@@ -286,7 +304,20 @@ function MobileNavOverlay({
         </button>
       </div>
 
-      <nav className="h-[calc(100svh-3.5rem)] overflow-y-auto px-6 pt-10 pb-12 flex flex-col items-center gap-10">
+      {/* Project selector */}
+      <div className="px-4 pb-3 border-b border-border/50">
+        <ProjectSelector
+          projectId={projectId}
+          currentProject={currentProject}
+          projects={projects}
+          loadingProjects={loadingProjects}
+          onFetchProjects={onFetchProjects}
+          onProjectSelect={(id) => { onProjectSelect(id); onClose(); }}
+          onViewAll={onClose}
+        />
+      </div>
+
+      <nav className="h-[calc(100svh-3.5rem-56px-80px)] overflow-y-auto px-6 pt-8 pb-4 flex flex-col items-center gap-10">
         {groups.map((group) => (
           <div key={group.id} className="flex flex-col items-center gap-6 w-full">
             <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
@@ -331,6 +362,18 @@ function MobileNavOverlay({
           </div>
         ))}
       </nav>
+
+      {/* User avatar footer */}
+      <div className="absolute bottom-0 left-0 right-0 border-t border-border/50 bg-background px-4 py-3">
+        <HeaderUserMenu
+          user={user}
+          projectId={projectId}
+          activeToolName={activeToolName}
+          permissions={permissions}
+          isAppAdmin={isAppAdmin}
+          userType={userType}
+        />
+      </div>
     </div>
   );
 }
