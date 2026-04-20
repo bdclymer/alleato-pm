@@ -67,21 +67,26 @@ const config = [
       'react/display-name': 'off',
       '@next/next/no-img-element': 'off',
 
-      // Design System Enforcement — warnings (visible but non-blocking)
+      // Design System Enforcement
+      // All rules are "warn" globally + escalated to "error" on changed files via lint-staged.
+      // To escalate a rule to "error" globally: verify zero violations first with:
+      //   node_modules/.bin/eslint src --no-color 2>&1 | grep "<rule-name>"
+
       'design-system/no-hardcoded-colors': 'warn',
       'design-system/no-arbitrary-spacing': 'warn',
       'design-system/require-semantic-colors': 'warn',
       'design-system/no-design-violations': 'warn',
       'design-system/require-page-shell': 'warn',
-      'design-system/no-oversized-shadows': 'warn',
       'design-system/no-raw-button': 'warn',
       'design-system/no-raw-form-controls': 'warn',
       'design-system/require-money-field': 'warn',
       // WARN globally (300+ existing violations — tracked as debt, fix incrementally).
       // ENFORCED as ERROR on changed files via lint-staged (.lintstagedrc.js).
-      // New/modified files MUST use apiFetch. Regression: use-rfis.ts raw fetch
-      // caused "Failed to fetch" instead of real error messages (2026-04-13).
       'design-system/require-api-client': 'warn',
+      'design-system/require-empty-state': 'warn',
+      'design-system/no-raw-heading': 'warn',
+      'design-system/no-inline-currency': 'warn',
+      'design-system/require-error-state': 'warn',
     },
   },
 ]

@@ -16,6 +16,12 @@ const noRawFormControls = require('./rules/no-raw-form-controls');
 const requireApprovedFormComponents = require('./rules/require-approved-form-components');
 const requireMoneyField = require('./rules/require-money-field');
 const requireApiClient = require('./rules/require-api-client');
+const requireEmptyState = require('./rules/require-empty-state');
+const noHardcodedStatusColors = require('./rules/no-hardcoded-status-colors');
+const noInlineSpinner = require('./rules/no-inline-spinner');
+const noRawHeading = require('./rules/no-raw-heading');
+const noInlineCurrency = require('./rules/no-inline-currency');
+const requireErrorState = require('./rules/require-error-state');
 
 module.exports = {
   rules: {
@@ -30,6 +36,12 @@ module.exports = {
     'require-approved-form-components': requireApprovedFormComponents,
     'require-money-field': requireMoneyField,
     'require-api-client': requireApiClient,
+    'require-empty-state': requireEmptyState,
+    'no-hardcoded-status-colors': noHardcodedStatusColors,
+    'no-inline-spinner': noInlineSpinner,
+    'no-raw-heading': noRawHeading,
+    'no-inline-currency': noInlineCurrency,
+    'require-error-state': requireErrorState,
   },
   configs: {
     recommended: {

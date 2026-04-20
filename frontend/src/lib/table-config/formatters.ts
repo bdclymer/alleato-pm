@@ -1,4 +1,4 @@
-import { format } from "date-fns";
+import { format, formatDistanceToNow, isValid, parseISO } from "date-fns";
 
 /**
  * Format a number as currency (USD)
@@ -16,18 +16,52 @@ export function formatCurrency(
 }
 
 /**
- * Format a date string
+ * Format a date value with a named style or a custom date-fns format string.
+ *
+ * Named styles:
+ *   "short"   → "Apr 20, 2026"    (default)
+ *   "long"    → "April 20, 2026"
+ *   "numeric" → "04/20/2026"
+ *   "relative"→ "2 days ago"
+ *
+ * Custom format string (date-fns tokens):
+ *   e.g. "MMM d" → "Apr 20"
+ *
+ * Returns "--" for null/undefined/invalid dates.
+ *
+ * @example
+ * formatDate(record.start_date)              // "Apr 20, 2026"
+ * formatDate(record.start_date, "long")      // "April 20, 2026"
+ * formatDate(record.start_date, "numeric")   // "04/20/2026"
+ * formatDate(record.start_date, "relative")  // "2 days ago"
+ * formatDate(record.start_date, "MMM d")     // "Apr 20"
  */
 export function formatDate(
   value: string | Date | null | undefined,
-  formatStr: string = "MMM d, yyyy",
+  styleOrFormat: "short" | "long" | "numeric" | "relative" | (string & Record<never, never>) = "short",
 ): string {
-  if (!value) return "-";
+  if (!value) return "--";
+  const date = typeof value === "string" ? parseISO(value) : value;
+  if (!isValid(date)) {
+    // parseISO may return Invalid Date for non-ISO strings; fall back to new Date()
+    const fallback = typeof value === "string" ? new Date(value) : value;
+    if (!isValid(fallback)) return "--";
+    return _applyStyle(fallback, styleOrFormat);
+  }
+  return _applyStyle(date, styleOrFormat);
+}
+
+function _applyStyle(date: Date, styleOrFormat: string): string {
   try {
-    const date = typeof value === "string" ? new Date(value) : value;
-    return format(date, formatStr);
+    switch (styleOrFormat) {
+      case "short":   return format(date, "MMM d, yyyy");
+      case "long":    return format(date, "MMMM d, yyyy");
+      case "numeric": return format(date, "MM/dd/yyyy");
+      case "relative": return formatDistanceToNow(date, { addSuffix: true });
+      default:        return format(date, styleOrFormat);
+    }
   } catch {
-    return "-";
+    return "--";
   }
 }
 

@@ -32,6 +32,7 @@ export { DateAvatar } from "./date-avatar";
 export { DataTable } from "./data-table";
 export type { TableColumn, DataTableProps } from "./data-table";
 export { EmptyState } from "./empty-state";
+export { ErrorState } from "./error-state";
 export { Eyebrow } from "./eyebrow";
 export { PageBadge } from "./page-badge";
 export { IconBadge } from "./icon-badge";

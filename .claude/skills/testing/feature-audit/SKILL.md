@@ -381,6 +381,38 @@ Using screenshots from Phase 2 and the dogfood issue taxonomy categories:
 - Consistent spacing and typography?
 - Mobile-responsive?
 
+### 4.3b Design Consistency Checklist (Mandatory — Run on Every File in Scope)
+
+This is non-negotiable. Run these grep checks and flag every hit as a violation. These are design-101 issues that should never reach review.
+
+```bash
+# 1. Raw heading tags used as section headings (should be SectionRuleHeading)
+grep -r "<h[234]" frontend/src/components/domain/<tool> frontend/src/app/(main)/\[projectId\]/<tool> --include="*.tsx"
+
+# 2. Hand-rolled empty states (should be <EmptyState> from @/components/ds)
+grep -r "py-16 text-center\|rounded.*border.*text-center\|No.*yet.*<p\|Coming soon" frontend/src/components/domain/<tool> --include="*.tsx"
+
+# 3. Raw <button> elements (should be <Button> from @/components/ui/button)
+grep -r "<button " frontend/src/components/domain/<tool> --include="*.tsx"
+
+# 4. Hardcoded colors (should be semantic tokens only)
+grep -r "text-gray-\|text-neutral-\|text-zinc-\|bg-white\|bg-gray-\|#[0-9a-fA-F]" frontend/src/components/domain/<tool> --include="*.tsx"
+
+# 5. Spacing at callsite instead of in component
+grep -rA2 "SectionRuleHeading" frontend/src/components/domain/<tool> --include="*.tsx" | grep "mt-\|space-y-6"
+
+# 6. Tab consistency — if the tool has a detail page with multiple tabs,
+#    list all tab components and verify each uses SectionRuleHeading (not h3),
+#    EmptyState (not hand-rolled), and the same content width wrapper.
+```
+
+**For each violation found:**
+- Severity: HIGH for items 1–3, MEDIUM for 4–5
+- Fix it inline (don't just report it)
+- Note it in the report under "Design Consistency Violations"
+
+**The standard:** Every section heading = `SectionRuleHeading`. Every empty state = `<EmptyState>`. Every button = `<Button>`. No exceptions. These are not style preferences — they are the only correct implementation.
+
 ### 4.4 Code Quality Observations
 
 From the codebase inventory in Phase 1:

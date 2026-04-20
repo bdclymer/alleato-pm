@@ -45,9 +45,46 @@ Zero hex codes. Zero `gray-*`, `blue-*`, `white` classes. Zero arbitrary values 
 
 Only `shadow-xs` (cards) or `shadow-sm` (dropdowns). Never `shadow-md` or larger.
 
+### Adding spacing or styling near a shared component?
+
+**Before adding `mt-*`, `mb-*`, `pt-*`, `pb-*`, or `space-y-*` at a callsite, ask: should this shared component own this spacing?**
+
+If the same component is used in multiple places and always needs the same gap below/above it, put the spacing **inside the component** — not at every callsite. Callsite spacing drifts. Component-owned spacing is a single source of truth.
+
+Examples:
+- `SectionRuleHeading` should own the gap below itself — not every caller adding `mt-4` or `space-y-6`
+- `PageTabs` should NOT own spacing between itself and page content it doesn't control
+
+Rule: spacing that is *always the same* belongs in the component. Spacing that *varies by context* belongs at the callsite.
+
 ## The design system docs
 
 Full reference: `frontend/src/design-system/DESIGN.md`
+
+### Showing an empty state?
+
+**ALWAYS** use `<EmptyState>` from `@/components/ds`. Never hand-roll one.
+
+```tsx
+import { EmptyState } from "@/components/ds";
+
+<EmptyState
+  icon={<SomeLucideIcon />}
+  title="No items yet"
+  description="Helpful description of what will appear here."
+  action={<Button size="sm">Create Item</Button>}  {/* optional */}
+/>
+```
+
+**Never:**
+- `<div className="text-center py-8 text-muted-foreground">` with inline icon + text
+- Emoji in a `rounded-full bg-muted` div as a placeholder icon
+- `<p>No * yet</p>` rendered directly without `<EmptyState>`
+- `opacity-50` on an icon to fake an empty state look
+
+If the empty state needs a button, pass it via the `action` prop — never put the button only in the section header when the list is empty.
+
+**Button placement rule:** When a list is empty, the create/add button must appear inside the `<EmptyState action={...}>`, not floating in the section header. Only show the header button when items exist.
 
 ## Why this gate exists
 
@@ -58,3 +95,4 @@ Every time an agent skips this gate, it produces:
 - Hardcoded colors that break dark mode
 - Custom buttons instead of `<Button>`
 - One-off components that duplicate existing ones
+- Hand-rolled empty states that look completely different from each other

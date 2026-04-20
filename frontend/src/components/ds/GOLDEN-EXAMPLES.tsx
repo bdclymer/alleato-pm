@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageShell } from "@/components/layout";
 import { StatusBadge, KpiRow, SectionHeader, EmptyState, DataTable } from "@/components/ds";
+import { Plus } from "lucide-react";
 import type { ReactNode } from "react";
 
 // ─── NEVER DO THESE ──────────────────────────────────────────────────────────
@@ -239,7 +240,12 @@ export function GoldenEmptyState() {
       icon={null}
       title="No change orders yet"
       description="Change orders will appear here once they're created."
-      action={{ label: "+ Create Change Order", onClick: () => {} }}
+      action={
+        <Button size="sm" variant="outline" onClick={() => {}}>
+          <Plus />
+          Create Change Order
+        </Button>
+      }
     />
   );
 }

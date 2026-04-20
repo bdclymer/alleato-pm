@@ -48,7 +48,7 @@ export function DetailActions({ onEdit, onDelete, onShare, extraActions, classNa
               variant="ghost"
               size="icon"
               aria-label="More actions"
-              className="h-8 w-8 rounded-md border-0 text-muted-foreground shadow-none hover:text-foreground"
+              className="h-8 w-8 rounded-md text-muted-foreground hover:text-foreground"
             >
               <MoreVertical className="h-4 w-4" />
             </Button>
