@@ -204,14 +204,18 @@ const normalizeCommitment = (raw: unknown): CommitmentDetail | null => {
     billed_to_date: Number(record.billed_to_date ?? 0),
     balance_to_finish: Number(record.balance_to_finish ?? 0),
     executed_date:
-      typeof record.executed_date === "string" ? record.executed_date : undefined,
+      typeof record.executed_date === "string"
+        ? record.executed_date
+        : typeof record.contract_date === "string"
+          ? record.contract_date
+          : undefined,
     start_date:
       typeof record.start_date === "string" ? record.start_date : undefined,
     substantial_completion_date:
-      typeof record.estimated_completion_date === "string"
-        ? record.estimated_completion_date
-        : typeof record.substantial_completion_date === "string"
-          ? record.substantial_completion_date
+      typeof record.substantial_completion_date === "string"
+        ? record.substantial_completion_date
+        : typeof record.estimated_completion_date === "string"
+          ? record.estimated_completion_date
           : undefined,
     accounting_method: accountingMethod,
     retention_percentage: Number(record.default_retainage_percent ?? record.retention_percentage ?? 0),
@@ -450,6 +454,13 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
                 <dl className="space-y-4 text-sm">
                   <LabelValueRow label="Default Retainage">
                     {commitment.retention_percentage ?? 0}%
+                  </LabelValueRow>
+                  <LabelValueRow label="Accounting Method">
+                    {commitment.accounting_method === "unit"
+                      ? "Unit/Quantity"
+                      : commitment.accounting_method === "percent"
+                        ? "Percent"
+                        : "Amount Based"}
                   </LabelValueRow>
                   <LabelValueRow label="Created By" missing={!commitment.created_by_name && !commitment.created_by}>
                     {commitment.created_by_name || "—"}
