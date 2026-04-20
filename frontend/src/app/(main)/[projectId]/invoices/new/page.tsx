@@ -22,7 +22,6 @@ import {
 import { CalendarIcon, Plus, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -273,14 +272,7 @@ export default function NewInvoicePage() {
     >
       <div className="max-w-none mx-0">
         <form onSubmit={handleSubmit} className="space-y-6">
-        <Tabs defaultValue="general" className="space-y-4">
-          <TabsList variant="line">
-            <TabsTrigger value="general">General Info</TabsTrigger>
-            <TabsTrigger value="line-items">Line Items</TabsTrigger>
-            <TabsTrigger value="summary">Summary</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="general">
+          <div>
             <FormSection
               title="Invoice Information"
               description="Basic invoice details and billing period."
@@ -544,9 +536,9 @@ export default function NewInvoicePage() {
                 </div>
               </div>
             </FormSection>
-          </TabsContent>
+          </div>
 
-          <TabsContent value="line-items">
+          <div>
             <FormSection
               title="Invoice Line Items"
               description="Add line items for billing."
@@ -706,9 +698,9 @@ export default function NewInvoicePage() {
                 </div>
               </div>
             </FormSection>
-          </TabsContent>
+          </div>
 
-          <TabsContent value="summary">
+          <div>
             <FormSection
               title="Invoice Summary"
               description="Review invoice totals before submission."
@@ -779,8 +771,7 @@ export default function NewInvoicePage() {
                 </div>
               </div>
             </FormSection>
-          </TabsContent>
-        </Tabs>
+          </div>
 
         <FormActions
           submitLabel="Create Invoice"
