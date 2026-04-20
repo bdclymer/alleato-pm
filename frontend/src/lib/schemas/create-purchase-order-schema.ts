@@ -43,7 +43,7 @@ export const CreatePurchaseOrderSchema = z.object({
   // General Information
   contractNumber: z.string().min(1, "Contract number is required"),
   contractCompanyId: z.string().optional(),
-  title: z.string().optional(),
+  title: z.string().min(1, "Title is required"),
   status: z.enum([
     "Draft",
     "Out for Bid",
