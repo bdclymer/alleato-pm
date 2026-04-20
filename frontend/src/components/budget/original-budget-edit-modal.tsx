@@ -137,7 +137,13 @@ export function OriginalBudgetEditModal({
     }
   }, [unitQty, unitCost, calculationMethod]);
 
-  // Reset form when sidebar opens with new line item
+  // Reset form when sidebar opens. `lineItem` is intentionally excluded from the
+  // dependency array: the parent creates a new object literal on every render, so
+  // including it would reset the user's edits whenever React Query refetches. The
+  // component is conditionally rendered only while selectedLineItem is non-null and
+  // always unmounts on cancel, so `open` transitioning false→true is the only signal
+  // we need.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (open) {
       setCalculationMethod("manual");
@@ -146,7 +152,7 @@ export function OriginalBudgetEditModal({
       setUnitCost(toEditableNumberString(lineItem.unitCost));
       setOriginalBudget(toEditableNumberString(lineItem.originalBudgetAmount));
     }
-  }, [open, lineItem]);
+  }, [open]); // intentionally omit lineItem — see comment above
 
   // Fetch history when history tab is active
   useEffect(() => {
