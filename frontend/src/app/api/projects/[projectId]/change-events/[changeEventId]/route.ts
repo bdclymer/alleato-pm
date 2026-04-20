@@ -7,6 +7,13 @@ import { updateChangeEventSchema } from "../validation";
 import { ZodError } from "zod";
 import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
+import {
+  formatHistoryFieldName,
+  formatHistoryFieldValue,
+  generateHistoryDescription,
+  resolveUserEmails,
+  mapChangedBy,
+} from "@/lib/change-events/history-formatters";
 
 interface RouteParams {
   params: Promise<{ projectId: string; changeEventId: string }>;
@@ -54,6 +61,35 @@ function computeMarkupAdditions(
     cost: 0,
     revenue: totalRevenueMarkup,
   };
+}
+
+
+async function enrichHistoryEntries(
+  historyRows: any[],
+  serviceSupabase: ReturnType<typeof createServiceClient>,
+) {
+  const uniqueUserIds = [
+    ...new Set(
+      historyRows
+        .map((e: any) => e.changed_by)
+        .filter((id: any): id is string => Boolean(id)),
+    ),
+  ];
+  const userEmailById = await resolveUserEmails(
+    uniqueUserIds,
+    (id) => serviceSupabase.auth.admin.getUserById(id),
+    "change-events#GET",
+  );
+  return historyRows.map((entry: any) => ({
+    id: entry.id,
+    fieldName: formatHistoryFieldName(entry.field_name),
+    oldValue: formatHistoryFieldValue(entry.field_name, entry.old_value),
+    newValue: formatHistoryFieldValue(entry.field_name, entry.new_value),
+    changeType: entry.change_type,
+    changedAt: entry.changed_at,
+    changedBy: mapChangedBy(entry.changed_by, userEmailById),
+    description: generateHistoryDescription(entry),
+  }));
 }
 
 /**
@@ -348,9 +384,13 @@ export const GET = withApiGuardrails(
 
       // Fallback: try auth user email if people lookup fails
       if (!creator) {
-        const { data: { user: authUser } } = await supabase.auth.admin.getUserById(changeEvent.created_by);
-        if (authUser) {
-          creator = { id: authUser.id, email: authUser.email, first_name: null, last_name: null };
+        try {
+          const { data: { user: authUser } } = await serviceSupabase.auth.admin.getUserById(changeEvent.created_by);
+          if (authUser) {
+            creator = { id: authUser.id, email: authUser.email, first_name: null, last_name: null };
+          }
+        } catch (err) {
+          console.error("[change-events#GET] Failed to resolve creator email:", err);
         }
       }
     }
@@ -423,15 +463,10 @@ export const GET = withApiGuardrails(
           updatedAt: item.updated_at,
         };
       }),
-      history: (changeEvent.change_event_history || []).map((entry: any) => ({
-        id: entry.id,
-        fieldName: entry.field_name,
-        oldValue: entry.old_value,
-        newValue: entry.new_value,
-        changeType: entry.change_type,
-        changedAt: entry.changed_at,
-        changedBy: entry.changed_by,
-      })),
+      history: await enrichHistoryEntries(
+        changeEvent.change_event_history || [],
+        serviceSupabase,
+      ),
       createdAt: changeEvent.created_at,
       createdBy: creator,
       updatedAt: changeEvent.updated_at,

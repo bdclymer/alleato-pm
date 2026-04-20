@@ -1,8 +1,16 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from "@/lib/supabase/service";
 import { NextResponse } from 'next/server';
 import { apiErrorResponse } from "@/lib/api-error";
+import {
+  formatHistoryFieldName,
+  formatHistoryFieldValue,
+  generateHistoryDescription,
+  resolveUserEmails,
+  mapChangedBy,
+} from "@/lib/change-events/history-formatters";
 
 interface RouteParams {
   params: Promise<{
@@ -18,7 +26,7 @@ interface RouteParams {
 export const GET = withApiGuardrails(
   "projects/[projectId]/change-events/[changeEventId]/history#GET",
   async ({ request, params }) => {
-  
+
     const { projectId, changeEventId } = await params;
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -65,18 +73,41 @@ export const GET = withApiGuardrails(
       return apiErrorResponse(error);
     }
 
+    // Resolve user emails for changed_by UUIDs
+    const uniqueUserIds = [
+      ...new Set(
+        (historyEntries || [])
+          .map((e) => e.changed_by)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    ];
+
+    let userEmailById: Record<string, string> = {};
+    try {
+      const serviceSupabase = createServiceClient();
+      userEmailById = await resolveUserEmails(
+        uniqueUserIds,
+        (id) => serviceSupabase.auth.admin.getUserById(id),
+        "change-events/history#GET",
+      );
+    } catch (err) {
+      console.error("[change-events/history#GET] Service client unavailable, skipping email enrichment:", err);
+    }
+
     // Format history entries
-    const formattedHistory = (historyEntries || []).map(entry => ({
-      id: entry.id,
-      changeEventId: entry.change_event_id,
-      action: entry.change_type,
-      fieldName: formatFieldName(entry.field_name),
-      oldValue: formatFieldValue(entry.field_name, entry.old_value),
-      newValue: formatFieldValue(entry.field_name, entry.new_value),
-      changedBy: entry.changed_by,
-      changedAt: entry.changed_at,
-      description: generateChangeDescription(entry),
-    }));
+    const formattedHistory = (historyEntries || []).map(entry => {
+      return {
+        id: entry.id,
+        changeEventId: entry.change_event_id,
+        action: entry.change_type,
+        fieldName: formatHistoryFieldName(entry.field_name),
+        oldValue: formatHistoryFieldValue(entry.field_name, entry.old_value),
+        newValue: formatHistoryFieldValue(entry.field_name, entry.new_value),
+        changedBy: mapChangedBy(entry.changed_by, userEmailById),
+        changedAt: entry.changed_at,
+        description: generateHistoryDescription(entry),
+      };
+    });
 
     // Calculate pagination
     const totalPages = count ? Math.ceil(count / limit) : 0;
@@ -104,104 +135,3 @@ export const GET = withApiGuardrails(
     });
     },
 );
-
-/**
- * Format field names for display
- */
-function formatFieldName(fieldName: string): string {
-  const fieldNameMap: { [key: string]: string } = {
-    'title': 'Title',
-    'type': 'Type',
-    'reason': 'Change Reason',
-    'scope': 'Scope',
-    'status': 'Status',
-    'notes': 'Description',
-    'deleted': 'Deleted',
-    'line_item_added': 'Line Item Added',
-    'line_item_removed': 'Line Item Removed',
-    'line_item_updated': 'Line Item Updated',
-    'attachment_added': 'Attachment Added',
-    'attachment_removed': 'Attachment Removed',
-    'expecting_revenue': 'Expecting Revenue',
-    'line_item_revenue_source': 'Revenue Source',
-  };
-
-  return fieldNameMap[fieldName] || fieldName
-    .split('_')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-}
-
-/**
- * Format field values for display
- */
-function formatFieldValue(fieldName: string, value: string | null): string | null {
-  if (value === null) return null;
-
-  // Format specific field types
-  switch (fieldName) {
-    case 'type':
-      return value.toUpperCase().replace(/\s+/g, '_');
-    case 'scope':
-      return value.toUpperCase().replace(/\s+/g, '_');
-    case 'status':
-      return value.toUpperCase();
-    case 'expecting_revenue':
-    case 'deleted':
-      return value === 'true' ? 'Yes' : 'No';
-    case 'line_item_revenue_source':
-      return value.toUpperCase();
-    default:
-      return value;
-  }
-}
-
-/**
- * Generate a human-readable description of the change
- */
-interface HistoryEntry {
-  change_type: string;
-  field_name: string;
-  old_value: string | null;
-  new_value: string | null;
-}
-
-function generateChangeDescription(entry: HistoryEntry): string {
-  const { change_type, field_name, old_value, new_value } = entry;
-
-  switch (change_type) {
-    case 'CREATE':
-      return 'Change event created';
-    case 'UPDATE':
-      switch (field_name) {
-        case 'line_item_added':
-          return `Added line item: "${new_value}"`;
-        case 'line_item_removed':
-          return `Removed line item: "${old_value}"`;
-        case 'line_item_updated':
-          return `Updated line item`;
-        case 'attachment_added':
-          return `Added attachment: "${new_value}"`;
-        case 'attachment_removed':
-          return `Removed attachment: "${old_value}"`;
-        case 'deleted':
-          return new_value === 'true' ? 'Change event deleted' : 'Change event restored';
-        default:
-          if (old_value && new_value) {
-            return `Changed ${formatFieldName(field_name)} from "${formatFieldValue(field_name, old_value)}" to "${formatFieldValue(field_name, new_value)}"`;
-          } else if (new_value) {
-            return `Set ${formatFieldName(field_name)} to "${formatFieldValue(field_name, new_value)}"`;
-          } else {
-            return `Cleared ${formatFieldName(field_name)}`;
-          }
-      }
-    case 'DELETE':
-      return 'Change event deleted';
-    case 'VOID':
-      return 'Change event voided';
-    case 'RECOVER':
-      return 'Change event recovered from recycle bin';
-    default:
-      return `${change_type} - ${field_name}`;
-  }
-}

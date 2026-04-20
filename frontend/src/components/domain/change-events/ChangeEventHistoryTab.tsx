@@ -28,7 +28,7 @@ function formatUser(
   if (!changedBy) return "System";
   if (typeof changedBy === "object" && "email" in changedBy)
     return changedBy.email;
-  if (typeof changedBy === "string") return "User";
+  if (typeof changedBy === "string") return changedBy;
   return "System";
 }
 
@@ -101,7 +101,13 @@ export function ChangeEventHistoryTab({
           </div>
           <div>
             <Text size="sm" tone="muted">
-              {new Date(entry.changedAt).toLocaleString()}
+              {new Date(entry.changedAt).toLocaleDateString("en-US", {
+                  year: "numeric",
+                  month: "short",
+                  day: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
             </Text>
           </div>
         </div>
