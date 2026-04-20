@@ -468,20 +468,30 @@ export function BudgetLineItemCreatorModal({
   };
 
   const handleCreate = async () => {
-    // Validate all rows
-    const invalidRows = rows.filter(
-      (row) =>
-        !row.costCodeId ||
-        !row.costTypeId ||
-        (parseFloat(row.qty) || 0) < 1 ||
-        parseFloat(row.amount) === 0,
-    );
+    // Validate each row with specific, actionable error messages
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+      const rowSuffix = rows.length > 1 ? ` (row ${i + 1})` : "";
 
-    if (invalidRows.length > 0) {
-      toast.error(
-        "All rows must have a budget code, an associated cost type, quantity of at least 1, and a non-zero amount",
-      );
-      return;
+      if (!row.budgetCodeId) {
+        toast.error(`Please select a budget code${rowSuffix}`);
+        return;
+      }
+
+      if (!row.costTypeId) {
+        toast.error(`Budget code is missing a cost type${rowSuffix}`);
+        return;
+      }
+
+      if ((parseFloat(row.qty) || 0) < 1) {
+        toast.error(`Quantity must be at least 1${rowSuffix}`);
+        return;
+      }
+
+      if (!row.unitCost || parseFloat(row.unitCost) === 0) {
+        toast.error(`Must enter a unit cost${rowSuffix}`);
+        return;
+      }
     }
 
     setIsCreating(true);
@@ -843,7 +853,7 @@ export function BudgetLineItemCreatorModal({
           </Button>
           <Button
             onClick={handleCreate}
-            disabled={isCreating || rows.every((r) => !r.costCodeId)}
+            disabled={isCreating || rows.every((r) => !r.budgetCodeId)}
             className="min-w-[140px]"
           >
             {isCreating ? (
