@@ -681,6 +681,7 @@ export default function ProjectCommitmentsPage(): ReactElement {
           columns: commitmentColumns,
           visibleColumns: tableState.visibleColumns,
           onColumnVisibilityChange: tableState.setVisibleColumns,
+          onExport: handleExport,
           onBulkDelete: tableState.selectedIds.length > 0
             ? () => setBulkDeleteDialogOpen(true)
             : undefined,
@@ -848,6 +849,7 @@ export default function ProjectCommitmentsPage(): ReactElement {
         open={isExportDialogOpen}
         onOpenChange={setIsExportDialogOpen}
         projectId={projectId}
+        selectedCommitmentIds={tableState.selectedIds}
       />
     </>
   );

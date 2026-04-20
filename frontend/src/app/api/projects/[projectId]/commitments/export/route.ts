@@ -165,7 +165,7 @@ export const POST = withApiGuardrails<Promise<{ projectId: string }>>(
         status: 200,
         headers: {
           "Content-Type": "text/html; charset=utf-8",
-          "Content-Disposition": `inline; filename="commitments-${new Date().toISOString().split("T")[0]}.html"`,
+          "Content-Disposition": `attachment; filename="commitments-${new Date().toISOString().split("T")[0]}.html"`,
         },
       });
     }
@@ -185,7 +185,7 @@ export const POST = withApiGuardrails<Promise<{ projectId: string }>>(
 async function fetchCommitmentsForExport(
   supabase: any,
   projectId: number,
-  filters?: { type?: string; status?: string; companyId?: string; search?: string }
+  filters?: { type?: string; status?: string; companyId?: string; search?: string; ids?: string[] }
 ): Promise<CommitmentExportRow[]> {
   const allCommitments: CommitmentExportRow[] = [];
   const filterType = filters?.type;
@@ -208,6 +208,9 @@ async function fetchCommitmentsForExport(
       scQuery = scQuery.or(
         `contract_number.ilike.%${filters.search}%,title.ilike.%${filters.search}%`
       );
+    }
+    if (filters?.ids?.length) {
+      scQuery = scQuery.in('id', filters.ids);
     }
 
     const { data: scData, error: scError } = await scQuery;
@@ -236,6 +239,9 @@ async function fetchCommitmentsForExport(
       poQuery = poQuery.or(
         `contract_number.ilike.%${filters.search}%,title.ilike.%${filters.search}%`
       );
+    }
+    if (filters?.ids?.length) {
+      poQuery = poQuery.in('id', filters.ids);
     }
 
     const { data: poData, error: poError } = await poQuery;

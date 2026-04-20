@@ -21,6 +21,7 @@ export const CommitmentExportSchema = z.object({
     status: z.string().optional(),
     companyId: z.string().optional(),
     search: z.string().optional(),
+    ids: z.array(z.string()).optional(),
   }).optional(),
   include_sov_items: z.boolean().default(false),
   template: z.enum(['standard', 'financial', 'summary']).default('standard'),

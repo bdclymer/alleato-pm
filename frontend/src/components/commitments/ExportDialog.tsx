@@ -15,6 +15,8 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { apiFetchBlob } from "@/lib/api-client";
+import type { CommitmentExport } from "@/lib/schemas/commitment-export-schema";
 
 /**
  * ExportDialog props interface
@@ -89,51 +91,46 @@ export function ExportDialog({
     setIsExporting(true);
 
     try {
-      const exportParams: any = {
-        format,
+      const exportParams: CommitmentExport = {
+        format: isIndividualExport ? "pdf" : format,
         template,
         include_sov_items: includeSOVItems,
-        filters: {},
+        filters: selectedCommitmentIds?.length ? { ids: selectedCommitmentIds } : undefined,
+        commitmentId: isIndividualExport && commitmentId ? commitmentId : undefined,
       };
 
-      // For individual commitment PDF export
-      if (isIndividualExport && commitmentId) {
-        exportParams.commitmentId = commitmentId;
-        exportParams.format = "pdf";
-      }
-
-      // Use different endpoint for individual commitment vs list export
       const endpoint = isIndividualExport && commitmentId
         ? `/api/commitments/${commitmentId}/export`
         : `/api/projects/${projectId}/commitments/export`;
 
-      const response = await fetch(endpoint, {
+      // List PDF is HTML with auto-print — open in new tab so window.print() fires
+      if (!isIndividualExport && format === "pdf") {
+        const blob = await apiFetchBlob(endpoint, {
+          method: "POST",
+          body: JSON.stringify(exportParams),
+        });
+        const url = window.URL.createObjectURL(blob);
+        const opened = window.open(url, "_blank");
+        if (!opened) {
+          toast.info("Popup blocked — allow popups and try again");
+        } else {
+          toast.success("PDF view opened — use Ctrl+P / Cmd+P to save as PDF");
+        }
+        setTimeout(() => window.URL.revokeObjectURL(url), 30_000);
+        onOpenChange(false);
+        return;
+      }
+
+      const blob = await apiFetchBlob(endpoint, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify(exportParams),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Export failed with status ${response.status}`);
-      }
+      const ext = format === "excel" ? "xlsx" : format;
+      const filename = isIndividualExport
+        ? `commitment-${commitmentNumber || commitmentId}.pdf`
+        : `commitments-${new Date().toISOString().split("T")[0]}.${ext}`;
 
-      // Get filename from Content-Disposition or create default
-      const contentDisposition = response.headers.get("Content-Disposition");
-      let filename = isIndividualExport
-        ? `commitment-${commitmentNumber || commitmentId}.${format === "pdf" ? "pdf" : format}`
-        : `commitments-${new Date().toISOString().split("T")[0]}.${format === "pdf" ? "pdf" : format}`;
-
-      if (contentDisposition) {
-        const filenameMatch = contentDisposition.match(/filename="?(.+)"?/i);
-        if (filenameMatch?.[1]) {
-          filename = filenameMatch[1];
-        }
-      }
-
-      const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
@@ -144,12 +141,8 @@ export function ExportDialog({
       window.URL.revokeObjectURL(url);
 
       toast.success(
-        format === "pdf"
-          ? "PDF downloaded successfully"
-          : "Export downloaded successfully"
+        format === "pdf" ? "PDF downloaded successfully" : "Export downloaded successfully"
       );
-
-      // Close dialog on success
       onOpenChange(false);
     } catch (error) {
       toast.error(
