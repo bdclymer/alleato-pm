@@ -58,7 +58,7 @@ export default function PrpStatusPage() {
   const total = data.length;
 
   return (
-    <PageShell variant="content" title="PRP Pipeline Status">
+    <PageShell variant="dashboard" title="PRP Pipeline Status">
       <div className="space-y-6">
         {/* Summary row */}
         {!loading && (
