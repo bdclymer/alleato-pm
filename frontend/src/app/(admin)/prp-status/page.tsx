@@ -12,7 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { CheckCircle2, Circle, XCircle, Minus } from "lucide-react";
+import { CheckCircle2, Circle, XCircle, Minus, Info } from "lucide-react";
 import type { ToolPrpStatus } from "@/app/api/admin/prp-status/route";
 
 function Check({ value }: { value: boolean | null }) {
@@ -54,33 +54,9 @@ export default function PrpStatusPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const passCount = data.filter((t) => t.validationPassed).length;
-  const total = data.length;
-
   return (
     <PageShell variant="dashboard" title="PRP Pipeline Status">
       <div className="space-y-6">
-        {/* Summary row */}
-        {!loading && (
-          <div className="flex items-center gap-6 text-sm text-muted-foreground">
-            <span>
-              <span className="font-medium text-foreground">{passCount}</span> / {total} validated
-            </span>
-            <span>
-              <span className="font-medium text-foreground">
-                {data.filter((t) => t.tasksComplete).length}
-              </span>{" "}
-              / {total} implemented
-            </span>
-            <span>
-              <span className="font-medium text-foreground">
-                {data.filter((t) => t.hasPrp).length}
-              </span>{" "}
-              / {total} have PRP doc
-            </span>
-          </div>
-        )}
-
         {loading ? (
           <div className="space-y-2">
             {Array.from({ length: 8 }).map((_, i) => (
@@ -139,12 +115,16 @@ export default function PrpStatusPage() {
         )}
 
         {/* Pipeline legend */}
-        <div className="space-y-1 pt-2 border-t border-border">
-          {COLUMNS.filter((c) => c.tip).map((c) => (
-            <p key={c.key} className="text-xs text-muted-foreground">
-              <span className="font-medium text-foreground">{c.label}</span> — {c.tip}
-            </p>
-          ))}
+        <div className="rounded-lg bg-muted/50 px-4 py-3 flex gap-3">
+          <Info className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+          <div className="space-y-1">
+            <p className="text-xs font-medium text-foreground">Column key</p>
+            {COLUMNS.filter((c) => c.tip).map((c) => (
+              <p key={c.key} className="text-xs text-muted-foreground">
+                <span className="font-medium text-foreground">{c.label}</span> — {c.tip}
+              </p>
+            ))}
+          </div>
         </div>
       </div>
     </PageShell>
