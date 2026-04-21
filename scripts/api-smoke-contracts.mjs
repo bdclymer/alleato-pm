@@ -65,6 +65,16 @@ const ENDPOINTS = [
   ["GET", `/api/projects/${PROJECT_ID}/commitment-pcos/${FAKE_UUID}`, "Commitment PCO detail (fake id)", [200, 401, 404]],
   ["GET", `/api/projects/${PROJECT_ID}/pcos`, "All PCOs", [200, 401]],
 
+  // Prime Contract Change Orders (canonical routes)
+  ["GET", `/api/projects/${PROJECT_ID}/prime-contract-change-orders`, "Prime contract change orders list", [200, 401]],
+  ["GET", `/api/projects/${PROJECT_ID}/prime-contract-change-orders/1700`, "Prime contract change order detail", [200, 401, 404]],
+  ["GET", `/api/projects/${PROJECT_ID}/prime-contract-change-orders/1700/line-items`, "Prime CO line items list", [200, 401, 404]],
+  ["GET", `/api/projects/${PROJECT_ID}/prime-contract-change-orders/export`, "Prime contract change orders CSV export", [200, 401]],
+
+  // Commitment Change Orders (canonical routes)
+  ["GET", `/api/projects/${PROJECT_ID}/commitment-change-orders`, "Commitment change orders list", [200, 401]],
+  ["GET", `/api/projects/${PROJECT_ID}/commitment-change-orders/export`, "Commitment change orders CSV export", [200, 401]],
+
   // Contracts
   ["GET", `/api/projects/${PROJECT_ID}/contracts`, "Contracts list", [200, 401]],
   ["GET", `/api/projects/${PROJECT_ID}/contracts/settings`, "Prime contract settings", [200, 401]],
