@@ -4,12 +4,36 @@ import * as React from "react";
 import { toast } from "sonner";
 
 import type {
+  BudgetCodeOption,
   ChangeEventFormData,
   ChangeEventLineItem,
   CommitmentSovLineItem,
 } from "./types";
 import { createEmptyLineItem } from "./types";
 import { useDropdownData } from "./useDropdownData";
+
+// When all SOV items share the same budget code, auto-fill it; if only one item
+// exists also use its description. Returns only the fields that should update.
+function resolveBudgetCodeFromItems(
+  items: CommitmentSovLineItem[],
+  budgetCodes: BudgetCodeOption[],
+): Partial<ChangeEventLineItem> {
+  if (items.length === 0) return {};
+  const updates: Partial<ChangeEventLineItem> = {};
+
+  const firstCode = items[0].budget_code;
+  const allSameCode = firstCode !== null && items.every((i) => i.budget_code === firstCode);
+  if (allSameCode) {
+    const bc = budgetCodes.find((b) => b.code === firstCode);
+    if (bc) updates.budgetCode = bc.id;
+  }
+
+  if (items.length === 1 && items[0].description) {
+    updates.description = items[0].description;
+  }
+
+  return updates;
+}
 
 interface UseChangeEventFormDataOptions {
   initialData?: Partial<ChangeEventFormData>;
@@ -134,6 +158,10 @@ export function useChangeEventFormData({
         if (commitment?.vendorId) {
           current.vendor = String(commitment.vendorId);
         }
+        // Immediately populate description from commitment title (same pattern as vendor)
+        if (commitment?.title && !current.description) {
+          current.description = commitment.title;
+        }
         nextItems[rowIndex] = current;
         return { ...prev, lineItems: nextItems };
       });
@@ -142,14 +170,10 @@ export function useChangeEventFormData({
 
       if (commitmentLineItemsMap[commitmentId] !== undefined) {
         const items = commitmentLineItemsMap[commitmentId];
-        if (items.length === 1) {
-          const item = items[0];
-          const bc = item.budget_code ? budgetCodes.find((b) => b.code === item.budget_code) : undefined;
+        const updates = resolveBudgetCodeFromItems(items, budgetCodes);
+        if (Object.keys(updates).length > 0) {
           setFormData((prev) => {
             const nextItems = [...prev.lineItems];
-            const updates: Partial<typeof nextItems[number]> = {};
-            if (bc) updates.budgetCode = bc.id;
-            if (item.description) updates.description = item.description;
             nextItems[rowIndex] = { ...nextItems[rowIndex], ...updates };
             return { ...prev, lineItems: nextItems };
           });
@@ -170,14 +194,10 @@ export function useChangeEventFormData({
         const items: CommitmentSovLineItem[] = data.data || [];
         setCommitmentLineItemsMap((prev) => ({ ...prev, [commitmentId]: items }));
 
-        if (items.length === 1) {
-          const item = items[0];
-          const bc = item.budget_code ? budgetCodes.find((b) => b.code === item.budget_code) : undefined;
+        const updates = resolveBudgetCodeFromItems(items, budgetCodes);
+        if (Object.keys(updates).length > 0) {
           setFormData((prev) => {
             const nextItems = [...prev.lineItems];
-            const updates: Partial<typeof nextItems[number]> = {};
-            if (bc) updates.budgetCode = bc.id;
-            if (item.description) updates.description = item.description;
             nextItems[rowIndex] = { ...nextItems[rowIndex], ...updates };
             return { ...prev, lineItems: nextItems };
           });

@@ -75,6 +75,7 @@ export interface ContractOption {
   type: "purchase_order" | "subcontract";
   vendorId?: string | null;
   vendorName?: string | null;
+  title?: string | null;
 }
 
 export interface CommitmentSovLineItem {

@@ -119,6 +119,7 @@ export function useDropdownData({ projectId }: UseDropdownDataOptions) {
               type: "purchase_order",
               vendorId: po.contract_company_id || null,
               vendorName: po.company_name || null,
+              title: po.title || null,
             });
           }
         }
@@ -136,6 +137,7 @@ export function useDropdownData({ projectId }: UseDropdownDataOptions) {
               type: "subcontract",
               vendorId: sub.contract_company_id || null,
               vendorName: sub.company_name || null,
+              title: sub.title || null,
             });
           }
         }
