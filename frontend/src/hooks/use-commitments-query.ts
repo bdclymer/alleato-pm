@@ -91,7 +91,6 @@ export function useCommitmentsList(
     },
     enabled: !!projectId,
     staleTime: 30 * 1000, // 30 seconds - commitments change infrequently
-    placeholderData: keepPreviousData, // Keep showing old data while fetching new page
   });
 }
 
