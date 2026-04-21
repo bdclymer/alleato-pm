@@ -37,7 +37,7 @@ export const GET = withApiGuardrails(
     const { data: runs, error: runsErr } = await supabase
       .from("test_runs")
       .select(`
-        id, run_date, tester, environment, branch, notes, suite_id,
+        id, slug, run_date, tester, environment, branch, notes, suite_id,
         test_results (status)
       `)
       .in("suite_id", suiteIds)
@@ -55,6 +55,7 @@ export const GET = withApiGuardrails(
       const suite = suiteById.get(r.suite_id);
       return {
         id: r.id,
+        slug: (r as { slug?: string | null }).slug ?? null,
         run_date: r.run_date,
         tester: r.tester,
         environment: r.environment,
@@ -120,16 +121,31 @@ export const POST = withApiGuardrails(
 
     const selectedCases = cases ?? [];
 
+    // Generate a slug: {tool}-{suite-type}, with -N suffix if taken.
+    const base = `${suite}-${suiteType}`;
+    const { data: existing } = await supabase
+      .from("test_runs")
+      .select("slug")
+      .like("slug", `${base}%`);
+    const taken = new Set((existing ?? []).map((r: { slug: string | null }) => r.slug));
+    let slug = base;
+    let n = 1;
+    while (taken.has(slug)) {
+      slug = `${base}-${n}`;
+      n++;
+    }
+
     const { data: run, error: runErr } = await supabase
       .from("test_runs")
       .insert({
         suite_id: suiteRow.id,
+        slug,
         tester: tester ?? null,
         environment: environment ?? "localhost:3000",
         branch: branch ?? null,
         notes: notes ?? null,
       })
-      .select("id, run_date")
+      .select("id, slug, run_date")
       .single();
 
     if (runErr || !run) {
@@ -153,7 +169,7 @@ export const POST = withApiGuardrails(
     }
 
     return NextResponse.json({
-      run_id: run.id,
+      run_id: run.slug ?? run.id,
       run_date: run.run_date,
       case_count: resultRows.length,
     });

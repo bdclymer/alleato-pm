@@ -101,8 +101,7 @@ export const GET = withApiGuardrails(
       url,
     });
   } catch (error) {
-    logger.error({ msg: "Error fetching metadata:", error: error instanceof Error ? error.message : String(error instanceof Error ? error instanceof Error ? error.message : String(error.message : String(error instanceof Error ? error.message : String(error) }),
-    );
+    logger.error({ msg: "Error fetching metadata:", error: error instanceof Error ? error.message : String(error) });
 
     return apiErrorResponse(error);
   }

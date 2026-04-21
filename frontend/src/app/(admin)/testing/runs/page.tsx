@@ -16,6 +16,9 @@ interface RunRow {
   suiteDisplayName: string;
 }
 
+// Maps tool_name -> suite_type -> display_name for accurate per-run labeling
+type SuiteDisplayMap = Map<string, Map<string, string>>;
+
 // Unified runs index: in-progress + history on one page, separated by a
 // subtle section heading rather than tab chrome.
 export default function RunsPage() {
@@ -30,16 +33,20 @@ export default function RunsPage() {
           "/api/testing/suites",
         );
         const suites = suitesRes.suites ?? [];
-        // De-duplicate by tool_name — runs query returns rows regardless of suite_type.
-        const uniqueTools = Array.from(
-          new Map(suites.map((s) => [s.tool_name, s])).values(),
-        );
+        // De-duplicate by tool_name to get one fetch per tool.
+        const uniqueToolNames = Array.from(new Set(suites.map((s) => s.tool_name)));
+        // Build display name map: tool_name -> suite_type -> display_name
+        const displayMap: SuiteDisplayMap = new Map();
+        for (const s of suites) {
+          if (!displayMap.has(s.tool_name)) displayMap.set(s.tool_name, new Map());
+          displayMap.get(s.tool_name)!.set(s.suite_type, s.display_name);
+        }
         const results = await Promise.allSettled(
-          uniqueTools.map((suite) =>
+          uniqueToolNames.map((toolName) =>
             apiFetch<{ runs?: HistoryRun[] }>(
-              `/api/testing/runs?suite=${suite.tool_name}`,
+              `/api/testing/runs?suite=${toolName}`,
             ).then((data) => ({
-              suite,
+              toolName,
               runs: data.runs ?? [],
             })),
           ),
@@ -48,10 +55,14 @@ export default function RunsPage() {
         for (const r of results) {
           if (r.status !== "fulfilled") continue;
           for (const run of r.value.runs) {
+            const typeMap = displayMap.get(r.value.toolName);
+            const displayName = typeMap?.get(run.suite_type)
+              ?? typeMap?.values().next().value
+              ?? r.value.toolName;
             flattened.push({
               run,
-              suiteName: r.value.suite.tool_name,
-              suiteDisplayName: r.value.suite.display_name,
+              suiteName: r.value.toolName,
+              suiteDisplayName: displayName,
             });
           }
         }
@@ -124,7 +135,7 @@ function RunSection({ title, rows }: { title: string; rows: RunRow[] }) {
           return (
             <li key={run.id}>
               <Link
-                href={`/testing/runs/${run.id}`}
+                href={`/testing/runs/${run.slug ?? run.id}`}
                 className="group flex items-center gap-4 px-1 py-4 hover:bg-muted/40"
               >
                 <div className="min-w-0 flex-1">

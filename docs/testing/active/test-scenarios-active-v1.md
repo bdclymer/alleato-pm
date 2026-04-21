@@ -19,30 +19,29 @@ _Last refreshed: 2026-04-20_
 | Change Events | 10 | 30 | 40 | [scenarios/change-events.md](../scenarios/change-events.md) |
 | Change Orders | 8 | 23 | 31 | [scenarios/change-orders.md](../scenarios/change-orders.md) |
 | Commitments | 10 | 26 | 36 | [scenarios/commitments.md](../scenarios/commitments.md) |
+| Daily Log | 7 | 26 | 33 | [scenarios/daily-log.md](../scenarios/daily-log.md) |
+| Direct Costs | 8 | 33 | 41 | [scenarios/direct-costs.md](../scenarios/direct-costs.md) |
+| Directory | 8 | 28 | 36 | [scenarios/directory.md](../scenarios/directory.md) |
+| Documents | 7 | 33 | 40 | [scenarios/documents.md](../scenarios/documents.md) |
+| Drawings | 10 | 34 | 44 | [scenarios/drawings.md](../scenarios/drawings.md) |
+| Invoices | 8 | 25 | 33 | [scenarios/invoices.md](../scenarios/invoices.md) |
+| Meetings | 8 | 26 | 34 | [scenarios/meetings.md](../scenarios/meetings.md) |
+| Photos | 7 | 27 | 34 | [scenarios/photos.md](../scenarios/photos.md) |
+| Prime Contracts | 10 | 28 | 38 | [scenarios/prime-contracts.md](../scenarios/prime-contracts.md) |
+| Project Lifecycle | 10 | 32 | 42 | [scenarios/project-lifecycle.md](../scenarios/project-lifecycle.md) |
+| Punch List | 8 | 28 | 36 | [scenarios/punch-list.md](../scenarios/punch-list.md) |
 | Rfis | 10 | 26 | 36 | [scenarios/rfis.md](../scenarios/rfis.md) |
+| Schedule | 8 | 28 | 36 | [scenarios/schedule.md](../scenarios/schedule.md) |
+| Specifications | 10 | 23 | 33 | [scenarios/specifications.md](../scenarios/specifications.md) |
+| Submittals | 10 | 23 | 33 | [scenarios/submittals.md](../scenarios/submittals.md) |
 
-**Totals:** 5 tools · 52 smoke · 130 feature · **182 cases**
+**Totals:** 19 tools · 161 smoke · 524 feature · **685 cases**
 
 ---
 
 ## Tools still pending audit
 
-Run `/test-scenario-audit <tool>` for each:
-
-- `submittals`
-- `invoices`
-- `prime-contracts`
-- `direct-costs`
-- `daily-log`
-- `meetings`
-- `punch-list`
-- `documents`
-- `directory`
-- `schedule`
-- `drawings`
-- `specifications`
-- `photos`
-- `project-lifecycle`
+All tools have been audited. ✅
 
 ---
 

@@ -1,8 +1,41 @@
 # Development Guardrails
 
 Actionable rules for AI agents. No philosophy — only what to do, when, and how to verify it.
+## Mandatory Rules
 
----
+**Rule 1:** Do not ship silent failures.
+**Rule 2:** Do not return generic errors.
+**Rule 3:** Do not fix a recurring bug without adding a guardrail.
+**Rule 4:** Do not introduce one-off handling when a shared abstraction is warranted.
+**Rule 5:** For every failure, explain cause, detection gap, and prevention step.
+**Rule 6:** Before closing any task, ask: “How does this fail loudly?”
+**Rule 7:** Before closing any bug, ask: “What makes this never happen again?”
+
+> Do not give me another isolated fix. Standardize this at the system level. Add shared error handling, structured logging, actionable notifications, a regression test, and the appropriate pre-deploy or post-deploy guardrail. Also tell me what would have caught this before I did.
+
+### Every issue falls into one of these buckets:
+
+* **Should have been prevented** → add validation / constraints
+* **Should have been caught pre-deploy** → add tests / CI
+* **Should have been caught post-deploy** → add monitoring
+
+### “What would have caught this before I did?”
+
+- If the answer is “a test,” write the test.
+- If the answer is “a deploy check,” add the deploy check.
+- If the answer is “monitoring,” add the monitor.
+- If the answer is “a process step,” automate it if possible.
+
+### Any bug found twice is now a system failure, not an individual mistake.
+
+1. **Catalog repeat failures**
+   Keep a simple list of recurring bug types: broken endpoints, missing fields, auth failures, bad status codes, broken integrations, etc.
+
+2. **Convert each repeat failure into an automated guardrail**
+   Every escaped bug should leave behind a scar in the codebase: a test, a monitor, a lint rule, a schema check, a contract check.
+
+3. **Make quality gates automatic**
+   Don’t “remember to test.” Make deploys and merges prove they’re safe enough.
 
 ## Task Completion Gates
 

@@ -22,20 +22,18 @@ import {
   Image as ImageIcon,
   Link2,
   Loader2,
-  MessageSquare,
   Play,
-  Send,
   ShieldCheck,
   Trash2,
-  Upload,
   Wrench,
   XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 
 import { PageShell } from "@/components/layout";
-import { Button } from "@/components/ui/button";
+import { SectionRuleHeading } from "@/components/layout/spacing";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { apiFetch } from "@/lib/api-client";
@@ -153,32 +151,6 @@ const REQUEST_TYPE_LABELS: Record<string, string> = {
   question: "Question",
 };
 
-const REQUEST_TYPE_META: Record<
-  string,
-  { icon: typeof Wrench; className: string; shortLabel: string }
-> = {
-  change_request: {
-    icon: Wrench,
-    className: "text-status-info",
-    shortLabel: "Change",
-  },
-  bug: {
-    icon: XCircle,
-    className: "text-status-error",
-    shortLabel: "Bug",
-  },
-  question: {
-    icon: MessageSquare,
-    className: "text-status-info",
-    shortLabel: "Question",
-  },
-  copy: {
-    icon: Copy,
-    className: "text-muted-foreground",
-    shortLabel: "Copy",
-  },
-};
-
 
 const PANEL_MIN_WIDTH = 280;
 const PANEL_MAX_WIDTH = 600;
@@ -194,10 +166,36 @@ const IN_PROGRESS_STATUSES = new Set([
   "in_review",
 ]);
 const RESOLVED_STATUSES = new Set(["resolved", "closed"]);
+const LIST_SECTION_ORDER: DisplayStatus[] = ["in_progress", "open", "resolved"];
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
+
+function toolLabelFromPath(pagePath: string): string | null {
+  const parts = pagePath.split("/").filter(Boolean);
+  // Look for /projects/<id>/<tool> pattern
+  const projectsIdx = parts.indexOf("projects");
+  if (projectsIdx >= 0 && parts.length > projectsIdx + 2) {
+    const toolSlug = parts[projectsIdx + 2];
+    if (!/^\d+$/.test(toolSlug)) {
+      return toolSlug
+        .split("-")
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(" ");
+    }
+  }
+  // Fallback: last non-numeric segment
+  const nonNumeric = parts.filter((p) => !/^\d+$/.test(p));
+  if (nonNumeric.length > 0) {
+    const last = nonNumeric[nonNumeric.length - 1];
+    return last
+      .split("-")
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(" ");
+  }
+  return null;
+}
 
 function relativeTime(dateStr: string) {
   const now = Date.now();
@@ -711,9 +709,7 @@ function CommentsSection({
 
   return (
     <div>
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-primary/70 mb-2">
-        Comments
-      </p>
+      <SectionRuleHeading label="Comments" />
 
       {/* Comment list */}
       <div ref={scrollRef} className="space-y-3 mb-4 max-h-64 overflow-y-auto">
@@ -817,14 +813,7 @@ function GitHubActivitySection({ issueNumber }: { issueNumber: number }) {
 
   return (
     <div>
-      <div className="flex items-center gap-2 mb-2">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-primary/70">
-          GitHub Activity
-        </p>
-        <span className="text-[10px] text-muted-foreground">
-          #{issueNumber}
-        </span>
-      </div>
+      <SectionRuleHeading label={`GitHub Activity · #${issueNumber}`} />
 
       {loading && (
         <div className="flex items-center justify-center py-4">
@@ -1291,9 +1280,7 @@ function ToolContextSection({ item }: { item: FeedbackItem }) {
 
   return (
     <div>
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-primary/70 mb-2">
-        Tool Context
-      </p>
+      <SectionRuleHeading label="Tool Context" />
 
       {/* Tool assignment */}
       <div className="flex items-center gap-2 mb-3">
@@ -1448,7 +1435,7 @@ function FeedbackDetail({
   return (
     <>
     {DetailConfirmDialog}
-    <div className="mx-auto max-w-4xl space-y-6 px-6 py-6 lg:px-10 lg:py-8">
+    <div className="mx-auto max-w-5xl space-y-6 px-5 py-5 lg:px-8 lg:py-7">
       {/* Mobile back button */}
       {onBack && (
         <Button
@@ -1464,10 +1451,10 @@ function FeedbackDetail({
       )}
 
       {/* Header + Actions */}
-      <div>
+      <div className="border-b border-border/60 pb-4">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
-            <h2 className="text-lg font-semibold text-foreground">
+            <h2 className="text-xl font-semibold text-foreground">
               {item.title}
             </h2>
             <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
@@ -1543,7 +1530,7 @@ function FeedbackDetail({
               onChange={(e) => onUpdateStatus(item.id, e.target.value as DisplayStatus)}
               disabled={updatingId === item.id}
               className={cn(
-                "h-7 appearance-none rounded-md border-0 pl-2 pr-7 text-xs font-medium cursor-pointer transition-colors focus:outline-none focus:ring-1 focus:ring-ring",
+                "h-7 cursor-pointer appearance-none rounded-md border border-border/60 bg-background pl-2 pr-7 text-xs font-medium transition-colors focus:outline-none focus:ring-1 focus:ring-ring",
                 displayStatus === "resolved" && "bg-status-success/15 text-status-success",
                 displayStatus === "open" && "bg-status-warning/15 text-status-warning",
                 displayStatus === "in_progress" && "bg-status-info/15 text-status-info",
@@ -1565,7 +1552,7 @@ function FeedbackDetail({
               variant="outline"
               onClick={() => onSendToGitHub(item.id)}
               disabled={sendingToGitHub}
-              className="h-7 text-xs"
+              className="h-7 border-border/60 text-xs"
             >
               <Github />
               {sendingToGitHub ? "Sending..." : "Create Issue"}
@@ -1586,14 +1573,14 @@ function FeedbackDetail({
       </div>
 
       {/* Description */}
-      <div>
+      <div className="space-y-3">
         <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
           {item.comment}
         </p>
 
         {/* Screenshot */}
         {item.screenshot_url && (
-          <div className="mt-3 overflow-hidden rounded-lg border border-border">
+          <div className="overflow-hidden rounded-md border border-border/60">
             <img
               src={item.screenshot_url}
               alt="Feedback screenshot"
@@ -1604,10 +1591,8 @@ function FeedbackDetail({
       </div>
 
       {/* Page context */}
-      <div>
-        <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-primary/70">
-          Page Context
-        </p>
+      <div className="border-t border-border/60 pt-4">
+        <SectionRuleHeading label="Page Context" />
         <div className="space-y-1.5">
           <div className="flex items-center gap-2 text-xs">
             <span className="w-16 shrink-0 text-muted-foreground">Page</span>
@@ -1649,14 +1634,20 @@ function FeedbackDetail({
         </div>
       </div>
 
-      <ToolContextSection item={item} />
+      <div className="border-t border-border/60 pt-4">
+        <ToolContextSection item={item} />
+      </div>
 
       {/* Comments */}
-      <CommentsSection feedbackItemId={item.id} commentInputRef={commentInputRef} />
+      <div className="border-t border-border/60 pt-4">
+        <CommentsSection feedbackItemId={item.id} commentInputRef={commentInputRef} />
+      </div>
 
       {/* GitHub Activity */}
       {item.github_issue_number && (
-        <GitHubActivitySection issueNumber={item.github_issue_number} />
+        <div className="border-t border-border/60 pt-4">
+          <GitHubActivitySection issueNumber={item.github_issue_number} />
+        </div>
       )}
     </div>
     </>
@@ -1879,41 +1870,72 @@ export default function FeedbackInboxPage() {
     setMobileShowDetail(false);
   }
 
+  const listSections = useMemo(() => {
+    const grouped = new Map<DisplayStatus, FeedbackItem[]>(
+      LIST_SECTION_ORDER.map((status) => [status, []]),
+    );
+
+    for (const item of items) {
+      const status = toDisplayStatus(item.status);
+      grouped.get(status)?.push(item);
+    }
+
+    const statusesToShow =
+      filter === "all" ? LIST_SECTION_ORDER : [filter as DisplayStatus];
+
+    return statusesToShow
+      .map((status) => ({
+        status,
+        label: STATUS_META[status].label,
+        items: grouped.get(status) ?? [],
+      }))
+      .filter((section) => section.items.length > 0);
+  }, [items, filter]);
+
   return (
     <PageShell
       variant="dashboard"
       title="Feedback Inbox"
       showHeader={false}
-      className="px-0! py-0!"
+      className="bg-muted/30 px-0! py-0!"
       description="Review feedback, assign tools, and sync issues to GitHub."
     >
       <div className="flex h-full min-h-0 flex-col">
-      <div className="flex flex-1 min-h-0">
+      <div className="flex min-h-0 flex-1 border-y border-border/60">
         {/* ---- Left: list panel ---- */}
         <div
           ref={listPanelRef}
           className={cn(
-            "flex flex-col border-r border-border",
+            "flex flex-col border-r border-border/60 bg-background",
             mobileShowDetail ? "hidden lg:flex" : "flex",
             "w-full lg:w-auto lg:shrink-0",
           )}
           style={{ width: panelWidth, minWidth: PANEL_MIN_WIDTH, maxWidth: PANEL_MAX_WIDTH }}
         >
-          {/* Panel header: item count + keyboard hints */}
-          <div className="flex items-center justify-between border-b border-border px-4 py-2">
-            <span className="text-xs text-muted-foreground">
-              {total} {total === 1 ? "item" : "items"}
-            </span>
-            <p className="text-[10px] text-muted-foreground hidden lg:block">
-              <kbd className="rounded border border-border px-1 py-0.5 text-[9px]">&uarr;&darr;</kbd> navigate
-              <span className="mx-1.5 text-border">|</span>
-              <kbd className="rounded border border-border px-1 py-0.5 text-[9px]">c</kbd> comment
-              <span className="mx-1.5 text-border">|</span>
-              <kbd className="rounded border border-border px-1 py-0.5 text-[9px]">g</kbd> github
-            </p>
+          <div className="border-b border-border/60 px-3 py-2.5">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-foreground">
+                  Feedback Inbox
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {total} {total === 1 ? "issue" : "issues"}
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                onClick={fetchItems}
+                className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                title="Refresh inbox"
+              >
+                <Clock className="h-3.5 w-3.5" />
+              </Button>
+            </div>
           </div>
-          {/* Filter tabs */}
-          <div className="border-b border-border px-3 py-2">
+
+          <div className="border-b border-border/60 px-3 py-2">
             <Tabs
               value={filter}
               onValueChange={(v) => {
@@ -1922,9 +1944,9 @@ export default function FeedbackInboxPage() {
                 setMobileShowDetail(false);
               }}
             >
-              <TabsList>
+              <TabsList className="h-8 w-full justify-start gap-1 rounded-md bg-muted/70 p-1">
                 {STATUS_FILTERS.map((f) => (
-                  <TabsTrigger key={f.value} value={f.value} className="text-xs">
+                  <TabsTrigger key={f.value} value={f.value} className="h-6 rounded-sm px-2.5 text-xs">
                     {f.label}
                   </TabsTrigger>
                 ))}
@@ -1933,7 +1955,7 @@ export default function FeedbackInboxPage() {
           </div>
 
           {/* Items */}
-          <div className="flex-1 overflow-y-auto bg-muted/20">
+          <div className="flex-1 overflow-y-auto bg-muted/25">
             {loading && (
               <div className="flex items-center justify-center py-16">
                 <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
@@ -1953,102 +1975,81 @@ export default function FeedbackInboxPage() {
             )}
 
             {!loading &&
-              items.map((item, index) => {
-                const displayStatus = toDisplayStatus(item.status);
-                const meta = STATUS_META[displayStatus];
-                const isSelected = selectedId === item.id;
-                const isFocused = focusedIndex === index;
-
+              listSections.map((section) => {
+                const sectionMeta = STATUS_META[section.status];
+                const SectionIcon = sectionMeta.icon;
                 return (
-                  <ListItemContextMenu
-                    key={item.id}
-                    item={item}
-                    onUpdateStatus={updateStatus}
-                    onSendToGitHub={sendToGitHub}
-                    onDelete={deleteItem}
-                  >
-                    <Button
-                      type="button"
-                      data-feedback-item
-                      variant="ghost"
-                      size="default"
-                      onClick={() => selectItem(item.id)}
-                      className={cn(
-                        "group h-auto w-full items-start justify-start gap-3 rounded-none border-b border-border px-4 py-3 text-left transition-colors",
-                        isSelected
-                          ? "bg-primary/8 border-l-2 border-l-primary"
-                          : "hover:bg-muted border-l-2 border-l-transparent",
-                        isFocused && !isSelected && "bg-muted/60",
-                      )}
-                    >
-                      {/* Status dot */}
-                      <div
-                        className={cn(
-                          "mt-1.5 h-2 w-2 shrink-0 rounded-full",
-                          meta.dotClassName,
-                        )}
-                      />
-
-                      <div className="flex-1 min-w-0">
-                        {/* Title row */}
-                        <div className="flex items-center gap-2">
-                          <span className="truncate text-[13px] font-normal text-foreground">
-                            {item.title}
-                          </span>
-                          {item.severity === "high" && (
-                            <span className="shrink-0 text-[10px] font-semibold text-status-error">
-                              HIGH
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Meta row */}
-                        <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
-                          <button
-                            type="button"
-                            tabIndex={-1}
-                            className="font-mono text-[10px] text-muted-foreground/60 hover:text-foreground transition-colors cursor-pointer"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigator.clipboard.writeText(item.id);
-                              toast.success("ID copied");
-                            }}
-                            title={`Copy ID: ${item.id}`}
-                          >
-                            #{item.id.slice(0, 8)}
-                          </button>
-                          <span className="text-border">|</span>
-                          {(() => {
-                            const requestMeta =
-                              REQUEST_TYPE_META[item.request_type];
-                            return (
-                              <span
-                                className={cn(
-                                  "text-[10px] font-normal",
-                                  requestMeta?.className ?? "text-muted-foreground",
-                                )}
-                              >
-                                {requestMeta?.shortLabel ??
-                                  REQUEST_TYPE_LABELS[item.request_type] ??
-                                  item.request_type}
-                              </span>
-                            );
-                          })()}
-                          <span className="text-border">|</span>
-                          <span className="truncate font-mono text-[10px] font-normal text-muted-foreground">
-                            {item.page_path}
-                          </span>
-                        </div>
-
-
+                  <section key={section.status}>
+                    <div className="sticky top-0 z-10 border-y border-border/60 bg-muted/85 px-3 py-1.5 backdrop-blur">
+                      <div className="flex items-center gap-1.5 text-xs font-medium text-foreground">
+                        <SectionIcon className={cn("h-3.5 w-3.5 shrink-0", sectionMeta.className, section.status === "in_progress" && "animate-spin")} />
+                        <span>{section.label}</span>
+                        <span className="text-muted-foreground">{section.items.length}</span>
                       </div>
+                    </div>
+                    {section.items.map((item) => {
+                      const displayStatus = toDisplayStatus(item.status);
+                      const meta = STATUS_META[displayStatus];
+                      const itemIndex = items.findIndex((entry) => entry.id === item.id);
+                      const isSelected = selectedId === item.id;
+                      const isFocused = focusedIndex === itemIndex;
 
-                      {/* Timestamp */}
-                      <span className="shrink-0 pt-0.5 text-[10px] text-muted-foreground">
-                        {relativeTime(item.created_at)}
-                      </span>
-                    </Button>
-                  </ListItemContextMenu>
+                      const toolLabel = toolLabelFromPath(item.page_path);
+                      return (
+                        <ListItemContextMenu
+                          key={item.id}
+                          item={item}
+                          onUpdateStatus={updateStatus}
+                          onSendToGitHub={sendToGitHub}
+                          onDelete={deleteItem}
+                        >
+                          <Button
+                            type="button"
+                            data-feedback-item
+                            variant="ghost"
+                            size="default"
+                            onClick={() => selectItem(item.id)}
+                            className={cn(
+                              "group h-auto w-full items-start justify-start gap-2.5 rounded-none border-b border-border/60 px-3 py-2.5 text-left transition-colors",
+                              isSelected
+                                ? "bg-background shadow-[inset_2px_0_0_hsl(var(--primary))]"
+                                : "hover:bg-background/70",
+                              isFocused && !isSelected && "bg-background/80",
+                            )}
+                          >
+                            {displayStatus !== "in_progress" && (
+                              <meta.icon className={cn("mt-0.5 h-3.5 w-3.5 shrink-0", meta.className)} />
+                            )}
+
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-start gap-2">
+                                <span className="line-clamp-2 text-[13px] font-medium leading-snug text-foreground">
+                                  {item.title}
+                                </span>
+                                {item.severity === "high" && (
+                                  <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-status-error">
+                                    High
+                                  </span>
+                                )}
+                              </div>
+
+                              {toolLabel && (
+                                <div className="mt-1.5">
+                                  <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                                    {toolLabel}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+
+                            <span className="shrink-0 pt-0.5 text-[10px] text-muted-foreground">
+                              {relativeTime(item.created_at)}
+                            </span>
+                          </Button>
+                        </ListItemContextMenu>
+                      );
+                    })}
+                  </section>
                 );
               })}
           </div>
@@ -2056,7 +2057,7 @@ export default function FeedbackInboxPage() {
 
         {/* ---- Resize handle ---- */}
         <div
-          className="hidden lg:flex items-center justify-center w-1.5 cursor-col-resize group hover:bg-muted/50 active:bg-muted transition-colors shrink-0"
+          className="group hidden w-1.5 shrink-0 cursor-col-resize items-center justify-center transition-colors hover:bg-muted/50 active:bg-muted lg:flex"
           onMouseDown={handleMouseDown}
           aria-hidden="true"
         >
@@ -2064,7 +2065,7 @@ export default function FeedbackInboxPage() {
         </div>
 
         {/* ---- Right: detail panel (desktop) ---- */}
-        <div className="hidden flex-1 overflow-y-auto lg:block">
+        <div className="hidden flex-1 overflow-y-auto bg-background lg:block">
           {!selected && (
             <div className="flex h-full items-center justify-center">
               <p className="text-sm text-muted-foreground">
@@ -2089,7 +2090,7 @@ export default function FeedbackInboxPage() {
 
         {/* ---- Mobile: full-screen detail view ---- */}
         {mobileShowDetail && selected && (
-          <div className="flex flex-1 flex-col overflow-y-auto lg:hidden">
+          <div className="flex flex-1 flex-col overflow-y-auto bg-background lg:hidden">
             <FeedbackDetail
               item={selected}
               updatingId={updatingId}

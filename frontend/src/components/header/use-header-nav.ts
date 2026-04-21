@@ -54,6 +54,7 @@ const submittalTitleCache = new Map<string, string>();
 const settingsUserTitleCache = new Map<string, string>();
 const subcontractorInvoiceTitleCache = new Map<string, { commitmentLabel: string; invoiceLabel: string }>();
 const drawingTitleCache = new Map<string, string>();
+const testRunTitleCache = new Map<string, string>();
 
 const TABLE_ROUTE_ALIASES: Record<string, string> = {
   tasks: "tasks",
@@ -87,6 +88,7 @@ export function useHeaderNav(): UseHeaderNavReturn {
   const [settingsUserTitle, setSettingsUserTitle] = useState<string | null>(null);
   const [subcontractorInvoiceInfo, setSubcontractorInvoiceInfo] = useState<{ commitmentLabel: string; invoiceLabel: string } | null>(null);
   const [drawingTitle, setDrawingTitle] = useState<string | null>(null);
+  const [testRunTitle, setTestRunTitle] = useState<string | null>(null);
 
   // Extract project ID from URL path or query parameters
   const projectId = useMemo(() => {
@@ -271,6 +273,11 @@ export function useHeaderNav(): UseHeaderNavReturn {
         "revisions-report",
         "new",
       ].includes(segments[2]);
+    const isTestRunDetailRoute =
+      segments.length >= 3 &&
+      segments[0] === "testing" &&
+      segments[1] === "runs" &&
+      /^[0-9a-f-]{36}$/i.test(segments[2]);
 
     // Always start with Projects
     crumbs.push({ label: "Projects", href: "/" });
@@ -362,6 +369,8 @@ export function useHeaderNav(): UseHeaderNavReturn {
         label = drawingTitle || "Drawing";
       } else if (isDrawingViewerRoute && index === 3) {
         label = drawingTitle || "Drawing";
+      } else if (isTestRunDetailRoute && index === 2) {
+        label = testRunTitle || "Run";
       } else if (index === 0 && segment === "directory") {
         // Global directory routes (/directory/vendors, /directory/clients, etc.)
         // — not project-scoped, so label as Company Directory
@@ -411,7 +420,7 @@ export function useHeaderNav(): UseHeaderNavReturn {
     });
 
     return crumbs;
-  }, [pathname, companyTitle, vendorTitle, contactTitle, currentProject, meetingTitle, globalMeetingTitle, primeContractTitle, commitmentTitle, primePcoTitle, changeEventTitle, primeCoTitle, invoiceTitle, rfiTitle, submittalTitle, settingsUserTitle, subcontractorInvoiceInfo, drawingTitle]);
+  }, [pathname, companyTitle, vendorTitle, contactTitle, currentProject, meetingTitle, globalMeetingTitle, primeContractTitle, commitmentTitle, primePcoTitle, changeEventTitle, primeCoTitle, invoiceTitle, rfiTitle, submittalTitle, settingsUserTitle, subcontractorInvoiceInfo, drawingTitle, testRunTitle]);
   useEffect(() => {
     const segments = pathname?.split("/").filter(Boolean) ?? [];
     const isMeetingDetailRoute =
@@ -545,6 +554,50 @@ export function useHeaderNav(): UseHeaderNavReturn {
     return () => {
       isActive = false;
     };
+  }, [pathname]);
+
+  useEffect(() => {
+    const segments = pathname?.split("/").filter(Boolean) ?? [];
+    const isTestRunRoute =
+      segments.length >= 3 &&
+      segments[0] === "testing" &&
+      segments[1] === "runs" &&
+      /^[0-9a-f-]{36}$/i.test(segments[2]);
+
+    if (!isTestRunRoute) {
+      setTestRunTitle(null);
+      return;
+    }
+
+    const runId = segments[2];
+    const cached = testRunTitleCache.get(runId);
+    if (cached) {
+      setTestRunTitle(cached);
+      return;
+    }
+
+    let isActive = true;
+    const fetchTitle = async () => {
+      try {
+        const response = await fetch(`/api/testing/runs/${runId}`);
+        if (!response.ok) return;
+        const data = await response.json();
+        const title: string | null =
+          typeof data?.run?.suite?.display_name === "string" &&
+          data.run.suite.display_name.length > 0
+            ? data.run.suite.display_name
+            : null;
+        if (isActive && title) {
+          testRunTitleCache.set(runId, title);
+          setTestRunTitle(title);
+        }
+      } catch {
+        // Best-effort; raw "Run" fallback is fine
+      }
+    };
+
+    fetchTitle();
+    return () => { isActive = false; };
   }, [pathname]);
 
   useEffect(() => {

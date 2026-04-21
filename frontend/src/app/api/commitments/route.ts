@@ -172,6 +172,7 @@ function mapRowToCommitment(
  * @queryparam {string} [search] - Search in contract_number and title fields
  * @queryparam {string} [companyId] - Filter by contract company ID
  * @queryparam {string} [type] - Filter by type: "subcontract" or "purchase_order"
+ * @queryparam {"exclude"|"only"|"include"} [deleted=exclude] - Soft-delete filter mode
  *
  * @returns {PaginatedResponse<Commitment>} 200 - Paginated list of commitments with metadata
  * @returns {object} 401 - Unauthorized (missing or invalid session)
@@ -198,6 +199,9 @@ export const GET = withApiGuardrails(
     let companyId = searchParams.get("companyId");
     const projectId = searchParams.get("projectId");
     const type = searchParams.get("type");
+    const deletedParam = searchParams.get("deleted");
+    const deleted: "exclude" | "only" | "include" =
+      deletedParam === "only" || deletedParam === "include" ? deletedParam : "exclude";
 
     // For subcontractors, auto-filter to only their company's commitments
     if (projectId && !companyId) {
@@ -240,8 +244,12 @@ export const GET = withApiGuardrails(
       .from("commitments_unified")
       .select("id, commitment_type, created_at", { count: "exact" })
       .order("created_at", { ascending: false })
-      .range(from, to)
-      .is("deleted_at", null);
+      .range(from, to);
+    if (deleted === "exclude") {
+      baseQuery = baseQuery.is("deleted_at", null);
+    } else if (deleted === "only") {
+      baseQuery = baseQuery.not("deleted_at", "is", null);
+    }
     if (filters.projectId) baseQuery = baseQuery.eq("project_id", parseInt(filters.projectId, 10));
     if (filters.status) baseQuery = baseQuery.ilike("status", filters.status);
     if (filters.companyId) baseQuery = baseQuery.eq("contract_company_id", filters.companyId);

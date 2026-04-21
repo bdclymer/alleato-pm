@@ -7,8 +7,8 @@ import { updateChangeEventSchema } from "../validation";
 import { ZodError } from "zod";
 import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
-import {
 import { logger } from "@/lib/logger";
+import {
   formatHistoryFieldName,
   formatHistoryFieldValue,
   generateHistoryDescription,

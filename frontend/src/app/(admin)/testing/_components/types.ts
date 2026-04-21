@@ -35,12 +35,18 @@ export interface TestResult {
   id: string;
   status: TestStatus;
   notes: string | null;
+  severity: "critical" | "major" | "minor" | "cosmetic" | null;
+  video_url: string | null;
+  github_issue_number: number | null;
+  github_issue_url: string | null;
+  github_issue_state: string | null;
   test_cases: TestCase;
   test_screenshots: { id: string; public_url: string | null; label: string | null }[];
 }
 
 export interface HistoryRun {
   id: string;
+  slug?: string | null;
   run_date: string;
   tester: string | null;
   environment: string | null;
@@ -51,4 +57,15 @@ export interface HistoryRun {
   fail: number;
   skip: number;
   not_tested: number;
+}
+
+export interface RunMeta {
+  id: string;
+  slug: string | null;
+  run_date: string;
+  suite: {
+    tool_name: string;
+    display_name: string;
+    suite_type: SuiteType;
+  } | null;
 }

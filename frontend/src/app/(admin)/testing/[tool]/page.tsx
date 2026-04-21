@@ -1,17 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { Play, Search, X } from "lucide-react";
+import { toast } from "sonner";
 import { PageShell } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { apiFetch } from "@/lib/api-client";
-import { Play } from "lucide-react";
-import { CaseList } from "../_components/CaseList";
-import { SuiteBadge } from "../_components/SuiteBadge";
 import { cn } from "@/lib/utils";
+import { CaseList } from "../_components/CaseList";
 import type { SuiteType, TestCase } from "../_components/types";
-import { toast } from "sonner";
 
 interface SuiteMeta {
   tool_name: string;
@@ -36,7 +35,9 @@ export default function ToolPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
   const [starting, setStarting] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const loadCases = useCallback(async () => {
     setLoading(true);
@@ -113,36 +114,60 @@ export default function ToolPage() {
         </Button>
       }
     >
-      {/* Suite-type toggle: this is the first-class decision on this page. */}
-      <div className="flex items-center gap-1 rounded-full bg-muted p-1 w-fit">
-        {(["smoke", "feature"] as const).map((t) => (
-          <button
-            key={t}
-            type="button"
-            onClick={() => switchType(t)}
-            className={cn(
-              "rounded-full px-4 py-1.5 text-xs font-medium transition-colors",
-              suiteType === t
-                ? "bg-background text-foreground shadow-xs"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            <SuiteBadge type={t} className="mr-2" />
-            {t === "smoke" ? "Smoke tests" : "Feature tests"}
-          </button>
-        ))}
-      </div>
+      {/* Single toolbar row: tabs + expandable search + count */}
+      <div className="flex items-center gap-3">
+        {/* Suite-type toggle */}
+        <div className="flex items-center gap-1 rounded-full bg-muted p-1">
+          {(["smoke", "feature"] as const).map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => switchType(t)}
+              className={cn(
+                "rounded-full px-4 py-1.5 text-xs font-medium transition-colors",
+                suiteType === t
+                  ? "bg-background text-foreground shadow-xs"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {t === "smoke" ? "Smoke tests" : "Feature tests"}
+            </button>
+          ))}
+        </div>
 
-      <div className="flex items-center justify-between">
-        <Input
-          placeholder="Search cases…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="max-w-sm"
-        />
-        <p className="text-xs text-muted-foreground">
-          {filtered.length} of {cases.length} cases
-        </p>
+        <div className="flex flex-1 items-center justify-end gap-2">
+          {/* Expandable search */}
+          <div className="flex items-center gap-1">
+            {searchOpen && (
+              <Input
+                ref={searchInputRef}
+                autoFocus
+                placeholder="Search cases…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="h-8 w-48 text-xs"
+              />
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                if (searchOpen) {
+                  setSearch("");
+                  setSearchOpen(false);
+                } else {
+                  setSearchOpen(true);
+                }
+              }}
+              className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              {searchOpen ? <X className="h-3.5 w-3.5" /> : <Search className="h-3.5 w-3.5" />}
+            </button>
+          </div>
+
+          <p className="text-xs text-muted-foreground whitespace-nowrap">
+            {filtered.length} of {cases.length} cases
+          </p>
+        </div>
       </div>
 
       {error && (

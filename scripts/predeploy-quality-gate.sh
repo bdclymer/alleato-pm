@@ -23,6 +23,12 @@ GUARDRAIL_SCOPE=all node scripts/check-changed-route-guardrails.mjs
 echo "2e) New explicit any debt gate"
 node scripts/check-no-new-any.mjs
 
+echo "2f) New unvalidated request.json() debt gate"
+node scripts/check-zod-coverage.mjs
+
+echo "2g) Zod coverage report (informational)"
+node scripts/check-zod-coverage.mjs --report-all || true
+
 echo "3) Frontend lint + typecheck + build"
 cd frontend
 npm run lint

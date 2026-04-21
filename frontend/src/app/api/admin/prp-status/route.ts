@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
 import { createServiceClient } from "@/lib/supabase/service";
+import { withApiGuardrails } from "@/lib/guardrails/api";
 
 export interface ToolPrpStatus {
   tool: string;
@@ -49,18 +50,6 @@ function countRoutes(apiPath: string): number {
     "[projectId]",
     apiPath
   );
-  // Also check the /contracts path for prime-contracts
-  const alt = path.join(
-    process.cwd(),
-    "..",
-    "frontend",
-    "src",
-    "app",
-    "api",
-    "projects",
-    "[projectId]",
-    "contracts"
-  );
 
   function countInDir(dir: string): number {
     if (!fs.existsSync(dir)) return 0;
@@ -102,54 +91,57 @@ async function loadTestSuiteCounts(): Promise<Map<string, { smoke: number; featu
   return counts;
 }
 
-export async function GET() {
-  const prpBase = path.join(process.cwd(), "..", "docs", "PRPs");
-  const testSuiteCounts = await loadTestSuiteCounts();
+export const GET = withApiGuardrails(
+  "admin/prp-status#GET",
+  async () => {
+    const prpBase = path.join(process.cwd(), "..", "docs", "PRPs");
+    const testSuiteCounts = await loadTestSuiteCounts();
 
-  const results: ToolPrpStatus[] = TOOLS.map(({ slug, label, apiPath }) => {
-    const prpDir = path.join(prpBase, slug);
-    const dirExists = fs.existsSync(prpDir);
+    const results: ToolPrpStatus[] = TOOLS.map(({ slug, label, apiPath }) => {
+      const prpDir = path.join(prpBase, slug);
+      const dirExists = fs.existsSync(prpDir);
 
-    // Detect PRP doc (prp-*.md or any *-PRP.md or PRP-*.md)
-    let hasPrp = false;
-    if (dirExists) {
-      const files = fs.readdirSync(prpDir);
-      hasPrp = files.some(
-        (f) =>
-          (f.startsWith("prp-") || f.toLowerCase().includes("prp")) &&
-          f.endsWith(".md") &&
-          !f.includes("VALIDATION") &&
-          !f.includes("TASKS") &&
-          !f.includes("AUDIT") &&
-          !f.includes("TEST-SCENARIOS")
-      );
-    }
+      // Detect PRP doc (prp-*.md or any *-PRP.md or PRP-*.md)
+      let hasPrp = false;
+      if (dirExists) {
+        const files = fs.readdirSync(prpDir);
+        hasPrp = files.some(
+          (f) =>
+            (f.startsWith("prp-") || f.toLowerCase().includes("prp")) &&
+            f.endsWith(".md") &&
+            !f.includes("VALIDATION") &&
+            !f.includes("TASKS") &&
+            !f.includes("AUDIT") &&
+            !f.includes("TEST-SCENARIOS")
+        );
+      }
 
-    const auditPath = path.join(prpDir, "AUDIT.md");
-    const tasksPath = path.join(prpDir, "TASKS.md");
-    const scenariosPath = path.join(prpDir, "TEST-SCENARIOS.md");
-    const reportPath = path.join(prpDir, "VALIDATION-REPORT.md");
+      const auditPath = path.join(prpDir, "AUDIT.md");
+      const tasksPath = path.join(prpDir, "TASKS.md");
+      const scenariosPath = path.join(prpDir, "TEST-SCENARIOS.md");
+      const reportPath = path.join(prpDir, "VALIDATION-REPORT.md");
 
-    const apiRoutes = apiPath ? countRoutes(apiPath) : 0;
-    const suiteCounts = testSuiteCounts.get(slug) ?? { smoke: 0, feature: 0 };
-    const hasTestAudit = suiteCounts.smoke > 0 && suiteCounts.feature > 0;
+      const apiRoutes = apiPath ? countRoutes(apiPath) : 0;
+      const suiteCounts = testSuiteCounts.get(slug) ?? { smoke: 0, feature: 0 };
+      const hasTestAudit = suiteCounts.smoke > 0 && suiteCounts.feature > 0;
 
-    return {
-      tool: slug,
-      label,
-      apiRoutes,
-      hasPrp,
-      hasAudit: dirExists && fs.existsSync(auditPath),
-      hasTasks: dirExists && fs.existsSync(tasksPath),
-      hasTestScenarios: dirExists && fs.existsSync(scenariosPath),
-      hasValidationReport: dirExists && fs.existsSync(reportPath),
-      validationPassed: dirExists ? checkValidationPassed(reportPath) : null,
-      smokeCases: suiteCounts.smoke,
-      featureCases: suiteCounts.feature,
-      hasTestAudit,
-      prpDir: dirExists ? slug : null,
-    };
-  });
+      return {
+        tool: slug,
+        label,
+        apiRoutes,
+        hasPrp,
+        hasAudit: dirExists && fs.existsSync(auditPath),
+        hasTasks: dirExists && fs.existsSync(tasksPath),
+        hasTestScenarios: dirExists && fs.existsSync(scenariosPath),
+        hasValidationReport: dirExists && fs.existsSync(reportPath),
+        validationPassed: dirExists ? checkValidationPassed(reportPath) : null,
+        smokeCases: suiteCounts.smoke,
+        featureCases: suiteCounts.feature,
+        hasTestAudit,
+        prpDir: dirExists ? slug : null,
+      };
+    });
 
-  return NextResponse.json(results);
-}
+    return NextResponse.json(results);
+  },
+);

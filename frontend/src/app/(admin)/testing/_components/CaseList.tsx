@@ -1,16 +1,13 @@
 "use client";
 
-import Link from "next/link";
-import { cn } from "@/lib/utils";
+import { useState } from "react";
+import { ChevronRight, FlaskConical } from "lucide-react";
 import { EmptyState } from "@/components/ds";
-import { FlaskConical } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type { TestCase } from "./types";
 
-// Premium hairline-divided list for test cases. No card wrappers, no
-// border-on-row — just whitespace and a single divider between rows.
 export function CaseList({
   cases,
-  toolName,
   emptyTitle = "No test cases",
   emptyDescription = "Cases will appear here once added to this suite.",
 }: {
@@ -19,6 +16,8 @@ export function CaseList({
   emptyTitle?: string;
   emptyDescription?: string;
 }) {
+  const [openId, setOpenId] = useState<string | null>(null);
+
   if (cases.length === 0) {
     return (
       <EmptyState
@@ -28,49 +27,111 @@ export function CaseList({
       />
     );
   }
+
   return (
-    <ul className="divide-y divide-border">
-      {cases.map((c) => (
-        <li key={c.id}>
-          <Link
-            href={`/testing/${toolName}/cases/${c.id}`}
-            className="group flex items-start gap-4 px-1 py-4 transition-colors hover:bg-muted/40"
-          >
-            <span className="mt-0.5 w-14 shrink-0 font-mono text-xs text-muted-foreground">
-              {c.test_number}
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-foreground group-hover:text-primary">
+    <ul className="space-y-0">
+      {cases.map((c) => {
+        const isOpen = openId === c.id;
+        return (
+          <li key={c.id} className={cn("rounded-md transition-colors", isOpen && "bg-muted/40")}>
+            <button
+              type="button"
+              onClick={() => setOpenId(isOpen ? null : c.id)}
+              className="group w-full flex items-center gap-2 px-3 py-4 text-left"
+            >
+              <span className="w-10 shrink-0 font-mono text-xs text-muted-foreground">
+                {c.test_number}
+              </span>
+              <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground group-hover:text-primary">
                 {c.test_name}
-              </p>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                {c.category}
-                {c.subcategory ? ` · ${c.subcategory}` : ""}
-              </p>
-            </div>
-            <PriorityPill priority={c.priority} />
-          </Link>
-        </li>
-      ))}
+              </span>
+              <ChevronRight
+                className={cn(
+                  "h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform duration-150",
+                  isOpen && "rotate-90",
+                )}
+              />
+            </button>
+
+            {isOpen && (
+              <div className="px-3 pb-5 pl-19 space-y-4">
+                {c.context_note && (
+                  <DetailSection label="Context">
+                    <p className="text-sm text-muted-foreground">{c.context_note}</p>
+                  </DetailSection>
+                )}
+                {c.setup_steps && (
+                  <DetailSection label="Setup">
+                    <StepList text={c.setup_steps} />
+                  </DetailSection>
+                )}
+                {c.steps && (
+                  <DetailSection label="Steps">
+                    <StepList text={c.steps} />
+                  </DetailSection>
+                )}
+                {c.expected_result && (
+                  <DetailSection label="Expected result">
+                    <p className="text-sm text-muted-foreground">{c.expected_result}</p>
+                  </DetailSection>
+                )}
+                {c.start_url && (
+                  <DetailSection label="Start URL">
+                    <a
+                      href={c.start_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-primary underline underline-offset-4 hover:text-primary/80"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {c.start_url}
+                    </a>
+                  </DetailSection>
+                )}
+              </div>
+            )}
+          </li>
+        );
+      })}
     </ul>
   );
 }
 
-function PriorityPill({ priority }: { priority: "HIGH" | "MEDIUM" | "LOW" }) {
-  const tone =
-    priority === "HIGH"
-      ? "bg-destructive/10 text-destructive"
-      : priority === "MEDIUM"
-      ? "bg-warning/10 text-warning"
-      : "bg-muted text-muted-foreground";
+function DetailSection({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
   return (
-    <span
-      className={cn(
-        "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider",
-        tone,
-      )}
-    >
-      {priority}
-    </span>
+    <div>
+      <p className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-foreground/80">
+        {label}
+      </p>
+      {children}
+    </div>
+  );
+}
+
+/** Renders a newline- or numbered-list-style steps string as a clean <ol>/<ul>. */
+function StepList({ text }: { text: string }) {
+  const lines = text
+    .split("\n")
+    .map((l) => l.replace(/^\d+[.)]\s*/, "").trim())
+    .filter(Boolean);
+
+  if (lines.length === 1) {
+    return <p className="text-sm text-muted-foreground">{lines[0]}</p>;
+  }
+
+  return (
+    <ol className="list-decimal list-inside space-y-1">
+      {lines.map((line) => (
+        <li key={line} className="text-sm text-muted-foreground">
+          {line}
+        </li>
+      ))}
+    </ol>
   );
 }

@@ -9,7 +9,6 @@ import {
 } from "ai";
 import { after } from "next/server";
 
-import { apiErrorResponse } from "@/lib/api-error";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { getLanguageModel } from "@/lib/ai/providers";
@@ -24,6 +23,8 @@ import {
   runPostResponseTasks,
 } from "@/lib/ai/bot-core";
 import { recordAgentLearningUsages } from "@/lib/ai/services/agent-learning-service";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 
 export const maxDuration = 120;
 
@@ -87,191 +88,195 @@ function extractTextFromParts(parts: UIMessage["parts"]): string {
     .join("");
 }
 
-export async function POST(request: Request) {
-  try {
-  const user = await getApiRouteUser();
-  if (!user) {
-    return new Response("Unauthorized", { status: 401 });
-  }
-
-  const body = await request.json();
-  const { id: sessionId, messages, councilMode, selectedProjectId } = body as {
-    id: string;
-    messages: UIMessage[];
-    councilMode?: boolean;
-    selectedProjectId?: number;
-  };
-
-  if (!sessionId || !messages?.length) {
-    return new Response("session id and messages are required", {
-      status: 400,
-    });
-  }
-
-  const supabase = createServiceClient();
-  const toolTrace: Array<Record<string, unknown>> = [];
-  let memoryUsage: MemoryUsageSummary | undefined;
-  let learningUsage: BotLearningUsageSummary | undefined;
-
-  // Token usage tracking — populated inside execute(), read in onFinish()
-  let totalUsage: {
-    inputTokens: number | undefined;
-    outputTokens: number | undefined;
-    totalTokens: number | undefined;
-  } | undefined;
-  let latestResponseQuality: ResponseQuality | undefined;
-
-  // Persist the latest user message
-  const lastUserMessage = [...messages].reverse().find((m) => m.role === "user");
-  if (lastUserMessage) {
-    const content = extractTextFromParts(lastUserMessage.parts);
-    if (content.trim()) {
-      await supabase.from("chat_history").insert({
-        session_id: sessionId,
-        user_id: user.id,
-        role: "user",
-        content,
+export const POST = withApiGuardrails(
+  "ai-assistant/chat#POST",
+  async ({ request }) => {
+    const user = await getApiRouteUser();
+    if (!user) {
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "ai-assistant/chat#POST",
+        message: "Unauthorized",
+        status: 401,
       });
     }
-  }
 
-  // Build tools and system prompt using shared bot-core logic
-  const modelMessages = await convertToModelMessages(messages);
-  const tools = createStrategistTools(user.id, {
-    onTrace: (trace) => {
-      toolTrace.push(trace);
-    },
-    pinnedProjectId: selectedProjectId,
-  });
-  const lastUserContent = lastUserMessage
-    ? extractTextFromParts(lastUserMessage.parts)
-    : "";
+    const body = await request.json();
+    const { id: sessionId, messages, councilMode, selectedProjectId } = body as {
+      id: string;
+      messages: UIMessage[];
+      councilMode?: boolean;
+      selectedProjectId?: number;
+    };
 
-  const systemPrompt = await assembleSystemPrompt({
-    userId: user.id,
-    messageText: lastUserContent,
-    selectedProjectId,
-    councilMode,
-    sessionId,
-    isFirstTurn: messages.length === 1,
-    onMemoryUsage: (usage) => {
-      memoryUsage = usage;
-    },
-    onLearningUsage: (usage) => {
-      learningUsage = usage;
-    },
-  });
-  const stream = createUIMessageStream({
-    execute: async ({ writer }) => {
-      const result = streamText({
-        model: getLanguageModel(STRATEGIST_MODEL),
-        system: systemPrompt,
-        messages: modelMessages,
-        tools: tools as unknown as ToolSet,
-        // Strategist gets 7 steps to route, consult specialists, and synthesize.
-        // Each specialist gets up to 5 internal tool-call steps.
-        stopWhen: stepCountIs(7),
+    if (!sessionId || !messages?.length) {
+      return new Response("session id and messages are required", {
+        status: 400,
       });
+    }
 
-      writer.merge(result.toUIMessageStream());
+    const supabase = createServiceClient();
+    const toolTrace: Array<Record<string, unknown>> = [];
+    let memoryUsage: MemoryUsageSummary | undefined;
+    let learningUsage: BotLearningUsageSummary | undefined;
 
-      // Await totalUsage AFTER merge — resolves when stream completes.
-      // totalUsage accumulates across ALL agent steps (not just the last),
-      // which is correct for multi-step agents using stopWhen.
-      totalUsage = await result.totalUsage;
-    },
-    onFinish: async ({ messages: finishedMessages }) => {
-      // Persist assistant messages
-      for (const msg of finishedMessages) {
-        if (msg.role === "assistant") {
-          const content = extractTextFromParts(msg.parts);
-          if (content.trim()) {
-            const responseQuality = scoreResponseQuality({
-              toolTrace,
-              content,
-            });
-            latestResponseQuality = responseQuality;
-            await supabase.from("chat_history").insert({
-              session_id: sessionId,
-              user_id: user.id,
-              role: "assistant",
-              content,
-              metadata: JSON.parse(
-                JSON.stringify({
-                  tool_trace: toolTrace,
-                  model: STRATEGIST_MODEL,
-                  architecture: "csuite",
-                  councilMode: councilMode ?? false,
-                  memory_usage: memoryUsage
-                    ? {
-                        totalUsed: memoryUsage.totalUsed,
-                        preferencesUsed: memoryUsage.preferencesUsed,
-                        relevantUsed: memoryUsage.relevantUsed,
-                        teamUsed: memoryUsage.teamUsed,
-                        recentConversationsUsed: memoryUsage.recentConversationsUsed,
-                        memories: memoryUsage.memories.map((memory) => ({
-                          id: memory.id,
-                          type: memory.type,
-                          content:
-                            memory.content.length > 240
-                              ? `${memory.content.slice(0, 240)}...`
-                              : memory.content,
-                        })),
-                      }
-                    : null,
-                  learning_usage: learningUsage
-                    ? {
-                        totalUsed: learningUsage.totalUsed,
-                        learnings: learningUsage.learnings.map((learning) => ({
-                          id: learning.id,
-                          title: learning.title,
-                          source: learning.source,
-                        })),
-                      }
-                    : null,
-                  usage: totalUsage
-                    ? {
-                        inputTokens: totalUsage.inputTokens ?? 0,
-                        outputTokens: totalUsage.outputTokens ?? 0,
-                        totalTokens: totalUsage.totalTokens ?? 0,
-                      }
-                    : null,
-                  response_quality: responseQuality,
-                }),
-              ),
-            });
-          }
-        }
-      }
+    // Token usage tracking — populated inside execute(), read in onFinish()
+    let totalUsage: {
+      inputTokens: number | undefined;
+      outputTokens: number | undefined;
+      totalTokens: number | undefined;
+    } | undefined;
+    let latestResponseQuality: ResponseQuality | undefined;
 
-      // Update conversation timestamp — scope to user to prevent cross-user update
-      await supabase
-        .from("conversations")
-        .update({ last_message_at: new Date().toISOString() })
-        .eq("session_id", sessionId)
-        .eq("user_id", user.id);
-
-      if (learningUsage?.learnings.length) {
-        await recordAgentLearningUsages({
-          sessionId,
-          userId: user.id,
-          messageText: lastUserContent,
-          responseQualityScore: latestResponseQuality?.score,
-          learnings: learningUsage.learnings,
+    // Persist the latest user message
+    const lastUserMessage = [...messages].reverse().find((m) => m.role === "user");
+    if (lastUserMessage) {
+      const content = extractTextFromParts(lastUserMessage.parts);
+      if (content.trim()) {
+        await supabase.from("chat_history").insert({
+          session_id: sessionId,
+          user_id: user.id,
+          role: "user",
+          content,
         });
       }
-    },
-    onError: () => {
-      return "An error occurred while generating a response. Please try again.";
-    },
-  });
+    }
 
-  // Post-response tasks — run AFTER the streaming response is sent.
-  // Zero impact on user-facing latency.
-  after(() => runPostResponseTasks(sessionId, user.id));
+    // Build tools and system prompt using shared bot-core logic
+    const modelMessages = await convertToModelMessages(messages);
+    const tools = createStrategistTools(user.id, {
+      onTrace: (trace) => {
+        toolTrace.push(trace);
+      },
+      pinnedProjectId: selectedProjectId,
+    });
+    const lastUserContent = lastUserMessage
+      ? extractTextFromParts(lastUserMessage.parts)
+      : "";
 
-  return createUIMessageStreamResponse({ stream });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    const systemPrompt = await assembleSystemPrompt({
+      userId: user.id,
+      messageText: lastUserContent,
+      selectedProjectId,
+      councilMode,
+      sessionId,
+      isFirstTurn: messages.length === 1,
+      onMemoryUsage: (usage) => {
+        memoryUsage = usage;
+      },
+      onLearningUsage: (usage) => {
+        learningUsage = usage;
+      },
+    });
+    const stream = createUIMessageStream({
+      execute: async ({ writer }) => {
+        const result = streamText({
+          model: getLanguageModel(STRATEGIST_MODEL),
+          system: systemPrompt,
+          messages: modelMessages,
+          tools: tools as unknown as ToolSet,
+          // Strategist gets 7 steps to route, consult specialists, and synthesize.
+          // Each specialist gets up to 5 internal tool-call steps.
+          stopWhen: stepCountIs(7),
+        });
+
+        writer.merge(result.toUIMessageStream());
+
+        // Await totalUsage AFTER merge — resolves when stream completes.
+        // totalUsage accumulates across ALL agent steps (not just the last),
+        // which is correct for multi-step agents using stopWhen.
+        totalUsage = await result.totalUsage;
+      },
+      onFinish: async ({ messages: finishedMessages }) => {
+        // Persist assistant messages
+        for (const msg of finishedMessages) {
+          if (msg.role === "assistant") {
+            const content = extractTextFromParts(msg.parts);
+            if (content.trim()) {
+              const responseQuality = scoreResponseQuality({
+                toolTrace,
+                content,
+              });
+              latestResponseQuality = responseQuality;
+              await supabase.from("chat_history").insert({
+                session_id: sessionId,
+                user_id: user.id,
+                role: "assistant",
+                content,
+                metadata: JSON.parse(
+                  JSON.stringify({
+                    tool_trace: toolTrace,
+                    model: STRATEGIST_MODEL,
+                    architecture: "csuite",
+                    councilMode: councilMode ?? false,
+                    memory_usage: memoryUsage
+                      ? {
+                          totalUsed: memoryUsage.totalUsed,
+                          preferencesUsed: memoryUsage.preferencesUsed,
+                          relevantUsed: memoryUsage.relevantUsed,
+                          teamUsed: memoryUsage.teamUsed,
+                          recentConversationsUsed: memoryUsage.recentConversationsUsed,
+                          memories: memoryUsage.memories.map((memory) => ({
+                            id: memory.id,
+                            type: memory.type,
+                            content:
+                              memory.content.length > 240
+                                ? `${memory.content.slice(0, 240)}...`
+                                : memory.content,
+                          })),
+                        }
+                      : null,
+                    learning_usage: learningUsage
+                      ? {
+                          totalUsed: learningUsage.totalUsed,
+                          learnings: learningUsage.learnings.map((learning) => ({
+                            id: learning.id,
+                            title: learning.title,
+                            source: learning.source,
+                          })),
+                        }
+                      : null,
+                    usage: totalUsage
+                      ? {
+                          inputTokens: totalUsage.inputTokens ?? 0,
+                          outputTokens: totalUsage.outputTokens ?? 0,
+                          totalTokens: totalUsage.totalTokens ?? 0,
+                        }
+                      : null,
+                    response_quality: responseQuality,
+                  }),
+                ),
+              });
+            }
+          }
+        }
+
+        // Update conversation timestamp — scope to user to prevent cross-user update
+        await supabase
+          .from("conversations")
+          .update({ last_message_at: new Date().toISOString() })
+          .eq("session_id", sessionId)
+          .eq("user_id", user.id);
+
+        if (learningUsage?.learnings.length) {
+          await recordAgentLearningUsages({
+            sessionId,
+            userId: user.id,
+            messageText: lastUserContent,
+            responseQualityScore: latestResponseQuality?.score,
+            learnings: learningUsage.learnings,
+          });
+        }
+      },
+      onError: () => {
+        return "An error occurred while generating a response. Please try again.";
+      },
+    });
+
+    // Post-response tasks — run AFTER the streaming response is sent.
+    // Zero impact on user-facing latency.
+    after(() => runPostResponseTasks(sessionId, user.id));
+
+    return createUIMessageStreamResponse({ stream });
+  },
+);

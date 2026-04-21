@@ -86,6 +86,20 @@ export async function notifyOnError(payload: AlertPayload): Promise<void> {
 
   const webhook = process.env.ERROR_ALERT_WEBHOOK_URL?.trim();
   if (!webhook) {
+    // Webhook not configured — log the suppressed alert so it's visible in server logs.
+    logEvent({
+      event: "alert_suppressed_no_webhook",
+      level: "warn",
+      requestId: payload.requestId,
+      where: payload.where,
+      details: {
+        error_code: payload.errorCode,
+        severity: payload.severity,
+        message: payload.message,
+        escalated_by_repetition: alertDueToRepetition,
+        fix: "Set ERROR_ALERT_WEBHOOK_URL to enable external alerting",
+      },
+    });
     return;
   }
 

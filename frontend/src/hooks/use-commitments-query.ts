@@ -25,6 +25,7 @@ export interface CommitmentListFilters {
   search?: string;
   companyId?: string;
   type?: string;
+  deleted?: "exclude" | "only" | "include";
 }
 
 export interface CommitmentInlineUpdateInput {
@@ -81,6 +82,7 @@ export function useCommitmentsList(
       if (filters?.search) params.set("search", filters.search);
       if (filters?.companyId) params.set("companyId", filters.companyId);
       if (filters?.type) params.set("type", filters.type);
+      if (filters?.deleted) params.set("deleted", filters.deleted);
 
       const data = await apiFetch<unknown>(`/api/commitments?${params}`, { signal });
       const parsed = commitmentListResponseSchema.safeParse(data);

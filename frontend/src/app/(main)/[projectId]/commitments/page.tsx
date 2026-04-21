@@ -3,7 +3,7 @@
 import * as React from "react";
 import type { ReactElement, ReactNode } from "react";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
-import { ChevronDown, Plus, RefreshCw, FileText } from "lucide-react";
+import { ChevronDown, FileText, MoreHorizontal, Plus, RefreshCw, RotateCcw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { PermissionGate } from "@/components/domain/permissions/PermissionGate";
@@ -341,6 +341,8 @@ export default function ProjectCommitmentsPage(): ReactElement {
   }, [searchParams, tableState.setActiveFilters]);
 
   const activeFilters = tableState.activeFilters as FilterState;
+  const isRecycleBinTab = activeFilters.tab === "recycle-bin";
+  const isChangeOrdersTab = activeFilters.tab === "change-orders";
 
   // Fetch project-level change orders when the Change Orders tab is active
   React.useEffect(() => {
@@ -381,6 +383,7 @@ export default function ProjectCommitmentsPage(): ReactElement {
       (typeof activeFilters.type === "string" ? activeFilters.type : undefined),
     search:
       (searchParams.get("search") ?? tableState.debouncedSearch) || undefined,
+    deleted: isRecycleBinTab ? "only" : "exclude",
   });
   const resolvedError =
     error instanceof Error
@@ -513,6 +516,7 @@ export default function ProjectCommitmentsPage(): ReactElement {
     tableState.setSearchParams({
       status: typeof nextFilters.status === "string" ? nextFilters.status : null,
       type: typeof nextFilters.type === "string" ? nextFilters.type : null,
+      tab: typeof nextFilters.tab === "string" ? nextFilters.tab : null,
       page: "1",
     });
     tableState.setPage(1);
@@ -529,6 +533,51 @@ export default function ProjectCommitmentsPage(): ReactElement {
   const handleDeleteIntent = (item: CommitmentListItem) => {
     setCommitmentToDelete(item);
     setDeleteDialogOpen(true);
+  };
+  const [recycleDeleteDialogOpen, setRecycleDeleteDialogOpen] = React.useState(false);
+  const [recycleCommitmentToDelete, setRecycleCommitmentToDelete] =
+    React.useState<CommitmentListItem | null>(null);
+  const [isPermanentlyDeleting, setIsPermanentlyDeleting] = React.useState(false);
+
+  const handleRestoreIntent = async (item: CommitmentListItem) => {
+    try {
+      await apiFetch(`/api/commitments/${item.id}/restore`, { method: "POST" });
+      toast.success(`"${item.number}" restored`);
+      tableState.setSelectedIds((prev) => prev.filter((selectedId) => selectedId !== item.id));
+      await refetch();
+    } catch (err) {
+      toast.error("Could not restore commitment", {
+        description: err instanceof Error ? err.message : "Unexpected error",
+      });
+    }
+  };
+
+  const handlePermanentDeleteIntent = (item: CommitmentListItem) => {
+    setRecycleCommitmentToDelete(item);
+    setRecycleDeleteDialogOpen(true);
+  };
+
+  const handlePermanentDeleteConfirm = async () => {
+    if (!recycleCommitmentToDelete) return;
+    setIsPermanentlyDeleting(true);
+    try {
+      await apiFetch(`/api/commitments/${recycleCommitmentToDelete.id}/permanent-delete`, {
+        method: "DELETE",
+      });
+      toast.success(`"${recycleCommitmentToDelete.number}" permanently deleted`);
+      tableState.setSelectedIds((prev) =>
+        prev.filter((selectedId) => selectedId !== recycleCommitmentToDelete.id),
+      );
+      await refetch();
+    } catch (err) {
+      toast.error("Could not permanently delete commitment", {
+        description: err instanceof Error ? err.message : "Unexpected error",
+      });
+    } finally {
+      setIsPermanentlyDeleting(false);
+      setRecycleDeleteDialogOpen(false);
+      setRecycleCommitmentToDelete(null);
+    }
   };
 
   const handleDeleteConfirm = async () => {
@@ -629,21 +678,22 @@ export default function ProjectCommitmentsPage(): ReactElement {
       label: "Commitments",
       href: `/${projectId}/commitments`,
       count: totalItems,
-      isActive: !activeFilters.type && activeFilters.tab !== "change-orders",
+      isActive: !activeFilters.type && !activeFilters.tab,
     },
     {
       label: "Subcontracts",
       href: `/${projectId}/commitments?type=subcontract`,
-      isActive: activeFilters.type === "subcontract",
+      isActive: activeFilters.type === "subcontract" && !activeFilters.tab,
     },
     {
       label: "Purchase Orders",
       href: `/${projectId}/commitments?type=purchase_order`,
-      isActive: activeFilters.type === "purchase_order",
+      isActive: activeFilters.type === "purchase_order" && !activeFilters.tab,
     },
     {
       label: "Recycle Bin",
-      href: `/${projectId}/commitments/recycle-bin`,
+      href: `/${projectId}/commitments?tab=recycle-bin`,
+      isActive: isRecycleBinTab,
     },
   ];
 
@@ -699,7 +749,7 @@ export default function ProjectCommitmentsPage(): ReactElement {
           visibleColumns: tableState.visibleColumns,
           onColumnVisibilityChange: tableState.setVisibleColumns,
           onExport: handleExport,
-          onBulkDelete: tableState.selectedIds.length > 0
+          onBulkDelete: !isRecycleBinTab && tableState.selectedIds.length > 0
             ? () => setBulkDeleteDialogOpen(true)
             : undefined,
           customActions: (
@@ -723,18 +773,42 @@ export default function ProjectCommitmentsPage(): ReactElement {
           ),
         }}
         data={{
-          items: activeFilters.tab === "change-orders" ? [] : sortedCommitments,
-          isLoading: activeFilters.tab === "change-orders" ? false : isLoading,
-          isFetching: activeFilters.tab === "change-orders" ? false : isFetching,
-          error: activeFilters.tab === "change-orders" ? undefined : resolvedError,
+          items: isChangeOrdersTab ? [] : sortedCommitments,
+          isLoading: isChangeOrdersTab ? false : isLoading,
+          isFetching: isChangeOrdersTab ? false : isFetching,
+          error: isChangeOrdersTab ? undefined : resolvedError,
         }}
         table={{
           columns: tableColumns,
           getRowId: (item) => item.id,
-          onRowClick: handleRowClick,
-          rowActions: (item) => renderCommitmentRowActions(item, handleEdit, handleDeleteIntent),
+          onRowClick: isRecycleBinTab ? undefined : handleRowClick,
+          rowActions: (item) =>
+            isRecycleBinTab ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Row actions">
+                    <MoreHorizontal />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => void handleRestoreIntent(item)}>
+                    <RotateCcw className="mr-2 h-4 w-4" />
+                    Restore
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="text-destructive"
+                    onClick={() => handlePermanentDeleteIntent(item)}
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete Forever
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              renderCommitmentRowActions(item, handleEdit, handleDeleteIntent)
+            ),
           renderExpandedRow: (item, colSpan) => {
-            if (!expandedIds.has(item.id)) return null;
+            if (isRecycleBinTab || !expandedIds.has(item.id)) return null;
             return <CommitmentChangeOrdersRow commitmentId={item.id} colSpan={colSpan} />;
           },
         }}
@@ -758,12 +832,14 @@ export default function ProjectCommitmentsPage(): ReactElement {
           onSelectRow: handleSelectRow,
         }}
         views={{
-          card: (item) => renderCommitmentCard(item, handleRowClick),
-          list: (item) => renderCommitmentList(item, handleRowClick),
+          card: (item) => renderCommitmentCard(item, isRecycleBinTab ? () => undefined : handleRowClick),
+          list: (item) => renderCommitmentList(item, isRecycleBinTab ? () => undefined : handleRowClick),
         }}
         emptyState={{
-          title: "No commitments found",
-          description: "You have not added any commitments yet.",
+          title: isRecycleBinTab ? "Recycle Bin is empty" : "No commitments found",
+          description: isRecycleBinTab
+            ? "Deleted commitments will appear here."
+            : "You have not added any commitments yet.",
           filteredDescription: "Try adjusting your search or filters",
           isFiltered,
         }}
@@ -782,7 +858,7 @@ export default function ProjectCommitmentsPage(): ReactElement {
             balance_to_finish: <span className="font-semibold">{formatCurrency(financialTotals.balance_to_finish)}</span>,
           },
         }}
-        pagination={activeFilters.tab === "change-orders" ? undefined : {
+        pagination={isChangeOrdersTab ? undefined : {
           page: tableState.page,
           totalPages,
           perPage: tableState.perPage,
@@ -799,7 +875,7 @@ export default function ProjectCommitmentsPage(): ReactElement {
           },
         }}
         topContent={
-          activeFilters.tab === "change-orders" ? (
+          isChangeOrdersTab ? (
             <ProjectChangeOrdersTable
               changeOrders={projectChangeOrders}
               isLoading={isLoadingProjectCOs}
@@ -857,6 +933,28 @@ export default function ProjectCommitmentsPage(): ReactElement {
               {isBulkDeleting
                 ? "Deleting..."
                 : `Delete ${tableState.selectedIds.length} Commitment${tableState.selectedIds.length === 1 ? "" : "s"}`}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={recycleDeleteDialogOpen} onOpenChange={setRecycleDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Permanently Delete Commitment</AlertDialogTitle>
+            <AlertDialogDescription>
+              Permanently delete <strong>{recycleCommitmentToDelete?.number}</strong>? This cannot be
+              undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isPermanentlyDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handlePermanentDeleteConfirm}
+              disabled={isPermanentlyDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isPermanentlyDeleting ? "Deleting..." : "Delete Forever"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

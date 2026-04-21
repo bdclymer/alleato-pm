@@ -29,7 +29,7 @@ const COST_CODES = [
   { value: "15-400", label: "15-400 Plumbing Fixtures", description: "Division 15" },
 ];
 
-function Controlled(props: React.ComponentProps<typeof SearchableSelect>) {
+function Controlled(props: Omit<React.ComponentProps<typeof SearchableSelect>, "onValueChange">) {
   const [value, setValue] = React.useState<string | undefined>(props.value);
   return <div className="w-72"><SearchableSelect {...props} value={value} onValueChange={setValue} /></div>;
 }

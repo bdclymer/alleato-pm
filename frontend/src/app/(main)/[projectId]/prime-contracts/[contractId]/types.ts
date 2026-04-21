@@ -157,6 +157,7 @@ export interface Contract {
   exclusions: string | null;
   is_private: boolean;
   created_at: string;
+  updated_at: string;
   created_by: string | null;
   vendor_id: string | null;
   client_id: number | null;

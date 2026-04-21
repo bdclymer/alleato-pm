@@ -1040,7 +1040,7 @@ export default function ProjectContractDetailPage() {
         {activeTab === "related-items" && (
           <RelatedItemsTab
             commitmentId={contractId}
-            projectId={projectId}
+            projectId={Number(projectId)}
             commitmentType="subcontract"
             apiBasePath={`/api/projects/${projectId}/contracts/${contractId}/related-items`}
             entityLabel="prime contract"

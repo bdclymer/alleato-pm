@@ -54,7 +54,7 @@ const config = [
       'no-var': 'error',
 
       // IMPORTANT RULES - Warnings (disabled to unblock cleanup tasks)
-      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-unused-vars': ['off', {
         argsIgnorePattern: '^_',
         varsIgnorePattern: '^_',
@@ -87,6 +87,7 @@ const config = [
       'design-system/no-raw-heading': 'error',
       'design-system/no-inline-currency': 'warn',
       'design-system/require-error-state': 'warn',
+      'design-system/require-info-alert': 'warn',
     },
   },
   // Admin pages: relax heading rule — these are internal tools used only by the Alleato team.

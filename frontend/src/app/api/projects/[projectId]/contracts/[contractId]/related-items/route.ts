@@ -115,12 +115,12 @@ async function resolveRelatedRecord(
     case "prime_contract_change_order": {
       const { data } = await supabase
         .from("prime_contract_change_orders")
-        .select("id, co_number, title, status")
+        .select("id, pcco_number, title, status")
         .eq("project_id", projectId)
-        .eq("id", relatedId)
+        .eq("id", Number(relatedId))
         .single();
       if (!data) return null;
-      return { relatedNumber: data.co_number, relatedTitle: data.title, relatedStatus: data.status };
+      return { relatedNumber: data.pcco_number, relatedTitle: data.title, relatedStatus: data.status };
     }
     case "commitment": {
       const { data } = await supabase
@@ -234,8 +234,8 @@ export const POST = withApiGuardrails(
         project_id: projectIdNum,
         related_type: relatedType,
         related_id: relatedId,
-        related_number: resolved.relatedNumber,
-        related_title: resolved.relatedTitle,
+        related_number: resolved.relatedNumber ?? "",
+        related_title: resolved.relatedTitle ?? "",
         related_status: resolved.relatedStatus,
         related_url: buildRelatedHref(projectIdNum, relatedType, relatedId),
         created_by: user.id,

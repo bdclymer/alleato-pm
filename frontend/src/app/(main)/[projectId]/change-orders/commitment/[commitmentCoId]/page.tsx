@@ -276,23 +276,24 @@ export default function CommitmentCODetailPage() {
   const [attachmentsError, setAttachmentsError] = useState<string | null>(null);
 
   // Fetch CO data
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setIsLoading(true);
-        const data = await apiFetch<CommitmentCOData>(
-          `/api/projects/${projectId}/commitment-change-orders/${commitmentCoId}`,
-        );
-        setCo(data);
-        setContractId(data.contract_id);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchData();
+  const fetchCo = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const data = await apiFetch<CommitmentCOData>(
+        `/api/projects/${projectId}/commitment-change-orders/${commitmentCoId}`,
+      );
+      setCo(data);
+      setContractId(data.contract_id);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load");
+    } finally {
+      setIsLoading(false);
+    }
   }, [projectId, commitmentCoId]);
+
+  useEffect(() => {
+    fetchCo();
+  }, [fetchCo]);
 
   // Fetch line items via API
   const fetchLineItemsFn = useCallback(async () => {
@@ -627,16 +628,16 @@ export default function CommitmentCODetailPage() {
   const handleApprove = useCallback(async () => {
     if (!co || !contractId) return;
     try {
-      const updated = await apiFetch<CommitmentCOData>(
+      await apiFetch(
         `/api/commitments/${contractId}/change-orders/${commitmentCoId}/approve`,
         { method: "POST" },
       );
-      setCo(updated);
+      await fetchCo();
       toast.success("Change order approved");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to approve");
     }
-  }, [co, contractId, commitmentCoId]);
+  }, [co, contractId, commitmentCoId, fetchCo]);
 
   const [rejectionReason, setRejectionReason] = useState("");
   const [showRejectDialog, setShowRejectDialog] = useState(false);

@@ -70,8 +70,8 @@ async function parseMonitoringData(): Promise<{
     return { initiatives, systemHealth, activityLog, aiInsights };
   } catch (error) {
     logger.error({ msg: "[monitoring/dashboard] Failed to parse monitoring data", data: {
-      reason: error instanceof Error ? error.message : String(error }),
-    });
+      reason: error instanceof Error ? error.message : String(error),
+    } });
     return {
       initiatives: [],
       systemHealth: {

@@ -24,18 +24,34 @@ function normalizeTestCase(
   return Array.isArray(value) ? value[0] ?? null : value;
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export const GET = withApiGuardrails<{ runId: string }>(
   "testing/runs/[runId]/results#GET",
   async ({ request, params }) => {
-  const { runId } = await params;
+  const { runId: runIdOrSlug } = await params;
   const { searchParams } = new URL(request.url);
   const typeFilter = searchParams.get("type"); // "scenario" | "feature" | null (all)
   const supabase = await createClient();
 
+  // Resolve slug → UUID if needed.
+  let runId = runIdOrSlug;
+  if (!UUID_RE.test(runIdOrSlug)) {
+    const { data: runRow, error: resolveErr } = await supabase
+      .from("test_runs")
+      .select("id")
+      .eq("slug", runIdOrSlug)
+      .single();
+    if (resolveErr || !runRow) {
+      return NextResponse.json({ error: "Run not found" }, { status: 404 });
+    }
+    runId = runRow.id;
+  }
+
   const resultsRes = await supabase
     .from("test_results")
     .select(`
-      id, case_id, status, notes, updated_at,
+      id, case_id, status, notes, severity, video_url, github_issue_number, github_issue_url, github_issue_state, updated_at,
       test_cases (
         id, test_number, category, subcategory, test_name,
         steps, setup_steps, context_note, expected_result, priority,

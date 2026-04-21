@@ -23233,16 +23233,24 @@ export type Database = {
           context_note: string | null
           created_at: string
           expected_result: string | null
+          gap_type: string | null
           id: string
           priority: string
+          procore_feature_id: string | null
           setup_steps: string | null
+          source_article_id: number | null
+          source_chunk_id: number | null
+          source_manifest_path: string | null
+          source_url: string | null
           start_url: string | null
+          status: string
           steps: string | null
           subcategory: string | null
           suite_id: string
           test_name: string
           test_number: string
           test_type: string
+          tool: number | null
           updated_at: string
         }
         Insert: {
@@ -23250,16 +23258,24 @@ export type Database = {
           context_note?: string | null
           created_at?: string
           expected_result?: string | null
+          gap_type?: string | null
           id?: string
           priority?: string
+          procore_feature_id?: string | null
           setup_steps?: string | null
+          source_article_id?: number | null
+          source_chunk_id?: number | null
+          source_manifest_path?: string | null
+          source_url?: string | null
           start_url?: string | null
+          status?: string
           steps?: string | null
           subcategory?: string | null
           suite_id: string
           test_name: string
           test_number: string
           test_type?: string
+          tool?: number | null
           updated_at?: string
         }
         Update: {
@@ -23267,16 +23283,24 @@ export type Database = {
           context_note?: string | null
           created_at?: string
           expected_result?: string | null
+          gap_type?: string | null
           id?: string
           priority?: string
+          procore_feature_id?: string | null
           setup_steps?: string | null
+          source_article_id?: number | null
+          source_chunk_id?: number | null
+          source_manifest_path?: string | null
+          source_url?: string | null
           start_url?: string | null
+          status?: string
           steps?: string | null
           subcategory?: string | null
           suite_id?: string
           test_name?: string
           test_number?: string
           test_type?: string
+          tool?: number | null
           updated_at?: string
         }
         Relationships: [
@@ -23285,6 +23309,13 @@ export type Database = {
             columns: ["suite_id"]
             isOneToOne: false
             referencedRelation: "test_suites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "test_cases_tool_fkey"
+            columns: ["tool"]
+            isOneToOne: false
+            referencedRelation: "procore_tools"
             referencedColumns: ["id"]
           },
         ]
@@ -23345,6 +23376,7 @@ export type Database = {
           id: string
           notes: string | null
           run_date: string
+          slug: string | null
           suite_id: string
           tester: string | null
         }
@@ -23355,6 +23387,7 @@ export type Database = {
           id?: string
           notes?: string | null
           run_date?: string
+          slug?: string | null
           suite_id: string
           tester?: string | null
         }
@@ -23365,6 +23398,7 @@ export type Database = {
           id?: string
           notes?: string | null
           run_date?: string
+          slug?: string | null
           suite_id?: string
           tester?: string | null
         }
