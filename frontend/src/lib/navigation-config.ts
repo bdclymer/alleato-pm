@@ -547,6 +547,20 @@ export const headerNavGroups: HeaderNavGroup[] = [
         description: "User roles and access control",
       },
       {
+        name: "Settings",
+        path: "settings/account",
+        requiresProject: false,
+        icon: Settings,
+        description: "Company account settings",
+      },
+      {
+        name: "Users",
+        path: "settings/users",
+        requiresProject: false,
+        icon: Users,
+        description: "Manage workspace users",
+      },
+      {
         name: "Meetings",
         path: "meetings",
         requiresProject: false,

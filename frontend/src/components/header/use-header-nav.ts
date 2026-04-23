@@ -107,19 +107,27 @@ export function useHeaderNav(): UseHeaderNavReturn {
   // Determine the currently active tool from the URL
   const activeToolName = useMemo(() => {
     const segments = pathname?.split("/").filter(Boolean) ?? [];
+    const allTools: HeaderNavigationTool[] = [
+      ...headerNavGroups.flatMap((g) => g.tools),
+      ...adminSettingsTools,
+    ];
 
     // Check if we're on a project-scoped page (/{projectId}/{tool})
     if (segments.length >= 2 && /^\d+$/.test(segments[0])) {
-      const toolPath = segments[1];
+      const scopedPath = segments.slice(1).join("/");
+      const scopedFirstSegment = segments[1];
 
-      // Search through header nav groups and admin tools
-      const allTools: HeaderNavigationTool[] = [
-        ...headerNavGroups.flatMap((g) => g.tools),
-        ...adminSettingsTools,
-      ];
-      const matchingTool = allTools.find(
-        (tool) => tool.path === toolPath || tool.path.split("/")[0] === toolPath
-      );
+      // Prefer the most specific path match to avoid collisions like
+      // "directory" vs "directory/companies".
+      const matchingTool = allTools
+        .filter((tool) => tool.requiresProject !== false)
+        .sort((left, right) => right.path.length - left.path.length)
+        .find(
+          (tool) =>
+            tool.path === scopedPath ||
+            scopedPath.startsWith(`${tool.path}/`) ||
+            tool.path === scopedFirstSegment
+        );
       return matchingTool?.name || "Home";
     }
 
@@ -127,17 +135,22 @@ export function useHeaderNav(): UseHeaderNavReturn {
     if (segments.length >= 1) {
       const firstSegment = segments[0];
       const aliasedPath = TABLE_ROUTE_ALIASES[firstSegment];
-      const allTools: HeaderNavigationTool[] = [
-        ...headerNavGroups.flatMap((g) => g.tools),
-        ...adminSettingsTools,
-      ];
-      const matchingTool = allTools.find(
-        (tool) =>
-          tool.path === firstSegment ||
-          (aliasedPath ? tool.path === aliasedPath : false) ||
-          tool.path === segments.join("/") ||
-          tool.path.split("/")[0] === firstSegment
-      );
+      const globalPath = segments.join("/");
+
+      // Non-project URLs should resolve against non-project tools first.
+      const globalTools = allTools.filter((tool) => tool.requiresProject === false);
+
+      // Prefer exact full-path matches before first-segment fallbacks.
+      const matchingTool = globalTools
+        .sort((left, right) => right.path.length - left.path.length)
+        .find(
+          (tool) =>
+            tool.path === globalPath ||
+            (aliasedPath ? tool.path === aliasedPath : false) ||
+            globalPath.startsWith(`${tool.path}/`) ||
+            tool.path === firstSegment ||
+            tool.path.split("/")[0] === firstSegment
+        );
       if (matchingTool) return matchingTool.name;
     }
 

@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Bell, Globe, Calendar, DollarSign } from "lucide-react";
+import { Bell, Globe, DollarSign } from "lucide-react";
 import { PageShell } from "@/components/layout";
 import { SectionRuleHeading } from "@/components/layout/spacing";
 import { Switch } from "@/components/ui/switch";
@@ -50,10 +50,11 @@ function SectionCard({
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-[220px_1fr]">
       <div>
-        <div className="flex items-center gap-2">
-          <Icon className="h-4 w-4 text-muted-foreground" />
-          <SectionRuleHeading label={title} />
-        </div>
+        <SectionRuleHeading
+          label={title}
+          icon={<Icon className="h-4 w-4" />}
+          className="mb-0 py-1"
+        />
       </div>
       <div className="rounded-lg border border-border px-5 divide-y divide-border">
         {children}
