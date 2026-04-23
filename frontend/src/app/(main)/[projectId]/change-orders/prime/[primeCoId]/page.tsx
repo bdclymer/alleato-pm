@@ -36,6 +36,11 @@ import {
   InlineTableRow,
   StatusBadge,
 } from "@/components/ds";
+import { ChangeEventRelatedItemsTab } from "@/components/domain/change-events/ChangeEventRelatedItemsTab";
+import type {
+  ChangeEventRelatedItem,
+  ChangeEventRelatedItemOption,
+} from "@/types/change-events";
 import { useVerticalMarkup } from "@/hooks/use-vertical-markup";
 import { useConfirm } from "@/hooks/use-confirm";
 import {
@@ -349,6 +354,10 @@ export default function PrimeContractCODetailPage() {
   const [attachmentsLoading, setAttachmentsLoading] = useState(true);
   const [attachmentsError, setAttachmentsError] = useState<string | null>(null);
 
+  // Related Items
+  const [relatedItems, setRelatedItems] = useState<ChangeEventRelatedItem[]>([]);
+  const [relatedItemsLoading, setRelatedItemsLoading] = useState(true);
+
   // Line Items (inline CRUD)
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
   const [lineItemsLoading, setLineItemsLoading] = useState(true);
@@ -591,6 +600,64 @@ export default function PrimeContractCODetailPage() {
     [apiBase, fetchAttachments],
   );
 
+  // ---- Related Items -------------------------------------------------------
+  const fetchRelatedItems = useCallback(async () => {
+    setRelatedItemsLoading(true);
+    try {
+      const res = await fetch(`${apiBase}/related-items`);
+      if (!res.ok) throw new Error("Failed to fetch related items");
+      const json = await res.json();
+      setRelatedItems(json.data ?? []);
+    } catch (err) {
+      console.error("Failed to fetch related items:", err);
+    } finally {
+      setRelatedItemsLoading(false);
+    }
+  }, [apiBase]);
+
+  const fetchRelatedItemOptions = useCallback(
+    async (type: string, search: string): Promise<ChangeEventRelatedItemOption[]> => {
+      const params = new URLSearchParams({ type, search });
+      const res = await fetch(`${apiBase}/related-items/options?${params.toString()}`);
+      if (!res.ok) return [];
+      const json = await res.json();
+      return json.data ?? [];
+    },
+    [apiBase],
+  );
+
+  const linkRelatedItem = useCallback(
+    async (relatedType: string, relatedId: string): Promise<void> => {
+      const res = await fetch(`${apiBase}/related-items`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ relatedType, relatedId }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Link failed" }));
+        throw new Error(err.error || "Failed to link item");
+      }
+      await fetchRelatedItems();
+    },
+    [apiBase, fetchRelatedItems],
+  );
+
+  const unlinkRelatedItem = useCallback(
+    async (relatedItemId: string): Promise<void> => {
+      const prev = relatedItems;
+      setRelatedItems((items) => items.filter((i) => i.id !== relatedItemId));
+      const res = await fetch(`${apiBase}/related-items/${relatedItemId}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        setRelatedItems(prev);
+        const err = await res.json().catch(() => ({ error: "Unlink failed" }));
+        throw new Error(err.error || "Failed to unlink item");
+      }
+    },
+    [apiBase, relatedItems],
+  );
+
   // ---- Fetch data ----------------------------------------------------------
   useEffect(() => {
     const fetchData = async () => {
@@ -622,7 +689,8 @@ export default function PrimeContractCODetailPage() {
     fetchData();
     fetchAttachments();
     fetchLineItems();
-  }, [apiBase, projectId, fetchAttachments, fetchLineItems]);
+    fetchRelatedItems();
+  }, [apiBase, projectId, fetchAttachments, fetchLineItems, fetchRelatedItems]);
 
   useEffect(() => {
     if (searchParams.get("edit") === "1") setIsEditing(true);
@@ -1419,7 +1487,7 @@ export default function PrimeContractCODetailPage() {
               General
             </TabsTrigger>
             <TabsTrigger value="related" className="px-3 py-1.5 text-xs">
-              Related Items (0)
+              Related Items ({relatedItems.length})
             </TabsTrigger>
             <TabsTrigger value="emails" className="px-3 py-1.5 text-xs">
               Emails (0)
@@ -2073,10 +2141,12 @@ export default function PrimeContractCODetailPage() {
           </TabsContent>
 
           <TabsContent value="related">
-            <EmptyState
-              icon={<List />}
-              title="No related items"
-              description="Related change events and PCOs will appear here"
+            <ChangeEventRelatedItemsTab
+              relatedItems={relatedItems}
+              isLoading={relatedItemsLoading}
+              onFetchOptions={fetchRelatedItemOptions}
+              onLink={linkRelatedItem}
+              onUnlink={unlinkRelatedItem}
             />
           </TabsContent>
 
