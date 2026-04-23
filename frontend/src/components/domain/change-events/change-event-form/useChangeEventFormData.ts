@@ -10,6 +10,7 @@ import type {
   CommitmentSovLineItem,
 } from "./types";
 import { createEmptyLineItem } from "./types";
+import { apiFetch } from "@/lib/api-client";
 import { useDropdownData } from "./useDropdownData";
 
 // When all SOV items share the same budget code, auto-fill it; if only one item
@@ -183,14 +184,9 @@ export function useChangeEventFormData({
 
       const rawId = commitmentId.replace(/^(po|sub)-/, "");
       try {
-        const res = await fetch(
+        const data = await apiFetch<{ data: CommitmentSovLineItem[] }>(
           `/api/projects/${projectId}/commitments/${rawId}/line-items`,
         );
-        if (!res.ok) {
-          setCommitmentLineItemsMap((prev) => ({ ...prev, [commitmentId]: [] }));
-          return;
-        }
-        const data = await res.json();
         const items: CommitmentSovLineItem[] = data.data || [];
         setCommitmentLineItemsMap((prev) => ({ ...prev, [commitmentId]: items }));
 
@@ -303,14 +299,11 @@ export function useChangeEventFormData({
       let items: CommitmentSovLineItem[] = commitmentLineItemsMap[commitmentId] || [];
       if (items.length === 0) {
         try {
-          const res = await fetch(
+          const data = await apiFetch<{ data: CommitmentSovLineItem[] }>(
             `/api/projects/${projectId}/commitments/${rawId}/line-items`,
           );
-          if (res.ok) {
-            const data = await res.json();
-            items = data.data || [];
-            setCommitmentLineItemsMap((prev) => ({ ...prev, [commitmentId]: items }));
-          }
+          items = data.data || [];
+          setCommitmentLineItemsMap((prev) => ({ ...prev, [commitmentId]: items }));
         } catch {
           toast.error("Failed to load commitment line items");
           return;

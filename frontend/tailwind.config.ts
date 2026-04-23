@@ -114,6 +114,10 @@ export default {
           DEFAULT: "hsl(var(--status-info))",
           foreground: "hsl(0 0% 100%)",
         },
+        fixed: {
+          DEFAULT: "hsl(var(--status-fixed))",
+          foreground: "hsl(0 0% 100%)",
+        },
         link: {
           DEFAULT: "hsl(var(--status-info))",
           hover: "hsl(214 80% 42%)",

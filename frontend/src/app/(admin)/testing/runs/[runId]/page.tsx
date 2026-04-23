@@ -821,7 +821,7 @@ export default function RunPage() {
       backLabel="All runs"
     >
       <ProgressBar
-        pass={counts.pass}
+        pass={counts.pass + counts.fixed}
         fail={counts.fail}
         skip={counts.skip}
         notTested={counts.notTested}

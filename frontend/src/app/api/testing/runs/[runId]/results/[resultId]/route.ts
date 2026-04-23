@@ -42,6 +42,7 @@ export const PATCH = withApiGuardrails<{ runId: string; resultId: string }>(
       .from("test_results")
       .update(updates)
       .eq("id", resultId)
+      .eq("run_id", runId)
       .select("id, status, notes, severity, video_url, github_issue_number, github_issue_url, github_issue_state, updated_at")
       .single();
 

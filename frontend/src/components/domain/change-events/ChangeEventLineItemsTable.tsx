@@ -905,7 +905,7 @@ export function ChangeEventLineItemsTable({
                           numeric
                           divider
                           className={cn(
-                            liOverUnder > 0 ? "text-green-600" : liOverUnder < 0 ? "text-destructive" : "",
+                            liOverUnder > 0 ? "text-success" : liOverUnder < 0 ? "text-destructive" : "",
                           )}
                         >
                           {formatCurrency(liOverUnder)}
@@ -1056,7 +1056,7 @@ export function ChangeEventLineItemsTable({
                   numeric
                   divider
                   className={cn(
-                    overUnder > 0 ? "text-green-600" : overUnder < 0 ? "text-destructive" : "",
+                    overUnder > 0 ? "text-success" : overUnder < 0 ? "text-destructive" : "",
                   )}
                 >
                   {formatCurrency(overUnder)}

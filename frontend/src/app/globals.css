@@ -189,6 +189,7 @@
     --status-warning: 38 92% 50%;
     --status-error: 0 72% 51%;
     --status-info: 217 91% 60%;
+    --status-fixed: 174 80% 35%;
 
     /* Sidebar */
     --sidebar: hsl(0 0% 100%);
@@ -317,6 +318,7 @@
     --status-warning: 38 92% 55%;
     --status-error: 0 72% 55%;
     --status-info: 217 91% 65%;
+    --status-fixed: 174 80% 42%;
 
     --sidebar: hsl(240 6% 9%);
     --sidebar-foreground: hsl(0 0% 85%);
