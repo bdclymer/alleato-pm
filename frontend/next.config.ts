@@ -33,9 +33,13 @@ const nextConfig: NextConfig = {
     ],
   },
   serverExternalPackages: [
+    // AI/ML packages — large module graphs, server-only, never in client bundles
+    "openai",
+    // Mermaid diagram packages — complex dependency trees
     "@mermaid-js/parser",
     "mermaid",
     "@streamdown/mermaid",
+    // Headless browser — too large to bundle
     "puppeteer",
     // Heavy doc/API packages only used in specific admin routes
     "redoc",
