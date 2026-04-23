@@ -313,36 +313,16 @@ export default function ProjectCommitmentsPage(): ReactElement {
     },
   });
 
-  const statusParam = searchParams.get("status") ?? undefined;
-  const typeParam = searchParams.get("type") ?? undefined;
-
-  React.useEffect(() => {
-    const nextStatus = searchParams.get("status") ?? "";
-    const nextType = searchParams.get("type") ?? "";
-    const nextTab = searchParams.get("tab") ?? "";
-
-    tableState.setActiveFilters((prev) => {
-      const normalizedStatus = nextStatus || undefined;
-      const normalizedType = nextType || undefined;
-      const normalizedTab = nextTab || undefined;
-      if (
-        prev.status === normalizedStatus &&
-        prev.type === normalizedType &&
-        prev.tab === normalizedTab
-      ) {
-        return prev;
-      }
-      return {
-        status: normalizedStatus,
-        type: normalizedType,
-        tab: normalizedTab,
-      };
-    });
-  }, [searchParams, tableState.setActiveFilters]);
-
-  const activeFilters = tableState.activeFilters as FilterState;
-  const isRecycleBinTab = activeFilters.tab === "recycle-bin";
-  const isChangeOrdersTab = activeFilters.tab === "change-orders";
+  // Derive activeFilters directly from the URL so they are always in sync with
+  // the current searchParams on every render — no useEffect lag, no TDZ risk.
+  const activeFilters = React.useMemo<FilterState>(
+    () => ({
+      status: searchParams.get("status") || undefined,
+      type: searchParams.get("type") || undefined,
+      tab: searchParams.get("tab") || undefined,
+    }),
+    [searchParams],
+  );
 
   // Fetch project-level change orders when the Change Orders tab is active
   React.useEffect(() => {
@@ -375,12 +355,8 @@ export default function ProjectCommitmentsPage(): ReactElement {
   } = useCommitmentsList(projectId, {
     page: tableState.page,
     limit: tableState.perPage,
-    status:
-      statusParam ||
-      (typeof activeFilters.status === "string" ? activeFilters.status : undefined),
-    type:
-      typeParam ||
-      (typeof activeFilters.type === "string" ? activeFilters.type : undefined),
+    status: typeof activeFilters.status === "string" ? activeFilters.status : undefined,
+    type: typeof activeFilters.type === "string" ? activeFilters.type : undefined,
     search:
       (searchParams.get("search") ?? tableState.debouncedSearch) || undefined,
     deleted: isRecycleBinTab ? "only" : "exclude",
@@ -512,7 +488,6 @@ export default function ProjectCommitmentsPage(): ReactElement {
   }, [commitments, tableColumns, tableState.sortBy, tableState.sortDirection]);
 
   const handleFilterChange = (nextFilters: FilterState) => {
-    tableState.setActiveFilters(nextFilters);
     tableState.setSearchParams({
       status: typeof nextFilters.status === "string" ? nextFilters.status : null,
       type: typeof nextFilters.type === "string" ? nextFilters.type : null,
