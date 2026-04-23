@@ -40,7 +40,8 @@ import {
 import { type PrimeContract } from "@/lib/validation/prime-contracts";
 import { fetchWithTransientRouteRetry } from "@/lib/fetch-with-transient-route-retry";
 import { apiFetch, summarizeBulkResults } from "@/lib/api-client";
-import { usePrimeContracts } from "@/hooks/use-prime-contracts";
+import { usePrimeContracts, primeContractKeys } from "@/hooks/use-prime-contracts";
+import { useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const EMPTY_FILTERS: Record<string, FilterValue> = {
@@ -81,6 +82,7 @@ export default function ProjectContractsPage(): ReactElement {
   const params = useParams<{ projectId: string }>();
   const projectId = params.projectId ?? "";
   const projectIdNumber = Number(projectId);
+  const queryClient = useQueryClient();
 
   useProjectTitle("Prime Contracts");
 
@@ -208,7 +210,6 @@ export default function ProjectContractsPage(): ReactElement {
     data: contracts = [],
     isLoading,
     error: contractsError,
-    refetch: refetchContracts,
   } = usePrimeContracts(projectIdNumber, {
     status: statusFilter,
     search: searchTerm || undefined,
@@ -366,7 +367,9 @@ export default function ProjectContractsPage(): ReactElement {
         `/api/projects/${projectId}/contracts/${deletingId}`,
         { method: "DELETE" },
       );
-      await refetchContracts();
+      await queryClient.invalidateQueries({
+        queryKey: primeContractKeys.all(projectIdNumber),
+      });
       toast.success(`Contract "${deletingTitle}" deleted successfully`);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error";
@@ -406,7 +409,9 @@ export default function ProjectContractsPage(): ReactElement {
       });
 
       const summary = summarizeBulkResults(deletionResults);
-      await refetchContracts();
+      await queryClient.invalidateQueries({
+        queryKey: primeContractKeys.all(projectIdNumber),
+      });
       tableState.setSelectedIds([]);
 
       if (failedDeletes.length > 0) {

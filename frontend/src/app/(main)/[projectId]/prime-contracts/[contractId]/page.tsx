@@ -725,7 +725,7 @@ export default function ProjectContractDetailPage() {
         method: "PUT",
         body: JSON.stringify({
           contract_number: data.number, title: data.title, client_id: data.ownerCompanyId || null, contractor_id: data.contractorId || null, architect_engineer_id: data.architectEngineerId || null,
-          contract_company_id: data.ownerCompanyId || data.contractCompanyId || null, description: data.description, status: data.status || "draft", executed: data.executed || false, original_contract_value: sovTotal,
+          contract_company_id: data.ownerCompanyId || data.contractCompanyId || null, description: data.description, status: data.status || "draft", executed: data.executed ?? false, executed_at: (data.executed ?? false) ? (contract.executed_at ?? new Date().toISOString()) : null, original_contract_value: sovTotal,
           start_date: data.startDate?.toISOString().split("T")[0] || null, end_date: data.estimatedCompletionDate?.toISOString().split("T")[0] || null,
           substantial_completion_date: data.substantialCompletionDate?.toISOString().split("T")[0] || null, actual_completion_date: data.actualCompletionDate?.toISOString().split("T")[0] || null,
           signed_contract_received_date: data.signedContractReceivedDate?.toISOString().split("T")[0] || null, contract_termination_date: data.contractTerminationDate?.toISOString().split("T")[0] || null,

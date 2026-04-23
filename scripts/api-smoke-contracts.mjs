@@ -243,6 +243,24 @@ const AUTH_WRITE_PROBES = [
       default_retainage_percent: 101,
     },
   },
+  // Regression guard: executed field must be accepted (not stripped) by the PUT route.
+  // Bug: executed: true was being silently dropped because the payload used `|| false`
+  // instead of `?? false`, and executed_at was missing from the PUT body entirely.
+  // A 401 (unauthenticated) or 404 (contract not found) is expected for a fake UUID,
+  // but a 500 would indicate the schema rejected `executed` or `executed_at`.
+  {
+    method: "PUT",
+    path: `/api/projects/${PROJECT_ID}/contracts/${FAKE_UUID}`,
+    description: "Prime contract update — executed field accepted (not 500)",
+    expectedStatuses: [401, 404],
+    body: {
+      contract_number: "TEST-EXEC-001",
+      title: "Executed Field Regression Guard",
+      status: "draft",
+      executed: true,
+      executed_at: new Date().toISOString(),
+    },
+  },
   {
     method: "PUT",
     path: `/api/projects/${PROJECT_ID}/contracts/${FAKE_UUID}/advanced-settings`,
