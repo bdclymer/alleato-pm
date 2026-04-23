@@ -87,39 +87,17 @@ function mapApiOriginToFormOrigin(origin?: string | null): string | undefined {
 
 function mapApiTypeToFormType(type?: string | null): string | undefined {
   if (!type) return undefined;
-  const key = type.trim().toLowerCase().replace(/[^a-z0-9]+/g, "_");
-  const map: Record<string, string> = {
-    allowance: "allowance",
-    contingency: "contingency",
-    owner_change: "owner_change",
-    tbd: "tbd",
-    transfer: "transfer",
-  };
-  return map[key] ?? key;
+  return type.trim();
 }
 
 function mapApiReasonToFormReason(reason?: string | null): string | undefined {
   if (!reason) return undefined;
-  const key = reason.trim().toLowerCase().replace(/[^a-z0-9]+/g, "_");
-  const map: Record<string, string> = {
-    allowance: "allowance",
-    back_charge: "back_charge",
-    backcharge: "back_charge",
-    client_request: "client_request",
-    design_development: "design_development",
-    existing_condition: "existing_condition",
-  };
-  return map[key];
+  return reason.trim();
 }
 
 function mapApiStatusToFormStatus(status?: string | null): string {
-  if (!status) return "open";
-  const s = status.toLowerCase();
-  if (s === "closed") return "close";
-  if (s === "pending" || s === "pending approval" || s === "pending_approval") return "pending";
-  if (s === "open") return "open";
-  if (s === "void") return "void";
-  return "open";
+  if (!status) return "Open";
+  return status.trim();
 }
 
 /* ── Page component ──────────────────────────────────────────────── */
@@ -716,11 +694,13 @@ export default function ChangeEventDetailPage() {
             <div className="mt-10">
               <ChangeEventLineItemsTable
                 projectId={projectId}
+                changeEventId={changeEventId}
                 lineItems={lineItems}
                 markupRows={markupRows}
                 expectingRevenue={(changeEvent.expectingRevenue ?? changeEvent.expecting_revenue) !== false}
                 primeContractDisplayName={primeContractDisplayName}
                 onDeleteLineItem={actions.deleteLineItem}
+                onLineItemsChange={() => void actions.refetch()}
               />
             </div>
             <div className="mt-10">

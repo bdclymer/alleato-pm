@@ -57,6 +57,8 @@ const ENDPOINTS = [
   ["GET", `/api/projects/${PROJECT_ID}/change-events`, "Change events list", [200, 401]],
   ["GET", `/api/projects/${PROJECT_ID}/change-events/${FAKE_UUID}`, "Change event detail (fake id)", [200, 401, 404]],
   ["GET", `/api/projects/${PROJECT_ID}/change-events/origin-options`, "Change event origin options", [200, 401]],
+  // Line items — regression guard for 5.1/5.2 (Add/Edit were missing before 2026-04-21)
+  ["GET", `/api/projects/${PROJECT_ID}/change-events/${FAKE_UUID}/line-items`, "Change event line items (fake id)", [200, 401, 404]],
 
   // Change Orders / PCOs
   ["GET", `/api/projects/${PROJECT_ID}/prime-contract-pcos`, "Prime PCOs list", [200, 401]],
@@ -64,6 +66,16 @@ const ENDPOINTS = [
   ["GET", `/api/projects/${PROJECT_ID}/commitment-pcos`, "Commitment PCOs list", [200, 401]],
   ["GET", `/api/projects/${PROJECT_ID}/commitment-pcos/${FAKE_UUID}`, "Commitment PCO detail (fake id)", [200, 401, 404]],
   ["GET", `/api/projects/${PROJECT_ID}/pcos`, "All PCOs", [200, 401]],
+
+  // Prime Contract Change Orders (canonical routes)
+  ["GET", `/api/projects/${PROJECT_ID}/prime-contract-change-orders`, "Prime contract change orders list", [200, 401]],
+  ["GET", `/api/projects/${PROJECT_ID}/prime-contract-change-orders/1700`, "Prime contract change order detail", [200, 401, 404]],
+  ["GET", `/api/projects/${PROJECT_ID}/prime-contract-change-orders/1700/line-items`, "Prime CO line items list", [200, 401, 404]],
+  ["GET", `/api/projects/${PROJECT_ID}/prime-contract-change-orders/export`, "Prime contract change orders CSV export", [200, 401]],
+
+  // Commitment Change Orders (canonical routes)
+  ["GET", `/api/projects/${PROJECT_ID}/commitment-change-orders`, "Commitment change orders list", [200, 401]],
+  ["GET", `/api/projects/${PROJECT_ID}/commitment-change-orders/export`, "Commitment change orders CSV export", [200, 401]],
 
   // Contracts
   ["GET", `/api/projects/${PROJECT_ID}/contracts`, "Contracts list", [200, 401]],
@@ -149,6 +161,8 @@ const ENDPOINTS = [
   ["GET", `/api/projects/${PROJECT_ID}/drawings/${FAKE_UUID}/related-items`, "Drawing related items", [200, 401, 404]],
   ["GET", `/api/projects/${PROJECT_ID}/drawings/${FAKE_UUID}/change-history`, "Drawing change history", [200, 401, 404]],
   ["GET", `/api/projects/${PROJECT_ID}/drawings/${FAKE_UUID}/qr-code`, "Drawing QR code", [200, 401, 404]],
+  // Regression: upload-url must return 400 for missing fields and never 500 (caught 2026-04-21)
+  ["POST", `/api/projects/${PROJECT_ID}/drawings/upload-url`, "Drawing upload-url (no body → 400)", [400, 401]],
 
   // Specifications
   ["GET", `/api/projects/${PROJECT_ID}/specifications`, "Specifications list", [200, 401]],

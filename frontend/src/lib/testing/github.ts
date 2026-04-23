@@ -1,3 +1,5 @@
+import { fetchWithGuardrails, WRITE_POLICY } from "@/lib/fetch-with-guardrails";
+
 type GitHubIssuePayload = {
   title: string;
   body: string;
@@ -22,6 +24,8 @@ export type CreateTestFailureIssueInput = {
   runId: string;
   runSlug: string | null;
   toolName: string | null;
+  /** Propagated from the API route's x-request-id for distributed tracing. */
+  requestId?: string;
 };
 
 function getRepoConfig() {
@@ -73,21 +77,28 @@ function buildIssueBody(input: CreateTestFailureIssueInput): string {
   return lines.join("\n");
 }
 
+const GITHUB_HEADERS = (token: string) => ({
+  Accept: "application/vnd.github+json",
+  Authorization: `Bearer ${token}`,
+  "Content-Type": "application/json",
+  "X-GitHub-Api-Version": "2022-11-28",
+});
+
 async function postIssue(
   config: NonNullable<ReturnType<typeof getRepoConfig>>,
   payload: GitHubIssuePayload,
+  requestId: string,
 ): Promise<CreatedGitHubIssue> {
-  const response = await fetch(
+  const response = await fetchWithGuardrails(
     `https://api.github.com/repos/${config.owner}/${config.repo}/issues`,
     {
+      ...WRITE_POLICY,
       method: "POST",
-      headers: {
-        Accept: "application/vnd.github+json",
-        Authorization: `Bearer ${config.token}`,
-        "Content-Type": "application/json",
-        "X-GitHub-Api-Version": "2022-11-28",
-      },
+      headers: GITHUB_HEADERS(config.token),
       body: JSON.stringify(payload),
+      requestId,
+      where: "lib/testing/github#postIssue",
+      dependency: "github-api",
     },
   );
 
@@ -108,18 +119,18 @@ async function addLabels(
   config: NonNullable<ReturnType<typeof getRepoConfig>>,
   issueNumber: number,
   labels: string[],
+  requestId: string,
 ) {
-  await fetch(
+  await fetchWithGuardrails(
     `https://api.github.com/repos/${config.owner}/${config.repo}/issues/${issueNumber}/labels`,
     {
+      ...WRITE_POLICY,
       method: "POST",
-      headers: {
-        Accept: "application/vnd.github+json",
-        Authorization: `Bearer ${config.token}`,
-        "Content-Type": "application/json",
-        "X-GitHub-Api-Version": "2022-11-28",
-      },
+      headers: GITHUB_HEADERS(config.token),
       body: JSON.stringify({ labels }),
+      requestId,
+      where: "lib/testing/github#addLabels",
+      dependency: "github-api",
     },
   );
 }
@@ -128,18 +139,19 @@ async function addComment(
   config: NonNullable<ReturnType<typeof getRepoConfig>>,
   issueNumber: number,
   body: string,
+  requestId: string,
 ) {
-  await fetch(
+  // Posting "@claude" as a comment triggers the Claude Code Action to triage the failure.
+  await fetchWithGuardrails(
     `https://api.github.com/repos/${config.owner}/${config.repo}/issues/${issueNumber}/comments`,
     {
+      ...WRITE_POLICY,
       method: "POST",
-      headers: {
-        Accept: "application/vnd.github+json",
-        Authorization: `Bearer ${config.token}`,
-        "Content-Type": "application/json",
-        "X-GitHub-Api-Version": "2022-11-28",
-      },
+      headers: GITHUB_HEADERS(config.token),
       body: JSON.stringify({ body }),
+      requestId,
+      where: "lib/testing/github#addComment",
+      dependency: "github-api",
     },
   );
 }
@@ -150,13 +162,15 @@ export async function createTestFailureGitHubIssue(
   const config = getRepoConfig();
   if (!config) return null;
 
+  const requestId = input.requestId ?? crypto.randomUUID();
+
   const severityPrefix = input.severity ? `[${input.severity.toUpperCase()}] ` : "";
   const title = `${severityPrefix}Test failure: ${input.testNumber} — ${input.testName}`;
 
   const issue = await postIssue(config, {
     title,
     body: buildIssueBody(input),
-  });
+  }, requestId);
 
   const baseLabels = (process.env.GITHUB_FEEDBACK_LABELS ?? "admin-feedback")
     .split(",")
@@ -167,15 +181,15 @@ export async function createTestFailureGitHubIssue(
   if (input.severity) labels.push(`severity:${input.severity}`);
 
   try {
-    await addLabels(config, issue.number, labels);
-  } catch {
-    // Non-fatal
+    await addLabels(config, issue.number, labels, requestId);
+  } catch (err) {
+    console.warn("[github] addLabels failed (non-fatal):", err);
   }
 
   try {
-    await addComment(config, issue.number, "@claude");
-  } catch {
-    // Non-fatal
+    await addComment(config, issue.number, "@claude", requestId);
+  } catch (err) {
+    console.warn("[github] addComment failed (non-fatal):", err);
   }
 
   return issue;

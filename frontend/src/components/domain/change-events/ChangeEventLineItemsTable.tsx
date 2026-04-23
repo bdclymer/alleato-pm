@@ -2,8 +2,9 @@
 
 import React, { useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { toast } from "sonner";
 
-import { Columns2, Search, SlidersHorizontal, Trash2, X } from "lucide-react";
+import { Columns2, MoreVertical, Plus, Search, SlidersHorizontal, Trash2, X } from "lucide-react";
 
 import {
   InlineTable,
@@ -19,22 +20,54 @@ import {
 } from "@/components/ds/inline-table";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { formatCurrency } from "@/config/tables";
+import { apiFetch } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import type { VerticalMarkup } from "@/hooks/use-vertical-markup";
 import type { ChangeEventDetailLineItem } from "@/types/change-events";
 import { SectionRuleHeading } from "@/components/layout/spacing";
 
+interface LineItemFormState {
+  description: string;
+  revenueRom: string;
+  costRom: string;
+  quantity: string;
+  unitCost: string;
+}
+
+const EMPTY_FORM: LineItemFormState = {
+  description: "",
+  revenueRom: "",
+  costRom: "",
+  quantity: "",
+  unitCost: "",
+};
+
 interface ChangeEventLineItemsTableProps {
   projectId: number;
+  changeEventId?: string;
   lineItems: ChangeEventDetailLineItem[];
   markupRows: VerticalMarkup[];
   expectingRevenue?: boolean;
   primeContractDisplayName?: string | null;
   onDeleteLineItem?: (lineItemId: string) => Promise<void>;
+  onLineItemsChange?: () => void;
 }
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -117,14 +150,20 @@ const DEFAULT_COL_WIDTHS: Record<ColWidthKey, number> = {
 
 export function ChangeEventLineItemsTable({
   projectId,
+  changeEventId,
   lineItems,
   markupRows,
   expectingRevenue = true,
   primeContractDisplayName,
   onDeleteLineItem,
+  onLineItemsChange,
 }: ChangeEventLineItemsTableProps) {
   const [search, setSearch] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<ChangeEventDetailLineItem | null>(null);
+  const [formState, setFormState] = useState<LineItemFormState>(EMPTY_FORM);
+  const [isSaving, setIsSaving] = useState(false);
   const [groupBy, setGroupBy] = useState<GroupBy>("none");
   const [filterVendorOnly, setFilterVendorOnly] = useState(false);
   const [filterNonZero, setFilterNonZero] = useState(false);
@@ -263,8 +302,59 @@ export function ChangeEventLineItemsTable({
 
   const overUnder = totals.latestPrice - totals.latestCost;
 
+  const openAdd = () => {
+    setEditingItem(null);
+    setFormState(EMPTY_FORM);
+    setDialogOpen(true);
+  };
+
+  const openEdit = (li: ChangeEventDetailLineItem) => {
+    setEditingItem(li);
+    setFormState({
+      description: li.description ?? "",
+      revenueRom: li.revenueRom != null ? String(li.revenueRom) : "",
+      costRom: li.costRom != null ? String(li.costRom) : "",
+      quantity: li.quantity != null ? String(li.quantity) : "",
+      unitCost: li.unitCost != null ? String(li.unitCost) : "",
+    });
+    setDialogOpen(true);
+  };
+
+  const handleSaveLineItem = async () => {
+    if (!changeEventId || !formState.description.trim()) return;
+    setIsSaving(true);
+    try {
+      const payload = {
+        description: formState.description.trim(),
+        revenueRom: formState.revenueRom ? parseFloat(formState.revenueRom) : undefined,
+        costRom: formState.costRom ? parseFloat(formState.costRom) : undefined,
+        quantity: formState.quantity ? parseFloat(formState.quantity) : undefined,
+        unitCost: formState.unitCost ? parseFloat(formState.unitCost) : undefined,
+      };
+      if (editingItem) {
+        await apiFetch(
+          `/api/projects/${projectId}/change-events/${changeEventId}/line-items/${editingItem.id}`,
+          { method: "PATCH", body: JSON.stringify(payload) },
+        );
+        toast.success("Line item updated");
+      } else {
+        await apiFetch(
+          `/api/projects/${projectId}/change-events/${changeEventId}/line-items`,
+          { method: "POST", body: JSON.stringify(payload) },
+        );
+        toast.success("Line item added");
+      }
+      setDialogOpen(false);
+      onLineItemsChange?.();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to save line item");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const detailSpan = 5;
-  const actionSpan = onDeleteLineItem ? 1 : 0;
+  const actionSpan = onDeleteLineItem || changeEventId ? 1 : 0;
   const totalColCount =
     detailSpan +
     revenueSpan +
@@ -303,6 +393,12 @@ export function ChangeEventLineItemsTable({
         </div>
 
         <div className="flex items-center gap-1">
+          {changeEventId && (
+            <Button size="sm" variant="outline" className="h-8 gap-1.5" onClick={openAdd}>
+              <Plus className="h-3.5 w-3.5" />
+              Add
+            </Button>
+          )}
           {/* Search — expandable icon */}
           {searchOpen ? (
             <div className="relative flex items-center">
@@ -545,7 +641,7 @@ export function ChangeEventLineItemsTable({
             {COST_COLS.map((c) => visibleCols[c] && <col key={c} style={{ width: colWidths[c] }} />)}
             {visibleCols.overUnder && <col style={{ width: colWidths.overUnder }} />}
             {visibleCols.budgetMod && <col style={{ width: colWidths.budgetMod }} />}
-            {onDeleteLineItem && <col style={{ width: colWidths.action }} />}
+            {(onDeleteLineItem || changeEventId) && <col style={{ width: colWidths.action }} />}
           </colgroup>
 
           <InlineTableHeader>
@@ -560,7 +656,7 @@ export function ChangeEventLineItemsTable({
               )}
               {visibleCols.overUnder && <InlineTableHeaderCell divider>O/U</InlineTableHeaderCell>}
               {visibleCols.budgetMod && <InlineTableHeaderCell divider>Mod</InlineTableHeaderCell>}
-              {onDeleteLineItem && <InlineTableHeaderCell />}
+              {(onDeleteLineItem || changeEventId) && <InlineTableHeaderCell />}
             </InlineTableHeaderRow>
 
             {/* Column header row */}
@@ -619,7 +715,7 @@ export function ChangeEventLineItemsTable({
                   Amount <RH col="budgetMod" />
                 </InlineTableHeaderCell>
               )}
-              {onDeleteLineItem && (
+              {(onDeleteLineItem || changeEventId) && (
                 <InlineTableHeaderCell>
                   <span className="sr-only">Actions</span>
                 </InlineTableHeaderCell>
@@ -809,7 +905,7 @@ export function ChangeEventLineItemsTable({
                           numeric
                           divider
                           className={cn(
-                            liOverUnder > 0 ? "text-green-600" : liOverUnder < 0 ? "text-destructive" : "",
+                            liOverUnder > 0 ? "text-success" : liOverUnder < 0 ? "text-destructive" : "",
                           )}
                         >
                           {formatCurrency(liOverUnder)}
@@ -820,18 +916,37 @@ export function ChangeEventLineItemsTable({
                           {formatCurrency(li.extendedAmount)}
                         </InlineTableCell>
                       )}
-                      {onDeleteLineItem && (
+                      {(onDeleteLineItem || changeEventId) && (
                         <InlineTableCell className="px-1 py-1 text-center">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
-                            onClick={() => onDeleteLineItem(li.id)}
-                            aria-label="Delete line item"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 w-7 p-0 text-muted-foreground"
+                                aria-label="Row actions"
+                              >
+                                <MoreVertical className="h-3.5 w-3.5" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              {changeEventId && (
+                                <DropdownMenuItem onClick={() => openEdit(li)}>
+                                  Edit
+                                </DropdownMenuItem>
+                              )}
+                              {onDeleteLineItem && (
+                                <DropdownMenuItem
+                                  className="text-destructive"
+                                  onClick={() => onDeleteLineItem(li.id)}
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Delete
+                                </DropdownMenuItem>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </InlineTableCell>
                       )}
                     </InlineTableRow>
@@ -887,7 +1002,7 @@ export function ChangeEventLineItemsTable({
                   </InlineTableCell>
                 )}
                 {visibleCols.budgetMod && <InlineTableCell divider />}
-                {onDeleteLineItem && <InlineTableCell />}
+                {(onDeleteLineItem || changeEventId) && <InlineTableCell />}
               </InlineTableRow>
             ))}
           </InlineTableBody>
@@ -941,22 +1056,101 @@ export function ChangeEventLineItemsTable({
                   numeric
                   divider
                   className={cn(
-                    overUnder > 0 ? "text-green-600" : overUnder < 0 ? "text-destructive" : "",
+                    overUnder > 0 ? "text-success" : overUnder < 0 ? "text-destructive" : "",
                   )}
                 >
                   {formatCurrency(overUnder)}
                 </InlineTableFooterCell>
               )}
               {visibleCols.budgetMod && <InlineTableFooterCell divider />}
-              {onDeleteLineItem && <InlineTableFooterCell />}
+              {(onDeleteLineItem || changeEventId) && <InlineTableFooterCell />}
             </InlineTableFooterRow>
           </InlineTableFooter>
         </InlineTable>
       ) : (
-        <div className="flex items-center justify-center py-12">
+        <div className="flex flex-col items-center justify-center gap-3 py-12">
           <span className="text-sm text-muted-foreground">No line items added yet</span>
+          {changeEventId && (
+            <Button size="sm" variant="outline" onClick={openAdd}>
+              <Plus className="mr-1.5 h-3.5 w-3.5" />
+              Add Line Item
+            </Button>
+          )}
         </div>
       )}
+
+      {/* Add / Edit dialog */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{editingItem ? "Edit Line Item" : "Add Line Item"}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="li-description">Description *</Label>
+              <Input
+                id="li-description"
+                value={formState.description}
+                onChange={(e) => setFormState((s) => ({ ...s, description: e.target.value }))}
+                placeholder="Enter description"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="li-qty">Quantity</Label>
+                <Input
+                  id="li-qty"
+                  type="number"
+                  value={formState.quantity}
+                  onChange={(e) => setFormState((s) => ({ ...s, quantity: e.target.value }))}
+                  placeholder="1"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="li-unitCost">Unit Cost</Label>
+                <Input
+                  id="li-unitCost"
+                  type="number"
+                  value={formState.unitCost}
+                  onChange={(e) => setFormState((s) => ({ ...s, unitCost: e.target.value }))}
+                  placeholder="0.00"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="li-revenueRom">Revenue ROM</Label>
+                <Input
+                  id="li-revenueRom"
+                  type="number"
+                  value={formState.revenueRom}
+                  onChange={(e) => setFormState((s) => ({ ...s, revenueRom: e.target.value }))}
+                  placeholder="0.00"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="li-costRom">Cost ROM</Label>
+                <Input
+                  id="li-costRom"
+                  type="number"
+                  value={formState.costRom}
+                  onChange={(e) => setFormState((s) => ({ ...s, costRom: e.target.value }))}
+                  placeholder="0.00"
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={isSaving}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSaveLineItem}
+              disabled={isSaving || !formState.description.trim()}
+            >
+              {isSaving ? "Saving…" : editingItem ? "Save Changes" : "Add Line Item"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
     </div>
   );

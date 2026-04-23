@@ -56,10 +56,12 @@ export const ChangeEventScope = createNormalizedEnum(
 export const ChangeEventStatus = createNormalizedEnum(
   [
     "Open",
+    "Pending",
     "Pending Approval",
     "Approved",
     "Rejected",
     "Closed",
+    "Void",
     "Converted",
   ],
   {
@@ -70,7 +72,7 @@ export const ChangeEventStatus = createNormalizedEnum(
     rejected: "Rejected",
     converted: "Converted",
     close: "Closed",
-    void: "Closed",
+    void: "Void",
   },
 );
 // Procore-aligned change reason set.
