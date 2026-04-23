@@ -228,6 +228,94 @@ const CHANGE_REASONS = [
 ];
 
 // ---------------------------------------------------------------------------
+// Change History Timeline
+// ---------------------------------------------------------------------------
+
+interface HistoryEntry {
+  label: string;
+  date: string;
+  note?: string;
+  variant: "default" | "success" | "destructive";
+}
+
+function ChangeHistoryTimeline({ co }: { co: PrimeCO }) {
+  const entries: HistoryEntry[] = [];
+
+  if (co.created_at) {
+    entries.push({
+      label: "Created",
+      date: co.created_at,
+      note: co.created_by ? `by ${co.created_by}` : undefined,
+      variant: "default",
+    });
+  }
+
+  if (co.submitted_at) {
+    entries.push({ label: "Submitted", date: co.submitted_at, variant: "default" });
+  }
+
+  if (co.approved_at) {
+    entries.push({ label: "Approved", date: co.approved_at, variant: "success" });
+  }
+
+  if (co.status === "rejected" && co.rejection_reason) {
+    const rejectionDate = co.review_date ?? co.created_at;
+    if (rejectionDate) {
+      entries.push({
+        label: "Rejected",
+        date: rejectionDate,
+        note: co.rejection_reason,
+        variant: "destructive",
+      });
+    }
+  }
+
+  // Sort chronologically, oldest first
+  entries.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+  if (entries.length === 0) {
+    return (
+      <EmptyState
+        icon={<List />}
+        title="No change history"
+        description="A log of changes to this record will appear here"
+      />
+    );
+  }
+
+  const variantClasses: Record<HistoryEntry["variant"], string> = {
+    default: "bg-muted text-muted-foreground",
+    success: "bg-primary/10 text-primary",
+    destructive: "bg-destructive/10 text-destructive",
+  };
+
+  return (
+    <div className="space-y-3">
+      {entries.map((entry) => (
+        <div
+          key={entry.label}
+          className="flex items-start gap-3 rounded-md border border-border bg-card p-3 text-sm"
+        >
+          <span
+            className={`mt-0.5 inline-flex shrink-0 rounded px-2 py-0.5 text-xs font-medium ${variantClasses[entry.variant]}`}
+          >
+            {entry.label}
+          </span>
+          <div className="min-w-0 flex-1">
+            {entry.note && (
+              <p className="text-foreground">{entry.note}</p>
+            )}
+          </div>
+          <span className="shrink-0 text-xs text-muted-foreground">
+            {formatDate(entry.date)}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Page
 // ---------------------------------------------------------------------------
 
@@ -2001,11 +2089,7 @@ export default function PrimeContractCODetailPage() {
           </TabsContent>
 
           <TabsContent value="history">
-            <EmptyState
-              icon={<List />}
-              title="No change history"
-              description="A log of changes to this record will appear here"
-            />
+            <ChangeHistoryTimeline co={co} />
           </TabsContent>
         </Tabs>
       </PageShell>
