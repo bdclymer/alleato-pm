@@ -228,6 +228,33 @@ export const DELETE = withApiGuardrails(
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/contracts/[contractId]#DELETE", message: "Authentication required." });
     }
 
+    // Guard: prevent delete when child records exist (test 3.2)
+    // A contract with SOV line items or prime contract change orders must be
+    // cleaned up by the user first — silent cascade would destroy financial history.
+    const [lineItemsResult, changeOrdersResult] = await Promise.all([
+      supabase
+        .from("contract_line_items")
+        .select("id", { count: "exact", head: true })
+        .eq("contract_id", contractId),
+      supabase
+        .from("prime_contract_change_orders")
+        .select("id", { count: "exact", head: true })
+        .eq("contract_id", contractId),
+    ]);
+
+    const lineItemCount = lineItemsResult.count ?? 0;
+    const changeOrderCount = changeOrdersResult.count ?? 0;
+
+    if (lineItemCount > 0 || changeOrderCount > 0) {
+      return NextResponse.json(
+        {
+          error:
+            "Cannot delete contract with existing line items or change orders. Remove them first.",
+        },
+        { status: 409 },
+      );
+    }
+
     // Delete directly — cascade FKs handle child cleanup automatically.
     // Skipping the pre-check eliminates a race condition and a round-trip;
     // "0 rows affected" is treated the same as a 404 (contract not found).

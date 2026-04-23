@@ -15,11 +15,16 @@ interface RouteParams {
  *
  * Fetch all line items for a commitment change order, ordered by created_at ASC.
  */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export const GET = withApiGuardrails(
   "projects/[projectId]/commitment-change-orders/[commitmentCoId]/line-items#GET",
   async ({ request, params }) => {
-  
+
     const { commitmentCoId } = await params;
+    if (!UUID_RE.test(commitmentCoId)) {
+      return NextResponse.json({ error: "Invalid change order id" }, { status: 400 });
+    }
     const supabase = await createClient();
 
     const { data, error } = await supabase

@@ -152,14 +152,19 @@ async function getRelatedSourceRecord(
   }
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export const GET = withApiGuardrails(
   "projects/[projectId]/change-events/[changeEventId]/related-items#GET",
   async ({ params }) => {
-  
+
     const { projectId, changeEventId } = await params;
     const parsedProjectId = Number.parseInt(projectId, 10);
     if (Number.isNaN(parsedProjectId)) {
       return NextResponse.json({ error: "Invalid project id" }, { status: 400 });
+    }
+    if (!UUID_RE.test(changeEventId)) {
+      return NextResponse.json({ error: "Invalid change event id" }, { status: 400 });
     }
 
     const supabase = await createClient();

@@ -10,10 +10,15 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export const GET = withApiGuardrails(
   "projects/[projectId]/change-events/[changeEventId]/prime-pcos#GET",
   async ({ params }) => {
     const { projectId, changeEventId } = await params;
+    if (!UUID_RE.test(changeEventId)) {
+      return NextResponse.json({ error: "Invalid change event id" }, { status: 400 });
+    }
     const projectIdNum = parseInt(projectId, 10);
     // Use service client so RLS doesn't silently filter junction table rows.
     // This is a read-only endpoint scoped tightly by changeEventId + pco_type.

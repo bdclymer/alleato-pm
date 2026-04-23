@@ -26,18 +26,19 @@ interface RouteParams {
   params: Promise<{ projectId: string; pcoId: string }>;
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 /**
  * GET - List all line items for a PCO
  */
 export const GET = withApiGuardrails(
   "projects/[projectId]/pcos/[pcoId]/line-items#GET",
   async ({ request, params }) => {
-  
-    const { projectId, pcoId } = await params;
-    const numericPcoId = parseInt(pcoId, 10);
 
-    if (isNaN(numericPcoId)) {
-      return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
+    const { pcoId } = await params;
+    // pco_line_items.pco_id is uuid in DB — reject non-UUID params before hitting Postgres
+    if (!UUID_RE.test(pcoId)) {
+      return NextResponse.json({ error: "Invalid PCO id" }, { status: 400 });
     }
 
     const supabase = await createClient();
@@ -45,7 +46,7 @@ export const GET = withApiGuardrails(
     const { data, error } = await supabase
       .from("pco_line_items")
       .select("*")
-      .eq("pco_id", String(numericPcoId))
+      .eq("pco_id", pcoId)
       .order("id", { ascending: true });
 
     if (error) {

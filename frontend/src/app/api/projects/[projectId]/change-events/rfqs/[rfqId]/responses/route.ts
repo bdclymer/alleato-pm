@@ -38,21 +38,27 @@ async function ensureRfq(
   return data;
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export const GET = withApiGuardrails(
   "projects/[projectId]/change-events/rfqs/[rfqId]/responses#GET",
   async ({ request, params }) => {
-  
+
     const { projectId, rfqId } = await params;
     const numericProjectId = parseInt(projectId, 10);
     if (!Number.isFinite(numericProjectId)) {
-      return NextResponse.json(
-        { error: "Invalid project id" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "Invalid project id" }, { status: 400 });
+    }
+    if (!UUID_RE.test(rfqId)) {
+      return NextResponse.json({ error: "Invalid RFQ id" }, { status: 400 });
     }
 
     const supabase = await createClient();
-    await ensureRfq(supabase, numericProjectId, rfqId);
+    try {
+      await ensureRfq(supabase, numericProjectId, rfqId);
+    } catch {
+      return NextResponse.json({ error: "RFQ not found" }, { status: 404 });
+    }
     const { data, error } = await supabase
       .from("change_event_rfq_responses")
       .select("*")

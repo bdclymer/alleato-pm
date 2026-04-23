@@ -84,6 +84,10 @@ const ENDPOINTS = [
   ["GET", `/api/projects/${PROJECT_ID}/contracts/${FAKE_UUID}/line-items`, "Prime contract line items (fake id)", [200, 401, 404]],
   ["GET", `/api/projects/${PROJECT_ID}/contracts/${FAKE_UUID}/payments`, "Prime contract payments (fake id)", [200, 401, 404]],
   ["GET", `/api/projects/${PROJECT_ID}/contracts/${FAKE_UUID}/payment-applications`, "Prime contract payment apps (fake id)", [200, 401, 404]],
+  // test 3.2: DELETE on a contract with children must return 409, never 204.
+  // A fake UUID has no children so expects 401 (unauthenticated) or 404 (not found) — never 204.
+  // Authenticated callers with a real contract that has line items / COs must see 409.
+  ["DELETE", `/api/projects/${PROJECT_ID}/contracts/${FAKE_UUID}`, "Prime contract delete (fake id — child guard)", [401, 404]],
   ["GET", `/api/projects/${PROJECT_ID}/vertical-markup`, "Prime contract vertical markup settings", [200, 401]],
   [
     "PUT",
