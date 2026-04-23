@@ -47,7 +47,7 @@ export function useChangeEventFormData({
   const [formData, setFormData] = React.useState<ChangeEventFormData>({
     contractNumber: initialData?.contractNumber || initialData?.number || "",
     title: initialData?.title || "",
-    status: initialData?.status || "open",
+    status: initialData?.status || "Open",
     origin: initialData?.origin,
     type: initialData?.type,
     changeReason: initialData?.changeReason,

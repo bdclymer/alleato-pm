@@ -26,7 +26,7 @@ import { RunnerActionBar } from "../../_components/RunnerActionBar";
 import { ProgressBar } from "../../_components/ProgressBar";
 import type { RunMeta, TestResult, TestStatus } from "../../_components/types";
 
-type FilterTab = "all" | "failed" | "passed";
+type FilterTab = "all" | "failed" | "passed" | "fixed";
 type Severity = "critical" | "major" | "minor" | "cosmetic";
 
 const SEVERITY_STYLES: Record<Severity, string> = {
@@ -45,6 +45,7 @@ function StatusDot({ status }: { status: TestStatus }) {
         "h-2 w-2 shrink-0 rounded-full",
         status === "pass" && "bg-success",
         status === "fail" && "bg-destructive",
+        status === "fixed" && "bg-teal-500",
         (status === "skip" || status === "not_tested") && "bg-muted-foreground/40",
       )}
       aria-hidden
@@ -126,6 +127,7 @@ function VideoSection({ url }: { url: string }) {
 const STATUS_OPTIONS: { value: TestStatus; label: string }[] = [
   { value: "fail", label: "Failed" },
   { value: "pass", label: "Passed" },
+  { value: "fixed", label: "Fixed" },
   { value: "skip", label: "Skipped" },
   { value: "not_tested", label: "Not tested" },
 ];
@@ -134,15 +136,18 @@ function CaseDetail({
   result,
   runId,
   onStatusChange,
+  onIssueCreated,
 }: {
   result: TestResult;
   runId: string;
   onStatusChange: (resultId: string, status: TestStatus) => void;
+  onIssueCreated: (resultId: string, issueNumber: number, issueUrl: string, issueState: string) => void;
 }) {
   const tc = result.test_cases;
   const screenshots = result.test_screenshots ?? [];
   const steps = parseSteps(tc.steps);
   const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [filingIssue, setFilingIssue] = useState(false);
 
   const handleStatusChange = async (newStatus: TestStatus) => {
     if (newStatus === result.status) return;
@@ -157,6 +162,27 @@ function CaseDetail({
       toast.error(e instanceof Error ? e.message : "Failed to update status.");
     } finally {
       setUpdatingStatus(false);
+    }
+  };
+
+  const handleFileIssue = async () => {
+    setFilingIssue(true);
+    try {
+      const { result: updated, already_existed } = await apiFetch<{
+        result: TestResult;
+        already_existed: boolean;
+      }>(
+        `/api/testing/runs/${runId}/results/${result.id}/github-issue`,
+        { method: "POST" },
+      );
+      if (updated.github_issue_number && updated.github_issue_url && updated.github_issue_state) {
+        onIssueCreated(result.id, updated.github_issue_number, updated.github_issue_url, updated.github_issue_state);
+        toast.success(already_existed ? "Issue already exists" : `Issue #${updated.github_issue_number} created`);
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to create GitHub issue.");
+    } finally {
+      setFilingIssue(false);
     }
   };
 
@@ -210,12 +236,14 @@ function CaseDetail({
       </div>
 
       <div className="pt-4">
-        <SectionRuleHeading label="Details" />
+        <SectionRuleHeading label={result.status === "fixed" ? "Fix Details" : "Details"} />
         <div className="space-y-3">
           <div className="flex items-start gap-2 text-xs">
-            <span className="w-20 shrink-0 text-muted-foreground">Error</span>
+            <span className="w-20 shrink-0 text-muted-foreground">
+              {result.status === "fixed" ? "What was fixed" : "Error"}
+            </span>
             <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
-              {result.notes?.trim() || "No error details captured for this case."}
+              {result.notes?.trim() || (result.status === "fixed" ? "No fix details captured." : "No error details captured for this case.")}
             </p>
           </div>
 
@@ -342,9 +370,21 @@ function CaseDetail({
             <ExternalLink className="h-3 w-3 text-muted-foreground shrink-0" />
           </a>
         ) : (
-          <p className="text-xs text-muted-foreground py-2">
-            No GitHub issue linked. Issues are created automatically when a test is marked as failed.
-          </p>
+          <div className="py-2 space-y-2">
+            <p className="text-xs text-muted-foreground">No GitHub issue linked to this failure.</p>
+            {result.status === "fail" && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => void handleFileIssue()}
+                disabled={filingIssue}
+                className="gap-2"
+              >
+                <Github className="h-3.5 w-3.5" />
+                {filingIssue ? "Creating issue…" : "File GitHub Issue"}
+              </Button>
+            )}
+          </div>
         )}
       </div>
 
@@ -431,11 +471,12 @@ export default function RunPage() {
   }, [current?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const counts = useMemo(() => {
-    const c = { pass: 0, fail: 0, skip: 0, notTested: 0 };
+    const c = { pass: 0, fail: 0, skip: 0, notTested: 0, fixed: 0 };
     for (const r of results) {
       if (r.status === "pass") c.pass++;
       else if (r.status === "fail") c.fail++;
       else if (r.status === "skip") c.skip++;
+      else if (r.status === "fixed") c.fixed++;
       else c.notTested++;
     }
     return c;
@@ -586,6 +627,7 @@ export default function RunPage() {
     const filtered = results.filter((r) => {
       if (tab === "failed") return r.status === "fail";
       if (tab === "passed") return r.status === "pass";
+      if (tab === "fixed") return r.status === "fixed";
       return true;
     });
 
@@ -593,6 +635,7 @@ export default function RunPage() {
 
     const tabs: { key: FilterTab; label: string; count: number }[] = [
       { key: "failed", label: "Failed", count: counts.fail },
+      { key: "fixed", label: "Fixed", count: counts.fixed },
       { key: "passed", label: "Passed", count: counts.pass },
       { key: "all", label: "All", count: results.length },
     ];
@@ -626,6 +669,12 @@ export default function RunPage() {
                 <span className="font-semibold text-success">{counts.pass}</span>
                 <span className="text-muted-foreground"> passed</span>
               </span>
+              {counts.fixed > 0 && (
+                <span>
+                  <span className="font-semibold text-teal-500">{counts.fixed}</span>
+                  <span className="text-muted-foreground"> fixed</span>
+                </span>
+              )}
               {counts.fail > 0 && (
                 <span>
                   <span className="font-semibold text-destructive">{counts.fail}</span>
@@ -658,7 +707,9 @@ export default function RunPage() {
                     "ml-1.5 rounded-full px-1.5 tabular-nums text-[10px]",
                     tab === t.key && t.key === "failed"
                       ? "bg-destructive/10 text-destructive"
-                      : "text-muted-foreground",
+                      : tab === t.key && t.key === "fixed"
+                        ? "bg-teal-500/10 text-teal-600"
+                        : "text-muted-foreground",
                   )}
                 >
                   {t.count}
@@ -728,6 +779,15 @@ export default function RunPage() {
               onStatusChange={(resultId, status) =>
                 setResults((prev) =>
                   prev.map((r) => (r.id === resultId ? { ...r, status } : r)),
+                )
+              }
+              onIssueCreated={(resultId, issueNumber, issueUrl, issueState) =>
+                setResults((prev) =>
+                  prev.map((r) =>
+                    r.id === resultId
+                      ? { ...r, github_issue_number: issueNumber, github_issue_url: issueUrl, github_issue_state: issueState }
+                      : r,
+                  ),
                 )
               }
             />

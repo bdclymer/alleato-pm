@@ -23324,32 +23324,44 @@ export type Database = {
         Row: {
           case_id: string
           created_at: string
+          github_issue_number: number | null
+          github_issue_state: string | null
+          github_issue_url: string | null
           id: string
           notes: string | null
           run_id: string
           severity: string | null
           status: string
           updated_at: string
+          video_url: string | null
         }
         Insert: {
           case_id: string
           created_at?: string
+          github_issue_number?: number | null
+          github_issue_state?: string | null
+          github_issue_url?: string | null
           id?: string
           notes?: string | null
           run_id: string
           severity?: string | null
           status?: string
           updated_at?: string
+          video_url?: string | null
         }
         Update: {
           case_id?: string
           created_at?: string
+          github_issue_number?: number | null
+          github_issue_state?: string | null
+          github_issue_url?: string | null
           id?: string
           notes?: string | null
           run_id?: string
           severity?: string | null
           status?: string
           updated_at?: string
+          video_url?: string | null
         }
         Relationships: [
           {

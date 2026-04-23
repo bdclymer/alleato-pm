@@ -89,7 +89,7 @@ export default function TestingIndexPage() {
                   className="group flex items-center gap-2"
                 >
                   <p className="truncate text-base font-medium text-foreground group-hover:text-primary">
-                    {display_name}
+                    {display_name.replace(/\s*[—–-]\s*(smoke|feature)$/i, "")}
                   </p>
                   <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
                 </Link>

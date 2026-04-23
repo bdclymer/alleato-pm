@@ -57,6 +57,8 @@ const ENDPOINTS = [
   ["GET", `/api/projects/${PROJECT_ID}/change-events`, "Change events list", [200, 401]],
   ["GET", `/api/projects/${PROJECT_ID}/change-events/${FAKE_UUID}`, "Change event detail (fake id)", [200, 401, 404]],
   ["GET", `/api/projects/${PROJECT_ID}/change-events/origin-options`, "Change event origin options", [200, 401]],
+  // Line items — regression guard for 5.1/5.2 (Add/Edit were missing before 2026-04-21)
+  ["GET", `/api/projects/${PROJECT_ID}/change-events/${FAKE_UUID}/line-items`, "Change event line items (fake id)", [200, 401, 404]],
 
   // Change Orders / PCOs
   ["GET", `/api/projects/${PROJECT_ID}/prime-contract-pcos`, "Prime PCOs list", [200, 401]],
@@ -159,6 +161,8 @@ const ENDPOINTS = [
   ["GET", `/api/projects/${PROJECT_ID}/drawings/${FAKE_UUID}/related-items`, "Drawing related items", [200, 401, 404]],
   ["GET", `/api/projects/${PROJECT_ID}/drawings/${FAKE_UUID}/change-history`, "Drawing change history", [200, 401, 404]],
   ["GET", `/api/projects/${PROJECT_ID}/drawings/${FAKE_UUID}/qr-code`, "Drawing QR code", [200, 401, 404]],
+  // Regression: upload-url must return 400 for missing fields and never 500 (caught 2026-04-21)
+  ["POST", `/api/projects/${PROJECT_ID}/drawings/upload-url`, "Drawing upload-url (no body → 400)", [400, 401]],
 
   // Specifications
   ["GET", `/api/projects/${PROJECT_ID}/specifications`, "Specifications list", [200, 401]],

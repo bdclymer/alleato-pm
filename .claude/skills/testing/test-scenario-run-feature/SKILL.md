@@ -2,11 +2,12 @@
 name: test-scenario-run-feature
 description: >
   Execute the full browser-based feature test suite for an Alleato tool using agent-browser.
-  MANDATORY: screenshots after every step for ALL cases. MANDATORY: video recording per case,
-  saved to DB for ALL failures. Evidence gate blocks marking any FAIL without attached proof.
-  Behaves like a careful human tester — navigates, interacts, asserts, persists results.
+  Screenshots at key points (setup, final, and on failure) for all cases. Video recording is
+  opt-in via --video flag; always recorded for FAIL cases. Evidence gate blocks marking any
+  FAIL without attached proof. Behaves like a careful human tester — navigates, interacts,
+  asserts, persists results.
   Use when: "run feature tests for X", "test X", "verify X works", "run all tests for X".
-argument-hint: <tool> [--case N.N.N] [--priority HIGH|MEDIUM|LOW]
+argument-hint: <tool> [--case N.N.N] [--priority HIGH|MEDIUM|LOW] [--video]
 ---
 
 # test-scenario-run-feature
@@ -15,9 +16,9 @@ argument-hint: <tool> [--case N.N.N] [--priority HIGH|MEDIUM|LOW]
 
 Execute browser-based test cases from Supabase (`test_cases`) against the live app. Every case produces:
 
-1. **Screenshots at every step** — saved to `e2e-screenshots/<run_id>/` locally and uploaded to Supabase Storage
-2. **A video recording per case** — `agent-browser record start` fires before navigation, `record stop` fires after verdict. Stored locally at `e2e-recordings/<run_id>/`. For FAIL cases, the local path is written to `test_results.video_url` immediately.
-3. **A DB result row** — no result row is written without at least one screenshot attached
+1. **Screenshots at key points** — setup entry, final assertion, and every step on `fail`. Saved to `e2e-screenshots/<run_id>/` locally; uploaded to Supabase Storage **after** each case completes (batched, not per-step).
+2. **A video recording per case** — recorded for ALL cases when `--video` flag is passed, or for FAIL cases only otherwise. `agent-browser record start` fires before navigation, `record stop` fires after verdict. Stored at `e2e-recordings/<run_id>/`.
+3. **A DB result row** — no result row is written without at least one screenshot attached.
 
 The evidence gate is **non-negotiable**: a FAIL with no screenshot and no video is an incomplete test, not a passing one.
 
@@ -120,7 +121,7 @@ agent-browser snapshot -i
 agent-browser fill @<emailInput> "$TEST_USER"
 agent-browser fill @<passwordInput> "$TEST_PASSWORD"
 agent-browser click @<submitButton>
-agent-browser wait --load networkidle
+agent-browser wait --load domcontentloaded
 ```
 
 Verify URL is NOT `/login` after redirect. If still on `/login`, stop and report auth failure.
@@ -129,63 +130,68 @@ Verify URL is NOT `/login` after redirect. If still on `/login`, stop and report
 
 ## Step 5 — Execute each case
 
-For **every** case, in order, follow this exact sequence. **There are no shortcuts. Every sub-step is mandatory.**
+For **every** case, in order, follow this exact sequence.
 
 ### 5.0 — Announce case start
 
 Print to user: `▶ Running [<test_number>] <test_name> (<priority>)`
 
-### 5.1 — Start video recording (MANDATORY — fires before ANY navigation)
+### 5.1 — Start video recording
+
+**If `--video` flag was passed OR this is a known-failing case:** always record.
+**Otherwise:** start recording anyway — it will be discarded in 5.6 if the case passes.
 
 ```bash
 VIDEO_PATH="e2e-recordings/$run_id/<test_number>.webm"
 agent-browser record start "$VIDEO_PATH"
 ```
 
-**If `record start` fails:** log the error, continue the test, note "video unavailable: <error>" — but do NOT skip the test.
+**If `record start` fails:** log the error, continue the test, note "video unavailable: <error>" — do NOT skip the test.
 
 ### 5.2 — Navigate
 
 ```bash
 agent-browser open "<case.start_url with {projectId} replaced by 67>" --headed
-agent-browser wait --load networkidle
+agent-browser wait --load domcontentloaded
 ```
+
+Use `networkidle` only when the page has known async data loading that must complete before the first interaction (e.g., a table that populates via API). Default to `domcontentloaded`.
 
 ### 5.3 — Setup steps (if `case.setup_steps` is non-empty)
 
 For each setup step N:
 - Re-snapshot: `agent-browser snapshot -i`
 - Perform the action
-- `agent-browser wait --load networkidle`
-- **Screenshot (MANDATORY):**
+- `agent-browser wait --load domcontentloaded`
+- Screenshot only at end of ALL setup steps (not per-step):
   ```bash
-  agent-browser screenshot "e2e-screenshots/$run_id/<test_number>-setup-<N>.png"
+  agent-browser screenshot "e2e-screenshots/$run_id/<test_number>-setup.png"
   ```
-- Read the screenshot with the Read tool. Confirm the page state matches what the setup step intended.
+- Read the screenshot. Confirm setup completed as expected before proceeding.
 
-### 5.4 — Execute steps (MANDATORY screenshot after every step)
+### 5.4 — Execute steps
 
 For each step N in `case.steps`:
 
 1. Re-snapshot: `agent-browser snapshot -i`
 2. Perform the action described in step N (click, fill, select, press, scroll, etc.)
-3. `agent-browser wait --load networkidle`
-4. **Screenshot (MANDATORY):**
-   ```bash
-   STEP_SCREENSHOT="e2e-screenshots/$run_id/<test_number>-step-<N>.png"
-   agent-browser screenshot "$STEP_SCREENSHOT"
-   ```
-5. **Read the screenshot with the Read tool.** State in one sentence what the screenshot shows. If the screenshot is blank or shows an error page, that is a `fail` — assign severity `critical` and continue to 5.5.
-6. **Check console:**
-   ```bash
-   agent-browser console
-   agent-browser errors
-   ```
-   Any uncaught JS exception → note it; it contributes to a `fail` outcome but does NOT stop the test.
+3. `agent-browser wait --load domcontentloaded`
+
+**Do NOT screenshot after each step during normal execution.** Screenshots are taken only at:
+- End of setup (5.3 above)
+- Final assertion (5.5 below)
+- Any step where the page shows an error or blank screen (take immediately and flag as candidate fail)
+
+**Console check — final step only:** After the last step in the case, run once:
+```bash
+agent-browser console
+agent-browser errors
+```
+Any uncaught JS exception → note it; contributes to a `fail` outcome but does NOT stop the test.
 
 ### 5.5 — Assert expected result
 
-Take a final screenshot:
+Take the final screenshot:
 
 ```bash
 FINAL_SCREENSHOT="e2e-screenshots/$run_id/<test_number>-final.png"
@@ -200,13 +206,26 @@ Read the screenshot. State what you see. Compare against `case.expected_result`:
   ```
 - If the case checks a URL, verify: `agent-browser get url`
 
-### 5.6 — Stop video recording (MANDATORY — fires after assertion, before result insert)
+**If assertion fails:** immediately take per-step screenshots for all steps in this case to build the failure record:
+```bash
+# Re-navigate and re-run steps quickly, screenshot after each
+agent-browser screenshot "e2e-screenshots/$run_id/<test_number>-step-<N>.png"
+```
+This keeps the happy path fast while ensuring fails have full evidence.
+
+### 5.6 — Stop video recording
 
 ```bash
 agent-browser record stop
 ```
 
-The video is now saved at `$VIDEO_PATH`.
+**If case PASSED and `--video` flag was NOT passed:** delete the video to save disk space:
+```bash
+rm -f "$VIDEO_PATH"
+VIDEO_PATH=""
+```
+
+**If case FAILED:** keep the video. `$VIDEO_PATH` is evidence.
 
 ### 5.7 — Classify outcome
 
@@ -250,23 +269,28 @@ values ($run_id, $case_id, $status, $severity, $notes, $video_url)
 returning id;
 ```
 
-- `$video_url`: local path `$VIDEO_PATH` for ALL runs (pass or fail). Never leave it null if recording succeeded.
-- `$notes`: include step-by-step summary, console errors (if any), DB assertion result
+- `$video_url`: local path `$VIDEO_PATH` if recording kept; null if discarded for a pass.
+- `$notes`: include step summary, console errors (if any), DB assertion result.
 
-### 5.10 — Upload screenshots to Supabase Storage
+### 5.10 — Upload screenshots to Supabase Storage (batched per case)
+
+After inserting the result row, upload all screenshots for this case in one batch:
 
 For every `.png` in `e2e-screenshots/<run_id>/<test_number>-*.png`:
 
 Upload to bucket `test-screenshots` at path `<run_id>/<test_number>/<filename>.png`.
 
-Then for each uploaded file:
+Then insert all screenshot rows in a single multi-row insert:
 
 ```sql
 insert into public.test_screenshots (result_id, storage_path, public_url, label)
-values ($result_id, $storage_path, $public_url, $label);
+values
+  ($result_id, $storage_path_1, $public_url_1, $label_1),
+  ($result_id, $storage_path_2, $public_url_2, $label_2),
+  ...;
 ```
 
-`$label` = `step-<N>`, `setup-<N>`, or `final`.
+`$label` = `setup`, `step-<N>` (fail evidence only), or `final`.
 
 **If upload fails:** log the storage error in result notes. Do NOT re-attempt more than once. The local file is evidence even if cloud upload fails.
 
@@ -278,7 +302,7 @@ Print to user: `✅ PASS [<test_number>]` or `❌ FAIL [<test_number>] — <seve
 
 ## Step 6 — Failure handling
 
-- **One case failing never stops the run.** Wrap per-case execution in try/catch. On unexpected exception: insert a `fail` result with severity `high`, note the error, stop the recording if active, screenshot current state, continue to next case.
+- **One case failing never stops the run.** On unexpected exception: insert a `fail` result with severity `high`, note the error, stop the recording if active, screenshot current state, continue to next case.
 - **If dev server dies mid-run:** mark current case `blocked`, retry health check once, if still down mark remaining cases `blocked`, proceed to Step 7.
 - **If auth session is lost:** re-login once (Step 4 again), then continue from current case.
 
@@ -324,7 +348,7 @@ Pass rate: **X%**
 
 | # | Test | Priority | Status | Severity | Evidence |
 |---|------|----------|--------|----------|----------|
-| 1.1.1 | Create record | HIGH | ✅ pass | — | [step-1](<url>) [step-2](<url>) [final](<url>) |
+| 1.1.1 | Create record | HIGH | ✅ pass | — | [final](<url>) |
 | 1.1.2 | Reject invalid input | HIGH | ❌ fail | high | [step-1](<url>) [final](<url>) [video](e2e-recordings/<run_id>/1.1.2.webm) |
 
 ## Failures
@@ -336,8 +360,8 @@ Pass rate: **X%**
 - **Severity:** <severity>
 - **Video:** `e2e-recordings/<run_id>/<test_number>.webm`
 - **Screenshots:**
-  - Step 1: <public_url>
   - Final: <public_url>
+  - Step evidence: <public_url per step>
 - **Console errors:** <list or "none">
 - **DB assertion:** <query result if applicable>
 - **Remediation hint:** <specific file/line where the fix should go>
@@ -377,6 +401,7 @@ agent-browser fill @eN "text"
 agent-browser select @eN "option"
 agent-browser press Enter
 agent-browser scroll down 500
+agent-browser wait --load domcontentloaded
 agent-browser wait --load networkidle
 agent-browser wait @eN
 agent-browser screenshot <path.png>

@@ -1,11 +1,26 @@
-export type ChangeEventStatus = "open" | "pending" | "close" | "void";
+export type ChangeEventStatus =
+  | "Open"
+  | "Pending Approval"
+  | "Approved"
+  | "Rejected"
+  | "Closed"
+  | "Void"
+  | "Converted"
+  | string;
 export type ChangeEventOrigin = "emails" | "meetings" | "rfis";
 export type ChangeEventType =
-  | "allowance"
-  | "contingency"
-  | "owner_change"
-  | "tbd"
-  | "transfer";
+  | "Owner Change"
+  | "Design Change"
+  | "Allowance"
+  | "Contingency"
+  | "Scope Gap"
+  | "TBD"
+  | "Transfer"
+  | "Unforeseen Condition"
+  | "Value Engineering"
+  | "Owner Requested"
+  | "Constructability Issue"
+  | string;
 export type ChangeReason =
   | "allowance"
   | "backcharge"
@@ -127,10 +142,12 @@ export const UOM_OPTIONS = [
 ];
 
 export const STATUS_OPTIONS = [
-  { value: "close", label: "Closed" },
-  { value: "open", label: "Open" },
-  { value: "pending", label: "Pending" },
-  { value: "void", label: "Void" },
+  { value: "Open", label: "Open" },
+  { value: "Pending Approval", label: "Pending Approval" },
+  { value: "Approved", label: "Approved" },
+  { value: "Rejected", label: "Rejected" },
+  { value: "Closed", label: "Closed" },
+  { value: "Void", label: "Void" },
 ];
 
 export const ORIGIN_OPTIONS = [
@@ -140,19 +157,25 @@ export const ORIGIN_OPTIONS = [
 ];
 
 export const TYPE_OPTIONS = [
-  { value: "allowance", label: "Allowance" },
-  { value: "contingency", label: "Contingency" },
-  { value: "owner_change", label: "Owner Change" },
-  { value: "tbd", label: "TBD" },
-  { value: "transfer", label: "Transfer" },
+  { value: "Owner Change", label: "Owner Change" },
+  { value: "Design Change", label: "Design Change" },
+  { value: "Allowance", label: "Allowance" },
+  { value: "Contingency", label: "Contingency" },
+  { value: "Scope Gap", label: "Scope Gap" },
+  { value: "TBD", label: "TBD" },
+  { value: "Transfer", label: "Transfer" },
+  { value: "Unforeseen Condition", label: "Unforeseen Condition" },
+  { value: "Value Engineering", label: "Value Engineering" },
+  { value: "Owner Requested", label: "Owner Requested" },
+  { value: "Constructability Issue", label: "Constructability Issue" },
 ];
 
 export const CHANGE_REASON_OPTIONS = [
-  { value: "allowance", label: "Allowance" },
-  { value: "back_charge", label: "Back Charge" },
-  { value: "client_request", label: "Client Request" },
-  { value: "design_development", label: "Design Development" },
-  { value: "existing_condition", label: "Existing Condition" },
+  { value: "Allowance", label: "Allowance" },
+  { value: "Back Charge", label: "Back Charge" },
+  { value: "Client Request", label: "Client Request" },
+  { value: "Design Development", label: "Design Development" },
+  { value: "Existing Condition", label: "Existing Condition" },
 ];
 
 export const SCOPE_OPTIONS = [

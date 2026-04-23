@@ -3,7 +3,7 @@
 
 export type SuiteType = "smoke" | "feature";
 
-export type TestStatus = "pass" | "fail" | "skip" | "not_tested";
+export type TestStatus = "pass" | "fail" | "skip" | "not_tested" | "fixed";
 
 export interface Suite {
   id: string;

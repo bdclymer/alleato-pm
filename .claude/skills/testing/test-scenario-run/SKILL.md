@@ -42,3 +42,4 @@ Run smoke first (full completion), then run feature. Two separate `test_runs` ro
 
 - Smoke: `.claude/skills/testing/test-scenario-run-smoke/SKILL.md`
 - Feature: `.claude/skills/testing/test-scenario-run-feature/SKILL.md`
+- Fix: `.claude/skills/testing/test-scenario-fix/SKILL.md` — run after feature/smoke to fix failures
