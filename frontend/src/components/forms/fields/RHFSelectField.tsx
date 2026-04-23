@@ -48,6 +48,7 @@ export function RHFSelectField<TFieldValues extends FieldValues>({
       render={({ field }) => (
         <FormItem>
           <FormLabel>{label}</FormLabel>
+          {description && <FormDescription>{description}</FormDescription>}
 
           <Select
             value={field.value ?? ""}
@@ -69,7 +70,6 @@ export function RHFSelectField<TFieldValues extends FieldValues>({
             </SelectContent>
           </Select>
 
-          {description && <FormDescription>{description}</FormDescription>}
           <FormMessage />
         </FormItem>
       )}

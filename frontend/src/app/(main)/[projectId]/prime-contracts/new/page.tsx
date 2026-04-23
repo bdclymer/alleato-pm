@@ -56,6 +56,7 @@ export default function NewContractPage() {
 
   const handleSubmit = async (data: ContractFormData) => {
     setIsSaving(true);
+    let createdContractId: string | null = null;
     try {
       const sovItems = (data.sovItems || []).filter((item) => !item.isGroup);
       const sovTotal = sovItems.reduce(
@@ -105,9 +106,12 @@ export default function NewContractPage() {
         }),
       });
 
+      createdContractId = newContract.id;
+
       if (sovItems.length > 0) {
         // Sequential inserts to avoid the UNIQUE(contract_id, line_number) constraint
         // race condition that occurs when Promise.all fires all POSTs simultaneously.
+        const sovErrors: string[] = [];
         for (let index = 0; index < sovItems.length; index++) {
           const item = sovItems[index];
           const quantity =
@@ -118,28 +122,63 @@ export default function NewContractPage() {
             data.accountingMethod === "unit_quantity"
               ? item.unitCost ?? 0
               : item.amount || 0;
-          await apiFetchWithTimeout(
-            `/api/projects/${projectId}/contracts/${newContract.id}/line-items`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                line_number: index + 1,
-                description: item.description || `Line ${index + 1}`,
-                budget_code_id: item.budgetCodeId || null,
-                quantity,
-                unit_cost: unitCost,
-                unit_of_measure: item.unitOfMeasure || null,
-              }),
-            },
-          );
+          try {
+            await apiFetchWithTimeout(
+              `/api/projects/${projectId}/contracts/${newContract.id}/line-items`,
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  line_number: index + 1,
+                  description: item.description || `Line ${index + 1}`,
+                  // budget_code_id must be a project_cost_codes UUID or null.
+                  // Empty string is treated as null to avoid FK validation errors.
+                  budget_code_id: item.budgetCodeId || null,
+                  quantity,
+                  unit_cost: unitCost,
+                  unit_of_measure: item.unitOfMeasure || null,
+                }),
+              },
+            );
+          } catch (lineErr) {
+            sovErrors.push(
+              `Line ${index + 1} (${item.description || "untitled"}): ${lineErr instanceof Error ? lineErr.message : "Unknown error"}`,
+            );
+          }
         }
+
+        void warmContractDetailSurface(newContract.id);
+
+        if (sovErrors.length > 0) {
+          // Contract was saved. Some SOV items failed — redirect to the contract
+          // detail so the user can fix line items there rather than retrying the
+          // whole create form (which would produce a duplicate contract).
+          toast.warning(
+            `Contract created, but ${sovErrors.length} line item${sovErrors.length !== 1 ? "s" : ""} failed to save. You can add them from the contract page.`,
+            { duration: 8000 },
+          );
+          router.push(`/${projectId}/prime-contracts/${newContract.id}`);
+          return;
+        }
+      } else {
+        void warmContractDetailSurface(newContract.id);
       }
 
-      void warmContractDetailSurface(newContract.id);
       toast.success("Prime contract created");
       router.push(`/${projectId}/prime-contracts/${newContract.id}`);
     } catch (err) {
+      // If the contract was already committed before the error, redirect to it
+      // instead of leaving the user on the create form where they would produce a duplicate.
+      if (createdContractId) {
+        toast.warning(
+          "Contract was saved, but an unexpected error occurred. Redirecting to the contract page.",
+          { duration: 8000 },
+        );
+        void warmContractDetailSurface(createdContractId);
+        router.push(`/${projectId}/prime-contracts/${createdContractId}`);
+        return;
+      }
+
       // "Failed to fetch" means the HTTP connection dropped (e.g. dev server hot-reload)
       // even though the INSERT may have already committed. Check if it was actually saved.
       if (err instanceof TypeError && err.message.toLowerCase().includes("failed to fetch")) {

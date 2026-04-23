@@ -226,6 +226,9 @@ export function SpecificationUploadDialog({
               render={({ field }) => (
                 <FormItem className="flex flex-col">
                   <FormLabel>Specification Set *</FormLabel>
+                  <FormDescription>
+                    Search an existing set or type a new set name.
+                  </FormDescription>
                   <Popover open={setPickerOpen} onOpenChange={setSetPickerOpen}>
                     <PopoverTrigger asChild>
                       <FormControl>
@@ -294,9 +297,6 @@ export function SpecificationUploadDialog({
                       </Command>
                     </PopoverContent>
                   </Popover>
-                  <FormDescription>
-                    Search an existing set or type a new set name.
-                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -384,15 +384,15 @@ export function SpecificationUploadDialog({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Default Revision Instructions</FormLabel>
+                    <FormDescription>
+                      Enter your specification set default revision number or letter, if applicable.
+                    </FormDescription>
                     <FormControl>
                       <Input
                         placeholder="Enter your specification set default revision number or letter"
                         {...field}
                       />
                     </FormControl>
-                    <FormDescription>
-                      Enter your specification set default revision number or letter, if applicable.
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -404,15 +404,15 @@ export function SpecificationUploadDialog({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Number to Ignore</FormLabel>
+                    <FormDescription>
+                      Enter any number here that should be ignored as a spec section number.
+                    </FormDescription>
                     <FormControl>
                       <Input
                         placeholder="Enter a number to ignore as a spec section number"
                         {...field}
                       />
                     </FormControl>
-                    <FormDescription>
-                      Enter any number here that should be ignored as a spec section number.
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -424,6 +424,9 @@ export function SpecificationUploadDialog({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Specifications Language</FormLabel>
+                    <FormDescription>
+                      Only CSI MasterFormat supports languages other than English.
+                    </FormDescription>
                     <Select
                       value={field.value}
                       onValueChange={field.onChange}
@@ -446,9 +449,6 @@ export function SpecificationUploadDialog({
                         </SelectItem>
                       </SelectContent>
                     </Select>
-                    <FormDescription>
-                      Only CSI MasterFormat supports languages other than English.
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}

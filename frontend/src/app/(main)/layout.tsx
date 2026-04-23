@@ -61,7 +61,11 @@ export default function MainLayout({
                 {...feedbackTargetProps("app.main-content")}
               >
                 {children}
-                {!isDrawingViewer && <SiteFooter />}
+                {!isDrawingViewer && (
+                  <div className="mt-auto">
+                    <SiteFooter />
+                  </div>
+                )}
               </main>
               <ProcoreReferencePanel />
             </div>

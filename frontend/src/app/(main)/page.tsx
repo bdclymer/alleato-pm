@@ -17,6 +17,7 @@ import {
   MoreVertical,
   Clock3,
   Tag,
+  Eye,
   Pencil,
   Trash2,
 } from "lucide-react";
@@ -672,24 +673,6 @@ export default function PortfolioPage() {
   const activeFilters = tableState.activeFilters;
 
   const projectTabs = React.useMemo(() => {
-    const countByScope = projects.reduce(
-      (acc, project) => {
-        const phase = (project.phase ?? "").toLowerCase();
-        const type = (project.type ?? "").toLowerCase();
-        const isCurrent = phase === "current";
-        const isInternal = type === "internal";
-        if (isCurrent && !isInternal) {
-          acc.client += 1;
-        }
-        if (isCurrent && isInternal) {
-          acc.internal += 1;
-        }
-        acc.all += 1;
-        return acc;
-      },
-      { all: 0, client: 0, internal: 0 },
-    );
-
     const buildScopeHref = (scope: PortfolioScope) => {
       const params = new URLSearchParams(searchParams.toString());
       params.set("page", "1");
@@ -708,19 +691,16 @@ export default function PortfolioPage() {
       {
         label: "Clients",
         href: buildScopeHref("client"),
-        count: countByScope.client,
         isActive: activeScope === "client",
       },
       {
         label: "Internal",
         href: buildScopeHref("internal"),
-        count: countByScope.internal,
         isActive: activeScope === "internal",
       },
       {
         label: "All",
         href: buildScopeHref("all"),
-        count: countByScope.all,
         isActive: activeScope === "all",
       },
     ];
@@ -1014,12 +994,18 @@ export default function PortfolioPage() {
     <>
       <UnifiedTablePage
       header={{
-        title: "Portfolio",
+        title: "Projects",
         description: "All projects across your organization",
+        mobileActionsInline: true,
         actions: (
-          <Button size="sm" onClick={handleCreateProject}>
-            <Plus />
-            New Project
+          <Button
+            size="sm"
+            onClick={handleCreateProject}
+            aria-label="Create new project"
+            className="h-8 w-8 p-0 sm:h-9 sm:w-auto sm:px-3"
+          >
+            <Plus className="h-4 w-4" />
+            <span className="sr-only sm:not-sr-only sm:ml-2">New Project</span>
           </Button>
         ),
       }}
@@ -1067,6 +1053,10 @@ export default function PortfolioPage() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => navigateToProject(item)}>
+                <Eye className="mr-2 h-4 w-4" />
+                View
+              </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => {
                   setEditingProject(item);

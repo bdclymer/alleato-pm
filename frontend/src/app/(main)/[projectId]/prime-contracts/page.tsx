@@ -487,8 +487,8 @@ export default function ProjectContractsPage(): ReactElement {
             <div className="flex items-center gap-2">
               <Button
                 size="icon"
-                variant="outline"
-                className="h-8 w-8 border-input bg-background text-foreground hover:bg-muted hover:text-foreground"
+                variant="ghost"
+                className="h-8 w-8 text-foreground hover:bg-muted hover:text-foreground"
                 onClick={() => router.push(`/${projectId}/prime-contracts/configure`)}
                 aria-label="Configure prime contracts"
               >

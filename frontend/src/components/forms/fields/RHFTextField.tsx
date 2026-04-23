@@ -38,6 +38,7 @@ export function RHFTextField<TFieldValues extends FieldValues>({
       render={({ field }) => (
         <FormItem>
           <FormLabel>{label}</FormLabel>
+          {description ? <FormDescription>{description}</FormDescription> : null}
           <FormControl>
             <Input
               {...field}
@@ -48,7 +49,6 @@ export function RHFTextField<TFieldValues extends FieldValues>({
               disabled={disabled}
             />
           </FormControl>
-          {description ? <FormDescription>{description}</FormDescription> : null}
           <FormMessage />
         </FormItem>
       )}

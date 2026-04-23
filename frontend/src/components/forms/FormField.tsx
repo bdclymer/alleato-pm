@@ -50,9 +50,9 @@ export function FormField({
           {label}
           {required && <span className="ml-1 text-destructive">*</span>}
         </label>
+        {hint && !error && <p className="mt-1 text-sm text-muted-foreground">{hint}</p>}
         <div className="mt-1">
           {children}
-          {hint && !error && <p className="mt-2 text-sm text-muted-foreground">{hint}</p>}
           {error && <p className="mt-2 text-sm text-destructive" data-field-error="">{error}</p>}
         </div>
       </div>

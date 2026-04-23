@@ -502,11 +502,6 @@ function BudgetPageContent() {
     fetchBudgetDetails,
   ]);
 
-  const handleAnalyzeVariance = () => {
-    // TODO: Implement variance analysis
-    toast.info("Variance analysis coming soon");
-  };
-
   const handleToggleFullscreen = React.useCallback(async () => {
     try {
       if (document.fullscreenElement) {
@@ -961,7 +956,7 @@ function BudgetPageContent() {
 
   return (
     <>
-      <div className="px-4 sm:px-6 lg:px-8">
+      <div className="px-4 pt-0.5 sm:px-6 sm:pt-1 lg:px-8">
         <BudgetPageHeader
           title="Budget"
           isLocked={isLocked}
@@ -996,7 +991,6 @@ function BudgetPageContent() {
               selectedGroup={selectedGroup}
               onSnapshotChange={setSelectedSnapshot}
               onGroupChange={setSelectedGroup}
-              onAnalyzeVariance={handleAnalyzeVariance}
               onToggleFullscreen={handleToggleFullscreen}
               onQuickFilterChange={handleQuickFilterChange}
               activeQuickFilter={quickFilter}

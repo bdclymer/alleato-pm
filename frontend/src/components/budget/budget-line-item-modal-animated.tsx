@@ -19,9 +19,9 @@ function ModalController({
     <BudgetOverlay
       open={open}
       onOpenChange={onOpenChange}
-      variant="sheet"
+      variant="dialog"
       size="xl"
-      className="flex h-full flex-col"
+      className="flex flex-col"
     >
       <BudgetLineItemForm
         projectId={projectId}

@@ -47,6 +47,7 @@ export function RHFNumberField<TFieldValues extends FieldValues>({
       render={({ field }) => (
         <FormItem>
           <FormLabel>{label}</FormLabel>
+          {description && <FormDescription>{description}</FormDescription>}
 
           <FormControl>
             <Input
@@ -64,7 +65,6 @@ export function RHFNumberField<TFieldValues extends FieldValues>({
             />
           </FormControl>
 
-          {description && <FormDescription>{description}</FormDescription>}
           <FormMessage />
         </FormItem>
       )}

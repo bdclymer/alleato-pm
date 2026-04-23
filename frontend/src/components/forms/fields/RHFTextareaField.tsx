@@ -35,6 +35,7 @@ export function RHFTextareaField<TFieldValues extends FieldValues>({
       render={({ field }) => (
         <FormItem>
           <FormLabel>{label}</FormLabel>
+          {description ? <FormDescription>{description}</FormDescription> : null}
           <FormControl>
             <Textarea
               {...field}
@@ -44,7 +45,6 @@ export function RHFTextareaField<TFieldValues extends FieldValues>({
               disabled={disabled}
             />
           </FormControl>
-          {description ? <FormDescription>{description}</FormDescription> : null}
           <FormMessage />
         </FormItem>
       )}

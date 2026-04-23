@@ -23,6 +23,10 @@ export const POST = withApiGuardrails<{ projectId: string; viewId: string }>(
       return NextResponse.json({ error: "Invalid project ID" }, { status: 400 });
     }
 
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(viewId)) {
+      return NextResponse.json({ error: "Invalid view ID" }, { status: 404 });
+    }
+
     const guard = await requirePermission(projectIdNum, "budget", "write");
     if (guard.denied) return guard.response;
     const body: CloneBudgetViewRequest = await request.json();

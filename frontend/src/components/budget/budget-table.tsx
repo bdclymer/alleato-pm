@@ -502,7 +502,29 @@ export function BudgetTable({
         const hasChildren = Boolean(
           row.original.children && row.original.children.length > 0);
         if (hasChildren) {
-          return null;
+          return (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={(e) => {
+                e.stopPropagation();
+                row.toggleExpanded();
+              }}
+              className="h-6 w-6 hover:bg-muted"
+              aria-label={
+                row.getIsExpanded()
+                  ? `Collapse ${row.original.description}`
+                  : `Expand ${row.original.description}`
+              }
+            >
+              {row.getIsExpanded() ? (
+                <ChevronDown className="w-4 h-4 text-muted-foreground" />
+              ) : (
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              )}
+            </Button>
+          );
         }
         return (
           <div onClick={(e) => e.stopPropagation()}>
@@ -513,44 +535,6 @@ export function BudgetTable({
               className="h-4 w-4"
             />
           </div>
-        );
-      },
-      size: 32,
-      minSize: 32,
-      maxSize: 32,
-      enableResizing: false,
-    },
-    {
-      id: "expander",
-      header: () => null,
-      cell: ({ row }) => {
-        const canExpand =
-          row.original.children && row.original.children.length > 0;
-        if (!canExpand) {
-          return <div className="w-4" />;
-        }
-        return (
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={(e) => {
-              e.stopPropagation();
-              row.toggleExpanded();
-            }}
-            className="h-6 w-6 hover:bg-muted"
-            aria-label={
-              row.getIsExpanded()
-                ? `Collapse ${row.original.description}`
-                : `Expand ${row.original.description}`
-            }
-          >
-            {row.getIsExpanded() ? (
-              <ChevronDown className="w-4 h-4 text-muted-foreground" />
-            ) : (
-              <ChevronRight className="w-4 h-4 text-muted-foreground" />
-            )}
-          </Button>
         );
       },
       size: 32,
@@ -1082,7 +1066,7 @@ export function BudgetTable({
   const hasRows = rows.length > 0;
   const emptyRowCount = hasRows ? 0 : 8;
   const visibleColumnCount = table.getVisibleLeafColumns().length;
-  const trailingInlineCreateColumnSpan = Math.max(0, visibleColumnCount - 5);
+  const trailingInlineCreateColumnSpan = Math.max(0, visibleColumnCount - 4);
   const tableWidth = table.getTotalSize();
   const getColumnSizeStyle = (columnId: string) => {
     const column = table.getColumn(columnId);
@@ -1111,9 +1095,7 @@ export function BudgetTable({
                           "relative bg-background py-2 text-center text-[11px] font-semibold text-foreground",
                           header.column.id === "select"
                             ? "pl-2 pr-1"
-                            : header.column.id === "expander"
-                              ? "px-1"
-                              : "px-1.5",
+                            : "px-1.5",
                         )}
                         style={getColumnSizeStyle(header.column.id)}
                       >
@@ -1172,9 +1154,7 @@ export function BudgetTable({
                               "py-2 text-sm",
                               cell.column.id === "select"
                                 ? "pl-2 pr-1"
-                                : cell.column.id === "expander"
-                                  ? "px-1"
-                                  : "px-1.5",
+                                : "px-1.5",
                               row.depth > 0 && "text-foreground",
                               isDataColumn && "group/cell",
                             )}
@@ -1225,9 +1205,6 @@ export function BudgetTable({
               <TableRow className="bg-primary/5 border-b border-border">
                 <TableCell className="py-2 pl-2 pr-1">
                   {/* Empty checkbox cell */}
-                </TableCell>
-                <TableCell className="py-2 px-1">
-                  {/* Empty expander cell */}
                 </TableCell>
                 <TableCell className="py-2 px-2">
                   <div className="flex items-center gap-2">
@@ -1324,7 +1301,6 @@ export function BudgetTable({
             <TableFooter className="bg-muted/50 border-t">
               <tr className="bg-muted/50 hover:bg-muted/50 transition-colors">
                 <td className="py-4 pl-2 pr-1" style={getColumnSizeStyle("select")} />
-                <td className="py-4 px-1" style={getColumnSizeStyle("expander")} />
                 <td
                   className="py-4 px-2 text-sm font-semibold text-foreground"
                   style={getColumnSizeStyle("description")}

@@ -118,6 +118,7 @@ export interface UnifiedTablePageProps<T> {
     description?: string;
     actions?: ReactNode;
     variant?: "default" | "compact";
+    mobileActionsInline?: boolean;
   };
   tabs?: TabItem[];
   toolbar: {
@@ -738,23 +739,50 @@ export function UnifiedTablePage<T>({
     [draggedRowId, rowOrderedItems, table],
   );
 
+  const visibleLeftPinnedColumnIds = React.useMemo(
+    () =>
+      orderedVisibleColumns
+        .map((column) => column.id)
+        .filter((columnId) => columnPinning.left.includes(columnId)),
+    [columnPinning.left, orderedVisibleColumns],
+  );
+  const visibleRightPinnedColumnIds = React.useMemo(
+    () =>
+      orderedVisibleColumns
+        .map((column) => column.id)
+        .filter((columnId) => columnPinning.right.includes(columnId)),
+    [columnPinning.right, orderedVisibleColumns],
+  );
+  const lastLeftPinnedColumnId = visibleLeftPinnedColumnIds.at(-1);
+  const firstRightPinnedColumnId = visibleRightPinnedColumnIds[0];
+  const selectionColumnNeedsPinnedBoundary =
+    hasRowSelection && !lastLeftPinnedColumnId && orderedVisibleColumns.length > 0;
+
   const getPinnedStyle = React.useCallback(
     (columnId: string): React.CSSProperties | undefined => {
       if (!resolvedFeatures.enableColumnPinning) return undefined;
       if (columnPinning.left.includes(columnId)) {
+        const isPinnedBoundary = columnId === lastLeftPinnedColumnId;
         return {
           position: "sticky",
           left: leftPinnedOffsets[columnId] ?? 0,
           zIndex: 2,
           background: "hsl(var(--background))",
+          boxShadow: isPinnedBoundary
+            ? "inset -1px 0 0 hsl(var(--border)), 6px 0 8px -8px rgba(15,23,42,0.35)"
+            : undefined,
         };
       }
       if (columnPinning.right.includes(columnId)) {
+        const isPinnedBoundary = columnId === firstRightPinnedColumnId;
         return {
           position: "sticky",
           right: rightPinnedOffsets[columnId] ?? 0,
           zIndex: 2,
           background: "hsl(var(--background))",
+          boxShadow: isPinnedBoundary
+            ? "inset 1px 0 0 hsl(var(--border)), -6px 0 8px -8px rgba(15,23,42,0.35)"
+            : undefined,
         };
       }
       return undefined;
@@ -762,6 +790,8 @@ export function UnifiedTablePage<T>({
     [
       columnPinning.left,
       columnPinning.right,
+      firstRightPinnedColumnId,
+      lastLeftPinnedColumnId,
       leftPinnedOffsets,
       resolvedFeatures.enableColumnPinning,
       rightPinnedOffsets,
@@ -896,7 +926,9 @@ export function UnifiedTablePage<T>({
 
   const tableToolbar = (
     <TableToolbar
-      className={cn("w-full lg:w-auto", toolbarInlineWithHeader && "py-0")}
+      className={cn(
+        toolbarInlineWithHeader ? "w-auto py-0" : "w-full lg:w-auto",
+      )}
       totalItems={toolbar.totalItems}
       filteredItems={toolbar.filteredItems}
       selectedCount={toolbar.selectedCount}
@@ -933,6 +965,7 @@ export function UnifiedTablePage<T>({
       title={header.title}
       description={isCompactDensity ? undefined : header.description}
       variant={header.variant}
+      mobileActionsInline={header.mobileActionsInline}
       className={cn("px-0 sm:px-0 lg:px-0", isCompactDensity && "[&>div]:pt-2 [&>div]:pb-2")}
       actions={
         toolbarInlineWithHeader ? (
@@ -1077,6 +1110,10 @@ export function UnifiedTablePage<T>({
                         position: "sticky",
                         left: 0,
                         zIndex: 3,
+                        background: "hsl(var(--card))",
+                        boxShadow: selectionColumnNeedsPinnedBoundary
+                          ? "inset -1px 0 0 hsl(var(--border)), 6px 0 8px -8px rgba(15,23,42,0.35)"
+                          : undefined,
                       }}
                     >
                       <div
@@ -1155,7 +1192,7 @@ export function UnifiedTablePage<T>({
                                   type="button"
                                   variant="ghost"
                                   className={cn(
-                                    "h-auto gap-1.5 p-0 font-medium uppercase tracking-wide",
+                                    "h-auto gap-1.5 p-0 has-[>svg]:px-0 font-medium uppercase tracking-wide",
                                     "text-xs",
                                     "text-muted-foreground",
                                     headerAlignment === "left" ? "justify-start" : "justify-center",
@@ -1343,6 +1380,9 @@ export function UnifiedTablePage<T>({
                           left: 0,
                           zIndex: 2,
                           background: "hsl(var(--background))",
+                          boxShadow: selectionColumnNeedsPinnedBoundary
+                            ? "inset -1px 0 0 hsl(var(--border)), 6px 0 8px -8px rgba(15,23,42,0.35)"
+                            : undefined,
                         }}
                         onClick={(event) => event.stopPropagation()}
                       >

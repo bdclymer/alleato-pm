@@ -122,6 +122,7 @@ export function RHFDateField<TFieldValues extends FieldValues>({
         return (
           <FormItem>
             <FormLabel>{label}</FormLabel>
+            {description && <FormDescription>{description}</FormDescription>}
 
             {isMobile ? (
               <Drawer open={open} onOpenChange={setOpen}>
@@ -173,10 +174,9 @@ export function RHFDateField<TFieldValues extends FieldValues>({
                     </div>
                   )}
                 </PopoverContent>
-              </Popover>
+                </Popover>
             )}
 
-            {description && <FormDescription>{description}</FormDescription>}
             <FormMessage />
           </FormItem>
         )

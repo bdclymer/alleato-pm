@@ -136,6 +136,7 @@ export function RHFComboboxField<TFieldValues extends FieldValues>({
         return (
           <FormItem className="flex flex-col">
             <FormLabel>{label}</FormLabel>
+            {description && <FormDescription>{description}</FormDescription>}
 
             {isMobile ? (
               <Drawer open={open} onOpenChange={setOpen}>
@@ -153,10 +154,9 @@ export function RHFComboboxField<TFieldValues extends FieldValues>({
                 <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
                   {optionsList}
                 </PopoverContent>
-              </Popover>
+                </Popover>
             )}
 
-            {description && <FormDescription>{description}</FormDescription>}
             <FormMessage />
           </FormItem>
         )

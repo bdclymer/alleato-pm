@@ -107,7 +107,7 @@ export function BudgetPageHeader({
 
   const titleContent = (
     <div className="flex items-center gap-2">
-      <h1 className="text-2xl sm:text-3xl lg:text-3xl font-semibold">{title}</h1>
+      <h1 className="text-2xl sm:text-3xl lg:text-[2rem] font-medium text-foreground/90 break-words">{title}</h1>
       {isLocked && (
         <Badge variant="secondary" className="flex items-center gap-1">
           <Lock className="w-3 h-3" />
@@ -294,8 +294,9 @@ export function BudgetPageHeader({
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
-              variant="outline"
+              variant="ghost"
               size="icon"
+              className="text-foreground hover:bg-muted hover:text-foreground"
               onClick={onResendToERP}
               aria-label="Sync to ERP"
             >
@@ -309,8 +310,9 @@ export function BudgetPageHeader({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
-              variant="outline"
+              variant="ghost"
               size="icon"
+              className="text-foreground hover:bg-muted hover:text-foreground"
               aria-label="Export"
               title="Export"
             >

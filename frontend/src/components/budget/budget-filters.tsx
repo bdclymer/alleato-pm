@@ -1,6 +1,6 @@
 "use client";
 
-import { Maximize2, Minimize2, SlidersHorizontal, Sigma } from "lucide-react";
+import { Maximize2, Minimize2, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
@@ -32,7 +32,6 @@ interface BudgetFiltersProps {
   selectedGroup: string;
   onSnapshotChange: (snapshotId: string) => void;
   onGroupChange: (groupId: string) => void;
-  onAnalyzeVariance?: () => void;
   onToggleFullscreen?: () => void;
   onQuickFilterChange?: (filter: QuickFilterType) => void;
   activeQuickFilter?: QuickFilterType;
@@ -46,7 +45,6 @@ export function BudgetFilters({
   selectedGroup,
   onSnapshotChange,
   onGroupChange,
-  onAnalyzeVariance,
   onToggleFullscreen,
   onQuickFilterChange,
   activeQuickFilter = "all",
@@ -175,21 +173,6 @@ export function BudgetFilters({
           </DropdownMenuContent>
         </DropdownMenu>
         <TooltipContent>View options</TooltipContent>
-      </Tooltip>
-
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onAnalyzeVariance}
-            aria-label="Analyze variance"
-            title="Analyze variance"
-          >
-            <Sigma />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>Analyze variance</TooltipContent>
       </Tooltip>
 
       <Tooltip>

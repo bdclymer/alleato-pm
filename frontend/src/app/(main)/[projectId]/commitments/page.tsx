@@ -346,6 +346,9 @@ export default function ProjectCommitmentsPage(): ReactElement {
     };
   }, [activeFilters.tab, projectId]);
 
+  const isRecycleBinTab = activeFilters.tab === "recycle-bin";
+  const isChangeOrdersTab = activeFilters.tab === "change-orders";
+
   const {
     data: response,
     isLoading,

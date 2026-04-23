@@ -19,6 +19,10 @@ export const GET = withApiGuardrails<{ projectId: string; lineId: string }>(
       );
     }
 
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(lineId)) {
+      return NextResponse.json({ error: "Invalid line ID" }, { status: 404 });
+    }
+
     // Permission check: reading budget line history requires "read" on budget
     const guard = await requirePermission(projectIdNum, "budget", "read");
     if (guard.denied) return guard.response;

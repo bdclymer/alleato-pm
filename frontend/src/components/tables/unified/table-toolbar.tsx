@@ -36,6 +36,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -559,7 +560,9 @@ export function TableToolbar({
   };
 
   const [isMobile, setIsMobile] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [mobilePanelOpen, setMobilePanelOpen] = useState(false);
+  const mobileSearchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -571,6 +574,11 @@ export function TableToolbar({
     mediaQuery.addEventListener("change", apply);
     return () => mediaQuery.removeEventListener("change", apply);
   }, []);
+
+  useEffect(() => {
+    if (!mobileSearchOpen) return;
+    mobileSearchInputRef.current?.focus();
+  }, [mobileSearchOpen]);
 
   const hasRightActions =
     (feat.filters && filters.length > 0) ||
@@ -585,53 +593,38 @@ export function TableToolbar({
   if (isMobile) {
     return (
       <div className={cn("py-2", className)}>
-        <div className="flex items-center gap-2">
-          {feat.search && (
-            <div className="relative min-w-0 flex-1">
-              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={searchValue}
-                onChange={(event) => onSearchChange(event.target.value)}
-                placeholder={searchPlaceholder}
-                className="h-9 pl-8 pr-8 text-sm"
-                aria-label="Search table"
+        <div className="flex w-full items-center justify-end gap-2">
+          {feat.views && (
+            <div className="shrink-0">
+              <ViewSwitcher
+                currentView={currentView}
+                onViewChange={onViewChange}
+                enabledViews={enabledViews}
               />
-              {searchValue ? (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute right-0 top-0 h-9 w-9"
-                  onClick={() => onSearchChange("")}
-                  aria-label="Clear search"
-                >
-                  <X className="h-3 w-3" />
-                </Button>
-              ) : null}
             </div>
           )}
 
-          <Sheet open={mobilePanelOpen} onOpenChange={setMobilePanelOpen}>
-            <SheetTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className="relative h-9 w-9 shrink-0 p-0"
-                aria-label="Open table controls"
-              >
-                <SlidersHorizontal className="h-4 w-4" />
-                <TableCountIndicator count={activeFilterCount} className="absolute -right-1 -top-1" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-80 p-0 sm:w-90">
-              <SheetHeader className="border-b px-4 py-4">
-                <SheetTitle>Table Controls</SheetTitle>
-              </SheetHeader>
-              <div className="max-h-[calc(100vh-88px)] space-y-5 overflow-y-auto px-4 py-4">
-                <div className="space-y-2">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Search</p>
+          {feat.search && (
+            <div className="shrink-0">
+              <Dialog open={mobileSearchOpen} onOpenChange={setMobileSearchOpen}>
+                <DialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 p-0"
+                    aria-label="Open search"
+                  >
+                    <Search className="h-4 w-4" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Search</DialogTitle>
+                  </DialogHeader>
                   <div className="relative">
                     <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
+                      ref={mobileSearchInputRef}
                       value={searchValue}
                       onChange={(event) => onSearchChange(event.target.value)}
                       placeholder={searchPlaceholder}
@@ -650,19 +643,28 @@ export function TableToolbar({
                       </Button>
                     ) : null}
                   </div>
-                </div>
+                </DialogContent>
+              </Dialog>
+            </div>
+          )}
 
-                {feat.views && (
-                  <div className="space-y-2">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">View</p>
-                    <ViewSwitcher
-                      currentView={currentView}
-                      onViewChange={onViewChange}
-                      enabledViews={enabledViews}
-                    />
-                  </div>
-                )}
-
+          <Sheet open={mobilePanelOpen} onOpenChange={setMobilePanelOpen}>
+            <SheetTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="relative h-9 w-9 shrink-0 p-0"
+                aria-label="Open table controls"
+              >
+                <SlidersHorizontal className="h-4 w-4" />
+                <TableCountIndicator count={activeFilterCount} className="absolute -right-1 -top-1" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-full max-w-none p-0">
+              <SheetHeader className="border-b px-4 py-4">
+                <SheetTitle>Table Controls</SheetTitle>
+              </SheetHeader>
+              <div className="max-h-[calc(100vh-88px)] space-y-5 overflow-y-auto px-4 py-4">
                 {feat.filters && filters.length > 0 && (
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">

@@ -14033,7 +14033,7 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
-          pco_id: string
+          pco_id: number
           pco_type: string
           quantity: number | null
           sort_order: number | null
@@ -14049,7 +14049,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
-          pco_id: string
+          pco_id: number
           pco_type: string
           quantity?: number | null
           sort_order?: number | null
@@ -14065,7 +14065,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
-          pco_id?: string
+          pco_id?: number
           pco_type?: string
           quantity?: number | null
           sort_order?: number | null
@@ -14093,6 +14093,13 @@ export type Database = {
             columns: ["change_event_line_item_id"]
             isOneToOne: false
             referencedRelation: "change_event_line_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pco_line_items_pco_id_fkey"
+            columns: ["pco_id"]
+            isOneToOne: false
+            referencedRelation: "potential_change_orders"
             referencedColumns: ["id"]
           },
         ]

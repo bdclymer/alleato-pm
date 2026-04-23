@@ -41,6 +41,7 @@ interface PageHeaderProps {
   // Layout options
   variant?: "default" | "executive" | "compact" | "budget";
   actions?: React.ReactNode;
+  mobileActionsInline?: boolean;
   className?: string;
 
   // Navigation
@@ -99,6 +100,7 @@ export function PageHeader({
   description,
   variant = "default",
   actions,
+  mobileActionsInline = false,
   className,
   breadcrumbs,
   showProjectName = false,
@@ -194,7 +196,14 @@ export function PageHeader({
         ) : null}
 
         {/* Title and Actions */}
-        <div className="flex flex-col gap-2 pt-1.5 pb-3 min-w-0 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+        <div
+          className={cn(
+            "min-w-0 pt-1.5 pb-3",
+            mobileActionsInline
+              ? "flex items-center justify-between gap-3"
+              : "flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4",
+          )}
+        >
           {/* Left: title + badges (desktop only) */}
           <div className="min-w-0 flex-1">
             {/* Project Name */}
@@ -232,9 +241,14 @@ export function PageHeader({
 
           {/* Right: actions + badges below (mobile) */}
           {(actions || showExportButton || statusBadge) && (
-            <div className="flex flex-col gap-2 shrink-0 sm:items-end">
+            <div
+              className={cn(
+                "shrink-0",
+                mobileActionsInline ? "flex items-center justify-end" : "flex flex-col gap-2 sm:items-end",
+              )}
+            >
               {(actions || showExportButton) && (
-                <div className="flex flex-wrap items-center gap-2">
+                <div className={cn("flex items-center gap-2", mobileActionsInline ? "justify-end" : "flex-wrap")}>
                   {showExportButton && (onExportCSV || onExportPDF) && (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>

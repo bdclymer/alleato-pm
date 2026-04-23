@@ -5,6 +5,7 @@ import {
   FormDescription,
   FormField,
   FormItem,
+  FormLabel,
   FormMessage,
 } from "@/components/ui/form"
 
@@ -46,8 +47,11 @@ export function RHFMoneyField<TFieldValues extends FieldValues>({
       name={name}
       render={({ field }) => (
         <FormItem>
+          <FormLabel>{label}</FormLabel>
+          {description && <FormDescription>{description}</FormDescription>}
           <FormControl>
             <MoneyField
+              id={`${String(name)}-money-field`}
               label={label}
               value={typeof field.value === "number" ? field.value : undefined}
               onChange={(val) => field.onChange(val as never)}
@@ -56,10 +60,10 @@ export function RHFMoneyField<TFieldValues extends FieldValues>({
               disabled={disabled}
               allowNegative={allowNegative}
               showCurrency={showCurrency}
+              inline
             />
           </FormControl>
 
-          {description && <FormDescription>{description}</FormDescription>}
           <FormMessage />
         </FormItem>
       )}

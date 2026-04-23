@@ -626,6 +626,7 @@ export function ContractForm({
       return;
     }
 
+    let unmappedCount = 0;
     const mapped: SOVLineItem[] = importedItems.map((raw, index) => {
       const item = raw as {
         id?: string;
@@ -637,16 +638,28 @@ export function ContractForm({
         costType?: string;
       };
 
-      const label = item.costCode
+      const fallbackLabel = item.costCode
         ? item.costCodeDescription
           ? `${item.costCode} - ${item.costCodeDescription}`
           : item.costCode
         : "";
 
+      // Resolve to a project_cost_codes UUID (budgetCodes are already loaded from
+      // /api/projects/[id]/budget-codes). The imported item carries a budget_lines.id
+      // which is NOT the same as project_cost_codes.id — we must look up by code+costType.
+      const matchingCode =
+        budgetCodes.find(
+          (bc) =>
+            bc.code === item.costCode &&
+            (item.costType ? bc.costType === item.costType : true),
+        ) ?? budgetCodes.find((bc) => bc.code === item.costCode); // fallback: code only
+
+      if (!matchingCode) unmappedCount++;
+
       return {
         id: `sov-import-${Date.now()}-${index}`,
-        budgetCodeId: item.id || item.costCode || "",
-        budgetCodeLabel: label,
+        budgetCodeId: matchingCode?.id ?? "",
+        budgetCodeLabel: matchingCode?.fullLabel ?? fallbackLabel,
         description: item.costCodeDescription || item.description || item.costCode || "",
         amount: item.originalBudgetAmount || 0,
         billedToDate: 0,
@@ -658,7 +671,14 @@ export function ContractForm({
       ...prev,
       sovItems: [...(prev.sovItems || []), ...mapped],
     }));
-    toast.success(`Imported ${mapped.length} SOV line item${mapped.length === 1 ? "" : "s"}`);
+
+    if (unmappedCount > 0) {
+      toast.warning(
+        `${unmappedCount} item${unmappedCount !== 1 ? "s" : ""} could not be matched to a budget code — please select manually before saving.`,
+      );
+    } else {
+      toast.success(`Imported ${mapped.length} SOV line item${mapped.length === 1 ? "" : "s"}`);
+    }
   };
 
   const filteredBudgetCodes = budgetCodes.filter((code) =>
