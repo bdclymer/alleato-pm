@@ -254,7 +254,6 @@ export const POST = withApiGuardrails<{ projectId: string }>(
 
         const costCodeCandidates = buildCostCodeCandidates(String(row["Cost Code"]));
 
-        // First try project_budget_codes (legacy table), then project_cost_codes.
         const { data: projectBudgetCodes } = await supabase
           .from("project_budget_codes")
           .select("id, cost_code_id")
@@ -264,19 +263,7 @@ export const POST = withApiGuardrails<{ projectId: string }>(
           .eq("is_active", true)
           .limit(1);
 
-        const { data: projectCostCodes } = await supabase
-          .from("project_cost_codes")
-          .select("id, cost_code_id")
-          .eq("project_id", numericProjectId)
-          .in("cost_code_id", costCodeCandidates)
-          .eq("cost_type_id", costType.id)
-          .eq("is_active", true)
-          .limit(1);
-
-        const matchedCostCodeId =
-          projectBudgetCodes?.[0]?.cost_code_id ||
-          projectCostCodes?.[0]?.cost_code_id ||
-          null;
+        const matchedCostCodeId = projectBudgetCodes?.[0]?.cost_code_id ?? null;
 
         let finalCostCodeId = matchedCostCodeId;
 
@@ -325,8 +312,8 @@ export const POST = withApiGuardrails<{ projectId: string }>(
             );
           }
 
-          const { data: existingProjectCostCode } = await supabase
-            .from("project_cost_codes")
+          const { data: existingProjectBudgetCode } = await supabase
+            .from("project_budget_codes")
             .select("id, is_active")
             .eq("project_id", numericProjectId)
             .eq("cost_code_id", finalCostCodeId)
@@ -334,39 +321,46 @@ export const POST = withApiGuardrails<{ projectId: string }>(
             .limit(1)
             .maybeSingle();
 
-          if (existingProjectCostCode) {
-            if (!existingProjectCostCode.is_active) {
-              const { error: reactivateProjectCostCodeError } = await supabase
-                .from("project_cost_codes")
+          if (existingProjectBudgetCode) {
+            if (!existingProjectBudgetCode.is_active) {
+              const { error: reactivateError } = await supabase
+                .from("project_budget_codes")
                 .update({ is_active: true })
-                .eq("id", existingProjectCostCode.id);
+                .eq("id", existingProjectBudgetCode.id);
 
-              if (reactivateProjectCostCodeError) {
+              if (reactivateError) {
                 errors.push(
-                  `Row ${rowNum}: Failed to reactivate project cost code "${finalCostCodeId}.${costTypeCode}": ${reactivateProjectCostCodeError.message}`,
+                  `Row ${rowNum}: Failed to reactivate project budget code "${finalCostCodeId}.${costTypeCode}": ${reactivateError.message}`,
                 );
                 continue;
               }
             }
           } else {
-            const { error: createProjectCostCodeError } = await supabase
-              .from("project_cost_codes")
+            const { data: costCodeMeta } = await supabase
+              .from("cost_codes")
+              .select("title")
+              .eq("id", finalCostCodeId)
+              .maybeSingle();
+
+            const { error: createProjectBudgetCodeError } = await supabase
+              .from("project_budget_codes")
               .insert({
                 project_id: numericProjectId,
                 cost_code_id: finalCostCodeId,
                 cost_type_id: costType.id,
+                description: costCodeMeta?.title ?? finalCostCodeId,
                 is_active: true,
               });
 
-            if (createProjectCostCodeError && createProjectCostCodeError.code !== "23505") {
+            if (createProjectBudgetCodeError && createProjectBudgetCodeError.code !== "23505") {
               errors.push(
-                `Row ${rowNum}: Failed to create project cost code "${finalCostCodeId}.${costTypeCode}": ${createProjectCostCodeError.message}`,
+                `Row ${rowNum}: Failed to create project budget code "${finalCostCodeId}.${costTypeCode}": ${createProjectBudgetCodeError.message}`,
               );
               continue;
             }
 
             warnings.push(
-              `Row ${rowNum}: Added project cost code "${finalCostCodeId}.${costTypeCode}"`,
+              `Row ${rowNum}: Added project budget code "${finalCostCodeId}.${costTypeCode}"`,
             );
           }
         }

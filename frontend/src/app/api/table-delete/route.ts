@@ -43,7 +43,7 @@ const TABLE_ALLOWLIST = [
   "payment_application_line_items",
   "direct_cost_line_items",
   "change_event_line_items",
-  "project_cost_codes",
+  "project_budget_codes",
   "procore_features",
   "procore_pages",
 ] as const satisfies readonly TableName[];

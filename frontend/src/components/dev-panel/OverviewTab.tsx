@@ -67,7 +67,6 @@ const TOOL_TABLES: Record<string, string[]> = {
     "budget_views",
     "budget_view_columns",
     "project_budget_codes",
-    "project_cost_codes",
   ],
   invoicing: [
     "owner_invoices",

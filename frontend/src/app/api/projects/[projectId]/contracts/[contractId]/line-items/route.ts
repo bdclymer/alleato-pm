@@ -179,7 +179,7 @@ export const POST = withApiGuardrails(
           { status: 409 },
         );
       }
-      // FK violation — budget_code_id not found in project_cost_codes
+      // FK violation — budget_code_id not found in project_budget_codes
       if (error.code === "23503") {
         return NextResponse.json(
           { error: "Invalid budget code: the selected code does not exist for this project" },

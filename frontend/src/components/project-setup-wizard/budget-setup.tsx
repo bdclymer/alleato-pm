@@ -40,7 +40,7 @@ import { isDevelopment, fakeData } from "@/lib/dev-autofill";
 type BudgetItem = Database["public"]["Tables"]["budget_lines"]["Row"];
 type CostCode = Database["public"]["Tables"]["cost_codes"]["Row"];
 type ProjectCostCode =
-  Database["public"]["Tables"]["project_cost_codes"]["Row"];
+  Database["public"]["Tables"]["project_budget_codes"]["Row"];
 type CostCodeType = Database["public"]["Tables"]["cost_code_types"]["Row"];
 
 interface SimpleBudgetItem {
@@ -92,9 +92,9 @@ export function BudgetSetup({ projectId, onNext, onSkip }: StepComponentProps) {
       if (typesError) throw typesError;
       setCostCodeTypes(types || []);
 
-      // Load project cost codes with details
+      // Load project budget codes with details
       const { data: costCodes, error: codesError } = await supabase
-        .from("project_cost_codes")
+        .from("project_budget_codes")
         .select(
           `
           *,
@@ -214,7 +214,7 @@ export function BudgetSetup({ projectId, onNext, onSkip }: StepComponentProps) {
       setSaving(true);
       setError(null);
 
-      // Filter out items with no amount (all items have cost codes from project_cost_codes)
+      // Filter out items with no amount (all items have cost codes from project_budget_codes)
       const itemsToSave = budgetItems.filter(
         (item) => item.amount > 0 && item.cost_code_id,
       );

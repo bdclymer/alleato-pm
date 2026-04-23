@@ -99,7 +99,7 @@ export function useProjectCostCodes(projectId: string) {
       const supabase = createClient();
 
       const { data, error } = await supabase
-        .from("project_cost_codes")
+        .from("project_budget_codes")
         .select("id, cost_code_id, cost_type_id, is_active")
         .eq("project_id", Number.parseInt(projectId, 10))
         .eq("is_active", true);

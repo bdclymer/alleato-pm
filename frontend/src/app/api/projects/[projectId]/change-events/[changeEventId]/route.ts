@@ -300,34 +300,19 @@ export const GET = withApiGuardrails(
       primeContractData?.contract_number ||
       null;
 
-    // Map budget_lines IDs to project_cost_codes IDs for edit form compatibility
-    // budget_code_id on line items references budget_lines.id, but the BudgetCodeSelector uses project_cost_codes.id
+    // Map budget_lines IDs to project_budget_codes IDs for edit form compatibility.
+    // budget_lines.project_budget_code_id is the direct reference — no secondary lookup needed.
     const budgetLineIds = [...new Set(lineItems.filter((li: any) => li.budget_code_id).map((li: any) => li.budget_code_id))];
     const budgetLineToProjectCodeMap: Record<string, string> = {};
     if (budgetLineIds.length > 0) {
-      // Get budget lines with cost_code_id and cost_type_id
       const { data: budgetLines } = await supabase
         .from("budget_lines")
-        .select("id, cost_code_id, cost_type_id")
+        .select("id, project_budget_code_id")
         .in("id", budgetLineIds);
 
-      if (budgetLines && budgetLines.length > 0) {
-        // Get project_cost_codes for this project to match against
-        const { data: projectCostCodes } = await supabase
-          .from("project_cost_codes")
-          .select("id, cost_code_id, cost_type_id")
-          .eq("project_id", parseInt(projectId, 10))
-          .eq("is_active", true);
-
-        if (projectCostCodes) {
-          for (const bl of budgetLines as any[]) {
-            const matchingPcc = projectCostCodes.find((pcc: any) =>
-              pcc.cost_code_id === bl.cost_code_id && pcc.cost_type_id === bl.cost_type_id
-            );
-            if (matchingPcc) {
-              budgetLineToProjectCodeMap[bl.id] = matchingPcc.id;
-            }
-          }
+      for (const bl of budgetLines ?? []) {
+        if (bl.project_budget_code_id) {
+          budgetLineToProjectCodeMap[bl.id] = bl.project_budget_code_id;
         }
       }
     }
@@ -427,7 +412,7 @@ export const GET = withApiGuardrails(
           id: item.id,
           description: item.description,
           budgetCodeId: item.budget_code_id,
-          // projectBudgetCodeId maps budget_lines → project_cost_codes for form selectors
+          // projectBudgetCodeId maps budget_lines → project_budget_codes for form selectors
           projectBudgetCodeId: budgetLineToProjectCodeMap[item.budget_code_id] || item.budget_line?.project_budget_code_id || null,
           budgetLine: item.budget_line || null,
           quantity: item.quantity,

@@ -7297,7 +7297,7 @@ export type Database = {
             foreignKeyName: "contract_line_items_budget_code_id_fkey"
             columns: ["budget_code_id"]
             isOneToOne: false
-            referencedRelation: "project_cost_codes"
+            referencedRelation: "project_budget_codes"
             referencedColumns: ["id"]
           },
           {
@@ -8279,6 +8279,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "direct_cost_line_items_budget_code_id_fkey"
+            columns: ["budget_code_id"]
+            isOneToOne: false
+            referencedRelation: "project_budget_codes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "direct_cost_line_items_direct_cost_id_fkey"
             columns: ["direct_cost_id"]
@@ -16489,7 +16496,7 @@ export type Database = {
       project_budget_codes: {
         Row: {
           cost_code_id: string
-          cost_type_id: string
+          cost_type_id: string | null
           created_at: string
           created_by: string | null
           description: string
@@ -16503,7 +16510,7 @@ export type Database = {
         }
         Insert: {
           cost_code_id: string
-          cost_type_id: string
+          cost_type_id?: string | null
           created_at?: string
           created_by?: string | null
           description: string
@@ -16517,7 +16524,7 @@ export type Database = {
         }
         Update: {
           cost_code_id?: string
-          cost_type_id?: string
+          cost_type_id?: string | null
           created_at?: string
           created_by?: string | null
           description?: string
@@ -16791,104 +16798,6 @@ export type Database = {
           },
           {
             foreignKeyName: "project_companies_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "submittal_project_dashboard"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      project_cost_codes: {
-        Row: {
-          cost_code_id: string
-          cost_type_id: string | null
-          created_at: string | null
-          id: string
-          is_active: boolean | null
-          project_id: number
-        }
-        Insert: {
-          cost_code_id: string
-          cost_type_id?: string | null
-          created_at?: string | null
-          id?: string
-          is_active?: boolean | null
-          project_id: number
-        }
-        Update: {
-          cost_code_id?: string
-          cost_type_id?: string | null
-          created_at?: string | null
-          id?: string
-          is_active?: boolean | null
-          project_id?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "project_cost_codes_cost_code_id_fkey"
-            columns: ["cost_code_id"]
-            isOneToOne: false
-            referencedRelation: "cost_codes"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "project_cost_codes_cost_code_id_fkey"
-            columns: ["cost_code_id"]
-            isOneToOne: false
-            referencedRelation: "cost_codes_with_division_title"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "project_cost_codes_cost_type_id_fkey"
-            columns: ["cost_type_id"]
-            isOneToOne: false
-            referencedRelation: "cost_code_types"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "project_cost_codes_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "project_activity_view"
-            referencedColumns: ["project_id"]
-          },
-          {
-            foreignKeyName: "project_cost_codes_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "project_health_dashboard"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "project_cost_codes_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "project_health_dashboard_no_summary"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "project_cost_codes_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "project_issue_summary"
-            referencedColumns: ["project_id"]
-          },
-          {
-            foreignKeyName: "project_cost_codes_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "project_cost_codes_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects_with_counts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "project_cost_codes_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "submittal_project_dashboard"

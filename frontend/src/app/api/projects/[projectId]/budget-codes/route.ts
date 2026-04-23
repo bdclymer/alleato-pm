@@ -72,10 +72,10 @@ export const GET = withApiGuardrails<{ projectId: string }>(
 
     const supabase = await createClient();
 
-    // Fetch project_cost_codes for this project (the chart of accounts)
+    // Fetch project_budget_codes for this project (the chart of accounts)
     const { data: projectBudgetCodesData, error: projectBudgetCodesError } =
       await supabase
-        .from("project_cost_codes")
+        .from("project_budget_codes")
         .select(
           `
           id,
@@ -99,7 +99,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
       );
     }
 
-    // Transform the data. project_cost_codes.cost_code_id is already a FK to
+    // Transform the data. project_budget_codes.cost_code_id is already a FK to
     // cost_codes.id, so no secondary lookup is needed — the same value is the
     // legacy cost_code id.
     const uniqueCostCodeIds = Array.from(
@@ -227,7 +227,7 @@ export const POST = withApiGuardrails<{ projectId: string }>(
 
     // Check for existing duplicate before inserting
     const { data: existingCode } = await supabase
-      .from("project_cost_codes")
+      .from("project_budget_codes")
       .select("id")
       .eq("project_id", projectIdNum)
       .eq("cost_code_id", cost_code_id)
@@ -241,13 +241,22 @@ export const POST = withApiGuardrails<{ projectId: string }>(
       );
     }
 
-    // Insert new project_cost_code (the chart of accounts entry)
+    // Resolve description from cost_codes.title
+    const { data: costCodeMeta } = await supabase
+      .from("cost_codes")
+      .select("title")
+      .eq("id", cost_code_id)
+      .maybeSingle();
+    const resolvedDescription = costCodeMeta?.title || cost_code_id;
+
+    // Insert new project_budget_code (the chart of accounts entry)
     const { data: newProjectBudgetCode, error: insertError } = await supabase
-      .from("project_cost_codes")
+      .from("project_budget_codes")
       .insert({
         project_id: projectIdNum,
         cost_code_id,
         cost_type_id: costTypeUuid,
+        description: description || resolvedDescription,
         is_active: true,
       })
       .select(

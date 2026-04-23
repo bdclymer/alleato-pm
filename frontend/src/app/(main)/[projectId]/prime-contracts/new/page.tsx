@@ -131,7 +131,7 @@ export default function NewContractPage() {
                 body: JSON.stringify({
                   line_number: index + 1,
                   description: item.description || `Line ${index + 1}`,
-                  // budget_code_id must be a project_cost_codes UUID or null.
+                  // budget_code_id must be a project_budget_codes UUID or null.
                   // Empty string is treated as null to avoid FK validation errors.
                   budget_code_id: item.budgetCodeId || null,
                   quantity,

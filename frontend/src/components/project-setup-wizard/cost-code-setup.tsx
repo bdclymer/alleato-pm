@@ -32,7 +32,7 @@ import type { Database } from "@/types/database.types";
 type CostCode = Database["public"]["Tables"]["cost_codes"]["Row"];
 type CostCodeType = Database["public"]["Tables"]["cost_code_types"]["Row"];
 type ProjectCostCode =
-  Database["public"]["Tables"]["project_cost_codes"]["Row"];
+  Database["public"]["Tables"]["project_budget_codes"]["Row"];
 
 interface CostCodeWithType extends CostCode {
   cost_code_type?: CostCodeType;
@@ -152,7 +152,7 @@ export function CostCodeSetup({
 
       // Load project-specific cost codes
       const { data: projectCodes, error: projectCodesError } = await supabase
-        .from("project_cost_codes")
+        .from("project_budget_codes")
         .select("*")
         .eq("project_id", Number(projectId));
 
@@ -316,9 +316,9 @@ export function CostCodeSetup({
       setSaving(true);
       setError(null);
 
-      // Delete existing project cost codes
+      // Delete existing project budget codes
       const { error: deleteError } = await supabase
-        .from("project_cost_codes")
+        .from("project_budget_codes")
         .delete()
         .eq("project_id", Number(projectId));
 
@@ -332,7 +332,7 @@ export function CostCodeSetup({
           costCodeTypes.find((t) => codeId.startsWith(t.code + "-"))?.id;
 
         // CRITICAL: If we still don't have a type, use "Other" as fallback
-        // Every project cost code MUST have a cost_type_id
+        // Every project budget code MUST have a cost_type_id
         if (!typeId) {
           const otherType = costCodeTypes.find((t) => t.code === "O");
           if (!otherType) {
@@ -347,13 +347,14 @@ export function CostCodeSetup({
           project_id: projectId,
           cost_code_id: codeId,
           cost_type_id: typeId,
+          description: code?.title || codeId,
           is_active: true,
         };
       });
 
       if (projectCostCodes.length > 0) {
         const { error: insertError } = await supabase
-          .from("project_cost_codes")
+          .from("project_budget_codes")
           .insert(projectCostCodes as any);
 
         if (insertError) throw insertError;

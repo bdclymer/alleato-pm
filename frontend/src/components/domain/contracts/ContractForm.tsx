@@ -644,9 +644,8 @@ export function ContractForm({
           : item.costCode
         : "";
 
-      // Resolve to a project_cost_codes UUID (budgetCodes are already loaded from
-      // /api/projects/[id]/budget-codes). The imported item carries a budget_lines.id
-      // which is NOT the same as project_cost_codes.id — we must look up by code+costType.
+      // Resolve to a project_budget_codes UUID (budgetCodes are already loaded from
+      // /api/projects/[id]/budget-codes which now returns project_budget_codes.id values).
       const matchingCode =
         budgetCodes.find(
           (bc) =>

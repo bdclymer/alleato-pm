@@ -125,12 +125,12 @@ export const GET = withApiGuardrails<{ projectId: string }>(
       costCodeIds = budgetLine.cost_code_id ? [budgetLine.cost_code_id] : null;
     }
 
-    // Translate cost_code_ids to project_cost_code IDs
-    // because direct_cost_line_items.budget_code_id references project_cost_codes.id (not cost_codes.id)
+    // Translate cost_code_ids to project_budget_code IDs
+    // because direct_cost_line_items.budget_code_id references project_budget_codes.id (not cost_codes.id)
     let projectCostCodeIds: string[] | null = null;
     if (costCodeIds && costCodeIds.length > 0) {
       const { data: pccRows } = await supabase
-        .from("project_cost_codes")
+        .from("project_budget_codes")
         .select("id")
         .eq("project_id", projectIdNum)
         .in("cost_code_id", costCodeIds);

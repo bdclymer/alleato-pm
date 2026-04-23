@@ -72,7 +72,7 @@ export const GET = withApiGuardrails(
       return apiErrorResponse(error);
     }
 
-    // Batch reverse-map budget_lines.id → project_cost_codes.id
+    // Batch reverse-map budget_lines.id → project_budget_codes.id
     // vendor_id directly stores companies.id — no remap needed.
     // Done as two bulk queries (not per-item) to avoid N+1.
     const budgetCodeIds = [...new Set(
@@ -82,28 +82,17 @@ export const GET = withApiGuardrails(
       (lineItems || []).map(i => i.vendor_id).filter(Boolean)
     )] as string[];
 
-    // budget_lines.id → project_cost_codes.id
-    // Join budget_lines to project_cost_codes on (cost_code_id, cost_type_id, project_id)
+    // budget_lines.project_budget_code_id is the project_budget_codes.id we want directly
     const budgetLineToProjectCostCode = new Map<string, string>();
     if (budgetCodeIds.length > 0) {
       const { data: budgetLines } = await supabase
         .from('budget_lines')
-        .select('id, cost_code_id, cost_type_id')
+        .select('id, project_budget_code_id')
         .in('id', budgetCodeIds);
 
-      if (budgetLines && budgetLines.length > 0) {
-        const { data: pccs } = await supabase
-          .from('project_cost_codes')
-          .select('id, cost_code_id, cost_type_id')
-          .eq('project_id', parseInt(projectId, 10));
-
-        if (pccs) {
-          for (const bl of budgetLines) {
-            const match = pccs.find(
-              p => p.cost_code_id === bl.cost_code_id && p.cost_type_id === bl.cost_type_id
-            );
-            if (match) budgetLineToProjectCostCode.set(bl.id, match.id);
-          }
+      for (const bl of budgetLines ?? []) {
+        if (bl.project_budget_code_id) {
+          budgetLineToProjectCostCode.set(bl.id, bl.project_budget_code_id);
         }
       }
     }
@@ -285,7 +274,7 @@ export const POST = withApiGuardrails(
       });
     }
 
-    // Resolve budgetCodeId: could be budget_lines.id OR project_cost_codes.id
+    // Resolve budgetCodeId: could be budget_lines.id OR project_budget_codes.id
     let resolvedBudgetCodeId: string | null = validatedData.budgetCodeId ?? null;
     if (validatedData.budgetCodeId) {
       // First try budget_lines directly
@@ -306,28 +295,28 @@ export const POST = withApiGuardrails(
           });
         }
       } else {
-        // Not a budget_lines ID — try project_cost_codes and find matching budget_line
-        const { data: pcc } = await supabase
-          .from('project_cost_codes')
+        // Not a budget_lines ID — try project_budget_codes and find matching budget_line
+        const { data: pbc } = await supabase
+          .from('project_budget_codes')
           .select('id, cost_code_id, cost_type_id')
           .eq('id', validatedData.budgetCodeId)
           .single();
 
-        if (pcc) {
-          if (!pcc.cost_type_id) {
+        if (pbc) {
+          if (!pbc.cost_type_id) {
             throw new GuardrailError({
               code: "INVALID_PAYLOAD",
               where: "projects/[projectId]/change-events/[changeEventId]/line-items#POST",
-              message: `Project cost code ${validatedData.budgetCodeId} has no cost_type_id; cannot resolve budget line.`,
+              message: `Project budget code ${validatedData.budgetCodeId} has no cost_type_id; cannot resolve budget line.`,
             });
           }
-          const pccCostTypeId: string = pcc.cost_type_id;
+          const pbcCostTypeId: string = pbc.cost_type_id;
           const { data: matchingBudgetLine } = await supabase
             .from('budget_lines')
             .select('id')
             .eq('project_id', parseInt(projectId, 10))
-            .eq('cost_code_id', pcc.cost_code_id)
-            .eq('cost_type_id', pccCostTypeId)
+            .eq('cost_code_id', pbc.cost_code_id)
+            .eq('cost_type_id', pbcCostTypeId)
             .single();
 
           if (matchingBudgetLine) {
@@ -338,8 +327,8 @@ export const POST = withApiGuardrails(
               .from('budget_lines')
               .insert({
                 project_id: parseInt(projectId, 10),
-                cost_code_id: pcc.cost_code_id,
-                cost_type_id: pccCostTypeId,
+                cost_code_id: pbc.cost_code_id,
+                cost_type_id: pbcCostTypeId,
               })
               .select('id')
               .single();
@@ -347,7 +336,7 @@ export const POST = withApiGuardrails(
             if (newBudgetLine) {
               resolvedBudgetCodeId = newBudgetLine.id;
             } else {
-              logger.error({ msg: `[line-items POST] Failed to auto-create budget_line for project_cost_code ${validatedData.budgetCodeId}:`, data: createError?.message, });
+              logger.error({ msg: `[line-items POST] Failed to auto-create budget_line for project_budget_code ${validatedData.budgetCodeId}:`, data: createError?.message, });
               throw new GuardrailError({
                 code: "INVALID_PAYLOAD",
                 where: "projects/[projectId]/change-events/[changeEventId]/line-items#POST",
@@ -365,7 +354,7 @@ export const POST = withApiGuardrails(
           throw new GuardrailError({
             code: "INVALID_PAYLOAD",
             where: "projects/[projectId]/change-events/[changeEventId]/line-items#POST",
-            message: `Invalid budget code: ID ${validatedData.budgetCodeId} not found in budget_lines or project_cost_codes.`,
+            message: `Invalid budget code: ID ${validatedData.budgetCodeId} not found in budget_lines or project_budget_codes.`,
             status: 400,
             severity: "low",
           });

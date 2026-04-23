@@ -152,7 +152,7 @@ export const PATCH = withApiGuardrails(
       );
     }
 
-    // Resolve budgetCodeId: could be budget_lines.id OR project_cost_codes.id
+    // Resolve budgetCodeId: could be budget_lines.id OR project_budget_codes.id
     // Must resolve BEFORE the commitment guard so we compare budget_lines.id to budget_lines.id.
     let resolvedBudgetCodeId: string | null = validatedData.budgetCodeId ?? null;
     if (validatedData.budgetCodeId) {
@@ -164,27 +164,27 @@ export const PATCH = withApiGuardrails(
         .single();
 
       if (!budgetLine) {
-        // Not a budget_lines ID — try project_cost_codes and find matching budget_line
-        const { data: pcc } = await supabase
-          .from('project_cost_codes')
+        // Not a budget_lines ID — try project_budget_codes and find matching budget_line
+        const { data: pbc } = await supabase
+          .from('project_budget_codes')
           .select('id, cost_code_id, cost_type_id')
           .eq('id', validatedData.budgetCodeId)
           .single();
 
-        if (pcc) {
-          if (!pcc.cost_type_id) {
+        if (pbc) {
+          if (!pbc.cost_type_id) {
             return NextResponse.json(
-              { error: 'Invalid budget code', details: `Project cost code ${validatedData.budgetCodeId} has no cost_type_id; cannot resolve budget line.` },
+              { error: 'Invalid budget code', details: `Project budget code ${validatedData.budgetCodeId} has no cost_type_id; cannot resolve budget line.` },
               { status: 400 },
             );
           }
-          const pccCostTypeId: string = pcc.cost_type_id;
+          const pbcCostTypeId: string = pbc.cost_type_id;
           const { data: matchingBudgetLine } = await supabase
             .from('budget_lines')
             .select('id')
             .eq('project_id', parseInt(projectId, 10))
-            .eq('cost_code_id', pcc.cost_code_id)
-            .eq('cost_type_id', pccCostTypeId)
+            .eq('cost_code_id', pbc.cost_code_id)
+            .eq('cost_type_id', pbcCostTypeId)
             .single();
 
           if (matchingBudgetLine) {
@@ -195,8 +195,8 @@ export const PATCH = withApiGuardrails(
               .from('budget_lines')
               .insert({
                 project_id: parseInt(projectId, 10),
-                cost_code_id: pcc.cost_code_id,
-                cost_type_id: pccCostTypeId,
+                cost_code_id: pbc.cost_code_id,
+                cost_type_id: pbcCostTypeId,
               })
               .select('id')
               .single();
@@ -204,7 +204,7 @@ export const PATCH = withApiGuardrails(
             if (newBudgetLine) {
               resolvedBudgetCodeId = newBudgetLine.id;
             } else {
-              logger.error({ msg: `[line-items PATCH] Failed to auto-create budget_line for project_cost_code ${validatedData.budgetCodeId}:`, data: createError?.message, });
+              logger.error({ msg: `[line-items PATCH] Failed to auto-create budget_line for project_budget_code ${validatedData.budgetCodeId}:`, data: createError?.message, });
               return NextResponse.json(
                 { error: 'Failed to resolve budget code', details: `Could not create budget line for cost code. ${createError?.message || ''}` },
                 { status: 400 },
@@ -213,7 +213,7 @@ export const PATCH = withApiGuardrails(
           }
         } else {
           return NextResponse.json(
-            { error: 'Invalid budget code', details: `ID ${validatedData.budgetCodeId} not found in budget_lines or project_cost_codes` },
+            { error: 'Invalid budget code', details: `ID ${validatedData.budgetCodeId} not found in budget_lines or project_budget_codes` },
             { status: 400 },
           );
         }

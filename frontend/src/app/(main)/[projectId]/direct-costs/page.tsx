@@ -67,7 +67,7 @@ export default async function ProjectDirectCostsPage({
   const { data: projectCostCodes } =
     budgetCodeIds.length > 0
       ? await supabase
-          .from("project_cost_codes")
+          .from("project_budget_codes")
           .select("id,cost_code_id")
           .in("id", budgetCodeIds)
       : { data: [] as Array<{ id: string; cost_code_id: string | null }> };

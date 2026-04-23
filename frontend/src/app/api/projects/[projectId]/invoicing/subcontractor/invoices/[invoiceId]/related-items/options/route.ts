@@ -180,9 +180,9 @@ export const GET = withApiGuardrails(
       }
 
       case "cost_code": {
-        // project_cost_codes joined with cost_codes
+        // project_budget_codes joined with cost_codes
         const q = supabase
-          .from("project_cost_codes")
+          .from("project_budget_codes")
           .select("id, cost_codes!inner(id, title, division_title)")
           .eq("project_id", parsedProjectId)
           .eq("is_active", true)

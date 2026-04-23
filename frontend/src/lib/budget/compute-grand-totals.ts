@@ -526,7 +526,7 @@ export async function computeBudgetGrandTotals(
       .in("direct_costs.status", APPROVED_DIRECT_COST_STATUSES),
 
     supabase
-      .from("project_cost_codes")
+      .from("project_budget_codes")
       .select("id, cost_code_id")
       .eq("project_id", projectIdNum),
 
@@ -670,7 +670,7 @@ export async function computeBudgetGrandTotals(
     }
   };
 
-  // Translation map: project_cost_codes.id -> cost_codes.id
+  // Translation map: project_budget_codes.id -> cost_codes.id
   const pccToCostCodeId: Record<string, string> = {};
   for (const pcc of projectCostCodesRes.data || []) {
     if (pcc.id && pcc.cost_code_id) {

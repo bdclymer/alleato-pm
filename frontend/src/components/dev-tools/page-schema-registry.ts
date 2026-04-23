@@ -105,11 +105,7 @@ const CHANGE_EVENTS_SCHEMA: PageSchemaEntry = {
             const [table = "budget_lines", column = "id"] = fkTarget.split(".")
             return { table, column }
           })(),
-          notes: getMismatchNote(
-            getFkTarget("change_event_line_items", "budget_code_id", "budget_lines.id"),
-            "project_cost_codes.id",
-            "⚠️ FK → budget_lines.id, but dropdown uses project_cost_codes. Requires ID resolution.",
-          ),
+          notes: "FK → budget_lines.id; dropdown uses budget-codes API (project_budget_codes.id). Both tables now unified.",
         },
         { name: "description", type: "text", nullable: true },
         {
@@ -188,21 +184,22 @@ const CHANGE_EVENTS_SCHEMA: PageSchemaEntry = {
       columns: [
         { name: "id", type: "uuid", pk: true },
         { name: "project_id", type: "integer", fk: { table: "projects", column: "id" } },
-        { name: "cost_code_id", type: "uuid", fk: { table: "cost_codes", column: "id" }, notes: "Shared key with project_cost_codes" },
-        { name: "cost_type_id", type: "uuid", nullable: true, notes: "Shared key with project_cost_codes" },
+        { name: "cost_code_id", type: "uuid", fk: { table: "cost_codes", column: "id" }, notes: "Shared key with project_budget_codes" },
+        { name: "cost_type_id", type: "uuid", nullable: true, notes: "Shared key with project_budget_codes" },
         { name: "description", type: "text", nullable: true },
         { name: "original_budget_amount", type: "numeric", nullable: true },
         { name: "created_at", type: "timestamptz" },
       ],
     },
     {
-      name: "project_cost_codes",
-      description: "Cost codes assigned to a project. Dropdown source for budget code selection. NOT the FK target.",
+      name: "project_budget_codes",
+      description: "Cost codes assigned to a project. Single source of truth for FK and dropdown. Supersedes removed project_cost_codes table.",
       columns: [
-        { name: "id", type: "uuid", pk: true, notes: "⚠️ This ID is NOT stored in change_event_line_items.budget_code_id" },
+        { name: "id", type: "uuid", pk: true, notes: "FK target for contract_line_items.budget_code_id, direct_cost_line_items.budget_code_id" },
         { name: "project_id", type: "integer", fk: { table: "projects", column: "id" } },
-        { name: "cost_code_id", type: "uuid", fk: { table: "cost_codes", column: "id" }, notes: "Maps to budget_lines via (cost_code_id, cost_type_id)" },
+        { name: "cost_code_id", type: "text", fk: { table: "cost_codes", column: "id" } },
         { name: "cost_type_id", type: "uuid", nullable: true },
+        { name: "description", type: "text" },
         { name: "created_at", type: "timestamptz" },
       ],
     },
@@ -263,12 +260,8 @@ const CHANGE_EVENTS_SCHEMA: PageSchemaEntry = {
       dbColumn: "budget_code_id",
       dbTable: "change_event_line_items",
       fkTarget: getFkTarget("change_event_line_items", "budget_code_id", "budget_lines.id"),
-      dropdownSource: "project_cost_codes.id",
-      notes: getMismatchNote(
-        getFkTarget("change_event_line_items", "budget_code_id", "budget_lines.id"),
-        "project_cost_codes.id",
-        "⚠️ FK MISMATCH — API resolves pcc.id → budget_lines.id via (cost_code_id, cost_type_id). Auto-creates budget_line if missing.",
-      ),
+      dropdownSource: "project_budget_codes.id",
+      notes: "FK → budget_lines.id; dropdown uses project_budget_codes.id (same table). ID resolution handled in API.",
     },
     { formField: "lineItems[].description", dbColumn: "description", dbTable: "change_event_line_items" },
     {

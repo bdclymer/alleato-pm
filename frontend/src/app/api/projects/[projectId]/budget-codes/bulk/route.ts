@@ -62,10 +62,10 @@ export const PUT = withApiGuardrails<{ projectId: string }>(
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/budget-codes/bulk#PUT", message: "Authentication required." });
     }
 
-    // Fetch ALL existing project_cost_codes for this project + cost type
+    // Fetch ALL existing project_budget_codes for this project + cost type
     // (including inactive ones so we can reactivate)
     const { data: existing, error: fetchError } = await supabase
-      .from("project_cost_codes")
+      .from("project_budget_codes")
       .select("id, cost_code_id, is_active")
       .eq("project_id", projectIdNum)
       .eq("cost_type_id", cost_type_id);
@@ -82,8 +82,21 @@ export const PUT = withApiGuardrails<{ projectId: string }>(
     );
     const desiredSet = new Set(cost_code_ids);
 
+    // Batch-resolve descriptions for codes we'll be inserting
+    const newCodeIds = cost_code_ids.filter((id) => !existingMap.has(id));
+    const descriptionMap = new Map<string, string>();
+    if (newCodeIds.length > 0) {
+      const { data: costCodeRows } = await supabase
+        .from("cost_codes")
+        .select("id, title")
+        .in("id", newCodeIds);
+      for (const row of costCodeRows ?? []) {
+        descriptionMap.set(row.id, row.title ?? row.id);
+      }
+    }
+
     // Determine operations
-    const toInsert: { project_id: number; cost_code_id: string; cost_type_id: string; is_active: boolean }[] = [];
+    const toInsert: { project_id: number; cost_code_id: string; cost_type_id: string; description: string; is_active: boolean }[] = [];
     const toActivate: string[] = [];
     const toDeactivate: string[] = [];
 
@@ -95,6 +108,7 @@ export const PUT = withApiGuardrails<{ projectId: string }>(
           project_id: projectIdNum,
           cost_code_id: codeId,
           cost_type_id,
+          description: descriptionMap.get(codeId) ?? codeId,
           is_active: true,
         });
       } else if (!row.is_active) {
@@ -114,14 +128,14 @@ export const PUT = withApiGuardrails<{ projectId: string }>(
 
     if (toInsert.length > 0) {
       const { error: insertError } = await supabase
-        .from("project_cost_codes")
+        .from("project_budget_codes")
         .insert(toInsert);
       if (insertError) errors.push(`Insert failed: ${insertError.message}`);
     }
 
     if (toActivate.length > 0) {
       const { error: activateError } = await supabase
-        .from("project_cost_codes")
+        .from("project_budget_codes")
         .update({ is_active: true })
         .in("id", toActivate);
       if (activateError) errors.push(`Activate failed: ${activateError.message}`);
@@ -129,7 +143,7 @@ export const PUT = withApiGuardrails<{ projectId: string }>(
 
     if (toDeactivate.length > 0) {
       const { error: deactivateError } = await supabase
-        .from("project_cost_codes")
+        .from("project_budget_codes")
         .update({ is_active: false })
         .in("id", toDeactivate);
       if (deactivateError) errors.push(`Deactivate failed: ${deactivateError.message}`);

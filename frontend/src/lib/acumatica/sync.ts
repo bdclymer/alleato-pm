@@ -289,7 +289,7 @@ export async function syncDirectCosts(
   const validCostCodes = new Set((costCodes ?? []).map((row) => row.id));
 
   const { data: existingProjectCostCodes, error: projectCostCodesError } = await supabase
-    .from("project_cost_codes")
+    .from("project_budget_codes")
     .select("id, cost_code_id")
     .eq("project_id", projectId);
 
@@ -320,19 +320,27 @@ export async function syncDirectCosts(
 
       let projectCostCodeId = projectCostCodeByCode.get(normalizedCostCode);
       if (!projectCostCodeId) {
+        const { data: costCodeMeta } = await supabase
+          .from("cost_codes")
+          .select("title")
+          .eq("id", normalizedCostCode)
+          .maybeSingle();
+
         const { data: insertedCostCode, error: insertProjectCostCodeError } = await supabase
-          .from("project_cost_codes")
+          .from("project_budget_codes")
           .insert({
             project_id: projectId,
             cost_code_id: normalizedCostCode,
+            description: costCodeMeta?.title ?? normalizedCostCode,
             is_active: true,
+            // cost_type_id intentionally omitted — Acumatica transactions don't carry it
           })
           .select("id")
           .single();
 
         if (insertProjectCostCodeError) {
           result.errors.push(
-            `${refNbr}: failed to ensure project cost code ${normalizedCostCode} (${insertProjectCostCodeError.message})`,
+            `${refNbr}: failed to ensure project_budget_codes entry for ${normalizedCostCode} (${insertProjectCostCodeError.message})`,
           );
           continue;
         }
