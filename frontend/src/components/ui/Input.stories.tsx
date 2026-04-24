@@ -64,7 +64,7 @@ export const Error: Story = {
 export const NumberInput: Story = {
   args: {
     type: "number",
-    placeholder: "0.00",
+    placeholder: "",
   },
 };
 
@@ -93,7 +93,7 @@ export const AllTypes: Story = {
       </div>
       <div className="space-y-1">
         <Label>Number</Label>
-        <Input type="number" placeholder="0" />
+        <Input type="number" placeholder="" />
       </div>
       <div className="space-y-1">
         <Label>Disabled</Label>

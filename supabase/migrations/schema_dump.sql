@@ -8068,7 +8068,7 @@ CREATE TABLE public.subcontracts (
     updated_at timestamp with time zone DEFAULT now(),
     deleted_at timestamp with time zone,
     CONSTRAINT subcontracts_default_retainage_percent_check CHECK (((default_retainage_percent >= (0)::numeric) AND (default_retainage_percent <= (100)::numeric))),
-    CONSTRAINT subcontracts_status_check CHECK ((status = ANY (ARRAY['Draft'::text, 'Sent'::text, 'Pending'::text, 'Approved'::text, 'Executed'::text, 'Closed'::text, 'Void'::text])))
+    CONSTRAINT subcontracts_status_check CHECK ((status = ANY (ARRAY['Draft'::text, 'Out for Bid'::text, 'Out for Signature'::text, 'Approved'::text, 'Complete'::text, 'Terminated'::text])))
 );
 
 
@@ -28156,4 +28156,3 @@ ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON T
 --
 -- PostgreSQL database dump complete
 --
-

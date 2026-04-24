@@ -6,7 +6,7 @@ import {
 } from "./common";
 
 /**
- * Commitment Status enum values matching Procore
+ * Commitment Status enum values matching the subcontracts.status DB constraint.
  */
 export const CommitmentStatusValues = [
   "Draft",

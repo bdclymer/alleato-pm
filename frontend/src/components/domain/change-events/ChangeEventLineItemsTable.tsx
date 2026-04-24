@@ -1113,7 +1113,7 @@ export function ChangeEventLineItemsTable({
                   type="number"
                   value={formState.unitCost}
                   onChange={(e) => setFormState((s) => ({ ...s, unitCost: e.target.value }))}
-                  placeholder="0.00"
+                  placeholder=""
                 />
               </div>
               <div className="space-y-1.5">
@@ -1123,7 +1123,7 @@ export function ChangeEventLineItemsTable({
                   type="number"
                   value={formState.revenueRom}
                   onChange={(e) => setFormState((s) => ({ ...s, revenueRom: e.target.value }))}
-                  placeholder="0.00"
+                  placeholder=""
                 />
               </div>
               <div className="space-y-1.5">
@@ -1133,7 +1133,7 @@ export function ChangeEventLineItemsTable({
                   type="number"
                   value={formState.costRom}
                   onChange={(e) => setFormState((s) => ({ ...s, costRom: e.target.value }))}
-                  placeholder="0.00"
+                  placeholder=""
                 />
               </div>
             </div>

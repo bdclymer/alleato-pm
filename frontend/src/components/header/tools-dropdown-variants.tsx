@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { SectionRuleHeading } from "@/components/layout/spacing";
 import { cn } from "@/lib/utils";
 import type { HeaderNavGroup } from "@/lib/navigation-config";
 import {
@@ -73,12 +74,7 @@ function ToolLink({
 
 // Section header
 function SectionHeader({ label }: { label: string }) {
-  // eslint-disable-next-line design-system/no-raw-heading
-  return (
-    <h3 className="text-[11px] font-semibold uppercase tracking-widest text-zinc-700 mb-3 px-2.5">
-      {label}
-    </h3>
-  );
+  return <SectionRuleHeading label={label} className="mb-3 px-2.5" />;
 }
 
 // Warning footer

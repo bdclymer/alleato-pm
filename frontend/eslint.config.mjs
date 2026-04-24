@@ -19,6 +19,7 @@ const IGNORE_PATTERNS = [
   'out/**',
   'coverage/**',
   'public/**',
+  'storybook-static/**',
   'test-results/**',
   'scripts/**', // Utility scripts - allow console.log
   'tests/**', // Test files - allow console.log
