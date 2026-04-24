@@ -11,7 +11,7 @@ import { createClient } from "@/lib/supabase/server";
 export const PATCH = withApiGuardrails<{ runId: string; resultId: string }>(
   "testing/runs/[runId]/results/[resultId]#PATCH",
   async ({ request, params }) => {
-    const { resultId } = await params;
+    const { runId, resultId } = params;
     const supabase = await createClient();
 
     const body = await request.json();

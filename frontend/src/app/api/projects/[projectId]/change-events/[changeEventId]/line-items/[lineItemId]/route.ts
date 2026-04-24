@@ -5,8 +5,8 @@ import { NextResponse } from 'next/server';
 import { updateLineItemSchema } from '../../../validation';
 import { ZodError } from 'zod';
 import { apiErrorResponse } from "@/lib/api-error";
+import { resolveChangeEventBudgetLineId } from "@/lib/change-events/budget-line-resolver";
 import { requirePermission } from "@/lib/permissions-guard";
-import { logger } from "@/lib/logger";
 
 interface RouteParams {
   params: Promise<{
@@ -63,7 +63,8 @@ export const GET = withApiGuardrails(
       id: lineItem.id,
       changeEventId: lineItem.change_event_id,
       description: lineItem.description,
-      budgetCodeId: lineItem.budget_code_id,
+      budgetLineId: lineItem.budget_line_id ?? lineItem.budget_code_id,
+      budgetCodeId: lineItem.budget_line_id ?? lineItem.budget_code_id,
       vendorId: lineItem.vendor_id,
       contractId: lineItem.contract_id,
       commitmentId: lineItem.commitment_id,
@@ -152,78 +153,19 @@ export const PATCH = withApiGuardrails(
       );
     }
 
-    // Resolve budgetCodeId: could be budget_lines.id OR project_budget_codes.id
-    // Must resolve BEFORE the commitment guard so we compare budget_lines.id to budget_lines.id.
-    let resolvedBudgetCodeId: string | null = validatedData.budgetCodeId ?? null;
-    if (validatedData.budgetCodeId) {
-      // First try budget_lines directly
-      const { data: budgetLine } = await supabase
-        .from('budget_lines')
-        .select('id')
-        .eq('id', validatedData.budgetCodeId)
-        .single();
-
-      if (!budgetLine) {
-        // Not a budget_lines ID — try project_budget_codes and find matching budget_line
-        const { data: pbc } = await supabase
-          .from('project_budget_codes')
-          .select('id, cost_code_id, cost_type_id')
-          .eq('id', validatedData.budgetCodeId)
-          .single();
-
-        if (pbc) {
-          if (!pbc.cost_type_id) {
-            return NextResponse.json(
-              { error: 'Invalid budget code', details: `Project budget code ${validatedData.budgetCodeId} has no cost_type_id; cannot resolve budget line.` },
-              { status: 400 },
-            );
-          }
-          const pbcCostTypeId: string = pbc.cost_type_id;
-          const { data: matchingBudgetLine } = await supabase
-            .from('budget_lines')
-            .select('id')
-            .eq('project_id', parseInt(projectId, 10))
-            .eq('cost_code_id', pbc.cost_code_id)
-            .eq('cost_type_id', pbcCostTypeId)
-            .single();
-
-          if (matchingBudgetLine) {
-            resolvedBudgetCodeId = matchingBudgetLine.id;
-          } else {
-            // Cost code exists but has no budget line — auto-create one
-            const { data: newBudgetLine, error: createError } = await supabase
-              .from('budget_lines')
-              .insert({
-                project_id: parseInt(projectId, 10),
-                cost_code_id: pbc.cost_code_id,
-                cost_type_id: pbcCostTypeId,
-              })
-              .select('id')
-              .single();
-
-            if (newBudgetLine) {
-              resolvedBudgetCodeId = newBudgetLine.id;
-            } else {
-              logger.error({ msg: `[line-items PATCH] Failed to auto-create budget_line for project_budget_code ${validatedData.budgetCodeId}:`, data: createError?.message, });
-              return NextResponse.json(
-                { error: 'Failed to resolve budget code', details: `Could not create budget line for cost code. ${createError?.message || ''}` },
-                { status: 400 },
-              );
-            }
-          }
-        } else {
-          return NextResponse.json(
-            { error: 'Invalid budget code', details: `ID ${validatedData.budgetCodeId} not found in budget_lines or project_budget_codes` },
-            { status: 400 },
-          );
-        }
-      }
-    }
+    // Resolve BEFORE the commitment guard so we compare budget_lines.id to budget_lines.id.
+    const resolvedBudgetLineId = await resolveChangeEventBudgetLineId({
+      supabase,
+      projectId: projectIdNum,
+      inputId: validatedData.budgetCodeId,
+      where: "projects/[projectId]/change-events/[changeEventId]/line-items/[lineItemId]#PATCH",
+    });
 
     // Guard: budget code and contract cannot be changed on commitment-linked line items.
     // Placed after ID resolution so we compare budget_lines.id to budget_lines.id.
     if (existingItem.commitment_id) {
-      if (resolvedBudgetCodeId !== null && resolvedBudgetCodeId !== existingItem.budget_code_id) {
+      const existingBudgetLineId = existingItem.budget_line_id ?? existingItem.budget_code_id;
+      if (resolvedBudgetLineId !== null && resolvedBudgetLineId !== existingBudgetLineId) {
         return NextResponse.json(
           { error: 'Cannot change the budget code on a line item linked to a commitment' },
           { status: 409 }
@@ -247,7 +189,8 @@ export const PATCH = withApiGuardrails(
 
     if (validatedData.description !== undefined) updates.description = validatedData.description;
     if (validatedData.budgetCodeId !== undefined) {
-      updates.budget_code_id = resolvedBudgetCodeId;
+      updates.budget_line_id = resolvedBudgetLineId;
+      updates.budget_code_id = resolvedBudgetLineId;
     }
     if (resolvedVendorId !== undefined && validatedData.vendorId !== undefined) updates.vendor_id = resolvedVendorId;
     if (validatedData.contractId !== undefined) updates.contract_id = validatedData.contractId;
@@ -301,7 +244,8 @@ export const PATCH = withApiGuardrails(
       id: data.id,
       changeEventId: data.change_event_id,
       description: data.description,
-      budgetCodeId: data.budget_code_id,
+      budgetLineId: data.budget_line_id ?? data.budget_code_id,
+      budgetCodeId: data.budget_line_id ?? data.budget_code_id,
       vendorId: data.vendor_id,
       contractId: data.contract_id,
       commitmentId: data.commitment_id,

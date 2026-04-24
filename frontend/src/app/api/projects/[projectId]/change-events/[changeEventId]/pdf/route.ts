@@ -27,6 +27,7 @@ export const GET = withApiGuardrails(
         change_event_line_items(
           id,
           description,
+          budget_line_id,
           budget_code_id,
           quantity,
           unit_of_measure,
@@ -34,7 +35,7 @@ export const GET = withApiGuardrails(
           revenue_rom,
           cost_rom,
           non_committed_cost,
-          budget_line:budget_lines!budget_code_id(
+          budget_line:budget_lines!change_event_line_items_budget_line_id_fkey(
             id,
             description,
             cost_code:cost_codes!cost_code_id(

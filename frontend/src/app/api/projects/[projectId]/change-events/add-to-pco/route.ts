@@ -296,6 +296,7 @@ export const POST = withApiGuardrails(
       // 2. Fetch line items for this change event
       const lineItems = (event as Record<string, unknown>).change_event_line_items as Array<{
         id: string;
+        budget_line_id: string | null;
         budget_code_id: string | null;
         description: string | null;
         quantity: number | null;
@@ -318,7 +319,7 @@ export const POST = withApiGuardrails(
           pco_type: pco_type,
           change_event_id: event.id,
           change_event_line_item_id: li.id,
-          budget_code_id: li.budget_code_id,
+          budget_code_id: li.budget_line_id ?? li.budget_code_id,
           description: li.description,
           quantity: li.quantity,
           unit_of_measure: li.unit_of_measure,

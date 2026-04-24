@@ -5,8 +5,8 @@ import { NextResponse } from 'next/server';
 import { createLineItemSchema, updateLineItemSchema } from '../../validation';
 import { ZodError } from 'zod';
 import { apiErrorResponse } from "@/lib/api-error";
+import { resolveChangeEventBudgetLineId } from "@/lib/change-events/budget-line-resolver";
 import { requirePermission } from "@/lib/permissions-guard";
-import { logger } from "@/lib/logger";
 
 interface RouteParams {
   params: Promise<{
@@ -50,7 +50,7 @@ export const GET = withApiGuardrails(
       .from('change_event_line_items')
       .select(`
         *,
-        budget_line:budget_lines!budget_code_id(
+        budget_line:budget_lines!change_event_line_items_budget_line_id_fkey(
           id,
           description,
           cost_code:cost_codes!cost_code_id(
@@ -75,20 +75,16 @@ export const GET = withApiGuardrails(
     // Batch reverse-map budget_lines.id → project_budget_codes.id
     // vendor_id directly stores companies.id — no remap needed.
     // Done as two bulk queries (not per-item) to avoid N+1.
-    const budgetCodeIds = [...new Set(
-      (lineItems || []).map(i => i.budget_code_id).filter(Boolean)
+    const budgetLineIds = [...new Set(
+      (lineItems || []).map(i => i.budget_line_id ?? i.budget_code_id).filter(Boolean)
     )] as string[];
-    const vendorIds = [...new Set(
-      (lineItems || []).map(i => i.vendor_id).filter(Boolean)
-    )] as string[];
-
     // budget_lines.project_budget_code_id is the project_budget_codes.id we want directly
     const budgetLineToProjectCostCode = new Map<string, string>();
-    if (budgetCodeIds.length > 0) {
+    if (budgetLineIds.length > 0) {
       const { data: budgetLines } = await supabase
         .from('budget_lines')
         .select('id, project_budget_code_id')
-        .in('id', budgetCodeIds);
+        .in('id', budgetLineIds);
 
       for (const bl of budgetLines ?? []) {
         if (bl.project_budget_code_id) {
@@ -175,13 +171,15 @@ export const GET = withApiGuardrails(
       const quantity = item.quantity || 0;
       const unitCost = item.unit_cost || 0;
       const extendedAmount = quantity * unitCost;
+      const budgetLineId = item.budget_line_id ?? item.budget_code_id;
 
       return {
         id: item.id,
         changeEventId: item.change_event_id,
-        budgetCodeId: item.budget_code_id,
-        projectBudgetCodeId: item.budget_code_id
-          ? (budgetLineToProjectCostCode.get(item.budget_code_id) ?? item.budget_code_id)
+        budgetLineId,
+        budgetCodeId: budgetLineId,
+        projectBudgetCodeId: budgetLineId
+          ? (budgetLineToProjectCostCode.get(budgetLineId) ?? budgetLineId)
           : undefined,
         budgetLine: item.budget_line || undefined,
         description: item.description,
@@ -274,93 +272,12 @@ export const POST = withApiGuardrails(
       });
     }
 
-    // Resolve budgetCodeId: could be budget_lines.id OR project_budget_codes.id
-    let resolvedBudgetCodeId: string | null = validatedData.budgetCodeId ?? null;
-    if (validatedData.budgetCodeId) {
-      // First try budget_lines directly
-      const { data: budgetLine } = await supabase
-        .from('budget_lines')
-        .select('id, project_id')
-        .eq('id', validatedData.budgetCodeId)
-        .single();
-
-      if (budgetLine) {
-        if (budgetLine.project_id !== parseInt(projectId, 10)) {
-          throw new GuardrailError({
-            code: "INVALID_PAYLOAD",
-            where: "projects/[projectId]/change-events/[changeEventId]/line-items#POST",
-            message: "Budget code does not belong to this project.",
-            status: 400,
-            severity: "low",
-          });
-        }
-      } else {
-        // Not a budget_lines ID — try project_budget_codes and find matching budget_line
-        const { data: pbc } = await supabase
-          .from('project_budget_codes')
-          .select('id, cost_code_id, cost_type_id')
-          .eq('id', validatedData.budgetCodeId)
-          .single();
-
-        if (pbc) {
-          if (!pbc.cost_type_id) {
-            throw new GuardrailError({
-              code: "INVALID_PAYLOAD",
-              where: "projects/[projectId]/change-events/[changeEventId]/line-items#POST",
-              message: `Project budget code ${validatedData.budgetCodeId} has no cost_type_id; cannot resolve budget line.`,
-            });
-          }
-          const pbcCostTypeId: string = pbc.cost_type_id;
-          const { data: matchingBudgetLine } = await supabase
-            .from('budget_lines')
-            .select('id')
-            .eq('project_id', parseInt(projectId, 10))
-            .eq('cost_code_id', pbc.cost_code_id)
-            .eq('cost_type_id', pbcCostTypeId)
-            .single();
-
-          if (matchingBudgetLine) {
-            resolvedBudgetCodeId = matchingBudgetLine.id;
-          } else {
-            // Cost code exists but has no budget line — auto-create one
-            const { data: newBudgetLine, error: createError } = await supabase
-              .from('budget_lines')
-              .insert({
-                project_id: parseInt(projectId, 10),
-                cost_code_id: pbc.cost_code_id,
-                cost_type_id: pbcCostTypeId,
-              })
-              .select('id')
-              .single();
-
-            if (newBudgetLine) {
-              resolvedBudgetCodeId = newBudgetLine.id;
-            } else {
-              logger.error({ msg: `[line-items POST] Failed to auto-create budget_line for project_budget_code ${validatedData.budgetCodeId}:`, data: createError?.message, });
-              throw new GuardrailError({
-                code: "INVALID_PAYLOAD",
-                where: "projects/[projectId]/change-events/[changeEventId]/line-items#POST",
-                message: "Failed to resolve budget code.",
-                status: 400,
-                severity: "low",
-                details: {
-                  reason: `Could not create budget line for cost code. ${createError?.message || ""}`,
-                },
-                cause: createError ?? undefined,
-              });
-            }
-          }
-        } else {
-          throw new GuardrailError({
-            code: "INVALID_PAYLOAD",
-            where: "projects/[projectId]/change-events/[changeEventId]/line-items#POST",
-            message: `Invalid budget code: ID ${validatedData.budgetCodeId} not found in budget_lines or project_budget_codes.`,
-            status: 400,
-            severity: "low",
-          });
-        }
-      }
-    }
+    const resolvedBudgetLineId = await resolveChangeEventBudgetLineId({
+      supabase,
+      projectId: projectIdNum,
+      inputId: validatedData.budgetCodeId,
+      where: "projects/[projectId]/change-events/[changeEventId]/line-items#POST",
+    });
 
     // vendor_id FK targets companies(id) directly — store as-is.
     const resolvedVendorId = validatedData.vendorId;
@@ -375,7 +292,8 @@ export const POST = withApiGuardrails(
       .from('change_event_line_items')
       .insert({
         change_event_id: changeEventId,
-        budget_code_id: resolvedBudgetCodeId || undefined,
+        budget_line_id: resolvedBudgetLineId || undefined,
+        budget_code_id: resolvedBudgetLineId || undefined,
         description: validatedData.description,
         vendor_id: resolvedVendorId || undefined,
         // SENSITIVE: this writes a contract foreign key; preserve UUID exactly.
@@ -394,7 +312,7 @@ export const POST = withApiGuardrails(
       })
       .select(`
         *,
-        budget_line:budget_lines!budget_code_id(
+        budget_line:budget_lines!change_event_line_items_budget_line_id_fkey(
           id,
           description,
           cost_code:cost_codes!cost_code_id(
@@ -427,7 +345,8 @@ export const POST = withApiGuardrails(
     const response = {
       id: data.id,
       changeEventId: data.change_event_id,
-      budgetCodeId: data.budget_code_id,
+      budgetLineId: data.budget_line_id ?? data.budget_code_id,
+      budgetCodeId: data.budget_line_id ?? data.budget_code_id,
       budgetLine: data.budget_line || undefined,
       description: data.description,
       vendorId: data.vendor_id,

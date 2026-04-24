@@ -4,7 +4,8 @@
 
 Change event edit form showed empty dropdowns for Budget Code and Vendor because:
 
-- `change_event_line_items.budget_code_id` → FK to `budget_lines.id`
+- `change_event_line_items.budget_line_id` → FK to `budget_lines.id`
+- `change_event_line_items.budget_code_id` → legacy alias for `budget_line_id`; it stores `budget_lines.id`, not `project_budget_codes.id`
 - `BudgetCodeSelector` dropdown → uses `project_cost_codes.id`
 - **Different tables, different UUIDs. Form can never match.**
 
@@ -26,7 +27,7 @@ This pattern will recur anywhere a form dropdown loads options from a different 
 
 | Column | FK Target | Form Dropdown Source | Resolution |
 |--------|-----------|---------------------|------------|
-| `change_event_line_items.budget_code_id` | `budget_lines` | `project_cost_codes` (via `/api/projects/[id]/budget-codes`) | Match through `cost_code_id` + `cost_type_id` |
+| `change_event_line_items.budget_line_id` | `budget_lines` | `project_budget_codes` (via `/api/projects/[id]/budget-codes`) | Prefer `budget_lines.project_budget_code_id`; fallback through `cost_code_id` + `cost_type_id` |
 | `change_event_line_items.vendor_id` | `companies` | `vendors` (via `/api/projects/[id]/vendors`) | Match by company name |
 | `*.commitment_id` | `subcontracts` or `purchase_orders` | Combined list with `sub-`/`po-` prefixes | Prefix-based parsing (already working) |
 | `direct_costs.vendor_id` | `companies` | `/api/projects/[id]/vendors` (project-scoped companies) | Form injects the record's existing `vendor:companies(*)` as a synthetic option + uses `selectedLabel` fallback so Edit always renders the saved vendor even if it's outside the scoped dropdown set |
@@ -61,10 +62,11 @@ stored FK is **global**. Example: `/api/projects/[id]/vendors` only returns vend
 
 ### Read path (API → Form)
 The GET API maps stored IDs to form-compatible IDs:
-- `projectBudgetCodeId`: budget_lines.id → project_cost_codes.id (via cost_code_id + cost_type_id)
+- `budgetLineId`: stored `budget_lines.id`
+- `projectBudgetCodeId`: budget_lines.id → project_budget_codes.id (via `budget_lines.project_budget_code_id`)
 - `formVendorId`: companies.id → vendors.id (via name matching)
 
 ### Write path (Form → API)
 The POST/PATCH line items API resolves form IDs back to FK-compatible IDs:
-- If `budgetCodeId` not found in `budget_lines`, checks `project_cost_codes` and finds matching budget_line
+- If `budgetCodeId` is not found in `budget_lines`, checks `project_budget_codes` and resolves or creates the matching `budget_lines` row
 - If `vendorId` not found in `companies`, checks `vendors` table and gets `company_id`

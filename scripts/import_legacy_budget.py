@@ -408,16 +408,17 @@ def ensure_cost_code(
     return row.cost_code, warnings
 
 
-def ensure_project_cost_code(
+def ensure_project_budget_code(
     client: SupabaseRestClient,
     project_id: int,
     cost_code_id: str,
     cost_type_id: str,
+    description: str,
     dry_run: bool,
-) -> list[str]:
+) -> tuple[str | None, list[str]]:
     warnings: list[str] = []
     existing = client.select(
-        "project_cost_codes",
+        "project_budget_codes",
         {
             "select": "id,is_active",
             "project_id": f"eq.{project_id}",
@@ -430,38 +431,39 @@ def ensure_project_cost_code(
         if existing[0].get("is_active") is False:
             if dry_run:
                 warnings.append(
-                    f'Would reactivate project cost code "{cost_code_id}" for project {project_id}.'
+                    f'Would reactivate project budget code "{cost_code_id}" for project {project_id}.'
                 )
-                return warnings
+                return str(existing[0]["id"]), warnings
             client.patch(
-                "project_cost_codes",
+                "project_budget_codes",
                 {"id": f'eq.{existing[0]["id"]}'},
                 {"is_active": True},
             )
             warnings.append(
-                f'Reactivated project cost code "{cost_code_id}" for project {project_id}.'
+                f'Reactivated project budget code "{cost_code_id}" for project {project_id}.'
             )
-        return warnings
+        return str(existing[0]["id"]), warnings
 
     if dry_run:
         warnings.append(
-            f'Would add project cost code "{cost_code_id}" to project {project_id}.'
+            f'Would add project budget code "{cost_code_id}" to project {project_id}.'
         )
-        return warnings
+        return None, warnings
 
-    client.insert(
-        "project_cost_codes",
+    inserted = client.insert(
+        "project_budget_codes",
         {
             "project_id": project_id,
             "cost_code_id": cost_code_id,
             "cost_type_id": cost_type_id,
+            "description": description or cost_code_id,
             "is_active": True,
         },
     )
     warnings.append(
-        f'Added project cost code "{cost_code_id}" to project {project_id}.'
+        f'Added project budget code "{cost_code_id}" to project {project_id}.'
     )
-    return warnings
+    return str(inserted[0]["id"]) if inserted else None, warnings
 
 
 def update_project_budget_summary(
@@ -524,20 +526,31 @@ def import_rows(
         cost_code_id, cost_code_warnings = ensure_cost_code(client, row, divisions, dry_run)
         warnings.extend(f"Row {index}: {warning}" for warning in cost_code_warnings)
 
-        project_cost_code_warnings = ensure_project_cost_code(
-            client, project_id, cost_code_id, cost_type_id, dry_run
+        project_budget_code_id, project_budget_code_warnings = ensure_project_budget_code(
+            client,
+            project_id,
+            cost_code_id,
+            cost_type_id,
+            row.description or cost_code_id,
+            dry_run,
         )
-        warnings.extend(f"Row {index}: {warning}" for warning in project_cost_code_warnings)
+        warnings.extend(f"Row {index}: {warning}" for warning in project_budget_code_warnings)
 
         if dry_run:
             imported_count += 1
             continue
+
+        if not project_budget_code_id:
+            raise RuntimeError(
+                f'Row {index}: failed to resolve project_budget_codes row for "{cost_code_id}".'
+            )
 
         try:
             client.insert(
                 "budget_lines",
                 {
                     "project_id": project_id,
+                    "project_budget_code_id": project_budget_code_id,
                     "cost_code_id": cost_code_id,
                     "cost_type_id": cost_type_id,
                     "description": row.description or None,

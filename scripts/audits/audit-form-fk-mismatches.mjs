@@ -28,7 +28,7 @@
  *   - the `*_id` is not actually a DB column (e.g. selection state).
  *
  * Known true-positive seeds:
- *   - `budget_code_id`  → FK budget_lines;  dropdowns often load project_cost_codes
+ *   - `budget_code_id`  → FK budget_lines;  dropdowns often load project_budget_codes
  *   - `vendor_id`       → FK companies;     dropdowns often load vendors
  *
  * Output: suspected mismatches, with all evidence (fk target + endpoints seen).
@@ -59,7 +59,7 @@ const EXT_OK = new Set([".ts", ".tsx"]);
 const KNOWN_MISMATCHES = {
   budget_code_id: {
     fkTargets: ["budget_lines"],
-    wrongSources: ["project_cost_codes", "cost_codes"],
+    wrongSources: ["project_budget_codes", "cost_codes"],
   },
   vendor_id: {
     fkTargets: ["companies"],

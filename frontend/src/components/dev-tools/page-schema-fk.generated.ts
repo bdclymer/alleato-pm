@@ -3,6 +3,7 @@
 // Generated at: 2026-04-23T17:17:42.753Z
 
 export const PAGE_SCHEMA_FK_TARGETS: Record<string, string> = {
+  "change_event_line_items.budget_line_id": "budget_lines.id",
   "change_event_line_items.budget_code_id": "budget_lines.id",
   "change_event_line_items.vendor_id": "companies.id",
 };

@@ -26,6 +26,11 @@ interface VerticalMarkupRow {
   compound: boolean | null;
 }
 
+interface ChangeEventLineItemRow {
+  budget_code_id?: string | null;
+  budget_line_id?: string | null;
+}
+
 function computeMarkupAdditions(
   _baseCost: number,
   baseRevenue: number,
@@ -120,6 +125,7 @@ export const GET = withApiGuardrails(
         change_event_line_items(
           id,
           description,
+          budget_line_id,
           budget_code_id,
           quantity,
           unit_of_measure,
@@ -135,7 +141,7 @@ export const GET = withApiGuardrails(
           sort_order,
           created_at,
           updated_at,
-          budget_line:budget_lines!budget_code_id(
+          budget_line:budget_lines!change_event_line_items_budget_line_id_fkey(
             id,
             project_budget_code_id,
             description,
@@ -301,8 +307,14 @@ export const GET = withApiGuardrails(
       null;
 
     // Map budget_lines IDs to project_budget_codes IDs for edit form compatibility.
-    // budget_lines.project_budget_code_id is the direct reference — no secondary lookup needed.
-    const budgetLineIds = [...new Set(lineItems.filter((li: any) => li.budget_code_id).map((li: any) => li.budget_code_id))];
+    // budget_lines.project_budget_code_id is the direct reference; budget_code_id is a legacy alias.
+    const budgetLineIds = [
+      ...new Set(
+        lineItems
+          .map((li: ChangeEventLineItemRow) => li.budget_line_id ?? li.budget_code_id)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    ];
     const budgetLineToProjectCodeMap: Record<string, string> = {};
     if (budgetLineIds.length > 0) {
       const { data: budgetLines } = await supabase
@@ -408,12 +420,16 @@ export const GET = withApiGuardrails(
       lineItems: lineItems.map((item: any) => {
         const quantity = item.quantity || 0;
         const unitCost = item.unit_cost || 0;
+        const budgetLineId = item.budget_line_id ?? item.budget_code_id;
         return {
           id: item.id,
           description: item.description,
-          budgetCodeId: item.budget_code_id,
+          budgetLineId,
+          budgetCodeId: budgetLineId,
           // projectBudgetCodeId maps budget_lines → project_budget_codes for form selectors
-          projectBudgetCodeId: budgetLineToProjectCodeMap[item.budget_code_id] || item.budget_line?.project_budget_code_id || null,
+          projectBudgetCodeId: budgetLineId
+            ? (budgetLineToProjectCodeMap[budgetLineId] || item.budget_line?.project_budget_code_id || null)
+            : null,
           budgetLine: item.budget_line || null,
           quantity: item.quantity,
           unitOfMeasure: item.unit_of_measure,
@@ -551,6 +567,7 @@ export const PATCH = withApiGuardrails(
         change_event_line_items(
           id,
           description,
+          budget_line_id,
           budget_code_id,
           quantity,
           unit_of_measure,
@@ -563,7 +580,7 @@ export const PATCH = withApiGuardrails(
           sort_order,
           created_at,
           updated_at,
-          budget_line:budget_lines!budget_code_id(
+          budget_line:budget_lines!change_event_line_items_budget_line_id_fkey(
             id,
             project_budget_code_id,
             description,
@@ -639,10 +656,12 @@ export const PATCH = withApiGuardrails(
       lineItems: (data.change_event_line_items || []).map((item: any) => {
         const quantity = item.quantity || 0;
         const unitCost = item.unit_cost || 0;
+        const budgetLineId = item.budget_line_id ?? item.budget_code_id;
         return {
           id: item.id,
           description: item.description,
-          budgetCodeId: item.budget_code_id,
+          budgetLineId,
+          budgetCodeId: budgetLineId,
           budgetLine: item.budget_line || null,
           quantity: item.quantity,
           unitOfMeasure: item.unit_of_measure,

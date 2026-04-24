@@ -12,6 +12,7 @@ const frontendRoot = path.join(repoRoot, "frontend");
 const liveTypesPath = path.join(frontendRoot, "src", "types", "database.types.ts");
 const localTypesPath = path.join(frontendRoot, "src", "types", "database.local.types.ts");
 const SYSTEM_RELATIONS = new Set(["_migrations", "_sql", "pg_tables"]);
+const DROPPED_RELATIONS = new Set([`project_${"cost"}_codes`]);
 
 function readFile(filePath) {
   return fs.readFileSync(filePath, "utf8");
@@ -148,6 +149,40 @@ function collectLocalOnlyRelations(liveRelations) {
   return [...localRelations].filter((relation) => !liveRelations.has(relation)).sort();
 }
 
+function collectDroppedRelationReferences() {
+  let raw = "";
+  try {
+    raw = execFileSync(
+      "rg",
+      [
+        "-n",
+        ...DROPPED_RELATIONS,
+        "frontend/src",
+        "scripts",
+        "-g",
+        "!*.json",
+        "-g",
+        "!frontend/src/types/database.types.ts",
+        "-g",
+        "!frontend/src/types/database.local.types.ts",
+      ],
+      {
+        cwd: repoRoot,
+        encoding: "utf8",
+      },
+    );
+  } catch (error) {
+    if (error.status === 1) return [];
+    throw error;
+  }
+
+  return raw
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .filter((line) => !line.includes("scripts/database/audit-live-schema-references.mjs"));
+}
+
 function main() {
   if (!fs.existsSync(liveTypesPath)) {
     console.error(`Missing live database types at ${liveTypesPath}`);
@@ -162,6 +197,7 @@ function main() {
 
   const unknownRelations = collectUnknownRelations(liveRelations);
   const localOnlyRelations = collectLocalOnlyRelations(liveRelations);
+  const droppedRelationReferences = collectDroppedRelationReferences();
 
   let failed = false;
 
@@ -184,6 +220,17 @@ function main() {
     console.error("Stale local-only schema relations found in frontend/src/types/database.local.types.ts:");
     for (const relation of localOnlyRelations) {
       console.error(`- ${relation}`);
+    }
+  }
+
+  if (droppedRelationReferences.length > 0) {
+    failed = true;
+    console.error("Dropped schema relation references found:");
+    for (const location of droppedRelationReferences.slice(0, 12)) {
+      console.error(`- ${location}`);
+    }
+    if (droppedRelationReferences.length > 12) {
+      console.error(`- ... ${droppedRelationReferences.length - 12} more`);
     }
   }
 

@@ -4853,6 +4853,7 @@ export type Database = {
       }
       change_event_line_items: {
         Row: {
+          budget_line_id: string | null
           budget_code_id: string | null
           change_event_id: string
           commitment_id: string | null
@@ -4874,6 +4875,7 @@ export type Database = {
           vendor_id: string | null
         }
         Insert: {
+          budget_line_id?: string | null
           budget_code_id?: string | null
           change_event_id: string
           commitment_id?: string | null
@@ -4895,6 +4897,7 @@ export type Database = {
           vendor_id?: string | null
         }
         Update: {
+          budget_line_id?: string | null
           budget_code_id?: string | null
           change_event_id?: string
           commitment_id?: string | null
@@ -4916,6 +4919,13 @@ export type Database = {
           vendor_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "change_event_line_items_budget_line_id_fkey"
+            columns: ["budget_line_id"]
+            isOneToOne: false
+            referencedRelation: "budget_lines"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "change_event_line_items_budget_code_id_fkey"
             columns: ["budget_code_id"]
@@ -14040,7 +14050,7 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
-          pco_id: number
+          pco_id: string
           pco_type: string
           quantity: number | null
           sort_order: number | null
@@ -14056,7 +14066,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
-          pco_id: number
+          pco_id: string
           pco_type: string
           quantity?: number | null
           sort_order?: number | null
@@ -14072,7 +14082,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
-          pco_id?: number
+          pco_id?: string
           pco_type?: string
           quantity?: number | null
           sort_order?: number | null
@@ -14964,6 +14974,73 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prime_contract_change_order_related_items: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          prime_co_id: number
+          project_id: number
+          related_id: string
+          related_number: string | null
+          related_status: string | null
+          related_title: string
+          related_type: string
+          related_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          prime_co_id: number
+          project_id: number
+          related_id: string
+          related_number?: string | null
+          related_status?: string | null
+          related_title: string
+          related_type: string
+          related_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          prime_co_id?: number
+          project_id?: number
+          related_id?: string
+          related_number?: string | null
+          related_status?: string | null
+          related_title?: string
+          related_type?: string
+          related_url?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prime_contract_change_order_related_items_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prime_contract_change_order_related_items_prime_co_id_fkey"
+            columns: ["prime_co_id"]
+            isOneToOne: false
+            referencedRelation: "prime_contract_change_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prime_contract_change_order_related_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
         ]

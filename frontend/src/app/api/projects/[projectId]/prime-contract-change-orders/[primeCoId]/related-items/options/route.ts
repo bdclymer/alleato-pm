@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
 
 interface RouteParams {
-  params: Promise<{ projectId: string; primeCoId: string }>;
+  params: { projectId: string; primeCoId: string };
 }
 
 const RELATED_ITEM_TYPES = [
@@ -40,8 +40,8 @@ function optionSort(a: RelatedItemOption, b: RelatedItemOption): number {
 
 export const GET = withApiGuardrails(
   "projects/[projectId]/prime-contract-change-orders/[primeCoId]/related-items/options#GET",
-  async ({ request, params }: RouteParams) => {
-    const { projectId } = await params;
+  async ({ request, params }) => {
+    const { projectId } = params;
     const parsedProjectId = Number.parseInt(projectId, 10);
 
     if (Number.isNaN(parsedProjectId)) {

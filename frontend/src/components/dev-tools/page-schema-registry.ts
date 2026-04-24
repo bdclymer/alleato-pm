@@ -97,6 +97,17 @@ const CHANGE_EVENTS_SCHEMA: PageSchemaEntry = {
         { name: "id", type: "uuid", pk: true },
         { name: "change_event_id", type: "uuid", fk: { table: "change_events", column: "id" } },
         {
+          name: "budget_line_id",
+          type: "uuid",
+          nullable: true,
+          fk: (() => {
+            const fkTarget = getFkTarget("change_event_line_items", "budget_line_id", "budget_lines.id")
+            const [table = "budget_lines", column = "id"] = fkTarget.split(".")
+            return { table, column }
+          })(),
+          notes: "Preferred FK to budget_lines.id. Replaces legacy budget_code_id naming.",
+        },
+        {
           name: "budget_code_id",
           type: "uuid",
           nullable: true,
@@ -105,7 +116,7 @@ const CHANGE_EVENTS_SCHEMA: PageSchemaEntry = {
             const [table = "budget_lines", column = "id"] = fkTarget.split(".")
             return { table, column }
           })(),
-          notes: "FK → budget_lines.id; dropdown uses budget-codes API (project_budget_codes.id). Both tables now unified.",
+          notes: "Legacy alias for budget_line_id. Stores budget_lines.id, not project_budget_codes.id.",
         },
         { name: "description", type: "text", nullable: true },
         {
@@ -180,7 +191,7 @@ const CHANGE_EVENTS_SCHEMA: PageSchemaEntry = {
     },
     {
       name: "budget_lines",
-      description: "Budget line items. FK target for change_event_line_items.budget_code_id.",
+      description: "Budget line items. FK target for change_event_line_items.budget_line_id.",
       columns: [
         { name: "id", type: "uuid", pk: true },
         { name: "project_id", type: "integer", fk: { table: "projects", column: "id" } },
@@ -193,7 +204,7 @@ const CHANGE_EVENTS_SCHEMA: PageSchemaEntry = {
     },
     {
       name: "project_budget_codes",
-      description: "Cost codes assigned to a project. Single source of truth for FK and dropdown. Supersedes removed project_cost_codes table.",
+      description: "Cost codes assigned to a project. Single source of truth for FK and dropdown. Supersedes the removed legacy project cost code table.",
       columns: [
         { name: "id", type: "uuid", pk: true, notes: "FK target for contract_line_items.budget_code_id, direct_cost_line_items.budget_code_id" },
         { name: "project_id", type: "integer", fk: { table: "projects", column: "id" } },
@@ -257,11 +268,11 @@ const CHANGE_EVENTS_SCHEMA: PageSchemaEntry = {
     // Line item form fields
     {
       formField: "lineItems[].budgetCode",
-      dbColumn: "budget_code_id",
+      dbColumn: "budget_line_id",
       dbTable: "change_event_line_items",
-      fkTarget: getFkTarget("change_event_line_items", "budget_code_id", "budget_lines.id"),
+      fkTarget: getFkTarget("change_event_line_items", "budget_line_id", "budget_lines.id"),
       dropdownSource: "project_budget_codes.id",
-      notes: "FK → budget_lines.id; dropdown uses project_budget_codes.id (same table). ID resolution handled in API.",
+      notes: "API accepts a project_budget_codes.id from the form and stores the resolved budget_lines.id in budget_line_id.",
     },
     { formField: "lineItems[].description", dbColumn: "description", dbTable: "change_event_line_items" },
     {

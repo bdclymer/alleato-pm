@@ -291,7 +291,8 @@ export async function syncDirectCosts(
   const { data: existingProjectCostCodes, error: projectCostCodesError } = await supabase
     .from("project_budget_codes")
     .select("id, cost_code_id")
-    .eq("project_id", projectId);
+    .eq("project_id", projectId)
+    .is("cost_type_id", null);
 
   if (projectCostCodesError) {
     result.errors.push(`Failed to load project cost codes: ${projectCostCodesError.message}`);
@@ -299,8 +300,17 @@ export async function syncDirectCosts(
   }
 
   const projectCostCodeByCode = new Map<string, string>();
+  const ambiguousProjectCostCodes = new Set<string>();
   for (const row of existingProjectCostCodes ?? []) {
-    if (row.cost_code_id) projectCostCodeByCode.set(row.cost_code_id, row.id);
+    if (!row.cost_code_id) continue;
+    if (projectCostCodeByCode.has(row.cost_code_id)) {
+      ambiguousProjectCostCodes.add(row.cost_code_id);
+      projectCostCodeByCode.delete(row.cost_code_id);
+      continue;
+    }
+    if (!ambiguousProjectCostCodes.has(row.cost_code_id)) {
+      projectCostCodeByCode.set(row.cost_code_id, row.id);
+    }
   }
 
   const now = new Date().toISOString();
@@ -317,6 +327,12 @@ export async function syncDirectCosts(
       const normalizedCostCode = normalizeCostCode(detail.CostCode);
       if (!normalizedCostCode) continue;
       if (!validCostCodes.has(normalizedCostCode)) continue;
+      if (ambiguousProjectCostCodes.has(normalizedCostCode)) {
+        result.errors.push(
+          `${refNbr}: multiple null-cost-type project_budget_codes rows exist for ${normalizedCostCode}; cannot map Acumatica direct cost safely.`,
+        );
+        continue;
+      }
 
       let projectCostCodeId = projectCostCodeByCode.get(normalizedCostCode);
       if (!projectCostCodeId) {
@@ -331,9 +347,9 @@ export async function syncDirectCosts(
           .insert({
             project_id: projectId,
             cost_code_id: normalizedCostCode,
+            cost_type_id: null,
             description: costCodeMeta?.title ?? normalizedCostCode,
             is_active: true,
-            // cost_type_id intentionally omitted — Acumatica transactions don't carry it
           })
           .select("id")
           .single();

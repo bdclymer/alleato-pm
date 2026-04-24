@@ -93,7 +93,7 @@ export const POST = withApiGuardrails(
     if (body.scope === "matching_cost_codes") {
       const { data: lineItems, error: lineItemsError } = await supabase
         .from("change_event_line_items")
-        .select("change_event_id, commitment_id, budget_code_id")
+        .select("change_event_id, commitment_id, budget_line_id, budget_code_id")
         .in("change_event_id", body.change_event_ids);
 
       if (lineItemsError) {
@@ -109,7 +109,7 @@ export const POST = withApiGuardrails(
       const budgetLineIds = [
         ...new Set(
           (lineItems ?? [])
-            .map((lineItem) => lineItem.budget_code_id)
+            .map((lineItem) => lineItem.budget_line_id ?? lineItem.budget_code_id)
             .filter((value): value is string => !!value),
         ),
       ];

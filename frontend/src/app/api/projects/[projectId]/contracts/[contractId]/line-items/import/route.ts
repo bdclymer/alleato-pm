@@ -68,7 +68,7 @@ export const POST = withApiGuardrails(
     let budgetQuery = supabase
       .from("budget_lines")
       .select(
-        `id, cost_code_id, cost_type_id, description, original_amount,
+        `id, project_budget_code_id, cost_code_id, cost_type_id, description, original_amount,
          cost_codes ( title ),
          cost_code_types ( code, description )`,
       )
@@ -142,7 +142,9 @@ export const POST = withApiGuardrails(
     for (let i = 0; i < newBudgetLines.length; i++) {
       const budgetLine = newBudgetLines[i] as {
         id: string;
+        project_budget_code_id: string | null;
         cost_code_id: string;
+        cost_type_id: string | null;
         description: string | null;
         original_amount: number;
         cost_codes: { title: string | null } | { title: string | null }[] | null;
@@ -165,6 +167,33 @@ export const POST = withApiGuardrails(
         `Imported – ${budgetLine.cost_code_id}`;
 
       const lineNumber = maxLineNumber + i + 1;
+      let budgetCodeId = budgetLine.project_budget_code_id;
+
+      if (!budgetCodeId) {
+        if (!budgetLine.cost_type_id) {
+          errors.push(
+            `Line ${lineNumber}: Budget line ${budgetLine.id} has no project_budget_code_id or cost_type_id; cannot resolve canonical budget code.`,
+          );
+          continue;
+        }
+
+        const { data: projectBudgetCode, error: budgetCodeError } = await supabase
+          .from("project_budget_codes")
+          .select("id")
+          .eq("project_id", numericProjectId)
+          .eq("cost_code_id", budgetLine.cost_code_id)
+          .eq("cost_type_id", budgetLine.cost_type_id)
+          .maybeSingle();
+
+        if (budgetCodeError || !projectBudgetCode) {
+          errors.push(
+            `Line ${lineNumber}: Failed to resolve canonical budget code for ${budgetLine.cost_code_id}: ${budgetCodeError?.message ?? "not found"}`,
+          );
+          continue;
+        }
+
+        budgetCodeId = projectBudgetCode.id;
+      }
 
       const { data: insertedItem, error: insertError } = await supabase
         .from("contract_line_items")
@@ -172,6 +201,7 @@ export const POST = withApiGuardrails(
           contract_id: contractId,
           line_number: lineNumber,
           description,
+          budget_code_id: budgetCodeId,
           cost_code_id: budgetLine.cost_code_id,
           quantity: 1,
           unit_of_measure: "LS",

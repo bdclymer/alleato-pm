@@ -7,7 +7,7 @@ import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
 
 interface RouteParams {
-  params: Promise<{ projectId: string; primeCoId: string }>;
+  params: { projectId: string; primeCoId: string };
 }
 
 const RELATED_ITEM_TYPES = [
@@ -182,7 +182,7 @@ async function getRelatedSourceRecord(
 export const GET = withApiGuardrails(
   "projects/[projectId]/prime-contract-change-orders/[primeCoId]/related-items#GET",
   async ({ params }: RouteParams) => {
-    const { projectId, primeCoId } = await params;
+    const { projectId, primeCoId } = params;
     const parsedProjectId = Number.parseInt(projectId, 10);
     const parsedPrimeCoId = Number.parseInt(primeCoId, 10);
 
@@ -234,8 +234,8 @@ export const GET = withApiGuardrails(
 
 export const POST = withApiGuardrails(
   "projects/[projectId]/prime-contract-change-orders/[primeCoId]/related-items#POST",
-  async ({ request, params }: RouteParams) => {
-    const { projectId, primeCoId } = await params;
+  async ({ request, params }) => {
+    const { projectId, primeCoId } = params;
     const parsedProjectId = Number.parseInt(projectId, 10);
     const parsedPrimeCoId = Number.parseInt(primeCoId, 10);
 

@@ -7801,7 +7801,7 @@ export type Database = {
       project_budget_codes: {
         Row: {
           cost_code_id: string
-          cost_type_id: string
+          cost_type_id: string | null
           created_at: string
           created_by: string | null
           description: string
@@ -7815,7 +7815,7 @@ export type Database = {
         }
         Insert: {
           cost_code_id: string
-          cost_type_id: string
+          cost_type_id?: string | null
           created_at?: string
           created_by?: string | null
           description: string
@@ -7829,7 +7829,7 @@ export type Database = {
         }
         Update: {
           cost_code_id?: string
-          cost_type_id?: string
+          cost_type_id?: string | null
           created_at?: string
           created_by?: string | null
           description?: string

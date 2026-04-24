@@ -7,17 +7,17 @@ import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
 
 interface RouteParams {
-  params: Promise<{
+  params: {
     projectId: string;
     primeCoId: string;
     relatedItemId: string;
-  }>;
+  };
 }
 
 export const DELETE = withApiGuardrails(
   "projects/[projectId]/prime-contract-change-orders/[primeCoId]/related-items/[relatedItemId]#DELETE",
   async ({ params }: RouteParams) => {
-    const { projectId, primeCoId, relatedItemId } = await params;
+    const { projectId, primeCoId, relatedItemId } = params;
     const parsedProjectId = Number.parseInt(projectId, 10);
     const parsedPrimeCoId = Number.parseInt(primeCoId, 10);
 
