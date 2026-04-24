@@ -7,8 +7,6 @@ import { toast } from "sonner";
 import {
   Check,
   ChevronRight,
-  Columns3,
-  LockKeyhole,
   Minus,
   MoreVertical,
   Plus,
@@ -16,11 +14,11 @@ import {
   ShieldCheck,
   Trash2,
   UserCog,
-  Users,
+  X,
 } from "lucide-react";
 
 import { PermissionTemplateForm } from "./permission-template-form";
-import { PageShell } from "@/components/layout";
+import { PageShell, SectionRuleHeading } from "@/components/layout";
 import { EmptyState } from "@/components/ds";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -56,7 +54,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiFetch } from "@/lib/api-client";
@@ -79,6 +76,8 @@ type PermissionUser = {
   email: string;
   profilePhotoUrl: string | null;
   isAdmin: boolean;
+  companyTemplateId: string | null;
+  companyTemplateName: string | null;
   memberships: Array<{
     projectId: number | string;
     projectName: string | null;
@@ -96,6 +95,8 @@ type UserAccessSummary = {
   email: string;
   profilePhotoUrl: string | null;
   isAdmin: boolean;
+  companyTemplateId: string | null;
+  companyTemplateName: string | null;
   projectCount: number;
   assignedProjectCount: number;
   missingTemplateCount: number;
@@ -174,6 +175,8 @@ function toAccessSummary(user: PermissionUser): UserAccessSummary {
     email: user.email,
     profilePhotoUrl: user.profilePhotoUrl,
     isAdmin: user.isAdmin,
+    companyTemplateId: user.companyTemplateId,
+    companyTemplateName: user.companyTemplateName,
     projectCount: user.memberships.length,
     assignedProjectCount,
     missingTemplateCount,
@@ -188,7 +191,7 @@ function formatProjectCount(count: number) {
 
 export default function PermissionsAdminPage() {
   const qc = useQueryClient();
-  const [activeTab, setActiveTab] = useState<"users" | "templates">("users");
+  const [activeTab, setActiveTab] = useState<"users" | "company" | "project">("users");
   const [searchValue, setSearchValue] = useState("");
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
@@ -362,19 +365,29 @@ export default function PermissionsAdminPage() {
     },
   });
 
+  const companyTemplateMutation = useMutation({
+    mutationFn: async ({ personId, templateId }: { personId: string; templateId: string | null }) => {
+      if (templateId) {
+        await apiFetch(`/api/permissions/users/${personId}/company-template`, {
+          method: "PUT",
+          body: JSON.stringify({ template_id: templateId }),
+        });
+      } else {
+        await apiFetch(`/api/permissions/users/${personId}/company-template`, { method: "DELETE" });
+      }
+    },
+    onSuccess: (_data, variables) => {
+      toast.success(variables.templateId ? "Company access assigned" : "Company access removed");
+      qc.invalidateQueries({ queryKey: ["permission-users"] });
+    },
+    onError: (err) => {
+      toast.error(err instanceof Error ? err.message : "Failed to update company access");
+    },
+  });
+
   const openCreateForScope = (scope: TemplateScope) => {
     setCreateScope(scope);
     setShowCreate(true);
-  };
-
-  const metrics = {
-    totalUsers: users.length,
-    appAdmins: users.filter((user) => user.isAdmin).length,
-    missingTemplates: users.reduce(
-      (sum, user) => sum + user.missingTemplateCount,
-      0,
-    ),
-    templates: templates.length,
   };
 
   return (
@@ -382,44 +395,36 @@ export default function PermissionsAdminPage() {
       variant="dashboard"
       title="Permissions"
       description="Control app admin access and project permission templates."
-      contentClassName="space-y-8"
-      actions={
-        <Button size="sm" onClick={() => openCreateForScope("project")}>
-          <Plus className="h-4 w-4" />
-          New Template
-        </Button>
-      }
+      contentClassName="space-y-6"
     >
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <AccessMetric label="Users" value={metrics.totalUsers} icon={Users} />
-        <AccessMetric label="App admins" value={metrics.appAdmins} icon={ShieldCheck} />
-        <AccessMetric
-          label="Missing templates"
-          value={metrics.missingTemplates}
-          icon={LockKeyhole}
-          tone={metrics.missingTemplates > 0 ? "warning" : "default"}
-        />
-        <AccessMetric label="Templates" value={metrics.templates} icon={Columns3} />
-      </section>
-
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as typeof activeTab)}>
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <TabsList variant="line">
             <TabsTrigger value="users">User Access</TabsTrigger>
-            <TabsTrigger value="templates">Templates</TabsTrigger>
+            <TabsTrigger value="company">Company Templates</TabsTrigger>
+            <TabsTrigger value="project">Project Templates</TabsTrigger>
           </TabsList>
-          {activeTab === "templates" && (
-            <div className="flex items-center gap-2">
+          <div className="flex min-w-0 items-center justify-end gap-2">
+            {activeTab === "users" && (
+              <ExpandableSearch
+                value={searchValue}
+                onChange={setSearchValue}
+                placeholder="Search users..."
+              />
+            )}
+            {activeTab === "company" && (
               <Button size="sm" variant="outline" onClick={() => openCreateForScope("company")}>
                 <Plus className="h-4 w-4" />
-                Company
+                New Template
               </Button>
+            )}
+            {activeTab === "project" && (
               <Button size="sm" onClick={() => openCreateForScope("project")}>
                 <Plus className="h-4 w-4" />
-                Project
+                New Template
               </Button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         <TabsContent value="users" className="mt-6">
@@ -427,13 +432,13 @@ export default function PermissionsAdminPage() {
             users={filteredUsers}
             allUserCount={users.length}
             selectedUser={selectedUser}
-            searchValue={searchValue}
             templates={templates}
+            companyTemplates={companyTemplatesQuery.data ?? []}
             isLoading={usersQuery.isLoading}
             isTemplatesLoading={allTemplatesQuery.isLoading}
             isAdminSaving={adminMutation.isPending}
             isAssignmentSaving={assignMutation.isPending}
-            onSearchChange={setSearchValue}
+            isCompanyTemplateSaving={companyTemplateMutation.isPending}
             onSelectUser={setSelectedUserId}
             onToggleAdmin={(authUserId, isAdmin) =>
               adminMutation.mutate({ authUserId, isAdmin })
@@ -441,34 +446,38 @@ export default function PermissionsAdminPage() {
             onAssignTemplate={(projectId, personId, templateId) =>
               assignMutation.mutate({ projectId, personId, templateId })
             }
+            onAssignCompanyTemplate={(personId, templateId) =>
+              companyTemplateMutation.mutate({ personId, templateId })
+            }
           />
         </TabsContent>
 
-        <TabsContent value="templates" className="mt-6">
-          <div className="grid gap-8 xl:grid-cols-2">
-            <TemplatesTab
-              scope="company"
-              title="Company Templates"
-              templates={companyTemplatesQuery.data ?? []}
-              isLoading={companyTemplatesQuery.isLoading}
-              emptyTitle="No company templates"
-              emptyDescription="Create a company template for access patterns used across projects."
-              onCreateEmpty={() => openCreateForScope("company")}
-              onEdit={setEditTarget}
-              onDelete={setDeleteTarget}
-            />
-            <TemplatesTab
-              scope="project"
-              title="Project Templates"
-              templates={projectTemplatesQuery.data ?? []}
-              isLoading={projectTemplatesQuery.isLoading}
-              emptyTitle="No project templates"
-              emptyDescription="Create a project template for project-specific access roles."
-              onCreateEmpty={() => openCreateForScope("project")}
-              onEdit={setEditTarget}
-              onDelete={setDeleteTarget}
-            />
-          </div>
+        <TabsContent value="company" className="mt-6">
+          <TemplatesTab
+            scope="company"
+            title="Company Templates"
+            templates={companyTemplatesQuery.data ?? []}
+            isLoading={companyTemplatesQuery.isLoading}
+            emptyTitle="No company templates"
+            emptyDescription="Create a company template for access patterns used across projects."
+            onCreateEmpty={() => openCreateForScope("company")}
+            onEdit={setEditTarget}
+            onDelete={setDeleteTarget}
+          />
+        </TabsContent>
+
+        <TabsContent value="project" className="mt-6">
+          <TemplatesTab
+            scope="project"
+            title="Project Templates"
+            templates={projectTemplatesQuery.data ?? []}
+            isLoading={projectTemplatesQuery.isLoading}
+            emptyTitle="No project templates"
+            emptyDescription="Create a project template for project-specific access roles."
+            onCreateEmpty={() => openCreateForScope("project")}
+            onEdit={setEditTarget}
+            onDelete={setDeleteTarget}
+          />
         </TabsContent>
       </Tabs>
 
@@ -544,37 +553,76 @@ export default function PermissionsAdminPage() {
   );
 }
 
-function AccessMetric({
-  label,
+function ExpandableSearch({
   value,
-  icon: Icon,
-  tone = "default",
+  onChange,
+  placeholder,
 }: {
-  label: string;
-  value: number;
-  icon: React.ComponentType<{ className?: string }>;
-  tone?: "default" | "warning";
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
 }) {
+  const [expanded, setExpanded] = useState(false);
+  const inputRef = React.useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (expanded) inputRef.current?.focus();
+  }, [expanded]);
+
+  useEffect(() => {
+    if (value) setExpanded(true);
+  }, [value]);
+
+  if (!expanded) {
+    return (
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        aria-label="Search users"
+        onClick={() => setExpanded(true)}
+        className="h-8 w-8 text-muted-foreground"
+      >
+        <Search className="h-4 w-4" />
+      </Button>
+    );
+  }
+
   return (
-    <div className="rounded-lg border border-border bg-background px-4 py-3">
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            {label}
-          </p>
-          <p className="mt-1 text-2xl font-semibold text-foreground">{value}</p>
-        </div>
-        <div
-          className={cn(
-            "flex h-9 w-9 items-center justify-center rounded-md border",
-            tone === "warning"
-              ? "border-destructive/30 bg-destructive/5 text-destructive"
-              : "border-border bg-muted text-muted-foreground",
-          )}
+    <div className="relative flex min-w-0 items-center">
+      <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+      <Input
+        ref={inputRef}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        onBlur={() => {
+          if (!value) setExpanded(false);
+        }}
+        onKeyDown={(event) => {
+          if (event.key === "Escape") {
+            onChange("");
+            setExpanded(false);
+          }
+        }}
+        placeholder={placeholder}
+        className="h-8 w-36 pl-8 pr-8 text-sm sm:w-44"
+        aria-label="Search users"
+      />
+      {value && (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          aria-label="Clear search"
+          onClick={() => {
+            onChange("");
+            inputRef.current?.focus();
+          }}
+          className="absolute right-0 top-0 h-8 w-8 text-muted-foreground"
         >
-          <Icon className="h-4 w-4" />
-        </div>
-      </div>
+          <X className="h-3 w-3" />
+        </Button>
+      )}
     </div>
   );
 }
@@ -583,27 +631,28 @@ function AccessWorkspace({
   users,
   allUserCount,
   selectedUser,
-  searchValue,
   templates,
+  companyTemplates,
   isLoading,
   isTemplatesLoading,
   isAdminSaving,
   isAssignmentSaving,
-  onSearchChange,
+  isCompanyTemplateSaving,
   onSelectUser,
   onToggleAdmin,
   onAssignTemplate,
+  onAssignCompanyTemplate,
 }: {
   users: UserAccessSummary[];
   allUserCount: number;
   selectedUser: UserAccessSummary | null;
-  searchValue: string;
   templates: PermissionTemplate[];
+  companyTemplates: PermissionTemplate[];
   isLoading: boolean;
   isTemplatesLoading: boolean;
   isAdminSaving: boolean;
   isAssignmentSaving: boolean;
-  onSearchChange: (value: string) => void;
+  isCompanyTemplateSaving: boolean;
   onSelectUser: (userId: string) => void;
   onToggleAdmin: (authUserId: string, isAdmin: boolean) => void;
   onAssignTemplate: (
@@ -611,6 +660,7 @@ function AccessWorkspace({
     personId: string,
     templateId: string,
   ) => void;
+  onAssignCompanyTemplate: (personId: string, templateId: string | null) => void;
 }) {
   if (isLoading) {
     return <AccessWorkspaceSkeleton />;
@@ -627,25 +677,9 @@ function AccessWorkspace({
   }
 
   return (
-    <div className="grid min-h-screen gap-6 xl:grid-cols-[minmax(320px,420px)_1fr]">
+    <div className="grid min-h-screen gap-x-12 gap-y-6 xl:grid-cols-[minmax(320px,420px)_1fr]">
       <section className="space-y-4">
-        <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={searchValue}
-            onChange={(event) => onSearchChange(event.target.value)}
-            placeholder="Search users, projects, or templates"
-            className="h-10 pl-9"
-          />
-        </div>
-
-        <div className="rounded-lg border border-border">
-          <div className="flex items-center justify-between border-b border-border px-3 py-2">
-            <p className="text-sm font-medium text-foreground">Users</p>
-            <p className="text-xs text-muted-foreground">
-              {users.length} of {allUserCount}
-            </p>
-          </div>
+        <div>
           <ScrollArea className="max-h-screen">
             {users.length === 0 ? (
               <p className="px-4 py-8 text-sm text-muted-foreground">
@@ -672,14 +706,17 @@ function AccessWorkspace({
           <UserAccessPanel
             user={selectedUser}
             templates={templates}
+            companyTemplates={companyTemplates}
             isTemplatesLoading={isTemplatesLoading}
             isAdminSaving={isAdminSaving}
             isAssignmentSaving={isAssignmentSaving}
+            isCompanyTemplateSaving={isCompanyTemplateSaving}
             onToggleAdmin={onToggleAdmin}
             onAssignTemplate={onAssignTemplate}
+            onAssignCompanyTemplate={onAssignCompanyTemplate}
           />
         ) : (
-          <div className="flex h-full min-h-96 items-center justify-center rounded-lg border border-dashed border-border">
+          <div className="flex h-full min-h-96 items-center justify-center border border-dashed border-border">
             <p className="text-sm text-muted-foreground">Select a user to manage access.</p>
           </div>
         )}
@@ -703,7 +740,7 @@ function UserRosterRow({
       variant="ghost"
       onClick={onSelect}
       className={cn(
-        "h-auto w-full justify-start gap-3 rounded-none px-3 py-3 text-left transition-colors",
+        "h-auto w-full justify-start gap-3 rounded-none px-2 py-3 text-left transition-colors sm:px-0",
         isSelected ? "bg-muted" : "hover:bg-muted/60",
       )}
     >
@@ -744,27 +781,29 @@ function UserRosterRow({
 function UserAccessPanel({
   user,
   templates,
+  companyTemplates,
   isTemplatesLoading,
   isAdminSaving,
   isAssignmentSaving,
+  isCompanyTemplateSaving,
   onToggleAdmin,
   onAssignTemplate,
+  onAssignCompanyTemplate,
 }: {
   user: UserAccessSummary;
   templates: PermissionTemplate[];
+  companyTemplates: PermissionTemplate[];
   isTemplatesLoading: boolean;
   isAdminSaving: boolean;
   isAssignmentSaving: boolean;
+  isCompanyTemplateSaving: boolean;
   onToggleAdmin: (authUserId: string, isAdmin: boolean) => void;
-  onAssignTemplate: (
-    projectId: number | string,
-    personId: string,
-    templateId: string,
-  ) => void;
+  onAssignTemplate: (projectId: number | string, personId: string, templateId: string) => void;
+  onAssignCompanyTemplate: (personId: string, templateId: string | null) => void;
 }) {
   return (
-    <div className="rounded-lg border border-border bg-background">
-      <div className="flex flex-col gap-4 p-5 md:flex-row md:items-start md:justify-between">
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div className="flex min-w-0 items-start gap-4">
           <UserAvatar user={user} size="lg" />
           <div className="min-w-0">
@@ -773,6 +812,11 @@ function UserAccessPanel({
                 {user.fullName}
               </h2>
               {user.isAdmin && <Badge>App Admin</Badge>}
+              {user.companyTemplateId && !user.isAdmin && (
+                <Badge variant="outline" className="border-primary/30 text-primary">
+                  All projects
+                </Badge>
+              )}
             </div>
             <p className="mt-1 truncate text-sm text-muted-foreground">
               {user.email || "No email"}
@@ -791,10 +835,10 @@ function UserAccessPanel({
           </div>
         </div>
 
-        <div className="rounded-md border border-border px-3 py-2">
+        <div className="px-0 py-1">
           <div className="flex items-center gap-3">
             <div>
-              <p className="text-sm font-medium text-foreground">App Admin</p>
+              <p className="text-sm font-medium text-foreground">Super Admin</p>
               <p className="text-xs text-muted-foreground">Full access to every project</p>
             </div>
             {user.authUserId ? (
@@ -810,32 +854,56 @@ function UserAccessPanel({
         </div>
       </div>
 
-      <Separator />
-
-      <div className="space-y-4 p-5">
-        <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h3 className="text-base font-semibold text-foreground">Project Access</h3>
-            <p className="text-sm text-muted-foreground">
-              Assign one template per project membership.
-            </p>
-          </div>
+      {/* Company Access */}
+      <div className="space-y-3">
+        <SectionRuleHeading label="Company Access" />
+        <p className="text-sm text-muted-foreground">
+          Assign a company-wide template to grant access to every project automatically. Project-specific assignments override this.
+        </p>
+        <div className="flex items-center gap-3">
+          <Select
+            value={user.companyTemplateId ?? "none"}
+            disabled={user.isAdmin || isTemplatesLoading || isCompanyTemplateSaving || companyTemplates.length === 0}
+            onValueChange={(val) => onAssignCompanyTemplate(user.personId, val === "none" ? null : val)}
+          >
+            <SelectTrigger className="h-9 w-64 text-sm">
+              <SelectValue placeholder="No company access" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">No company access</SelectItem>
+              {companyTemplates.map((tpl) => (
+                <SelectItem key={tpl.id} value={tpl.id}>
+                  {tpl.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           {user.isAdmin && (
-            <Badge variant="outline" className="w-fit">
-              Templates are bypassed by app admin access
-            </Badge>
+            <p className="text-xs text-muted-foreground">Bypassed — user is Super Admin.</p>
           )}
+        </div>
+      </div>
+
+      {/* Project Access */}
+      <div className="space-y-4">
+        <div>
+          <SectionRuleHeading label="Project Access" />
+          <p className="text-sm text-muted-foreground">
+            Assign one template per project membership.
+            {user.isAdmin && " Templates are bypassed by Super Admin access."}
+            {user.companyTemplateId && !user.isAdmin && " Project assignments override the company template."}
+          </p>
         </div>
 
         {user.memberships.length === 0 ? (
-          <div className="rounded-md border border-dashed border-border px-4 py-8 text-center">
+          <div className="border border-dashed border-border px-4 py-8 text-center">
             <p className="text-sm text-muted-foreground">
               This user is not a member of any project.
             </p>
           </div>
         ) : (
-          <div className="overflow-hidden rounded-md border border-border">
-            <div className="grid grid-cols-[minmax(0,1fr)_220px] gap-4 border-b border-border bg-muted/50 px-4 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground max-sm:hidden">
+          <div className="overflow-hidden border-y border-border">
+            <div className="grid grid-cols-[minmax(0,1fr)_220px] gap-4 border-b border-border bg-muted/30 px-4 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground max-sm:hidden">
               <span>Project</span>
               <span>Template</span>
             </div>

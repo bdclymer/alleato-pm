@@ -1,0 +1,60 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+import { assignCompanyTemplate, removeCompanyTemplate } from "@/lib/permissions";
+import { z } from "zod";
+
+interface RouteParams {
+  params: Promise<{ personId: string }>;
+}
+
+async function requireAdmin() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new GuardrailError({ code: "AUTH_EXPIRED", where: "permissions/users/company-template", message: "Authentication required." });
+
+  const { data: profile } = await supabase.from("user_profiles").select("is_admin").eq("id", user.id).maybeSingle();
+  if (!profile?.is_admin) throw new GuardrailError({ code: "FORBIDDEN", where: "permissions/users/company-template", message: "Access denied." });
+}
+
+const AssignBody = z.object({ template_id: z.string().uuid() });
+
+/**
+ * PUT /api/permissions/users/[personId]/company-template
+ * Assign (or replace) a company-level template for a person.
+ */
+export const PUT = withApiGuardrails(
+  "permissions/users/[personId]/company-template#PUT",
+  async ({ request, params }) => {
+    await requireAdmin();
+    const { personId } = await params;
+
+    const body = AssignBody.safeParse(await request.json());
+    if (!body.success) {
+      return NextResponse.json({ error: "template_id (uuid) is required" }, { status: 400 });
+    }
+
+    const result = await assignCompanyTemplate(personId, body.data.template_id);
+    if (!result.success) return NextResponse.json({ error: result.error }, { status: 500 });
+
+    return NextResponse.json({ success: true });
+  },
+);
+
+/**
+ * DELETE /api/permissions/users/[personId]/company-template
+ * Remove company-level template from a person (reverts to project-only access).
+ */
+export const DELETE = withApiGuardrails(
+  "permissions/users/[personId]/company-template#DELETE",
+  async ({ params }) => {
+    await requireAdmin();
+    const { personId } = await params;
+
+    const result = await removeCompanyTemplate(personId);
+    if (!result.success) return NextResponse.json({ error: result.error }, { status: 500 });
+
+    return NextResponse.json({ success: true });
+  },
+);

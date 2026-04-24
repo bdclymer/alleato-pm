@@ -2,7 +2,7 @@
  * Permissions System
  *
  * Utilities for working with the permission system.
- * Permissions flow: app admin > explicit module override > permission template > none
+ * Permissions flow: app admin > explicit module override > project template > company template > none
  */
 
 import { createClient } from "@/lib/supabase/server";
@@ -71,7 +71,7 @@ export async function loadUserPermissions(
   const personId = userAuthResult.data.person_id;
   const isAdmin = profileResult.data?.is_admin === true;
 
-  const [membershipResult, overridesResult] = await Promise.all([
+  const [membershipResult, overridesResult, companyTemplateResult] = await Promise.all([
     supabase
       .from("project_directory_memberships")
       .select(
@@ -87,11 +87,23 @@ export async function loadUserPermissions(
       .select("module, level")
       .eq("project_id", projectId)
       .eq("person_id", personId),
+    supabase
+      .from("person_company_templates")
+      .select("template:permission_templates (id, name, rules_json, granular_flags)")
+      .eq("person_id", personId)
+      .maybeSingle(),
   ]);
 
-  const rawTemplate = Array.isArray(membershipResult.data?.permission_template)
+  const rawProjectTemplate = Array.isArray(membershipResult.data?.permission_template)
     ? membershipResult.data.permission_template[0]
     : membershipResult.data?.permission_template;
+
+  const rawCompanyTemplate = Array.isArray(companyTemplateResult.data?.template)
+    ? companyTemplateResult.data.template[0]
+    : companyTemplateResult.data?.template;
+
+  // Project template takes precedence over company template
+  const rawTemplate = rawProjectTemplate ?? rawCompanyTemplate;
 
   const template = rawTemplate
     ? {
@@ -364,6 +376,42 @@ export async function removePermissionOverride(
     });
   }
 
+  return { success: true };
+}
+
+// ---------------------------------------------------------------------------
+// Company template (auto-all-projects access)
+// ---------------------------------------------------------------------------
+
+export async function assignCompanyTemplate(
+  personId: string,
+  templateId: string,
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  const { error } = await supabase
+    .from("person_company_templates")
+    .upsert(
+      { person_id: personId, template_id: templateId, assigned_by: user?.id, assigned_at: new Date().toISOString() },
+      { onConflict: "person_id" },
+    );
+
+  if (error) return { success: false, error: error.message };
+  return { success: true };
+}
+
+export async function removeCompanyTemplate(
+  personId: string,
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("person_company_templates")
+    .delete()
+    .eq("person_id", personId);
+
+  if (error) return { success: false, error: error.message };
   return { success: true };
 }
 

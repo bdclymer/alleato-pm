@@ -52,7 +52,7 @@ export const GET = withApiGuardrails(
 
     const personIds = (people ?? []).map((p) => p.id);
 
-    const [profilesResult, membershipsResult] = await Promise.all([
+    const [profilesResult, membershipsResult, companyTemplatesResult] = await Promise.all([
       authIds.length
         ? supabase
             .from("user_profiles")
@@ -70,11 +70,26 @@ export const GET = withApiGuardrails(
             .in("person_id", personIds)
             .eq("status", "active")
         : Promise.resolve({ data: [], error: null }),
+      personIds.length
+        ? supabase
+            .from("person_company_templates")
+            .select("person_id, template:permission_templates (id, name)")
+            .in("person_id", personIds)
+        : Promise.resolve({ data: [], error: null }),
     ]);
 
     const profileMap = new Map<string, boolean>();
     for (const row of profilesResult.data ?? []) {
       profileMap.set(row.id, row.is_admin === true);
+    }
+
+    const companyTemplateMap = new Map<string, { id: string; name: string } | null>();
+    for (const row of (companyTemplatesResult.data ?? []) as Array<{
+      person_id: string;
+      template: { id: string; name: string } | { id: string; name: string }[] | null;
+    }>) {
+      const tpl = Array.isArray(row.template) ? row.template[0] : row.template;
+      companyTemplateMap.set(row.person_id, tpl ?? null);
     }
 
     const membershipsByPerson = new Map<
@@ -111,16 +126,21 @@ export const GET = withApiGuardrails(
       membershipsByPerson.set(row.person_id, list);
     }
 
-    const users = (people ?? []).map((p) => ({
-      personId: p.id,
-      authUserId: p.auth_user_id,
-      firstName: p.first_name ?? "",
-      lastName: p.last_name ?? "",
-      email: p.email ?? "",
-      profilePhotoUrl: p.profile_photo_url ?? null,
-      isAdmin: p.auth_user_id ? profileMap.get(p.auth_user_id) === true : false,
-      memberships: membershipsByPerson.get(p.id) ?? [],
-    }));
+    const users = (people ?? []).map((p) => {
+      const companyTemplate = companyTemplateMap.get(p.id) ?? null;
+      return {
+        personId: p.id,
+        authUserId: p.auth_user_id,
+        firstName: p.first_name ?? "",
+        lastName: p.last_name ?? "",
+        email: p.email ?? "",
+        profilePhotoUrl: p.profile_photo_url ?? null,
+        isAdmin: p.auth_user_id ? profileMap.get(p.auth_user_id) === true : false,
+        companyTemplateId: companyTemplate?.id ?? null,
+        companyTemplateName: companyTemplate?.name ?? null,
+        memberships: membershipsByPerson.get(p.id) ?? [],
+      };
+    });
 
     return NextResponse.json({ data: users });
     },
