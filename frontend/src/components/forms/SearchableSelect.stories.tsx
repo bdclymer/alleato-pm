@@ -3,7 +3,7 @@ import * as React from "react";
 import { SearchableSelect } from "./SearchableSelect";
 
 const meta: Meta<typeof SearchableSelect> = {
-  title: "Forms/Combobox",
+  title: "Inputs/SearchableSelect",
   component: SearchableSelect,
   parameters: { layout: "centered" },
   tags: ["autodocs"],

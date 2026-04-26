@@ -13,10 +13,20 @@ const config: StorybookConfig = {
   staticDirs: [],
   viteFinal: async (viteConfig) => {
     if (!viteConfig.resolve) viteConfig.resolve = {};
-    viteConfig.resolve.alias = {
-      ...viteConfig.resolve.alias,
-      "@": path.resolve(__dirname, "../src"),
-    };
+    // Use array format so specific aliases are checked before the generic "@" prefix.
+    // Object format resolves "@" before "@/contexts/..." because it matches the prefix first.
+    const existingAliases = Array.isArray(viteConfig.resolve.alias)
+      ? viteConfig.resolve.alias
+      : Object.entries(viteConfig.resolve.alias ?? {}).map(([find, replacement]) => ({ find, replacement: replacement as string }));
+    viteConfig.resolve.alias = [
+      // Specific mocks first — must come before the generic "@" alias
+      { find: "@/contexts/project-context", replacement: path.resolve(__dirname, "./mocks/project-context.tsx") },
+      { find: "next/navigation",            replacement: path.resolve(__dirname, "./mocks/next-navigation.ts") },
+      { find: "next/link",                  replacement: path.resolve(__dirname, "./mocks/next-link.tsx") },
+      // Generic @ path alias
+      { find: "@", replacement: path.resolve(__dirname, "../src") },
+      ...existingAliases,
+    ];
     // Force automatic JSX runtime in all Storybook Vite pipelines (serve/build/deps).
     // This prevents "React is not defined" when stories use JSX without importing React.
     viteConfig.esbuild = {

@@ -4,7 +4,7 @@ import { Plus, Trash2, Settings } from "lucide-react";
 import { Button } from "./button";
 
 const meta: Meta<typeof Button> = {
-  title: "UI/Button",
+  title: "Actions/Button",
   component: Button,
   tags: ["autodocs"],
   parameters: {

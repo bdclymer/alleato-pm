@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { Eyebrow } from "./eyebrow";
 
 const meta: Meta<typeof Eyebrow> = {
-  title: "Design System/Eyebrow",
+  title: "Typography/Eyebrow",
   component: Eyebrow,
   tags: ["autodocs"],
   parameters: {

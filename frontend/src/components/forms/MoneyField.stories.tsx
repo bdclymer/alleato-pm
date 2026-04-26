@@ -3,7 +3,7 @@ import * as React from "react";
 import { MoneyField } from "./MoneyField";
 
 const meta: Meta<typeof MoneyField> = {
-  title: "Forms/MoneyField",
+  title: "Inputs/MoneyField",
   component: MoneyField,
   parameters: { layout: "centered" },
   tags: ["autodocs"],

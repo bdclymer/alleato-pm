@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { KpiBlock, KpiRow } from "./kpi";
 
 const meta: Meta<typeof KpiBlock> = {
-  title: "Design System/KpiBlock",
+  title: "Data Display/KpiBlock",
   component: KpiBlock,
   tags: ["autodocs"],
   parameters: {

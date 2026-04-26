@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "./empty-state";
 
 const meta: Meta<typeof EmptyState> = {
-  title: "Design System/EmptyState",
+  title: "Feedback/EmptyState",
   component: EmptyState,
   tags: ["autodocs"],
   parameters: {
