@@ -2,7 +2,7 @@
 import os
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, AsyncMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -22,74 +22,6 @@ def _stub_modules():
     supabase_mod = MagicMock()
     supabase_mod.create_client = MagicMock(return_value=MagicMock())
     stubs["supabase"] = supabase_mod
-
-    # openai-agents SDK
-    agents_mod = MagicMock()
-    class FakeAgent:
-        """Minimal Agent stand-in that supports Agent[T] generic syntax."""
-        def __init__(self, **kwargs):
-            for k, v in kwargs.items():
-                setattr(self, k, v)
-            if not hasattr(self, "handoffs"):
-                self.handoffs = []
-            if not hasattr(self, "tools"):
-                self.tools = []
-            if not hasattr(self, "input_guardrails"):
-                self.input_guardrails = []
-        def __class_getitem__(cls, item):
-            return cls
-
-    agents_mod.Agent = FakeAgent
-    agents_mod.Runner = MagicMock()
-    agents_mod.function_tool = lambda **kw: (lambda fn: fn)
-    agents_mod.handoff = MagicMock()
-    agents_mod.RunContextWrapper = MagicMock
-    agents_mod.TResponseInputItem = list
-    agents_mod.GuardrailFunctionOutput = MagicMock
-    agents_mod.input_guardrail = lambda **kw: (lambda fn: fn)
-    agents_mod.Handoff = MagicMock
-    agents_mod.HandoffOutputItem = MagicMock
-    agents_mod.InputGuardrailTripwireTriggered = Exception
-    agents_mod.ItemHelpers = MagicMock()
-    agents_mod.MessageOutputItem = MagicMock
-    agents_mod.ToolCallItem = MagicMock
-    agents_mod.ToolCallOutputItem = MagicMock
-    stubs["agents"] = agents_mod
-    stubs["agents.extensions"] = MagicMock()
-    stubs["agents.extensions.handoff_prompt"] = MagicMock(RECOMMENDED_PROMPT_PREFIX="")
-
-    # chatkit
-    import types as _t
-    chatkit_mod = MagicMock()
-    stubs["chatkit"] = chatkit_mod
-
-    chatkit_agents_mod = MagicMock()
-    chatkit_agents_mod.stream_agent_response = MagicMock()
-    stubs["chatkit.agents"] = chatkit_agents_mod
-
-    # chatkit.server — need ChatKitServer to be a real class
-    chatkit_server_mod = _t.ModuleType("chatkit.server")
-    class _FakeChatKitServer:
-        def __init__(self, store=None): pass
-        def __class_getitem__(cls, item): return cls
-    chatkit_server_mod.ChatKitServer = _FakeChatKitServer
-    chatkit_server_mod.StreamingResult = MagicMock()
-    stubs["chatkit.server"] = chatkit_server_mod
-
-    # chatkit.types — need real classes for type annotations
-    chatkit_types_mod = _t.ModuleType("chatkit.types")
-    for _cls_name in [
-        "Action", "AssistantMessageContent", "AssistantMessageItem",
-        "ThreadItemDoneEvent", "ThreadMetadata", "ThreadStreamEvent",
-        "UserMessageItem", "WidgetItem",
-    ]:
-        setattr(chatkit_types_mod, _cls_name, type(_cls_name, (), {}))
-    stubs["chatkit.types"] = chatkit_types_mod
-
-    # chatkit.store
-    chatkit_store_mod = _t.ModuleType("chatkit.store")
-    chatkit_store_mod.NotFoundError = type("NotFoundError", (Exception,), {})
-    stubs["chatkit.store"] = chatkit_store_mod
 
     # langchain / crawl4ai / psycopg2 etc.
     for mod_name in [
@@ -118,7 +50,6 @@ os.environ.setdefault("SUPABASE_SERVICE_ROLE_KEY", "fake-key")
 # Patch env_loader so it doesn't try to read a real .env
 with patch.dict(sys.modules, {"src.services.env_loader": MagicMock()}):
     # Patch heavy service modules
-    mock_memory_store_mod = MagicMock()
     mock_supabase_helpers_mod = MagicMock()
     mock_fireflies_mod = MagicMock()
     class _FakeFirefliesIngestionPipeline:
@@ -128,18 +59,11 @@ with patch.dict(sys.modules, {"src.services.env_loader": MagicMock()}):
 
     with patch.dict(sys.modules, {
         "src.services.env_loader": MagicMock(),
-        "src.services.memory_store": mock_memory_store_mod,
         "src.services.supabase_helpers": mock_supabase_helpers_mod,
         "src.services.ingestion": MagicMock(),
         "src.services.ingestion.fireflies_pipeline": mock_fireflies_mod,
-        "alleato_agent_workflow": MagicMock(),
-        "alleato_agent_workflow.workflow": MagicMock(),
-        "alleato_agent_workflow.agents": MagicMock(),
         "src.workers": MagicMock(),
         "src.workers.scripts": MagicMock(),
-        "src.workers.scripts.rag_chatkit_server_streaming": MagicMock(),
-        "src.workers.scripts.rag_chatkit_server_unified": MagicMock(),
-        "src.workers.scripts.rag_chatkit_server": MagicMock(),
         "src.api.admin_endpoints": MagicMock(),
         "src.yokeflow": MagicMock(),
         "src.yokeflow.api": MagicMock(),
@@ -220,8 +144,3 @@ def sample_ingest_request():
         "project_id": 1,
         "dry_run": True,
     }
-
-
-@pytest.fixture
-def sample_rag_chat_request():
-    return {"message": "Tell me about the project"}

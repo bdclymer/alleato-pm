@@ -13,7 +13,6 @@ class TestHealthEndpoint:
         assert data["status"] == "healthy"
         assert "timestamp" in data
         assert isinstance(data["openai_configured"], bool)
-        assert isinstance(data["rag_available"], bool)
 
     def test_health_openai_configured(self, client, monkeypatch):
         monkeypatch.setenv("OPENAI_API_KEY", "sk-real")
@@ -84,20 +83,32 @@ class TestChatEndpoint:
 class TestIngestionEndpoint:
     """POST /api/ingest/fireflies tests."""
 
-    def test_ingest_success(self, client, mock_fireflies_pipeline, sample_ingest_request):
+    def test_legacy_file_ingest_disabled_by_default(self, client, mock_fireflies_pipeline, sample_ingest_request):
+        r = client.post("/api/ingest/fireflies", json=sample_ingest_request)
+        assert r.status_code == 410
+        assert "Legacy file-based Fireflies ingest is disabled" in r.json()["detail"]
+        mock_fireflies_pipeline.ingest_file.assert_not_called()
+
+    def test_legacy_file_ingest_enabled(self, client, mock_fireflies_pipeline, sample_ingest_request, monkeypatch):
+        monkeypatch.setenv("ENABLE_LEGACY_FIREFLIES_FILE_INGEST", "true")
         r = client.post("/api/ingest/fireflies", json=sample_ingest_request)
         assert r.status_code == 200
         data = r.json()
         assert data["result"]["status"] == "success"
+        mock_fireflies_pipeline.ingest_file.assert_called_once_with(
+            "/path/to/fireflies/transcript.json", project_id=1, dry_run=True
+        )
 
-    def test_ingest_no_project_id(self, client, mock_fireflies_pipeline):
+    def test_ingest_no_project_id(self, client, mock_fireflies_pipeline, monkeypatch):
+        monkeypatch.setenv("ENABLE_LEGACY_FIREFLIES_FILE_INGEST", "true")
         r = client.post("/api/ingest/fireflies", json={"path": "/some/file.json", "dry_run": True})
         assert r.status_code == 200
         mock_fireflies_pipeline.ingest_file.assert_called_once_with(
             "/some/file.json", project_id=None, dry_run=True
         )
 
-    def test_ingest_error(self, client, mock_fireflies_pipeline):
+    def test_ingest_error(self, client, mock_fireflies_pipeline, monkeypatch):
+        monkeypatch.setenv("ENABLE_LEGACY_FIREFLIES_FILE_INGEST", "true")
         mock_fireflies_pipeline.ingest_file.side_effect = Exception("File not found")
         with pytest.raises(Exception, match="File not found"):
             client.post(

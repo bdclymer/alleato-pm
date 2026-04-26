@@ -187,7 +187,7 @@ class FirefliesIngestionPipeline:
         if self._project_assigner is not None:
             return self._project_assigner
         try:
-            from ..alleato_agent_workflow.tools.project_assignment import ProjectAssigner
+            from .project_assignment import ProjectAssigner
         except Exception:
             return None
         self._project_assigner = ProjectAssigner(self.store._client)

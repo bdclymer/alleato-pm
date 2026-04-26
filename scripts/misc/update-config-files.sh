@@ -142,20 +142,9 @@ show_next_config_patch() {
 NEXT.CONFIG.TS CHANGES:
 ----------------------
 
-Likely no changes needed if running from frontend/ directory.
-Verify rewrites still work:
-
-const nextConfig: NextConfig = {
-  devIndicators: false,
-  async rewrites() {
-    return [
-      {
-        source: "/rag-chatkit",
-        destination: "http://127.0.0.1:8000/rag-chatkit",
-      },
-    ];
-  },
-};
+Likely no changes needed if running from frontend/ directory. The old Python
+RAG rewrite has been removed; AI chat is served by the Next.js
+/api/ai-assistant/chat route.
 
 EOF
 }

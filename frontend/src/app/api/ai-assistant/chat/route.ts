@@ -26,6 +26,7 @@ import {
 } from "@/lib/ai/bot-core";
 import { recordAgentLearningUsages } from "@/lib/ai/services/agent-learning-service";
 import { createToolGuardrails } from "@/lib/ai/tools/guardrails";
+import { createAiAssistantMcpTools } from "@/lib/ai/tools/mcp-tools";
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 
@@ -89,6 +90,21 @@ type SemanticSearchOutput = {
 };
 
 type ProjectBriefingSnapshot = Record<string, unknown>;
+
+type SourceHealthStatus = "ok" | "warning" | "error" | "unknown";
+
+type SourceHealthCheck = {
+  source: string;
+  status: SourceHealthStatus;
+  detail: string;
+  metrics?: Record<string, unknown>;
+};
+
+type SourceHealthPreflight = {
+  promptInjection: string;
+  trace: Record<string, unknown>;
+  checks: SourceHealthCheck[];
+};
 
 type StrategistStatus = {
   stage:
@@ -857,6 +873,212 @@ async function buildBusinessContextPreflight(params: {
   };
 }
 
+function sourceHealthStatusRank(status: SourceHealthStatus): number {
+  if (status === "error") return 3;
+  if (status === "warning") return 2;
+  if (status === "unknown") return 1;
+  return 0;
+}
+
+function summarizeSourceHealth(checks: SourceHealthCheck[]): SourceHealthStatus {
+  return checks.reduce<SourceHealthStatus>((worst, check) => {
+    return sourceHealthStatusRank(check.status) > sourceHealthStatusRank(worst)
+      ? check.status
+      : worst;
+  }, "ok");
+}
+
+async function buildSourceHealthPreflight(
+  supabase: ReturnType<typeof createServiceClient>,
+): Promise<SourceHealthPreflight> {
+  const checks: SourceHealthCheck[] = [];
+
+  const [graphStateResult, graphDocsResult, firefliesResult, acumaticaResult] =
+    await Promise.allSettled([
+      supabase
+        .from("graph_sync_state")
+        .select("source, sync_status, last_sync_at, error_message, items_synced")
+        .order("updated_at", { ascending: false })
+        .limit(500),
+      supabase
+        .from("document_metadata")
+        .select("id, category, status", { count: "exact" })
+        .eq("source", "microsoft_graph")
+        .limit(5000),
+      supabase
+        .from("fireflies_ingestion_jobs")
+        .select("stage, created_at, error_message")
+        .order("created_at", { ascending: false })
+        .limit(100),
+      supabase
+        .from("acumatica_sync_state")
+        .select("entity_name, last_success_at, status, last_error")
+        .order("updated_at", { ascending: false })
+        .limit(50),
+    ]);
+
+  if (graphStateResult.status === "fulfilled" && !graphStateResult.value.error) {
+    const rows = (graphStateResult.value.data ?? []) as Array<Record<string, unknown>>;
+    const errorCount = rows.filter((row) => row.sync_status === "error").length;
+    const sources = new Set(rows.map((row) => String(row.source ?? "")));
+    const latestSync = rows
+      .map((row) => String(row.last_sync_at ?? ""))
+      .filter(Boolean)
+      .sort()
+      .at(-1) ?? null;
+
+    checks.push({
+      source: "microsoft_graph_sync",
+      status: errorCount > 0 ? "warning" : rows.length > 0 ? "ok" : "error",
+      detail:
+        rows.length > 0
+          ? `${rows.length} Graph sync resource(s), ${errorCount} error resource(s), latest sync ${latestSync ?? "unknown"}.`
+          : "No Microsoft Graph sync state rows found.",
+      metrics: {
+        resourceCount: rows.length,
+        errorCount,
+        sources: [...sources].filter(Boolean),
+        latestSync,
+      },
+    });
+  } else {
+    checks.push({
+      source: "microsoft_graph_sync",
+      status: "error",
+      detail: `Microsoft Graph sync state could not be checked: ${
+        graphStateResult.status === "fulfilled"
+          ? graphStateResult.value.error?.message
+          : graphStateResult.reason instanceof Error
+            ? graphStateResult.reason.message
+            : String(graphStateResult.reason)
+      }`,
+    });
+  }
+
+  if (graphDocsResult.status === "fulfilled" && !graphDocsResult.value.error) {
+    const rows = (graphDocsResult.value.data ?? []) as Array<Record<string, unknown>>;
+    const pendingCount = rows.filter((row) =>
+      ["raw_ingested", "segmented", "complete"].includes(String(row.status ?? "")),
+    ).length;
+    const errorCount = rows.filter((row) => String(row.status ?? "") === "error").length;
+    const sharePointCount = rows.filter((row) => String(row.id ?? "").startsWith("sharepoint_")).length;
+
+    checks.push({
+      source: "microsoft_graph_vectorization",
+      status: errorCount > 0 || pendingCount > 0 || sharePointCount === 0 ? "warning" : "ok",
+      detail:
+        `${graphDocsResult.value.count ?? rows.length} Microsoft Graph document row(s); ` +
+        `${pendingCount} pending/non-embedded sample row(s); ${errorCount} error sample row(s); ` +
+        `${sharePointCount} SharePoint sample row(s).`,
+      metrics: {
+        sampledRows: rows.length,
+        totalRows: graphDocsResult.value.count,
+        pendingCount,
+        errorCount,
+        sharePointCount,
+      },
+    });
+  } else {
+    checks.push({
+      source: "microsoft_graph_vectorization",
+      status: "error",
+      detail: `Microsoft Graph vectorization rows could not be checked: ${
+        graphDocsResult.status === "fulfilled"
+          ? graphDocsResult.value.error?.message
+          : graphDocsResult.reason instanceof Error
+            ? graphDocsResult.reason.message
+            : String(graphDocsResult.reason)
+      }`,
+    });
+  }
+
+  if (firefliesResult.status === "fulfilled" && !firefliesResult.value.error) {
+    const rows = (firefliesResult.value.data ?? []) as Array<Record<string, unknown>>;
+    const failedCount = rows.filter((row) =>
+      ["failed", "error"].includes(String(row.stage ?? "").toLowerCase()),
+    ).length;
+    checks.push({
+      source: "fireflies_meeting_ingestion",
+      status: failedCount > 0 ? "warning" : rows.length > 0 ? "ok" : "unknown",
+      detail:
+        rows.length > 0
+          ? `${rows.length} recent Fireflies ingestion job(s), ${failedCount} failed/error job(s).`
+          : "No recent Fireflies ingestion jobs found.",
+      metrics: {
+        sampledJobs: rows.length,
+        failedCount,
+      },
+    });
+  } else {
+    checks.push({
+      source: "fireflies_meeting_ingestion",
+      status: "warning",
+      detail: `Fireflies ingestion jobs could not be checked: ${
+        firefliesResult.status === "fulfilled"
+          ? firefliesResult.value.error?.message
+          : firefliesResult.reason instanceof Error
+            ? firefliesResult.reason.message
+            : String(firefliesResult.reason)
+      }`,
+    });
+  }
+
+  if (acumaticaResult.status === "fulfilled" && !acumaticaResult.value.error) {
+    const rows = (acumaticaResult.value.data ?? []) as Array<Record<string, unknown>>;
+    const errorCount = rows.filter((row) =>
+      ["failed", "error"].includes(String(row.status ?? "").toLowerCase()),
+    ).length;
+    checks.push({
+      source: "acumatica_sync",
+      status: errorCount > 0 ? "warning" : rows.length > 0 ? "ok" : "unknown",
+      detail:
+        rows.length > 0
+          ? `${rows.length} Acumatica sync state row(s), ${errorCount} failed/error row(s).`
+          : "No Acumatica sync state rows found.",
+      metrics: {
+        sampledRows: rows.length,
+        errorCount,
+      },
+    });
+  } else {
+    checks.push({
+      source: "acumatica_sync",
+      status: "warning",
+      detail: `Acumatica sync state could not be checked: ${
+        acumaticaResult.status === "fulfilled"
+          ? acumaticaResult.value.error?.message
+          : acumaticaResult.reason instanceof Error
+            ? acumaticaResult.reason.message
+            : String(acumaticaResult.reason)
+      }`,
+    });
+  }
+
+  const overallStatus = summarizeSourceHealth(checks);
+  const promptInjection = [
+    "## Source Health Preflight",
+    `Overall source health: ${overallStatus}`,
+    ...checks.map((check) => `- ${check.source}: ${check.status} - ${check.detail}`),
+    "If a user asks for a broad strategic update, explicitly account for degraded or unavailable sources instead of implying complete coverage.",
+  ].join("\n");
+
+  return {
+    promptInjection,
+    checks,
+    trace: {
+      tool: "sourceHealthPreflight",
+      input: {
+        sources: ["microsoft_graph", "fireflies", "acumatica"],
+      },
+      output: {
+        overallStatus,
+        checks,
+      },
+      timestamp: new Date().toISOString(),
+    },
+  };
+}
+
 function createStrategistFailureResponse(params: {
   cause: string;
   selectedProjectId?: number;
@@ -1129,6 +1351,10 @@ export const POST = withApiGuardrails(
           toolTrace.push(preflight.trace);
           systemPrompt = `${preflight.promptInjection}\n\n---\n\n${systemPrompt}`;
 
+          const sourceHealth = await buildSourceHealthPreflight(supabase);
+          toolTrace.push(sourceHealth.trace);
+          systemPrompt = `${sourceHealth.promptInjection}\n\n---\n\n${systemPrompt}`;
+
           const projectId = selectedProjectId ?? preflight.primaryProjectId ?? undefined;
           const semanticSearchTool = (tools as Record<string, ExecutableTool>).semanticSearch;
           const briefingSnapshotTool = (tools as Record<string, ExecutableTool>).getProjectBriefingSnapshot;
@@ -1388,76 +1614,85 @@ export const POST = withApiGuardrails(
 
         const hasDeterministicRetrieval =
           (deterministicRetrieval?.results ?? []).length > 0;
+        const mcpToolBundle = hasDeterministicRetrieval
+          ? null
+          : await createAiAssistantMcpTools();
+        if (mcpToolBundle?.trace.length) {
+          toolTrace.push(...mcpToolBundle.trace);
+        }
         // AI Gateway currently returns empty `finishReason: other` responses
         // for OpenAI chat tool calls. When retrieval already succeeded
         // server-side, synthesize from the injected context without tools.
         const modelTools = hasDeterministicRetrieval
           ? undefined
-          : (tools as unknown as ToolSet);
+          : ({
+              ...(tools as unknown as ToolSet),
+              ...(mcpToolBundle?.tools ?? {}),
+            } as ToolSet);
         const result = streamText({
-          model: getLanguageModel(STRATEGIST_MODEL),
-          system: systemPrompt,
-          messages: modelMessages,
-          tools: modelTools,
-          maxOutputTokens: 1500,
-          timeout: {
-            totalMs: 90_000,
-            stepMs: 45_000,
-            chunkMs: 20_000,
-          },
-          // Strategist gets enough steps to route, consult specialists, and synthesize.
-          // Each specialist gets up to 5 internal tool-call steps.
-          stopWhen: stepCountIs(10),
-          prepareStep: ({ stepNumber }) => {
-            if (!forceBusinessRetrieval || stepNumber !== 0) return undefined;
-            if (hasDeterministicRetrieval) return undefined;
+            model: getLanguageModel(STRATEGIST_MODEL),
+            system: systemPrompt,
+            messages: modelMessages,
+            tools: modelTools,
+            maxOutputTokens: 1500,
+            timeout: {
+              totalMs: 90_000,
+              stepMs: 45_000,
+              chunkMs: 20_000,
+            },
+            // Strategist gets enough steps to route, consult specialists, and synthesize.
+            // Each specialist gets up to 5 internal tool-call steps.
+            stopWhen: stepCountIs(10),
+            prepareStep: ({ stepNumber }) => {
+              if (!forceBusinessRetrieval || stepNumber !== 0) return undefined;
+              if (hasDeterministicRetrieval) return undefined;
 
-            return {
-              toolChoice: { type: "tool", toolName: "semanticSearch" },
-              activeTools: [
-                "semanticSearch",
-              ],
-            };
-          },
-          onError: ({ error }) => {
-            streamErrorMessage =
-              error instanceof Error ? error.message : String(error);
-          },
-          experimental_onStepStart: ({
-            stepNumber,
-            model,
-            toolChoice,
-            activeTools,
-            tools,
-          }) => {
-            stepStartDiagnostics.push({
+              return {
+                toolChoice: { type: "tool", toolName: "semanticSearch" },
+                activeTools: [
+                  "semanticSearch",
+                ],
+              };
+            },
+            onError: ({ error }) => {
+              streamErrorMessage =
+                error instanceof Error ? error.message : String(error);
+            },
+            experimental_onStepStart: ({
               stepNumber,
-              modelProvider: model.provider,
-              modelId: model.modelId,
-              toolChoice: serializeDiagnosticValue(toolChoice),
-              activeTools: activeTools?.map(String),
-              availableToolNames: Object.keys(tools ?? {}),
-            });
-          },
-          onStepFinish: ({ stepNumber, finishReason, usage, warnings, toolCalls }) => {
-            // warnings are CallWarning = { type: "unsupported"; feature: string; details?: string }
-            const warningMessages = (warnings ?? []).map((w) =>
-              w.type === "unsupported"
-                ? `unsupported:${w.feature}${w.details ? `:${w.details}` : ""}`
-                : String(w),
-            );
-            stepDiagnostics.push({
-              stepNumber,
-              finishReason,
-              toolCallCount: toolCalls.length,
-              toolCallNames: toolCalls.map((tc) => tc.toolName),
-              warningCount: warningMessages.length,
-              warnings: warningMessages,
-              inputTokens: usage?.inputTokens,
-              outputTokens: usage?.outputTokens,
-            });
-          },
-        });
+              model,
+              toolChoice,
+              activeTools,
+              tools,
+            }) => {
+              stepStartDiagnostics.push({
+                stepNumber,
+                modelProvider: model.provider,
+                modelId: model.modelId,
+                toolChoice: serializeDiagnosticValue(toolChoice),
+                activeTools: activeTools?.map(String),
+                availableToolNames: Object.keys(tools ?? {}),
+              });
+            },
+            onStepFinish: ({ stepNumber, finishReason, usage, warnings, toolCalls }) => {
+              // warnings are CallWarning = { type: "unsupported"; feature: string; details?: string }
+              const warningMessages = (warnings ?? []).map((w) =>
+                w.type === "unsupported"
+                  ? `unsupported:${w.feature}${w.details ? `:${w.details}` : ""}`
+                  : String(w),
+              );
+              stepDiagnostics.push({
+                stepNumber,
+                finishReason,
+                toolCallCount: toolCalls.length,
+                toolCallNames: toolCalls.map((tc) => tc.toolName),
+                warningCount: warningMessages.length,
+                warnings: warningMessages,
+                inputTokens: usage?.inputTokens,
+                outputTokens: usage?.outputTokens,
+              });
+            },
+          });
 
         writer.merge(
           result.toUIMessageStream({
@@ -1468,8 +1703,14 @@ export const POST = withApiGuardrails(
           }),
         );
 
-        let content = (await result.text).trim();
-        const totalUsage = await result.totalUsage;
+        let content: string;
+        let totalUsage: Awaited<typeof result.totalUsage>;
+        try {
+          content = (await result.text).trim();
+          totalUsage = await result.totalUsage;
+        } finally {
+          await mcpToolBundle?.close();
+        }
 
         if (!content) {
           const cause = streamErrorMessage

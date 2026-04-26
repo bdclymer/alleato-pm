@@ -86,7 +86,7 @@ const adminTools = [
   { name: "Executive", path: "/executive", icon: IconChartBar, requiresProject: false },
   { name: "Spreadsheet", path: "/spreadsheet-demo", icon: IconTable, requiresProject: false },
   { name: "Crawled Pages", path: "/crawled-pages", icon: IconWorldWww, requiresProject: false },
-  { name: "AI Chat", path: "/chat-rag", icon: IconMessageChatbot, requiresProject: false },
+  { name: "AI Strategist", path: "/ai-assistant", icon: IconMessageChatbot, requiresProject: false },
   { name: "Documentation", path: "/docs", icon: IconBook, requiresProject: false },
   { name: "FM Global", path: "/fm-global", icon: IconTable, requiresProject: false },
 ];

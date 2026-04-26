@@ -28,14 +28,10 @@ const SKIP_PATTERNS = [
   "/bot/",
   "/liveblocks/webhook/",
   "/monitoring/websocket/",
-  "/primitives/tool-calling/",
   "/procore-docs/chat/",
   "/procore-screenshots/",
-  "/rag-chat/",
-  "/rag-chatkit/",
   "/supabase-proxy/",
   "/sync/acumatica/",
-  "/tool-calling/",
   "/admin/rag-eval/run/",
 ];
 

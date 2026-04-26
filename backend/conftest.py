@@ -2,7 +2,7 @@
 import os
 import pytest
 from typing import AsyncGenerator, Generator
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 from fastapi.testclient import TestClient
 from httpx import AsyncClient
@@ -109,18 +109,6 @@ def sample_chat_request():
 
 
 @pytest.fixture
-def sample_rag_chat_request():
-    """Sample RAG chat request payload."""
-    return {
-        "message": "Tell me about the project status",
-        "history": [
-            {"role": "user", "text": "Hello"},
-            {"role": "assistant", "text": "Hi! How can I help you?"}
-        ]
-    }
-
-
-@pytest.fixture
 def sample_ingest_request():
     """Sample ingestion request payload."""
     return {
@@ -128,24 +116,6 @@ def sample_ingest_request():
         "project_id": 1,
         "dry_run": True
     }
-
-
-@pytest.fixture
-def mock_chatkit_server():
-    """Mock RagChatKitServer for testing."""
-    with patch("src.api.main.RagChatKitServer") as mock:
-        server = MagicMock()
-        server.process = AsyncMock()
-        server.snapshot = AsyncMock(return_value={
-            "thread_id": "test-thread",
-            "current_agent": "classification",
-            "context": {},
-            "agents": [],
-            "events": [],
-            "guardrails": []
-        })
-        mock.return_value = server
-        yield server
 
 
 @pytest.fixture

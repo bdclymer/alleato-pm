@@ -1,7 +1,5 @@
 """Tests for chat API endpoints."""
 import pytest
-from unittest.mock import MagicMock, AsyncMock
-import json
 
 
 class TestChatAPI:
@@ -139,46 +137,3 @@ class TestChatAPI:
         assert "transcript snippets" in data["reply"]
         mock_supabase_store.search_financial_rows.assert_called_once()
         mock_supabase_store.search_chunks_by_keyword.assert_called_once()
-    
-    @pytest.mark.unit
-    @pytest.mark.asyncio
-    async def test_rag_chat_simple_success(self, client, mock_runner, sample_rag_chat_request):
-        """Test simple RAG chat endpoint."""
-        # Mock agent response
-        mock_item = MagicMock()
-        mock_item.agent = MagicMock(name="test_agent")
-        mock_runner.run_sync.return_value.new_items = [mock_item]
-        
-        # Mock the text extraction
-        with pytest.mock.patch("src.api.main.ItemHelpers") as mock_helpers:
-            mock_helpers.text_message_output.return_value = "This is the agent's response."
-            
-            response = client.post("/api/rag-chat-simple", json=sample_rag_chat_request)
-        
-        assert response.status_code == 200
-        data = response.json()
-        
-        assert "response" in data
-        assert "retrieved" in data
-        assert data["response"] == "This is the agent's response."
-    
-    @pytest.mark.unit
-    def test_rag_chat_simple_empty_message(self, client):
-        """Test RAG chat with empty message."""
-        response = client.post("/api/rag-chat-simple", json={"message": "  "})
-        
-        assert response.status_code == 422
-        data = response.json()
-        assert data["detail"] == "Message cannot be empty"
-    
-    @pytest.mark.unit
-    def test_rag_chat_simple_no_rag_available(self, client, monkeypatch):
-        """Test RAG chat when RAG workflow is not available."""
-        # Simulate RAG not being available
-        monkeypatch.setattr("src.api.main.RAG_AVAILABLE", False)
-        
-        response = client.post("/api/rag-chat-simple", json={"message": "Test"})
-        
-        assert response.status_code == 503
-        data = response.json()
-        assert data["detail"] == "RAG workflow not available"

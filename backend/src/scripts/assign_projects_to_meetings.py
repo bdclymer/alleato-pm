@@ -7,15 +7,10 @@ Usage:
     python assign_projects_to_meetings.py --all  # Process all unassigned
 """
 
-import sys
-import os
 import argparse
 
-# Add parent directory to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'python-backend'))
-
-from supabase_helpers import get_supabase_client
-from project_assignment import batch_assign_projects
+from src.services.supabase_helpers import get_supabase_client
+from src.services.ingestion.project_assignment import batch_assign_projects
 
 
 def main():

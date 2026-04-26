@@ -16,7 +16,6 @@ class TestHealthEndpoint:
         
         assert data["status"] == "healthy"
         assert "openai_configured" in data
-        assert "rag_available" in data
         assert "timestamp" in data
         
         # Verify timestamp is valid ISO format
@@ -44,15 +43,3 @@ class TestHealthEndpoint:
         assert response.status_code == 200
         data = response.json()
         assert data["openai_configured"] is False
-    
-    @pytest.mark.unit
-    def test_health_check_rag_availability(self, client):
-        """Test that RAG availability is reported correctly."""
-        response = client.get("/health")
-        
-        assert response.status_code == 200
-        data = response.json()
-        
-        # RAG_AVAILABLE depends on whether the alleato_agent_workflow module can be imported
-        # In test environment, this might be True or False depending on setup
-        assert isinstance(data["rag_available"], bool)

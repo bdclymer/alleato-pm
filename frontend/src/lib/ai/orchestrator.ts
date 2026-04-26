@@ -12,17 +12,22 @@
  * Architecture:
  *   Chat Route → streamText(Strategist prompt + consult tools)
  *                   └─ consultCFO tool → orchestrator.consultAgent("cfo", question)
- *                                          └─ generateText(CFO prompt + financial tools)
+ *                                          └─ ToolLoopAgent(CFO prompt + financial tools)
  *
  * See: docs/AI-CSUITE-ARCHITECTURE.md
  */
 
-import { generateText, stepCountIs, tool, type ToolSet } from "ai";
+import { ToolLoopAgent, stepCountIs, tool, type ToolSet } from "ai";
 import { z } from "zod";
 import { getLanguageModel } from "@/lib/ai/providers";
-import { createProjectTools } from "@/lib/ai/tools/project-tools";
-import { createWebSearchTools } from "@/lib/ai/tools/web-search";
-import { createActionTools } from "@/lib/ai/tools/action-tools";
+import {
+  createProjectTools,
+  type CreateProjectToolsOptions,
+} from "@/lib/ai/tools/project-tools";
+import {
+  createWebSearchTools,
+  type CreateWebSearchToolsOptions,
+} from "@/lib/ai/tools/web-search";
 import { strategistSystemPrompt } from "@/lib/ai/agents/strategist";
 import { soul } from "@/lib/ai/soul";
 import { identity } from "@/lib/ai/identity";
@@ -37,6 +42,8 @@ import type {
   ConfidenceLevel,
   RoutingDecision,
 } from "@/lib/ai/agents/types";
+
+type StrategistToolOptions = CreateProjectToolsOptions & CreateWebSearchToolsOptions;
 
 // ---------------------------------------------------------------------------
 // Agent Registry
@@ -67,10 +74,7 @@ export interface AgentConfig {
    */
   createTools: (
     userId: string,
-    options?: {
-      onTrace?: (trace: Record<string, unknown>) => void;
-      pinnedProjectId?: number;
-    },
+    options?: StrategistToolOptions,
   ) => ToolSet;
 }
 
@@ -174,7 +178,7 @@ export const agentRegistry: Record<string, AgentConfig> = {
       "project budget",
       "project list",
     ],
-    createTools: (userId: string, options?) => {
+    createTools: (userId: string, options?: StrategistToolOptions) => {
       // CFO gets the full project tools which include:
       // - Base tools: portfolio overview, risk analysis, financial analysis,
       //   budget summary, action items, document search, project details
@@ -185,7 +189,7 @@ export const agentRegistry: Record<string, AgentConfig> = {
       // - Operational tools: schedule analysis, people & roles, vendor performance,
       //   RFI status, submittal status, cross-project comparison, historical trends,
       //   forecast comparison, semantic search, company knowledge
-      return createProjectTools(userId, options as any);
+      return createProjectTools(userId, options);
     },
   },
 
@@ -257,12 +261,12 @@ export const agentRegistry: Record<string, AgentConfig> = {
       "blocker",
       "bottleneck",
     ],
-    createTools: (userId: string, options?) => {
+    createTools: (userId: string, options?: StrategistToolOptions) => {
       // COO gets the full project tools which include all operational tools:
       // schedule analysis, people & roles, vendor performance, RFI status,
       // submittal status, cross-project comparison, historical trends,
       // action items, meeting search, and semantic search.
-      return createProjectTools(userId, options as any);
+      return createProjectTools(userId, options);
     },
   },
 
@@ -328,12 +332,12 @@ export const agentRegistry: Record<string, AgentConfig> = {
       "risk signal",
       "risk signals",
     ],
-    createTools: (userId: string, options?) => {
+    createTools: (userId: string, options?: StrategistToolOptions) => {
       // CRO gets the full project tools which include all risk-related tools:
       // getProjectsWithRisks, getProjectRiskAnalysis, getPortfolioOverview,
       // getRFIStatus, getSubmittalStatus, getChangeOrderDetails, budget summary,
       // meeting search, action items, and semantic search.
-      return createProjectTools(userId, options as any);
+      return createProjectTools(userId, options);
     },
   },
 
@@ -429,12 +433,12 @@ export const agentRegistry: Record<string, AgentConfig> = {
       "how does",
       "opinion",
     ],
-    createTools: (userId: string, options?) => {
+    createTools: (userId: string, options?: StrategistToolOptions) => {
       // CHRO gets the full project tools which include:
       // getPeopleAndRoles, getActionItemsAndInsights, getCrossProjectComparison,
       // getVendorPerformance, getPortfolioOverview, searchMeetingsByTopic,
       // getMeetingDetails, getCompanyKnowledge, and semanticSearch.
-      return createProjectTools(userId, options as any);
+      return createProjectTools(userId, options);
     },
   },
 
@@ -519,7 +523,7 @@ export const agentRegistry: Record<string, AgentConfig> = {
       "pitch",
       "presentation",
     ],
-    createTools: (userId: string, options?) => {
+    createTools: (userId: string, options?: StrategistToolOptions) => {
       // VP BD gets the full project tools which include:
       // getPortfolioOverview (with all phase filters), getFinancialAnalysis,
       // getCompanyKnowledge, semanticSearch, searchMeetingsByTopic,
@@ -527,8 +531,8 @@ export const agentRegistry: Record<string, AgentConfig> = {
       // getHistoricalTrends, and getCrossProjectComparison.
       // Plus web search for competitive/market intelligence.
       return {
-        ...createProjectTools(userId, options as any),
-        ...createWebSearchTools(options as any),
+        ...createProjectTools(userId, options),
+        ...createWebSearchTools(options),
       } as unknown as ToolSet;
     },
   },
@@ -664,12 +668,15 @@ export async function consultAgent(
     : question;
 
   try {
-    const result = await generateText({
+    const agent = new ToolLoopAgent({
       model: getLanguageModel(config.modelId),
-      system: config.systemPrompt,
-      messages: [{ role: "user", content: userMessage }],
+      instructions: config.systemPrompt,
       tools: agentTools,
       stopWhen: stepCountIs(5),
+    });
+
+    const result = await agent.generate({
+      messages: [{ role: "user", content: userMessage }],
     });
 
     // Extract which tools were called from the steps
@@ -760,14 +767,10 @@ export function createStrategistTools(
 ) {
   // Include the base project tools so the Strategist can answer
   // general questions without routing to a specialist
-  const baseTools = createProjectTools(userId, options as any);
+  const baseTools = createProjectTools(userId, options);
   // Web search tools — available to Strategist for external research
   // (competitive questions, market intel, industry trends)
-  const webSearchTools = createWebSearchTools(options as any);
-  // Action tools — write layer. Gives the Strategist the ability to create
-  // and update records (change orders, RFIs, tasks, risks, etc.) in addition
-  // to reading and analyzing data.
-  const actionTools = createActionTools(userId, options as any);
+  const webSearchTools = createWebSearchTools(options);
   // Do not expose risk-dedicated tools directly to the Strategist.
   // This forces portfolio/project risk questions through consultCFO,
   // where the specialist prompt requires risk-specific workflows.
@@ -781,8 +784,6 @@ export function createStrategistTools(
   return {
     // Web search — available directly to the Strategist for external research
     ...webSearchTools,
-    // Action tools — write layer (create/update records)
-    ...actionTools,
     // The Strategist's specialist consultation tools
     consultCFO: tool({
       description:

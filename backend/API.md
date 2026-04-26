@@ -18,25 +18,15 @@ These are the authoritative, always-up-to-date references. The summary below pro
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `GET` | `/health` | Health check — returns backend status, OpenAI config, RAG availability |
-
-### Airline Demo (ChatKit)
-
-| Method | Path | Description |
-|--------|------|-------------|
-| `POST` | `/chatkit` | ChatKit protocol endpoint for airline demo chatbot |
-| `GET` | `/chatkit/state?thread_id=` | Get current airline chat conversation state |
-| `GET` | `/chatkit/bootstrap` | Initialize a new airline chat session |
+| `GET` | `/health` | Health check — returns backend status and AI provider config |
 
 ### RAG Chat
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `POST` | `/rag-chatkit` | Main RAG ChatKit endpoint (SSE streaming) |
-| `GET` | `/rag-chatkit/state?thread_id=` | Get RAG conversation state |
-| `GET` | `/rag-chatkit/bootstrap` | Bootstrap new RAG chat session |
-| `POST` | `/api/chat` | Simple keyword-based chat (non-streaming) |
-| `POST` | `/api/rag-chat-simple` | Agent-powered RAG chat returning JSON (non-streaming) |
+| `POST` | `/api/chat` | Legacy keyword-based transcript lookup used by backend verification scripts |
+
+Production AI strategist chat is handled by the frontend Next.js route at `frontend/src/app/api/ai-assistant/chat/route.ts`, not this backend API.
 
 ### Projects
 
@@ -49,7 +39,8 @@ These are the authoritative, always-up-to-date references. The summary below pro
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `POST` | `/api/ingest/fireflies` | Ingest a Fireflies meeting transcript |
+| `POST` | `/api/ingest/fireflies/recent` | Ingest recent Fireflies meetings |
+| `POST` | `/api/ingest/fireflies` | Legacy file-based Fireflies ingest, disabled unless explicitly enabled |
 
 ### Admin (`/api/admin`)
 

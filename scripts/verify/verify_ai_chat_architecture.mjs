@@ -1,0 +1,341 @@
+#!/usr/bin/env node
+
+import { existsSync, readFileSync } from "node:fs";
+import { createRequire } from "node:module";
+import { resolve } from "node:path";
+
+const repoRoot = resolve(import.meta.dirname, "..", "..");
+const requireFromFrontend = createRequire(resolve(repoRoot, "frontend/package.json"));
+
+const files = {
+  route: "frontend/src/app/api/ai-assistant/chat/route.ts",
+  client: "frontend/src/components/ai-assistant/rag-chat-page.tsx",
+  orchestrator: "frontend/src/lib/ai/orchestrator.ts",
+  providers: "frontend/src/lib/ai/providers.ts",
+  projectTools: "frontend/src/lib/ai/tools/project-tools.ts",
+  operationalTools: "frontend/src/lib/ai/tools/operational.ts",
+  financialTools: "frontend/src/lib/ai/tools/financial.ts",
+  acumaticaTools: "frontend/src/lib/ai/tools/acumatica.ts",
+  actionTools: "frontend/src/lib/ai/tools/action-tools.ts",
+  mcpTools: "frontend/src/lib/ai/tools/mcp-tools.ts",
+  webTools: "frontend/src/lib/ai/tools/web-search.ts",
+  auditDoc: "docs/ai-plan/AI-CHAT-IMPLEMENTATION-AUDIT-2026-04-26.md",
+  backendApiDoc: "backend/API.md",
+  backendRequirements: "backend/requirements.txt",
+};
+
+const removedLegacyPaths = [
+  "backend/src/api/server.py",
+  "backend/src/services/alleato_agent_workflow",
+  "backend/src/services/memory_store.py",
+  "backend/src/scripts/rag_chatkit_server.py",
+  "backend/src/scripts/rag_chatkit_server_streaming.py",
+  "backend/src/scripts/rag_chatkit_server_unified.py",
+  "backend/tests/test_rag_chatkit.py",
+  "frontend/src/app/(chat)/chat-admin-view",
+  "frontend/src/app/(chat)/chat-demo",
+  "frontend/src/app/(chat)/chat-rag",
+  "frontend/src/app/(chat)/chat-tool",
+  "frontend/src/app/(chat)/rag",
+  "frontend/src/app/(chat)/simple-chat",
+  "frontend/src/app/api/rag-chat",
+  "frontend/src/app/api/rag-chatkit",
+  "frontend/src/app/api/tool-calling",
+  "frontend/src/app/api/primitives/tool-calling",
+  "frontend/src/components/chat/ChatKit.tsx",
+  "frontend/src/components/chat/ChatKitWidget.tsx",
+  "frontend/src/components/chat/rag-chatkit-panel.tsx",
+  "frontend/src/components/chat/simple-rag-chat.tsx",
+  "frontend/src/components/chat/ai-chat-widget.tsx",
+  "frontend/src/components/misc/chatkit-panel.tsx",
+  "frontend/src/hooks/useChatKit.ts",
+  "frontend/src/lib/chatkit-config.ts",
+  "frontend/src/lib/rag-chatkit",
+  "frontend/src/lib/rag-api.ts",
+  "frontend/src/types/chatkit.d.ts",
+];
+
+const forbiddenLegacyTokens = [
+  "@openai/chatkit",
+  "CHATKIT_API_URL",
+  "alleato_agent_workflow",
+  "rag_chatkit_server",
+  "/rag-chatkit",
+  "/api/rag-chatkit",
+  "/api/rag-chat",
+  "useChatKit",
+  "ChatKitWidget",
+  "rag-chatkit-panel",
+  "simple-rag-chat",
+  "ai-chat-widget",
+];
+
+const expected = {
+  agents: ["cfo", "coo", "cro", "chro", "vpbd"],
+  consultTools: ["consultCFO", "consultCOO", "consultCRO", "consultCHRO", "consultVPBD"],
+  projectTools: [
+    "getProjectBriefingSnapshot",
+    "getPortfolioOverview",
+    "getProjectsWithRisks",
+    "getProjectRiskAnalysis",
+    "getFinancialAnalysis",
+    "getProjectBudgetSummary",
+    "getActionItemsAndInsights",
+    "getMeetingsByDate",
+    "searchDocuments",
+    "getProjectDetails",
+  ],
+  operationalTools: [
+    "getScheduleAnalysis",
+    "getPeopleAndRoles",
+    "getVendorPerformance",
+    "getRFIStatus",
+    "getSubmittalStatus",
+    "getCrossProjectComparison",
+    "getHistoricalTrends",
+    "getForecastComparison",
+    "semanticSearch",
+    "getCompanyKnowledge",
+    "recallPastConversations",
+    "searchMeetingsByTopic",
+    "getMeetingDetails",
+    "saveToKnowledgeBase",
+    "saveInsight",
+    "searchMemories",
+    "writeMemory",
+    "findProject",
+    "searchEmails",
+    "searchTeamsMessages",
+    "searchExternalDocuments",
+    "queryBudgetData",
+    "queryChangeOrders",
+    "queryCommitments",
+    "queryDirectCosts",
+    "queryScheduleTasks",
+    "queryDocumentRows",
+  ],
+  financialTools: [
+    "getCommitmentsOverview",
+    "getChangeOrderDetails",
+    "getDirectCostsSummary",
+    "getBudgetLineItems",
+    "getCostTrends",
+    "getMarginAnalysis",
+  ],
+  acumaticaTools: [
+    "getAPAgingReport",
+    "getARAgingReport",
+    "getCashPositionReport",
+    "getVendorSpendReport",
+    "getRecentBills",
+    "getRecentInvoices",
+    "getAcumaticaProjectBudget",
+    "getAcumaticaProjectList",
+    "getPurchaseOrderSummary",
+  ],
+  actionTools: [
+    "createChangeOrder",
+    "createChangeEvent",
+    "updateProjectStatus",
+    "createRFI",
+    "createTask",
+    "flagProjectRisk",
+    "updateRFIStatus",
+    "createMeetingNote",
+    "createSubmittal",
+    "logDailyReport",
+    "generateProjectSummary",
+    "createInitiativeCard",
+    "createCommitment",
+  ],
+  webTools: ["searchWeb", "researchCompany", "searchConstructionMarket"],
+};
+
+function read(relativePath) {
+  return readFileSync(resolve(repoRoot, relativePath), "utf8");
+}
+
+function readIfExists(relativePath) {
+  const file = resolve(repoRoot, relativePath);
+  return existsSync(file) ? readFileSync(file, "utf8") : "";
+}
+
+function packageJson(relativePath) {
+  return JSON.parse(readFileSync(resolve(repoRoot, relativePath), "utf8"));
+}
+
+function extractToolNames(relativePath) {
+  const content = read(relativePath);
+  const names = new Set();
+  const re = /\n\s*([A-Za-z0-9_]+)\s*:\s*tool\s*\(/g;
+  let match;
+  while ((match = re.exec(content))) {
+    names.add(match[1]);
+  }
+  return [...names].sort();
+}
+
+function missing(expectedNames, actualNames) {
+  const actual = new Set(actualNames);
+  return expectedNames.filter((name) => !actual.has(name));
+}
+
+function hasPackage(pkg, name) {
+  return Boolean(pkg.dependencies?.[name] || pkg.devDependencies?.[name]);
+}
+
+function assertNoForbiddenTokens(relativePath, content) {
+  for (const token of forbiddenLegacyTokens) {
+    requireCondition(!content.includes(token), `${relativePath} contains removed legacy token: ${token}`);
+  }
+}
+
+const frontendPackage = packageJson("frontend/package.json");
+const route = read(files.route);
+const client = read(files.client);
+const orchestrator = read(files.orchestrator);
+const providers = read(files.providers);
+const actionTools = read(files.actionTools);
+const mcpTools = readIfExists(files.mcpTools);
+const operationalTools = read(files.operationalTools);
+const auditDoc = readIfExists(files.auditDoc);
+
+const inventory = {
+  packageVersions: {
+    ai: requireFromFrontend("ai/package.json").version,
+    "@ai-sdk/react": frontendPackage.dependencies?.["@ai-sdk/react"] ?? null,
+    "@ai-sdk/openai": frontendPackage.dependencies?.["@ai-sdk/openai"] ?? null,
+    "@ai-sdk/mcp": frontendPackage.dependencies?.["@ai-sdk/mcp"] ?? null,
+  },
+  tools: {
+    consult: extractToolNames(files.orchestrator).filter((name) => name.startsWith("consult")),
+    project: extractToolNames(files.projectTools),
+    operational: extractToolNames(files.operationalTools),
+    financial: extractToolNames(files.financialTools),
+    acumatica: extractToolNames(files.acumaticaTools),
+    action: extractToolNames(files.actionTools),
+    web: extractToolNames(files.webTools),
+  },
+};
+
+const failures = [];
+const warnings = [];
+
+function requireCondition(condition, message) {
+  if (!condition) failures.push(message);
+}
+
+function warnCondition(condition, message) {
+  if (!condition) warnings.push(message);
+}
+
+requireCondition(hasPackage(frontendPackage, "ai"), "frontend/package.json must include ai");
+requireCondition(hasPackage(frontendPackage, "@ai-sdk/react"), "frontend/package.json must include @ai-sdk/react");
+requireCondition(hasPackage(frontendPackage, "@ai-sdk/openai"), "frontend/package.json must include @ai-sdk/openai");
+requireCondition(!hasPackage(frontendPackage, "@openai/chatkit"), "frontend/package.json must not include removed @openai/chatkit");
+requireCondition(!hasPackage(frontendPackage, "@openai/chatkit-react"), "frontend/package.json must not include removed @openai/chatkit-react");
+
+for (const legacyPath of removedLegacyPaths) {
+  requireCondition(!existsSync(resolve(repoRoot, legacyPath)), `removed legacy AI chat path still exists: ${legacyPath}`);
+}
+
+for (const [label, relativePath] of Object.entries(files)) {
+  assertNoForbiddenTokens(relativePath, readIfExists(relativePath));
+}
+
+requireCondition(route.includes("createUIMessageStream"), "chat route must use createUIMessageStream");
+requireCondition(route.includes("createUIMessageStreamResponse"), "chat route must use createUIMessageStreamResponse");
+requireCondition(route.includes("streamText"), "chat route must use streamText");
+requireCondition(route.includes("generateText"), "chat route must use generateText");
+requireCondition(route.includes("data-status"), "chat route must stream data-status progress parts");
+requireCondition(route.includes("loop_diagnostic"), "chat route must persist loop diagnostics");
+requireCondition(route.includes("tool_trace"), "chat route must persist tool trace");
+requireCondition(route.includes("response_quality"), "chat route must persist response quality metadata");
+requireCondition(route.includes("getProjectBriefingSnapshot"), "chat route must preflight broad project snapshots");
+requireCondition(route.includes("semanticSearch"), "chat route must preflight semantic search");
+
+requireCondition(client.includes("useChat"), "client must use useChat");
+requireCondition(client.includes("DefaultChatTransport"), "client must use DefaultChatTransport");
+requireCondition(client.includes("prepareSendMessagesRequest"), "client must prepare request body per AI SDK v6");
+requireCondition(client.includes("stripStatusParts"), "client must strip non-history status parts before resending messages");
+requireCondition(client.includes("onData"), "client must consume streamed data-status parts");
+
+requireCondition(providers.includes("createOpenAI"), "providers must use @ai-sdk/openai createOpenAI");
+requireCondition(providers.includes("https://ai-gateway.vercel.sh/v1"), "providers must route through AI Gateway when configured");
+requireCondition(providers.includes("openai.chat"), "providers must use chat-completions path for tool calling");
+
+for (const [bucket, expectedNames] of Object.entries({
+  consult: expected.consultTools,
+  project: expected.projectTools,
+  operational: expected.operationalTools,
+  financial: expected.financialTools,
+  acumatica: expected.acumaticaTools,
+  action: expected.actionTools,
+  web: expected.webTools,
+})) {
+  const absent = missing(expectedNames, inventory.tools[bucket]);
+  requireCondition(absent.length === 0, `${bucket} tool inventory missing: ${absent.join(", ")}`);
+}
+
+for (const agent of expected.agents) {
+  requireCondition(orchestrator.includes(`${agent}: {`), `agent registry missing ${agent}`);
+}
+
+const hasLiveAiSdkMcp =
+  hasPackage(frontendPackage, "@ai-sdk/mcp") &&
+  route.includes("createAiAssistantMcpTools") &&
+  mcpTools.includes("createMCPClient") &&
+  mcpTools.includes("AI_ASSISTANT_DISABLE_SUPABASE_MCP") &&
+  mcpTools.includes("isReadOnlyMcpTool");
+requireCondition(hasLiveAiSdkMcp, "live /ai-assistant has no AI SDK MCP integration");
+
+const usesToolLoopAgent =
+  route.includes("ToolLoopAgent") || orchestrator.includes("ToolLoopAgent");
+requireCondition(usesToolLoopAgent, "live agents are not implemented with AI SDK ToolLoopAgent");
+
+const writeToolsMergedIntoStrategist =
+  orchestrator.includes("const actionTools = createActionTools") &&
+  orchestrator.includes("...actionTools");
+requireCondition(!writeToolsMergedIntoStrategist, "write/action tools are exposed in the default Strategist tool set");
+
+const hasFirstClassApproval =
+  route.includes("addToolOutput") ||
+  client.includes("addToolOutput") ||
+  route.includes("approval") ||
+  client.includes("approval");
+requireCondition(hasFirstClassApproval, "write tools do not use a first-class client approval flow");
+
+const hasSourceHealth =
+  route.includes("sourceHealth") ||
+  route.includes("buildSourceHealth") ||
+  route.includes("verifyMicrosoft") ||
+  route.includes("graph_sync_state");
+requireCondition(hasSourceHealth, "chat route does not inject source-health status for Microsoft/Acumatica/meeting systems");
+
+warnCondition(
+  auditDoc.includes("frontend/src/lib/ai/tools/mcp-tools.ts") &&
+    auditDoc.includes("@ai-sdk/mcp"),
+  "audit doc should identify the current live AI SDK MCP implementation",
+);
+warnCondition(
+  !operationalTools.includes("throw err;"),
+  "web/operational tool errors should return structured degraded-state data where possible",
+);
+warnCondition(
+  actionTools.includes("ai_tool_write_audits") && actionTools.includes("idempotencyKey"),
+  "action tools should keep audit + idempotency controls",
+);
+
+const report = {
+  status: failures.length === 0 ? "pass" : "fail",
+  checkedAt: new Date().toISOString(),
+  inventory,
+  failures,
+  warnings,
+};
+
+console.log(JSON.stringify(report, null, 2));
+
+if (failures.length > 0) {
+  process.exit(1);
+}

@@ -19,7 +19,7 @@ type ToolTracePayload = {
   timestamp: string;
 };
 
-type CreateProjectToolsOptions = {
+export type CreateProjectToolsOptions = {
   onTrace?: (trace: ToolTracePayload) => void;
   pinnedProjectId?: number;
 };
@@ -33,6 +33,56 @@ function asNumber(value: unknown): number {
     return Number.isFinite(parsed) ? parsed : 0;
   }
   return 0;
+}
+
+function isMissingBudgetViewError(error: unknown): boolean {
+  const serialized = JSON.stringify(error ?? {});
+  return (
+    serialized.includes("v_budget_lines") ||
+    serialized.includes("PGRST205") ||
+    serialized.includes("schema cache")
+  );
+}
+
+async function fetchBudgetRowsForBriefing(
+  supabase: ReturnType<typeof createServiceClient>,
+  projectId: number,
+): Promise<{
+  data: AnyRow[] | null;
+  error: { message: string } | null;
+  source: "v_budget_lines" | "budget_lines";
+}> {
+  const viewResult = (await supabase
+    .from("v_budget_lines" as never)
+    .select("id, original_amount, revised_budget, approved_co_total, budget_mod_total")
+    .eq("project_id", projectId)) as unknown as {
+    data: AnyRow[] | null;
+    error: { message: string } | null;
+  };
+
+  if (!viewResult.error || !isMissingBudgetViewError(viewResult.error)) {
+    return {
+      ...viewResult,
+      source: "v_budget_lines",
+    };
+  }
+
+  const tableResult = await supabase
+    .from("budget_lines")
+    .select("id, original_amount")
+    .eq("project_id", projectId);
+
+  return {
+    data:
+      tableResult.data?.map((row) => ({
+        ...row,
+        revised_budget: row.original_amount,
+        approved_co_total: 0,
+        budget_mod_total: 0,
+      })) ?? null,
+    error: tableResult.error,
+    source: "budget_lines",
+  };
 }
 
 function parseTextList(value: unknown): string[] {
@@ -227,13 +277,7 @@ export function createProjectTools(
             notificationRes,
             recentDocsRes,
           ] = await Promise.all([
-            (supabase
-              .from("v_budget_lines" as never)
-              .select("id, original_amount, revised_budget, approved_co_total, budget_mod_total")
-              .eq("project_id", resolvedProjectId) as unknown as Promise<{
-              data: AnyRow[] | null;
-              error: { message: string } | null;
-            }>),
+            fetchBudgetRowsForBriefing(supabase, resolvedProjectId),
             supabase
               .from("prime_contract_financial_summary")
               .select("*")
@@ -398,6 +442,9 @@ export function createProjectTools(
 
           const dataGaps = [
             budgetRows.length === 0 ? "No budget line rows were found for this project." : null,
+            budgetRes.source === "budget_lines"
+              ? "Budget lines came from the budget_lines fallback because v_budget_lines is unavailable."
+              : null,
             contracts.length === 0 ? "No prime contract financial summary rows were found." : null,
             scheduleTasks.length === 0 ? "No schedule task rows were found." : null,
             recentDocs.length === 0 ? "No recent meeting/document context found in the last 90 days." : null,

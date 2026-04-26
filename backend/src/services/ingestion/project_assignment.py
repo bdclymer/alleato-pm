@@ -232,21 +232,3 @@ def batch_assign_projects(
             print(f"✗ Failed to assign '{doc.get('title', 'Untitled')[:50]}...': {str(e)}")
 
     return stats
-
-
-if __name__ == "__main__":
-    from supabase_helpers import get_supabase_client
-
-    print("🔍 Starting automatic project assignment...")
-    client = get_supabase_client()
-
-    stats = batch_assign_projects(client, limit=100, min_confidence=0.7)
-
-    print("\n📊 Assignment Results:")
-    print(f"Total processed: {stats['total']}")
-    print(f"Assigned: {stats['assigned']}")
-    print(f"Skipped (low confidence): {stats['skipped_low_confidence']}")
-    print(f"Failed: {stats['failed']}")
-    print(f"\nMethods used:")
-    for method, count in stats['methods'].items():
-        print(f"  - {method}: {count}")

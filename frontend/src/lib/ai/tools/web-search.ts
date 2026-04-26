@@ -21,7 +21,7 @@ type ToolTracePayload = {
   timestamp: string;
 };
 
-type CreateWebSearchToolsOptions = {
+export type CreateWebSearchToolsOptions = {
   onTrace?: (trace: ToolTracePayload) => void;
 };
 
