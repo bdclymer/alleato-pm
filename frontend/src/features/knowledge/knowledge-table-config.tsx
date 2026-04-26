@@ -11,10 +11,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { ColumnConfig, FilterConfig } from "@/components/tables/unified";
+import type { ColumnConfig, FilterConfig, TableColumn } from "@/components/tables/unified";
 import type { KnowledgeArticle } from "@/hooks/use-company-knowledge";
 import { KNOWLEDGE_CATEGORIES } from "@/hooks/use-company-knowledge";
-import type { TableColumn } from "@/components/tables/unified/unified-table-page";
 
 // ---------------------------------------------------------------------------
 // Category display helpers

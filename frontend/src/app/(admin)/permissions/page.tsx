@@ -200,7 +200,7 @@ function toAccessSummary(user: PermissionUser): UserAccessSummary {
     user.email ||
     "Unnamed user";
   const assignedProjectCount = user.memberships.filter((m) => !!m.templateId).length;
-  const missingTemplateCount = user.memberships.length - assignedProjectCount;
+  const missingTemplateCount = user.isAdmin ? 0 : user.memberships.length - assignedProjectCount;
   const primaryTemplateName = user.isAdmin
     ? "App Admin"
     : user.companyTemplateName ?? user.memberships[0]?.templateName ?? "No template";
@@ -233,6 +233,8 @@ function getUserSortValue(user: UserAccessSummary, sortBy: string) {
   switch (sortBy) {
     case "role":
       return user.primaryTemplateName;
+    case "email":
+      return user.email;
     case "projects":
       return user.projectCount;
     case "exceptions":
@@ -242,6 +244,18 @@ function getUserSortValue(user: UserAccessSummary, sortBy: string) {
     case "name":
     default:
       return user.fullName;
+  }
+}
+
+function getTemplateSortValue(template: PermissionTemplate, sortBy: string) {
+  switch (sortBy) {
+    case "scope":
+      return template.scope ?? "project";
+    case "granular":
+      return template.granular_flags?.length ?? 0;
+    case "name":
+    default:
+      return template.name;
   }
 }
 
@@ -270,7 +284,7 @@ export default function PermissionsAdminPage() {
       search: "",
       sortBy: "name",
       sortDirection: "asc",
-      visibleColumns: ["name", "role", "projects", "exceptions", "status"],
+      visibleColumns: ["name", "email", "role", "projects", "exceptions", "status"],
       filters: {},
     },
   });
@@ -370,9 +384,21 @@ export default function PermissionsAdminPage() {
             <UserAvatar user={user} />
             <div className="min-w-0">
               <p className="truncate text-sm font-medium text-foreground">{user.fullName}</p>
-              <p className="truncate text-xs text-muted-foreground">{user.email || "No email"}</p>
             </div>
           </div>
+        ),
+      },
+      {
+        id: "email",
+        label: "Email",
+        defaultVisible: true,
+        alwaysVisible: true,
+        sortable: true,
+        sortValue: (user) => user.email,
+        render: (user) => (
+          <span className="block truncate text-sm text-muted-foreground">
+            {user.email || "No email"}
+          </span>
         ),
       },
       {
@@ -702,9 +728,21 @@ export default function PermissionsAdminPage() {
         .includes(search),
     );
   }, [activeTemplates, tableState.debouncedSearch]);
+  const sortedRoles = useMemo(() => {
+    const direction = tableState.sortDirection === "desc" ? -1 : 1;
+    return [...filteredRoles].sort((left, right) => {
+      const sortBy = tableState.sortBy ?? "name";
+      const leftValue = getTemplateSortValue(left, sortBy);
+      const rightValue = getTemplateSortValue(right, sortBy);
+      if (typeof leftValue === "number" && typeof rightValue === "number") {
+        return (leftValue - rightValue) * direction;
+      }
+      return String(leftValue).localeCompare(String(rightValue)) * direction;
+    });
+  }, [filteredRoles, tableState.sortBy, tableState.sortDirection]);
+  const templateTotalPages = Math.max(1, Math.ceil(sortedRoles.length / tableState.perPage));
   const selectedTemplate =
-    filteredRoles.find((template) => template.id === selectedTemplateId) ??
-    filteredRoles[0] ??
+    sortedRoles.find((template) => template.id === selectedTemplateId) ??
     null;
 
   const tabs = [
@@ -827,6 +865,39 @@ export default function PermissionsAdminPage() {
             stickyHeader: true,
             density: "compact",
           }}
+          sidePanel={
+            selectedUser
+              ? {
+                  variant: "wide",
+                  storageKey: "permissions-user-access-wide",
+                  content: (
+                    <UserAccessPanel
+                      user={selectedUser}
+                      templates={templates}
+                      companyTemplates={companyTemplatesQuery.data ?? []}
+                      isTemplatesLoading={allTemplatesQuery.isLoading}
+                      isAdminSaving={adminMutation.isPending}
+                      isAssignmentSaving={assignMutation.isPending}
+                      isCompanyTemplateSaving={companyTemplateMutation.isPending}
+                      isGranularOverrideSaving={granularOverrideMutation.isPending}
+                      onToggleAdmin={(authUserId, isAdmin) =>
+                        adminMutation.mutate({ authUserId, isAdmin })
+                      }
+                      onAssignTemplate={(projectId, personId, templateId) =>
+                        assignMutation.mutate({ projectId, personId, templateId })
+                      }
+                      onAssignCompanyTemplate={(personId, templateId) =>
+                        companyTemplateMutation.mutate({ personId, templateId })
+                      }
+                      onSetGranularOverride={(personId, flag, effect) =>
+                        granularOverrideMutation.mutate({ personId, flag, effect })
+                      }
+                    />
+                  ),
+                  onClose: () => setSelectedUserId(null),
+                }
+              : undefined
+          }
           sorting={{
             sortBy: tableState.sortBy,
             sortDirection: tableState.sortDirection,
@@ -891,7 +962,7 @@ export default function PermissionsAdminPage() {
           tabs={tabs}
           toolbar={{
             totalItems: activeTemplates.length,
-            filteredItems: filteredRoles.length,
+            filteredItems: sortedRoles.length,
             selectedCount: 0,
             searchValue: tableState.searchInput,
             onSearchChange: tableState.setSearchInput,
@@ -906,7 +977,7 @@ export default function PermissionsAdminPage() {
             onColumnVisibilityChange: () => undefined,
           }}
           data={{
-            items: filteredRoles,
+            items: sortedRoles,
             isLoading: companyTemplatesQuery.isLoading || projectTemplatesQuery.isLoading,
           }}
           table={{
@@ -914,35 +985,18 @@ export default function PermissionsAdminPage() {
             getRowId: (role) => role.id,
             activeRowId: selectedTemplate?.id ?? null,
             onRowClick: (template) => setSelectedTemplateId(template.id),
+            onDelete: (template) => setDeleteTarget(template),
             stickyHeader: true,
             density: "compact",
           }}
-          sidePanel={{
-            content: selectedTemplate ? (
-              <TemplatePermissionMatrix
-                template={selectedTemplate}
-                isSaving={templateMatrixMutation.isPending}
-                onEdit={() => setEditTarget(selectedTemplate)}
-                onChange={(nextTemplate) =>
-                  templateMatrixMutation.mutate({
-                    id: nextTemplate.id,
-                    scope: (nextTemplate.scope === "company" ? "company" : "project") as TemplateScope,
-                    name: nextTemplate.name,
-                    description: nextTemplate.description ?? "",
-                    rules_json: nextTemplate.rules_json,
-                    granular_flags: nextTemplate.granular_flags ?? [],
-                  })
-                }
-              />
-            ) : (
-              <p className="p-6 text-sm text-muted-foreground">
-                Select a template to manage permissions.
-              </p>
-            ),
-            defaultWidth: 640,
-            minWidth: 520,
-            maxWidth: 900,
-            storageKey: "permissions-template-matrix",
+          sorting={{
+            sortBy: tableState.sortBy,
+            sortDirection: tableState.sortDirection,
+            onSortChange: (sortBy, direction) => {
+              tableState.setSortBy(sortBy);
+              tableState.setSortDirection(direction);
+              tableState.setSearchParams({ sort: sortBy, sort_dir: direction, page: "1" });
+            },
           }}
           emptyState={{
             title: "No templates",
@@ -964,6 +1018,14 @@ export default function PermissionsAdminPage() {
               </Button>
             ),
           }}
+          pagination={{
+            page: tableState.page,
+            totalPages: templateTotalPages,
+            perPage: tableState.perPage,
+            onPageChange: tableState.setPage,
+            onPerPageChange: (perPage) => tableState.setPerPage(Number(perPage)),
+            clientSide: true,
+          }}
           layout={{ maxWidth: "full", fullBleedTable: true }}
           features={{
             enableSearch: true,
@@ -973,7 +1035,7 @@ export default function PermissionsAdminPage() {
             enableExport: false,
             enableBulkDelete: false,
             enableRowSelection: false,
-            enableRowActions: false,
+            enableRowActions: true,
           }}
         />
       )}
@@ -988,41 +1050,6 @@ export default function PermissionsAdminPage() {
         isSaving={inviteMutation.isPending}
         onInvite={(payload) => inviteMutation.mutateAsync(payload)}
       />
-
-      <Dialog open={!!selectedUser} onOpenChange={(open) => !open && setSelectedUserId(null)}>
-        <DialogContent size="form" className="max-h-[calc(100svh-2rem)] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Manage user access</DialogTitle>
-            <DialogDescription>
-              Update company access, project templates, and granular exceptions for this user.
-            </DialogDescription>
-          </DialogHeader>
-          {selectedUser && (
-            <UserAccessPanel
-              user={selectedUser}
-              templates={templates}
-              companyTemplates={companyTemplatesQuery.data ?? []}
-              isTemplatesLoading={allTemplatesQuery.isLoading}
-              isAdminSaving={adminMutation.isPending}
-              isAssignmentSaving={assignMutation.isPending}
-              isCompanyTemplateSaving={companyTemplateMutation.isPending}
-              isGranularOverrideSaving={granularOverrideMutation.isPending}
-              onToggleAdmin={(authUserId, isAdmin) =>
-                adminMutation.mutate({ authUserId, isAdmin })
-              }
-              onAssignTemplate={(projectId, personId, templateId) =>
-                assignMutation.mutate({ projectId, personId, templateId })
-              }
-              onAssignCompanyTemplate={(personId, templateId) =>
-                companyTemplateMutation.mutate({ personId, templateId })
-              }
-              onSetGranularOverride={(personId, flag, effect) =>
-                granularOverrideMutation.mutate({ personId, flag, effect })
-              }
-            />
-          )}
-        </DialogContent>
-      </Dialog>
 
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
         <DialogContent size="form" className="max-h-[calc(100svh-2rem)] overflow-y-auto">
@@ -1067,6 +1094,37 @@ export default function PermissionsAdminPage() {
                 })
               }
               onCancel={() => setEditTarget(null)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!selectedTemplate} onOpenChange={(open) => !open && setSelectedTemplateId(null)}>
+        <DialogContent size="form" className="max-h-[calc(100svh-2rem)] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Manage template permissions</DialogTitle>
+            <DialogDescription>
+              Adjust the module access and granular capabilities included in this template.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedTemplate && (
+            <TemplatePermissionMatrix
+              template={selectedTemplate}
+              isSaving={templateMatrixMutation.isPending}
+              onEdit={() => {
+                setEditTarget(selectedTemplate);
+                setSelectedTemplateId(null);
+              }}
+              onChange={(nextTemplate) =>
+                templateMatrixMutation.mutate({
+                  id: nextTemplate.id,
+                  scope: (nextTemplate.scope === "company" ? "company" : "project") as TemplateScope,
+                  name: nextTemplate.name,
+                  description: nextTemplate.description ?? "",
+                  rules_json: nextTemplate.rules_json,
+                  granular_flags: nextTemplate.granular_flags ?? [],
+                })
+              }
             />
           )}
         </DialogContent>

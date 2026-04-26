@@ -22,44 +22,45 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { PageShell } from "@/components/layout";
 import {
+  Badge,
+  Button,
+  DensityControl,
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
+  FilterCheckboxRow,
+  FilterMenu,
+  FilterMenuGroup,
+  Input,
+  KanbanCardShell,
+  KanbanColumnShell,
+  KanbanEmptyAction,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import {
+  Textarea,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
+  Label,
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { Checkbox } from "@/components/ui/checkbox";
+  kanbanDensityStyles,
+  kanbanPriorityDotClasses,
+  type KanbanTone,
+} from "@/components/ds";
+import { PageShell } from "@/components/layout";
 import {
   Calendar,
   ChevronDown,
@@ -71,7 +72,6 @@ import {
   Lightbulb,
   MoreHorizontal,
   Pencil,
-  Plus,
   Rows3,
   Search,
   Sparkles,
@@ -106,7 +106,7 @@ interface ColumnDef {
   id: CardStatus;
   title: string;
   icon: React.ReactNode;
-  accent: string;
+  tone: KanbanTone;
   emptyText: string;
 }
 
@@ -115,28 +115,28 @@ const COLUMNS: ColumnDef[] = [
     id: "idea",
     title: "Ideas",
     icon: <Lightbulb className="h-4 w-4" />,
-    accent: "bg-amber-500/5",
+    tone: "warning",
     emptyText: "Capture your next idea",
   },
   {
     id: "planned",
     title: "Planned",
     icon: <Calendar className="h-4 w-4" />,
-    accent: "bg-blue-500/5",
+    tone: "info",
     emptyText: "Drag ideas here to plan",
   },
   {
     id: "in_progress",
     title: "In Progress",
     icon: <Zap className="h-4 w-4" />,
-    accent: "bg-violet-500/5",
+    tone: "primary",
     emptyText: "Active work appears here",
   },
   {
     id: "done",
     title: "Done",
     icon: <Circle className="h-4 w-4" />,
-    accent: "bg-emerald-500/5",
+    tone: "success",
     emptyText: "Completed items",
   },
 ];
@@ -145,10 +145,10 @@ const PRIORITY_CONFIG: Record<
   CardPriority,
   { label: string; dot: string }
 > = {
-  urgent: { label: "Urgent", dot: "bg-red-600" },
-  high: { label: "High", dot: "bg-red-400" },
-  medium: { label: "Medium", dot: "bg-amber-400" },
-  low: { label: "Low", dot: "bg-blue-400" },
+  urgent: { label: "Urgent", dot: kanbanPriorityDotClasses.urgent },
+  high: { label: "High", dot: kanbanPriorityDotClasses.high },
+  medium: { label: "Medium", dot: kanbanPriorityDotClasses.medium },
+  low: { label: "Low", dot: kanbanPriorityDotClasses.low },
 };
 
 const SOURCE_BADGE: Record<string, { label: string; icon: React.ReactNode }> = {
@@ -172,11 +172,7 @@ const CARD_FIELDS: { key: CardField; label: string }[] = [
   { key: "github", label: "GitHub link" },
 ];
 
-const DENSITY_CONFIG: Record<Density, { cardPadding: string; gap: string; titleClass: string; showDescription: boolean }> = {
-  compact: { cardPadding: "p-2", gap: "space-y-1", titleClass: "text-xs", showDescription: false },
-  default: { cardPadding: "p-3", gap: "space-y-2", titleClass: "text-sm", showDescription: true },
-  spacious: { cardPadding: "p-4", gap: "space-y-3", titleClass: "text-sm", showDescription: true },
-};
+const DENSITY_CONFIG = kanbanDensityStyles;
 
 // ---------------------------------------------------------------------------
 // Expandable search — icon collapses to input on click (Notion-style)
@@ -539,73 +535,61 @@ export default function CommandCenterPage() {
           <div className="flex items-center gap-1">
             <TooltipProvider delayDuration={300}>
               {/* Filter icon — unified popover with all filter categories */}
-              <Popover>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <PopoverTrigger asChild>
-                      <Button variant="ghost" size="icon" className="relative h-8 w-8">
-                        <Filter />
-                        {hasActiveFilters && (
-                          <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-primary-foreground">
-                            {ALL_PRIORITIES.length - priorityFilter.size + ALL_SOURCES.length - sourceFilter.size + (allLabels.length > 0 ? allLabels.length - labelFilter.size : 0)}
-                          </span>
-                        )}
-                      </Button>
-                    </PopoverTrigger>
-                  </TooltipTrigger>
-                  <TooltipContent>Filter</TooltipContent>
-                </Tooltip>
-                <PopoverContent align="end" className="w-64 p-0">
-                  <div className="px-3 py-2.5 border-b border-border flex items-center justify-between">
-                    <span className="text-sm font-medium">Filters</span>
+              <FilterMenu
+                title="Filters"
+                hasActiveFilters={hasActiveFilters}
+                onClear={clearFilters}
+                trigger={
+                  <Button variant="ghost" size="icon" className="relative h-8 w-8" aria-label="Filter">
+                    <Filter />
                     {hasActiveFilters && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="xs"
-                        onClick={clearFilters}
-                        className="h-auto px-0 text-xs text-muted-foreground hover:text-foreground"
+                      <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-primary-foreground">
+                        {ALL_PRIORITIES.length - priorityFilter.size + ALL_SOURCES.length - sourceFilter.size + (allLabels.length > 0 ? allLabels.length - labelFilter.size : 0)}
+                      </span>
+                    )}
+                  </Button>
+                }
+              >
+                <FilterMenuGroup label="Priority">
+                  {ALL_PRIORITIES.map((p) => (
+                    <FilterCheckboxRow
+                      key={p}
+                      checked={priorityFilter.has(p)}
+                      onCheckedChange={() => togglePriority(p)}
+                    >
+                      <span className="flex items-center gap-1.5">
+                        <span className={`h-2 w-2 rounded-full ${PRIORITY_CONFIG[p].dot}`} />
+                        {PRIORITY_CONFIG[p].label}
+                      </span>
+                    </FilterCheckboxRow>
+                  ))}
+                </FilterMenuGroup>
+                <FilterMenuGroup label="Source">
+                  {ALL_SOURCES.map((s) => (
+                    <FilterCheckboxRow
+                      key={s}
+                      checked={sourceFilter.has(s)}
+                      onCheckedChange={() => toggleSource(s)}
+                      className="capitalize"
+                    >
+                      {s.replace("_", " ")}
+                    </FilterCheckboxRow>
+                  ))}
+                </FilterMenuGroup>
+                {allLabels.length > 0 && (
+                  <FilterMenuGroup label="Labels">
+                    {allLabels.map((l) => (
+                      <FilterCheckboxRow
+                        key={l}
+                        checked={labelFilter.has(l)}
+                        onCheckedChange={() => toggleLabel(l)}
                       >
-                        Clear all
-                      </Button>
-                    )}
-                  </div>
-                  <div className="p-3 space-y-4 max-h-80 overflow-y-auto">
-                    {/* Priority */}
-                    <div>
-                      <p className="text-xs font-medium text-muted-foreground mb-1.5">Priority</p>
-                      {ALL_PRIORITIES.map((p) => (
-                        <label key={p} className="flex items-center gap-2 px-1 py-1 rounded hover:bg-muted cursor-pointer text-sm">
-                          <Checkbox checked={priorityFilter.has(p)} onCheckedChange={() => togglePriority(p)} />
-                          <span className="flex items-center gap-1.5"><span className={`h-2 w-2 rounded-full ${PRIORITY_CONFIG[p].dot}`} />{PRIORITY_CONFIG[p].label}</span>
-                        </label>
-                      ))}
-                    </div>
-                    {/* Source */}
-                    <div>
-                      <p className="text-xs font-medium text-muted-foreground mb-1.5">Source</p>
-                      {ALL_SOURCES.map((s) => (
-                        <label key={s} className="flex items-center gap-2 px-1 py-1 rounded hover:bg-muted cursor-pointer text-sm capitalize">
-                          <Checkbox checked={sourceFilter.has(s)} onCheckedChange={() => toggleSource(s)} />
-                          {s.replace("_", " ")}
-                        </label>
-                      ))}
-                    </div>
-                    {/* Labels */}
-                    {allLabels.length > 0 && (
-                      <div>
-                        <p className="text-xs font-medium text-muted-foreground mb-1.5">Labels</p>
-                        {allLabels.map((l) => (
-                          <label key={l} className="flex items-center gap-2 px-1 py-1 rounded hover:bg-muted cursor-pointer text-sm">
-                            <Checkbox checked={labelFilter.has(l)} onCheckedChange={() => toggleLabel(l)} />
-                            {l}
-                          </label>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </PopoverContent>
-              </Popover>
+                        {l}
+                      </FilterCheckboxRow>
+                    ))}
+                  </FilterMenuGroup>
+                )}
+              </FilterMenu>
 
               {/* Search icon — expandable */}
               <ExpandableSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search cards..." />
@@ -630,33 +614,27 @@ export default function CommandCenterPage() {
                     {/* Density */}
                     <div>
                       <p className="text-xs font-medium text-muted-foreground mb-1.5">Density</p>
-                      <div className="flex gap-1">
-                        {(["compact", "default", "spacious"] as Density[]).map((d) => (
-                          <Button
-                            key={d}
-                            type="button"
-                            variant={density === d ? "secondary" : "ghost"}
-                            size="xs"
-                            onClick={() => setDensity(d)}
-                            className={`flex-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors ${
-                              density === d
-                                ? "bg-foreground text-background"
-                                : "bg-muted/50 text-muted-foreground hover:bg-muted"
-                            }`}
-                          >
-                            {d.charAt(0).toUpperCase() + d.slice(1)}
-                          </Button>
-                        ))}
-                      </div>
+                      <DensityControl
+                        value={density}
+                        options={[
+                          { value: "compact", label: "Compact" },
+                          { value: "default", label: "Default" },
+                          { value: "spacious", label: "Spacious" },
+                        ]}
+                        onChange={setDensity}
+                      />
                     </div>
                     {/* Property visibility */}
                     <div>
                       <p className="text-xs font-medium text-muted-foreground mb-1.5">Property visibility</p>
                       {CARD_FIELDS.map((f) => (
-                        <label key={f.key} className="flex items-center gap-2 px-1 py-1 rounded hover:bg-muted cursor-pointer text-sm">
-                          <Checkbox checked={visibleFields.has(f.key)} onCheckedChange={() => toggleField(f.key)} />
+                        <FilterCheckboxRow
+                          key={f.key}
+                          checked={visibleFields.has(f.key)}
+                          onCheckedChange={() => toggleField(f.key)}
+                        >
                           {f.label}
-                        </label>
+                        </FilterCheckboxRow>
                       ))}
                     </div>
                   </div>
@@ -776,55 +754,36 @@ function KanbanColumn({
   onDispatchCard: (id: string) => void;
 }) {
   return (
-    <div className={`flex-1 min-w-72 flex flex-col ${column.accent}`}>
-      <div className="flex items-center justify-between px-4 pt-3 pb-2">
-        <div className="flex items-center gap-2">
-          {column.icon}
-          <span className="text-sm font-semibold text-foreground">{column.title}</span>
-          <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-foreground/10 px-1.5 text-xs font-medium text-foreground">
-            {cards.length}
-          </span>
+    <KanbanColumnShell
+      title={column.title}
+      icon={column.icon}
+      count={cards.length}
+      tone={column.tone}
+      onAdd={onAddCard}
+    >
+      <SortableContext items={cards.map((c) => c.id)} strategy={verticalListSortingStrategy}>
+        <div className={density.gap}>
+          {cards.map((card) => (
+            <SortableCard
+              key={card.id}
+              card={card}
+              density={density}
+              visibleFields={visibleFields}
+              employees={employees}
+              copiedDispatch={copiedDispatch}
+              onEdit={() => onEditCard(card)}
+              onDelete={() => onDeleteCard(card.id)}
+              onDispatch={() => onDispatchCard(card.id)}
+            />
+          ))}
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-7 w-7 text-muted-foreground hover:text-foreground"
-          onClick={onAddCard}
-        >
-          <Plus />
-        </Button>
-      </div>
-
-      <div className="flex-1 overflow-y-auto px-3 pb-3">
-        <SortableContext items={cards.map((c) => c.id)} strategy={verticalListSortingStrategy}>
-          <div className={density.gap}>
-            {cards.map((card) => (
-              <SortableCard
-                key={card.id}
-                card={card}
-                density={density}
-                visibleFields={visibleFields}
-                employees={employees}
-                copiedDispatch={copiedDispatch}
-                onEdit={() => onEditCard(card)}
-                onDelete={() => onDeleteCard(card.id)}
-                onDispatch={() => onDispatchCard(card.id)}
-              />
-            ))}
-          </div>
-        </SortableContext>
-        {cards.length === 0 && (
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={onAddCard}
-            className="h-auto w-full rounded-lg border border-dashed border-border/60 p-6 text-center text-sm text-muted-foreground hover:border-border hover:bg-muted/30"
-          >
-            {column.emptyText}
-          </Button>
-        )}
-      </div>
-    </div>
+      </SortableContext>
+      {cards.length === 0 && (
+        <KanbanEmptyAction onClick={onAddCard}>
+          {column.emptyText}
+        </KanbanEmptyAction>
+      )}
+    </KanbanColumnShell>
   );
 }
 
@@ -860,19 +819,20 @@ function SortableCard({
   };
 
   return (
-    <div ref={setNodeRef} style={style} className={isDragging ? "opacity-30" : "opacity-100"}>
-      <CardContent
-        card={card}
-        density={density}
-        visibleFields={visibleFields}
-        employees={employees}
-        copiedDispatch={copiedDispatch}
-        dragProps={{ ...attributes, ...listeners }}
-        onEdit={onEdit}
-        onDelete={onDelete}
-        onDispatch={onDispatch}
-      />
-    </div>
+    <CardContent
+      ref={setNodeRef}
+      card={card}
+      density={density}
+      visibleFields={visibleFields}
+      employees={employees}
+      copiedDispatch={copiedDispatch}
+      dragProps={{ ...attributes, ...listeners }}
+      sortStyle={style}
+      isDragging={isDragging}
+      onEdit={onEdit}
+      onDelete={onDelete}
+      onDispatch={onDispatch}
+    />
   );
 }
 
@@ -880,27 +840,31 @@ function SortableCard({
 // Card content (used in board + drag overlay)
 // ---------------------------------------------------------------------------
 
-function CardContent({
-  card,
-  density,
-  visibleFields,
-  employees,
-  copiedDispatch,
-  dragProps,
-  onEdit,
-  onDelete,
-  onDispatch,
-}: {
+const CardContent = React.forwardRef<HTMLDivElement, {
   card: InitiativeCard;
   density: (typeof DENSITY_CONFIG)[Density];
   visibleFields: Set<CardField>;
   employees?: Employee[];
   copiedDispatch?: string | null;
   dragProps?: Record<string, unknown>;
+  sortStyle?: React.CSSProperties;
+  isDragging?: boolean;
   onEdit?: () => void;
   onDelete?: () => void;
   onDispatch?: () => void;
-}) {
+}>(function CardContent({
+  card,
+  density,
+  visibleFields,
+  employees,
+  copiedDispatch,
+  dragProps,
+  sortStyle,
+  isDragging = false,
+  onEdit,
+  onDelete,
+  onDispatch,
+}, ref) {
   const priority = PRIORITY_CONFIG[card.priority];
   const sourceBadge = card.source !== "manual" ? SOURCE_BADGE[card.source] : null;
   const labels = card.labels?.filter(Boolean) ?? [];
@@ -939,15 +903,15 @@ function CardContent({
   );
 
   return (
-    <div
-      className={`rounded-lg border border-border/60 bg-muted/20 ${density.cardPadding} shadow-xs hover:shadow-sm transition-shadow group ${
-        isEditable ? "cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" : ""
-      }`}
+    <KanbanCardShell
+      ref={ref}
+      density={density}
+      interactive={isEditable}
+      sortStyle={sortStyle}
+      className={isDragging ? "opacity-30" : "opacity-100"}
       onClick={isEditable ? handleCardClick : undefined}
       onKeyDown={isEditable ? handleCardKeyDown : undefined}
-      role={isEditable ? "button" : undefined}
-      tabIndex={isEditable ? 0 : undefined}
-      aria-label={isEditable ? `Edit ${card.title}` : undefined}
+      ariaLabel={isEditable ? `Edit ${card.title}` : undefined}
     >
       <div className="flex items-start gap-1.5">
         <Button
@@ -976,7 +940,12 @@ function CardContent({
           {/* Title with priority dot */}
           <p className={`${density.titleClass} font-medium text-foreground leading-snug ${isCompact ? "line-clamp-1" : "line-clamp-2"} flex items-start gap-1.5`}>
             {visibleFields.has("priority") && (
-              <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${priority.dot}`} title={priority.label} />
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${priority.dot}`} />
+                </TooltipTrigger>
+                <TooltipContent>{priority.label}</TooltipContent>
+              </Tooltip>
             )}
             <span>{card.title}</span>
           </p>
@@ -1004,9 +973,14 @@ function CardContent({
             <div className={`flex items-center justify-between ${isCompact ? "mt-1" : "mt-2"}`}>
               <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
                 {visibleFields.has("assignee") && assigneeName && (
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-primary text-[10px] font-semibold" title={assigneeName}>
-                    {assigneeInitials}
-                  </span>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-primary text-[10px] font-semibold">
+                        {assigneeInitials}
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>{assigneeName}</TooltipContent>
+                  </Tooltip>
                 )}
                 {isDispatched && (
                   <span className="inline-flex items-center gap-0.5 text-[10px] text-status-info">
@@ -1084,9 +1058,9 @@ function CardContent({
           </DropdownMenu>
         )}
       </div>
-    </div>
+    </KanbanCardShell>
   );
-}
+});
 
 // ---------------------------------------------------------------------------
 // Create / Edit dialog
@@ -1231,7 +1205,7 @@ function CardFormDialog({
                     size="icon-xs"
                     className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                     onClick={() => { setAssigneeId(""); setAssigneeSearch(""); }}
-                    title="Clear assignee"
+                    aria-label="Clear assignee"
                   >
                     <X className="h-3 w-3" />
                   </Button>

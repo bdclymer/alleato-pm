@@ -3,6 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { format, isPast } from "date-fns";
+import { toast } from "sonner";
 import {
   AlertTriangle,
   ArrowRight,
@@ -24,15 +25,25 @@ import { useBudgetData } from "@/hooks/use-budget-data";
 import { useCurrentUserName } from "@/hooks/use-current-user-name";
 import { useProjectRoles, type ProjectRole } from "@/hooks/use-project-roles";
 import { AssignMemberDialog } from "@/components/domain/directory/AssignMemberDialog";
-import { Button, StatusBadge, EmptyState } from "@/components/ds";
-import { ContentSectionStack } from "@/components/layout";
 import {
+  Avatar,
+  AvatarFallback,
+  Button,
+  CompactSectionHeader as SectionHeading,
+  DashedActionLink,
+  EmptyState,
+  RecordPreview,
+  RecordPreviewField,
+  RecordPreviewGrid,
+  RecordPreviewState,
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
-} from "@/components/ui/sheet";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+  StatusBadge,
+  ToneDot,
+} from "@/components/ds";
+import { ContentSectionStack } from "@/components/layout";
 import { RealtimeCursors } from "@/components/realtime-cursors";
 import { EditProjectSidebar } from "@/components/project/edit-project-sidebar";
 import type { Database } from "@/types/database.types";
@@ -164,23 +175,6 @@ function initials(value: string | null | undefined): string {
 /* ─────────────────────────────────────────────────────────────
    Shared primitives
 ───────────────────────────────────────────────────────────── */
-
-function SectionHeading({
-  children,
-  action,
-}: {
-  children: React.ReactNode;
-  action?: React.ReactNode;
-}) {
-  return (
-    <div className="mb-3 flex items-center justify-between">
-      <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-        {children}
-      </span>
-      {action}
-    </div>
-  );
-}
 
 function ViewAllLink({
   href,
@@ -322,12 +316,8 @@ function ProjectPageIdentity({
 
 function ProjectCommandSurface({ healthCells }: { healthCells: HealthCell[] }) {
   return (
-    <section className="relative overflow-hidden rounded-lg bg-muted/30 p-4 shadow-sm sm:p-6 lg:p-8">
-      <div
-        className="pointer-events-none absolute right-8 top-8 hidden h-40 w-40 rotate-12 rounded-lg bg-primary/10 blur-xl lg:block"
-        aria-hidden="true"
-      />
-      <div className="relative space-y-3">
+    <section className="rounded-lg bg-muted/30 p-4 shadow-sm sm:p-6 lg:p-8">
+      <div className="space-y-3">
         <SectionHeading>Project health</SectionHeading>
         <ProjectHealthCells cells={healthCells} />
       </div>
@@ -468,8 +458,12 @@ function ProjectTeamSection({ projectId }: { projectId: string }) {
     try {
       const newRole = await createRole(roleName);
       setAssignDialog({ open: true, role: newRole });
-    } catch {
-      // ignore — createRole shows its own error
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : `Failed to create ${roleName} role`,
+      );
     } finally {
       setCreating(null);
     }
@@ -657,120 +651,83 @@ function PrimeContractSection({
       </SectionHeading>
 
       {!primary ? (
-        <Link
+        <DashedActionLink
           href={`/${projectId}/prime-contracts/new`}
-          className="flex items-center gap-2 rounded-md px-3 py-3 text-sm text-muted-foreground transition-colors hover:text-primary"
-          style={{ borderStyle: "dashed", borderWidth: 1 }}
+          icon={<Building2 className="h-4 w-4" strokeWidth={1.5} />}
         >
-          <Building2 className="h-4 w-4 shrink-0" strokeWidth={1.5} />
-          <span>No prime contract — create one</span>
-          <ChevronRight className="ml-auto h-3.5 w-3.5" />
-        </Link>
+          No prime contract — create one
+        </DashedActionLink>
       ) : (
         <div className="space-y-2">
-          {/* Primary contract — info card */}
-          <Link
+          <RecordPreview
             href={`/${projectId}/prime-contracts/${primary.id}`}
-            className="group block"
+            title={
+              primary.title ??
+              primary.contract_number ??
+              "Prime Contract"
+            }
+            subtitle={
+              primary.contract_number && primary.title
+                ? primary.contract_number
+                : undefined
+            }
+            status={<StatusBadge status={primary.status ?? "Draft"} />}
+            footer={
+              primary.executed ? (
+                <RecordPreviewState tone="success" icon={<Check className="h-3 w-3" />}>
+                  Executed
+                </RecordPreviewState>
+              ) : (
+                <RecordPreviewState>Not executed</RecordPreviewState>
+              )
+            }
           >
-            <div className="rounded-xl bg-primary/5 p-4 transition-colors group-hover:bg-primary/8">
-              {/* Header */}
-              <div className="mb-3 flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-foreground leading-snug">
-                    {primary.title ??
-                      primary.contract_number ??
-                      "Prime Contract"}
-                  </p>
-                  {primary.contract_number && primary.title && (
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      {primary.contract_number}
-                    </p>
-                  )}
-                </div>
-                <StatusBadge status={primary.status ?? "Draft"} />
-              </div>
-
-              {/* Stats grid */}
-              <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-                <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Contract Value
-                  </p>
-                  <p className="mt-0.5 text-base font-semibold tabular-nums text-foreground">
-                    {fmtFull(
-                      primary.revised_contract_value ||
-                        primary.original_contract_value ||
-                        null,
-                    )}
-                  </p>
-                  {primary.revised_contract_value > 0 &&
-                    primary.original_contract_value > 0 &&
-                    primary.revised_contract_value !==
-                      primary.original_contract_value && (
-                      <p className="mt-0.5 text-[11px] text-muted-foreground tabular-nums">
-                        Original {fmtCompact(primary.original_contract_value)}
-                      </p>
-                    )}
-                </div>
-
+            <RecordPreviewGrid>
+              <RecordPreviewField
+                label="Contract Value"
+                value={fmtFull(
+                  primary.revised_contract_value ||
+                    primary.original_contract_value ||
+                    null,
+                )}
+                valueClassName="text-base font-semibold tabular-nums"
+                detail={
+                  primary.revised_contract_value > 0 &&
+                  primary.original_contract_value > 0 &&
+                  primary.revised_contract_value !== primary.original_contract_value
+                    ? `Original ${fmtCompact(primary.original_contract_value)}`
+                    : undefined
+                }
+              />
                 {primary.retention_percentage != null && (
-                  <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                      Retention
-                    </p>
-                    <p className="mt-0.5 text-base font-semibold tabular-nums text-foreground">
-                      {primary.retention_percentage}%
-                    </p>
-                  </div>
+                  <RecordPreviewField
+                    label="Retention"
+                    value={`${primary.retention_percentage}%`}
+                    valueClassName="text-base font-semibold tabular-nums"
+                  />
                 )}
 
                 {primary.start_date && (
-                  <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                      Start Date
-                    </p>
-                    <p className="mt-0.5 text-sm font-medium text-foreground">
-                      {format(new Date(primary.start_date), "MMM d, yyyy")}
-                    </p>
-                  </div>
+                  <RecordPreviewField
+                    label="Start Date"
+                    value={format(new Date(primary.start_date), "MMM d, yyyy")}
+                  />
                 )}
 
                 {primary.end_date && (
-                  <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                      Completion
-                    </p>
-                    <p
-                      className={cn(
-                        "mt-0.5 text-sm font-medium",
-                        isPast(new Date(primary.end_date)) &&
-                          primary.status !== "complete"
-                          ? "text-destructive"
-                          : "text-foreground",
-                      )}
-                    >
-                      {format(new Date(primary.end_date), "MMM d, yyyy")}
-                    </p>
-                  </div>
+                  <RecordPreviewField
+                    label="Completion"
+                    value={format(new Date(primary.end_date), "MMM d, yyyy")}
+                    valueClassName={
+                      isPast(new Date(primary.end_date)) &&
+                      primary.status !== "complete"
+                        ? "text-destructive"
+                        : undefined
+                    }
+                  />
                 )}
-              </div>
-
-              {/* Footer: executed flag + arrow */}
-              <div className="mt-3 flex items-center justify-between">
-                {primary.executed ? (
-                  <span className="flex items-center gap-1 text-[11px] font-medium text-green-600 dark:text-green-400">
-                    <Check className="h-3 w-3" /> Executed
-                  </span>
-                ) : (
-                  <span className="text-[11px] text-muted-foreground">
-                    Not executed
-                  </span>
-                )}
-                <ArrowRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
-              </div>
-            </div>
-          </Link>
+            </RecordPreviewGrid>
+          </RecordPreview>
         </div>
       )}
     </section>
@@ -1369,14 +1326,7 @@ function OpenRFIsSection({
                 href={`/${projectId}/rfis/${rfi.id}`}
                 className="-mx-2 flex items-start gap-2.5 rounded-md border-b border-border/50 px-2 py-2.5 last:border-0 transition-colors hover:bg-muted/50"
               >
-                <span
-                  className={cn(
-                    "mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full",
-                    overdue
-                      ? "bg-destructive"
-                      : "bg-amber-500 dark:bg-amber-400",
-                  )}
-                />
+                <ToneDot tone={overdue ? "danger" : "warning"} className="mt-1" />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm">{rfi.subject}</p>
                   {rfi.due_date && (
@@ -1441,12 +1391,7 @@ function OpenSubmittalsSection({
                 href={`/${projectId}/submittals/${s.id}`}
                 className="-mx-2 flex items-start gap-2.5 rounded-md border-b border-border/50 px-2 py-2.5 last:border-0 transition-colors hover:bg-muted/50"
               >
-                <span
-                  className={cn(
-                    "mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full",
-                    overdue ? "bg-destructive" : "bg-blue-500 dark:bg-blue-400",
-                  )}
-                />
+                <ToneDot tone={overdue ? "danger" : "info"} className="mt-1" />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm">
                     {s.submittal_number ? `${s.submittal_number} – ` : ""}

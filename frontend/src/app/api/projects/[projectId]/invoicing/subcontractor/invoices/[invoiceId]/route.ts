@@ -87,13 +87,19 @@ export const GET = withApiGuardrails<{ projectId: string; invoiceId: string }>(
     // detail page can render them without duplicating the math client-side.
     const contractId = invoice.subcontract_id ?? invoice.purchase_order_id ?? null;
 
-    // Original contract sum = sum of subcontract SOV items
+    // Original contract sum = sum of commitment SOV items
     let originalContractSum = 0;
     if (contractId) {
+      const sovTable = invoice.subcontract_id
+        ? "subcontract_sov_items"
+        : "purchase_order_sov_items";
+      const sovForeignKey = invoice.subcontract_id
+        ? "subcontract_id"
+        : "purchase_order_id";
       const { data: sovRows } = await supabase
-        .from("subcontract_sov_items")
+        .from(sovTable)
         .select("amount")
-        .eq("subcontract_id", contractId);
+        .eq(sovForeignKey, contractId);
       originalContractSum = (sovRows ?? []).reduce(
         (sum, row) => sum + (Number(row.amount) || 0),
         0,
@@ -121,12 +127,30 @@ export const GET = withApiGuardrails<{ projectId: string; invoiceId: string }>(
       amount: number | null;
     }> = [];
     if (contractId) {
-      const { data: sov } = await supabase
-        .from("subcontract_sov_items")
-        .select("sort_order, budget_code, description, amount")
-        .eq("subcontract_id", contractId)
-        .order("sort_order", { ascending: true });
-      sovItems = sov ?? [];
+      const sovResult = invoice.subcontract_id
+        ? await supabase
+            .from("subcontract_sov_items")
+            .select("line_number, budget_code, description, amount")
+            .eq("subcontract_id", contractId)
+            .order("line_number", { ascending: true })
+        : await supabase
+            .from("purchase_order_sov_items")
+            .select("sort_order, line_number, budget_code, description, amount")
+            .eq("purchase_order_id", contractId)
+            .order("line_number", { ascending: true });
+      const sov = (sovResult.data ?? []) as Array<{
+        sort_order?: number | null;
+        line_number?: number | null;
+        budget_code?: string | null;
+        description?: string | null;
+        amount?: number | null;
+      }>;
+      sovItems = sov.map((row) => ({
+        sort_order: Number(row.sort_order ?? row.line_number ?? 0),
+        budget_code: row.budget_code ?? null,
+        description: row.description ?? null,
+        amount: row.amount ?? null,
+      }));
     }
     // Map SOV items by sort_order for fast lookup
     const sovBySort = new Map(
@@ -171,6 +195,10 @@ export const GET = withApiGuardrails<{ projectId: string; invoiceId: string }>(
       (sum, li) => sum + (Number(li.materials_retainage_amount) || 0),
       0,
     );
+    const invoiceNetAmount = lineItems.reduce(
+      (sum, li) => sum + (Number(li.net_amount_this_period) || 0),
+      0,
+    );
     const totalRetainage = totalWorkRetainage + totalMaterialsRetainage;
     const totalEarnedLessRetainage = totalCompletedAndStored - totalRetainage;
 
@@ -209,7 +237,12 @@ export const GET = withApiGuardrails<{ projectId: string; invoiceId: string }>(
     }
 
     const contractSumToDate = originalContractSum + netChangeByChangeOrders;
-    const currentPaymentDue = totalEarnedLessRetainage - lessPreviousCertificates;
+    if (invoice.is_retainage_release) {
+      lessPreviousCertificates = Math.max(totalEarnedLessRetainage - invoiceNetAmount, 0);
+    }
+    const currentPaymentDue = invoice.is_retainage_release
+      ? invoiceNetAmount
+      : totalEarnedLessRetainage - lessPreviousCertificates;
     const balanceToFinish = contractSumToDate - totalEarnedLessRetainage;
 
     const rollup = {
@@ -384,7 +417,7 @@ export const GET = withApiGuardrails<{ projectId: string; invoiceId: string }>(
 );
 
 // PATCH /api/projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]
-// Update a subcontractor invoice (only when status is draft or revise_and_resubmit)
+// Update a subcontractor invoice (only when status is draft, invited, or revise_and_resubmit)
 export const PATCH = withApiGuardrails<{ projectId: string; invoiceId: string }>(
   "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]#PATCH",
   async ({ request, params }) => {
@@ -455,12 +488,12 @@ export const PATCH = withApiGuardrails<{ projectId: string; invoiceId: string }>
       );
     }
 
-    const editableStatuses = ["draft", "revise_and_resubmit"];
+    const editableStatuses = ["draft", "invited", "revise_and_resubmit"];
     if (!editableStatuses.includes(existing.status)) {
       return NextResponse.json(
         {
           error: "Cannot edit invoice",
-          message: `Invoice status is '${existing.status}'. Only draft or revise-and-resubmit invoices can be edited.`,
+          message: `Invoice status is '${existing.status}'. Only draft, invited, or revise-and-resubmit invoices can be edited.`,
         },
         { status: 400 },
       );

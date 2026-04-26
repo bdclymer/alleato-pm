@@ -34,6 +34,8 @@ export type EmailTemplate =
   | "sov-approved"
   | "sov-rejected"
   | "invoice-submitted-to-pm"
+  | "subcontractor-invoice-invitation"
+  | "subcontractor-invoice-invite-new-user"
   | "invoice-approved"
   | "invoice-rejected"
   | "commitment-issued"

@@ -2384,69 +2384,6 @@ export type Database = {
         }
         Relationships: []
       }
-      app_capability_actions: {
-        Row: {
-          action_id: string
-          capability_id: string
-        }
-        Insert: {
-          action_id: string
-          capability_id: string
-        }
-        Update: {
-          action_id?: string
-          capability_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "app_capability_actions_action_id_fkey"
-            columns: ["action_id"]
-            isOneToOne: false
-            referencedRelation: "app_system_actions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "app_capability_actions_capability_id_fkey"
-            columns: ["capability_id"]
-            isOneToOne: false
-            referencedRelation: "app_functional_capabilities"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      app_commands: {
-        Row: {
-          command_key: string
-          confidence_score: number | null
-          created_at: string | null
-          description: string | null
-          id: string
-          label: string | null
-          module: string
-          source_action_ids: string[] | null
-        }
-        Insert: {
-          command_key: string
-          confidence_score?: number | null
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          label?: string | null
-          module: string
-          source_action_ids?: string[] | null
-        }
-        Update: {
-          command_key?: string
-          confidence_score?: number | null
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          label?: string | null
-          module?: string
-          source_action_ids?: string[] | null
-        }
-        Relationships: []
-      }
       app_crawl_sessions: {
         Row: {
           completed_at: string | null
@@ -2476,56 +2413,6 @@ export type Database = {
           started_at?: string
         }
         Relationships: []
-      }
-      app_functional_capabilities: {
-        Row: {
-          description: string | null
-          domain: string
-          id: string
-          name: string
-        }
-        Insert: {
-          description?: string | null
-          domain: string
-          id?: string
-          name: string
-        }
-        Update: {
-          description?: string | null
-          domain?: string
-          id?: string
-          name?: string
-        }
-        Relationships: []
-      }
-      app_page_links: {
-        Row: {
-          from_page: string | null
-          id: string
-          link_text: string | null
-          to_url: string | null
-        }
-        Insert: {
-          from_page?: string | null
-          id?: string
-          link_text?: string | null
-          to_url?: string | null
-        }
-        Update: {
-          from_page?: string | null
-          id?: string
-          link_text?: string | null
-          to_url?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "app_page_links_from_page_fkey"
-            columns: ["from_page"]
-            isOneToOne: false
-            referencedRelation: "app_pages"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       app_pages: {
         Row: {
@@ -2677,38 +2564,6 @@ export type Database = {
           sort_order?: number
         }
         Relationships: []
-      }
-      app_state_transitions: {
-        Row: {
-          conditions: string | null
-          from_state: string | null
-          id: string
-          to_state: string | null
-          triggered_by_action: string | null
-        }
-        Insert: {
-          conditions?: string | null
-          from_state?: string | null
-          id?: string
-          to_state?: string | null
-          triggered_by_action?: string | null
-        }
-        Update: {
-          conditions?: string | null
-          from_state?: string | null
-          id?: string
-          to_state?: string | null
-          triggered_by_action?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "app_state_transitions_triggered_by_action_fkey"
-            columns: ["triggered_by_action"]
-            isOneToOne: false
-            referencedRelation: "app_system_actions"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       app_system_actions: {
         Row: {

@@ -43,7 +43,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { TableToolbar, type FilterConfig, type ColumnConfig } from "@/components/tables/unified/table-toolbar";
+import { TableToolbar, type FilterConfig, type ColumnConfig } from "@/components/tables/unified";
 import {
   Plus,
   Columns,

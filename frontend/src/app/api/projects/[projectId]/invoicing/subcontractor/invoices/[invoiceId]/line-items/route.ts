@@ -76,11 +76,11 @@ export const PATCH = withApiGuardrails<{ projectId: string; invoiceId: string }>
       );
     }
 
-    if (!["draft", "revise_and_resubmit"].includes(invoice.status)) {
+    if (!["draft", "invited", "revise_and_resubmit"].includes(invoice.status)) {
       return NextResponse.json(
         {
           error:
-            "Line items can only be edited when the invoice is Draft or Revise & Resubmit",
+            "Line items can only be edited when the invoice is Draft, Invited, or Revise & Resubmit",
         },
         { status: 400 },
       );

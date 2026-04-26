@@ -22,6 +22,7 @@ export {
 } from "./table-primitives";
 export {
   UnifiedTablePage,
+  TableExpandedRow,
   type UnifiedTablePageProps,
   type TableColumn,
   type UnifiedTableFeatures,

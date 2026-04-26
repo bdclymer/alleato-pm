@@ -34,9 +34,33 @@ export type { TableColumn, DataTableProps } from "./data-table";
 export { EmptyState } from "./empty-state";
 export { ErrorState } from "./error-state";
 export { Eyebrow } from "./eyebrow";
+export { CompactSectionHeader } from "./compact-section-header";
+export { DashedActionLink } from "./dashed-action-link";
+export { DensityControl } from "./density-control";
+export {
+  FilterCheckboxRow,
+  FilterMenu,
+  FilterMenuGroup,
+} from "./filter-menu";
+export {
+  KanbanCardShell,
+  KanbanColumnShell,
+  KanbanEmptyAction,
+  kanbanDensityStyles,
+  kanbanPriorityDotClasses,
+} from "./kanban";
+export type { KanbanTone } from "./kanban";
 export { PageBadge } from "./page-badge";
 export { IconBadge } from "./icon-badge";
 export type { IconBadgeProps, IconBadgeSize } from "./icon-badge";
+export {
+  RecordPreview,
+  RecordPreviewField,
+  RecordPreviewGrid,
+  RecordPreviewState,
+} from "./record-preview";
+export { ToneDot } from "./tone-dot";
+export type { ToneDotTone } from "./tone-dot";
 
 // Inline table primitives (SOV, line items, financial detail tables)
 export {

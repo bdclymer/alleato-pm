@@ -3,6 +3,9 @@ import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { GET, POST } from "../route";
 
+process.env.NEXT_PUBLIC_SUPABASE_URL ??= "https://example.supabase.co";
+process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??= "test-anon-key";
+
 jest.mock("@/lib/supabase/server", () => ({
   createClient: jest.fn(),
 }));

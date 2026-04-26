@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/tooltip";
 import { ExportDialog } from "@/components/commitments/ExportDialog";
 import {
+  TableExpandedRow,
   UnifiedTablePage,
   useUnifiedTableState,
   type FilterValue,
@@ -54,6 +55,15 @@ import {
   renderCommitmentRowActions,
 } from "@/features/commitments/commitments-table-config";
 import { EmptyState } from "@/components/ds";
+import {
+  InlineTable,
+  InlineTableBody,
+  InlineTableCell,
+  InlineTableHeader,
+  InlineTableHeaderCell,
+  InlineTableHeaderRow,
+  InlineTableRow,
+} from "@/components/ds/inline-table";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const EMPTY_FILTERS: Record<string, FilterValue> = {
@@ -116,58 +126,54 @@ function CommitmentChangeOrdersRow({
     }).format(value);
 
   return (
-    <tr>
-      <td colSpan={colSpan} className="p-0">
-        <div className="bg-muted/40 border-y border-border px-6 py-3">
-          {isLoading ? (
-            <div className="space-y-1.5 py-2">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="flex items-center gap-6">
-                  <Skeleton className="h-3.5 w-8" />
-                  <Skeleton className="h-3.5 w-40" />
-                  <Skeleton className="h-3.5 w-16" />
-                  <Skeleton className="h-3.5 w-20 ml-auto" />
-                  <Skeleton className="h-3.5 w-20" />
-                </div>
+    <TableExpandedRow colSpan={colSpan}>
+      <div className="bg-muted/40 border-y border-border px-6 py-3">
+        {isLoading ? (
+          <div className="space-y-1.5 py-2">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-6">
+                <Skeleton className="h-3.5 w-8" />
+                <Skeleton className="h-3.5 w-40" />
+                <Skeleton className="h-3.5 w-16" />
+                <Skeleton className="h-3.5 w-20 ml-auto" />
+                <Skeleton className="h-3.5 w-20" />
+              </div>
+            ))}
+          </div>
+        ) : changeOrders.length === 0 ? (
+          <p className="py-2 text-sm text-muted-foreground">No change orders</p>
+        ) : (
+          <InlineTable variant="read">
+            <InlineTableHeader>
+              <InlineTableHeaderRow>
+                <InlineTableHeaderCell>#</InlineTableHeaderCell>
+                <InlineTableHeaderCell>Description</InlineTableHeaderCell>
+                <InlineTableHeaderCell>Status</InlineTableHeaderCell>
+                <InlineTableHeaderCell align="right">Amount</InlineTableHeaderCell>
+                <InlineTableHeaderCell>Requested</InlineTableHeaderCell>
+              </InlineTableHeaderRow>
+            </InlineTableHeader>
+            <InlineTableBody>
+              {changeOrders.map((co) => (
+                <InlineTableRow key={co.id}>
+                  <InlineTableCell className="font-mono text-muted-foreground">
+                    {co.number}
+                  </InlineTableCell>
+                  <InlineTableCell className="max-w-xs truncate">{co.title}</InlineTableCell>
+                  <InlineTableCell className="capitalize">{co.status}</InlineTableCell>
+                  <InlineTableCell align="right" numeric>
+                    {formatAmt(co.amount)}
+                  </InlineTableCell>
+                  <InlineTableCell className="text-muted-foreground">
+                    {co.requested_date ? new Date(co.requested_date).toLocaleDateString() : "—"}
+                  </InlineTableCell>
+                </InlineTableRow>
               ))}
-            </div>
-          ) : changeOrders.length === 0 ? (
-            <p className="py-2 text-sm text-muted-foreground">No change orders</p>
-          ) : (
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="text-left text-muted-foreground">
-                  <th className="pb-1.5 pr-6 font-medium">#</th>
-                  <th className="pb-1.5 pr-6 font-medium">Description</th>
-                  <th className="pb-1.5 pr-6 font-medium">Status</th>
-                  <th className="pb-1.5 pr-6 font-medium text-right">Amount</th>
-                  <th className="pb-1.5 font-medium">Requested</th>
-                </tr>
-              </thead>
-              <tbody>
-                {changeOrders.map((co) => (
-                  <tr key={co.id} className="border-t border-border/50">
-                    <td className="py-1.5 pr-6 font-mono text-muted-foreground">
-                      {co.number}
-                    </td>
-                    <td className="py-1.5 pr-6 max-w-xs truncate">{co.title}</td>
-                    <td className="py-1.5 pr-6 capitalize">{co.status}</td>
-                    <td className="py-1.5 pr-6 text-right tabular-nums">
-                      {formatAmt(co.amount)}
-                    </td>
-                    <td className="py-1.5 text-muted-foreground">
-                      {co.requested_date
-                        ? new Date(co.requested_date).toLocaleDateString()
-                        : "—"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-      </td>
-    </tr>
+            </InlineTableBody>
+          </InlineTable>
+        )}
+      </div>
+    </TableExpandedRow>
   );
 }
 
@@ -220,45 +226,38 @@ function ProjectChangeOrdersTable({
   }
 
   return (
-    <div className="rounded-md border border-border overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead className="bg-muted/50">
-          <tr className="text-left text-muted-foreground border-b border-border">
-            <th className="px-4 py-3 font-medium">#</th>
-            <th className="px-4 py-3 font-medium">Description</th>
-            <th className="px-4 py-3 font-medium">Status</th>
-            <th className="px-4 py-3 font-medium">Commitment</th>
-            <th className="px-4 py-3 font-medium text-right">Amount</th>
-            <th className="px-4 py-3 font-medium">Requested</th>
-          </tr>
-        </thead>
-        <tbody>
-          {changeOrders.map((co, idx) => (
-            <tr
-              key={co.id}
-              className={idx % 2 === 0 ? "bg-background" : "bg-muted/20"}
-            >
-              <td className="px-4 py-3 font-mono text-muted-foreground text-xs">
-                {co.number}
-              </td>
-              <td className="px-4 py-3 max-w-xs truncate">{co.title}</td>
-              <td className="px-4 py-3 capitalize">{co.status}</td>
-              <td className="px-4 py-3 text-muted-foreground text-xs">
-                {co.commitment_number ?? "—"}
-              </td>
-              <td className="px-4 py-3 text-right tabular-nums">
-                {formatAmt(co.amount)}
-              </td>
-              <td className="px-4 py-3 text-muted-foreground text-xs">
-                {co.requested_date
-                  ? new Date(co.requested_date).toLocaleDateString()
-                  : "—"}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <InlineTable variant="read">
+      <InlineTableHeader>
+        <InlineTableHeaderRow>
+          <InlineTableHeaderCell>#</InlineTableHeaderCell>
+          <InlineTableHeaderCell>Description</InlineTableHeaderCell>
+          <InlineTableHeaderCell>Status</InlineTableHeaderCell>
+          <InlineTableHeaderCell>Commitment</InlineTableHeaderCell>
+          <InlineTableHeaderCell align="right">Amount</InlineTableHeaderCell>
+          <InlineTableHeaderCell>Requested</InlineTableHeaderCell>
+        </InlineTableHeaderRow>
+      </InlineTableHeader>
+      <InlineTableBody>
+        {changeOrders.map((co) => (
+          <InlineTableRow key={co.id}>
+            <InlineTableCell className="font-mono text-muted-foreground">
+              {co.number}
+            </InlineTableCell>
+            <InlineTableCell className="max-w-xs truncate">{co.title}</InlineTableCell>
+            <InlineTableCell className="capitalize">{co.status}</InlineTableCell>
+            <InlineTableCell className="text-muted-foreground">
+              {co.commitment_number ?? "—"}
+            </InlineTableCell>
+            <InlineTableCell align="right" numeric>
+              {formatAmt(co.amount)}
+            </InlineTableCell>
+            <InlineTableCell className="text-muted-foreground">
+              {co.requested_date ? new Date(co.requested_date).toLocaleDateString() : "—"}
+            </InlineTableCell>
+          </InlineTableRow>
+        ))}
+      </InlineTableBody>
+    </InlineTable>
   );
 }
 

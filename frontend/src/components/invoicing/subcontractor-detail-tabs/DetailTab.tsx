@@ -174,7 +174,7 @@ export function DetailTab({
           scheduled > 0 ? (totalCompleted / scheduled) * 100 : 0,
         balance_to_finish: scheduled - totalCompleted,
         net_amount_this_period:
-          thisPeriod + stored - (workRetainage + matRetainage),
+          thisPeriod + stored - (workRetainage + matRetainage) + workReleased + matReleased,
       };
     });
   }, [editing, edits, lineItems]);

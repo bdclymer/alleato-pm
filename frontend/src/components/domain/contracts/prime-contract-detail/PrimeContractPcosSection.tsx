@@ -5,7 +5,7 @@ import { toast } from "sonner";
 
 import { SectionRuleHeading } from "@/components/layout/spacing";
 import { StatusBadge } from "@/components/ds/status-badge";
-import { UnifiedTablePage, type TableColumn } from "@/components/tables/unified/unified-table-page";
+import { UnifiedTablePage, type TableColumn } from "@/components/tables/unified";
 import { formatDate } from "@/lib/table-config/formatters";
 import { apiFetch } from "@/lib/api-client";
 

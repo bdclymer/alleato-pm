@@ -12,6 +12,7 @@ import {
   Pencil,
   Send,
   Trash2,
+  UserPlus,
 } from "lucide-react";
 
 import { PageShell } from "@/components/layout";
@@ -216,6 +217,23 @@ export function SubcontractorInvoiceDetail({
     }
   }
 
+  async function handleInviteSubcontractor() {
+    setBusy(true);
+    try {
+      const body = await apiFetch<{ message?: string }>(
+        `/api/projects/${projectId}/invoicing/subcontractor/invoices/${invoiceId}/invite`,
+        { method: "POST" },
+      );
+      toast.success(body.message ?? "Subcontractor invitation sent");
+      await refetch();
+      setActiveTab("emails");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to invite subcontractor");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function handleEmailContract() {
     toast.info("Email Contract — wires to commitment email flow (pending)");
   }
@@ -273,9 +291,12 @@ export function SubcontractorInvoiceDetail({
 
   const status = invoice.status as string;
   const isDraft = status === "draft";
+  const isInvited = status === "invited";
+  const isNotInvited = status === "not_invited";
   const isUnderReview = status === "under_review";
   const isReviseAndResubmit = status === "revise_and_resubmit";
-  const canEdit = isDraft || isReviseAndResubmit;
+  const canEdit = isDraft || isInvited || isReviseAndResubmit;
+  const canInviteSubcontractor = isNotInvited || isInvited || isDraft || isReviseAndResubmit;
   const canDelete = !["approved", "paid"].includes(status);
   const canResendErp = ["approved", "approved_as_noted", "paid"].includes(
     status,
@@ -305,9 +326,21 @@ export function SubcontractorInvoiceDetail({
       contentClassName="space-y-4"
       actions={
         <div className="flex items-center gap-2">
-          {(isDraft || isReviseAndResubmit) && (
+          {canInviteSubcontractor && (
             <Button
               size="sm"
+              variant={isInvited ? "outline" : "default"}
+              disabled={busy}
+              onClick={handleInviteSubcontractor}
+            >
+              <UserPlus className="mr-2 h-4 w-4" />
+              {isInvited ? "Resend Invite" : "Invite Subcontractor"}
+            </Button>
+          )}
+          {(isDraft || isInvited || isReviseAndResubmit) && (
+            <Button
+              size="sm"
+              variant="outline"
               disabled={busy}
               onClick={() =>
                 handleStatus("under_review", "Submitted for review")
@@ -357,6 +390,13 @@ export function SubcontractorInvoiceDetail({
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handleEmailInvoice}>
                 <Mail className="h-4 w-4 mr-2" /> Email Invoice
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={handleInviteSubcontractor}
+                disabled={!canInviteSubcontractor || busy}
+              >
+                <UserPlus className="h-4 w-4 mr-2" />
+                {isInvited ? "Resend Subcontractor Invite" : "Invite Subcontractor"}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={handleResendErp}

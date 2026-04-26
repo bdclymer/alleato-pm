@@ -406,6 +406,130 @@ function formatExecutiveRecentSignals(packet: ExecutiveBriefingRetrievalPacket |
   });
 }
 
+function actionLine(params: {
+  owner: string;
+  action: string;
+  due: string;
+  why: string;
+  sourceRef: string;
+}): string {
+  return `- **Owner:** ${params.owner} | **Action:** ${params.action} | **Due:** ${params.due} | **Why it matters:** ${params.why} ${params.sourceRef}`;
+}
+
+function createDeterministicActionBriefing(params: {
+  snapshot: ProjectBriefingSnapshot | null;
+  executiveRetrieval: ExecutiveBriefingRetrievalPacket | null;
+}): string | null {
+  const { snapshot, executiveRetrieval } = params;
+  if (!snapshot) return null;
+
+  const project = readSnapshotObject(snapshot, "project");
+  const hardFacts = readSnapshotObject(snapshot, "hardFacts");
+  const projectName = typeof project?.name === "string" && project.name.trim()
+    ? project.name.trim()
+    : "the project";
+  const sourceRef = typeof snapshot.sourceRef === "string"
+    ? snapshot.sourceRef
+    : "[Source: Project Briefing Snapshot]";
+  const openRfis = readNestedNumber(hardFacts, ["rfis", "openCount"]);
+  const overdueRfis = readNestedNumber(hardFacts, ["rfis", "overdueCount"]);
+  const openChangeEvents = readNestedNumber(hardFacts, ["changeEvents", "openCount"]);
+  const pendingCos = readNestedNumber(hardFacts, ["changeOrders", "pendingCount"]);
+  const overdueTasks = readNestedNumber(hardFacts, ["schedule", "overdueCount"]);
+  const unexecutedCommitments = readNestedNumber(hardFacts, ["commitments", "unexecutedCount"]);
+  const sourceSummary = formatSourcesCheckedLine(executiveRetrieval);
+
+  return [
+    `**Highest-Leverage PM Actions for ${projectName}**`,
+    "",
+    actionLine({
+      owner: "Project Manager",
+      action: `Run a 30-minute recovery huddle on the ${overdueTasks} overdue schedule task(s) and ${overdueRfis || openRfis} open/overdue RFI(s); leave with named owners and dates.`,
+      due: "Today",
+      why: "The schedule/RFI stack is the clearest execution risk, and it needs ownership before it turns into field delay.",
+      sourceRef,
+    }),
+    actionLine({
+      owner: "PM + Cost Lead",
+      action: `Turn ${pendingCos} pending change order(s) and ${openChangeEvents} open change event(s) into a decision log with pricing owner, approval status, and target decision date.`,
+      due: "Today",
+      why: "Change exposure is manageable only if leadership can see which items are priced, waiting, or drifting.",
+      sourceRef,
+    }),
+    actionLine({
+      owner: "PM + Procurement Lead",
+      action: `Review the ${unexecutedCommitments} unexecuted commitment(s) and decide what can be released now versus what is waiting on owner direction.`,
+      due: "Next business day",
+      why: "The comms signal points to coordination/procurement pressure; unexecuted commitments are where that pressure becomes schedule risk.",
+      sourceRef,
+    }),
+    "",
+    `**Sources Checked**`,
+    `- ${sourceSummary}`,
+    "",
+    `**Next Step**`,
+    `- Send the PM this three-item action list and ask for a written owner/date update by end of day.`,
+  ].join("\n");
+}
+
+function createDeterministicSourceQualityAnswer(params: {
+  snapshot: ProjectBriefingSnapshot | null;
+  executiveRetrieval: ExecutiveBriefingRetrievalPacket | null;
+}): string | null {
+  const { snapshot, executiveRetrieval } = params;
+  if (!snapshot) return null;
+
+  const project = readSnapshotObject(snapshot, "project");
+  const hardFacts = readSnapshotObject(snapshot, "hardFacts");
+  const projectName = typeof project?.name === "string" && project.name.trim()
+    ? project.name.trim()
+    : "the project";
+  const sourceRef = typeof snapshot.sourceRef === "string"
+    ? snapshot.sourceRef
+    : "[Source: Project Briefing Snapshot]";
+  const weakSources = executiveRetrieval?.sources.filter((source) =>
+    source.status === "empty" || source.status === "warning" || source.status === "error",
+  ) ?? [];
+  const loadedSources = executiveRetrieval?.sources.filter((source) => source.status === "loaded") ?? [];
+  const weakestSource = weakSources[0];
+  const weakSourceLabel = weakestSource
+    ? `${weakestSource.label} (${weakestSource.status})`
+    : loadedSources.length
+      ? "the communication-source cross-check, because every source returned something but the extracts still need human confirmation"
+      : "the communication-source cross-check, because no recent meeting, Teams, email, or OneDrive packet was available";
+  const weakReason = weakestSource
+    ? weakestSource.status === "empty"
+      ? "it did not return a current matching communication for this project"
+      : weakestSource.status === "warning"
+        ? "it returned a warning instead of a clean current result"
+        : "it failed to return a dependable current result"
+    : "source coverage is not the same as verified owner-ready truth";
+  const openRfis = readNestedNumber(hardFacts, ["rfis", "openCount"]);
+  const overdueRfis = readNestedNumber(hardFacts, ["rfis", "overdueCount"]);
+  const pendingCos = readNestedNumber(hardFacts, ["changeOrders", "pendingCount"]);
+  const openCes = readNestedNumber(hardFacts, ["changeEvents", "openCount"]);
+  const overdueTasks = readNestedNumber(hardFacts, ["schedule", "overdueCount"]);
+  const unexecutedCommitments = readNestedNumber(hardFacts, ["commitments", "unexecutedCount"]);
+
+  return [
+    `**Weakest Signal for ${projectName}**`,
+    "",
+    `- The least trustworthy signal is **${weakSourceLabel}**: ${weakReason}. I would not tell the owner that the communication picture is complete until that source is checked against the live project record.`,
+    `- The structured controls are more dependable for the operating scoreboard: ${openRfis} open RFI(s), ${overdueRfis} overdue RFI(s), ${pendingCos} pending change order(s), ${openCes} open change event(s), ${overdueTasks} overdue schedule task(s), and ${unexecutedCommitments} unexecuted commitment(s). ${sourceRef}`,
+    "",
+    "**What I Would Verify Before Telling the Owner**",
+    `- Confirm the current RFI/change-event/change-order log directly in the project controls system so the owner hears current counts, not stale meeting language. ${sourceRef}`,
+    `- Ask the PM whether the ${overdueTasks} overdue schedule task(s) are true blockers or just unmaintained schedule rows.`,
+    `- Re-check the missing or weak communication source(s), especially Teams/email if they returned empty or warning, before claiming there are no recent coordination issues.`,
+    "",
+    "**Recommendation**",
+    "- Tell the owner the structured project controls show the clearest risk, but label the communication read as provisional until Teams/email/meeting coverage is confirmed.",
+    "",
+    "**Next Step**",
+    "- Have the PM send one owner-ready validation note today: current RFI count, current change exposure, schedule blockers, and whether any recent Teams/email/OneDrive item changes the risk read.",
+  ].join("\n");
+}
+
 function readSnapshotArray(
   snapshot: ProjectBriefingSnapshot | null,
   key: string,
@@ -837,6 +961,36 @@ function extractTextFromParts(parts: UIMessage["parts"]): string {
     .join("");
 }
 
+function shouldUseActionFollowUpResponse(message: string): boolean {
+  const normalized = message.toLowerCase();
+  return [
+    "three actions",
+    "3 actions",
+    "highest-leverage",
+    "owner, action, due date",
+    "owner/action/due",
+    "what should the pm do",
+    "tell the pm to take",
+    "do not repeat the full briefing",
+  ].some((phrase) => normalized.includes(phrase));
+}
+
+function shouldUseSourceQualityFollowUpResponse(message: string): boolean {
+  const normalized = message.toLowerCase();
+  return [
+    "weakest source",
+    "least trustworthy",
+    "weakest signal",
+    "what would you verify",
+    "verify before telling",
+    "source-quality",
+    "source quality",
+    "raw tool query",
+    "what caveat",
+    "caveat would you include",
+  ].some((phrase) => normalized.includes(phrase));
+}
+
 function shouldForceBusinessRetrieval(message: string): boolean {
   const normalized = message.toLowerCase();
   if (normalized.length < 20) return false;
@@ -866,6 +1020,27 @@ function shouldForceBusinessRetrieval(message: string): boolean {
     "vendor",
     "exol",
   ].some((keyword) => normalized.includes(keyword));
+}
+
+function extractPriorProjectName(messages: UIMessage[]): string | undefined {
+  for (const message of [...messages].reverse()) {
+    const content = extractTextFromParts(message.parts);
+    if (!content.trim()) continue;
+
+    const explicitProjectMatch = content.match(/\*\*Project:\*\*\s*([^(\n]+?)(?:\s*\(|\n|$)/i) ??
+      content.match(/\bProject:\s*([^(\n]+?)(?:\s*\(|\n|$)/i);
+    const projectName = explicitProjectMatch?.[1]?.trim();
+    if (projectName && !/^selected project$/i.test(projectName)) {
+      return projectName;
+    }
+
+    const vermillionMatch = content.match(/\bVermillion Rise(?:\s+Warehouse)?\b/i);
+    if (vermillionMatch) {
+      return vermillionMatch[0];
+    }
+  }
+
+  return undefined;
 }
 
 function extractLookupTerms(message: string): string[] {
@@ -1355,6 +1530,8 @@ async function persistAssistantMessage(params: {
   responseQuality: ResponseQuality;
   councilMode?: boolean;
   loopDiagnostic?: LoopDiagnostic;
+  projectBriefingSnapshot?: ProjectBriefingSnapshot | null;
+  executiveBriefingRetrieval?: ExecutiveBriefingRetrievalPacket | null;
 }) {
   const {
     supabase,
@@ -1368,6 +1545,8 @@ async function persistAssistantMessage(params: {
     responseQuality,
     councilMode,
     loopDiagnostic,
+    projectBriefingSnapshot,
+    executiveBriefingRetrieval,
   } = params;
 
   await supabase.from("chat_history").insert({
@@ -1417,9 +1596,90 @@ async function persistAssistantMessage(params: {
           : null,
         response_quality: responseQuality,
         loop_diagnostic: loopDiagnostic ?? null,
+        project_briefing_snapshot: projectBriefingSnapshot ?? null,
+        executive_briefing_retrieval: executiveBriefingRetrieval ?? null,
       }),
     ),
   });
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function normalizeReusableBriefingContext(value: unknown): {
+  snapshot: ProjectBriefingSnapshot;
+  executiveRetrieval: ExecutiveBriefingRetrievalPacket | null;
+} | null {
+  if (!isRecord(value)) return null;
+
+  const snapshot = value.project_briefing_snapshot;
+  if (!isRecord(snapshot)) return null;
+
+  const packet = value.executive_briefing_retrieval;
+  const executiveRetrieval =
+    isRecord(packet) && Array.isArray(packet.sources)
+      ? (packet as ExecutiveBriefingRetrievalPacket)
+      : null;
+
+  return {
+    snapshot,
+    executiveRetrieval,
+  };
+}
+
+function briefingContextMatchesProject(params: {
+  snapshot: ProjectBriefingSnapshot;
+  executiveRetrieval: ExecutiveBriefingRetrievalPacket | null;
+  projectName?: string;
+}): boolean {
+  const requestedProject = params.projectName?.trim().toLowerCase();
+  if (!requestedProject) return true;
+
+  const project = readSnapshotObject(params.snapshot, "project");
+  const projectNames = [
+    typeof project?.name === "string" ? project.name.trim().toLowerCase() : "",
+    params.executiveRetrieval?.projectName?.trim().toLowerCase() ?? "",
+  ].filter((name) => name.length > 0);
+
+  return projectNames.some((name) =>
+    name.includes(requestedProject) || requestedProject.includes(name),
+  );
+}
+
+async function loadReusableBriefingContext(params: {
+  supabase: ReturnType<typeof createServiceClient>;
+  sessionId: string;
+  projectName?: string;
+}): Promise<{
+  snapshot: ProjectBriefingSnapshot;
+  executiveRetrieval: ExecutiveBriefingRetrievalPacket | null;
+} | null> {
+  const { data, error } = await params.supabase
+    .from("chat_history")
+    .select("metadata")
+    .eq("session_id", params.sessionId)
+    .eq("role", "assistant")
+    .order("created_at", { ascending: false })
+    .limit(5);
+
+  if (error) return null;
+
+  for (const row of data ?? []) {
+    const reusable = normalizeReusableBriefingContext((row as Record<string, unknown>).metadata);
+    if (!reusable) continue;
+    if (
+      !briefingContextMatchesProject({
+        ...reusable,
+        projectName: params.projectName,
+      })
+    ) {
+      continue;
+    }
+    return reusable;
+  }
+
+  return null;
 }
 
 export const POST = withApiGuardrails(
@@ -1485,7 +1745,13 @@ export const POST = withApiGuardrails(
     const lastUserContent = lastUserMessage
       ? extractTextFromParts(lastUserMessage.parts)
       : "";
-    const forceBusinessRetrieval = shouldForceBusinessRetrieval(lastUserContent);
+    const actionFollowUpResponse = shouldUseActionFollowUpResponse(lastUserContent);
+    const sourceQualityFollowUpResponse = shouldUseSourceQualityFollowUpResponse(lastUserContent);
+    const forceBusinessRetrieval =
+      shouldForceBusinessRetrieval(lastUserContent) ||
+      actionFollowUpResponse ||
+      sourceQualityFollowUpResponse;
+    const priorProjectName = extractPriorProjectName(messages);
     let deterministicRetrieval: SemanticSearchOutput | null = null;
     let projectBriefingSnapshot: ProjectBriefingSnapshot | null = null;
     let executiveBriefingRetrieval: ExecutiveBriefingRetrievalPacket | null = null;
@@ -1514,6 +1780,77 @@ export const POST = withApiGuardrails(
         });
 
         if (forceBusinessRetrieval) {
+          const reusableBriefingContext =
+            actionFollowUpResponse || sourceQualityFollowUpResponse
+              ? await loadReusableBriefingContext({
+                  supabase,
+                  sessionId,
+                  projectName: priorProjectName,
+                })
+              : null;
+
+          if (reusableBriefingContext) {
+            projectBriefingSnapshot = reusableBriefingContext.snapshot;
+            executiveBriefingRetrieval = reusableBriefingContext.executiveRetrieval;
+
+            const snapshotContext = formatProjectBriefingSnapshotContext(projectBriefingSnapshot);
+            if (snapshotContext) {
+              systemPrompt = `${snapshotContext}\n\n---\n\n${systemPrompt}`;
+            }
+
+            const executiveRetrievalContext =
+              formatExecutiveBriefingRetrievalContext(executiveBriefingRetrieval);
+            if (executiveRetrievalContext) {
+              systemPrompt = `${executiveRetrievalContext}\n\n---\n\n${systemPrompt}`;
+            }
+
+            toolTrace.push(
+              {
+                tool: "reusePreviousBriefingContext",
+                input: {
+                  sessionId,
+                  projectName: priorProjectName ?? null,
+                },
+                output: {
+                  reusedSnapshot: true,
+                  reusedExecutiveRetrieval: Boolean(executiveBriefingRetrieval),
+                },
+                timestamp: new Date().toISOString(),
+              },
+              {
+                tool: "cachedProjectBriefingSnapshot",
+                input: {
+                  projectName: priorProjectName ?? null,
+                },
+                output: {
+                  sourceRef: projectBriefingSnapshot.sourceRef ?? null,
+                },
+                timestamp: new Date().toISOString(),
+              },
+              {
+                tool: "cachedExecutiveRetrievalPacket",
+                input: {
+                  projectName: executiveBriefingRetrieval?.projectName ?? priorProjectName ?? null,
+                },
+                output: {
+                  sources: executiveBriefingRetrieval?.sources.map((source) => ({
+                    label: source.label,
+                    status: source.status,
+                    resultCount: source.resultCount,
+                  })) ?? [],
+                },
+                timestamp: new Date().toISOString(),
+              },
+            );
+
+            writeStrategistStatus(writer, {
+              stage: "knowledge",
+              message: "Reusing the prior briefing packet for this follow-up",
+              status: "success",
+            });
+          }
+
+          if (!reusableBriefingContext) {
           writeStrategistStatus(writer, {
             stage: "project",
             message: "Finding the project and checking access",
@@ -1522,7 +1859,9 @@ export const POST = withApiGuardrails(
 
           const preflight = await buildBusinessContextPreflight({
             userId: user.id,
-            message: lastUserContent,
+            message: priorProjectName
+              ? `${priorProjectName} ${lastUserContent}`
+              : lastUserContent,
             selectedProjectId,
           });
           toolTrace.push(preflight.trace);
@@ -1546,6 +1885,7 @@ export const POST = withApiGuardrails(
             const snapshotOutput = await withTimeout(
               briefingSnapshotTool.execute({
                 projectId,
+                projectName: projectId ? undefined : priorProjectName,
               }),
               12_000,
               "getProjectBriefingSnapshot timed out during strategist retrieval",
@@ -1597,7 +1937,9 @@ export const POST = withApiGuardrails(
           if (semanticSearchTool?.execute) {
             const searchOutput = await withTimeout(
               semanticSearchTool.execute({
-                query: lastUserContent,
+                query: priorProjectName
+                  ? `${priorProjectName} - ${lastUserContent}`
+                  : lastUserContent,
                 projectId,
                 matchCount: 8,
                 threshold: 0.2,
@@ -1662,7 +2004,7 @@ export const POST = withApiGuardrails(
           const projectName =
             typeof projectSnapshotRecord?.name === "string" && projectSnapshotRecord.name.trim()
               ? projectSnapshotRecord.name.trim()
-              : undefined;
+              : priorProjectName;
           const executiveQuery = [projectName, lastUserContent]
             .filter((part): part is string => Boolean(part?.trim()))
             .join(" - ");
@@ -1758,6 +2100,7 @@ export const POST = withApiGuardrails(
             message: `Checked meetings, Teams, email, and OneDrive (${loadedExecutiveSources}/4 with results)`,
             status: loadedExecutiveSources > 0 ? "success" : "warning",
           });
+          }
 
           writeStrategistStatus(writer, {
             stage: "synthesis",
@@ -1770,7 +2113,21 @@ export const POST = withApiGuardrails(
             retrieval: deterministicRetrieval,
             executiveRetrieval: executiveBriefingRetrieval,
           });
-          let content = deterministicBriefing ??
+          const deterministicActionBriefing = actionFollowUpResponse
+            ? createDeterministicActionBriefing({
+                snapshot: projectBriefingSnapshot,
+                executiveRetrieval: executiveBriefingRetrieval,
+              })
+            : null;
+          const deterministicSourceQualityAnswer = sourceQualityFollowUpResponse
+            ? createDeterministicSourceQualityAnswer({
+                snapshot: projectBriefingSnapshot,
+                executiveRetrieval: executiveBriefingRetrieval,
+              })
+            : null;
+          let content = deterministicSourceQualityAnswer ??
+            deterministicActionBriefing ??
+            deterministicBriefing ??
             (await generateRecoveryResponse({
               userMessage: lastUserContent,
               cause: "Project briefing retrieval did not return enough source data to synthesize a full answer.",
@@ -1783,7 +2140,8 @@ export const POST = withApiGuardrails(
             content,
             projectBriefingSnapshot,
             executiveRetrieval: executiveBriefingRetrieval,
-            forceBusinessRetrieval,
+            forceBusinessRetrieval:
+              forceBusinessRetrieval && !actionFollowUpResponse && !sourceQualityFollowUpResponse,
           });
           if (content !== contentBeforeContract) {
             toolTrace.push({
@@ -1827,6 +2185,8 @@ export const POST = withApiGuardrails(
               stepStarts: stepStartDiagnostics,
               steps: stepDiagnostics,
             }),
+            projectBriefingSnapshot,
+            executiveBriefingRetrieval,
           });
 
           await supabase
@@ -2003,7 +2363,8 @@ export const POST = withApiGuardrails(
           content,
           projectBriefingSnapshot,
           executiveRetrieval: executiveBriefingRetrieval,
-          forceBusinessRetrieval,
+          forceBusinessRetrieval:
+            forceBusinessRetrieval && !actionFollowUpResponse && !sourceQualityFollowUpResponse,
         });
         if (content !== contentBeforeContract) {
           toolTrace.push({
@@ -2045,6 +2406,8 @@ export const POST = withApiGuardrails(
             stepStarts: stepStartDiagnostics,
             steps: stepDiagnostics,
           }),
+          projectBriefingSnapshot,
+          executiveBriefingRetrieval,
         });
 
         // Update conversation timestamp — scope to user to prevent cross-user update

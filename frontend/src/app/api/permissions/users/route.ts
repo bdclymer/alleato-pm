@@ -18,6 +18,27 @@ const InviteUserSchema = z.object({
   project_ids: z.array(z.coerce.number().int().positive()).default([]),
 });
 
+type AuthAvatarLookup = {
+  authUserId: string;
+  avatarUrl: string | null;
+  error: string | null;
+};
+
+function getAuthMetadataAvatarUrl(metadata: Record<string, unknown> | null | undefined) {
+  const avatarUrl = metadata?.avatar_url;
+  const picture = metadata?.picture;
+
+  if (typeof avatarUrl === "string" && avatarUrl.trim()) {
+    return avatarUrl;
+  }
+
+  if (typeof picture === "string" && picture.trim()) {
+    return picture;
+  }
+
+  return null;
+}
+
 async function requireAdmin(where: string) {
   const supabase = await createClient();
   const {
@@ -78,7 +99,7 @@ export const GET = withApiGuardrails(
 
     const personIds = (people ?? []).map((p) => p.id);
 
-    const [profilesResult, membershipsResult, companyTemplatesResult, granularOverridesResult] = await Promise.all([
+    const [profilesResult, membershipsResult, companyTemplatesResult, granularOverridesResult, authAvatarLookups] = await Promise.all([
       authIds.length
         ? supabase
             .from("user_profiles")
@@ -108,11 +129,48 @@ export const GET = withApiGuardrails(
             .select("person_id, project_id, flag, effect")
             .in("person_id", personIds)
         : Promise.resolve({ data: [], error: null }),
+      authIds.length
+        ? Promise.all(
+            authIds.map(async (authUserId): Promise<AuthAvatarLookup> => {
+              const { data, error } = await service.auth.admin.getUserById(authUserId);
+
+              if (error) {
+                return {
+                  authUserId,
+                  avatarUrl: null,
+                  error: error.message,
+                };
+              }
+
+              return {
+                authUserId,
+                avatarUrl: getAuthMetadataAvatarUrl(data.user?.user_metadata),
+                error: null,
+              };
+            }),
+          )
+        : Promise.resolve([] as AuthAvatarLookup[]),
     ]);
 
     const profileMap = new Map<string, boolean>();
     for (const row of profilesResult.data ?? []) {
       profileMap.set(row.id, row.is_admin === true);
+    }
+
+    const authAvatarMap = new Map<string, string>();
+    for (const lookup of authAvatarLookups) {
+      if (lookup.error) {
+        logger.warn({
+          msg: "Unable to load auth avatar metadata for permissions user.",
+          authUserId: lookup.authUserId,
+          error: lookup.error,
+        });
+        continue;
+      }
+
+      if (lookup.avatarUrl) {
+        authAvatarMap.set(lookup.authUserId, lookup.avatarUrl);
+      }
     }
 
     const companyTemplateMap = new Map<string, { id: string; name: string } | null>();
@@ -197,7 +255,7 @@ export const GET = withApiGuardrails(
         firstName: p.first_name ?? "",
         lastName: p.last_name ?? "",
         email: p.email ?? "",
-        profilePhotoUrl: p.profile_photo_url ?? null,
+        profilePhotoUrl: p.profile_photo_url ?? authAvatarMap.get(p.auth_user_id ?? "") ?? null,
         isAdmin: p.auth_user_id ? profileMap.get(p.auth_user_id) === true : false,
         companyTemplateId: companyTemplate?.id ?? null,
         companyTemplateName: companyTemplate?.name ?? null,

@@ -79,6 +79,12 @@ const checks = [
       content.includes("projectBriefingResponseContract") &&
       content.includes("getProjectBriefingSnapshot") &&
       content.includes("projectBriefingSnapshot") &&
+      content.includes("createDeterministicActionBriefing") &&
+      content.includes("createDeterministicSourceQualityAnswer") &&
+      content.includes("shouldUseActionFollowUpResponse") &&
+      content.includes("shouldUseSourceQualityFollowUpResponse") &&
+      content.includes("extractPriorProjectName") &&
+      content.includes("!actionFollowUpResponse && !sourceQualityFollowUpResponse") &&
       content.includes("Hard Facts") &&
       content.includes("What Changed") &&
       content.includes("Recent Communication Signals") &&

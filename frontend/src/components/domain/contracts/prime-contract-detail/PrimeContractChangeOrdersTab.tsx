@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import type { PrimeContractCO } from "@/app/(main)/[projectId]/prime-contracts/[contractId]/types";
 import { SectionRuleHeading } from "@/components/layout/spacing";
 import { StatusBadge } from "@/components/ds";
-import { UnifiedTablePage, type TableColumn } from "@/components/tables/unified/unified-table-page";
+import { UnifiedTablePage, type TableColumn } from "@/components/tables/unified";
 import { Button } from "@/components/ui/button";
 import { apiFetch, apiFetchBlob } from "@/lib/api-client";
 import {

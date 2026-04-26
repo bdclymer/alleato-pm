@@ -214,6 +214,8 @@ export interface UnifiedTablePageProps<T> {
   topContent?: ReactNode;
   sidePanel?: {
     content: ReactNode;
+    /** Width preset. "wide" opens at 50% of the viewport on desktop. */
+    variant?: "default" | "wide";
     widthClassName?: string;
     columnClassName?: string;
     /** Initial width in px (default: 560 = 35rem) */
@@ -230,6 +232,8 @@ export interface UnifiedTablePageProps<T> {
     sticky?: boolean;
     /** localStorage key suffix for persisting width/collapsed state */
     storageKey?: string;
+    /** Called when the mobile details overlay closes. */
+    onClose?: () => void;
   };
   layout?: {
     fullBleedTable?: boolean;
@@ -246,6 +250,24 @@ export interface UnifiedTablePageProps<T> {
   };
   features?: UnifiedTableFeatures;
   columnGroups?: Array<{ label: string; columnIds: string[] }>;
+}
+
+export function TableExpandedRow({
+  colSpan,
+  className,
+  children,
+}: {
+  colSpan: number;
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <TableRow>
+      <TableCell colSpan={colSpan} className={cn("p-0", className)}>
+        {children}
+      </TableCell>
+    </TableRow>
+  );
 }
 
 export function UnifiedTablePage<T>({
@@ -335,7 +357,11 @@ export function UnifiedTablePage<T>({
   const visibleColumns = React.useMemo(() => {
     const alwaysVisibleIds = toolbarColumns.filter((c) => c.alwaysVisible).map((c) => c.id);
     const missing = alwaysVisibleIds.filter((id) => !rawVisibleColumns.includes(id));
-    return missing.length > 0 ? [...missing, ...rawVisibleColumns] : rawVisibleColumns;
+    if (missing.length === 0) return rawVisibleColumns;
+    const visibleSet = new Set([...rawVisibleColumns, ...missing]);
+    return toolbarColumns
+      .map((column) => column.id)
+      .filter((id) => visibleSet.has(id));
   }, [rawVisibleColumns, toolbarColumns]);
   const activeFilters = toolbar.activeFilters ?? {};
   const handleFilterChange =
@@ -377,10 +403,25 @@ export function UnifiedTablePage<T>({
   const selectionColumnWidth = 40;
 
   // ── Side panel collapse & resize state ───────────────────────────────
+  const panelVariant = sidePanel?.variant ?? "default";
+  const getPanelDefaultWidth = React.useCallback(() => {
+    if (sidePanel?.defaultWidth != null) return sidePanel.defaultWidth;
+    if (panelVariant === "wide" && typeof window !== "undefined") {
+      return Math.round(window.innerWidth * 0.5);
+    }
+    return 560;
+  }, [panelVariant, sidePanel?.defaultWidth]);
+  const getPanelMaxWidth = React.useCallback(() => {
+    if (sidePanel?.maxWidth != null) return sidePanel.maxWidth;
+    if (panelVariant === "wide" && typeof window !== "undefined") {
+      return Math.round(window.innerWidth * 0.75);
+    }
+    return 960;
+  }, [panelVariant, sidePanel?.maxWidth]);
   const panelStorageKey = sidePanel?.storageKey ?? "unified-table-side-panel";
-  const panelDefaultWidth = sidePanel?.defaultWidth ?? 560;
-  const panelMinWidth = sidePanel?.minWidth ?? 480;
-  const panelMaxWidth = sidePanel?.maxWidth ?? 960;
+  const panelDefaultWidth = getPanelDefaultWidth();
+  const panelMinWidth = sidePanel?.minWidth ?? (panelVariant === "wide" ? 520 : 480);
+  const panelMaxWidth = getPanelMaxWidth();
   const panelCollapsible = sidePanel?.collapsible !== false;
   const panelResizable = sidePanel?.resizable !== false;
   const panelSticky = sidePanel?.sticky === true;
@@ -405,10 +446,12 @@ export function UnifiedTablePage<T>({
           const clampedWidth = Math.max(panelMinWidth, Math.min(panelMaxWidth, parsed.width));
           setPanelWidth(clampedWidth);
         }
+      } else {
+        setPanelWidth(Math.max(panelMinWidth, Math.min(panelMaxWidth, getPanelDefaultWidth())));
       }
     } catch { /* ignore */ }
     setPanelMounted(true);
-  }, [panelMaxWidth, panelMinWidth, panelStorageKey, sidePanel]);
+  }, [getPanelDefaultWidth, panelMaxWidth, panelMinWidth, panelStorageKey, sidePanel]);
 
   const persistPanel = React.useCallback(
     (collapsed: boolean, width: number) => {
@@ -1777,7 +1820,7 @@ export function UnifiedTablePage<T>({
               variant="ghost"
               size="icon"
               className="h-8 w-8"
-              onClick={() => table.onRowClick?.(null as unknown as T)}
+              onClick={sidePanel.onClose}
               aria-label="Close details"
             >
               <X className="h-4 w-4" />

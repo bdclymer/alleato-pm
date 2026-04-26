@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { memo, useEffect, useMemo, useState } from "react";
 import { FileText, Paperclip, Plus } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -58,6 +59,7 @@ export const InvoicesTab = memo(function InvoicesTab({
   projectId,
   commitmentType,
 }: InvoicesTabProps) {
+  const router = useRouter();
   const [invoices, setInvoices] = useState<EnrichedInvoice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
@@ -69,12 +71,15 @@ export const InvoicesTab = memo(function InvoicesTab({
     setIsCreating(true);
     try {
       const filterKey = commitmentType === "subcontract" ? "subcontract_id" : "purchase_order_id";
-      await apiFetch(`/api/projects/${projectId}/invoicing/subcontractor/invoices`, {
+      const response = await apiFetch<{ data?: { id?: number } }>(`/api/projects/${projectId}/invoicing/subcontractor/invoices`, {
         method: "POST",
         body: JSON.stringify({ [filterKey]: commitmentId, is_retainage_release: true }),
       });
       toast.success("Retainage release invoice created");
       setRefreshKey((k) => k + 1);
+      if (response.data?.id) {
+        router.push(`/${projectId}/commitments/${commitmentId}/invoices/${response.data.id}`);
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to create retainage release invoice");
     } finally {

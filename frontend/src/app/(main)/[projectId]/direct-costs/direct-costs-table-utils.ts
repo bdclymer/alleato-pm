@@ -1,4 +1,4 @@
-import type { FilterConfig } from "@/components/tables/unified/table-toolbar";
+import type { FilterConfig } from "@/components/tables/unified";
 
 export type CostCodeDetailRow = {
   id: string;

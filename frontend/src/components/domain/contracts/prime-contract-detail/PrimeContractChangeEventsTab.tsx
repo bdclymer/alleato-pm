@@ -6,7 +6,7 @@ import Link from "next/link";
 
 import { StatusBadge } from "@/components/ds";
 import { SectionRuleHeading } from "@/components/layout/spacing";
-import { UnifiedTablePage, type TableColumn } from "@/components/tables/unified/unified-table-page";
+import { UnifiedTablePage, type TableColumn } from "@/components/tables/unified";
 import { useChangeEvents } from "@/hooks/use-change-events";
 import type { ChangeEvent } from "@/types/change-events";
 

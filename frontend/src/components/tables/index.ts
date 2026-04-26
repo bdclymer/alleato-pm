@@ -35,5 +35,4 @@ export type {
 // Do NOT export it from this barrel file as it breaks client component imports.
 
 // Specialized data tables
-export { MeetingsDataTable } from "../../app/(tables)/meetings/components/meetings-data-table";
 export { EmployeesDataTable } from "./employees-data-table";

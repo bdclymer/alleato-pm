@@ -329,7 +329,7 @@ export function GeneralTab({
         _work_currently_retained: prevWorkRet + workRetainage - workReleased,
         _mat_currently_retained: prevMatRet + matRetainage - matReleased,
         net_amount_this_period:
-          thisPeriod + stored - (workRetainage + matRetainage),
+          thisPeriod + stored - (workRetainage + matRetainage) + workReleased + matReleased,
       };
     });
   }, [editingSOV, edits, lineItems]);

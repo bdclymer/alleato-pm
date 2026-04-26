@@ -361,6 +361,7 @@ export function FormattedTranscript({
           ),
           table: ({ children }) => (
             <div className="overflow-x-auto mb-4">
+              {/* @table-exception: Markdown transcript tables render arbitrary user-authored content, not app data tables. */}
               <table className="min-w-full border border-border">{children}</table>
             </div>
           ),

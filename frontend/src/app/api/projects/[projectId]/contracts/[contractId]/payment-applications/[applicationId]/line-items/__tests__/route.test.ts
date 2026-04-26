@@ -2,8 +2,19 @@ import { NextRequest } from "next/server";
 import { PATCH } from "../route";
 import { createClient } from "@/lib/supabase/server";
 
+process.env.NEXT_PUBLIC_SUPABASE_URL ??= "https://example.supabase.co";
+process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??= "test-anon-key";
+
 jest.mock("@/lib/supabase/server", () => ({
   createClient: jest.fn(),
+}));
+
+jest.mock("@/lib/permissions-guard", () => ({
+  requirePermission: jest.fn(async () => ({
+    denied: false,
+    userId: "user-1",
+    personId: "person-1",
+  })),
 }));
 
 const createClientMock = createClient as jest.Mock;

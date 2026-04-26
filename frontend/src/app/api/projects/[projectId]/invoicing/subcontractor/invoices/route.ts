@@ -4,6 +4,220 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
 
+const ACTIVE_RETAINAGE_STATUSES = [
+  "draft",
+  "under_review",
+  "approved",
+  "approved_as_noted",
+  "pending_owner_approval",
+  "paid",
+  "revise_and_resubmit",
+] as const;
+
+type ReleaseLineSeed = {
+  description: string | null;
+  budget_code: string | null;
+  scheduled_value: number;
+  work_completed_previous: number;
+  work_completed_period: number;
+  materials_stored: number;
+  retainage_pct: number;
+  retainage_amount: number;
+  materials_retainage_pct: number;
+  materials_retainage_amount: number;
+  previous_work_retainage: number;
+  previous_materials_retainage: number;
+  work_retainage_released: number;
+  materials_retainage_released: number;
+  retainage_released: number;
+  work_completed_pct: number;
+  sort_order: number;
+};
+
+function num(value: unknown): number {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function roundCurrency(value: number): number {
+  return Math.round(value * 100) / 100;
+}
+
+function lineKey(input: {
+  sort_order?: number | null;
+  line_number?: number | null;
+  budget_code?: string | null;
+  description?: string | null;
+}): string {
+  const order = input.sort_order ?? input.line_number;
+  if (order != null && Number.isFinite(Number(order))) {
+    return `order:${Number(order)}`;
+  }
+  return `text:${input.budget_code ?? ""}:${input.description ?? ""}`.toLowerCase();
+}
+
+async function buildRetainageReleaseLineItems(args: {
+  supabase: Awaited<ReturnType<typeof createClient>>;
+  projectId: number;
+  subcontractId?: string | null;
+  purchaseOrderId?: string | null;
+}): Promise<ReleaseLineSeed[]> {
+  const { supabase, projectId, subcontractId, purchaseOrderId } = args;
+  const contractId = subcontractId ?? purchaseOrderId;
+  if (!contractId) return [];
+
+  const isSubcontract = Boolean(subcontractId);
+  const foreignKey = isSubcontract ? "subcontract_id" : "purchase_order_id";
+  const sovResult = isSubcontract
+    ? await supabase
+        .from("subcontract_sov_items")
+        .select("line_number, budget_code, description, amount, billed_to_date")
+        .eq("subcontract_id", contractId)
+        .order("line_number", { ascending: true })
+    : await supabase
+        .from("purchase_order_sov_items")
+        .select("line_number, sort_order, budget_code, description, amount, billed_to_date")
+        .eq("purchase_order_id", contractId)
+        .order("line_number", { ascending: true });
+  const sovRows = (sovResult.data ?? []) as Array<{
+    line_number?: number | null;
+    sort_order?: number | null;
+    budget_code?: string | null;
+    description?: string | null;
+    amount?: number | null;
+    billed_to_date?: number | null;
+  }>;
+  const sovError = sovResult.error;
+
+  if (sovError) {
+    throw new Error(`Failed to load commitment SOV for retainage release: ${sovError.message}`);
+  }
+
+  const seedByKey = new Map<
+    string,
+    {
+      description: string | null;
+      budget_code: string | null;
+      scheduled_value: number;
+      sort_order: number;
+      latest_completed: number;
+      retained_work: number;
+      retained_materials: number;
+    }
+  >();
+
+  for (const row of sovRows) {
+    const sortOrder = num(row.sort_order ?? row.line_number);
+    seedByKey.set(lineKey(row), {
+      description: row.description ?? null,
+      budget_code: row.budget_code ?? null,
+      scheduled_value: num(row.amount),
+      sort_order: sortOrder,
+      latest_completed: num(row.billed_to_date),
+      retained_work: 0,
+      retained_materials: 0,
+    });
+  }
+
+  const { data: priorInvoices, error: priorError } = await supabase
+    .from("subcontractor_invoices")
+    .select(
+      `
+      id,
+      created_at,
+      status,
+      subcontractor_invoice_line_items(
+        sort_order,
+        budget_code,
+        description,
+        scheduled_value,
+        work_completed_previous,
+        work_completed_period,
+        materials_stored,
+        total_completed_stored,
+        retainage_amount,
+        materials_retainage_amount,
+        previous_work_retainage,
+        previous_materials_retainage,
+        work_retainage_released,
+        materials_retainage_released
+      )
+      `,
+    )
+    .eq("project_id", projectId)
+    .eq(foreignKey, contractId)
+    .in("status", [...ACTIVE_RETAINAGE_STATUSES])
+    .order("created_at", { ascending: true })
+    .order("id", { ascending: true });
+
+  if (priorError) {
+    throw new Error(`Failed to load prior invoices for retainage release: ${priorError.message}`);
+  }
+
+  for (const invoice of priorInvoices ?? []) {
+    const lineItems = (invoice.subcontractor_invoice_line_items ?? []) as Array<Record<string, unknown>>;
+    for (const line of lineItems) {
+      const key = lineKey(line);
+      const existing = seedByKey.get(key) ?? {
+        description: typeof line.description === "string" ? line.description : null,
+        budget_code: typeof line.budget_code === "string" ? line.budget_code : null,
+        scheduled_value: num(line.scheduled_value),
+        sort_order: num(line.sort_order),
+        latest_completed: 0,
+        retained_work: 0,
+        retained_materials: 0,
+      };
+
+      const latestCompleted =
+        num(line.total_completed_stored) ||
+        num(line.work_completed_previous) +
+          num(line.work_completed_period) +
+          num(line.materials_stored);
+      existing.latest_completed = latestCompleted;
+      existing.retained_work = roundCurrency(
+        num(line.previous_work_retainage) +
+          num(line.retainage_amount) -
+          num(line.work_retainage_released),
+      );
+      existing.retained_materials = roundCurrency(
+        num(line.previous_materials_retainage) +
+          num(line.materials_retainage_amount) -
+          num(line.materials_retainage_released),
+      );
+      seedByKey.set(key, existing);
+    }
+  }
+
+  return Array.from(seedByKey.values())
+    .filter((line) => line.retained_work > 0.005 || line.retained_materials > 0.005)
+    .map((line) => {
+      const previousWorkRetainage = Math.max(roundCurrency(line.retained_work), 0);
+      const previousMaterialsRetainage = Math.max(roundCurrency(line.retained_materials), 0);
+      const totalReleased = previousWorkRetainage + previousMaterialsRetainage;
+      const completed = Math.max(roundCurrency(line.latest_completed), 0);
+      const scheduled = Math.max(roundCurrency(line.scheduled_value), 0);
+      return {
+        description: line.description,
+        budget_code: line.budget_code,
+        scheduled_value: scheduled,
+        work_completed_previous: completed,
+        work_completed_period: 0,
+        materials_stored: 0,
+        retainage_pct: 0,
+        retainage_amount: 0,
+        materials_retainage_pct: 0,
+        materials_retainage_amount: 0,
+        previous_work_retainage: previousWorkRetainage,
+        previous_materials_retainage: previousMaterialsRetainage,
+        work_retainage_released: previousWorkRetainage,
+        materials_retainage_released: previousMaterialsRetainage,
+        retainage_released: totalReleased,
+        work_completed_pct: scheduled > 0 ? (completed / scheduled) * 100 : 0,
+        sort_order: line.sort_order,
+      };
+    });
+}
+
 // GET /api/projects/[projectId]/invoicing/subcontractor/invoices
 // List subcontractor invoices for a project with commitment and billing period joins
 export const GET = withApiGuardrails<{ projectId: string }>(
@@ -126,7 +340,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
       if (cid) companyIds.add(cid);
     }
 
-    // Batch: SOV items per contract (subcontracts)
+    // Batch: SOV items per contract
     const sovSumByContract = new Map<string, number>();
     if (subIds.size > 0) {
       const { data: sovRows } = await supabase
@@ -135,6 +349,16 @@ export const GET = withApiGuardrails<{ projectId: string }>(
         .in("subcontract_id", Array.from(subIds));
       for (const r of sovRows ?? []) {
         const k = r.subcontract_id as string;
+        sovSumByContract.set(k, (sovSumByContract.get(k) ?? 0) + (Number(r.amount) || 0));
+      }
+    }
+    if (poIds.size > 0) {
+      const { data: poSovRows } = await supabase
+        .from("purchase_order_sov_items")
+        .select("purchase_order_id, amount")
+        .in("purchase_order_id", Array.from(poIds));
+      for (const r of poSovRows ?? []) {
+        const k = r.purchase_order_id as string;
         sovSumByContract.set(k, (sovSumByContract.get(k) ?? 0) + (Number(r.amount) || 0));
       }
     }
@@ -299,9 +523,16 @@ export const POST = withApiGuardrails<{ projectId: string }>(
       is_retainage_release,
     } = body;
 
-    // Validate status — only "draft" or "under_review" allowed on create
-    const allowedStatuses = ["draft", "under_review"];
-    const status = statusRaw && allowedStatuses.includes(statusRaw) ? statusRaw : "draft";
+    const isRetainageRelease = is_retainage_release === true;
+
+    // Validate status. Retainage release invoices start as Not Invited by
+    // default because the subcontractor must be invited before they can submit.
+    const allowedStatuses = ["draft", "under_review", "not_invited", "invited"];
+    const status = statusRaw && allowedStatuses.includes(statusRaw)
+      ? statusRaw
+      : isRetainageRelease
+        ? "not_invited"
+        : "draft";
 
     // Exactly one of subcontract_id or purchase_order_id is required
     if (!subcontract_id && !purchase_order_id) {
@@ -366,7 +597,7 @@ export const POST = withApiGuardrails<{ projectId: string }>(
         billing_date: billing_date === "" ? null : (billing_date ?? null),
         notes: notes ?? null,
         status,
-        is_retainage_release: is_retainage_release === true,
+        is_retainage_release: isRetainageRelease,
       })
       .select()
       .single();
@@ -396,9 +627,36 @@ export const POST = withApiGuardrails<{ projectId: string }>(
       invoice.invoice_number = generated;
     }
 
-    // Insert line items if provided
-    if (Array.isArray(line_items) && line_items.length > 0) {
-      const lineItemRows = line_items.map((item: {
+    const releaseLineItems =
+      isRetainageRelease && (!Array.isArray(line_items) || line_items.length === 0)
+        ? await buildRetainageReleaseLineItems({
+            supabase,
+            projectId: projectIdNum,
+            subcontractId: subcontract_id ?? null,
+            purchaseOrderId: purchase_order_id ?? null,
+          })
+        : [];
+
+    if (isRetainageRelease && releaseLineItems.length === 0) {
+      await supabase
+        .from("subcontractor_invoices")
+        .delete()
+        .eq("id", invoice.id);
+      return NextResponse.json(
+        {
+          error: "No releasable retainage found",
+          message:
+            "A retainage release invoice can only be created after retainage has been withheld on at least one prior invoice.",
+        },
+        { status: 409 },
+      );
+    }
+
+    // Insert line items if provided, or prefilled release rows when this is a
+    // dedicated retainage release invoice.
+    const effectiveLineItems = releaseLineItems.length > 0 ? releaseLineItems : line_items;
+    if (Array.isArray(effectiveLineItems) && effectiveLineItems.length > 0) {
+      const lineItemRows = effectiveLineItems.map((item: {
         description: string;
         budget_code?: string | null;
         scheduled_value: number;
@@ -406,7 +664,15 @@ export const POST = withApiGuardrails<{ projectId: string }>(
         work_completed_period: number;
         materials_stored: number;
         retainage_pct: number;
+        retainage_amount?: number;
         materials_retainage_pct?: number;
+        materials_retainage_amount?: number;
+        previous_work_retainage?: number;
+        previous_materials_retainage?: number;
+        work_retainage_released?: number;
+        materials_retainage_released?: number;
+        retainage_released?: number;
+        work_completed_pct?: number;
         sort_order?: number;
       }, index: number) => {
         const scheduled = Number(item.scheduled_value) || 0;
@@ -422,12 +688,19 @@ export const POST = withApiGuardrails<{ projectId: string }>(
         const workCompletedPct = scheduled > 0 ? (totalCompletedStored / scheduled) * 100 : 0;
         // "Work Retainage This Period" applies ONLY to work billed this period.
         // Prior periods' retainage is tracked in previous_work_retainage separately.
-        const retainageAmount = (thisPeriod * retainagePct) / 100;
-        const materialsRetainageAmount = (stored * materialsRetainagePct) / 100;
+        const retainageAmount =
+          item.retainage_amount != null
+            ? Number(item.retainage_amount) || 0
+            : (thisPeriod * retainagePct) / 100;
+        const materialsRetainageAmount =
+          item.materials_retainage_amount != null
+            ? Number(item.materials_retainage_amount) || 0
+            : (stored * materialsRetainagePct) / 100;
 
         return {
           invoice_id: invoice.id,
           description: item.description,
+          budget_code: item.budget_code ?? null,
           scheduled_value: scheduled,
           work_completed_previous: previous,
           work_completed_period: thisPeriod,
@@ -436,7 +709,15 @@ export const POST = withApiGuardrails<{ projectId: string }>(
           retainage_amount: retainageAmount,
           materials_retainage_pct: materialsRetainagePct,
           materials_retainage_amount: materialsRetainageAmount,
-          work_completed_pct: workCompletedPct,
+          previous_work_retainage: Number(item.previous_work_retainage) || 0,
+          previous_materials_retainage: Number(item.previous_materials_retainage) || 0,
+          work_retainage_released: Number(item.work_retainage_released) || 0,
+          materials_retainage_released: Number(item.materials_retainage_released) || 0,
+          retainage_released: Number(item.retainage_released) || 0,
+          work_completed_pct:
+            item.work_completed_pct != null
+              ? Number(item.work_completed_pct) || 0
+              : workCompletedPct,
           sort_order: item.sort_order ?? index,
         };
       });

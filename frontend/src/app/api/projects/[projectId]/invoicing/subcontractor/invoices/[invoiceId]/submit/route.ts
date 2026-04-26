@@ -67,12 +67,12 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
       });
     }
 
-    const submittableStatuses = ["draft", "revise_and_resubmit"];
+    const submittableStatuses = ["draft", "invited", "revise_and_resubmit"];
     if (!submittableStatuses.includes(invoice.status)) {
       throw new GuardrailError({
         code: "INVALID_PAYLOAD",
         where: "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/submit#POST",
-        message: "Invoice must be in Draft or Revise & Resubmit status to submit",
+        message: "Invoice must be in Draft, Invited, or Revise & Resubmit status to submit",
         status: 400,
         severity: "low",
       });
@@ -159,18 +159,24 @@ async function notifyProjectManagersOfInvoiceSubmission(args: {
 
   const lineItemsPromise: Promise<{
     data: Array<{
-      work_completed_this_period: number | null;
+      work_completed_period: number | null;
       materials_stored: number | null;
-      retention_amount: number | null;
+      retainage_amount: number | null;
+      materials_retainage_amount: number | null;
+      work_retainage_released: number | null;
+      materials_retainage_released: number | null;
     }> | null;
   }> = supabase
     .from("subcontractor_invoice_line_items")
-    .select("work_completed_this_period, materials_stored, retention_amount")
+    .select("work_completed_period, materials_stored, retainage_amount, materials_retainage_amount, work_retainage_released, materials_retainage_released")
     .eq("invoice_id", invoiceId) as unknown as Promise<{
     data: Array<{
-      work_completed_this_period: number | null;
+      work_completed_period: number | null;
       materials_stored: number | null;
-      retention_amount: number | null;
+      retainage_amount: number | null;
+      materials_retainage_amount: number | null;
+      work_retainage_released: number | null;
+      materials_retainage_released: number | null;
     }> | null;
   }>;
 
@@ -179,10 +185,15 @@ async function notifyProjectManagersOfInvoiceSubmission(args: {
 
   // Compute total amount from line items
   const total: number = (lineItems || []).reduce((sum, row) => {
-    const work = Number(row.work_completed_this_period ?? 0);
+    const work = Number(row.work_completed_period ?? 0);
     const mat = Number(row.materials_stored ?? 0);
-    const ret = Number(row.retention_amount ?? 0);
-    return sum + work + mat - ret;
+    const ret =
+      Number(row.retainage_amount ?? 0) +
+      Number(row.materials_retainage_amount ?? 0);
+    const released =
+      Number(row.work_retainage_released ?? 0) +
+      Number(row.materials_retainage_released ?? 0);
+    return sum + work + mat - ret + released;
   }, 0);
   const amountFormatted = total.toLocaleString("en-US", {
     style: "currency",

@@ -112,6 +112,10 @@ async function buildRollup(
     (sum, li) => sum + (Number(li.materials_retainage_amount) || 0),
     0,
   );
+  const invoiceNetAmount = lineItems.reduce(
+    (sum, li) => sum + (Number(li.net_amount_this_period) || 0),
+    0,
+  );
   const totalRetainage = totalWorkRetainage + totalMaterialsRetainage;
   const totalEarnedLessRetainage = totalCompletedAndStored - totalRetainage;
 
@@ -149,7 +153,12 @@ async function buildRollup(
   }
 
   const contractSumToDate = originalContractSum + netChangeByChangeOrders;
-  const currentPaymentDue = totalEarnedLessRetainage - lessPreviousCertificates;
+  if (invoice.is_retainage_release) {
+    lessPreviousCertificates = Math.max(totalEarnedLessRetainage - invoiceNetAmount, 0);
+  }
+  const currentPaymentDue = invoice.is_retainage_release
+    ? invoiceNetAmount
+    : totalEarnedLessRetainage - lessPreviousCertificates;
   const balanceToFinish = contractSumToDate - totalEarnedLessRetainage;
 
   return {
