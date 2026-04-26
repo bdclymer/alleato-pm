@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { PageShell } from "@/components/layout";
 import { createServiceClient } from "@/lib/supabase/service";
 import type { Database } from "@/types/database.types";
