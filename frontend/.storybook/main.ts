@@ -10,7 +10,7 @@ const config: StorybookConfig = {
     name: "@storybook/react-vite",
     options: {},
   },
-  staticDirs: ["../public"],
+  staticDirs: [{ from: "../public", to: "/" }],
   viteFinal: async (viteConfig) => {
     if (!viteConfig.resolve) viteConfig.resolve = {};
     viteConfig.resolve.alias = {
