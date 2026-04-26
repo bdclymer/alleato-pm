@@ -17,7 +17,7 @@
     "email:preview": "email dev --dir src/emails --port 3030",
     "lint": "eslint . --cache --cache-strategy content",
     "set-admin": "node scripts/set-admin.mjs",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "node --max-old-space-size=4096 node_modules/typescript/bin/tsc --noEmit",
     "audit:db": "tsx scripts/audit/audit-db-inserts.ts",
     "audit:db:fk-types": "node --require tsx/cjs scripts/audit/audit-db-fk-and-validation.ts",
     "audit:db:ambiguous-embeds": "node --require tsx/cjs scripts/audit/audit-db-ambiguous-embeds.ts",
