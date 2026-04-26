@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { FormActions } from "./FormActions";
 
 const meta: Meta = {
-  title: "Inputs/FormActions",
+  title: "Actions/FormActions",
   tags: ["autodocs"],
   parameters: { layout: "padded" },
 };

@@ -4,7 +4,7 @@ import { StatusBadge } from "./status-badge";
 import { DetailField, DetailFieldGrid } from "./DetailField";
 
 const meta: Meta<typeof DetailField> = {
-  title: "Data Display/DetailField",
+  title: "Inputs/DetailField",
   component: DetailField,
   tags: ["autodocs"],
   parameters: { layout: "padded" },

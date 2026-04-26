@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { AttachmentUploadPanel, type AttachmentUploadItem } from "./attachment-upload-panel";
 
 const meta: Meta<typeof AttachmentUploadPanel> = {
-  title: "Data Display/AttachmentUploadPanel",
+  title: "Inputs/AttachmentUploadPanel",
   component: AttachmentUploadPanel,
   tags: ["autodocs"],
   parameters: { layout: "padded" },
