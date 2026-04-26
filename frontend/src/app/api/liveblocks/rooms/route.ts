@@ -7,9 +7,18 @@ import {
   entityTypeLabel,
 } from "@/lib/liveblocks/rooms";
 
-const liveblocks = new Liveblocks({
-  secret: process.env.LIVEBLOCKS_SECRET_KEY!,
-});
+export const dynamic = "force-dynamic";
+
+let _liveblocks: Liveblocks | null = null;
+function getLiveblocks(): Liveblocks {
+  if (!_liveblocks) {
+    if (!process.env.LIVEBLOCKS_SECRET_KEY) {
+      throw new Error("LIVEBLOCKS_SECRET_KEY is not configured");
+    }
+    _liveblocks = new Liveblocks({ secret: process.env.LIVEBLOCKS_SECRET_KEY });
+  }
+  return _liveblocks;
+}
 
 /**
  * Build a navigable URL from a parsed room entity type + entity ID.
@@ -60,7 +69,7 @@ export const GET = withApiGuardrails(
 
       try {
         // Try to get room metadata from Liveblocks
-        const room = await liveblocks.getRoom(roomId);
+        const room = await getLiveblocks().getRoom(roomId);
         const metaTitle =
           room.metadata?.title ??
           room.metadata?.name ??
