@@ -17,10 +17,10 @@ interface BannerProps {
 }
 
 const variantStyles: Record<BannerVariant, string> = {
-  info: "bg-primary/8 border-primary/20 text-primary",
-  warning: "bg-yellow-50 border-yellow-200 text-yellow-900 dark:bg-yellow-950/30 dark:border-yellow-800/40 dark:text-yellow-200",
-  success: "bg-green-50 border-green-200 text-green-900 dark:bg-green-950/30 dark:border-green-800/40 dark:text-green-200",
-  error: "bg-destructive/8 border-destructive/20 text-destructive",
+  info:    "bg-primary/8 border-primary/20 text-primary",
+  warning: "bg-warning/10 border-warning/30 text-warning",
+  success: "bg-success/10 border-success/30 text-success",
+  error:   "bg-destructive/8 border-destructive/20 text-destructive",
 };
 
 const defaultIcons: Record<BannerVariant, React.ReactNode> = {
