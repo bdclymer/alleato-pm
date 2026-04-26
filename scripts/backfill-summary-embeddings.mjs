@@ -164,18 +164,27 @@ async function main() {
   let processed = 0;
   let skipped = 0;
   let errors = 0;
+  const skippedIds = new Set();
 
   while (true) {
     // Always read from offset 0 — as we embed rows, they drop out of the
     // IS NULL filter, so the result set shrinks. Offset pagination would
     // skip rows that shift into lower positions after each batch.
-    const { data: rows, error } = await supabase
+    let q = supabase
       .from("document_metadata")
       .select("id, summary, overview")
       .is("summary_embedding", null)
       .or("summary.not.is.null,overview.not.is.null")
       .or(MEETING_FILTER)
       .limit(BATCH_SIZE);
+
+    if (skippedIds.size > 0) {
+      // Exclude IDs we've already determined have no usable text so we don't
+      // loop on them forever.
+      q = q.not("id", "in", `(${Array.from(skippedIds).map((id) => `"${id}"`).join(",")})`);
+    }
+
+    const { data: rows, error } = await q;
 
     if (error) {
       console.error("Error fetching batch:", error.message);
@@ -193,10 +202,12 @@ async function main() {
     // Skip rows with no usable text
     const validRows = rows.filter((_, i) => texts[i].length >= 20);
     const validTexts = texts.filter((t) => t.length >= 20);
+    rows.forEach((r, i) => {
+      if (texts[i].length < 20) skippedIds.add(r.id);
+    });
     skipped += rows.length - validRows.length;
 
     if (validTexts.length === 0) {
-      offset += rows.length;
       continue;
     }
 
@@ -228,11 +239,14 @@ async function main() {
     } catch (embErr) {
       console.error(`\nEmbedding batch failed: ${embErr.message}`);
       errors++;
-      // Back off and retry next batch
+      // If we can't embed, no point continuing — this is a hard failure
+      // (provider outage / quota / auth). Bail loudly so the operator sees it.
+      if (errors >= 3) {
+        console.error("\nAborting: 3+ consecutive embedding failures. Fix the provider before re-running.");
+        process.exit(1);
+      }
       await sleep(2000);
     }
-
-    offset += rows.length;
   }
 
   console.log(`\n\n=== Done ===`);
