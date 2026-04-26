@@ -2,10 +2,20 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
-import { Camera, ImagePlus, ListFilter, RefreshCw, Sparkles, Trash2, Upload } from "lucide-react";
+import {
+  Camera,
+  ImagePlus,
+  ListFilter,
+  RefreshCw,
+  Sparkles,
+  Trash2,
+  Upload,
+} from "lucide-react";
 import { toast } from "sonner";
 import {
   ADMIN_FEEDBACK_OVERLAY_ATTRIBUTE,
+  OPEN_ADMIN_FEEDBACK_COMPOSER_EVENT,
+  type AdminFeedbackRequestType,
   feedbackTargetProps,
 } from "@/lib/admin-feedback/constants";
 import {
@@ -33,7 +43,10 @@ import { Textarea } from "@/components/ui/textarea";
 type SubmissionState = {
   title: string;
   comment: string;
+  feedbackType: FeedbackType;
 };
+
+type FeedbackType = "Issue" | "Wishlist" | "General thought";
 
 type RectState = {
   left: number;
@@ -45,7 +58,24 @@ type RectState = {
 const DEFAULT_FORM: SubmissionState = {
   title: "",
   comment: "",
+  feedbackType: "Issue",
 };
+
+const FEEDBACK_TYPES = ["Issue", "Wishlist", "General thought"] as const;
+
+function mapFeedbackTypeToRequestType(
+  feedbackType: FeedbackType,
+): AdminFeedbackRequestType {
+  if (feedbackType === "Issue") {
+    return "bug";
+  }
+
+  if (feedbackType === "Wishlist") {
+    return "change_request";
+  }
+
+  return "question";
+}
 
 function getRectState(target: FeedbackTargetSnapshot | null): RectState | null {
   if (!target) {
@@ -76,8 +106,9 @@ async function captureTargetScreenshot(target: HTMLElement) {
   // html2canvas v1 cannot parse modern CSS color functions (oklab, oklch)
   // that are used by shadcn/ui and browser extensions.
   const captureRoot =
-    (target.closest("main, section, [role='region'], [data-feedback-id]") as HTMLElement) ??
-    target;
+    (target.closest(
+      "main, section, [role='region'], [data-feedback-id]",
+    ) as HTMLElement) ?? target;
 
   // Hide overlays (dialog, feedback widget) during capture
   const overlays = document.querySelectorAll(
@@ -120,50 +151,57 @@ export function AdminFeedbackWidget() {
   const pathname = usePathname();
   const { profile, isLoading } = useCurrentUserProfile();
   const isMobile = useIsMobile();
+  const pagePath = pathname ?? "/";
   const [isSelecting, setIsSelecting] = useState(false);
-  const [hoveredTarget, setHoveredTarget] = useState<FeedbackTargetSnapshot | null>(
-    null,
-  );
+  const [hoveredTarget, setHoveredTarget] =
+    useState<FeedbackTargetSnapshot | null>(null);
   const [selectedTarget, setSelectedTarget] =
     useState<FeedbackTargetSnapshot | null>(null);
-  const [selectedElement, setSelectedElement] = useState<HTMLElement | null>(null);
+  const [selectedElement, setSelectedElement] = useState<HTMLElement | null>(
+    null,
+  );
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState<SubmissionState>(DEFAULT_FORM);
-  const [screenshotDataUrl, setScreenshotDataUrl] = useState<string | null>(null);
+  const [screenshotDataUrl, setScreenshotDataUrl] = useState<string | null>(
+    null,
+  );
   const [isCapturingScreenshot, setIsCapturingScreenshot] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const frameRef = useRef<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const handleFileUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  const handleFileUpload = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
 
-    if (!file.type.startsWith("image/")) {
-      toast.error("Please select an image file.");
-      return;
-    }
-
-    // 10MB limit
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error("Image must be under 10MB.");
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === "string") {
-        setScreenshotDataUrl(reader.result);
+      if (!file.type.startsWith("image/")) {
+        toast.error("Please select an image file.");
+        return;
       }
-    };
-    reader.onerror = () => {
-      toast.error("Failed to read image file.");
-    };
-    reader.readAsDataURL(file);
 
-    // Reset the input so the same file can be re-selected
-    event.target.value = "";
-  }, []);
+      // 10MB limit
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error("Image must be under 10MB.");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === "string") {
+          setScreenshotDataUrl(reader.result);
+        }
+      };
+      reader.onerror = () => {
+        toast.error("Failed to read image file.");
+      };
+      reader.readAsDataURL(file);
+
+      // Reset the input so the same file can be re-selected
+      event.target.value = "";
+    },
+    [],
+  );
 
   const isAdmin = profile?.isAdmin === true;
   const hoveredRect = hoveredTarget ? getRectState(hoveredTarget) : null;
@@ -264,6 +302,36 @@ export function AdminFeedbackWidget() {
     };
   }, [dialogOpen, selectedElement]);
 
+  useEffect(() => {
+    const openComposer = () => {
+      const target =
+        document.querySelector("[data-feedback-id='app.main-content']") ??
+        document.querySelector("main") ??
+        document.body;
+
+      if (!(target instanceof HTMLElement)) {
+        toast.error("Unable to find page context for feedback.");
+        return;
+      }
+
+      const snapshot = buildFeedbackTargetSnapshot(target);
+      setIsSelecting(false);
+      setSelectedElement(target);
+      setSelectedTarget(snapshot);
+      setHoveredTarget(snapshot);
+      setScreenshotDataUrl(null);
+      setForm(DEFAULT_FORM);
+      setDialogOpen(true);
+    };
+
+    window.addEventListener(OPEN_ADMIN_FEEDBACK_COMPOSER_EVENT, openComposer);
+    return () =>
+      window.removeEventListener(
+        OPEN_ADMIN_FEEDBACK_COMPOSER_EVENT,
+        openComposer,
+      );
+  }, []);
+
   // Set cursor to crosshair when selecting
   useEffect(() => {
     if (isSelecting) {
@@ -337,12 +405,12 @@ export function AdminFeedbackWidget() {
           body: JSON.stringify({
             title: form.title.trim() || undefined,
             comment: form.comment.trim(),
-            requestType: "change_request",
+            requestType: mapFeedbackTypeToRequestType(form.feedbackType),
             severity: "medium",
             pageUrl: window.location.href,
-            pagePath: pathname,
+            pagePath,
             pageTitle: document.title || null,
-            projectId: inferProjectId(pathname),
+            projectId: inferProjectId(pagePath),
             screenshotDataUrl,
             target: {
               id: selectedTarget.targetId,
@@ -358,7 +426,9 @@ export function AdminFeedbackWidget() {
               },
             },
             metadata: {
-              pathname,
+              pathname: pagePath,
+              feedbackType: form.feedbackType,
+              source: "admin-feedback-widget",
               userAgent: navigator.userAgent,
             },
           }),
@@ -439,13 +509,14 @@ export function AdminFeedbackWidget() {
         }}
       >
         <DialogContent
-          className="max-w-xl gap-0 overflow-hidden p-0"
+          className="max-h-[calc(100svh-2rem)] gap-0 overflow-y-auto p-0 sm:max-w-2xl"
           {...{ [ADMIN_FEEDBACK_OVERLAY_ATTRIBUTE]: "true" }}
         >
           <DialogHeader className="border-b border-border px-6 py-5">
             <DialogTitle>Submit Admin Feedback</DialogTitle>
             <DialogDescription>
-              Describe what should change. The app will attach the page context and selected element automatically.
+              Describe what should change. The app will attach the page context
+              and selected element automatically.
             </DialogDescription>
           </DialogHeader>
 
@@ -456,8 +527,36 @@ export function AdminFeedbackWidget() {
                   {selectedTarget.text || "Selected area"}
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Feedback will be attached to this part of the page automatically.
+                  Feedback will be attached to this part of the page
+                  automatically.
                 </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Feedback type</Label>
+                <div className="grid gap-2 sm:grid-cols-3">
+                  {FEEDBACK_TYPES.map((feedbackType) => (
+                    <Button
+                      key={feedbackType}
+                      type="button"
+                      variant={
+                        form.feedbackType === feedbackType
+                          ? "secondary"
+                          : "outline"
+                      }
+                      size="sm"
+                      className="justify-start"
+                      onClick={() =>
+                        setForm((current) => ({
+                          ...current,
+                          feedbackType,
+                        }))
+                      }
+                    >
+                      {feedbackType}
+                    </Button>
+                  ))}
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -596,7 +695,11 @@ export function AdminFeedbackWidget() {
             <Button type="button" variant="outline" onClick={resetComposer}>
               Cancel
             </Button>
-            <Button type="button" onClick={handleSubmit} disabled={isSubmitting}>
+            <Button
+              type="button"
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+            >
               {isSubmitting ? "Submitting..." : "Submit feedback"}
             </Button>
           </DialogFooter>

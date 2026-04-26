@@ -4,7 +4,7 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 FRONTEND_DIR="$REPO_ROOT/frontend"
 PID_FILE="/tmp/alleato-next-dev.pid"
-NEXT_MATCH="next dev --turbopack"
+NEXT_MATCH="next dev"
 
 is_matching_next_pid() {
   local pid="$1"
@@ -44,4 +44,4 @@ fi
 cd "$FRONTEND_DIR"
 rm -rf .next
 echo "$$" > "$PID_FILE"
-exec npx next dev --turbopack
+exec npx next dev

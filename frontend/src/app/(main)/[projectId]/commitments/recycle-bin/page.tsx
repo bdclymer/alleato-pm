@@ -1,13 +1,14 @@
 import { redirect } from "next/navigation";
 
 interface CommitmentsRecycleBinRedirectPageProps {
-  params: {
+  params: Promise<{
     projectId: string;
-  };
+  }>;
 }
 
-export default function CommitmentsRecycleBinRedirectPage({
+export default async function CommitmentsRecycleBinRedirectPage({
   params,
 }: CommitmentsRecycleBinRedirectPageProps) {
-  redirect(`/${params.projectId}/commitments?tab=recycle-bin`);
+  const { projectId } = await params;
+  redirect(`/${projectId}/commitments?tab=recycle-bin`);
 }

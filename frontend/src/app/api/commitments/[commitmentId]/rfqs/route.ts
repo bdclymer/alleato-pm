@@ -49,7 +49,7 @@ export const GET = withApiGuardrails<{ commitmentId: string }>(
         { status: 422 },
       );
     }
-    const projectId = commitment.project_id;
+    const commitmentProjectId = commitment.project_id;
 
     const { data: lineItems, error: lineItemsError } = await supabase
       .from("change_event_line_items")
@@ -77,14 +77,14 @@ export const GET = withApiGuardrails<{ commitmentId: string }>(
         supabase
           .from("change_events")
           .select("id, number, title")
-          .eq("project_id", projectId)
+          .eq("project_id", commitmentProjectId)
           .in("id", changeEventIds),
         supabase
           .from("change_event_rfqs")
           .select(
             "id, rfq_number, title, status, due_date, sent_at, response_received_at, created_at, change_event_id",
           )
-          .eq("project_id", projectId)
+          .eq("project_id", commitmentProjectId)
           .in("change_event_id", changeEventIds)
           .order("created_at", { ascending: false }),
       ]);

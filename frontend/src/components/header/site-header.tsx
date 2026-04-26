@@ -4,7 +4,16 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { ChevronRight, ChevronsUpDown, GitCompare, Inbox, Menu, MessageSquarePlus, Sparkles, X } from "lucide-react";
+import {
+  ChevronRight,
+  ChevronsUpDown,
+  GitCompare,
+  Inbox,
+  Menu,
+  MessageSquarePlus,
+  Sparkles,
+  X,
+} from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { useProjectPermissions } from "@/hooks/use-project-permissions";
@@ -28,10 +37,12 @@ import { NotificationBell } from "./notification-bell";
 import { CommentsSidebar } from "./comments-sidebar";
 import { useProcorePanelStore } from "@/lib/stores/procore-panel-store";
 import { LiveAvatarStack } from "./live-avatar-stack";
-import { feedbackTargetProps } from "@/lib/admin-feedback/constants";
+import {
+  OPEN_ADMIN_FEEDBACK_COMPOSER_EVENT,
+  feedbackTargetProps,
+} from "@/lib/admin-feedback/constants";
 import { HeaderUserMenu } from "./header-user-menu";
 import { createClient } from "@/lib/supabase/client";
-import { OPEN_ALLEATO_AI_FEEDBACK_EVENT } from "@/lib/alleato-ai-onboarding";
 
 function ProcoreReferenceToggle() {
   const { open, toggle } = useProcorePanelStore();
@@ -60,7 +71,7 @@ export function SiteHeader() {
   const router = useRouter();
   const nav = useHeaderNav();
   const { permissions, userType, isAppAdmin } = useProjectPermissions(
-    nav.projectId
+    nav.projectId,
   );
   const [user, setUser] = React.useState<User | null>(null);
   const [mobileNavOpen, setMobileNavOpen] = React.useState(false);
@@ -102,7 +113,11 @@ export function SiteHeader() {
         {/* ── Left: Mobile logo + Breadcrumbs (desktop) ── */}
         <div className="flex items-center gap-2 min-w-0 flex-1">
           {/* Mobile: Logo on left */}
-          <Link href="/" className="flex items-center md:hidden" aria-label="Home">
+          <Link
+            href="/"
+            className="flex items-center md:hidden"
+            aria-label="Home"
+          >
             <Image
               src="/Alleato-Group-Logo_Dark.png"
               alt="Alleato"
@@ -173,7 +188,9 @@ export function SiteHeader() {
             variant="ghost"
             size="icon-sm"
             onClick={() =>
-              window.dispatchEvent(new CustomEvent(OPEN_ALLEATO_AI_FEEDBACK_EVENT))
+              window.dispatchEvent(
+                new CustomEvent(OPEN_ADMIN_FEEDBACK_COMPOSER_EVENT),
+              )
             }
             className="text-muted-foreground hover:text-foreground"
             aria-label="Share feedback"
@@ -258,7 +275,11 @@ function MobileNavOverlay({
   open: boolean;
   onClose: () => void;
   projectId: number | null;
-  currentProject: { id: number; name: string | null; "job number": string | null } | null;
+  currentProject: {
+    id: number;
+    name: string | null;
+    "job number": string | null;
+  } | null;
   projects: { id: number; name: string | null; "job number": string | null }[];
   loadingProjects: boolean;
   onFetchProjects: () => void;
@@ -289,7 +310,7 @@ function MobileNavOverlay({
       projectId,
       permissions,
       isAppAdmin,
-      userType
+      userType,
     ),
   }));
 
@@ -297,7 +318,9 @@ function MobileNavOverlay({
     <div
       className={cn(
         "fixed inset-0 z-50 md:hidden bg-background transition-all duration-300 ease-out",
-        open ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"
+        open
+          ? "opacity-100 translate-y-0"
+          : "opacity-0 translate-y-4 pointer-events-none",
       )}
     >
       <div className="flex h-14 items-center justify-between px-4">
@@ -327,14 +350,20 @@ function MobileNavOverlay({
           projects={projects}
           loadingProjects={loadingProjects}
           onFetchProjects={onFetchProjects}
-          onProjectSelect={(id) => { onProjectSelect(id); onClose(); }}
+          onProjectSelect={(id) => {
+            onProjectSelect(id);
+            onClose();
+          }}
           onViewAll={onClose}
         />
       </div>
 
       <nav className="h-[calc(100svh-3.5rem-56px-80px)] overflow-y-auto px-6 pt-8 pb-4 flex flex-col items-center gap-10">
         {groups.map((group) => (
-          <div key={group.id} className="flex flex-col items-center gap-6 w-full">
+          <div
+            key={group.id}
+            className="flex flex-col items-center gap-6 w-full"
+          >
             <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
               {group.label}
             </p>
@@ -346,7 +375,7 @@ function MobileNavOverlay({
                 const href = buildToolUrl(
                   tool.path,
                   projectId,
-                  tool.requiresProject
+                  tool.requiresProject,
                 );
                 const isActive = tool.name === activeToolName;
                 return (
@@ -364,9 +393,9 @@ function MobileNavOverlay({
                       "w-full max-w-[22rem] truncate px-2 text-center text-xl tracking-tight transition-colors",
                       isDisabled
                         ? "pointer-events-none opacity-30"
-                      : isActive
-                        ? "text-foreground font-semibold"
-                        : "text-foreground/85"
+                        : isActive
+                          ? "text-foreground font-semibold"
+                          : "text-foreground/85",
                     )}
                   >
                     {tool.name}
@@ -419,7 +448,7 @@ function ToolsDropdown({
       projectId,
       permissions,
       isAppAdmin,
-      userType
+      userType,
     ),
   }));
 
@@ -432,10 +461,14 @@ function ToolsDropdown({
           size="sm"
           className="h-8 w-52 justify-between gap-1.5 border border-border/60 bg-transparent px-2.5 hover:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
         >
-          <span className={cn(
-            "truncate text-sm",
-            activeToolName === "Projects" ? "text-muted-foreground" : "text-foreground/80"
-          )}>
+          <span
+            className={cn(
+              "truncate text-sm",
+              activeToolName === "Projects"
+                ? "text-muted-foreground"
+                : "text-foreground/80",
+            )}
+          >
             {activeToolName === "Projects" ? "Switch Tool" : activeToolName}
           </span>
           <ChevronsUpDown
@@ -504,7 +537,7 @@ function ToolsGroup({
         </p>
         {group.subGroups.map((subGroup) => {
           const subTools = group.tools.filter((t) =>
-            subGroup.toolNames.includes(t.name)
+            subGroup.toolNames.includes(t.name),
           );
           return (
             <div key={subGroup.label} className="mb-3 last:mb-0">
@@ -544,8 +577,7 @@ function ToolsGroup({
           projectId={projectId}
           isActive={tool.name === activeToolName}
           isDisabled={
-            (tool.requiresProject && !projectId) ||
-            !visibleTools.includes(tool)
+            (tool.requiresProject && !projectId) || !visibleTools.includes(tool)
           }
           onClose={onClose}
         />
@@ -585,8 +617,8 @@ function ToolItem({
         isDisabled
           ? "pointer-events-none opacity-30"
           : isActive
-          ? "bg-muted text-foreground"
-          : "text-foreground/75 hover:bg-muted hover:text-foreground"
+            ? "bg-muted text-foreground"
+            : "text-foreground/75 hover:bg-muted hover:text-foreground",
       )}
     >
       {Icon && (
@@ -595,13 +627,18 @@ function ToolItem({
             "flex h-6 w-6 shrink-0 items-center justify-center rounded border",
             isActive
               ? "border-border text-foreground"
-              : "border-border/50 text-muted-foreground group-hover:border-border group-hover:text-foreground"
+              : "border-border/50 text-muted-foreground group-hover:border-border group-hover:text-foreground",
           )}
         >
           <Icon className="h-3.5 w-3.5" strokeWidth={1.6} />
         </span>
       )}
-      <span className={cn("text-[13px]", isActive ? "font-semibold" : "font-normal")}>
+      <span
+        className={cn(
+          "text-[13px]",
+          isActive ? "font-semibold" : "font-normal",
+        )}
+      >
         {tool.name}
       </span>
     </Link>

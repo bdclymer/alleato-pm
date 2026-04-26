@@ -1,6 +1,9 @@
-export { DataTablePage, DataTablePageSkeleton } from "./data-table/page";
+export {
+  DataTablePage,
+  DataTablePageSkeleton,
+} from "@/components/templates/data-table-page";
 export type {
   DataTablePageProps,
   TabConfig,
   FilterOption,
-} from "./data-table/page";
+} from "@/components/templates/data-table-page";

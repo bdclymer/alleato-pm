@@ -49,7 +49,7 @@ export const GET = withApiGuardrails(
       });
     }
 
-    const { entityType, entityId, projectId } = parsed.data;
+    const { entityType, entityId, projectId: parsedProjectId } = parsed.data;
 
     const supabase = await createClient();
 
@@ -61,8 +61,8 @@ export const GET = withApiGuardrails(
       .is("deleted_at", null)
       .order("created_at", { ascending: true });
 
-    if (typeof projectId === "number") {
-      query = query.eq("project_id", projectId);
+    if (typeof parsedProjectId === "number") {
+      query = query.eq("project_id", parsedProjectId);
     }
 
     const { data, error } = await query;

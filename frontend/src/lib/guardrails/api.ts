@@ -63,7 +63,7 @@ export function withApiGuardrails<TParams = any>(
 ) {
   return async (
     request: NextRequest,
-    args?: { params?: Promise<UnwrapParams<TParams>> },
+    args: { params: Promise<UnwrapParams<TParams>> },
   ): Promise<Response> => {
     const startedAt = Date.now();
     const requestId = getOrCreateRequestId(request.headers);

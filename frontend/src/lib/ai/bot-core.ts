@@ -108,6 +108,7 @@ export async function assembleSystemPrompt(options: {
   } = options;
 
   let systemPrompt = getStrategistSystemPrompt();
+  const contextHealth: string[] = [];
 
   // Inject user memories
   if (messageText) {
@@ -161,8 +162,24 @@ export async function assembleSystemPrompt(options: {
       if (contextParts.length > 0) {
         systemPrompt = contextParts.join("\n\n") + "\n\n---\n\n" + systemPrompt;
       }
-    } catch {
-      // Memory injection failure is non-fatal
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unknown memory context error";
+      contextHealth.push(
+        `Memory and learning context could not be loaded: ${message}`,
+      );
+      onMemoryUsage?.({
+        totalUsed: 0,
+        preferencesUsed: 0,
+        relevantUsed: 0,
+        teamUsed: 0,
+        recentConversationsUsed: 0,
+        memories: [],
+      });
+      onLearningUsage?.({
+        totalUsed: 0,
+        learnings: [],
+      });
     }
   }
 
@@ -193,8 +210,12 @@ export async function assembleSystemPrompt(options: {
           `Assume all project-specific questions refer to this project unless the user explicitly mentions a different one. ` +
           `Skip disambiguation steps and go straight to retrieving data for this project.`;
       }
-    } catch {
-      // Non-fatal
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unknown project context error";
+      contextHealth.push(
+        `Pinned project context could not be loaded: ${message}`,
+      );
     }
   }
 
@@ -209,6 +230,15 @@ export async function assembleSystemPrompt(options: {
   // Council mode
   if (councilMode) {
     systemPrompt += buildCouncilModePromptInjection();
+  }
+
+  if (contextHealth.length > 0) {
+    systemPrompt +=
+      "\n\n## Runtime Context Health\n" +
+      "Some context providers failed before generation. Do not ignore this. " +
+      "If the missing context affects the answer, say what could not be checked, " +
+      "what you can still answer from available sources, and what would make the next answer stronger.\n" +
+      contextHealth.map((item) => `- ${item}`).join("\n");
   }
 
   return systemPrompt;

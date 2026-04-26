@@ -79,7 +79,12 @@ function withTrace<TInput extends Record<string, unknown>, TResult>(
         error: message,
         timestamp: new Date().toISOString(),
       });
-      throw error;
+      return {
+        error: message,
+        source: name,
+        guidance:
+          "This financial data source failed during retrieval. Be explicit about the missing source and do not invent totals.",
+      } as TResult;
     }
   };
 }

@@ -13,7 +13,6 @@
  */
 
 import { createClient } from "../frontend/node_modules/@supabase/supabase-js/dist/index.mjs";
-import OpenAI from "../frontend/node_modules/openai/index.mjs";
 import { config } from "../frontend/node_modules/dotenv/lib/main.js";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
@@ -26,6 +25,7 @@ config({ path: join(__dirname, "../.env") });
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const AI_GATEWAY_API_KEY = process.env.AI_GATEWAY_API_KEY;
 const EMBEDDING_MODEL = "text-embedding-3-large";
 const EMBEDDING_DIMS = 3072;
 const BATCH_SIZE = parseInt(
@@ -33,25 +33,85 @@ const BATCH_SIZE = parseInt(
 );
 const DRY_RUN = process.argv.includes("--dry-run");
 
-if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY || !OPENAI_API_KEY) {
+if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
   console.error(
-    "Missing env vars: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, OPENAI_API_KEY"
+    "Missing env vars: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY"
+  );
+  process.exit(1);
+}
+
+if (!AI_GATEWAY_API_KEY && !OPENAI_API_KEY) {
+  console.error(
+    "Missing embedding credentials: set AI_GATEWAY_API_KEY (preferred) or OPENAI_API_KEY"
   );
   process.exit(1);
 }
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
-const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// ─── Embedding provider with AI Gateway → OpenAI fallback ────────────────────
+//
+// AI Gateway is preferred because it provides observability and survives direct
+// OpenAI quota issues (BYOK falls through if configured). Direct OpenAI is the
+// fallback. Both are tried in order; if BOTH fail we throw loudly so the
+// backfill stops instead of silently producing zero embeddings.
 
 async function batchEmbed(texts) {
-  const resp = await openai.embeddings.create({
-    model: EMBEDDING_MODEL,
-    dimensions: EMBEDDING_DIMS,
-    input: texts,
-  });
-  return resp.data.map((d) => d.embedding);
+  const errors = [];
+
+  if (AI_GATEWAY_API_KEY) {
+    try {
+      const res = await fetch("https://ai-gateway.vercel.sh/v1/embeddings", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${AI_GATEWAY_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: `openai/${EMBEDDING_MODEL}`,
+          input: texts,
+          dimensions: EMBEDDING_DIMS,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return data.data.map((d) => d.embedding);
+      }
+      const text = await res.text();
+      errors.push(`AI Gateway ${res.status}: ${text.slice(0, 200)}`);
+    } catch (err) {
+      errors.push(`AI Gateway threw: ${err.message}`);
+    }
+  }
+
+  if (OPENAI_API_KEY) {
+    try {
+      const res = await fetch("https://api.openai.com/v1/embeddings", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${OPENAI_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: EMBEDDING_MODEL,
+          input: texts,
+          dimensions: EMBEDDING_DIMS,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return data.data.map((d) => d.embedding);
+      }
+      const text = await res.text();
+      errors.push(`OpenAI direct ${res.status}: ${text.slice(0, 200)}`);
+    } catch (err) {
+      errors.push(`OpenAI direct threw: ${err.message}`);
+    }
+  }
+
+  throw new Error(
+    `Embedding failed across all providers — backfill cannot proceed. Errors: ${errors.join(" | ")}`
+  );
 }
 
 function sleep(ms) {

@@ -60,7 +60,12 @@ function withTrace<TInput extends Record<string, unknown>, TResult>(
         error: message,
         timestamp: new Date().toISOString(),
       });
-      throw error;
+      return {
+        error: message,
+        source: name,
+        guidance:
+          "This operational knowledge source failed during retrieval. Explain the gap plainly and use other available sources before asking for more detail.",
+      } as TResult;
     }
   };
 }

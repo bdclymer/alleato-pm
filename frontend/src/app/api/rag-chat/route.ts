@@ -100,7 +100,7 @@ export const POST = withApiGuardrails("/api/rag-chat#POST", async ({ request }) 
 });
 
 // Normalize transport-level backend failures so clients get retry-safe 503 envelopes.
-export function normalizeRagTransportError(error: unknown): never {
+function normalizeRagTransportError(error: unknown): never {
   if (error instanceof GuardrailError) {
     throw error;
   }

@@ -4,6 +4,16 @@ import { createTestProject } from "../../helpers/bootstrap";
 
 let projectId: number;
 
+interface BudgetApiLineItem {
+  costCode: string;
+  costType: string;
+  originalBudgetAmount: number;
+}
+
+interface BudgetApiResponse {
+  lineItems?: BudgetApiLineItem[];
+}
+
 /**
  * Waits for the main budget table so the page is ready for interaction.
  */
@@ -65,5 +75,65 @@ test.describe("Budget Core", () => {
     const closeButton = dialog.getByRole("button", { name: /close|cancel/i }).first();
     await closeButton.click();
     await expect(dialog).not.toBeVisible({ timeout: 15000 });
+  });
+
+  test("adds to an existing budget line without history FK errors", async ({
+    authenticatedRequest,
+  }) => {
+    const beforeResponse = await authenticatedRequest.get(
+      `/api/projects/${projectId}/budget`,
+    );
+    expect(beforeResponse.ok()).toBeTruthy();
+
+    const beforeBudget = (await beforeResponse.json()) as BudgetApiResponse;
+    const existingLine = beforeBudget.lineItems?.find(
+      (line) => line.costCode && line.costType,
+    );
+    expect(existingLine).toBeDefined();
+    if (!existingLine) return;
+
+    const addResponse = await authenticatedRequest.post(
+      `/api/projects/${projectId}/budget`,
+      {
+        data: {
+          lineItems: [
+            {
+              costCodeId: existingLine.costCode,
+              costType: existingLine.costType,
+              qty: "2",
+              uom: "LS",
+              unitCost: "5000",
+              amount: "10000",
+              description: "Repeat add regression line",
+            },
+          ],
+        },
+      },
+    );
+
+    const addResponseText = await addResponse.text();
+    expect(
+      addResponse.ok(),
+      `Expected repeat add to succeed, got ${addResponse.status()}: ${addResponseText}`,
+    ).toBeTruthy();
+    expect(addResponseText).not.toContain("budget_line_history");
+    expect(addResponseText).not.toContain("foreign key constraint");
+
+    const afterResponse = await authenticatedRequest.get(
+      `/api/projects/${projectId}/budget`,
+    );
+    expect(afterResponse.ok()).toBeTruthy();
+
+    const afterBudget = (await afterResponse.json()) as BudgetApiResponse;
+    const updatedLine = afterBudget.lineItems?.find(
+      (line) =>
+        line.costCode === existingLine.costCode &&
+        line.costType === existingLine.costType,
+    );
+
+    expect(updatedLine).toBeDefined();
+    expect(updatedLine?.originalBudgetAmount).toBe(
+      existingLine.originalBudgetAmount + 10000,
+    );
   });
 });

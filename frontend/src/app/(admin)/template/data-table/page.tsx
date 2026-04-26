@@ -17,7 +17,7 @@ import { ColumnDef } from "@tanstack/react-table";
 /**
  * Tab configuration for page navigation
  */
-export interface TabConfig {
+interface TabConfig {
   label: string;
   href: string;
   count?: number;
@@ -27,7 +27,7 @@ export interface TabConfig {
 /**
  * Filter option for the data table
  */
-export interface FilterOption {
+interface FilterOption {
   column: string;
   title: string;
   options: { label: string; value: string }[];
@@ -36,7 +36,7 @@ export interface FilterOption {
 /**
  * Props for the DataTablePage template
  */
-export interface DataTablePageProps<TData> {
+interface DataTablePageProps<TData> {
   /** Page title displayed in the header */
   title: string;
   /** Optional description below the title */
@@ -115,7 +115,7 @@ export interface DataTablePageProps<TData> {
  * />
  * ```
  */
-export function DataTablePage<TData>({
+function DataTablePage<TData>({
   title,
   description,
   summaryCards,
@@ -278,11 +278,6 @@ function DataTablePageSkeleton() {
     </div>
   );
 }
-
-/**
- * Export the skeleton separately for use in other contexts
- */
-export { DataTablePageSkeleton };
 
 /**
  * Default export required by Next.js App Router for page files.

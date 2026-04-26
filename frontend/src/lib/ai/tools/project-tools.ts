@@ -79,7 +79,12 @@ function withTrace<TInput extends Record<string, unknown>, TResult>(
         error: message,
         timestamp: new Date().toISOString(),
       });
-      throw error;
+      return {
+        error: message,
+        source: name,
+        guidance:
+          "This data source failed during retrieval. Tell the user exactly what could not be checked, then continue with any other successful sources instead of ending the response.",
+      } as TResult;
     }
   };
 }
