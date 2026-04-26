@@ -117,6 +117,26 @@ async function resolveProject(
 }
 
 /** Rerank candidates using LLM as cross-encoder. Returns indices sorted by relevance. */
+/** Keywords that signal a PM briefing intent — used to tune ranking and recall. */
+function isBriefingQuery(query: string): boolean {
+  const q = query.toLowerCase();
+  return [
+    "latest",
+    "brief",
+    "briefing",
+    "catch me up",
+    "update",
+    "what's happening",
+    "what is happening",
+    "status",
+    "how is",
+    "how's",
+    "progress",
+    "any news",
+    "what happened",
+  ].some((kw) => q.includes(kw));
+}
+
 async function rerankWithLLM(
   query: string,
   candidates: Array<{ content: string; sourceTable: string }>,
@@ -129,18 +149,25 @@ async function rerankWithLLM(
       .map((c, i) => `[${i}] (${c.sourceTable}) ${c.content.substring(0, 300)}`)
       .join("\n\n");
 
+    // PM briefings need recent meeting content surfaced above older generic docs.
+    const briefingHint = isBriefingQuery(query)
+      ? " For project status or briefing queries, prefer recent meeting transcripts, emails, and Teams messages over general reference documents."
+      : "";
+
     const response = await openai.chat.completions.create({
-      model: "openai/gpt-5.4", // fast model for reranking — routes through AI Gateway
+      model: "openai/gpt-4.1-mini", // gpt-4.1-mini via AI Gateway — fast, cheap, accurate reranker
       temperature: 0,
       max_tokens: 200,
       messages: [
         {
           role: "system",
           content:
-            "You are a relevance judge. Given a query and numbered text passages, " +
-            "return ONLY a JSON array of passage indices sorted by relevance to the query, " +
-            "most relevant first. Include only passages that are actually relevant. " +
-            "Example output: [3, 0, 7, 1]",
+            "You are a relevance judge for a construction project management assistant. " +
+            "Given a query and numbered text passages, return ONLY a JSON array of passage " +
+            "indices sorted by relevance to the query, most relevant first. " +
+            "Include only passages that are actually relevant." +
+            briefingHint +
+            " Example output: [3, 0, 7, 1]",
         },
         {
           role: "user",
@@ -150,7 +177,9 @@ async function rerankWithLLM(
     });
 
     const text = response.choices[0]?.message?.content?.trim() || "[]";
-    const indices = JSON.parse(text) as number[];
+    // Strip any markdown code fences the model may add
+    const jsonText = text.replace(/^```[a-z]*\n?/i, "").replace(/\n?```$/i, "").trim();
+    const indices = JSON.parse(jsonText) as number[];
     return indices
       .filter((i) => typeof i === "number" && i >= 0 && i < candidates.length)
       .slice(0, topK);
@@ -1425,11 +1454,14 @@ export function createOperationalTools(
             });
 
             const embeddingArg3072 = JSON.stringify(embResp3072.data[0].embedding);
-            const targetCount = matchCount ?? 10;
-            const targetThreshold = threshold ?? 0.3;
-            // Transcripts use broader recall: lower threshold + 2x candidates before reranking
+            const briefing = isBriefingQuery(query);
+            // Briefing queries cast a wider net (more candidates, lower threshold) so the
+            // LLM reranker has recent comms to surface. Non-briefing queries use tighter defaults.
+            const targetCount = matchCount ?? (briefing ? 15 : 10);
+            const targetThreshold = threshold ?? (briefing ? 0.2 : 0.3);
+            // Chunks use even broader recall — reranker filters out noise
             const chunkCount = targetCount * 2;
-            const chunkThreshold = Math.min(targetThreshold, 0.25);
+            const chunkThreshold = Math.min(targetThreshold, briefing ? 0.15 : 0.25);
 
             // Blended retrieval — all halfvec(3072):
             // search_document_chunks   → unified: meetings, emails, Teams, OneDrive, transcripts
@@ -1637,9 +1669,13 @@ export function createOperationalTools(
             };
 
             const stitchedItems = stitchTranscriptChunks(Array.from(dedupedMap.values()));
-            // Time-decay: blend semantic similarity (90%) with recency (10%).
+            // Time-decay: blend semantic similarity with recency.
+            // Briefing queries weight recency higher (25%) so recent meetings/emails surface above
+            // older but semantically similar documents. Non-briefing uses 10% recency.
             // Recency decays exponentially: full weight today, ~50% at 6 months, floor 0.1 at 2+ years.
             const nowMs = Date.now();
+            const recencyWeight = briefing ? 0.25 : 0.1;
+            const similarityWeight = 1 - recencyWeight;
             const recencyScore = (createdAt: string | null): number => {
               if (!createdAt) return 0.5;
               const ageMs = nowMs - new Date(createdAt).getTime();
@@ -1647,11 +1683,22 @@ export function createOperationalTools(
               return Math.max(0.1, Math.exp(-ageDays / 180));
             };
 
+            // Briefing source boost: recent comms (emails, Teams, meeting chunks) score higher
+            // than generic reference documents when the user is asking for a status update.
+            const sourceBoost = (sourceTable: string): number => {
+              if (!briefing) return 0;
+              if (["email", "teams_message", "meeting_transcript", "meeting_summary"].includes(sourceTable)) return 0.05;
+              return 0;
+            };
+
             // Pre-sort by blended score, take top 20 candidates for reranking
             const candidates = (stitchedItems as (typeof merged)[number][])
               .map((item) => ({
                 ...item,
-                finalScore: item.similarity * 0.9 + recencyScore(item.createdAt) * 0.1,
+                finalScore:
+                  item.similarity * similarityWeight +
+                  recencyScore(item.createdAt) * recencyWeight +
+                  sourceBoost(item.sourceTable),
               }))
               .sort((a, b) => b.finalScore - a.finalScore)
               .slice(0, 20);

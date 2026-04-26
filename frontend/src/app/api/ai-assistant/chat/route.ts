@@ -30,6 +30,40 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 
 export const maxDuration = 120;
 
+// ---------------------------------------------------------------------------
+// Tool-loop diagnostic — captured via onStepFinish, persisted per message.
+// Gives us finish reason, warnings, step count, and tool call count without
+// touching live stream latency.
+// ---------------------------------------------------------------------------
+type StepDiagnostic = {
+  stepNumber: number;
+  finishReason: string;
+  toolCallCount: number;
+  toolCallNames: string[];
+  warningCount: number;
+  warnings: string[];
+  inputTokens: number | undefined;
+  outputTokens: number | undefined;
+};
+
+type LoopDiagnostic = {
+  steps: StepDiagnostic[];
+  totalStepCount: number;
+  totalToolCallCount: number;
+  finalFinishReason: string;
+  totalWarningCount: number;
+};
+
+function buildLoopDiagnostic(steps: StepDiagnostic[]): LoopDiagnostic {
+  return {
+    steps,
+    totalStepCount: steps.length,
+    totalToolCallCount: steps.reduce((n, s) => n + s.toolCallCount, 0),
+    finalFinishReason: steps.at(-1)?.finishReason ?? "unknown",
+    totalWarningCount: steps.reduce((n, s) => n + s.warningCount, 0),
+  };
+}
+
 type ResponseQuality = {
   confidence: "high" | "medium" | "low";
   sourceQuality: "high" | "medium" | "low";
@@ -202,19 +236,32 @@ async function buildBusinessContextPreflight(params: {
   let recentMeetings: Array<Record<string, unknown>> = [];
   let budgetRows = 0;
 
+  let openRfiCount = 0;
+  let openChangeEventCount = 0;
+
   if (typeof primaryProject?.id === "number") {
-    const [meetingsResult, budgetResult] = await Promise.allSettled([
+    const [meetingsResult, budgetResult, rfiResult, ceResult] = await Promise.allSettled([
       supabase
         .from("document_metadata")
         .select("title, date, summary, overview, category")
         .eq("project_id", primaryProject.id)
         .or("type.eq.meeting,category.eq.meeting")
         .order("date", { ascending: false })
-        .limit(5),
+        .limit(10),
       supabase
         .from("budget_lines")
         .select("id", { count: "exact", head: true })
         .eq("project_id", primaryProject.id),
+      supabase
+        .from("rfis")
+        .select("id", { count: "exact", head: true })
+        .eq("project_id", primaryProject.id)
+        .in("status", ["open", "draft", "in_review"]),
+      supabase
+        .from("change_events")
+        .select("id", { count: "exact", head: true })
+        .eq("project_id", primaryProject.id)
+        .not("status", "in", '("approved","void","rejected")'),
     ]);
 
     if (meetingsResult.status === "fulfilled") {
@@ -228,6 +275,12 @@ async function buildBusinessContextPreflight(params: {
 
     if (budgetResult.status === "fulfilled") {
       budgetRows = budgetResult.value.count ?? 0;
+    }
+    if (rfiResult.status === "fulfilled") {
+      openRfiCount = rfiResult.value.count ?? 0;
+    }
+    if (ceResult.status === "fulfilled") {
+      openChangeEventCount = ceResult.value.count ?? 0;
     }
   }
 
@@ -253,6 +306,8 @@ async function buildBusinessContextPreflight(params: {
           summary: primaryProject.summary,
           recentMeetings,
           budgetRows,
+          openRfiCount,
+          openChangeEventCount,
         })}`
       : "Primary project context: unavailable",
     "Use this preflight only as a starting point. Still call the appropriate tools for a substantive answer. If tools fail, explain both this preflight and the failed deeper retrieval.",
@@ -271,6 +326,8 @@ async function buildBusinessContextPreflight(params: {
         primaryProjectId: primaryProject?.id ?? null,
         recentMeetingCount: recentMeetings.length,
         budgetRows,
+        openRfiCount,
+        openChangeEventCount,
       },
       timestamp: new Date().toISOString(),
     },
@@ -376,6 +433,7 @@ async function persistAssistantMessage(params: {
   };
   responseQuality: ResponseQuality;
   councilMode?: boolean;
+  loopDiagnostic?: LoopDiagnostic;
 }) {
   const {
     supabase,
@@ -388,6 +446,7 @@ async function persistAssistantMessage(params: {
     totalUsage,
     responseQuality,
     councilMode,
+    loopDiagnostic,
   } = params;
 
   await supabase.from("chat_history").insert({
@@ -436,6 +495,7 @@ async function persistAssistantMessage(params: {
             }
           : null,
         response_quality: responseQuality,
+        loop_diagnostic: loopDiagnostic ?? null,
       }),
     ),
   });
@@ -472,6 +532,9 @@ export const POST = withApiGuardrails(
     const toolTrace: Array<Record<string, unknown>> = [];
     let memoryUsage: MemoryUsageSummary | undefined;
     let learningUsage: BotLearningUsageSummary | undefined;
+
+    // Accumulated per-step diagnostics — populated by onStepFinish.
+    const stepDiagnostics: StepDiagnostic[] = [];
 
     let streamErrorMessage: string | undefined;
 
@@ -562,6 +625,24 @@ export const POST = withApiGuardrails(
             streamErrorMessage =
               error instanceof Error ? error.message : String(error);
           },
+          onStepFinish: ({ stepNumber, finishReason, usage, warnings, toolCalls }) => {
+            // warnings are CallWarning = { type: "unsupported"; feature: string; details?: string }
+            const warningMessages = (warnings ?? []).map((w) =>
+              w.type === "unsupported"
+                ? `unsupported:${w.feature}${w.details ? `:${w.details}` : ""}`
+                : String(w),
+            );
+            stepDiagnostics.push({
+              stepNumber,
+              finishReason,
+              toolCallCount: toolCalls.length,
+              toolCallNames: toolCalls.map((tc) => tc.toolName),
+              warningCount: warningMessages.length,
+              warnings: warningMessages,
+              inputTokens: usage?.inputTokens,
+              outputTokens: usage?.outputTokens,
+            });
+          },
         });
 
         writer.merge(
@@ -618,6 +699,7 @@ export const POST = withApiGuardrails(
           totalUsage,
           responseQuality,
           councilMode,
+          loopDiagnostic: buildLoopDiagnostic(stepDiagnostics),
         });
 
         // Update conversation timestamp — scope to user to prevent cross-user update
