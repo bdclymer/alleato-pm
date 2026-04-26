@@ -6,6 +6,9 @@ import { createAcumaticaTools } from "./acumatica";
 import { createOperationalTools } from "./operational";
 import { createToolGuardrails } from "./guardrails";
 
+// Existing AI tool outputs are heterogeneous Supabase rows from many tables/views.
+// Keep this broad row shape until the tool layer is split into typed modules.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyRow = Record<string, any>;
 
 type ToolTracePayload = {
@@ -53,6 +56,42 @@ function extractDueDate(item: string): string | null {
     /\b(?:due|by|before)\s*[:\-]?\s*(\d{4}-\d{2}-\d{2}|[A-Z][a-z]{2,8}\s+\d{1,2},?\s+\d{4})/i,
   );
   return dueMatch ? dueMatch[1].trim() : null;
+}
+
+function lowerStatus(value: unknown): string {
+  return String(value ?? "").trim().toLowerCase();
+}
+
+function isClosedStatus(value: unknown): boolean {
+  return ["closed", "complete", "completed", "approved", "void", "rejected"].includes(
+    lowerStatus(value),
+  );
+}
+
+function isApprovedStatus(value: unknown): boolean {
+  return ["approved", "executed", "complete", "completed"].includes(lowerStatus(value));
+}
+
+function isPendingStatus(value: unknown): boolean {
+  const status = lowerStatus(value);
+  return Boolean(status) && !isClosedStatus(status);
+}
+
+function isDateBeforeToday(value: unknown): boolean {
+  if (typeof value !== "string" || !value) return false;
+  return value.slice(0, 10) < new Date().toISOString().slice(0, 10);
+}
+
+function countByStatus(rows: AnyRow[]): Record<string, number> {
+  return rows.reduce<Record<string, number>>((acc, row) => {
+    const status = lowerStatus(row.status) || "unknown";
+    acc[status] = (acc[status] ?? 0) + 1;
+    return acc;
+  }, {});
+}
+
+function compactRows(rows: AnyRow[], limit = 8): AnyRow[] {
+  return rows.slice(0, limit);
 }
 
 function withTrace<TInput extends Record<string, unknown>, TResult>(
@@ -111,6 +150,423 @@ export function createProjectTools(
     ...financialTools,
     ...acumaticaTools,
     ...operationalTools,
+
+    getProjectBriefingSnapshot: tool({
+      description:
+        "Canonical broad project update snapshot for elite PM/CEO/owner briefings. " +
+        "Use this FIRST for questions like 'latest on project', 'project status', " +
+        "'what should I worry about', 'owner update', 'CEO briefing', or broad project health. " +
+        "Returns hard facts first: budget, forecast/over-under, commitments, change orders, " +
+        "RFIs, submittals, schedule, open notifications/actions, recent movement, risk signals, " +
+        "data gaps, and recommended operator questions.",
+      inputSchema: z.object({
+        projectId: z.number().optional().describe("Project ID if known"),
+        projectName: z.string().optional().describe("Project name to resolve if projectId is unknown"),
+      }),
+      execute: withTrace(
+        "getProjectBriefingSnapshot",
+        options,
+        async ({ projectId, projectName }) => {
+          const scopedProjectIds = await guardrails.getScopedProjectIds(projectId);
+          if (scopedProjectIds.length === 0) {
+            return {
+              error:
+                "You do not have access to that project. Choose a project you are assigned to.",
+            };
+          }
+
+          let project: AnyRow | null = null;
+          if (typeof projectId === "number" && Number.isFinite(projectId)) {
+            const { data, error } = await supabase
+              .from("projects")
+              .select("*")
+              .eq("id", projectId)
+              .in("id", scopedProjectIds)
+              .single();
+            if (error || !data) return { error: `Project ${projectId} not found or not accessible.` };
+            project = data as AnyRow;
+          } else if (projectName) {
+            const { data, error } = await supabase
+              .from("projects")
+              .select("*")
+              .in("id", scopedProjectIds)
+              .ilike("name", `%${projectName}%`)
+              .limit(1)
+              .single();
+            if (error || !data) return { error: `No project found matching "${projectName}".` };
+            project = data as AnyRow;
+          } else if (scopedProjectIds.length === 1) {
+            const { data, error } = await supabase
+              .from("projects")
+              .select("*")
+              .eq("id", scopedProjectIds[0])
+              .single();
+            if (error || !data) return { error: "Project not found." };
+            project = data as AnyRow;
+          } else {
+            return {
+              error:
+                "A project update needs a project name or projectId. List candidate projects instead of asking generically.",
+            };
+          }
+
+          const resolvedProjectId = asNumber(project.id);
+          const today = new Date().toISOString().slice(0, 10);
+          const since = new Date(Date.now() - 1000 * 60 * 60 * 24 * 90).toISOString();
+
+          const [
+            budgetRes,
+            contractSummaryRes,
+            ceRes,
+            pccoRes,
+            ccoRes,
+            rfiRes,
+            submittalRes,
+            scheduleRes,
+            commitmentRes,
+            notificationRes,
+            recentDocsRes,
+          ] = await Promise.all([
+            (supabase
+              .from("v_budget_lines" as never)
+              .select("id, original_amount, revised_budget, approved_co_total, budget_mod_total")
+              .eq("project_id", resolvedProjectId) as unknown as Promise<{
+              data: AnyRow[] | null;
+              error: { message: string } | null;
+            }>),
+            supabase
+              .from("prime_contract_financial_summary")
+              .select("*")
+              .eq("project_id", resolvedProjectId),
+            supabase
+              .from("change_events")
+              .select("id, number, title, status, type, scope, reason, created_at, updated_at, expecting_revenue")
+              .eq("project_id", resolvedProjectId)
+              .is("deleted_at", null)
+              .order("updated_at", { ascending: false })
+              .limit(25),
+            supabase
+              .from("prime_contract_change_orders")
+              .select("id, pcco_number, title, status, total_amount, due_date, approved_at, submitted_at, created_at")
+              .eq("project_id", resolvedProjectId)
+              .order("created_at", { ascending: false })
+              .limit(25),
+            supabase
+              .from("contract_change_orders")
+              .select("id, change_order_number, title, description, status, amount, due_date, approved_date, requested_date, created_at")
+              .eq("project_id", resolvedProjectId)
+              .order("created_at", { ascending: false })
+              .limit(25),
+            supabase
+              .from("rfis")
+              .select("id, number, subject, status, due_date, ball_in_court, schedule_impact, cost_impact, updated_at")
+              .eq("project_id", resolvedProjectId)
+              .order("due_date", { ascending: true })
+              .limit(80),
+            supabase
+              .from("submittals")
+              .select("id, submittal_number, title, status, final_due_date, required_approval_date, required_on_site_date, ball_in_court, lead_time, priority, updated_at")
+              .eq("project_id", resolvedProjectId)
+              .is("deleted_at", null)
+              .order("final_due_date", { ascending: true })
+              .limit(80),
+            supabase
+              .from("schedule_tasks")
+              .select("id, name, status, start_date, finish_date, percent_complete, is_milestone, constraint_date, constraint_type")
+              .eq("project_id", resolvedProjectId)
+              .order("finish_date", { ascending: true })
+              .limit(150),
+            supabase
+              .from("commitments_unified")
+              .select("id, title, commitment_type, contract_number, status, executed, contract_date, issued_on_date, updated_at")
+              .eq("project_id", resolvedProjectId)
+              .is("deleted_at", null)
+              .order("updated_at", { ascending: false })
+              .limit(100),
+            supabase
+              .from("collaboration_notifications")
+              .select("id, title, body, kind, entity_type, entity_id, read_at, created_at")
+              .eq("project_id", resolvedProjectId)
+              .eq("user_id", _userId)
+              .is("deleted_at", null)
+              .order("created_at", { ascending: false })
+              .limit(20),
+            supabase
+              .from("document_metadata")
+              .select("id, title, date, summary, overview, action_items, decisions, key_topics, source, category, type")
+              .eq("project_id", resolvedProjectId)
+              .gte("date", since)
+              .order("date", { ascending: false })
+              .limit(12),
+          ]);
+
+          const budgetRows = budgetRes.data ?? [];
+          const contracts = (contractSummaryRes.data ?? []) as AnyRow[];
+          const changeEvents = (ceRes.data ?? []) as AnyRow[];
+          const pccos = (pccoRes.data ?? []) as AnyRow[];
+          const ccos = (ccoRes.data ?? []) as AnyRow[];
+          const rfis = (rfiRes.data ?? []) as AnyRow[];
+          const submittals = (submittalRes.data ?? []) as AnyRow[];
+          const scheduleTasks = (scheduleRes.data ?? []) as AnyRow[];
+          const commitments = (commitmentRes.data ?? []) as AnyRow[];
+          const notifications = (notificationRes.data ?? []) as AnyRow[];
+          const recentDocs = (recentDocsRes.data ?? []) as AnyRow[];
+
+          const originalBudget = budgetRows.reduce((sum, row) => sum + asNumber(row.original_amount), 0);
+          const revisedBudget = budgetRows.reduce((sum, row) => sum + asNumber(row.revised_budget), 0);
+          const approvedBudgetChanges = budgetRows.reduce((sum, row) => sum + asNumber(row.approved_co_total), 0);
+          const originalContractValue = contracts.reduce((sum, row) => sum + asNumber(row.original_contract_amount), 0);
+          const revisedContractValue = contracts.reduce((sum, row) => sum + asNumber(row.revised_contract_amount), 0);
+          const invoicedAmount = contracts.reduce((sum, row) => sum + asNumber(row.invoiced_amount), 0);
+          const paymentsReceived = contracts.reduce((sum, row) => sum + asNumber(row.payments_received), 0);
+          const pendingContractChanges = contracts.reduce((sum, row) => sum + asNumber(row.pending_change_orders), 0);
+          const approvedContractChanges = contracts.reduce((sum, row) => sum + asNumber(row.approved_change_orders), 0);
+
+          const allChangeOrders = [...pccos, ...ccos];
+          const pendingChangeOrders = allChangeOrders.filter((row) => isPendingStatus(row.status));
+          const approvedChangeOrders = allChangeOrders.filter((row) => isApprovedStatus(row.status));
+          const pendingChangeOrderAmount = pendingChangeOrders.reduce(
+            (sum, row) => sum + asNumber(row.total_amount ?? row.amount),
+            0,
+          );
+          const approvedChangeOrderAmount = approvedChangeOrders.reduce(
+            (sum, row) => sum + asNumber(row.total_amount ?? row.amount),
+            0,
+          );
+
+          const openRfis = rfis.filter((row) => !isClosedStatus(row.status));
+          const overdueRfis = openRfis.filter((row) => isDateBeforeToday(row.due_date));
+          const scheduleSensitiveRfis = openRfis.filter((row) => {
+            const value = `${row.schedule_impact ?? ""} ${row.subject ?? ""}`.toLowerCase();
+            return value.includes("yes") || value.includes("schedule") || value.includes("delay");
+          });
+
+          const openSubmittals = submittals.filter((row) => !isClosedStatus(row.status));
+          const overdueSubmittals = openSubmittals.filter((row) =>
+            isDateBeforeToday(row.final_due_date ?? row.required_approval_date),
+          );
+          const longLeadSubmittals = openSubmittals.filter((row) => asNumber(row.lead_time) >= 21);
+
+          const incompleteTasks = scheduleTasks.filter(
+            (task) => lowerStatus(task.status) !== "completed" && asNumber(task.percent_complete) < 100,
+          );
+          const overdueTasks = incompleteTasks.filter((task) => isDateBeforeToday(task.finish_date));
+          const upcomingMilestones = scheduleTasks.filter(
+            (task) =>
+              task.is_milestone &&
+              !isClosedStatus(task.status) &&
+              typeof task.finish_date === "string" &&
+              task.finish_date.slice(0, 10) >= today,
+          );
+
+          const openNotifications = notifications.filter((row) => !row.read_at);
+          const unexecutedCommitments = commitments.filter((row) => !row.executed);
+
+          const budgetDelta = revisedBudget - originalBudget;
+          const forecastVariance =
+            revisedBudget > 0 && revisedContractValue > 0 ? revisedContractValue - revisedBudget : null;
+
+          const riskSignals = [
+            pendingChangeOrders.length > 0
+              ? `${pendingChangeOrders.length} pending change order(s) need pricing/approval discipline.`
+              : null,
+            overdueRfis.length > 0
+              ? `${overdueRfis.length} overdue RFI(s), including ${scheduleSensitiveRfis.length} schedule-sensitive item(s).`
+              : null,
+            overdueSubmittals.length > 0
+              ? `${overdueSubmittals.length} overdue submittal(s); ${longLeadSubmittals.length} open long-lead item(s).`
+              : null,
+            overdueTasks.length > 0
+              ? `${overdueTasks.length} incomplete schedule task(s) have finish dates before today.`
+              : null,
+            unexecutedCommitments.length > 0
+              ? `${unexecutedCommitments.length} commitment(s) are not executed.`
+              : null,
+            openNotifications.length > 0
+              ? `${openNotifications.length} unread/open notification(s) need review.`
+              : null,
+          ].filter((value): value is string => Boolean(value));
+
+          const recommendedQuestions = [
+            "What budget number has leadership committed to: original budget, revised budget, or latest forecast?",
+            "Which pending change orders need owner approval, pricing backup, or a go/no-go decision this week?",
+            "Which RFIs or submittals can move the schedule if they sit another week?",
+            "What long-lead/procurement items are not bought out or fully released?",
+            "What decision can the CEO, owner, or PM make now that would reduce risk fastest?",
+            "What open actions have no clear owner or due date?",
+          ];
+
+          const dataGaps = [
+            budgetRows.length === 0 ? "No budget line rows were found for this project." : null,
+            contracts.length === 0 ? "No prime contract financial summary rows were found." : null,
+            scheduleTasks.length === 0 ? "No schedule task rows were found." : null,
+            recentDocs.length === 0 ? "No recent meeting/document context found in the last 90 days." : null,
+            budgetRes.error ? `Budget query failed: ${budgetRes.error.message}` : null,
+            contractSummaryRes.error ? `Contract summary query failed: ${contractSummaryRes.error.message}` : null,
+            ceRes.error ? `Change event query failed: ${ceRes.error.message}` : null,
+            rfiRes.error ? `RFI query failed: ${rfiRes.error.message}` : null,
+            submittalRes.error ? `Submittal query failed: ${submittalRes.error.message}` : null,
+            scheduleRes.error ? `Schedule query failed: ${scheduleRes.error.message}` : null,
+          ].filter((value): value is string => Boolean(value));
+
+          return {
+            sourceRef: `[Source: Project Briefing Snapshot - ${project.name}]`,
+            project: {
+              id: resolvedProjectId,
+              name: project.name,
+              projectNumber: project.project_number,
+              client: project.client,
+              phase: project.phase ?? project.current_phase,
+              healthStatus: project.health_status,
+              completionPct: project.completion_percentage,
+              summary: project.summary,
+            },
+            hardFacts: {
+              budget: {
+                originalBudget,
+                revisedBudget,
+                budgetDelta,
+                approvedBudgetChanges,
+                forecastVariance,
+                status:
+                  forecastVariance == null
+                    ? "unknown"
+                    : forecastVariance > 0
+                      ? "over budget"
+                      : forecastVariance < 0
+                        ? "under budget"
+                        : "on budget",
+              },
+              contract: {
+                originalContractValue,
+                revisedContractValue,
+                approvedContractChanges,
+                pendingContractChanges,
+                invoicedAmount,
+                paymentsReceived,
+              },
+              changeOrders: {
+                recentCount: allChangeOrders.length,
+                pendingCount: pendingChangeOrders.length,
+                approvedCount: approvedChangeOrders.length,
+                pendingAmount: pendingChangeOrderAmount,
+                approvedAmount: approvedChangeOrderAmount,
+                statusBreakdown: countByStatus(allChangeOrders),
+                recent: compactRows(allChangeOrders).map((row) => ({
+                  number: row.pcco_number ?? row.change_order_number,
+                  title: row.title ?? row.description,
+                  status: row.status,
+                  amount: row.total_amount ?? row.amount,
+                  dueDate: row.due_date,
+                })),
+              },
+              changeEvents: {
+                openCount: changeEvents.filter((row) => !isClosedStatus(row.status)).length,
+                statusBreakdown: countByStatus(changeEvents),
+                recent: compactRows(changeEvents).map((row) => ({
+                  number: row.number,
+                  title: row.title,
+                  status: row.status,
+                  type: row.type,
+                  updatedAt: row.updated_at,
+                })),
+              },
+              rfis: {
+                openCount: openRfis.length,
+                overdueCount: overdueRfis.length,
+                scheduleSensitiveCount: scheduleSensitiveRfis.length,
+                statusBreakdown: countByStatus(rfis),
+                open: compactRows(openRfis).map((row) => ({
+                  number: row.number,
+                  subject: row.subject,
+                  status: row.status,
+                  dueDate: row.due_date,
+                  ballInCourt: row.ball_in_court,
+                  scheduleImpact: row.schedule_impact,
+                })),
+              },
+              submittals: {
+                openCount: openSubmittals.length,
+                overdueCount: overdueSubmittals.length,
+                longLeadOpenCount: longLeadSubmittals.length,
+                statusBreakdown: countByStatus(submittals),
+                open: compactRows(openSubmittals).map((row) => ({
+                  number: row.submittal_number,
+                  title: row.title,
+                  status: row.status,
+                  dueDate: row.final_due_date ?? row.required_approval_date,
+                  requiredOnSiteDate: row.required_on_site_date,
+                  ballInCourt: row.ball_in_court,
+                  leadTime: row.lead_time,
+                })),
+              },
+              schedule: {
+                totalTasks: scheduleTasks.length,
+                incompleteCount: incompleteTasks.length,
+                overdueCount: overdueTasks.length,
+                upcomingMilestoneCount: upcomingMilestones.length,
+                upcomingMilestones: compactRows(upcomingMilestones).map((task) => ({
+                  name: task.name,
+                  finishDate: task.finish_date,
+                  status: task.status,
+                  percentComplete: task.percent_complete,
+                })),
+                overdueTasks: compactRows(overdueTasks).map((task) => ({
+                  name: task.name,
+                  finishDate: task.finish_date,
+                  status: task.status,
+                  percentComplete: task.percent_complete,
+                })),
+              },
+              commitments: {
+                totalCount: commitments.length,
+                unexecutedCount: unexecutedCommitments.length,
+                statusBreakdown: countByStatus(commitments),
+                unexecuted: compactRows(unexecutedCommitments).map((row) => ({
+                  title: row.title,
+                  type: row.commitment_type,
+                  contractNumber: row.contract_number,
+                  status: row.status,
+                })),
+              },
+              notifications: {
+                openCount: openNotifications.length,
+                open: compactRows(openNotifications, 5).map((row) => ({
+                  title: row.title,
+                  kind: row.kind,
+                  entityType: row.entity_type,
+                  createdAt: row.created_at,
+                })),
+              },
+            },
+            recentMovement: recentDocs.map((doc) => ({
+              sourceRef: `[Source: ${doc.source ?? doc.category ?? doc.type ?? "document"} ${doc.id}]`,
+              title: doc.title,
+              date: doc.date,
+              summary: String(doc.summary ?? doc.overview ?? "").slice(0, 700),
+              actionItems: parseTextList(doc.action_items).slice(0, 5),
+              decisions: doc.decisions,
+              keyTopics: doc.key_topics,
+            })),
+            riskSignals,
+            recommendedQuestions,
+            responseContract: {
+              order: [
+                "Hard Facts",
+                "What Changed",
+                "Insider Analysis",
+                "Recommended Actions",
+                "Confidence and Data Gaps",
+                "Next Step",
+              ],
+              hardFactsFirst: true,
+              alwaysEndWithForwardMotion: true,
+            },
+            dataGaps,
+          };
+        },
+      ),
+    }),
 
     getPortfolioOverview: tool({
       description:
@@ -403,7 +859,7 @@ export function createProjectTools(
             await Promise.all([
                
               supabase
-                .from("risks" as any)
+                .from("risks" as never)
                 .select(
                   "id, project_id, status, category, likelihood, impact, description, owner_name, metadata_id, created_at",
                 )
@@ -680,7 +1136,7 @@ export function createProjectTools(
             .single(),
            
           supabase
-            .from("v_budget_lines" as any)
+            .from("v_budget_lines" as never)
             .select(
               "id, description, original_amount, revised_budget, approved_co_total",
             )
@@ -1037,7 +1493,7 @@ export function createProjectTools(
           const [budgetRes, contractRes] = await Promise.all([
              
             supabase
-              .from("v_budget_lines" as any)
+              .from("v_budget_lines" as never)
               .select(
                 "id, original_amount, revised_budget, approved_co_total, budget_mod_total",
               )

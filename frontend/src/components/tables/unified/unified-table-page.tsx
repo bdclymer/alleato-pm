@@ -921,10 +921,11 @@ export function UnifiedTablePage<T>({
     };
   }, [isResizingColumn]);
 
-  const tableToolbar = (
+  const renderTableToolbar = (className?: string) => (
     <TableToolbar
       className={cn(
         toolbarInlineWithHeader ? "w-auto py-0" : "w-full lg:w-auto",
+        className,
       )}
       totalItems={toolbar.totalItems}
       filteredItems={toolbar.filteredItems}
@@ -942,6 +943,10 @@ export function UnifiedTablePage<T>({
       columns={toolbarColumns}
       visibleColumns={visibleColumns}
       onColumnVisibilityChange={handleColumnVisibilityChange}
+      sortOptions={table.columns.filter((column) => column.sortable !== false)}
+      sortBy={sorting?.sortBy}
+      sortDirection={sorting?.sortDirection}
+      onSortChange={sorting?.onSortChange}
       onExport={toolbar.onExport}
       onBulkDelete={toolbar.onBulkDelete}
       mobilePanelActions={toolbar.mobilePanelActions}
@@ -954,6 +959,8 @@ export function UnifiedTablePage<T>({
       enableBulkDelete={resolvedFeatures.enableBulkDelete && hasRowSelection}
     />
   );
+
+  const tableToolbar = renderTableToolbar();
 
   const isCompactDensity = table.density === "compact";
 
@@ -970,8 +977,13 @@ export function UnifiedTablePage<T>({
             {header.actions}
             {tableToolbar}
           </div>
+        ) : header.actions ? (
+          <div className="flex items-center gap-2">
+            {header.actions}
+            {renderTableToolbar("sm:hidden")}
+          </div>
         ) : (
-          header.actions
+          renderTableToolbar("sm:hidden")
         )
       }
     />
@@ -983,9 +995,22 @@ export function UnifiedTablePage<T>({
     <>
       {header.title ? headerContent : null}
       {(tabs || !toolbarInlineWithHeader) && (
-        <div className={cn("flex flex-col gap-2", isCompactDensity ? "pb-1 pt-0" : cn("pb-3", containerPadding ? "pt-1 sm:pt-2" : "pt-0"))}>
-          {tabs && <PageTabs tabs={tabs} variant="inline" className="-mr-4 w-[calc(100vw-1rem)] sm:mr-0 sm:w-full" />}
-          {!toolbarInlineWithHeader ? <div className="flex justify-end">{tableToolbar}</div> : null}
+        <div
+          className={cn(
+            "flex flex-col gap-2 md:flex-row md:items-end md:justify-between md:gap-4",
+            isCompactDensity ? "pb-1 pt-0" : cn("pb-3", containerPadding ? "pt-1 sm:pt-2" : "pt-0"),
+          )}
+        >
+          {tabs && (
+            <PageTabs
+              tabs={tabs}
+              variant="inline"
+              className="-mr-4 mb-0 w-[calc(100vw-1rem)] min-w-0 sm:mr-0 sm:w-full md:flex-1"
+            />
+          )}
+          {!toolbarInlineWithHeader ? (
+            <div className="hidden min-w-0 justify-end sm:flex md:shrink-0">{tableToolbar}</div>
+          ) : null}
         </div>
       )}
     </>

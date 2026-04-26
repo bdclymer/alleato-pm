@@ -7,6 +7,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import {
+  ALL_GRANULAR_FLAGS,
   ALL_MODULES,
   type PermissionLevel,
   type PermissionModule,
@@ -71,7 +72,7 @@ export async function loadUserPermissions(
   const personId = userAuthResult.data.person_id;
   const isAdmin = profileResult.data?.is_admin === true;
 
-  const [membershipResult, overridesResult, companyTemplateResult] = await Promise.all([
+  const [membershipResult, overridesResult, granularOverridesResult, companyTemplateResult] = await Promise.all([
     supabase
       .from("project_directory_memberships")
       .select(
@@ -87,6 +88,11 @@ export async function loadUserPermissions(
       .select("module, level")
       .eq("project_id", projectId)
       .eq("person_id", personId),
+    supabase
+      .from("user_granular_permission_overrides")
+      .select("project_id, flag, effect")
+      .eq("person_id", personId)
+      .or(`project_id.is.null,project_id.eq.${projectId}`),
     supabase
       .from("person_company_templates")
       .select("template:permission_templates (id, name, rules_json, granular_flags)")
@@ -125,7 +131,20 @@ export async function loadUserPermissions(
     return acc;
   }, emptyOverrides);
 
-  return { userId: userId!, personId, projectId, template, overrides, isAdmin };
+  const granularOverrides = (granularOverridesResult.data ?? []).reduce(
+    (acc, row) => {
+      if (
+        ALL_GRANULAR_FLAGS.includes(row.flag as GranularFlag) &&
+        (row.effect === "allow" || row.effect === "deny")
+      ) {
+        acc[row.flag as GranularFlag] = row.effect;
+      }
+      return acc;
+    },
+    {} as Partial<Record<GranularFlag, "allow" | "deny">>,
+  );
+
+  return { userId: userId!, personId, projectId, template, overrides, granularOverrides, isAdmin };
 }
 
 // ---------------------------------------------------------------------------
@@ -420,7 +439,7 @@ export async function removeCompanyTemplate(
 // ---------------------------------------------------------------------------
 
 async function logPermissionChange(
-  supabase: any,
+  supabase: Awaited<ReturnType<typeof createClient>>,
   entry: {
     project_id: number;
     person_id: string;

@@ -605,11 +605,15 @@ async def health_check() -> Dict[str, Any]:
         Dict containing health status, OpenAI configuration status, and RAG availability.
     """
     openai_key = os.getenv("OPENAI_API_KEY")
+    gateway_key = os.getenv("AI_GATEWAY_API_KEY")
     openai_configured = bool(openai_key and len(openai_key) > 0)
+    ai_gateway_configured = bool(gateway_key and len(gateway_key) > 0)
     
     return {
         "status": "healthy",
         "openai_configured": openai_configured,
+        "ai_gateway_configured": ai_gateway_configured,
+        "embedding_provider_configured": ai_gateway_configured or openai_configured,
         "rag_available": RAG_AVAILABLE,
         "timestamp": datetime.now().isoformat()
     }

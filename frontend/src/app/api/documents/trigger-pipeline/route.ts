@@ -2,7 +2,6 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { apiErrorResponse } from "@/lib/api-error";
 
 type PipelinePhase = "parse" | "embed" | "extract";
 
@@ -29,16 +28,14 @@ export const POST = withApiGuardrails(
     const stageMapping = {
       parse: {
         currentStage: "raw_ingested",
-        workerEndpoint: "/parser/process",
       },
-      embed: { currentStage: "segmented", workerEndpoint: "/embedder/process" },
+      embed: { currentStage: "segmented" },
       extract: {
         currentStage: "embedded",
-        workerEndpoint: "/extractor/process",
       },
     };
 
-    const { currentStage, workerEndpoint } = stageMapping[phase];
+    const { currentStage } = stageMapping[phase];
 
     // Get documents ready for this phase
     let query = supabase
@@ -68,47 +65,26 @@ export const POST = withApiGuardrails(
       });
     }
 
-    const cloudflareBaseUrl = process.env.CLOUDFLARE_WORKER_BASE_URL?.trim();
-    const workerAuthToken = process.env.WORKER_AUTH_TOKEN || "";
     const pythonBackendUrl = (
       process.env.PYTHON_BACKEND_URL || "http://127.0.0.1:8000"
     )
       .replace(/\/+$/, "")
       .trim();
 
-    // Trigger the appropriate worker for each document.
-    // Fallback: if worker URL isn't configured, call FastAPI full pipeline endpoint.
+    // Trigger the native Render/FastAPI pipeline for each document.
     const results = [];
     for (const job of jobs) {
       try {
-        let response: Response;
-        let endpoint = "";
-
-        if (cloudflareBaseUrl) {
-          endpoint = `${cloudflareBaseUrl}${workerEndpoint}`;
-          response = await fetch(endpoint, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${workerAuthToken}`,
-            },
-            body: JSON.stringify({
-              firefliesId: job.fireflies_id,
-              metadataId: job.metadata_id,
-            }),
-          });
-        } else {
-          endpoint = `${pythonBackendUrl}/api/pipeline/process`;
-          response = await fetch(endpoint, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              metadataId: job.metadata_id,
-            }),
-          });
-        }
+        const endpoint = `${pythonBackendUrl}/api/pipeline/process`;
+        const response = await fetch(endpoint, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            metadataId: job.metadata_id,
+          }),
+        });
 
         if (response.ok) {
           let backendStatus: string | undefined;
@@ -138,9 +114,7 @@ export const POST = withApiGuardrails(
           fireflies_id: job.fireflies_id,
           status: "error",
           message: `Error triggering ${phase}: ${error}`,
-          endpoint: cloudflareBaseUrl
-            ? `${cloudflareBaseUrl}${workerEndpoint}`
-            : `${pythonBackendUrl}/api/pipeline/process`,
+          endpoint: `${pythonBackendUrl}/api/pipeline/process`,
         });
       }
     }

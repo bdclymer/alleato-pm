@@ -54,6 +54,7 @@ interface CostAggregation {
   directCosts: number;
   pendingCostChanges: number;
   committedCosts: number;
+  approvedBudgetChanges: number;
   pendingBudgetChanges: number;
 }
 
@@ -87,6 +88,11 @@ interface SOVItem {
 interface ChangeOrderLineItem {
   cost_code_id: string | null;
   amount: number | null;
+}
+
+interface PrimeContractChangeOrderLineItem {
+  cost_code: string | null;
+  line_amount: number | null;
 }
 
 interface CommitmentChangeOrderLineItem {
@@ -168,7 +174,7 @@ type PendingChangeOrderLinesClient = {
 type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
 
 type RuntimeCommitmentsLookupClient = {
-  from: (table: "commitments") => {
+  from: (table: "commitments_unified") => {
     select: (query: "id") => {
       eq: (column: "project_id", value: number) => {
         in: (
@@ -290,6 +296,43 @@ async function fetchPendingPrimeChangeOrderLines(
   return result;
 }
 
+async function fetchPrimeContractChangeOrderLinesByStatus(
+  supabase: SupabaseServerClient,
+  projectIdNum: number,
+  statusFilter: "approved" | "pending",
+) {
+  const statuses =
+    statusFilter === "approved"
+      ? ["approved", "Approved"]
+      : ["proposed", "pending", "submitted", "under_review", "revised"];
+
+  let query = supabase
+    .from("pcco_line_items")
+    .select("cost_code, line_amount, prime_contract_change_orders!inner(status, project_id)")
+    .eq("prime_contract_change_orders.project_id", projectIdNum);
+
+  if (statusFilter === "approved") {
+    query = query.in("prime_contract_change_orders.status", statuses);
+  } else {
+    query = query.in("prime_contract_change_orders.status", statuses);
+  }
+
+  const { data, error } = await query;
+  if (error) {
+    const serialized = JSON.stringify(error);
+    const isMissingTable =
+      serialized.includes("pcco_line_items") ||
+      serialized.includes("PGRST205") ||
+      serialized.includes("schema cache");
+    if (isMissingTable) {
+      return { data: [] as PrimeContractChangeOrderLineItem[], error: null };
+    }
+    return { data: null, error };
+  }
+
+  return { data: data as PrimeContractChangeOrderLineItem[], error: null };
+}
+
 async function fetchCommitmentChangeOrderLinesByStatus(
   supabase: SupabaseServerClient,
   projectIdNum: number,
@@ -319,9 +362,9 @@ async function fetchCommitmentChangeOrderLinesByStatus(
     .select("id, contract_id, status")
     .in("id", changeOrderIds);
   if (statusFilter === "pending") {
-    parentQuery = parentQuery.like("status", "Pending%");
+    parentQuery = parentQuery.in("status", ["pending", "Pending", "Pending Approval"]);
   } else {
-    parentQuery = parentQuery.eq("status", "Approved");
+    parentQuery = parentQuery.in("status", ["approved", "Approved", "executed", "Executed"]);
   }
 
   const { data: parentRows, error: parentError } = await parentQuery;
@@ -344,7 +387,7 @@ async function fetchCommitmentChangeOrderLinesByStatus(
     supabase as unknown as RuntimeCommitmentsLookupClient;
   const { data: commitments, error: commitmentsError } =
     await runtimeCommitmentsClient
-      .from("commitments")
+      .from("commitments_unified")
       .select("id")
       .eq("project_id", projectIdNum)
       .in("id", commitmentIds);
@@ -501,6 +544,8 @@ export async function computeBudgetGrandTotals(
     subcontractSovRes,
     poSovRes,
     pendingPrimeChangeOrdersRes,
+    approvedPrimeContractCOsRes,
+    pendingPrimeContractCOsRes,
     executedSubcontractSovRes,
     executedPoSovRes,
     pendingCommitmentCOsRes,
@@ -545,6 +590,8 @@ export async function computeBudgetGrandTotals(
       .in("purchase_orders.status", PENDING_PO_STATUSES),
 
     fetchPendingPrimeChangeOrderLines(supabase, projectIdNum),
+    fetchPrimeContractChangeOrderLinesByStatus(supabase, projectIdNum, "approved"),
+    fetchPrimeContractChangeOrderLinesByStatus(supabase, projectIdNum, "pending"),
 
     supabase
       .from("subcontract_sov_items")
@@ -572,6 +619,12 @@ export async function computeBudgetGrandTotals(
   }
   if (approvedCommitmentCOsRes.error) {
     throw new BudgetFetchError(approvedCommitmentCOsRes.error);
+  }
+  if (approvedPrimeContractCOsRes.error) {
+    throw new BudgetFetchError(approvedPrimeContractCOsRes.error);
+  }
+  if (pendingPrimeContractCOsRes.error) {
+    throw new BudgetFetchError(pendingPrimeContractCOsRes.error);
   }
 
   const budgetLineIds: string[] = [];
@@ -665,6 +718,7 @@ export async function computeBudgetGrandTotals(
         directCosts: 0,
         pendingCostChanges: 0,
         committedCosts: 0,
+        approvedBudgetChanges: 0,
         pendingBudgetChanges: 0,
       };
     }
@@ -728,6 +782,22 @@ export async function computeBudgetGrandTotals(
     ensureCostEntry(codeId);
     costsByCode[codeId].pendingBudgetChanges += item.amount || 0;
   }
+  for (const item of (pendingPrimeContractCOsRes.data ||
+    []) as PrimeContractChangeOrderLineItem[]) {
+    const codeId = item.cost_code;
+    if (!codeId) continue;
+    ensureCostEntry(codeId);
+    costsByCode[codeId].pendingBudgetChanges += item.line_amount || 0;
+  }
+
+  // Approved Budget Changes: approved prime contract COs
+  for (const item of (approvedPrimeContractCOsRes.data ||
+    []) as PrimeContractChangeOrderLineItem[]) {
+    const codeId = item.cost_code;
+    if (!codeId) continue;
+    ensureCostEntry(codeId);
+    costsByCode[codeId].approvedBudgetChanges += item.line_amount || 0;
+  }
 
   // Committed Costs: executed subs + POs + approved commitment COs
   for (const item of (executedSubcontractSovRes.data || []) as SOVItem[]) {
@@ -771,6 +841,7 @@ export async function computeBudgetGrandTotals(
         directCosts: 0,
         pendingCostChanges: 0,
         committedCosts: 0,
+        approvedBudgetChanges: 0,
         pendingBudgetChanges: 0,
       };
 
@@ -780,8 +851,9 @@ export async function computeBudgetGrandTotals(
         ? 0
         : parseFloat(item.budget_mod_total as string) || 0;
       const approvedCOs = usingBudgetTableFallback
-        ? 0
-        : parseFloat(item.approved_co_total as string) || 0;
+        ? costData.approvedBudgetChanges
+        : (parseFloat(item.approved_co_total as string) || 0) +
+          costData.approvedBudgetChanges;
       const revisedBudget = usingBudgetTableFallback
         ? originalBudgetAmount + budgetModifications + approvedCOs
         : parseFloat(item.revised_budget as string) || 0;

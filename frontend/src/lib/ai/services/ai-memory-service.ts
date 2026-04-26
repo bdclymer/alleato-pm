@@ -104,16 +104,20 @@ export async function writeMemory(
     const embeddingJson = JSON.stringify(embeddingVec);
 
     // --- Deduplication ---
-    const { data: dupRows } = await supabase.rpc("find_duplicate_memory", {
+    const { data: dupRows, error: dupError } = await supabase.rpc("find_duplicate_memory", {
       query_embedding: embeddingJson,
       p_user_id: params.userId,
       p_type: params.type,
       similarity_threshold: 0.88,
     });
 
+    if (dupError) {
+      return { error: `Duplicate memory check failed: ${dupError.message}` };
+    }
+
     if (dupRows && dupRows.length > 0) {
       const dup = dupRows[0] as { id: string };
-      await supabase
+      const { error: updateError } = await supabase
         .from("ai_memories")
         .update({
           content: params.content,
@@ -127,6 +131,7 @@ export async function writeMemory(
         })
         .eq("id", dup.id);
 
+      if (updateError) return { error: updateError.message };
       return { id: dup.id, action: "updated" };
     }
 
@@ -189,7 +194,7 @@ async function bridgeCommitmentToInsight(params: {
   const supabase = createServiceClient();
 
   // Avoid duplicate action items: check if one already exists with this content
-  const { data: existing } = await supabase
+  const { data: existing, error: existingError } = await supabase
     .from("ai_insights")
     .select("id")
     .eq("project_id", params.projectId)
@@ -197,9 +202,13 @@ async function bridgeCommitmentToInsight(params: {
     .ilike("title", params.content.substring(0, 80) + "%")
     .limit(1);
 
+  if (existingError) {
+    throw new Error(`Failed to check commitment insight duplicate: ${existingError.message}`);
+  }
+
   if (existing && existing.length > 0) return;
 
-  await supabase.from("ai_insights").insert({
+  const { error: insertError } = await supabase.from("ai_insights").insert({
     project_id: params.projectId,
     title: params.content.substring(0, 255),
     description:
@@ -211,6 +220,10 @@ async function bridgeCommitmentToInsight(params: {
     confidence_score: 80,
     meeting_id: params.meetingId ?? null,
   });
+
+  if (insertError) {
+    throw new Error(`Failed to create commitment insight from memory: ${insertError.message}`);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -239,16 +252,26 @@ export async function searchMemories(params: {
       filter_project_id: params.projectId ?? undefined,
     });
 
-    if (error || !data) return [];
+    if (error) {
+      throw new Error(`AI memory search failed: ${error.message}`);
+    }
+    if (!data) return [];
 
     const ids = (data as AiMemory[]).map((m) => m.id);
     if (ids.length > 0) {
-      supabase.rpc("touch_ai_memories", { memory_ids: ids }).then(() => {});
+      supabase
+        .rpc("touch_ai_memories", { memory_ids: ids })
+        .then(({ error: touchError }) => {
+          if (touchError) {
+            console.error("[ai-memory-service] Failed to touch memories:", touchError);
+          }
+        });
     }
 
     return data as AiMemory[];
-  } catch {
-    return [];
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown memory search error";
+    throw new Error(message);
   }
 }
 
@@ -271,10 +294,14 @@ async function searchTeamMemories(params: {
       match_threshold: 0.5,
     });
 
-    if (error || !data) return [];
+    if (error) {
+      throw new Error(`Team memory search failed: ${error.message}`);
+    }
+    if (!data) return [];
     return data as AiMemory[];
-  } catch {
-    return [];
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown team memory search error";
+    throw new Error(message);
   }
 }
 
@@ -297,7 +324,10 @@ export async function getUserPreferences(userId: string): Promise<AiMemory[]> {
     .order("importance", { ascending: false })
     .limit(20);
 
-  if (error || !data) return [];
+  if (error) {
+    throw new Error(`User preference memory lookup failed: ${error.message}`);
+  }
+  if (!data) return [];
   return data as AiMemory[];
 }
 
@@ -492,8 +522,13 @@ export async function getMemoriesForSession(params: {
   userId: string;
   firstMessage: string;
   projectId?: number;
-}): Promise<{ preferences: AiMemory[]; relevant: AiMemory[]; team: AiMemory[] }> {
-  const [preferences, relevant, team] = await Promise.all([
+}): Promise<{
+  preferences: AiMemory[];
+  relevant: AiMemory[];
+  team: AiMemory[];
+  errors: string[];
+}> {
+  const [preferencesResult, relevantResult, teamResult] = await Promise.allSettled([
     getUserPreferences(params.userId),
     searchMemories({
       userId: params.userId,
@@ -508,5 +543,18 @@ export async function getMemoriesForSession(params: {
     }),
   ]);
 
-  return { preferences, relevant, team };
+  const errors: string[] = [];
+  const unwrap = (label: string, result: PromiseSettledResult<AiMemory[]>): AiMemory[] => {
+    if (result.status === "fulfilled") return result.value;
+    const message =
+      result.reason instanceof Error ? result.reason.message : String(result.reason);
+    errors.push(`${label}: ${message}`);
+    return [];
+  };
+
+  const preferences = unwrap("preferences", preferencesResult);
+  const relevant = unwrap("relevant memories", relevantResult);
+  const team = unwrap("team memories", teamResult);
+
+  return { preferences, relevant, team, errors };
 }

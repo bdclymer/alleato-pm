@@ -3,20 +3,22 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { createContractSchema } from "./validation";
-import { ZodError } from "zod";
 import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
 import { logger } from "@/lib/logger";
+import {
+  fetchLivePrimeContractChangeTotals,
+  type LivePrimeContractChangeTotals,
+  mergePrimeContractFinancials,
+} from "@/lib/prime-contracts/live-change-order-totals";
 
-interface RouteParams {
-  params: Promise<{ projectId: string }>;
-}
+const WHERE = "projects/[projectId]/contracts#POST";
 
 /**
  * GET /api/projects/[id]/contracts
  * Returns all prime contracts for a specific project with calculated financial data
  */
-export const GET = withApiGuardrails(
+export const GET = withApiGuardrails<{ projectId: string }>(
   "projects/[projectId]/contracts#GET",
   async ({ request, params }) => {
   
@@ -131,9 +133,25 @@ export const GET = withApiGuardrails(
       return allowedIds.includes(currentUserId);
     });
 
+    let liveChangeTotalsByContractId = new Map<string, LivePrimeContractChangeTotals>();
+    try {
+      liveChangeTotalsByContractId = await fetchLivePrimeContractChangeTotals(
+        supabase,
+        projectIdNum,
+        visibleContracts.map((contract) => contract.id),
+      );
+    } catch (error) {
+      return apiErrorResponse(error);
+    }
+
     const enrichedContracts = visibleContracts.map((contract) => {
       const fin = financialByContractId.get(contract.id);
       const originalValue = contract.original_contract_value ?? 0;
+      const financials = mergePrimeContractFinancials(
+        originalValue,
+        fin,
+        liveChangeTotalsByContractId.get(contract.id),
+      );
       // Use contract_company as fallback when client_id is not set
       const clientData = (contract as Record<string, unknown>).client
         ?? (contract as Record<string, unknown>).contract_company
@@ -141,13 +159,13 @@ export const GET = withApiGuardrails(
       return {
         ...contract,
         client: clientData,
-        approved_change_orders: fin?.approved_change_orders ?? 0,
-        pending_change_orders: fin?.pending_change_orders ?? 0,
-        draft_change_orders: fin?.draft_change_orders ?? 0,
-        revised_contract_value: fin?.revised_contract_amount ?? originalValue,
+        approved_change_orders: financials.approved_change_orders,
+        pending_change_orders: financials.pending_change_orders,
+        draft_change_orders: financials.draft_change_orders,
+        revised_contract_value: financials.revised_contract_value,
         invoiced_amount: fin?.invoiced_amount ?? 0,
         payments_received: fin?.payments_received ?? 0,
-        remaining_balance: fin?.remaining_balance ?? originalValue,
+        remaining_balance: fin?.remaining_balance ?? financials.revised_contract_value,
         percent_paid: fin?.percent_paid ?? 0,
         attachment_count: attachmentCountByContractId.get(contract.id) ?? 0,
       };
@@ -161,8 +179,8 @@ export const GET = withApiGuardrails(
  * POST /api/projects/[id]/contracts
  * Creates a new prime contract for a specific project
  */
-export const POST = withApiGuardrails(
-  "projects/[projectId]/contracts#POST",
+export const POST = withApiGuardrails<{ projectId: string }>(
+  WHERE,
   async ({ request, params }) => {
   
     const { projectId } = await params;
@@ -171,13 +189,31 @@ export const POST = withApiGuardrails(
     if (guard.denied) return guard.response;
 
     const supabase = await createClient();
-    const body = await request.json();
+    const body = await request.json().catch(() => {
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: WHERE,
+        message: "Malformed prime contract payload.",
+      });
+    });
 
     // Validate request body
-    const validatedData = createContractSchema.parse({
+    const parsed = createContractSchema.safeParse({
       ...body,
-      project_id: parseInt(projectId, 10),
+      project_id: projectIdNum,
     });
+    if (!parsed.success) {
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: WHERE,
+        message: "Invalid prime contract payload.",
+        details: parsed.error.issues.map((issue) => ({
+          path: issue.path.join("."),
+          message: issue.message,
+        })),
+      });
+    }
+    const validatedData = parsed.data;
 
     // Get current user
     const {
@@ -186,14 +222,14 @@ export const POST = withApiGuardrails(
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/contracts#POST", message: "Authentication required." });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: WHERE, message: "Authentication required." });
     }
 
     // Check for unique contract_number within project
     const { data: existingContract } = await supabase
       .from("prime_contracts")
       .select("id")
-      .eq("project_id", parseInt(projectId, 10))
+      .eq("project_id", projectIdNum)
       .eq("contract_number", validatedData.contract_number)
       .maybeSingle();
 

@@ -134,6 +134,12 @@ function isBriefingQuery(query: string): boolean {
     "progress",
     "any news",
     "what happened",
+    "recent",
+    "risk",
+    "risks",
+    "tracking",
+    "right now",
+    "should know",
   ].some((kw) => q.includes(kw));
 }
 
@@ -155,7 +161,7 @@ async function rerankWithLLM(
       : "";
 
     const response = await openai.chat.completions.create({
-      model: "openai/gpt-4.1-mini", // gpt-4.1-mini via AI Gateway — fast, cheap, accurate reranker
+      model: getOpenAIModelId("gpt-4.1-mini"),
       temperature: 0,
       max_tokens: 200,
       messages: [
@@ -206,6 +212,10 @@ function getOpenAI(): OpenAI {
     }
   }
   return _openai;
+}
+
+function getOpenAIModelId(modelId: string): string {
+  return process.env.AI_GATEWAY_API_KEY ? `openai/${modelId}` : modelId;
 }
 
 // ---------------------------------------------------------------------------
@@ -1303,7 +1313,7 @@ export function createOperationalTools(
           // Fetch budget lines with full financial data
            
           const { data: budgetRows, error } = await supabase
-            .from("v_budget_lines" as any)
+            .from("v_budget_lines" as never)
             .select("*")
             .eq("project_id", resolved.id) as { data: Array<Record<string, unknown>> | null; error: { message: string } | null };
 
@@ -1430,11 +1440,18 @@ export function createOperationalTools(
           .optional()
           .default(0.3)
           .describe("Minimum similarity threshold (0-1)"),
+        skipRerank: z
+          .boolean()
+          .optional()
+          .default(false)
+          .describe(
+            "Skip the LLM reranker when the caller needs fast deterministic retrieval.",
+          ),
       }),
       execute: withTrace(
         "semanticSearch",
         options,
-        async ({ query, projectId, projectName, matchCount, threshold }) => {
+        async ({ query, projectId, projectName, matchCount, threshold, skipRerank }) => {
           // Resolve project name to ID if provided
           let resolvedProjectId = projectId;
           if (!resolvedProjectId && projectName) {
@@ -1469,7 +1486,12 @@ export function createOperationalTools(
             // search_knowledge_base    → company_knowledge
             const [chunksRes, knowledgeRes, knowledgeBaseRes] = await Promise.all([
                
-              (supabase as any).rpc("search_document_chunks", {
+              (supabase as unknown as {
+                rpc: (
+                  name: string,
+                  args: Record<string, unknown>,
+                ) => Promise<{ data: Array<Record<string, unknown>> | null; error: { message: string } | null }>;
+              }).rpc("search_document_chunks", {
                 query_embedding: embeddingArg3072,
                 filter_source_types: null,
                 filter_project_id: resolvedProjectId ?? null,
@@ -1537,7 +1559,7 @@ export function createOperationalTools(
                 key: `${sourceTable}:${recordId}`,
                 sourceTable,
                 recordId,
-                content: String(row.content ?? ""),
+                content: String(row.content ?? row.description ?? ""),
                 similarity,
                 projectIds: Array.isArray(row.project_ids)
                   ? (row.project_ids as unknown[]).filter(
@@ -1705,7 +1727,7 @@ export function createOperationalTools(
 
             // LLM reranker: always re-score candidates by actual relevance to the query
             let results: typeof candidates;
-            if (candidates.length > 0) {
+            if (candidates.length > 0 && !skipRerank) {
               const rerankedIndices = await rerankWithLLM(query, candidates, targetCount);
               results = rerankedIndices.map((i) => candidates[i]).filter(Boolean);
               // Fill remaining slots if reranker returned fewer than targetCount
@@ -3231,7 +3253,12 @@ async function searchDocumentChunksByCategory({
     const queryEmbedding = embeddingResponse.data[0].embedding;
 
      
-    const { data, error } = await (supabase as any).rpc(
+    const { data, error } = await (supabase as unknown as {
+      rpc: (
+        name: string,
+        args: Record<string, unknown>,
+      ) => Promise<{ data: Array<Record<string, unknown>> | null; error: { message: string } | null }>;
+    }).rpc(
       "search_document_chunks_by_category",
       {
         query_embedding: JSON.stringify(queryEmbedding),

@@ -119,8 +119,8 @@ Sync implementation:
   - Upsert `document_metadata`
   - Create/advance ingestion job row
 
-Legacy ingest worker still exists but is not the preferred path:
-- [`backend/src/workers/ingest/index.ts`](../../backend/src/workers/ingest/index.ts)
+Legacy Cloudflare workers were removed. Fireflies ingestion runs through the
+native Render/FastAPI backend path only.
 
 ## 7) How the RAG Pipeline Is Initiated
 

@@ -28,6 +28,7 @@ Leader reviews all pending handoffs here.
 | `docs/ops/handoffs/2026-04-24-S16-commitments-feature-run.md` | S16 | ORCH-019 | 2026-04-24 | Yes | Accepted | Blocked run accepted: all 26 cases blocked by documented page crash in `LiveCursorsRoom` / `crypto.randomUUID`; screenshots and report captured. |
 | `docs/ops/handoffs/2026-04-24-S17-budget-feature-run.md` | S17 | ORCH-020 | 2026-04-24 | Partial | Needs Rework | Continued slice added cases 11.1, 12.1, 12.2, 12.3, 13.1 with a slice report; parent run remains incomplete with 4 pass, 4 fail, and 17 not_tested. |
 | `docs/ops/handoffs/2026-04-26-S18-frontend-qa-audit.md` | S18 | ORCH-021 | 2026-04-26 | Yes | Pending Review | Browser QA audit completed with route/responsive artifacts, scoped shared mobile chrome fixes, tab/action/table mobile pattern cleanup, budget scroll sync fix, and passing focused Playwright regressions. |
+| `docs/ops/handoffs/2026-04-26-S19-linear-codex-process.md` | S19 | ORCH-022 / AAI-165 | 2026-04-26 | Yes | Pending Review | Linear-Codex process installed with mandatory issue/comment/sub-issue/evidence contract, guardrail command, worker-status enforcement, and Linear evidence posted to AAI-165. |
 
 ## Disposition Rules
 

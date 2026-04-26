@@ -27,6 +27,7 @@ Use this as the live ownership registry.
 | S16 | Codex Worker | ORCH-019 | Feature-test run using `test-scenario-run-feature` for commitments | `docs/ops/handoffs/2026-04-24-S16-commitments-feature-run.md`, `tests/agent-browser-runs/*feature-commitments*/**`, `docs/testing/results/*commitments-feature-*.md` | Accepted | 2026-04-24 | 2026-04-24 |
 | S17 | Codex Worker | ORCH-020 | Feature-test run using `test-scenario-run-feature` for budget | `docs/ops/handoffs/2026-04-24-S17-budget-feature-run.md`, `tests/agent-browser-runs/*feature-budget*/**`, `docs/testing/results/*budget-feature-*.md` | Needs Rework | 2026-04-24 | 2026-04-24 |
 | S18 | Codex | ORCH-021 | Senior frontend QA browser audit for core navigation, project workflows, responsive layouts, accessibility, and scoped frontend fixes | `frontend/src/**`, `frontend/tests/**`, `frontend/next.config.ts`, `tests/agent-browser-runs/*frontend-qa*/**`, `tests/agent-browser-runs/*mobile-design-audit*/**`, `docs/ops/handoffs/2026-04-26-S18-frontend-qa-audit.md` | Pending Review | 2026-04-26 | 2026-04-26 |
+| S19 | Codex | ORCH-022 / AAI-165 | Linear-Codex execution process, handoff guardrails, sub-issue policy, and Linear comment generation | `AGENTS.md`, `docs/ops/orchestration/**`, `docs/ops/handoffs/HANDOFF-TEMPLATE.md`, `docs/ops/handoffs/2026-04-26-S19-linear-codex-process.md`, `scripts/ops/**`, `package.json` | Pending Review | 2026-04-26 | 2026-04-26 |
 
 ## Status Rules
 

@@ -4854,6 +4854,7 @@ export type Database = {
       change_event_line_items: {
         Row: {
           budget_code_id: string | null
+          budget_line_id: string | null
           change_event_id: string
           commitment_id: string | null
           commitment_line_item_id: string | null
@@ -4875,6 +4876,7 @@ export type Database = {
         }
         Insert: {
           budget_code_id?: string | null
+          budget_line_id?: string | null
           change_event_id: string
           commitment_id?: string | null
           commitment_line_item_id?: string | null
@@ -4896,6 +4898,7 @@ export type Database = {
         }
         Update: {
           budget_code_id?: string | null
+          budget_line_id?: string | null
           change_event_id?: string
           commitment_id?: string | null
           commitment_line_item_id?: string | null
@@ -4919,6 +4922,13 @@ export type Database = {
           {
             foreignKeyName: "change_event_line_items_budget_code_id_fkey"
             columns: ["budget_code_id"]
+            isOneToOne: false
+            referencedRelation: "budget_lines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "change_event_line_items_budget_line_id_fkey"
+            columns: ["budget_line_id"]
             isOneToOne: false
             referencedRelation: "budget_lines"
             referencedColumns: ["id"]
@@ -14824,6 +14834,108 @@ export type Database = {
           },
         ]
       }
+      prime_contract_change_order_related_items: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          prime_co_id: number
+          project_id: number
+          related_id: string
+          related_number: string | null
+          related_status: string | null
+          related_title: string
+          related_type: string
+          related_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          prime_co_id: number
+          project_id: number
+          related_id: string
+          related_number?: string | null
+          related_status?: string | null
+          related_title: string
+          related_type: string
+          related_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          prime_co_id?: number
+          project_id?: number
+          related_id?: string
+          related_number?: string | null
+          related_status?: string | null
+          related_title?: string
+          related_type?: string
+          related_url?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prime_contract_change_order_related_items_prime_co_id_fkey"
+            columns: ["prime_co_id"]
+            isOneToOne: false
+            referencedRelation: "prime_contract_change_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prime_contract_change_order_related_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "prime_contract_change_order_related_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prime_contract_change_order_related_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prime_contract_change_order_related_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "prime_contract_change_order_related_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prime_contract_change_order_related_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prime_contract_change_order_related_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prime_contract_change_orders: {
         Row: {
           acumatica_external_key: string | null
@@ -23987,6 +24099,93 @@ export type Database = {
           },
         ]
       }
+      user_granular_permission_overrides: {
+        Row: {
+          effect: string
+          flag: string
+          id: string
+          person_id: string
+          project_id: number | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          effect: string
+          flag: string
+          id?: string
+          person_id: string
+          project_id?: number | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          effect?: string
+          flag?: string
+          id?: string
+          person_id?: string
+          project_id?: number | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_granular_permission_overrides_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_granular_permission_overrides_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "user_granular_permission_overrides_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_granular_permission_overrides_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_granular_permission_overrides_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "user_granular_permission_overrides_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_granular_permission_overrides_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_granular_permission_overrides_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_module_permissions: {
         Row: {
           id: string
@@ -26382,7 +26581,7 @@ export type Database = {
         Args: {
           p_type: string
           p_user_id: string
-          query_embedding: string
+          query_embedding: unknown
           similarity_threshold?: number
         }
         Returns: {
@@ -27353,7 +27552,7 @@ export type Database = {
           match_count?: number
           match_threshold?: number
           p_user_id: string
-          query_embedding: string
+          query_embedding: unknown
         }
         Returns: {
           confidence: number
@@ -27661,7 +27860,7 @@ export type Database = {
           filter_type?: string
           match_count?: number
           match_threshold?: number
-          query_embedding: string
+          query_embedding: unknown
         }
         Returns: {
           confidence: number

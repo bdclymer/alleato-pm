@@ -107,7 +107,7 @@
   - PDF text extraction (pdf-parse)
   - DOCX text extraction (mammoth)
   - Chunk with metadata → embed with text-embedding-3-small
-  - Follow pattern: backend/src/workers/embedder/index.ts
+  - Follow pattern: backend/src/services/pipeline/embedder.py
 
 - [ ] **1.18** Create document upload trigger
   - On upload to Supabase Storage → trigger ingestion pipeline

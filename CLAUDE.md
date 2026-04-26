@@ -361,6 +361,46 @@ const data = await fetchWithGuardrails("https://backend.onrender.com/api/...", {
 
 **Why:** Raw `fetch` to external services has no timeout (can hang forever), no retry, no structured error output, and loses the request ID chain. `fetchWithGuardrails` enforces all four.
 
+### 17. Build Crash Prevention Gate
+
+**These two patterns have caused 5+ production build failures. Both are detected by CI — but you must not introduce them in the first place.**
+
+#### Pattern A: Module-level server client initialization
+
+**NEVER** initialize a server-side client that reads non-public env vars at the module level:
+
+```ts
+// ❌ CRASHES next build — runs at import time, env var absent in CI
+const client = new Liveblocks({ secret: process.env.LIVEBLOCKS_SECRET_KEY });
+
+// ✅ CORRECT — lazy singleton, only runs at request time
+let _client: Liveblocks | null = null;
+function getClient(): Liveblocks {
+  if (!_client) {
+    if (!process.env.LIVEBLOCKS_SECRET_KEY) throw new Error("LIVEBLOCKS_SECRET_KEY not set");
+    _client = new Liveblocks({ secret: process.env.LIVEBLOCKS_SECRET_KEY });
+  }
+  return _client;
+}
+```
+
+**Rule:** Any file that is NOT `"use client"` and reads a non-`NEXT_PUBLIC_*` env var to construct a client MUST use the lazy singleton pattern.
+
+#### Pattern B: Server pages missing `force-dynamic`
+
+**ALWAYS** add `export const dynamic = "force-dynamic"` as the first line of any Next.js `page.tsx` that calls `createServiceClient()` or any service that reads `SUPABASE_SERVICE_ROLE_KEY`:
+
+```ts
+// ✅ REQUIRED — prevents static prerendering at build time
+export const dynamic = "force-dynamic";
+
+import { createServiceClient } from "@/lib/supabase/service";
+```
+
+**Why:** Without `force-dynamic`, Next.js statically prerenders the page during `next build`. It imports the module, the service client reads `SUPABASE_SERVICE_ROLE_KEY`, which is absent in CI, and the build crashes with a cryptic error.
+
+**Guardrail:** `scripts/check-server-prerender-safety.mjs` and `scripts/check-no-module-level-server-init.mjs` run in the predeploy gate and fail the build if either pattern is detected.
+
 ---
 
 ## Behavioral Rules

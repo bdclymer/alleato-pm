@@ -8,6 +8,10 @@ import { updateContractSchema } from "../validation";
 import { ZodError } from "zod";
 import { requirePermission } from "@/lib/permissions-guard";
 import { logger } from "@/lib/logger";
+import {
+  fetchLivePrimeContractChangeTotals,
+  mergePrimeContractFinancials,
+} from "@/lib/prime-contracts/live-change-order-totals";
 
 interface RouteParams {
   params: Promise<{ projectId: string; contractId: string }>;
@@ -96,17 +100,32 @@ export const GET = withApiGuardrails(
       remaining_balance: contract.original_contract_value ?? 0,
       percent_paid: 0,
     };
+    let liveTotals;
+    try {
+      liveTotals = (await fetchLivePrimeContractChangeTotals(
+        supabase,
+        parseInt(projectId, 10),
+        [contractId],
+      )).get(contractId);
+    } catch (error) {
+      return apiErrorResponse(error);
+    }
+    const financials = mergePrimeContractFinancials(
+      contract.original_contract_value ?? 0,
+      fin,
+      liveTotals,
+    );
 
     return NextResponse.json({
       ...contract,
-      approved_change_orders: fin.approved_change_orders,
-      pending_change_orders: fin.pending_change_orders,
-      draft_change_orders: fin.draft_change_orders,
-      pending_revised_contract_amount: fin.pending_revised_contract_amount,
-      revised_contract_value: fin.revised_contract_amount,
+      approved_change_orders: financials.approved_change_orders,
+      pending_change_orders: financials.pending_change_orders,
+      draft_change_orders: financials.draft_change_orders,
+      pending_revised_contract_amount: financials.pending_revised_contract_value,
+      revised_contract_value: financials.revised_contract_value,
       invoiced_amount: fin.invoiced_amount,
       payments_received: fin.payments_received,
-      remaining_balance: fin.remaining_balance,
+      remaining_balance: fin.remaining_balance ?? financials.revised_contract_value,
       percent_paid: fin.percent_paid,
     });
     },

@@ -4,13 +4,14 @@ You are Codex running inside the Codex CLI on the user's Mac.
 
 ## Proactive Systems Thinking Rules
 
-Rule 1: Do not ship silent failures.
-Rule 2: Do not return generic errors.
-Rule 3: Do not fix a recurring bug without adding a guardrail.
-Rule 4: Do not introduce one-off handling when a shared abstraction is warranted.
-Rule 5: For every failure, explain cause, detection gap, and prevention step.
-Rule 6: Before closing any task, ask: “How does this fail loudly?”
-Rule 7: Before closing any bug, ask: “What makes this never happen again?”
+Rule 1: Never create one-off components, one-off styling, or page-local hard-coded UI when an existing shared primitive, pattern, or design-system component can reasonably be used. If a one-off implementation is absolutely mandatory, document why in the code, explain why no shared primitive fits, and create or reference a follow-up to move it into a shared abstraction when appropriate.
+Rule 2: Do not ship silent failures.
+Rule 3: Do not return generic errors.
+Rule 4: Do not fix a recurring bug without adding a guardrail.
+Rule 5: Do not introduce one-off handling when a shared abstraction is warranted.
+Rule 6: For every failure, explain cause, detection gap, and prevention step.
+Rule 7: Before closing any task, ask: “How does this fail loudly?”
+Rule 8: Before closing any bug, ask: “What makes this never happen again?”
 
 ## General
 
@@ -51,6 +52,46 @@ When more than one Codex session is active, use `docs/ops/orchestration/` as the
 ### Worker Summary Requirement
 
 Yes: each active session must summarize what it did and what it found in its handoff file so the leader can consolidate and decide.
+
+## Long-Running Verification Delegation (MANDATORY)
+
+Do not block the main conversation on long-running verification unless the user explicitly asks to wait.
+
+For expensive checks such as full builds, full predeploy gates, full test suites, long crawls, deployment log monitoring, or any command likely to run for more than a few minutes:
+
+1. Delegate the long-running verification to a cheaper capable sub-agent when sub-agents are available.
+2. Keep the main thread focused on implementation, short targeted checks, integration decisions, and fixing concrete blockers.
+3. Do not stream large lint, build, crawl, or test logs into the main conversation.
+4. Prefer the cheapest capable model available for routine verification. Do not use a frontier model for lint, typecheck, build, predeploy, or log-watching unless the user explicitly requests it.
+5. The verification sub-agent must return a compact report with:
+   - pass/fail status
+   - exact failing command
+   - concise error lines only
+   - likely owner file(s)
+   - whether the failure is related to the current task or unrelated repo debt
+6. The main agent should re-engage only when the sub-agent reports a concrete blocker that needs code changes or when final pass/fail status is needed for the user.
+
+Default pattern:
+
+- Main thread: implementation, short checks, decisions.
+- Cheap sub-agent: full build, full predeploy, full test suite, long-running verification.
+- Final answer: summarize what changed, what passed, what remains, and recommended next steps.
+
+## Linear-Codex Operating Process (MANDATORY)
+
+Linear is the source of truth for issue ownership and state. The local orchestration docs are the evidence ledger.
+
+Required process:
+
+1. Every Codex-owned task must have a Linear issue before coding starts.
+2. Broad work must be split into Linear sub-issues when slices have separate ownership, verification, risk, or definition of done.
+3. The active Linear issue ID and URL must be recorded in the worker handoff intake block.
+4. Codex must post Linear comments at kickoff, meaningful milestones, blockers, review handoff, and acceptance/rework.
+5. Every Linear update must include scope, changed files, command outcomes, evidence artifact paths, risks/blockers, and next action.
+6. Before handoff, run `npm run linear:codex:check -- docs/ops/handoffs/<file>.md`.
+7. Use `npm run linear:codex:comment -- docs/ops/handoffs/<file>.md` to generate the comment body, then post it to Linear with the Linear connector.
+
+Process reference: `docs/ops/orchestration/linear-codex-process.md`.
 
 ---
 

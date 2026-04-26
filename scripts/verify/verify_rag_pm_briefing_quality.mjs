@@ -22,26 +22,35 @@
  *   EVAL_BASE_URL=http://localhost:3000 EVAL_SESSION_COOKIE=... node scripts/verify/verify_rag_pm_briefing_quality.mjs
  */
 
-import { createClient } from "@supabase/supabase-js";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
+import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, "..", "..");
+const requireFromFrontend = createRequire(resolve(repoRoot, "frontend", "package.json"));
+const { createClient } = requireFromFrontend("@supabase/supabase-js");
 
 // ---------------------------------------------------------------------------
 // Config
 // ---------------------------------------------------------------------------
 function loadEnv() {
-  try {
-    const raw = readFileSync(resolve(repoRoot, "frontend", ".env.local"), "utf8");
+  for (const envPath of [
+    resolve(repoRoot, ".env"),
+    resolve(repoRoot, ".env.local"),
+    resolve(repoRoot, "frontend", ".env.local"),
+  ]) {
+    if (!existsSync(envPath)) continue;
+    const raw = readFileSync(envPath, "utf8");
     for (const line of raw.split("\n")) {
-      const m = line.match(/^([A-Z0-9_]+)=(.*)$/);
-      if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^['"]|['"]$/g, "");
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith("#")) continue;
+      const m = trimmed.match(/^([A-Z0-9_]+)=(.*)$/);
+      if (m && !process.env[m[1]]) {
+        process.env[m[1]] = m[2].trim().replace(/^['"]|['"]$/g, "");
+      }
     }
-  } catch {
-    // .env.local may not exist in CI — rely on real env vars
   }
 }
 
@@ -90,6 +99,11 @@ const NON_BRIEFING_QUERIES = [
   "Explain retainage",
 ];
 
+const EXPECTED_BRIEFING_DETECTION = new Map([
+  ...BRIEFING_QUERIES.map((query) => [query, true]),
+  ...NON_BRIEFING_QUERIES.map((query) => [query, false]),
+]);
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -117,6 +131,7 @@ function isBriefingQuery(query) {
     "latest", "brief", "briefing", "catch me up", "update",
     "what's happening", "what is happening", "status", "how is",
     "how's", "progress", "any news", "what happened",
+    "recent", "risk", "risks", "tracking", "right now", "should know",
   ].some((kw) => q.includes(kw));
 }
 
@@ -148,7 +163,7 @@ async function evalRetrieval(query) {
 
   const embeddingStr = JSON.stringify(embedding);
 
-  const [chunksRes, knowledgeRes] = await Promise.allSettled([
+  const [chunksRes, knowledgeRes] = await Promise.all([
     supabase.rpc("search_document_chunks", {
       query_embedding: embeddingStr,
       filter_source_types: null,
@@ -163,19 +178,25 @@ async function evalRetrieval(query) {
     }),
   ]);
 
-  const chunks = chunksRes.status === "fulfilled" ? (chunksRes.value.data ?? []) : [];
-  const knowledge = knowledgeRes.status === "fulfilled" ? (knowledgeRes.value.data ?? []) : [];
-
-  if (chunksRes.status === "rejected") {
-    console.log(`  ⚠️  search_document_chunks RPC failed: ${chunksRes.reason}`);
+  const rpcErrors = [];
+  if (chunksRes.error) {
+    rpcErrors.push(`search_document_chunks=${chunksRes.error.message}`);
   }
-  if (knowledgeRes.status === "rejected") {
-    console.log(`  ⚠️  search_all_knowledge RPC failed: ${knowledgeRes.reason}`);
+  if (knowledgeRes.error) {
+    rpcErrors.push(`search_all_knowledge=${knowledgeRes.error.message}`);
   }
 
+  for (const error of rpcErrors) {
+    console.log(`  WARN ${error}`);
+  }
+
+  const chunks = chunksRes.error ? [] : (chunksRes.data ?? []);
+  const knowledge = knowledgeRes.error ? [] : (knowledgeRes.data ?? []);
   const allResults = [...chunks, ...knowledge];
   const totalCount = allResults.length;
-  const sourceTables = [...new Set(allResults.map((r) => r.source_table ?? "knowledge"))];
+  const sourceTables = [
+    ...new Set(allResults.map((r) => r.source_table ?? r.source_type ?? "knowledge")),
+  ];
   const topSimilarities = allResults
     .map((r) => r.similarity ?? 0)
     .sort((a, b) => b - a)
@@ -194,8 +215,13 @@ async function evalRetrieval(query) {
   const passes = [
     grade(
       "Briefing detection",
-      isBriefing === isBriefingQuery(query),
-      `isBriefingQuery=${isBriefing}`,
+      isBriefing === EXPECTED_BRIEFING_DETECTION.get(query),
+      `expected=${EXPECTED_BRIEFING_DETECTION.get(query)} actual=${isBriefing}`,
+    ),
+    grade(
+      "RPCs succeeded",
+      rpcErrors.length === 0,
+      rpcErrors.length ? rpcErrors.join("; ") : "both retrieval RPCs returned without errors",
     ),
     grade(
       "Returns results",
@@ -228,6 +254,32 @@ async function evalRetrieval(query) {
 async function evalChatApi(query, baseUrl, cookie) {
   console.log(`\n🤖 Live chat: "${query}"`);
 
+  let sessionId;
+  try {
+    const conversationResp = await fetch(`${baseUrl}/api/ai-assistant/conversations`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Cookie: cookie,
+      },
+      body: JSON.stringify({ title: `PM briefing eval: ${query.slice(0, 60)}` }),
+      signal: AbortSignal.timeout(30_000),
+    });
+    if (!conversationResp.ok) {
+      console.log(`  WARN conversation create HTTP ${conversationResp.status}`);
+      return null;
+    }
+    const conversationJson = await conversationResp.json();
+    sessionId = conversationJson.conversation?.session_id;
+    if (!sessionId) {
+      console.log("  WARN conversation create did not return session_id");
+      return null;
+    }
+  } catch (err) {
+    console.log(`  WARN conversation create failed: ${err.message}`);
+    return null;
+  }
+
   let resp;
   try {
     resp = await fetch(`${baseUrl}/api/ai-assistant/chat`, {
@@ -237,7 +289,7 @@ async function evalChatApi(query, baseUrl, cookie) {
         Cookie: cookie,
       },
       body: JSON.stringify({
-        id: `eval-${Date.now()}`,
+        id: sessionId,
         messages: [{ role: "user", parts: [{ type: "text", text: query }], id: "u1" }],
       }),
       signal: AbortSignal.timeout(90_000),
@@ -265,6 +317,22 @@ async function evalChatApi(query, baseUrl, cookie) {
     }
   }
   const responseText = textDeltas.join("");
+  let loopDiagnostic = null;
+  try {
+    const messagesResp = await fetch(`${baseUrl}/api/ai-assistant/messages/${sessionId}`, {
+      headers: { Cookie: cookie },
+      signal: AbortSignal.timeout(30_000),
+    });
+    if (messagesResp.ok) {
+      const messagesJson = await messagesResp.json();
+      const assistantMessage = [...(messagesJson.messages ?? [])]
+        .reverse()
+        .find((message) => message.role === "assistant");
+      loopDiagnostic = assistantMessage?.metadata?.loop_diagnostic ?? null;
+    }
+  } catch {
+    // Keep the text-only eval useful when message lookup is unavailable.
+  }
 
   const isGracefulFailure =
     responseText.includes("retrieval/generation failure") ||
@@ -279,6 +347,11 @@ async function evalChatApi(query, baseUrl, cookie) {
 
   const passes = [
     grade("Avoided fallback path", !isGracefulFailure),
+    grade(
+      "Tool loop called at least one tool",
+      (loopDiagnostic?.totalToolCallCount ?? 0) > 0,
+      `tool calls=${loopDiagnostic?.totalToolCallCount ?? "unknown"}`,
+    ),
     grade("Response is substantive", responseText.length > 150, `${responseText.length} chars`),
     grade("Contains source citations", hasCitations),
   ];
@@ -295,6 +368,8 @@ async function main() {
   const results = [];
   let totalPasses = 0;
   let totalChecks = 0;
+  let livePasses = 0;
+  let liveChecks = 0;
 
   console.log("--- Retrieval Stack (briefing queries) ---");
   for (const query of BRIEFING_QUERIES) {
@@ -327,6 +402,8 @@ async function main() {
       const result = await evalChatApi(query, baseUrl, cookie);
       if (result) {
         const passed = result.passes.filter(Boolean).length;
+        livePasses += passed;
+        liveChecks += result.passes.length;
         totalPasses += passed;
         totalChecks += result.passes.length;
       }
@@ -368,6 +445,19 @@ async function main() {
   }
 
   const threshold = 0.7;
+  if (baseUrl && cookie) {
+    if (liveChecks === 0) {
+      console.error("\n❌ Live chat gate failed: no live checks ran");
+      process.exit(1);
+    }
+    if (livePasses < liveChecks) {
+      console.error(
+        `\n❌ Live chat gate failed: ${livePasses}/${liveChecks} live checks passed`,
+      );
+      process.exit(1);
+    }
+  }
+
   if (pct < threshold * 100) {
     console.error(`\n❌ Quality gate failed: ${pct}% < ${threshold * 100}% required`);
     process.exit(1);

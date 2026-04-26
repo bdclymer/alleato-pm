@@ -143,18 +143,45 @@ export const POST = withApiGuardrails(
       );
     }
 
-    // 5. Fetch approved change orders for the contract
+    // 5. Fetch approved prime contract change orders and their cost-code line items.
     const { data: changeOrders, error: coError } = await supabase
-      .from("contract_change_orders")
-      .select("*")
-      .eq("contract_id", contractId)
-      .eq("status", "approved");
+      .from("prime_contract_change_orders")
+      .select("id, pcco_number, title, description, total_amount, prime_contract_id, contract_id")
+      .eq("project_id", projectIdNum)
+      .or(`prime_contract_id.eq.${contractId},contract_id.eq.${contractId}`)
+      .ilike("status", "approved%");
 
     if (coError) {
       return NextResponse.json(
         { error: "Failed to fetch change orders", details: coError.message },
         { status: 400 },
       );
+    }
+
+    const pccoIds = (changeOrders ?? []).map((co) => co.id);
+    let changeOrderLineItems: PccoLineItem[] = [];
+    if (pccoIds.length > 0) {
+      const { data: lineData, error: lineError } = await supabase
+        .from("pcco_line_items")
+        .select("id, pcco_id, description, cost_code, line_amount")
+        .in("pcco_id", pccoIds)
+        .order("id", { ascending: true });
+
+      if (lineError) {
+        return NextResponse.json(
+          { error: "Failed to fetch prime contract change order line items", details: lineError.message },
+          { status: 400 },
+        );
+      }
+
+      changeOrderLineItems = lineData ?? [];
+    }
+
+    const pccoLineItemsByPccoId = new Map<number, PccoLineItem[]>();
+    for (const lineItem of changeOrderLineItems) {
+      const items = pccoLineItemsByPccoId.get(lineItem.pcco_id) ?? [];
+      items.push(lineItem);
+      pccoLineItemsByPccoId.set(lineItem.pcco_id, items);
     }
 
     // 6. Build line items array
@@ -190,33 +217,45 @@ export const POST = withApiGuardrails(
       sortOrder++;
     }
 
-    // Then change order items
+    // Then prime contract change order items.
     for (const co of changeOrders ?? []) {
-      const prevKey = `co:${co.id}`;
-      const prev = previousLineItems[prevKey];
+      const pccoLines = pccoLineItemsByPccoId.get(co.id) ?? [];
+      const linesToInsert = pccoLines.length > 0
+        ? pccoLines
+        : [{
+            id: 0,
+            pcco_id: co.id,
+            description: co.description ?? co.title,
+            cost_code: null,
+            line_amount: co.total_amount ?? 0,
+          }];
 
-      lineItems.push({
-        payment_application_id: applicationId,
-        item_number: String(sortOrder),
-        description: `CO #${co.change_order_number}: ${co.description}`,
-        scheduled_value: co.amount ?? 0,
-        sov_item_id: null,
-        change_order_id: co.id,
-        budget_code: null,
-        sort_order: sortOrder,
-        work_completed_previous: prev?.work_completed_previous ?? 0,
-        work_completed_this_period: 0,
-        materials_stored: 0,
-        retainage_previous_work: prev?.retainage_previous_work ?? 0,
-        retainage_previous_materials: prev?.retainage_previous_materials ?? 0,
-        retainage_this_period_work: 0,
-        retainage_this_period_work_pct: defaultRetainagePct,
-        retainage_this_period_materials: 0,
-        retainage_this_period_materials_pct: defaultRetainagePct,
-        retainage_released_work: 0,
-        retainage_released_materials: 0,
-      });
-      sortOrder++;
+      for (const pccoLine of linesToInsert) {
+        // payment_application_line_items.change_order_id points to commitment COs,
+        // so prime contract COs are represented as standalone PCCO rows here.
+        lineItems.push({
+          payment_application_id: applicationId,
+          item_number: String(sortOrder),
+          description: `CO #${co.pcco_number ?? co.id}: ${pccoLine.description ?? co.title}`,
+          scheduled_value: pccoLine.line_amount ?? 0,
+          sov_item_id: null,
+          change_order_id: null,
+          budget_code: pccoLine.cost_code ?? null,
+          sort_order: sortOrder,
+          work_completed_previous: 0,
+          work_completed_this_period: 0,
+          materials_stored: 0,
+          retainage_previous_work: 0,
+          retainage_previous_materials: 0,
+          retainage_this_period_work: 0,
+          retainage_this_period_work_pct: defaultRetainagePct,
+          retainage_this_period_materials: 0,
+          retainage_this_period_materials_pct: defaultRetainagePct,
+          retainage_released_work: 0,
+          retainage_released_materials: 0,
+        });
+        sortOrder++;
+      }
     }
 
     if (lineItems.length === 0) {
@@ -251,6 +290,14 @@ interface PreviousCarryForward {
 }
 
 type PreviousLineItemMap = Record<string, PreviousCarryForward>;
+
+interface PccoLineItem {
+  id: number;
+  pcco_id: number;
+  description: string | null;
+  cost_code: string | null;
+  line_amount: number | null;
+}
 
 interface LineItemInsert {
   payment_application_id: string;

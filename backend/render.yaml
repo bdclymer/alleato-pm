@@ -11,6 +11,8 @@ services:
         value: 8000
       - key: OPENAI_API_KEY
         sync: false
+      - key: AI_GATEWAY_API_KEY
+        sync: false
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_SERVICE_KEY

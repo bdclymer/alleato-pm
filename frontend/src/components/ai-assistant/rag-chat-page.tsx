@@ -11,6 +11,7 @@ import {
   useRenameConversation,
   useDeleteConversation,
 } from "@/hooks/use-rag-conversations";
+import { apiFetch } from "@/lib/api-client";
 import { ConversationSidebar } from "./conversation-sidebar";
 import { ChatArea, type ResponseQuality } from "./chat-area";
 import type { ToolTraceItem } from "./trace-panel";
@@ -42,6 +43,26 @@ interface ChatHistoryMessage {
 type MemoryUsage = NonNullable<
   NonNullable<ChatHistoryMessage["metadata"]>["memory_usage"]
 >;
+
+type StrategistLiveStatus = {
+  stage: string;
+  message: string;
+  status: "loading" | "success" | "warning" | "error";
+  timestamp?: string;
+};
+
+function isStrategistLiveStatus(value: unknown): value is StrategistLiveStatus {
+  if (!value || typeof value !== "object") return false;
+  const record = value as Record<string, unknown>;
+  return typeof record.message === "string" && typeof record.stage === "string";
+}
+
+function stripStatusParts(messages: UIMessage[]): UIMessage[] {
+  return messages.map((message) => ({
+    ...message,
+    parts: message.parts.filter((part) => part.type !== "data-status"),
+  }));
+}
 
 function dbMessageToUIMessage(msg: ChatHistoryMessage): UIMessage {
   return {
@@ -135,6 +156,7 @@ function ChatWithSession({
   onFinishMessage: (sessionId: string) => void;
 }) {
   const [input, setInput] = useState(pendingFirstMessage ?? "");
+  const [liveStatus, setLiveStatus] = useState<StrategistLiveStatus | null>(null);
   const councilModeRef = useRef(councilMode);
   councilModeRef.current = councilMode;
 
@@ -150,12 +172,13 @@ function ChatWithSession({
     transport: new DefaultChatTransport({
       api: "/api/ai-assistant/chat",
       prepareSendMessagesRequest(request) {
-        const lastMessage = request.messages.at(-1);
+        const cleanedMessages = stripStatusParts(request.messages);
+        const lastMessage = cleanedMessages.at(-1);
         return {
           body: {
             id: sessionIdRef.current,
             message: lastMessage,
-            messages: request.messages,
+            messages: cleanedMessages,
             councilMode: councilModeRef.current,
             selectedProjectId: selectedProjectIdRef.current ?? undefined,
           },
@@ -163,7 +186,14 @@ function ChatWithSession({
       },
     }),
     onFinish: () => {
+      setLiveStatus(null);
       onFinishMessage(sessionIdRef.current);
+    },
+    onData: (part) => {
+      if (part.type !== "data-status") return;
+      if (isStrategistLiveStatus(part.data)) {
+        setLiveStatus(part.data);
+      }
     },
   });
 
@@ -204,6 +234,7 @@ function ChatWithSession({
       sourcesByMessageId={sourcesByMessageId}
       memoryUsageByMessageId={memoryUsageByMessageId}
       responseQualityByMessageId={responseQualityByMessageId}
+      liveStatus={liveStatus}
       isLoadingMessages={isLoadingMessages}
       isStreaming={isStreaming}
       input={input}
@@ -257,8 +288,9 @@ export function RagChatPage() {
   const loadSessionMessages = useCallback(async (sessionId: string) => {
     setIsLoadingMessages(true);
     try {
-      const res = await fetch(`/api/ai-assistant/messages/${sessionId}`);
-      const data = await res.json();
+      const data = await apiFetch<{ messages?: ChatHistoryMessage[] }>(
+        `/api/ai-assistant/messages/${sessionId}`,
+      );
       const historyMessages = (data.messages || []) as ChatHistoryMessage[];
       const msgs: UIMessage[] = historyMessages.map((m) => dbMessageToUIMessage(m));
       setInitialMessages(msgs);
@@ -403,6 +435,7 @@ export function RagChatPage() {
             messages={[]}
             toolTracesByMessageId={{}}
             responseQualityByMessageId={{}}
+            liveStatus={null}
             isLoadingMessages={false}
             isStreaming={false}
             input={noSessionInput}

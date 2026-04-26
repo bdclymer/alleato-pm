@@ -1,25 +1,24 @@
 "use client";
 
 import * as React from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
-  Check,
-  ChevronRight,
-  Minus,
-  MoreVertical,
+  AlertTriangle,
   Plus,
-  Search,
-  ShieldCheck,
-  Trash2,
-  UserCog,
-  X,
+  UserPlus,
 } from "lucide-react";
 
 import { PermissionTemplateForm } from "./permission-template-form";
-import { PageShell, SectionRuleHeading } from "@/components/layout";
-import { EmptyState } from "@/components/ds";
+import { SectionRuleHeading } from "@/components/layout";
+import { ErrorState } from "@/components/ds";
+import {
+  UnifiedTablePage,
+  useUnifiedTableState,
+  type TableColumn,
+} from "@/components/tables/unified";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   AlertDialog,
@@ -33,20 +32,17 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { MultiSelectField } from "@/components/forms/MultiSelectField";
 import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
   SelectContent,
@@ -55,10 +51,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { apiFetch } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
-import { ALL_MODULES, GRANULAR_FLAG_LABELS } from "@/lib/permissions-shared";
+import { ALL_GRANULAR_FLAGS, GRANULAR_FLAG_LABELS } from "@/lib/permissions-shared";
 import type {
   GranularFlag,
   PermissionLevel,
@@ -67,6 +62,9 @@ import type {
 } from "@/lib/permissions-shared";
 
 type TemplateScope = "company" | "project";
+type PermissionsTab = "users" | "project-templates" | "company-templates";
+type AccessScope = "all_projects" | "selected_projects";
+type GranularOverrideEffect = "allow" | "deny";
 
 type PermissionUser = {
   personId: string;
@@ -84,7 +82,56 @@ type PermissionUser = {
     templateId: string | null;
     templateName: string | null;
   }>;
+  granularOverrides: Array<{
+    projectId: number | string | null;
+    flag: GranularFlag;
+    effect: GranularOverrideEffect;
+  }>;
 };
+
+type UserLinkDiagnostic = {
+  authUserId: string;
+  email: string;
+  fullName: string | null;
+  isAdmin: boolean;
+  issues: Array<
+    | "missing_person_auth_link"
+    | "missing_users_auth_link"
+    | "mismatched_users_auth_link"
+    | "duplicate_people_email"
+  >;
+};
+
+type PermissionUsersResponse = {
+  data: PermissionUser[];
+  diagnostics?: {
+    missingAuthLinks?: UserLinkDiagnostic[];
+  };
+};
+
+type ProjectOption = {
+  id: number;
+  name: string;
+  jobNumber: string | null;
+};
+
+const TEMPLATE_MODULES: Array<{ key: PermissionModule; label: string }> = [
+  { key: "directory", label: "Directory" },
+  { key: "budget", label: "Budget" },
+  { key: "contracts", label: "Contracts" },
+  { key: "documents", label: "Documents" },
+  { key: "schedule", label: "Schedule" },
+  { key: "submittals", label: "Submittals" },
+  { key: "rfis", label: "RFIs" },
+  { key: "change_orders", label: "Change Orders" },
+];
+
+const TEMPLATE_LEVELS: Array<{ key: PermissionLevel; label: string }> = [
+  { key: "none", label: "None" },
+  { key: "read", label: "Read" },
+  { key: "write", label: "Write" },
+  { key: "admin", label: "Admin" },
+];
 
 type UserAccessSummary = {
   id: string;
@@ -102,26 +149,7 @@ type UserAccessSummary = {
   missingTemplateCount: number;
   primaryTemplateName: string;
   memberships: PermissionUser["memberships"];
-};
-
-const MODULE_LABELS: Record<PermissionModule, string> = {
-  directory: "Directory",
-  budget: "Budget",
-  contracts: "Contracts",
-  documents: "Documents",
-  schedule: "Schedule",
-  submittals: "Submittals",
-  rfis: "RFIs",
-  change_orders: "Change Orders",
-};
-
-const LEVEL_ORDER: PermissionLevel[] = ["read", "write", "admin"];
-
-const LEVEL_LABELS: Record<PermissionLevel, string> = {
-  none: "None",
-  read: "Read",
-  write: "Write",
-  admin: "Admin",
+  granularOverrides: PermissionUser["granularOverrides"];
 };
 
 async function fetchTemplates(scope: TemplateScope): Promise<PermissionTemplate[]> {
@@ -138,11 +166,22 @@ async function fetchAllTemplates(): Promise<PermissionTemplate[]> {
   return data;
 }
 
-async function fetchUsers(): Promise<PermissionUser[]> {
-  const { data } = await apiFetch<{ data: PermissionUser[] }>(
+async function fetchUsers(): Promise<PermissionUsersResponse> {
+  return apiFetch<PermissionUsersResponse>(
     "/api/permissions/users",
   );
-  return data;
+}
+
+async function fetchProjects(): Promise<ProjectOption[]> {
+  const { data } = await apiFetch<{
+    data: Array<{ id: number; name: string | null; "job number"?: string | null }>;
+  }>("/api/projects?limit=500");
+
+  return data.map((project) => ({
+    id: project.id,
+    name: project.name ?? `Project #${project.id}`,
+    jobNumber: project["job number"] ?? null,
+  }));
 }
 
 function getInitials(firstName: string, lastName: string, fallback: string): string {
@@ -164,7 +203,7 @@ function toAccessSummary(user: PermissionUser): UserAccessSummary {
   const missingTemplateCount = user.memberships.length - assignedProjectCount;
   const primaryTemplateName = user.isAdmin
     ? "App Admin"
-    : user.memberships[0]?.templateName ?? "No template";
+    : user.companyTemplateName ?? user.memberships[0]?.templateName ?? "No template";
 
   return {
     id: user.personId,
@@ -182,6 +221,7 @@ function toAccessSummary(user: PermissionUser): UserAccessSummary {
     missingTemplateCount,
     primaryTemplateName,
     memberships: user.memberships,
+    granularOverrides: user.granularOverrides ?? [],
   };
 }
 
@@ -189,20 +229,64 @@ function formatProjectCount(count: number) {
   return `${count} ${count === 1 ? "project" : "projects"}`;
 }
 
+function getUserSortValue(user: UserAccessSummary, sortBy: string) {
+  switch (sortBy) {
+    case "role":
+      return user.primaryTemplateName;
+    case "projects":
+      return user.projectCount;
+    case "exceptions":
+      return user.granularOverrides.length;
+    case "status":
+      return user.isAdmin ? "admin" : "member";
+    case "name":
+    default:
+      return user.fullName;
+  }
+}
+
 export default function PermissionsAdminPage() {
   const qc = useQueryClient();
-  const [activeTab, setActiveTab] = useState<"users" | "company" | "project">("users");
-  const [searchValue, setSearchValue] = useState("");
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get("tab");
+  const activeTab: PermissionsTab =
+    tabParam === "company-templates"
+      ? "company-templates"
+      : tabParam === "project-templates"
+        ? "project-templates"
+        : "users";
+  const tableState = useUnifiedTableState({
+    entityKey: "permissions-users",
+    searchParams,
+    pathname,
+    router,
+    defaults: {
+      view: "table",
+      allowedViews: ["table", "list"],
+      page: 1,
+      perPage: 25,
+      search: "",
+      sortBy: "name",
+      sortDirection: "asc",
+      visibleColumns: ["name", "role", "projects", "exceptions", "status"],
+      filters: {},
+    },
+  });
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [showInvite, setShowInvite] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [createScope, setCreateScope] = useState<TemplateScope>("project");
   const [editTarget, setEditTarget] = useState<PermissionTemplate | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<PermissionTemplate | null>(null);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
 
   const usersQuery = useQuery({
     queryKey: ["permission-users"],
     queryFn: fetchUsers,
   });
+  const lastReconcileKeyRef = useRef<string | null>(null);
 
   const allTemplatesQuery = useQuery({
     queryKey: ["permission-templates", "all"],
@@ -219,13 +303,19 @@ export default function PermissionsAdminPage() {
     queryFn: () => fetchTemplates("project"),
   });
 
+  const projectsQuery = useQuery({
+    queryKey: ["permissions-project-options"],
+    queryFn: fetchProjects,
+  });
+
+  const linkDiagnostics = usersQuery.data?.diagnostics?.missingAuthLinks ?? [];
   const users = useMemo(
-    () => (usersQuery.data ?? []).map(toAccessSummary),
-    [usersQuery.data],
+    () => (usersQuery.data?.data ?? []).map(toAccessSummary),
+    [usersQuery.data?.data],
   );
 
   const filteredUsers = useMemo(() => {
-    const search = searchValue.trim().toLowerCase();
+    const search = tableState.debouncedSearch.trim().toLowerCase();
 
     if (!search) return users;
 
@@ -243,24 +333,111 @@ export default function PermissionsAdminPage() {
         .toLowerCase()
         .includes(search);
     });
-  }, [searchValue, users]);
+  }, [tableState.debouncedSearch, users]);
 
-  useEffect(() => {
-    if (filteredUsers.length === 0) {
-      setSelectedUserId(null);
-      return;
-    }
-
-    setSelectedUserId((current) => {
-      if (current && filteredUsers.some((user) => user.id === current)) {
-        return current;
+  const sortedUsers = useMemo(() => {
+    const direction = tableState.sortDirection === "desc" ? -1 : 1;
+    return [...filteredUsers].sort((left, right) => {
+      const sortBy = tableState.sortBy ?? "name";
+      const leftValue = getUserSortValue(left, sortBy);
+      const rightValue = getUserSortValue(right, sortBy);
+      if (typeof leftValue === "number" && typeof rightValue === "number") {
+        return (leftValue - rightValue) * direction;
       }
-      return filteredUsers[0].id;
+      return String(leftValue).localeCompare(String(rightValue)) * direction;
     });
-  }, [filteredUsers]);
+  }, [filteredUsers, tableState.sortBy, tableState.sortDirection]);
 
-  const selectedUser = filteredUsers.find((user) => user.id === selectedUserId) ?? null;
+  const totalPages = Math.max(1, Math.ceil(sortedUsers.length / tableState.perPage));
+  const pagedUsers = useMemo(() => {
+    const start = (tableState.page - 1) * tableState.perPage;
+    return sortedUsers.slice(start, start + tableState.perPage);
+  }, [sortedUsers, tableState.page, tableState.perPage]);
+
+  const selectedUser = sortedUsers.find((user) => user.id === selectedUserId) ?? null;
   const templates = allTemplatesQuery.data ?? [];
+  const userColumns = useMemo<TableColumn<UserAccessSummary>[]>(
+    () => [
+      {
+        id: "name",
+        label: "User",
+        defaultVisible: true,
+        alwaysVisible: true,
+        sortable: true,
+        sortValue: (user) => user.fullName,
+        render: (user) => (
+          <div className="flex min-w-0 items-center gap-3">
+            <UserAvatar user={user} />
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium text-foreground">{user.fullName}</p>
+              <p className="truncate text-xs text-muted-foreground">{user.email || "No email"}</p>
+            </div>
+          </div>
+        ),
+      },
+      {
+        id: "role",
+        label: "Role",
+        defaultVisible: true,
+        sortable: true,
+        sortValue: (user) => user.primaryTemplateName,
+        render: (user) => (
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm text-foreground">{user.primaryTemplateName}</span>
+            {user.companyTemplateId && !user.isAdmin && (
+              <Badge variant="outline" className="border-primary/30 text-primary">
+                All projects
+              </Badge>
+            )}
+          </div>
+        ),
+      },
+      {
+        id: "projects",
+        label: "Projects",
+        defaultVisible: true,
+        sortable: true,
+        sortValue: (user) => user.projectCount,
+        render: (user) => (
+          <div className="text-sm text-foreground">
+            {formatProjectCount(user.projectCount)}
+            {user.missingTemplateCount > 0 && (
+              <span className="ml-2 text-destructive">
+                {user.missingTemplateCount} missing template
+              </span>
+            )}
+          </div>
+        ),
+      },
+      {
+        id: "exceptions",
+        label: "Exceptions",
+        defaultVisible: true,
+        sortable: true,
+        sortValue: (user) => user.granularOverrides.length,
+        render: (user) => (
+          <span className="text-sm text-muted-foreground">
+            {user.granularOverrides.length === 0
+              ? "None"
+              : `${user.granularOverrides.length} active`}
+          </span>
+        ),
+      },
+      {
+        id: "status",
+        label: "Status",
+        defaultVisible: true,
+        sortable: true,
+        sortValue: (user) => (user.isAdmin ? "admin" : "member"),
+        render: (user) => (
+          <Badge variant={user.isAdmin ? "default" : "outline"}>
+            {user.isAdmin ? "Admin" : "Member"}
+          </Badge>
+        ),
+      },
+    ],
+    [],
+  );
 
   const createMutation = useMutation({
     mutationFn: async (payload: {
@@ -308,6 +485,32 @@ export default function PermissionsAdminPage() {
     },
     onError: (err) => {
       toast.error(err instanceof Error ? err.message : "Failed to update template");
+    },
+  });
+
+  const templateMatrixMutation = useMutation({
+    mutationFn: async ({
+      id,
+      ...payload
+    }: {
+      id: string;
+      scope: TemplateScope;
+      name: string;
+      description: string;
+      rules_json: Record<PermissionModule, PermissionLevel[]>;
+      granular_flags?: GranularFlag[];
+    }) => {
+      await apiFetch(`/api/permissions/templates/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(payload),
+      });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["permission-templates"] });
+      toast.success("Permission saved");
+    },
+    onError: (err) => {
+      toast.error(err instanceof Error ? err.message : "Failed to update permission");
     },
   });
 
@@ -385,108 +588,451 @@ export default function PermissionsAdminPage() {
     },
   });
 
+  const granularOverrideMutation = useMutation({
+    mutationFn: async ({
+      personId,
+      flag,
+      effect,
+    }: {
+      personId: string;
+      flag: GranularFlag;
+      effect: GranularOverrideEffect | null;
+    }) => {
+      const url = `/api/permissions/users/${personId}/granular-overrides`;
+      if (effect) {
+        await apiFetch(url, {
+          method: "PUT",
+          body: JSON.stringify({ flag, effect }),
+        });
+        return;
+      }
+
+      await apiFetch(url, {
+        method: "DELETE",
+        body: JSON.stringify({ flag }),
+      });
+    },
+    onSuccess: (_data, variables) => {
+      toast.success(variables.effect ? "Permission exception saved" : "Permission exception removed");
+      qc.invalidateQueries({ queryKey: ["permission-users"] });
+    },
+    onError: (err) => {
+      toast.error(err instanceof Error ? err.message : "Failed to update permission exception");
+    },
+  });
+
+  const inviteMutation = useMutation({
+    mutationFn: async (payload: {
+      first_name: string;
+      last_name: string;
+      email: string;
+      job_title?: string;
+      access_scope: AccessScope;
+      template_id: string;
+      project_ids: number[];
+    }) => {
+      await apiFetch("/api/permissions/users", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+    },
+    onSuccess: () => {
+      toast.success("User invited and access assigned");
+      setShowInvite(false);
+      qc.invalidateQueries({ queryKey: ["permission-users"] });
+    },
+    onError: (err) => {
+      toast.error(err instanceof Error ? err.message : "Failed to invite user");
+    },
+  });
+
+  const reconcileLinksMutation = useMutation({
+    mutationFn: async () => {
+      return apiFetch<{
+        success: boolean;
+        data: {
+          repaired: Array<{ email: string }>;
+          unresolved: UserLinkDiagnostic[];
+        };
+      }>("/api/permissions/users/reconcile-links", { method: "POST" });
+    },
+    onSuccess: (result) => {
+      const repairedCount = result.data.repaired.length;
+      if (repairedCount > 0) {
+        toast.success(`${repairedCount} user auth link${repairedCount === 1 ? "" : "s"} repaired`);
+      }
+      qc.invalidateQueries({ queryKey: ["permission-users"] });
+    },
+    onError: (err) => {
+      toast.error(err instanceof Error ? err.message : "User auth links need manual review");
+    },
+  });
+
+  useEffect(() => {
+    if (activeTab !== "users" || linkDiagnostics.length === 0) return;
+
+    const reconcileKey = linkDiagnostics
+      .map((diagnostic) => `${diagnostic.authUserId}:${diagnostic.issues.join(",")}`)
+      .sort()
+      .join("|");
+
+    if (lastReconcileKeyRef.current === reconcileKey || reconcileLinksMutation.isPending) return;
+
+    lastReconcileKeyRef.current = reconcileKey;
+    reconcileLinksMutation.mutate();
+  }, [activeTab, linkDiagnostics, reconcileLinksMutation]);
+
   const openCreateForScope = (scope: TemplateScope) => {
     setCreateScope(scope);
     setShowCreate(true);
   };
 
-  return (
-    <PageShell
-      variant="dashboard"
-      title="Permissions"
-      description="Control app admin access and project permission templates."
-      contentClassName="space-y-6"
-    >
-      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as typeof activeTab)}>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <TabsList variant="line">
-            <TabsTrigger value="users">User Access</TabsTrigger>
-            <TabsTrigger value="company">Company Templates</TabsTrigger>
-            <TabsTrigger value="project">Project Templates</TabsTrigger>
-          </TabsList>
-          <div className="flex min-w-0 items-center justify-end gap-2">
-            {activeTab === "users" && (
-              <ExpandableSearch
-                value={searchValue}
-                onChange={setSearchValue}
-                placeholder="Search users..."
-              />
-            )}
-            {activeTab === "company" && (
-              <Button size="sm" variant="outline" onClick={() => openCreateForScope("company")}>
-                <Plus className="h-4 w-4" />
-                New Template
-              </Button>
-            )}
-            {activeTab === "project" && (
-              <Button size="sm" onClick={() => openCreateForScope("project")}>
-                <Plus className="h-4 w-4" />
-                New Template
-              </Button>
+  const projectTemplates = projectTemplatesQuery.data ?? [];
+  const companyTemplates = companyTemplatesQuery.data ?? [];
+  const activeTemplates =
+    activeTab === "company-templates" ? companyTemplates : projectTemplates;
+
+  const filteredRoles = useMemo(() => {
+    const search = tableState.debouncedSearch.trim().toLowerCase();
+    if (!search) return activeTemplates;
+    return activeTemplates.filter((role) =>
+      [role.name, role.description ?? "", role.scope ?? ""]
+        .join(" ")
+        .toLowerCase()
+        .includes(search),
+    );
+  }, [activeTemplates, tableState.debouncedSearch]);
+  const selectedTemplate =
+    filteredRoles.find((template) => template.id === selectedTemplateId) ??
+    filteredRoles[0] ??
+    null;
+
+  const tabs = [
+    { label: "Users", href: "/permissions", count: users.length, isActive: activeTab === "users" },
+    {
+      label: "Project Templates",
+      href: "/permissions?tab=project-templates",
+      count: projectTemplates.length,
+      isActive: activeTab === "project-templates",
+    },
+    {
+      label: "Company Templates",
+      href: "/permissions?tab=company-templates",
+      count: companyTemplates.length,
+      isActive: activeTab === "company-templates",
+    },
+  ];
+
+  const roleColumns = useMemo<TableColumn<PermissionTemplate>[]>(
+    () => [
+      {
+        id: "name",
+        label: "Template",
+        defaultVisible: true,
+        alwaysVisible: true,
+        sortable: true,
+        sortValue: (role) => role.name,
+        render: (role) => (
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="truncate text-sm font-medium text-foreground">{role.name}</span>
+              {role.is_system && <Badge variant="outline">System</Badge>}
+            </div>
+            {role.description && (
+              <p className="mt-0.5 truncate text-xs text-muted-foreground">{role.description}</p>
             )}
           </div>
-        </div>
+        ),
+      },
+      {
+        id: "scope",
+        label: "Scope",
+        defaultVisible: true,
+        sortable: true,
+        sortValue: (role) => role.scope ?? "project",
+        render: (role) => (
+          <Badge variant="outline">
+            {role.scope === "company" ? "All projects" : "Project"}
+          </Badge>
+        ),
+      },
+      {
+        id: "granular",
+        label: "Granular",
+        defaultVisible: true,
+        sortable: true,
+        sortValue: (role) => role.granular_flags?.length ?? 0,
+        render: (role) => (
+          <span className="text-sm text-muted-foreground">
+            {(role.granular_flags ?? []).length || "None"}
+          </span>
+        ),
+      },
+    ],
+    [],
+  );
 
-        <TabsContent value="users" className="mt-6">
-          <AccessWorkspace
-            users={filteredUsers}
-            allUserCount={users.length}
-            selectedUser={selectedUser}
-            templates={templates}
-            companyTemplates={companyTemplatesQuery.data ?? []}
-            isLoading={usersQuery.isLoading}
-            isTemplatesLoading={allTemplatesQuery.isLoading}
-            isAdminSaving={adminMutation.isPending}
-            isAssignmentSaving={assignMutation.isPending}
-            isCompanyTemplateSaving={companyTemplateMutation.isPending}
-            onSelectUser={setSelectedUserId}
-            onToggleAdmin={(authUserId, isAdmin) =>
-              adminMutation.mutate({ authUserId, isAdmin })
-            }
-            onAssignTemplate={(projectId, personId, templateId) =>
-              assignMutation.mutate({ projectId, personId, templateId })
-            }
-            onAssignCompanyTemplate={(personId, templateId) =>
-              companyTemplateMutation.mutate({ personId, templateId })
-            }
-          />
-        </TabsContent>
+  return (
+    <>
+      {activeTab === "users" ? (
+        <UnifiedTablePage<UserAccessSummary>
+          header={{
+            title: "User Management",
+            description: "Invite users, assign roles, choose project access, and manage exceptions.",
+            actions: (
+              <Button size="sm" onClick={() => setShowInvite(true)}>
+                <UserPlus className="h-4 w-4" />
+                Add User
+              </Button>
+            ),
+          }}
+          tabs={tabs}
+          toolbar={{
+            totalItems: users.length,
+            filteredItems: sortedUsers.length,
+            selectedCount: tableState.selectedIds.length,
+            searchValue: tableState.searchInput,
+            onSearchChange: tableState.setSearchInput,
+            searchPlaceholder: "Search users...",
+            currentView: tableState.currentView,
+            onViewChange: (view) => {
+              tableState.setCurrentView(view);
+              tableState.setSearchParams({ view });
+            },
+            enabledViews: ["table"],
+            columns: userColumns,
+            visibleColumns: tableState.visibleColumns,
+            onColumnVisibilityChange: tableState.setVisibleColumns,
+          }}
+          data={{
+            items: pagedUsers,
+            isLoading: usersQuery.isLoading,
+            isFetching: usersQuery.isFetching,
+            error: usersQuery.error instanceof Error ? usersQuery.error : null,
+          }}
+          topContent={
+            linkDiagnostics.length > 0 ? (
+              <UserLinkDiagnosticsAlert
+                diagnostics={linkDiagnostics}
+                isRepairing={reconcileLinksMutation.isPending}
+                onRepair={() => reconcileLinksMutation.mutate()}
+              />
+            ) : null
+          }
+          table={{
+            columns: userColumns,
+            getRowId: (user) => user.id,
+            activeRowId: selectedUserId,
+            onRowClick: (user) => setSelectedUserId(user.id),
+            stickyHeader: true,
+            density: "compact",
+          }}
+          sorting={{
+            sortBy: tableState.sortBy,
+            sortDirection: tableState.sortDirection,
+            onSortChange: (sortBy, direction) => {
+              tableState.setSortBy(sortBy);
+              tableState.setSortDirection(direction);
+              tableState.setSearchParams({ sort: sortBy, sort_dir: direction, page: "1" });
+            },
+          }}
+          emptyState={{
+            title: "No users",
+            description: "Invite a user to assign roles and project access.",
+            filteredDescription: "No users match your search.",
+            isFiltered: Boolean(tableState.debouncedSearch),
+            action: (
+              <Button size="sm" onClick={() => setShowInvite(true)}>
+                <UserPlus className="h-4 w-4" />
+                Add User
+              </Button>
+            ),
+          }}
+          pagination={{
+            page: tableState.page,
+            totalPages,
+            perPage: tableState.perPage,
+            onPageChange: tableState.setPage,
+            onPerPageChange: (perPage) => tableState.setPerPage(Number(perPage)),
+            clientSide: true,
+          }}
+          layout={{ maxWidth: "full", fullBleedTable: true }}
+          features={{
+            enableSearch: true,
+            enableViews: false,
+            enableColumnToggle: true,
+            enableFilters: false,
+            enableExport: false,
+            enableBulkDelete: false,
+            enableRowSelection: false,
+            enableRowActions: false,
+          }}
+        />
+      ) : (
+        <UnifiedTablePage<PermissionTemplate>
+          header={{
+            title: activeTab === "company-templates" ? "Company Templates" : "Project Templates",
+            description:
+              activeTab === "company-templates"
+                ? "Manage company-wide templates for users who need access across every project."
+                : "Manage project templates assigned to users on individual projects.",
+            actions: (
+              <Button
+                size="sm"
+                onClick={() =>
+                  openCreateForScope(activeTab === "company-templates" ? "company" : "project")
+                }
+              >
+                <Plus className="h-4 w-4" />
+                {activeTab === "company-templates" ? "New Company Template" : "New Project Template"}
+              </Button>
+            ),
+          }}
+          tabs={tabs}
+          toolbar={{
+            totalItems: activeTemplates.length,
+            filteredItems: filteredRoles.length,
+            selectedCount: 0,
+            searchValue: tableState.searchInput,
+            onSearchChange: tableState.setSearchInput,
+            searchPlaceholder:
+              activeTab === "company-templates"
+                ? "Search company templates..."
+                : "Search project templates...",
+            currentView: "table",
+            onViewChange: () => undefined,
+            columns: roleColumns,
+            visibleColumns: ["name", "scope", "granular"],
+            onColumnVisibilityChange: () => undefined,
+          }}
+          data={{
+            items: filteredRoles,
+            isLoading: companyTemplatesQuery.isLoading || projectTemplatesQuery.isLoading,
+          }}
+          table={{
+            columns: roleColumns,
+            getRowId: (role) => role.id,
+            activeRowId: selectedTemplate?.id ?? null,
+            onRowClick: (template) => setSelectedTemplateId(template.id),
+            stickyHeader: true,
+            density: "compact",
+          }}
+          sidePanel={{
+            content: selectedTemplate ? (
+              <TemplatePermissionMatrix
+                template={selectedTemplate}
+                isSaving={templateMatrixMutation.isPending}
+                onEdit={() => setEditTarget(selectedTemplate)}
+                onChange={(nextTemplate) =>
+                  templateMatrixMutation.mutate({
+                    id: nextTemplate.id,
+                    scope: (nextTemplate.scope === "company" ? "company" : "project") as TemplateScope,
+                    name: nextTemplate.name,
+                    description: nextTemplate.description ?? "",
+                    rules_json: nextTemplate.rules_json,
+                    granular_flags: nextTemplate.granular_flags ?? [],
+                  })
+                }
+              />
+            ) : (
+              <p className="p-6 text-sm text-muted-foreground">
+                Select a template to manage permissions.
+              </p>
+            ),
+            defaultWidth: 640,
+            minWidth: 520,
+            maxWidth: 900,
+            storageKey: "permissions-template-matrix",
+          }}
+          emptyState={{
+            title: "No templates",
+            description:
+              activeTab === "company-templates"
+                ? "Create a company template for all-project access."
+                : "Create a project template for project-specific access.",
+            filteredDescription: "No templates match your search.",
+            isFiltered: Boolean(tableState.debouncedSearch),
+            action: (
+              <Button
+                size="sm"
+                onClick={() =>
+                  openCreateForScope(activeTab === "company-templates" ? "company" : "project")
+                }
+              >
+                <Plus className="h-4 w-4" />
+                {activeTab === "company-templates" ? "New Company Template" : "New Project Template"}
+              </Button>
+            ),
+          }}
+          layout={{ maxWidth: "full", fullBleedTable: true }}
+          features={{
+            enableSearch: true,
+            enableViews: false,
+            enableColumnToggle: false,
+            enableFilters: false,
+            enableExport: false,
+            enableBulkDelete: false,
+            enableRowSelection: false,
+            enableRowActions: false,
+          }}
+        />
+      )}
 
-        <TabsContent value="company" className="mt-6">
-          <TemplatesTab
-            scope="company"
-            title="Company Templates"
-            templates={companyTemplatesQuery.data ?? []}
-            isLoading={companyTemplatesQuery.isLoading}
-            emptyTitle="No company templates"
-            emptyDescription="Create a company template for access patterns used across projects."
-            onCreateEmpty={() => openCreateForScope("company")}
-            onEdit={setEditTarget}
-            onDelete={setDeleteTarget}
-          />
-        </TabsContent>
+      <InviteUserDialog
+        open={showInvite}
+        onOpenChange={setShowInvite}
+        projectTemplates={projectTemplatesQuery.data ?? []}
+        companyTemplates={companyTemplatesQuery.data ?? []}
+        projects={projectsQuery.data ?? []}
+        isLoading={projectTemplatesQuery.isLoading || companyTemplatesQuery.isLoading || projectsQuery.isLoading}
+        isSaving={inviteMutation.isPending}
+        onInvite={(payload) => inviteMutation.mutateAsync(payload)}
+      />
 
-        <TabsContent value="project" className="mt-6">
-          <TemplatesTab
-            scope="project"
-            title="Project Templates"
-            templates={projectTemplatesQuery.data ?? []}
-            isLoading={projectTemplatesQuery.isLoading}
-            emptyTitle="No project templates"
-            emptyDescription="Create a project template for project-specific access roles."
-            onCreateEmpty={() => openCreateForScope("project")}
-            onEdit={setEditTarget}
-            onDelete={setDeleteTarget}
-          />
-        </TabsContent>
-      </Tabs>
+      <Dialog open={!!selectedUser} onOpenChange={(open) => !open && setSelectedUserId(null)}>
+        <DialogContent size="form" className="max-h-[calc(100svh-2rem)] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Manage user access</DialogTitle>
+            <DialogDescription>
+              Update company access, project templates, and granular exceptions for this user.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedUser && (
+            <UserAccessPanel
+              user={selectedUser}
+              templates={templates}
+              companyTemplates={companyTemplatesQuery.data ?? []}
+              isTemplatesLoading={allTemplatesQuery.isLoading}
+              isAdminSaving={adminMutation.isPending}
+              isAssignmentSaving={assignMutation.isPending}
+              isCompanyTemplateSaving={companyTemplateMutation.isPending}
+              isGranularOverrideSaving={granularOverrideMutation.isPending}
+              onToggleAdmin={(authUserId, isAdmin) =>
+                adminMutation.mutate({ authUserId, isAdmin })
+              }
+              onAssignTemplate={(projectId, personId, templateId) =>
+                assignMutation.mutate({ projectId, personId, templateId })
+              }
+              onAssignCompanyTemplate={(personId, templateId) =>
+                companyTemplateMutation.mutate({ personId, templateId })
+              }
+              onSetGranularOverride={(personId, flag, effect) =>
+                granularOverrideMutation.mutate({ personId, flag, effect })
+              }
+            />
+          )}
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
-        <DialogContent className="max-h-screen max-w-2xl overflow-y-auto">
+        <DialogContent size="form" className="max-h-[calc(100svh-2rem)] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               New {createScope === "company" ? "Company" : "Project"} Template
             </DialogTitle>
+            <DialogDescription>
+              Define the module access and granular capabilities included in this role.
+            </DialogDescription>
           </DialogHeader>
           <PermissionTemplateForm
             onSave={(data) => createMutation.mutateAsync(data)}
@@ -496,7 +1042,7 @@ export default function PermissionsAdminPage() {
       </Dialog>
 
       <Dialog open={!!editTarget} onOpenChange={() => setEditTarget(null)}>
-        <DialogContent className="max-h-screen max-w-2xl overflow-y-auto">
+        <DialogContent size="form" className="max-h-[calc(100svh-2rem)] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               Edit Template: {editTarget?.name}
@@ -506,6 +1052,9 @@ export default function PermissionsAdminPage() {
                 </Badge>
               )}
             </DialogTitle>
+            <DialogDescription>
+              Adjust this role so future assignments inherit the updated access profile.
+            </DialogDescription>
           </DialogHeader>
           {editTarget && (
             <PermissionTemplateForm
@@ -549,232 +1098,440 @@ export default function PermissionsAdminPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </PageShell>
+    </>
   );
 }
 
-function ExpandableSearch({
-  value,
-  onChange,
-  placeholder,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-  placeholder: string;
-}) {
-  const [expanded, setExpanded] = useState(false);
-  const inputRef = React.useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (expanded) inputRef.current?.focus();
-  }, [expanded]);
-
-  useEffect(() => {
-    if (value) setExpanded(true);
-  }, [value]);
-
-  if (!expanded) {
-    return (
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        aria-label="Search users"
-        onClick={() => setExpanded(true)}
-        className="h-8 w-8 text-muted-foreground"
-      >
-        <Search className="h-4 w-4" />
-      </Button>
-    );
-  }
-
-  return (
-    <div className="relative flex min-w-0 items-center">
-      <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-      <Input
-        ref={inputRef}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        onBlur={() => {
-          if (!value) setExpanded(false);
-        }}
-        onKeyDown={(event) => {
-          if (event.key === "Escape") {
-            onChange("");
-            setExpanded(false);
-          }
-        }}
-        placeholder={placeholder}
-        className="h-8 w-36 pl-8 pr-8 text-sm sm:w-44"
-        aria-label="Search users"
-      />
-      {value && (
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          aria-label="Clear search"
-          onClick={() => {
-            onChange("");
-            inputRef.current?.focus();
-          }}
-          className="absolute right-0 top-0 h-8 w-8 text-muted-foreground"
-        >
-          <X className="h-3 w-3" />
-        </Button>
-      )}
-    </div>
-  );
-}
-
-function AccessWorkspace({
-  users,
-  allUserCount,
-  selectedUser,
-  templates,
+function InviteUserDialog({
+  open,
+  onOpenChange,
+  projectTemplates,
   companyTemplates,
+  projects,
   isLoading,
-  isTemplatesLoading,
-  isAdminSaving,
-  isAssignmentSaving,
-  isCompanyTemplateSaving,
-  onSelectUser,
-  onToggleAdmin,
-  onAssignTemplate,
-  onAssignCompanyTemplate,
+  isSaving,
+  onInvite,
 }: {
-  users: UserAccessSummary[];
-  allUserCount: number;
-  selectedUser: UserAccessSummary | null;
-  templates: PermissionTemplate[];
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  projectTemplates: PermissionTemplate[];
   companyTemplates: PermissionTemplate[];
+  projects: ProjectOption[];
   isLoading: boolean;
-  isTemplatesLoading: boolean;
-  isAdminSaving: boolean;
-  isAssignmentSaving: boolean;
-  isCompanyTemplateSaving: boolean;
-  onSelectUser: (userId: string) => void;
-  onToggleAdmin: (authUserId: string, isAdmin: boolean) => void;
-  onAssignTemplate: (
-    projectId: number | string,
-    personId: string,
-    templateId: string,
-  ) => void;
-  onAssignCompanyTemplate: (personId: string, templateId: string | null) => void;
+  isSaving: boolean;
+  onInvite: (payload: {
+    first_name: string;
+    last_name: string;
+    email: string;
+    job_title?: string;
+    access_scope: AccessScope;
+    template_id: string;
+    project_ids: number[];
+  }) => Promise<void>;
 }) {
-  if (isLoading) {
-    return <AccessWorkspaceSkeleton />;
-  }
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [jobTitle, setJobTitle] = useState("");
+  const [accessScope, setAccessScope] = useState<AccessScope>("selected_projects");
+  const [projectTemplateId, setProjectTemplateId] = useState("");
+  const [companyTemplateId, setCompanyTemplateId] = useState("");
+  const [selectedProjectIds, setSelectedProjectIds] = useState<Set<number>>(new Set());
+  const [error, setError] = useState<string | null>(null);
 
-  if (allUserCount === 0) {
-    return (
-      <EmptyState
-        icon={<UserCog className="h-6 w-6" />}
-        title="No users found"
-        description="No people in the directory have auth accounts yet."
-      />
-    );
-  }
+  useEffect(() => {
+    if (!open) {
+      setFirstName("");
+      setLastName("");
+      setEmail("");
+      setJobTitle("");
+      setAccessScope("selected_projects");
+      setProjectTemplateId("");
+      setCompanyTemplateId("");
+      setSelectedProjectIds(new Set());
+      setError(null);
+      return;
+    }
+
+    setProjectTemplateId((current) => current || findTemplateId(projectTemplates, "Project Manager"));
+    setCompanyTemplateId((current) => current || companyTemplates[0]?.id || "");
+  }, [open, projectTemplates, companyTemplates]);
+
+  const selectedTemplateId =
+    accessScope === "all_projects"
+      ? companyTemplateId || companyTemplates[0]?.id || ""
+      : projectTemplateId || findTemplateId(projectTemplates, "Project Manager") || projectTemplates[0]?.id || "";
+
+  const canSubmit =
+    firstName.trim() &&
+    lastName.trim() &&
+    email.trim() &&
+    selectedTemplateId &&
+    (accessScope === "all_projects" || selectedProjectIds.size > 0);
+
+  const submit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setError(null);
+
+    if (!canSubmit) {
+      setError("Add the user details, role, and project access before sending the invite.");
+      return;
+    }
+
+    try {
+      await onInvite({
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
+        email: email.trim(),
+        job_title: jobTitle.trim() || undefined,
+        access_scope: accessScope,
+        template_id: selectedTemplateId,
+        project_ids: accessScope === "all_projects" ? [] : Array.from(selectedProjectIds),
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Invite failed");
+    }
+  };
 
   return (
-    <div className="grid min-h-screen gap-x-12 gap-y-6 xl:grid-cols-[minmax(320px,420px)_1fr]">
-      <section className="space-y-4">
-        <div>
-          <ScrollArea className="max-h-screen">
-            {users.length === 0 ? (
-              <p className="px-4 py-8 text-sm text-muted-foreground">
-                No users match your search.
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent size="form" className="max-h-[calc(100svh-2rem)] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Add user</DialogTitle>
+          <DialogDescription>
+            Invite a user, choose their role, and assign either specific projects or all-project access.
+          </DialogDescription>
+        </DialogHeader>
+
+        <form className="space-y-6" onSubmit={submit}>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <label htmlFor="invite-first-name" className="text-sm font-medium text-foreground">
+                First name
+              </label>
+              <Input
+                id="invite-first-name"
+                value={firstName}
+                onChange={(event) => setFirstName(event.target.value)}
+                autoComplete="given-name"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label htmlFor="invite-last-name" className="text-sm font-medium text-foreground">
+                Last name
+              </label>
+              <Input
+                id="invite-last-name"
+                value={lastName}
+                onChange={(event) => setLastName(event.target.value)}
+                autoComplete="family-name"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label htmlFor="invite-email" className="text-sm font-medium text-foreground">
+                Email
+              </label>
+              <Input
+                id="invite-email"
+                type="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                autoComplete="email"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label htmlFor="invite-title" className="text-sm font-medium text-foreground">
+                Title
+              </label>
+              <Input
+                id="invite-title"
+                value={jobTitle}
+                onChange={(event) => setJobTitle(event.target.value)}
+                placeholder="Project Manager"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <SectionRuleHeading label="Access" />
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setAccessScope("selected_projects");
+                  setProjectTemplateId((current) => current || projectTemplates[0]?.id || "");
+                }}
+                className={cn(
+                  "h-auto justify-start rounded-md px-4 py-3 text-left transition-colors",
+                  accessScope === "selected_projects"
+                    ? "border-primary bg-primary/5 hover:bg-primary/5"
+                    : "hover:bg-muted/50",
+                )}
+              >
+                <span className="block min-w-0">
+                  <span className="block text-sm font-semibold text-foreground">Specific projects</span>
+                  <span className="mt-1 block whitespace-normal text-sm font-normal text-muted-foreground">
+                    Best for a new PM, field staff, or limited rollout.
+                  </span>
+                </span>
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setAccessScope("all_projects");
+                  setCompanyTemplateId((current) => current || companyTemplates[0]?.id || "");
+                }}
+                className={cn(
+                  "h-auto justify-start rounded-md px-4 py-3 text-left transition-colors",
+                  accessScope === "all_projects"
+                    ? "border-primary bg-primary/5 hover:bg-primary/5"
+                    : "hover:bg-muted/50",
+                )}
+              >
+                <span className="block min-w-0">
+                  <span className="block text-sm font-semibold text-foreground">All projects</span>
+                  <span className="mt-1 block whitespace-normal text-sm font-normal text-muted-foreground">
+                    Best for a senior PM or project management admin.
+                  </span>
+                </span>
+              </Button>
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
+            <div className="space-y-1.5">
+              <label htmlFor="invite-role" className="text-sm font-medium text-foreground">
+                Role
+              </label>
+              <Select
+                value={selectedTemplateId}
+                disabled={isLoading}
+                onValueChange={(value) => {
+                  if (accessScope === "all_projects") {
+                    setCompanyTemplateId(value);
+                  } else {
+                    setProjectTemplateId(value);
+                  }
+                }}
+              >
+                <SelectTrigger id="invite-role" className="h-9 text-sm">
+                  <SelectValue placeholder="Select role" />
+                </SelectTrigger>
+                <SelectContent>
+                  {(accessScope === "all_projects" ? companyTemplates : projectTemplates).map((template) => (
+                    <SelectItem key={template.id} value={template.id}>
+                      {template.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Start with a role, then customize the user later if needed.
               </p>
-            ) : (
-              <div className="divide-y divide-border">
-                {users.map((user) => (
-                  <UserRosterRow
-                    key={user.id}
-                    user={user}
-                    isSelected={selectedUser?.id === user.id}
-                    onSelect={() => onSelectUser(user.id)}
-                  />
+            </div>
+
+            <div className="space-y-2">
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-foreground">
+                  Projects
+                  {accessScope === "selected_projects" && selectedProjectIds.size > 0 && (
+                    <span className="ml-2 text-xs font-normal text-muted-foreground">
+                      {selectedProjectIds.size} selected
+                    </span>
+                  )}
+                </label>
+              </div>
+              {accessScope === "all_projects" ? (
+                <div className="rounded-md border border-border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
+                  This user will inherit access across every current and future project through the selected company role.
+                </div>
+              ) : (
+                <MultiSelectField
+                  label=""
+                  options={projects.map((project) => ({
+                    value: String(project.id),
+                    label: project.jobNumber
+                      ? `${project.name} ${project.jobNumber}`
+                      : project.name,
+                  }))}
+                  value={Array.from(selectedProjectIds).map(String)}
+                  onChange={(values) =>
+                    setSelectedProjectIds(
+                      new Set(values.map((value) => Number(value)).filter(Number.isFinite)),
+                    )
+                  }
+                  placeholder={isLoading ? "Loading projects..." : "Select projects..."}
+                  disabled={isLoading}
+                />
+              )}
+            </div>
+          </div>
+
+          {error && (
+            <ErrorState
+              title="Invite blocked"
+              error={error}
+              className="items-start py-2 text-left"
+            />
+          )}
+
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isSaving || !canSubmit}>
+              {isSaving ? "Sending..." : "Send Invite"}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function findTemplateId(templates: PermissionTemplate[], name: string) {
+  return templates.find((template) => template.name.toLowerCase() === name.toLowerCase())?.id ?? "";
+}
+
+function getHighestTemplateLevel(levels: PermissionLevel[] | undefined): PermissionLevel {
+  if (levels?.includes("admin")) return "admin";
+  if (levels?.includes("write")) return "write";
+  if (levels?.includes("read")) return "read";
+  return "none";
+}
+
+function expandTemplateLevel(level: PermissionLevel): PermissionLevel[] {
+  if (level === "admin") return ["read", "write", "admin"];
+  if (level === "write") return ["read", "write"];
+  if (level === "read") return ["read"];
+  return ["none"];
+}
+
+function TemplatePermissionMatrix({
+  template,
+  isSaving,
+  onEdit,
+  onChange,
+}: {
+  template: PermissionTemplate;
+  isSaving: boolean;
+  onEdit: () => void;
+  onChange: (template: PermissionTemplate) => void;
+}) {
+  const updateModuleLevel = (module: PermissionModule, level: PermissionLevel) => {
+    onChange({
+      ...template,
+      rules_json: {
+        ...template.rules_json,
+        [module]: expandTemplateLevel(level),
+      },
+    });
+  };
+
+  const updateGranularFlag = (flag: GranularFlag, checked: boolean) => {
+    const currentFlags = new Set(template.granular_flags ?? []);
+    if (checked) {
+      currentFlags.add(flag);
+    } else {
+      currentFlags.delete(flag);
+    }
+    onChange({
+      ...template,
+      granular_flags: Array.from(currentFlags),
+    });
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="truncate text-lg font-semibold text-foreground">
+              {template.name}
+            </h2>
+            {template.is_system && <Badge variant="outline">System</Badge>}
+            <Badge variant="outline">
+              {template.scope === "company" ? "Company template" : "Project template"}
+            </Badge>
+          </div>
+          {template.description && (
+            <p className="mt-1 text-sm text-muted-foreground">{template.description}</p>
+          )}
+        </div>
+        <Button type="button" size="sm" variant="outline" onClick={onEdit}>
+          Edit Details
+        </Button>
+      </div>
+
+      <div className="overflow-hidden border-y border-border">
+        <div className="grid grid-cols-[minmax(150px,1fr)_repeat(4,minmax(72px,96px))] border-b border-border bg-muted/40 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          <div className="px-4 py-2">Module</div>
+          {TEMPLATE_LEVELS.map((level) => (
+            <div key={level.key} className="border-l border-border px-3 py-2 text-center">
+              {level.label}
+            </div>
+          ))}
+        </div>
+        <div className="divide-y divide-border">
+          {TEMPLATE_MODULES.map((module) => {
+            const selectedLevel = getHighestTemplateLevel(template.rules_json[module.key]);
+
+            return (
+              <div
+                key={module.key}
+                className="grid grid-cols-[minmax(150px,1fr)_repeat(4,minmax(72px,96px))] items-center"
+              >
+                <div className="px-4 py-3 text-sm font-medium text-foreground">
+                  {module.label}
+                </div>
+                {TEMPLATE_LEVELS.map((level) => (
+                  <label
+                    key={`${module.key}-${level.key}`}
+                    className="flex h-full items-center justify-center border-l border-border px-3 py-3"
+                    aria-label={`${module.label} ${level.label}`}
+                  >
+                    <Checkbox
+                      checked={selectedLevel === level.key}
+                      disabled={isSaving}
+                      onCheckedChange={(checked) => {
+                        if (checked) updateModuleLevel(module.key, level.key);
+                      }}
+                    />
+                  </label>
                 ))}
               </div>
-            )}
-          </ScrollArea>
+            );
+          })}
         </div>
-      </section>
+      </div>
 
-      <section className="min-w-0">
-        {selectedUser ? (
-          <UserAccessPanel
-            user={selectedUser}
-            templates={templates}
-            companyTemplates={companyTemplates}
-            isTemplatesLoading={isTemplatesLoading}
-            isAdminSaving={isAdminSaving}
-            isAssignmentSaving={isAssignmentSaving}
-            isCompanyTemplateSaving={isCompanyTemplateSaving}
-            onToggleAdmin={onToggleAdmin}
-            onAssignTemplate={onAssignTemplate}
-            onAssignCompanyTemplate={onAssignCompanyTemplate}
-          />
-        ) : (
-          <div className="flex h-full min-h-96 items-center justify-center border border-dashed border-border">
-            <p className="text-sm text-muted-foreground">Select a user to manage access.</p>
+      <div className="space-y-3">
+        <SectionRuleHeading label="Granular Permissions" />
+        <div className="overflow-hidden border-y border-border">
+          <div className="divide-y divide-border">
+            {ALL_GRANULAR_FLAGS.map((flag) => (
+              <label
+                key={flag}
+                className="grid cursor-pointer grid-cols-[minmax(0,1fr)_96px] items-center px-4 py-3 hover:bg-muted/40"
+              >
+                <span className="text-sm text-foreground">
+                  {GRANULAR_FLAG_LABELS[flag]}
+                </span>
+                <span className="flex justify-center">
+                  <Checkbox
+                    checked={(template.granular_flags ?? []).includes(flag)}
+                    disabled={isSaving}
+                    onCheckedChange={(checked) => updateGranularFlag(flag, checked === true)}
+                  />
+                </span>
+              </label>
+            ))}
           </div>
-        )}
-      </section>
+        </div>
+      </div>
     </div>
-  );
-}
-
-function UserRosterRow({
-  user,
-  isSelected,
-  onSelect,
-}: {
-  user: UserAccessSummary;
-  isSelected: boolean;
-  onSelect: () => void;
-}) {
-  return (
-    <Button
-      type="button"
-      variant="ghost"
-      onClick={onSelect}
-      className={cn(
-        "h-auto w-full justify-start gap-3 rounded-none px-2 py-3 text-left transition-colors sm:px-0",
-        isSelected ? "bg-muted" : "hover:bg-muted/60",
-      )}
-    >
-      <UserAvatar user={user} />
-      <span className="min-w-0 flex-1">
-        <span className="flex items-center gap-2">
-          <span className="truncate text-sm font-medium text-foreground">
-            {user.fullName}
-          </span>
-          {user.isAdmin && (
-            <Badge variant="default" className="shrink-0 text-[11px]">
-              Admin
-            </Badge>
-          )}
-        </span>
-        <span className="mt-0.5 block truncate text-xs text-muted-foreground">
-          {user.email || "No email"}
-        </span>
-        <span className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
-          <span>{formatProjectCount(user.projectCount)}</span>
-          {user.missingTemplateCount > 0 && (
-            <span className="text-destructive">
-              {user.missingTemplateCount} missing template
-            </span>
-          )}
-        </span>
-      </span>
-      <ChevronRight
-        className={cn(
-          "h-4 w-4 shrink-0",
-          isSelected ? "text-foreground" : "text-muted-foreground",
-        )}
-      />
-    </Button>
   );
 }
 
@@ -786,9 +1543,11 @@ function UserAccessPanel({
   isAdminSaving,
   isAssignmentSaving,
   isCompanyTemplateSaving,
+  isGranularOverrideSaving,
   onToggleAdmin,
   onAssignTemplate,
   onAssignCompanyTemplate,
+  onSetGranularOverride,
 }: {
   user: UserAccessSummary;
   templates: PermissionTemplate[];
@@ -797,9 +1556,15 @@ function UserAccessPanel({
   isAdminSaving: boolean;
   isAssignmentSaving: boolean;
   isCompanyTemplateSaving: boolean;
+  isGranularOverrideSaving: boolean;
   onToggleAdmin: (authUserId: string, isAdmin: boolean) => void;
   onAssignTemplate: (projectId: number | string, personId: string, templateId: string) => void;
   onAssignCompanyTemplate: (personId: string, templateId: string | null) => void;
+  onSetGranularOverride: (
+    personId: string,
+    flag: GranularFlag,
+    effect: GranularOverrideEffect | null,
+  ) => void;
 }) {
   return (
     <div className="space-y-6">
@@ -884,6 +1649,14 @@ function UserAccessPanel({
         </div>
       </div>
 
+      <GranularExceptionPanel
+        user={user}
+        templates={templates}
+        companyTemplates={companyTemplates}
+        isSaving={isGranularOverrideSaving}
+        onSetGranularOverride={onSetGranularOverride}
+      />
+
       {/* Project Access */}
       <div className="space-y-4">
         <div>
@@ -923,6 +1696,187 @@ function UserAccessPanel({
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function UserLinkDiagnosticsAlert({
+  diagnostics,
+  isRepairing,
+  onRepair,
+}: {
+  diagnostics: UserLinkDiagnostic[];
+  isRepairing: boolean;
+  onRepair: () => void;
+}) {
+  const names = diagnostics
+    .slice(0, 3)
+    .map((diagnostic) => diagnostic.fullName || diagnostic.email)
+    .join(", ");
+  const extraCount = Math.max(0, diagnostics.length - 3);
+
+  return (
+    <Alert className="border-status-warning/30 bg-status-warning/10 text-foreground">
+      <AlertTriangle className="h-4 w-4 text-status-warning" />
+      <AlertDescription className="flex flex-col gap-3 text-sm md:flex-row md:items-center md:justify-between">
+        <span>
+          {diagnostics.length} user auth link{diagnostics.length === 1 ? "" : "s"} need repair
+          {names ? `: ${names}${extraCount > 0 ? `, +${extraCount} more` : ""}.` : "."}
+        </span>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          disabled={isRepairing}
+          onClick={onRepair}
+          className="w-fit shrink-0"
+        >
+          {isRepairing ? "Repairing..." : "Repair links"}
+        </Button>
+      </AlertDescription>
+    </Alert>
+  );
+}
+
+function getTemplateFlagsById(templates: PermissionTemplate[]) {
+  return new Map(templates.map((template) => [template.id, template.granular_flags ?? []]));
+}
+
+function getInheritedGranularFlags(
+  user: UserAccessSummary,
+  templates: PermissionTemplate[],
+  companyTemplates: PermissionTemplate[],
+) {
+  const flags = new Set<GranularFlag>();
+  const flagsById = getTemplateFlagsById([...templates, ...companyTemplates]);
+  const assignedTemplateIds = [
+    user.companyTemplateId,
+    ...user.memberships.map((membership) => membership.templateId),
+  ].filter((id): id is string => !!id);
+
+  for (const templateId of assignedTemplateIds) {
+    for (const flag of flagsById.get(templateId) ?? []) {
+      flags.add(flag);
+    }
+  }
+
+  return flags;
+}
+
+function getCompanyGranularOverride(
+  user: UserAccessSummary,
+  flag: GranularFlag,
+): GranularOverrideEffect | null {
+  return (
+    user.granularOverrides.find(
+      (override) => override.projectId == null && override.flag === flag,
+    )?.effect ?? null
+  );
+}
+
+function GranularExceptionPanel({
+  user,
+  templates,
+  companyTemplates,
+  isSaving,
+  onSetGranularOverride,
+}: {
+  user: UserAccessSummary;
+  templates: PermissionTemplate[];
+  companyTemplates: PermissionTemplate[];
+  isSaving: boolean;
+  onSetGranularOverride: (
+    personId: string,
+    flag: GranularFlag,
+    effect: GranularOverrideEffect | null,
+  ) => void;
+}) {
+  const inheritedFlags = getInheritedGranularFlags(user, templates, companyTemplates);
+  const activeOverrideCount = user.granularOverrides.filter(
+    (override) => override.projectId == null,
+  ).length;
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <div className="flex flex-wrap items-center gap-2">
+          <SectionRuleHeading label="Granular Exceptions" />
+          {activeOverrideCount > 0 && (
+            <Badge variant="outline">{activeOverrideCount} active</Badge>
+          )}
+        </div>
+        <p className="text-sm text-muted-foreground">
+          Override individual capabilities without cloning the user role. Deny takes precedence over role grants.
+        </p>
+      </div>
+
+      <div className="overflow-hidden border-y border-border">
+        <div className="grid grid-cols-[minmax(0,1fr)_160px] gap-4 border-b border-border bg-muted/30 px-4 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground max-sm:hidden">
+          <span>Capability</span>
+          <span>Exception</span>
+        </div>
+        <div className="divide-y divide-border">
+          {ALL_GRANULAR_FLAGS.map((flag) => {
+            const override = getCompanyGranularOverride(user, flag);
+            const inherited = inheritedFlags.has(flag);
+            const effective = override ?? (inherited ? "allow" : "deny");
+
+            return (
+              <div
+                key={flag}
+                className="grid gap-3 px-4 py-3 sm:grid-cols-[minmax(0,1fr)_160px] sm:items-center sm:gap-4"
+              >
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="text-sm font-medium text-foreground">
+                      {GRANULAR_FLAG_LABELS[flag] ?? flag}
+                    </p>
+                    {flag === "approve_change_orders" && (
+                      <Badge variant="outline" className="text-xs">
+                        Change orders
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {override
+                      ? `${override === "allow" ? "Allowed" : "Denied"} by exception`
+                      : `${inherited ? "Allowed" : "Denied"} by assigned role`}
+                  </p>
+                </div>
+
+                <Select
+                  value={override ?? "inherit"}
+                  disabled={user.isAdmin || isSaving}
+                  onValueChange={(value) => {
+                    onSetGranularOverride(
+                      user.personId,
+                      flag,
+                      value === "inherit" ? null : (value as GranularOverrideEffect),
+                    );
+                  }}
+                >
+                  <SelectTrigger className="h-9 w-full text-sm">
+                    <SelectValue placeholder="Inherit" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="inherit">
+                      Inherit ({effective === "allow" ? "Allowed" : "Denied"})
+                    </SelectItem>
+                    <SelectItem value="allow">Always allow</SelectItem>
+                    <SelectItem value="deny">Deny</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {user.isAdmin && (
+        <p className="text-xs text-muted-foreground">
+          Exceptions are bypassed because this user is a Super Admin.
+        </p>
+      )}
     </div>
   );
 }
@@ -997,287 +1951,5 @@ function UserAvatar({
       )}
       <AvatarFallback>{user.initials}</AvatarFallback>
     </Avatar>
-  );
-}
-
-function AccessWorkspaceSkeleton() {
-  return (
-    <div className="grid min-h-screen gap-6 xl:grid-cols-[minmax(320px,420px)_1fr]">
-      <div className="space-y-4">
-        <div className="h-10 rounded-md bg-muted animate-pulse" />
-        <div className="rounded-lg border border-border">
-          <div className="h-10 border-b border-border bg-muted/60" />
-          <div className="divide-y divide-border">
-            {[1, 2, 3, 4, 5, 6].map((index) => (
-              <div key={index} className="h-20 bg-muted/30 animate-pulse" />
-            ))}
-          </div>
-        </div>
-      </div>
-      <div className="h-screen rounded-lg border border-border bg-muted/30 animate-pulse" />
-    </div>
-  );
-}
-
-function TemplatesTab({
-  scope,
-  title,
-  templates,
-  isLoading,
-  emptyTitle,
-  emptyDescription,
-  onCreateEmpty,
-  onEdit,
-  onDelete,
-}: {
-  scope: TemplateScope;
-  title: string;
-  templates: PermissionTemplate[];
-  isLoading: boolean;
-  emptyTitle: string;
-  emptyDescription: string;
-  onCreateEmpty: () => void;
-  onEdit: (tpl: PermissionTemplate) => void;
-  onDelete: (tpl: PermissionTemplate) => void;
-}) {
-  if (isLoading) {
-    return (
-      <section className="space-y-3">
-        <div className="h-6 w-48 rounded bg-muted animate-pulse" />
-        {[1, 2, 3].map((index) => (
-          <div key={index} className="h-28 rounded-lg border border-border bg-muted/30 animate-pulse" />
-        ))}
-      </section>
-    );
-  }
-
-  const systemTemplates = templates.filter((template) => template.is_system);
-  const customTemplates = templates.filter((template) => !template.is_system);
-
-  return (
-    <section className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-semibold text-foreground">{title}</h2>
-          <p className="text-sm text-muted-foreground">
-            {templates.length} {templates.length === 1 ? "template" : "templates"}
-          </p>
-        </div>
-        <Button size="sm" variant="outline" onClick={onCreateEmpty}>
-          <Plus className="h-4 w-4" />
-          New
-        </Button>
-      </div>
-
-      {templates.length === 0 ? (
-        <EmptyState
-          icon={<ShieldCheck className="h-6 w-6" />}
-          title={emptyTitle}
-          description={emptyDescription}
-          action={
-            <Button size="sm" variant="outline" onClick={onCreateEmpty}>
-              <Plus className="h-4 w-4" />
-              New {scope === "company" ? "Company" : "Project"} Template
-            </Button>
-          }
-        />
-      ) : (
-        <div className="space-y-6">
-          {systemTemplates.length > 0 && (
-            <TemplateSection
-              title="System"
-              templates={systemTemplates}
-              onEdit={onEdit}
-              onDelete={onDelete}
-            />
-          )}
-          <TemplateSection
-            title="Custom"
-            templates={customTemplates}
-            emptyText="No custom templates yet."
-            onEdit={onEdit}
-            onDelete={onDelete}
-          />
-        </div>
-      )}
-    </section>
-  );
-}
-
-function TemplateSection({
-  title,
-  templates,
-  emptyText,
-  onEdit,
-  onDelete,
-}: {
-  title: string;
-  templates: PermissionTemplate[];
-  emptyText?: string;
-  onEdit: (tpl: PermissionTemplate) => void;
-  onDelete: (tpl: PermissionTemplate) => void;
-}) {
-  return (
-    <div className="space-y-3">
-      <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-        {title}
-      </h3>
-      {templates.length === 0 ? (
-        <p className="text-sm text-muted-foreground">{emptyText}</p>
-      ) : (
-        <div className="space-y-3">
-          {templates.map((template) => (
-            <TemplateCard
-              key={template.id}
-              template={template}
-              onEdit={() => onEdit(template)}
-              onDelete={template.is_system ? undefined : () => onDelete(template)}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function TemplateCard({
-  template,
-  onEdit,
-  onDelete,
-}: {
-  template: PermissionTemplate;
-  onEdit?: () => void;
-  onDelete?: () => void;
-}) {
-  return (
-    <div className="rounded-lg border border-border bg-background p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <h3 className="text-base font-semibold text-foreground">{template.name}</h3>
-            {template.is_system && (
-              <Badge variant="outline" className="text-xs">
-                System
-              </Badge>
-            )}
-          </div>
-          {template.description && (
-            <p className="mt-1 text-sm text-muted-foreground">{template.description}</p>
-          )}
-        </div>
-        {(onEdit || onDelete) && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {onEdit && <DropdownMenuItem onClick={onEdit}>Edit</DropdownMenuItem>}
-              {onDelete && (
-                <DropdownMenuItem
-                  onClick={onDelete}
-                  className="text-destructive focus:text-destructive"
-                >
-                  <Trash2 className="h-4 w-4" />
-                  Delete
-                </DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
-      </div>
-
-      <div className="mt-4 space-y-4">
-        <PermissionMatrix rules={template.rules_json} />
-        <GranularFlags flags={template.granular_flags ?? []} />
-      </div>
-    </div>
-  );
-}
-
-function GranularFlags({ flags }: { flags: GranularFlag[] }) {
-  return (
-    <div className="border-t border-border pt-3">
-      <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-        Granular permissions
-      </p>
-      {flags.length === 0 ? (
-        <p className="text-xs text-muted-foreground">None granted.</p>
-      ) : (
-        <ul className="grid gap-1 sm:grid-cols-2">
-          {flags.map((flag) => (
-            <li key={flag} className="flex items-center gap-2 text-sm text-foreground">
-              <Check className="h-3.5 w-3.5 shrink-0 text-primary" strokeWidth={2.5} />
-              <span>{GRANULAR_FLAG_LABELS[flag] ?? flag}</span>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-}
-
-function PermissionMatrix({
-  rules,
-}: {
-  rules: Record<PermissionModule, PermissionLevel[]>;
-}) {
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b border-border">
-            <th className="py-2 pr-4 text-left font-medium text-muted-foreground">
-              Module
-            </th>
-            {LEVEL_ORDER.map((level) => (
-              <th
-                key={level}
-                className="w-20 px-3 py-2 text-center font-medium text-muted-foreground"
-              >
-                {LEVEL_LABELS[level]}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {ALL_MODULES.map((module) => {
-            const granted = rules[module] ?? [];
-            const hasAny = granted.some((level) => level !== "none");
-
-            return (
-              <tr key={module} className="border-b border-border/50 last:border-b-0">
-                <td
-                  className={cn(
-                    "py-2 pr-4 font-medium",
-                    hasAny ? "text-foreground" : "text-muted-foreground",
-                  )}
-                >
-                  {MODULE_LABELS[module]}
-                  {!hasAny && (
-                    <span className="ml-2 text-xs font-normal text-muted-foreground">
-                      no access
-                    </span>
-                  )}
-                </td>
-                {LEVEL_ORDER.map((level) => {
-                  const isGranted = granted.includes(level);
-                  return (
-                    <td key={level} className="px-3 py-2 text-center">
-                      {isGranted ? (
-                        <Check className="inline-block h-4 w-4 text-primary" strokeWidth={2.5} />
-                      ) : (
-                        <Minus className="inline-block h-4 w-4 text-muted-foreground/30" />
-                      )}
-                    </td>
-                  );
-                })}
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
   );
 }

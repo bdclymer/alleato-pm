@@ -113,13 +113,18 @@ export async function assembleSystemPrompt(options: {
   // Inject user memories
   if (messageText) {
     try {
-      const [{ preferences, relevant, team }, recentSummaries] =
+      const [{ preferences, relevant, team, errors: memoryErrors }, recentSummaries] =
         await Promise.all([
           getMemoriesForSession({ userId, firstMessage: messageText }),
           isFirstTurn && sessionId
             ? getRecentConversationSummaries(userId, sessionId, 3)
             : Promise.resolve([]),
         ]);
+      if (memoryErrors.length > 0) {
+        contextHealth.push(
+          `Memory context partially unavailable: ${memoryErrors.join("; ")}`,
+        );
+      }
       const relevantLearnings = await getRelevantAgentLearnings({
         messageText,
         projectId: selectedProjectId,

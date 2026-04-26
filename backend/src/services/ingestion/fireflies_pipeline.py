@@ -85,31 +85,92 @@ class IngestionResult:
     dry_run: bool
 
 
+def _openai_provider_configs() -> List[Dict[str, str]]:
+    providers: List[Dict[str, str]] = []
+    gateway_key = os.getenv("AI_GATEWAY_API_KEY")
+    if gateway_key:
+        providers.append(
+            {
+                "name": "AI Gateway",
+                "api_key": gateway_key,
+                "base_url": "https://ai-gateway.vercel.sh/v1",
+                "model_prefix": "openai/",
+            }
+        )
+
+    openai_key = os.getenv("OPENAI_API_KEY")
+    if openai_key:
+        providers.append(
+            {
+                "name": "OpenAI direct",
+                "api_key": openai_key,
+                "base_url": "",
+                "model_prefix": "",
+            }
+        )
+
+    return providers
+
+
+def _model_for_provider(model: str, provider: Dict[str, str]) -> str:
+    prefix = provider.get("model_prefix", "")
+    if prefix and not model.startswith(prefix):
+        return f"{prefix}{model}"
+    return model
+
+
+def _client_for_provider(provider: Dict[str, str]) -> OpenAI:
+    kwargs: Dict[str, str] = {"api_key": provider["api_key"]}
+    if provider.get("base_url"):
+        kwargs["base_url"] = provider["base_url"]
+    return OpenAI(**kwargs)
+
+
 class EmbeddingGenerator:
-    """Produces embeddings using OpenAI when available, otherwise hashed vectors."""
+    """Produces embeddings through configured providers and fails loudly."""
 
     def __init__(self, model: str = "text-embedding-3-large") -> None:
         self.model = model
-        self._client = None
-        if os.getenv("OPENAI_API_KEY") and OpenAI is not None:
-            self._client = OpenAI()
+        if OpenAI is None:
+            raise RuntimeError("openai package is required for Fireflies embeddings")
+        self._providers = _openai_provider_configs()
+        if not self._providers:
+            raise RuntimeError(
+                "AI_GATEWAY_API_KEY or OPENAI_API_KEY is required for Fireflies embeddings"
+            )
 
     def embed(self, texts: List[str]) -> List[List[float]]:
         if not texts:
             return []
-        if self._client is None:
-            return [self._hash_embedding(text) for text in texts]
-        response = self._client.embeddings.create(model=self.model, input=texts, dimensions=3072)
-        return [item.embedding for item in response.data]
+        errors: List[str] = []
+        truncated = [text[:8000] for text in texts]
+        for provider in self._providers:
+            try:
+                client = _client_for_provider(provider)
+                response = client.embeddings.create(
+                    model=_model_for_provider(self.model, provider),
+                    input=truncated,
+                    dimensions=3072,
+                )
+                embeddings = [item.embedding for item in response.data]
+                if len(embeddings) != len(texts):
+                    raise RuntimeError(
+                        f"expected {len(texts)} embeddings, got {len(embeddings)}"
+                    )
+                logger.info(
+                    "[FirefliesIngestion] Embedded %d texts via %s",
+                    len(texts),
+                    provider["name"],
+                )
+                return embeddings
+            except Exception as exc:
+                message = f"{provider['name']}: {exc}"
+                logger.error("[FirefliesIngestion] Embedding provider failed: %s", message)
+                errors.append(message)
 
-    @staticmethod
-    def _hash_embedding(text: str, dim: int = 64) -> List[float]:
-        digest = hashlib.sha256(text.encode("utf-8")).digest()
-        floats: List[float] = []
-        for i in range(dim):
-            byte = digest[i % len(digest)]
-            floats.append((byte - 128) / 128.0)
-        return floats
+        raise RuntimeError(
+            "Fireflies embedding failed across all providers: " + " | ".join(errors)
+        )
 
 
 class FirefliesIngestionPipeline:
@@ -1582,11 +1643,11 @@ class FirefliesIngestionPipeline:
             logger.debug("OpenAI not available, skipping memory extraction")
             return
 
-        api_key = os.environ.get("OPENAI_API_KEY")
-        if not api_key:
-            return
-
-        client = OpenAI(api_key=api_key)
+        providers = _openai_provider_configs()
+        if not providers:
+            raise RuntimeError(
+                "AI_GATEWAY_API_KEY or OPENAI_API_KEY is required for meeting memory extraction"
+            )
 
         # Build a compact transcript excerpt (first 4,000 chars)
         excerpt = content[:4000]
@@ -1614,12 +1675,28 @@ class FirefliesIngestionPipeline:
             "Return [] if nothing meaningful. Return ONLY valid JSON array."
         )
 
-        response = client.chat.completions.create(
-            model="gpt-4.1-nano",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0,
-            max_tokens=512,
-        )
+        response = None
+        chat_errors: List[str] = []
+        for provider in providers:
+            try:
+                client = _client_for_provider(provider)
+                response = client.chat.completions.create(
+                    model=_model_for_provider("gpt-4.1-nano", provider),
+                    messages=[{"role": "user", "content": prompt}],
+                    temperature=0,
+                    max_tokens=512,
+                )
+                break
+            except Exception as exc:
+                message = f"{provider['name']}: {exc}"
+                logger.error("[FirefliesIngestion] Memory extraction chat provider failed: %s", message)
+                chat_errors.append(message)
+
+        if response is None:
+            raise RuntimeError(
+                "Meeting memory extraction chat failed across all providers: "
+                + " | ".join(chat_errors)
+            )
 
         raw = (response.choices[0].message.content or "").strip()
         raw = raw.lstrip("```json").lstrip("```").rstrip("```").strip()
@@ -1646,12 +1723,7 @@ class FirefliesIngestionPipeline:
             return
 
         texts = [m["content"][:500] for m in valid]
-        embeddings_resp = client.embeddings.create(
-            model="text-embedding-3-large",
-            input=texts,
-            dimensions=3072,
-        )
-        embeddings = [e.embedding for e in embeddings_resp.data]
+        embeddings = EmbeddingGenerator().embed(texts)
 
         supabase_url = os.environ.get("SUPABASE_URL") or os.environ.get("NEXT_PUBLIC_SUPABASE_URL")
         supabase_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")

@@ -11,7 +11,8 @@ Create order across parallel sessions by controlling ownership, evidence, and ac
 1. Open `docs/ops/memory/current-state.md`.
 2. Reset/confirm `session-board.md` statuses.
 3. Prioritize top tasks and assign one owner per task.
-4. Ensure each task has a clear definition of done.
+4. Ensure each task has a Linear issue or sub-issue.
+5. Ensure each task has a clear definition of done.
 
 ## Assignment Rules
 
@@ -21,11 +22,15 @@ Create order across parallel sessions by controlling ownership, evidence, and ac
   - Scope
   - Required evidence
   - Stop condition
+  - Linear issue ID
+  - Whether subtasks are required before implementation
 
 ## Review Rules
 
 A handoff is `Accepted` only if it includes:
 
+- Linear issue ID and URL
+- Latest Linear Codex update comment
 - Exact commands run
 - Pass/fail outcome summary
 - Artifact paths (logs/screenshots/reports)
@@ -33,6 +38,8 @@ A handoff is `Accepted` only if it includes:
 - Known risks and next step
 
 If any are missing, mark `Needs Rework` with explicit reason.
+
+Also post the same acceptance or rework reason to the Linear issue. Linear is the source of truth for issue state; `review-queue.md` is the local evidence ledger.
 
 ## Fast Intake (No Manual Copy/Paste)
 
@@ -51,6 +58,8 @@ This reports missing handoff sections per worker session so you can disposition 
 - Worker cannot start a new task while previous handoff is `Pending Review` or `Needs Rework`.
 - Unclaimed work is invalid and not merged.
 - "Fixed" without evidence is automatically rejected.
+- Codex work without a Linear issue is invalid.
+- Parent issues with multiple active slices must be decomposed into Linear sub-issues before workers start.
 
 ## End Of Day
 

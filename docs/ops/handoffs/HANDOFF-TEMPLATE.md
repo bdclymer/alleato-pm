@@ -4,13 +4,21 @@
 
 1) Session ID:
 2) Task ID:
-3) Current status:
-4) Files changed (absolute paths):
-5) Commands run and outcome (pass/fail counts):
-6) Evidence artifacts (screenshot/video/report/log paths):
-7) Top 3 findings (frontend-visible issues first):
-8) Recommended next action (one line):
-9) Handoff file path:
+3) Linear issue:
+4) Linear URL:
+5) Current status:
+6) Files changed (absolute paths):
+7) Commands run and outcome (pass/fail counts):
+8) Evidence artifacts (screenshot/video/report/log paths):
+9) Top 3 findings (frontend-visible issues first):
+10) Recommended next action (one line):
+11) Handoff file path:
+
+## Linear Updates
+
+- Kickoff comment:
+- Milestone comments:
+- Completion/blocker comment:
 
 ## Current Status
 

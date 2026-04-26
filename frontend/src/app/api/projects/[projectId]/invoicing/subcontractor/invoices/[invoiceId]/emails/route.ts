@@ -2,6 +2,7 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { apiErrorResponse } from "@/lib/api-error";
 import { sendDocumentEmail } from "@/lib/documents/email";
 import { fetchSubcontractorInvoicePdfData } from "../pdf/route";
@@ -17,6 +18,14 @@ export const GET = withApiGuardrails<{ projectId: string; invoiceId: string }>(
     const { invoiceId } = params;
     const invoiceIdNum = parseInt(invoiceId, 10);
 
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/emails#GET", message: "Authentication required." });
+    }
+
     const { data, error } = await supabase
       .from("subcontractor_invoice_emails")
       .select("*")
@@ -30,7 +39,33 @@ export const GET = withApiGuardrails<{ projectId: string; invoiceId: string }>(
       );
     }
 
-    return NextResponse.json({ data: data ?? [] });
+    const serviceClient = createServiceClient();
+    const { data: emailEvents, error: emailEventsError } = await serviceClient
+      .from("email_events")
+      .select("id, from_email, to_email, subject, template, status, sent_at, created_at")
+      .eq("entity_type", "subcontractor_invoice")
+      .eq("entity_id", String(invoiceIdNum))
+      .order("created_at", { ascending: false });
+
+    if (emailEventsError) {
+      return NextResponse.json(
+        { error: "Failed to fetch email events", details: emailEventsError.message },
+        { status: 500 },
+      );
+    }
+
+    const eventRows = (emailEvents ?? []).map((event) => ({
+      id: event.id,
+      sent_by_email: event.from_email,
+      to_recipients: [event.to_email],
+      cc_recipients: [],
+      subject: event.subject,
+      email_type: event.template,
+      sent_at: event.sent_at ?? event.created_at,
+      status: event.status,
+    }));
+
+    return NextResponse.json({ data: [...(data ?? []), ...eventRows] });
     },
 );
 

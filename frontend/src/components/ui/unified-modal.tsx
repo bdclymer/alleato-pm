@@ -21,7 +21,7 @@ const modalVariants = cva(
         "4xl": "max-w-4xl",
         "5xl": "max-w-5xl",
         full: "max-w-full",
-        form: "max-w-3xl",
+        form: "max-w-3xl lg:max-w-4xl",
       },
     },
     defaultVariants: {

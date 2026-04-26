@@ -6,6 +6,7 @@ import {
   stepCountIs,
   streamText,
   type UIMessage,
+  type UIMessageStreamWriter,
   type ToolSet,
 } from "ai";
 import { after } from "next/server";
@@ -31,10 +32,19 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 export const maxDuration = 120;
 
 // ---------------------------------------------------------------------------
-// Tool-loop diagnostic — captured via onStepFinish, persisted per message.
-// Gives us finish reason, warnings, step count, and tool call count without
-// touching live stream latency.
+// Tool-loop diagnostic — captured via step callbacks, persisted per message.
+// Gives us the prepared tool policy, finish reason, warnings, step count, and
+// tool call count without touching live stream latency.
 // ---------------------------------------------------------------------------
+type StepStartDiagnostic = {
+  stepNumber: number;
+  modelProvider: string;
+  modelId: string;
+  toolChoice: string | undefined;
+  activeTools: string[] | undefined;
+  availableToolNames: string[];
+};
+
 type StepDiagnostic = {
   stepNumber: number;
   finishReason: string;
@@ -47,21 +57,532 @@ type StepDiagnostic = {
 };
 
 type LoopDiagnostic = {
+  stepStarts: StepStartDiagnostic[];
   steps: StepDiagnostic[];
+  preparedStepCount: number;
   totalStepCount: number;
   totalToolCallCount: number;
   finalFinishReason: string;
   totalWarningCount: number;
 };
 
-function buildLoopDiagnostic(steps: StepDiagnostic[]): LoopDiagnostic {
+type ExecutableTool = {
+  execute?: (input: Record<string, unknown>) => Promise<unknown>;
+};
+
+type SemanticSearchResult = {
+  content?: unknown;
+  sourceTable?: unknown;
+  recordId?: unknown;
+  similarity?: unknown;
+  finalScore?: unknown;
+  metadata?: unknown;
+  createdAt?: unknown;
+};
+
+type SemanticSearchOutput = {
+  query?: unknown;
+  resultCount?: unknown;
+  results?: SemanticSearchResult[];
+  error?: unknown;
+  message?: unknown;
+};
+
+type ProjectBriefingSnapshot = Record<string, unknown>;
+
+type StrategistStatus = {
+  stage:
+    | "memory"
+    | "project"
+    | "snapshot"
+    | "knowledge"
+    | "synthesis"
+    | "complete"
+    | "fallback";
+  message: string;
+  status: "loading" | "success" | "warning" | "error";
+  timestamp: string;
+};
+
+type TimeoutResult = {
+  timedOut: true;
+  error: string;
+};
+
+function isTimeoutResult<T>(value: T | TimeoutResult): value is TimeoutResult {
+  return typeof value === "object" && value !== null && "timedOut" in value;
+}
+
+function withTimeout<T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  error: string,
+): Promise<T | TimeoutResult> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      resolve({ timedOut: true, error });
+    }, timeoutMs);
+
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (err) => {
+        clearTimeout(timer);
+        reject(err);
+      },
+    );
+  });
+}
+
+function writeStrategistStatus(
+  writer: UIMessageStreamWriter<UIMessage>,
+  status: Omit<StrategistStatus, "timestamp">,
+) {
+  writer.write({
+    type: "data-status",
+    id: "strategist-status",
+    data: {
+      ...status,
+      timestamp: new Date().toISOString(),
+    },
+  } as Parameters<typeof writer.write>[0]);
+}
+
+function serializeDiagnosticValue(value: unknown): string | undefined {
+  if (value == null) return undefined;
+  if (typeof value === "string") return value;
+
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
+}
+
+function buildLoopDiagnostic(params: {
+  stepStarts: StepStartDiagnostic[];
+  steps: StepDiagnostic[];
+}): LoopDiagnostic {
+  const { stepStarts, steps } = params;
   return {
+    stepStarts,
     steps,
+    preparedStepCount: stepStarts.length,
     totalStepCount: steps.length,
     totalToolCallCount: steps.reduce((n, s) => n + s.toolCallCount, 0),
     finalFinishReason: steps.at(-1)?.finishReason ?? "unknown",
     totalWarningCount: steps.reduce((n, s) => n + s.warningCount, 0),
   };
+}
+
+function normalizeSemanticSearchOutput(output: unknown): SemanticSearchOutput | null {
+  if (!output || typeof output !== "object") return null;
+  const value = output as SemanticSearchOutput;
+  return {
+    ...value,
+    results: Array.isArray(value.results) ? value.results : [],
+  };
+}
+
+function getMetadataValue(metadata: unknown, key: string): string | undefined {
+  if (!metadata || typeof metadata !== "object") return undefined;
+  const value = (metadata as Record<string, unknown>)[key];
+  return typeof value === "string" && value.trim() ? value : undefined;
+}
+
+function formatRetrievedSourceContext(output: SemanticSearchOutput): string | null {
+  const results = (output.results ?? []).slice(0, 8);
+  if (results.length === 0) return null;
+
+  const formattedResults = results.map((result, index) => {
+    const metadata = result.metadata;
+    const title =
+      getMetadataValue(metadata, "title") ??
+      getMetadataValue(metadata, "source") ??
+      String(result.sourceTable ?? "source");
+    const date =
+      (typeof result.createdAt === "string" && result.createdAt) ||
+      getMetadataValue(metadata, "date") ||
+      "unknown date";
+    const sourceTable = String(result.sourceTable ?? "source");
+    const recordId = String(result.recordId ?? "unknown");
+    const content = String(result.content ?? "").replace(/\s+/g, " ").trim();
+    const excerpt = content.length > 900 ? `${content.slice(0, 900)}...` : content;
+
+    return [
+      `Source ${index + 1}: [Source: ${sourceTable} ${recordId}] ${title} (${date})`,
+      `Excerpt: ${excerpt}`,
+    ].join("\n");
+  });
+
+  return [
+    "Deterministic retrieval context for this briefing prompt:",
+    "Use these retrieved source excerpts to answer the user. Cite them inline using the [Source: ...] labels below. If the excerpts are incomplete, say what is missing instead of inventing details.",
+    "",
+    ...formattedResults,
+  ].join("\n\n");
+}
+
+function formatProjectBriefingSnapshotContext(snapshot: ProjectBriefingSnapshot | null): string | null {
+  if (!snapshot) return null;
+  return [
+    "Canonical project briefing snapshot for this broad project-update prompt:",
+    "Use this snapshot first. Lead with Hard Facts before any narrative interpretation. Then cover What Changed, Insider Analysis, Recommended Actions, Confidence/Data Gaps, and a concrete Next Step.",
+    JSON.stringify(snapshot, null, 2),
+  ].join("\n\n");
+}
+
+function readSnapshotArray(
+  snapshot: ProjectBriefingSnapshot | null,
+  key: string,
+): unknown[] {
+  const value = snapshot?.[key];
+  return Array.isArray(value) ? value : [];
+}
+
+function readSnapshotObject(
+  snapshot: ProjectBriefingSnapshot | null,
+  key: string,
+): Record<string, unknown> | null {
+  const value = snapshot?.[key];
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+}
+
+function readNestedNumber(
+  source: Record<string, unknown> | null,
+  path: string[],
+): number {
+  let current: unknown = source;
+  for (const key of path) {
+    if (!current || typeof current !== "object" || Array.isArray(current)) return 0;
+    current = (current as Record<string, unknown>)[key];
+  }
+  return typeof current === "number" && Number.isFinite(current) ? current : 0;
+}
+
+function buildSnapshotNextStep(snapshot: ProjectBriefingSnapshot | null): string {
+  const hardFacts = readSnapshotObject(snapshot, "hardFacts");
+  const project = readSnapshotObject(snapshot, "project");
+  const projectName = typeof project?.name === "string" ? project.name : "this project";
+  const overdueRfis = readNestedNumber(hardFacts, ["rfis", "overdueCount"]);
+  const openRfis = readNestedNumber(hardFacts, ["rfis", "openCount"]);
+  const overdueSubmittals = readNestedNumber(hardFacts, ["submittals", "overdueCount"]);
+  const overdueTasks = readNestedNumber(hardFacts, ["schedule", "overdueCount"]);
+  const pendingCos = readNestedNumber(hardFacts, ["changeOrders", "pendingCount"]);
+  const openCes = readNestedNumber(hardFacts, ["changeEvents", "openCount"]);
+  const unexecutedCommitments = readNestedNumber(hardFacts, ["commitments", "unexecutedCount"]);
+
+  if (overdueTasks > 0 || overdueRfis > 0 || overdueSubmittals > 0) {
+    return `Next step: run a 30-minute PM/owner recovery huddle for ${projectName} and leave with named owners for the ${overdueTasks} overdue schedule task(s), ${overdueRfis || openRfis} open/overdue RFI(s), and ${overdueSubmittals} overdue submittal(s).`;
+  }
+
+  if (pendingCos > 0 || openCes > 0) {
+    return `Next step: turn the ${pendingCos} pending change order(s) and ${openCes} open change event(s) into a decision log with owner approval status, pricing owner, and target decision date.`;
+  }
+
+  if (unexecutedCommitments > 0) {
+    return `Next step: review the ${unexecutedCommitments} unexecuted commitment(s) and decide what can be released now versus what is waiting on owner direction.`;
+  }
+
+  return `Next step: confirm the budget baseline and the top three owner/PM decisions for ${projectName} so the next briefing can separate real exposure from noise.`;
+}
+
+function currency(value: number): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: value % 1 === 0 ? 0 : 2,
+  }).format(value);
+}
+
+function createDeterministicProjectBriefing(params: {
+  snapshot: ProjectBriefingSnapshot | null;
+  retrieval: SemanticSearchOutput | null;
+}): string | null {
+  const { snapshot, retrieval } = params;
+  if (!snapshot) return null;
+
+  const project = readSnapshotObject(snapshot, "project");
+  const hardFacts = readSnapshotObject(snapshot, "hardFacts");
+  const budget = readSnapshotObject(hardFacts, "budget");
+  const contract = readSnapshotObject(hardFacts, "contract");
+  const changeOrders = readSnapshotObject(hardFacts, "changeOrders");
+  const changeEvents = readSnapshotObject(hardFacts, "changeEvents");
+  const rfis = readSnapshotObject(hardFacts, "rfis");
+  const submittals = readSnapshotObject(hardFacts, "submittals");
+  const schedule = readSnapshotObject(hardFacts, "schedule");
+  const commitments = readSnapshotObject(hardFacts, "commitments");
+  const notifications = readSnapshotObject(hardFacts, "notifications");
+  const recentMovement = readSnapshotArray(snapshot, "recentMovement").slice(0, 3);
+  const riskSignals = readSnapshotArray(snapshot, "riskSignals").map(String).filter(Boolean);
+  const dataGaps = readSnapshotArray(snapshot, "dataGaps").map(String).filter(Boolean);
+  const sourceRef = typeof snapshot.sourceRef === "string"
+    ? snapshot.sourceRef
+    : "[Source: Project Briefing Snapshot]";
+  const sourceResults = (retrieval?.results ?? []).slice(0, 3);
+  const sourceLine = sourceResults.length
+    ? sourceResults.map((result) => sourceLabel(result)).join("; ")
+    : sourceRef;
+
+  return [
+    `**Hard Facts**`,
+    `- **Project:** ${String(project?.name ?? "Selected project")} (${String(project?.phase ?? "phase unknown")}).`,
+    `- **Budget:** original ${currency(readNestedNumber(budget, ["originalBudget"]))}; revised ${currency(readNestedNumber(budget, ["revisedBudget"]))}; status ${String(budget?.status ?? "unknown")}; variance ${currency(readNestedNumber(budget, ["forecastVariance"]))}. ${sourceRef}`,
+    `- **Contract:** revised value ${currency(readNestedNumber(contract, ["revisedContractValue"]))}; approved changes ${currency(readNestedNumber(contract, ["approvedContractChanges"]))}; pending changes ${currency(readNestedNumber(contract, ["pendingContractChanges"]))}; invoiced ${currency(readNestedNumber(contract, ["invoicedAmount"]))}.`,
+    `- **Change Orders:** ${readNestedNumber(changeOrders, ["pendingCount"])} pending (${currency(readNestedNumber(changeOrders, ["pendingAmount"]))}), ${readNestedNumber(changeOrders, ["approvedCount"])} approved (${currency(readNestedNumber(changeOrders, ["approvedAmount"]))}).`,
+    `- **Change Events:** ${readNestedNumber(changeEvents, ["openCount"])} open.`,
+    `- **RFIs:** ${readNestedNumber(rfis, ["openCount"])} open; ${readNestedNumber(rfis, ["overdueCount"])} overdue; ${readNestedNumber(rfis, ["scheduleSensitiveCount"])} schedule-sensitive.`,
+    `- **Submittals:** ${readNestedNumber(submittals, ["openCount"])} open; ${readNestedNumber(submittals, ["overdueCount"])} overdue; ${readNestedNumber(submittals, ["longLeadOpenCount"])} long-lead open.`,
+    `- **Schedule:** ${readNestedNumber(schedule, ["incompleteCount"])} incomplete tasks; ${readNestedNumber(schedule, ["overdueCount"])} overdue; ${readNestedNumber(schedule, ["upcomingMilestoneCount"])} upcoming milestones.`,
+    `- **Commitments/Procurement:** ${readNestedNumber(commitments, ["unexecutedCount"])} unexecuted of ${readNestedNumber(commitments, ["totalCount"])} total commitments.`,
+    `- **Open notifications/actions:** ${readNestedNumber(notifications, ["openCount"])} open notifications.`,
+    "",
+    `**What Changed**`,
+    ...(recentMovement.length
+      ? recentMovement.map((item) => {
+          const record = item && typeof item === "object" ? item as Record<string, unknown> : {};
+          return `- ${String(record.date ?? "undated")}: ${String(record.summary ?? record.title ?? "Recent project movement found.").slice(0, 260)} ${String(record.sourceRef ?? "")}`.trim();
+        })
+      : [`- I did not find recent meeting/document movement in the snapshot. ${sourceLine}`]),
+    "",
+    `**Insider Analysis**`,
+    ...(riskSignals.length
+      ? riskSignals.slice(0, 4).map((risk) => `- ${risk}`)
+      : ["- The current record does not expose a strong risk signal, so the operating risk is source completeness rather than a confirmed project issue."]),
+    "",
+    `**Recommended Actions**`,
+    `1. **Lock the operating baseline** - Confirm which budget/forecast number leadership is managing to before making cost or scope commitments.`,
+    `2. **Clear decision blockers** - Turn pending change orders, open change events, overdue RFIs, and overdue schedule tasks into a dated owner/PM decision log.`,
+    `3. **Protect procurement** - Review unexecuted commitments and release anything that is not truly waiting on owner direction.`,
+    "",
+    `**Confidence/Data Gaps**`,
+    dataGaps.length
+      ? dataGaps.map((gap) => `- ${gap}`).join("\n")
+      : `- Confidence is strongest on structured project controls from the briefing snapshot. Meeting/document context came from: ${sourceLine}.`,
+    "",
+    `**Next Step**`,
+    `- ${buildSnapshotNextStep(snapshot)}`,
+  ].join("\n");
+}
+
+function enforceProjectBriefingResponseContract(params: {
+  content: string;
+  projectBriefingSnapshot: ProjectBriefingSnapshot | null;
+  forceBusinessRetrieval: boolean;
+}): string {
+  const { content, projectBriefingSnapshot, forceBusinessRetrieval } = params;
+  if (!forceBusinessRetrieval || !projectBriefingSnapshot) return content;
+
+  const hasHardFacts = /(^|\n)\s*(#{1,4}\s*)?(\*\*)?hard facts(\*\*)?\b/i.test(content);
+  const hasNextStep = /(^|\n)\s*(#{1,4}\s*)?(\*\*)?next step(\*\*)?\b/i.test(content);
+  const appendedSections: string[] = [];
+
+  if (!hasHardFacts) {
+    appendedSections.push(
+      [
+        "Hard Facts",
+        "The project briefing snapshot loaded, but the generated answer did not clearly label the hard-facts section. Treat the budget, change order, RFI, submittal, schedule, commitment, and notification facts above as the operating scoreboard.",
+      ].join("\n\n"),
+    );
+  }
+
+  if (!hasNextStep) {
+    appendedSections.push(["Next Step", buildSnapshotNextStep(projectBriefingSnapshot)].join("\n\n"));
+  }
+
+  if (appendedSections.length === 0) return content;
+  return [content.trim(), ...appendedSections].join("\n\n");
+}
+
+function sourceLabel(result: SemanticSearchResult): string {
+  return `[Source: ${String(result.sourceTable ?? "source")} ${String(result.recordId ?? "unknown")}]`;
+}
+
+function sourceTitle(result: SemanticSearchResult): string {
+  return (
+    getMetadataValue(result.metadata, "title") ??
+    getMetadataValue(result.metadata, "source") ??
+    String(result.sourceTable ?? "source")
+  );
+}
+
+function sourceDate(result: SemanticSearchResult): string {
+  return (
+    (typeof result.createdAt === "string" && result.createdAt.slice(0, 10)) ||
+    getMetadataValue(result.metadata, "date")?.slice(0, 10) ||
+    "undated"
+  );
+}
+
+function extractRelevantSentences(
+  results: SemanticSearchResult[],
+  keywords: string[],
+  limit: number,
+): string[] {
+  const findings: string[] = [];
+  const seen = new Set<string>();
+
+  for (const result of results) {
+    const content = String(result.content ?? "").replace(/\s+/g, " ").trim();
+    if (!content) continue;
+
+    const sentences = content
+      .split(/(?<=[.!?])\s+/)
+      .map((sentence) => sentence.trim())
+      .filter(Boolean);
+
+    for (const sentence of sentences) {
+      const normalized = sentence.toLowerCase();
+      if (!keywords.some((keyword) => normalized.includes(keyword))) continue;
+
+      const cleaned = sentence.length > 260 ? `${sentence.slice(0, 260).trim()}...` : sentence;
+      const key = cleaned.toLowerCase();
+      if (seen.has(key)) continue;
+
+      findings.push(`${cleaned} ${sourceLabel(result)}`);
+      seen.add(key);
+      if (findings.length >= limit) return findings;
+    }
+  }
+
+  return findings;
+}
+
+function createSourceGroundedBriefingFallback(params: {
+  output: SemanticSearchOutput;
+}): string | null {
+  const results = (params.output.results ?? []).slice(0, 8);
+  if (results.length === 0) return null;
+
+  const latestSources = results.slice(0, 3).map((result) => {
+    return `${sourceDate(result)} — ${sourceTitle(result)} ${sourceLabel(result)}`;
+  });
+
+  const changed = extractRelevantSentences(
+    results,
+    [
+      "approved",
+      "decided",
+      "agreed",
+      "final",
+      "revised",
+      "updated",
+      "progress",
+      "milestone",
+      "design",
+      "procurement",
+      "budget",
+    ],
+    4,
+  );
+  const risks = extractRelevantSentences(
+    results,
+    [
+      "risk",
+      "concern",
+      "delay",
+      "delays",
+      "cost",
+      "overrun",
+      "permit",
+      "zoning",
+      "supply",
+      "procurement",
+      "material",
+    ],
+    4,
+  );
+
+  return [
+    "I found usable Vermillion Rise context. Here is the sourced readout from the latest records I found.",
+    "",
+    "Latest signal:",
+    ...latestSources.map((source) => `- ${source}`),
+    "",
+    "What changed recently:",
+    ...(changed.length
+      ? changed.map((item) => `- ${item}`)
+      : ["- The retrieved records show recent project/status meeting context, but the excerpts did not include a clean decision sentence."]),
+    "",
+    "Current risks I would track:",
+    ...(risks.length
+      ? risks.map((item) => `- ${item}`)
+      : ["- The retrieved records did not surface a clear risk sentence in the top results."]),
+    "",
+    "Strategic next move:",
+    "- Treat procurement/material availability, permitting/zoning, and budget exposure as the immediate watch items until the live Acumatica/schedule read can be cross-checked against these meeting notes.",
+  ].join("\n");
+}
+
+function formatCompactRetrievedSources(output: SemanticSearchOutput): string {
+  return (output.results ?? [])
+    .slice(0, 8)
+    .map((result, index) => {
+      const content = String(result.content ?? "").replace(/\s+/g, " ").trim();
+      const excerpt = content.length > 1_200 ? `${content.slice(0, 1_200).trim()}...` : content;
+
+      return [
+        `Source ${index + 1}: ${sourceLabel(result)}`,
+        `Title: ${sourceTitle(result)}`,
+        `Date: ${sourceDate(result)}`,
+        `Excerpt: ${excerpt}`,
+      ].join("\n");
+    })
+    .join("\n\n");
+}
+
+async function generateSourceGroundedSynthesis(params: {
+  output: SemanticSearchOutput;
+  userMessage: string;
+  projectBriefingSnapshot?: ProjectBriefingSnapshot | null;
+}): Promise<string | null> {
+  if ((params.output.results ?? []).length === 0) return null;
+
+  const fallback = createSourceGroundedBriefingFallback({ output: params.output });
+  const sourceContext = formatCompactRetrievedSources(params.output);
+  const projectSnapshotContext = params.projectBriefingSnapshot
+    ? JSON.stringify(params.projectBriefingSnapshot, null, 2)
+    : "No project briefing snapshot was available.";
+
+  try {
+    const result = await generateText({
+      model: getLanguageModel("openai/gpt-4.1"),
+      system:
+        "You are Alleato's business strategist and project manager. " +
+        "Answer naturally, directly, and with executive judgment. " +
+        "For broad project updates, start with a Hard Facts section: budget, forecast/over-under, change orders, RFIs, submittals, schedule, commitments/procurement, and open actions/notifications. " +
+        "Then give What Changed, Insider Analysis, Recommended Actions, Confidence/Data Gaps, and a concrete next step. " +
+        "Use only the provided retrieved sources. Cite facts inline with the exact [Source: ...] labels. " +
+        "If the sources are thin or internally stale, say that plainly while still extracting the useful signal. " +
+        "Do not mention model failures, tool failures, RAG, retrieval, or implementation details.",
+      messages: [
+        {
+          role: "user",
+          content: [
+            `User request: ${params.userMessage}`,
+            "Structured project briefing snapshot:",
+            projectSnapshotContext,
+            "Retrieved sources:",
+            sourceContext,
+            "Write a concise PM briefing with sections: Hard Facts, What Changed, Insider Analysis, Recommended Actions, Confidence/Data Gaps, Next Step.",
+          ].join("\n\n"),
+        },
+      ],
+      maxOutputTokens: 1_000,
+      timeout: {
+        totalMs: 45_000,
+      },
+    });
+
+    const text = result.text.trim();
+    return text || fallback;
+  } catch {
+    return fallback;
+  }
 }
 
 type ResponseQuality = {
@@ -189,6 +710,7 @@ async function buildBusinessContextPreflight(params: {
   selectedProjectId?: number;
 }): Promise<{
   promptInjection: string;
+  primaryProjectId: number | null;
   trace: Record<string, unknown>;
 }> {
   const supabase = createServiceClient();
@@ -315,6 +837,7 @@ async function buildBusinessContextPreflight(params: {
 
   return {
     promptInjection,
+    primaryProjectId: typeof primaryProject?.id === "number" ? primaryProject.id : null,
     trace: {
       tool: "serverBusinessContextPreflight",
       input: {
@@ -533,7 +1056,8 @@ export const POST = withApiGuardrails(
     let memoryUsage: MemoryUsageSummary | undefined;
     let learningUsage: BotLearningUsageSummary | undefined;
 
-    // Accumulated per-step diagnostics — populated by onStepFinish.
+    // Accumulated per-step diagnostics — populated by streamText callbacks.
+    const stepStartDiagnostics: StepStartDiagnostic[] = [];
     const stepDiagnostics: StepDiagnostic[] = [];
 
     let streamErrorMessage: string | undefined;
@@ -564,66 +1088,356 @@ export const POST = withApiGuardrails(
       ? extractTextFromParts(lastUserMessage.parts)
       : "";
     const forceBusinessRetrieval = shouldForceBusinessRetrieval(lastUserContent);
-
-    let systemPrompt = await assembleSystemPrompt({
-      userId: user.id,
-      messageText: lastUserContent,
-      selectedProjectId,
-      councilMode,
-      sessionId,
-      isFirstTurn: messages.length === 1,
-      onMemoryUsage: (usage) => {
-        memoryUsage = usage;
-      },
-      onLearningUsage: (usage) => {
-        learningUsage = usage;
-      },
-    });
-
-    if (forceBusinessRetrieval) {
-      const preflight = await buildBusinessContextPreflight({
-        userId: user.id,
-        message: lastUserContent,
-        selectedProjectId,
-      });
-      toolTrace.push(preflight.trace);
-      systemPrompt = `${preflight.promptInjection}\n\n---\n\n${systemPrompt}`;
-    }
+    let deterministicRetrieval: SemanticSearchOutput | null = null;
+    let projectBriefingSnapshot: ProjectBriefingSnapshot | null = null;
     const stream = createUIMessageStream({
       originalMessages: messages,
       execute: async ({ writer }) => {
+        writeStrategistStatus(writer, {
+          stage: "memory",
+          message: "Reading conversation memory and project context",
+          status: "loading",
+        });
+
+        let systemPrompt = await assembleSystemPrompt({
+          userId: user.id,
+          messageText: lastUserContent,
+          selectedProjectId,
+          councilMode,
+          sessionId,
+          isFirstTurn: messages.length === 1,
+          onMemoryUsage: (usage) => {
+            memoryUsage = usage;
+          },
+          onLearningUsage: (usage) => {
+            learningUsage = usage;
+          },
+        });
+
+        if (forceBusinessRetrieval) {
+          writeStrategistStatus(writer, {
+            stage: "project",
+            message: "Finding the project and checking access",
+            status: "loading",
+          });
+
+          const preflight = await buildBusinessContextPreflight({
+            userId: user.id,
+            message: lastUserContent,
+            selectedProjectId,
+          });
+          toolTrace.push(preflight.trace);
+          systemPrompt = `${preflight.promptInjection}\n\n---\n\n${systemPrompt}`;
+
+          const projectId = selectedProjectId ?? preflight.primaryProjectId ?? undefined;
+          const semanticSearchTool = (tools as Record<string, ExecutableTool>).semanticSearch;
+          const briefingSnapshotTool = (tools as Record<string, ExecutableTool>).getProjectBriefingSnapshot;
+
+          writeStrategistStatus(writer, {
+            stage: "snapshot",
+            message: "Pulling budget, contract, RFIs, submittals, schedule, and commitments",
+            status: "loading",
+          });
+
+          if (briefingSnapshotTool?.execute) {
+            const snapshotOutput = await withTimeout(
+              briefingSnapshotTool.execute({
+                projectId,
+              }),
+              12_000,
+              "getProjectBriefingSnapshot timed out during strategist retrieval",
+            );
+
+            if (isTimeoutResult(snapshotOutput)) {
+              toolTrace.push({
+                tool: "getProjectBriefingSnapshot",
+                input: {
+                  projectId: projectId ?? null,
+                },
+                error: snapshotOutput.error,
+                timestamp: new Date().toISOString(),
+              });
+              writeStrategistStatus(writer, {
+                stage: "snapshot",
+                message: "Structured project controls timed out; continuing with other sources",
+                status: "warning",
+              });
+            } else if (snapshotOutput && typeof snapshotOutput === "object") {
+              projectBriefingSnapshot = snapshotOutput as ProjectBriefingSnapshot;
+              const snapshotContext = formatProjectBriefingSnapshotContext(projectBriefingSnapshot);
+              if (snapshotContext) {
+                systemPrompt = `${snapshotContext}\n\n---\n\n${systemPrompt}`;
+              }
+              writeStrategistStatus(writer, {
+                stage: "snapshot",
+                message: "Structured project controls loaded",
+                status: "success",
+              });
+            }
+          } else {
+            toolTrace.push({
+              tool: "getProjectBriefingSnapshot",
+              input: {
+                projectId: projectId ?? null,
+              },
+              error: "getProjectBriefingSnapshot tool was not executable during server-side retrieval",
+              timestamp: new Date().toISOString(),
+            });
+          }
+
+          writeStrategistStatus(writer, {
+            stage: "knowledge",
+            message: "Searching meetings, documents, and vectorized project history",
+            status: "loading",
+          });
+
+          if (semanticSearchTool?.execute) {
+            const searchOutput = await withTimeout(
+              semanticSearchTool.execute({
+                query: lastUserContent,
+                projectId,
+                matchCount: 8,
+                threshold: 0.2,
+                skipRerank: true,
+              }),
+              12_000,
+              "semanticSearch pre-retrieval timed out during strategist retrieval",
+            );
+
+            if (isTimeoutResult(searchOutput)) {
+              toolTrace.push({
+                tool: "semanticSearch",
+                input: {
+                  query: lastUserContent,
+                  projectId: projectId ?? null,
+                  matchCount: 8,
+                  threshold: 0.2,
+                  skipRerank: true,
+                },
+                error: searchOutput.error,
+                timestamp: new Date().toISOString(),
+              });
+              writeStrategistStatus(writer, {
+                stage: "knowledge",
+                message: "Meeting/document search timed out; using structured project controls",
+                status: "warning",
+              });
+            } else {
+              deterministicRetrieval = normalizeSemanticSearchOutput(searchOutput);
+              writeStrategistStatus(writer, {
+                stage: "knowledge",
+                message: `Found ${(deterministicRetrieval?.results ?? []).length} relevant meeting/document signals`,
+                status: "success",
+              });
+            }
+
+            const retrievedContext = deterministicRetrieval
+              ? formatRetrievedSourceContext(deterministicRetrieval)
+              : null;
+            if (retrievedContext) {
+              systemPrompt = `${retrievedContext}\n\n---\n\n${systemPrompt}`;
+            }
+          } else {
+            toolTrace.push({
+              tool: "semanticSearch",
+              input: {
+                query: lastUserContent,
+                projectId: projectId ?? null,
+              },
+              error: "semanticSearch tool was not executable during server-side retrieval",
+              timestamp: new Date().toISOString(),
+            });
+          }
+
+          writeStrategistStatus(writer, {
+            stage: "synthesis",
+            message: "Writing the executive PM briefing and recommendation",
+            status: "loading",
+          });
+
+          const deterministicBriefing = createDeterministicProjectBriefing({
+            snapshot: projectBriefingSnapshot,
+            retrieval: deterministicRetrieval,
+          });
+          const synthesisOutput = deterministicRetrieval
+            ? await withTimeout(
+                generateSourceGroundedSynthesis({
+                  output: deterministicRetrieval,
+                  userMessage: lastUserContent,
+                  projectBriefingSnapshot,
+                }),
+                6_000,
+                "source-grounded synthesis exceeded the fast briefing budget",
+              )
+            : null;
+          const sourceGroundedSynthesis =
+            synthesisOutput && !isTimeoutResult(synthesisOutput)
+              ? synthesisOutput
+              : null;
+
+          if (synthesisOutput && isTimeoutResult(synthesisOutput)) {
+            toolTrace.push({
+              tool: "sourceGroundedSynthesisFallback",
+              input: {
+                primaryModel: STRATEGIST_MODEL,
+                synthesisModel: "openai/gpt-4.1",
+                reason: "deterministic broad briefing path",
+              },
+              error: synthesisOutput.error,
+              timestamp: new Date().toISOString(),
+            });
+          }
+
+          let content = sourceGroundedSynthesis ??
+            deterministicBriefing ??
+            (await generateRecoveryResponse({
+              userMessage: lastUserContent,
+              cause: "Project briefing retrieval did not return enough source data to synthesize a full answer.",
+              selectedProjectId,
+              toolTrace,
+            }));
+
+          if (sourceGroundedSynthesis) {
+            toolTrace.push({
+              tool: "sourceGroundedSynthesisFallback",
+              input: {
+                primaryModel: STRATEGIST_MODEL,
+                synthesisModel: "openai/gpt-4.1",
+                reason: "deterministic broad briefing path",
+              },
+              output: {
+                contentLength: sourceGroundedSynthesis.length,
+              },
+              timestamp: new Date().toISOString(),
+            });
+          }
+
+          const contentBeforeContract = content;
+          content = enforceProjectBriefingResponseContract({
+            content,
+            projectBriefingSnapshot,
+            forceBusinessRetrieval,
+          });
+          if (content !== contentBeforeContract) {
+            toolTrace.push({
+              tool: "projectBriefingResponseContract",
+              input: {
+                hadHardFacts: /(^|\n)\s*(#{1,4}\s*)?(\*\*)?hard facts(\*\*)?\b/i.test(contentBeforeContract),
+                hadNextStep: /(^|\n)\s*(#{1,4}\s*)?(\*\*)?next step(\*\*)?\b/i.test(contentBeforeContract),
+              },
+              output: {
+                appendedCharacters: content.length - contentBeforeContract.length,
+              },
+              timestamp: new Date().toISOString(),
+            });
+          }
+
+          const textId = "strategist-project-briefing";
+          writer.write({ type: "text-start", id: textId });
+          writer.write({
+            type: "text-delta",
+            id: textId,
+            delta: content,
+          });
+          writer.write({ type: "text-end", id: textId });
+
+          const responseQuality = scoreResponseQuality({
+            toolTrace,
+            content,
+          });
+          await persistAssistantMessage({
+            supabase,
+            sessionId,
+            userId: user.id,
+            content,
+            toolTrace,
+            memoryUsage,
+            learningUsage,
+            totalUsage: undefined,
+            responseQuality,
+            councilMode,
+            loopDiagnostic: buildLoopDiagnostic({
+              stepStarts: stepStartDiagnostics,
+              steps: stepDiagnostics,
+            }),
+          });
+
+          await supabase
+            .from("conversations")
+            .update({ last_message_at: new Date().toISOString() })
+            .eq("session_id", sessionId)
+            .eq("user_id", user.id);
+
+          if (learningUsage?.learnings.length) {
+            await recordAgentLearningUsages({
+              sessionId,
+              userId: user.id,
+              messageText: lastUserContent,
+              responseQualityScore: responseQuality.score,
+              learnings: learningUsage.learnings,
+            });
+          }
+
+          writeStrategistStatus(writer, {
+            stage: "complete",
+            message: "Briefing complete",
+            status: "success",
+          });
+          return;
+        }
+
+        const hasDeterministicRetrieval =
+          (deterministicRetrieval?.results ?? []).length > 0;
+        // AI Gateway currently returns empty `finishReason: other` responses
+        // for OpenAI chat tool calls. When retrieval already succeeded
+        // server-side, synthesize from the injected context without tools.
+        const modelTools = hasDeterministicRetrieval
+          ? undefined
+          : (tools as unknown as ToolSet);
         const result = streamText({
           model: getLanguageModel(STRATEGIST_MODEL),
           system: systemPrompt,
           messages: modelMessages,
-          tools: tools as unknown as ToolSet,
+          tools: modelTools,
+          maxOutputTokens: 1500,
+          timeout: {
+            totalMs: 90_000,
+            stepMs: 45_000,
+            chunkMs: 20_000,
+          },
           // Strategist gets enough steps to route, consult specialists, and synthesize.
           // Each specialist gets up to 5 internal tool-call steps.
           stopWhen: stepCountIs(10),
           prepareStep: ({ stepNumber }) => {
             if (!forceBusinessRetrieval || stepNumber !== 0) return undefined;
+            if (hasDeterministicRetrieval) return undefined;
 
             return {
-              toolChoice: "required",
+              toolChoice: { type: "tool", toolName: "semanticSearch" },
               activeTools: [
-                "findProject",
-                "getProjectDetails",
                 "semanticSearch",
-                "searchMeetingsByTopic",
-                "searchEmails",
-                "searchTeamsMessages",
-                "queryBudgetData",
-                "queryCommitments",
-                "queryChangeOrders",
-                "getProjectBudgetSummary",
-                "consultCOO",
-                "consultCFO",
               ],
             };
           },
           onError: ({ error }) => {
             streamErrorMessage =
               error instanceof Error ? error.message : String(error);
+          },
+          experimental_onStepStart: ({
+            stepNumber,
+            model,
+            toolChoice,
+            activeTools,
+            tools,
+          }) => {
+            stepStartDiagnostics.push({
+              stepNumber,
+              modelProvider: model.provider,
+              modelId: model.modelId,
+              toolChoice: serializeDiagnosticValue(toolChoice),
+              activeTools: activeTools?.map(String),
+              availableToolNames: Object.keys(tools ?? {}),
+            });
           },
           onStepFinish: ({ stepNumber, finishReason, usage, warnings, toolCalls }) => {
             // warnings are CallWarning = { type: "unsupported"; feature: string; details?: string }
@@ -661,18 +1475,35 @@ export const POST = withApiGuardrails(
           const cause = streamErrorMessage
             ? `The model stream reported: ${streamErrorMessage}`
             : "The model/tool run completed without returning final assistant text.";
-          content = createStrategistFailureResponse({
-            cause,
-            selectedProjectId,
-            toolTrace,
-            userMessage: lastUserContent,
-          });
-          content = await generateRecoveryResponse({
-            userMessage: lastUserContent,
-            cause,
-            selectedProjectId,
-            toolTrace,
-          });
+          const sourceGroundedFallback = deterministicRetrieval
+            ? await generateSourceGroundedSynthesis({
+                output: deterministicRetrieval,
+                userMessage: lastUserContent,
+                projectBriefingSnapshot,
+              })
+            : null;
+          if (sourceGroundedFallback) {
+            toolTrace.push({
+              tool: "sourceGroundedSynthesisFallback",
+              input: {
+                primaryModel: STRATEGIST_MODEL,
+                synthesisModel: "openai/gpt-4.1",
+                reason: cause,
+              },
+              output: {
+                contentLength: sourceGroundedFallback.length,
+              },
+              timestamp: new Date().toISOString(),
+            });
+          }
+          content =
+            sourceGroundedFallback ??
+            (await generateRecoveryResponse({
+              userMessage: lastUserContent,
+              cause,
+              selectedProjectId,
+              toolTrace,
+            }));
 
           const fallbackTextId = "strategist-failure-response";
           writer.write({ type: "text-start", id: fallbackTextId });
@@ -682,6 +1513,33 @@ export const POST = withApiGuardrails(
             delta: content,
           });
           writer.write({ type: "text-end", id: fallbackTextId });
+        }
+
+        const contentBeforeContract = content;
+        content = enforceProjectBriefingResponseContract({
+          content,
+          projectBriefingSnapshot,
+          forceBusinessRetrieval,
+        });
+        if (content !== contentBeforeContract) {
+          toolTrace.push({
+            tool: "projectBriefingResponseContract",
+            input: {
+              hadHardFacts: /(^|\n)\s*(#{1,4}\s*)?(\*\*)?hard facts(\*\*)?\b/i.test(contentBeforeContract),
+              hadNextStep: /(^|\n)\s*(#{1,4}\s*)?(\*\*)?next step(\*\*)?\b/i.test(contentBeforeContract),
+            },
+            output: {
+              appendedCharacters: content.length - contentBeforeContract.length,
+            },
+            timestamp: new Date().toISOString(),
+          });
+          writer.write({ type: "text-start", id: "project-briefing-contract" });
+          writer.write({
+            type: "text-delta",
+            id: "project-briefing-contract",
+            delta: content.slice(contentBeforeContract.trim().length).trimStart(),
+          });
+          writer.write({ type: "text-end", id: "project-briefing-contract" });
         }
 
         const responseQuality = scoreResponseQuality({
@@ -699,7 +1557,10 @@ export const POST = withApiGuardrails(
           totalUsage,
           responseQuality,
           councilMode,
-          loopDiagnostic: buildLoopDiagnostic(stepDiagnostics),
+          loopDiagnostic: buildLoopDiagnostic({
+            stepStarts: stepStartDiagnostics,
+            steps: stepDiagnostics,
+          }),
         });
 
         // Update conversation timestamp — scope to user to prevent cross-user update

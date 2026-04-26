@@ -6,8 +6,6 @@ from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Header
 from pydantic import BaseModel
 from typing import Dict, Any, Optional, List
 import logging
-import asyncio
-import subprocess
 from datetime import datetime
 from pathlib import Path
 import sys
@@ -19,6 +17,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 from services.supabase_helpers import SupabaseRagStore
 from services.env_loader import load_env
+from services.pipeline import run_embedder, run_extractor, run_parser
 
 load_env()
 
@@ -151,45 +150,91 @@ async def trigger_generate_embeddings(
                 details={"stage": request.stage, "count": 0}
             )
         
-        # Define the background task
-        async def run_embedding_pipeline():
+        jobs_response = (
+            supabase
+            .table('fireflies_ingestion_jobs')
+            .select('fireflies_id, metadata_id, stage')
+            .eq('stage', request.stage)
+            .is_("error_message", "null")
+            .limit(request.limit or 10)
+            .execute()
+        )
+        jobs = [job for job in (jobs_response.data or []) if job.get("metadata_id")]
+
+        if not jobs:
+            return EmbeddingGenerationResponse(
+                status="no_documents",
+                message=f"No documents with metadata IDs found in stage '{request.stage}'",
+                details={"stage": request.stage, "count": 0}
+            )
+
+        def run_embedding_pipeline():
             try:
                 logger.info(f"Starting embedding generation task {task_id}")
-                
-                # Prepare command arguments
-                cmd = [
-                    sys.executable,
-                    "src/workers/scripts/process_documents.py",
-                    "--start-stage", request.stage,
-                    "--limit", str(request.limit)
-                ]
-                
-                if request.skip_extraction:
-                    cmd.append("--skip-extraction")
-                if request.skip_embedding:
-                    cmd.append("--skip-embedding")
-                
-                # Run the process
-                process = await asyncio.create_subprocess_exec(
-                    *cmd,
-                    stdout=asyncio.subprocess.PIPE,
-                    stderr=asyncio.subprocess.PIPE,
-                    cwd=Path(__file__).parent.parent.parent  # backend directory
-                )
-                
-                stdout, stderr = await process.communicate()
-                
-                # Store result
+
+                processed = 0
+                failed = 0
+                results = []
+
+                for job in jobs:
+                    metadata_id = job["metadata_id"]
+                    fireflies_id = job.get("fireflies_id")
+                    try:
+                        stage = request.stage
+                        if stage == "raw_ingested":
+                            run_parser(metadata_id)
+                            stage = "segmented"
+
+                        if stage == "segmented" and not request.skip_embedding:
+                            run_embedder(metadata_id)
+                            stage = "embedded"
+
+                        if stage == "embedded" and not request.skip_extraction:
+                            run_extractor(metadata_id)
+                            stage = "done"
+
+                        processed += 1
+                        results.append(
+                            {
+                                "fireflies_id": fireflies_id,
+                                "metadata_id": metadata_id,
+                                "status": "processed",
+                                "final_stage": stage,
+                            }
+                        )
+                    except Exception as job_exc:
+                        failed += 1
+                        logger.error(
+                            "Embedding generation task %s failed for metadata_id=%s: %s",
+                            task_id,
+                            metadata_id,
+                            job_exc,
+                            exc_info=True,
+                        )
+                        results.append(
+                            {
+                                "fireflies_id": fireflies_id,
+                                "metadata_id": metadata_id,
+                                "status": "failed",
+                                "error": str(job_exc),
+                            }
+                        )
+
                 _background_tasks[task_id] = {
-                    "status": "completed" if process.returncode == 0 else "failed",
-                    "stdout": stdout.decode() if stdout else "",
-                    "stderr": stderr.decode() if stderr else "",
-                    "return_code": process.returncode,
+                    "status": "completed" if failed == 0 else "failed",
+                    "processed": processed,
+                    "failed": failed,
+                    "results": results,
                     "completed_at": datetime.now().isoformat()
                 }
-                
-                logger.info(f"Task {task_id} completed with return code {process.returncode}")
-                
+
+                logger.info(
+                    "Task %s completed with processed=%s failed=%s",
+                    task_id,
+                    processed,
+                    failed,
+                )
+
             except Exception as e:
                 logger.error(f"Task {task_id} failed with error: {e}")
                 _background_tasks[task_id] = {
@@ -210,11 +255,11 @@ async def trigger_generate_embeddings(
         
         return EmbeddingGenerationResponse(
             status="started",
-            message=f"Embedding generation started for {document_count} documents",
+            message=f"Embedding generation started for {len(jobs)} documents",
             task_id=task_id,
             details={
                 "stage": request.stage,
-                "document_count": document_count,
+                "document_count": len(jobs),
                 "limit": request.limit
             }
         )

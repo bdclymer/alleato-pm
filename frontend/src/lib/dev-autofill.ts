@@ -472,9 +472,10 @@ export const autoFillPresets = {
     status: () =>
       copycat.oneOf(Math.random().toString(), [
         "draft",
-        "active",
-        "completed",
-        "on_hold",
+        "out_for_signature",
+        "approved",
+        "complete",
+        "terminated",
       ]),
     executed: () => copycat.bool(Math.random().toString()),
     defaultRetainage: () =>

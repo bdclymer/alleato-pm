@@ -84,6 +84,7 @@ import { WelcomeScreen } from "./welcome-screen";
 import { TracePanel, type ToolTraceItem } from "./trace-panel";
 import { SourceCitations } from "./source-citations";
 import { CrossSourceTimeline } from "./cross-source-timeline";
+import { formatStructuredMeetingList } from "./chat-formatting";
 
 // ─── Part extraction helpers ───────────────────────────────────────
 
@@ -134,10 +135,40 @@ export interface ResponseQuality {
   reasons: string[];
 }
 
+export interface StrategistLiveStatus {
+  stage: string;
+  message: string;
+  status: "loading" | "success" | "warning" | "error";
+  timestamp?: string;
+}
+
 function getToolParts(msg: UIMessage): ToolPart[] {
   return msg.parts
     .filter((p) => p.type.startsWith("tool-"))
     .map((p) => p as unknown as ToolPart);
+}
+
+function getLatestStatusPart(msg: UIMessage): StrategistLiveStatus | null {
+  for (const part of [...msg.parts].reverse()) {
+    if (part.type !== "data-status") continue;
+    const data = (part as { data?: unknown }).data;
+    if (!data || typeof data !== "object") continue;
+    const record = data as Record<string, unknown>;
+    if (typeof record.message !== "string" || typeof record.stage !== "string") continue;
+    return {
+      stage: record.stage,
+      message: record.message,
+      status:
+        record.status === "success" ||
+        record.status === "warning" ||
+        record.status === "error"
+          ? record.status
+          : "loading",
+      timestamp: typeof record.timestamp === "string" ? record.timestamp : undefined,
+    };
+  }
+
+  return null;
 }
 
 function hasToolInvocations(msg: UIMessage): boolean {
@@ -310,40 +341,6 @@ function getRecordDeepLinks(part: ToolPart): Array<{ label: string; href: string
   return links;
 }
 
-/**
- * Normalize numbered meeting summaries into a clearer layout:
- * "1. **Meeting Name** - details" => "### 1. Meeting Name\n\ndetails"
- */
-function formatStructuredMeetingList(text: string): string {
-  if (!text.includes("\n") || !text.includes("1.")) return text;
-
-  const lines = text.split("\n");
-  const linePattern =
-    /^(\d+)\.\s*(?:\*\*([^*]+)\*\*|([^—–:\-]+))\s*[—–:\-]\s*(.+)$/;
-
-  const matches = lines
-    .map((line, index) => ({ line, index, match: line.match(linePattern) }))
-    .filter((item) => item.match);
-
-  // Only transform when this really looks like a meeting/results list.
-  if (matches.length < 2) return text;
-
-  const firstMatchIndex = matches[0].index;
-  const before = lines.slice(0, firstMatchIndex).join("\n").trim();
-  const transformed = matches
-    .map((item) => {
-      const match = item.match;
-      if (!match) return item.line;
-      const num = match[1];
-      const title = (match[2] ?? match[3] ?? "").trim();
-      const description = match[4].trim();
-      return `### ${num}. ${title}\n\n${description}`;
-    })
-    .join("\n\n");
-
-  return before ? `${before}\n\n${transformed}` : transformed;
-}
-
 // ─── Assistant Avatar ───────────────────────────────────────────────
 
 function AssistantAvatar({ councilMode }: { councilMode?: boolean }) {
@@ -470,17 +467,37 @@ function getToolStepStatus(state: string): "complete" | "active" | "pending" {
 function StreamingIndicator({
   hasToolCalls,
   councilMode,
+  liveStatus,
 }: {
   hasToolCalls: boolean;
   councilMode?: boolean;
+  liveStatus?: StrategistLiveStatus | null;
 }) {
+  const statusMessage = liveStatus?.message;
+  const isWarning = liveStatus?.status === "warning";
+  const isSuccess = liveStatus?.status === "success";
+
   return (
     <div className="flex items-start gap-3">
       <AssistantAvatar councilMode={councilMode} />
       <Message from="assistant">
         <MessageContent>
-          <div className="flex items-center gap-2.5 py-1">
-            {hasToolCalls ? (
+          <div className="flex items-center gap-2.5 py-1 text-sm text-muted-foreground">
+            {statusMessage ? (
+              <>
+                <DatabaseIcon
+                  className={cn(
+                    "h-4 w-4 shrink-0",
+                    isWarning
+                      ? "text-amber-600"
+                      : isSuccess
+                        ? "text-primary"
+                        : "animate-pulse text-muted-foreground",
+                  )}
+                />
+                <span>{statusMessage}</span>
+              </>
+            ) : hasToolCalls ? (
               <>
                 <DatabaseIcon className="h-4 w-4 animate-pulse text-muted-foreground" />
                 <Shimmer as="span" duration={1.5} className="text-sm">
@@ -776,6 +793,7 @@ interface ChatAreaProps {
   sourcesByMessageId?: Record<string, unknown[]>;
   memoryUsageByMessageId?: Record<string, MemoryUsage>;
   responseQualityByMessageId?: Record<string, ResponseQuality>;
+  liveStatus?: StrategistLiveStatus | null;
   isLoadingMessages: boolean;
   isStreaming: boolean;
   input: string;
@@ -795,6 +813,7 @@ export function ChatArea({
   sourcesByMessageId = {},
   memoryUsageByMessageId = {},
   responseQualityByMessageId = {},
+  liveStatus,
   isLoadingMessages,
   isStreaming,
   input,
@@ -903,12 +922,14 @@ export function ChatArea({
   // Determine streaming indicator visibility
   const lastMessage = messages[messages.length - 1];
   const lastMessageText = lastMessage ? getMessageText(lastMessage) : "";
+  const lastMessageStatus = lastMessage ? getLatestStatusPart(lastMessage) : null;
   const lastIsAssistantWithToolCalls =
     lastMessage?.role === "assistant" && hasToolInvocations(lastMessage);
   const showStreamingIndicator =
     isStreaming &&
     messages.length > 0 &&
     (lastMessage?.role === "user" ||
+      Boolean(lastMessageStatus) ||
       (lastIsAssistantWithToolCalls && !lastMessageText.trim()));
 
   // Generate contextual follow-up suggestions
@@ -1192,11 +1213,11 @@ export function ChatArea({
                           </MessageResponse>
 
                           {responseQuality && (
-                            <div className="mt-2 inline-flex items-center gap-2 rounded-md bg-muted px-2 py-1 text-[11px] text-muted-foreground">
+                            <div className="mt-2 flex items-center gap-2 text-[11px] text-muted-foreground">
                               <span>
                                 Confidence: <span className="font-medium">{responseQuality.confidence}</span>
                               </span>
-                              <span>•</span>
+                              <span>/</span>
                               <span>
                                 Sources: <span className="font-medium">{responseQuality.sourceQuality}</span>
                               </span>
@@ -1271,6 +1292,7 @@ export function ChatArea({
                 <StreamingIndicator
                   hasToolCalls={lastIsAssistantWithToolCalls}
                   councilMode={councilMode}
+                  liveStatus={liveStatus ?? lastMessageStatus}
                 />
               )}
 

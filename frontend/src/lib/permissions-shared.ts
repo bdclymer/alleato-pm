@@ -78,6 +78,7 @@ export interface UserPermissions {
     granularFlags: GranularFlag[];
   };
   overrides: Record<PermissionModule, PermissionLevel>;
+  granularOverrides?: Partial<Record<GranularFlag, "allow" | "deny">>;
   isAdmin: boolean;
 }
 
@@ -151,6 +152,9 @@ export function hasGranular(
   flag: GranularFlag,
 ): boolean {
   if (permissions.isAdmin) return true;
+  const override = permissions.granularOverrides?.[flag];
+  if (override === "deny") return false;
+  if (override === "allow") return true;
   return permissions.template?.granularFlags.includes(flag) ?? false;
 }
 

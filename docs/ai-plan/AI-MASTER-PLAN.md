@@ -182,7 +182,6 @@ Alleato's AI acts as the **ultimate business strategist** — an employee who ha
 | 6 RAG + 6 financial + 7 Acumatica ERP + 9 operational (28 total) | Working | `project-tools.ts` + `financial.ts` + `acumatica.ts` + `operational.ts` |
 | C-Suite Architecture (Strategist + CFO) | Working | `frontend/src/lib/ai/orchestrator.ts` |
 | Agent Types & Routing | Working | `frontend/src/lib/ai/agents/types.ts` |
-| Worker pipeline (embed, extract, ingest, parse) | Scaffolded | `backend/src/workers/` |
 | Document ingestion pipeline (PDF/DOCX → parse → embed → extract) | Working | `backend/src/services/pipeline/document_parser.py` |
 | Document upload API + frontend UI | Working | `frontend/src/app/api/documents/upload/route.ts` + company-knowledge page |
 | Supabase "documents" storage bucket | Working | 50MB limit, PDF/DOCX/TXT allowed |
@@ -517,8 +516,8 @@ Add an AI-powered layer to the existing dashboard.
 | Pipeline orchestrator (auto-routing) | `backend/src/services/pipeline/orchestrator.py` |
 | Document upload API | `frontend/src/app/api/documents/upload/route.ts` |
 | Document metadata migration | `supabase/migrations/20260304000002_document_metadata_file_columns.sql` |
-| Embedding worker | `backend/src/workers/embedder/` |
-| Ingestion worker | `backend/src/workers/ingest/` |
+| Embedding pipeline | `backend/src/services/pipeline/embedder.py` |
+| Ingestion pipeline | `backend/src/services/ingestion/fireflies_pipeline.py` |
 | Daily digest | `backend/src/services/daily_digest.py` |
 | Guardrails | `backend/src/services/alleato_agent_workflow/guardrails.py` |
 | Insight services | `backend/src/services/insights/` |

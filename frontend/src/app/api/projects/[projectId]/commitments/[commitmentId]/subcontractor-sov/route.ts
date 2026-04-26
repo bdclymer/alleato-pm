@@ -208,7 +208,7 @@ async function sendSsovInviteEmail(args: {
     pmName,
     submissionId,
   } = args;
-  if (recipients.length === 0) return;
+  if (recipients.length === 0) return [];
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
   const subject = `Submit your Schedule of Values${commitmentNumber ? ` — ${commitmentNumber}` : ""}`;
@@ -246,7 +246,7 @@ async function sendSsovInviteEmail(args: {
   const existingPersonIds = new Set((existingAuthLinks || []).map((row: { person_id: string }) => row.person_id));
 
   // Send individually so each recipient gets personalized greeting + own idempotency key
-  await Promise.all(
+  return Promise.all(
     recipients.map(async (recipient) => {
       const isNewUser = !existingPersonIds.has(recipient.id);
 
@@ -858,7 +858,7 @@ export const POST = withApiGuardrails(
           .maybeSingle(),
       ]);
 
-      await sendSsovInviteEmail({
+      const sendResults = await sendSsovInviteEmail({
         recipients: contacts.map((contact: { id: string; name: string; email: string }) => ({
           id: contact.id,
           name: contact.name,
@@ -875,6 +875,22 @@ export const POST = withApiGuardrails(
           "Your project manager",
         submissionId: submission.id,
       });
+
+      const failedSends = sendResults.filter((result) => result.error);
+      if (failedSends.length > 0) {
+        const message = failedSends
+          .map((result) => result.error?.message)
+          .filter(Boolean)
+          .join("; ");
+        return NextResponse.json(
+          {
+            error:
+              message ||
+              "Subcontractor SOV invitation email failed to send.",
+          },
+          { status: 502 },
+        );
+      }
 
       const { error: inviteError } = await supabase
         .from("subcontractor_sov_submissions")

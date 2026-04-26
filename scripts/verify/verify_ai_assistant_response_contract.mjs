@@ -30,14 +30,59 @@ const checks = [
       content.includes("buildBusinessContextPreflight") &&
       content.includes("serverBusinessContextPreflight") &&
       content.includes("shouldForceBusinessRetrieval") &&
-      content.includes('toolChoice: "required"') &&
+      content.includes("experimental_onStepStart") &&
+      content.includes("preparedStepCount") &&
+      content.includes('toolChoice: { type: "tool", toolName: "semanticSearch" }') &&
       content.includes("What I could confirm"),
   },
   {
+    file: files.route,
+    description: "chat route synthesizes from server-side retrieval without model tools when Gateway tool calls fail",
+    test: (content) =>
+      content.includes("generateSourceGroundedSynthesis") &&
+      content.includes('model: getLanguageModel("openai/gpt-4.1")') &&
+      content.includes("sourceGroundedSynthesisFallback") &&
+      content.includes("source-grounded synthesis exceeded the fast briefing budget") &&
+      content.includes("6_000") &&
+      content.includes("createDeterministicProjectBriefing") &&
+      content.includes("const hasDeterministicRetrieval") &&
+      content.includes("const modelTools = hasDeterministicRetrieval") &&
+      content.includes("tools: modelTools") &&
+      content.includes("availableToolNames"),
+  },
+  {
+    file: files.route,
+    description: "chat route streams live AI SDK status data before long retrieval work",
+    test: (content) =>
+      content.includes("writeStrategistStatus") &&
+      content.includes('type: "data-status"') &&
+      content.includes("Reading conversation memory and project context") &&
+      content.includes("Pulling budget, contract, RFIs, submittals, schedule, and commitments") &&
+      content.includes("Searching meetings, documents, and vectorized project history"),
+  },
+  {
+    file: files.route,
+    description: "chat route injects canonical project briefing snapshot for broad PM updates",
+    test: (content) =>
+      content.includes("formatProjectBriefingSnapshotContext") &&
+      content.includes("enforceProjectBriefingResponseContract") &&
+      content.includes("projectBriefingResponseContract") &&
+      content.includes("getProjectBriefingSnapshot") &&
+      content.includes("projectBriefingSnapshot") &&
+      content.includes("Hard Facts") &&
+      content.includes("What Changed") &&
+      content.includes("Insider Analysis") &&
+      content.includes("Recommended Actions") &&
+      content.includes("Next Step"),
+  },
+  {
     file: files.strategist,
-    description: "strategist prompt bans robotic fallback behavior",
+    description: "strategist prompt enforces natural strategic responses and project briefing structure",
     test: (content) =>
       content.includes("Conversation Quality Contract") &&
+      content.includes("Broad Project Update Contract") &&
+      content.includes("Hard Facts") &&
+      content.includes("always end with a concrete next step") &&
       content.includes("Do not use robotic fallback phrases") &&
       content.includes("If product data is missing"),
   },
@@ -51,9 +96,12 @@ const checks = [
   },
   {
     file: files.projectTools,
-    description: "project tools return structured retrieval errors",
+    description: "project tools return structured retrieval errors and canonical briefing snapshot",
     test: (content) =>
       content.includes("This data source failed during retrieval") &&
+      content.includes("getProjectBriefingSnapshot") &&
+      content.includes("recommendedQuestions") &&
+      content.includes("alwaysEndWithForwardMotion") &&
       !content.includes("throw error;\n    }\n  };\n}\n\nexport function createProjectTools"),
   },
   {

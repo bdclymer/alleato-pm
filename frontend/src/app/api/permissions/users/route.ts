@@ -2,7 +2,43 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { logger } from "@/lib/logger";
+import { ALL_GRANULAR_FLAGS, type GranularFlag } from "@/lib/permissions-shared";
+import { findPermissionUserLinkDiagnostics } from "@/lib/permissions/user-link-reconciliation";
+import { z } from "zod";
+
+const InviteUserSchema = z.object({
+  first_name: z.string().trim().min(1, "First name is required"),
+  last_name: z.string().trim().min(1, "Last name is required"),
+  email: z.string().trim().email("A valid email is required"),
+  job_title: z.string().trim().optional(),
+  access_scope: z.enum(["all_projects", "selected_projects"]),
+  template_id: z.string().uuid("A role is required"),
+  project_ids: z.array(z.coerce.number().int().positive()).default([]),
+});
+
+async function requireAdmin(where: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    throw new GuardrailError({ code: "AUTH_EXPIRED", where, message: "Authentication required." });
+  }
+
+  const { data: profile } = await supabase
+    .from("user_profiles")
+    .select("is_admin")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (!profile?.is_admin) {
+    throw new GuardrailError({ code: "AUTH_FORBIDDEN", where, message: "Access denied." });
+  }
+
+  return user;
+}
 
 /**
  * GET /api/permissions/users
@@ -16,24 +52,9 @@ import { logger } from "@/lib/logger";
 export const GET = withApiGuardrails(
   "permissions/users#GET",
   async () => {
-  
     const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
-      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "permissions/users#GET", message: "Authentication required." });
-    }
-
-    const { data: profile } = await supabase
-      .from("user_profiles")
-      .select("is_admin")
-      .eq("id", user.id)
-      .maybeSingle();
-
-    if (!profile?.is_admin) {
-      throw new GuardrailError({ code: "FORBIDDEN", where: "permissions/users#GET", message: "Access denied." });
-    }
+    await requireAdmin("permissions/users#GET");
+    const service = createServiceClient();
 
     const { data: people, error: peopleError } = await supabase
       .from("people")
@@ -43,7 +64,12 @@ export const GET = withApiGuardrails(
 
     if (peopleError) {
       logger.error({ msg: "Error loading people:", data: peopleError });
-      return NextResponse.json({ error: "Failed to load users" }, { status: 500 });
+      throw new GuardrailError({
+        code: "UPSTREAM_FAILURE",
+        where: "permissions/users#GET",
+        message: "Failed to load users.",
+        details: peopleError,
+      });
     }
 
     const authIds = (people ?? [])
@@ -52,7 +78,7 @@ export const GET = withApiGuardrails(
 
     const personIds = (people ?? []).map((p) => p.id);
 
-    const [profilesResult, membershipsResult, companyTemplatesResult] = await Promise.all([
+    const [profilesResult, membershipsResult, companyTemplatesResult, granularOverridesResult] = await Promise.all([
       authIds.length
         ? supabase
             .from("user_profiles")
@@ -74,6 +100,12 @@ export const GET = withApiGuardrails(
         ? supabase
             .from("person_company_templates")
             .select("person_id, template:permission_templates (id, name)")
+            .in("person_id", personIds)
+        : Promise.resolve({ data: [], error: null }),
+      personIds.length
+        ? supabase
+            .from("user_granular_permission_overrides")
+            .select("person_id, project_id, flag, effect")
             .in("person_id", personIds)
         : Promise.resolve({ data: [], error: null }),
     ]);
@@ -101,6 +133,37 @@ export const GET = withApiGuardrails(
         templateName: string | null;
       }>
     >();
+
+    const granularOverridesByPerson = new Map<
+      string,
+      Array<{
+        projectId: number | string | null;
+        flag: GranularFlag;
+        effect: "allow" | "deny";
+      }>
+    >();
+
+    for (const row of (granularOverridesResult.data ?? []) as Array<{
+      person_id: string;
+      project_id: number | string | null;
+      flag: string;
+      effect: string;
+    }>) {
+      if (
+        !ALL_GRANULAR_FLAGS.includes(row.flag as GranularFlag) ||
+        (row.effect !== "allow" && row.effect !== "deny")
+      ) {
+        continue;
+      }
+
+      const list = granularOverridesByPerson.get(row.person_id) ?? [];
+      list.push({
+        projectId: row.project_id ?? null,
+        flag: row.flag as GranularFlag,
+        effect: row.effect,
+      });
+      granularOverridesByPerson.set(row.person_id, list);
+    }
 
     for (const row of (membershipsResult.data ?? []) as Array<{
       project_id: number | string;
@@ -139,9 +202,280 @@ export const GET = withApiGuardrails(
         companyTemplateId: companyTemplate?.id ?? null,
         companyTemplateName: companyTemplate?.name ?? null,
         memberships: membershipsByPerson.get(p.id) ?? [],
+        granularOverrides: granularOverridesByPerson.get(p.id) ?? [],
       };
     });
 
-    return NextResponse.json({ data: users });
-    },
+    const linkDiagnostics = await findPermissionUserLinkDiagnostics(service);
+
+    return NextResponse.json({
+      data: users,
+      diagnostics: {
+        missingAuthLinks: linkDiagnostics,
+      },
+    });
+  },
+);
+
+/**
+ * POST /api/permissions/users
+ *
+ * Invite an employee and atomically connect their auth account, person record,
+ * auth/person mapping, and initial access assignment.
+ */
+export const POST = withApiGuardrails(
+  "permissions/users#POST",
+  async ({ request }) => {
+    const actor = await requireAdmin("permissions/users#POST");
+    const parsed = InviteUserSchema.safeParse(await request.json());
+
+    if (!parsed.success) {
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: "permissions/users#POST",
+        message: "Invalid employee invite.",
+        details: parsed.error.issues.map((issue) => ({
+          path: issue.path.join("."),
+          message: issue.message,
+        })),
+      });
+    }
+
+    const body = parsed.data;
+    const projectIds = Array.from(new Set(body.project_ids));
+
+    if (body.access_scope === "selected_projects" && projectIds.length === 0) {
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: "permissions/users#POST",
+        message: "Select at least one project for project-specific access.",
+      });
+    }
+
+    const service = createServiceClient();
+    const email = body.email.toLowerCase();
+    const fullName = [body.first_name, body.last_name].filter(Boolean).join(" ");
+
+    const { data: template, error: templateError } = await service
+      .from("permission_templates")
+      .select("id, name, scope")
+      .eq("id", body.template_id)
+      .maybeSingle();
+
+    if (templateError || !template) {
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: "permissions/users#POST",
+        message: "Selected role no longer exists.",
+        details: templateError ?? { templateId: body.template_id },
+      });
+    }
+
+    if (body.access_scope === "all_projects" && template.scope !== "company") {
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: "permissions/users#POST",
+        message: "All-project access requires an all-project role.",
+      });
+    }
+
+    if (body.access_scope === "selected_projects" && template.scope === "company") {
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: "permissions/users#POST",
+        message: "Project access requires a project role.",
+      });
+    }
+
+    let authUserId: string | null = null;
+    const { data: existingProfile } = await service
+      .from("user_profiles")
+      .select("id")
+      .eq("email", email)
+      .maybeSingle();
+
+    if (existingProfile?.id) {
+      authUserId = existingProfile.id;
+    } else {
+      const { data: inviteData, error: inviteError } =
+        await service.auth.admin.inviteUserByEmail(email, {
+          data: {
+            full_name: fullName,
+            role: body.job_title || template.name,
+          },
+        });
+
+      if (inviteError || !inviteData.user) {
+        throw new GuardrailError({
+          code: "UPSTREAM_FAILURE",
+          where: "permissions/users#POST",
+          message: inviteError?.message ?? "Could not create invitation.",
+          details: inviteError ?? { email },
+        });
+      }
+
+      authUserId = inviteData.user.id;
+    }
+
+    const { error: profileError } = await service.from("user_profiles").upsert(
+      {
+        id: authUserId,
+        email,
+        full_name: fullName,
+        role: body.job_title || template.name,
+        is_active: true,
+        is_admin: false,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "id" },
+    );
+
+    if (profileError) {
+      throw new GuardrailError({
+        code: "UPSTREAM_FAILURE",
+        where: "permissions/users#POST",
+        message: `Could not save user profile: ${profileError.message}`,
+        details: profileError,
+      });
+    }
+
+    const { data: existingPerson, error: existingPersonError } = await service
+      .from("people")
+      .select("id, auth_user_id")
+      .ilike("email", email)
+      .eq("person_type", "user")
+      .limit(1)
+      .maybeSingle();
+
+    if (existingPersonError) {
+      throw new GuardrailError({
+        code: "UPSTREAM_FAILURE",
+        where: "permissions/users#POST",
+        message: `Could not check existing employee record: ${existingPersonError.message}`,
+        details: existingPersonError,
+      });
+    }
+
+    let personId = existingPerson?.id ?? null;
+    if (personId) {
+      const { error: personUpdateError } = await service
+        .from("people")
+        .update({
+          first_name: body.first_name,
+          last_name: body.last_name,
+          email,
+          job_title: body.job_title || null,
+          auth_user_id: authUserId,
+          status: "active",
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", personId);
+
+      if (personUpdateError) {
+        throw new GuardrailError({
+          code: "UPSTREAM_FAILURE",
+          where: "permissions/users#POST",
+          message: `Could not update employee record: ${personUpdateError.message}`,
+          details: personUpdateError,
+        });
+      }
+    } else {
+      const { data: person, error: personInsertError } = await service
+        .from("people")
+        .insert({
+          first_name: body.first_name,
+          last_name: body.last_name,
+          email,
+          job_title: body.job_title || null,
+          auth_user_id: authUserId,
+          person_type: "user",
+          status: "active",
+        })
+        .select("id")
+        .single();
+
+      if (personInsertError || !person) {
+        throw new GuardrailError({
+          code: "UPSTREAM_FAILURE",
+          where: "permissions/users#POST",
+          message: `Could not create employee record: ${personInsertError?.message ?? "no row returned"}`,
+          details: personInsertError ?? { email },
+        });
+      }
+
+      personId = person.id;
+    }
+
+    const { error: authLinkError } = await service.from("users_auth").upsert(
+      { person_id: personId, auth_user_id: authUserId },
+      { onConflict: "person_id" },
+    );
+
+    if (authLinkError) {
+      throw new GuardrailError({
+        code: "UPSTREAM_FAILURE",
+        where: "permissions/users#POST",
+        message: `Could not link employee to auth account: ${authLinkError.message}`,
+        details: authLinkError,
+      });
+    }
+
+    if (body.access_scope === "all_projects") {
+      const { error: companyAccessError } = await service
+        .from("person_company_templates")
+        .upsert(
+          {
+            person_id: personId,
+            template_id: body.template_id,
+            assigned_by: actor.id,
+            assigned_at: new Date().toISOString(),
+          },
+          { onConflict: "person_id" },
+        );
+
+      if (companyAccessError) {
+        throw new GuardrailError({
+          code: "UPSTREAM_FAILURE",
+          where: "permissions/users#POST",
+          message: `Could not assign all-project access: ${companyAccessError.message}`,
+          details: companyAccessError,
+        });
+      }
+    } else {
+      const memberships = projectIds.map((projectId) => ({
+        project_id: projectId,
+        person_id: personId,
+        permission_template_id: body.template_id,
+        role: body.job_title || template.name,
+        status: "active",
+        user_type: "employee",
+        invite_status: "invited",
+        invited_at: new Date().toISOString(),
+        last_invited_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }));
+
+      const { error: membershipError } = await service
+        .from("project_directory_memberships")
+        .upsert(memberships, { onConflict: "project_id,person_id" });
+
+      if (membershipError) {
+        throw new GuardrailError({
+          code: "UPSTREAM_FAILURE",
+          where: "permissions/users#POST",
+          message: `Could not assign project access: ${membershipError.message}`,
+          details: membershipError,
+        });
+      }
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        personId,
+        authUserId,
+        accessScope: body.access_scope,
+      },
+    }, { status: 201 });
+  },
 );

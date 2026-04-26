@@ -239,21 +239,21 @@ _This PRP includes all file paths, patterns, interfaces, and architecture decisi
   gotcha: maxDuration=120, stopWhen stepCountIs(7) for Strategist
 
 # MUST READ — Backend Pipeline
-- file: backend/src/workers/ingest/index.ts
-  why: Document ingestion entry point (Fireflies, Storage, manual)
-  pattern: Parse → deduplicate → upload to storage → create document_metadata
+- file: backend/src/services/ingestion/fireflies_pipeline.py
+  why: Fireflies ingestion entry point on the Render backend
+  pattern: Fetch transcript → normalize markdown → upsert document_metadata → enqueue pipeline
 
-- file: backend/src/workers/parser/index.ts
-  why: Meeting transcript segmentation via GPT-4o-mini
+- file: backend/src/services/pipeline/parser.py
+  why: Meeting transcript segmentation
   pattern: parseFirefliesMarkdown → generateMeetingSummary → segmentTranscript → upsert segments
 
-- file: backend/src/workers/embedder/index.ts
+- file: backend/src/services/pipeline/embedder.py
   why: Chunking and embedding pipeline
-  pattern: createMeetingChunks (3000 chars, 500 overlap) → batchEmbed (text-embedding-3-small) → upsert documents
+  pattern: createMeetingChunks → batchEmbed → upsert document_chunks
 
-- file: backend/src/workers/extractor/index.ts
+- file: backend/src/services/pipeline/extractor.py
   why: Structured data extraction (decisions, risks, tasks, opportunities)
-  pattern: Collect raw → GPT-4o-mini normalize/deduplicate → embed → upsert to structured tables
+  pattern: Collect raw → normalize/deduplicate → embed → upsert to structured tables
 
 - file: backend/src/services/daily_digest.py
   why: Daily digest generation pattern
@@ -712,7 +712,7 @@ Task 1.17: EXTEND backend document ingestion for non-meeting documents
   - IMPLEMENT: DOCX text extraction (mammoth)
   - Chunk with metadata (project, doc type, section, date)
   - Embed and store in documents table (same as meeting chunks)
-  - FOLLOW pattern: backend/src/workers/embedder/index.ts
+  - FOLLOW pattern: backend/src/services/pipeline/embedder.py
   - GOTCHA: Use same embedding model (text-embedding-3-small)
 
 Task 1.18: CREATE document upload trigger

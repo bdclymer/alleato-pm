@@ -9,7 +9,8 @@
  * and stores them via writeMemory() with embeddings.
  */
 
-import { generateText } from "ai";
+import { generateText, Output } from "ai";
+import { z } from "zod";
 import { createServiceClient } from "@/lib/supabase/service";
 import { writeMemory, type MemoryType } from "./ai-memory-service";
 import { getLanguageModel } from "../providers";
@@ -27,25 +28,51 @@ const MIN_IMPORTANCE_TO_STORE = 0.3;
 // Extraction
 // ---------------------------------------------------------------------------
 
-interface ExtractedMemory {
-  type: MemoryType;
-  content: string;
-  importance: number;
-  confidence: number;
-}
+const extractedMemorySchema = z.object({
+  memories: z
+    .array(
+      z.object({
+        type: z.enum(["fact", "preference", "lesson", "commitment", "context"]),
+        content: z
+          .string()
+          .min(10)
+          .describe("One or two specific sentences worth remembering."),
+        importance: z
+          .number()
+          .min(0.1)
+          .max(1)
+          .describe("How valuable this memory is across future sessions."),
+        confidence: z
+          .number()
+          .min(0.1)
+          .max(1)
+          .describe("How certain the model is that the memory is accurate."),
+      }),
+    )
+    .max(5)
+    .describe("Durable memories extracted from the conversation. Empty when nothing is worth storing."),
+});
+
+type ExtractedMemory = z.infer<typeof extractedMemorySchema>["memories"][number];
 
 async function extractMemoriesFromTranscript(
   transcript: string,
 ): Promise<ExtractedMemory[]> {
   const result = await generateText({
     model: getLanguageModel("openai/gpt-4.1-nano"),
+    output: Output.object({
+      schema: extractedMemorySchema,
+      name: "durable_memories",
+      description:
+        "Durable memories extracted from an AI assistant conversation.",
+    }),
     system: `You extract durable memories from AI assistant conversations in a construction project management platform.
 
-Return a JSON array of memory objects. Each has:
+Return structured output with a memories array. Each memory has:
 - type: "fact" | "preference" | "lesson" | "commitment" | "context"
 - content: 1-2 sentence memory (specific, include names/numbers/dates when available)
-- importance: 0.1–1.0 (how valuable is this across future sessions?)
-- confidence: 0.1–1.0 (how certain are you this is accurate?)
+- importance: 0.1-1.0 (how valuable is this across future sessions?)
+- confidence: 0.1-1.0 (how certain you are this is accurate)
 
 Type definitions:
 - fact: Objective facts about projects, people, or the company
@@ -70,30 +97,13 @@ Rules:
 - Preferences are gold — always capture them with high importance
 - Be specific: include project names, dollar amounts, dates, people's names
 - Commitments need a clear owner and deadline to be worth storing
-- Return [] if nothing meaningful to store
+- Return an empty memories array if nothing meaningful should be stored
 - Max 5 memories per conversation
-
-Return ONLY a valid JSON array, no markdown fences, no other text.`,
+`,
     prompt: `Extract durable memories from this construction PM conversation:\n\n${transcript}`,
   });
 
-  try {
-    const text = result.text.trim();
-    const cleaned = text.replace(/^```json\s*/i, "").replace(/\s*```$/, "");
-    const parsed = JSON.parse(cleaned);
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter(
-      (m): m is ExtractedMemory =>
-        typeof m === "object" &&
-        m !== null &&
-        typeof m.type === "string" &&
-        ["fact", "preference", "lesson", "commitment", "context"].includes(m.type) &&
-        typeof m.content === "string" &&
-        m.content.trim().length > 10,
-    );
-  } catch {
-    return [];
-  }
+  return result.output.memories;
 }
 
 // ---------------------------------------------------------------------------
@@ -121,7 +131,10 @@ export async function extractAndStoreMemories(
     .order("created_at", { ascending: true })
     .limit(MAX_MESSAGES);
 
-  if (error || !messages) return;
+  if (error) {
+    throw new Error(`Failed to fetch chat history for memory extraction: ${error.message}`);
+  }
+  if (!messages) return;
 
   const valid = messages.filter((m) => m.content?.trim());
   if (valid.length < MIN_MESSAGES_TO_EXTRACT) return;
@@ -136,22 +149,36 @@ export async function extractAndStoreMemories(
   const extracted = await extractMemoriesFromTranscript(transcript);
   if (extracted.length === 0) return;
 
-  // Store each memory that meets the importance threshold
-  await Promise.allSettled(
-    extracted
-      .filter((m) => m.importance >= MIN_IMPORTANCE_TO_STORE)
-      .map((m) =>
-        writeMemory({
-          userId,
-          type: m.type,
-          content: m.content.trim(),
-          confidence: Math.min(1, Math.max(0, m.confidence ?? 0.8)),
-          importance: Math.min(1, Math.max(0, m.importance ?? 0.5)),
-          source: "extraction",
-          // Facts and lessons about projects benefit the whole team
-          visibility:
-            m.type === "fact" || m.type === "lesson" ? "team" : "private",
-        }),
-      ),
-  );
+  const memoryWrites = extracted
+    .filter((m) => m.importance >= MIN_IMPORTANCE_TO_STORE)
+    .map(async (memory) => {
+      const result = await writeMemory({
+        userId,
+        type: memory.type as MemoryType,
+        content: memory.content.trim(),
+        confidence: Math.min(1, Math.max(0, memory.confidence ?? 0.8)),
+        importance: Math.min(1, Math.max(0, memory.importance ?? 0.5)),
+        source: "extraction",
+        // Facts and lessons about projects benefit the whole team
+        visibility:
+          memory.type === "fact" || memory.type === "lesson" ? "team" : "private",
+      });
+
+      if ("error" in result) {
+        throw new Error(`Failed to store extracted ${memory.type} memory: ${result.error}`);
+      }
+
+      return result;
+    });
+
+  if (memoryWrites.length === 0) return;
+
+  const results = await Promise.allSettled(memoryWrites);
+  const failures = results
+    .filter((result): result is PromiseRejectedResult => result.status === "rejected")
+    .map((result) => result.reason instanceof Error ? result.reason.message : String(result.reason));
+
+  if (failures.length > 0) {
+    throw new Error(`Extracted memory write failures: ${failures.join("; ")}`);
+  }
 }

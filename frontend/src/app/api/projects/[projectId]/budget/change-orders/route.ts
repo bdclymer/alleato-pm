@@ -5,6 +5,7 @@ import { requirePermission } from "@/lib/permissions-guard";
 
 type ChangeOrderStatusFilter = "approved" | "pending" | "all";
 const PRIME_CHANGE_ORDER_LINES_TABLE = "change_order_lines";
+const PENDING_PRIME_CO_STATUSES = ["proposed", "pending", "submitted", "under_review", "revised"];
 
 interface RuntimePrimeChangeOrderLinesClient {
   from: (tableName: string) => {
@@ -133,20 +134,17 @@ export const GET = withApiGuardrails<{ projectId: string }>(
       errStr.includes(PRIME_CHANGE_ORDER_LINES_TABLE) ||
       errStr.includes("PGRST205") ||
       errStr.includes("schema cache");
-    if (result.error && isMissingTable) {
-      return NextResponse.json({ changeOrders: [] });
-    }
 
     const { data, error } = result;
-    if (error) {
+    if (error && !isMissingTable) {
       return NextResponse.json(
         { error: "Failed to fetch change orders", details: String(error) },
         { status: 500 },
       );
     }
 
-    const rows = (data ?? []) as RuntimePrimeChangeOrderLineRow[];
-    const changeOrders = rows.map((rawLine) => {
+    const rows = isMissingTable ? [] : ((data ?? []) as RuntimePrimeChangeOrderLineRow[]);
+    const legacyChangeOrders = rows.map((rawLine) => {
       const line = rawLine as Record<string, unknown>;
       const coRaw = Array.isArray(line.change_orders)
         ? line.change_orders[0]
@@ -178,6 +176,72 @@ export const GET = withApiGuardrails<{ projectId: string }>(
       };
     });
 
-    return NextResponse.json({ changeOrders });
+    let pccoQuery = supabase
+      .from("pcco_line_items")
+      .select(
+        `
+        id,
+        line_amount,
+        description,
+        cost_code,
+        prime_contract_change_orders!inner(
+          id,
+          pcco_number,
+          title,
+          status,
+          submitted_at,
+          approved_at,
+          created_at,
+          project_id,
+          prime_contract_id,
+          contract_id
+        )
+      `,
+      )
+      .eq("prime_contract_change_orders.project_id", projectIdNum)
+      .eq("cost_code", costCodeId);
+
+    if (statusFilter === "approved") {
+      pccoQuery = pccoQuery.in("prime_contract_change_orders.status", ["approved", "Approved"]);
+    } else if (statusFilter === "pending") {
+      pccoQuery = pccoQuery.in("prime_contract_change_orders.status", PENDING_PRIME_CO_STATUSES);
+    }
+
+    const pccoResult = await pccoQuery;
+    const pccoError = pccoResult.error;
+    const pccoSerializedError = JSON.stringify(pccoError);
+    const isMissingPccoTable =
+      pccoSerializedError.includes("pcco_line_items") ||
+      pccoSerializedError.includes("PGRST205") ||
+      pccoSerializedError.includes("schema cache");
+
+    if (pccoError && !isMissingPccoTable) {
+      return NextResponse.json(
+        { error: "Failed to fetch prime contract change orders", details: pccoError.message },
+        { status: 500 },
+      );
+    }
+
+    const pccoChangeOrders = (pccoResult.data ?? []).map((line) => {
+      const coRaw = Array.isArray(line.prime_contract_change_orders)
+        ? line.prime_contract_change_orders[0]
+        : line.prime_contract_change_orders;
+      const co = coRaw ?? null;
+
+      return {
+        id: String(line.id ?? ""),
+        changeOrderNumber: co?.pcco_number || String(co?.id ?? ""),
+        description: line.description || co?.title || "",
+        amount: Number(line.line_amount ?? 0) || 0,
+        status: co?.status || "unknown",
+        requestedDate: co?.submitted_at || co?.created_at || null,
+        requestedBy: null,
+        approvedDate: co?.approved_at || null,
+        approvedBy: null,
+        contractNumber: "-",
+      };
+    });
+
+    return NextResponse.json({ changeOrders: [...legacyChangeOrders, ...pccoChangeOrders] });
   },
 );

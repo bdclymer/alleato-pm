@@ -8,8 +8,9 @@
  *   1. No embeddings exist at all
  *   2. Recent meetings (last 14 days) exist with zero summary embeddings
  *   3. The newest meeting is more than 7 days ahead of the newest embedding
- *   4. The OpenAI / AI Gateway embedding endpoint cannot embed a probe string
- *   5. The DB retrieval RPCs return zero results for known-good probe vectors
+ *   4. Recent meetings have poor chunk coverage for broad semanticSearch
+ *   5. The OpenAI / AI Gateway embedding endpoint cannot embed a probe string
+ *   6. The DB retrieval RPCs return zero results for known-good probe vectors
  *
  * Why this exists: silent failures in the embedding pipeline (quota, RPC bugs,
  * mis-configured workers) caused the strategist to silently degrade to keyword
@@ -33,6 +34,7 @@ if (!databaseUrl) {
 const STALENESS_DAYS = 7;
 const RECENT_WINDOW_DAYS = 14;
 const RECENT_MIN_EMBEDDED_RATIO = 0.5;
+const RECENT_MIN_CHUNK_RATIO = 0.5;
 
 const sql = postgres(databaseUrl, { max: 1, ssl: "require" });
 
@@ -48,11 +50,7 @@ function warn(msg) {
 }
 
 async function probeEmbeddingProvider() {
-  const probeBody = JSON.stringify({
-    model: "openai/text-embedding-3-large",
-    input: "alleato meeting health probe",
-    dimensions: 3072,
-  });
+  const successes = [];
 
   if (aiGatewayKey) {
     try {
@@ -62,11 +60,18 @@ async function probeEmbeddingProvider() {
           Authorization: `Bearer ${aiGatewayKey}`,
           "Content-Type": "application/json",
         },
-        body: probeBody,
+        body: JSON.stringify({
+          model: "openai/text-embedding-3-large",
+          input: "alleato meeting health probe",
+          dimensions: 3072,
+        }),
       });
-      if (res.ok) return { ok: true, provider: "ai-gateway" };
-      const text = await res.text();
-      warn(`AI Gateway embedding probe returned ${res.status}: ${text.slice(0, 200)}`);
+      if (res.ok) {
+        successes.push("ai-gateway");
+      } else {
+        const text = await res.text();
+        warn(`AI Gateway embedding probe returned ${res.status}: ${text.slice(0, 200)}`);
+      }
     } catch (err) {
       warn(`AI Gateway embedding probe threw: ${err.message}`);
     }
@@ -75,8 +80,12 @@ async function probeEmbeddingProvider() {
   }
 
   if (!openAiKey) {
-    fail("Neither AI_GATEWAY_API_KEY nor OPENAI_API_KEY can produce embeddings — ingestion is dead.");
-    return { ok: false, provider: null };
+    if (successes.length === 0) {
+      fail("Neither AI_GATEWAY_API_KEY nor OPENAI_API_KEY can produce embeddings — ingestion is dead.");
+    } else {
+      warn("OPENAI_API_KEY not set — AI Gateway is the only working embedding provider.");
+    }
+    return { ok: successes.length > 0, providers: successes };
   }
 
   try {
@@ -92,19 +101,33 @@ async function probeEmbeddingProvider() {
         dimensions: 3072,
       }),
     });
-    if (res.ok) return { ok: true, provider: "openai-direct" };
-    const text = await res.text();
-    fail(
-      `Embedding provider is FAILING. Direct OpenAI returned ${res.status}. ` +
+    if (res.ok) {
+      successes.push("openai-direct");
+    } else {
+      const text = await res.text();
+      const message =
+        `Direct OpenAI embedding probe returned ${res.status}. ` +
         `Body: ${text.slice(0, 300)}. ` +
-        `New Fireflies meetings will NOT be embedded. ` +
-        `Check OpenAI billing/quota or set AI_GATEWAY_API_KEY.`
-    );
-    return { ok: false, provider: "openai-direct" };
+        `Check OpenAI billing/quota.`;
+      if (successes.length > 0) {
+        fail(`${message} AI Gateway is currently masking this provider failure, but direct OpenAI is configured and unhealthy.`);
+      } else {
+        fail(
+          `Embedding provider is FAILING. ${message} ` +
+            `New Fireflies meetings will NOT be embedded. ` +
+            `Set AI_GATEWAY_API_KEY or fix OpenAI billing/quota.`
+        );
+      }
+    }
   } catch (err) {
-    fail(`Direct OpenAI embedding probe threw: ${err.message}`);
-    return { ok: false, provider: null };
+    if (successes.length > 0) {
+      fail(`Direct OpenAI embedding probe threw: ${err.message}. AI Gateway is currently masking this provider failure, but direct OpenAI is configured and unhealthy.`);
+    } else {
+      fail(`Direct OpenAI embedding probe threw: ${err.message}`);
+    }
   }
+
+  return { ok: successes.length > 0, providers: successes };
 }
 
 try {
@@ -144,6 +167,36 @@ try {
        or dm.type in ('meeting', 'meeting_transcript')
        or dm.category = 'meeting'
        or dm.fireflies_id is not null
+  `;
+
+  const [recentChunkCoverage] = await sql`
+    with recent_meetings as (
+      select id
+      from public.document_metadata
+      where (source = 'fireflies'
+         or type in ('meeting', 'meeting_transcript')
+         or category = 'meeting'
+         or fireflies_id is not null)
+        and coalesce(captured_at, date, created_at::timestamptz) >= now() - (${RECENT_WINDOW_DAYS} || ' days')::interval
+    ),
+    per_meeting as (
+      select
+        rm.id,
+        count(dc.chunk_id)::int as chunk_count,
+        count(dc.chunk_id) filter (where dc.embedding is not null)::int as embedded_chunk_count,
+        max(dc.updated_at) as latest_chunk_embedding_at
+      from recent_meetings rm
+      left join public.document_chunks dc on dc.document_id = rm.id
+      group by rm.id
+    )
+    select
+      count(*)::int as recent_meetings,
+      count(*) filter (where chunk_count > 0)::int as recent_meetings_with_chunks,
+      count(*) filter (where embedded_chunk_count > 0)::int as recent_meetings_with_embedded_chunks,
+      coalesce(sum(chunk_count), 0)::int as recent_chunks,
+      coalesce(sum(embedded_chunk_count), 0)::int as recent_embedded_chunks,
+      max(latest_chunk_embedding_at) as latest_recent_chunk_embedding_at
+    from per_meeting
   `;
 
   const [summaryProbe] = await sql`
@@ -189,6 +242,18 @@ try {
           `New meetings are NOT being vectorized. AI Strategist is missing recent context.`
       );
     }
+
+    const chunkRatio =
+      recentChunkCoverage.recent_meetings_with_embedded_chunks / recent.recent_meetings;
+    if (chunkRatio < RECENT_MIN_CHUNK_RATIO) {
+      fail(
+        `Only ${recentChunkCoverage.recent_meetings_with_embedded_chunks} of ` +
+          `${recent.recent_meetings} meetings from the last ${RECENT_WINDOW_DAYS} days ` +
+          `have embedded document_chunks (${(chunkRatio * 100).toFixed(1)}%, ` +
+          `required ≥${RECENT_MIN_CHUNK_RATIO * 100}%). ` +
+          `AI Strategist semanticSearch is missing recent meeting context.`
+      );
+    }
   }
 
   if (metadata.latest_meeting_at && metadata.latest_summary_embedding_at) {
@@ -218,6 +283,7 @@ try {
     metadata,
     recent,
     chunks,
+    recentChunkCoverage,
     probes: {
       meetingSummarySearch: summaryProbe,
       documentChunkSearch: chunkProbe,

@@ -1,14 +1,16 @@
 /**
  * ESLint Rule: require-page-shell
  *
- * Every page.tsx file under app/ must use <PageShell> as its root layout wrapper.
+ * Every page.tsx file under app/ must use a shared page-level shell as its root
+ * layout wrapper.
  * This prevents the recurring pattern of agents writing raw <div> + manual <h1>
  * instead of using the design system's page component.
  *
  * What it checks:
  * - The file exports a default function (a Next.js page)
- * - The file imports PageShell from @/components/layout
- * - The returned JSX contains a <PageShell> element
+ * - The file imports PageShell from @/components/layout or UnifiedTablePage from
+ *   @/components/tables/unified
+ * - The returned JSX contains a <PageShell> or <UnifiedTablePage> element
  *
  * Exceptions (via eslint-disable or path-based):
  * - Files in (auth)/ routes (login, signup pages have custom layouts)
@@ -25,13 +27,13 @@ module.exports = {
     },
     messages: {
       missingPageShell:
-        'Page files must use <PageShell> from "@/components/layout". ' +
+        'Page files must use <PageShell> from "@/components/layout" or <UnifiedTablePage> from "@/components/tables/unified". ' +
         'Do not write raw <div> + manual headings. ' +
         'See CLAUDE.md → "BUILDING A NEW PAGE? START HERE" for variants: ' +
         'dashboard, table, form, detail, content.',
       missingPageShellImport:
-        'Page file is missing the PageShell import. ' +
-        'Add: import { PageShell } from "@/components/layout";',
+        'Page file is missing the shared page shell import. ' +
+        'Add PageShell from "@/components/layout" or UnifiedTablePage from "@/components/tables/unified".',
     },
     schema: [],
   },
@@ -55,32 +57,36 @@ module.exports = {
     ];
     if (skipPatterns.some(p => filename.includes(p))) return {};
 
-    let hasPageShellImport = false;
-    let hasPageShellJSX = false;
+    let hasSharedPageShellImport = false;
+    let hasSharedPageShellJSX = false;
     let defaultExportNode = null;
 
     return {
       // Track imports
       ImportDeclaration(node) {
         const source = node.source.value;
-        if (
-          source === '@/components/layout' ||
-          source === '@/components/layout/page-shell'
-        ) {
+        if (source === '@/components/layout' || source === '@/components/layout/page-shell') {
           const hasPageShell = node.specifiers.some(
             s => s.imported && s.imported.name === 'PageShell'
           );
-          if (hasPageShell) hasPageShellImport = true;
+          if (hasPageShell) hasSharedPageShellImport = true;
+        }
+
+        if (source === '@/components/tables/unified') {
+          const hasUnifiedTablePage = node.specifiers.some(
+            s => s.imported && s.imported.name === 'UnifiedTablePage'
+          );
+          if (hasUnifiedTablePage) hasSharedPageShellImport = true;
         }
       },
 
-      // Track JSX usage of <PageShell>
+      // Track JSX usage of page-level shell primitives.
       JSXOpeningElement(node) {
         if (
           node.name.type === 'JSXIdentifier' &&
-          node.name.name === 'PageShell'
+          (node.name.name === 'PageShell' || node.name.name === 'UnifiedTablePage')
         ) {
-          hasPageShellJSX = true;
+          hasSharedPageShellJSX = true;
         }
       },
 
@@ -94,18 +100,18 @@ module.exports = {
         // Only check files that export a default (page components)
         if (!defaultExportNode) return;
 
-        if (!hasPageShellImport && !hasPageShellJSX) {
+        if (!hasSharedPageShellImport && !hasSharedPageShellJSX) {
           context.report({
             node: defaultExportNode,
             messageId: 'missingPageShell',
           });
-        } else if (hasPageShellImport && !hasPageShellJSX) {
+        } else if (hasSharedPageShellImport && !hasSharedPageShellJSX) {
           // Imported but never used — likely a mistake
           context.report({
             node: defaultExportNode,
             messageId: 'missingPageShell',
           });
-        } else if (!hasPageShellImport && hasPageShellJSX) {
+        } else if (!hasSharedPageShellImport && hasSharedPageShellJSX) {
           // Used but not imported — would be a runtime error anyway
           context.report({
             node: defaultExportNode,

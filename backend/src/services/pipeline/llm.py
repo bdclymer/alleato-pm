@@ -1,6 +1,5 @@
 """
 OpenAI helpers for the ingestion pipeline.
-Ported from backend/src/workers/shared/openai.ts.
 """
 
 from __future__ import annotations
@@ -22,8 +21,45 @@ CHAT_MODEL = "gpt-4o-mini"
 SEGMENT_TRANSCRIPT_MAX_CHARS = int(os.getenv("SEGMENT_TRANSCRIPT_MAX_CHARS", "0"))
 
 
-def _client() -> OpenAI:
-    return OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+def _provider_configs() -> List[Dict[str, str]]:
+    providers: List[Dict[str, str]] = []
+    gateway_key = os.getenv("AI_GATEWAY_API_KEY")
+    if gateway_key:
+        providers.append(
+            {
+                "name": "AI Gateway",
+                "api_key": gateway_key,
+                "base_url": "https://ai-gateway.vercel.sh/v1",
+                "model_prefix": "openai/",
+            }
+        )
+    openai_key = os.getenv("OPENAI_API_KEY")
+    if openai_key:
+        providers.append(
+            {
+                "name": "OpenAI direct",
+                "api_key": openai_key,
+                "base_url": "",
+                "model_prefix": "",
+            }
+        )
+    if not providers:
+        raise RuntimeError("AI_GATEWAY_API_KEY or OPENAI_API_KEY is required for LLM calls")
+    return providers
+
+
+def _client(provider: Dict[str, str]) -> OpenAI:
+    kwargs: Dict[str, str] = {"api_key": provider["api_key"]}
+    if provider.get("base_url"):
+        kwargs["base_url"] = provider["base_url"]
+    return OpenAI(**kwargs)
+
+
+def _model_for_provider(model: str, provider: Dict[str, str]) -> str:
+    prefix = provider.get("model_prefix", "")
+    if prefix and not model.startswith(prefix):
+        return f"{prefix}{model}"
+    return model
 
 
 # ---------------------------------------------------------------------------
@@ -36,8 +72,24 @@ def batch_embed(texts: List[str], model: str = EMBEDDING_MODEL) -> List[List[flo
         return []
     truncated = [t[:8000] for t in texts]
     logger.info("[LLM] Embedding %d texts with %s (dimensions=%d)", len(texts), model, EMBEDDING_DIMENSIONS)
-    response = _client().embeddings.create(model=model, input=truncated, dimensions=EMBEDDING_DIMENSIONS)
-    return [item.embedding for item in response.data]
+    errors: List[str] = []
+    for provider in _provider_configs():
+        try:
+            response = _client(provider).embeddings.create(
+                model=_model_for_provider(model, provider),
+                input=truncated,
+                dimensions=EMBEDDING_DIMENSIONS,
+            )
+            embeddings = [item.embedding for item in response.data]
+            if len(embeddings) != len(texts):
+                raise RuntimeError(f"expected {len(texts)} embeddings, got {len(embeddings)}")
+            logger.info("[LLM] Embedded %d texts via %s", len(texts), provider["name"])
+            return embeddings
+        except Exception as exc:
+            message = f"{provider['name']}: {exc}"
+            logger.error("[LLM] Embedding provider failed: %s", message)
+            errors.append(message)
+    raise RuntimeError("Embedding failed across all providers: " + " | ".join(errors))
 
 
 # ---------------------------------------------------------------------------
@@ -56,8 +108,18 @@ def _call_llm(prompt: str, json_mode: bool = False, max_tokens: Optional[int] = 
         kwargs["max_tokens"] = max_tokens
 
     logger.info("[LLM] Calling %s (json=%s)", CHAT_MODEL, json_mode)
-    response = _client().chat.completions.create(**kwargs)
-    return response.choices[0].message.content or ""
+    errors: List[str] = []
+    for provider in _provider_configs():
+        try:
+            provider_kwargs = dict(kwargs)
+            provider_kwargs["model"] = _model_for_provider(CHAT_MODEL, provider)
+            response = _client(provider).chat.completions.create(**provider_kwargs)
+            return response.choices[0].message.content or ""
+        except Exception as exc:
+            message = f"{provider['name']}: {exc}"
+            logger.error("[LLM] Chat provider failed: %s", message)
+            errors.append(message)
+    raise RuntimeError("Chat completion failed across all providers: " + " | ".join(errors))
 
 
 # ---------------------------------------------------------------------------

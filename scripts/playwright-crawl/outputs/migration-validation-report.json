@@ -1,0 +1,2046 @@
+{
+  "timestamp": "2026-04-26T09:46:13.373Z",
+  "summary": {
+    "totalMigrations": 202,
+    "errors": 4,
+    "unbaselinedErrors": 0,
+    "baselinedErrors": 4,
+    "warnings": 995,
+    "info": 11
+  },
+  "errors": [
+    "Table 'drawing_markup_pins' references non-existent table 'drawings'",
+    "Table 'payment_application_line_items' references non-existent table 'prime_contract_payment_applications'",
+    "Table 'drawing_change_history' references non-existent table 'drawings'",
+    "schema_dump.sql: Trigger references non-existent function 'enqueue_document_for_insights'"
+  ],
+  "unbaselinedErrors": [],
+  "baselinedErrors": [
+    "Table 'drawing_markup_pins' references non-existent table 'drawings'",
+    "Table 'payment_application_line_items' references non-existent table 'prime_contract_payment_applications'",
+    "Table 'drawing_change_history' references non-existent table 'drawings'",
+    "schema_dump.sql: Trigger references non-existent function 'enqueue_document_for_insights'"
+  ],
+  "warnings": [
+    "20260227000002_pipeline_config_table.sql: References 'config' which may not exist yet",
+    "20260301000001_meeting_digests.sql: References 'document_metadata' which may not exist yet",
+    "20260301000001_meeting_digests.sql: References 'projects' which may not exist yet",
+    "20260303000002_direct_cost_statuses_procore.sql: References 'direct_costs_status' which may not exist yet",
+    "20260303000003_change_order_attachments_and_schema_fixes.sql: References 'change_orders' which may not exist yet",
+    "20260303000003_change_order_attachments_and_schema_fixes.sql: References 'the' which may not exist yet",
+    "20260303000003_change_order_attachments_and_schema_fixes.sql: References 'sequential' which may not exist yet",
+    "20260303000003_change_order_attachments_and_schema_fixes.sql: References 'schema' which may not exist yet",
+    "20260304000002_document_metadata_file_columns.sql: References 'the' which may not exist yet",
+    "20260305000001_create_meeting_preps.sql: References 'document_metadata' which may not exist yet",
+    "20260305000001_create_meeting_preps.sql: References 'projects' which may not exist yet",
+    "20260305000003_add_note_highlights.sql: References 'document_metadata' which may not exist yet",
+    "20260305000003_add_note_highlights.sql: References 'documents' which may not exist yet",
+    "20260305000003_add_note_highlights.sql: References 'notes' which may not exist yet",
+    "20260305000003_add_note_highlights.sql: References 'projects' which may not exist yet",
+    "20260305000003_add_note_highlights.sql: References 'columns' which may not exist yet",
+    "20260305000003_add_note_highlights.sql: References 'pg_constraint' which may not exist yet",
+    "20260305000003_add_note_highlights.sql: References 'pg_policies' which may not exist yet",
+    "20260306000001_conversation_memories.sql: References 'search_all_knowledge' which may not exist yet",
+    "20260306000001_conversation_memories.sql: References 'memories' which may not exist yet",
+    "20260307000001_consolidate_task_tables.sql: References 'the' which may not exist yet",
+    "20260307000001_consolidate_task_tables.sql: References 'projects' which may not exist yet",
+    "20260307000001_consolidate_task_tables.sql: References 'document_metadata' which may not exist yet",
+    "20260307000001_consolidate_task_tables.sql: References 'tasks' which may not exist yet",
+    "20260307000002_backfill_task_project_ids.sql: References 'linked' which may not exist yet",
+    "20260307000002_backfill_task_project_ids.sql: References 'document_metadata' which may not exist yet",
+    "20260309000001_add_prime_contracts_contract_company_fk.sql: References 'companies' which may not exist yet",
+    "20260309000001_add_prime_contracts_contract_company_fk.sql: References 'prime_contracts' which may not exist yet",
+    "20260309000001_add_prime_contracts_contract_company_fk.sql: References 'pg_constraint' which may not exist yet",
+    "20260310000001_performance_indexes_hot_paths.sql: References 'idx_punch_items_project_status' which may not exist yet",
+    "20260310000001_performance_indexes_hot_paths.sql: References 'idx_spec_sections_project_status' which may not exist yet",
+    "20260310000001_performance_indexes_hot_paths.sql: References 'idx_project_companies_project_status' which may not exist yet",
+    "20260310000001_performance_indexes_hot_paths.sql: References 'idx_distribution_groups_project_status' which may not exist yet",
+    "20260310000005_acumatica_ar_invoices.sql: References 'acumatica_ar_invoices_status' which may not exist yet",
+    "20260310000006_estimates_and_qto.sql: References 'projects' which may not exist yet",
+    "20260310000006_estimates_and_qto.sql: References 'idx_estimates_status' which may not exist yet",
+    "20260310000006_estimates_and_qto.sql: References 'cost_code_divisions' which may not exist yet",
+    "20260313000001_acumatica_financial_sync.sql: References 'projects' which may not exist yet",
+    "20260313000001_acumatica_financial_sync.sql: References 'companies' which may not exist yet",
+    "20260313000002_knowledge_base_enhancements.sql: References 'projects' which may not exist yet",
+    "20260313000002_knowledge_base_enhancements.sql: References 'document_metadata' which may not exist yet",
+    "20260313000002_knowledge_base_enhancements.sql: References 'a' which may not exist yet",
+    "20260313000004_ai_memories.sql: References 'projects' which may not exist yet",
+    "20260313000004_ai_memories.sql: References 'document_metadata' which may not exist yet",
+    "20260313000004_ai_memories.sql: References 'for' which may not exist yet",
+    "20260313000004_ai_memories.sql: References 'pg_policies' which may not exist yet",
+    "20260314000001_council_mode_data_enrichment.sql: References 'projects' which may not exist yet",
+    "20260314000001_council_mode_data_enrichment.sql: References 'comparing' which may not exist yet",
+    "20260314000001_council_mode_data_enrichment.sql: References 'to' which may not exist yet",
+    "20260316000001_project_vendors.sql: References 'projects' which may not exist yet",
+    "20260316000001_project_vendors.sql: References 'vendors' which may not exist yet",
+    "20260316000001_project_vendors.sql: References 'people' which may not exist yet",
+    "20260316000002_migrate_clients_to_companies.sql: References 'to' which may not exist yet",
+    "20260316000002_migrate_clients_to_companies.sql: References 'companies' which may not exist yet",
+    "20260316000002_migrate_clients_to_companies.sql: References 'pg_tables' which may not exist yet",
+    "20260316000002_migrate_clients_to_companies.sql: References 'clients' which may not exist yet",
+    "20260316000002_migrate_clients_to_companies.sql: References 'projects' which may not exist yet",
+    "20260316000002_migrate_clients_to_companies.sql: References 'document_metadata' which may not exist yet",
+    "20260316000002_migrate_clients_to_companies.sql: References 'prime_contract_payment_applications' which may not exist yet",
+    "20260316000002_migrate_clients_to_companies.sql: References 'prime_contract_payments' which may not exist yet",
+    "20260316000002_migrate_clients_to_companies.sql: References 'prime_contracts' which may not exist yet",
+    "20260316000002_migrate_clients_to_companies.sql: References 'prime_contract_sovs' which may not exist yet",
+    "20260316000002_migrate_clients_to_companies.sql: References 'prime_contract_change_orders' which may not exist yet",
+    "20260316000002_migrate_clients_to_companies.sql: References 'prime_potential_change_orders' which may not exist yet",
+    "20260316000002_migrate_clients_to_companies.sql: References 'owner_invoices' which may not exist yet",
+    "20260316000002_migrate_clients_to_companies.sql: References 'payment_transactions' which may not exist yet",
+    "20260316000002_migrate_clients_to_companies.sql: References 'contracts' which may not exist yet",
+    "20260316000002_migrate_clients_to_companies.sql: References 'contract_change_orders' which may not exist yet",
+    "20260316000002_migrate_clients_to_companies.sql: References 'pcco_line_items' which may not exist yet",
+    "20260316000002_migrate_clients_to_companies.sql: References 'pco_line_items' which may not exist yet",
+    "20260316000002_migrate_clients_to_companies.sql: References 'owner_invoice_line_items' which may not exist yet",
+    "20260316000002_migrate_clients_to_companies.sql: References 'original_sov' which may not exist yet",
+    "20260316000002_migrate_clients_to_companies.sql: References 'approved_pccos' which may not exist yet",
+    "20260316000002_migrate_clients_to_companies.sql: References 'pending_pcos' which may not exist yet",
+    "20260316000002_migrate_clients_to_companies.sql: References 'draft_pcos' which may not exist yet",
+    "20260316000002_migrate_clients_to_companies.sql: References 'invoiced' which may not exist yet",
+    "20260316000002_migrate_clients_to_companies.sql: References 'payments' which may not exist yet",
+    "20260316000003_acumatica_procurement_and_contract_sync.sql: References 'projects' which may not exist yet",
+    "20260316000003_acumatica_procurement_and_contract_sync.sql: References 'companies' which may not exist yet",
+    "20260316000003_acumatica_procurement_and_contract_sync.sql: References 'acumatica_change_orders_status' which may not exist yet",
+    "20260316000003_acumatica_procurement_and_contract_sync.sql: References 'acumatica_subcontracts_status' which may not exist yet",
+    "20260316000003_acumatica_procurement_and_contract_sync.sql: References 'acumatica_purchase_orders_status' which may not exist yet",
+    "20260316000004_acumatica_subcontract_vendor_linking.sql: References 'vendors' which may not exist yet",
+    "20260316000004_acumatica_subcontract_vendor_linking.sql: References 'legacy' which may not exist yet",
+    "20260316000005_commitments_acumatica_projection.sql: References 'vendors' which may not exist yet",
+    "20260316000005_commitments_acumatica_projection.sql: References 'acumatica' which may not exist yet",
+    "20260316000005_commitments_acumatica_projection.sql: References 'the' which may not exist yet",
+    "20260316000006_change_orders_acumatica_linking.sql: References 'projects' which may not exist yet",
+    "20260316000007_fix_meeting_search_type_filter.sql: References 'document_metadata' which may not exist yet",
+    "20260317000001_drawings_rls_policies.sql: References 'pg_policies' which may not exist yet",
+    "20260317000002_drawing_markup_pins.sql: References 'drawings' which may not exist yet",
+    "20260317000002_drawing_markup_pins.sql: References 'projects' which may not exist yet",
+    "20260317000003_acumatica_sync_columns.sql: References 'Acumatica' which may not exist yet",
+    "20260317000003_acumatica_sync_columns.sql: References 'migration' which may not exist yet",
+    "20260317000004_contract_line_items_budget_code_id.sql: References 'id' which may not exist yet",
+    "20260317000004_contract_line_items_budget_code_id.sql: References 'project_budget_codes' which may not exist yet",
+    "20260317000004_contract_line_items_budget_code_id.sql: References 'prime_contracts' which may not exist yet",
+    "20260317000005_fix_budget_code_id_fk.sql: References 'project_cost_codes' which may not exist yet",
+    "20260317000007_fix_owner_invoices_contract_id.sql: References 'prime_contracts' which may not exist yet",
+    "20260318000001_improve_vector_search_quality.sql: References '5' which may not exist yet",
+    "20260318000001_improve_vector_search_quality.sql: References 'IVFFlat' which may not exist yet",
+    "20260318000001_improve_vector_search_quality.sql: References 'meeting_segments' which may not exist yet",
+    "20260318000001_improve_vector_search_quality.sql: References 'decisions' which may not exist yet",
+    "20260318000001_improve_vector_search_quality.sql: References 'risks' which may not exist yet",
+    "20260318000001_improve_vector_search_quality.sql: References 'opportunities' which may not exist yet",
+    "20260318000001_improve_vector_search_quality.sql: References 'documents' which may not exist yet",
+    "20260318000003_search_document_chunks_by_category.sql: References 'document_chunks' which may not exist yet",
+    "20260318000003_search_document_chunks_by_category.sql: References 'document_metadata' which may not exist yet",
+    "20260318000004_migrate_embeddings_to_3072.sql: References 'document_chunks' which may not exist yet",
+    "20260318000004_migrate_embeddings_to_3072.sql: References 'document_metadata' which may not exist yet",
+    "20260319000002_create_change_order_attachment_tables.sql: References 'prime_contract_change_orders' which may not exist yet",
+    "20260319000002_create_change_order_attachment_tables.sql: References 'contract_change_orders' which may not exist yet",
+    "20260320100000_consolidate_rag_schema.sql: References 'document_metadata' which may not exist yet",
+    "20260320100000_consolidate_rag_schema.sql: References 'projects' which may not exist yet",
+    "20260320100000_consolidate_rag_schema.sql: References 'idx_insights_status' which may not exist yet",
+    "20260320100000_consolidate_rag_schema.sql: References 'it' which may not exist yet",
+    "20260320100000_consolidate_rag_schema.sql: References 'decisions' which may not exist yet",
+    "20260320100000_consolidate_rag_schema.sql: References 'risks' which may not exist yet",
+    "20260320100000_consolidate_rag_schema.sql: References 'opportunities' which may not exist yet",
+    "20260320100000_consolidate_rag_schema.sql: References 'meeting_segments' which may not exist yet",
+    "20260320200000_document_metadata_fireflies_rich_fields.sql: References 'the' which may not exist yet",
+    "20260321100000_add_prime_contract_id_to_pcccos.sql: References 'the' which may not exist yet",
+    "20260321100000_add_prime_contract_id_to_pcccos.sql: References 'prime_contracts' which may not exist yet",
+    "20260321200000_fix_full_text_search_meetings.sql: References 'document_metadata' which may not exist yet",
+    "20260322000000_admin_feedback_items.sql: References 'user_profiles' which may not exist yet",
+    "20260322000000_admin_feedback_items.sql: References 'projects' which may not exist yet",
+    "20260322000000_admin_feedback_items.sql: References 'admin_feedback_items_status' which may not exist yet",
+    "20260322000000_admin_feedback_items.sql: References 'idx_admin_feedback_items_status' which may not exist yet",
+    "20260322100000_unified_document_chunks.sql: References 'document_metadata' which may not exist yet",
+    "20260322100000_unified_document_chunks.sql: References 'documents' which may not exist yet",
+    "20260322100000_unified_document_chunks.sql: References 'document_chunks' which may not exist yet",
+    "20260322200000_drop_dead_tables.sql: References 'AND' which may not exist yet",
+    "20260322200000_drop_dead_tables.sql: References 'the' which may not exist yet",
+    "20260322200000_drop_dead_tables.sql: References 'AI' which may not exist yet",
+    "20260323300000_design_violations.sql: References 'design_violations_status' which may not exist yet",
+    "20260323300000_design_violations.sql: References 'Megan' which may not exist yet",
+    "20260324000001_eval_framework_tables.sql: References 'historical' which may not exist yet",
+    "20260324000001_eval_framework_tables.sql: References 'an' which may not exist yet",
+    "20260325000000_feedback_tool_context.sql: References 'procore_tools' which may not exist yet",
+    "20260327000001_project_photos_transmittals_emails_documents.sql: References 'projects' which may not exist yet",
+    "20260327000001_project_photos_transmittals_emails_documents.sql: References 'idx_project_transmittals_status' which may not exist yet",
+    "20260327000001_project_photos_transmittals_emails_documents.sql: References 'idx_project_emails_status' which may not exist yet",
+    "20260327000001_project_photos_transmittals_emails_documents.sql: References 'idx_project_documents_status' which may not exist yet",
+    "20260328000001_prime_contract_attachments_fk_join.sql: References 'prime_contracts' which may not exist yet",
+    "20260328000001_prime_contract_attachments_fk_join.sql: References 'attachments' which may not exist yet",
+    "20260328000001_prime_contract_attachments_fk_join.sql: References 'pg_policies' which may not exist yet",
+    "20260328000001_prime_contract_attachments_fk_join.sql: References 'legacy' which may not exist yet",
+    "20260328000001_prime_contract_attachments_fk_join.sql: References 'table' which may not exist yet",
+    "20260328000001_prime_contract_attachments_fk_join.sql: References 'links' which may not exist yet",
+    "20260329000001_expand_admin_feedback_statuses.sql: References 'admin_feedback_items_status' which may not exist yet",
+    "20260330000001_fix_invoice_status_enum.sql: References 'idx_owner_invoices_status' which may not exist yet",
+    "20260330000001_fix_invoice_status_enum.sql: References 'idx_owner_invoices_prime_contract_status' which may not exist yet",
+    "20260330000001_fix_invoice_status_enum.sql: References 'pg_enum' which may not exist yet",
+    "20260330000002_prime_contract_payments_rls.sql: References 'pg_policies' which may not exist yet",
+    "20260330000003_change_event_related_items.sql: References 'from' which may not exist yet",
+    "20260330000003_change_event_related_items.sql: References 'projects' which may not exist yet",
+    "20260330000003_change_event_related_items.sql: References 'change_events' which may not exist yet",
+    "20260330000003_change_event_related_items.sql: References 'a' which may not exist yet",
+    "20260330000007_fix_contract_financial_summary_mv_trigger.sql: References 'pg_matviews' which may not exist yet",
+    "20260401000001_change_workflow_tables.sql: References 'projects' which may not exist yet",
+    "20260401000001_change_workflow_tables.sql: References 'change_events' which may not exist yet",
+    "20260401000001_change_workflow_tables.sql: References 'idx_pco_status' which may not exist yet",
+    "20260401000001_change_workflow_tables.sql: References 'pco_line_items' which may not exist yet",
+    "20260401000001_change_workflow_tables.sql: References 'table_constraints' which may not exist yet",
+    "20260401100000_payment_application_line_items.sql: References 'billing_periods' which may not exist yet",
+    "20260401100000_payment_application_line_items.sql: References 'prime_contract_payment_applications' which may not exist yet",
+    "20260401100000_payment_application_line_items.sql: References 'prime_contract_sovs' which may not exist yet",
+    "20260401100000_payment_application_line_items.sql: References 'contract_change_orders' which may not exist yet",
+    "20260402000001_tighten_pco_rls_policies.sql: References 'project_directory_memberships' which may not exist yet",
+    "20260402000001_tighten_pco_rls_policies.sql: References 'users_auth' which may not exist yet",
+    "20260404000001_fix_change_events_prime_contract_fk.sql: References 'prime_contracts' which may not exist yet",
+    "20260406000001_acumatica_outbound_audit_logs.sql: References 'projects' which may not exist yet",
+    "20260406000002_test_tracking.sql: References 'idx_test_results_status' which may not exist yet",
+    "20260406000002_test_tracking.sql: References 'the' which may not exist yet",
+    "20260406000002_test_tracking.sql: References 'pg_trigger' which may not exist yet",
+    "20260406130000_add_subcontractor_sov_submission_tables.sql: References 'projects' which may not exist yet",
+    "20260406130000_add_subcontractor_sov_submission_tables.sql: References 'subcontracts' which may not exist yet",
+    "20260406130000_add_subcontractor_sov_submission_tables.sql: References 'people' which may not exist yet",
+    "20260406130000_add_subcontractor_sov_submission_tables.sql: References 'idx_ssov_submissions_project_status' which may not exist yet",
+    "20260406130000_add_subcontractor_sov_submission_tables.sql: References 'commitment' which may not exist yet",
+    "20260406130000_add_subcontractor_sov_submission_tables.sql: References 'users_auth' which may not exist yet",
+    "20260406130000_add_subcontractor_sov_submission_tables.sql: References 'project_directory_memberships' which may not exist yet",
+    "20260406140000_update_subcontractor_sov_submission_workflow.sql: References 'people' which may not exist yet",
+    "20260406140000_update_subcontractor_sov_submission_workflow.sql: References 'subcontractor_sov_submissions_status' which may not exist yet",
+    "20260407000001_agent_learnings.sql: References 'procore_tools' which may not exist yet",
+    "20260407000001_agent_learnings.sql: References 'projects' which may not exist yet",
+    "20260407000001_agent_learnings.sql: References 'idx_agent_learnings_status' which may not exist yet",
+    "20260407000001_agent_learnings.sql: References 'feedback' which may not exist yet",
+    "20260407000001_agent_learnings.sql: References 'pg_policies' which may not exist yet",
+    "20260407130000_seed_budget_test_scenarios.sql: References 'suite' which may not exist yet",
+    "20260407130000_seed_budget_test_scenarios.sql: References 'the' which may not exist yet",
+    "20260407130001_seed_photos_test_scenarios.sql: References 'suite' which may not exist yet",
+    "20260407130001_seed_photos_test_scenarios.sql: References 'your' which may not exist yet",
+    "20260407130001_seed_photos_test_scenarios.sql: References 'the' which may not exist yet",
+    "20260407130001_seed_photos_test_scenarios.sql: References 'a' which may not exist yet",
+    "20260407130001_seed_photos_test_scenarios.sql: References 'within' which may not exist yet",
+    "20260407130001_seed_photos_test_scenarios.sql: References 'scenario' which may not exist yet",
+    "20260407130001_seed_photos_test_scenarios.sql: References 'one' which may not exist yet",
+    "20260407130001_seed_photos_test_scenarios.sql: References 'other' which may not exist yet",
+    "20260407130001_seed_photos_test_scenarios.sql: References 'Inspections' which may not exist yet",
+    "20260407130001_seed_photos_test_scenarios.sql: References 'Observations' which may not exist yet",
+    "20260407130001_seed_photos_test_scenarios.sql: References 'Punch' which may not exist yet",
+    "20260407130002_seed_commitments_test_scenarios.sql: References 'suite' which may not exist yet",
+    "20260407130002_seed_commitments_test_scenarios.sql: References 'the' which may not exist yet",
+    "20260407130002_seed_commitments_test_scenarios.sql: References 'each' which may not exist yet",
+    "20260407130002_seed_commitments_test_scenarios.sql: References 'a' which may not exist yet",
+    "20260407130002_seed_commitments_test_scenarios.sql: References 'lowest' which may not exist yet",
+    "20260407130002_seed_commitments_test_scenarios.sql: References 'highest' which may not exist yet",
+    "20260407200000_permissions_completion.sql: References 'projects' which may not exist yet",
+    "20260407200000_permissions_completion.sql: References 'people' which may not exist yet",
+    "20260407200000_permissions_completion.sql: References 'permission_templates' which may not exist yet",
+    "20260407200000_permissions_completion.sql: References 'project_directory_memberships' which may not exist yet",
+    "20260407200000_permissions_completion.sql: References 'user_profiles' which may not exist yet",
+    "20260407200000_permissions_completion.sql: References 'users_auth' which may not exist yet",
+    "20260408000000_seed_prime-contracts_test_scenarios.sql: References 'suite' which may not exist yet",
+    "20260408000000_seed_prime-contracts_test_scenarios.sql: References 'a' which may not exist yet",
+    "20260408000000_seed_prime-contracts_test_scenarios.sql: References 'the' which may not exist yet",
+    "20260408000000_seed_prime-contracts_test_scenarios.sql: References 'Draft' which may not exist yet",
+    "20260408000001_seed_change-orders_test_scenarios.sql: References 'the' which may not exist yet",
+    "20260408000002_seed_direct-costs_test_scenarios.sql: References 'suite' which may not exist yet",
+    "20260408000002_seed_direct-costs_test_scenarios.sql: References 'a' which may not exist yet",
+    "20260408000002_seed_direct-costs_test_scenarios.sql: References 'Draft' which may not exist yet",
+    "20260408000002_seed_direct-costs_test_scenarios.sql: References 'the' which may not exist yet",
+    "20260408000002_seed_direct-costs_test_scenarios.sql: References 'detail' which may not exist yet",
+    "20260408000002_seed_direct-costs_test_scenarios.sql: References 'its' which may not exist yet",
+    "20260408000003_seed_invoices_test_scenarios.sql: References 'the' which may not exist yet",
+    "20260408000003_seed_invoices_test_scenarios.sql: References 'Draft' which may not exist yet",
+    "20260408000004_seed_rfis_test_scenarios.sql: References 'Draft' which may not exist yet",
+    "20260408000004_seed_rfis_test_scenarios.sql: References 'today' which may not exist yet",
+    "20260408000004_seed_rfis_test_scenarios.sql: References 'the' which may not exist yet",
+    "20260408000005_seed_submittals_test_scenarios.sql: References 'a' which may not exist yet",
+    "20260408000005_seed_submittals_test_scenarios.sql: References 'scenario' which may not exist yet",
+    "20260408000005_seed_submittals_test_scenarios.sql: References 'Draft' which may not exist yet",
+    "20260408000005_seed_submittals_test_scenarios.sql: References 'your' which may not exist yet",
+    "20260408000005_seed_submittals_test_scenarios.sql: References 'the' which may not exist yet",
+    "20260408000006_seed_schedule_test_scenarios.sql: References 'suite' which may not exist yet",
+    "20260408000006_seed_schedule_test_scenarios.sql: References 'regular' which may not exist yet",
+    "20260408000006_seed_schedule_test_scenarios.sql: References 'the' which may not exist yet",
+    "20260408000007_seed_drawings_test_scenarios.sql: References 'suite' which may not exist yet",
+    "20260408000007_seed_drawings_test_scenarios.sql: References 'other' which may not exist yet",
+    "20260408000007_seed_drawings_test_scenarios.sql: References 'at' which may not exist yet",
+    "20260408000007_seed_drawings_test_scenarios.sql: References 'the' which may not exist yet",
+    "20260408000007_seed_drawings_test_scenarios.sql: References 'your' which may not exist yet",
+    "20260408000008_seed_punch-list_test_scenarios.sql: References 'suite' which may not exist yet",
+    "20260408000008_seed_punch-list_test_scenarios.sql: References 'the' which may not exist yet",
+    "20260408000009_seed_daily-log_test_scenarios.sql: References 'a' which may not exist yet",
+    "20260408000009_seed_daily-log_test_scenarios.sql: References 'scenario' which may not exist yet",
+    "20260408000010_seed_meetings_test_scenarios.sql: References 'suite' which may not exist yet",
+    "20260408000010_seed_meetings_test_scenarios.sql: References 'row' which may not exist yet",
+    "20260408000010_seed_meetings_test_scenarios.sql: References 'the' which may not exist yet",
+    "20260408000010_seed_meetings_test_scenarios.sql: References 'other' which may not exist yet",
+    "20260408000011_seed_directory_test_scenarios.sql: References 'the' which may not exist yet",
+    "20260408000011_seed_directory_test_scenarios.sql: References 'other' which may not exist yet",
+    "20260408000012_seed_documents_test_scenarios.sql: References 'suite' which may not exist yet",
+    "20260408000012_seed_documents_test_scenarios.sql: References 'the' which may not exist yet",
+    "20260408123000_prime_contract_retainage_settings.sql: References 'SOV' which may not exist yet",
+    "20260408210000_seed_project_lifecycle_test_suite.sql: References 'earlier' which may not exist yet",
+    "20260408210000_seed_project_lifecycle_test_suite.sql: References 'suite' which may not exist yet",
+    "20260408210000_seed_project_lifecycle_test_suite.sql: References 'the' which may not exist yet",
+    "20260408210000_seed_project_lifecycle_test_suite.sql: References '85000' which may not exist yet",
+    "20260408210000_seed_project_lifecycle_test_suite.sql: References 'Phase' which may not exist yet",
+    "20260408210000_seed_project_lifecycle_test_suite.sql: References 'Draft' which may not exist yet",
+    "20260408210000_seed_project_lifecycle_test_suite.sql: References 'unapproved' which may not exist yet",
+    "20260408210000_seed_project_lifecycle_test_suite.sql: References 'change' which may not exist yet",
+    "20260408210000_seed_project_lifecycle_test_suite.sql: References 'a' which may not exist yet",
+    "20260408210000_seed_project_lifecycle_test_suite.sql: References 'test' which may not exist yet",
+    "20260408220000_update_lifecycle_phase1_create_project.sql: References 'different' which may not exist yet",
+    "20260408220000_update_lifecycle_phase1_create_project.sql: References 'the' which may not exist yet",
+    "20260408220000_update_lifecycle_phase1_create_project.sql: References 'your' which may not exist yet",
+    "20260408220000_update_lifecycle_phase1_create_project.sql: References 'suite' which may not exist yet",
+    "20260409000002_create_subcontractor_invoices.sql: References 'projects' which may not exist yet",
+    "20260409000002_create_subcontractor_invoices.sql: References 'subcontracts' which may not exist yet",
+    "20260409000002_create_subcontractor_invoices.sql: References 'purchase_orders' which may not exist yet",
+    "20260409000002_create_subcontractor_invoices.sql: References 'billing_periods' which may not exist yet",
+    "20260409000002_create_subcontractor_invoices.sql: References 'idx_subcontractor_invoices_status' which may not exist yet",
+    "20260409000003_invoice_extras.sql: References 'projects' which may not exist yet",
+    "20260409000003_invoice_extras.sql: References 'owner_invoices' which may not exist yet",
+    "20260409000003_invoice_extras.sql: References 'pg_enum' which may not exist yet",
+    "20260409000005_add_pending_owner_approval_status.sql: References 'pg_enum' which may not exist yet",
+    "20260409000006_split_work_materials_retainage.sql: References 'Previous' which may not exist yet",
+    "20260409120000_dedupe_permission_templates.sql: References 'pointed' which may not exist yet",
+    "20260409120000_dedupe_permission_templates.sql: References 'permission_templates' which may not exist yet",
+    "20260409130000_reconcile_permission_templates.sql: References 'permission_templates' which may not exist yet",
+    "20260409150000_commitment_sov_rls.sql: References 'its' which may not exist yet",
+    "20260409150000_commitment_sov_rls.sql: References 'people' which may not exist yet",
+    "20260409150000_commitment_sov_rls.sql: References 'user_profiles' which may not exist yet",
+    "20260409150000_commitment_sov_rls.sql: References 'project_directory_memberships' which may not exist yet",
+    "20260409150000_commitment_sov_rls.sql: References 'the' which may not exist yet",
+    "20260409150000_commitment_sov_rls.sql: References 'subcontracts' which may not exist yet",
+    "20260409150000_commitment_sov_rls.sql: References 'purchase_orders' which may not exist yet",
+    "20260409150000_commitment_sov_rls.sql: References 'prime_contracts' which may not exist yet",
+    "20260409150000_commitment_sov_rls.sql: References 'permission_templates' which may not exist yet",
+    "20260409160000_fix_commitment_rls_policies.sql: References 'parent' which may not exist yet",
+    "20260409160000_fix_commitment_rls_policies.sql: References 'subcontracts' which may not exist yet",
+    "20260409160000_fix_commitment_rls_policies.sql: References 'purchase_orders' which may not exist yet",
+    "20260409160000_fix_commitment_rls_policies.sql: References 'prime_contracts' which may not exist yet",
+    "20260409170000_commitment_related_items.sql: References 'projects' which may not exist yet",
+    "20260409200000_drawings_publish_obsolete.sql: References 'drawings' which may not exist yet",
+    "20260409200000_drawings_publish_obsolete.sql: References 'drawing_revisions' which may not exist yet",
+    "20260409200000_drawings_publish_obsolete.sql: References 'drawing_areas' which may not exist yet",
+    "20260409200000_drawings_publish_obsolete.sql: References 'drawing_sets' which may not exist yet",
+    "20260409210000_subcontractor_sov_tables.sql: References 'projects' which may not exist yet",
+    "20260409210000_subcontractor_sov_tables.sql: References 'subcontracts' which may not exist yet",
+    "20260409210000_subcontractor_sov_tables.sql: References 'project_directory_memberships' which may not exist yet",
+    "20260409210000_subcontractor_sov_tables.sql: References 'users_auth' which may not exist yet",
+    "20260409220000_ssov_add_actor_columns.sql: References 'people' which may not exist yet",
+    "20260410000000_email_events.sql: References 'idx_email_events_status' which may not exist yet",
+    "20260410090000_ssov_add_invite_sent_by.sql: References 'people' which may not exist yet",
+    "20260410110000_invoice_line_items_retainage_columns.sql: References 'pg_type' which may not exist yet",
+    "20260410130000_drawings_soft_delete.sql: References 'drawings' which may not exist yet",
+    "20260410130000_drawings_soft_delete.sql: References 'drawing_revisions' which may not exist yet",
+    "20260410130000_drawings_soft_delete.sql: References 'drawing_areas' which may not exist yet",
+    "20260410130000_drawings_soft_delete.sql: References 'drawing_sets' which may not exist yet",
+    "20260410140000_create_pco_tables.sql: References 'projects' which may not exist yet",
+    "20260410140000_create_pco_tables.sql: References 'prime_contracts' which may not exist yet",
+    "20260410140000_create_pco_tables.sql: References 'prime_contract_change_orders' which may not exist yet",
+    "20260410140000_create_pco_tables.sql: References 'contract_change_orders' which may not exist yet",
+    "20260410140000_create_pco_tables.sql: References 'change_events' which may not exist yet",
+    "20260410140000_create_pco_tables.sql: References 'change_event_line_items' which may not exist yet",
+    "20260410140000_create_pco_tables.sql: References 'idx_prime_contract_pcos_status' which may not exist yet",
+    "20260410140000_create_pco_tables.sql: References 'idx_commitment_pcos_status' which may not exist yet",
+    "20260410150000_invoice_audit_log_trigger.sql: References 'log_subcontractor_invoice_status' which may not exist yet",
+    "20260410150000_invoice_audit_log_trigger.sql: References 'trg_subcontractor_invoice_status' which may not exist yet",
+    "20260410150000_invoice_audit_log_trigger.sql: References 'status' which may not exist yet",
+    "20260410150000_invoice_audit_log_trigger.sql: References 'subcontractor_invoice_audit_log' which may not exist yet",
+    "20260413000000_create_punch_items.sql: References 'projects' which may not exist yet",
+    "20260413000000_create_punch_items.sql: References 'idx_punch_items_status' which may not exist yet",
+    "20260413000000_create_punch_items.sql: References 'project_directory_memberships' which may not exist yet",
+    "20260413000000_create_punch_items.sql: References 'users_auth' which may not exist yet",
+    "20260413000001_acumatica_mirror_tables.sql: References 'projects' which may not exist yet",
+    "20260413000001_acumatica_mirror_tables.sql: References 'companies' which may not exist yet",
+    "20260413000001_acumatica_mirror_tables.sql: References 'idx_acumatica_customers_status' which may not exist yet",
+    "20260413000001_acumatica_mirror_tables.sql: References 'idx_acumatica_projects_status' which may not exist yet",
+    "20260413000001_acumatica_mirror_tables.sql: References 'idx_acumatica_project_tasks_status' which may not exist yet",
+    "20260413000001_acumatica_mirror_tables.sql: References 'sql' which may not exist yet",
+    "20260413000003_prime_contracts_perf_and_security.sql: References 'idx_prime_contracts_project_status' which may not exist yet",
+    "20260413000003_prime_contracts_perf_and_security.sql: References 'prime_contracts' which may not exist yet",
+    "20260413000003_prime_contracts_perf_and_security.sql: References 'contract_change_orders' which may not exist yet",
+    "20260413000003_prime_contracts_perf_and_security.sql: References 'project_directory_memberships' which may not exist yet",
+    "20260413000003_prime_contracts_perf_and_security.sql: References 'users_auth' which may not exist yet",
+    "20260413000005_prime_contract_settings_retainage.sql: References 'DEFAULT_SETTINGS' which may not exist yet",
+    "20260413000006_owner_invoice_payment_application_link.sql: References 'prime_contract_payment_applications' which may not exist yet",
+    "20260413000006_owner_invoice_payment_application_link.sql: References 'the' which may not exist yet",
+    "20260413000010_unique_project_cost_codes.sql: References 'project_cost_codes' which may not exist yet",
+    "20260414000001_change_management_scope_guardrails.sql: References 'projects' which may not exist yet",
+    "20260414000001_change_management_scope_guardrails.sql: References 'commitment_status' which may not exist yet",
+    "20260414000001_change_management_scope_guardrails.sql: References 'idx_contract_change_orders_project_status' which may not exist yet",
+    "20260414000001_change_management_scope_guardrails.sql: References 'idx_prime_contract_change_orders_project_status' which may not exist yet",
+    "20260414000001_change_management_scope_guardrails.sql: References 'idx_subcontracts_project_active_status' which may not exist yet",
+    "20260414000001_change_management_scope_guardrails.sql: References 'idx_purchase_orders_project_active_status' which may not exist yet",
+    "20260414000001_change_management_scope_guardrails.sql: References 'the' which may not exist yet",
+    "20260414000001_change_management_scope_guardrails.sql: References 'commitments_unified' which may not exist yet",
+    "20260414000001_change_management_scope_guardrails.sql: References 'project_id' which may not exist yet",
+    "20260414000001_change_management_scope_guardrails.sql: References 'CASE' which may not exist yet",
+    "20260414000001_change_management_scope_guardrails.sql: References 'pg_constraint' which may not exist yet",
+    "20260414000001_change_management_scope_guardrails.sql: References 'contract_change_orders' which may not exist yet",
+    "20260414123000_budget_rls_and_atomic_upsert.sql: References 'budget_views' which may not exist yet",
+    "20260414123000_budget_rls_and_atomic_upsert.sql: References 'budget_modifications' which may not exist yet",
+    "20260414221000_create_prime_contract_pco_attachments.sql: References 'pg_policies' which may not exist yet",
+    "20260414225500_team_chat_channels.sql: References 'existing' which may not exist yet",
+    "20260414225500_team_chat_channels.sql: References 'pg_constraint' which may not exist yet",
+    "20260414225500_team_chat_channels.sql: References 'user_profiles' which may not exist yet",
+    "20260415043000_collaboration_comments_notifications.sql: References 'projects' which may not exist yet",
+    "20260415043000_collaboration_comments_notifications.sql: References 'pg_publication_tables' which may not exist yet",
+    "20260417103000_add_testing_scenario_quality_constraints.sql: References 'pg_constraint' which may not exist yet",
+    "20260417114000_update_drawings_scenarios_upload_first.sql: References 'suite' which may not exist yet",
+    "20260417115500_fix_drawings_setup_references_after_reorder.sql: References 'suite' which may not exist yet",
+    "20260417122000_consolidate_budget_broad_scenarios.sql: References 'suite' which may not exist yet",
+    "20260417143000_budget_forecast_details_and_settings.sql: References 'projects' which may not exist yet",
+    "20260417143000_budget_forecast_details_and_settings.sql: References 'budget_lines' which may not exist yet",
+    "20260417150000_update_budget_forecast_test_case.sql: References 'columns' which may not exist yet",
+    "20260417150000_update_budget_forecast_test_case.sql: References 'procore_features' which may not exist yet",
+    "20260417150000_update_budget_forecast_test_case.sql: References 'budget_feature' which may not exist yet",
+    "20260417150000_update_budget_forecast_test_case.sql: References 'suite' which may not exist yet",
+    "20260417153000_procore_traceability_and_coverage_gates.sql: References 'procore_features' which may not exist yet",
+    "20260417153000_procore_traceability_and_coverage_gates.sql: References 'procore_tools' which may not exist yet",
+    "20260417153000_procore_traceability_and_coverage_gates.sql: References 'procore_feature_impl_status' which may not exist yet",
+    "20260417153000_procore_traceability_and_coverage_gates.sql: References 'idx_procore_feature_impl_status' which may not exist yet",
+    "20260417153000_procore_traceability_and_coverage_gates.sql: References 'feature_status' which may not exist yet",
+    "20260417153000_procore_traceability_and_coverage_gates.sql: References 'pg_constraint' which may not exist yet",
+    "20260417153000_procore_traceability_and_coverage_gates.sql: References 'pg_trigger' which may not exist yet",
+    "20260417153000_procore_traceability_and_coverage_gates.sql: References 'high_tests' which may not exist yet",
+    "20260417153000_procore_traceability_and_coverage_gates.sql: References 'feature_map' which may not exist yet",
+    "20260417170000_submittals_user_flow_ordering.sql: References 'pg_constraint' which may not exist yet",
+    "20260417210000_commitments_schema_gaps.sql: References 'purchase_orders' which may not exist yet",
+    "20260417210000_commitments_schema_gaps.sql: References 'commitment_status' which may not exist yet",
+    "20260417210000_commitments_schema_gaps.sql: References 'columns' which may not exist yet",
+    "20260417210000_commitments_schema_gaps.sql: References 'subcontracts' which may not exist yet",
+    "20260417210000_commitments_schema_gaps.sql: References 'subcontract_sov_items' which may not exist yet",
+    "20260417210000_commitments_schema_gaps.sql: References 'subcontract_attachments' which may not exist yet",
+    "20260417210000_commitments_schema_gaps.sql: References 'contract_change_orders' which may not exist yet",
+    "20260417210000_commitments_schema_gaps.sql: References 'companies' which may not exist yet",
+    "20260417220000_commitments_status_align_procore.sql: References 'subcontracts_status' which may not exist yet",
+    "20260417220000_commitments_status_align_procore.sql: References 'purchase_orders_status' which may not exist yet",
+    "20260417230000_commitments_audit_log.sql: References 'this' which may not exist yet",
+    "20260418000000_add_budget_changes_table.sql: References 'projects' which may not exist yet",
+    "20260418000000_add_budget_changes_table.sql: References 'change_events' which may not exist yet",
+    "20260418000001_drawing_change_history.sql: References 'drawings' which may not exist yet",
+    "20260418000001_drawing_change_history.sql: References 'projects' which may not exist yet",
+    "20260418010000_prime_contracts_schema_gaps.sql: References 'prime_contract_status' which may not exist yet",
+    "20260418010000_prime_contracts_schema_gaps.sql: References 'erp_status' which may not exist yet",
+    "20260418010000_prime_contracts_schema_gaps.sql: References 'idx_prime_contracts_erp_status' which may not exist yet",
+    "20260418010000_prime_contracts_schema_gaps.sql: References 'md' which may not exist yet",
+    "20260418010000_prime_contracts_schema_gaps.sql: References 'implementation' which may not exist yet",
+    "20260418010000_prime_contracts_schema_gaps.sql: References 'prime_contract_status_v2' which may not exist yet",
+    "20260418010000_prime_contracts_schema_gaps.sql: References 'prime_contracts' which may not exist yet",
+    "20260418010000_prime_contracts_schema_gaps.sql: References 'prime_contract_payment_applications' which may not exist yet",
+    "20260418010000_prime_contracts_schema_gaps.sql: References 'prime_contract_payments' which may not exist yet",
+    "20260418010000_prime_contracts_schema_gaps.sql: References 'contract_change_orders' which may not exist yet",
+    "20260419000001_submittals_rls_and_workflow_templates.sql: References 'projects' which may not exist yet",
+    "20260419000001_submittals_rls_and_workflow_templates.sql: References 'submittals' which may not exist yet",
+    "20260419000001_submittals_rls_and_workflow_templates.sql: References 'via' which may not exist yet",
+    "20260419000011_budget_mod_lines_change_event_id.sql: References 'change_events' which may not exist yet",
+    "20260420154140_seed_commitments_smoke_scenarios.sql: References 's' which may not exist yet",
+    "20260420154140_seed_commitments_smoke_scenarios.sql: References 'the' which may not exist yet",
+    "20260420154141_seed_commitments_feature_scenarios.sql: References 's' which may not exist yet",
+    "20260420154141_seed_commitments_feature_scenarios.sql: References 'the' which may not exist yet",
+    "20260420154141_seed_commitments_feature_scenarios.sql: References '1' which may not exist yet",
+    "20260420154141_seed_commitments_feature_scenarios.sql: References 'CO' which may not exist yet",
+    "20260420154141_seed_commitments_feature_scenarios.sql: References 'multiple' which may not exist yet",
+    "20260420160000_cleanup_testing_schema.sql: References 'the' which may not exist yet",
+    "20260420162332_seed_budget_smoke_scenarios.sql: References 's' which may not exist yet",
+    "20260420162332_seed_budget_smoke_scenarios.sql: References 'the' which may not exist yet",
+    "20260420162333_seed_budget_feature_scenarios.sql: References 's' which may not exist yet",
+    "20260420162333_seed_budget_feature_scenarios.sql: References 'the' which may not exist yet",
+    "20260420162333_seed_budget_feature_scenarios.sql: References 'any' which may not exist yet",
+    "20260420173320_seed_change_orders_feature_scenarios.sql: References 'list' which may not exist yet",
+    "20260420173320_seed_change_orders_feature_scenarios.sql: References 'UI' which may not exist yet",
+    "20260420174513_seed_invoices_feature_scenarios.sql: References 'draft' which may not exist yet",
+    "20260420174513_seed_invoices_feature_scenarios.sql: References 'active' which may not exist yet",
+    "20260420174513_seed_invoices_feature_scenarios.sql: References 'Billing' which may not exist yet",
+    "20260420181514_seed_submittals_smoke_scenarios.sql: References 'list' which may not exist yet",
+    "20260420181514_seed_submittals_smoke_scenarios.sql: References 'recycle' which may not exist yet",
+    "20260420181515_seed_submittals_feature_scenarios.sql: References 'package' which may not exist yet",
+    "20260420181515_seed_submittals_feature_scenarios.sql: References 'specification' which may not exist yet",
+    "20260420181515_seed_submittals_feature_scenarios.sql: References 'Items' which may not exist yet",
+    "20260420181515_seed_submittals_feature_scenarios.sql: References 'active' which may not exist yet",
+    "20260420181515_seed_submittals_feature_scenarios.sql: References 'Recycle' which may not exist yet",
+    "20260420182728_seed_specifications_smoke_scenarios.sql: References 'detail' which may not exist yet",
+    "20260420182729_seed_specifications_feature_scenarios.sql: References 'list' which may not exist yet",
+    "20260420182729_seed_specifications_feature_scenarios.sql: References 'active' which may not exist yet",
+    "20260420182729_seed_specifications_feature_scenarios.sql: References 'recycle' which may not exist yet",
+    "20260420182729_seed_specifications_feature_scenarios.sql: References 'section' which may not exist yet",
+    "20260420182729_seed_specifications_feature_scenarios.sql: References 'specifications' which may not exist yet",
+    "20260420182729_seed_specifications_feature_scenarios.sql: References 'revisions' which may not exist yet",
+    "20260420213250_seed_rfis_smoke_scenarios.sql: References 's' which may not exist yet",
+    "20260420213250_seed_rfis_smoke_scenarios.sql: References 'the' which may not exist yet",
+    "20260420213251_seed_rfis_feature_scenarios.sql: References 's' which may not exist yet",
+    "20260420213251_seed_rfis_feature_scenarios.sql: References 'the' which may not exist yet",
+    "20260420213251_seed_rfis_feature_scenarios.sql: References '1' which may not exist yet",
+    "20260420213251_seed_rfis_feature_scenarios.sql: References 'an' which may not exist yet",
+    "20260420214550_seed_prime_contracts_smoke_scenarios.sql: References 'the' which may not exist yet",
+    "20260420214551_seed_prime_contracts_feature_scenarios.sql: References 'the' which may not exist yet",
+    "20260420214551_seed_prime_contracts_feature_scenarios.sql: References 'row' which may not exist yet",
+    "20260420214551_seed_prime_contracts_feature_scenarios.sql: References 'Draft' which may not exist yet",
+    "20260420214551_seed_prime_contracts_feature_scenarios.sql: References 'current' which may not exist yet",
+    "20260420220000_add_test_cases_status.sql: References 'idx_test_cases_status' which may not exist yet",
+    "20260420230000_add_test_cases_metadata_columns.sql: References 'but' which may not exist yet",
+    "20260420230000_add_test_cases_metadata_columns.sql: References 'procore_tools' which may not exist yet",
+    "20260421200000_add_fixed_status_to_test_results.sql: References 'test_results_status' which may not exist yet",
+    "20260423000001_prime_co_related_items.sql: References 'from' which may not exist yet",
+    "20260423000001_prime_co_related_items.sql: References 'projects' which may not exist yet",
+    "20260423000001_prime_co_related_items.sql: References 'prime_contract_change_orders' which may not exist yet",
+    "20260423000001_prime_co_related_items.sql: References 'a' which may not exist yet",
+    "20260423000002_consolidate_cost_codes.sql: References 'project_budget_codes' which may not exist yet",
+    "20260423000002_consolidate_cost_codes.sql: References 'are' which may not exist yet",
+    "20260423000002_consolidate_cost_codes.sql: References 'project_cost_codes' which may not exist yet",
+    "20260423000002_consolidate_cost_codes.sql: References 'deduped' which may not exist yet",
+    "20260423000002_consolidate_cost_codes.sql: References '_pcc_to_pbc' which may not exist yet",
+    "20260423000002_consolidate_cost_codes.sql: References 'cost_codes' which may not exist yet",
+    "20260423000003_add_change_event_line_item_budget_line_id.sql: References 'budget_lines' which may not exist yet",
+    "20260423000004_guard_acumatica_null_budget_codes.sql: References 'project_budget_codes' which may not exist yet",
+    "20260423000004_guard_acumatica_null_budget_codes.sql: References 'ranked' which may not exist yet",
+    "20260423000004_guard_acumatica_null_budget_codes.sql: References 'duplicates' which may not exist yet",
+    "20260426000001_fix_budget_line_history_trigger_timing.sql: References 'an' which may not exist yet",
+    "20260426000001_fix_budget_line_history_trigger_timing.sql: References 'quantity' which may not exist yet",
+    "20260426000001_fix_budget_line_history_trigger_timing.sql: References 'unit_cost' which may not exist yet",
+    "20260426000001_fix_budget_line_history_trigger_timing.sql: References 'description' which may not exist yet",
+    "20260426000002_fix_meeting_summary_search_rpc.sql: References 'document_metadata' which may not exist yet",
+    "schema_dump.sql: References 'per' which may not exist yet",
+    "schema_dump.sql: References 'OWNER' which may not exist yet",
+    "schema_dump.sql: References 'user_project_preferences_pkey' which may not exist yet",
+    "schema_dump.sql: References 'ADD' which may not exist yet",
+    "schema_dump.sql: References 'user_project_preferences_user_id_project_id_key' which may not exist yet",
+    "schema_dump.sql: References 'update_user_project_preferences_updated_at' which may not exist yet",
+    "schema_dump.sql: References 'FOR' which may not exist yet",
+    "schema_dump.sql: References 'user_project_preferences_project_id_fkey' which may not exist yet",
+    "schema_dump.sql: References 'user_project_preferences_user_id_fkey' which may not exist yet",
+    "schema_dump.sql: References 'USING' which may not exist yet",
+    "schema_dump.sql: References 'ENABLE' which may not exist yet",
+    "schema_dump.sql: References 'TO' which may not exist yet",
+    "schema_dump.sql: References 'projects_health_status' which may not exist yet",
+    "schema_dump.sql: References 'ai_analysis_jobs_status' which may not exist yet",
+    "schema_dump.sql: References 'ai_insights_status' which may not exist yet",
+    "schema_dump.sql: References 'budget_modifications_status' which may not exist yet",
+    "schema_dump.sql: References 'change_event_approvals_status' which may not exist yet",
+    "schema_dump.sql: References 'change_event_rfq_responses_status' which may not exist yet",
+    "schema_dump.sql: References 'change_event_rfqs_status' which may not exist yet",
+    "schema_dump.sql: References 'change_events_status' which may not exist yet",
+    "schema_dump.sql: References 'subcontracts_status' which may not exist yet",
+    "schema_dump.sql: References 'contract_billing_periods_status' which may not exist yet",
+    "schema_dump.sql: References 'contract_change_orders_status' which may not exist yet",
+    "schema_dump.sql: References 'contract_payments_status' which may not exist yet",
+    "schema_dump.sql: References 'decisions_status' which may not exist yet",
+    "schema_dump.sql: References 'direct_costs_status' which may not exist yet",
+    "schema_dump.sql: References 'discrepancies_status' which may not exist yet",
+    "schema_dump.sql: References 'distribution_groups_status' which may not exist yet",
+    "schema_dump.sql: References 'chk_lead_status' which may not exist yet",
+    "schema_dump.sql: References 'chk_extraction_status' which may not exist yet",
+    "schema_dump.sql: References 'initiatives_status' which may not exist yet",
+    "schema_dump.sql: References 'opportunities_status' which may not exist yet",
+    "schema_dump.sql: References 'people_status' which may not exist yet",
+    "schema_dump.sql: References 'processing_queue_status' which may not exist yet",
+    "schema_dump.sql: References 'procore_capture_sessions_status' which may not exist yet",
+    "schema_dump.sql: References 'project_companies_status' which may not exist yet",
+    "schema_dump.sql: References 'project_directory_memberships_invite_status' which may not exist yet",
+    "schema_dump.sql: References 'project_directory_memberships_status' which may not exist yet",
+    "schema_dump.sql: References 'project_tasks_status' which may not exist yet",
+    "schema_dump.sql: References 'review_comments_status' which may not exist yet",
+    "schema_dump.sql: References 'reviews_status' which may not exist yet",
+    "schema_dump.sql: References 'risks_status' which may not exist yet",
+    "schema_dump.sql: References 'schedule_of_values_status' which may not exist yet",
+    "schema_dump.sql: References 'schedule_tasks_status' which may not exist yet",
+    "schema_dump.sql: References 'specifications_status' which may not exist yet",
+    "schema_dump.sql: References 'subcontractors_status' which may not exist yet",
+    "schema_dump.sql: References 'submittals_status' which may not exist yet",
+    "schema_dump.sql: References 'sync_status_status' which may not exist yet",
+    "schema_dump.sql: References 'tasks_status' which may not exist yet",
+    "schema_dump.sql: References 'idx_ai_insights_status' which may not exist yet",
+    "schema_dump.sql: References 'idx_ai_tasks_project_status' which may not exist yet",
+    "schema_dump.sql: References 'idx_billing_periods_status' which may not exist yet",
+    "schema_dump.sql: References 'idx_budget_modifications_status' which may not exist yet",
+    "schema_dump.sql: References 'idx_budget_mods_status' which may not exist yet",
+    "schema_dump.sql: References 'idx_ce_approvals_status' which may not exist yet",
+    "schema_dump.sql: References 'idx_change_event_rfq_responses_status' which may not exist yet",
+    "schema_dump.sql: References 'idx_change_event_rfqs_status' which may not exist yet",
+    "schema_dump.sql: References 'idx_change_events_status' which may not exist yet",
+    "schema_dump.sql: References 'idx_change_events_summary_status' which may not exist yet",
+    "schema_dump.sql: References 'idx_change_orders_status' which may not exist yet",
+    "schema_dump.sql: References 'idx_companies_status' which may not exist yet",
+    "schema_dump.sql: References 'idx_contracts_erp_status' which may not exist yet",
+    "schema_dump.sql: References 'idx_contracts_status' which may not exist yet",
+    "schema_dump.sql: References 'idx_direct_costs_status' which may not exist yet",
+    "schema_dump.sql: References 'idx_discrepancies_status' which may not exist yet",
+    "schema_dump.sql: References 'idx_distribution_groups_status' which may not exist yet",
+    "schema_dump.sql: References 'idx_documents_status' which may not exist yet",
+    "schema_dump.sql: References 'idx_fm_tables_status' which may not exist yet",
+    "schema_dump.sql: References 'idx_form_submissions_status' which may not exist yet",
+    "schema_dump.sql: References 'idx_initiatives_status' which may not exist yet",
+    "schema_dump.sql: References 'idx_payments_status' which may not exist yet",
+    "schema_dump.sql: References 'idx_pdm_invite_status' which may not exist yet",
+    "schema_dump.sql: References 'idx_pdm_project_status' which may not exist yet",
+    "schema_dump.sql: References 'idx_pdm_status' which may not exist yet",
+    "schema_dump.sql: References 'idx_people_status' which may not exist yet",
+    "schema_dump.sql: References 'idx_prime_contracts_status' which may not exist yet",
+    "schema_dump.sql: References 'idx_processing_queue_status' which may not exist yet",
+    "schema_dump.sql: References 'idx_procore_pages_status' which may not exist yet",
+    "schema_dump.sql: References 'idx_project_companies_status' which may not exist yet",
+    "schema_dump.sql: References 'idx_project_directory_memberships_status' which may not exist yet",
+    "schema_dump.sql: References 'idx_project_tasks_status' which may not exist yet",
+    "schema_dump.sql: References 'idx_prospects_status' which may not exist yet",
+    "schema_dump.sql: References 'idx_purchase_orders_status' which may not exist yet",
+    "schema_dump.sql: References 'idx_qa_page_audit_status' which may not exist yet",
+    "schema_dump.sql: References 'idx_reviews_status' which may not exist yet",
+    "schema_dump.sql: References 'idx_rfis_status' which may not exist yet",
+    "schema_dump.sql: References 'idx_schedule_of_values_status' which may not exist yet",
+    "schema_dump.sql: References 'idx_schedule_tasks_status' which may not exist yet",
+    "schema_dump.sql: References 'idx_subcontractors_status' which may not exist yet",
+    "schema_dump.sql: References 'idx_subcontracts_status' which may not exist yet",
+    "schema_dump.sql: References 'idx_submittals_status' which may not exist yet",
+    "schema_dump.sql: References 'user_projects_status' which may not exist yet",
+    "schema_dump.sql: References 'track_submittal_status' which may not exist yet",
+    "schema_dump.sql: References 'database' which may not exist yet",
+    "schema_dump.sql: References 'document_id' which may not exist yet",
+    "schema_dump.sql: References 'email' which may not exist yet",
+    "schema_dump.sql: References 'archon_tasks' which may not exist yet",
+    "schema_dump.sql: References 'meetings' which may not exist yet",
+    "schema_dump.sql: References 'JSON' which may not exist yet",
+    "schema_dump.sql: References 'the' which may not exist yet",
+    "schema_dump.sql: References 'budget_snapshots' which may not exist yet",
+    "schema_dump.sql: References 'snapshot1_items' which may not exist yet",
+    "schema_dump.sql: References 'meeting_embeddings' which may not exist yet",
+    "schema_dump.sql: References 'view' which may not exist yet",
+    "schema_dump.sql: References 'v_budget_rollup' which may not exist yet",
+    "schema_dump.sql: References 'v_budget_grand_totals' which may not exist yet",
+    "schema_dump.sql: References 'insight_pairs' which may not exist yet",
+    "schema_dump.sql: References 'v_new' which may not exist yet",
+    "schema_dump.sql: References 'project_data' which may not exist yet",
+    "schema_dump.sql: References '4' which may not exist yet",
+    "schema_dump.sql: References 'asrs_figures' which may not exist yet",
+    "schema_dump.sql: References 'filtered' which may not exist yet",
+    "schema_dump.sql: References 'search_filtered' which may not exist yet",
+    "schema_dump.sql: References 'paged' which may not exist yet",
+    "schema_dump.sql: References 'params' which may not exist yet",
+    "schema_dump.sql: References 'total_count' which may not exist yet",
+    "schema_dump.sql: References 'ordered' which may not exist yet",
+    "schema_dump.sql: References 'doc_stats' which may not exist yet",
+    "schema_dump.sql: References 'IS' which may not exist yet",
+    "schema_dump.sql: References 'due_date' which may not exist yet",
+    "schema_dump.sql: References 'base' which may not exist yet",
+    "schema_dump.sql: References 'meeting_insights' which may not exist yet",
+    "schema_dump.sql: References 'vector_results' which may not exist yet",
+    "schema_dump.sql: References 'fm_global_vectors' which may not exist yet",
+    "schema_dump.sql: References 'combined' which may not exist yet",
+    "schema_dump.sql: References 'archon_code_examples' which may not exist yet",
+    "schema_dump.sql: References 'archon_crawled_pages' which may not exist yet",
+    "schema_dump.sql: References 'meeting_chunks' which may not exist yet",
+    "schema_dump.sql: References 'chunk_results' which may not exist yet",
+    "schema_dump.sql: References 'table_results' which may not exist yet",
+    "schema_dump.sql: References 'all_results' which may not exist yet",
+    "schema_dump.sql: References 'ranked_chunks' which may not exist yet",
+    "schema_dump.sql: References 'project_budget_code' which may not exist yet",
+    "schema_dump.sql: References 'v_title' which may not exist yet",
+    "schema_dump.sql: References 'title' which may not exist yet",
+    "schema_dump.sql: References 'employees' which may not exist yet",
+    "schema_dump.sql: References 'supervisor' which may not exist yet",
+    "schema_dump.sql: References 'inputs' which may not exist yet",
+    "schema_dump.sql: References 'project_matches' which may not exist yet",
+    "schema_dump.sql: References 'name' which may not exist yet",
+    "schema_dump.sql: References 'quantity' which may not exist yet",
+    "schema_dump.sql: References 'unit_cost' which may not exist yet",
+    "schema_dump.sql: References 'description' which may not exist yet",
+    "schema_dump.sql: References 'meeting_id' which may not exist yet",
+    "schema_dump.sql: References 'project_id' which may not exist yet",
+    "schema_dump.sql: References 'change' which may not exist yet",
+    "schema_dump.sql: References 'this' which may not exist yet",
+    "schema_dump.sql: References 'Procore' which may not exist yet",
+    "schema_dump.sql: References 'invoices' which may not exist yet",
+    "schema_dump.sql: References 'false' which may not exist yet",
+    "schema_dump.sql: References 'snapshot2_items' which may not exist yet",
+    "schema_dump.sql: References 'conversation_history' which may not exist yet",
+    "schema_dump.sql: References 'insight_stats' which may not exist yet",
+    "schema_dump.sql: References 'category_stats' which may not exist yet",
+    "schema_dump.sql: References 'activity_stats' which may not exist yet",
+    "schema_dump.sql: References 'LATERAL' which may not exist yet",
+    "schema_dump.sql: References 'chain' which may not exist yet",
+    "schema_dump.sql: References 'last_row' which may not exist yet",
+    "schema_dump.sql: References 'recent_document_keywords' which may not exist yet",
+    "schema_dump.sql: References 'text_results' which may not exist yet",
+    "schema_dump.sql: References 'original_sov' which may not exist yet",
+    "schema_dump.sql: References 'approved_pccos' which may not exist yet",
+    "schema_dump.sql: References 'pending_pcos' which may not exist yet",
+    "schema_dump.sql: References 'draft_pcos' which may not exist yet",
+    "schema_dump.sql: References 'invoiced' which may not exist yet",
+    "schema_dump.sql: References 'payments' which may not exist yet",
+    "seed-data-direct-costs.sql: References 'direct_costs_with_details' which may not exist yet",
+    "Table 'pipeline_config' has no foreign key relationships",
+    "Table 'meeting_digests' has no foreign key relationships",
+    "Table 'change_order_attachments' has no foreign key relationships",
+    "Table 'meeting_preps' has no foreign key relationships",
+    "Table 'acumatica_ar_invoices' has no foreign key relationships",
+    "Table 'acumatica_ar_invoice_lines' has no foreign key relationships",
+    "Table 'estimate_line_items' has no foreign key relationships",
+    "Table 'estimate_alternates' has no foreign key relationships",
+    "Table 'estimate_allowances' has no foreign key relationships",
+    "Table 'acumatica_sync_state' has no foreign key relationships",
+    "Table 'acumatica_ap_bill_lines' has no foreign key relationships",
+    "Table 'acumatica_checks' has no foreign key relationships",
+    "Table 'project_risk_snapshots' has no foreign key relationships",
+    "Table 'graph_sync_state' has no foreign key relationships",
+    "Table 'pcco_attachments' has no foreign key relationships",
+    "Table 'cco_attachments' has no foreign key relationships",
+    "Table 'insights' has no foreign key relationships",
+    "Table 'support_articles' has no foreign key relationships",
+    "Table 'support_article_chunks' has no foreign key relationships",
+    "Table 'admin_feedback_items' has no foreign key relationships",
+    "Table 'project_photos' has no foreign key relationships",
+    "Table 'project_transmittals' has no foreign key relationships",
+    "Table 'transmittal_items' has no foreign key relationships",
+    "Table 'project_emails' has no foreign key relationships",
+    "Table 'email_attachments' has no foreign key relationships",
+    "Table 'project_documents' has no foreign key relationships",
+    "Table 'ai_tool_write_audits' has no foreign key relationships",
+    "Table 'potential_change_orders' has no foreign key relationships",
+    "Table 'pco_versions' has no foreign key relationships",
+    "Table 'pco_change_events' has no foreign key relationships",
+    "Table 'timeline_events' has no foreign key relationships",
+    "Table 'change_workflow_comments' has no foreign key relationships",
+    "Table 'change_workflow_notifications' has no foreign key relationships",
+    "Table 'project_notification_groups' has no foreign key relationships",
+    "Table 'acumatica_sync_runs' has no foreign key relationships",
+    "Table 'acumatica_outbound_audit_logs' has no foreign key relationships",
+    "Table 'subcontractor_invoice_line_items' has no foreign key relationships",
+    "Table 'invoice_payments' has no foreign key relationships",
+    "Table 'invoicing_settings' has no foreign key relationships",
+    "Table 'acumatica_customers' has no foreign key relationships",
+    "Table 'acumatica_accounts' has no foreign key relationships",
+    "Table 'acumatica_projects' has no foreign key relationships",
+    "Table 'acumatica_project_tasks' has no foreign key relationships",
+    "Table 'acumatica_payment_applications' has no foreign key relationships",
+    "Table 'collaboration_comments' has no foreign key relationships",
+    "Table 'collaboration_notifications' has no foreign key relationships",
+    "Table 'project_budget_settings' has no foreign key relationships",
+    "Table 'qa_page_audit' has no foreign key relationships",
+    "Table '__drizzle_migrations' has no foreign key relationships",
+    "Table 'document_insights' has no foreign key relationships",
+    "Table 'document_metadata' has no foreign key relationships",
+    "Table 'ai_analysis_jobs' has no foreign key relationships",
+    "Table 'ai_insights' has no foreign key relationships",
+    "Table 'ai_models' has no foreign key relationships",
+    "Table 'ai_tasks' has no foreign key relationships",
+    "Table 'app_capability_actions' has no foreign key relationships",
+    "Table 'app_commands' has no foreign key relationships",
+    "Table 'app_crawl_sessions' has no foreign key relationships",
+    "Table 'app_functional_capabilities' has no foreign key relationships",
+    "Table 'app_page_links' has no foreign key relationships",
+    "Table 'app_pages' has no foreign key relationships",
+    "Table 'app_parity_checks' has no foreign key relationships",
+    "Table 'app_roles' has no foreign key relationships",
+    "Table 'app_schedule_bulk_operations' has no foreign key relationships",
+    "Table 'app_schedule_task_hierarchy' has no foreign key relationships",
+    "Table 'app_state_transitions' has no foreign key relationships",
+    "Table 'app_system_actions' has no foreign key relationships",
+    "Table 'app_system_states' has no foreign key relationships",
+    "Table 'app_ui_components' has no foreign key relationships",
+    "Table 'app_ui_table_columns' has no foreign key relationships",
+    "Table 'app_ui_tables' has no foreign key relationships",
+    "Table 'asrs_blocks' has no foreign key relationships",
+    "Table 'asrs_configurations' has no foreign key relationships",
+    "Table 'asrs_decision_matrix' has no foreign key relationships",
+    "Table 'asrs_logic_cards' has no foreign key relationships",
+    "Table 'asrs_protection_rules' has no foreign key relationships",
+    "Table 'asrs_sections' has no foreign key relationships",
+    "Table 'block_embeddings' has no foreign key relationships",
+    "Table 'briefing_runs' has no foreign key relationships",
+    "Table 'budget_line_history' has no foreign key relationships",
+    "Table 'budget_line_item_history' has no foreign key relationships",
+    "Table 'budget_mod_lines' has no foreign key relationships",
+    "Table 'budget_modification_lines' has no foreign key relationships",
+    "Table 'budget_modifications' has no foreign key relationships",
+    "Table 'budget_view_columns' has no foreign key relationships",
+    "Table 'budget_views' has no foreign key relationships",
+    "Table 'change_event_approvals' has no foreign key relationships",
+    "Table 'change_event_attachments' has no foreign key relationships",
+    "Table 'change_event_history' has no foreign key relationships",
+    "Table 'change_event_rfq_attachments' has no foreign key relationships",
+    "Table 'change_event_rfq_responses' has no foreign key relationships",
+    "Table 'change_event_rfqs' has no foreign key relationships",
+    "Table 'change_order_approvals' has no foreign key relationships",
+    "Table 'change_order_costs' has no foreign key relationships",
+    "Table 'change_order_lines' has no foreign key relationships",
+    "Table 'change_orders' has no foreign key relationships",
+    "Table 'chat_history' has no foreign key relationships",
+    "Table 'chat_messages' has no foreign key relationships",
+    "Table 'chat_sessions' has no foreign key relationships",
+    "Table 'chat_thread_attachment_files' has no foreign key relationships",
+    "Table 'chat_thread_attachments' has no foreign key relationships",
+    "Table 'chat_thread_feedback' has no foreign key relationships",
+    "Table 'chat_thread_items' has no foreign key relationships",
+    "Table 'chat_threads' has no foreign key relationships",
+    "Table 'chats' has no foreign key relationships",
+    "Table 'chunks' has no foreign key relationships",
+    "Table 'clients' has no foreign key relationships",
+    "Table 'code_examples' has no foreign key relationships",
+    "Table 'commitment_change_order_lines' has no foreign key relationships",
+    "Table 'company_context' has no foreign key relationships",
+    "Table 'contract_billing_periods' has no foreign key relationships",
+    "Table 'contract_documents' has no foreign key relationships",
+    "Table 'contracts' has no foreign key relationships",
+    "Table 'owner_invoice_line_items' has no foreign key relationships",
+    "Table 'owner_invoices' has no foreign key relationships",
+    "Table 'payment_transactions' has no foreign key relationships",
+    "Table 'pcco_line_items' has no foreign key relationships",
+    "Table 'prime_contract_change_orders' has no foreign key relationships",
+    "Table 'prime_contract_sovs' has no foreign key relationships",
+    "Table 'prime_potential_change_orders' has no foreign key relationships",
+    "Table 'contract_line_items' has no foreign key relationships",
+    "Table 'contract_payments' has no foreign key relationships",
+    "Table 'contract_snapshots' has no foreign key relationships",
+    "Table 'contract_views' has no foreign key relationships",
+    "Table 'conversations' has no foreign key relationships",
+    "Table 'issues' has no foreign key relationships",
+    "Table 'cost_code_division_updates_audit' has no foreign key relationships",
+    "Table 'cost_code_divisions' has no foreign key relationships",
+    "Table 'cost_code_types' has no foreign key relationships",
+    "Table 'cost_codes' has no foreign key relationships",
+    "Table 'cost_factors' has no foreign key relationships",
+    "Table 'cost_forecasts' has no foreign key relationships",
+    "Table 'crawled_pages' has no foreign key relationships",
+    "Table 'daily_log_equipment' has no foreign key relationships",
+    "Table 'daily_log_manpower' has no foreign key relationships",
+    "Table 'daily_log_notes' has no foreign key relationships",
+    "Table 'daily_logs' has no foreign key relationships",
+    "Table 'daily_recaps' has no foreign key relationships",
+    "Table 'database_tables_catalog' has no foreign key relationships",
+    "Table 'decisions' has no foreign key relationships",
+    "Table 'design_recommendations' has no foreign key relationships",
+    "Table 'direct_cost_line_items' has no foreign key relationships",
+    "Table 'direct_costs' has no foreign key relationships",
+    "Table 'discrepancies' has no foreign key relationships",
+    "Table 'distribution_group_members' has no foreign key relationships",
+    "Table 'distribution_groups' has no foreign key relationships",
+    "Table 'document_chunks' has no foreign key relationships",
+    "Table 'document_executive_summaries' has no foreign key relationships",
+    "Table 'document_group_access' has no foreign key relationships",
+    "Table 'document_rows' has no foreign key relationships",
+    "Table 'document_user_access' has no foreign key relationships",
+    "Table 'erp_sync_log' has no foreign key relationships",
+    "Table 'fm_global_figures' has no foreign key relationships",
+    "Table 'files' has no foreign key relationships",
+    "Table 'financial_contracts' has no foreign key relationships",
+    "Table 'fireflies_ingestion_jobs' has no foreign key relationships",
+    "Table 'fm_blocks' has no foreign key relationships",
+    "Table 'fm_cost_factors' has no foreign key relationships",
+    "Table 'fm_documents' has no foreign key relationships",
+    "Table 'fm_form_submissions' has no foreign key relationships",
+    "Table 'fm_global_tables' has no foreign key relationships",
+    "Table 'fm_optimization_rules' has no foreign key relationships",
+    "Table 'fm_optimization_suggestions' has no foreign key relationships",
+    "Table 'fm_sections' has no foreign key relationships",
+    "Table 'fm_sprinkler_configs' has no foreign key relationships",
+    "Table 'fm_table_vectors' has no foreign key relationships",
+    "Table 'fm_text_chunks' has no foreign key relationships",
+    "Table 'forecasting' has no foreign key relationships",
+    "Table 'forecasting_curves' has no foreign key relationships",
+    "Table 'group_members' has no foreign key relationships",
+    "Table 'groups' has no foreign key relationships",
+    "Table 'ingestion_jobs' has no foreign key relationships",
+    "Table 'initiatives' has no foreign key relationships",
+    "Table 'meeting_segments' has no foreign key relationships",
+    "Table 'memories' has no foreign key relationships",
+    "Table 'messages' has no foreign key relationships",
+    "Table 'nods_page' has no foreign key relationships",
+    "Table 'nods_page_section' has no foreign key relationships",
+    "Table 'notes' has no foreign key relationships",
+    "Table 'opportunities' has no foreign key relationships",
+    "Table 'optimization_rules' has no foreign key relationships",
+    "Table 'parts' has no foreign key relationships",
+    "Table 'processing_queue' has no foreign key relationships",
+    "Table 'procore_capture_sessions' has no foreign key relationships",
+    "Table 'procore_modules' has no foreign key relationships",
+    "Table 'procore_screenshots' has no foreign key relationships",
+    "Table 'procore_components' has no foreign key relationships",
+    "Table 'procore_features' has no foreign key relationships",
+    "Table 'procore_pages' has no foreign key relationships",
+    "Table 'project' has no foreign key relationships",
+    "Table 'project_briefings' has no foreign key relationships",
+    "Table 'project_budget_codes' has no foreign key relationships",
+    "Table 'project_companies' has no foreign key relationships",
+    "Table 'project_cost_codes' has no foreign key relationships",
+    "Table 'project_directory_memberships' has no foreign key relationships",
+    "Table 'project_insights' has no foreign key relationships",
+    "Table 'project_resources' has no foreign key relationships",
+    "Table 'project_role_members' has no foreign key relationships",
+    "Table 'project_roles' has no foreign key relationships",
+    "Table 'project_tasks' has no foreign key relationships",
+    "Table 'projects_audit' has no foreign key relationships",
+    "Table 'prospects' has no foreign key relationships",
+    "Table 'purchase_order_sov_items' has no foreign key relationships",
+    "Table 'qto_items' has no foreign key relationships",
+    "Table 'qtos' has no foreign key relationships",
+    "Table 'rag_pipeline_state' has no foreign key relationships",
+    "Table 'requests' has no foreign key relationships",
+    "Table 'review_comments' has no foreign key relationships",
+    "Table 'reviews' has no foreign key relationships",
+    "Table 'rfi_assignees' has no foreign key relationships",
+    "Table 'rfis' has no foreign key relationships",
+    "Table 'risks' has no foreign key relationships",
+    "Table 'schedule_deadlines' has no foreign key relationships",
+    "Table 'schedule_dependencies' has no foreign key relationships",
+    "Table 'schedule_of_values' has no foreign key relationships",
+    "Table 'schedule_tasks' has no foreign key relationships",
+    "Table 'sources' has no foreign key relationships",
+    "Table 'sov_line_items' has no foreign key relationships",
+    "Table 'specifications' has no foreign key relationships",
+    "Table 'sub_jobs' has no foreign key relationships",
+    "Table 'subcontract_attachments' has no foreign key relationships",
+    "Table 'subcontract_sov_items' has no foreign key relationships",
+    "Table 'subcontractor_contacts' has no foreign key relationships",
+    "Table 'subcontractor_documents' has no foreign key relationships",
+    "Table 'subcontractor_projects' has no foreign key relationships",
+    "Table 'subcontractors' has no foreign key relationships",
+    "Table 'submittal_analytics_events' has no foreign key relationships",
+    "Table 'submittal_documents' has no foreign key relationships",
+    "Table 'submittal_history' has no foreign key relationships",
+    "Table 'submittal_notifications' has no foreign key relationships",
+    "Table 'submittal_performance_metrics' has no foreign key relationships",
+    "Table 'submittals' has no foreign key relationships",
+    "Table 'submittal_types' has no foreign key relationships",
+    "Table 'sync_status' has no foreign key relationships",
+    "Table 'tasks' has no foreign key relationships",
+    "Table 'todos' has no foreign key relationships",
+    "Table 'user_directory_permissions' has no foreign key relationships",
+    "Table 'user_email_notifications' has no foreign key relationships",
+    "Table 'user_profiles' has no foreign key relationships",
+    "Table 'user_project_preferences' has no foreign key relationships",
+    "Table 'user_project_roles' has no foreign key relationships",
+    "Table 'user_projects' has no foreign key relationships",
+    "Table 'user_schedule_notifications' has no foreign key relationships",
+    "Table 'users_auth' has no foreign key relationships",
+    "Table 'vertical_markup' has no foreign key relationships",
+    "Function 'search_conversation_memories' in 20260306000001_conversation_memories.sql is defined but not used",
+    "Function 'search_knowledge_base' in 20260318000001_improve_vector_search_quality.sql is defined but not used",
+    "Function 'search_ai_memories' in 20260426000003_normalize_ai_memory_rpc_halfvec.sql is defined but not used",
+    "Function 'touch_ai_memories' in 20260313000004_ai_memories.sql is defined but not used",
+    "Function 'expire_ai_memories' in 20260313000004_ai_memories.sql is defined but not used",
+    "Function 'find_duplicate_memory' in 20260426000003_normalize_ai_memory_rpc_halfvec.sql is defined but not used",
+    "Function 'search_team_memories' in 20260426000003_normalize_ai_memory_rpc_halfvec.sql is defined but not used",
+    "Function 'decay_memory_confidence' in 20260313000005_ai_memories_enhancements.sql is defined but not used",
+    "Function 'full_text_search_meetings' in schema_dump.sql is defined but not used",
+    "Function 'match_meeting_segments' in schema_dump.sql is defined but not used",
+    "Function 'match_decisions' in schema_dump.sql is defined but not used",
+    "Function 'match_risks' in schema_dump.sql is defined but not used",
+    "Function 'match_opportunities' in schema_dump.sql is defined but not used",
+    "Function 'match_documents_full' in schema_dump.sql is defined but not used",
+    "Function 'search_all_knowledge' in schema_dump.sql is defined but not used",
+    "Function 'search_document_chunks_by_category' in 20260318000004_migrate_embeddings_to_3072.sql is defined but not used",
+    "Function 'match_document_metadata_by_summary' in 20260426000002_fix_meeting_summary_search_rpc.sql is defined but not used",
+    "Function 'search_support_articles' in 20260321300000_support_articles_and_chunks.sql is defined but not used",
+    "Function 'fulltext_search_support_articles' in 20260321300000_support_articles_and_chunks.sql is defined but not used",
+    "Function 'search_document_chunks' in 20260322100000_unified_document_chunks.sql is defined but not used",
+    "Function 'refresh_contract_financial_summary' in schema_dump.sql is defined but not used",
+    "Function 'search_agent_learnings' in 20260407000001_agent_learnings.sql is defined but not used",
+    "Function 'current_person_id' in 20260409150000_commitment_sov_rls.sql is defined but not used",
+    "Function 'current_is_app_admin' in 20260409150000_commitment_sov_rls.sql is defined but not used",
+    "Function 'current_is_project_member' in 20260409150000_commitment_sov_rls.sql is defined but not used",
+    "Function 'current_can_view_private_commitments' in 20260409150000_commitment_sov_rls.sql is defined but not used",
+    "Function 'user_is_project_member_for_contract' in 20260413000003_prime_contracts_perf_and_security.sql is defined but not used",
+    "Function 'assert_procore_coverage_gate' in 20260417153000_procore_traceability_and_coverage_gates.sql is defined but not used",
+    "Function 'add_meeting_participants_to_contacts' in schema_dump.sql is defined but not used",
+    "Function 'archive_task' in schema_dump.sql is defined but not used",
+    "Function 'assign_meeting_project_id' in schema_dump.sql is defined but not used",
+    "Function 'auto_archive_old_chats' in schema_dump.sql is defined but not used",
+    "Function 'backfill_meeting_participants_to_contacts' in schema_dump.sql is defined but not used",
+    "Function 'batch_update_project_assignments' in schema_dump.sql is defined but not used",
+    "Function 'convert_embeddings_to_vector' in schema_dump.sql is defined but not used",
+    "Function 'create_conversation_with_message' in schema_dump.sql is defined but not used",
+    "Function 'email_to_names' in schema_dump.sql is defined but not used",
+    "Function 'enhanced_match_chunks' in schema_dump.sql is defined but not used",
+    "Function 'execute_custom_sql' in schema_dump.sql is defined but not used",
+    "Function 'extract_names' in schema_dump.sql is defined but not used",
+    "Function 'find_duplicate_insights' in schema_dump.sql is defined but not used",
+    "Function 'find_sprinkler_requirements' in schema_dump.sql is defined but not used",
+    "Function 'fn_sync_cost_code_division_title' in schema_dump.sql is defined but not used",
+    "Function 'generate_optimization_recommendations' in schema_dump.sql is defined but not used",
+    "Function 'generate_optimizations' in schema_dump.sql is defined but not used",
+    "Function 'handle_new_user' in schema_dump.sql is defined but not used",
+    "Function 'hybrid_search' in schema_dump.sql is defined but not used",
+    "Function 'hybrid_search_fm_global' in schema_dump.sql is defined but not used",
+    "Function 'increment_session_tokens' in schema_dump.sql is defined but not used",
+    "Function 'interpolate_sprinkler_requirements' in schema_dump.sql is defined but not used",
+    "Function 'is_admin' in schema_dump.sql is defined but not used",
+    "Function 'mark_document_processed' in schema_dump.sql is defined but not used",
+    "Function 'match_archon_code_examples' in schema_dump.sql is defined but not used",
+    "Function 'match_archon_crawled_pages' in schema_dump.sql is defined but not used",
+    "Function 'match_chunks' in schema_dump.sql is defined but not used",
+    "Function 'match_code_examples' in schema_dump.sql is defined but not used",
+    "Function 'match_crawled_pages' in schema_dump.sql is defined but not used",
+    "Function 'match_decisions_by_project' in schema_dump.sql is defined but not used",
+    "Function 'match_document_chunks' in schema_dump.sql is defined but not used",
+    "Function 'match_documents' in schema_dump.sql is defined but not used",
+    "Function 'match_documents_enhanced' in schema_dump.sql is defined but not used",
+    "Function 'match_files' in schema_dump.sql is defined but not used",
+    "Function 'match_fm_documents' in schema_dump.sql is defined but not used",
+    "Function 'match_fm_global_vectors' in schema_dump.sql is defined but not used",
+    "Function 'match_fm_tables' in schema_dump.sql is defined but not used",
+    "Function 'match_meeting_chunks' in schema_dump.sql is defined but not used",
+    "Function 'match_meeting_chunks_with_project' in schema_dump.sql is defined but not used",
+    "Function 'match_meeting_segments_by_project' in schema_dump.sql is defined but not used",
+    "Function 'match_meetings' in schema_dump.sql is defined but not used",
+    "Function 'match_memories' in schema_dump.sql is defined but not used",
+    "Function 'match_page_sections' in schema_dump.sql is defined but not used",
+    "Function 'match_recent_documents' in schema_dump.sql is defined but not used",
+    "Function 'match_risks_by_project' in schema_dump.sql is defined but not used",
+    "Function 'match_segments' in schema_dump.sql is defined but not used",
+    "Function 'match_tasks' in schema_dump.sql is defined but not used",
+    "Function 'normalize_exact_quotes' in schema_dump.sql is defined but not used",
+    "Function 'qa_effective_status' in schema_dump.sql is defined but not used",
+    "Function 'refresh_search_vectors' in schema_dump.sql is defined but not used",
+    "Function 'search_asrs_figures' in schema_dump.sql is defined but not used",
+    "Function 'search_by_category' in schema_dump.sql is defined but not used",
+    "Function 'search_by_participants' in schema_dump.sql is defined but not used",
+    "Function 'search_documentation' in schema_dump.sql is defined but not used",
+    "Function 'search_fm_global_all' in schema_dump.sql is defined but not used",
+    "Function 'search_meeting_chunks' in schema_dump.sql is defined but not used",
+    "Function 'search_meeting_chunks_semantic' in schema_dump.sql is defined but not used",
+    "Function 'search_meeting_embeddings' in schema_dump.sql is defined but not used",
+    "Function 'search_text_chunks' in schema_dump.sql is defined but not used",
+    "Function 'set_chunk_doc_title' in schema_dump.sql is defined but not used",
+    "Function 'set_document_insight_doc_title' in schema_dump.sql is defined but not used",
+    "Function 'set_supervisor_name' in schema_dump.sql is defined but not used",
+    "Function 'suggest_project_assignments' in schema_dump.sql is defined but not used",
+    "Function 'sync_contacts_company_name' in schema_dump.sql is defined but not used",
+    "Function 'sync_cost_codes_division_title' in schema_dump.sql is defined but not used",
+    "Function 'sync_doc_title' in schema_dump.sql is defined but not used",
+    "Function 'sync_document_metadata_project_from_project_id' in schema_dump.sql is defined but not used",
+    "Function 'sync_meeting_title' in schema_dump.sql is defined but not used",
+    "Function 'sync_project_title' in schema_dump.sql is defined but not used",
+    "Function 'text_search_chunks' in schema_dump.sql is defined but not used",
+    "Function 'update_app_users_updated_at' in schema_dump.sql is defined but not used",
+    "Function 'update_chat_last_message_at' in schema_dump.sql is defined but not used",
+    "Function 'update_document_project_assignment' in schema_dump.sql is defined but not used",
+    "Function 'update_meeting_chunks_updated_at' in schema_dump.sql is defined but not used",
+    "Function 'validate_project_assignment' in schema_dump.sql is defined but not used",
+    "Function 'vector_search' in schema_dump.sql is defined but not used"
+  ],
+  "info": [
+    "Consider adding index for foreign key column 'uploaded_by'",
+    "Consider adding index for foreign key column 'created_by'",
+    "Consider adding index for foreign key column 'superseded_by'",
+    "Consider adding index for foreign key column 'added_by'",
+    "Consider adding index for foreign key column 'vendor_uuid'",
+    "Consider adding index for foreign key column 'submitted_by'",
+    "Consider adding index for foreign key column 'updated_by'",
+    "Consider adding index for foreign key column 'changed_by'",
+    "Consider adding index for foreign key column 'reviewed_by'",
+    "Consider adding index for foreign key column 'invite_sent_by'",
+    "Tables without RLS: public, acumatica_ar_invoices, acumatica_ar_invoice_lines, graph_sync_state, eval_scenarios_raw, eval_test_cases, eval_runs, eval_results, budget_changes"
+  ],
+  "migrations": [
+    {
+      "file": "20260227000001_auto_trigger_pipeline_on_document_insert.sql",
+      "number": 20260227000001,
+      "size": 2868
+    },
+    {
+      "file": "20260227000002_pipeline_config_table.sql",
+      "number": 20260227000002,
+      "size": 2002
+    },
+    {
+      "file": "20260301000001_meeting_digests.sql",
+      "number": 20260301000001,
+      "size": 1365
+    },
+    {
+      "file": "20260303000002_direct_cost_statuses_procore.sql",
+      "number": 20260303000002,
+      "size": 938
+    },
+    {
+      "file": "20260303000003_change_order_attachments_and_schema_fixes.sql",
+      "number": 20260303000003,
+      "size": 6169
+    },
+    {
+      "file": "20260304000001_expand_company_context_for_ai.sql",
+      "number": 20260304000001,
+      "size": 4349
+    },
+    {
+      "file": "20260304000002_document_metadata_file_columns.sql",
+      "number": 20260304000002,
+      "size": 1135
+    },
+    {
+      "file": "20260305000001_create_meeting_preps.sql",
+      "number": 20260305000001,
+      "size": 1049
+    },
+    {
+      "file": "20260305000002_add_acumatica_project_id.sql",
+      "number": 20260305000002,
+      "size": 652
+    },
+    {
+      "file": "20260305000003_add_note_highlights.sql",
+      "number": 20260305000003,
+      "size": 4367
+    },
+    {
+      "file": "20260306000001_conversation_memories.sql",
+      "number": 20260306000001,
+      "size": 1970
+    },
+    {
+      "file": "20260307000001_consolidate_task_tables.sql",
+      "number": 20260307000001,
+      "size": 2003
+    },
+    {
+      "file": "20260307000002_backfill_task_project_ids.sql",
+      "number": 20260307000002,
+      "size": 686
+    },
+    {
+      "file": "20260309000001_add_prime_contracts_contract_company_fk.sql",
+      "number": 20260309000001,
+      "size": 994
+    },
+    {
+      "file": "20260310000001_performance_indexes_hot_paths.sql",
+      "number": 20260310000001,
+      "size": 7338
+    },
+    {
+      "file": "20260310000002_documents_bucket_allowed_mime_types.sql",
+      "number": 20260310000002,
+      "size": 689
+    },
+    {
+      "file": "20260310000003_vendors_acumatica_columns.sql",
+      "number": 20260310000003,
+      "size": 373
+    },
+    {
+      "file": "20260310000004_vendors_acumatica_fields.sql",
+      "number": 20260310000004,
+      "size": 701
+    },
+    {
+      "file": "20260310000005_acumatica_ar_invoices.sql",
+      "number": 20260310000005,
+      "size": 2044
+    },
+    {
+      "file": "20260310000006_estimates_and_qto.sql",
+      "number": 20260310000006,
+      "size": 9251
+    },
+    {
+      "file": "20260313000001_acumatica_financial_sync.sql",
+      "number": 20260313000001,
+      "size": 5822
+    },
+    {
+      "file": "20260313000002_knowledge_base_enhancements.sql",
+      "number": 20260313000002,
+      "size": 4021
+    },
+    {
+      "file": "20260313000003_estimate_type.sql",
+      "number": 20260313000003,
+      "size": 503
+    },
+    {
+      "file": "20260313000004_ai_memories.sql",
+      "number": 20260313000004,
+      "size": 6800
+    },
+    {
+      "file": "20260313000005_ai_memories_enhancements.sql",
+      "number": 20260313000005,
+      "size": 4496
+    },
+    {
+      "file": "20260314000001_council_mode_data_enrichment.sql",
+      "number": 20260314000001,
+      "size": 5951
+    },
+    {
+      "file": "20260316000001_project_vendors.sql",
+      "number": 20260316000001,
+      "size": 832
+    },
+    {
+      "file": "20260316000002_migrate_clients_to_companies.sql",
+      "number": 20260316000002,
+      "size": 11676
+    },
+    {
+      "file": "20260316000003_acumatica_procurement_and_contract_sync.sql",
+      "number": 20260316000003,
+      "size": 5454
+    },
+    {
+      "file": "20260316000004_acumatica_subcontract_vendor_linking.sql",
+      "number": 20260316000004,
+      "size": 762
+    },
+    {
+      "file": "20260316000005_commitments_acumatica_projection.sql",
+      "number": 20260316000005,
+      "size": 2225
+    },
+    {
+      "file": "20260316000006_change_orders_acumatica_linking.sql",
+      "number": 20260316000006,
+      "size": 791
+    },
+    {
+      "file": "20260316000007_fix_meeting_search_type_filter.sql",
+      "number": 20260316000007,
+      "size": 1266
+    },
+    {
+      "file": "20260317000001_drawings_rls_policies.sql",
+      "number": 20260317000001,
+      "size": 3000
+    },
+    {
+      "file": "20260317000002_drawing_markup_pins.sql",
+      "number": 20260317000002,
+      "size": 2090
+    },
+    {
+      "file": "20260317000003_acumatica_sync_columns.sql",
+      "number": 20260317000003,
+      "size": 1550
+    },
+    {
+      "file": "20260317000004_contract_line_items_budget_code_id.sql",
+      "number": 20260317000004,
+      "size": 971
+    },
+    {
+      "file": "20260317000005_fix_budget_code_id_fk.sql",
+      "number": 20260317000005,
+      "size": 464
+    },
+    {
+      "file": "20260317000006_add_rfi_drawing_number.sql",
+      "number": 20260317000006,
+      "size": 176
+    },
+    {
+      "file": "20260317000007_fix_owner_invoices_contract_id.sql",
+      "number": 20260317000007,
+      "size": 703
+    },
+    {
+      "file": "20260318000001_improve_vector_search_quality.sql",
+      "number": 20260318000001,
+      "size": 15222
+    },
+    {
+      "file": "20260318000002_microsoft_graph_sync.sql",
+      "number": 20260318000002,
+      "size": 1474
+    },
+    {
+      "file": "20260318000003_search_document_chunks_by_category.sql",
+      "number": 20260318000003,
+      "size": 3522
+    },
+    {
+      "file": "20260318000004_migrate_embeddings_to_3072.sql",
+      "number": 20260318000004,
+      "size": 6161
+    },
+    {
+      "file": "20260319000001_drop_legacy_change_order_tables.sql",
+      "number": 20260319000001,
+      "size": 1247
+    },
+    {
+      "file": "20260319000002_create_change_order_attachment_tables.sql",
+      "number": 20260319000002,
+      "size": 2731
+    },
+    {
+      "file": "20260320100000_consolidate_rag_schema.sql",
+      "number": 20260320100000,
+      "size": 11106
+    },
+    {
+      "file": "20260320200000_document_metadata_fireflies_rich_fields.sql",
+      "number": 20260320200000,
+      "size": 1645
+    },
+    {
+      "file": "20260321100000_add_prime_contract_id_to_pcccos.sql",
+      "number": 20260321100000,
+      "size": 473
+    },
+    {
+      "file": "20260321200000_fix_full_text_search_meetings.sql",
+      "number": 20260321200000,
+      "size": 1639
+    },
+    {
+      "file": "20260321300000_support_articles_and_chunks.sql",
+      "number": 20260321300000,
+      "size": 6643
+    },
+    {
+      "file": "20260322000000_admin_feedback_items.sql",
+      "number": 20260322000000,
+      "size": 2009
+    },
+    {
+      "file": "20260322100000_unified_document_chunks.sql",
+      "number": 20260322100000,
+      "size": 7412
+    },
+    {
+      "file": "20260322200000_drop_dead_tables.sql",
+      "number": 20260322200000,
+      "size": 2762
+    },
+    {
+      "file": "20260323000000_team_chat_messages.sql",
+      "number": 20260323000000,
+      "size": 1042
+    },
+    {
+      "file": "20260323100000_dev_annotations.sql",
+      "number": 20260323100000,
+      "size": 1114
+    },
+    {
+      "file": "20260323300000_design_violations.sql",
+      "number": 20260323300000,
+      "size": 1639
+    },
+    {
+      "file": "20260324000000_bot_user_mappings.sql",
+      "number": 20260324000000,
+      "size": 1825
+    },
+    {
+      "file": "20260324000001_eval_framework_tables.sql",
+      "number": 20260324000001,
+      "size": 4285
+    },
+    {
+      "file": "20260325000000_feedback_tool_context.sql",
+      "number": 20260325000000,
+      "size": 926
+    },
+    {
+      "file": "20260327000001_project_photos_transmittals_emails_documents.sql",
+      "number": 20260327000001,
+      "size": 7878
+    },
+    {
+      "file": "20260328000001_prime_contract_attachments_fk_join.sql",
+      "number": 20260328000001,
+      "size": 2543
+    },
+    {
+      "file": "20260329000001_expand_admin_feedback_statuses.sql",
+      "number": 20260329000001,
+      "size": 509
+    },
+    {
+      "file": "20260329000002_project_files_allow_all_mime_types.sql",
+      "number": 20260329000002,
+      "size": 221
+    },
+    {
+      "file": "20260330000001_fix_invoice_status_enum.sql",
+      "number": 20260330000001,
+      "size": 3509
+    },
+    {
+      "file": "20260330000002_prime_contract_payments_rls.sql",
+      "number": 20260330000002,
+      "size": 2965
+    },
+    {
+      "file": "20260330000003_change_event_related_items.sql",
+      "number": 20260330000003,
+      "size": 1586
+    },
+    {
+      "file": "20260330000004_ai_tool_write_audits.sql",
+      "number": 20260330000004,
+      "size": 757
+    },
+    {
+      "file": "20260330000005_add_payroll_cost_type.sql",
+      "number": 20260330000005,
+      "size": 475
+    },
+    {
+      "file": "20260330000006_add_commitment_to_line_items.sql",
+      "number": 20260330000006,
+      "size": 623
+    },
+    {
+      "file": "20260330000007_fix_contract_financial_summary_mv_trigger.sql",
+      "number": 20260330000007,
+      "size": 684
+    },
+    {
+      "file": "20260330000008_add_pcco_procore_fields.sql",
+      "number": 20260330000008,
+      "size": 869
+    },
+    {
+      "file": "20260401000001_change_workflow_tables.sql",
+      "number": 20260401000001,
+      "size": 16788
+    },
+    {
+      "file": "20260401100000_payment_application_line_items.sql",
+      "number": 20260401100000,
+      "size": 2973
+    },
+    {
+      "file": "20260402000001_tighten_pco_rls_policies.sql",
+      "number": 20260402000001,
+      "size": 7259
+    },
+    {
+      "file": "20260402000002_acumatica_sync_runs_log.sql",
+      "number": 20260402000002,
+      "size": 953
+    },
+    {
+      "file": "20260404000001_fix_change_events_prime_contract_fk.sql",
+      "number": 20260404000001,
+      "size": 2406
+    },
+    {
+      "file": "20260406000001_acumatica_outbound_audit_logs.sql",
+      "number": 20260406000001,
+      "size": 1343
+    },
+    {
+      "file": "20260406000002_test_tracking.sql",
+      "number": 20260406000002,
+      "size": 4646
+    },
+    {
+      "file": "20260406130000_add_subcontractor_sov_submission_tables.sql",
+      "number": 20260406130000,
+      "size": 5000
+    },
+    {
+      "file": "20260406140000_update_subcontractor_sov_submission_workflow.sql",
+      "number": 20260406140000,
+      "size": 765
+    },
+    {
+      "file": "20260407000001_agent_learnings.sql",
+      "number": 20260407000001,
+      "size": 6246
+    },
+    {
+      "file": "20260407120000_dev_panel_comments.sql",
+      "number": 20260407120000,
+      "size": 2068
+    },
+    {
+      "file": "20260407130000_seed_budget_test_scenarios.sql",
+      "number": 20260407130000,
+      "size": 4157
+    },
+    {
+      "file": "20260407130001_seed_photos_test_scenarios.sql",
+      "number": 20260407130001,
+      "size": 51936
+    },
+    {
+      "file": "20260407130002_seed_commitments_test_scenarios.sql",
+      "number": 20260407130002,
+      "size": 26273
+    },
+    {
+      "file": "20260407200000_permissions_completion.sql",
+      "number": 20260407200000,
+      "size": 7269
+    },
+    {
+      "file": "20260408000000_seed_prime-contracts_test_scenarios.sql",
+      "number": 20260408000000,
+      "size": 22800
+    },
+    {
+      "file": "20260408000001_seed_change-orders_test_scenarios.sql",
+      "number": 20260408000001,
+      "size": 12691
+    },
+    {
+      "file": "20260408000002_seed_direct-costs_test_scenarios.sql",
+      "number": 20260408000002,
+      "size": 21625
+    },
+    {
+      "file": "20260408000003_seed_invoices_test_scenarios.sql",
+      "number": 20260408000003,
+      "size": 10085
+    },
+    {
+      "file": "20260408000004_seed_rfis_test_scenarios.sql",
+      "number": 20260408000004,
+      "size": 12163
+    },
+    {
+      "file": "20260408000005_seed_submittals_test_scenarios.sql",
+      "number": 20260408000005,
+      "size": 17123
+    },
+    {
+      "file": "20260408000006_seed_schedule_test_scenarios.sql",
+      "number": 20260408000006,
+      "size": 10981
+    },
+    {
+      "file": "20260408000007_seed_drawings_test_scenarios.sql",
+      "number": 20260408000007,
+      "size": 10002
+    },
+    {
+      "file": "20260408000008_seed_punch-list_test_scenarios.sql",
+      "number": 20260408000008,
+      "size": 14755
+    },
+    {
+      "file": "20260408000009_seed_daily-log_test_scenarios.sql",
+      "number": 20260408000009,
+      "size": 8806
+    },
+    {
+      "file": "20260408000010_seed_meetings_test_scenarios.sql",
+      "number": 20260408000010,
+      "size": 14029
+    },
+    {
+      "file": "20260408000011_seed_directory_test_scenarios.sql",
+      "number": 20260408000011,
+      "size": 9628
+    },
+    {
+      "file": "20260408000012_seed_documents_test_scenarios.sql",
+      "number": 20260408000012,
+      "size": 12024
+    },
+    {
+      "file": "20260408100000_fix_test_cases_missing_test_type.sql",
+      "number": 20260408100000,
+      "size": 216
+    },
+    {
+      "file": "20260408123000_prime_contract_retainage_settings.sql",
+      "number": 20260408123000,
+      "size": 1296
+    },
+    {
+      "file": "20260408200000_add_severity_to_test_results.sql",
+      "number": 20260408200000,
+      "size": 72
+    },
+    {
+      "file": "20260408210000_seed_project_lifecycle_test_suite.sql",
+      "number": 20260408210000,
+      "size": 29857
+    },
+    {
+      "file": "20260408220000_update_lifecycle_phase1_create_project.sql",
+      "number": 20260408220000,
+      "size": 4219
+    },
+    {
+      "file": "20260409000001_change_orders_missing_procore_fields.sql",
+      "number": 20260409000001,
+      "size": 1369
+    },
+    {
+      "file": "20260409000002_create_subcontractor_invoices.sql",
+      "number": 20260409000002,
+      "size": 3945
+    },
+    {
+      "file": "20260409000003_invoice_extras.sql",
+      "number": 20260409000003,
+      "size": 5802
+    },
+    {
+      "file": "20260409000004_owner_invoices_notes.sql",
+      "number": 20260409000004,
+      "size": 152
+    },
+    {
+      "file": "20260409000005_add_pending_owner_approval_status.sql",
+      "number": 20260409000005,
+      "size": 499
+    },
+    {
+      "file": "20260409000006_split_work_materials_retainage.sql",
+      "number": 20260409000006,
+      "size": 2099
+    },
+    {
+      "file": "20260409120000_dedupe_permission_templates.sql",
+      "number": 20260409120000,
+      "size": 1549
+    },
+    {
+      "file": "20260409130000_reconcile_permission_templates.sql",
+      "number": 20260409130000,
+      "size": 2016
+    },
+    {
+      "file": "20260409140000_permission_templates_granular_flags.sql",
+      "number": 20260409140000,
+      "size": 2013
+    },
+    {
+      "file": "20260409150000_commitment_sov_rls.sql",
+      "number": 20260409150000,
+      "size": 10010
+    },
+    {
+      "file": "20260409160000_fix_commitment_rls_policies.sql",
+      "number": 20260409160000,
+      "size": 5710
+    },
+    {
+      "file": "20260409170000_commitment_related_items.sql",
+      "number": 20260409170000,
+      "size": 1452
+    },
+    {
+      "file": "20260409200000_drawings_publish_obsolete.sql",
+      "number": 20260409200000,
+      "size": 1431
+    },
+    {
+      "file": "20260409210000_subcontractor_sov_tables.sql",
+      "number": 20260409210000,
+      "size": 2559
+    },
+    {
+      "file": "20260409220000_ssov_add_actor_columns.sql",
+      "number": 20260409220000,
+      "size": 299
+    },
+    {
+      "file": "20260410000000_email_events.sql",
+      "number": 20260410000000,
+      "size": 1849
+    },
+    {
+      "file": "20260410090000_ssov_add_invite_sent_by.sql",
+      "number": 20260410090000,
+      "size": 221
+    },
+    {
+      "file": "20260410100000_add_pco_missing_fields.sql",
+      "number": 20260410100000,
+      "size": 664
+    },
+    {
+      "file": "20260410110000_invoice_line_items_retainage_columns.sql",
+      "number": 20260410110000,
+      "size": 1577
+    },
+    {
+      "file": "20260410120000_change_events_add_origin_id.sql",
+      "number": 20260410120000,
+      "size": 357
+    },
+    {
+      "file": "20260410130000_drawings_soft_delete.sql",
+      "number": 20260410130000,
+      "size": 1375
+    },
+    {
+      "file": "20260410140000_create_pco_tables.sql",
+      "number": 20260410140000,
+      "size": 8094
+    },
+    {
+      "file": "20260410150000_invoice_audit_log_trigger.sql",
+      "number": 20260410150000,
+      "size": 2697
+    },
+    {
+      "file": "20260410190000_add_scenario_depth_to_testing.sql",
+      "number": 20260410190000,
+      "size": 707
+    },
+    {
+      "file": "20260413000000_create_punch_items.sql",
+      "number": 20260413000000,
+      "size": 7068
+    },
+    {
+      "file": "20260413000001_acumatica_mirror_tables.sql",
+      "number": 20260413000001,
+      "size": 8198
+    },
+    {
+      "file": "20260413000002_add_commitment_pco_fields.sql",
+      "number": 20260413000002,
+      "size": 745
+    },
+    {
+      "file": "20260413000003_prime_contracts_perf_and_security.sql",
+      "number": 20260413000003,
+      "size": 7235
+    },
+    {
+      "file": "20260413000004_retainage_release_invoice_flag.sql",
+      "number": 20260413000004,
+      "size": 678
+    },
+    {
+      "file": "20260413000005_prime_contract_settings_retainage.sql",
+      "number": 20260413000005,
+      "size": 1148
+    },
+    {
+      "file": "20260413000006_owner_invoice_payment_application_link.sql",
+      "number": 20260413000006,
+      "size": 1005
+    },
+    {
+      "file": "20260413000007_prime_contract_pcos_extended_fields.sql",
+      "number": 20260413000007,
+      "size": 853
+    },
+    {
+      "file": "20260413000008_contract_change_orders_extended_fields.sql",
+      "number": 20260413000008,
+      "size": 266
+    },
+    {
+      "file": "20260413000009_permission_template_tester.sql",
+      "number": 20260413000009,
+      "size": 1116
+    },
+    {
+      "file": "20260413000010_unique_project_cost_codes.sql",
+      "number": 20260413000010,
+      "size": 479
+    },
+    {
+      "file": "20260414000001_change_management_scope_guardrails.sql",
+      "number": 20260414000001,
+      "size": 6491
+    },
+    {
+      "file": "20260414123000_budget_rls_and_atomic_upsert.sql",
+      "number": 20260414123000,
+      "size": 13409
+    },
+    {
+      "file": "20260414221000_create_prime_contract_pco_attachments.sql",
+      "number": 20260414221000,
+      "size": 4295
+    },
+    {
+      "file": "20260414225500_team_chat_channels.sql",
+      "number": 20260414225500,
+      "size": 2323
+    },
+    {
+      "file": "20260415043000_collaboration_comments_notifications.sql",
+      "number": 20260415043000,
+      "size": 5937
+    },
+    {
+      "file": "20260417103000_add_testing_scenario_quality_constraints.sql",
+      "number": 20260417103000,
+      "size": 979
+    },
+    {
+      "file": "20260417114000_update_drawings_scenarios_upload_first.sql",
+      "number": 20260417114000,
+      "size": 3458
+    },
+    {
+      "file": "20260417115500_fix_drawings_setup_references_after_reorder.sql",
+      "number": 20260417115500,
+      "size": 412
+    },
+    {
+      "file": "20260417122000_consolidate_budget_broad_scenarios.sql",
+      "number": 20260417122000,
+      "size": 4536
+    },
+    {
+      "file": "20260417143000_budget_forecast_details_and_settings.sql",
+      "number": 20260417143000,
+      "size": 4442
+    },
+    {
+      "file": "20260417150000_update_budget_forecast_test_case.sql",
+      "number": 20260417150000,
+      "size": 3032
+    },
+    {
+      "file": "20260417153000_procore_traceability_and_coverage_gates.sql",
+      "number": 20260417153000,
+      "size": 10199
+    },
+    {
+      "file": "20260417160000_budget_snapshots_rls.sql",
+      "number": 20260417160000,
+      "size": 1722
+    },
+    {
+      "file": "20260417170000_submittals_user_flow_ordering.sql",
+      "number": 20260417170000,
+      "size": 2063
+    },
+    {
+      "file": "20260417200700_test_cases_category_default.sql",
+      "number": 20260417200700,
+      "size": 166
+    },
+    {
+      "file": "20260417210000_commitments_schema_gaps.sql",
+      "number": 20260417210000,
+      "size": 9526
+    },
+    {
+      "file": "20260417220000_commitments_status_align_procore.sql",
+      "number": 20260417220000,
+      "size": 1986
+    },
+    {
+      "file": "20260417230000_commitments_audit_log.sql",
+      "number": 20260417230000,
+      "size": 3764
+    },
+    {
+      "file": "20260417240000_sov_budget_code_indexes.sql",
+      "number": 20260417240000,
+      "size": 565
+    },
+    {
+      "file": "20260418000000_add_budget_changes_table.sql",
+      "number": 20260418000000,
+      "size": 649
+    },
+    {
+      "file": "20260418000001_drawing_change_history.sql",
+      "number": 20260418000001,
+      "size": 1513
+    },
+    {
+      "file": "20260418010000_prime_contracts_schema_gaps.sql",
+      "number": 20260418010000,
+      "size": 5888
+    },
+    {
+      "file": "20260418020000_fix_prime_contract_change_orders_project_id_bigint.sql",
+      "number": 20260418020000,
+      "size": 419
+    },
+    {
+      "file": "20260419000001_submittals_rls_and_workflow_templates.sql",
+      "number": 20260419000001,
+      "size": 3856
+    },
+    {
+      "file": "20260419000010_budget_mod_lines_modification_type.sql",
+      "number": 20260419000010,
+      "size": 245
+    },
+    {
+      "file": "20260419000011_budget_mod_lines_change_event_id.sql",
+      "number": 20260419000011,
+      "size": 413
+    },
+    {
+      "file": "20260419000012_budget_modification_lines_voided_reason.sql",
+      "number": 20260419000012,
+      "size": 229
+    },
+    {
+      "file": "20260420000000_testing_split_smoke_feature_suites.sql",
+      "number": 20260420000000,
+      "size": 1821
+    },
+    {
+      "file": "20260420154140_seed_commitments_smoke_scenarios.sql",
+      "number": 20260420154140,
+      "size": 5793
+    },
+    {
+      "file": "20260420154141_seed_commitments_feature_scenarios.sql",
+      "number": 20260420154141,
+      "size": 16312
+    },
+    {
+      "file": "20260420160000_cleanup_testing_schema.sql",
+      "number": 20260420160000,
+      "size": 1313
+    },
+    {
+      "file": "20260420162332_seed_budget_smoke_scenarios.sql",
+      "number": 20260420162332,
+      "size": 6883
+    },
+    {
+      "file": "20260420162333_seed_budget_feature_scenarios.sql",
+      "number": 20260420162333,
+      "size": 13988
+    },
+    {
+      "file": "20260420172149_seed_change_events_smoke_scenarios.sql",
+      "number": 20260420172149,
+      "size": 6308
+    },
+    {
+      "file": "20260420172150_seed_change_events_feature_scenarios.sql",
+      "number": 20260420172150,
+      "size": 835
+    },
+    {
+      "file": "20260420173319_seed_change_orders_smoke_scenarios.sql",
+      "number": 20260420173319,
+      "size": 4171
+    },
+    {
+      "file": "20260420173320_seed_change_orders_feature_scenarios.sql",
+      "number": 20260420173320,
+      "size": 9234
+    },
+    {
+      "file": "20260420174512_seed_invoices_smoke_scenarios.sql",
+      "number": 20260420174512,
+      "size": 4144
+    },
+    {
+      "file": "20260420174513_seed_invoices_feature_scenarios.sql",
+      "number": 20260420174513,
+      "size": 10283
+    },
+    {
+      "file": "20260420181514_seed_submittals_smoke_scenarios.sql",
+      "number": 20260420181514,
+      "size": 4850
+    },
+    {
+      "file": "20260420181515_seed_submittals_feature_scenarios.sql",
+      "number": 20260420181515,
+      "size": 9030
+    },
+    {
+      "file": "20260420182728_seed_specifications_smoke_scenarios.sql",
+      "number": 20260420182728,
+      "size": 4200
+    },
+    {
+      "file": "20260420182729_seed_specifications_feature_scenarios.sql",
+      "number": 20260420182729,
+      "size": 8384
+    },
+    {
+      "file": "20260420213250_seed_rfis_smoke_scenarios.sql",
+      "number": 20260420213250,
+      "size": 5789
+    },
+    {
+      "file": "20260420213251_seed_rfis_feature_scenarios.sql",
+      "number": 20260420213251,
+      "size": 14800
+    },
+    {
+      "file": "20260420214550_seed_prime_contracts_smoke_scenarios.sql",
+      "number": 20260420214550,
+      "size": 6247
+    },
+    {
+      "file": "20260420214551_seed_prime_contracts_feature_scenarios.sql",
+      "number": 20260420214551,
+      "size": 15234
+    },
+    {
+      "file": "20260420220000_add_test_cases_status.sql",
+      "number": 20260420220000,
+      "size": 583
+    },
+    {
+      "file": "20260420230000_add_test_cases_metadata_columns.sql",
+      "number": 20260420230000,
+      "size": 1371
+    },
+    {
+      "file": "20260420230001_add_test_run_slug.sql",
+      "number": 20260420230001,
+      "size": 275
+    },
+    {
+      "file": "20260420233000_add_video_url_to_test_results.sql",
+      "number": 20260420233000,
+      "size": 164
+    },
+    {
+      "file": "20260421100000_add_github_issue_to_test_results.sql",
+      "number": 20260421100000,
+      "size": 340
+    },
+    {
+      "file": "20260421200000_add_fixed_status_to_test_results.sql",
+      "number": 20260421200000,
+      "size": 421
+    },
+    {
+      "file": "20260423000001_prime_co_related_items.sql",
+      "number": 20260423000001,
+      "size": 2200
+    },
+    {
+      "file": "20260423000002_consolidate_cost_codes.sql",
+      "number": 20260423000002,
+      "size": 3310
+    },
+    {
+      "file": "20260423000003_add_change_event_line_item_budget_line_id.sql",
+      "number": 20260423000003,
+      "size": 2710
+    },
+    {
+      "file": "20260423000004_guard_acumatica_null_budget_codes.sql",
+      "number": 20260423000004,
+      "size": 2561
+    },
+    {
+      "file": "20260426000001_fix_budget_line_history_trigger_timing.sql",
+      "number": 20260426000001,
+      "size": 3857
+    },
+    {
+      "file": "20260426000002_fix_meeting_summary_search_rpc.sql",
+      "number": 20260426000002,
+      "size": 1619
+    },
+    {
+      "file": "20260426000003_normalize_ai_memory_rpc_halfvec.sql",
+      "number": 20260426000003,
+      "size": 5016
+    },
+    {
+      "file": "schema_dump.sql",
+      "number": 0,
+      "size": 921952
+    },
+    {
+      "file": "seed-data-direct-costs.sql",
+      "number": 0,
+      "size": 10945
+    }
+  ]
+}

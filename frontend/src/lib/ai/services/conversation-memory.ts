@@ -126,7 +126,7 @@ async function embedAndStoreMemory(
 
   if (existing && existing.length > 0) {
     // Update existing memory
-    await supabase
+    const { error: updateError } = await supabase
       .from("memories")
       .update({
         content: summary,
@@ -137,9 +137,12 @@ async function embedAndStoreMemory(
         },
       })
       .eq("id", existing[0].id);
+    if (updateError) {
+      throw new Error(`Failed to update conversation memory: ${updateError.message}`);
+    }
   } else {
     // Insert new memory
-    await supabase.from("memories").insert({
+    const { error: insertError } = await supabase.from("memories").insert({
       content: summary,
       embedding: JSON.stringify(embedding),
       user_id: userId,
@@ -150,6 +153,9 @@ async function embedAndStoreMemory(
         session_id: sessionId,
       },
     });
+    if (insertError) {
+      throw new Error(`Failed to insert conversation memory: ${insertError.message}`);
+    }
   }
 }
 
@@ -181,8 +187,9 @@ export async function generateConversationMemory(
     .limit(MAX_MESSAGES_FOR_SUMMARY);
 
   if (error || !messages) {
-    console.error("[conversation-memory] Failed to fetch messages:", error);
-    return;
+    throw new Error(
+      `Failed to fetch messages for conversation memory: ${error?.message ?? "no messages returned"}`,
+    );
   }
 
   // Skip trivial conversations
@@ -242,8 +249,9 @@ export async function getRecentConversationSummaries(
     .limit(limit);
 
   if (error || !data) {
-    console.error("[conversation-memory] Failed to fetch recent summaries:", error);
-    return [];
+    throw new Error(
+      `Failed to fetch recent conversation summaries: ${error?.message ?? "No data returned"}`,
+    );
   }
 
   return data.map((row) => ({

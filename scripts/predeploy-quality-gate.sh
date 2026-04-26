@@ -32,6 +32,21 @@ node scripts/check-zod-coverage.mjs
 echo "2h) Zod coverage report (informational)"
 node scripts/check-zod-coverage.mjs --report-all || true
 
+echo "2i) Build crash prevention: server-prerender safety"
+node scripts/check-server-prerender-safety.mjs
+
+echo "2j) Build crash prevention: no module-level server client init"
+node scripts/check-no-module-level-server-init.mjs
+
+echo "2k) Retired Cloudflare ingestion path gate"
+if rg -n "backend/src/workers|CLOUDFLARE_WORKER_BASE_URL|WORKER_AUTH_TOKEN|fireflies-(parser|embedder|extractor)|workers\\.dev|src/workers/scripts/process_documents.py" \
+  backend frontend scripts docs .github package.json \
+  --glob '!frontend/playwright-report/**' \
+  --glob '!scripts/predeploy-quality-gate.sh'; then
+  echo "Retired Cloudflare ingestion/vectorization path reference found. Use the Render/FastAPI backend pipeline instead." >&2
+  exit 1
+fi
+
 echo "3) Frontend lint + typecheck + build"
 cd frontend
 npm run lint
@@ -45,5 +60,8 @@ node scripts/playwright-crawl/scripts/utils/validate-migrations.js
 
 echo "5) API smoke contracts"
 node scripts/api-smoke-contracts.mjs
+
+echo "6) AI memory contract"
+npm run rag:verify:memory
 
 echo "Pre-deploy quality gate passed."

@@ -216,7 +216,7 @@ export const GET = withApiGuardrails(
     let tabFilterIds: string[] | null = null
     const tabSummary = { lineItems: 0, noLineItems: 0, rfqs: 0, recycleBin: 0 }
 
-    if (queryParams.tab && queryParams.tab !== 'all') {
+    if (queryParams.tab) {
       // 1. Fetch all CE IDs for the project (active and deleted)
       const { data: projectCEs } = await supabase
         .from('change_events')
@@ -270,7 +270,7 @@ export const GET = withApiGuardrails(
       } else if (queryParams.tab === 'rfqs') {
         tabFilterIds = activeCEIds.filter((id) => idsWithRfqSet.has(id))
       }
-      // recycle_bin is handled via includeDeleted + deleted_at filter below
+      // all does not need an ID filter; recycle_bin is handled via deleted_at below.
     }
 
     // ── Build base query ────────────────────────────────────────────────────

@@ -4,6 +4,11 @@ import { type NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
+import {
+  fetchLivePrimeContractChangeTotals,
+  type LivePrimeContractChangeTotals,
+  mergePrimeContractFinancials,
+} from "@/lib/prime-contracts/live-change-order-totals";
 
 // Normalize optional request values so Postgres sees nulls instead of empty strings.
 function normalizeOptionalField<T extends string | null | undefined>(value: T): T | null {
@@ -137,7 +142,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
         *,
         owner_invoice_line_items(*),
         prime_contracts!inner(id, project_id, contract_number, title, original_contract_value, revised_contract_value),
-        prime_contract_payment_applications(id, amount, retention_amount, net_amount, percent_complete, status)
+        prime_contract_payment_applications!owner_invoices_payment_application_id_fkey(id, amount, retention_amount, net_amount, percent_complete, status)
       `,
       )
       .eq("prime_contracts.project_id", projectIdNum)
@@ -174,6 +179,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
       due_date: string | null;
     };
     let changeOrders: PCCO[] = [];
+    let liveChangeTotalsByContractId = new Map<string, LivePrimeContractChangeTotals>();
     if (contractIds.length > 0) {
       const { data: coData } = await supabase
         .from("prime_contract_change_orders")
@@ -181,6 +187,16 @@ export const GET = withApiGuardrails<{ projectId: string }>(
         .in("prime_contract_id", contractIds)
         .ilike("status", "approved%");
       changeOrders = coData || [];
+
+      try {
+        liveChangeTotalsByContractId = await fetchLivePrimeContractChangeTotals(
+          supabase,
+          projectIdNum,
+          contractIds,
+        );
+      } catch (error) {
+        return apiErrorResponse(error);
+      }
     }
 
     // Batch-fetch all payments for invoices in result set
@@ -210,16 +226,17 @@ export const GET = withApiGuardrails<{ projectId: string }>(
       );
 
       // If linked to a payment application, use its canonical retainage figures
+      type LinkedPaymentApplication = {
+        id: string;
+        amount: number | null;
+        retention_amount: number | null;
+        net_amount: number | null;
+        percent_complete: number | null;
+        status: string | null;
+      };
       const linkedPayApp = Array.isArray(invoice.prime_contract_payment_applications)
-        ? (invoice.prime_contract_payment_applications as Array<{
-            id: string;
-            amount: number | null;
-            retention_amount: number | null;
-            net_amount: number | null;
-            percent_complete: number | null;
-            status: string | null;
-          }>)[0]
-        : null;
+        ? (invoice.prime_contract_payment_applications as LinkedPaymentApplication[])[0] ?? null
+        : invoice.prime_contract_payment_applications as LinkedPaymentApplication | null;
 
       const canonical_gross = linkedPayApp?.amount ?? invoice.gross_amount ?? gross_amount;
       const canonical_retention = linkedPayApp?.retention_amount ?? null;
@@ -237,6 +254,14 @@ export const GET = withApiGuardrails<{ projectId: string }>(
           } | null;
 
       const { prime_contracts: _pc, prime_contract_payment_applications: _ppa, ...invoiceData } = invoice;
+      const liveChangeTotals = liveChangeTotalsByContractId.get(invoice.prime_contract_id ?? "");
+      const totalContractAmount = pc && liveChangeTotals
+        ? mergePrimeContractFinancials(
+            pc.original_contract_value ?? 0,
+            null,
+            liveChangeTotals,
+          ).revised_contract_value
+        : null;
 
       // Compute previous / current changes from approved prime contract COs
       let previous_changes = 0;
@@ -279,7 +304,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
         ...invoiceData,
         contract_number: pc?.contract_number ?? null,
         contract_title: pc?.title ?? null,
-        total_contract_amount: pc?.revised_contract_value ?? pc?.original_contract_value ?? null,
+        total_contract_amount: totalContractAmount ?? pc?.revised_contract_value ?? pc?.original_contract_value ?? null,
         gross_amount: canonical_gross,
         retention_amount: canonical_retention,
         net_amount: canonical_net,

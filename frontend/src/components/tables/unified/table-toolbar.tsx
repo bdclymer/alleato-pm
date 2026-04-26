@@ -4,11 +4,15 @@ import { useEffect, useRef, useState } from "react";
 import type { ReactElement, ReactNode } from "react";
 
 import {
+  ArrowUpDown,
   CalendarIcon,
   Columns3,
   Download,
+  Eye,
+  Filter,
   LayoutGrid,
   List,
+  MoreHorizontal,
   Search,
   SlidersHorizontal,
   Table2,
@@ -36,7 +40,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -68,6 +72,7 @@ export interface ColumnConfig {
 }
 
 type FilterValue = string | string[] | number | boolean | null | undefined;
+type SortDirection = "asc" | "desc";
 
 /**
  * Feature flags for TableToolbar. Pass a partial object to opt out of specific
@@ -101,6 +106,10 @@ export interface TableToolbarProps {
   columns?: ColumnConfig[];
   visibleColumns: string[];
   onColumnVisibilityChange: (columns: string[]) => void;
+  sortOptions?: ColumnConfig[];
+  sortBy?: string | null;
+  sortDirection?: SortDirection;
+  onSortChange?: (sortBy: string, direction: SortDirection) => void;
   onExport?: () => void;
   onBulkDelete?: () => void;
   mobilePanelActions?: ReactNode;
@@ -451,6 +460,65 @@ function FilterMenu({
   );
 }
 
+function MobileSettingsRow({
+  icon,
+  label,
+  value,
+  onClick,
+  disabled = false,
+}: {
+  icon: ReactNode;
+  label: string;
+  value?: ReactNode;
+  onClick?: () => void;
+  disabled?: boolean;
+}): ReactElement {
+  return (
+    <Button
+      variant="ghost"
+      className={cn(
+        "h-auto min-h-12 w-full justify-start gap-3 rounded-none border-b border-border/70 px-4 py-3 text-left font-normal last:border-b-0",
+        "hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring",
+        disabled && "cursor-not-allowed opacity-50 hover:bg-transparent",
+      )}
+      onClick={onClick}
+      disabled={disabled}
+    >
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center text-muted-foreground">
+        {icon}
+      </span>
+      <span className="min-w-0 flex-1 text-base text-foreground">{label}</span>
+      {value ? <span className="shrink-0 text-base text-muted-foreground">{value}</span> : null}
+      {onClick ? <span className="text-xl leading-none text-muted-foreground/70">›</span> : null}
+    </Button>
+  );
+}
+
+function getViewLabel(view: ViewMode): string {
+  if (view === "card") return "Grid";
+  if (view === "list") return "List";
+  return "Table";
+}
+
+function getFirstActiveFilterLabel(
+  filters: FilterConfig[],
+  activeFilters: Record<string, FilterValue>,
+): string | undefined {
+  const active = filters.find((filter) => {
+    const value = activeFilters[filter.id];
+    return value !== undefined && value !== "" && value !== null;
+  });
+
+  if (!active) return undefined;
+
+  const value = activeFilters[active.id];
+  if (typeof value === "string" && active.options) {
+    return active.options.find((option) => option.value === value)?.label ?? active.label;
+  }
+
+  return active.label;
+}
+
 function ColumnToggle({
   columns,
   visibleColumns,
@@ -539,6 +607,10 @@ export function TableToolbar({
   columns = [],
   visibleColumns,
   onColumnVisibilityChange,
+  sortOptions = [],
+  sortBy,
+  sortDirection = "asc",
+  onSortChange,
   onExport,
   onBulkDelete,
   mobilePanelActions,
@@ -566,6 +638,9 @@ export function TableToolbar({
   const [isMobile, setIsMobile] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [mobilePanelOpen, setMobilePanelOpen] = useState(false);
+  const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
+  const [mobileColumnsOpen, setMobileColumnsOpen] = useState(false);
+  const [mobileSortOpen, setMobileSortOpen] = useState(false);
   const mobileSearchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -584,167 +659,289 @@ export function TableToolbar({
     mobileSearchInputRef.current?.focus();
   }, [mobileSearchOpen]);
 
-  const hasRightActions =
-    (feat.filters && filters.length > 0) ||
-    (feat.columnToggle && columns.length > 0) ||
-    (feat.export && Boolean(onExport)) ||
-    (feat.bulkDelete && Boolean(onBulkDelete));
-
   const activeFilterCount = Object.values(activeFilters).filter(
     (value) => value !== undefined && value !== "" && value !== null,
   ).length;
+  const visibleColumnCount = columns.filter((column) => visibleColumns.includes(column.id)).length;
+  const firstActiveFilterLabel = getFirstActiveFilterLabel(filters, activeFilters);
+  const activeSortLabel = sortOptions.find((option) => option.id === sortBy)?.label;
 
   if (isMobile) {
     return (
       <div className={cn("py-2", className)}>
         <div className="flex w-full items-center justify-end gap-3">
           <div className="flex shrink-0 items-center gap-1.5">
-            {feat.views && (
-              <ViewSwitcher
-                currentView={currentView}
-                onViewChange={onViewChange}
-                enabledViews={enabledViews}
-              />
-            )}
-
-            {feat.search && (
-              <Dialog open={mobileSearchOpen} onOpenChange={setMobileSearchOpen}>
-                <DialogTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-11 w-11 p-0"
-                    aria-label="Open search"
-                  >
-                    <Search className="h-4 w-4" />
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-md">
-                  <DialogHeader>
-                    <DialogTitle>Search</DialogTitle>
-                  </DialogHeader>
-                  <div className="relative">
-                    <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      ref={mobileSearchInputRef}
-                      value={searchValue}
-                      onChange={(event) => onSearchChange(event.target.value)}
-                      placeholder={searchPlaceholder}
-                      className="h-9 pl-8 pr-8 text-sm"
-                      aria-label="Search table"
-                    />
-                    {searchValue ? (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="absolute right-0 top-0 h-9 w-9"
-                        onClick={() => onSearchChange("")}
-                        aria-label="Clear search"
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    ) : null}
-                  </div>
-                </DialogContent>
-              </Dialog>
-            )}
-
             <Sheet open={mobilePanelOpen} onOpenChange={setMobilePanelOpen}>
               <SheetTrigger asChild>
                 <Button
                   variant="ghost"
                   size="sm"
                   className="relative h-11 w-11 shrink-0 p-0"
-                  aria-label="Open table controls"
+                  aria-label="Open table settings"
                 >
-                  <SlidersHorizontal className="h-4 w-4" />
+                  <MoreHorizontal className="h-5 w-5" />
                   <TableCountIndicator count={activeFilterCount} className="absolute -right-1 -top-1" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-full max-w-none p-0">
-              <SheetHeader className="border-b px-4 py-4">
-                <SheetTitle>Table Controls</SheetTitle>
-              </SheetHeader>
-              <div className="max-h-[calc(100vh-88px)] space-y-5 overflow-y-auto px-4 py-4">
-                {feat.filters && filters.length > 0 && (
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Filters</p>
-                      {activeFilterCount > 0 ? (
-                        <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={onClearFilters}>
-                          Clear
-                        </Button>
-                      ) : null}
-                    </div>
-                    <FilterFields
-                      filters={filters}
-                      activeFilters={activeFilters}
-                      onFilterChange={onFilterChange}
+              <SheetContent side="right" className="w-full max-w-none gap-0 bg-muted/40 p-0">
+                <SheetHeader className="px-4 pb-5 pt-2 text-center">
+                  <SheetTitle className="text-lg">Settings</SheetTitle>
+                </SheetHeader>
+                <div className="max-h-[calc(90dvh-72px)] space-y-4 overflow-y-auto px-4 pb-6">
+                  <div className="overflow-hidden rounded-2xl bg-background">
+                    <MobileSettingsRow
+                      icon={<Table2 className="h-5 w-5" />}
+                      label="Active"
+                      value={
+                        <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-muted-foreground text-[11px] font-semibold text-background">
+                          i
+                        </span>
+                      }
                     />
                   </div>
-                )}
 
-                {feat.columnToggle && columns.length > 0 && (
-                  <div className="space-y-2">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Columns</p>
-                    <div className="space-y-2 rounded-md border p-3">
-                      {columns
-                        .filter((column) => !column.alwaysVisible)
-                        .map((column) => (
-                          <label key={column.id} htmlFor={`col-toggle-${column.id}`} className="flex items-center gap-2 text-sm text-foreground">
-                            <Checkbox
-                              id={`col-toggle-${column.id}`}
-                              checked={visibleColumns.includes(column.id)}
-                              onCheckedChange={(checked) => {
-                                if (checked) {
-                                  onColumnVisibilityChange([...visibleColumns, column.id]);
-                                } else {
-                                  onColumnVisibilityChange(
-                                    visibleColumns.filter((existing) => existing !== column.id),
-                                  );
-                                }
-                              }}
-                            />
-                            <span>{column.label}</span>
-                          </label>
-                        ))}
-                    </div>
+                  <div className="overflow-hidden rounded-2xl bg-background">
+                    {feat.views && (
+                      <MobileSettingsRow
+                        icon={<Table2 className="h-5 w-5" />}
+                        label="Layout"
+                        value={getViewLabel(currentView)}
+                        onClick={() => {
+                          const currentIndex = enabledViews.indexOf(currentView);
+                          const nextView = enabledViews[(currentIndex + 1) % enabledViews.length] ?? "table";
+                          onViewChange(nextView);
+                        }}
+                      />
+                    )}
+                    {feat.columnToggle && columns.length > 0 && (
+                      <MobileSettingsRow
+                        icon={<Eye className="h-5 w-5" />}
+                        label="Property visibility"
+                        value={visibleColumnCount}
+                        onClick={() => {
+                          setMobilePanelOpen(false);
+                          window.setTimeout(() => setMobileColumnsOpen(true), 160);
+                        }}
+                      />
+                    )}
+                    {feat.filters && filters.length > 0 && (
+                      <MobileSettingsRow
+                        icon={<Filter className="h-5 w-5" />}
+                        label="Filter"
+                        value={firstActiveFilterLabel ?? (activeFilterCount > 0 ? `${activeFilterCount}` : "None")}
+                        onClick={() => {
+                          setMobilePanelOpen(false);
+                          window.setTimeout(() => setMobileFilterOpen(true), 160);
+                        }}
+                      />
+                    )}
+                    <MobileSettingsRow
+                      icon={<ArrowUpDown className="h-5 w-5" />}
+                      label="Sort"
+                      value={activeSortLabel ?? "Default"}
+                      onClick={
+                        onSortChange && sortOptions.length > 0
+                          ? () => {
+                              setMobilePanelOpen(false);
+                              window.setTimeout(() => setMobileSortOpen(true), 160);
+                            }
+                          : undefined
+                      }
+                      disabled={!onSortChange || sortOptions.length === 0}
+                    />
+                    <MobileSettingsRow
+                      icon={<Columns3 className="h-5 w-5" />}
+                      label="Group"
+                      disabled
+                    />
                   </div>
-                )}
 
-                {(feat.export && onExport) || mobilePanelActions || (feat.bulkDelete && onBulkDelete) ? (
-                  <div className="space-y-2">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Actions</p>
-                    <div className="space-y-2">
+                  {feat.search && (
+                    <div className="overflow-hidden rounded-2xl bg-background">
+                      <MobileSettingsRow
+                        icon={<Search className="h-5 w-5" />}
+                        label="Search"
+                        value={searchValue ? "Active" : undefined}
+                        onClick={() => {
+                          setMobilePanelOpen(false);
+                          window.setTimeout(() => setMobileSearchOpen(true), 160);
+                        }}
+                      />
+                    </div>
+                  )}
+
+                  {(feat.export && onExport) || mobilePanelActions || (feat.bulkDelete && onBulkDelete) ? (
+                    <div className="overflow-hidden rounded-2xl bg-background">
                       {mobilePanelActions}
                       {feat.export && onExport ? (
-                        <Button variant="outline" size="sm" className="w-full justify-start" onClick={onExport}>
-                          <Download />
-                          Export
-                        </Button>
+                        <MobileSettingsRow
+                          icon={<Download className="h-5 w-5" />}
+                          label="Export"
+                          onClick={onExport}
+                        />
                       ) : null}
                       {feat.bulkDelete && onBulkDelete ? (
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          className="w-full justify-start"
+                        <MobileSettingsRow
+                          icon={<Trash2 className="h-5 w-5" />}
+                          label="Delete selected"
+                          value={selectedCount > 0 ? selectedCount : undefined}
+                          onClick={selectedCount > 0 ? onBulkDelete : undefined}
                           disabled={selectedCount === 0}
-                          onClick={onBulkDelete}
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Delete selected
-                        </Button>
+                        />
                       ) : null}
                     </div>
-                  </div>
-                ) : null}
+                  ) : null}
 
-                <p className="text-xs text-muted-foreground">
-                  {filteredItems === totalItems
-                    ? `${totalItems} items`
-                    : `${filteredItems} of ${totalItems} items`}
-                </p>
-              </div>
+                  <p className="px-1 text-xs text-muted-foreground">
+                    {filteredItems === totalItems
+                      ? `${totalItems} items`
+                      : `${filteredItems} of ${totalItems} items`}
+                  </p>
+                </div>
+              </SheetContent>
+            </Sheet>
+
+            <Dialog open={mobileSearchOpen} onOpenChange={setMobileSearchOpen}>
+              <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Search</DialogTitle>
+                </DialogHeader>
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    ref={mobileSearchInputRef}
+                    value={searchValue}
+                    onChange={(event) => onSearchChange(event.target.value)}
+                    placeholder={searchPlaceholder}
+                    className="h-9 pl-8 pr-8 text-sm"
+                    aria-label="Search table"
+                  />
+                  {searchValue ? (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-0 top-0 h-9 w-9"
+                      onClick={() => onSearchChange("")}
+                      aria-label="Clear search"
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  ) : null}
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            <Sheet open={mobileFilterOpen} onOpenChange={setMobileFilterOpen}>
+              <SheetContent side="right" className="w-full max-w-none gap-0 p-0">
+                <SheetHeader className="border-b px-4 py-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <SheetTitle>Filter</SheetTitle>
+                    {activeFilterCount > 0 ? (
+                      <Button variant="ghost" size="sm" className="h-8 px-2 text-xs" onClick={onClearFilters}>
+                        Clear
+                      </Button>
+                    ) : null}
+                  </div>
+                </SheetHeader>
+                <div className="max-h-[calc(90dvh-76px)] overflow-y-auto px-4 py-4">
+                  <FilterFields
+                    filters={filters}
+                    activeFilters={activeFilters}
+                    onFilterChange={onFilterChange}
+                  />
+                </div>
+              </SheetContent>
+            </Sheet>
+
+            <Sheet open={mobileColumnsOpen} onOpenChange={setMobileColumnsOpen}>
+              <SheetContent side="right" className="w-full max-w-none gap-0 p-0">
+                <SheetHeader className="border-b px-4 py-4">
+                  <SheetTitle>Property visibility</SheetTitle>
+                </SheetHeader>
+                <div className="max-h-[calc(90dvh-76px)] overflow-y-auto px-4 py-4">
+                  <div className="overflow-hidden rounded-2xl border bg-background">
+                    {columns
+                      .filter((column) => !column.alwaysVisible)
+                      .map((column) => (
+                        <label
+                          key={column.id}
+                          htmlFor={`mobile-col-toggle-${column.id}`}
+                          className="flex min-h-12 items-center gap-3 border-b border-border/70 px-4 py-3 last:border-b-0"
+                        >
+                          <Checkbox
+                            id={`mobile-col-toggle-${column.id}`}
+                            checked={visibleColumns.includes(column.id)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                onColumnVisibilityChange([...visibleColumns, column.id]);
+                              } else {
+                                onColumnVisibilityChange(
+                                  visibleColumns.filter((existing) => existing !== column.id),
+                                );
+                              }
+                            }}
+                          />
+                          <span className="text-base text-foreground">{column.label}</span>
+                        </label>
+                      ))}
+                  </div>
+                </div>
+              </SheetContent>
+            </Sheet>
+
+            <Sheet open={mobileSortOpen} onOpenChange={setMobileSortOpen}>
+              <SheetContent side="right" className="w-full max-w-none gap-0 p-0">
+                <SheetHeader className="border-b px-4 py-4">
+                  <SheetTitle>Sort</SheetTitle>
+                </SheetHeader>
+                <div className="space-y-4 px-4 py-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground" htmlFor="mobile-table-sort-column">
+                      Field
+                    </label>
+                    <Select
+                      value={sortBy ?? undefined}
+                      onValueChange={(nextSortBy) => {
+                        if (!onSortChange) return;
+                        onSortChange(nextSortBy, sortDirection);
+                      }}
+                    >
+                      <SelectTrigger id="mobile-table-sort-column" className="h-10 w-full">
+                        <SelectValue placeholder="Select field" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {sortOptions.map((option) => (
+                          <SelectItem key={option.id} value={option.id}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-foreground">Direction</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button
+                        variant={sortDirection === "asc" ? "default" : "outline"}
+                        onClick={() => {
+                          if (!onSortChange || !sortBy) return;
+                          onSortChange(sortBy, "asc");
+                        }}
+                      >
+                        Ascending
+                      </Button>
+                      <Button
+                        variant={sortDirection === "desc" ? "default" : "outline"}
+                        onClick={() => {
+                          if (!onSortChange || !sortBy) return;
+                          onSortChange(sortBy, "desc");
+                        }}
+                      >
+                        Descending
+                      </Button>
+                    </div>
+                  </div>
+                </div>
               </SheetContent>
             </Sheet>
           </div>
