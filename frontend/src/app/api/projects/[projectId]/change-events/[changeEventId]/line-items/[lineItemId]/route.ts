@@ -63,8 +63,8 @@ export const GET = withApiGuardrails(
       id: lineItem.id,
       changeEventId: lineItem.change_event_id,
       description: lineItem.description,
-      budgetLineId: lineItem.budget_line_id ?? lineItem.budget_code_id,
-      budgetCodeId: lineItem.budget_line_id ?? lineItem.budget_code_id,
+      budgetLineId: lineItem.budget_code_id,
+      budgetCodeId: lineItem.budget_code_id,
       vendorId: lineItem.vendor_id,
       contractId: lineItem.contract_id,
       commitmentId: lineItem.commitment_id,
@@ -164,7 +164,7 @@ export const PATCH = withApiGuardrails(
     // Guard: budget code and contract cannot be changed on commitment-linked line items.
     // Placed after ID resolution so we compare budget_lines.id to budget_lines.id.
     if (existingItem.commitment_id) {
-      const existingBudgetLineId = existingItem.budget_line_id ?? existingItem.budget_code_id;
+      const existingBudgetLineId = existingItem.budget_code_id;
       if (resolvedBudgetLineId !== null && resolvedBudgetLineId !== existingBudgetLineId) {
         return NextResponse.json(
           { error: 'Cannot change the budget code on a line item linked to a commitment' },
@@ -189,7 +189,6 @@ export const PATCH = withApiGuardrails(
 
     if (validatedData.description !== undefined) updates.description = validatedData.description;
     if (validatedData.budgetCodeId !== undefined) {
-      updates.budget_line_id = resolvedBudgetLineId;
       updates.budget_code_id = resolvedBudgetLineId;
     }
     if (resolvedVendorId !== undefined && validatedData.vendorId !== undefined) updates.vendor_id = resolvedVendorId;
@@ -244,8 +243,8 @@ export const PATCH = withApiGuardrails(
       id: data.id,
       changeEventId: data.change_event_id,
       description: data.description,
-      budgetLineId: data.budget_line_id ?? data.budget_code_id,
-      budgetCodeId: data.budget_line_id ?? data.budget_code_id,
+      budgetLineId: data.budget_code_id,
+      budgetCodeId: data.budget_code_id,
       vendorId: data.vendor_id,
       contractId: data.contract_id,
       commitmentId: data.commitment_id,

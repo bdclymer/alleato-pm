@@ -50,7 +50,6 @@ import {
   ArrowUpDown,
   Loader2,
 } from "lucide-react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import {
   DndContext,
@@ -706,20 +705,21 @@ function DraggableTaskCard({ task, onTaskClick, onUpdateTask, visibleFields }: D
   const statusInfo = statusConfig[task.status];
 
   return (
-    <Card
+    <div
       ref={setNodeRef}
       style={style}
       {...attributes}
       {...listeners}
+      data-schedule-task-card="true"
       className={cn(
-        "border border-border shadow-sm cursor-grab active:cursor-grabbing hover:bg-accent/30 transition-colors duration-150 group",
-        isDragging && "opacity-90 scale-[1.02] rotate-1 shadow-sm ring-2 ring-primary"
+        "group cursor-grab rounded-md bg-background px-3 py-2.5 ring-1 ring-border/70 transition-colors duration-150 hover:bg-accent/30 active:cursor-grabbing",
+        isDragging && "opacity-90 scale-[1.02] rotate-1 ring-2 ring-primary"
       )}
       onClick={() => onTaskClick(task)}
     >
-      <CardContent className="p-2 space-y-1.5">
-        <div className="flex items-start gap-2">
-          <GripVertical className="h-3.5 w-3.5 text-muted-foreground opacity-30 mt-0.5 shrink-0 group-hover:opacity-70 transition-opacity duration-150" />
+      <div className="space-y-2">
+        <div className="flex items-start gap-2.5">
+          <GripVertical className="mt-1 h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-30 transition-opacity duration-150 group-hover:opacity-70" />
           <Checkbox
             checked={task.status === "complete"}
             onCheckedChange={async (checked) => {
@@ -729,22 +729,22 @@ function DraggableTaskCard({ task, onTaskClick, onUpdateTask, visibleFields }: D
               });
             }}
             onClick={(e) => e.stopPropagation()}
-            className="mt-0.5 shrink-0"
+            className="mt-0.5 h-5 w-5 shrink-0"
           />
           <span className={cn(
-            "text-sm leading-snug line-clamp-2",
+            "line-clamp-2 min-w-0 flex-1 text-sm leading-snug",
             task.status === "complete" && "line-through text-muted-foreground"
           )}>
             {task.name}
           </span>
         </div>
 
-        <div className="pl-6 space-y-1">
-          <div className="flex flex-wrap items-center gap-2">
+        <div className="ml-10 space-y-1.5">
+          <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
             {visibleFields.has("status") && (
-              <div className="flex items-center gap-1">
+              <div className="flex min-w-0 items-center gap-1">
                 <statusInfo.icon className={cn("h-3 w-3", statusInfo.color)} />
-                <span className="text-xs text-muted-foreground">{statusInfo.label}</span>
+                <span className="truncate text-xs text-muted-foreground">{statusInfo.label}</span>
               </div>
             )}
             {visibleFields.has("priority") && priority === "important" && (
@@ -760,14 +760,14 @@ function DraggableTaskCard({ task, onTaskClick, onUpdateTask, visibleFields }: D
             )}
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex min-w-0 items-center gap-2">
             {visibleFields.has("dates") && (
-              <span className="text-xs text-muted-foreground">
+              <span className="min-w-0 truncate text-xs text-muted-foreground">
                 {formatDate(task.start_date)} — {formatDate(task.finish_date)}
               </span>
             )}
             {visibleFields.has("subtask_count") && task.children && task.children.length > 0 && (
-              <span className="text-xs text-muted-foreground">
+              <span className="shrink-0 text-xs text-muted-foreground">
                 {task.children.filter(c => c.status === "complete").length}/{task.children.length} subtasks
               </span>
             )}
@@ -780,8 +780,8 @@ function DraggableTaskCard({ task, onTaskClick, onUpdateTask, visibleFields }: D
             </div>
           )}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
@@ -790,8 +790,8 @@ function TaskCardOverlay({ task }: { task: ScheduleTaskWithHierarchy }) {
   const priority = getTaskPriority(task);
 
   return (
-    <Card className="cursor-grabbing shadow-sm ring-1 ring-primary/30 w-72">
-      <CardContent className="p-4 space-y-2">
+    <div className="w-72 cursor-grabbing rounded-md bg-background p-3 ring-1 ring-primary/30">
+      <div className="space-y-2">
         <div className="flex items-center gap-2">
           <GripVertical className="h-4 w-4 text-muted-foreground" />
           {label && (
@@ -817,8 +817,8 @@ function TaskCardOverlay({ task }: { task: ScheduleTaskWithHierarchy }) {
             <AlertTriangle className="h-3 w-3" />
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
@@ -839,7 +839,7 @@ function BoardColumn({ title, status, tasks, onTaskClick, onAddTask, onQuickAddT
 
   return (
     <div className={cn(
-      "flex flex-col min-w-[280px] w-80 shrink-0 bg-muted/20 rounded-xl p-4 transition-all duration-200",
+      "flex min-w-full shrink-0 flex-col rounded-lg bg-muted/20 p-3 transition-all duration-200 sm:min-w-[280px] sm:w-80 sm:p-4",
       isOver && "ring-2 ring-primary/30 bg-primary/5"
     )}>
       {/* Column Header */}
@@ -853,7 +853,7 @@ function BoardColumn({ title, status, tasks, onTaskClick, onAddTask, onQuickAddT
       {/* Add Task Button */}
       <Button
         variant="ghost"
-        className="w-full justify-start gap-2 mb-4 text-primary hover:text-primary hover:bg-background"
+        className="mb-4 min-h-11 w-full justify-start gap-2 text-primary hover:bg-background hover:text-primary"
         onClick={() => setIsInlineAddOpen((prev) => !prev)}
       >
         <Plus />
@@ -886,7 +886,7 @@ function BoardColumn({ title, status, tasks, onTaskClick, onAddTask, onQuickAddT
           strategy={verticalListSortingStrategy}
         >
           <ScrollArea className="flex-1">
-            <div className="space-y-2 pr-2 min-h-[200px]">
+            <div className="min-h-[200px] space-y-2 pr-0 sm:pr-2">
               {tasks.map((task) => (
                 <DraggableTaskCard
                   key={task.id}
@@ -1014,7 +1014,7 @@ export function ScheduleBoardView({
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="flex gap-4 p-4 overflow-x-auto min-h-[500px]">
+        <div className="flex min-h-[500px] gap-4 overflow-x-auto px-0 py-3 sm:p-4">
           {columns.map(({ status, title }) => (
             <BoardColumn
               key={status}

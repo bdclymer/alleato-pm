@@ -14,6 +14,7 @@ import {
   type FeedbackTargetSnapshot,
 } from "@/lib/admin-feedback/targeting";
 import { useCurrentUserProfile } from "@/hooks/use-current-user-profile";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { apiFetch } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -118,6 +119,7 @@ async function captureTargetScreenshot(target: HTMLElement) {
 export function AdminFeedbackWidget() {
   const pathname = usePathname();
   const { profile, isLoading } = useCurrentUserProfile();
+  const isMobile = useIsMobile();
   const [isSelecting, setIsSelecting] = useState(false);
   const [hoveredTarget, setHoveredTarget] = useState<FeedbackTargetSnapshot | null>(
     null,
@@ -274,7 +276,7 @@ export function AdminFeedbackWidget() {
     };
   }, [isSelecting]);
 
-  if (isLoading || !isAdmin) {
+  if (isLoading || !isAdmin || isMobile) {
     return null;
   }
 

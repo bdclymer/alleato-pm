@@ -73,6 +73,41 @@ function getChangedRoutes() {
     .sort();
 }
 
+export function lineHasRawErrorResponse(line) {
+  return (
+    /NextResponse\.json\(\s*\{\s*error\s*:/.test(line) ||
+    /new Response\(\s*["'`]Unauthorized["'`]/.test(line)
+  );
+}
+
+function getAddedRawErrorRoutes() {
+  const diffCommands = [
+    `git diff --unified=0 ${baseRef}...HEAD -- frontend/src/app/api || true`,
+    "git diff --unified=0 --cached -- frontend/src/app/api || true",
+    "git diff --unified=0 -- frontend/src/app/api || true",
+  ];
+
+  const rawRoutes = new Set();
+  for (const command of diffCommands) {
+    const diff = run(command);
+    let currentRoute = null;
+    for (const line of diff.split("\n")) {
+      if (line.startsWith("+++ b/")) {
+        const route = line.slice("+++ b/".length);
+        currentRoute = route.endsWith("/route.ts") ? route : null;
+        continue;
+      }
+      if (!currentRoute || !line.startsWith("+") || line.startsWith("+++")) {
+        continue;
+      }
+      if (lineHasRawErrorResponse(line.slice(1))) {
+        rawRoutes.add(currentRoute);
+      }
+    }
+  }
+  return [...rawRoutes].sort();
+}
+
 function analyzeRoute(route) {
   const content = readFileSync(route, "utf8");
   const hasGuardrailWrapper = content.includes("withApiGuardrails");
@@ -103,10 +138,12 @@ export function buildGuardrailReport({
     .map((c) => c.route)
     .sort();
 
-  const rawErrorRoutes = checks
-    .filter((c) => c.hasRawErrorResponse)
-    .map((c) => c.route)
-    .sort();
+  const rawErrorRoutes = guardrailScope === "changed"
+    ? getAddedRawErrorRoutes()
+    : checks
+      .filter((c) => c.hasRawErrorResponse)
+      .map((c) => c.route)
+      .sort();
 
   const failures = [];
   if (guardrailScope === "changed") {

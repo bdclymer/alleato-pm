@@ -1,7 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { resolveRawErrorEnforcement } from "../check-changed-route-guardrails.mjs";
+import {
+  lineHasRawErrorResponse,
+  resolveRawErrorEnforcement,
+} from "../check-changed-route-guardrails.mjs";
 
 test("changed-route guardrails enforce raw-error debt by default", () => {
   assert.equal(
@@ -36,6 +39,17 @@ test("explicit environment override still wins", () => {
       guardrailScope: "changed",
       envValue: "false",
     }),
+    false,
+  );
+});
+
+test("raw error detector matches only raw response lines", () => {
+  assert.equal(
+    lineHasRawErrorResponse('return NextResponse.json({ error: "Invalid ID" }, { status: 400 });'),
+    true,
+  );
+  assert.equal(
+    lineHasRawErrorResponse('throw new GuardrailError({ code: "INVALID_PAYLOAD", message: "Invalid ID" });'),
     false,
   );
 });

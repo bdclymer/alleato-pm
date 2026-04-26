@@ -28,57 +28,76 @@ function run(command) {
   }
 }
 
-function getChangedFiles() {
-  const changed = isStaged
-    ? run("git diff --cached --name-only --diff-filter=ACMR")
-    : run(`git diff --name-only ${baseRef}...HEAD --diff-filter=ACMR`);
-
-  if (!changed) return [];
-
-  return changed
+function splitChangedOutput(output) {
+  return output
     .split("\n")
     .map((f) => f.trim())
-    .filter(Boolean)
+    .filter(Boolean);
+}
+
+export function normalizeFrontendChangedFiles(files) {
+  return [...new Set(files)]
     .filter((f) => f.startsWith("frontend/"))
     .map((f) => f.slice("frontend/".length))
     .filter((f) => scanPrefixes.some((prefix) => f.startsWith(prefix)))
-    .filter((f) => scanExt.test(f));
+    .filter((f) => scanExt.test(f))
+    .sort();
+}
+
+function getChangedFiles() {
+  const commands = isStaged
+    ? ["git diff --cached --name-only --diff-filter=ACMR"]
+    : [
+        `git diff --name-only ${baseRef}...HEAD --diff-filter=ACMR`,
+        "git diff --cached --name-only --diff-filter=ACMR",
+        "git diff --name-only --diff-filter=ACMR",
+      ];
+
+  const changedFiles = commands.flatMap((command) => splitChangedOutput(run(command)));
+
+  return normalizeFrontendChangedFiles(changedFiles);
 }
 
 function parseAddedLineMap(relativePath) {
   const repoPath = `frontend/${relativePath}`;
-  const diffCmd = isStaged
-    ? `git diff --cached --unified=0 -- ${repoPath}`
-    : `git diff --unified=0 ${baseRef}...HEAD -- ${repoPath}`;
-  const diff = run(diffCmd);
-
-  if (!diff) return null;
+  const commands = isStaged
+    ? [`git diff --cached --unified=0 -- ${repoPath}`]
+    : [
+        `git diff --unified=0 ${baseRef}...HEAD -- ${repoPath}`,
+        `git diff --cached --unified=0 -- ${repoPath}`,
+        `git diff --unified=0 -- ${repoPath}`,
+      ];
 
   const added = new Set();
-  let currentNewLine = null;
+  for (const diffCmd of commands) {
+    const diff = run(diffCmd);
+    if (!diff) continue;
 
-  for (const line of diff.split("\n")) {
-    if (line.startsWith("@@")) {
-      const match = line.match(/\+(\d+)(?:,(\d+))?/);
-      currentNewLine = match ? Number.parseInt(match[1], 10) : null;
-      continue;
-    }
+    let currentNewLine = null;
 
-    if (currentNewLine === null) continue;
-    if (line.startsWith("+") && !line.startsWith("+++")) {
-      added.add(currentNewLine);
+    for (const line of diff.split("\n")) {
+      if (line.startsWith("@@")) {
+        const match = line.match(/\+(\d+)(?:,(\d+))?/);
+        currentNewLine = match ? Number.parseInt(match[1], 10) : null;
+        continue;
+      }
+
+      if (currentNewLine === null) continue;
+      if (line.startsWith("+") && !line.startsWith("+++")) {
+        added.add(currentNewLine);
+        currentNewLine += 1;
+        continue;
+      }
+
+      if (line.startsWith("-") && !line.startsWith("---")) {
+        continue;
+      }
+
       currentNewLine += 1;
-      continue;
     }
-
-    if (line.startsWith("-") && !line.startsWith("---")) {
-      continue;
-    }
-
-    currentNewLine += 1;
   }
 
-  return added;
+  return added.size > 0 ? added : null;
 }
 
 function main() {
@@ -113,6 +132,7 @@ function main() {
       [
         "--format",
         "json",
+        "--no-warn-ignored",
         "--cache",
         "--cache-strategy",
         "content",
@@ -189,4 +209,6 @@ function main() {
   process.exit(1);
 }
 
-main();
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main();
+}

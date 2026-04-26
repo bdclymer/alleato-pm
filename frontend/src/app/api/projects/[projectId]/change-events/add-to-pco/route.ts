@@ -141,6 +141,19 @@ export const POST = withApiGuardrails(
       );
     }
 
+    const selectedLineItemCount = changeEvents.reduce((count, event) => {
+      const lineItems = (event as Record<string, unknown>).change_event_line_items as unknown[] | null;
+      return count + (Array.isArray(lineItems) ? lineItems.length : 0);
+    }, 0);
+    if (selectedLineItemCount > 0) {
+      throw new GuardrailError({
+        code: "SCHEMA_MISMATCH",
+        where: "projects/[projectId]/change-events/add-to-pco#POST",
+        message:
+          "Cannot add change-event line items to prime/commitment PCOs because the live pco_line_items table only references numeric potential_change_orders IDs. Apply the UUID-compatible PCO line-item migration before using this flow.",
+      });
+    }
+
     let pcoId: string;
     let pcoRecord: Record<string, unknown>;
 
@@ -267,7 +280,7 @@ export const POST = withApiGuardrails(
       const { count } = await supabase
         .from("pco_line_items")
         .select("id", { count: "exact", head: true })
-        .eq("pco_id", pcoId)
+        .eq("pco_id", Number(pcoId))
         .eq("pco_type", pco_type);
       sortOrder = count ?? 0;
     }
@@ -296,7 +309,6 @@ export const POST = withApiGuardrails(
       // 2. Fetch line items for this change event
       const lineItems = (event as Record<string, unknown>).change_event_line_items as Array<{
         id: string;
-        budget_line_id: string | null;
         budget_code_id: string | null;
         description: string | null;
         quantity: number | null;
@@ -315,11 +327,11 @@ export const POST = withApiGuardrails(
 
         sortOrder += 1;
         return {
-          pco_id: pcoId,
+          pco_id: Number(pcoId),
           pco_type: pco_type,
           change_event_id: event.id,
           change_event_line_item_id: li.id,
-          budget_code_id: li.budget_line_id ?? li.budget_code_id,
+          budget_code_id: li.budget_code_id,
           description: li.description,
           quantity: li.quantity,
           unit_of_measure: li.unit_of_measure,
@@ -373,7 +385,7 @@ export const POST = withApiGuardrails(
     const { data: allLineItems } = await supabase
       .from("pco_line_items")
       .select("amount")
-      .eq("pco_id", pcoId)
+      .eq("pco_id", Number(pcoId))
       .eq("pco_type", pco_type);
 
     const lineItemsBaseAmount = (allLineItems ?? []).reduce(
@@ -426,7 +438,7 @@ export const POST = withApiGuardrails(
     const { data: finalLineItems } = await supabase
       .from("pco_line_items")
       .select("*")
-      .eq("pco_id", pcoId)
+      .eq("pco_id", Number(pcoId))
       .eq("pco_type", pco_type)
       .order("sort_order", { ascending: true });
 

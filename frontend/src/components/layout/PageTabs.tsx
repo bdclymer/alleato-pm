@@ -39,27 +39,31 @@ export function PageTabs({
   const searchString = searchParams.toString();
   const currentPath = searchString ? `${pathname}?${searchString}` : pathname;
   const hasExactHrefMatch = tabs.some((tab) => tab.href === currentPath);
-
   const wrapperClasses =
     variant === "inline"
       ? "relative flex min-w-0 w-full items-center"
       : "px-4 sm:px-6 lg:px-8";
   const navClasses =
     variant === "inline"
-      ? "-mb-px flex-1 min-w-0 flex overflow-x-auto scrollbar-hide"
-      : "-mb-px flex overflow-x-auto scrollbar-hide";
+      ? "-mb-px flex-1 min-w-0 flex overflow-x-auto overscroll-x-contain pb-1 scrollbar-hide"
+      : "-mb-px flex overflow-x-auto overscroll-x-contain pb-1 scrollbar-hide";
   const buttonClasses =
     variant === "inline"
-      ? "group relative inline-flex min-h-10 items-center gap-2 whitespace-nowrap px-2 py-1.5 text-sm transition-colors"
-      : "group relative inline-flex min-h-11 items-center gap-2 whitespace-nowrap px-2 py-3 text-sm transition-colors";
+      ? "group relative inline-flex min-h-11 snap-start items-center gap-2 whitespace-nowrap px-3 py-2 text-sm transition-colors"
+      : "group relative inline-flex min-h-11 snap-start items-center gap-2 whitespace-nowrap px-3 py-3 text-sm transition-colors";
 
   return (
     <div className={cn(wrapperClasses, "mb-4 md:mb-6", className)}>
       {variant === "inline" && (
-        <div className="pointer-events-none absolute right-0 top-0 h-full w-8 bg-gradient-to-l from-background to-transparent z-10" />
+        <div className="pointer-events-none absolute right-0 top-0 z-10 h-[calc(100%-0.25rem)] w-4 bg-gradient-to-l from-background to-transparent md:hidden" />
       )}
       <nav className={navClasses} aria-label="Tabs">
-        <div className="flex min-w-max space-x-4 md:space-x-6">
+        <div
+          className={cn(
+            "flex snap-x snap-mandatory md:space-x-6",
+            "min-w-max space-x-2",
+          )}
+        >
           {tabs.map((tab, index) => {
             const isActive =
               tab.isActive ??
@@ -83,7 +87,7 @@ export function PageTabs({
                   data-testid={tab.testId}
                   className={cn(
                     buttonClasses,
-                    variant === "inline" && index === 0 && "pl-0",
+                    variant === "inline" && index === 0 && "ml-0 pl-0",
                     isActive
                       ? "text-primary font-medium"
                       : "text-foreground/70 font-medium hover:text-foreground/90",

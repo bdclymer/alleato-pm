@@ -88,7 +88,7 @@ export const GET = withApiGuardrails(
     }
 
     // Batch-fetch change event and line item counts (no FK join available for pco_line_items).
-    // `pco_change_events.pco_id` is a number; `pco_line_items.pco_id` is a string.
+    // Both `pco_change_events.pco_id` and `pco_line_items.pco_id` are numeric in the live schema.
     const pcoIdStrings = (data || []).map((pco: Record<string, unknown>) => String(pco.id));
     const pcoIdNumbers = pcoIdStrings
       .map((id) => Number(id))
@@ -99,7 +99,7 @@ export const GET = withApiGuardrails(
     if (pcoIdStrings.length > 0) {
       const [ceResult, liResult] = await Promise.all([
         supabase.from("pco_change_events").select("pco_id").in("pco_id", pcoIdNumbers),
-        supabase.from("pco_line_items").select("pco_id").in("pco_id", pcoIdStrings),
+        supabase.from("pco_line_items").select("pco_id").in("pco_id", pcoIdNumbers),
       ]);
 
       if (ceResult.data) {

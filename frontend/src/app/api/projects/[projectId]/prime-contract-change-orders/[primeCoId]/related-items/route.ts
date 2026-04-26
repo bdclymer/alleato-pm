@@ -3,7 +3,6 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
-import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
 
 interface RouteParams {
@@ -24,27 +23,6 @@ type RelatedItemType = (typeof RELATED_ITEM_TYPES)[number];
 
 function isSupportedRelatedType(value: string): value is RelatedItemType {
   return (RELATED_ITEM_TYPES as readonly string[]).includes(value);
-}
-
-function buildRelatedHref(projectId: number, type: RelatedItemType, id: string): string {
-  switch (type) {
-    case "change_event":
-      return `/${projectId}/change-events/${id}`;
-    case "drawing":
-      return `/${projectId}/drawings/${id}`;
-    case "rfi":
-      return `/${projectId}/rfis/${id}`;
-    case "specification":
-      return `/${projectId}/specifications/${id}`;
-    case "submittal":
-      return `/${projectId}/submittals/${id}`;
-    case "commitment_co":
-      return `/${projectId}/commitments/change-orders/${id}`;
-    case "commitment":
-      return `/${projectId}/commitments/${id}`;
-    default:
-      return `/${projectId}`;
-  }
 }
 
 interface RelatedSourceRecord {
@@ -190,45 +168,12 @@ export const GET = withApiGuardrails(
       return NextResponse.json({ error: "Invalid id" }, { status: 400 });
     }
 
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("prime_contract_change_order_related_items")
-      .select("id, related_type, related_id, related_number, related_title, related_status, related_url, created_at")
-      .eq("project_id", parsedProjectId)
-      .eq("prime_co_id", parsedPrimeCoId)
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      if (
-        error.code === "42P01" ||
-        error.message?.includes("Could not find") ||
-        error.message?.includes("schema cache")
-      ) {
-        return NextResponse.json({ data: [] });
-      }
-
-      return apiErrorResponse(error);
-    }
-
-    const response = (data || []).map((item) => {
-      const type = isSupportedRelatedType(item.related_type)
-        ? item.related_type
-        : "change_event";
-
-      return {
-        id: item.id,
-        relatedType: item.related_type,
-        relatedId: item.related_id,
-        relatedNumber: item.related_number,
-        relatedTitle: item.related_title,
-        relatedStatus: item.related_status,
-        relatedUrl:
-          item.related_url || buildRelatedHref(parsedProjectId, type, item.related_id),
-        createdAt: item.created_at,
-      };
+    throw new GuardrailError({
+      code: "SCHEMA_MISMATCH",
+      where: "projects/[projectId]/prime-contract-change-orders/[primeCoId]/related-items#GET",
+      message:
+        "Prime contract change order related items are unavailable because prime_contract_change_order_related_items is not present in the live Supabase schema.",
     });
-
-    return NextResponse.json({ data: response });
   },
 );
 
@@ -301,58 +246,11 @@ export const POST = withApiGuardrails(
       );
     }
 
-    const { data, error } = await supabase
-      .from("prime_contract_change_order_related_items")
-      .insert({
-        project_id: parsedProjectId,
-        prime_co_id: parsedPrimeCoId,
-        related_type: relatedType,
-        related_id: relatedId,
-        related_number: sourceRecord.relatedNumber,
-        related_title: sourceRecord.relatedTitle,
-        related_status: sourceRecord.relatedStatus,
-        related_url: buildRelatedHref(parsedProjectId, relatedType, relatedId),
-        created_by: user.id,
-      })
-      .select("id, related_type, related_id, related_number, related_title, related_status, related_url, created_at")
-      .single();
-
-    if (error) {
-      if (error.code === "23505") {
-        return NextResponse.json(
-          { error: "This item is already linked" },
-          { status: 409 },
-        );
-      }
-
-      if (
-        error.code === "42P01" ||
-        error.message?.includes("Could not find") ||
-        error.message?.includes("schema cache")
-      ) {
-        return NextResponse.json(
-          { error: "Related items are unavailable until migrations are applied" },
-          { status: 503 },
-        );
-      }
-
-      return apiErrorResponse(error);
-    }
-
-    return NextResponse.json(
-      {
-        data: {
-          id: data.id,
-          relatedType: data.related_type,
-          relatedId: data.related_id,
-          relatedNumber: data.related_number,
-          relatedTitle: data.related_title,
-          relatedStatus: data.related_status,
-          relatedUrl: data.related_url,
-          createdAt: data.created_at,
-        },
-      },
-      { status: 201 },
-    );
+    throw new GuardrailError({
+      code: "SCHEMA_MISMATCH",
+      where: "projects/[projectId]/prime-contract-change-orders/[primeCoId]/related-items#POST",
+      message:
+        "Cannot link related items because prime_contract_change_order_related_items is not present in the live Supabase schema.",
+    });
   },
 );

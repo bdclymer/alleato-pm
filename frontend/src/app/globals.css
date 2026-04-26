@@ -1874,3 +1874,11 @@
 .alleato-comments [class*="lb-powered-by"] {
   display: none !important;
 }
+
+.alleato-ai-mark-bg {
+  background-color: #323232;
+}
+
+.alleato-ai-mark-bg:hover {
+  background-color: #323232;
+}

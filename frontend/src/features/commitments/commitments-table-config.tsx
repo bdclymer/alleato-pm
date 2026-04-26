@@ -169,6 +169,7 @@ export function buildCommitmentTableColumns(
     number: {
       render: (item) => (
         <div className="flex items-center gap-1.5">
+          <span className="font-medium max-w-[120px] truncate" title={item.number}>{item.number}</span>
           {onToggleExpand && (
             <Button
               type="button"
@@ -188,7 +189,6 @@ export function buildCommitmentTableColumns(
               />
             </Button>
           )}
-          <span className="font-medium max-w-[120px] truncate" title={item.number}>{item.number}</span>
         </div>
       ),
       csvValue: (item) => item.number,

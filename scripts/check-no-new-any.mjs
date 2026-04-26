@@ -47,34 +47,48 @@ function shouldScanPath(path) {
 
 // Collect changed files from either staged diff or base-ref comparison.
 function getCandidateFiles() {
-  const files =
+  const commands =
     mode === "staged"
-      ? run("git diff --cached --name-only --diff-filter=ACMR")
-      : run(`git diff --name-only ${baseRef}...HEAD --diff-filter=ACMR`);
+      ? ["git diff --cached --name-only --diff-filter=ACMR"]
+      : [
+          `git diff --name-only ${baseRef}...HEAD --diff-filter=ACMR`,
+          "git diff --cached --name-only --diff-filter=ACMR",
+          "git diff --name-only --diff-filter=ACMR",
+        ];
 
-  if (!files) return [];
-  return files
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .filter(shouldScanPath);
+  const files = commands.flatMap((cmd) =>
+    run(cmd)
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean),
+  );
+
+  return [...new Set(files)].filter(shouldScanPath).sort();
 }
 
 // Return added diff lines only so existing debt outside changed lines is ignored.
 function getAddedLinesForFile(path) {
-  const diffCmd =
-    mode === "staged"
-      ? `git diff --cached --unified=0 -- "${path}"`
-      : `git diff --unified=0 ${baseRef}...HEAD -- "${path}"`;
-  const diffText = run(diffCmd);
-  if (!diffText) return [];
-
   const added = [];
-  for (const rawLine of diffText.split("\n")) {
-    if (!rawLine.startsWith("+")) continue;
-    if (rawLine.startsWith("+++")) continue;
-    added.push(rawLine.slice(1));
+  const commands =
+    mode === "staged"
+      ? [`git diff --cached --unified=0 -- "${path}"`]
+      : [
+          `git diff --unified=0 ${baseRef}...HEAD -- "${path}"`,
+          `git diff --cached --unified=0 -- "${path}"`,
+          `git diff --unified=0 -- "${path}"`,
+        ];
+
+  for (const diffCmd of commands) {
+    const diffText = run(diffCmd);
+    if (!diffText) continue;
+
+    for (const rawLine of diffText.split("\n")) {
+      if (!rawLine.startsWith("+")) continue;
+      if (rawLine.startsWith("+++")) continue;
+      added.push(rawLine.slice(1));
+    }
   }
+
   return added;
 }
 

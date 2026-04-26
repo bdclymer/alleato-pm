@@ -11,6 +11,7 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
   productionBrowserSourceMaps: false,
+  devIndicators: false,
   experimental: {
     webpackMemoryOptimizations: true,
     serverSourceMaps: false,

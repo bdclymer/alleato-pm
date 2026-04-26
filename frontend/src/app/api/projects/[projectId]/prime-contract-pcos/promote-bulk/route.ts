@@ -128,39 +128,6 @@ export const POST = withApiGuardrails(
       return apiErrorResponse(createPccoError);
     }
 
-    const { data: pcoLineItems, error: lineItemsError } = await supabase
-      .from("pco_line_items")
-      .select("*")
-      .in("pco_id", pcoIds)
-      .eq("pco_type", "prime")
-      .order("sort_order", { ascending: true });
-
-    if (lineItemsError) {
-      await supabase.from("prime_contract_change_orders").delete().eq("id", pcco.id);
-      return apiErrorResponse(lineItemsError);
-    }
-
-    if (pcoLineItems && pcoLineItems.length > 0) {
-      const pccoLineItems = pcoLineItems.map((item) => ({
-        pcco_id: pcco.id,
-        description: item.description,
-        cost_code: item.budget_code_id,
-        quantity: item.quantity,
-        unit_cost: item.unit_cost,
-        uom: item.unit_of_measure,
-        line_amount: item.amount,
-      }));
-
-      const { error: insertLineItemsError } = await supabase
-        .from("pcco_line_items")
-        .insert(pccoLineItems);
-
-      if (insertLineItemsError) {
-        await supabase.from("prime_contract_change_orders").delete().eq("id", pcco.id);
-        return apiErrorResponse(insertLineItemsError);
-      }
-    }
-
     const { error: updatePcosError } = await supabase
       .from("prime_contract_pcos")
       .update({
@@ -192,4 +159,3 @@ export const POST = withApiGuardrails(
     );
     },
 );
-

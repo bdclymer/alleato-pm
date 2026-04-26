@@ -51,7 +51,7 @@ export function MobileCardList<T>({
   hasRowActions,
 }: MobileCardListProps<T>) {
   return (
-    <div className={cn("sm:hidden", isFetching && "opacity-70")}>
+    <div className={cn("sm:hidden [&_button]:min-h-11 [&_button]:min-w-11", isFetching && "opacity-70")}>
       <div className="flex flex-col gap-2">
         {items.map((item) => {
           const rowId = getRowId(item);
@@ -68,10 +68,10 @@ export function MobileCardList<T>({
               role={isClickable ? "button" : undefined}
               tabIndex={isClickable ? 0 : undefined}
               className={cn(
-                "flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-3.5 transition-colors",
+                "rounded-md border border-border/60 bg-background px-3 py-3 transition-colors",
                 isClickable &&
                   "cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
-                isActive ? "bg-muted" : isClickable && "active:bg-muted/60",
+                isActive ? "bg-muted" : isClickable && "active:bg-muted/50",
               )}
               onClick={isClickable ? () => onRowClick?.(item) : undefined}
               onKeyDown={
@@ -84,71 +84,70 @@ export function MobileCardList<T>({
                   : undefined
               }
             >
-              {/* Main content area */}
-              <div className="flex-1 min-w-0">
-                {/* Title row */}
+              <div className="flex min-w-0 items-start gap-3">
+                {/* Main content area */}
+                <div className="min-w-0 flex-1">
+                  {/* Title row */}
                 {titleCol && (
-                  <div className="text-sm font-semibold text-foreground truncate">
+                  <div className="truncate text-sm font-semibold text-foreground [&>div]:w-full [&>div]:justify-between">
                     {React.Children.toArray(titleCol.render(item))}
                   </div>
                 )}
 
-                {/* Detail rows: label-value pairs */}
-                {detailCols.length > 0 && (
-                  <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5">
-                    {detailCols.map((col) => (
-                      <span
-                        key={col.id}
-                        className="inline-flex items-center gap-1 text-xs truncate max-w-48"
-                      >
-                        <span className="text-muted-foreground">{col.label}:</span>
-                        <span className="text-foreground/80">
-                          {React.Children.toArray(col.render(item))}
-                        </span>
-                      </span>
-                    ))}
+                  {/* Detail rows: label-value pairs */}
+                  {detailCols.length > 0 && (
+                    <div className="mt-1.5 grid min-w-0 grid-cols-1 gap-1">
+                      {detailCols.map((col) => (
+                        <div key={col.id} className="grid min-w-0 grid-cols-[7.5rem_1fr] gap-2 text-xs">
+                          <span className="truncate text-muted-foreground">{col.label}</span>
+                          <span className="min-w-0 truncate text-foreground/80">
+                            {React.Children.toArray(col.render(item))}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Row actions menu */}
+                {hasRowActions && (
+                  <div
+                    className="-mr-1 -mt-1 flex-shrink-0"
+                    onClick={(event) => event.stopPropagation()}
+                    onKeyDown={(event) => event.stopPropagation()}
+                  >
+                    {rowActions ? (
+                      rowActions(item)
+                    ) : onDelete ? (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground"
+                          >
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            className="text-destructive"
+                            onClick={() => onDelete(item)}
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    ) : null}
                   </div>
                 )}
+
+                {/* Chevron indicator for clickable cards (when no row actions) */}
+                {isClickable && !hasRowActions && (
+                  <ChevronRight className="h-4 w-4 flex-shrink-0 text-muted-foreground/60" />
+                )}
               </div>
-
-              {/* Row actions menu */}
-              {hasRowActions && (
-                <div
-                  className="flex-shrink-0"
-                  onClick={(event) => event.stopPropagation()}
-                  onKeyDown={(event) => event.stopPropagation()}
-                >
-                  {rowActions ? (
-                    rowActions(item)
-                  ) : onDelete ? (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-muted-foreground"
-                        >
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          className="text-destructive"
-                          onClick={() => onDelete(item)}
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  ) : null}
-                </div>
-              )}
-
-              {/* Chevron indicator for clickable cards (when no row actions) */}
-              {isClickable && !hasRowActions && (
-                <ChevronRight className="h-4 w-4 flex-shrink-0 text-muted-foreground/60" />
-              )}
             </div>
           );
         })}

@@ -216,11 +216,15 @@ function ViewSwitcher({
 
   return (
     <Tabs value={currentView} onValueChange={(value) => onViewChange(value as ViewMode)}>
-      <TabsList className="h-8 bg-primary/10 border-0">
+      <TabsList className="h-10 bg-primary/10 border-0 sm:h-8">
         {views
           .filter((view) => enabledViews.includes(view.mode))
           .map((view) => (
-            <TabsTrigger key={view.mode} value={view.mode} className="h-6 gap-1.5 px-2.5">
+            <TabsTrigger
+              key={view.mode}
+              value={view.mode}
+              className="h-8 min-w-10 gap-1.5 px-2.5 sm:h-6 sm:min-w-0"
+            >
               {view.icon}
               <span className="hidden text-[12px] sm:inline">{view.label}</span>
             </TabsTrigger>
@@ -593,25 +597,23 @@ export function TableToolbar({
   if (isMobile) {
     return (
       <div className={cn("py-2", className)}>
-        <div className="flex w-full items-center justify-end gap-2">
-          {feat.views && (
-            <div className="shrink-0">
+        <div className="flex w-full items-center justify-end gap-3">
+          <div className="flex shrink-0 items-center gap-1.5">
+            {feat.views && (
               <ViewSwitcher
                 currentView={currentView}
                 onViewChange={onViewChange}
                 enabledViews={enabledViews}
               />
-            </div>
-          )}
+            )}
 
-          {feat.search && (
-            <div className="shrink-0">
+            {feat.search && (
               <Dialog open={mobileSearchOpen} onOpenChange={setMobileSearchOpen}>
                 <DialogTrigger asChild>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-9 w-9 p-0"
+                    className="h-11 w-11 p-0"
                     aria-label="Open search"
                   >
                     <Search className="h-4 w-4" />
@@ -645,22 +647,21 @@ export function TableToolbar({
                   </div>
                 </DialogContent>
               </Dialog>
-            </div>
-          )}
+            )}
 
-          <Sheet open={mobilePanelOpen} onOpenChange={setMobilePanelOpen}>
-            <SheetTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="relative h-9 w-9 shrink-0 p-0"
-                aria-label="Open table controls"
-              >
-                <SlidersHorizontal className="h-4 w-4" />
-                <TableCountIndicator count={activeFilterCount} className="absolute -right-1 -top-1" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-full max-w-none p-0">
+            <Sheet open={mobilePanelOpen} onOpenChange={setMobilePanelOpen}>
+              <SheetTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="relative h-11 w-11 shrink-0 p-0"
+                  aria-label="Open table controls"
+                >
+                  <SlidersHorizontal className="h-4 w-4" />
+                  <TableCountIndicator count={activeFilterCount} className="absolute -right-1 -top-1" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-full max-w-none p-0">
               <SheetHeader className="border-b px-4 py-4">
                 <SheetTitle>Table Controls</SheetTitle>
               </SheetHeader>
@@ -744,8 +745,9 @@ export function TableToolbar({
                     : `${filteredItems} of ${totalItems} items`}
                 </p>
               </div>
-            </SheetContent>
-          </Sheet>
+              </SheetContent>
+            </Sheet>
+          </div>
         </div>
       </div>
     );
@@ -842,13 +844,6 @@ export function TableToolbar({
           )}
         </div>
 
-        {hasRightActions && <div className="mx-0.5 h-4 w-px shrink-0 bg-border/60" />}
-
-        <span className="inline-flex h-6 shrink-0 items-center rounded-md bg-muted/60 px-2 text-[11px] font-medium text-muted-foreground">
-          {filteredItems === totalItems
-            ? `${totalItems} items`
-            : `${filteredItems} of ${totalItems}`}
-        </span>
       </div>
     </div>
   );

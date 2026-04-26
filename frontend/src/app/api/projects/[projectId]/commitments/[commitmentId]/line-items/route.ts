@@ -1,14 +1,10 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
-import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { verifyProjectAccess, isAuthError } from "@/lib/supabase/auth-guard";
-import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
-
-interface RouteParams {
-  params: Promise<{ projectId: string; commitmentId: string }>;
-}
+import type { Database } from "@/types/database.types";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 interface LineItemInput {
   id?: string;
@@ -26,6 +22,267 @@ interface LineItemInput {
 interface UpdatePayload {
   lineItems: LineItemInput[];
   commitmentType?: "subcontract" | "purchase_order" | string;
+}
+
+type DbClient = SupabaseClient<Database>;
+type CommitmentType = "subcontract" | "purchase_order";
+type Tables = Database["public"]["Tables"];
+type SubcontractSovRow = Tables["subcontract_sov_items"]["Row"];
+type SubcontractSovInsert = Tables["subcontract_sov_items"]["Insert"];
+type SubcontractSovUpdate = Tables["subcontract_sov_items"]["Update"];
+type PurchaseOrderSovRow = Tables["purchase_order_sov_items"]["Row"];
+type PurchaseOrderSovInsert = Tables["purchase_order_sov_items"]["Insert"];
+type PurchaseOrderSovUpdate = Tables["purchase_order_sov_items"]["Update"];
+type SovRow = SubcontractSovRow | PurchaseOrderSovRow;
+type ExistingSovItem = Pick<SovRow, "id" | "billed_to_date" | "amount">;
+
+const ROUTE_WHERE = "projects/[projectId]/commitments/[commitmentId]/line-items";
+
+function invalidPayload(message: string): never {
+  throw new GuardrailError({
+    code: "INVALID_PAYLOAD",
+    where: ROUTE_WHERE,
+    message,
+    status: 400,
+  });
+}
+
+function normalizeCommitmentType(
+  value: string | null | undefined,
+  fallback?: CommitmentType,
+): CommitmentType {
+  if (value === "subcontract" || value === "purchase_order") return value;
+  if (fallback) return fallback;
+  throw new GuardrailError({
+    code: "SCHEMA_MISMATCH",
+    where: ROUTE_WHERE,
+    message: `Unsupported commitment type: ${value ?? "missing"}`,
+  });
+}
+
+async function fetchCommitmentType(
+  supabase: DbClient,
+  commitmentId: string,
+): Promise<CommitmentType> {
+  const { data, error } = await supabase
+    .from("commitments_unified")
+    .select("commitment_type")
+    .eq("id", commitmentId)
+    .single();
+
+  if (error || !data) {
+    throw new GuardrailError({
+      code: "INVALID_PAYLOAD",
+      where: `${ROUTE_WHERE}#commitment-type`,
+      message: "Commitment not found.",
+      cause: error,
+      status: 404,
+    });
+  }
+
+  return normalizeCommitmentType(data.commitment_type);
+}
+
+async function fetchSovLineItems(
+  supabase: DbClient,
+  commitmentType: CommitmentType,
+  commitmentId: string,
+): Promise<SovRow[]> {
+  if (commitmentType === "subcontract") {
+    const { data, error } = await supabase
+      .from("subcontract_sov_items")
+      .select("*")
+      .eq("subcontract_id", commitmentId)
+      .order("line_number", { ascending: true });
+
+    if (error) {
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: `${ROUTE_WHERE}#fetch-subcontract-sov`,
+        message: `Failed to fetch subcontract line items: ${error.message}`,
+        cause: error,
+      });
+    }
+    return data ?? [];
+  }
+
+  const { data, error } = await supabase
+    .from("purchase_order_sov_items")
+    .select("*")
+    .eq("purchase_order_id", commitmentId)
+    .order("line_number", { ascending: true });
+
+  if (error) {
+    throw new GuardrailError({
+      code: "INTERNAL_ERROR",
+      where: `${ROUTE_WHERE}#fetch-purchase-order-sov`,
+      message: `Failed to fetch purchase order line items: ${error.message}`,
+      cause: error,
+    });
+  }
+  return data ?? [];
+}
+
+async function fetchExistingSovItems(
+  supabase: DbClient,
+  commitmentType: CommitmentType,
+  commitmentId: string,
+): Promise<ExistingSovItem[]> {
+  if (commitmentType === "subcontract") {
+    const { data, error } = await supabase
+      .from("subcontract_sov_items")
+      .select("id, billed_to_date, amount")
+      .eq("subcontract_id", commitmentId);
+
+    if (error) {
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: `${ROUTE_WHERE}#fetch-existing-subcontract-sov`,
+        message: `Failed to fetch existing subcontract line items: ${error.message}`,
+        cause: error,
+      });
+    }
+    return data ?? [];
+  }
+
+  const { data, error } = await supabase
+    .from("purchase_order_sov_items")
+    .select("id, billed_to_date, amount")
+    .eq("purchase_order_id", commitmentId);
+
+  if (error) {
+    throw new GuardrailError({
+      code: "INTERNAL_ERROR",
+      where: `${ROUTE_WHERE}#fetch-existing-purchase-order-sov`,
+      message: `Failed to fetch existing purchase order line items: ${error.message}`,
+      cause: error,
+    });
+  }
+  return data ?? [];
+}
+
+async function deleteSovItems(
+  supabase: DbClient,
+  commitmentType: CommitmentType,
+  idsToDelete: string[],
+) {
+  if (idsToDelete.length === 0) return;
+
+  const result =
+    commitmentType === "subcontract"
+      ? await supabase
+          .from("subcontract_sov_items")
+          .delete()
+          .in("id", idsToDelete)
+      : await supabase
+          .from("purchase_order_sov_items")
+          .delete()
+          .in("id", idsToDelete);
+
+  if (result.error) {
+    throw new GuardrailError({
+      code: "INTERNAL_ERROR",
+      where: `${ROUTE_WHERE}#delete-sov-items`,
+      message: `Failed to delete removed line items: ${result.error.message}`,
+      cause: result.error,
+    });
+  }
+}
+
+function buildSubcontractSovData(
+  commitmentId: string,
+  lineNumber: number,
+  item: LineItemInput,
+): SubcontractSovUpdate & SubcontractSovInsert {
+  return {
+    subcontract_id: commitmentId,
+    line_number: lineNumber,
+    budget_code: item.budget_code || null,
+    description: item.description || "",
+    amount: item.amount ?? 0,
+    billed_to_date: item.billed_to_date ?? 0,
+    quantity: item.quantity ?? null,
+    unit_cost: item.unit_cost ?? null,
+    unit_of_measure: item.unit_of_measure ?? null,
+    retainage_percent: item.retainage_percent ?? null,
+    updated_at: new Date().toISOString(),
+  };
+}
+
+function buildPurchaseOrderSovData(
+  commitmentId: string,
+  lineNumber: number,
+  item: LineItemInput,
+): PurchaseOrderSovUpdate & PurchaseOrderSovInsert {
+  return {
+    purchase_order_id: commitmentId,
+    line_number: lineNumber,
+    budget_code: item.budget_code || null,
+    description: item.description || "",
+    amount: item.amount ?? 0,
+    billed_to_date: item.billed_to_date ?? 0,
+    quantity: item.quantity ?? null,
+    unit_cost: item.unit_cost ?? null,
+    uom: item.unit_of_measure ?? null,
+    updated_at: new Date().toISOString(),
+  };
+}
+
+async function upsertSovItem(
+  supabase: DbClient,
+  commitmentType: CommitmentType,
+  commitmentId: string,
+  item: LineItemInput,
+  lineNumber: number,
+  isExisting: boolean,
+): Promise<SovRow> {
+  if (commitmentType === "subcontract") {
+    const itemData = buildSubcontractSovData(commitmentId, lineNumber, item);
+    const result =
+      item.id && isExisting
+        ? await supabase
+            .from("subcontract_sov_items")
+            .update(itemData)
+            .eq("id", item.id)
+            .select()
+            .single()
+        : await supabase
+            .from("subcontract_sov_items")
+            .insert({
+              ...itemData,
+              created_at: new Date().toISOString(),
+            })
+            .select()
+            .single();
+
+    if (result.error) {
+      throw new Error(result.error.message);
+    }
+    return result.data;
+  }
+
+  const itemData = buildPurchaseOrderSovData(commitmentId, lineNumber, item);
+  const result =
+    item.id && isExisting
+      ? await supabase
+          .from("purchase_order_sov_items")
+          .update(itemData)
+          .eq("id", item.id)
+          .select()
+          .single()
+      : await supabase
+          .from("purchase_order_sov_items")
+          .insert({
+            ...itemData,
+            created_at: new Date().toISOString(),
+          })
+          .select()
+          .single();
+
+  if (result.error) {
+    throw new Error(result.error.message);
+  }
+  return result.data;
 }
 
 /**
@@ -53,60 +310,30 @@ interface UpdatePayload {
 export const GET = withApiGuardrails(
   "projects/[projectId]/commitments/[commitmentId]/line-items#GET",
   async ({ request, params }) => {
-  
     const { projectId, commitmentId } = await params;
     const numericProjectId = Number.parseInt(projectId, 10);
 
     if (Number.isNaN(numericProjectId)) {
-      return NextResponse.json(
-        { error: "Invalid project ID" },
-        { status: 400 },
-      );
+      invalidPayload("Invalid project ID.");
     }
 
     const authResult = await verifyProjectAccess(numericProjectId);
     if (isAuthError(authResult)) return authResult;
     const supabase = authResult.serviceClient;
 
-    // First determine the commitment type
-    const { data: unifiedData, error: unifiedError } = await supabase
-      .from("commitments_unified")
-      .select("commitment_type")
-      .eq("id", commitmentId)
-      .single();
-
-    if (unifiedError || !unifiedData) {
-      return NextResponse.json(
-        { error: "Commitment not found" },
-        { status: 404 },
-      );
-    }
-
-    const isSubcontract = unifiedData.commitment_type === "subcontract";
-    const tableName = isSubcontract
-      ? "subcontract_sov_items"
-      : "purchase_order_sov_items";
-    const fkColumn = isSubcontract ? "subcontract_id" : "purchase_order_id";
-
-    const { data: lineItems, error: lineItemsError } = await (supabase as any)
-      .from(tableName)
-      .select("*")
-      .eq(fkColumn, commitmentId)
-      .order("line_number", { ascending: true });
-
-    if (lineItemsError) {
-      return NextResponse.json(
-        { error: "Failed to fetch line items", details: lineItemsError.message },
-        { status: 400 },
-      );
-    }
+    const commitmentType = await fetchCommitmentType(supabase, commitmentId);
+    const lineItems = await fetchSovLineItems(
+      supabase,
+      commitmentType,
+      commitmentId,
+    );
 
     return NextResponse.json({
       success: true,
-      data: lineItems || [],
-      commitmentType: unifiedData.commitment_type,
+      data: lineItems,
+      commitmentType,
     });
-    },
+  },
 );
 
 /**
@@ -148,15 +375,11 @@ export const GET = withApiGuardrails(
 export const PUT = withApiGuardrails(
   "projects/[projectId]/commitments/[commitmentId]/line-items#PUT",
   async ({ request, params }) => {
-  
     const { projectId, commitmentId } = await params;
     const numericProjectId = Number.parseInt(projectId, 10);
 
     if (Number.isNaN(numericProjectId)) {
-      return NextResponse.json(
-        { error: "Invalid project ID" },
-        { status: 400 },
-      );
+      invalidPayload("Invalid project ID.");
     }
 
     const authResult = await verifyProjectAccess(numericProjectId);
@@ -170,46 +393,28 @@ export const PUT = withApiGuardrails(
     const { lineItems, commitmentType: bodyCommitmentType } = body;
 
     if (!lineItems || !Array.isArray(lineItems)) {
-      return NextResponse.json(
-        { error: "Invalid payload: lineItems array required" },
-        { status: 400 },
-      );
+      invalidPayload("Invalid payload: lineItems array required.");
     }
 
-    // Determine the commitment type if not provided
-    let commitmentType = bodyCommitmentType;
-    if (!commitmentType) {
-      const { data: unifiedData } = await supabase
-        .from("commitments_unified")
-        .select("commitment_type")
-        .eq("id", commitmentId)
-        .single();
-
-      commitmentType = unifiedData?.commitment_type || "subcontract";
-    }
-
-    const isSubcontract = commitmentType === "subcontract";
-    const tableName = isSubcontract
-      ? "subcontract_sov_items"
-      : "purchase_order_sov_items";
-    const fkColumn = isSubcontract ? "subcontract_id" : "purchase_order_id";
+    const commitmentType = bodyCommitmentType
+      ? normalizeCommitmentType(bodyCommitmentType, "subcontract")
+      : await fetchCommitmentType(supabase, commitmentId);
 
     // Fetch existing line items (with billed_to_date + amount so we can lock invoiced lines)
-    const { data: existingItems } = await (supabase as any)
-      .from(tableName)
-      .select("id, billed_to_date, amount")
-      .eq(fkColumn, commitmentId);
+    const existingItems = await fetchExistingSovItems(
+      supabase,
+      commitmentType,
+      commitmentId,
+    );
 
     const existingById = new Map<
       string,
       { billed_to_date: number | null; amount: number | null }
     >(
-      (existingItems || []).map(
-        (item: { id: string; billed_to_date: number | null; amount: number | null }) => [
-          item.id,
-          { billed_to_date: item.billed_to_date, amount: item.amount },
-        ],
-      ),
+      existingItems.map((item) => [
+        item.id,
+        { billed_to_date: item.billed_to_date, amount: item.amount },
+      ]),
     );
     const existingIds = new Set<string>(existingById.keys());
     const newItemIds = new Set<string>(
@@ -223,14 +428,16 @@ export const PUT = withApiGuardrails(
     const idsToDelete = [...existingIds].filter((id) => !newItemIds.has(id));
     const blockedDeletes = idsToDelete.filter(isBilled);
     if (blockedDeletes.length > 0) {
-      return NextResponse.json(
-        {
-          error: "Cannot delete invoiced SOV lines",
-          details: `${blockedDeletes.length} line item(s) have billed_to_date > 0 and are locked. Remove the invoices first.`,
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: `${ROUTE_WHERE}#delete-invoiced-lines`,
+        message: "Cannot delete invoiced SOV lines.",
+        details: {
+          reason: `${blockedDeletes.length} line item(s) have billed_to_date > 0 and are locked. Remove the invoices first.`,
           blockedIds: blockedDeletes,
         },
-        { status: 400 },
-      );
+        status: 400,
+      });
     }
 
     // Block amount changes on invoiced lines
@@ -245,29 +452,19 @@ export const PUT = withApiGuardrails(
       }
     }
     if (blockedAmountChanges.length > 0) {
-      return NextResponse.json(
-        {
-          error: "Cannot change amount on invoiced SOV lines",
-          details: `${blockedAmountChanges.length} line item(s) have billed_to_date > 0; their amount is locked.`,
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: `${ROUTE_WHERE}#change-invoiced-line-amount`,
+        message: "Cannot change amount on invoiced SOV lines.",
+        details: {
+          reason: `${blockedAmountChanges.length} line item(s) have billed_to_date > 0; their amount is locked.`,
           blockedIds: blockedAmountChanges,
         },
-        { status: 400 },
-      );
+        status: 400,
+      });
     }
 
-    if (idsToDelete.length > 0) {
-      const { error: deleteError } = await (supabase as any)
-        .from(tableName)
-        .delete()
-        .in("id", idsToDelete);
-
-      if (deleteError) {
-        return NextResponse.json(
-          { error: "Failed to delete removed line items", details: deleteError.message },
-          { status: 400 },
-        );
-      }
-    }
+    await deleteSovItems(supabase, commitmentType, idsToDelete);
 
     // Upsert line items
     const upsertedItems: unknown[] = [];
@@ -277,54 +474,19 @@ export const PUT = withApiGuardrails(
       const item = lineItems[i];
       const lineNumber = item.line_number ?? i + 1;
 
-      const itemData: Record<string, unknown> = {
-        [fkColumn]: commitmentId,
-        line_number: lineNumber,
-        budget_code: item.budget_code || null,
-        description: item.description || "",
-        amount: item.amount ?? 0,
-        billed_to_date: item.billed_to_date ?? 0,
-        retainage_percent: item.retainage_percent ?? null,
-        updated_at: new Date().toISOString(),
-      };
-
-      // Purchase order SOV carries quantity / unit pricing
-      if (!isSubcontract) {
-        itemData.quantity = item.quantity ?? null;
-        itemData.unit_cost = item.unit_cost ?? null;
-        itemData.unit_of_measure = item.unit_of_measure ?? null;
-      }
-
-      if (item.id && existingIds.has(item.id)) {
-        // Update existing item
-        const { data: updatedItem, error: updateError } = await (supabase as any)
-          .from(tableName)
-          .update(itemData)
-          .eq("id", item.id)
-          .select()
-          .single();
-
-        if (updateError) {
-          errors.push(`Line ${lineNumber}: ${updateError.message}`);
-          continue;
-        }
-        upsertedItems.push(updatedItem);
-      } else {
-        // Insert new item
-        const { data: insertedItem, error: insertError } = await (supabase as any)
-          .from(tableName)
-          .insert({
-            ...itemData,
-            created_at: new Date().toISOString(),
-          })
-          .select()
-          .single();
-
-        if (insertError) {
-          errors.push(`Line ${lineNumber}: ${insertError.message}`);
-          continue;
-        }
-        upsertedItems.push(insertedItem);
+      try {
+        const upsertedItem = await upsertSovItem(
+          supabase,
+          commitmentType,
+          commitmentId,
+          item,
+          lineNumber,
+          Boolean(item.id && existingIds.has(item.id)),
+        );
+        upsertedItems.push(upsertedItem);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        errors.push(`Line ${lineNumber}: ${message}`);
       }
     }
 
@@ -344,5 +506,5 @@ export const PUT = withApiGuardrails(
         idsToDelete.length > 0 ? `, deleted ${idsToDelete.length}` : ""
       }`,
     });
-    },
+  },
 );

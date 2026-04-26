@@ -12,6 +12,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { apiFetch } from "@/lib/api-client";
 
 type ViolationType =
@@ -46,6 +47,9 @@ type Violation = {
 };
 
 const POS_KEY = "design-widget-pos";
+// Disabled while the design feedback launcher is not part of the active QA workflow.
+// Flip this to true to restore the launcher, panel, and right-click reporting.
+const DESIGN_VIOLATION_OVERLAY_ENABLED = false;
 
 function loadPos(): Position {
   if (typeof window === "undefined") return { x: 16, y: 700 };
@@ -67,7 +71,14 @@ function timeAgo(dateStr: string): string {
 }
 
 export function DesignViolationOverlay() {
+  if (!DESIGN_VIOLATION_OVERLAY_ENABLED) return null;
+
+  return <DesignViolationOverlayContent />;
+}
+
+function DesignViolationOverlayContent() {
   const pathname = usePathname();
+  const isMobile = useIsMobile();
   const [menu, setMenu] = useState<ContextMenu>(null);
   const [selected, setSelected] = useState<ViolationType[]>([]);
   const [notes, setNotes] = useState("");
@@ -196,6 +207,7 @@ export function DesignViolationOverlay() {
 
   useEffect(() => {
     function onContextMenu(e: MouseEvent) {
+      if (isMobile) return;
       const target = e.target as Element;
       if (
         menuRef.current?.contains(target) ||
@@ -225,7 +237,7 @@ export function DesignViolationOverlay() {
       document.removeEventListener("contextmenu", onContextMenu);
       document.removeEventListener("keydown", onKeyDown);
     };
-  }, []);
+  }, [isMobile]);
 
   function toggleType(type: ViolationType) {
     setSelected(prev =>
@@ -285,6 +297,8 @@ export function DesignViolationOverlay() {
   }
 
   const totalBadge = stats.open + stats.in_progress;
+
+  if (isMobile) return null;
 
   // Position panel relative to widget
   const panelStyle: React.CSSProperties = {

@@ -91,11 +91,11 @@ export const POST = withApiGuardrails(
       );
     }
 
-    // 2. Fetch line items for this PCO (pco_id column is string-typed)
+    // 2. Fetch line items for this PCO
     const { data: lineItems } = await supabase
       .from("pco_line_items")
       .select("*")
-      .eq("pco_id", String(numericPcoId))
+      .eq("pco_id", numericPcoId)
       .order("id", { ascending: true });
 
     // 3. Auto-generate next PCCO number (safe parsing — treat non-numeric as 0)

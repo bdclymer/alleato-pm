@@ -26,8 +26,6 @@ interface RouteParams {
   params: Promise<{ projectId: string; pcoId: string }>;
 }
 
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
 /**
  * GET - List all line items for a PCO
  */
@@ -36,8 +34,8 @@ export const GET = withApiGuardrails(
   async ({ request, params }) => {
 
     const { pcoId } = await params;
-    // pco_line_items.pco_id is uuid in DB — reject non-UUID params before hitting Postgres
-    if (!UUID_RE.test(pcoId)) {
+    const numericPcoId = parseInt(pcoId, 10);
+    if (Number.isNaN(numericPcoId)) {
       return NextResponse.json({ error: "Invalid PCO id" }, { status: 400 });
     }
 
@@ -46,7 +44,7 @@ export const GET = withApiGuardrails(
     const { data, error } = await supabase
       .from("pco_line_items")
       .select("*")
-      .eq("pco_id", pcoId)
+      .eq("pco_id", numericPcoId)
       .order("id", { ascending: true });
 
     if (error) {
@@ -112,11 +110,11 @@ export const POST = withApiGuardrails(
       );
     }
 
-    // Schema note: pco_line_items.pco_id is string-typed; legacy fields
+    // Schema note: legacy fields
     // (cost_code, uom, line_type, category, subcontractor_id, line_amount) were
     // replaced by (budget_code_id, unit_of_measure, amount, pco_type).
     const insertData = {
-      pco_id: String(numericPcoId),
+      pco_id: numericPcoId,
       pco_type: body.pco_type || "commitment",
       description: body.description,
       budget_code_id: body.budget_code_id || null,
@@ -192,12 +190,12 @@ export const PATCH = withApiGuardrails(
       );
     }
 
-    // Verify line item belongs to this PCO (pco_id is string-typed)
+    // Verify line item belongs to this PCO 
     const { data: existing, error: fetchError } = await supabase
       .from("pco_line_items")
       .select("id")
       .eq("id", body.id)
-      .eq("pco_id", String(numericPcoId))
+      .eq("pco_id", numericPcoId)
       .single();
 
     if (fetchError || !existing) {
@@ -308,12 +306,12 @@ export const DELETE = withApiGuardrails(
       );
     }
 
-    // Delete and return the deleted item for confirmation (pco_id is string-typed)
+    // Delete and return the deleted item for confirmation 
     const { data, error } = await supabase
       .from("pco_line_items")
       .delete()
       .eq("id", body.lineItemId)
-      .eq("pco_id", String(numericPcoId))
+      .eq("pco_id", numericPcoId)
       .select()
       .single();
 

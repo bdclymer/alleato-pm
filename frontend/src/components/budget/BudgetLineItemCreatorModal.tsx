@@ -37,11 +37,6 @@ import {
   CommandSeparator,
 } from "@/components/ui/command";
 import {
-  BaseSidebar,
-  SidebarBody,
-  SidebarFooter,
-} from "@/components/budget/modals/BaseSidebar";
-import {
   BaseModal,
   ModalBody,
   ModalFooter,
@@ -578,13 +573,13 @@ export function BudgetLineItemCreatorModal({
 
   return (
     <>
-      <BaseSidebar
-        open={isOpen}
+      <BaseModal
+        isOpen={isOpen}
         onClose={onClose}
         title="Add Budget Line Items"
         size="xl"
       >
-        <SidebarBody className="min-h-0 px-6 pb-4">
+        <ModalBody className="min-h-0 px-6 pb-4">
           {/* Smart Copy UOM Toggle */}
           <div className="mb-4 flex gap-4 text-xs">
             <label className="flex cursor-pointer items-center gap-2 text-muted-foreground">
@@ -845,9 +840,9 @@ export function BudgetLineItemCreatorModal({
               Add Line Item
             </Button>
           </div>
-        </SidebarBody>
+        </ModalBody>
 
-        <SidebarFooter>
+        <ModalFooter>
           <Button variant="outline" onClick={onClose} disabled={isCreating}>
             Cancel
           </Button>
@@ -869,8 +864,8 @@ export function BudgetLineItemCreatorModal({
               `Create ${rows.length} Line Item${rows.length > 1 ? "s" : ""}`
             )}
           </Button>
-        </SidebarFooter>
-      </BaseSidebar>
+        </ModalFooter>
+      </BaseModal>
 
       {/* Create Budget Code Modal */}
       <BaseModal

@@ -142,8 +142,8 @@ function ViewModeTabs({
   onChange: (mode: ViewMode) => void;
 }) {
   return (
-    <nav className="flex overflow-x-auto" aria-label="View mode">
-      <div className="flex min-w-max space-x-5">
+    <nav className="flex overflow-x-auto overscroll-x-contain pb-1 scrollbar-hide" aria-label="View mode">
+      <div className="flex min-w-max space-x-2 sm:space-x-5">
         {viewModeConfig.map(({ mode: viewMode, label, icon: Icon }) => (
           <button
             type="button"
@@ -151,7 +151,7 @@ function ViewModeTabs({
             onClick={() => onChange(viewMode)}
             aria-label={`Switch to ${label} view`}
             className={cn(
-              "group inline-flex items-center gap-2 whitespace-nowrap pb-2 pt-2 text-sm font-medium transition-colors",
+              "group inline-flex min-h-11 items-center gap-2 whitespace-nowrap px-2 pb-2 pt-2 text-sm font-medium transition-colors",
               mode === viewMode
                 ? "text-[hsl(var(--schedule-view-active))]"
                 : "text-muted-foreground hover:text-foreground"
@@ -741,9 +741,10 @@ export default function ProjectSchedulePage() {
 
   // Actions for header — just the primary action, like every other page
   const headerActions = (
-    <div className="flex items-center gap-2">
+    <div className="flex w-full items-center gap-2 sm:w-auto">
       <Button
         size="sm"
+        className="max-sm:min-h-11"
         onClick={() => handleAddTask()}
       >
         <Plus />

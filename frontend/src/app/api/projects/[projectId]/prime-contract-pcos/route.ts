@@ -132,28 +132,10 @@ export const GET = withApiGuardrails(
       return apiErrorResponse(error);
     }
 
-    // Fetch line item totals for each PCO
-    const pcoIds = (pcos || []).map((p) => p.id);
+    // Prime contract PCO IDs are UUIDs, while the live pco_line_items table
+    // only references numeric potential_change_orders IDs. Use stored totals
+    // until the UUID-compatible line-item table/migration is present.
     const lineItemTotals: Record<string, { count: number; amount: number }> = {};
-
-    if (pcoIds.length > 0) {
-      const { data: lineItems } = await supabase
-        .from("pco_line_items")
-        .select("pco_id, amount")
-        .in("pco_id", pcoIds)
-        .eq("pco_type", "prime");
-
-      if (lineItems) {
-        for (const item of lineItems) {
-          const key = item.pco_id;
-          if (!lineItemTotals[key]) {
-            lineItemTotals[key] = { count: 0, amount: 0 };
-          }
-          lineItemTotals[key].count += 1;
-          lineItemTotals[key].amount += item.amount || 0;
-        }
-      }
-    }
 
     // Enrich PCOs with computed fields
     const enrichedPcos = (pcos || []).map((pco) => {

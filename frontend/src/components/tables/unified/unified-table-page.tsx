@@ -374,7 +374,7 @@ export function UnifiedTablePage<T>({
   } | null>(null);
   const [isResizingColumn, setIsResizingColumn] = React.useState(false);
   const hasUserManagedColumnOrderRef = React.useRef(false);
-  const selectionColumnWidth = isFullBleedTable ? 72 : 44;
+  const selectionColumnWidth = 40;
 
   // ── Side panel collapse & resize state ───────────────────────────────
   const panelStorageKey = sidePanel?.storageKey ?? "unified-table-side-panel";
@@ -755,9 +755,6 @@ export function UnifiedTablePage<T>({
   );
   const lastLeftPinnedColumnId = visibleLeftPinnedColumnIds.at(-1);
   const firstRightPinnedColumnId = visibleRightPinnedColumnIds[0];
-  const selectionColumnNeedsPinnedBoundary =
-    hasRowSelection && !lastLeftPinnedColumnId && orderedVisibleColumns.length > 0;
-
   const getPinnedStyle = React.useCallback(
     (columnId: string): React.CSSProperties | undefined => {
       if (!resolvedFeatures.enableColumnPinning) return undefined;
@@ -986,9 +983,9 @@ export function UnifiedTablePage<T>({
     <>
       {header.title ? headerContent : null}
       {(tabs || !toolbarInlineWithHeader) && (
-        <div className={cn("flex flex-col gap-2 lg:flex-row lg:items-end", isCompactDensity ? "pb-1 pt-0" : cn("pb-3", containerPadding ? "pt-1 sm:pt-2" : "pt-0"), tabs ? "lg:justify-between" : "lg:justify-end")}>
-          {tabs && <PageTabs tabs={tabs} variant="inline" className="lg:flex-1" />}
-          {!toolbarInlineWithHeader ? tableToolbar : null}
+        <div className={cn("flex flex-col gap-2", isCompactDensity ? "pb-1 pt-0" : cn("pb-3", containerPadding ? "pt-1 sm:pt-2" : "pt-0"))}>
+          {tabs && <PageTabs tabs={tabs} variant="inline" className="-mr-4 w-[calc(100vw-1rem)] sm:mr-0 sm:w-full" />}
+          {!toolbarInlineWithHeader ? <div className="flex justify-end">{tableToolbar}</div> : null}
         </div>
       )}
     </>
@@ -1099,29 +1096,18 @@ export function UnifiedTablePage<T>({
                 <TableRow className="border-border/80">
                   {hasRowSelection && (
                     <TableHead
-                      className={cn(
-                        isFullBleedTable ? "pl-8 pr-2" : "px-2",
-                      )}
+                      className="px-2"
                       style={{
                         width: selectionColumnWidth,
                         minWidth: selectionColumnWidth,
                         maxWidth: selectionColumnWidth,
-                        paddingLeft: isFullBleedTable ? "32px" : undefined,
                         position: "sticky",
                         left: 0,
                         zIndex: 3,
                         background: "hsl(var(--card))",
-                        boxShadow: selectionColumnNeedsPinnedBoundary
-                          ? "inset -1px 0 0 hsl(var(--border)), 6px 0 8px -8px rgba(15,23,42,0.35)"
-                          : undefined,
                       }}
                     >
-                      <div
-                        className={cn(
-                          "flex items-center",
-                          isFullBleedTable ? "justify-start pl-4" : "justify-center",
-                        )}
-                      >
+                      <div className="flex items-center justify-center">
                         <Checkbox
                           checked={allSelected ? true : someSelected ? "indeterminate" : false}
                           onCheckedChange={(checked) => handleSelectAll(Boolean(checked))}
@@ -1368,30 +1354,19 @@ export function UnifiedTablePage<T>({
                   >
                     {hasRowSelection && (
                       <TableCell
-                        className={cn(
-                          isFullBleedTable ? "pl-8 pr-2" : "px-2",
-                        )}
+                        className="px-2"
                         style={{
                           width: selectionColumnWidth,
                           minWidth: selectionColumnWidth,
                           maxWidth: selectionColumnWidth,
-                          paddingLeft: isFullBleedTable ? "32px" : undefined,
                           position: "sticky",
                           left: 0,
                           zIndex: 2,
                           background: "hsl(var(--background))",
-                          boxShadow: selectionColumnNeedsPinnedBoundary
-                            ? "inset -1px 0 0 hsl(var(--border)), 6px 0 8px -8px rgba(15,23,42,0.35)"
-                            : undefined,
                         }}
                         onClick={(event) => event.stopPropagation()}
                       >
-                        <div
-                          className={cn(
-                            "flex items-center",
-                            isFullBleedTable ? "justify-start pl-4" : "justify-center",
-                          )}
-                        >
+                        <div className="flex items-center justify-center">
                           <Checkbox
                             checked={selectedIds.includes(table.getRowId(item))}
                             onCheckedChange={(checked) =>

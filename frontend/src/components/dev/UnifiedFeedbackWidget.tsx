@@ -13,6 +13,8 @@
 import { Agentation } from "agentation";
 import { useEffect, useMemo, useState } from "react";
 
+import { useIsMobile } from "@/hooks/use-mobile";
+
 const MCP_ENDPOINT = "http://localhost:4747";
 const TOOLBAR_SETTINGS_KEY = "feedback-toolbar-settings";
 const BLOCK_INTERACTIONS_MIGRATION_KEY =
@@ -20,6 +22,7 @@ const BLOCK_INTERACTIONS_MIGRATION_KEY =
 
 export function UnifiedFeedbackWidget() {
   const [isReady, setIsReady] = useState(false);
+  const isMobile = useIsMobile();
 
   const webhookUrl = useMemo(() => {
     if (typeof window === "undefined") return undefined;
@@ -53,7 +56,7 @@ export function UnifiedFeedbackWidget() {
     }
   }, []);
 
-  if (!isReady) return null;
+  if (!isReady || isMobile) return null;
 
   return <Agentation endpoint={MCP_ENDPOINT} webhookUrl={webhookUrl} />;
 }

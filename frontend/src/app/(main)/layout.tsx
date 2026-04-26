@@ -10,6 +10,7 @@ import { ProcoreReferencePanel } from "@/components/header/procore-reference-pan
 import { CommentsSidebarPanel } from "@/components/header/comments-sidebar";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { LiveCursors } from "@/components/live-cursors/LiveCursors";
+import { AlleatoAiOnboarding } from "@/components/onboarding/AlleatoAiOnboarding";
 // AdminFeedbackWidget replaced by UnifiedFeedbackWidget in root layout
 import { feedbackTargetProps } from "@/lib/admin-feedback/constants";
 
@@ -17,7 +18,10 @@ import { feedbackTargetProps } from "@/lib/admin-feedback/constants";
 function Overlays() {
   return (
     <React.Suspense fallback={null}>
-      <LiveCursors />
+      <div className="contents">
+        <LiveCursors />
+        <AlleatoAiOnboarding />
+      </div>
     </React.Suspense>
   );
 }
@@ -50,31 +54,32 @@ export default function MainLayout({
 
   return (
     <SidebarProvider defaultOpen={false}>
-      {!isDrawingViewer && <AppSidebar />}
-      <SidebarInset className="h-svh overflow-hidden">
+      {!isDrawingViewer && <AppSidebar key="app-sidebar" />}
+      <SidebarInset key="app-shell" className="h-svh overflow-hidden">
         <CreateProjectDevConfigProvider>
           <div className="flex min-h-0 flex-1 overflow-hidden">
             <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-              {!isDrawingViewer && <SiteHeader />}
+              {!isDrawingViewer && <SiteHeader key="site-header" />}
               <main
+                key="main-content"
                 className="flex flex-1 flex-col overflow-auto scrollbar-hide min-w-0 min-h-0"
                 {...feedbackTargetProps("app.main-content")}
               >
-                {children}
+                <React.Fragment key="route-content">{children}</React.Fragment>
                 {!isDrawingViewer && (
-                  <div className="mt-auto">
+                  <div key="site-footer" className="mt-auto">
                     <SiteFooter />
                   </div>
                 )}
               </main>
-              <ProcoreReferencePanel />
+              <ProcoreReferencePanel key="procore-reference-panel" />
             </div>
             <React.Suspense fallback={null}>
-              <CommentsSidebarPanel />
+              <CommentsSidebarPanel key="comments-sidebar-panel" />
             </React.Suspense>
           </div>
         </CreateProjectDevConfigProvider>
-        <Overlays />
+        <Overlays key="floating-overlays" />
       </SidebarInset>
     </SidebarProvider>
   );

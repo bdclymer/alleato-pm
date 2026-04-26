@@ -109,13 +109,6 @@ export const POST = withApiGuardrails<{ projectId: string }>(
         };
       };
     };
-    const runtimeSupabase = supabase as unknown as {
-      rpc: (
-        fn: string,
-        args: Record<string, unknown>,
-      ) => Promise<{ data: unknown; error: unknown }>;
-    };
-
     // Get current user
     const {
       data: { user },
@@ -190,7 +183,13 @@ export const POST = withApiGuardrails<{ projectId: string }>(
 
     for (const item of resolvedLineItems) {
       if (!validCostCodeIds.has(item.costCodeId)) {
-        throw new Error(`Cost code not found: ${item.costCodeId}`);
+        return NextResponse.json(
+          {
+            error: "Cost code not found",
+            costCodeId: item.costCodeId,
+          },
+          { status: 400 },
+        );
       }
 
       // Create new budget_line. cost_type_id is required by the DB schema.
@@ -203,6 +202,46 @@ export const POST = withApiGuardrails<{ projectId: string }>(
           },
           { status: 400 },
         );
+      }
+
+      const { data: existingLine, error: existingLineError } = await supabase
+        .from("budget_lines")
+        .select(
+          "id, original_amount, description, quantity, unit_of_measure, unit_cost",
+        )
+        .eq("project_id", projectIdNum)
+        .eq("cost_code_id", item.costCodeId)
+        .eq("cost_type_id", item.costTypeId)
+        .is("sub_job_id", null)
+        .maybeSingle();
+
+      if (existingLineError) {
+        return apiErrorResponse(existingLineError);
+      }
+
+      if (existingLine) {
+        const { data: updatedLine, error: updateError } = await supabase
+          .from("budget_lines")
+          .update({
+            original_amount:
+              (Number(existingLine.original_amount) || 0) + (item.amount || 0),
+            description: item.description || existingLine.description,
+            quantity: item.qty ?? existingLine.quantity,
+            unit_of_measure: item.uom ?? existingLine.unit_of_measure,
+            unit_cost: item.unitCost ?? existingLine.unit_cost,
+            updated_by: user.id,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", existingLine.id)
+          .select()
+          .single();
+
+        if (updateError) {
+          return apiErrorResponse(updateError);
+        }
+
+        results.push(updatedLine);
+        continue;
       }
 
       const runtimeSupabase = supabase as unknown as {

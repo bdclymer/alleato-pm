@@ -3,7 +3,7 @@
 import * as React from "react";
 import type { ReactElement, ReactNode } from "react";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
-import { ChevronDown, FileText, MoreHorizontal, Plus, RefreshCw, RotateCcw, Trash2 } from "lucide-react";
+import { ChevronDown, FileSignature, FileText, MoreHorizontal, Plus, RefreshCw, RotateCcw, ShoppingCart, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { PermissionGate } from "@/components/domain/permissions/PermissionGate";
@@ -461,6 +461,24 @@ export default function ProjectCommitmentsPage(): ReactElement {
     });
   }, []);
 
+  const expandableCommitmentIds = React.useMemo(
+    () => commitments.map((commitment) => commitment.id),
+    [commitments],
+  );
+  const allRowsExpanded =
+    expandableCommitmentIds.length > 0 &&
+    expandableCommitmentIds.every((id) => expandedIds.has(id));
+  const handleToggleAllRows = React.useCallback(() => {
+    setExpandedIds((prev) => {
+      const shouldCollapse =
+        expandableCommitmentIds.length > 0 &&
+        expandableCommitmentIds.every((id) => prev.has(id));
+
+      if (shouldCollapse) return new Set();
+      return new Set(expandableCommitmentIds);
+    });
+  }, [expandableCommitmentIds]);
+
   const tableColumns = React.useMemo(
     () => buildCommitmentTableColumns(projectId, expandedIds, handleToggleExpand, handleStatusChange),
     [projectId, expandedIds, handleToggleExpand, handleStatusChange],
@@ -681,21 +699,24 @@ export default function ProjectCommitmentsPage(): ReactElement {
         header={{
           title: "Commitments",
           description: "Manage purchase orders and subcontracts",
+          mobileActionsInline: true,
           actions: (
             <PermissionGate projectId={projectId} module="contracts" level="write">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button size="sm">
+                  <Button size="sm" className="max-sm:h-11 max-sm:w-11 max-sm:p-0" aria-label="Create commitment">
                     <Plus />
-                    Create
-                    <ChevronDown />
+                    <span className="max-sm:sr-only">Create</span>
+                    <ChevronDown className="max-sm:hidden" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem onClick={handleCreateSubcontract}>
+                    <FileSignature className="mr-2 h-4 w-4 text-muted-foreground" />
                     Subcontract
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={handleCreatePurchaseOrder}>
+                    <ShoppingCart className="mr-2 h-4 w-4 text-muted-foreground" />
                     Purchase Order
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -705,7 +726,7 @@ export default function ProjectCommitmentsPage(): ReactElement {
         }}
         tabs={tabs}
         layout={{
-          fullBleedTable: false,
+          fullBleedTable: true,
         }}
         toolbar={{
           totalItems,
@@ -732,6 +753,25 @@ export default function ProjectCommitmentsPage(): ReactElement {
             : undefined,
           customActions: (
             <TooltipProvider>
+              {!isRecycleBinTab && !isChangeOrdersTab ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 shrink-0"
+                      disabled={expandableCommitmentIds.length === 0}
+                      onClick={handleToggleAllRows}
+                      aria-label={allRowsExpanded ? "Collapse all rows" : "Expand all rows"}
+                    >
+                      <ChevronDown className={allRowsExpanded ? "rotate-180 transition-transform" : "transition-transform"} />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {allRowsExpanded ? "Collapse all rows" : "Expand all rows"}
+                  </TooltipContent>
+                </Tooltip>
+              ) : null}
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button

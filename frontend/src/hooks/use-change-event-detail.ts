@@ -3,17 +3,17 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
+import type { ChangeEventFormData } from "@/components/domain/change-events/ChangeEventForm";
+import { apiFetch } from "@/lib/api-client";
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import type {
+  ChangeEventAttachment,
   ChangeEventDetail,
   ChangeEventDetailLineItem,
-  ChangeEventAttachment,
   ChangeEventHistoryEntry,
   ChangeEventRelatedItem,
   ChangeEventRelatedItemOption,
 } from "@/types/change-events";
-import type { ChangeEventFormData } from "@/components/domain/change-events/ChangeEventForm";
-
-/* ── Constants ─────────────────────────────────────────────────────── */
 
 const STATUS_MAP: Record<string, string> = {
   open: "Open",
@@ -34,40 +34,63 @@ const REASON_MAP: Record<string, string> = {
   existing_condition: "Existing Condition",
 };
 
-/* ── Helper ────────────────────────────────────────────────────────── */
+type DetailResponse = ChangeEventDetail & {
+  lineItems?: ChangeEventDetailLineItem[];
+  attachments?: ChangeEventAttachment[];
+  history?: Record<string, unknown>[];
+};
 
 function baseUrl(projectId: number, changeEventId: string) {
   return `/api/projects/${projectId}/change-events/${changeEventId}`;
 }
 
-async function parseError(res: Response, fallback: string): Promise<string> {
-  try {
-    const json = await res.json();
-    const base = json.error ?? json.message ?? fallback;
-
-    // Surface Zod validation details (array of {field, message})
-    if (Array.isArray(json.details)) {
-      const fieldErrors = json.details
-        .map((d: { field?: string; message?: string }) =>
-          d.field ? `${d.field}: ${d.message}` : d.message,
-        )
-        .filter(Boolean)
-        .join("; ");
-      if (fieldErrors) return `${base} — ${fieldErrors}`;
-    }
-
-    // Surface Supabase error details (string)
-    if (typeof json.details === "string" && json.details) {
-      return `${base} — ${json.details}`;
-    }
-
-    return base;
-  } catch {
-    return `${fallback} (HTTP ${res.status})`;
-  }
+function dataArray<T>(payload: T[] | { data?: T[] } | null): T[] {
+  if (Array.isArray(payload)) return payload;
+  return payload?.data ?? [];
 }
 
-/* ── Hook ──────────────────────────────────────────────────────────── */
+function reportChangeEventPartialFailure(
+  operation: string,
+  error: unknown,
+  projectId: number,
+  changeEventId: string,
+  userVisibleFallback: string,
+) {
+  reportNonCriticalFailure({
+    area: "change-event-detail",
+    operation,
+    error,
+    userVisibleFallback,
+    metadata: { projectId, changeEventId },
+  });
+}
+
+function mapHistoryEntry(h: Record<string, unknown>): ChangeEventHistoryEntry {
+  return {
+    id: (h.id as string) ?? crypto.randomUUID(),
+    changeEventId:
+      (h.change_event_id as string) ?? (h.changeEventId as string),
+    action:
+      (h.changeType as string) ??
+      (h.change_type as string) ??
+      (h.action as string) ??
+      "update",
+    fieldName: (h.field_name as string) ?? (h.fieldName as string) ?? "",
+    oldValue:
+      (h.old_value as string | null) ?? (h.oldValue as string | null) ?? null,
+    newValue:
+      (h.new_value as string | null) ?? (h.newValue as string | null) ?? null,
+    changedBy:
+      (h.changed_by as string | null) ??
+      (h.changedBy as string | null) ??
+      null,
+    changedAt:
+      (h.changed_at as string) ??
+      (h.changedAt as string) ??
+      new Date().toISOString(),
+    description: (h.description as string) ?? undefined,
+  };
+}
 
 export function useChangeEventDetail(
   projectId: number,
@@ -88,149 +111,116 @@ export function useChangeEventDetail(
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  /* ── Fetch detail ─────────────────────────────────────────────── */
-
   const fetchChangeEventDetails = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
 
-      const res = await fetch(baseUrl(projectId, changeEventId));
-      if (!res.ok) {
-        const msg = await parseError(res, "Failed to fetch change event");
-        setError(msg);
-        return;
-      }
-
-      const data = await res.json();
+      const data = await apiFetch<DetailResponse>(
+        baseUrl(projectId, changeEventId),
+      );
       setChangeEvent(data);
 
-      // Line items — prefer embedded, fall back to separate fetch
-      if (data.lineItems && Array.isArray(data.lineItems)) {
+      if (Array.isArray(data.lineItems)) {
         setLineItems(data.lineItems);
       } else {
         try {
-          const liRes = await fetch(
-            `${baseUrl(projectId, changeEventId)}/line-items`,
+          const liData = await apiFetch<
+            ChangeEventDetailLineItem[] | { data?: ChangeEventDetailLineItem[] }
+          >(`${baseUrl(projectId, changeEventId)}/line-items`);
+          setLineItems(dataArray(liData));
+        } catch (err) {
+          reportChangeEventPartialFailure(
+            "fetch-line-items",
+            err,
+            projectId,
+            changeEventId,
+            "Line items are temporarily unavailable on this change event.",
           );
-          if (liRes.ok) {
-            const liData = await liRes.json();
-            setLineItems(Array.isArray(liData) ? liData : liData.data ?? []);
-          }
-        } catch {
-          // Non-critical — leave line items empty
         }
       }
 
-      // History — map from snake_case API format
-      if (data.history && Array.isArray(data.history)) {
-        const mapped: ChangeEventHistoryEntry[] = data.history.map(
-          (h: Record<string, unknown>) => ({
-            id: (h.id as string) ?? crypto.randomUUID(),
-            changeEventId:
-              (h.change_event_id as string) ?? (h.changeEventId as string),
-            action: (h.changeType as string) ?? (h.change_type as string) ?? (h.action as string) ?? "update",
-            fieldName:
-              (h.field_name as string) ?? (h.fieldName as string) ?? "",
-            oldValue:
-              (h.old_value as string | null) ??
-              (h.oldValue as string | null) ??
-              null,
-            newValue:
-              (h.new_value as string | null) ??
-              (h.newValue as string | null) ??
-              null,
-            changedBy:
-              (h.changed_by as string | null) ??
-              (h.changedBy as string | null) ??
-              null,
-            changedAt:
-              (h.changed_at as string) ??
-              (h.changedAt as string) ??
-              new Date().toISOString(),
-            description: (h.description as string) ?? undefined,
-          }),
-        );
-        setHistoryEntries(mapped);
+      if (Array.isArray(data.history)) {
+        setHistoryEntries(data.history.map(mapHistoryEntry));
       }
 
-      // Attachments — prefer embedded, fall back to separate fetch
-      if (data.attachments && Array.isArray(data.attachments)) {
+      if (Array.isArray(data.attachments)) {
         setAttachments(data.attachments);
       } else {
         try {
-          const attRes = await fetch(
-            `${baseUrl(projectId, changeEventId)}/attachments`,
+          const attData = await apiFetch<
+            ChangeEventAttachment[] | { data?: ChangeEventAttachment[] }
+          >(`${baseUrl(projectId, changeEventId)}/attachments`);
+          setAttachments(dataArray(attData));
+        } catch (err) {
+          reportChangeEventPartialFailure(
+            "fetch-attachments",
+            err,
+            projectId,
+            changeEventId,
+            "Attachments are temporarily unavailable on this change event.",
           );
-          if (attRes.ok) {
-            const attData = await attRes.json();
-            setAttachments(
-              Array.isArray(attData) ? attData : attData.data ?? [],
-            );
-          }
-        } catch {
-          // Non-critical
         }
       }
     } catch (err) {
-      const msg =
-        err instanceof Error ? err.message : "Failed to fetch change event";
-      setError(msg);
+      setError(err instanceof Error ? err.message : "Failed to fetch change event");
     } finally {
       setIsLoading(false);
     }
   }, [projectId, changeEventId]);
 
-  /* ── Fetch RFQ count ─────────────────────────────────────────── */
-
   const fetchRfqCount = useCallback(async () => {
     try {
-      const res = await fetch(
+      const json = await apiFetch<unknown[] | { data?: unknown[] }>(
         `/api/projects/${projectId}/change-events/rfqs?changeEventId=${changeEventId}`,
       );
-      if (!res.ok) return;
-      const json = await res.json();
-      const items: unknown[] = Array.isArray(json) ? json : (json.data ?? []);
-      setRfqCount(items.length);
-    } catch {
-      // Non-critical
+      setRfqCount(dataArray(json).length);
+    } catch (err) {
+      reportChangeEventPartialFailure(
+        "fetch-rfq-count",
+        err,
+        projectId,
+        changeEventId,
+        "RFQ count is temporarily unavailable.",
+      );
     }
   }, [projectId, changeEventId]);
-
-  /* ── Fetch related items ──────────────────────────────────────── */
 
   const fetchRelatedItems = useCallback(async () => {
     try {
-      const res = await fetch(
-        `${baseUrl(projectId, changeEventId)}/related-items`,
+      const data = await apiFetch<
+        ChangeEventRelatedItem[] | { data?: ChangeEventRelatedItem[] }
+      >(`${baseUrl(projectId, changeEventId)}/related-items`);
+      setRelatedItems(dataArray(data));
+    } catch (err) {
+      reportChangeEventPartialFailure(
+        "fetch-related-items",
+        err,
+        projectId,
+        changeEventId,
+        "Related items are temporarily unavailable on this change event.",
       );
-      if (res.ok) {
-        const data = await res.json();
-        setRelatedItems(Array.isArray(data) ? data : data.data ?? []);
-      }
-    } catch {
-      // Non-critical — leave related items empty
     }
   }, [projectId, changeEventId]);
 
-  /* ── Effects ──────────────────────────────────────────────────── */
-
   useEffect(() => {
-    fetchChangeEventDetails();
+    void fetchChangeEventDetails();
   }, [fetchChangeEventDetails]);
 
   useEffect(() => {
-    fetchRelatedItems();
+    void fetchRelatedItems();
   }, [fetchRelatedItems]);
 
   useEffect(() => {
     void fetchRfqCount();
   }, [fetchRfqCount]);
 
-  /* ── Actions ──────────────────────────────────────────────────── */
-
   const refetch = useCallback(async () => {
-    await Promise.all([fetchChangeEventDetails(), fetchRelatedItems(), fetchRfqCount()]);
+    await Promise.all([
+      fetchChangeEventDetails(),
+      fetchRelatedItems(),
+      fetchRfqCount(),
+    ]);
   }, [fetchChangeEventDetails, fetchRelatedItems, fetchRfqCount]);
 
   const updateStatus = useCallback(
@@ -240,9 +230,8 @@ export function useChangeEventDetail(
       const normalized = STATUS_MAP[newStatus] ?? newStatus;
 
       try {
-        const res = await fetch(baseUrl(projectId, changeEventId), {
+        await apiFetch(baseUrl(projectId, changeEventId), {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             project_id: projectId,
             title: changeEvent.title,
@@ -250,22 +239,12 @@ export function useChangeEventDetail(
           }),
         });
 
-        if (!res.ok) {
-          const msg = await parseError(res, "Failed to update status");
-          toast.error(msg);
-          throw new Error(msg);
-        }
-
         setChangeEvent((prev) =>
           prev ? { ...prev, status: normalized } : prev,
         );
         toast.success(`Status updated to ${normalized}`);
       } catch (err) {
-        if (
-          !(err instanceof Error && err.message.startsWith("Failed to update"))
-        ) {
-          toast.error("Failed to update status");
-        }
+        toast.error(err instanceof Error ? err.message : "Failed to update status");
         throw err;
       }
     },
@@ -274,23 +253,15 @@ export function useChangeEventDetail(
 
   const deleteChangeEvent = useCallback(async () => {
     try {
-      const res = await fetch(baseUrl(projectId, changeEventId), {
+      await apiFetch(baseUrl(projectId, changeEventId), {
         method: "DELETE",
       });
 
-      if (!res.ok) {
-        const msg = await parseError(res, "Failed to delete change event");
-        toast.error(msg);
-        throw new Error(msg);
-      }
-
       toast.success("Change event deleted");
     } catch (err) {
-      if (
-        !(err instanceof Error && err.message.startsWith("Failed to delete"))
-      ) {
-        toast.error("Failed to delete change event");
-      }
+      toast.error(
+        err instanceof Error ? err.message : "Failed to delete change event",
+      );
       throw err;
     }
   }, [projectId, changeEventId]);
@@ -298,14 +269,12 @@ export function useChangeEventDetail(
   const submitEdit = useCallback(
     async (data: ChangeEventFormData) => {
       try {
-        // Map reason value
         const reason = data.changeReason
           ? REASON_MAP[data.changeReason] ?? data.changeReason
           : undefined;
 
-        const res = await fetch(baseUrl(projectId, changeEventId), {
+        await apiFetch(baseUrl(projectId, changeEventId), {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             title: data.title,
             status: data.status,
@@ -321,41 +290,38 @@ export function useChangeEventDetail(
           }),
         });
 
-        if (!res.ok) {
-          const msg = await parseError(res, "Failed to update change event");
-          toast.error(msg);
-          throw new Error(msg);
-        }
-
-        // Delete line items that were removed in the form
+        const lineItemFailures: string[] = [];
         const formItemIds = new Set(
-          data.lineItems.filter((i) => i.id).map((i) => i.id),
+          data.lineItems.filter((item) => item.id).map((item) => item.id),
         );
         const existingItemIds = lineItems
-          .filter((i) => i.id)
-          .map((i) => i.id);
+          .filter((item) => item.id)
+          .map((item) => item.id);
         const deletedIds = existingItemIds.filter(
           (id) => !formItemIds.has(id),
         );
 
         for (const deletedId of deletedIds) {
-          const delRes = await fetch(
-            `${baseUrl(projectId, changeEventId)}/line-items/${deletedId}`,
-            { method: "DELETE" },
-          );
-          if (!delRes.ok && delRes.status !== 204) {
-            const msg = await parseError(
-              delRes,
-              "Failed to delete line item",
+          try {
+            await apiFetch(
+              `${baseUrl(projectId, changeEventId)}/line-items/${deletedId}`,
+              { method: "DELETE" },
             );
-            toast.error(msg);
+          } catch (err) {
+            const msg =
+              err instanceof Error ? err.message : "Failed to delete line item";
+            lineItemFailures.push(`Deleted line item ${deletedId}: ${msg}`);
+            reportNonCriticalFailure({
+              area: "change-event-detail",
+              operation: "delete-line-item-during-edit",
+              error: err,
+              userVisibleFallback: `Deleted line item ${deletedId} was not removed.`,
+              metadata: { projectId, changeEventId, lineItemId: deletedId },
+            });
           }
         }
 
-        // Save line items
-        const lineItemFailures: string[] = [];
         for (const [index, item] of data.lineItems.entries()) {
-          // Parse prefixed commitment IDs (form stores as "sub-{id}" or "po-{id}")
           let commitmentId: string | null = null;
           let commitmentType: string | null = null;
           const contractValue = item.contract;
@@ -372,52 +338,56 @@ export function useChangeEventDetail(
             description: item.description,
             sortOrder: index,
           };
-          if (item.revenueUnitOfMeasure) lineItemPayload.unitOfMeasure = item.revenueUnitOfMeasure;
-          if (item.costQuantity != null) lineItemPayload.quantity = item.costQuantity;
-          if (item.costUnitCost != null) lineItemPayload.unitCost = item.costUnitCost;
+          if (item.revenueUnitOfMeasure) {
+            lineItemPayload.unitOfMeasure = item.revenueUnitOfMeasure;
+          }
+          if (item.costQuantity != null) {
+            lineItemPayload.quantity = item.costQuantity;
+          }
+          if (item.costUnitCost != null) {
+            lineItemPayload.unitCost = item.costUnitCost;
+          }
           if (item.costRom != null) lineItemPayload.costRom = item.costRom;
-          if (item.revenueRom != null) lineItemPayload.revenueRom = item.revenueRom;
-          if (item.nonCommittedCost != null) lineItemPayload.nonCommittedCost = item.nonCommittedCost;
+          if (item.revenueRom != null) {
+            lineItemPayload.revenueRom = item.revenueRom;
+          }
+          if (item.nonCommittedCost != null) {
+            lineItemPayload.nonCommittedCost = item.nonCommittedCost;
+          }
           if (item.budgetCode) lineItemPayload.budgetCodeId = item.budgetCode;
           if (item.vendor) lineItemPayload.vendorId = item.vendor;
           if (commitmentId) lineItemPayload.commitmentId = commitmentId;
           if (commitmentType) lineItemPayload.commitmentType = commitmentType;
-          if (item.commitmentLineItemId) lineItemPayload.commitmentLineItemId = item.commitmentLineItemId;
+          if (item.commitmentLineItemId) {
+            lineItemPayload.commitmentLineItemId = item.commitmentLineItemId;
+          }
 
           const itemLabel = item.description
             ? `"${item.description.slice(0, 40)}"`
             : `#${index + 1}`;
+          const itemUrl = item.id
+            ? `${baseUrl(projectId, changeEventId)}/line-items/${item.id}`
+            : `${baseUrl(projectId, changeEventId)}/line-items`;
 
-          if (item.id) {
-            // Update existing
-            const liRes = await fetch(
-              `${baseUrl(projectId, changeEventId)}/line-items/${item.id}`,
-              {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(lineItemPayload),
+          try {
+            await apiFetch(itemUrl, {
+              method: item.id ? "PATCH" : "POST",
+              body: JSON.stringify(lineItemPayload),
+            });
+          } catch (err) {
+            const msg = err instanceof Error ? err.message : "Unknown error";
+            lineItemFailures.push(`Line item ${itemLabel}: ${msg}`);
+            reportNonCriticalFailure({
+              area: "change-event-detail",
+              operation: item.id ? "patch-line-item" : "post-line-item",
+              error: err,
+              userVisibleFallback: `Line item ${itemLabel} was not saved.`,
+              metadata: {
+                projectId,
+                changeEventId,
+                lineItemId: item.id,
               },
-            );
-            if (!liRes.ok) {
-              const msg = await parseError(liRes, "Unknown error");
-              lineItemFailures.push(`Line item ${itemLabel}: ${msg}`);
-              console.error("Line item PATCH failed:", msg, lineItemPayload);
-            }
-          } else {
-            // Create new
-            const liRes = await fetch(
-              `${baseUrl(projectId, changeEventId)}/line-items`,
-              {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(lineItemPayload),
-              },
-            );
-            if (!liRes.ok) {
-              const msg = await parseError(liRes, "Unknown error");
-              lineItemFailures.push(`Line item ${itemLabel}: ${msg}`);
-              console.error("Line item POST failed:", msg, lineItemPayload);
-            }
+            });
           }
         }
 
@@ -427,33 +397,21 @@ export function useChangeEventDetail(
           }
         }
 
-        // Upload attachments
         if (data.attachments && data.attachments.length > 0) {
           const formData = new FormData();
           for (const file of data.attachments) {
             formData.append("files", file);
           }
-          await fetch(
-            `${baseUrl(projectId, changeEventId)}/attachments`,
-            {
-              method: "POST",
-              body: formData,
-            },
-          );
+          await apiFetch(`${baseUrl(projectId, changeEventId)}/attachments`, {
+            method: "POST",
+            body: formData,
+          });
         }
 
-        // Refetch to sync state
         await fetchChangeEventDetails();
         toast.success("Change event updated");
       } catch (err) {
-        if (
-          !(
-            err instanceof Error &&
-            err.message.startsWith("Failed to update change event")
-          )
-        ) {
-          toast.error("Failed to save changes");
-        }
+        toast.error(err instanceof Error ? err.message : "Failed to save changes");
         throw err;
       }
     },
@@ -463,28 +421,21 @@ export function useChangeEventDetail(
   const deleteLineItem = useCallback(
     async (lineItemId: string) => {
       try {
-        const res = await fetch(
+        await apiFetch(
           `${baseUrl(projectId, changeEventId)}/line-items/${lineItemId}`,
           { method: "DELETE" },
         );
-        if (!res.ok) {
-          const msg = await parseError(res, "Failed to delete line item");
-          toast.error(msg);
-          throw new Error(msg);
-        }
         setLineItems((prev) => prev.filter((li) => li.id !== lineItemId));
         toast.success("Line item deleted");
       } catch (err) {
-        if (!(err instanceof Error && err.message.startsWith("Failed to delete"))) {
-          toast.error("Failed to delete line item");
-        }
+        toast.error(
+          err instanceof Error ? err.message : "Failed to delete line item",
+        );
         throw err;
       }
     },
     [projectId, changeEventId],
   );
-
-  /* ── Related item actions ─────────────────────────────────────── */
 
   const fetchRelatedItemOptions = useCallback(
     async (
@@ -493,13 +444,22 @@ export function useChangeEventDetail(
     ): Promise<ChangeEventRelatedItemOption[]> => {
       try {
         const params = new URLSearchParams({ type, search });
-        const res = await fetch(
+        const data = await apiFetch<
+          ChangeEventRelatedItemOption[] | {
+            data?: ChangeEventRelatedItemOption[];
+          }
+        >(
           `${baseUrl(projectId, changeEventId)}/related-items/options?${params}`,
         );
-        if (!res.ok) return [];
-        const data = await res.json();
-        return Array.isArray(data) ? data : data.data ?? [];
-      } catch {
+        return dataArray(data);
+      } catch (err) {
+        reportChangeEventPartialFailure(
+          "fetch-related-item-options",
+          err,
+          projectId,
+          changeEventId,
+          "Related item options are temporarily unavailable.",
+        );
         return [];
       }
     },
@@ -509,32 +469,20 @@ export function useChangeEventDetail(
   const linkRelatedItem = useCallback(
     async (type: string, relatedId: string) => {
       try {
-        const res = await fetch(
-          `${baseUrl(projectId, changeEventId)}/related-items`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              relatedType: type,
-              relatedId,
-            }),
-          },
-        );
-
-        if (!res.ok) {
-          const msg = await parseError(res, "Failed to link related item");
-          toast.error(msg);
-          throw new Error(msg);
-        }
+        await apiFetch(`${baseUrl(projectId, changeEventId)}/related-items`, {
+          method: "POST",
+          body: JSON.stringify({
+            relatedType: type,
+            relatedId,
+          }),
+        });
 
         await fetchRelatedItems();
         toast.success("Related item linked");
       } catch (err) {
-        if (
-          !(err instanceof Error && err.message.startsWith("Failed to link"))
-        ) {
-          toast.error("Failed to link related item");
-        }
+        toast.error(
+          err instanceof Error ? err.message : "Failed to link related item",
+        );
         throw err;
       }
     },
@@ -543,74 +491,60 @@ export function useChangeEventDetail(
 
   const unlinkRelatedItem = useCallback(
     async (relatedItemId: string) => {
-      // Optimistic removal
       setRelatedItems((prev) =>
         prev.filter((item) => item.id !== relatedItemId),
       );
 
       try {
-        const res = await fetch(
+        await apiFetch(
           `${baseUrl(projectId, changeEventId)}/related-items/${relatedItemId}`,
           { method: "DELETE" },
         );
 
-        if (!res.ok) {
-          // Revert on failure
-          await fetchRelatedItems();
-          const msg = await parseError(res, "Failed to unlink related item");
-          toast.error(msg);
-          throw new Error(msg);
-        }
-
         toast.success("Related item removed");
       } catch (err) {
-        if (
-          !(err instanceof Error && err.message.startsWith("Failed to unlink"))
-        ) {
-          toast.error("Failed to unlink related item");
-        }
+        await fetchRelatedItems();
+        toast.error(
+          err instanceof Error ? err.message : "Failed to unlink related item",
+        );
         throw err;
       }
     },
     [projectId, changeEventId, fetchRelatedItems],
   );
 
-  /* ── Return ───────────────────────────────────────────────────── */
-
-  const actions = useMemo(() => ({
-    refetch,
-    updateStatus,
-    deleteChangeEvent,
-    deleteLineItem,
-    submitEdit,
-    fetchRelatedItemOptions,
-    linkRelatedItem,
-    unlinkRelatedItem,
-  }), [
-    refetch,
-    updateStatus,
-    deleteChangeEvent,
-    deleteLineItem,
-    submitEdit,
-    fetchRelatedItemOptions,
-    linkRelatedItem,
-    unlinkRelatedItem,
-  ]);
+  const actions = useMemo(
+    () => ({
+      refetch,
+      updateStatus,
+      deleteChangeEvent,
+      deleteLineItem,
+      submitEdit,
+      fetchRelatedItemOptions,
+      linkRelatedItem,
+      unlinkRelatedItem,
+    }),
+    [
+      refetch,
+      updateStatus,
+      deleteChangeEvent,
+      deleteLineItem,
+      submitEdit,
+      fetchRelatedItemOptions,
+      linkRelatedItem,
+      unlinkRelatedItem,
+    ],
+  );
 
   return {
-    // Data
     changeEvent,
     lineItems,
     attachments,
     historyEntries,
     relatedItems,
     rfqCount,
-
-    // Loading / error
     isLoading,
     error,
-
-    // Actions
     actions,
   };
 }

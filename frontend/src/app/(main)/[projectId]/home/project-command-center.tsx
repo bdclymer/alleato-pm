@@ -24,7 +24,7 @@ import { useBudgetData } from "@/hooks/use-budget-data";
 import { useCurrentUserName } from "@/hooks/use-current-user-name";
 import { useProjectRoles, type ProjectRole } from "@/hooks/use-project-roles";
 import { AssignMemberDialog } from "@/components/domain/directory/AssignMemberDialog";
-import { KpiRow, StatusBadge, Skeleton, EmptyState } from "@/components/ds";
+import { Button, StatusBadge, EmptyState } from "@/components/ds";
 import { ContentSectionStack } from "@/components/layout";
 import {
   Sheet,
@@ -33,7 +33,6 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import { RealtimeCursors } from "@/components/realtime-cursors";
 import { EditProjectSidebar } from "@/components/project/edit-project-sidebar";
 import type { Database } from "@/types/database.types";
@@ -48,9 +47,11 @@ type Meeting = Database["public"]["Tables"]["document_metadata"]["Row"];
 type ChangeOrder = any;
 type RFI = Database["public"]["Tables"]["rfis"]["Row"];
 type Contract = Database["public"]["Tables"]["prime_contracts"]["Row"];
-type ContractLineItem = Database["public"]["Tables"]["contract_line_items"]["Row"];
+type ContractLineItem =
+  Database["public"]["Tables"]["contract_line_items"]["Row"];
 type ChangeEvent = Database["public"]["Tables"]["change_events"]["Row"];
-type ProjectTeamMember = Database["public"]["Functions"]["get_project_team"]["Returns"][number];
+type ProjectTeamMember =
+  Database["public"]["Functions"]["get_project_team"]["Returns"][number];
 type Submittal = Database["public"]["Tables"]["submittals"]["Row"];
 
 interface Commitment {
@@ -100,7 +101,10 @@ interface ProjectCommandCenterProps {
   commitments: Commitment[];
   commitmentTotal?: number;
   contracts: Contract[];
-  contractLineItems?: Pick<ContractLineItem, "contract_id" | "total_cost" | "quantity" | "unit_cost">[];
+  contractLineItems?: Pick<
+    ContractLineItem,
+    "contract_id" | "total_cost" | "quantity" | "unit_cost"
+  >[];
   changeEvents?: ChangeEvent[];
   schedule?: any[];
   team?: ProjectTeamMember[];
@@ -170,7 +174,7 @@ function SectionHeading({
 }) {
   return (
     <div className="mb-3 flex items-center justify-between">
-      <span className="text-[11px] font-semibold uppercase tracking-wider text-primary">
+      <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
         {children}
       </span>
       {action}
@@ -178,7 +182,13 @@ function SectionHeading({
   );
 }
 
-function ViewAllLink({ href, label = "View All" }: { href: string; label?: string }) {
+function ViewAllLink({
+  href,
+  label = "View All",
+}: {
+  href: string;
+  label?: string;
+}) {
   return (
     <Link
       href={href}
@@ -189,96 +199,238 @@ function ViewAllLink({ href, label = "View All" }: { href: string; label?: strin
   );
 }
 
-/* ─────────────────────────────────────────────────────────────
-   Section: Financial Overview
-───────────────────────────────────────────────────────────── */
+type HomeTone = "success" | "warning" | "danger" | "neutral";
 
-interface FinancialOverviewSectionProps {
-  projectId: string;
-  budgetLoading: boolean;
-  revisedBudget: number;
-  costToDate: number;
-  spendPct: number;
-  originalBudgetAmount: number;
-  primeContractValue: number;
-  commitmentTotal: number;
-  commitments: Commitment[];
-  contracts: Contract[];
-  directCosts: number;
+interface AttentionItem {
+  id: string;
+  title: string;
+  detail: string;
+  href: string;
+  tone: Exclude<HomeTone, "neutral">;
 }
 
-function FinancialOverviewSection({
-  projectId,
-  budgetLoading,
-  revisedBudget,
-  costToDate,
-  spendPct,
-  originalBudgetAmount,
-  primeContractValue,
-  commitmentTotal,
-  commitments,
-  contracts,
-  directCosts,
-}: FinancialOverviewSectionProps) {
+interface HealthCell {
+  label: string;
+  value: string;
+  detail: string;
+  href: string;
+  tone: HomeTone;
+}
+
+function toneDotClass(tone: HomeTone): string {
+  if (tone === "success") return "bg-status-success";
+  if (tone === "warning") return "bg-primary";
+  if (tone === "danger") return "bg-destructive";
+  return "bg-muted-foreground/40";
+}
+
+function toneTextClass(tone: HomeTone): string {
+  if (tone === "success") return "text-status-success";
+  if (tone === "warning") return "text-primary";
+  if (tone === "danger") return "text-destructive";
+  return "text-muted-foreground";
+}
+
+function ProjectHealthCells({ cells }: { cells: HealthCell[] }) {
+  return (
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      {cells.map((cell) => (
+        <Link
+          key={cell.label}
+          href={cell.href}
+          className="group min-w-0 rounded-md bg-background/80 p-4 shadow-sm transition-colors hover:bg-background"
+        >
+          <div className="mb-3 flex items-center gap-2">
+            <span
+              className={cn(
+                "h-1.5 w-1.5 rounded-full",
+                toneDotClass(cell.tone),
+              )}
+            />
+            <span className="truncate text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              {cell.label}
+            </span>
+          </div>
+          <p className="truncate text-xl font-semibold tabular-nums text-foreground">
+            {cell.value}
+          </p>
+          <p className="mt-1 truncate text-sm text-muted-foreground">
+            {cell.detail}
+          </p>
+        </Link>
+      ))}
+    </div>
+  );
+}
+
+function ProjectPageIdentity({
+  projectName,
+  jobNumber,
+  healthScore,
+  setupCompletedCount,
+  setupTotalCount,
+  onOpenSetup,
+  onEditProject,
+}: {
+  projectName: string;
+  jobNumber?: string | number | null;
+  healthScore?: number | null;
+  setupCompletedCount: number;
+  setupTotalCount: number;
+  onOpenSetup: () => void;
+  onEditProject: () => void;
+}) {
+  return (
+    <header className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+      <div className="min-w-0">
+        {jobNumber && (
+          <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Job # {jobNumber}
+          </div>
+        )}
+        <h1 className="text-4xl font-semibold leading-tight text-foreground sm:text-5xl">
+          {projectName}
+        </h1>
+      </div>
+
+      <div className="flex shrink-0 items-start gap-2">
+        <ReadinessIndicator
+          completedCount={setupCompletedCount}
+          totalCount={setupTotalCount}
+          onOpen={onOpenSetup}
+        />
+        {healthScore != null && (
+          <div className="w-28 rounded-md bg-background/80 px-3 py-2 text-right shadow-sm">
+            <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Health
+            </div>
+            <div className="text-xl font-semibold tabular-nums tracking-tight">
+              {healthScore}
+              <span className="text-sm font-normal text-muted-foreground">
+                /100
+              </span>
+            </div>
+          </div>
+        )}
+        <Button variant="default" size="sm" onClick={onEditProject}>
+          Edit
+        </Button>
+      </div>
+    </header>
+  );
+}
+
+function ProjectCommandSurface({ healthCells }: { healthCells: HealthCell[] }) {
+  return (
+    <section className="relative overflow-hidden rounded-lg bg-muted/30 p-4 shadow-sm sm:p-6 lg:p-8">
+      <div
+        className="pointer-events-none absolute right-8 top-8 hidden h-40 w-40 rotate-12 rounded-lg bg-primary/10 blur-xl lg:block"
+        aria-hidden="true"
+      />
+      <div className="relative space-y-3">
+        <SectionHeading>Project health</SectionHeading>
+        <ProjectHealthCells cells={healthCells} />
+      </div>
+    </section>
+  );
+}
+
+function AttentionSidebarSection({ items }: { items: AttentionItem[] }) {
+  if (items.length === 0) {
+    return null;
+  }
+
   return (
     <section>
-      <SectionHeading action={<ViewAllLink href={`/${projectId}/budget`} label="View Budget" />}>
-        Financial Overview
-      </SectionHeading>
-
-      {budgetLoading ? (
-        <div className="space-y-3">
-          <Skeleton className="h-16 w-full" />
-          <Skeleton className="h-4 w-full" />
-        </div>
-      ) : (
-        <div className="space-y-4">
-          <KpiRow
-            metrics={[
-              {
-                label: "Budget",
-                value: fmtFull(revisedBudget),
-                href: `/${projectId}/budget`,
-                context: costToDate > 0
-                  ? `${fmtCompact(costToDate)} of ${fmtCompact(revisedBudget)} spent`
-                  : revisedBudget !== originalBudgetAmount
-                  ? `Original ${fmtFull(originalBudgetAmount)}`
-                  : undefined,
-                progress: {
-                  value: spendPct,
-                  tone: spendPct > 90 ? "danger" : spendPct > 75 ? "warning" : "neutral",
-                },
-              },
-              {
-                label: "Prime Contract",
-                value: fmtFull(primeContractValue || null),
-                href: `/${projectId}/prime-contracts`,
-                context: contracts.length > 0
-                  ? `${contracts.length} contract${contracts.length !== 1 ? "s" : ""}`
-                  : undefined,
-              },
-              {
-                label: "Commitments",
-                value: fmtFull(commitmentTotal || null),
-                href: `/${projectId}/commitments`,
-                context: commitments.length > 0
-                  ? `${commitments.length} commitment${commitments.length !== 1 ? "s" : ""}`
-                  : undefined,
-              },
-              {
-                label: "Direct Costs",
-                value: fmtFull(directCosts || null),
-                href: `/${projectId}/direct-costs`,
-                context: costToDate > 0
-                  ? `${pct(directCosts, costToDate)}% of cost to date`
-                  : undefined,
-              },
-            ]}
-          />
-
-        </div>
-      )}
+      <SectionHeading>Needs attention</SectionHeading>
+      <div className="space-y-3">
+        {items.slice(0, 4).map((item) => (
+          <Link
+            key={item.id}
+            href={item.href}
+            className={cn(
+              "group relative block rounded-md px-4 py-3 transition-colors",
+              item.tone === "danger"
+                ? "bg-destructive/5 hover:bg-destructive/10"
+                : "bg-primary/10 hover:bg-primary/15",
+            )}
+          >
+            <span
+              className={cn(
+                "absolute bottom-3 left-0 top-3 w-1 rounded-r-full",
+                item.tone === "danger" ? "bg-destructive/70" : "bg-primary/70",
+              )}
+            />
+            <div className="flex items-start gap-3">
+              <AlertTriangle
+                className={cn(
+                  "mt-0.5 h-4 w-4 shrink-0",
+                  toneTextClass(item.tone),
+                )}
+              />
+              <div className="min-w-0 flex-1">
+                <p
+                  className={cn(
+                    "text-sm font-medium",
+                    toneTextClass(item.tone),
+                  )}
+                >
+                  {item.title}
+                </p>
+                <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                  {item.detail}
+                </p>
+              </div>
+              <ChevronRight
+                className={cn(
+                  "mt-1 h-3.5 w-3.5 shrink-0 transition-transform group-hover:translate-x-0.5",
+                  toneTextClass(item.tone),
+                )}
+              />
+            </div>
+          </Link>
+        ))}
+      </div>
     </section>
+  );
+}
+
+function ReadinessIndicator({
+  completedCount,
+  totalCount,
+  onOpen,
+}: {
+  completedCount: number;
+  totalCount: number;
+  onOpen: () => void;
+}) {
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      onClick={onOpen}
+      className="group h-auto w-44 flex-col items-stretch gap-1 px-3 py-2 text-left hover:bg-muted/50"
+    >
+      <div className="mb-1 flex items-center justify-between gap-3">
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          Setup readiness
+        </span>
+        <span className="text-xs font-medium tabular-nums text-primary">
+          {completedCount}/{totalCount}
+        </span>
+      </div>
+      <div className="flex items-center gap-1">
+        {Array.from({ length: totalCount }).map((_, index) => (
+          <span
+            key={index}
+            className={cn(
+              "h-1 flex-1 rounded-full",
+              index < completedCount ? "bg-primary" : "bg-muted",
+            )}
+          />
+        ))}
+      </div>
+    </Button>
   );
 }
 
@@ -289,7 +441,8 @@ function FinancialOverviewSection({
 const DEFAULT_ROLES = ["Project Manager", "Superintendent", "Architect"];
 
 function ProjectTeamSection({ projectId }: { projectId: string }) {
-  const { roles, isLoading, updateRoleMembers, createRole } = useProjectRoles(projectId);
+  const { roles, isLoading, updateRoleMembers, createRole } =
+    useProjectRoles(projectId);
   const [assignDialog, setAssignDialog] = React.useState<{
     open: boolean;
     role: ProjectRole | null;
@@ -302,7 +455,7 @@ function ProjectTeamSection({ projectId }: { projectId: string }) {
     );
     const firstMember = dbRole?.members[0] ?? null;
     const person = firstMember?.person ?? null;
-    return { roleName, dbRole: dbRole ?? null as ProjectRole | null, person };
+    return { roleName, dbRole: dbRole ?? (null as ProjectRole | null), person };
   });
 
   const openDialog = async (dbRole: ProjectRole | null, roleName: string) => {
@@ -326,7 +479,10 @@ function ProjectTeamSection({ projectId }: { projectId: string }) {
     <section>
       <SectionHeading
         action={
-          <ViewAllLink href={`/${projectId}/directory`} label="Project Directory" />
+          <ViewAllLink
+            href={`/${projectId}/directory`}
+            label="Project Directory"
+          />
         }
       >
         Project Team
@@ -353,14 +509,15 @@ function ProjectTeamSection({ projectId }: { projectId: string }) {
             const isCreating = creating === roleName;
 
             return (
-              <button
+              <Button
                 key={roleName}
                 type="button"
+                variant="ghost"
                 onClick={() => openDialog(dbRole, roleName)}
                 disabled={isCreating}
                 className={cn(
-                  "w-full flex items-center gap-3 border-b border-border/50 py-2.5 last:border-0 text-left",
-                  "group hover:bg-muted/40 -mx-3 px-3 rounded-md transition-colors cursor-pointer"
+                  "h-auto w-full justify-start gap-3 border-b border-border/50 py-2.5 text-left last:border-0",
+                  "group hover:bg-muted/40 -mx-3 px-3 rounded-md transition-colors cursor-pointer",
                 )}
               >
                 {person ? (
@@ -371,8 +528,12 @@ function ProjectTeamSection({ projectId }: { projectId: string }) {
                       </AvatarFallback>
                     </Avatar>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">{displayName}</p>
-                      <p className="mt-0.5 truncate text-xs text-muted-foreground">{roleName}</p>
+                      <p className="truncate text-sm font-medium">
+                        {displayName}
+                      </p>
+                      <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                        {roleName}
+                      </p>
                     </div>
                     <span className="shrink-0 text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
                       Edit
@@ -382,15 +543,19 @@ function ProjectTeamSection({ projectId }: { projectId: string }) {
                   <>
                     <div className="h-8 w-8 shrink-0 rounded-full border border-dashed border-border bg-muted" />
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm text-muted-foreground italic">Not Assigned</p>
-                      <p className="mt-0.5 truncate text-xs text-muted-foreground">{roleName}</p>
+                      <p className="truncate text-sm text-muted-foreground italic">
+                        Not Assigned
+                      </p>
+                      <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                        {roleName}
+                      </p>
                     </div>
                     <span className="shrink-0 text-xs text-primary">
                       {isCreating ? "..." : "Assign"}
                     </span>
                   </>
                 )}
-              </button>
+              </Button>
             );
           })}
         </div>
@@ -471,14 +636,23 @@ function PrimeContractSection({
 }: {
   projectId: string;
   contracts: Contract[];
-  contractLineItems: Pick<ContractLineItem, "contract_id" | "total_cost" | "quantity" | "unit_cost">[];
+  contractLineItems: Pick<
+    ContractLineItem,
+    "contract_id" | "total_cost" | "quantity" | "unit_cost"
+  >[];
 }) {
   const primary = contracts[0] ?? null;
-  const additional = contracts.slice(1, 3);
 
   return (
     <section>
-      <SectionHeading action={<ViewAllLink href={`/${projectId}/prime-contracts`} label="View All" />}>
+      <SectionHeading
+        action={
+          <ViewAllLink
+            href={`/${projectId}/prime-contracts`}
+            label="View All"
+          />
+        }
+      >
         Prime Contract
       </SectionHeading>
 
@@ -504,7 +678,9 @@ function PrimeContractSection({
               <div className="mb-3 flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium text-foreground leading-snug">
-                    {primary.title ?? primary.contract_number ?? "Prime Contract"}
+                    {primary.title ??
+                      primary.contract_number ??
+                      "Prime Contract"}
                   </p>
                   {primary.contract_number && primary.title && (
                     <p className="mt-0.5 text-xs text-muted-foreground">
@@ -522,11 +698,16 @@ function PrimeContractSection({
                     Contract Value
                   </p>
                   <p className="mt-0.5 text-base font-semibold tabular-nums text-foreground">
-                    {fmtFull(primary.revised_contract_value || primary.original_contract_value || null)}
+                    {fmtFull(
+                      primary.revised_contract_value ||
+                        primary.original_contract_value ||
+                        null,
+                    )}
                   </p>
                   {primary.revised_contract_value > 0 &&
                     primary.original_contract_value > 0 &&
-                    primary.revised_contract_value !== primary.original_contract_value && (
+                    primary.revised_contract_value !==
+                      primary.original_contract_value && (
                       <p className="mt-0.5 text-[11px] text-muted-foreground tabular-nums">
                         Original {fmtCompact(primary.original_contract_value)}
                       </p>
@@ -560,12 +741,15 @@ function PrimeContractSection({
                     <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                       Completion
                     </p>
-                    <p className={cn(
-                      "mt-0.5 text-sm font-medium",
-                      isPast(new Date(primary.end_date)) && primary.status !== "complete"
-                        ? "text-destructive"
-                        : "text-foreground"
-                    )}>
+                    <p
+                      className={cn(
+                        "mt-0.5 text-sm font-medium",
+                        isPast(new Date(primary.end_date)) &&
+                          primary.status !== "complete"
+                          ? "text-destructive"
+                          : "text-foreground",
+                      )}
+                    >
                       {format(new Date(primary.end_date), "MMM d, yyyy")}
                     </p>
                   </div>
@@ -579,31 +763,14 @@ function PrimeContractSection({
                     <Check className="h-3 w-3" /> Executed
                   </span>
                 ) : (
-                  <span className="text-[11px] text-muted-foreground">Not executed</span>
+                  <span className="text-[11px] text-muted-foreground">
+                    Not executed
+                  </span>
                 )}
                 <ArrowRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
               </div>
             </div>
           </Link>
-
-          {/* Additional contracts — compact list */}
-          {additional.length > 0 && (
-            <div className="space-y-0.5">
-              {additional.map((c) => (
-                <Link
-                  key={c.id}
-                  href={`/${projectId}/prime-contracts/${c.id}`}
-                  className="-mx-1 flex items-center gap-2.5 rounded-md px-1 py-2 transition-colors hover:bg-muted/50"
-                >
-                  <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" strokeWidth={1.5} />
-                  <p className="min-w-0 flex-1 truncate text-sm">
-                    {c.title ?? c.contract_number ?? "Prime Contract"}
-                  </p>
-                  <StatusBadge status={c.status ?? "Draft"} />
-                </Link>
-              ))}
-            </div>
-          )}
         </div>
       )}
     </section>
@@ -634,7 +801,11 @@ function CommitmentsSection({
 
   return (
     <section>
-      <SectionHeading action={<ViewAllLink href={`/${projectId}/commitments`} label="View All" />}>
+      <SectionHeading
+        action={
+          <ViewAllLink href={`/${projectId}/commitments`} label="View All" />
+        }
+      >
         Commitments
       </SectionHeading>
       {commitments.length === 0 ? (
@@ -646,7 +817,8 @@ function CommitmentsSection({
               {fmtCompact(commitmentTotal || null)}
             </span>
             <span className="text-xs text-muted-foreground">
-              {commitments.length} commitment{commitments.length !== 1 ? "s" : ""}
+              {commitments.length} commitment
+              {commitments.length !== 1 ? "s" : ""}
             </span>
           </div>
           <div className="flex flex-wrap gap-1.5">
@@ -668,7 +840,9 @@ function CommitmentsSection({
                 className="-mx-2 flex items-center gap-2.5 rounded-md border-b border-border/50 px-2 py-2 last:border-0 transition-colors hover:bg-muted/50"
               >
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm">{c.title ?? c.number ?? "Commitment"}</p>
+                  <p className="truncate text-sm">
+                    {c.title ?? c.number ?? "Commitment"}
+                  </p>
                 </div>
                 <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
                   {fmtCompact(c.contract_amount ?? c.original_amount)}
@@ -694,18 +868,29 @@ function ChangeEventsSection({
   changeEvents: ChangeEvent[];
 }) {
   const open = changeEvents.filter(
-    (ce) => !["closed", "rejected", "approved"].includes((ce.status ?? "").toLowerCase()),
+    (ce) =>
+      !["closed", "rejected", "approved"].includes(
+        (ce.status ?? "").toLowerCase(),
+      ),
   );
   const approved = changeEvents.filter(
     (ce) => (ce.status ?? "").toLowerCase() === "approved",
   );
   const recent = [...changeEvents]
-    .sort((a, b) => new Date(b.updated_at ?? b.created_at).getTime() - new Date(a.updated_at ?? a.created_at).getTime())
+    .sort(
+      (a, b) =>
+        new Date(b.updated_at ?? b.created_at).getTime() -
+        new Date(a.updated_at ?? a.created_at).getTime(),
+    )
     .slice(0, 3);
 
   return (
     <section>
-      <SectionHeading action={<ViewAllLink href={`/${projectId}/change-events`} label="View All" />}>
+      <SectionHeading
+        action={
+          <ViewAllLink href={`/${projectId}/change-events`} label="View All" />
+        }
+      >
         Change Events
       </SectionHeading>
       {changeEvents.length === 0 ? (
@@ -714,13 +899,22 @@ function ChangeEventsSection({
         <div className="space-y-2">
           <div className="flex gap-3">
             <span className="text-xs text-muted-foreground">
-              <span className="font-semibold text-foreground">{open.length}</span> open
+              <span className="font-semibold text-foreground">
+                {open.length}
+              </span>{" "}
+              open
             </span>
             <span className="text-xs text-muted-foreground">
-              <span className="font-semibold text-foreground">{approved.length}</span> approved
+              <span className="font-semibold text-foreground">
+                {approved.length}
+              </span>{" "}
+              approved
             </span>
             <span className="text-xs text-muted-foreground">
-              <span className="font-semibold text-foreground">{changeEvents.length}</span> total
+              <span className="font-semibold text-foreground">
+                {changeEvents.length}
+              </span>{" "}
+              total
             </span>
           </div>
           <div>
@@ -757,7 +951,10 @@ function ChangeOrdersSection({
   changeOrders: ChangeOrder[];
 }) {
   const pending = changeOrders.filter(
-    (co: ChangeOrder) => !["approved", "rejected", "closed"].includes((co.status ?? "").toLowerCase()),
+    (co: ChangeOrder) =>
+      !["approved", "rejected", "closed"].includes(
+        (co.status ?? "").toLowerCase(),
+      ),
   );
   const approved = changeOrders.filter(
     (co: ChangeOrder) => (co.status ?? "").toLowerCase() === "approved",
@@ -767,15 +964,20 @@ function ChangeOrdersSection({
     0,
   );
   const recent: ChangeOrder[] = [...changeOrders]
-    .sort((a: ChangeOrder, b: ChangeOrder) =>
-      new Date(b?.updated_at ?? b?.created_at ?? 0).getTime() -
-      new Date(a?.updated_at ?? a?.created_at ?? 0).getTime(),
+    .sort(
+      (a: ChangeOrder, b: ChangeOrder) =>
+        new Date(b?.updated_at ?? b?.created_at ?? 0).getTime() -
+        new Date(a?.updated_at ?? a?.created_at ?? 0).getTime(),
     )
     .slice(0, 3);
 
   return (
     <section>
-      <SectionHeading action={<ViewAllLink href={`/${projectId}/change-orders`} label="View All" />}>
+      <SectionHeading
+        action={
+          <ViewAllLink href={`/${projectId}/change-orders`} label="View All" />
+        }
+      >
         Change Orders
       </SectionHeading>
       {changeOrders.length === 0 ? (
@@ -803,7 +1005,9 @@ function ChangeOrdersSection({
                   className="-mx-2 flex items-center gap-2.5 rounded-md border-b border-border/50 px-2 py-2 last:border-0 transition-colors hover:bg-muted/50"
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm">{co.title ?? "Change Order"}</p>
+                    <p className="truncate text-sm">
+                      {co.title ?? "Change Order"}
+                    </p>
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
                     <span className="text-xs tabular-nums text-muted-foreground">
@@ -834,16 +1038,27 @@ function InvoicesPaymentsSection({
   ownerInvoices: OwnerInvoice[];
   subcontractorInvoices: SubcontractorInvoice[];
 }) {
-  const totalBilled = ownerInvoices.reduce((sum, inv) => sum + (inv.gross_amount ?? 0), 0);
-  const totalPaid = ownerInvoices.reduce((sum, inv) => sum + (inv.paid_amount ?? 0), 0);
+  const totalBilled = ownerInvoices.reduce(
+    (sum, inv) => sum + (inv.gross_amount ?? 0),
+    0,
+  );
+  const totalPaid = ownerInvoices.reduce(
+    (sum, inv) => sum + (inv.paid_amount ?? 0),
+    0,
+  );
   const subPending = subcontractorInvoices.filter(
-    (inv) => !["approved", "paid", "void"].includes((inv.status ?? "").toLowerCase()),
+    (inv) =>
+      !["approved", "paid", "void"].includes((inv.status ?? "").toLowerCase()),
   );
   const hasAny = ownerInvoices.length > 0 || subcontractorInvoices.length > 0;
 
   return (
     <section>
-      <SectionHeading action={<ViewAllLink href={`/${projectId}/invoices`} label="View All" />}>
+      <SectionHeading
+        action={
+          <ViewAllLink href={`/${projectId}/invoices`} label="View All" />
+        }
+      >
         Invoices &amp; Payments
       </SectionHeading>
       {!hasAny ? (
@@ -858,15 +1073,21 @@ function InvoicesPaymentsSection({
               <div className="flex gap-4">
                 <div>
                   <p className="text-xs text-muted-foreground">Billed</p>
-                  <p className="text-sm font-semibold tabular-nums">{fmtCompact(totalBilled)}</p>
+                  <p className="text-sm font-semibold tabular-nums">
+                    {fmtCompact(totalBilled)}
+                  </p>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Paid</p>
-                  <p className="text-sm font-semibold tabular-nums">{fmtCompact(totalPaid)}</p>
+                  <p className="text-sm font-semibold tabular-nums">
+                    {fmtCompact(totalPaid)}
+                  </p>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Count</p>
-                  <p className="text-sm font-semibold">{ownerInvoices.length}</p>
+                  <p className="text-sm font-semibold">
+                    {ownerInvoices.length}
+                  </p>
                 </div>
               </div>
             </div>
@@ -879,12 +1100,16 @@ function InvoicesPaymentsSection({
               <div className="flex gap-4">
                 <div>
                   <p className="text-xs text-muted-foreground">Total</p>
-                  <p className="text-sm font-semibold">{subcontractorInvoices.length}</p>
+                  <p className="text-sm font-semibold">
+                    {subcontractorInvoices.length}
+                  </p>
                 </div>
                 {subPending.length > 0 && (
                   <div>
                     <p className="text-xs text-muted-foreground">Pending</p>
-                    <p className="text-sm font-semibold text-status-warning">{subPending.length}</p>
+                    <p className="text-sm font-semibold text-status-warning">
+                      {subPending.length}
+                    </p>
                   </div>
                 )}
               </div>
@@ -920,7 +1145,9 @@ function AlertsSection({
   projectId: string;
   showPrimeContractMarkupAlert: boolean;
   changeOrdersWithoutChangeRequestCount: number;
-  pendingSsovReviews: NonNullable<ProjectCommandCenterProps["pendingSsovReviews"]>;
+  pendingSsovReviews: NonNullable<
+    ProjectCommandCenterProps["pendingSsovReviews"]
+  >;
   variance: number;
   varianceTone: "success" | "danger" | "warning";
   ecac: number;
@@ -928,7 +1155,10 @@ function AlertsSection({
   const hasPendingSsov = pendingSsovReviews.length > 0;
   const hasVariance = variance !== 0;
   const hasAlerts =
-    showPrimeContractMarkupAlert || changeOrdersWithoutChangeRequestCount > 0 || hasPendingSsov || hasVariance;
+    showPrimeContractMarkupAlert ||
+    changeOrdersWithoutChangeRequestCount > 0 ||
+    hasPendingSsov ||
+    hasVariance;
 
   return (
     <section>
@@ -960,9 +1190,11 @@ function AlertsSection({
                 <span>
                   Forecast{" "}
                   <strong>
-                    {variance > 0 ? "under" : "over"} budget by {fmtCompact(Math.abs(variance))}
+                    {variance > 0 ? "under" : "over"} budget by{" "}
+                    {fmtCompact(Math.abs(variance))}
                   </strong>
-                  {" · ECAC "}{fmtFull(ecac)}
+                  {" · ECAC "}
+                  {fmtFull(ecac)}
                 </span>
               </div>
               <ChevronRight className="h-3.5 w-3.5 shrink-0 opacity-50" />
@@ -991,7 +1223,9 @@ function AlertsSection({
                 >
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">
-                      {item.commitmentNumber ? `${item.commitmentNumber} · ` : ""}
+                      {item.commitmentNumber
+                        ? `${item.commitmentNumber} · `
+                        : ""}
                       {item.commitmentTitle} pending SSOV review
                     </p>
                     <p className="mt-0.5 text-xs text-muted-foreground">
@@ -1030,7 +1264,8 @@ function AlertsSection({
                 <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-destructive" />
                 <span className="text-sm font-medium text-destructive">
                   {changeOrdersWithoutChangeRequestCount} change order
-                  {changeOrdersWithoutChangeRequestCount !== 1 ? "s" : ""} without change request
+                  {changeOrdersWithoutChangeRequestCount !== 1 ? "s" : ""}{" "}
+                  without change request
                 </span>
               </div>
               <ChevronRight className="h-3.5 w-3.5 text-destructive" />
@@ -1078,7 +1313,8 @@ function ActionRequiredSection({
               <div className="flex items-center gap-2">
                 <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-destructive" />
                 <span className="text-sm font-medium text-destructive">
-                  {rfisOverdue.length} overdue RFI{rfisOverdue.length !== 1 ? "s" : ""}
+                  {rfisOverdue.length} overdue RFI
+                  {rfisOverdue.length !== 1 ? "s" : ""}
                 </span>
               </div>
               <ChevronRight className="h-3.5 w-3.5 text-destructive" />
@@ -1089,7 +1325,8 @@ function ActionRequiredSection({
             <div className="flex items-center gap-2 rounded-md bg-status-warning/10 px-3 py-2.5">
               <Clock className="h-3.5 w-3.5 shrink-0 text-status-warning" />
               <span className="text-sm font-medium text-status-warning">
-                {overdueTasks.length} overdue task{overdueTasks.length !== 1 ? "s" : ""}
+                {overdueTasks.length} overdue task
+                {overdueTasks.length !== 1 ? "s" : ""}
               </span>
             </div>
           )}
@@ -1114,7 +1351,9 @@ function OpenRFIsSection({
 }) {
   return (
     <section>
-      <SectionHeading action={<ViewAllLink href={`/${projectId}/rfis`} label="All RFIs" />}>
+      <SectionHeading
+        action={<ViewAllLink href={`/${projectId}/rfis`} label="All RFIs" />}
+      >
         Open RFIs{rfisOpen.length > 0 ? ` (${rfisOpen.length})` : ""}
       </SectionHeading>
 
@@ -1133,7 +1372,9 @@ function OpenRFIsSection({
                 <span
                   className={cn(
                     "mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full",
-                    overdue ? "bg-destructive" : "bg-amber-500 dark:bg-amber-400",
+                    overdue
+                      ? "bg-destructive"
+                      : "bg-amber-500 dark:bg-amber-400",
                   )}
                 />
                 <div className="min-w-0 flex-1">
@@ -1177,7 +1418,12 @@ function OpenSubmittalsSection({
   return (
     <section>
       <SectionHeading
-        action={<ViewAllLink href={`/${projectId}/submittals`} label="All Submittals" />}
+        action={
+          <ViewAllLink
+            href={`/${projectId}/submittals`}
+            label="All Submittals"
+          />
+        }
       >
         Open Submittals{open.length > 0 ? ` (${open.length})` : ""}
       </SectionHeading>
@@ -1187,7 +1433,8 @@ function OpenSubmittalsSection({
       ) : (
         <div>
           {sorted.slice(0, 5).map((s) => {
-            const overdue = s.final_due_date && isPast(new Date(s.final_due_date));
+            const overdue =
+              s.final_due_date && isPast(new Date(s.final_due_date));
             return (
               <Link
                 key={s.id}
@@ -1202,7 +1449,8 @@ function OpenSubmittalsSection({
                 />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm">
-                    {s.submittal_number ? `${s.submittal_number} – ` : ""}{s.title}
+                    {s.submittal_number ? `${s.submittal_number} – ` : ""}
+                    {s.title}
                   </p>
                   {s.final_due_date && (
                     <p className="mt-0.5 text-xs text-muted-foreground">
@@ -1214,6 +1462,157 @@ function OpenSubmittalsSection({
               </Link>
             );
           })}
+        </div>
+      )}
+    </section>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Section: Next Actions
+───────────────────────────────────────────────────────────── */
+
+interface NextActionItem {
+  id: string;
+  title: string;
+  detail: string;
+  href: string;
+  tone: HomeTone;
+}
+
+function NextActionsSection({ actions }: { actions: NextActionItem[] }) {
+  return (
+    <section>
+      <SectionHeading>Next actions</SectionHeading>
+      {actions.length === 0 ? (
+        <div className="flex items-center gap-2 text-sm text-status-success">
+          <CheckCircle2 className="h-4 w-4 shrink-0" />
+          <span>Core project setup and reviews are current</span>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {actions.slice(0, 5).map((action) => (
+            <Link
+              key={action.id}
+              href={action.href}
+              className="-mx-2 flex items-start gap-3 rounded-md px-2 py-1.5 transition-colors hover:bg-muted/45"
+            >
+              <span
+                className={cn(
+                  "mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full",
+                  toneDotClass(action.tone),
+                )}
+              />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-foreground">
+                  {action.title}
+                </p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {action.detail}
+                </p>
+              </div>
+              <ChevronRight className="mt-1 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+            </Link>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+interface DueSoonItem {
+  id: string;
+  title: string;
+  detail: string;
+  href: string;
+  dueDate: string;
+  overdue: boolean;
+}
+
+function DueSoonSection({ items }: { items: DueSoonItem[] }) {
+  return (
+    <section>
+      <SectionHeading>Due soon</SectionHeading>
+      {items.length === 0 ? (
+        <p className="text-sm text-muted-foreground">
+          No dated RFIs, submittals, or tasks need attention.
+        </p>
+      ) : (
+        <div className="divide-y divide-border">
+          {items.slice(0, 6).map((item) => (
+            <Link
+              key={item.id}
+              href={item.href}
+              className="-mx-2 flex items-start gap-3 rounded-md px-2 py-2.5 transition-colors hover:bg-muted/45"
+            >
+              <Clock
+                className={cn(
+                  "mt-0.5 h-3.5 w-3.5 shrink-0",
+                  item.overdue ? "text-destructive" : "text-muted-foreground",
+                )}
+              />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-foreground">
+                  {item.title}
+                </p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {item.detail}
+                </p>
+              </div>
+              <span
+                className={cn(
+                  "shrink-0 text-xs tabular-nums",
+                  item.overdue ? "text-destructive" : "text-muted-foreground",
+                )}
+              >
+                {format(new Date(item.dueDate), "MMM d")}
+              </span>
+            </Link>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+interface ActivityItem {
+  id: string;
+  title: string;
+  detail: string;
+  href: string;
+  date: string;
+}
+
+function RecentProjectActivitySection({ items }: { items: ActivityItem[] }) {
+  return (
+    <section>
+      <SectionHeading>Recently changed</SectionHeading>
+      {items.length === 0 ? (
+        <p className="text-sm text-muted-foreground">
+          Recent project activity will appear here.
+        </p>
+      ) : (
+        <div className="divide-y divide-border">
+          {items.slice(0, 6).map((item) => (
+            <Link
+              key={item.id}
+              href={item.href}
+              className="-mx-2 flex items-start gap-3 rounded-md px-2 py-2.5 transition-colors hover:bg-muted/45"
+            >
+              <FileText className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-foreground">
+                  {item.title}
+                </p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {item.detail}
+                </p>
+              </div>
+              <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+                {format(new Date(item.date), "MMM d")}
+              </span>
+            </Link>
+          ))}
         </div>
       )}
     </section>
@@ -1312,7 +1711,9 @@ function ProjectSetupSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="flex flex-col gap-0 p-0">
         <SheetHeader className="px-6 pt-6 pb-4 border-b border-border">
-          <SheetTitle className="text-base font-semibold">Project Setup</SheetTitle>
+          <SheetTitle className="text-base font-semibold">
+            Project Setup
+          </SheetTitle>
           <p className="text-sm text-muted-foreground">
             Complete these steps to get your project running.
           </p>
@@ -1355,9 +1756,15 @@ function ProjectSetupSheet({
                     )}
                   >
                     {done ? (
-                      <Check className="h-4 w-4 text-status-success" strokeWidth={2.5} />
+                      <Check
+                        className="h-4 w-4 text-status-success"
+                        strokeWidth={2.5}
+                      />
                     ) : (
-                      <Icon className="h-4 w-4 text-primary" strokeWidth={1.75} />
+                      <Icon
+                        className="h-4 w-4 text-primary"
+                        strokeWidth={1.75}
+                      />
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
@@ -1371,7 +1778,14 @@ function ProjectSetupSheet({
                     >
                       {item.title}
                     </p>
-                    <p className={cn("text-xs", done ? "text-muted-foreground/60" : "text-muted-foreground")}>
+                    <p
+                      className={cn(
+                        "text-xs",
+                        done
+                          ? "text-muted-foreground/60"
+                          : "text-muted-foreground",
+                      )}
+                    >
                       {item.description}
                     </p>
                   </div>
@@ -1418,14 +1832,18 @@ export function ProjectCommandCenter({
   subcontractorInvoices = [],
 }: ProjectCommandCenterProps) {
   const projectId = String(project.id);
-  const [isEditProjectSidebarOpen, setIsEditProjectSidebarOpen] = React.useState(false);
+  const [isEditProjectSidebarOpen, setIsEditProjectSidebarOpen] =
+    React.useState(false);
   const [isSetupOpen, setIsSetupOpen] = React.useState(false);
   const roomName = `project-home:${projectId}`;
   const currentUserName = useCurrentUserName();
-  const { grandTotals, loading: budgetLoading } = useBudgetData(projectId, { silent: true });
+  const { grandTotals, loading: budgetLoading } = useBudgetData(projectId, {
+    silent: true,
+  });
 
   /* ── Budget ────────────────────────────────────────────── */
-  const revisedBudget = grandTotals.revisedBudget || grandTotals.originalBudgetAmount;
+  const revisedBudget =
+    grandTotals.revisedBudget || grandTotals.originalBudgetAmount;
   const costToDate = grandTotals.jobToDateCostDetail;
   const ecac = grandTotals.estimatedCostAtCompletion;
   const variance = grandTotals.projectedOverUnder;
@@ -1437,10 +1855,11 @@ export function ProjectCommandCenter({
     0,
   );
 
-
   /* ── RFIs ──────────────────────────────────────────────── */
   const rfisOpen = rfis.filter((r) => r.status.toLowerCase() !== "closed");
-  const rfisOverdue = rfisOpen.filter((r) => r.due_date && isPast(new Date(r.due_date)));
+  const rfisOverdue = rfisOpen.filter(
+    (r) => r.due_date && isPast(new Date(r.due_date)),
+  );
   const rfisSort = [...rfisOpen].sort((a, b) => {
     if (a.due_date && b.due_date)
       return new Date(a.due_date).getTime() - new Date(b.due_date).getTime();
@@ -1453,10 +1872,13 @@ export function ProjectCommandCenter({
   const openTasks = tasks
     .filter((t) => !["done", "cancelled"].includes(t.status.toLowerCase()))
     .slice(0, 6);
-  const overdueTasks = openTasks.filter((t) => t.due_date && isPast(new Date(t.due_date)));
+  const overdueTasks = openTasks.filter(
+    (t) => t.due_date && isPast(new Date(t.due_date)),
+  );
 
   /* ── Alerts ────────────────────────────────────────────── */
-  const showPrimeContractMarkupAlert = homeAlerts?.hasPrimeContractWithoutFinancialMarkup ?? false;
+  const showPrimeContractMarkupAlert =
+    homeAlerts?.hasPrimeContractWithoutFinancialMarkup ?? false;
   const changeOrdersWithoutChangeRequestCount =
     homeAlerts?.changeOrdersWithoutChangeRequestCount ?? 0;
 
@@ -1473,129 +1895,416 @@ export function ProjectCommandCenter({
     })
     .slice(0, 4);
 
+  const hasTeam = (team ?? []).length > 0;
+  const hasBudget = (budget ?? []).length > 0 || revisedBudget > 0;
+  const hasContracts = contracts.length > 0;
+  const hasSchedule = (schedule ?? []).length > 0;
+  const trackableSetupTotal = 4;
+  const setupCompletedCount = [
+    hasTeam,
+    hasBudget,
+    hasContracts,
+    hasSchedule,
+  ].filter(Boolean).length;
+  const openChangeEvents = changeEvents.filter(
+    (ce) =>
+      !["closed", "rejected", "approved"].includes(
+        (ce.status ?? "").toLowerCase(),
+      ),
+  );
+  const pendingChangeOrders = changeOrders.filter(
+    (co: ChangeOrder) =>
+      !["approved", "rejected", "closed"].includes(
+        (co.status ?? "").toLowerCase(),
+      ),
+  );
+  const openSubmittals = submittals.filter(
+    (s) => !["closed"].includes((s.status ?? "").toLowerCase()),
+  );
+  const pendingSubInvoices = subcontractorInvoices.filter(
+    (inv) =>
+      !["approved", "paid", "void"].includes((inv.status ?? "").toLowerCase()),
+  );
+
+  const attentionItems: AttentionItem[] = [
+    ...(variance < 0
+      ? [
+          {
+            id: "budget-variance",
+            title: `Forecast over budget by ${fmtCompact(Math.abs(variance))}`,
+            detail: `Estimated cost at completion is ${fmtFull(ecac)}.`,
+            href: `/${projectId}/budget`,
+            tone: "danger" as const,
+          },
+        ]
+      : []),
+    ...(showPrimeContractMarkupAlert
+      ? [
+          {
+            id: "prime-markup",
+            title: "Prime contract missing financial markup",
+            detail:
+              "Markup settings are required before contract financials can be trusted.",
+            href: `/${projectId}/prime-contracts`,
+            tone: "danger" as const,
+          },
+        ]
+      : []),
+    ...(changeOrdersWithoutChangeRequestCount > 0
+      ? [
+          {
+            id: "orphan-change-orders",
+            title: `${changeOrdersWithoutChangeRequestCount} change order${changeOrdersWithoutChangeRequestCount !== 1 ? "s" : ""} missing change request`,
+            detail:
+              "Link change orders back to change events before reporting exposure.",
+            href: `/${projectId}/change-orders`,
+            tone: "danger" as const,
+          },
+        ]
+      : []),
+    ...(pendingSsovReviews.length > 0
+      ? [
+          {
+            id: "pending-ssov",
+            title: `${pendingSsovReviews.length} subcontractor SOV pending review`,
+            detail:
+              "Review submitted schedule of values before invoice flow starts.",
+            href: `/${projectId}/commitments`,
+            tone: "warning" as const,
+          },
+        ]
+      : []),
+    ...(rfisOverdue.length > 0
+      ? [
+          {
+            id: "overdue-rfis",
+            title: `${rfisOverdue.length} overdue RFI${rfisOverdue.length !== 1 ? "s" : ""}`,
+            detail: "Resolve field questions before they slow downstream work.",
+            href: `/${projectId}/rfis`,
+            tone: "warning" as const,
+          },
+        ]
+      : []),
+  ];
+
+  const healthCells: HealthCell[] = [
+    {
+      label: "Budget",
+      value: budgetLoading ? "Loading" : fmtCompact(revisedBudget || null),
+      detail: budgetLoading
+        ? "Refreshing totals"
+        : revisedBudget > 0
+          ? `${spendPct}% spent`
+          : "Budget not built",
+      href: `/${projectId}/budget`,
+      tone: budgetLoading
+        ? "neutral"
+        : revisedBudget === 0
+          ? "warning"
+          : spendPct > 90
+            ? "danger"
+            : "success",
+    },
+    {
+      label: "Prime contract",
+      value: fmtCompact(primeContractValue || null),
+      detail:
+        contracts.length > 0
+          ? `${contracts.length} active record${contracts.length !== 1 ? "s" : ""}`
+          : "Not created",
+      href: `/${projectId}/prime-contracts`,
+      tone:
+        contracts.length > 0
+          ? showPrimeContractMarkupAlert
+            ? "danger"
+            : "success"
+          : "warning",
+    },
+    {
+      label: "Commitments",
+      value: fmtCompact(commitmentTotal || null),
+      detail:
+        commitments.length > 0
+          ? `${commitments.length} commitment${commitments.length !== 1 ? "s" : ""}`
+          : "No buyout yet",
+      href: `/${projectId}/commitments`,
+      tone: commitments.length > 0 ? "success" : "warning",
+    },
+    {
+      label: "Change exposure",
+      value: String(openChangeEvents.length + pendingChangeOrders.length),
+      detail: `${openChangeEvents.length} events, ${pendingChangeOrders.length} orders`,
+      href: `/${projectId}/change-events`,
+      tone:
+        changeOrdersWithoutChangeRequestCount > 0
+          ? "danger"
+          : openChangeEvents.length + pendingChangeOrders.length > 0
+            ? "warning"
+            : "success",
+    },
+    {
+      label: "RFIs / Submittals",
+      value: String(rfisOpen.length + openSubmittals.length),
+      detail: `${rfisOpen.length} RFIs, ${openSubmittals.length} submittals`,
+      href: `/${projectId}/rfis`,
+      tone:
+        rfisOverdue.length > 0
+          ? "danger"
+          : rfisOpen.length + openSubmittals.length > 0
+            ? "warning"
+            : "success",
+    },
+    {
+      label: "Invoices",
+      value: String(ownerInvoices.length + subcontractorInvoices.length),
+      detail:
+        pendingSubInvoices.length > 0
+          ? `${pendingSubInvoices.length} subcontractor pending`
+          : "No pending invoice risk",
+      href: `/${projectId}/invoices`,
+      tone: pendingSubInvoices.length > 0 ? "warning" : "success",
+    },
+  ];
+
+  const nextActions: NextActionItem[] = [
+    ...(!hasTeam
+      ? [
+          {
+            id: "setup-team",
+            title: "Assign project team",
+            detail: "Add core roles so ownership is clear.",
+            href: `/${projectId}/directory`,
+            tone: "warning" as const,
+          },
+        ]
+      : []),
+    ...(!hasBudget
+      ? [
+          {
+            id: "setup-budget",
+            title: "Build project budget",
+            detail: "Create budget lines before tracking commitments and cost.",
+            href: `/${projectId}/budget`,
+            tone: "warning" as const,
+          },
+        ]
+      : []),
+    ...(!hasContracts
+      ? [
+          {
+            id: "setup-prime-contract",
+            title: "Create prime contract",
+            detail: "Establish owner contract value and billing basis.",
+            href: `/${projectId}/prime-contracts`,
+            tone: "warning" as const,
+          },
+        ]
+      : []),
+    ...(showPrimeContractMarkupAlert
+      ? [
+          {
+            id: "fix-markup",
+            title: "Add financial markup",
+            detail:
+              "Prime contract financials are incomplete until markup is configured.",
+            href: `/${projectId}/prime-contracts`,
+            tone: "danger" as const,
+          },
+        ]
+      : []),
+    ...(pendingSsovReviews.length > 0
+      ? [
+          {
+            id: "review-ssov",
+            title: "Review submitted subcontractor SOV",
+            detail: `${pendingSsovReviews.length} schedule of values submission${pendingSsovReviews.length !== 1 ? "s" : ""} waiting.`,
+            href: `/${projectId}/commitments`,
+            tone: "warning" as const,
+          },
+        ]
+      : []),
+    ...(commitments.length === 0 && hasContracts
+      ? [
+          {
+            id: "create-commitments",
+            title: "Create commitments",
+            detail: "Start buyout so contract exposure is visible.",
+            href: `/${projectId}/commitments`,
+            tone: "warning" as const,
+          },
+        ]
+      : []),
+    ...(!hasSchedule
+      ? [
+          {
+            id: "setup-schedule",
+            title: "Add schedule baseline",
+            detail:
+              "Milestones help due dates and risk reporting stay meaningful.",
+            href: `/${projectId}/schedule`,
+            tone: "neutral" as const,
+          },
+        ]
+      : []),
+  ];
+
+  const dueSoonItems: DueSoonItem[] = [
+    ...rfisOpen
+      .filter((rfi) => rfi.due_date)
+      .map((rfi) => ({
+        id: `rfi-${rfi.id}`,
+        title: rfi.subject ?? "RFI",
+        detail: "RFI response due",
+        href: `/${projectId}/rfis/${rfi.id}`,
+        dueDate: rfi.due_date as string,
+        overdue: isPast(new Date(rfi.due_date as string)),
+      })),
+    ...openSubmittals
+      .filter((submittal) => submittal.final_due_date)
+      .map((submittal) => ({
+        id: `submittal-${submittal.id}`,
+        title: submittal.title ?? "Submittal",
+        detail: "Submittal final due date",
+        href: `/${projectId}/submittals/${submittal.id}`,
+        dueDate: submittal.final_due_date as string,
+        overdue: isPast(new Date(submittal.final_due_date as string)),
+      })),
+    ...openTasks
+      .filter((task) => task.due_date)
+      .map((task) => ({
+        id: `task-${task.id}`,
+        title: task.description,
+        detail: task.assignee_name
+          ? `Assigned to ${task.assignee_name}`
+          : "Open task",
+        href: `/${projectId}/tasks`,
+        dueDate: task.due_date as string,
+        overdue: isPast(new Date(task.due_date as string)),
+      })),
+  ].sort(
+    (a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime(),
+  );
+
+  const recentActivityItems: ActivityItem[] = [
+    ...changeEvents.map((event) => ({
+      id: `change-event-${event.id}`,
+      title: event.title ?? `Change Event #${event.number}`,
+      detail: `Change event ${event.status ?? "updated"}`,
+      href: `/${projectId}/change-events/${event.id}`,
+      date: event.updated_at ?? event.created_at,
+    })),
+    ...changeOrders.map((order: ChangeOrder) => {
+      const isPrime = !order.change_order_number;
+      return {
+        id: `change-order-${order.id}`,
+        title: order.title ?? "Change Order",
+        detail: `Change order ${order.status ?? "updated"}`,
+        href: isPrime
+          ? `/${projectId}/change-orders/prime/${order.id}`
+          : `/${projectId}/change-orders/commitment/${order.id}`,
+        date: order.updated_at ?? order.created_at,
+      };
+    }),
+    ...recentMeetings.map((meeting) => ({
+      id: `meeting-${meeting.id}`,
+      title: meeting.title ?? "Meeting",
+      detail: "Meeting record",
+      href: `/${projectId}/meetings`,
+      date: meeting.date ?? meeting.created_at,
+    })),
+  ]
+    .filter((item) => item.date)
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
   return (
     <div className="flex min-h-0 flex-col">
       <RealtimeCursors roomName={roomName} username={currentUserName} />
 
-      {/* Identity Band */}
-      <div className="px-4 py-4 sm:px-5 lg:px-6">
-        <div className="flex flex-wrap items-start justify-between gap-3 sm:gap-4">
-          <div className="min-w-0 flex-1">
-            {jobNumber && (
-              <div className="mb-1.5 text-sm font-semibold uppercase tracking-normal text-muted-foreground">
-                Job # {jobNumber}
-              </div>
-            )}
-            <h1 className="text-3xl font-semibold leading-snug text-foreground sm:text-2xl">
-              {project.name ?? "Untitled Project"}
-            </h1>
+      <div className="space-y-10 px-4 py-6 sm:px-5 lg:px-6">
+        <ProjectPageIdentity
+          projectName={project.name ?? "Untitled Project"}
+          jobNumber={jobNumber}
+          healthScore={project.health_score}
+          setupCompletedCount={setupCompletedCount}
+          setupTotalCount={trackableSetupTotal}
+          onOpenSetup={() => setIsSetupOpen(true)}
+          onEditProject={() => setIsEditProjectSidebarOpen(true)}
+        />
+
+        <div className="grid grid-cols-1 gap-y-12 xl:grid-cols-[minmax(0,1fr)_360px] xl:gap-x-24 xl:gap-y-0 2xl:gap-x-32">
+          <div className="min-w-0 space-y-10">
+            <ProjectCommandSurface healthCells={healthCells} />
+            <ContentSectionStack>
+              <PrimeContractSection
+                projectId={projectId}
+                contracts={contracts}
+                contractLineItems={contractLineItems}
+              />
+              {commitments.length > 0 && (
+                <CommitmentsSection
+                  projectId={projectId}
+                  commitments={commitments}
+                  commitmentTotal={commitmentTotal}
+                />
+              )}
+              {changeEvents.length > 0 && (
+                <ChangeEventsSection
+                  projectId={projectId}
+                  changeEvents={changeEvents}
+                />
+              )}
+              {changeOrders.length > 0 && (
+                <ChangeOrdersSection
+                  projectId={projectId}
+                  changeOrders={changeOrders}
+                />
+              )}
+              {(ownerInvoices.length > 0 ||
+                subcontractorInvoices.length > 0) && (
+                <InvoicesPaymentsSection
+                  projectId={projectId}
+                  ownerInvoices={ownerInvoices}
+                  subcontractorInvoices={subcontractorInvoices}
+                />
+              )}
+            </ContentSectionStack>
           </div>
 
-          <div className="flex shrink-0 flex-col items-end gap-2 sm:gap-3">
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsSetupOpen(true)}
-              >
-                Project Setup
-              </Button>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setIsEditProjectSidebarOpen(true)}
-              >
-                Edit
-              </Button>
-            </div>
-            {project.health_score != null && (
-              <div className="text-right">
-                <div className="mb-0.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Health
-                </div>
-                <div className="text-xl font-semibold tabular-nums tracking-tight sm:text-2xl">
-                  {project.health_score}
-                  <span className="text-sm font-normal text-muted-foreground">/100</span>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Body — 2-col layout */}
-      <div className="flex-1 grid grid-cols-1 gap-y-8 lg:grid-cols-[minmax(0,1fr)_560px] lg:gap-x-12 lg:gap-y-0">
-        {/* Left: Main */}
-        <div className="min-w-0 px-4 py-4 sm:px-5 sm:py-5 lg:px-6">
-          <ContentSectionStack>
-            <FinancialOverviewSection
-              projectId={projectId}
-              budgetLoading={budgetLoading}
-              revisedBudget={revisedBudget}
-              costToDate={costToDate}
-              spendPct={spendPct}
-              originalBudgetAmount={grandTotals.originalBudgetAmount}
-              primeContractValue={primeContractValue}
-              commitmentTotal={commitmentTotal}
-              commitments={commitments}
-              contracts={contracts}
-              directCosts={grandTotals.directCosts}
-            />
-            <ProjectTeamSection projectId={projectId} />
-            <RecentMeetingsSection projectId={projectId} meetings={recentMeetings} />
-            <PrimeContractSection
-              projectId={projectId}
-              contracts={contracts}
-              contractLineItems={contractLineItems}
-            />
-            <CommitmentsSection
-              projectId={projectId}
-              commitments={commitments}
-              commitmentTotal={commitmentTotal}
-            />
-            <ChangeEventsSection
-              projectId={projectId}
-              changeEvents={changeEvents}
-            />
-            <ChangeOrdersSection
-              projectId={projectId}
-              changeOrders={changeOrders}
-            />
-            <InvoicesPaymentsSection
-              projectId={projectId}
-              ownerInvoices={ownerInvoices}
-              subcontractorInvoices={subcontractorInvoices}
-            />
-          </ContentSectionStack>
-        </div>
-
-        {/* Right: Sidebar */}
-        <div className="px-4 py-4 sm:px-5 sm:py-5">
-          <ContentSectionStack>
-            <AlertsSection
-              projectId={projectId}
-              showPrimeContractMarkupAlert={showPrimeContractMarkupAlert}
-              changeOrdersWithoutChangeRequestCount={changeOrdersWithoutChangeRequestCount}
-              pendingSsovReviews={pendingSsovReviews}
-              variance={variance}
-              varianceTone={varianceTone}
-              ecac={ecac}
-            />
-            <ActionRequiredSection
-              projectId={projectId}
-              rfisOverdue={rfisOverdue}
-              overdueTasks={overdueTasks}
-            />
-            <OpenRFIsSection
-              projectId={projectId}
-              rfisOpen={rfisOpen}
-              rfisSort={rfisSort}
-            />
-            <OpenSubmittalsSection
-              projectId={projectId}
-              submittals={submittals}
-            />
-          </ContentSectionStack>
+          <aside>
+            <ContentSectionStack className="space-y-12">
+              <AttentionSidebarSection items={attentionItems} />
+              {nextActions.length > 0 && (
+                <NextActionsSection actions={nextActions} />
+              )}
+              {(rfisOverdue.length > 0 || overdueTasks.length > 0) && (
+                <ActionRequiredSection
+                  projectId={projectId}
+                  rfisOverdue={rfisOverdue}
+                  overdueTasks={overdueTasks}
+                />
+              )}
+              {dueSoonItems.length > 0 && (
+                <DueSoonSection items={dueSoonItems} />
+              )}
+              {recentActivityItems.length > 0 && (
+                <RecentProjectActivitySection items={recentActivityItems} />
+              )}
+              <ProjectTeamSection projectId={projectId} />
+              {rfisSort.length > 0 && (
+                <OpenRFIsSection
+                  projectId={projectId}
+                  rfisOpen={rfisOpen}
+                  rfisSort={rfisSort}
+                />
+              )}
+              {openSubmittals.length > 0 && (
+                <OpenSubmittalsSection
+                  projectId={projectId}
+                  submittals={submittals}
+                />
+              )}
+            </ContentSectionStack>
+          </aside>
         </div>
       </div>
 
@@ -1608,10 +2317,10 @@ export function ProjectCommandCenter({
         open={isSetupOpen}
         onOpenChange={setIsSetupOpen}
         projectId={projectId}
-        hasTeam={(team ?? []).length > 0}
-        hasBudget={(budget ?? []).length > 0}
-        hasContracts={contracts.length > 0}
-        hasSchedule={(schedule ?? []).length > 0}
+        hasTeam={hasTeam}
+        hasBudget={hasBudget}
+        hasContracts={hasContracts}
+        hasSchedule={hasSchedule}
       />
     </div>
   );

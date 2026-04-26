@@ -50,7 +50,7 @@ export const GET = withApiGuardrails(
       .from('change_event_line_items')
       .select(`
         *,
-        budget_line:budget_lines!change_event_line_items_budget_line_id_fkey(
+        budget_line:budget_lines!change_event_line_items_budget_code_id_fkey(
           id,
           description,
           cost_code:cost_codes!cost_code_id(
@@ -76,7 +76,7 @@ export const GET = withApiGuardrails(
     // vendor_id directly stores companies.id — no remap needed.
     // Done as two bulk queries (not per-item) to avoid N+1.
     const budgetLineIds = [...new Set(
-      (lineItems || []).map(i => i.budget_line_id ?? i.budget_code_id).filter(Boolean)
+      (lineItems || []).map(i => i.budget_code_id).filter(Boolean)
     )] as string[];
     // budget_lines.project_budget_code_id is the project_budget_codes.id we want directly
     const budgetLineToProjectCostCode = new Map<string, string>();
@@ -171,7 +171,7 @@ export const GET = withApiGuardrails(
       const quantity = item.quantity || 0;
       const unitCost = item.unit_cost || 0;
       const extendedAmount = quantity * unitCost;
-      const budgetLineId = item.budget_line_id ?? item.budget_code_id;
+      const budgetLineId = item.budget_code_id;
 
       return {
         id: item.id,
@@ -292,7 +292,6 @@ export const POST = withApiGuardrails(
       .from('change_event_line_items')
       .insert({
         change_event_id: changeEventId,
-        budget_line_id: resolvedBudgetLineId || undefined,
         budget_code_id: resolvedBudgetLineId || undefined,
         description: validatedData.description,
         vendor_id: resolvedVendorId || undefined,
@@ -312,7 +311,7 @@ export const POST = withApiGuardrails(
       })
       .select(`
         *,
-        budget_line:budget_lines!change_event_line_items_budget_line_id_fkey(
+        budget_line:budget_lines!change_event_line_items_budget_code_id_fkey(
           id,
           description,
           cost_code:cost_codes!cost_code_id(
@@ -345,8 +344,8 @@ export const POST = withApiGuardrails(
     const response = {
       id: data.id,
       changeEventId: data.change_event_id,
-      budgetLineId: data.budget_line_id ?? data.budget_code_id,
-      budgetCodeId: data.budget_line_id ?? data.budget_code_id,
+      budgetLineId: data.budget_code_id,
+      budgetCodeId: data.budget_code_id,
       budgetLine: data.budget_line || undefined,
       description: data.description,
       vendorId: data.vendor_id,

@@ -28,6 +28,12 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
@@ -321,6 +327,31 @@ function CurrencyCell({ value }: { value: number }) {
   );
 }
 
+function getBudgetLineLabel(lineItem: BudgetLineItem) {
+  const { costCode, costCodeDescription, costType, description } = lineItem;
+  const codeLabelBase = costCode
+    ? `${costCode}${costCodeDescription ? ` - ${costCodeDescription}` : ""}`
+    : costCodeDescription || "";
+  const codeLabel = codeLabelBase
+    ? (costType ? `${codeLabelBase}.${costType}` : codeLabelBase)
+    : null;
+  const fallbackDescription = `${costCode}${costCodeDescription ? ` - ${costCodeDescription}` : ""}${costType ? ` (${costType})` : ""}`;
+  const normalizedDescription = description.trim();
+  const showDescription = Boolean(
+    normalizedDescription &&
+    normalizedDescription !== codeLabel &&
+    normalizedDescription !== fallbackDescription,
+  );
+
+  return {
+    codeLabel,
+    description: showDescription ? description : "",
+    fullLabel: codeLabel && showDescription
+      ? `${codeLabel} ${description}`
+      : codeLabel || description || "",
+  };
+}
+
 // Helper functions to create toast-aware click handlers
 function createSafeClickHandler(
   isLocked: boolean,
@@ -372,6 +403,42 @@ function EditableCurrencyCell({
     <div className="text-right">
       <CurrencyCell value={value} />
     </div>
+  );
+}
+
+function MobileMetricButton({
+  label,
+  value,
+  onClick,
+}: {
+  label: string;
+  value: number;
+  onClick?: () => void;
+}) {
+  const content = (
+    <>
+      <span className="text-[11px] font-medium uppercase text-muted-foreground">
+        {label}
+      </span>
+      <span className="text-sm font-semibold tabular-nums text-foreground">
+        <CurrencyCell value={value} />
+      </span>
+    </>
+  );
+
+  if (!onClick) {
+    return <div className="flex min-w-0 flex-col gap-1">{content}</div>;
+  }
+
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      className="h-auto min-h-11 w-full flex-col items-start gap-1 px-0 py-0 text-left hover:bg-transparent"
+      onClick={onClick}
+    >
+      {content}
+    </Button>
   );
 }
 
@@ -549,28 +616,7 @@ export function BudgetTable({
         const hasChildren = Boolean(
           row.original.children && row.original.children.length > 0);
         const isGroupRow = hasChildren;
-        const { costCode, costCodeDescription, costType, description } = row.original;
-
-        // Build canonical budget label: "01-3245 - Superintendent.L"
-        const codeLabelBase = costCode
-          ? `${costCode}${costCodeDescription ? ` - ${costCodeDescription}` : ""}`
-          : costCodeDescription || "";
-        const codeLabel = codeLabelBase
-          ? (costType ? `${codeLabelBase}.${costType}` : codeLabelBase)
-          : null;
-
-        // Hide description when API fallback text duplicates the canonical label.
-        const fallbackDescription = `${costCode}${costCodeDescription ? ` - ${costCodeDescription}` : ""}${costType ? ` (${costType})` : ""}`;
-        const normalizedDescription = description.trim();
-        const showDescription = Boolean(
-          normalizedDescription &&
-          normalizedDescription !== codeLabel &&
-          normalizedDescription !== fallbackDescription,
-        );
-
-        const fullLabel = codeLabel && showDescription
-          ? `${codeLabel} ${description}`
-          : codeLabel || description || "";
+        const { codeLabel, description, fullLabel } = getBudgetLineLabel(row.original);
 
         return (
           <div
@@ -586,7 +632,7 @@ export function BudgetTable({
                 {codeLabel}
               </span>
             )}
-            {showDescription && <span className="truncate">{description}</span>}
+            {description && <span className="truncate">{description}</span>}
           </div>
         );
       },
@@ -1068,16 +1114,318 @@ export function BudgetTable({
   const visibleColumnCount = table.getVisibleLeafColumns().length;
   const trailingInlineCreateColumnSpan = Math.max(0, visibleColumnCount - 4);
   const tableWidth = table.getTotalSize();
+  const bodyScrollRef = React.useRef<HTMLDivElement>(null);
+  const footerScrollRef = React.useRef<HTMLDivElement>(null);
+  const syncingScrollRef = React.useRef(false);
+  const mobileExpandedIds = React.useMemo(() => {
+    if (expanded === true) {
+      return new Set(data.map((item) => item.id));
+    }
+    return new Set(
+      Object.entries(expanded)
+        .filter(([, isExpanded]) => isExpanded)
+        .map(([id]) => id),
+    );
+  }, [data, expanded]);
+  const selectedIds = React.useMemo(
+    () =>
+      Object.entries(rowSelection)
+        .filter(([, isSelected]) => isSelected)
+        .map(([id]) => id),
+    [rowSelection],
+  );
   const getColumnSizeStyle = (columnId: string) => {
     const column = table.getColumn(columnId);
     const width = column?.getSize();
     return width ? { width: `${width}px`, minWidth: `${width}px` } : undefined;
   };
 
+  const syncHorizontalScroll = (
+    source: HTMLDivElement | null,
+    target: HTMLDivElement | null,
+  ) => {
+    if (!source || !target || syncingScrollRef.current) {
+      return;
+    }
+
+    syncingScrollRef.current = true;
+    target.scrollLeft = source.scrollLeft;
+    requestAnimationFrame(() => {
+      syncingScrollRef.current = false;
+    });
+  };
+
+  const getBodyTableScrollElement = React.useCallback(() => {
+    return bodyScrollRef.current?.querySelector<HTMLDivElement>(
+      '[data-slot="table-container"]',
+    ) ?? null;
+  }, []);
+
+  const toggleMobileExpanded = (lineItemId: string) => {
+    setExpanded((current) => {
+      if (current === true) {
+        return data.reduce<Record<string, boolean>>((next, item) => {
+          if (item.id !== lineItemId) next[item.id] = true;
+          return next;
+        }, {});
+      }
+
+      return {
+        ...current,
+        [lineItemId]: !current[lineItemId],
+      };
+    });
+  };
+
+  const toggleMobileSelection = (lineItemId: string, checked: boolean) => {
+    setRowSelection((current) => {
+      if (!checked) {
+        const next = { ...current };
+        delete next[lineItemId];
+        return next;
+      }
+      return { ...current, [lineItemId]: true };
+    });
+  };
+
+  const renderMobileBudgetLine = (lineItem: BudgetLineItem, depth = 0): React.ReactNode => {
+    const children = lineItem.children ?? [];
+    const hasChildren = children.length > 0;
+    const isExpanded = mobileExpandedIds.has(lineItem.id);
+    const { codeLabel, description, fullLabel } = getBudgetLineLabel(lineItem);
+    const isSelected = selectedIds.includes(lineItem.id);
+    const canDelete = Boolean(onDeleteLineItem);
+    const originalAmount = Number(lineItem.originalBudgetAmount ?? 0);
+    const deleteDisabled = isLocked || originalAmount !== 0;
+    const overUnderIsNegative = lineItem.projectedOverUnder < 0;
+
+    const handleEdit = createSafeClickHandler(
+      isLocked,
+      "edit line items",
+      onEditLineItem ? () => onEditLineItem(lineItem) : undefined,
+    );
+    const handleDelete = () => {
+      if (!onDeleteLineItem) return;
+      if (deleteDisabled) {
+        toast.error(
+          isLocked
+            ? "Budget is locked. Unlock the budget to delete line items."
+            : "Cannot delete a line with an original budget.",
+        );
+        return;
+      }
+      onDeleteLineItem(lineItem);
+    };
+
+    return (
+      <React.Fragment key={lineItem.id}>
+        <article
+          className={cn(
+            "rounded-md border border-border bg-background px-3 py-3",
+            depth > 0 && "ml-4",
+            isSelected && "border-primary/40 bg-primary/5",
+          )}
+          data-budget-mobile-card
+        >
+          <div className="flex min-w-0 items-start gap-2">
+            {hasChildren ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="mt-0.5 h-11 w-11 shrink-0"
+                onClick={() => toggleMobileExpanded(lineItem.id)}
+                aria-label={isExpanded ? `Collapse ${fullLabel}` : `Expand ${fullLabel}`}
+              >
+                {isExpanded ? <ChevronDown /> : <ChevronRight />}
+              </Button>
+            ) : (
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center">
+                <Checkbox
+                  checked={isSelected}
+                  onCheckedChange={(checked) =>
+                    toggleMobileSelection(lineItem.id, Boolean(checked))
+                  }
+                  aria-label={`Select ${fullLabel}`}
+                />
+              </div>
+            )}
+
+            <div className="min-w-0 flex-1">
+              <div className="flex min-w-0 items-start justify-between gap-2">
+                <div className="min-w-0">
+                  {codeLabel ? (
+                    <p className="truncate font-mono text-xs text-muted-foreground">
+                      {codeLabel}
+                    </p>
+                  ) : null}
+                  <p className="truncate text-sm font-semibold text-foreground">
+                    {description || fullLabel}
+                  </p>
+                </div>
+
+                {!hasChildren && (onEditLineItem || canDelete) ? (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-11 w-11 shrink-0"
+                        aria-label={`Actions for ${fullLabel}`}
+                      >
+                        <MoreHorizontal />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      {onEditLineItem ? (
+                        <DropdownMenuItem onClick={handleEdit}>
+                          <Pencil className="mr-2 h-4 w-4" />
+                          Edit line item
+                        </DropdownMenuItem>
+                      ) : null}
+                      {canDelete ? (
+                        <DropdownMenuItem
+                          className="text-destructive"
+                          disabled={deleteDisabled}
+                          onClick={handleDelete}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete line item
+                        </DropdownMenuItem>
+                      ) : null}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                ) : null}
+              </div>
+
+              <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3">
+                <MobileMetricButton
+                  label="Original"
+                  value={lineItem.originalBudgetAmount}
+                  onClick={handleEdit}
+                />
+                <MobileMetricButton
+                  label="Revised"
+                  value={lineItem.revisedBudget}
+                  onClick={handleEdit}
+                />
+                <MobileMetricButton
+                  label="Committed"
+                  value={lineItem.committedCosts}
+                  onClick={createSafeClickHandler(
+                    isLocked,
+                    "view committed costs",
+                    onCommittedCostsClick ? () => onCommittedCostsClick(lineItem) : undefined,
+                  )}
+                />
+                <MobileMetricButton
+                  label="Projected cost"
+                  value={lineItem.projectedCosts}
+                  onClick={handleEdit}
+                />
+              </div>
+
+              <div className="mt-3 flex items-center justify-between gap-3 border-t border-border/70 pt-3">
+                <span className="text-[11px] font-medium uppercase text-muted-foreground">
+                  Projected +/- 
+                </span>
+                <span
+                  className={cn(
+                    "text-sm font-semibold tabular-nums",
+                    overUnderIsNegative ? "text-destructive" : "text-foreground",
+                  )}
+                >
+                  <CurrencyCell value={lineItem.projectedOverUnder} />
+                </span>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        {hasChildren && isExpanded ? (
+          <div className="space-y-2">
+            {children.map((child) => renderMobileBudgetLine(child, depth + 1))}
+          </div>
+        ) : null}
+      </React.Fragment>
+    );
+  };
+
+  React.useEffect(() => {
+    const bodyTableScrollElement = getBodyTableScrollElement();
+    if (!bodyTableScrollElement) {
+      return;
+    }
+
+    bodyTableScrollElement.setAttribute("aria-label", "Budget table scroll area");
+    bodyTableScrollElement.tabIndex = 0;
+    bodyTableScrollElement.classList.add(
+      "focus-visible:outline-none",
+      "focus-visible:ring-1",
+      "focus-visible:ring-border",
+    );
+
+    const handleBodyScroll = () =>
+      syncHorizontalScroll(bodyTableScrollElement, footerScrollRef.current);
+
+    bodyTableScrollElement.addEventListener("scroll", handleBodyScroll);
+
+    return () => {
+      bodyTableScrollElement.removeEventListener("scroll", handleBodyScroll);
+    };
+  }, [getBodyTableScrollElement]);
+
   return (
     <div className="flex h-full flex-col rounded-md bg-background">
+      <div className="space-y-3 sm:hidden" data-testid="budget-mobile-list">
+        <section
+          className="rounded-md border border-border bg-muted/30 px-3 py-3"
+          aria-label="Budget grand totals"
+        >
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm font-semibold text-foreground">Grand Totals</p>
+            <span className="text-xs text-muted-foreground">
+              {data.length} cost code groups
+            </span>
+          </div>
+          <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3">
+            <MobileMetricButton
+              label="Original"
+              value={grandTotals.originalBudgetAmount}
+            />
+            <MobileMetricButton
+              label="Revised"
+              value={grandTotals.revisedBudget}
+            />
+            <MobileMetricButton
+              label="Projected cost"
+              value={grandTotals.projectedCosts}
+            />
+            <MobileMetricButton
+              label="Projected +/-"
+              value={grandTotals.projectedOverUnder}
+            />
+          </div>
+        </section>
+
+        {hasRows ? (
+          <div className="space-y-2" aria-label="Budget mobile list">
+            {data.map((lineItem) => renderMobileBudgetLine(lineItem))}
+          </div>
+        ) : (
+          <div className="rounded-md border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground">
+            No budget line items yet.
+          </div>
+        )}
+      </div>
+
+      <div className="hidden min-h-0 flex-1 flex-col sm:flex">
       {/* Horizontal scroll container — allows the wide budget table to scroll on mobile */}
-      <div className="flex-1 overflow-auto scrollbar-hide min-w-0">
+      <div
+        ref={bodyScrollRef}
+        className="flex-1 min-w-0 overflow-hidden"
+      >
         <Table
           className="table-fixed bg-background"
           style={{ width: `${tableWidth}px`, minWidth: "100%" }}
@@ -1293,7 +1641,13 @@ export function BudgetTable({
       </div>
 
       {/* Grand Totals Row - scrolls horizontally in sync with the table above */}
-      <div className="overflow-x-auto scrollbar-hide border-t border-border bg-background">
+      <div
+        ref={footerScrollRef}
+        className="overflow-x-auto border-t border-border bg-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-border"
+        aria-label="Budget totals scroll area"
+        tabIndex={0}
+        onScroll={() => syncHorizontalScroll(footerScrollRef.current, getBodyTableScrollElement())}
+      >
           <table
             className="w-full caption-bottom text-sm table-fixed"
             style={{ width: `${tableWidth}px`, minWidth: "100%" }}
@@ -1426,6 +1780,7 @@ export function BudgetTable({
             </TableFooter>
           </table>
         </div>
+      </div>
     </div>
   );
 }

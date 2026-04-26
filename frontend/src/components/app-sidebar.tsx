@@ -422,9 +422,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <Image
                   src="/Alleato-Group-Logo_Dark.png"
                   alt="Alleato Group"
-                  width={146}
-                  height={28}
-                  className="h-7 w-auto"
+                  width={144}
+                  height={32}
+                  className="h-auto w-36"
+                  style={{ height: "auto" }}
                 />
               </Link>
               {/* eslint-disable-next-line design-system/no-design-violations -- sidebar toggle with custom sidebar tokens */}

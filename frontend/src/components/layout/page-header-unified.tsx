@@ -244,11 +244,18 @@ export function PageHeader({
             <div
               className={cn(
                 "shrink-0",
-                mobileActionsInline ? "flex items-center justify-end" : "flex flex-col gap-2 sm:items-end",
+                mobileActionsInline
+                  ? "flex items-center justify-end"
+                  : "flex w-full flex-col gap-2 sm:w-auto sm:items-end",
               )}
             >
               {(actions || showExportButton) && (
-                <div className={cn("flex items-center gap-2", mobileActionsInline ? "justify-end" : "flex-wrap")}>
+                <div
+                  className={cn(
+                    "flex items-center gap-2 max-sm:[&_button]:min-h-11",
+                    mobileActionsInline ? "justify-end" : "w-full flex-wrap sm:w-auto",
+                  )}
+                >
                   {showExportButton && (onExportCSV || onExportPDF) && (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>

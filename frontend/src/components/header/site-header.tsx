@@ -4,7 +4,7 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { ChevronRight, ChevronsUpDown, GitCompare, Inbox, Menu, Sparkles, X } from "lucide-react";
+import { ChevronRight, ChevronsUpDown, GitCompare, Inbox, Menu, MessageSquarePlus, Sparkles, X } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { useProjectPermissions } from "@/hooks/use-project-permissions";
@@ -31,6 +31,7 @@ import { LiveAvatarStack } from "./live-avatar-stack";
 import { feedbackTargetProps } from "@/lib/admin-feedback/constants";
 import { HeaderUserMenu } from "./header-user-menu";
 import { createClient } from "@/lib/supabase/client";
+import { OPEN_ALLEATO_AI_FEEDBACK_EVENT } from "@/lib/alleato-ai-onboarding";
 
 function ProcoreReferenceToggle() {
   const { open, toggle } = useProcorePanelStore();
@@ -106,9 +107,10 @@ export function SiteHeader() {
               src="/Alleato-Group-Logo_Dark.png"
               alt="Alleato"
               width={96}
-              height={24}
+              height={21}
               priority
-              className="h-6 w-auto dark:invert"
+              className="h-auto w-24 dark:invert"
+              style={{ height: "auto" }}
             />
           </Link>
 
@@ -166,6 +168,18 @@ export function SiteHeader() {
             <CommentsSidebar />
           </React.Suspense>
           <ProcoreReferenceToggle />
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            onClick={() =>
+              window.dispatchEvent(new CustomEvent(OPEN_ALLEATO_AI_FEEDBACK_EVENT))
+            }
+            className="text-muted-foreground hover:text-foreground"
+            aria-label="Share feedback"
+          >
+            <MessageSquarePlus className="h-4 w-4" />
+          </Button>
           <Link
             href="/feedback-inbox"
             className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
@@ -291,8 +305,9 @@ function MobileNavOverlay({
           src="/Alleato-Group-Logo_Dark.png"
           alt="Alleato"
           width={96}
-          height={24}
-          className="h-6 w-auto dark:invert"
+          height={21}
+          className="h-auto w-24 dark:invert"
+          style={{ height: "auto" }}
         />
         <button
           type="button"

@@ -28,8 +28,7 @@ interface VerticalMarkupRow {
 
 interface ChangeEventLineItemRow {
   budget_code_id?: string | null;
-  budget_line_id?: string | null;
-}
+  }
 
 function computeMarkupAdditions(
   _baseCost: number,
@@ -125,7 +124,6 @@ export const GET = withApiGuardrails(
         change_event_line_items(
           id,
           description,
-          budget_line_id,
           budget_code_id,
           quantity,
           unit_of_measure,
@@ -141,7 +139,7 @@ export const GET = withApiGuardrails(
           sort_order,
           created_at,
           updated_at,
-          budget_line:budget_lines!change_event_line_items_budget_line_id_fkey(
+          budget_line:budget_lines!change_event_line_items_budget_code_id_fkey(
             id,
             project_budget_code_id,
             description,
@@ -311,7 +309,7 @@ export const GET = withApiGuardrails(
     const budgetLineIds = [
       ...new Set(
         lineItems
-          .map((li: ChangeEventLineItemRow) => li.budget_line_id ?? li.budget_code_id)
+          .map((li: ChangeEventLineItemRow) => li.budget_code_id)
           .filter((id): id is string => Boolean(id)),
       ),
     ];
@@ -420,7 +418,7 @@ export const GET = withApiGuardrails(
       lineItems: lineItems.map((item: any) => {
         const quantity = item.quantity || 0;
         const unitCost = item.unit_cost || 0;
-        const budgetLineId = item.budget_line_id ?? item.budget_code_id;
+        const budgetLineId = item.budget_code_id;
         return {
           id: item.id,
           description: item.description,
@@ -567,7 +565,6 @@ export const PATCH = withApiGuardrails(
         change_event_line_items(
           id,
           description,
-          budget_line_id,
           budget_code_id,
           quantity,
           unit_of_measure,
@@ -580,7 +577,7 @@ export const PATCH = withApiGuardrails(
           sort_order,
           created_at,
           updated_at,
-          budget_line:budget_lines!change_event_line_items_budget_line_id_fkey(
+          budget_line:budget_lines!change_event_line_items_budget_code_id_fkey(
             id,
             project_budget_code_id,
             description,
@@ -656,7 +653,7 @@ export const PATCH = withApiGuardrails(
       lineItems: (data.change_event_line_items || []).map((item: any) => {
         const quantity = item.quantity || 0;
         const unitCost = item.unit_cost || 0;
-        const budgetLineId = item.budget_line_id ?? item.budget_code_id;
+        const budgetLineId = item.budget_code_id;
         return {
           id: item.id,
           description: item.description,

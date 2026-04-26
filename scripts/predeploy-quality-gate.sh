@@ -23,10 +23,13 @@ GUARDRAIL_SCOPE=all node scripts/check-changed-route-guardrails.mjs
 echo "2e) New explicit any debt gate"
 node scripts/check-no-new-any.mjs
 
-echo "2f) New unvalidated request.json() debt gate"
+echo "2f) New unsafe frontend pattern gate"
+node scripts/check-no-new-unsafe-patterns.mjs
+
+echo "2g) New unvalidated request.json() debt gate"
 node scripts/check-zod-coverage.mjs
 
-echo "2g) Zod coverage report (informational)"
+echo "2h) Zod coverage report (informational)"
 node scripts/check-zod-coverage.mjs --report-all || true
 
 echo "3) Frontend lint + typecheck + build"
