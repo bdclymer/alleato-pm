@@ -19,11 +19,7 @@ import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
 import { logger } from "@/lib/logger";
 
-interface RouteParams {
-  params: Promise<{ projectId: string; pcoId: string }>;
-}
-
-export const POST = withApiGuardrails(
+export const POST = withApiGuardrails<{ projectId: string; pcoId: string }>(
   "projects/[projectId]/prime-contract-pcos/[pcoId]/promote#POST",
   async ({ request, params }) => {
   
@@ -40,6 +36,7 @@ export const POST = withApiGuardrails(
     }
 
     const projectIdNum = parseInt(projectId, 10);
+    const pcoIdNum = parseInt(pcoId, 10);
 
     // Get existing PCO with line items total
     const { data: pco, error: fetchError } = await supabase
@@ -83,7 +80,7 @@ export const POST = withApiGuardrails(
     const { data: lineItems } = await supabase
       .from("pco_line_items")
       .select("amount")
-      .eq("pco_id", pcoId)
+      .eq("pco_id", pcoIdNum)
       .eq("pco_type", "prime");
 
     const totalAmount = (lineItems || []).reduce(
@@ -158,7 +155,7 @@ export const POST = withApiGuardrails(
       const { data: fullLineItems } = await supabase
         .from("pco_line_items")
         .select("*")
-        .eq("pco_id", pcoId)
+        .eq("pco_id", pcoIdNum)
         .eq("pco_type", "prime");
 
       if (fullLineItems && fullLineItems.length > 0) {

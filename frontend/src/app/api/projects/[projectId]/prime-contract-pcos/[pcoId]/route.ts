@@ -15,10 +15,6 @@ import { NextResponse } from "next/server";
 import { z, ZodError } from "zod";
 import { apiErrorResponse } from "@/lib/api-error";
 
-interface RouteParams {
-  params: Promise<{ projectId: string; pcoId: string }>;
-}
-
 // ---------------------------------------------------------------------------
 // Validation
 // ---------------------------------------------------------------------------
@@ -47,7 +43,7 @@ const updatePcoSchema = z.object({
 // GET /api/projects/[projectId]/prime-contract-pcos/[pcoId]
 // ---------------------------------------------------------------------------
 
-export const GET = withApiGuardrails(
+export const GET = withApiGuardrails<{ projectId: string; pcoId: string }>(
   "projects/[projectId]/prime-contract-pcos/[pcoId]#GET",
   async ({ request, params }) => {
   
@@ -64,6 +60,7 @@ export const GET = withApiGuardrails(
     }
 
     const projectIdNum = parseInt(projectId, 10);
+    const pcoIdNum = parseInt(pcoId, 10);
 
     // Get PCO with prime contract info
     const { data: pco, error } = await supabase
@@ -106,7 +103,7 @@ export const GET = withApiGuardrails(
         )
       `,
       )
-      .eq("pco_id", pcoId)
+      .eq("pco_id", pcoIdNum)
       .eq("pco_type", "prime")
       .order("sort_order", { ascending: true });
 
@@ -178,7 +175,7 @@ export const GET = withApiGuardrails(
 // PATCH /api/projects/[projectId]/prime-contract-pcos/[pcoId]
 // ---------------------------------------------------------------------------
 
-export const PATCH = withApiGuardrails(
+export const PATCH = withApiGuardrails<{ projectId: string; pcoId: string }>(
   "projects/[projectId]/prime-contract-pcos/[pcoId]#PATCH",
   async ({ request, params }) => {
   
@@ -290,7 +287,7 @@ export const PATCH = withApiGuardrails(
 // DELETE /api/projects/[projectId]/prime-contract-pcos/[pcoId]
 // ---------------------------------------------------------------------------
 
-export const DELETE = withApiGuardrails(
+export const DELETE = withApiGuardrails<{ projectId: string; pcoId: string }>(
   "projects/[projectId]/prime-contract-pcos/[pcoId]#DELETE",
   async ({ request, params }) => {
   
@@ -307,6 +304,7 @@ export const DELETE = withApiGuardrails(
     }
 
     const projectIdNum = parseInt(projectId, 10);
+    const pcoIdNum = parseInt(pcoId, 10);
 
     // Get existing PCO
     const { data: existingPco, error: fetchError } = await supabase
@@ -338,7 +336,7 @@ export const DELETE = withApiGuardrails(
     await supabase
       .from("pco_line_items")
       .delete()
-      .eq("pco_id", pcoId)
+      .eq("pco_id", pcoIdNum)
       .eq("pco_type", "prime");
 
     // Delete associated change event links

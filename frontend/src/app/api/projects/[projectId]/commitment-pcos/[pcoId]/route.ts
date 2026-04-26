@@ -6,10 +6,6 @@ import { z, ZodError } from "zod";
 import { apiErrorResponse } from "@/lib/api-error";
 import { logger } from "@/lib/logger";
 
-interface RouteParams {
-  params: Promise<{ projectId: string; pcoId: string }>;
-}
-
 const updateCommitmentPcoSchema = z.object({
   title: z.string().min(1).max(500).optional(),
   description: z.string().max(5000).nullish(),
@@ -23,7 +19,7 @@ const updateCommitmentPcoSchema = z.object({
  * GET /api/projects/[projectId]/commitment-pcos/[pcoId]
  * Get a single commitment PCO with full details
  */
-export const GET = withApiGuardrails(
+export const GET = withApiGuardrails<{ projectId: string; pcoId: string }>(
   "projects/[projectId]/commitment-pcos/[pcoId]#GET",
   async ({ request, params }) => {
   
@@ -79,7 +75,7 @@ export const GET = withApiGuardrails(
       .eq("pco_id", pcoId)
       .eq("pco_type", "commitment");
 
-    let linkedChangeEvents: Array<Record<string, any>> = [];
+    let linkedChangeEvents: Array<Record<string, unknown>> = [];
     if (links && links.length > 0) {
       const ceIds = links.map((l) => l.change_event_id);
       // total_revenue_rom / total_cost_rom live on the change_events_summary
@@ -137,7 +133,7 @@ export const GET = withApiGuardrails(
  * PATCH /api/projects/[projectId]/commitment-pcos/[pcoId]
  * Update a commitment PCO (only draft or pending)
  */
-export const PATCH = withApiGuardrails(
+export const PATCH = withApiGuardrails<{ projectId: string; pcoId: string }>(
   "projects/[projectId]/commitment-pcos/[pcoId]#PATCH",
   async ({ request, params }) => {
   
@@ -184,7 +180,7 @@ export const PATCH = withApiGuardrails(
     const validatedData = updateCommitmentPcoSchema.parse(body);
 
     // Build update object
-    const updates: Record<string, any> = {
+    const updates: Record<string, unknown> = {
       updated_at: new Date().toISOString(),
       updated_by: user.id,
     };
@@ -227,12 +223,13 @@ export const PATCH = withApiGuardrails(
  * DELETE /api/projects/[projectId]/commitment-pcos/[pcoId]
  * Delete a commitment PCO (only draft status)
  */
-export const DELETE = withApiGuardrails(
+export const DELETE = withApiGuardrails<{ projectId: string; pcoId: string }>(
   "projects/[projectId]/commitment-pcos/[pcoId]#DELETE",
   async ({ request, params }) => {
   
     const { projectId, pcoId } = await params;
     const projectIdNum = parseInt(projectId, 10);
+    const pcoIdNum = parseInt(pcoId, 10);
     const supabase = await createClient();
 
     // Auth check
@@ -286,7 +283,7 @@ export const DELETE = withApiGuardrails(
     const { error: lineItemDeleteError } = await supabase
       .from("pco_line_items")
       .delete()
-      .eq("pco_id", pcoId)
+      .eq("pco_id", pcoIdNum)
       .eq("pco_type", "commitment");
 
     if (lineItemDeleteError) {
