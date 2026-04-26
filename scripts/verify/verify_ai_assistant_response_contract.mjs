@@ -37,14 +37,23 @@ const checks = [
   },
   {
     file: files.route,
-    description: "chat route synthesizes from server-side retrieval without model tools when Gateway tool calls fail",
+    description: "chat route uses deterministic executive briefing retrieval without slow optional synthesis",
     test: (content) =>
       content.includes("generateSourceGroundedSynthesis") &&
       content.includes('model: getLanguageModel("openai/gpt-4.1")') &&
       content.includes("sourceGroundedSynthesisFallback") &&
-      content.includes("source-grounded synthesis exceeded the fast briefing budget") &&
-      content.includes("6_000") &&
       content.includes("createDeterministicProjectBriefing") &&
+      content.includes("ExecutiveBriefingRetrievalPacket") &&
+      content.includes("formatExecutiveBriefingRetrievalContext") &&
+      content.includes("formatExecutiveRecentSignals") &&
+      content.includes("searchMeetingsByTopic") &&
+      content.includes("searchTeamsMessages") &&
+      content.includes("searchEmails") &&
+      content.includes("searchExternalDocuments") &&
+      content.includes("Recent Communication Signals") &&
+      content.includes("Sources Checked") &&
+      !content.includes("source-grounded synthesis exceeded the fast briefing budget") &&
+      !content.includes("reason: \"deterministic broad briefing path\"") &&
       content.includes("const hasDeterministicRetrieval") &&
       content.includes("const modelTools = hasDeterministicRetrieval") &&
       content.includes("tools: modelTools") &&
@@ -58,7 +67,8 @@ const checks = [
       content.includes('type: "data-status"') &&
       content.includes("Reading conversation memory and project context") &&
       content.includes("Pulling budget, contract, RFIs, submittals, schedule, and commitments") &&
-      content.includes("Searching meetings, documents, and vectorized project history"),
+      content.includes("Searching meetings, documents, and vectorized project history") &&
+      content.includes("Checking recent meetings, Teams, email, and OneDrive sources"),
   },
   {
     file: files.route,
@@ -71,6 +81,8 @@ const checks = [
       content.includes("projectBriefingSnapshot") &&
       content.includes("Hard Facts") &&
       content.includes("What Changed") &&
+      content.includes("Recent Communication Signals") &&
+      content.includes("Sources Checked") &&
       content.includes("Insider Analysis") &&
       content.includes("Recommended Actions") &&
       content.includes("Next Step"),

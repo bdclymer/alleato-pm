@@ -91,6 +91,29 @@ type SemanticSearchOutput = {
 
 type ProjectBriefingSnapshot = Record<string, unknown>;
 
+type ExecutiveBriefingSourceName =
+  | "meetings"
+  | "teamsMessages"
+  | "emails"
+  | "oneDriveDocuments";
+
+type ExecutiveBriefingSourceOutput = {
+  source: ExecutiveBriefingSourceName;
+  label: string;
+  status: "loaded" | "empty" | "warning" | "error";
+  resultCount: number;
+  results: Array<Record<string, unknown>>;
+  message?: string;
+  error?: string;
+};
+
+type ExecutiveBriefingRetrievalPacket = {
+  query: string;
+  projectId?: number;
+  projectName?: string;
+  sources: ExecutiveBriefingSourceOutput[];
+};
+
 type SourceHealthStatus = "ok" | "warning" | "error" | "unknown";
 
 type SourceHealthCheck = {
@@ -250,6 +273,139 @@ function formatProjectBriefingSnapshotContext(snapshot: ProjectBriefingSnapshot 
   ].join("\n\n");
 }
 
+function normalizeExecutiveSourceOutput(
+  source: ExecutiveBriefingSourceName,
+  label: string,
+  output: unknown,
+): ExecutiveBriefingSourceOutput {
+  if (isTimeoutResult(output)) {
+    return {
+      source,
+      label,
+      status: "warning",
+      resultCount: 0,
+      results: [],
+      error: output.error,
+    };
+  }
+
+  if (!output || typeof output !== "object") {
+    return {
+      source,
+      label,
+      status: "error",
+      resultCount: 0,
+      results: [],
+      error: `${label} retrieval returned an invalid response.`,
+    };
+  }
+
+  const value = output as Record<string, unknown>;
+  const rawResults = Array.isArray(value.results)
+    ? value.results.filter(
+        (result): result is Record<string, unknown> =>
+          Boolean(result) && typeof result === "object" && !Array.isArray(result),
+      )
+    : [];
+  const resultCount =
+    typeof value.resultCount === "number"
+      ? value.resultCount
+      : typeof value.totalResults === "number"
+        ? value.totalResults
+        : rawResults.length;
+  const error = typeof value.error === "string" ? value.error : undefined;
+  const message = typeof value.message === "string" ? value.message : undefined;
+
+  return {
+    source,
+    label,
+    status: error ? "error" : resultCount > 0 ? "loaded" : "empty",
+    resultCount,
+    results: rawResults.slice(0, 5),
+    message,
+    error,
+  };
+}
+
+function executiveResultCitation(result: Record<string, unknown>, fallbackLabel: string): string {
+  const citation = typeof result.citation === "string" ? result.citation : null;
+  const sourceRef = typeof result.sourceRef === "string" ? result.sourceRef : null;
+  const title = typeof result.title === "string" ? result.title : fallbackLabel;
+  const date = typeof result.date === "string" ? result.date : null;
+  return citation ?? sourceRef ?? `${fallbackLabel}: ${title}${date ? ` (${date})` : ""}`;
+}
+
+function executiveResultExcerpt(result: Record<string, unknown>): string {
+  const content =
+    typeof result.content === "string"
+      ? result.content
+      : typeof result.summary === "string"
+        ? result.summary
+        : typeof result.actionItems === "string"
+          ? result.actionItems
+          : "";
+  const normalized = content.replace(/\s+/g, " ").trim();
+  return normalized.length > 700 ? `${normalized.slice(0, 700).trim()}...` : normalized;
+}
+
+function formatExecutiveBriefingRetrievalContext(
+  packet: ExecutiveBriefingRetrievalPacket | null,
+): string | null {
+  if (!packet) return null;
+
+  const sourceBlocks = packet.sources.map((source) => {
+    const header = `${source.label}: ${source.status}, ${source.resultCount} result(s)` +
+      (source.error ? `, error: ${source.error}` : source.message ? `, note: ${source.message}` : "");
+    const examples = source.results.slice(0, 3).map((result, index) => {
+      const excerpt = executiveResultExcerpt(result);
+      return [
+        `${index + 1}. ${executiveResultCitation(result, source.label)}`,
+        excerpt ? `   Excerpt: ${excerpt}` : null,
+      ].filter(Boolean).join("\n");
+    });
+
+    return [header, ...examples].join("\n");
+  });
+
+  return [
+    "Mandatory executive briefing retrieval packet:",
+    "These sources were checked by server-side orchestration before synthesis. Do not imply a source was checked if it is marked empty/error/warning. Use loaded source excerpts for recent-activity claims, and call out missing/stale coverage plainly.",
+    `Query: ${packet.query}`,
+    `Project: ${packet.projectName ?? "unknown"}${packet.projectId ? ` (#${packet.projectId})` : ""}`,
+    "",
+    ...sourceBlocks,
+  ].join("\n\n");
+}
+
+function formatSourcesCheckedLine(packet: ExecutiveBriefingRetrievalPacket | null): string {
+  if (!packet) {
+    return "Sources checked: structured project controls and semantic project history.";
+  }
+
+  const summary = packet.sources
+    .map((source) => `${source.label} ${source.status}${source.resultCount ? ` (${source.resultCount})` : ""}`)
+    .join("; ");
+  return `Sources checked: ${summary}.`;
+}
+
+function formatExecutiveRecentSignals(packet: ExecutiveBriefingRetrievalPacket | null): string[] {
+  if (!packet) return [];
+
+  return packet.sources.flatMap((source) => {
+    const result = source.results[0];
+    if (!result) {
+      const note = source.error ?? source.message ?? "no matching recent records found";
+      return [`- **${source.label}:** ${source.status} - ${note}.`];
+    }
+
+    const excerpt = executiveResultExcerpt(result);
+    const citation = executiveResultCitation(result, source.label);
+    return [
+      `- **${source.label}:** ${excerpt || "A matching source was found, but no excerpt was available."} ${citation}`,
+    ];
+  });
+}
+
 function readSnapshotArray(
   snapshot: ProjectBriefingSnapshot | null,
   key: string,
@@ -318,8 +474,9 @@ function currency(value: number): string {
 function createDeterministicProjectBriefing(params: {
   snapshot: ProjectBriefingSnapshot | null;
   retrieval: SemanticSearchOutput | null;
+  executiveRetrieval: ExecutiveBriefingRetrievalPacket | null;
 }): string | null {
-  const { snapshot, retrieval } = params;
+  const { snapshot, retrieval, executiveRetrieval } = params;
   if (!snapshot) return null;
 
   const project = readSnapshotObject(snapshot, "project");
@@ -343,6 +500,7 @@ function createDeterministicProjectBriefing(params: {
   const sourceLine = sourceResults.length
     ? sourceResults.map((result) => sourceLabel(result)).join("; ")
     : sourceRef;
+  const executiveSignals = formatExecutiveRecentSignals(executiveRetrieval).slice(0, 4);
 
   return [
     `**Hard Facts**`,
@@ -356,6 +514,12 @@ function createDeterministicProjectBriefing(params: {
     `- **Schedule:** ${readNestedNumber(schedule, ["incompleteCount"])} incomplete tasks; ${readNestedNumber(schedule, ["overdueCount"])} overdue; ${readNestedNumber(schedule, ["upcomingMilestoneCount"])} upcoming milestones.`,
     `- **Commitments/Procurement:** ${readNestedNumber(commitments, ["unexecutedCount"])} unexecuted of ${readNestedNumber(commitments, ["totalCount"])} total commitments.`,
     `- **Open notifications/actions:** ${readNestedNumber(notifications, ["openCount"])} open notifications.`,
+    `- **Sources Checked:** ${formatSourcesCheckedLine(executiveRetrieval)}`,
+    "",
+    `**Recent Communication Signals**`,
+    ...(executiveSignals.length
+      ? executiveSignals
+      : [`- No separate meeting, Teams, email, or OneDrive communication packet was available. ${sourceLine}`]),
     "",
     `**What Changed**`,
     ...(recentMovement.length
@@ -388,13 +552,15 @@ function createDeterministicProjectBriefing(params: {
 function enforceProjectBriefingResponseContract(params: {
   content: string;
   projectBriefingSnapshot: ProjectBriefingSnapshot | null;
+  executiveRetrieval?: ExecutiveBriefingRetrievalPacket | null;
   forceBusinessRetrieval: boolean;
 }): string {
-  const { content, projectBriefingSnapshot, forceBusinessRetrieval } = params;
+  const { content, projectBriefingSnapshot, executiveRetrieval, forceBusinessRetrieval } = params;
   if (!forceBusinessRetrieval || !projectBriefingSnapshot) return content;
 
   const hasHardFacts = /(^|\n)\s*(#{1,4}\s*)?(\*\*)?hard facts(\*\*)?\b/i.test(content);
   const hasNextStep = /(^|\n)\s*(#{1,4}\s*)?(\*\*)?next step(\*\*)?\b/i.test(content);
+  const hasSourcesChecked = /\bsources checked\b/i.test(content);
   const appendedSections: string[] = [];
 
   if (!hasHardFacts) {
@@ -408,6 +574,10 @@ function enforceProjectBriefingResponseContract(params: {
 
   if (!hasNextStep) {
     appendedSections.push(["Next Step", buildSnapshotNextStep(projectBriefingSnapshot)].join("\n\n"));
+  }
+
+  if (!hasSourcesChecked) {
+    appendedSections.push(["Sources Checked", formatSourcesCheckedLine(executiveRetrieval ?? null)].join("\n\n"));
   }
 
   if (appendedSections.length === 0) return content;
@@ -555,6 +725,7 @@ async function generateSourceGroundedSynthesis(params: {
   output: SemanticSearchOutput;
   userMessage: string;
   projectBriefingSnapshot?: ProjectBriefingSnapshot | null;
+  executiveRetrieval?: ExecutiveBriefingRetrievalPacket | null;
 }): Promise<string | null> {
   if ((params.output.results ?? []).length === 0) return null;
 
@@ -563,6 +734,9 @@ async function generateSourceGroundedSynthesis(params: {
   const projectSnapshotContext = params.projectBriefingSnapshot
     ? JSON.stringify(params.projectBriefingSnapshot, null, 2)
     : "No project briefing snapshot was available.";
+  const executiveRetrievalContext =
+    formatExecutiveBriefingRetrievalContext(params.executiveRetrieval ?? null) ??
+    "No mandatory executive briefing retrieval packet was available.";
 
   try {
     const result = await generateText({
@@ -570,9 +744,9 @@ async function generateSourceGroundedSynthesis(params: {
       system:
         "You are Alleato's business strategist and project manager. " +
         "Answer naturally, directly, and with executive judgment. " +
-        "For broad project updates, start with a Hard Facts section: budget, forecast/over-under, change orders, RFIs, submittals, schedule, commitments/procurement, and open actions/notifications. " +
+        "For broad project updates, start with a Hard Facts section: budget, forecast/over-under, change orders, RFIs, submittals, schedule, commitments/procurement, open actions/notifications, and sources checked. " +
         "Then give What Changed, Insider Analysis, Recommended Actions, Confidence/Data Gaps, and a concrete next step. " +
-        "Use only the provided retrieved sources. Cite facts inline with the exact [Source: ...] labels. " +
+        "Use only the provided project snapshot, mandatory source packet, and retrieved sources. Cite facts inline with the exact source labels when available. " +
         "If the sources are thin or internally stale, say that plainly while still extracting the useful signal. " +
         "Do not mention model failures, tool failures, RAG, retrieval, or implementation details.",
       messages: [
@@ -582,6 +756,8 @@ async function generateSourceGroundedSynthesis(params: {
             `User request: ${params.userMessage}`,
             "Structured project briefing snapshot:",
             projectSnapshotContext,
+            "Mandatory source packet:",
+            executiveRetrievalContext,
             "Retrieved sources:",
             sourceContext,
             "Write a concise PM briefing with sections: Hard Facts, What Changed, Insider Analysis, Recommended Actions, Confidence/Data Gaps, Next Step.",
@@ -1312,6 +1488,7 @@ export const POST = withApiGuardrails(
     const forceBusinessRetrieval = shouldForceBusinessRetrieval(lastUserContent);
     let deterministicRetrieval: SemanticSearchOutput | null = null;
     let projectBriefingSnapshot: ProjectBriefingSnapshot | null = null;
+    let executiveBriefingRetrieval: ExecutiveBriefingRetrievalPacket | null = null;
     const stream = createUIMessageStream({
       originalMessages: messages,
       execute: async ({ writer }) => {
@@ -1476,6 +1653,113 @@ export const POST = withApiGuardrails(
           }
 
           writeStrategistStatus(writer, {
+            stage: "knowledge",
+            message: "Checking recent meetings, Teams, email, and OneDrive sources",
+            status: "loading",
+          });
+
+          const projectSnapshotRecord = readSnapshotObject(projectBriefingSnapshot, "project");
+          const projectName =
+            typeof projectSnapshotRecord?.name === "string" && projectSnapshotRecord.name.trim()
+              ? projectSnapshotRecord.name.trim()
+              : undefined;
+          const executiveQuery = [projectName, lastUserContent]
+            .filter((part): part is string => Boolean(part?.trim()))
+            .join(" - ");
+          const executiveSourceTools = [
+            {
+              source: "meetings" as const,
+              label: "Meetings",
+              toolName: "searchMeetingsByTopic",
+              input: {
+                topic: executiveQuery,
+                projectId,
+                maxResults: 6,
+              },
+            },
+            {
+              source: "teamsMessages" as const,
+              label: "Teams",
+              toolName: "searchTeamsMessages",
+              input: {
+                query: executiveQuery,
+                matchCount: 6,
+              },
+            },
+            {
+              source: "emails" as const,
+              label: "Email",
+              toolName: "searchEmails",
+              input: {
+                query: executiveQuery,
+                matchCount: 6,
+              },
+            },
+            {
+              source: "oneDriveDocuments" as const,
+              label: "OneDrive/Documents",
+              toolName: "searchExternalDocuments",
+              input: {
+                query: executiveQuery,
+                matchCount: 6,
+              },
+            },
+          ];
+
+          const executiveSourceResults = await Promise.all(
+            executiveSourceTools.map(async (sourceTool) => {
+              const executableTool = (tools as Record<string, ExecutableTool>)[sourceTool.toolName];
+              if (!executableTool?.execute) {
+                return normalizeExecutiveSourceOutput(sourceTool.source, sourceTool.label, {
+                  error: `${sourceTool.toolName} was not executable during executive briefing retrieval.`,
+                });
+              }
+
+              try {
+                const output = await withTimeout(
+                  executableTool.execute(sourceTool.input),
+                  12_000,
+                  `${sourceTool.toolName} timed out during executive briefing retrieval`,
+                );
+                return normalizeExecutiveSourceOutput(sourceTool.source, sourceTool.label, output);
+              } catch (error) {
+                const message = error instanceof Error ? error.message : String(error);
+                toolTrace.push({
+                  tool: sourceTool.toolName,
+                  input: sourceTool.input,
+                  error: message,
+                  timestamp: new Date().toISOString(),
+                });
+                return normalizeExecutiveSourceOutput(sourceTool.source, sourceTool.label, {
+                  error: message,
+                });
+              }
+            }),
+          );
+
+          executiveBriefingRetrieval = {
+            query: executiveQuery,
+            projectId,
+            projectName,
+            sources: executiveSourceResults,
+          };
+
+          const executiveRetrievalContext =
+            formatExecutiveBriefingRetrievalContext(executiveBriefingRetrieval);
+          if (executiveRetrievalContext) {
+            systemPrompt = `${executiveRetrievalContext}\n\n---\n\n${systemPrompt}`;
+          }
+
+          const loadedExecutiveSources = executiveSourceResults.filter(
+            (source) => source.status === "loaded",
+          ).length;
+          writeStrategistStatus(writer, {
+            stage: "knowledge",
+            message: `Checked meetings, Teams, email, and OneDrive (${loadedExecutiveSources}/4 with results)`,
+            status: loadedExecutiveSources > 0 ? "success" : "warning",
+          });
+
+          writeStrategistStatus(writer, {
             stage: "synthesis",
             message: "Writing the executive PM briefing and recommendation",
             status: "loading",
@@ -1484,38 +1768,9 @@ export const POST = withApiGuardrails(
           const deterministicBriefing = createDeterministicProjectBriefing({
             snapshot: projectBriefingSnapshot,
             retrieval: deterministicRetrieval,
+            executiveRetrieval: executiveBriefingRetrieval,
           });
-          const synthesisOutput = deterministicRetrieval
-            ? await withTimeout(
-                generateSourceGroundedSynthesis({
-                  output: deterministicRetrieval,
-                  userMessage: lastUserContent,
-                  projectBriefingSnapshot,
-                }),
-                6_000,
-                "source-grounded synthesis exceeded the fast briefing budget",
-              )
-            : null;
-          const sourceGroundedSynthesis =
-            synthesisOutput && !isTimeoutResult(synthesisOutput)
-              ? synthesisOutput
-              : null;
-
-          if (synthesisOutput && isTimeoutResult(synthesisOutput)) {
-            toolTrace.push({
-              tool: "sourceGroundedSynthesisFallback",
-              input: {
-                primaryModel: STRATEGIST_MODEL,
-                synthesisModel: "openai/gpt-4.1",
-                reason: "deterministic broad briefing path",
-              },
-              error: synthesisOutput.error,
-              timestamp: new Date().toISOString(),
-            });
-          }
-
-          let content = sourceGroundedSynthesis ??
-            deterministicBriefing ??
+          let content = deterministicBriefing ??
             (await generateRecoveryResponse({
               userMessage: lastUserContent,
               cause: "Project briefing retrieval did not return enough source data to synthesize a full answer.",
@@ -1523,25 +1778,11 @@ export const POST = withApiGuardrails(
               toolTrace,
             }));
 
-          if (sourceGroundedSynthesis) {
-            toolTrace.push({
-              tool: "sourceGroundedSynthesisFallback",
-              input: {
-                primaryModel: STRATEGIST_MODEL,
-                synthesisModel: "openai/gpt-4.1",
-                reason: "deterministic broad briefing path",
-              },
-              output: {
-                contentLength: sourceGroundedSynthesis.length,
-              },
-              timestamp: new Date().toISOString(),
-            });
-          }
-
           const contentBeforeContract = content;
           content = enforceProjectBriefingResponseContract({
             content,
             projectBriefingSnapshot,
+            executiveRetrieval: executiveBriefingRetrieval,
             forceBusinessRetrieval,
           });
           if (content !== contentBeforeContract) {
@@ -1721,6 +1962,7 @@ export const POST = withApiGuardrails(
                 output: deterministicRetrieval,
                 userMessage: lastUserContent,
                 projectBriefingSnapshot,
+                executiveRetrieval: executiveBriefingRetrieval,
               })
             : null;
           if (sourceGroundedFallback) {
@@ -1760,6 +2002,7 @@ export const POST = withApiGuardrails(
         content = enforceProjectBriefingResponseContract({
           content,
           projectBriefingSnapshot,
+          executiveRetrieval: executiveBriefingRetrieval,
           forceBusinessRetrieval,
         });
         if (content !== contentBeforeContract) {

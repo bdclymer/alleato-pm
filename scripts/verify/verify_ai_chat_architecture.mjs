@@ -253,6 +253,12 @@ requireCondition(route.includes("tool_trace"), "chat route must persist tool tra
 requireCondition(route.includes("response_quality"), "chat route must persist response quality metadata");
 requireCondition(route.includes("getProjectBriefingSnapshot"), "chat route must preflight broad project snapshots");
 requireCondition(route.includes("semanticSearch"), "chat route must preflight semantic search");
+requireCondition(route.includes("ExecutiveBriefingRetrievalPacket"), "chat route must build a deterministic executive briefing retrieval packet");
+requireCondition(route.includes("searchMeetingsByTopic"), "chat route must preflight recent meetings for broad project briefings");
+requireCondition(route.includes("searchTeamsMessages"), "chat route must preflight Teams messages for broad project briefings");
+requireCondition(route.includes("searchEmails"), "chat route must preflight Outlook emails for broad project briefings");
+requireCondition(route.includes("searchExternalDocuments"), "chat route must preflight OneDrive/documents for broad project briefings");
+requireCondition(route.includes("Sources Checked"), "chat route must force source coverage disclosure in broad project briefings");
 
 requireCondition(client.includes("useChat"), "client must use useChat");
 requireCondition(client.includes("DefaultChatTransport"), "client must use DefaultChatTransport");

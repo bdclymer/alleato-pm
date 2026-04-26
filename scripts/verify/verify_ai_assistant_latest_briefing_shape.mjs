@@ -62,6 +62,8 @@ const trace = Array.isArray(data.metadata?.tool_trace)
 const toolNames = trace.map((entry) => String(entry.tool ?? ""));
 const requiredSections = [
   "Hard Facts",
+  "Sources Checked",
+  "Recent Communication Signals",
   "What Changed",
   "Insider Analysis",
   "Recommended Actions",
@@ -69,9 +71,17 @@ const requiredSections = [
 ];
 const requiredTools = [
   "serverBusinessContextPreflight",
+  "sourceHealthPreflight",
   "getProjectBriefingSnapshot",
   "semanticSearch",
+  "searchMeetingsByTopic",
+  "searchTeamsMessages",
+  "searchEmails",
+  "searchExternalDocuments",
 ];
+const forbiddenToolErrors = trace
+  .filter((entry) => entry.error)
+  .map((entry) => `${entry.tool ?? "unknown"}: ${entry.error}`);
 
 const failures = [
   ...requiredSections
@@ -80,10 +90,16 @@ const failures = [
   ...requiredTools
     .filter((tool) => !toolNames.includes(tool))
     .map((tool) => `missing tool trace: ${tool}`),
+  ...forbiddenToolErrors.map((error) => `tool error present: ${error}`),
 ];
 
 if (content.length < 800) {
   failures.push(`briefing too short: ${content.length} characters`);
+}
+
+const responseQualityScore = Number(data.metadata?.response_quality?.score ?? 0);
+if (!Number.isFinite(responseQualityScore) || responseQualityScore < 80) {
+  failures.push(`response quality score below 80: ${responseQualityScore || "missing"}`);
 }
 
 if (failures.length > 0) {
