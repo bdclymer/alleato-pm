@@ -605,6 +605,12 @@ function createDeterministicProjectBriefing(params: {
 
   const project = readSnapshotObject(snapshot, "project");
   const hardFacts = readSnapshotObject(snapshot, "hardFacts");
+
+  // If no real project was identified (name is the fallback "Selected project"),
+  // do not render the $0-everywhere template — it is worse than no answer.
+  // Return null so the LLM generates a conversational response instead.
+  const projectName = String(project?.name ?? "");
+  if (!projectName || /^selected project$/i.test(projectName)) return null;
   const budget = readSnapshotObject(hardFacts, "budget");
   const contract = readSnapshotObject(hardFacts, "contract");
   const changeOrders = readSnapshotObject(hardFacts, "changeOrders");
@@ -995,31 +1001,36 @@ function shouldForceBusinessRetrieval(message: string): boolean {
   const normalized = message.toLowerCase();
   if (normalized.length < 20) return false;
 
-  return [
-    "project",
-    "briefing",
-    "brief",
-    "status",
-    "latest",
-    "update",
-    "risk",
-    "budget",
-    "cost",
-    "schedule",
-    "meeting",
-    "email",
-    "teams",
-    "oneDrive".toLowerCase(),
-    "acumatica",
-    "invoice",
-    "commitment",
-    "change order",
-    "rfi",
-    "submittal",
-    "owner",
-    "vendor",
-    "exol",
-  ].some((keyword) => normalized.includes(keyword));
+  // Only force the full executive briefing format for genuine "give me the full
+  // project status/update" queries. Specific questions (e.g. "tell me about the
+  // recent meetings", "what's the budget?") should get a natural conversational
+  // answer — not a 7-section template with hardcoded section headers.
+  const broadUpdatePhrases = [
+    "give me a briefing",
+    "give me a brief",
+    "project briefing",
+    "project brief",
+    "project status",
+    "project update",
+    "full update",
+    "full briefing",
+    "status update",
+    "what is the status",
+    "what's the status",
+    "how is the project",
+    "how's the project",
+    "latest on the project",
+    "what's going on with",
+    "what is going on with",
+    "tell me everything",
+    "executive summary",
+    "run me through",
+    "walk me through the project",
+    "catch me up",
+    "caught up on",
+  ];
+
+  return broadUpdatePhrases.some((phrase) => normalized.includes(phrase));
 }
 
 function extractPriorProjectName(messages: UIMessage[]): string | undefined {
