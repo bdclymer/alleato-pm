@@ -201,6 +201,16 @@ Core workflow:
 
 **Alleato-Procore** — construction project management platform (Next.js 15 frontend + Supabase backend). Mirrors Procore functionality: budgets, contracts, change orders, directory, scheduling, and more.
 
+### Hosting Source Of Truth
+
+- **Frontend production host:** Vercel.
+- **Backend production host:** Render, configured by `backend/render.yaml`.
+- **Backend service:** Render service `alleato-backend`.
+- **Do not use Railway for this repo.** Railway config, commands, and assumptions are stale/outdated for Alleato PM backend work.
+- **Do not debug or patch deployment issues against unused hosts.** For backend runtime, health, env vars, logs, and pipeline behavior, inspect Render/FastAPI first.
+- **Required backend AI env:** `AI_GATEWAY_API_KEY` must be configured on Render and is the primary provider path for ingestion/vectorization. Direct `OPENAI_API_KEY` is fallback only and currently may be quota-limited.
+- **Pipeline source of truth:** Fireflies and Microsoft Graph ingestion/vectorization run through the native FastAPI backend under `backend/src/services/**` and `/api/pipeline/process`, not retired worker or Railway paths.
+
 ### Directory Structure
 
 ```text

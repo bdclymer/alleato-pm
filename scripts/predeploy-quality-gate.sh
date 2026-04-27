@@ -39,11 +39,11 @@ echo "2j) Build crash prevention: no module-level server client init"
 node scripts/check-no-module-level-server-init.mjs
 
 echo "2k) Retired Cloudflare ingestion path gate"
-if rg -n "backend/src/workers|CLOUDFLARE_WORKER_BASE_URL|WORKER_AUTH_TOKEN|fireflies-(parser|embedder|extractor)|workers\\.dev|src/workers/scripts/process_documents.py" \
+if rg -n "backend/src/workers|CLOUDFLARE_WORKER_BASE_URL|WORKER_AUTH_TOKEN|fireflies-(parser|embedder|extractor)|workers\\.dev|src/workers/scripts/process_documents.py|railway\\.json|railway up|Railway CLI|Deploying to Railway|fly\\.toml|fly deploy|Fly\\.io|kubernetes/(deployment|secrets)\\.yaml" \
   backend frontend scripts docs .github package.json \
   --glob '!frontend/playwright-report/**' \
   --glob '!scripts/predeploy-quality-gate.sh'; then
-  echo "Retired Cloudflare ingestion/vectorization path reference found. Use the Render/FastAPI backend pipeline instead." >&2
+  echo "Retired deployment/ingestion path reference found. Use the Render/FastAPI backend pipeline instead." >&2
   exit 1
 fi
 

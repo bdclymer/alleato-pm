@@ -110,7 +110,7 @@ async function probeEmbeddingProvider() {
         `Body: ${text.slice(0, 300)}. ` +
         `Check OpenAI billing/quota.`;
       if (successes.length > 0) {
-        fail(`${message} AI Gateway is currently masking this provider failure, but direct OpenAI is configured and unhealthy.`);
+        warn(`${message} AI Gateway is currently the working provider; direct OpenAI should not be treated as the primary path.`);
       } else {
         fail(
           `Embedding provider is FAILING. ${message} ` +
@@ -121,7 +121,7 @@ async function probeEmbeddingProvider() {
     }
   } catch (err) {
     if (successes.length > 0) {
-      fail(`Direct OpenAI embedding probe threw: ${err.message}. AI Gateway is currently masking this provider failure, but direct OpenAI is configured and unhealthy.`);
+      warn(`Direct OpenAI embedding probe threw: ${err.message}. AI Gateway is currently the working provider; direct OpenAI should not be treated as the primary path.`);
     } else {
       fail(`Direct OpenAI embedding probe threw: ${err.message}`);
     }
@@ -226,6 +226,24 @@ try {
     from q, public.search_document_chunks(q.embedding, null, null, 5, 0.3)
   `;
 
+  const pipelineJobs = await sql`
+    select
+      stage,
+      count(*)::int as count,
+      min(created_at) as oldest_created_at,
+      max(updated_at) as newest_updated_at
+    from public.fireflies_ingestion_jobs
+    group by stage
+    order by count desc
+  `;
+
+  const quotaErrorJobs = await sql`
+    select count(*)::int as count
+    from public.fireflies_ingestion_jobs
+    where stage = 'error'
+      and error_message ilike '%quota%'
+  `;
+
   const provider = await probeEmbeddingProvider();
 
   if (metadata.embedded_summaries === 0 && chunks.embedded_chunks === 0) {
@@ -279,11 +297,29 @@ try {
     fail("RPC search_document_chunks returned no meeting chunk results for a known-good probe vector. Retrieval is broken.");
   }
 
+  const rawIngestedJobs = pipelineJobs.find((job) => job.stage === "raw_ingested")?.count ?? 0;
+  const errorJobs = pipelineJobs.find((job) => job.stage === "error")?.count ?? 0;
+  if (rawIngestedJobs > 100) {
+    fail(
+      `${rawIngestedJobs} Fireflies ingestion jobs are stuck at raw_ingested. ` +
+        `They have not completed segmentation/chunking/embedding and are not reliable RAG context.`
+    );
+  }
+  if ((quotaErrorJobs[0]?.count ?? 0) > 0) {
+    fail(
+      `${quotaErrorJobs[0].count} Fireflies ingestion jobs failed with quota/provider errors. ` +
+        `Retry them through the AI Gateway-backed pipeline after backend config is deployed.`
+    );
+  } else if (errorJobs > 100) {
+    warn(`${errorJobs} Fireflies ingestion jobs are in error stage; inspect grouped error messages before relying on meeting recall.`);
+  }
+
   const result = {
     metadata,
     recent,
     chunks,
     recentChunkCoverage,
+    pipelineJobs,
     probes: {
       meetingSummarySearch: summaryProbe,
       documentChunkSearch: chunkProbe,

@@ -6,8 +6,9 @@ The implementation intentionally avoids hard-coding secrets—set the following
 environment variables before importing this module:
 
 * ``SUPABASE_URL`` – project URL, e.g. https://xyzcompany.supabase.co
-* ``SUPABASE_SERVICE_ROLE_KEY`` – preferred for server-side use. Falls back to
-  ``SUPABASE_ANON_KEY`` if the service key is not provided.
+* ``SUPABASE_SERVICE_ROLE_KEY`` – preferred for server-side use.
+* ``SUPABASE_SERVICE_KEY`` – legacy alias used by some deployment configs.
+  Falls back to ``SUPABASE_ANON_KEY`` only when neither service key exists.
 
 The official ``supabase`` Python package must be installed (add it to
 ``python-backend/requirements.txt``).
@@ -75,7 +76,11 @@ def get_supabase_client() -> Client:
     """Return a cached Supabase client instance."""
 
     url = _require_env("SUPABASE_URL")
-    key = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or _require_env("SUPABASE_ANON_KEY")
+    key = (
+        os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+        or os.getenv("SUPABASE_SERVICE_KEY")
+        or _require_env("SUPABASE_ANON_KEY")
+    )
     return create_client(url, key)
 
 

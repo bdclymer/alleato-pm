@@ -16,6 +16,8 @@ const requiredRouteFragments = [
   "buildSourceSpecificRagAnswer",
   "sourceSpecificRagRetrieval",
   "strategist-source-specific-rag",
+  "groupTeamsRows",
+  "conversation/day bucket",
   "teams rag",
   "using only teams",
   "chat/thread",

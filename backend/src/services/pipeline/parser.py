@@ -91,9 +91,29 @@ def _segment_transcript_in_windows(
         formatted = _format_transcript_for_llm(window_lines)
         window_title = f"{title} (lines {first_idx}-{last_idx})"
 
-        window_segments = llm.segment_transcript(
-            formatted, window_title, max_chars=None
-        )
+        try:
+            window_segments = llm.segment_transcript(
+                formatted, window_title, max_chars=None
+            )
+        except Exception as exc:
+            logger.warning(
+                "[Parser] Segment LLM failed for %s lines %s-%s; using fallback segment: %s",
+                title,
+                first_idx,
+                last_idx,
+                exc,
+            )
+            window_segments = [
+                {
+                    "title": f"Meeting Notes {first_idx}-{last_idx}",
+                    "start_index": first_idx,
+                    "end_index": last_idx,
+                    "summary": " ".join(line.text for line in window_lines)[:1200],
+                    "decisions": [],
+                    "risks": [],
+                    "tasks": [],
+                }
+            ]
         for seg in window_segments:
             seg_start = _coerce_int(seg.get("start_index"), first_idx)
             seg_end = _coerce_int(seg.get("end_index"), last_idx)
@@ -180,6 +200,21 @@ def run_parser(metadata_id: str) -> Dict[str, Any]:
         )
         for i, seg in enumerate(parsed.transcript_segments)
     ]
+    if not transcript_lines:
+        fallback_text = (parsed.summary or parsed.overview or content).strip()
+        if fallback_text:
+            transcript_lines = [
+                TranscriptLine(
+                    index=0,
+                    timestamp="",
+                    speaker="Meeting Notes",
+                    text=fallback_text[:12000],
+                )
+            ]
+            logger.warning(
+                "[Parser] No transcript lines found for %s; using meeting notes fallback segment",
+                metadata_id,
+            )
 
     # 4. Generate meeting summary (pass existing Fireflies summary as context)
     excerpt = _build_summary_excerpt(transcript_lines)
@@ -192,6 +227,22 @@ def run_parser(metadata_id: str) -> Dict[str, Any]:
 
     # 5. Segment the transcript via LLM
     segment_dicts = _segment_transcript_in_windows(transcript_lines, title)
+    if not segment_dicts and transcript_lines:
+        segment_dicts = [
+            {
+                "title": "Meeting Notes",
+                "start_index": transcript_lines[0].index,
+                "end_index": transcript_lines[-1].index,
+                "summary": meeting_summary,
+                "decisions": [],
+                "risks": [],
+                "tasks": [],
+            }
+        ]
+        logger.warning(
+            "[Parser] LLM returned no segments for %s; created fallback meeting-notes segment",
+            metadata_id,
+        )
     logger.info("[Parser] Created %d segments", len(segment_dicts))
 
     # 6. Convert to MeetingSegment objects

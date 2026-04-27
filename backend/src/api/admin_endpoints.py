@@ -67,6 +67,8 @@ class ReplayStaleRawIngestedRequest(BaseModel):
     stale_minutes: int = 120
     limit: int = 25
     dry_run: bool = False
+    include_error_jobs: bool = False
+    error_contains: Optional[str] = None
 
 
 def get_rag_store() -> SupabaseRagStore:
@@ -97,24 +99,39 @@ def _find_stale_raw_ingested_jobs(
     supabase,
     stale_minutes: int,
     limit: int,
+    include_error_jobs: bool = False,
+    error_contains: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
-    """Fetch stale raw_ingested jobs with valid metadata IDs."""
+    """Fetch stale raw_ingested jobs, optionally including retryable error jobs."""
     # Supabase/PostgREST expects ISO timestamp for lte filtering.
     from datetime import timedelta
 
     cutoff = (datetime.utcnow() - timedelta(minutes=stale_minutes)).isoformat()
     response = (
         supabase.table("fireflies_ingestion_jobs")
-        .select("fireflies_id, metadata_id, created_at, updated_at")
-        .eq("stage", "raw_ingested")
-        .is_("error_message", "null")
+        .select("fireflies_id, metadata_id, stage, error_message, created_at, updated_at")
+        .in_("stage", ["raw_ingested", "error"] if include_error_jobs else ["raw_ingested"])
         .lte("updated_at", cutoff)
         .order("updated_at", desc=False)
-        .limit(limit * 3)
+        .limit(limit * 5)
         .execute()
     )
     rows = response.data or []
-    return [row for row in rows if row.get("metadata_id")][:limit]
+    retryable: List[Dict[str, Any]] = []
+    for row in rows:
+        if not row.get("metadata_id"):
+            continue
+        stage = row.get("stage")
+        error_message = row.get("error_message") or ""
+        if stage == "raw_ingested" and not error_message:
+            retryable.append(row)
+        elif include_error_jobs and stage == "error":
+            if error_contains and error_contains.lower() not in error_message.lower():
+                continue
+            retryable.append(row)
+        if len(retryable) >= limit:
+            break
+    return retryable
 
 @router.post("/documents/generate-embeddings", response_model=EmbeddingGenerationResponse)
 async def trigger_generate_embeddings(
@@ -337,6 +354,8 @@ async def replay_stale_raw_ingested_jobs(
             supabase=supabase,
             stale_minutes=request.stale_minutes,
             limit=request.limit,
+            include_error_jobs=request.include_error_jobs,
+            error_contains=request.error_contains,
         )
 
         if not jobs:
@@ -350,6 +369,8 @@ async def replay_stale_raw_ingested_jobs(
                 "queued": 0,
                 "failed": 0,
                 "dry_run": request.dry_run,
+                "include_error_jobs": request.include_error_jobs,
+                "error_contains": request.error_contains,
             }
 
         results: List[Dict[str, Any]] = []
@@ -417,6 +438,8 @@ async def replay_stale_raw_ingested_jobs(
             "queued": queued if not request.dry_run else 0,
             "failed": failed if not request.dry_run else 0,
             "dry_run": request.dry_run,
+            "include_error_jobs": request.include_error_jobs,
+            "error_contains": request.error_contains,
             "results": results,
         }
 

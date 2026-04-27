@@ -21,22 +21,9 @@ case $PLATFORM in
     echo "Run with: docker run -p 8000:8000 --env-file .env.production $IMAGE_NAME:latest"
     ;;
     
-  railway)
-    echo "🚂 Deploying to Railway..."
-    if ! command -v railway &> /dev/null; then
-      echo "❌ Railway CLI not found. Install with: npm install -g @railway/cli"
-      exit 1
-    fi
-    railway up
-    ;;
-    
-  fly)
-    echo "✈️ Deploying to Fly.io..."
-    if ! command -v fly &> /dev/null; then
-      echo "❌ Fly CLI not found. Install from: https://fly.io/install.sh"
-      exit 1
-    fi
-    fly deploy --config deploy/fly.toml
+  render)
+    echo "Render is the production backend host for Alleato."
+    echo "Use backend/render.yaml and the Render dashboard/API for deploys, env vars, and logs."
     ;;
     
   compose)
@@ -54,7 +41,7 @@ case $PLATFORM in
     
   *)
     echo "❌ Unknown platform: $PLATFORM"
-    echo "Available platforms: docker, railway, fly, compose, test"
+    echo "Available platforms: docker, render, compose, test"
     exit 1
     ;;
 esac

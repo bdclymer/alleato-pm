@@ -121,12 +121,16 @@ async def health_check() -> Dict[str, Any]:
     gateway_key = os.getenv("AI_GATEWAY_API_KEY")
     openai_configured = bool(openai_key and len(openai_key) > 0)
     ai_gateway_configured = bool(gateway_key and len(gateway_key) > 0)
+    supabase_service_configured = bool(
+        os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_SERVICE_KEY")
+    )
     
     return {
         "status": "healthy",
         "openai_configured": openai_configured,
         "ai_gateway_configured": ai_gateway_configured,
         "embedding_provider_configured": ai_gateway_configured or openai_configured,
+        "supabase_service_configured": supabase_service_configured,
         "timestamp": datetime.now().isoformat()
     }
 

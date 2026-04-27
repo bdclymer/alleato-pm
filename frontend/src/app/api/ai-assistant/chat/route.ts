@@ -1213,6 +1213,29 @@ function sourceSpecificTitle(row: SourceSpecificRagRow): string {
   return row.title?.trim() || row.id;
 }
 
+function groupTeamsRows(rows: SourceSpecificRagRow[]): Array<{
+  key: string;
+  title: string;
+  date: string;
+  rows: SourceSpecificRagRow[];
+}> {
+  const groups = new Map<string, { key: string; title: string; date: string; rows: SourceSpecificRagRow[] }>();
+
+  for (const row of rows) {
+    const title = sourceSpecificTitle(row);
+    const date = formatSourceSpecificDate(row);
+    const key = `${title}::${date}`;
+    const existing = groups.get(key);
+    if (existing) {
+      existing.rows.push(row);
+    } else {
+      groups.set(key, { key, title, date, rows: [row] });
+    }
+  }
+
+  return [...groups.values()].sort((a, b) => b.date.localeCompare(a.date));
+}
+
 function formatSourceSpecificRagContent(
   request: SourceSpecificRagRequest,
   rows: SourceSpecificRagRow[],
@@ -1239,19 +1262,25 @@ function formatSourceSpecificRagContent(
   }
 
   if (request.kind === "recent_teams_discussions") {
+    const conversationGroups = groupTeamsRows(rows);
     return [
       `**Main Teams Discussions (${request.startDate} to ${request.endDate})**`,
       "",
-      ...rows.slice(0, request.limit).map((row, index) =>
-        `${index + 1}. **${sourceSpecificTitle(row)}** — ${formatSourceSpecificDate(row)}. ${sourceSpecificSnippet(row)} [Source: ${row.id}]`,
-      ),
+      ...conversationGroups.slice(0, request.limit).map((group, index) => {
+        const examples = group.rows
+          .slice(0, 3)
+          .map((row) => sourceSpecificSnippet(row, 180))
+          .join(" ");
+        const sourceIds = group.rows.slice(0, 3).map((row) => row.id).join(", ");
+        return `${index + 1}. **${group.title}** - ${group.date}. ${examples} [Sources: ${sourceIds}]`;
+      }),
       "",
       `**Observability**`,
       `- ${sourceLine}`,
-      `- Retrieved ${rows.length} Teams row(s) and answered from concrete Teams snippets/titles.`,
+      `- Retrieved ${rows.length} Teams row(s), grouped into ${conversationGroups.length} conversation/day bucket(s), and answered from concrete Teams snippets/titles.`,
       "",
       "**Next Step**",
-      "- Use these Teams items as the audit sample and compare them against graph_sync_state errors for any inaccessible chats.",
+      "- Use these grouped conversations as the audit sample and compare them against graph_sync_state errors for any inaccessible chats.",
     ].join("\n");
   }
 

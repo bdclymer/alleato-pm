@@ -102,8 +102,6 @@ def _call_llm(prompt: str, json_mode: bool = False, max_tokens: Optional[int] = 
         "messages": [{"role": "user", "content": prompt}],
         "temperature": 0.3,
     }
-    if json_mode:
-        kwargs["response_format"] = {"type": "json_object"}
     if max_tokens:
         kwargs["max_tokens"] = max_tokens
 
@@ -113,6 +111,8 @@ def _call_llm(prompt: str, json_mode: bool = False, max_tokens: Optional[int] = 
         try:
             provider_kwargs = dict(kwargs)
             provider_kwargs["model"] = _model_for_provider(CHAT_MODEL, provider)
+            if json_mode and provider["name"] != "AI Gateway":
+                provider_kwargs["response_format"] = {"type": "json_object"}
             response = _client(provider).chat.completions.create(**provider_kwargs)
             return response.choices[0].message.content or ""
         except Exception as exc:
@@ -283,7 +283,11 @@ Guidelines:
 - Identify implied opportunities from discussion"""
 
     raw = _call_llm(prompt, json_mode=True)
-    data = json.loads(raw)
+    try:
+        data = json.loads(raw)
+    except Exception as exc:
+        logger.warning("[LLM] Structured extraction returned non-JSON; continuing without extracted items: %s", exc)
+        return StructuredData()
 
     # Resolve emails from map if LLM didn't set them
     _email_map = speaker_email_map or {}

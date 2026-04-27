@@ -139,10 +139,10 @@ def run_extractor(metadata_id: str) -> Dict[str, Any]:
     if _is_interview_meeting(metadata):
         fireflies_id = str(metadata.get("fireflies_id") or metadata_id)
         client.table("fireflies_ingestion_jobs").update(
-            {"stage": "done"}
+            {"stage": "done", "error_message": None}
         ).eq("fireflies_id", fireflies_id).execute()
         client.table("fireflies_ingestion_jobs").update(
-            {"stage": "done"}
+            {"stage": "done", "error_message": None}
         ).eq("metadata_id", metadata_id).execute()
         client.table("document_metadata").update(
             {"status": "complete"}
@@ -344,7 +344,7 @@ def run_extractor(metadata_id: str) -> Dict[str, Any]:
 
     # 6. Mark job done and metadata complete
     client.table("fireflies_ingestion_jobs").update(
-        {"stage": "done"}
+        {"stage": "done", "error_message": None}
     ).eq("metadata_id", metadata_id).execute()
 
     client.table("document_metadata").update(
@@ -422,4 +422,3 @@ def _upsert_task(
         data,
         on_conflict="metadata_id,description",
     ).execute()
-

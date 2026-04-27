@@ -2,6 +2,7 @@
 Microsoft Teams Message Ingestion
 Fetches channel messages/threads and direct messages (chats) from Teams via Microsoft Graph API.
 """
+import hashlib
 import logging
 import re
 from datetime import datetime, timezone
@@ -17,6 +18,11 @@ MIN_MESSAGE_CHARS = 20
 def _strip_html(text: str) -> str:
     text = re.sub(r'<[^>]+>', ' ', text)
     return re.sub(r'\s+', ' ', text).strip()
+
+
+def _conversation_doc_id(prefix: str, conversation_id: str, date_key: str) -> str:
+    digest = hashlib.sha256(conversation_id.encode("utf-8")).hexdigest()[:16]
+    return f"{prefix}_{digest}_{date_key}"
 
 
 def _format_thread_as_text(thread_messages: list[dict], channel_name: str, team_name: str) -> str:
@@ -268,20 +274,38 @@ def _process_chat_message(
     if len(body) < MIN_MESSAGE_CHARS:
         raise _AlreadyIngested()
 
-    doc_id = f"teamsdm_{msg_id}"
+    created = msg.get("createdDateTime", datetime.now(timezone.utc).isoformat())
+    date_key = created[:10] if created else datetime.now(timezone.utc).date().isoformat()
+    doc_id = _conversation_doc_id("teamsdm", chat_id, date_key)
+    message_marker = f"[message:{msg_id}]"
 
     existing = supabase_client.from_("document_metadata").select("id").eq("id", doc_id).execute()
+    existing_doc = None
     if existing and existing.data:
-        raise _AlreadyIngested()
+        existing_resp = (
+            supabase_client.from_("document_metadata")
+            .select("id, content, participants")
+            .eq("id", doc_id)
+            .single()
+            .execute()
+        )
+        existing_doc = existing_resp.data
+        if existing_doc and message_marker in (existing_doc.get("content") or ""):
+            raise _AlreadyIngested()
 
     sender_field = msg.get("from") or {}
     user_field = sender_field.get("user") or {}
     sender_name = user_field.get("displayName", "Unknown") if isinstance(user_field, dict) else "Unknown"
-    created = msg.get("createdDateTime", datetime.now(timezone.utc).isoformat())
+    created_time = created[:19].replace("T", " ") if created else date_key
 
-    text = f"[Teams Direct Message: {chat_display_name}]\n\n[{created[:10]}] {sender_name}: {body}"
+    line = f"{message_marker} [{created_time}] {sender_name}: {body}"
+    if existing_doc:
+        previous_content = (existing_doc.get("content") or "").rstrip()
+        text = f"{previous_content}\n{line}"
+    else:
+        text = f"[Teams Direct Message Conversation: {chat_display_name}]\nDate: {date_key}\n\n{line}"
 
-    storage_path = f"teams/chats/{chat_id}/{msg_id}.txt"
+    storage_path = f"teams/chats/{chat_id}/{date_key}.txt"
     try:
         supabase_client.storage.from_("documents").upload(
             storage_path,
@@ -292,18 +316,23 @@ def _process_chat_message(
         logger.warning(f"[Teams DM] Storage upload failed for {msg_id}: {e}")
         raise
 
-    supabase_client.from_("document_metadata").insert({
+    participants = sorted(set((chat_members or []) + [sender_name]))
+    row = {
         "id": doc_id,
-        "title": f"Teams DM: {chat_display_name}",
+        "title": f"Teams DM Conversation: {chat_display_name}",
         "source": "microsoft_graph",
         "category": "teams_message",  # same category → picked up by searchTeamsMessages tool
-        "type": "teams_dm",
+        "type": "teams_dm_conversation",
         "content": text,
-        "date": created[:10] if created else None,
-        "participants": chat_members or [sender_name],
+        "date": date_key,
+        "participants": participants,
         "status": "raw_ingested",
         "tags": ["teams", "direct_message", chat_display_name.lower()],
-    }).execute()
+    }
+    if existing_doc:
+        supabase_client.from_("document_metadata").update(row).eq("id", doc_id).execute()
+    else:
+        supabase_client.from_("document_metadata").insert(row).execute()
 
 
 def sync_teams_chat(

@@ -5,6 +5,7 @@ Replay stale raw_ingested jobs via protected admin endpoint.
 Usage:
   python src/scripts/replay_stale_raw_ingested.py --stale-minutes 180 --limit 50 --dry-run
   python src/scripts/replay_stale_raw_ingested.py --stale-minutes 180 --limit 50
+  python src/scripts/replay_stale_raw_ingested.py --include-errors --error-contains quota --limit 50
 """
 
 from __future__ import annotations
@@ -37,6 +38,16 @@ def main() -> int:
     parser.add_argument("--limit", type=int, default=25)
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument(
+        "--include-errors",
+        action="store_true",
+        help="Also retry jobs currently in stage=error",
+    )
+    parser.add_argument(
+        "--error-contains",
+        default=None,
+        help="Only retry error jobs whose error_message contains this text",
+    )
+    parser.add_argument(
         "--backend-url",
         default=(os.getenv("PYTHON_BACKEND_URL") or "http://127.0.0.1:8000"),
         help="FastAPI backend base URL",
@@ -55,6 +66,8 @@ def main() -> int:
         "stale_minutes": args.stale_minutes,
         "limit": args.limit,
         "dry_run": args.dry_run,
+        "include_error_jobs": args.include_errors,
+        "error_contains": args.error_contains,
     }
     headers = {
         "Content-Type": "application/json",
@@ -78,4 +91,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

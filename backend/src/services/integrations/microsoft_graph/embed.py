@@ -4,8 +4,8 @@ Chunk and embed Microsoft Graph documents into document_chunks.
 Called after sync for any document_metadata row with status='raw_ingested'
 and source='microsoft_graph' (emails, Teams messages, OneDrive files).
 
-Uses text-embedding-3-large at 1536 dimensions to match the existing
-vector(1536) pgvector columns.
+Uses text-embedding-3-large at native 3072 dimensions to match the existing
+pgvector columns.
 """
 from __future__ import annotations
 
@@ -21,6 +21,43 @@ CHUNK_MAX_CHARS = 3000
 CHUNK_OVERLAP_CHARS = 400
 EMBEDDING_MODEL = "text-embedding-3-large"
 EMBEDDING_DIMENSIONS = 3072
+AI_GATEWAY_BASE_URL = "https://ai-gateway.vercel.sh/v1"
+
+
+def _provider_configs() -> List[Dict[str, str]]:
+    providers: List[Dict[str, str]] = []
+    gateway_key = os.getenv("AI_GATEWAY_API_KEY")
+    if gateway_key:
+        providers.append(
+            {
+                "name": "AI Gateway",
+                "api_key": gateway_key,
+                "base_url": AI_GATEWAY_BASE_URL,
+                "model_prefix": "openai/",
+            }
+        )
+
+    openai_key = os.getenv("OPENAI_API_KEY")
+    if openai_key:
+        providers.append(
+            {
+                "name": "OpenAI direct",
+                "api_key": openai_key,
+                "base_url": "",
+                "model_prefix": "",
+            }
+        )
+
+    if not providers:
+        raise RuntimeError("AI_GATEWAY_API_KEY or OPENAI_API_KEY is required for Graph embeddings")
+    return providers
+
+
+def _model_for_provider(model: str, provider: Dict[str, str]) -> str:
+    prefix = provider.get("model_prefix", "")
+    if prefix and not model.startswith(prefix):
+        return f"{prefix}{model}"
+    return model
 
 
 def _split_text(text: str) -> List[str]:
@@ -60,24 +97,56 @@ def _content_hash(text: str) -> str:
     return hashlib.sha256(text.encode()).hexdigest()[:16]
 
 
+def _source_type_for_document(doc: Dict[str, Any]) -> str:
+    category = doc.get("category")
+    if category == "teams_message":
+        return "teams_message"
+    if category == "email":
+        return "email"
+    if category == "document":
+        return "onedrive_document"
+    return "microsoft_graph"
+
+
 def _batch_embed(texts: List[str]) -> List[List[float]]:
-    """Embed a batch of texts using text-embedding-3-large at 1536 dims."""
+    """Embed a batch of texts using configured providers."""
     if not texts:
         return []
-    try:
-        from openai import OpenAI
-        client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
-        truncated = [t[:8000] for t in texts]
-        response = client.embeddings.create(
-            model=EMBEDDING_MODEL,
-            input=truncated,
-            dimensions=EMBEDDING_DIMENSIONS,
-        )
-        logger.info("[GraphEmbed] Embedded %d chunks with %s (dim=%d)", len(texts), EMBEDDING_MODEL, EMBEDDING_DIMENSIONS)
-        return [item.embedding for item in response.data]
-    except Exception as e:
-        logger.error("[GraphEmbed] Embedding failed: %s", e)
-        return [[] for _ in texts]
+
+    from openai import OpenAI
+
+    truncated = [t[:8000] for t in texts]
+    errors: List[str] = []
+    for provider in _provider_configs():
+        kwargs: Dict[str, str] = {"api_key": provider["api_key"]}
+        if provider.get("base_url"):
+            kwargs["base_url"] = provider["base_url"]
+
+        try:
+            response = OpenAI(**kwargs).embeddings.create(
+                model=_model_for_provider(EMBEDDING_MODEL, provider),
+                input=truncated,
+                dimensions=EMBEDDING_DIMENSIONS,
+            )
+            embeddings = [item.embedding for item in response.data]
+            if len(embeddings) != len(texts):
+                raise RuntimeError(f"expected {len(texts)} embeddings, got {len(embeddings)}")
+            if any(len(embedding) != EMBEDDING_DIMENSIONS for embedding in embeddings):
+                raise RuntimeError(f"one or more embeddings did not have {EMBEDDING_DIMENSIONS} dimensions")
+            logger.info(
+                "[GraphEmbed] Embedded %d chunks via %s with %s (dim=%d)",
+                len(texts),
+                provider["name"],
+                EMBEDDING_MODEL,
+                EMBEDDING_DIMENSIONS,
+            )
+            return embeddings
+        except Exception as e:
+            message = f"{provider['name']}: {e}"
+            logger.error("[GraphEmbed] Embedding provider failed: %s", message)
+            errors.append(message)
+
+    raise RuntimeError("Graph embedding failed across all providers: " + " | ".join(errors))
 
 
 def embed_graph_document(supabase_client, metadata_id: str) -> int:
@@ -119,7 +188,8 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
         supabase_client.from_("document_metadata").update({"status": "embedded"}).eq("id", metadata_id).execute()
         return 0
 
-    # Embed all chunks
+    # Embed all chunks. Do not write unembedded chunks or mark the document
+    # complete if the provider path is broken.
     embeddings = _batch_embed(chunks)
 
     # Build chunk rows
@@ -133,6 +203,7 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
         "participants": doc.get("participants"),
         "tags": doc.get("tags"),
     }
+    source_type = _source_type_for_document(doc)
 
     rows = []
     for i, (chunk_text, embedding) in enumerate(zip(chunks, embeddings)):
@@ -144,6 +215,7 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
             "text": chunk_text,
             "metadata": {**base_metadata, "chunk_index": i, "total_chunks": len(chunks)},
             "content_hash": _content_hash(chunk_text),
+            "source_type": source_type,
         }
         if embedding:
             row["embedding"] = embedding
