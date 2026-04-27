@@ -13,7 +13,7 @@ const nextConfig: NextConfig = {
   productionBrowserSourceMaps: false,
   devIndicators: false,
   experimental: {
-    webpackMemoryOptimizations: false,
+    webpackMemoryOptimizations: true,
     serverSourceMaps: false,
     // Prevent webpack from barrel-importing entire icon/component libraries.
     // Without this, lucide-react (511 icons), @tabler/icons-react (3000+ icons),
