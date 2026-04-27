@@ -29,16 +29,22 @@ if [[ -f "$PID_FILE" ]]; then
   rm -f "$PID_FILE"
 fi
 
-# Guardrail: fail loudly instead of killing unrelated Next processes from other sessions.
+# Auto-kill any unmanaged Next dev processes before starting.
 other_next_pids="$(pgrep -f "$NEXT_MATCH" || true)"
 if [[ -n "${other_next_pids:-}" ]]; then
-  echo "[frontend-dev] Refusing to start: found existing Next dev process(es) not managed by this script:"
+  echo "[frontend-dev] Found existing Next dev process(es) not managed by this script — killing them:"
   while IFS= read -r pid; do
     [[ -z "$pid" ]] && continue
     ps -p "$pid" -o pid=,command=
+    kill "$pid" 2>/dev/null || true
   done <<< "$other_next_pids"
-  echo "[frontend-dev] Prevention: stop those process(es) first or run only one frontend dev session."
-  exit 1
+  # Wait up to 5s for them to exit
+  for _ in {1..20}; do
+    remaining="$(pgrep -f "$NEXT_MATCH" || true)"
+    [[ -z "${remaining:-}" ]] && break
+    sleep 0.25
+  done
+  echo "[frontend-dev] Cleared. Starting fresh."
 fi
 
 cd "$FRONTEND_DIR"
