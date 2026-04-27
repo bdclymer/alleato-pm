@@ -622,12 +622,12 @@ function ToolItem({
       )}
     >
       {Icon && (
-        <span
+      <span
           className={cn(
-            "flex h-6 w-6 shrink-0 items-center justify-center rounded border",
+            "flex h-6 w-6 shrink-0 items-center justify-center",
             isActive
-              ? "border-border text-foreground"
-              : "border-border/50 text-muted-foreground group-hover:border-border group-hover:text-foreground",
+              ? "text-foreground"
+              : "text-muted-foreground group-hover:text-foreground",
           )}
         >
           <Icon className="h-3.5 w-3.5" strokeWidth={1.6} />

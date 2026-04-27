@@ -66,6 +66,7 @@
     "rag:verify:memory": "node scripts/verify/verify_ai_memory_contract.mjs",
     "rag:verify:chat-architecture": "node scripts/verify/verify_ai_chat_architecture.mjs",
     "rag:verify:response-contract": "node scripts/verify/verify_ai_assistant_response_contract.mjs",
+    "rag:verify:source-specific": "node scripts/verify/verify_ai_source_specific_rag_contract.mjs",
     "rag:verify:strategist-frontend": "node scripts/verify/verify_ai_strategist_frontend_conversation.mjs",
     "rag:verify:latest-briefing": "node scripts/verify/verify_ai_assistant_latest_briefing_shape.mjs",
     "rag:verify:risk-routing": "python3 scripts/verify/verify_ai_assistant_risk_routing.py",

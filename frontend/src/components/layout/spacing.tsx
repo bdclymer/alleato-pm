@@ -53,9 +53,8 @@ export function SectionRuleHeading({
   return (
     <div className={cn("flex items-center gap-3 pb-1 mb-4", className)}>
       {icon ? <span className="flex h-4 w-4 items-center justify-center text-muted-foreground">{icon}</span> : null}
-      <Eyebrow className="text-primary">{label}</Eyebrow>
-      <div className="h-px flex-1 bg-border/60" />
-      {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
+      <Eyebrow>{label}</Eyebrow>
+      {actions && <div className="ml-auto flex shrink-0 items-center gap-2">{actions}</div>}
     </div>
   );
 }
@@ -96,7 +95,7 @@ export function LabelValueRow({
         className={cn(
           "min-w-0 flex-1 text-left text-sm",
           missing
-            ? "italic text-muted-foreground/80"
+            ? "text-muted-foreground/50"
             : "font-medium text-foreground",
           valueClassName,
         )}

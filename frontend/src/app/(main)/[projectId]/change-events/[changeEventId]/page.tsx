@@ -681,7 +681,7 @@ export default function ChangeEventDetailPage() {
           </TabsTrigger>
         </TabsList>
 
-        <div className="pt-10">
+        <div className="pt-4">
           <TabsContent value="general">
             <ChangeEventGeneralInfoPanel
               changeEvent={changeEvent}

@@ -168,7 +168,7 @@ export default function PCODetailPage() {
           <TabsTrigger value="emails">Emails</TabsTrigger>
         </TabsList>
 
-        <div className="pt-10">
+        <div className="pt-4">
           <TabsContent value="detail">
             {/* Version sub-tabs when multiple versions exist */}
             {hasVersions && (

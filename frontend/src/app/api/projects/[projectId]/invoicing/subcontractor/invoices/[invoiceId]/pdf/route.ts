@@ -32,6 +32,7 @@ interface InvoiceWithJoins {
   period_start: string | null;
   period_end: string | null;
   billing_date: string | null;
+  is_retainage_release: boolean;
   notes: string | null;
   project_id: number;
   subcontract_id: string | null;
@@ -192,6 +193,7 @@ export async function fetchSubcontractorInvoicePdfData(
       period_start,
       period_end,
       billing_date,
+      is_retainage_release,
       notes,
       project_id,
       subcontract_id,

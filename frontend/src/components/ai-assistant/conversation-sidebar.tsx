@@ -39,11 +39,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
-  HistoryIcon,
   PlusIcon,
   MoreHorizontalIcon,
   PencilIcon,
   Trash2Icon,
+  MessageSquareIcon,
 } from "lucide-react";
 import type { RagConversation } from "@/hooks/use-rag-conversations";
 
@@ -254,22 +254,7 @@ export function ConversationSidebar({
 
   return (
     <>
-      <div className="flex items-center justify-start gap-1 px-4 pt-3 sm:px-6 lg:px-8">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              type="button"
-              variant="ghost"
-              className="h-9 gap-2 rounded-full border border-border/70 bg-accent px-3 text-foreground hover:bg-accent/80"
-              onClick={onNewChat}
-            >
-              <PlusIcon />
-              <span className="text-sm">New chat</span>
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent sideOffset={6}>New chat</TooltipContent>
-        </Tooltip>
-
+      <div className="fixed left-5 top-5 z-30 flex items-center justify-start gap-2">
         <Sheet open={historyOpen} onOpenChange={setHistoryOpen}>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -277,10 +262,11 @@ export function ConversationSidebar({
                 <Button
                   type="button"
                   variant="ghost"
-                  className="h-9 gap-2 rounded-full border border-border/70 bg-accent px-3 text-foreground hover:bg-accent/80"
+                  size="icon"
+                  className="h-12 w-12 rounded-full bg-muted/50 text-foreground shadow-none hover:bg-muted"
                 >
-                  <HistoryIcon />
-                  <span className="text-sm">Chat history</span>
+                  <MessageSquareIcon className="h-4 w-4" />
+                  <span className="sr-only">Chat history</span>
                 </Button>
               </SheetTrigger>
             </TooltipTrigger>

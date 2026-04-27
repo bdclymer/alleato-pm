@@ -8,7 +8,6 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { SiteHeader } from "@/components/header";
 import { ProcoreReferencePanel } from "@/components/header/procore-reference-panel";
 import { CommentsSidebarPanel } from "@/components/header/comments-sidebar";
-import { SiteFooter } from "@/components/layout/site-footer";
 import { LiveCursors } from "@/components/live-cursors/LiveCursors";
 import { AlleatoAiOnboarding } from "@/components/onboarding/AlleatoAiOnboarding";
 // AdminFeedbackWidget replaced by UnifiedFeedbackWidget in root layout
@@ -66,11 +65,6 @@ export default function MainLayout({
                 {...feedbackTargetProps("app.main-content")}
               >
                 <React.Fragment key="route-content">{children}</React.Fragment>
-                {!isDrawingViewer && (
-                  <div key="site-footer" className="mt-auto">
-                    <SiteFooter />
-                  </div>
-                )}
               </main>
               <ProcoreReferencePanel key="procore-reference-panel" />
             </div>

@@ -32,6 +32,7 @@ import {
   CompactSectionHeader as SectionHeading,
   DashedActionLink,
   EmptyState,
+  KpiRow,
   RecordPreview,
   RecordPreviewField,
   RecordPreviewGrid,
@@ -42,6 +43,7 @@ import {
   SheetTitle,
   StatusBadge,
   ToneDot,
+  type KpiBlockProps,
 } from "@/components/ds";
 import { ContentSectionStack } from "@/components/layout";
 import { RealtimeCursors } from "@/components/realtime-cursors";
@@ -225,38 +227,6 @@ function toneTextClass(tone: HomeTone): string {
   return "text-muted-foreground";
 }
 
-function ProjectHealthCells({ cells }: { cells: HealthCell[] }) {
-  return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-      {cells.map((cell) => (
-        <Link
-          key={cell.label}
-          href={cell.href}
-          className="group min-w-0 rounded-md bg-background/80 p-4 shadow-sm transition-colors hover:bg-background"
-        >
-          <div className="mb-3 flex items-center gap-2">
-            <span
-              className={cn(
-                "h-1.5 w-1.5 rounded-full",
-                toneDotClass(cell.tone),
-              )}
-            />
-            <span className="truncate text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              {cell.label}
-            </span>
-          </div>
-          <p className="truncate text-xl font-semibold tabular-nums text-foreground">
-            {cell.value}
-          </p>
-          <p className="mt-1 truncate text-sm text-muted-foreground">
-            {cell.detail}
-          </p>
-        </Link>
-      ))}
-    </div>
-  );
-}
-
 function ProjectPageIdentity({
   projectName,
   jobNumber,
@@ -315,12 +285,17 @@ function ProjectPageIdentity({
 }
 
 function ProjectCommandSurface({ healthCells }: { healthCells: HealthCell[] }) {
+  const metrics: KpiBlockProps[] = healthCells.slice(0, 4).map((cell) => ({
+    label: cell.label,
+    value: cell.value,
+    context: cell.detail,
+    href: cell.href,
+  }));
+
   return (
-    <section className="rounded-lg bg-muted/30 p-4 shadow-sm sm:p-6 lg:p-8">
-      <div className="space-y-3">
-        <SectionHeading>Project health</SectionHeading>
-        <ProjectHealthCells cells={healthCells} />
-      </div>
+    <section className="space-y-4">
+      <SectionHeading>Project health</SectionHeading>
+      <KpiRow metrics={metrics} size="large" />
     </section>
   );
 }

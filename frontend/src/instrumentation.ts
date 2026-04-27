@@ -3,7 +3,9 @@
  *
  * Validates required env vars at boot so a misconfigured deployment fails fast
  * rather than crashing on the first user-facing request. Also warns if the
- * alert webhook is absent so operators know alerts are suppressed.
+ * alert webhook is absent in deployed runtimes so operators know alerts are
+ * suppressed. Local development intentionally stays quiet unless an alertable
+ * error actually occurs.
  */
 export async function register() {
   if (process.env.NEXT_RUNTIME === "nodejs") {
@@ -15,7 +17,14 @@ export async function register() {
       "SUPABASE_SERVICE_ROLE_KEY",
     ]);
 
-    if (!process.env.ERROR_ALERT_WEBHOOK_URL?.trim()) {
+    const shouldWarnForMissingAlertWebhook =
+      process.env.NODE_ENV !== "development" ||
+      process.env.VERCEL_ENV === "preview";
+
+    if (
+      shouldWarnForMissingAlertWebhook &&
+      !process.env.ERROR_ALERT_WEBHOOK_URL?.trim()
+    ) {
       console.warn(
         JSON.stringify({
           timestamp: new Date().toISOString(),

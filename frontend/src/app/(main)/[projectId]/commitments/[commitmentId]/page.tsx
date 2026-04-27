@@ -307,6 +307,12 @@ function safeNumber(n: string | undefined): string | undefined {
   return n;
 }
 
+/** Uppercase the leading letter of each word while preserving existing acronym casing. */
+function capitalizeWords(value: string | undefined | null): string {
+  if (!value) return "";
+  return value.replace(/\b[a-z]/g, (char) => char.toUpperCase());
+}
+
 // ---------------------------------------------------------------------------
 // Contract Summary Report
 // ---------------------------------------------------------------------------
@@ -407,14 +413,14 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
                     {safeNumber(commitment.number) || "Not set"}
                   </LabelValueRow>
                   <LabelValueRow label="Title" missing={!commitment.title}>
-                    {commitment.title || "Not set"}
+                    {capitalizeWords(commitment.title) || "Not set"}
                   </LabelValueRow>
                   <LabelValueRow
                     label="Description"
                     missing={!commitment.description}
                     valueClassName="leading-relaxed font-normal text-foreground"
                   >
-                    {commitment.description || "Not set"}
+                    {capitalizeWords(commitment.description) || "Not set"}
                   </LabelValueRow>
                   <LabelValueRow label="Status">
                     <StatusBadge status={displayStatus} />
@@ -472,6 +478,7 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
                   <ToggleField
                     label="Executed"
                     hint="Shows whether a signed contract has been fully executed."
+                    labelClassName="font-normal text-muted-foreground"
                     checked={Boolean(commitment.executed)}
                     disabled
                   />
@@ -575,12 +582,14 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
                 <ToggleField
                   label="Private Commitment"
                   hint="Private commitments are restricted to permitted project members."
+                  labelClassName="font-normal text-muted-foreground"
                   checked={commitment.private}
                   disabled
                 />
                 <ToggleField
                   label="Allow Non-Admin SOV Visibility"
                   hint="Shows whether standard users can view schedule of values amounts."
+                  labelClassName="font-normal text-muted-foreground"
                   checked={commitment.allow_non_admin_view_sov_items}
                   disabled
                 />
@@ -978,17 +987,15 @@ export default function CommitmentDetailPage() {
   return (
     <PageShell
       variant="detailWide"
-      title={commitment.title || displayNumber || "Commitment"}
+      title={capitalizeWords(commitment.title) || displayNumber || "Commitment"}
       description={description}
       actions={headerActions}
-      statusBadge={<StatusBadge status={commitment.status ? commitment.status.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : "Draft"} />}
       onBack={() => router.back()}
       contentClassName="space-y-0"
     >
 
       <PageTabs
         variant="inline"
-        className="border-b border-border/60"
         tabs={[
           { label: "General", href: "general", isActive: activeTab === "general" },
           { label: sovLabel, href: "sov", isActive: activeTab === "sov" },
@@ -1013,7 +1020,7 @@ export default function CommitmentDetailPage() {
         onTabClick={(href) => setActiveTab(href)}
       />
 
-      <div className="pt-8">
+      <div>
         {activeTab === "general" && (
           <GeneralTab
             commitment={commitment}
@@ -1105,7 +1112,7 @@ export default function CommitmentDetailPage() {
         recordType="commitment"
         recordId={commitment.id}
         number={commitment.number}
-        title={commitment.title}
+        title={capitalizeWords(commitment.title)}
       />
     </PageShell>
   );

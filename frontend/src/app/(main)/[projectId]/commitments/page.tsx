@@ -125,9 +125,13 @@ function CommitmentChangeOrdersRow({
       maximumFractionDigits: 0,
     }).format(value);
 
+  if (!isLoading && changeOrders.length === 0) {
+    return null;
+  }
+
   return (
     <TableExpandedRow colSpan={colSpan}>
-      <div className="bg-muted/40 border-y border-border px-6 py-3">
+      <div className="px-6 py-3">
         {isLoading ? (
           <div className="space-y-1.5 py-2">
             {Array.from({ length: 3 }).map((_, i) => (
@@ -140,8 +144,6 @@ function CommitmentChangeOrdersRow({
               </div>
             ))}
           </div>
-        ) : changeOrders.length === 0 ? (
-          <p className="py-2 text-sm text-muted-foreground">No change orders</p>
         ) : (
           <InlineTable variant="read">
             <InlineTableHeader>
@@ -460,24 +462,6 @@ export default function ProjectCommitmentsPage(): ReactElement {
     });
   }, []);
 
-  const expandableCommitmentIds = React.useMemo(
-    () => commitments.map((commitment) => commitment.id),
-    [commitments],
-  );
-  const allRowsExpanded =
-    expandableCommitmentIds.length > 0 &&
-    expandableCommitmentIds.every((id) => expandedIds.has(id));
-  const handleToggleAllRows = React.useCallback(() => {
-    setExpandedIds((prev) => {
-      const shouldCollapse =
-        expandableCommitmentIds.length > 0 &&
-        expandableCommitmentIds.every((id) => prev.has(id));
-
-      if (shouldCollapse) return new Set();
-      return new Set(expandableCommitmentIds);
-    });
-  }, [expandableCommitmentIds]);
-
   const tableColumns = React.useMemo(
     () => buildCommitmentTableColumns(projectId, expandedIds, handleToggleExpand, handleStatusChange),
     [projectId, expandedIds, handleToggleExpand, handleStatusChange],
@@ -752,25 +736,6 @@ export default function ProjectCommitmentsPage(): ReactElement {
             : undefined,
           customActions: (
             <TooltipProvider>
-              {!isRecycleBinTab && !isChangeOrdersTab ? (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 shrink-0"
-                      disabled={expandableCommitmentIds.length === 0}
-                      onClick={handleToggleAllRows}
-                      aria-label={allRowsExpanded ? "Collapse all rows" : "Expand all rows"}
-                    >
-                      <ChevronDown className={allRowsExpanded ? "rotate-180 transition-transform" : "transition-transform"} />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {allRowsExpanded ? "Collapse all rows" : "Expand all rows"}
-                  </TooltipContent>
-                </Tooltip>
-              ) : null}
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button

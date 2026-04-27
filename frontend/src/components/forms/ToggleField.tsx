@@ -12,6 +12,8 @@ interface ToggleFieldProps {
   hint?: string;
   disabled?: boolean;
   className?: string;
+  labelClassName?: string;
+  hintClassName?: string;
 }
 
 export function ToggleField({
@@ -22,12 +24,14 @@ export function ToggleField({
   hint,
   disabled = false,
   className,
+  labelClassName,
+  hintClassName,
 }: ToggleFieldProps) {
   return (
     <div className={cn("flex items-center justify-between", className)}>
       <div className="flex-1">
-        <label className="text-sm font-medium text-foreground">{label}</label>
-        {hint && !error && <p className="text-sm text-muted-foreground">{hint}</p>}
+        <label className={cn("text-sm font-medium text-foreground", labelClassName)}>{label}</label>
+        {hint && !error && <p className={cn("text-sm text-muted-foreground", hintClassName)}>{hint}</p>}
         {error && <p className="text-sm text-destructive">{error}</p>}
       </div>
       <Switch

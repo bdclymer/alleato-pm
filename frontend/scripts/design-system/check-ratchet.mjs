@@ -59,9 +59,66 @@ function groupByRule(issues) {
   return byRule;
 }
 
+function collectFiles(dir, predicate, files = []) {
+  if (!fs.existsSync(dir)) {
+    return files;
+  }
+
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const fullPath = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      collectFiles(fullPath, predicate, files);
+      continue;
+    }
+    if (predicate(fullPath)) {
+      files.push(fullPath);
+    }
+  }
+
+  return files;
+}
+
+function getCustomGuardrailFailures() {
+  const failures = [];
+  const appDir = path.join(repoRoot, "src/app");
+  const avatarRouteInChat = path.join(appDir, "(chat)/ai-avatar");
+
+  if (fs.existsSync(avatarRouteInChat)) {
+    failures.push({
+      rule: "ai-avatar-normal-shell",
+      message:
+        "/ai-avatar must live under the normal app shell, not the full-bleed chat route group.",
+      file: path.relative(repoRoot, avatarRouteInChat),
+    });
+  }
+
+  const avatarFiles = collectFiles(
+    path.join(repoRoot, "src"),
+    (filePath) =>
+      /avatar/i.test(filePath) &&
+      /\.(tsx|ts)$/.test(filePath) &&
+      !filePath.includes(`${path.sep}.next${path.sep}`),
+  );
+
+  for (const filePath of avatarFiles) {
+    const source = fs.readFileSync(filePath, "utf8");
+    if (/rounded-(?:md|lg|xl)[^"\n`]*\bborder\b[^"\n`]*\bborder-border\b/.test(source)) {
+      failures.push({
+        rule: "no-avatar-page-frame-border",
+        message:
+          "Avatar pages must not wrap the primary experience in a decorative border.",
+        file: path.relative(repoRoot, filePath),
+      });
+    }
+  }
+
+  return failures;
+}
+
 function main() {
   const shouldWriteBaseline = process.argv.includes("--write-baseline");
   const issues = getCurrentDesignLint();
+  const customFailures = getCustomGuardrailFailures();
   const currentCount = issues.length;
   const byRule = groupByRule(issues);
 
@@ -86,6 +143,14 @@ function main() {
 
   console.log(`Design lint count: current=${currentCount} baseline=${baselineCount}`);
   console.log("By rule:", byRule);
+
+  if (customFailures.length > 0) {
+    console.error("Custom design guardrail failures:");
+    for (const failure of customFailures) {
+      console.error(`- ${failure.rule}: ${failure.file} - ${failure.message}`);
+    }
+    process.exit(1);
+  }
 
   if (currentCount > baselineCount) {
     console.error(

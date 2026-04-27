@@ -13,6 +13,7 @@ import {
 } from "@/components/motion/morphing-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { MorphingDialogBasicOne } from "@/components/motion/morphing-dialog-basic-one";
+import { MorphingDialogBasicImage } from "@/components/motion/morphing-image";
 import { AnimatedBackground } from "@/components/motion/animated-background";
 import { AnimatedList } from "@/components/motion/animated-list";
 import { Marquee } from "@/components/motion/marquee";
@@ -209,6 +210,7 @@ export default function ComponentsPage() {
             <MorphingDialogBasicOne />
             <MorphingDialogBasicTwo />
             <MorphingDialogBasicThree />
+            <MorphingDialogBasicImage />
           </div>
         </ComponentSection>
 

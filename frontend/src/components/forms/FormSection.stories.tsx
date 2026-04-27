@@ -1,6 +1,7 @@
 import React from "react";
 import type { Meta } from "@storybook/react";
 import { TextField } from "./TextField";
+import { DateField } from "./DateField";
 import { SelectField } from "./SelectField";
 import { FormGrid } from "./FormGrid";
 import { FormSection } from "./FormSection";
@@ -45,13 +46,13 @@ export const MultiSection = {
       <FormSection title="Contract Terms" description="Define the financial terms of the agreement.">
         <FormGrid columns={2}>
           <TextField label="Contract Value" prefix="$" />
-          <TextField label="Retainage" suffix="%" />
+          <TextField label="Retainage Percentage" placeholder="0%" inputMode="decimal" />
         </FormGrid>
       </FormSection>
       <FormSection title="Schedule" description="Set the project timeline.">
         <FormGrid columns={2}>
-          <TextField label="Start Date" type="date" />
-          <TextField label="Completion Date" type="date" />
+          <DateField label="Start Date" />
+          <DateField label="Completion Date" />
         </FormGrid>
       </FormSection>
     </div>

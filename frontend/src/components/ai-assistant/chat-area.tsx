@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { apiFetch } from "@/lib/api-client";
+import Image from "next/image";
+import { apiFetch, apiFetchBlob } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import type { UIMessage } from "ai";
 import { useProjects } from "@/hooks/use-projects";
@@ -49,6 +50,16 @@ import {
   ToolOutput,
 } from "@/components/ai-elements/tool";
 import {
+  Confirmation,
+  ConfirmationAccepted,
+  ConfirmationAction,
+  ConfirmationActions,
+  ConfirmationRejected,
+  ConfirmationRequest,
+  ConfirmationTitle,
+  type ConfirmationProps,
+} from "@/components/ai-elements/confirmation";
+import {
   ChainOfThought,
   ChainOfThoughtHeader,
   ChainOfThoughtContent,
@@ -61,6 +72,7 @@ import {
   PromptInputAction,
 } from "@/components/chat/prompt-input";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   CopyIcon,
   SendIcon,
@@ -68,7 +80,6 @@ import {
   ThumbsUpIcon,
   ThumbsDownIcon,
   DatabaseIcon,
-  SparklesIcon,
   FileTextIcon,
   Building2Icon,
   ChevronDownIcon,
@@ -77,6 +88,13 @@ import {
   SparkleIcon,
   LinkIcon,
   EraserIcon,
+  MicIcon,
+  MicOffIcon,
+  PaperclipIcon,
+  BrainIcon,
+  UsersRoundIcon,
+  Volume2Icon,
+  VolumeXIcon,
 } from "lucide-react";
 import type { DynamicToolUIPart } from "ai";
 import { toast } from "sonner";
@@ -85,6 +103,8 @@ import { TracePanel, type ToolTraceItem } from "./trace-panel";
 import { SourceCitations } from "./source-citations";
 import { CrossSourceTimeline } from "./cross-source-timeline";
 import { formatStructuredMeetingList } from "./chat-formatting";
+import { AnimatedOrb } from "./animated-orb";
+import { AudioWaveform } from "./audio-waveform";
 
 // ─── Part extraction helpers ───────────────────────────────────────
 
@@ -104,6 +124,30 @@ function getReasoningText(msg: UIMessage): string {
     .join("");
 }
 
+function getImageParts(
+  msg: UIMessage,
+): Array<{ url: string; filename?: string }> {
+  return msg.parts.reduce<Array<{ url: string; filename?: string }>>(
+    (images, part) => {
+      if (part.type !== "file") return images;
+      const filePart = part as {
+        type: "file";
+        mediaType?: string;
+        url?: string;
+        filename?: string;
+      };
+      if (filePart.mediaType?.startsWith("image/") && filePart.url) {
+        images.push({
+          url: filePart.url,
+          filename: filePart.filename,
+        });
+      }
+      return images;
+    },
+    [],
+  );
+}
+
 // AI SDK v6 tool parts use type: "tool-{toolName}" with toolCallId, input, output, state
 interface ToolPart {
   type: string;
@@ -113,7 +157,18 @@ interface ToolPart {
   output?: unknown;
   errorText?: string;
   title?: string;
+  approval?: {
+    id: string;
+    approved?: boolean;
+    reason?: string;
+  };
 }
+
+type ToolApprovalResponseHandler = (response: {
+  id: string;
+  approved: boolean;
+  reason?: string;
+}) => void;
 
 interface MemoryUsage {
   totalUsed: number;
@@ -127,6 +182,39 @@ interface MemoryUsage {
     content: string;
   }>;
 }
+
+type WindowWithSpeechRecognition = {
+  SpeechRecognition?: SpeechRecognitionConstructor;
+  webkitSpeechRecognition?: SpeechRecognitionConstructor;
+};
+
+type SpeechRecognitionResultLike = {
+  isFinal: boolean;
+  0: {
+    transcript: string;
+  };
+};
+
+type SpeechRecognitionEventLike = {
+  resultIndex: number;
+  results: {
+    length: number;
+    [index: number]: SpeechRecognitionResultLike;
+  };
+};
+
+type SpeechRecognitionLike = {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  onresult: ((event: SpeechRecognitionEventLike) => void) | null;
+  onerror: ((event: { error?: string }) => void) | null;
+  onend: (() => void) | null;
+  start: () => void;
+  stop: () => void;
+};
+
+type SpeechRecognitionConstructor = new () => SpeechRecognitionLike;
 
 export interface ResponseQuality {
   confidence: "high" | "medium" | "low";
@@ -345,11 +433,11 @@ function getRecordDeepLinks(part: ToolPart): Array<{ label: string; href: string
 
 function AssistantAvatar({ councilMode }: { councilMode?: boolean }) {
   return (
-    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted/60">
+    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-background shadow-sm ring-1 ring-border/50">
       {councilMode ? (
-        <SparkleIcon className="h-4 w-4 text-primary" />
+        <SparkleIcon className="absolute h-3.5 w-3.5 text-primary" />
       ) : (
-        <SparklesIcon className="h-4 w-4 text-muted-foreground" />
+        <AnimatedOrb size={32} />
       )}
     </div>
   );
@@ -362,16 +450,19 @@ function ToolCallItem({
   onApprove,
   onEdit,
   onRun,
+  onApprovalResponse,
 }: {
   part: ToolPart;
   onApprove: (part: ToolPart) => void;
   onEdit: (part: ToolPart) => void;
   onRun: (part: ToolPart) => void;
+  onApprovalResponse?: ToolApprovalResponseHandler;
 }) {
   const preview = getToolPreview(part);
   const previewFields = asObject(preview?.fields);
   const previewEntries = Object.entries(previewFields);
   const links = getRecordDeepLinks(part);
+  const approvalId = part.approval?.id;
 
   return (
     <ToolDisplay className="mb-1.5">
@@ -383,6 +474,51 @@ function ToolCallItem({
       />
       <ToolContent>
         {part.input != null && <ToolInput input={part.input} />}
+        <Confirmation
+          approval={part.approval as ConfirmationProps["approval"]}
+          state={part.state as DynamicToolUIPart["state"]}
+        >
+          <ConfirmationRequest>
+            <ConfirmationTitle>
+              This action requires approval before it can run.
+            </ConfirmationTitle>
+            <ConfirmationActions>
+              <ConfirmationAction
+                variant="outline"
+                disabled={!approvalId}
+                onClick={() => {
+                  if (!approvalId) return;
+                  onApprovalResponse?.({
+                    id: approvalId,
+                    approved: false,
+                    reason: "User denied tool execution",
+                  });
+                }}
+              >
+                Deny
+              </ConfirmationAction>
+              <ConfirmationAction
+                disabled={!approvalId}
+                onClick={() => {
+                  if (!approvalId) return;
+                  onApprovalResponse?.({
+                    id: approvalId,
+                    approved: true,
+                    reason: "User approved tool execution",
+                  });
+                }}
+              >
+                Approve
+              </ConfirmationAction>
+            </ConfirmationActions>
+          </ConfirmationRequest>
+          <ConfirmationAccepted>
+            <ConfirmationTitle>Approved. Running the action.</ConfirmationTitle>
+          </ConfirmationAccepted>
+          <ConfirmationRejected>
+            <ConfirmationTitle>Denied. The action was not run.</ConfirmationTitle>
+          </ConfirmationRejected>
+        </Confirmation>
         {preview && (
           <div className="space-y-2 rounded-md border border-border/60 bg-background p-3">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
@@ -803,7 +939,8 @@ interface ChatAreaProps {
   selectedProjectId?: number | null;
   onProjectChange?: (id: number | null) => void;
   onInputChange: (value: string) => void;
-  onSubmit: (message: string) => void;
+  onSubmit: (message: string, files?: FileList) => void;
+  onToolApprovalResponse?: ToolApprovalResponseHandler;
   onStop: () => void;
 }
 
@@ -824,6 +961,7 @@ export function ChatArea({
   onProjectChange,
   onInputChange,
   onSubmit,
+  onToolApprovalResponse,
   onStop,
 }: ChatAreaProps) {
   // Council mode can be controlled externally (via prop) or internally
@@ -831,9 +969,96 @@ export function ChatArea({
 
   // Project selector
   const [projectOpen, setProjectOpen] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState<FileList | undefined>();
+  const [uploadedPreviews, setUploadedPreviews] = useState<
+    Array<{ url: string; name: string }>
+  >([]);
+  const [isRecording, setIsRecording] = useState(false);
+  const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioUrlRef = useRef<string | null>(null);
+  const baseTextRef = useRef("");
+  const finalTranscriptsRef = useRef("");
+  const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
+  const [loadingSpeechMessageId, setLoadingSpeechMessageId] = useState<string | null>(null);
   const { projects, isLoading: projectsLoading } = useProjects({ limit: 50 });
   const selectedProject = projects.find((p) => p.id === selectedProjectIdProp) ?? null;
   const councilMode = councilModeProp ?? councilModeInternal;
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const speechWindow = window as unknown as WindowWithSpeechRecognition;
+    const SpeechRecognition =
+      speechWindow.SpeechRecognition ?? speechWindow.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) return;
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = "en-US";
+    recognition.onresult = (event) => {
+      let newFinalText = "";
+
+      for (let index = event.resultIndex; index < event.results.length; index += 1) {
+        const result = event.results[index];
+        if (result.isFinal) {
+          newFinalText += `${result[0].transcript} `;
+        }
+      }
+
+      if (newFinalText) {
+        finalTranscriptsRef.current += newFinalText;
+        onInputChange(baseTextRef.current + finalTranscriptsRef.current);
+      }
+    };
+    recognition.onerror = (event) => {
+      setIsRecording(false);
+      toast.error(
+        event.error
+          ? `Voice input failed: ${event.error}`
+          : "Voice input failed",
+      );
+    };
+    recognition.onend = () => {
+      setIsRecording(false);
+    };
+    recognitionRef.current = recognition;
+
+    return () => {
+      recognition.stop();
+      recognitionRef.current = null;
+    };
+  }, [onInputChange]);
+
+  useEffect(() => {
+    return () => {
+      uploadedPreviews.forEach((preview) => URL.revokeObjectURL(preview.url));
+    };
+  }, [uploadedPreviews]);
+
+  useEffect(() => {
+    return () => {
+      mediaStream?.getTracks().forEach((track) => track.stop());
+    };
+  }, [mediaStream]);
+
+  const stopSpeech = useCallback(() => {
+    audioRef.current?.pause();
+    audioRef.current = null;
+    if (audioUrlRef.current) {
+      URL.revokeObjectURL(audioUrlRef.current);
+      audioUrlRef.current = null;
+    }
+    setSpeakingMessageId(null);
+    setLoadingSpeechMessageId(null);
+  }, []);
+
+  useEffect(() => stopSpeech, [stopSpeech]);
+
   const handleCouncilToggle = useCallback(() => {
     const next = !councilMode;
     setCouncilModeInternal(next);
@@ -841,14 +1066,137 @@ export function ChatArea({
   }, [councilMode, onCouncilModeChange]);
   const handleSubmit = useCallback(() => {
     const trimmed = input.trim();
-    if (!trimmed || isStreaming) return;
-    onSubmit(trimmed);
-  }, [input, isStreaming, onSubmit]);
+    if ((!trimmed && !uploadedFiles?.length) || isStreaming) return;
+    onSubmit(trimmed || "Describe this image", uploadedFiles);
+    onInputChange("");
+    setUploadedFiles(undefined);
+    setUploadedPreviews([]);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }, [input, isStreaming, onInputChange, onSubmit, uploadedFiles]);
+
+  const handleFileSelect = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const files = event.target.files;
+      if (!files?.length) return;
+
+      const imageFiles = Array.from(files).filter((file) =>
+        file.type.startsWith("image/"),
+      );
+
+      if (imageFiles.length !== files.length) {
+        toast.error("Only image attachments are supported in chat right now.");
+      }
+
+      if (imageFiles.length === 0) {
+        event.target.value = "";
+        return;
+      }
+
+      const transfer = new DataTransfer();
+      imageFiles.forEach((file) => transfer.items.add(file));
+      setUploadedFiles(transfer.files);
+      setUploadedPreviews(
+        imageFiles.map((file) => ({
+          url: URL.createObjectURL(file),
+          name: file.name,
+        })),
+      );
+    },
+    [],
+  );
+
+  const clearUploads = useCallback(() => {
+    setUploadedFiles(undefined);
+    setUploadedPreviews([]);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }, []);
+
+  const toggleRecording = useCallback(() => {
+    if (!recognitionRef.current) {
+      toast.error("Voice input is not supported in this browser.");
+      return;
+    }
+
+    if (isRecording) {
+      recognitionRef.current.stop();
+      setIsRecording(false);
+      mediaStream?.getTracks().forEach((track) => track.stop());
+      setMediaStream(null);
+      return;
+    }
+
+    baseTextRef.current = input;
+    finalTranscriptsRef.current = "";
+    recognitionRef.current.start();
+    setIsRecording(true);
+
+    navigator.mediaDevices
+      .getUserMedia({ audio: true })
+      .then((stream) => {
+        setMediaStream(stream);
+      })
+      .catch((error: unknown) => {
+        recognitionRef.current?.stop();
+        setIsRecording(false);
+        toast.error(
+          error instanceof Error
+            ? `Microphone access failed: ${error.message}`
+            : "Microphone access failed",
+        );
+      });
+  }, [input, isRecording, mediaStream]);
 
   const handleCopy = useCallback((content: string) => {
     navigator.clipboard.writeText(content);
     toast.success("Copied to clipboard");
   }, []);
+
+  const handleSpeakResponse = useCallback(
+    async (messageId: string, content: string) => {
+      const trimmed = content.trim();
+      if (!trimmed) return;
+
+      if (speakingMessageId === messageId) {
+        stopSpeech();
+        return;
+      }
+
+      stopSpeech();
+      setLoadingSpeechMessageId(messageId);
+
+      try {
+        const audioBlob = await apiFetchBlob("/api/ai-assistant/speech", {
+          method: "POST",
+          body: JSON.stringify({ text: trimmed }),
+        });
+        const audioUrl = URL.createObjectURL(audioBlob);
+        const audio = new Audio(audioUrl);
+        audioRef.current = audio;
+        audioUrlRef.current = audioUrl;
+        audio.onended = stopSpeech;
+        audio.onerror = () => {
+          stopSpeech();
+          toast.error("AI voice playback failed.");
+        };
+        await audio.play();
+        setSpeakingMessageId(messageId);
+      } catch (error) {
+        stopSpeech();
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "AI voice playback failed.",
+        );
+      } finally {
+        setLoadingSpeechMessageId(null);
+      }
+    },
+    [speakingMessageId, stopSpeech],
+  );
 
   const handleFeedback = useCallback(
     (type: "up" | "down", messageContent?: string) => {
@@ -937,6 +1285,8 @@ export function ChatArea({
     () => generateSuggestions(messages, isStreaming),
     [messages, isStreaming],
   );
+  const composerIconButtonClass =
+    "h-10 w-10 rounded-full bg-muted/60 text-foreground shadow-none hover:bg-muted hover:text-foreground sm:h-11 sm:w-11";
 
   // Shared prompt input element
   const promptInputEl = (
@@ -946,35 +1296,113 @@ export function ChatArea({
       isLoading={isStreaming}
       onSubmit={handleSubmit}
       className={cn(
-        "rounded-[1.5rem] border-0 bg-background px-2.5 py-2 shadow-sm sm:rounded-[1.75rem] sm:px-3",
-        hasMessages && "rounded-[1.75rem]",
+        "overflow-hidden rounded-[1.75rem] border-0 bg-background px-4 py-4 shadow-md ring-1 ring-border/70 transition-all focus-within:ring-2 focus-within:ring-primary/15 sm:rounded-[2rem] sm:px-5",
+        hasMessages && "rounded-[2rem]",
       )}
     >
+      <Input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        className="sr-only"
+        tabIndex={-1}
+        aria-hidden="true"
+        onChange={handleFileSelect}
+      />
+      {uploadedPreviews.length > 0 && (
+        <div className="flex gap-2 overflow-x-auto px-1 pb-2">
+          {uploadedPreviews.map((preview) => (
+            <div
+              key={preview.url}
+              className="image-bounce relative h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-border bg-muted"
+            >
+              <Image
+                src={preview.url}
+                alt={preview.name}
+                fill
+                className="object-cover"
+                sizes="48px"
+              />
+            </div>
+          ))}
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-xs"
+            className="mt-1 rounded-full"
+            onClick={clearUploads}
+            aria-label="Remove attachments"
+          >
+            <XIcon className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      )}
       <PromptInputTextarea
         placeholder={
-          councilMode
+          isRecording
+            ? "Listening..."
+            : councilMode
             ? "Ask the council for a recommendation..."
-            : "How can I help with your projects today?"
+            : "Type a message... (Shift+Enter for new line)"
         }
-        className="min-h-11 px-2 pb-1.5 pt-1.5 text-sm leading-6 placeholder:text-muted-foreground/80 sm:min-h-12 sm:text-[15px]"
+        className="min-h-12 px-2 pb-3 pt-1 text-base leading-6 placeholder:text-muted-foreground/70 sm:text-lg"
       />
-      <PromptInputActions className="flex items-center justify-between gap-2 px-1 pb-1">
+      <PromptInputActions className="flex items-center justify-between gap-2 px-0 pb-0">
         <div className="flex min-w-0 items-center gap-1 overflow-x-auto pr-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <PromptInputAction tooltip="Attach image">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              className={composerIconButtonClass}
+              onClick={() => fileInputRef.current?.click()}
+              aria-label="Attach image"
+            >
+              <PaperclipIcon className="h-4 w-4" />
+            </Button>
+          </PromptInputAction>
+          <PromptInputAction tooltip={isRecording ? "Stop voice input" : "Voice input"}>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              className={cn(
+                composerIconButtonClass,
+                isRecording && "bg-primary/10 text-primary",
+              )}
+              onClick={toggleRecording}
+              aria-label={isRecording ? "Stop voice input" : "Start voice input"}
+            >
+              {isRecording ? (
+                <MicOffIcon className="h-4 w-4" />
+              ) : (
+                <MicIcon className="h-4 w-4" />
+              )}
+            </Button>
+          </PromptInputAction>
+          {isRecording && (
+            <div className="w-24 shrink-0">
+              <AudioWaveform isRecording={isRecording} stream={mediaStream} />
+            </div>
+          )}
           <Popover open={projectOpen} onOpenChange={setProjectOpen}>
             <PopoverTrigger asChild>
               <Button
                 type="button"
                 variant="ghost"
                 className={cn(
-                  "flex h-8 shrink-0 items-center gap-1.5 rounded-full bg-transparent px-2.5 py-1.5 text-xs font-medium transition-colors",
+                  "flex h-10 shrink-0 items-center gap-2 rounded-full bg-transparent px-0 py-0 pr-2 text-xs font-medium transition-colors sm:h-11",
                   selectedProject
                     ? "text-foreground"
                     : "text-muted-foreground hover:text-foreground",
                 )}
                 aria-label="Select project context"
               >
-                <Building2Icon className="h-3.5 w-3.5 shrink-0" />
-                <span className="max-w-24 truncate sm:max-w-36">
+                <span className={cn("inline-flex shrink-0 items-center justify-center", composerIconButtonClass)}>
+                  <Building2Icon className="h-4 w-4" />
+                </span>
+                <span className="hidden max-w-24 truncate sm:inline sm:max-w-36">
                   {selectedProject ? (selectedProject.name ?? "Project") : "All projects"}
                 </span>
                 {selectedProject ? (
@@ -986,7 +1414,7 @@ export function ChatArea({
                     }}
                   />
                 ) : (
-                  <ChevronDownIcon className="h-3.5 w-3.5 shrink-0 opacity-50" />
+                  <ChevronDownIcon className="hidden h-3.5 w-3.5 shrink-0 opacity-50 sm:block" />
                 )}
               </Button>
             </PopoverTrigger>
@@ -1031,41 +1459,47 @@ export function ChatArea({
             aria-checked={councilMode}
             onClick={handleCouncilToggle}
             className={cn(
-              "flex h-8 shrink-0 items-center gap-1.5 rounded-full bg-transparent px-2.5 py-1.5 text-xs font-medium transition-colors",
+              "flex h-10 shrink-0 items-center gap-2 rounded-full bg-transparent px-0 py-0 pr-2 text-xs font-medium transition-colors sm:h-11",
               councilMode
-                ? "text-foreground"
-                : "text-foreground",
+                ? "text-primary"
+                : "text-muted-foreground hover:text-foreground",
             )}
           >
             <span
               className={cn(
-                "inline-flex h-5 w-9 shrink-0 items-center rounded-full p-0.5 transition-colors",
-                councilMode ? "bg-primary/20" : "bg-background/80",
+                "inline-flex shrink-0 items-center justify-center",
+                composerIconButtonClass,
+                councilMode && "bg-primary/10 text-primary hover:bg-primary/15",
               )}
             >
-              <span
-                className={cn(
-                  "h-4 w-4 rounded-full transition-transform duration-200",
-                  councilMode
-                    ? "translate-x-4 bg-primary shadow-sm"
-                    : "bg-muted-foreground/70",
-                )}
-              />
+              <UsersRoundIcon className="h-4 w-4" />
             </span>
-            Council Mode
+            <span className="hidden sm:inline">Council Mode</span>
           </Button>
+          <div className="flex h-10 shrink-0 items-center gap-2 rounded-full pr-2 text-xs font-medium text-muted-foreground sm:h-11">
+            <span className={cn("inline-flex shrink-0 items-center justify-center", composerIconButtonClass)}>
+              <BrainIcon className="h-4 w-4" />
+            </span>
+            <span className="hidden sm:inline">Gemini</span>
+          </div>
         </div>
         <div className="flex shrink-0 items-center justify-end gap-2">
           <PromptInputAction tooltip={isStreaming ? "Stop" : "Send"}>
             <Button
               size="icon"
               variant={input.trim() ? "default" : "ghost"}
-              className="h-9 w-9 rounded-full"
-              disabled={!input.trim() && !isStreaming}
+              className={cn(
+                "relative h-10 w-10 rounded-full sm:h-11 sm:w-11",
+                isStreaming && "bg-transparent hover:bg-transparent",
+              )}
+              disabled={!input.trim() && !uploadedFiles?.length && !isStreaming}
               onClick={isStreaming ? onStop : handleSubmit}
             >
               {isStreaming ? (
-                <SquareIcon />
+                <>
+                  <AnimatedOrb size={36} variant="red" />
+                  <SquareIcon className="absolute h-3.5 w-3.5 text-red-700" fill="currentColor" />
+                </>
               ) : (
                 <SendIcon />
               )}
@@ -1089,6 +1523,7 @@ export function ChatArea({
               {messages.map((msg, msgIndex) => {
                 const text = getMessageText(msg);
                 const isAssistant = msg.role === "assistant";
+                const imageParts = isAssistant ? [] : getImageParts(msg);
                 const { cleanText: textWithoutSources, sources: inlineSources } = isAssistant
                   ? extractSources(text)
                   : { cleanText: text, sources: [] };
@@ -1114,6 +1549,7 @@ export function ChatArea({
                         <Message from="assistant">
                           <MessageContent>
                             {toolParts.length > 1 ? (
+                              <>
                               <ChainOfThought defaultOpen>
                                 <ChainOfThoughtHeader>Analysis Steps</ChainOfThoughtHeader>
                                 <ChainOfThoughtContent>
@@ -1126,12 +1562,30 @@ export function ChatArea({
                                   ))}
                                 </ChainOfThoughtContent>
                               </ChainOfThought>
+                              {toolParts.some((part) => part.approval) && (
+                                <div className="mt-2 space-y-2">
+                                  {toolParts
+                                    .filter((part) => part.approval)
+                                    .map((part) => (
+                                      <ToolCallItem
+                                        key={part.toolCallId}
+                                        part={part}
+                                        onApprove={handleToolApprove}
+                                        onEdit={handleToolEdit}
+                                        onRun={handleToolRun}
+                                        onApprovalResponse={onToolApprovalResponse}
+                                      />
+                                    ))}
+                                </div>
+                              )}
+                              </>
                             ) : (
                               <ToolCallItem
                                 part={toolParts[0]}
                                 onApprove={handleToolApprove}
                                 onEdit={handleToolEdit}
                                 onRun={handleToolRun}
+                                onApprovalResponse={onToolApprovalResponse}
                               />
                             )}
                           </MessageContent>
@@ -1154,7 +1608,25 @@ export function ChatArea({
                       key={msg.id}
                       from="user"
                     >
-                      <MessageContent className="rounded-[1.4rem] border border-border/60 bg-muted/40 px-4 py-3 shadow-none sm:px-5">
+                      <MessageContent className="user-message-enter rounded-[1.4rem] border border-border/60 bg-background px-4 py-3 shadow-sm sm:px-5">
+                        {imageParts.length > 0 && (
+                          <div className="mb-2 flex flex-wrap gap-2">
+                            {imageParts.map((image) => (
+                              <div
+                                key={image.url}
+                                className="relative h-20 w-20 overflow-hidden rounded-lg border border-border bg-muted"
+                              >
+                                <Image
+                                  src={image.url}
+                                  alt={image.filename ?? "Uploaded image"}
+                                  fill
+                                  className="object-cover"
+                                  sizes="80px"
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        )}
                         <MessageResponse>{text}</MessageResponse>
                       </MessageContent>
                     </Message>
@@ -1195,6 +1667,22 @@ export function ChatArea({
                                   ))}
                                 </ChainOfThoughtContent>
                               </ChainOfThought>
+                              {toolParts.some((part) => part.approval) && (
+                                <div className="mt-2 space-y-2">
+                                  {toolParts
+                                    .filter((part) => part.approval)
+                                    .map((part) => (
+                                      <ToolCallItem
+                                        key={part.toolCallId}
+                                        part={part}
+                                        onApprove={handleToolApprove}
+                                        onEdit={handleToolEdit}
+                                        onRun={handleToolRun}
+                                        onApprovalResponse={onToolApprovalResponse}
+                                      />
+                                    ))}
+                                </div>
+                              )}
                             </div>
                           ) : toolParts.length === 1 ? (
                             <div className="mb-3">
@@ -1203,6 +1691,7 @@ export function ChatArea({
                                 onApprove={handleToolApprove}
                                 onEdit={handleToolEdit}
                                 onRun={handleToolRun}
+                                onApprovalResponse={onToolApprovalResponse}
                               />
                             </div>
                           ) : null}
@@ -1261,6 +1750,30 @@ export function ChatArea({
                         {/* Message actions: copy, thumbs up/down (hover-only) */}
                         {text && (
                           <MessageActions className="opacity-100">
+                            <MessageAction
+                              tooltip={
+                                speakingMessageId === msg.id
+                                  ? "Stop voice"
+                                  : "Read aloud"
+                              }
+                              onClick={() => handleSpeakResponse(msg.id, formattedAssistantText)}
+                              disabled={
+                                isStreaming ||
+                                (loadingSpeechMessageId !== null &&
+                                  loadingSpeechMessageId !== msg.id)
+                              }
+                            >
+                              {speakingMessageId === msg.id ? (
+                                <VolumeXIcon className="h-3.5 w-3.5" />
+                              ) : (
+                                <Volume2Icon
+                                  className={cn(
+                                    "h-3.5 w-3.5",
+                                    loadingSpeechMessageId === msg.id && "animate-pulse",
+                                  )}
+                                />
+                              )}
+                            </MessageAction>
                             <MessageAction
                               tooltip="Copy"
                               onClick={() => handleCopy(text)}

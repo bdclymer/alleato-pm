@@ -205,6 +205,8 @@ export function AdminFeedbackWidget() {
 
   const isAdmin = profile?.isAdmin === true;
   const hoveredRect = hoveredTarget ? getRectState(hoveredTarget) : null;
+  const isImmersiveChatRoute =
+    pagePath.startsWith("/ai-assistant") || pagePath.startsWith("/ai-avatar");
 
   useEffect(() => {
     if (!isSelecting || dialogOpen) {
@@ -344,7 +346,7 @@ export function AdminFeedbackWidget() {
     };
   }, [isSelecting]);
 
-  if (isLoading || !isAdmin || isMobile) {
+  if (isLoading || !isAdmin || isMobile || isImmersiveChatRoute) {
     return null;
   }
 

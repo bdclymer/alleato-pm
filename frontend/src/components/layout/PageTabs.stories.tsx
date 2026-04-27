@@ -22,7 +22,6 @@ function DefaultDemo() {
   const [active, setActive] = React.useState("/overview");
   return (
     <PageTabs
-      className="border-b border-border/60"
       tabs={tabs.map((t) => ({ ...t, isActive: t.href === active }))}
       onTabClick={setActive}
     />
@@ -34,7 +33,6 @@ function InlineDemo() {
   return (
     <PageTabs
       variant="inline"
-      className="border-b border-border/60"
       tabs={tabs.map((t) => ({ ...t, isActive: t.href === active }))}
       onTabClick={setActive}
     />
@@ -54,7 +52,6 @@ function ManyTabsDemo() {
   const [active, setActive] = React.useState(manyTabs[0].href);
   return (
     <PageTabs
-      className="border-b border-border/60"
       tabs={manyTabs.map((t) => ({ ...t, isActive: t.href === active }))}
       onTabClick={setActive}
     />

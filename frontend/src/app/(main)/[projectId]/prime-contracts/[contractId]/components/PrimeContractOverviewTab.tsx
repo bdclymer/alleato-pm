@@ -41,6 +41,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MoneyField } from "@/components/forms/MoneyField";
+import { FileUploadField } from "@/components/forms/FileUploadField";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -52,6 +53,7 @@ import {
   InlineTableHeaderRow,
 } from "@/components/ds/inline-table";
 import { getCostTypeLabel } from "@/constants/budget";
+import { formatPercent } from "@/lib/format";
 import type {
   BudgetCode,
   Contract,
@@ -201,22 +203,30 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
       ? Math.min(1, Math.max(0, invoicesTotal / displayedSovTotal))
       : 0;
   const renderDateOrDash = (value: string | null | undefined) =>
-    value ? formatDate(value) : <span className="text-muted-foreground/60">—</span>;
+    value ? formatDate(value) : <span className="text-muted-foreground/40">—</span>;
+  const keyDatesLabelWidthClass = "w-40";
+  const handleAttachmentFilesSelected = (files: File[]) => {
+    void (async () => {
+      for (const file of files) {
+        await handleUploadAttachment(file);
+      }
+    })();
+  };
 
   return (
     <ContentSectionStack className="space-y-16 pb-20">
       {/* ─── General section: 3-column layout matching Procore ─── */}
       <section>
-        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(340px,420px)] gap-x-16 gap-y-10">
+        <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_minmax(320px,400px)] gap-x-16 gap-y-10">
           {/* Left column with inner rows */}
           <div className="space-y-8">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-20 gap-y-10">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-x-20 gap-y-10">
               {/* Details */}
               <div>
                 <SectionRuleHeading label="Details"  />
                 <dl className="space-y-4 text-sm">
                   <LabelValueRow label="Contract #" labelClassName="w-44">
-                    {contract.contract_number || "Not set"}
+                    {contract.contract_number || "—"}
                   </LabelValueRow>
                   <LabelValueRow label="Title" labelClassName="w-44">
                     {contract.title}
@@ -231,24 +241,24 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                     {contract.contractor?.name && contract.contractor?.id ? (
                       <Link
                         href={`/directory/companies/${contract.contractor.id}`}
-                        className="text-primary hover:underline font-medium"
+                        className="font-medium text-primary underline underline-offset-2 hover:text-primary/90"
                       >
                         {contract.contractor.name}
                       </Link>
-                    ) : (contract.contractor?.name || "Not set")}
+                    ) : (contract.contractor?.name || "—")}
                   </LabelValueRow>
                   <LabelValueRow label="Architect" labelClassName="w-44" missing={!contract.architect_engineer?.name}>
-                    {contract.architect_engineer?.name || "Not set"}
+                    {contract.architect_engineer?.name || "—"}
                   </LabelValueRow>
                   <LabelValueRow label="Owner" labelClassName="w-44" missing={!ownerName}>
                     {ownerName && (contract.contract_company?.id || contract.client?.id) ? (
                       <Link
                         href={`/directory/vendors/${contract.contract_company?.id || contract.client?.id}`}
-                        className="text-primary hover:underline"
+                        className="text-primary underline underline-offset-2 hover:text-primary/90"
                       >
                         {ownerName}
                       </Link>
-                    ) : (ownerName || "Not set")}
+                    ) : (ownerName || "—")}
                   </LabelValueRow>
                   <LabelValueRow label="Default Retainage" labelClassName="w-44">
                     {contract.retention_percentage ?? 0}%
@@ -260,22 +270,22 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
               <div className="space-y-4">
                 <SectionRuleHeading label="Key Dates"  />
                 <dl className="space-y-4 text-sm">
-                  <LabelValueRow label="Start Date" labelClassName="w-44">
+                  <LabelValueRow label="Start Date" labelClassName={keyDatesLabelWidthClass}>
                     {renderDateOrDash(contract.start_date)}
                   </LabelValueRow>
-                  <LabelValueRow label="Estimated Completion Date" labelClassName="w-44">
+                  <LabelValueRow label="Est. Completion" labelClassName={keyDatesLabelWidthClass}>
                     {renderDateOrDash(contract.end_date)}
                   </LabelValueRow>
-                  <LabelValueRow label="Substantial Completion" labelClassName="w-44">
+                  <LabelValueRow label="Substantial Completion" labelClassName={keyDatesLabelWidthClass}>
                     {renderDateOrDash(contract.substantial_completion_date)}
                   </LabelValueRow>
-                  <LabelValueRow label="Actual Completion" labelClassName="w-44">
+                  <LabelValueRow label="Actual Completion" labelClassName={keyDatesLabelWidthClass}>
                     {renderDateOrDash(contract.actual_completion_date)}
                   </LabelValueRow>
-                  <LabelValueRow label="Signed Contract Received" labelClassName="w-44">
+                  <LabelValueRow label="Signed Contract Received" labelClassName={keyDatesLabelWidthClass}>
                     {renderDateOrDash(contract.signed_contract_received_date)}
                   </LabelValueRow>
-                  <LabelValueRow label="Contract Termination" labelClassName="w-44">
+                  <LabelValueRow label="Contract Termination" labelClassName={keyDatesLabelWidthClass}>
                     {renderDateOrDash(contract.contract_termination_date)}
                   </LabelValueRow>
                 </dl>
@@ -293,24 +303,19 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                         </div>
                       ))}
                     </div>
-                  ) : attachments.length === 0 ? (
-                    <label className="cursor-pointer">
-                      <input
-                        type="file"
-                        className="sr-only"
-                        disabled={isUploadingAttachment}
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) handleUploadAttachment(file);
-                          e.target.value = "";
-                        }}
-                      />
-                      <span className="text-xs text-primary hover:underline cursor-pointer">
-                        {isUploadingAttachment ? "Uploading..." : "Upload file"}
-                      </span>
-                    </label>
                   ) : (
-                    <div className="flex flex-wrap gap-3">
+                    <div className="space-y-3">
+                      <FileUploadField
+                        label={<span className="sr-only">Upload attachment</span>}
+                        variant="link"
+                        showMetaText={false}
+                        multiple
+                        maxFiles={25}
+                        disabled={isUploadingAttachment}
+                        onFilesSelected={handleAttachmentFilesSelected}
+                      />
+                      {attachments.length > 0 && (
+                        <div className="flex flex-wrap gap-3">
                       {attachments.map((att) => (
                         <div key={att.id} className="group flex items-center gap-1.5">
                           <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
@@ -337,21 +342,8 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                           </Button>
                         </div>
                       ))}
-                      <label className="cursor-pointer">
-                        <input
-                          type="file"
-                          className="sr-only"
-                          disabled={isUploadingAttachment}
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) handleUploadAttachment(file);
-                            e.target.value = "";
-                          }}
-                        />
-                        <span className="text-xs text-primary hover:underline cursor-pointer">
-                          {isUploadingAttachment ? "Uploading..." : "+ Add"}
-                        </span>
-                      </label>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -369,11 +361,11 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                 {getTextValue(contract.description).text}
               </LabelValueRow>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-14 gap-y-6">
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-x-14 gap-y-6">
                 <div className="space-y-2">
                   <p className="text-xs text-muted-foreground">Inclusions</p>
                   {inclusionsList.length === 0 ? (
-                    <p className="text-sm text-muted-foreground/60">Not set</p>
+                    <p className="text-sm text-muted-foreground/50">—</p>
                   ) : (
                     <div className="space-y-1 text-sm leading-relaxed text-foreground">
                       {inclusionsList.map((line, index) => (
@@ -385,7 +377,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                 <div className="space-y-2">
                   <p className="text-xs text-muted-foreground">Exclusions</p>
                   {exclusionsList.length === 0 ? (
-                    <p className="text-sm text-muted-foreground/60">Not set</p>
+                    <p className="text-sm text-muted-foreground/50">—</p>
                   ) : (
                     <div className="space-y-1 text-sm leading-relaxed text-foreground">
                       {exclusionsList.map((line, index) => (
@@ -401,8 +393,8 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
           {/* Right sidebar: Financial Summary */}
           <div className="space-y-8">
             <div className="space-y-4">
-              <SectionRuleHeading label="Financial Summary"  />
-              <div className="rounded-md border border-border bg-muted p-6">
+              <div className="rounded-md bg-muted/35 p-6">
+                <SectionRuleHeading label="Financial Summary" className="mb-6 pb-0" />
                 <dl className="space-y-3 text-sm">
                   <SummaryValueRow label="Original Contract Amount" value={formatCurrency(displayedSovTotal)} />
                   <SummaryValueRow label="Revised Contract Amount" value={formatCurrency(revisedContractAmount)} />
@@ -413,7 +405,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                   <SummaryValueRow label="Invoices" value={formatCurrency(invoicesTotal)} />
                   <SummaryValueRow label="Payments Received" value={formatCurrency(paymentsReceivedTotal)} />
                   <SummaryValueRow label="Remaining Balance" value={formatCurrency(remainingBalanceTotal)} />
-                  <SummaryValueRow label="Percent Paid" value={`${percentPaid.toFixed(2)}%`} bold border />
+                  <SummaryValueRow label="Percent Paid" value={formatPercent(percentPaid, 2)} bold border />
                 </dl>
               </div>
             </div>
@@ -445,9 +437,12 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
           )}
 
           {lineItemsLoading ? (
-            <div className="text-center py-8 text-muted-foreground">
-              Loading schedule of values...
-            </div>
+            <EmptyState
+              icon={<Rows3 />}
+              title="Loading schedule of values"
+              description="Please wait while we load line items."
+              className="py-8"
+            />
           ) : displayedSovItems.length === 0 ? (
             <EmptyState
               icon={<FileText />}
@@ -467,7 +462,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                 <div className="overflow-x-auto overflow-hidden rounded-md border border-border/70 bg-muted/20">
                   <InlineTable variant="edit">
                     <InlineTableHeader className="border-y-0 [&_tr]:border-b-0">
-                      <InlineTableHeaderRow className="bg-muted/70 hover:bg-muted/70">
+                      <InlineTableHeaderRow>
                         <InlineTableHeaderCell className="w-10 px-1 py-1.5" />
                         <InlineTableHeaderCell className="min-w-72 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
                           Budget Code

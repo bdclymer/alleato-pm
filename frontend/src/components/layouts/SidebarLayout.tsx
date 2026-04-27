@@ -3,7 +3,6 @@
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SiteHeader } from "@/components/header";
-import Footer from "@/components/layout/Footer";
 
 /**
  * SidebarLayout - Shared layout component for routes that need the app sidebar
@@ -27,7 +26,6 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
           <main className="flex min-h-0 flex-1 flex-col gap-4 p-4 pt-0">
             {children}
           </main>
-          <Footer />
         </div>
       </SidebarInset>
     </SidebarProvider>

@@ -11,6 +11,7 @@
  */
 
 import { Agentation } from "agentation";
+import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -22,7 +23,10 @@ const BLOCK_INTERACTIONS_MIGRATION_KEY =
 
 export function UnifiedFeedbackWidget() {
   const [isReady, setIsReady] = useState(false);
+  const pathname = usePathname();
   const isMobile = useIsMobile();
+  const isImmersiveChatRoute =
+    pathname?.startsWith("/ai-assistant") || pathname?.startsWith("/ai-avatar");
 
   const webhookUrl = useMemo(() => {
     if (typeof window === "undefined") return undefined;
@@ -56,7 +60,7 @@ export function UnifiedFeedbackWidget() {
     }
   }, []);
 
-  if (!isReady || isMobile) return null;
+  if (!isReady || isMobile || isImmersiveChatRoute) return null;
 
   return <Agentation endpoint={MCP_ENDPOINT} webhookUrl={webhookUrl} />;
 }

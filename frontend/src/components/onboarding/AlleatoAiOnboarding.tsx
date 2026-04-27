@@ -168,6 +168,24 @@ export function AlleatoAiOnboarding() {
     setChatInput("");
   };
 
+  const closeAssistant = () => {
+    if (welcomeOpen) {
+      dismissWelcome();
+      return;
+    }
+
+    setAssistantOpen(false);
+  };
+
+  const toggleAssistant = () => {
+    if (assistantOpen) {
+      closeAssistant();
+      return;
+    }
+
+    setAssistantOpen(true);
+  };
+
   return (
     <>
       <div className="fixed bottom-5 right-4 z-40 flex flex-col items-end gap-3 sm:right-5">
@@ -211,7 +229,7 @@ export function AlleatoAiOnboarding() {
                   variant="ghost"
                   size="icon-sm"
                   aria-label="Collapse Alleato AI"
-                  onClick={() => setAssistantOpen(false)}
+                  onClick={closeAssistant}
                 >
                   <X className="h-4 w-4" />
                 </Button>
@@ -347,7 +365,7 @@ export function AlleatoAiOnboarding() {
               "bg-foreground text-background hover:bg-foreground/90",
             !assistantOpen && "alleato-ai-mark-bg",
           )}
-          onClick={() => setAssistantOpen((open) => !open)}
+          onClick={toggleAssistant}
           aria-label={assistantOpen ? "Collapse Alleato AI" : "Open Alleato AI"}
         >
           {assistantOpen ? (

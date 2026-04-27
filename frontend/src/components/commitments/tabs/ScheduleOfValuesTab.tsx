@@ -318,11 +318,16 @@ export function ScheduleOfValuesTab({
         <EmptyState
           title="No SOV line items for this commitment"
           description="Add line items manually or import them from the budget."
-          action={<Button onClick={handleAdd}><Plus />Add Line Item</Button>}
+          action={
+            <Button size="xs" onClick={handleAdd}>
+              <Plus />
+              Add Line Item
+            </Button>
+          }
         />
         <div className="flex justify-center -mt-4">
           <Button
-            size="sm"
+            size="xs"
             variant="outline"
             onClick={handleImport}
             disabled={isImporting}
@@ -488,9 +493,9 @@ export function ScheduleOfValuesTab({
       </InlineTable>
 
       {/* Actions below table, left-aligned */}
-      <div className="flex items-center gap-2">
+      <div className="mt-3 flex items-center gap-3">
         <Button
-          size="sm"
+          size="xs"
           onClick={handleAdd}
           disabled={isSaving}
         >
@@ -498,7 +503,7 @@ export function ScheduleOfValuesTab({
           Add Line Item
         </Button>
         <Button
-          size="sm"
+          size="xs"
           variant="link"
           onClick={handleImport}
           disabled={isImporting || isSaving}
@@ -508,7 +513,7 @@ export function ScheduleOfValuesTab({
         </Button>
         {hasUnsavedChanges && (
           <Button
-            size="sm"
+            size="xs"
             onClick={handleSave}
             disabled={isSaving}
           >

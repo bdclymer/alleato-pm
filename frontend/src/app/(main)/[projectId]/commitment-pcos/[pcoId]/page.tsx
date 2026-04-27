@@ -331,7 +331,7 @@ export default function CommitmentPcoDetailPage() {
           </TabsTrigger>
         </TabsList>
 
-        <div className="pt-6">
+        <div className="pt-4">
           {/* Line Items tab */}
           <TabsContent value="line-items">
             <PcoLineItemsTable pco={pco} />

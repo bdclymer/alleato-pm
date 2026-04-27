@@ -122,7 +122,7 @@ export function PageShell({
     return (
       <PageContainer maxWidth={config.containerMaxWidth} className={cn(className)}>
         {header}
-        <div className={cn("pt-6 pb-12", contentClassName)}>{children}</div>
+        <div className={cn("min-w-0 pt-6 pb-12", contentClassName)}>{children}</div>
       </PageContainer>
     );
   }
@@ -131,9 +131,9 @@ export function PageShell({
   if (config.contentMaxWidth) {
     return (
       <PageContainer maxWidth={config.containerMaxWidth} className={cn(className)}>
-        <div className={cn("mx-auto w-full", config.contentMaxWidth)}>
+        <div className={cn("mx-auto w-full min-w-0", config.contentMaxWidth)}>
           {header}
-          <div className={cn(config.spacing, "pt-6 pb-12", contentClassName)}>{children}</div>
+          <div className={cn(config.spacing, "min-w-0 pt-6 pb-12", contentClassName)}>{children}</div>
         </div>
       </PageContainer>
     );
@@ -143,7 +143,7 @@ export function PageShell({
   return (
     <PageContainer maxWidth={config.containerMaxWidth} className={cn(className)}>
       {header}
-      <div className={cn(config.spacing, "pt-6 pb-12", contentClassName)}>{children}</div>
+      <div className={cn(config.spacing, "min-w-0 pt-6 pb-12", contentClassName)}>{children}</div>
     </PageContainer>
   );
 }

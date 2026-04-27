@@ -28,7 +28,7 @@ interface FileUploadFieldProps {
   fullWidth?: boolean;
   className?: string;
   disabled?: boolean;
-  variant?: "default" | "minimal";
+  variant?: "default" | "minimal" | "link";
   showMetaText?: boolean;
   dropzoneTestId?: string;
   inputTestId?: string;
@@ -125,6 +125,7 @@ export function FileUploadField({
   };
 
   const isMinimal = variant === "minimal";
+  const isLink = variant === "link";
 
   return (
     <FormField
@@ -134,14 +135,16 @@ export function FileUploadField({
       required={required}
       fullWidth={fullWidth}
     >
-      <div className={cn(isMinimal ? "space-y-2.5" : "space-y-4")}>
+      <div className={cn(isMinimal ? "space-y-2.5" : isLink ? "space-y-1" : "space-y-4")}>
         <div
           onDragEnter={handleDrag}
           onDragLeave={handleDrag}
           onDragOver={handleDrag}
           onDrop={handleDrop}
           className={cn(
-            isMinimal
+            isLink
+              ? "relative"
+              : isMinimal
               ? "relative rounded-md border border-dashed px-4 py-3 text-left"
               : "relative rounded-lg border-2 border-dashed p-6 text-center",
             dragActive && "border-primary bg-primary/5",
@@ -161,7 +164,17 @@ export function FileUploadField({
             className="sr-only"
             data-testid={inputTestId}
           />
-          {isMinimal ? (
+          {isLink ? (
+            <Button
+              type="button"
+              variant="link"
+              className="h-auto p-0 text-xs font-medium"
+              onClick={() => inputRef.current?.click()}
+              disabled={disabled}
+            >
+              Upload Attachments
+            </Button>
+          ) : isMinimal ? (
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-2">
                 <Upload className="h-4 w-4 text-muted-foreground" />

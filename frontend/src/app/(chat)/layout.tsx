@@ -1,13 +1,11 @@
-import { SidebarLayout } from "@/components/layouts/SidebarLayout";
-
 /**
  * Layout for chat-related routes
- * Includes sidebar, header, and footer
+ * Full-bleed shell for immersive chat experiences.
  */
 export default function ChatLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <SidebarLayout>{children}</SidebarLayout>;
+  return <div className="flex h-svh min-h-0 bg-background">{children}</div>;
 }

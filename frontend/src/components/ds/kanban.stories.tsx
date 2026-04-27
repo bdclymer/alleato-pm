@@ -68,7 +68,6 @@ export const Default = {
             col.cards.map((card) => (
               <KanbanCardShell
                 key={card.id}
-                priority={card.priority}
                 density="default"
               >
                 <p className="text-sm font-medium">{card.title}</p>
@@ -94,7 +93,7 @@ export const Compact = {
           tone={col.tone}
         >
           {col.cards.map((card) => (
-            <KanbanCardShell key={card.id} priority={card.priority} density="compact">
+            <KanbanCardShell key={card.id} density="compact">
               <p className="text-xs font-medium">{card.title}</p>
             </KanbanCardShell>
           ))}

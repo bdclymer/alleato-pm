@@ -25,10 +25,8 @@ import {
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 
-import { PageShell } from "@/components/layout";
-import { SectionRuleHeading } from "@/components/layout/spacing";
-import { EmptyState, StatusBadge } from "@/components/ds";
-import { ERP_STATUS_LABELS, STATUS_LABELS } from "@/features/prime-contracts/prime-contracts-table-config";
+import { ContentSectionStack, PageShell, PageTabs, SectionRuleHeading } from "@/components/layout";
+import { EmptyState } from "@/components/ds";
 import { DocumentDeliveryDialog } from "@/components/documents/DocumentDeliveryDialog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -40,7 +38,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import { PageTabs } from "@/components/layout/PageTabs";
 import { useProjectTitle } from "@/hooks/useProjectTitle";
 import { fetchWithTransientRouteRetry } from "@/lib/fetch-with-transient-route-retry";
 import { apiFetch } from "@/lib/api-client";
@@ -136,7 +133,7 @@ const parseBulletList = (value: string | null | undefined): string[] => {
 
 const getTextValue = (value: string | null | undefined): { text: string; isMissing: boolean } => {
   const normalized = value?.trim();
-  if (!normalized) return { text: "Not set", isMissing: true };
+  if (!normalized) return { text: "—", isMissing: true };
   return { text: normalized, isMissing: false };
 };
 
@@ -872,18 +869,6 @@ export default function ProjectContractDetailPage() {
       variant="detailWide"
       title={`#${contract.contract_number || contract.id.slice(0, 8)} — ${contract.title}`}
       description={contract.contractor ? `Contractor: ${contract.contractor.name}` : contract.vendor ? `Contractor: ${contract.vendor.name}` : "No contractor assigned"}
-      statusBadge={
-        <div className="flex items-center gap-2">
-          {contract.status && (
-            <StatusBadge status={STATUS_LABELS[contract.status] ?? contract.status} />
-          )}
-          {(contract as { erp_status?: string }).erp_status && (
-            <StatusBadge
-              status={ERP_STATUS_LABELS[(contract as { erp_status?: string }).erp_status ?? "unsynced"] ?? "Unsynced"}
-            />
-          )}
-        </div>
-      }
       onBack={() => router.push(`/${projectId}/prime-contracts`)}
       actions={
         <div className="flex items-center gap-2">
@@ -934,7 +919,6 @@ export default function ProjectContractDetailPage() {
           </div>
       }
     >
-      <div className="space-y-4">
       <PageTabs
         variant="inline"
         tabs={[
@@ -953,7 +937,7 @@ export default function ProjectContractDetailPage() {
         onTabClick={(href) => setActiveTab(href as ContractTab)}
       />
 
-      <div>
+      <ContentSectionStack className="pt-3">
         {activeTab === "overview" && (
           <PrimeContractOverviewTab
             contract={contract} changeOrders={changeOrders} attachments={attachments} attachmentsLoading={attachmentsLoading}
@@ -994,7 +978,7 @@ export default function ProjectContractDetailPage() {
         )}
 
         {activeTab === "change-orders" && (
-          <div className="space-y-16">
+          <ContentSectionStack>
             <PrimeContractChangeOrdersTab
               projectId={projectId} contractId={contractId} changeOrders={changeOrders}
               setChangeOrders={setChangeOrders} formatCurrency={formatCurrency}
@@ -1011,7 +995,7 @@ export default function ProjectContractDetailPage() {
               contractId={contractId}
               formatCurrency={formatCurrency}
             />
-          </div>
+          </ContentSectionStack>
         )}
 
         {activeTab === "commitments" && (
@@ -1079,6 +1063,10 @@ export default function ProjectContractDetailPage() {
                 description="No lifecycle events are available for this contract yet."
               />
             ) : (
+              // @ui-exception prime-contract-history-timeline
+              // Intentional deviation: no shared timeline/list primitive currently supports the
+              // contract history row layout (label + timestamp + details), so this local shell
+              // remains until a reusable history component is extracted.
               <div className="divide-y divide-border rounded-md border border-border">
                 {historyEntries.map((entry) => (
                   <div key={entry.id} className="space-y-1 px-4 py-3">
@@ -1111,8 +1099,7 @@ export default function ProjectContractDetailPage() {
             changeOrderCount={changeOrders.length}
           />
         )}
-      </div>
-      </div>
+      </ContentSectionStack>
 
       <PrimeContractDialogs
         showAddLineItemDialog={showAddLineItemDialog} setShowAddLineItemDialog={setShowAddLineItemDialog}

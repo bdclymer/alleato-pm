@@ -710,7 +710,7 @@ export function UnifiedTablePage<T>({
   }, [columnOrder, columnPinning.left, columnPinning.right, table.columns, visibleColumns]);
 
   const leftPinnedOffsets = React.useMemo(() => {
-    let offset = hasRowSelection ? selectionColumnWidth : 0;
+    let offset = 0;
     const result: Record<string, number> = {};
     for (const column of orderedVisibleColumns) {
       if (!columnPinning.left.includes(column.id)) continue;
@@ -718,7 +718,7 @@ export function UnifiedTablePage<T>({
       offset += columnWidths[column.id] ?? column.width ?? 180;
     }
     return result;
-  }, [columnPinning.left, columnWidths, hasRowSelection, orderedVisibleColumns, selectionColumnWidth]);
+  }, [columnPinning.left, columnWidths, orderedVisibleColumns]);
 
   const rightPinnedOffsets = React.useMemo(() => {
     let offset = hasRowActions ? 50 : 0;
@@ -1169,10 +1169,6 @@ export function UnifiedTablePage<T>({
                         width: selectionColumnWidth,
                         minWidth: selectionColumnWidth,
                         maxWidth: selectionColumnWidth,
-                        position: "sticky",
-                        left: 0,
-                        zIndex: 3,
-                        background: "hsl(var(--card))",
                       }}
                     >
                       <div className="flex items-center justify-center">
@@ -1427,10 +1423,6 @@ export function UnifiedTablePage<T>({
                           width: selectionColumnWidth,
                           minWidth: selectionColumnWidth,
                           maxWidth: selectionColumnWidth,
-                          position: "sticky",
-                          left: 0,
-                          zIndex: 2,
-                          background: "hsl(var(--background))",
                         }}
                         onClick={(event) => event.stopPropagation()}
                       >

@@ -108,12 +108,16 @@ export function InlineTableHeaderRow({
   children,
   ...props
 }: InlineTableHeaderRowProps) {
+  const { variant } = useInlineTable();
+
   return (
     <tr
       className={cn(
         type === "group"
           ? "bg-primary/5 text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/50"
-          : "border-b border-border",
+          : variant === "edit"
+            ? "border-0"
+            : "border-b border-border",
         className,
       )}
       {...props}

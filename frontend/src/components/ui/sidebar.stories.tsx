@@ -33,7 +33,13 @@ const meta: Meta = {
 
 export default meta;
 
-const navItems = [
+type SidebarItem = {
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  label: string;
+  active?: boolean;
+};
+
+const navItems: SidebarItem[] = [
   { icon: Home, label: "Overview", active: true },
   { icon: DollarSign, label: "Budget" },
   { icon: ClipboardList, label: "Commitments" },
@@ -41,7 +47,7 @@ const navItems = [
   { icon: BarChart3, label: "Invoicing" },
 ];
 
-const toolItems = [
+const toolItems: SidebarItem[] = [
   { icon: FolderOpen, label: "Documents" },
   { icon: Building2, label: "Drawings" },
   { icon: Users, label: "Directory" },

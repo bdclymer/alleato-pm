@@ -1,7 +1,10 @@
 "use client";
 
 import { useChat, type UIMessage } from "@ai-sdk/react";
-import { DefaultChatTransport } from "ai";
+import {
+  DefaultChatTransport,
+  lastAssistantMessageIsCompleteWithApprovalResponses,
+} from "ai";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
@@ -132,6 +135,7 @@ function ChatWithSession({
   responseQualityByMessageId,
   isLoadingMessages,
   pendingFirstMessage,
+  pendingFirstFiles,
   councilMode,
   onCouncilModeChange,
   selectedProjectId,
@@ -149,13 +153,14 @@ function ChatWithSession({
   responseQualityByMessageId: Record<string, ResponseQuality>;
   isLoadingMessages: boolean;
   pendingFirstMessage: string | null;
+  pendingFirstFiles?: FileList;
   councilMode: boolean;
   onCouncilModeChange: (val: boolean) => void;
   selectedProjectId: number | null;
   onProjectChange: (id: number | null) => void;
   onFinishMessage: (sessionId: string) => void;
 }) {
-  const [input, setInput] = useState(pendingFirstMessage ?? "");
+  const [input, setInput] = useState("");
   const [liveStatus, setLiveStatus] = useState<StrategistLiveStatus | null>(null);
   const councilModeRef = useRef(councilMode);
   councilModeRef.current = councilMode;
@@ -166,9 +171,17 @@ function ChatWithSession({
   const selectedProjectIdRef = useRef(selectedProjectId);
   selectedProjectIdRef.current = selectedProjectId;
 
-  const { messages, setMessages, sendMessage, status, stop } = useChat({
+  const {
+    messages,
+    setMessages,
+    sendMessage,
+    status,
+    stop,
+    addToolApprovalResponse,
+  } = useChat({
     id: sessionId,
     messages: initialMessages,
+    sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithApprovalResponses,
     transport: new DefaultChatTransport({
       api: "/api/ai-assistant/chat",
       prepareSendMessagesRequest(request) {
@@ -202,10 +215,10 @@ function ChatWithSession({
   useEffect(() => {
     if (pendingFirstMessage && !hasSentFirstMessage.current) {
       hasSentFirstMessage.current = true;
-      sendMessage({ text: pendingFirstMessage });
+      sendMessage({ text: pendingFirstMessage, files: pendingFirstFiles });
       setInput("");
     }
-  }, [pendingFirstMessage, sendMessage]);
+  }, [pendingFirstFiles, pendingFirstMessage, sendMessage]);
 
   // Sync initial messages when they change (conversation switch)
   const prevInitialRef = useRef(initialMessages);
@@ -219,9 +232,9 @@ function ChatWithSession({
   const isStreaming = status === "streaming";
 
   const handleSubmit = useCallback(
-    (message: string) => {
+    (message: string, files?: FileList) => {
       if (!message.trim() || isStreaming) return;
-      sendMessage({ text: message });
+      sendMessage({ text: message, files });
       setInput("");
     },
     [sendMessage, isStreaming],
@@ -245,6 +258,7 @@ function ChatWithSession({
       onProjectChange={onProjectChange}
       onInputChange={setInput}
       onSubmit={handleSubmit}
+      onToolApprovalResponse={addToolApprovalResponse}
       onStop={stop}
     />
   );
@@ -260,6 +274,7 @@ export function RagChatPage() {
   const [pendingFirstMessage, setPendingFirstMessage] = useState<string | null>(
     null,
   );
+  const [pendingFirstFiles, setPendingFirstFiles] = useState<FileList | undefined>();
   const [initialMessages, setInitialMessages] = useState<UIMessage[]>([]);
   const [toolTracesByMessageId, setToolTracesByMessageId] = useState<
     Record<string, ToolTraceItem[]>
@@ -327,6 +342,7 @@ export function RagChatPage() {
   const handleFinishMessage = useCallback((sessionId: string) => {
     queryClient.invalidateQueries({ queryKey: ["rag-conversations"] });
     setPendingSessionId(null);
+    setPendingFirstFiles(undefined);
     void loadSessionMessages(sessionId);
   }, [queryClient, loadSessionMessages]);
 
@@ -334,6 +350,7 @@ export function RagChatPage() {
     (sessionId: string | null) => {
       setPendingSessionId(null);
       setPendingFirstMessage(null);
+      setPendingFirstFiles(undefined);
       if (sessionId) {
         router.push(`/ai-assistant?session=${sessionId}`, { scroll: false });
       } else {
@@ -348,6 +365,7 @@ export function RagChatPage() {
 
     setInitialMessages([]);
     setPendingFirstMessage(null);
+    setPendingFirstFiles(undefined);
     setPendingSessionId(null);
 
     try {
@@ -386,13 +404,14 @@ export function RagChatPage() {
 
   // Handle first message in a new conversation
   const handleFirstMessage = useCallback(
-    async (message: string) => {
+    async (message: string, files?: FileList) => {
       const title = message.substring(0, 50);
       try {
         const result = await createConversation.mutateAsync(title);
         const sessionId = result.session_id;
         setPendingSessionId(sessionId);
         setPendingFirstMessage(message);
+        setPendingFirstFiles(files);
         router.push(`/ai-assistant?session=${sessionId}`, { scroll: false });
       } catch {
         // Creation failed — don't proceed
@@ -424,6 +443,7 @@ export function RagChatPage() {
             responseQualityByMessageId={responseQualityByMessageId}
             isLoadingMessages={isLoadingMessages}
             pendingFirstMessage={pendingFirstMessage}
+            pendingFirstFiles={pendingFirstFiles}
             councilMode={councilMode}
             onCouncilModeChange={setCouncilMode}
             selectedProjectId={selectedProjectId}
@@ -444,9 +464,9 @@ export function RagChatPage() {
             selectedProjectId={selectedProjectId}
             onProjectChange={setSelectedProjectId}
             onInputChange={setNoSessionInput}
-            onSubmit={(msg: string) => {
+            onSubmit={(msg: string, files?: FileList) => {
               setNoSessionInput("");
-              handleFirstMessage(msg);
+              handleFirstMessage(msg, files);
             }}
             onStop={() => {}}
           />

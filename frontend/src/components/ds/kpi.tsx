@@ -15,7 +15,7 @@ interface KpiBlockProps {
     positive: boolean;
   };
   context?: string;
-  size?: "prominent" | "compact";
+  size?: "small" | "medium" | "large" | "prominent" | "compact";
   href?: string;
   progress?: {
     value: number; // 0–100
@@ -30,23 +30,38 @@ export function KpiBlock({
   value,
   delta,
   context,
-  size = "prominent",
+  size = "medium",
   href,
   progress,
 }: KpiBlockProps) {
+  const resolvedSize =
+    size === "prominent" ? "large" : size === "compact" ? "small" : size;
+
   const content = (
     <>
       {/* Tier 1: Eyebrow */}
-      <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+      <span
+        className={cn(
+          "font-bold uppercase tracking-[0.08em] text-muted-foreground/60",
+          resolvedSize === "small" ? "text-[9px]" : "text-[10px]"
+        )}
+      >
         {label}
       </span>
 
       {/* Tier 2: Value + optional delta */}
-      <div className="mt-1 flex items-baseline gap-2">
+      <div
+        className={cn(
+          "flex flex-wrap items-baseline gap-x-2 gap-y-1",
+          resolvedSize === "small" ? "mt-1" : "mt-2"
+        )}
+      >
         <span
           className={cn(
-            "font-semibold tracking-tight text-foreground",
-            size === "prominent" ? "text-lg sm:text-2xl" : "text-base sm:text-lg"
+            "font-bold leading-none tracking-[-0.03em] text-foreground",
+            resolvedSize === "large" && "text-2xl",
+            resolvedSize === "medium" && "text-xl",
+            resolvedSize === "small" && "text-lg"
           )}
         >
           {value}
@@ -54,7 +69,7 @@ export function KpiBlock({
         {delta && (
           <span
             className={cn(
-              "inline-flex items-center rounded-md px-1.5 py-0.5 text-xs font-medium",
+              "inline-flex items-center rounded px-[7px] py-0.5 text-[11px] font-semibold",
               delta.positive
                 ? "bg-green-50 text-green-600"
                 : "bg-red-50 text-red-600"
@@ -67,7 +82,12 @@ export function KpiBlock({
 
       {/* Tier 3: Context */}
       {context && (
-        <span className="mt-0.5 block text-xs text-muted-foreground/60">
+        <span
+          className={cn(
+            "mt-1 block text-muted-foreground/60",
+            resolvedSize === "small" ? "text-[10px]" : "text-[11px]"
+          )}
+        >
           {context}
         </span>
       )}
@@ -106,33 +126,40 @@ export function KpiBlock({
 // KpiRow — Shared container for 2-4 KpiBlocks with dividers
 // ---------------------------------------------------------------------------
 
-export function KpiRow({ metrics }: { metrics: KpiBlockProps[] }) {
+export function KpiRow({
+  metrics,
+  size = "medium",
+}: {
+  metrics: KpiBlockProps[];
+  size?: "small" | "medium" | "large";
+}) {
+  const itemPadding = {
+    small: "p-3",
+    medium: "p-4 sm:p-5",
+    large: "p-5 px-6",
+  }[size];
+
   return (
     /* eslint-disable-next-line design-system/no-design-violations -- KPI bento container uses intentional shared border */
     <div className="overflow-hidden rounded-lg border border-border bg-card">
       <div
         className={cn(
-          "grid",
-          // Mobile: 2-col grid with both x and y dividers
-          "grid-cols-2 divide-x divide-border",
-          // Desktop: full row
-          metrics.length === 4 && "md:grid-cols-4",
-          metrics.length === 3 && "md:grid-cols-3",
-          metrics.length <= 2 && "grid-cols-2"
+          "grid grid-cols-1 gap-px bg-border",
+          size !== "large" && "sm:grid-cols-2",
+          size === "large" && "sm:grid-cols-2 xl:grid-cols-4",
+          metrics.length === 6 && size !== "large" && "xl:grid-cols-3",
+          metrics.length === 5 && size !== "large" && "xl:grid-cols-5",
+          metrics.length === 4 && size !== "large" && "xl:grid-cols-4",
+          metrics.length === 3 && size !== "large" && "xl:grid-cols-3",
+          metrics.length <= 2 && size !== "large" && "sm:grid-cols-2"
         )}
       >
         {metrics.map((metric, i) => (
           <div
             key={i}
-            className={cn(
-              "px-4 py-3 sm:px-6 sm:py-4",
-              // On mobile 2-col layout, add top border to items in the second row
-              metrics.length > 2 && i >= 2 && "border-t border-border md:border-t-0",
-              // Reset left divider for first item in each mobile row
-              metrics.length > 2 && i === 2 && "[&]:border-l-0 md:[&]:border-l"
-            )}
+            className={cn("min-w-0 bg-card", itemPadding)}
           >
-            <KpiBlock {...metric} />
+            <KpiBlock {...metric} size={metric.size ?? size} />
           </div>
         ))}
       </div>

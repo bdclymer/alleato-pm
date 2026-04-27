@@ -36,7 +36,7 @@ type ToolTracePayload = {
   timestamp: string;
 };
 
-type ActionToolsOptions = {
+export type ActionToolsOptions = {
   onTrace?: (trace: ToolTracePayload) => void;
   pinnedProjectId?: number;
 };
@@ -196,7 +196,15 @@ export function createActionTools(
       response_payload: params.response,
       status: params.status,
     });
-    if (error) return;
+    if (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : typeof error === "object" && error && "message" in error
+            ? String(error.message)
+            : String(error);
+      throw new Error(`Failed to record AI tool write audit for ${params.toolName}: ${message}`);
+    }
   }
 
   async function enforceProjectWriteAccess(
@@ -217,6 +225,10 @@ export function createActionTools(
     }
 
     return { ok: true, projectId: effectiveProjectId };
+  }
+
+  function needsConfirmedWriteApproval(input: { confirmed?: boolean }): boolean {
+    return input.confirmed === true;
   }
 
   return {
@@ -249,6 +261,7 @@ export function createActionTools(
           .optional()
           .describe("Optional idempotency key to prevent duplicate writes"),
       }),
+      needsApproval: needsConfirmedWriteApproval,
       execute: withTrace("createChangeOrder", options, async (input) => {
         const { projectId, contractId, title, totalAmount, status, confirmed } = input;
         const access = await enforceProjectWriteAccess(projectId);
@@ -346,6 +359,7 @@ export function createActionTools(
           .optional()
           .describe("Optional idempotency key to prevent duplicate writes"),
       }),
+      needsApproval: needsConfirmedWriteApproval,
       execute: withTrace("createChangeEvent", options, async (input) => {
         const { projectId, title, description, scope, type, status, confirmed } = input;
         const access = await enforceProjectWriteAccess(projectId);
@@ -445,6 +459,7 @@ export function createActionTools(
           .optional()
           .describe("Optional idempotency key to prevent duplicate writes"),
       }),
+      needsApproval: needsConfirmedWriteApproval,
       execute: withTrace("updateProjectStatus", options, async (input) => {
         const { projectId, healthStatus, phase, reason, confirmed } = input;
         const access = await enforceProjectWriteAccess(projectId);
@@ -527,6 +542,7 @@ export function createActionTools(
           .optional()
           .describe("Optional idempotency key to prevent duplicate writes"),
       }),
+      needsApproval: needsConfirmedWriteApproval,
       execute: withTrace("createRFI", options, async (input) => {
         const { projectId, subject, question, ballInCourt, dueDate, costImpact, scheduleImpact, confirmed } = input;
         const access = await enforceProjectWriteAccess(projectId);
@@ -622,6 +638,7 @@ export function createActionTools(
           .optional()
           .describe("Optional idempotency key to prevent duplicate writes"),
       }),
+      needsApproval: needsConfirmedWriteApproval,
       execute: withTrace("createTask", options, async (input) => {
         const { projectId, name, assignee, dueDate, notes, priority, confirmed } = input;
         const access = await enforceProjectWriteAccess(projectId);
@@ -714,6 +731,7 @@ export function createActionTools(
         confirmed: z.boolean().default(false),
         idempotencyKey: z.string().optional(),
       }),
+      needsApproval: needsConfirmedWriteApproval,
       execute: withTrace("flagProjectRisk", options, async (input) => {
         const { projectId, title, description, severity, insightType, financialImpact, timelineImpactDays, confirmed } = input;
         const access = await enforceProjectWriteAccess(projectId);
@@ -793,6 +811,7 @@ export function createActionTools(
         confirmed: z.boolean().default(false),
         idempotencyKey: z.string().optional(),
       }),
+      needsApproval: needsConfirmedWriteApproval,
       execute: withTrace("updateRFIStatus", options, async (input) => {
         const { rfiId, rfiNumber, projectId, newStatus, response, confirmed } = input;
         const access = await enforceProjectWriteAccess(projectId);
@@ -892,6 +911,7 @@ export function createActionTools(
         confirmed: z.boolean().default(false),
         idempotencyKey: z.string().optional(),
       }),
+      needsApproval: needsConfirmedWriteApproval,
       execute: withTrace("createMeetingNote", options, async (input) => {
         const { projectId, title, date, summary, actionItems, participants, durationMinutes, confirmed } = input;
         const access = await enforceProjectWriteAccess(projectId);
@@ -976,6 +996,7 @@ export function createActionTools(
         confirmed: z.boolean().default(false),
         idempotencyKey: z.string().optional(),
       }),
+      needsApproval: needsConfirmedWriteApproval,
       execute: withTrace("createSubmittal", options, async (input) => {
         const { projectId, title, specSection, dueDate, submittedBy, status, confirmed } = input;
         const access = await enforceProjectWriteAccess(projectId);
@@ -1070,6 +1091,7 @@ export function createActionTools(
         confirmed: z.boolean().default(false),
         idempotencyKey: z.string().optional(),
       }),
+      needsApproval: needsConfirmedWriteApproval,
       execute: withTrace("logDailyReport", options, async (input) => {
         const { projectId, logDate, weather, crewCount, workPerformed, notes, confirmed } = input;
         const access = await enforceProjectWriteAccess(projectId);
@@ -1152,6 +1174,7 @@ export function createActionTools(
         confirmed: z.boolean().default(false),
         idempotencyKey: z.string().optional(),
       }),
+      needsApproval: needsConfirmedWriteApproval,
       execute: withTrace("generateProjectSummary", options, async (input) => {
         const { projectId, projectName, confirmed } = input;
 
@@ -1471,6 +1494,7 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
         confirmed: z.boolean().default(false),
         idempotencyKey: z.string().optional(),
       }),
+      needsApproval: needsConfirmedWriteApproval,
       execute: withTrace("createInitiativeCard", options, async (input) => {
         const {
           title,
@@ -1619,6 +1643,7 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
           .optional()
           .describe("Optional idempotency key to prevent duplicate writes"),
       }),
+      needsApproval: needsConfirmedWriteApproval,
       execute: withTrace("createCommitment", options, async (input) => {
         const {
           projectId,

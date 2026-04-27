@@ -12,6 +12,7 @@
     "postinstall": "rm -rf .next 2>/dev/null || true",
     "dev": "bash ../scripts/dev/start-frontend-clean.sh",
     "dev:clean": "bash ../scripts/dev/start-frontend-clean.sh",
+    "ai:devtools": "devtools",
     "build": "NODE_OPTIONS='--max-old-space-size=7168' next build",
     "start": "next start",
     "email:preview": "email dev --dir src/emails --port 3030",

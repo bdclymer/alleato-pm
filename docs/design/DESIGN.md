@@ -316,8 +316,15 @@ Borders create visual noise. **Every border must earn its place.**
 - Cards (use tonal elevation: `bg-card` on `bg-background` — the 3% lightness difference IS the separator)
 - Page sections (use spacing instead)
 - Decorative containers
+- Full-page experimental tools, onboarding pages, avatar pages, or AI pages
 - Hover states (use `hover:bg-muted` instead)
 - The sidebar nav (use background color shift)
+
+### Route shell guardrail
+
+Experimental pages are not exempt from the app shell. A general app page must live under the normal app route group and use `PageShell` so it inherits the standard top header, sidebar navigation, spacing, and scroll behavior. Do not put a non-chat page under a full-bleed chat route group just to make room for an experiment.
+
+Avatar, onboarding, and AI utility pages should have one obvious primary action. Do not duplicate Start actions in both the page header and page body, and do not wrap the entire page experience in a decorative border.
 
 ### Tonal elevation system
 

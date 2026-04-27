@@ -28,6 +28,14 @@ import {
   createWebSearchTools,
   type CreateWebSearchToolsOptions,
 } from "@/lib/ai/tools/web-search";
+import {
+  createActionTools,
+  type ActionToolsOptions,
+} from "@/lib/ai/tools/action-tools";
+import {
+  createStructuredOutputTools,
+  type CreateStructuredOutputToolsOptions,
+} from "@/lib/ai/tools/structured-output";
 import { strategistSystemPrompt } from "@/lib/ai/agents/strategist";
 import { soul } from "@/lib/ai/soul";
 import { identity } from "@/lib/ai/identity";
@@ -43,7 +51,10 @@ import type {
   RoutingDecision,
 } from "@/lib/ai/agents/types";
 
-type StrategistToolOptions = CreateProjectToolsOptions & CreateWebSearchToolsOptions;
+type StrategistToolOptions = CreateProjectToolsOptions &
+  CreateWebSearchToolsOptions &
+  ActionToolsOptions &
+  CreateStructuredOutputToolsOptions;
 
 // ---------------------------------------------------------------------------
 // Agent Registry
@@ -771,6 +782,7 @@ export function createStrategistTools(
   // Web search tools — available to Strategist for external research
   // (competitive questions, market intel, industry trends)
   const webSearchTools = createWebSearchTools(options);
+  const structuredOutputTools = createStructuredOutputTools(options);
   // Do not expose risk-dedicated tools directly to the Strategist.
   // This forces portfolio/project risk questions through consultCFO,
   // where the specialist prompt requires risk-specific workflows.
@@ -784,6 +796,7 @@ export function createStrategistTools(
   return {
     // Web search — available directly to the Strategist for external research
     ...webSearchTools,
+    ...structuredOutputTools,
     // The Strategist's specialist consultation tools
     consultCFO: tool({
       description:

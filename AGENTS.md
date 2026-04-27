@@ -309,6 +309,9 @@ When asked to design/build a page, default to **Linear/Supabase-style minimal UI
 - No decorative wrapper cards around whole sections
 - No bordered or boxed page-level wrappers around the main content area
 - Do not frame page content with `border`, `rounded-*`, or `bg-*` shells unless the element is a true localized component (table shell, input, modal, KPI tile, attachment module, etc.)
+- No full-page borders around experimental tools, onboarding pages, avatar pages, or AI pages
+- General app pages must use the normal app shell and `PageShell`; do not place non-chat pages under the full-bleed chat route group
+- Do not duplicate the same primary CTA in both the page header and page body
 - Max 2 visual container levels: page shell + section content
 - No heavy shadows (`shadow-lg`, `shadow-xl`, glow effects)
 - No mixed accent palette (pick one accent and stay consistent)
