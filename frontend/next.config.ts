@@ -34,8 +34,13 @@ const nextConfig: NextConfig = {
     ],
   },
   serverExternalPackages: [
-    // AI/ML packages — large module graphs, server-only, never in client bundles
+    // AI/ML packages — large module graphs, server-only, never in client bundles.
+    // Webpack bundling these causes OOM on Vercel's 8 GB build machines.
     "openai",
+    "ai",
+    "@ai-sdk/openai",
+    "@ai-sdk/anthropic",
+    "@ai-sdk/mcp",
     // Mermaid diagram packages — complex dependency trees
     "@mermaid-js/parser",
     "mermaid",
