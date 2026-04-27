@@ -19673,6 +19673,39 @@ export type Database = {
           },
         ]
       }
+      roadmap_items: {
+        Row: {
+          bullet_points: string[] | null
+          created_at: string | null
+          description: string | null
+          id: string
+          phase: string
+          sort_order: number | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          bullet_points?: string[] | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          phase: string
+          sort_order?: number | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          bullet_points?: string[] | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          phase?: string
+          sort_order?: number | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       schedule_deadlines: {
         Row: {
           created_at: string | null
