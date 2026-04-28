@@ -428,7 +428,7 @@ function CreateProjectForm() {
       section.id === "project-status" ? 1 : activeLayout === "single-column" ? 1 : 2;
     const hideSectionDescription = section.id === "logo" || section.id === "dates";
 
-    return (
+    const content = (
       <StandardFormSection
         key={section.id}
         title={section.title}
@@ -438,6 +438,16 @@ function CreateProjectForm() {
         <FormGrid columns={sectionColumns}>{section.fields.map(renderField)}</FormGrid>
       </StandardFormSection>
     );
+
+    if (section.id === "logo") {
+      return (
+        <FormLayoutProvider key={section.id} layout="stacked">
+          {content}
+        </FormLayoutProvider>
+      );
+    }
+
+    return content;
   };
 
   return (
