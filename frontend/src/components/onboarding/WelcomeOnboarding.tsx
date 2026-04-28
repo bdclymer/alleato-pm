@@ -104,7 +104,7 @@ export function WelcomeOnboarding({
 
   const handleCreateTestProject = () => {
     close(true);
-    window.location.assign("/create-project?testProject=1");
+    window.location.assign("/create-project");
   };
 
   return (
@@ -141,16 +141,7 @@ export function WelcomeOnboarding({
             {step === 2 && <MissionStep onCreateTestProject={handleCreateTestProject} />}
           </div>
 
-          <div className="relative flex flex-col gap-3 px-6 pb-6 pt-7 sm:flex-row sm:items-center sm:justify-between sm:px-12 sm:pb-8 sm:pt-10">
-            <Button
-              type="button"
-              onClick={() => close(true)}
-              variant="ghost"
-              size="sm"
-              className="h-auto justify-start px-0 py-0 text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70 hover:bg-transparent hover:text-muted-foreground"
-            >
-              {onboardingCopy.shell.skip}
-            </Button>
+          <div className="relative flex justify-end px-6 pb-6 pt-7 sm:px-12 sm:pb-8 sm:pt-10">
             <div className="flex gap-2">
               {step > 0 && (
                 <Button
@@ -162,19 +153,16 @@ export function WelcomeOnboarding({
                   {onboardingCopy.shell.back}
                 </Button>
               )}
-              <Button
-                size="sm"
-                onClick={next}
-                className={cn(
-                  "bg-primary px-5 text-primary-foreground hover:bg-primary/90",
-                  step === TOTAL_STEPS - 1 && "bg-primary hover:bg-primary/90",
-                )}
-              >
-                {step === TOTAL_STEPS - 1
-                  ? onboardingCopy.shell.startExploring
-                  : onboardingCopy.shell.continue}
-                <ArrowRight className="ml-1.5 size-3.5" />
-              </Button>
+              {step < TOTAL_STEPS - 1 && (
+                <Button
+                  size="sm"
+                  onClick={next}
+                  className="bg-primary px-5 text-primary-foreground hover:bg-primary/90"
+                >
+                  {onboardingCopy.shell.continue}
+                  <ArrowRight className="ml-1.5 size-3.5" />
+                </Button>
+              )}
             </div>
           </div>
         </div>

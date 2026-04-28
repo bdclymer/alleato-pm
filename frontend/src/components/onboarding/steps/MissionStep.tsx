@@ -23,9 +23,6 @@ export function MissionStep({ onCreateTestProject }: { onCreateTestProject: () =
         {onboardingCopy.mission.cta}
         <ArrowRight className="size-4" />
       </Button>
-      <p className="mt-3 text-[12.5px] text-muted-foreground">
-        {onboardingCopy.mission.ctaMeta}
-      </p>
     </div>
   );
 }

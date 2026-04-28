@@ -64,6 +64,11 @@ const DEFAULT_FORM: SubmissionState = {
 };
 
 const FEEDBACK_TYPES = ["Issue", "Wishlist", "General thought"] as const;
+const FEEDBACK_TYPE_IDS: Record<FeedbackType, string> = {
+  Issue: "issue",
+  Wishlist: "wishlist",
+  "General thought": "general-thought",
+};
 
 function mapFeedbackTypeToRequestType(
   feedbackType: FeedbackType,
@@ -502,8 +507,9 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
           {selectedTarget && (
             <div className="space-y-6 px-6 py-5">
               <div className="space-y-2">
-                <Label>Feedback type</Label>
+                <Label id="feedback-type-label">Feedback type</Label>
                 <RadioGroup
+                  aria-labelledby="feedback-type-label"
                   value={form.feedbackType}
                   onValueChange={(feedbackType) =>
                     setForm((current) => ({
@@ -511,22 +517,23 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
                       feedbackType: feedbackType as FeedbackType,
                     }))
                   }
-                  className="flex flex-col gap-2 sm:flex-row sm:gap-6"
+                  className="gap-3"
                 >
-                  {FEEDBACK_TYPES.map((feedbackType) => (
-                    <div key={feedbackType} className="flex items-center gap-2">
-                      <RadioGroupItem
-                        value={feedbackType}
-                        id={`feedback-type-${feedbackType}`}
-                      />
+                  {FEEDBACK_TYPES.map((feedbackType) => {
+                    const id = `feedback-type-${FEEDBACK_TYPE_IDS[feedbackType]}`;
+
+                    return (
+                    <div key={feedbackType} className="flex items-center gap-3">
+                      <RadioGroupItem value={feedbackType} id={id} />
                       <Label
-                        htmlFor={`feedback-type-${feedbackType}`}
-                        className="cursor-pointer font-normal"
+                        htmlFor={id}
+                        className="cursor-pointer text-sm font-normal text-foreground"
                       >
                         {feedbackType}
                       </Label>
                     </div>
-                  ))}
+                    );
+                  })}
                 </RadioGroup>
               </div>
 
