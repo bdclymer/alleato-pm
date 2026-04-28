@@ -5,14 +5,14 @@ type FormSectionSpacing = "default" | "compact";
 
 const spacingStyles: Record<FormSectionSpacing, { section: string; divider: string; noDivider: string }> = {
   default: {
-    section:   "space-y-6 pb-8",
-    divider:   "border-t border-border/70 pt-8 first:border-t-0 first:pt-0",
-    noDivider: "pt-8 first:pt-0",
-  },
-  compact: {
-    section:   "space-y-4 pb-6",
+    section:   "space-y-4 pb-4",
     divider:   "border-t border-border/70 pt-6 first:border-t-0 first:pt-0",
     noDivider: "pt-6 first:pt-0",
+  },
+  compact: {
+    section:   "space-y-3 pb-3",
+    divider:   "border-t border-border/70 pt-4 first:border-t-0 first:pt-0",
+    noDivider: "pt-4 first:pt-0",
   },
 };
 
