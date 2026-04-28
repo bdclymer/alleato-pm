@@ -365,7 +365,7 @@ export const formSections: FormSection[] = [
         label: "OneDrive Folder",
         control: "text",
         colSpan: "full",
-        placeholder: "https://alleato.sharepoint.com/...",
+        placeholder: "https://",
       },
       {
         name: "description",
