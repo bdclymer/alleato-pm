@@ -62,11 +62,11 @@ export interface PageShellProps {
 
 const variantConfig: Record<
   PageShellVariant,
-  { containerMaxWidth: "full" | "sm" | "md" | "lg" | "xl" | "2xl"; contentMaxWidth?: string; spacing: string }
+  { containerMaxWidth: "full" | "sm" | "md" | "lg" | "xl" | "2xl"; contentMaxWidth?: string; spacing: string; headerPadding?: string }
 > = {
   dashboard: { containerMaxWidth: "full", contentMaxWidth: "max-w-[1800px]", spacing: "space-y-14" },
   table:     { containerMaxWidth: "full", spacing: "space-y-4" },
-  form:      { containerMaxWidth: "full", contentMaxWidth: "max-w-5xl",  spacing: "space-y-8" },
+  form:      { containerMaxWidth: "full", contentMaxWidth: "max-w-5xl",  spacing: "space-y-8", headerPadding: "pt-10" },
   detail:    { containerMaxWidth: "full", contentMaxWidth: "max-w-6xl",  spacing: "space-y-6" },
   detailWide:{ containerMaxWidth: "full", contentMaxWidth: "max-w-screen-2xl",  spacing: "space-y-6" },
   content:   { containerMaxWidth: "full", contentMaxWidth: "max-w-4xl",  spacing: "space-y-8" },
@@ -131,7 +131,7 @@ export function PageShell({
   if (config.contentMaxWidth) {
     return (
       <PageContainer maxWidth={config.containerMaxWidth} className={cn(className)}>
-        <div className={cn("mx-auto w-full min-w-0", config.contentMaxWidth)}>
+        <div className={cn("mx-auto w-full min-w-0", config.contentMaxWidth, config.headerPadding)}>
           {header}
           <div className={cn(config.spacing, "min-w-0 pt-6 pb-12", contentClassName)}>{children}</div>
         </div>
