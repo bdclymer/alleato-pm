@@ -74,7 +74,7 @@ export function FormField({
   if (layout === "horizontal") {
     return (
       <FormFieldContext.Provider value={inputId}>
-        <div className={cn("flex items-start gap-x-6", className)}>
+        <div className={cn("flex items-start gap-x-3", className)}>
           <label
             htmlFor={inputId}
             className="w-44 shrink-0 pt-2 text-sm font-medium text-foreground"

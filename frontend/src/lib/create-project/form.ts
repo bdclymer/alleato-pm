@@ -362,7 +362,7 @@ export const formSections: FormSection[] = [
       },
       {
         name: "onedrive",
-        label: "OneDrive Folder URL",
+        label: "OneDrive Folder",
         control: "text",
         colSpan: "full",
         placeholder: "https://alleato.sharepoint.com/...",
