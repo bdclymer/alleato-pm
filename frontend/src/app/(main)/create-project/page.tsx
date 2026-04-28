@@ -433,7 +433,7 @@ function CreateProjectForm() {
         description={hideSectionDescription ? undefined : section.description}
         showDivider={false}
       >
-        <FormGrid columns={sectionColumns}>{section.fields.map(renderField)}</FormGrid>
+        <FormGrid columns={sectionColumns} className={section.id === "project-status" ? "gap-y-2" : undefined}>{section.fields.map(renderField)}</FormGrid>
       </StandardFormSection>
     );
 
