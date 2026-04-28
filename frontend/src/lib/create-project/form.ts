@@ -471,12 +471,6 @@ export const formSections: FormSection[] = [
         control: "checkbox",
         description: "Enable ERP sync flag.",
       },
-      {
-        name: "test_project",
-        label: "Test Project",
-        control: "checkbox",
-        description: "Mark project as test/sandbox.",
-      },
     ],
   },
 ];
