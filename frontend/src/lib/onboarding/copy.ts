@@ -17,25 +17,25 @@ export type MomentumStats = {
 
 export const onboardingCopy = {
   shell: {
-    eyebrow: "Alleato OS · Welcome",
-    skip: "Skip tour",
+    eyebrow: "Alleato OS",
+    skip: "Explore later",
     back: "Back",
     continue: "Continue",
     startExploring: "Start exploring",
   },
   foundation: {
-    badge: "Internal beta · You're shaping this",
-    headline: "You're not testing software. You're shaping it.",
-    body:
-      "Whatever you've ever wanted a platform like this to do — this is where it gets built. Some of what's here will feel rough. That's the point: you're seeing it in the bones, so what gets built next is what you actually need.",
-    pact: {
-      title: "The Tester Pact",
-      items: [
-        "I'll click Ask Alleato instead of guessing.",
-        "I'll say specifically what's missing — especially for construction.",
-        "I'll watch how fast things move when I speak up.",
-      ],
-    },
+    badge: "You’re getting the first look at what’s next",
+    preheadingWithName: (firstName: string) => `Welcome, ${firstName}`,
+    preheadingFallback: "Welcome",
+    headline: "THIS ISN'T TESTING... IT'S CO-CREATION.",
+    headlineWithName: () => "THIS ISN'T TESTING... IT'S CO-CREATION.",
+    headlineFallback: "THIS ISN'T TESTING... IT'S CO-CREATION.",
+    body: [
+      "This is your first look at Alleato’s new AI-powered project platform.",
+      "You may find things that need work. That is expected. What matters is that every bug, idea, missing detail, and “what if it worked this way?” can help shape the system around how Alleato actually operates.",
+      "The goal is not just to test software.",
+      "The goal is to help build what comes next.",
+    ],
     statLabels: {
       fixesShipped: "fixes shipped this month",
       activeTesters: "testers active",
@@ -43,18 +43,18 @@ export const onboardingCopy = {
     },
   },
   wow: {
-    badge: "What Procore can't do",
-    headlineWithName: (name: string) => `Hey ${name}. I read your last 14 meetings.`,
-    headlineFallback: "I read your last 14 meetings.",
+    badge: "What becomes possible",
+    headlineWithName: (name: string) => `${name}, this can become your project command layer.`,
+    headlineFallback: "This can become your project command layer.",
     body:
-      "Every meeting. Every transcript. Three patterns that didn't exist in any single document:",
+      "Alleato can connect signals that usually live in separate places. These are the kinds of patterns we want the product to surface automatically:",
     closer:
       "This isn't a one-time demo. Your AI assistant lives in the bottom-right of every page — ask it anything, anytime.",
   },
   widget: {
-    headline: "One widget. Two superpowers.",
+    headline: "Feedback is only a click away.",
     body:
-      "The pill in the bottom-right travels with you on every page. Ask the AI anything, or send feedback when something's off.",
+      "The Ask Alleato pill travels with you on every page. When something feels off, click Submit feedback, describe what happened, and attach the current screen so the team can see exactly what you saw.",
     askTab: "Ask AI",
     feedbackTab: "Send feedback",
     tryAsking: "Try asking",
@@ -65,7 +65,7 @@ export const onboardingCopy = {
     ],
     inputPlaceholder: "Ask anything about your projects...",
     feedbackPlaceholder: "Bug, idea, or just confused — anything works",
-    previewNote: "Click the tabs above to preview both modes.",
+    previewNote: "The form captures page context automatically. Screenshots make fixes dramatically faster.",
     feedbackFooter: "Every submission lands on the Client Feedback page within seconds.",
   },
   mission: {

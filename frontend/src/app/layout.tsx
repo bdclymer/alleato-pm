@@ -14,6 +14,7 @@ import { DesignViolationOverlay } from "@/components/dev/design-violation-overla
 import { Providers } from "./Providers";
 import { UnifiedFeedbackWidget } from "@/components/dev/UnifiedFeedbackWidget";
 import { AskAlleatoRoot } from "@/components/ask-alleato/AskAlleatoRoot";
+import { AdminFeedbackWidget } from "@/components/admin-feedback/AdminFeedbackWidget";
 import { ChunkLoadErrorRecovery } from "@/components/providers/chunk-error-recovery";
 import "./globals.css";
 import "swagger-ui-dist/swagger-ui.css";
@@ -86,6 +87,7 @@ export default function RootLayout({
         <Toaster />
         <Suspense fallback={null}>
           <AskAlleatoRoot />
+          <AdminFeedbackWidget showLauncher={false} />
         </Suspense>
         {process.env.NODE_ENV === "development" && (
           <>

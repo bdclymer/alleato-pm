@@ -1044,6 +1044,7 @@ export default function PortfolioPage() {
       table={{
         columns: PROJECT_TABLE_COLUMNS,
         getRowId: (item) => item.id,
+        onRowClick: navigateToProject,
         onDelete: handleDeleteProject,
         rowActions: (item) => (
           <DropdownMenu>

@@ -24,7 +24,7 @@ export const Modal: Story = {
 };
 
 export const Foundation = {
-  render: () => <StepFrame><FoundationStep stats={defaultMomentumStats} /></StepFrame>,
+  render: () => <StepFrame><FoundationStep firstName="Megan" stats={defaultMomentumStats} /></StepFrame>,
 };
 
 export const Wow = {

@@ -20,15 +20,10 @@ function shouldHideForRoute(pathname: string) {
 export function AskAlleatoRoot() {
   const pathname = usePathname() ?? "/";
   const [open, setOpen] = React.useState(false);
-  const [activeTab, setActiveTab] = React.useState<AskAlleatoPanelTab>("ai");
+  const [activeTab, setActiveTab] = React.useState<AskAlleatoPanelTab>("feedback");
   const [onboardingOpen, setOnboardingOpen] = React.useState(false);
 
   React.useEffect(() => {
-    const openFeedbackComposer = () => {
-      setActiveTab("feedback");
-      setOpen(true);
-    };
-
     const openShortcut = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "i") {
         event.preventDefault();
@@ -43,13 +38,11 @@ export function AskAlleatoRoot() {
       if (detail?.open) setOpen(false);
     };
 
-    window.addEventListener(OPEN_ADMIN_FEEDBACK_COMPOSER_EVENT, openFeedbackComposer);
     window.addEventListener("keydown", openShortcut);
     window.addEventListener(ONBOARDING_VISIBILITY_EVENT, onboardingVisibility);
     document.documentElement.dataset.askAlleatoShortcutReady = "true";
 
     return () => {
-      window.removeEventListener(OPEN_ADMIN_FEEDBACK_COMPOSER_EVENT, openFeedbackComposer);
       window.removeEventListener("keydown", openShortcut);
       window.removeEventListener(ONBOARDING_VISIBILITY_EVENT, onboardingVisibility);
       document.documentElement.dataset.askAlleatoShortcutReady = "false";
@@ -70,8 +63,7 @@ export function AskAlleatoRoot() {
     <>
       <AskAlleatoPill
         onClick={() => {
-          setActiveTab("ai");
-          setOpen(true);
+          window.dispatchEvent(new CustomEvent(OPEN_ADMIN_FEEDBACK_COMPOSER_EVENT));
         }}
       />
       <AskAlleatoPanel

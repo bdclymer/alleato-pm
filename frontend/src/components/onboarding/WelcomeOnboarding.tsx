@@ -2,38 +2,33 @@
 
 import * as React from "react";
 import { useSearchParams } from "next/navigation";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useCurrentUserProfile } from "@/hooks/use-current-user-profile";
 import {
   defaultMomentumStats,
-  defaultOnboardingInsights,
   onboardingCopy,
   ONBOARDING_VISIBILITY_EVENT,
   WELCOME_ONBOARDING_STORAGE_KEY,
   type MomentumStats,
-  type OnboardingInsight,
 } from "@/lib/onboarding/copy";
 import { findAlleatoAiProfile } from "@/config/aiPersonalization";
 import { cn } from "@/lib/utils";
 import { FoundationStep } from "./steps/FoundationStep";
 import { MissionStep } from "./steps/MissionStep";
 import { WidgetShowcaseStep } from "./steps/WidgetShowcaseStep";
-import { WowStep } from "./steps/WowStep";
 
 export type WelcomeOnboardingProps = {
   forceOpen?: boolean;
-  insights?: OnboardingInsight[];
   stats?: MomentumStats;
   storageKey?: string;
 };
 
-const TOTAL_STEPS = 4;
+const TOTAL_STEPS = 3;
 
 export function WelcomeOnboarding({
   forceOpen,
-  insights = defaultOnboardingInsights,
   stats = defaultMomentumStats,
   storageKey = WELCOME_ONBOARDING_STORAGE_KEY,
 }: WelcomeOnboardingProps) {
@@ -52,10 +47,15 @@ export function WelcomeOnboarding({
     [currentUserProfile?.email, currentUserProfile?.fullName],
   );
 
-  const userName = currentUserProfile?.fullName || personalizationProfile.displayName;
+  const userName =
+    currentUserProfile?.fullName || personalizationProfile.displayName;
+  const firstName = userName.trim().split(/\s+/)[0] || undefined;
 
   React.useEffect(() => {
-    const shouldForceOpen = forceOpen || queryForceOpen;
+    const shouldForceOpen =
+      forceOpen ||
+      queryForceOpen ||
+      new URLSearchParams(window.location.search).get("onboarding") === "1";
     if (shouldForceOpen) {
       setStep(0);
       setOpen(true);
@@ -111,51 +111,71 @@ export function WelcomeOnboarding({
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && close(false)}>
       <DialogContent
         showCloseButton={false}
-        className="max-h-[calc(100svh-1.5rem)] gap-0 overflow-hidden p-0 sm:max-w-xl"
+        className="flex max-h-[calc(100svh-1.5rem)] flex-col gap-0 overflow-hidden border-0 bg-background p-0 text-foreground sm:max-w-3xl"
+        style={{ height: "min(40rem, calc(100svh - 1.5rem))" }}
         aria-describedby={undefined}
       >
         <DialogTitle className="sr-only">Welcome to Alleato AI</DialogTitle>
-        <div className="flex items-center justify-between border-b px-5 py-4 sm:px-6">
-          <div className="flex items-center gap-2">
-            <span className="size-1.5 rounded-full bg-primary" />
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              {onboardingCopy.shell.eyebrow}
-            </span>
+        <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
+          <BlueprintBackdrop />
+
+          <div className="relative flex items-center justify-end px-6 pt-4 sm:px-12 sm:pt-5">
+            <div className="flex items-center gap-3">
+              <StepDots current={step} total={TOTAL_STEPS} />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => close(false)}
+                className="size-9 rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
+                aria-label="Close welcome"
+              >
+                <X className="size-4" />
+              </Button>
+            </div>
           </div>
-          <StepDots current={step} total={TOTAL_STEPS} />
-        </div>
 
-        <div className="min-h-96 overflow-y-auto px-5 py-6 sm:px-7 sm:py-7">
-          {step === 0 && <FoundationStep stats={stats} />}
-          {step === 1 && <WowStep userName={userName} insights={insights} />}
-          {step === 2 && <WidgetShowcaseStep />}
-          {step === 3 && <MissionStep onCreateTestProject={handleCreateTestProject} />}
-        </div>
+          <div className="relative min-h-0 flex-1 overflow-y-auto px-6 py-6 sm:min-h-96 sm:px-12 sm:py-8">
+            {step === 0 && <FoundationStep firstName={firstName} stats={stats} />}
+            {step === 1 && <WidgetShowcaseStep />}
+            {step === 2 && <MissionStep onCreateTestProject={handleCreateTestProject} />}
+          </div>
 
-        <div className="flex items-center justify-between border-t bg-muted/30 px-5 py-4 sm:px-6">
-          <Button
-            type="button"
-            onClick={() => close(true)}
-            variant="ghost"
-            size="sm"
-            className="h-8 px-2 text-[13px] text-muted-foreground hover:text-foreground"
-          >
-            {onboardingCopy.shell.skip}
-          </Button>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={back} disabled={step === 0}>
-              {onboardingCopy.shell.back}
-            </Button>
+          <div className="relative flex flex-col gap-3 px-6 pb-6 pt-7 sm:flex-row sm:items-center sm:justify-between sm:px-12 sm:pb-8 sm:pt-10">
             <Button
+              type="button"
+              onClick={() => close(true)}
+              variant="ghost"
               size="sm"
-              onClick={next}
-              className={cn(step === TOTAL_STEPS - 1 && "bg-primary hover:bg-primary/90")}
+              className="h-auto justify-start px-0 py-0 text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70 hover:bg-transparent hover:text-muted-foreground"
             >
-              {step === TOTAL_STEPS - 1
-                ? onboardingCopy.shell.startExploring
-                : onboardingCopy.shell.continue}
-              <ArrowRight className="ml-1.5 size-3.5" />
+              {onboardingCopy.shell.skip}
             </Button>
+            <div className="flex gap-2">
+              {step > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={back}
+                  className="h-9 px-0 text-[12px] font-medium uppercase tracking-[0.2em] text-muted-foreground underline-offset-4 hover:bg-transparent hover:text-foreground hover:underline"
+                >
+                  {onboardingCopy.shell.back}
+                </Button>
+              )}
+              <Button
+                size="sm"
+                onClick={next}
+                className={cn(
+                  "bg-primary px-5 text-primary-foreground hover:bg-primary/90",
+                  step === TOTAL_STEPS - 1 && "bg-primary hover:bg-primary/90",
+                )}
+              >
+                {step === TOTAL_STEPS - 1
+                  ? onboardingCopy.shell.startExploring
+                  : onboardingCopy.shell.continue}
+                <ArrowRight className="ml-1.5 size-3.5" />
+              </Button>
+            </div>
           </div>
         </div>
       </DialogContent>
@@ -174,11 +194,32 @@ function StepDots({ current, total }: { current: number; total: number }) {
             index === current
               ? "w-6 bg-primary"
               : index < current
-                ? "w-2 bg-foreground/70"
+                ? "w-2 bg-foreground/65"
                 : "w-2 bg-muted-foreground/30",
           )}
         />
       ))}
+    </div>
+  );
+}
+
+function BlueprintBackdrop() {
+  return (
+    <div className="pointer-events-none absolute inset-0 overflow-hidden bg-primary/5">
+      <div className="absolute inset-0 opacity-55">
+        <div className="absolute inset-x-0 top-16 h-px bg-primary/15" />
+        <div className="absolute inset-x-0 top-32 h-px bg-primary/15" />
+        <div className="absolute inset-x-0 top-48 h-px bg-primary/15" />
+        <div className="absolute inset-y-0 left-16 w-px bg-primary/15" />
+        <div className="absolute inset-y-0 left-32 w-px bg-primary/15" />
+        <div className="absolute inset-y-0 left-48 w-px bg-primary/15" />
+        <div className="absolute inset-y-0 right-16 w-px bg-primary/15" />
+        <div className="absolute inset-y-0 right-32 w-px bg-primary/15" />
+      </div>
+      <div className="absolute bottom-14 right-14 hidden h-40 w-64 border border-primary/15 md:block" />
+      <div className="absolute bottom-24 right-28 hidden h-px w-72 rotate-[-12deg] bg-primary/15 md:block" />
+      <div className="absolute bottom-20 left-16 hidden h-24 w-40 border border-primary/10 md:block" />
+      <div className="absolute left-20 top-28 hidden h-px w-56 rotate-[-18deg] bg-primary/10 md:block" />
     </div>
   );
 }

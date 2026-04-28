@@ -227,6 +227,15 @@ run_smoke_test() {
       -X "$method" \
       "${BASE_URL}${url}" 2>/dev/null || echo "000")
 
+    # Retry once on timeout — Next.js dev server compiles route handlers on first hit,
+    # which can exceed 10s for heavy routes. A real hang will still fail at 30s.
+    if [[ "$status" == "000" ]]; then
+      status=$(curl -s -o /dev/null -w "%{http_code}" \
+        --max-time 30 \
+        -X "$method" \
+        "${BASE_URL}${url}" 2>/dev/null || echo "000")
+    fi
+
     if [[ "$status" == "500" || "$status" == "000" ]]; then
       echo -e "  ${RED}FAIL${NC}  ${status}  ${url}  (${desc})"
       errors+=("${status} ${method} ${url} — ${desc}")

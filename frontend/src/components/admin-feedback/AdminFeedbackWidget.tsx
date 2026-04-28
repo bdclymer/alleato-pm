@@ -39,6 +39,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 
 type SubmissionState = {
@@ -101,7 +102,24 @@ function inferProjectId(pathname: string) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-export function AdminFeedbackWidget() {
+function getBestComposerTarget() {
+  const candidates = [
+    "[role='dialog']:not([data-admin-feedback-root='true'])",
+    "[data-feedback-id='app.main-content']",
+    "main",
+  ];
+
+  for (const selector of candidates) {
+    const target = document.querySelector(selector);
+    if (target instanceof HTMLElement && target.offsetParent !== null) {
+      return target;
+    }
+  }
+
+  return document.body;
+}
+
+export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: boolean }) {
   const pathname = usePathname();
   const { profile, isLoading } = useCurrentUserProfile();
   const isMobile = useIsMobile();
@@ -157,7 +175,6 @@ export function AdminFeedbackWidget() {
     [],
   );
 
-  const isAdmin = profile?.isAdmin === true;
   const hoveredRect = hoveredTarget ? getRectState(hoveredTarget) : null;
   const isImmersiveChatRoute =
     pagePath.startsWith("/ai-assistant") || pagePath.startsWith("/ai-avatar");
@@ -260,10 +277,7 @@ export function AdminFeedbackWidget() {
 
   useEffect(() => {
     const openComposer = () => {
-      const target =
-        document.querySelector("[data-feedback-id='app.main-content']") ??
-        document.querySelector("main") ??
-        document.body;
+      const target = getBestComposerTarget();
 
       if (!(target instanceof HTMLElement)) {
         toast.error("Unable to find page context for feedback.");
@@ -300,7 +314,7 @@ export function AdminFeedbackWidget() {
     };
   }, [isSelecting]);
 
-  if (isLoading || !isAdmin || isMobile || isImmersiveChatRoute) {
+  if (isLoading || isMobile || isImmersiveChatRoute) {
     return null;
   }
 
@@ -386,6 +400,13 @@ export function AdminFeedbackWidget() {
               feedbackType: form.feedbackType,
               source: "admin-feedback-widget",
               userAgent: navigator.userAgent,
+              viewport: {
+                width: window.innerWidth,
+                height: window.innerHeight,
+              },
+              selectedText: selectedTarget.text,
+              selectedSelector: selectedTarget.selector,
+              selectedDomPath: selectedTarget.domPath,
             },
           }),
         });
@@ -425,35 +446,37 @@ export function AdminFeedbackWidget() {
         />
       )}
 
-      <div
-        {...feedbackTargetProps("admin.feedback-widget")}
-        {...{ [ADMIN_FEEDBACK_OVERLAY_ATTRIBUTE]: "true" }}
-        className="fixed bottom-24 right-20 z-[9999] flex items-center gap-2 sm:bottom-8"
-      >
-        {isSelecting && (
-          <div className="hidden rounded-full bg-foreground px-3 py-1.5 text-xs text-background shadow-sm md:block">
-            Click an element · Esc to cancel
-          </div>
-        )}
-        {/* eslint-disable-next-line design-system/no-design-violations -- floating action button with custom shape */}
-        <button
-          type="button"
-          onClick={toggleSelectMode}
-          className={cn(
-            "flex h-12 w-12 items-center justify-center rounded-full shadow-sm transition-all",
-            isSelecting
-              ? "bg-foreground text-background hover:bg-foreground/90"
-              : "bg-background text-foreground border border-border hover:bg-muted",
-          )}
-          aria-label={isSelecting ? "Cancel feedback" : "Feedback mode"}
+      {showLauncher && (
+        <div
+          {...feedbackTargetProps("admin.feedback-widget")}
+          {...{ [ADMIN_FEEDBACK_OVERLAY_ATTRIBUTE]: "true" }}
+          className="fixed bottom-24 right-20 z-[9999] flex items-center gap-2 sm:bottom-8"
         >
-          {isSelecting ? (
-            <Sparkles className="h-5 w-5" />
-          ) : (
-            <ListFilter className="h-5 w-5" />
+          {isSelecting && (
+            <div className="hidden rounded-full bg-foreground px-3 py-1.5 text-xs text-background shadow-sm md:block">
+              Click an element · Esc to cancel
+            </div>
           )}
-        </button>
-      </div>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={toggleSelectMode}
+            className={cn(
+              "h-12 w-12 rounded-full shadow-sm",
+              isSelecting
+                ? "bg-foreground text-background hover:bg-foreground/90 border-foreground"
+                : "bg-background text-foreground",
+            )}
+            aria-label={isSelecting ? "Cancel feedback" : "Feedback mode"}
+          >
+            {isSelecting ? (
+              <Sparkles className="h-5 w-5" />
+            ) : (
+              <ListFilter className="h-5 w-5" />
+            )}
+          </Button>
+        </div>
+      )}
 
       <Dialog
         open={dialogOpen}
@@ -478,41 +501,33 @@ export function AdminFeedbackWidget() {
 
           {selectedTarget && (
             <div className="space-y-6 px-6 py-5">
-              <div className="rounded-lg border border-border bg-muted/20 px-4 py-3">
-                <p className="text-sm font-medium text-foreground">
-                  {selectedTarget.text || "Selected area"}
-                </p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Feedback will be attached to this part of the page
-                  automatically.
-                </p>
-              </div>
-
               <div className="space-y-2">
                 <Label>Feedback type</Label>
-                <div className="grid gap-2 sm:grid-cols-3">
+                <RadioGroup
+                  value={form.feedbackType}
+                  onValueChange={(feedbackType) =>
+                    setForm((current) => ({
+                      ...current,
+                      feedbackType: feedbackType as FeedbackType,
+                    }))
+                  }
+                  className="flex flex-col gap-2 sm:flex-row sm:gap-6"
+                >
                   {FEEDBACK_TYPES.map((feedbackType) => (
-                    <Button
-                      key={feedbackType}
-                      type="button"
-                      variant={
-                        form.feedbackType === feedbackType
-                          ? "secondary"
-                          : "outline"
-                      }
-                      size="sm"
-                      className="justify-start"
-                      onClick={() =>
-                        setForm((current) => ({
-                          ...current,
-                          feedbackType,
-                        }))
-                      }
-                    >
-                      {feedbackType}
-                    </Button>
+                    <div key={feedbackType} className="flex items-center gap-2">
+                      <RadioGroupItem
+                        value={feedbackType}
+                        id={`feedback-type-${feedbackType}`}
+                      />
+                      <Label
+                        htmlFor={`feedback-type-${feedbackType}`}
+                        className="cursor-pointer font-normal"
+                      >
+                        {feedbackType}
+                      </Label>
+                    </div>
                   ))}
-                </div>
+                </RadioGroup>
               </div>
 
               <div className="space-y-2">

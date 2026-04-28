@@ -1,95 +1,30 @@
 "use client";
 
 import * as React from "react";
-import { Bug, HelpCircle, Lightbulb, MessageSquare, Send, Sparkles } from "lucide-react";
+import { Bug, HelpCircle, ImagePlus, Lightbulb, MessageSquare, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { onboardingCopy } from "@/lib/onboarding/copy";
 import { type AskAlleatoFeedbackTag } from "@/lib/ask-alleato/feedback-tag-mapping";
 import { cn } from "@/lib/utils";
 
 export function WidgetShowcaseStep() {
-  const [tab, setTab] = React.useState<"ai" | "feedback">("ai");
-
   return (
-    <div>
-      <h1 className="mb-2 text-[22px] font-semibold leading-snug tracking-tight text-foreground">
-        {onboardingCopy.widget.headline}
-      </h1>
-      <p className="mb-5 text-[13.5px] leading-relaxed text-muted-foreground">
-        {onboardingCopy.widget.body}
-      </p>
-      <div className="overflow-hidden rounded-xl border bg-background shadow-sm">
-        <div className="flex border-b">
-          <PreviewTabButton active={tab === "ai"} onClick={() => setTab("ai")}>
-            <Sparkles className="size-3.5" />
-            {onboardingCopy.widget.askTab}
-          </PreviewTabButton>
-          <PreviewTabButton active={tab === "feedback"} onClick={() => setTab("feedback")}>
-            <MessageSquare className="size-3.5" />
-            {onboardingCopy.widget.feedbackTab}
-          </PreviewTabButton>
+    <div className="grid gap-7 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
+      <div>
+        <div className="mb-4 inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.28em] text-primary">
+          <MessageSquare className="size-4" />
+          Client feedback
         </div>
-        <div className="p-4">{tab === "ai" ? <AIPreview /> : <FeedbackPreview />}</div>
+        <h1 className="mb-4 text-2xl font-semibold leading-snug tracking-normal text-foreground sm:text-3xl">
+          {onboardingCopy.widget.headline}
+        </h1>
+        <p className="mb-6 text-[15px] leading-7 text-muted-foreground">
+          {onboardingCopy.widget.body}
+        </p>
       </div>
-      <div className="mt-3.5 text-center text-[12px] text-muted-foreground">
-        {onboardingCopy.widget.previewNote}
-      </div>
-    </div>
-  );
-}
 
-function PreviewTabButton({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <Button
-      type="button"
-      variant="ghost"
-      onClick={onClick}
-      className={cn(
-        "h-auto flex-1 rounded-none border-b-2 py-3 text-[13px] font-medium transition-colors hover:bg-muted/50",
-        active
-          ? "border-primary bg-background text-foreground"
-          : "border-transparent bg-muted/50 text-muted-foreground",
-      )}
-    >
-      {children}
-    </Button>
-  );
-}
-
-function AIPreview() {
-  return (
-    <div>
-      <div className="mb-2.5 rounded-lg bg-muted/50 p-3">
-        <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-          {onboardingCopy.widget.tryAsking}
-        </div>
-        <div className="flex flex-col gap-1.5 text-[13px] text-foreground">
-          {onboardingCopy.widget.examples.map((example) => (
-            <span key={example}>- {example}</span>
-          ))}
-        </div>
-      </div>
-      <div className="flex items-center gap-2 rounded-lg border px-3 py-2">
-        <Sparkles className="size-3.5 shrink-0 text-muted-foreground" />
-        <Input
-          placeholder={onboardingCopy.widget.inputPlaceholder}
-          className="h-7 border-0 p-0 text-[13px] shadow-none focus-visible:ring-0"
-          readOnly
-        />
-        <Button size="sm" className="h-7 px-2.5 text-xs">
-          Ask
-        </Button>
-      </div>
+      <FeedbackPreview />
     </div>
   );
 }
@@ -97,10 +32,19 @@ function AIPreview() {
 function FeedbackPreview() {
   const [tag, setTag] = React.useState<AskAlleatoFeedbackTag | null>(null);
   return (
-    <div>
+    <div className="border border-border bg-background p-4 text-foreground">
+      <div className="mb-3 flex items-center justify-between">
+        <div>
+          <div className="text-sm font-semibold">Submit feedback</div>
+          <div className="mt-1 text-xs text-muted-foreground">
+            Bugs, missing details, ideas, or “this should work differently.”
+          </div>
+        </div>
+        <MessageSquare className="size-4 text-primary" />
+      </div>
       <Textarea
         placeholder={onboardingCopy.widget.feedbackPlaceholder}
-        className="min-h-16 text-[13px]"
+        className="min-h-28 bg-background text-[13px]"
         readOnly
       />
       <div className="mt-2.5 flex flex-wrap gap-1.5">
@@ -108,10 +52,16 @@ function FeedbackPreview() {
         <TagButton label="Idea" icon={Lightbulb} active={tag === "Idea"} onClick={() => setTag("Idea")} />
         <TagButton label="Confused" icon={HelpCircle} active={tag === "Confused"} onClick={() => setTag("Confused")} />
       </div>
-      <Button size="sm" className="mt-3 h-8" disabled>
-        <Send className="mr-1.5 size-3" />
-        Send feedback
-      </Button>
+      <div className="mt-3 flex items-center justify-between gap-3">
+        <Button size="sm" variant="outline" className="h-8" disabled>
+          <ImagePlus className="mr-1.5 size-3" />
+          Add screenshot
+        </Button>
+        <Button size="sm" className="h-8 bg-primary text-primary-foreground" disabled>
+          <Send className="mr-1.5 size-3" />
+          Send feedback
+        </Button>
+      </div>
       <div className="mt-2.5 text-[11.5px] text-muted-foreground">
         {onboardingCopy.widget.feedbackFooter}
       </div>
@@ -139,7 +89,7 @@ function TagButton({
       className={cn(
         "h-7 rounded-full text-[11px]",
         active
-          ? "border-primary/30 bg-primary/5 text-primary"
+          ? "border-primary/30 bg-primary/10 text-primary"
           : "bg-background text-muted-foreground hover:border-primary/30 hover:text-primary",
       )}
     >

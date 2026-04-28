@@ -1,8 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Sparkles } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { RadioTower } from "lucide-react";
 import { onboardingCopy, type OnboardingInsight } from "@/lib/onboarding/copy";
 import { cn } from "@/lib/utils";
 
@@ -28,30 +27,22 @@ export function WowStep({
     : onboardingCopy.wow.headlineFallback;
 
   return (
-    <div>
-      <Badge
-        variant="outline"
-        className="mb-4 border-primary/20 bg-primary/5 text-primary hover:bg-primary/5"
-      >
-        <Sparkles className="mr-1.5 size-3" />
+    <div className="max-w-2xl">
+      <div className="mb-4 inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.28em] text-primary">
+        <RadioTower className="size-4" />
         {onboardingCopy.wow.badge}
-      </Badge>
-      <h1 className="mb-2 text-[22px] font-semibold leading-snug tracking-tight text-foreground">
+      </div>
+      <h1 className="mb-4 max-w-xl text-2xl font-semibold leading-snug tracking-normal text-foreground sm:text-3xl">
         {greeting}
       </h1>
-      <p className="mb-5 text-[13.5px] leading-relaxed text-muted-foreground">
+      <p className="mb-6 max-w-xl text-[15px] leading-7 text-muted-foreground">
         {onboardingCopy.wow.body}
       </p>
 
-      <div className="mb-5 flex flex-col gap-2.5">
+      <div className="mb-6 grid gap-3">
         {insights.slice(0, 3).map((insight, i) => (
           <InsightRow key={`${insight.kind}-${i}`} insight={insight} visible={i < shown} />
         ))}
-      </div>
-
-      <div className="rounded-lg border-l-2 border-primary bg-muted/50 p-3.5 text-[12.5px] leading-relaxed text-muted-foreground">
-        <span className="font-medium text-foreground">This isn't a one-time demo.</span>{" "}
-        Your AI assistant lives in the bottom-right of every page — ask it anything, anytime.
       </div>
     </div>
   );
@@ -67,13 +58,13 @@ function InsightRow({ insight, visible }: { insight: OnboardingInsight; visible:
   return (
     <div
       className={cn(
-        "flex gap-3 rounded-lg border bg-background p-3.5 transition-all duration-300",
+        "flex gap-3 border border-border p-4 transition-all duration-300",
         visible ? "translate-y-0 opacity-100" : "translate-y-1.5 opacity-0",
       )}
     >
       <span
         className={cn(
-          "h-fit shrink-0 rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider",
+          "h-fit shrink-0 rounded-sm px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider",
           meta.fg,
           meta.bg,
         )}

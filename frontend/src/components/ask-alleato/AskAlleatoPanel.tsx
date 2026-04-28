@@ -30,23 +30,27 @@ export function AskAlleatoPanel({
         {...{ [ADMIN_FEEDBACK_OVERLAY_ATTRIBUTE]: "true" }}
       >
         <DialogTitle className="sr-only">Ask Alleato</DialogTitle>
-        <Tabs value={activeTab} onValueChange={(value) => onActiveTabChange(value as AskAlleatoPanelTab)} className="gap-0">
+        <Tabs
+          value={activeTab}
+          onValueChange={(value) => onActiveTabChange(value as AskAlleatoPanelTab)}
+          className="gap-0"
+        >
           <TabsList className="grid h-auto w-full grid-cols-2 rounded-none border-b bg-transparent p-0" variant="default">
-            <TabsTrigger value="ai" className="rounded-none border-b-2 border-transparent py-3 data-[state=active]:border-primary data-[state=active]:shadow-none">
-              <Sparkles className="size-3.5" />
-              Ask AI
-            </TabsTrigger>
             <TabsTrigger value="feedback" className="rounded-none border-b-2 border-transparent py-3 data-[state=active]:border-primary data-[state=active]:shadow-none">
               <MessageSquare className="size-3.5" />
-              Send feedback
+              Feedback
+            </TabsTrigger>
+            <TabsTrigger value="ai" className="rounded-none border-b-2 border-transparent py-3 data-[state=active]:border-primary data-[state=active]:shadow-none">
+              <Sparkles className="size-3.5" />
+              Alleato AI
             </TabsTrigger>
           </TabsList>
           <div className="p-5">
-            <TabsContent value="ai" className="mt-0">
-              <AskAITab />
-            </TabsContent>
             <TabsContent value="feedback" className="mt-0">
               <FeedbackTab pagePath={pagePath} onSubmitted={() => onOpenChange(false)} />
+            </TabsContent>
+            <TabsContent value="ai" className="mt-0">
+              <AskAITab />
             </TabsContent>
           </div>
         </Tabs>
