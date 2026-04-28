@@ -386,24 +386,6 @@ export const formSections: FormSection[] = [
     ],
   },
   {
-    id: "logo",
-    title: "Logo",
-    fields: [
-      {
-        name: "project_logo",
-        label: "Project Logo",
-        control: "file",
-        accept: ".jpg,.jpeg,.png,.tif,.tiff,.bmp",
-      },
-      {
-        name: "project_photo",
-        label: "Project Photo",
-        control: "file",
-        accept: ".jpg,.jpeg,.png,.tif,.tiff,.bmp",
-      },
-    ],
-  },
-  {
     id: "project-metrics",
     title: "Project Metrics",
     fields: [
@@ -452,6 +434,24 @@ export const formSections: FormSection[] = [
         label: "Office",
         control: "select",
         options: OFFICE_OPTIONS,
+      },
+    ],
+  },
+  {
+    id: "logo",
+    title: "Logo",
+    fields: [
+      {
+        name: "project_logo",
+        label: "Project Logo",
+        control: "file",
+        accept: ".jpg,.jpeg,.png,.tif,.tiff,.bmp",
+      },
+      {
+        name: "project_photo",
+        label: "Project Photo",
+        control: "file",
+        accept: ".jpg,.jpeg,.png,.tif,.tiff,.bmp",
       },
     ],
   },
