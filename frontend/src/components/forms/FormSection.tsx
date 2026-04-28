@@ -1,29 +1,16 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
-type FormSectionSpacing = "default" | "compact";
-
-const spacingStyles: Record<FormSectionSpacing, { section: string; divider: string; noDivider: string }> = {
-  default: {
-    section:   "space-y-6 pb-8",
-    divider:   "border-t border-border/70 pt-8 first:border-t-0 first:pt-0",
-    noDivider: "pt-8 first:pt-0",
-  },
-  compact: {
-    section:   "space-y-3 pb-3",
-    divider:   "border-t border-border/70 pt-4 first:border-t-0 first:pt-0",
-    noDivider: "pt-4 first:pt-0",
-  },
-};
-
 interface FormSectionProps {
   title: string;
   description?: string;
   children: React.ReactNode;
   actions?: React.ReactNode;
   className?: string;
+  /** @deprecated — use a gap wrapper around sections instead */
   showDivider?: boolean;
-  spacing?: FormSectionSpacing;
+  /** @deprecated — use a gap wrapper around sections instead */
+  spacing?: "default" | "compact";
 }
 
 export function FormSection({
@@ -32,18 +19,9 @@ export function FormSection({
   children,
   actions,
   className,
-  showDivider = true,
-  spacing = "default",
 }: FormSectionProps) {
-  const s = spacingStyles[spacing];
   return (
-    <section
-      className={cn(
-        s.section,
-        showDivider ? s.divider : s.noDivider,
-        className,
-      )}
-    >
+    <section className={cn("space-y-6", className)}>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-0.5">
           {/* eslint-disable-next-line design-system/no-raw-heading */}

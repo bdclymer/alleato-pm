@@ -463,17 +463,19 @@ function CreateProjectForm() {
         projectName={createdProject?.name ?? ""}
       />
 
-      <Form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-0">
+      <Form onSubmit={form.handleSubmit(handleSubmit)}>
         <FormLayoutProvider layout="horizontal">
-          {effectiveFormSections.length > 0 ? (
-            effectiveFormSections.map(renderSection)
-          ) : (
-            <EmptyState
-              icon={<Settings />}
-              title="No fields visible"
-              description="No fields are currently visible for the selected template."
-            />
-          )}
+          <div className="flex flex-col gap-16">
+            {effectiveFormSections.length > 0 ? (
+              effectiveFormSections.map(renderSection)
+            ) : (
+              <EmptyState
+                icon={<Settings />}
+                title="No fields visible"
+                description="No fields are currently visible for the selected template."
+              />
+            )}
+          </div>
         </FormLayoutProvider>
 
         <FormActions
