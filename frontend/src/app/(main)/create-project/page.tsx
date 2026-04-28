@@ -424,7 +424,7 @@ function CreateProjectForm() {
   const renderSection = (section: FormSection) => {
     const sectionColumns =
       section.id === "project-status" ? 1 : activeLayout === "single-column" ? 1 : 2;
-    const hideSectionDescription = section.id === "logo" || section.id === "dates";
+    const hideSectionDescription = section.id === "logo";
 
     const content = (
       <StandardFormSection

@@ -361,6 +361,16 @@ export const formSections: FormSection[] = [
         allowEmptyOption: true,
       },
       {
+        name: "start_date",
+        label: "Start Date",
+        control: "date",
+      },
+      {
+        name: "completion_date",
+        label: "Completion Date",
+        control: "date",
+      },
+      {
         name: "onedrive",
         label: "OneDrive Folder",
         control: "text",
@@ -448,22 +458,6 @@ export const formSections: FormSection[] = [
         name: "postal_code",
         label: "Postal Code",
         control: "text",
-      },
-    ],
-  },
-  {
-    id: "dates",
-    title: "Dates",
-    fields: [
-      {
-        name: "start_date",
-        label: "Start Date",
-        control: "date",
-      },
-      {
-        name: "completion_date",
-        label: "Completion Date",
-        control: "date",
       },
     ],
   },
