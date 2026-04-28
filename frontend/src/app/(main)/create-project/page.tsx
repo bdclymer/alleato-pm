@@ -463,7 +463,7 @@ function CreateProjectForm() {
         projectName={createdProject?.name ?? ""}
       />
 
-      <Form onSubmit={form.handleSubmit(handleSubmit)}>
+      <Form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-0">
         <FormLayoutProvider layout="horizontal">
           {effectiveFormSections.length > 0 ? (
             effectiveFormSections.map(renderSection)
