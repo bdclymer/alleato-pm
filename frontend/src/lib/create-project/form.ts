@@ -432,12 +432,6 @@ export const formSections: FormSection[] = [
         options: OFFICE_OPTIONS,
       },
       {
-        name: "country",
-        label: "Country",
-        control: "select",
-        options: COUNTRY_OPTIONS,
-      },
-      {
         name: "street_address",
         label: "Street Address",
         control: "text",
