@@ -35,7 +35,6 @@ CREATE TABLE IF NOT EXISTS public.acumatica_change_orders (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-
 CREATE INDEX IF NOT EXISTS acumatica_change_orders_reference_nbr_idx
   ON public.acumatica_change_orders (reference_nbr);
 CREATE INDEX IF NOT EXISTS acumatica_change_orders_project_id_idx
@@ -44,7 +43,6 @@ CREATE INDEX IF NOT EXISTS acumatica_change_orders_change_date_idx
   ON public.acumatica_change_orders (change_date DESC);
 CREATE INDEX IF NOT EXISTS acumatica_change_orders_status_idx
   ON public.acumatica_change_orders (status);
-
 CREATE TABLE IF NOT EXISTS public.acumatica_subcontracts (
   id BIGSERIAL PRIMARY KEY,
   external_key TEXT NOT NULL UNIQUE,
@@ -75,7 +73,6 @@ CREATE TABLE IF NOT EXISTS public.acumatica_subcontracts (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-
 CREATE INDEX IF NOT EXISTS acumatica_subcontracts_subcontract_nbr_idx
   ON public.acumatica_subcontracts (subcontract_nbr);
 CREATE INDEX IF NOT EXISTS acumatica_subcontracts_project_id_idx
@@ -84,7 +81,6 @@ CREATE INDEX IF NOT EXISTS acumatica_subcontracts_vendor_id_idx
   ON public.acumatica_subcontracts (vendor_id);
 CREATE INDEX IF NOT EXISTS acumatica_subcontracts_status_idx
   ON public.acumatica_subcontracts (status);
-
 CREATE TABLE IF NOT EXISTS public.acumatica_purchase_orders (
   id BIGSERIAL PRIMARY KEY,
   external_key TEXT NOT NULL UNIQUE,
@@ -112,7 +108,6 @@ CREATE TABLE IF NOT EXISTS public.acumatica_purchase_orders (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-
 CREATE INDEX IF NOT EXISTS acumatica_purchase_orders_order_nbr_idx
   ON public.acumatica_purchase_orders (order_nbr);
 CREATE INDEX IF NOT EXISTS acumatica_purchase_orders_project_id_idx
@@ -121,7 +116,6 @@ CREATE INDEX IF NOT EXISTS acumatica_purchase_orders_vendor_id_idx
   ON public.acumatica_purchase_orders (vendor_id);
 CREATE INDEX IF NOT EXISTS acumatica_purchase_orders_status_idx
   ON public.acumatica_purchase_orders (status);
-
 CREATE TABLE IF NOT EXISTS public.acumatica_payments (
   id BIGSERIAL PRIMARY KEY,
   external_key TEXT NOT NULL UNIQUE,
@@ -148,7 +142,6 @@ CREATE TABLE IF NOT EXISTS public.acumatica_payments (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-
 CREATE INDEX IF NOT EXISTS acumatica_payments_reference_nbr_idx
   ON public.acumatica_payments (reference_nbr);
 CREATE INDEX IF NOT EXISTS acumatica_payments_customer_id_idx

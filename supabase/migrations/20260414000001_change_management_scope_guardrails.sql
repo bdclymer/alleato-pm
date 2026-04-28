@@ -7,21 +7,16 @@
 -- Clarify table ownership so future work does not reintroduce semantic drift.
 COMMENT ON TABLE public.contract_change_orders IS
   'Commitment-side change orders for subcontracts and purchase orders. contract_id resolves through commitments_unified, not prime_contracts.';
-
 COMMENT ON COLUMN public.contract_change_orders.contract_id IS
   'Polymorphic commitment reference. Must resolve to commitments_unified.id via subcontract or purchase_order rows.';
-
 -- Add a denormalized project scope column for fast project-level filtering.
 ALTER TABLE public.contract_change_orders
   ADD COLUMN IF NOT EXISTS project_id integer;
-
 COMMENT ON COLUMN public.contract_change_orders.project_id IS
   'Project scope derived from the referenced commitment. Populated automatically by trigger.';
-
 -- Remove the misleading FK if it still exists. This table is not prime-contract-scoped.
 ALTER TABLE public.contract_change_orders
   DROP CONSTRAINT IF EXISTS contract_change_orders_contract_id_fkey;
-
 -- Backfill project scope and normalized contract type from the current commitment read model.
 UPDATE public.contract_change_orders cco
 SET
@@ -42,7 +37,6 @@ WHERE cu.id = cco.contract_id
       ELSE cco.contract_type
     END
   );
-
 -- Keeps project scope and contract type aligned to the referenced commitment.
 CREATE OR REPLACE FUNCTION public.sync_commitment_change_order_scope()
 RETURNS trigger
@@ -76,24 +70,19 @@ BEGIN
   RETURN NEW;
 END;
 $$;
-
 DROP TRIGGER IF EXISTS trg_sync_commitment_change_order_scope
   ON public.contract_change_orders;
-
 CREATE TRIGGER trg_sync_commitment_change_order_scope
 BEFORE INSERT OR UPDATE OF contract_id
 ON public.contract_change_orders
 FOR EACH ROW
 EXECUTE FUNCTION public.sync_commitment_change_order_scope();
-
 -- Enforce project scope on new rows without failing historical rows that still need cleanup.
 ALTER TABLE public.contract_change_orders
   DROP CONSTRAINT IF EXISTS contract_change_orders_project_id_required;
-
 ALTER TABLE public.contract_change_orders
   ADD CONSTRAINT contract_change_orders_project_id_required
   CHECK (project_id IS NOT NULL) NOT VALID;
-
 DO $$
 BEGIN
   IF NOT EXISTS (
@@ -107,7 +96,6 @@ BEGIN
       FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE CASCADE;
   END IF;
 END $$;
-
 -- Canonical project-scoped read model for commitment change orders.
 CREATE OR REPLACE VIEW public.commitment_change_orders_with_scope AS
 SELECT
@@ -154,36 +142,28 @@ FROM public.contract_change_orders cco
 JOIN public.commitments_unified cu
   ON cu.id = cco.contract_id
  AND cu.deleted_at IS NULL;
-
 COMMENT ON VIEW public.commitment_change_orders_with_scope IS
   'Project-scoped commitment CO read model. Use this instead of rebuilding contract_change_orders joins in app code.';
-
 -- Indexes aligned to actual list/filter patterns.
 CREATE INDEX IF NOT EXISTS idx_contract_change_orders_project_id
   ON public.contract_change_orders (project_id)
   WHERE project_id IS NOT NULL;
-
 CREATE INDEX IF NOT EXISTS idx_contract_change_orders_project_status_requested
   ON public.contract_change_orders (project_id, status, requested_date DESC)
   WHERE project_id IS NOT NULL;
-
 CREATE INDEX IF NOT EXISTS idx_prime_contract_change_orders_project_status_created
   ON public.prime_contract_change_orders (project_id, status, created_at DESC)
   WHERE project_id IS NOT NULL;
-
 CREATE INDEX IF NOT EXISTS idx_prime_contract_change_orders_prime_contract_id
   ON public.prime_contract_change_orders (prime_contract_id)
   WHERE prime_contract_id IS NOT NULL;
-
 CREATE INDEX IF NOT EXISTS idx_change_events_project_prime_contract_active
   ON public.change_events (project_id, prime_contract_id)
   WHERE deleted_at IS NULL
     AND prime_contract_id IS NOT NULL;
-
 CREATE INDEX IF NOT EXISTS idx_subcontracts_project_active_status
   ON public.subcontracts (project_id, status, created_at DESC)
   WHERE deleted_at IS NULL;
-
 CREATE INDEX IF NOT EXISTS idx_purchase_orders_project_active_status
   ON public.purchase_orders (project_id, status, created_at DESC)
   WHERE deleted_at IS NULL;

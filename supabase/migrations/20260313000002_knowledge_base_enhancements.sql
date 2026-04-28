@@ -10,17 +10,14 @@
 -- Embedding for semantic search (same dimension as rest of system)
 ALTER TABLE company_knowledge
   ADD COLUMN IF NOT EXISTS embedding vector(1536);
-
 -- Link knowledge to source project and/or meeting
 ALTER TABLE company_knowledge
   ADD COLUMN IF NOT EXISTS project_id INTEGER REFERENCES projects(id) ON DELETE SET NULL,
   ADD COLUMN IF NOT EXISTS meeting_id TEXT REFERENCES document_metadata(id) ON DELETE SET NULL;
-
 -- Track whether entry was auto-extracted from a meeting vs manually created
 ALTER TABLE company_knowledge
   ADD COLUMN IF NOT EXISTS origin TEXT NOT NULL DEFAULT 'manual'
     CHECK (origin IN ('manual', 'meeting_extraction', 'ai_assistant', 'import'));
-
 -- 2. Expand category CHECK constraint to include construction/ASRS domain categories
 -- ---------------------------------------------------------------------------
 
@@ -40,23 +37,18 @@ ALTER TABLE company_knowledge ADD CONSTRAINT company_knowledge_category_check
     'safety_compliance',  -- OSHA, fire code, safety protocols
     'installation_ops'    -- Installation best practices, field operations
   ));
-
 -- 3. Add indexes for new columns
 -- ---------------------------------------------------------------------------
 
 CREATE INDEX IF NOT EXISTS idx_company_knowledge_embedding
   ON company_knowledge USING ivfflat (embedding vector_cosine_ops)
   WITH (lists = 50);
-
 CREATE INDEX IF NOT EXISTS idx_company_knowledge_project
   ON company_knowledge (project_id) WHERE project_id IS NOT NULL;
-
 CREATE INDEX IF NOT EXISTS idx_company_knowledge_meeting
   ON company_knowledge (meeting_id) WHERE meeting_id IS NOT NULL;
-
 CREATE INDEX IF NOT EXISTS idx_company_knowledge_origin
   ON company_knowledge (origin);
-
 -- 4. Semantic search RPC for knowledge base
 -- ---------------------------------------------------------------------------
 

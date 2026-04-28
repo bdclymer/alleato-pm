@@ -6,7 +6,6 @@
 --    Acumatica sync creates entries without a cost type.
 ALTER TABLE project_budget_codes
   ALTER COLUMN cost_type_id DROP NOT NULL;
-
 -- 2. Migrate project_cost_codes rows into project_budget_codes.
 --    DISTINCT ON deduplicates pcc entries with the same (project_id, cost_code_id, cost_type_id).
 --    Skip rows that already exist in project_budget_codes.
@@ -49,7 +48,6 @@ WHERE NOT EXISTS (
       OR (pbc.cost_type_id IS NULL AND d.cost_type_id IS NULL)
     )
 );
-
 -- 3. Build a temporary mapping: project_cost_codes.id -> project_budget_codes.id
 CREATE TEMP TABLE _pcc_to_pbc AS
 SELECT
@@ -63,38 +61,30 @@ JOIN project_budget_codes pbc
    (pbc.cost_type_id = pcc.cost_type_id)
    OR (pbc.cost_type_id IS NULL AND pcc.cost_type_id IS NULL)
  );
-
 -- 4. Drop the old FK BEFORE backfilling so the UPDATE isn't rejected
 --    by the constraint pointing to project_cost_codes.
 ALTER TABLE contract_line_items
   DROP CONSTRAINT IF EXISTS contract_line_items_budget_code_id_fkey;
-
 -- 5. Backfill contract_line_items.budget_code_id
 UPDATE contract_line_items cli
 SET    budget_code_id = m.new_id
 FROM   _pcc_to_pbc m
 WHERE  cli.budget_code_id = m.old_id;
-
 -- 6. Backfill direct_cost_line_items.budget_code_id
 UPDATE direct_cost_line_items dcli
 SET    budget_code_id = m.new_id
 FROM   _pcc_to_pbc m
 WHERE  dcli.budget_code_id = m.old_id;
-
 DROP TABLE _pcc_to_pbc;
-
 -- 7. Add new FK on contract_line_items pointing to project_budget_codes
 ALTER TABLE contract_line_items
   ADD CONSTRAINT contract_line_items_budget_code_id_fkey
   FOREIGN KEY (budget_code_id) REFERENCES project_budget_codes(id) ON DELETE SET NULL;
-
 -- 8. Add FK on direct_cost_line_items (previously unforced)
 ALTER TABLE direct_cost_line_items
   DROP CONSTRAINT IF EXISTS direct_cost_line_items_budget_code_id_fkey;
-
 ALTER TABLE direct_cost_line_items
   ADD CONSTRAINT direct_cost_line_items_budget_code_id_fkey
   FOREIGN KEY (budget_code_id) REFERENCES project_budget_codes(id) ON DELETE SET NULL;
-
 -- 9. Drop project_cost_codes now that all references are migrated
 DROP TABLE project_cost_codes;

@@ -13,7 +13,6 @@ VALUES ('meetings', 'Meetings', 0)
 ON CONFLICT (tool_name) DO UPDATE SET
   display_name = EXCLUDED.display_name,
   last_generated_at = now();
-
 -- Insert all scenarios
 WITH suite AS (SELECT id FROM public.test_suites WHERE tool_name = 'meetings')
 INSERT INTO public.test_cases
@@ -194,4 +193,4 @@ UPDATE public.test_suites
      SELECT count(*) FROM public.test_cases
      WHERE suite_id = test_suites.id AND test_type = 'scenario'
    )
- WHERE tool_name = 'meetings';
+ WHERE tool_name = 'meetings';;

@@ -1,8 +1,9 @@
 import type { ReactElement } from "react";
 import { useState, useEffect } from "react";
-import { FileText, MoreHorizontal } from "lucide-react";
+import { FileText, MoreHorizontal, QrCode } from "lucide-react";
 
 import { formatDate } from "@/lib/format";
+import { StatusBadge } from "@/components/ds";
 
 import type {
   ColumnConfig,
@@ -25,18 +26,7 @@ import {
   type DrawingLogTableRow,
 } from "@/types/drawings.types";
 
-// ─── Status badge maps ──────────────────────────────────────────────────────
-
-const statusVariantMap: Record<
-  string,
-  "default" | "secondary" | "destructive" | "outline" | "success"
-> = {
-  draft: "secondary",
-  under_review: "default",
-  approved: "success",
-  superseded: "outline",
-  void: "destructive",
-};
+// ─── Status formatting helpers ──────────────────────────────────────────────
 
 function formatStatus(status: string | null): string {
   if (!status) return "-";
@@ -145,9 +135,7 @@ export function buildDrawingTableColumns(): TableColumn<DrawingLogTableRow>[] {
       ...drawingColumns[5],
       render: (item) =>
         item.status ? (
-          <Badge variant={statusVariantMap[item.status] ?? "outline"}>
-            {formatStatus(item.status)}
-          </Badge>
+          <StatusBadge status={formatStatus(item.status)} />
         ) : (
           <span className="text-muted-foreground">-</span>
         ),
@@ -316,7 +304,7 @@ function DrawingGridCard({ item, onClick, selected, onSelect }: DrawingGridCardP
     <Button
       type="button"
       variant="ghost"
-      className={`group/card relative h-auto w-full overflow-hidden rounded-lg border bg-background p-0 text-left transition-all hover:bg-muted/40${dimmed ? " opacity-60" : ""}${selected ? " border-primary ring-1 ring-primary" : " border-border"}`}
+      className={`group/card relative flex flex-col items-stretch justify-start h-auto w-full overflow-hidden rounded-lg border bg-background p-0 text-left transition-all hover:bg-muted/40${dimmed ? " opacity-60" : ""}${selected ? " border-primary ring-1 ring-primary" : " border-border"}`}
       onClick={() => onClick(item)}
     >
       {/* Selection checkbox */}
@@ -384,10 +372,11 @@ export function renderDrawingCard(
   onClick: (item: DrawingLogTableRow) => void,
   onDelete?: (item: DrawingLogTableRow) => void,
   options?: { selected?: boolean; onSelect?: (id: string, checked: boolean) => void },
+  onQrCode?: () => void,
 ): ReactElement {
   return (
     <div className="relative group/wrapper">
-      {onDelete && (
+      {(onDelete || onQrCode) && (
         <div className="absolute right-1.5 top-1.5 z-20 opacity-0 group-hover/wrapper:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -402,20 +391,37 @@ export function renderDrawingCard(
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                className="text-destructive focus:text-destructive"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete(item);
-                }}
-              >
-                Delete
-              </DropdownMenuItem>
+              {onQrCode && (
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onQrCode();
+                  }}
+                >
+                  QR Code
+                </DropdownMenuItem>
+              )}
+              {onDelete && (
+                <DropdownMenuItem
+                  className="text-destructive focus:text-destructive"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(item);
+                  }}
+                >
+                  Delete
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       )}
-      <DrawingGridCard item={item} onClick={onClick} selected={options?.selected} onSelect={options?.onSelect} />
+      <DrawingGridCard
+        item={item}
+        onClick={onClick}
+        selected={options?.selected}
+        onSelect={options?.onSelect}
+      />
     </div>
   );
 }
@@ -424,6 +430,7 @@ export function renderDrawingList(
   item: DrawingLogTableRow,
   onClick: (item: DrawingLogTableRow) => void,
   onDelete?: (item: DrawingLogTableRow) => void,
+  onQrCode?: () => void,
 ): ReactElement {
   const dimmed = item.isObsolete || !item.isPublished;
 
@@ -474,6 +481,20 @@ export function renderDrawingList(
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
+          {onQrCode && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 w-7 p-0"
+              onClick={(e) => {
+                e.stopPropagation();
+                onQrCode();
+              }}
+            >
+              <QrCode className="h-4 w-4" />
+              <span className="sr-only">QR Code</span>
+            </Button>
+          )}
           {item.isObsolete && (
             <Badge variant="secondary">Obsolete</Badge>
           )}
@@ -481,9 +502,7 @@ export function renderDrawingList(
             <Badge variant="outline">Unpublished</Badge>
           )}
           {item.status && (
-            <Badge variant={statusVariantMap[item.status] ?? "outline"}>
-              {formatStatus(item.status)}
-            </Badge>
+            <StatusBadge status={formatStatus(item.status)} />
           )}
         </div>
       </Button>

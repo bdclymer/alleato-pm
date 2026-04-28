@@ -11,6 +11,5 @@ CREATE TABLE IF NOT EXISTS public.project_vendors (
   CONSTRAINT project_vendors_pkey PRIMARY KEY (id),
   CONSTRAINT project_vendors_project_vendor_key UNIQUE (project_id, vendor_id)
 );
-
 CREATE INDEX IF NOT EXISTS idx_project_vendors_project ON public.project_vendors USING btree (project_id);
 CREATE INDEX IF NOT EXISTS idx_project_vendors_vendor ON public.project_vendors USING btree (vendor_id);

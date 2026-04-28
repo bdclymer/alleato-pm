@@ -12,12 +12,10 @@
 ALTER TABLE ai_memories
   ADD COLUMN IF NOT EXISTS visibility TEXT NOT NULL DEFAULT 'private'
     CHECK (visibility IN ('private', 'team'));
-
 -- Index for fetching team-visible memories efficiently
 CREATE INDEX IF NOT EXISTS idx_ai_memories_team
   ON ai_memories (visibility, type, is_active)
   WHERE visibility = 'team' AND is_active = true;
-
 -- ---------------------------------------------------------------------------
 -- 2. Deduplication: find the closest existing memory before inserting
 -- ---------------------------------------------------------------------------
@@ -58,7 +56,6 @@ BEGIN
   LIMIT 1;
 END;
 $$;
-
 -- ---------------------------------------------------------------------------
 -- 3. Team memory search (no user_id filter — returns team-wide memories)
 -- ---------------------------------------------------------------------------
@@ -108,7 +105,6 @@ BEGIN
   LIMIT match_count;
 END;
 $$;
-
 -- ---------------------------------------------------------------------------
 -- 4. Confidence decay (run weekly via cron)
 -- Decrements importance by 5% on facts/lessons older than 90 days

@@ -4,12 +4,10 @@
 
 ALTER TABLE contract_line_items
   ADD COLUMN IF NOT EXISTS budget_code_id uuid REFERENCES project_budget_codes(id) ON DELETE SET NULL;
-
 -- Index for lookups by budget code
 CREATE INDEX IF NOT EXISTS idx_contract_line_items_budget_code_id
   ON contract_line_items(budget_code_id)
   WHERE budget_code_id IS NOT NULL;
-
 -- Backfill: for existing rows that have a cost_code_id, match them
 -- to a project_budget_code via cost_codes.id ↔ project_budget_codes.cost_code_id
 UPDATE contract_line_items cli

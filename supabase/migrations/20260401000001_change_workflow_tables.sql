@@ -48,15 +48,12 @@ CREATE TABLE IF NOT EXISTS public.potential_change_orders (
   submitted_at timestamptz,
   approved_at timestamptz
 );
-
 -- Index for project-level queries
 CREATE INDEX IF NOT EXISTS idx_pco_project_id ON public.potential_change_orders(project_id);
 CREATE INDEX IF NOT EXISTS idx_pco_status ON public.potential_change_orders(status);
-
 -- Unique PCO number per project
 CREATE UNIQUE INDEX IF NOT EXISTS idx_pco_number_project
   ON public.potential_change_orders(project_id, number);
-
 -- ============================================================================
 -- 2. ADD FK FROM pco_line_items → potential_change_orders
 -- ============================================================================
@@ -72,7 +69,6 @@ BEGIN
       FOREIGN KEY (pco_id) REFERENCES public.potential_change_orders(id);
   END IF;
 END $$;
-
 -- Add category and type columns to pco_line_items if missing
 ALTER TABLE public.pco_line_items
   ADD COLUMN IF NOT EXISTS line_type text DEFAULT 'COST'
@@ -80,7 +76,6 @@ ALTER TABLE public.pco_line_items
   ADD COLUMN IF NOT EXISTS category text DEFAULT 'OTHER'
     CHECK (category IN ('LABOR', 'MATERIAL', 'EQUIPMENT', 'OTHER')),
   ADD COLUMN IF NOT EXISTS subcontractor_id text;
-
 -- ============================================================================
 -- 3. PCO VERSIONS — Snapshot on each submission
 -- ============================================================================
@@ -96,11 +91,9 @@ CREATE TABLE IF NOT EXISTS public.pco_versions (
   client_decision_note text,
   created_at timestamptz NOT NULL DEFAULT now()
 );
-
 CREATE INDEX IF NOT EXISTS idx_pco_versions_pco_id ON public.pco_versions(pco_id);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_pco_versions_unique
   ON public.pco_versions(pco_id, version);
-
 -- ============================================================================
 -- 4. PCO ↔ CHANGE EVENT JUNCTION TABLE
 -- ============================================================================
@@ -114,10 +107,8 @@ CREATE TABLE IF NOT EXISTS public.pco_change_events (
   added_by_id text REFERENCES auth.users(id),
   UNIQUE(pco_id, change_event_id)
 );
-
 CREATE INDEX IF NOT EXISTS idx_pco_ce_pco_id ON public.pco_change_events(pco_id);
 CREATE INDEX IF NOT EXISTS idx_pco_ce_change_event_id ON public.pco_change_events(change_event_id);
-
 -- ============================================================================
 -- 5. ADD COLUMNS TO EXISTING change_events TABLE
 -- ============================================================================
@@ -131,10 +122,8 @@ ALTER TABLE public.change_events
     CHECK (originator_role IN ('SUPER', 'PM', 'VP', 'LEADERSHIP')),
   ADD COLUMN IF NOT EXISTS potential_change_order_id bigint
     REFERENCES public.potential_change_orders(id);
-
 CREATE INDEX IF NOT EXISTS idx_ce_pco_id
   ON public.change_events(potential_change_order_id);
-
 -- ============================================================================
 -- 6. TIMELINE EVENTS — Cross-entity append-only audit trail
 -- ============================================================================
@@ -159,12 +148,10 @@ CREATE TABLE IF NOT EXISTS public.timeline_events (
   metadata jsonb,                                 -- Extra structured data per event type
   created_at timestamptz NOT NULL DEFAULT now()
 );
-
 -- No updates or deletes — append-only
 CREATE INDEX IF NOT EXISTS idx_timeline_project ON public.timeline_events(project_id);
 CREATE INDEX IF NOT EXISTS idx_timeline_parent ON public.timeline_events(parent_type, parent_id);
 CREATE INDEX IF NOT EXISTS idx_timeline_created ON public.timeline_events(created_at);
-
 -- ============================================================================
 -- 7. CHANGE WORKFLOW COMMENTS — Threaded comments with client visibility
 -- ============================================================================
@@ -180,10 +167,8 @@ CREATE TABLE IF NOT EXISTS public.change_workflow_comments (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz
 );
-
 CREATE INDEX IF NOT EXISTS idx_cwc_parent ON public.change_workflow_comments(parent_type, parent_id);
 CREATE INDEX IF NOT EXISTS idx_cwc_author ON public.change_workflow_comments(author_id);
-
 -- ============================================================================
 -- 8. CHANGE WORKFLOW NOTIFICATIONS
 -- ============================================================================
@@ -205,12 +190,10 @@ CREATE TABLE IF NOT EXISTS public.change_workflow_notifications (
   email_sent_at timestamptz,
   created_at timestamptz NOT NULL DEFAULT now()
 );
-
 CREATE INDEX IF NOT EXISTS idx_cwn_recipient ON public.change_workflow_notifications(recipient_id);
 CREATE INDEX IF NOT EXISTS idx_cwn_unread
   ON public.change_workflow_notifications(recipient_id) WHERE read_at IS NULL;
 CREATE INDEX IF NOT EXISTS idx_cwn_project ON public.change_workflow_notifications(project_id);
-
 -- ============================================================================
 -- 9. PROJECT NOTIFICATION GROUPS — Leadership distribution per project
 -- ============================================================================
@@ -223,9 +206,7 @@ CREATE TABLE IF NOT EXISTS public.project_notification_groups (
   created_at timestamptz NOT NULL DEFAULT now(),
   UNIQUE(project_id, group_type, user_id)
 );
-
 CREATE INDEX IF NOT EXISTS idx_png_project ON public.project_notification_groups(project_id);
-
 -- ============================================================================
 -- 10. COMMITMENT CHANGE ORDERS V2 — Enhanced for PRP workflow
 -- ============================================================================
@@ -235,7 +216,6 @@ ALTER TABLE public.contract_change_orders
   ADD COLUMN IF NOT EXISTS prime_change_order_id bigint,
   ADD COLUMN IF NOT EXISTS contract_type text DEFAULT 'SUBCONTRACT'
     CHECK (contract_type IN ('SUBCONTRACT', 'PURCHASE_ORDER'));
-
 -- ============================================================================
 -- 11. RLS POLICIES
 -- ============================================================================
@@ -248,7 +228,6 @@ ALTER TABLE public.timeline_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.change_workflow_comments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.change_workflow_notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.project_notification_groups ENABLE ROW LEVEL SECURITY;
-
 -- PCOs: authenticated users can read, insert, update
 CREATE POLICY "pco_select" ON public.potential_change_orders
   FOR SELECT TO authenticated USING (true);
@@ -256,13 +235,11 @@ CREATE POLICY "pco_insert" ON public.potential_change_orders
   FOR INSERT TO authenticated WITH CHECK (true);
 CREATE POLICY "pco_update" ON public.potential_change_orders
   FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
-
 -- PCO Versions: authenticated users can read and insert (no update/delete — snapshots are immutable)
 CREATE POLICY "pco_versions_select" ON public.pco_versions
   FOR SELECT TO authenticated USING (true);
 CREATE POLICY "pco_versions_insert" ON public.pco_versions
   FOR INSERT TO authenticated WITH CHECK (true);
-
 -- PCO Change Events junction: full CRUD for authenticated
 CREATE POLICY "pco_ce_select" ON public.pco_change_events
   FOR SELECT TO authenticated USING (true);
@@ -270,13 +247,11 @@ CREATE POLICY "pco_ce_insert" ON public.pco_change_events
   FOR INSERT TO authenticated WITH CHECK (true);
 CREATE POLICY "pco_ce_delete" ON public.pco_change_events
   FOR DELETE TO authenticated USING (true);
-
 -- Timeline Events: read all, insert only (append-only, no update/delete)
 CREATE POLICY "timeline_select" ON public.timeline_events
   FOR SELECT TO authenticated USING (true);
 CREATE POLICY "timeline_insert" ON public.timeline_events
   FOR INSERT TO authenticated WITH CHECK (true);
-
 -- Comments: read all, insert, update own
 CREATE POLICY "cwc_select" ON public.change_workflow_comments
   FOR SELECT TO authenticated USING (true);
@@ -289,7 +264,6 @@ CREATE POLICY "cwc_update" ON public.change_workflow_comments
 CREATE POLICY "cwc_delete" ON public.change_workflow_comments
   FOR DELETE TO authenticated
   USING (author_id = auth.uid()::text);
-
 -- Notifications: users see only their own
 CREATE POLICY "cwn_select" ON public.change_workflow_notifications
   FOR SELECT TO authenticated USING (recipient_id = auth.uid()::text);
@@ -299,7 +273,6 @@ CREATE POLICY "cwn_update" ON public.change_workflow_notifications
   FOR UPDATE TO authenticated
   USING (recipient_id = auth.uid()::text)
   WITH CHECK (recipient_id = auth.uid()::text);
-
 -- Notification Groups: authenticated can read and manage
 CREATE POLICY "png_select" ON public.project_notification_groups
   FOR SELECT TO authenticated USING (true);
@@ -307,7 +280,6 @@ CREATE POLICY "png_insert" ON public.project_notification_groups
   FOR INSERT TO authenticated WITH CHECK (true);
 CREATE POLICY "png_delete" ON public.project_notification_groups
   FOR DELETE TO authenticated USING (true);
-
 -- ============================================================================
 -- 12. UPDATED_AT TRIGGER for potential_change_orders
 -- ============================================================================
@@ -318,13 +290,11 @@ BEGIN
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
-
 DROP TRIGGER IF EXISTS set_pco_updated_at ON public.potential_change_orders;
 CREATE TRIGGER set_pco_updated_at
   BEFORE UPDATE ON public.potential_change_orders
   FOR EACH ROW
   EXECUTE FUNCTION public.update_updated_at_column();
-
 -- ============================================================================
 -- 13. AUTO-NUMBER FUNCTION for PCOs
 -- ============================================================================
@@ -344,14 +314,12 @@ BEGIN
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
-
 DROP TRIGGER IF EXISTS auto_pco_number ON public.potential_change_orders;
 CREATE TRIGGER auto_pco_number
   BEFORE INSERT ON public.potential_change_orders
   FOR EACH ROW
   WHEN (NEW.number IS NULL OR NEW.number = '')
   EXECUTE FUNCTION public.generate_pco_number();
-
 -- ============================================================================
 -- SUMMARY OF CHANGES
 -- ============================================================================
@@ -367,4 +335,4 @@ CREATE TRIGGER auto_pco_number
 -- MODIFIED TABLES:
 --   pco_line_items             — Added FK to potential_change_orders, line_type, category, subcontractor_id
 --   change_events              — Added internal_subtype, originator_role, potential_change_order_id
---   contract_change_orders     — Added parallel_mode, prime_change_order_id, contract_type
+--   contract_change_orders     — Added parallel_mode, prime_change_order_id, contract_type;

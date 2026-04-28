@@ -10,10 +10,8 @@ create table if not exists public.ai_tool_write_audits (
   request_payload jsonb not null default '{}'::jsonb,
   response_payload jsonb null
 );
-
 create index if not exists idx_ai_tool_write_audits_user_tool_created
   on public.ai_tool_write_audits (user_id, tool_name, created_at desc);
-
 create unique index if not exists uq_ai_tool_write_audits_idempotency
   on public.ai_tool_write_audits (user_id, tool_name, idempotency_key)
   where status = 'success';

@@ -6,6 +6,5 @@
 
 CREATE INDEX IF NOT EXISTS idx_subcontract_sov_items_budget_code
   ON public.subcontract_sov_items (budget_code);
-
 CREATE INDEX IF NOT EXISTS idx_purchase_order_sov_items_budget_code
   ON public.purchase_order_sov_items (budget_code);

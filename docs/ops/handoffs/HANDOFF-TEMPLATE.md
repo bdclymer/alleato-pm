@@ -13,6 +13,7 @@
 9) Top 3 findings (frontend-visible issues first):
 10) Recommended next action (one line):
 11) Handoff file path:
+12) Migration ledger evidence:
 
 ## Linear Updates
 

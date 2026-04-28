@@ -15,11 +15,9 @@
 -- Drop views that depend on ai_tasks
 DROP VIEW IF EXISTS public.open_tasks_view;
 DROP VIEW IF EXISTS public.project_activity_view;
-
 -- Drop the redundant tables
 DROP TABLE IF EXISTS public.ai_tasks;
 DROP TABLE IF EXISTS public.project_tasks;
-
 -- Recreate project_activity_view using the unified `tasks` table.
 -- Key change: tasks.project_ids is an integer array, so we use ANY() for the join.
 CREATE OR REPLACE VIEW public.project_activity_view AS
@@ -38,7 +36,6 @@ FROM projects p
     LEFT JOIN document_metadata dm ON dm.project_id = p.id
     LEFT JOIN tasks t ON p.id = ANY(t.project_ids)
 GROUP BY p.id, p.name;
-
 -- Restore grants
 GRANT ALL ON TABLE public.project_activity_view TO anon;
 GRANT ALL ON TABLE public.project_activity_view TO authenticated;

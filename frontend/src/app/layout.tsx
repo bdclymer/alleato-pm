@@ -13,7 +13,7 @@ import { DevAnnotationOverlay } from "@/components/dev/dev-annotation-overlay";
 import { DesignViolationOverlay } from "@/components/dev/design-violation-overlay";
 import { Providers } from "./Providers";
 import { UnifiedFeedbackWidget } from "@/components/dev/UnifiedFeedbackWidget";
-import { AdminFeedbackWidget } from "@/components/admin-feedback/AdminFeedbackWidget";
+import { AskAlleatoRoot } from "@/components/ask-alleato/AskAlleatoRoot";
 import { ChunkLoadErrorRecovery } from "@/components/providers/chunk-error-recovery";
 import "./globals.css";
 import "swagger-ui-dist/swagger-ui.css";
@@ -84,7 +84,9 @@ export default function RootLayout({
         </QueryProvider>
         </ChunkLoadErrorRecovery>
         <Toaster />
-        <AdminFeedbackWidget />
+        <Suspense fallback={null}>
+          <AskAlleatoRoot />
+        </Suspense>
         {process.env.NODE_ENV === "development" && (
           <>
             <AgentationThemeSync />

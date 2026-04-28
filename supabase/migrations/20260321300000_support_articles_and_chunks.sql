@@ -4,7 +4,6 @@
 
 -- Ensure pgvector extension is available (should already exist)
 CREATE EXTENSION IF NOT EXISTS vector;
-
 --------------------------------------------------------------------------------
 -- Table 1: support_articles — full page content for display + metadata
 --------------------------------------------------------------------------------
@@ -31,13 +30,11 @@ CREATE TABLE IF NOT EXISTS support_articles (
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );
-
 -- Indexes for support_articles
 CREATE INDEX IF NOT EXISTS idx_support_articles_category ON support_articles(category);
 CREATE INDEX IF NOT EXISTS idx_support_articles_subcategory ON support_articles(category, subcategory);
 CREATE INDEX IF NOT EXISTS idx_support_articles_slug ON support_articles(slug);
 CREATE INDEX IF NOT EXISTS idx_support_articles_updated ON support_articles(updated_at DESC);
-
 -- Full-text search on title + markdown content
 ALTER TABLE support_articles ADD COLUMN IF NOT EXISTS fts tsvector
   GENERATED ALWAYS AS (
@@ -45,9 +42,7 @@ ALTER TABLE support_articles ADD COLUMN IF NOT EXISTS fts tsvector
     setweight(to_tsvector('english', coalesce(description, '')), 'B') ||
     setweight(to_tsvector('english', coalesce(markdown_content, '')), 'C')
   ) STORED;
-
 CREATE INDEX IF NOT EXISTS idx_support_articles_fts ON support_articles USING gin(fts);
-
 --------------------------------------------------------------------------------
 -- Table 2: support_article_chunks — chunked + embedded for RAG vector search
 --------------------------------------------------------------------------------
@@ -63,16 +58,13 @@ CREATE TABLE IF NOT EXISTS support_article_chunks (
 
   UNIQUE(article_id, chunk_index)
 );
-
 -- HNSW index for vector similarity search (matches existing project pattern)
 CREATE INDEX IF NOT EXISTS idx_support_chunks_embedding
   ON support_article_chunks
   USING hnsw (embedding halfvec_cosine_ops)
   WITH (m = 32, ef_construction = 200);
-
 CREATE INDEX IF NOT EXISTS idx_support_chunks_article
   ON support_article_chunks(article_id);
-
 --------------------------------------------------------------------------------
 -- RPC: search_support_articles — semantic search across chunked docs
 --------------------------------------------------------------------------------
@@ -113,7 +105,6 @@ RETURNS TABLE (
   ORDER BY c.embedding <=> query_embedding
   LIMIT match_count;
 $$ LANGUAGE sql STABLE;
-
 --------------------------------------------------------------------------------
 -- RPC: fulltext_search_support_articles — keyword search for browsing UI
 --------------------------------------------------------------------------------
@@ -147,37 +138,31 @@ RETURNS TABLE (
   ORDER BY rank DESC
   LIMIT result_limit;
 $$ LANGUAGE sql STABLE;
-
 --------------------------------------------------------------------------------
 -- RLS: Enable but allow public read (support docs are not sensitive)
 --------------------------------------------------------------------------------
 ALTER TABLE support_articles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE support_article_chunks ENABLE ROW LEVEL SECURITY;
-
 -- Authenticated users can read all support articles
 CREATE POLICY "Authenticated users can read support articles"
   ON support_articles FOR SELECT
   TO authenticated
   USING (true);
-
 CREATE POLICY "Authenticated users can read support article chunks"
   ON support_article_chunks FOR SELECT
   TO authenticated
   USING (true);
-
 -- Service role can do everything (for crawl scripts)
 CREATE POLICY "Service role full access on support articles"
   ON support_articles FOR ALL
   TO service_role
   USING (true)
   WITH CHECK (true);
-
 CREATE POLICY "Service role full access on support article chunks"
   ON support_article_chunks FOR ALL
   TO service_role
   USING (true)
   WITH CHECK (true);
-
 --------------------------------------------------------------------------------
 -- Updated_at trigger
 --------------------------------------------------------------------------------
@@ -188,7 +173,6 @@ BEGIN
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
-
 CREATE TRIGGER trg_support_articles_updated_at
   BEFORE UPDATE ON support_articles
   FOR EACH ROW

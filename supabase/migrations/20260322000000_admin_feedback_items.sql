@@ -31,18 +31,13 @@ create table if not exists public.admin_feedback_items (
   constraint admin_feedback_items_status_check
     check (status in ('open', 'submitted', 'github_failed', 'closed'))
 );
-
 create index if not exists idx_admin_feedback_items_created_by
   on public.admin_feedback_items(created_by, created_at desc);
-
 create index if not exists idx_admin_feedback_items_page_path
   on public.admin_feedback_items(page_path);
-
 create index if not exists idx_admin_feedback_items_status
   on public.admin_feedback_items(status, created_at desc);
-
 alter table public.admin_feedback_items enable row level security;
-
 drop trigger if exists set_admin_feedback_items_updated_at on public.admin_feedback_items;
 create trigger set_admin_feedback_items_updated_at
   before update on public.admin_feedback_items

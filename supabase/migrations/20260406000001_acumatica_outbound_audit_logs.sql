@@ -21,15 +21,11 @@ CREATE TABLE IF NOT EXISTS public.acumatica_outbound_audit_logs (
   response_payload JSONB,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-
 CREATE INDEX IF NOT EXISTS idx_acu_outbound_audit_run_id
   ON public.acumatica_outbound_audit_logs (run_id);
-
 CREATE INDEX IF NOT EXISTS idx_acu_outbound_audit_project_created
   ON public.acumatica_outbound_audit_logs (project_id, created_at DESC);
-
 CREATE INDEX IF NOT EXISTS idx_acu_outbound_audit_entity_created
   ON public.acumatica_outbound_audit_logs (entity_name, created_at DESC);
-
 CREATE INDEX IF NOT EXISTS idx_acu_outbound_audit_success
   ON public.acumatica_outbound_audit_logs (success, created_at DESC);

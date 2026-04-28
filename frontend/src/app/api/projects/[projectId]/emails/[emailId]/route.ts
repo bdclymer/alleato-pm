@@ -45,6 +45,29 @@ export const GET = withApiGuardrails(
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/emails/[emailId]#GET", message: "Authentication required." });
     }
 
+    const { data: profile, error: profileError } = await supabase
+      .from("user_profiles")
+      .select("is_admin")
+      .eq("id", user.id)
+      .single();
+
+    if (profileError) {
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: "projects/[projectId]/emails/[emailId]#GET",
+        message: profileError.message,
+      });
+    }
+
+    if (!profile?.is_admin) {
+      throw new GuardrailError({
+        code: "FORBIDDEN",
+        where: "projects/[projectId]/emails/[emailId]#GET",
+        message: "Admin access required.",
+        status: 403,
+      });
+    }
+
     const { data, error } = await supabase
       .from("project_emails")
       .select("*")
@@ -78,6 +101,29 @@ export const PUT = withApiGuardrails(
     const user = await getApiRouteUser();
     if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/emails/[emailId]#PUT", message: "Authentication required." });
+    }
+
+    const { data: profile, error: profileError } = await supabase
+      .from("user_profiles")
+      .select("is_admin")
+      .eq("id", user.id)
+      .single();
+
+    if (profileError) {
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: "projects/[projectId]/emails/[emailId]#PUT",
+        message: profileError.message,
+      });
+    }
+
+    if (!profile?.is_admin) {
+      throw new GuardrailError({
+        code: "FORBIDDEN",
+        where: "projects/[projectId]/emails/[emailId]#PUT",
+        message: "Admin access required.",
+        status: 403,
+      });
     }
 
     const body = await request.json();
@@ -127,6 +173,29 @@ export const DELETE = withApiGuardrails(
     const user = await getApiRouteUser();
     if (!user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/emails/[emailId]#DELETE", message: "Authentication required." });
+    }
+
+    const { data: profile, error: profileError } = await supabase
+      .from("user_profiles")
+      .select("is_admin")
+      .eq("id", user.id)
+      .single();
+
+    if (profileError) {
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: "projects/[projectId]/emails/[emailId]#DELETE",
+        message: profileError.message,
+      });
+    }
+
+    if (!profile?.is_admin) {
+      throw new GuardrailError({
+        code: "FORBIDDEN",
+        where: "projects/[projectId]/emails/[emailId]#DELETE",
+        message: "Admin access required.",
+        status: 403,
+      });
     }
 
     const { data, error } = await supabase

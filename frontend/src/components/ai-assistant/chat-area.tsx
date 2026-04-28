@@ -5,6 +5,11 @@ import Link from "next/link";
 import Image from "next/image";
 import { apiFetch, apiFetchBlob } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
+import {
+  AI_ASSISTANT_MODELS,
+  DEFAULT_AI_ASSISTANT_MODEL,
+  type AiAssistantModelId,
+} from "@/lib/ai/assistant-models";
 import type { UIMessage } from "ai";
 import { useProjects } from "@/hooks/use-projects";
 import {
@@ -12,6 +17,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   Command,
   CommandEmpty,
@@ -81,8 +92,7 @@ import {
   ThumbsDownIcon,
   DatabaseIcon,
   FileTextIcon,
-  Building2Icon,
-  ChevronDownIcon,
+  FolderIcon,
   CheckIcon,
   XIcon,
   SparkleIcon,
@@ -427,6 +437,53 @@ function getRecordDeepLinks(part: ToolPart): Array<{ label: string; href: string
   }
 
   return links;
+}
+
+function isTextReadableAttachment(file: File): boolean {
+  const name = file.name.toLowerCase();
+  return (
+    file.type.startsWith("text/") ||
+    file.type === "application/json" ||
+    file.type === "application/xml" ||
+    name.endsWith(".md") ||
+    name.endsWith(".markdown") ||
+    name.endsWith(".csv") ||
+    name.endsWith(".json") ||
+    name.endsWith(".xml") ||
+    name.endsWith(".txt")
+  );
+}
+
+async function prepareMessageWithReadableAttachments(
+  message: string,
+  files: FileList | undefined,
+): Promise<{ message: string; files?: FileList }> {
+  if (!files?.length) return { message, files };
+
+  const readableFiles = Array.from(files).filter(isTextReadableAttachment);
+  if (readableFiles.length === 0) return { message, files };
+
+  const attachmentText = await Promise.all(
+    readableFiles.map(async (file) => {
+      const text = await file.text();
+      return [
+        `--- ${file.name} (${file.type || "text/plain"}) ---`,
+        text,
+        `--- end ${file.name} ---`,
+      ].join("\n");
+    }),
+  );
+  const transfer = new DataTransfer();
+  Array.from(files)
+    .filter((file) => !isTextReadableAttachment(file))
+    .forEach((file) => transfer.items.add(file));
+
+  return {
+    message: [message, "Attached readable files:", ...attachmentText]
+      .filter(Boolean)
+      .join("\n\n"),
+    files: transfer.files.length > 0 ? transfer.files : undefined,
+  };
 }
 
 // ─── Assistant Avatar ───────────────────────────────────────────────
@@ -938,6 +995,8 @@ interface ChatAreaProps {
   onCouncilModeChange?: (val: boolean) => void;
   selectedProjectId?: number | null;
   onProjectChange?: (id: number | null) => void;
+  selectedModel?: AiAssistantModelId;
+  onModelChange?: (model: AiAssistantModelId) => void;
   onInputChange: (value: string) => void;
   onSubmit: (message: string, files?: FileList) => void;
   onToolApprovalResponse?: ToolApprovalResponseHandler;
@@ -959,6 +1018,8 @@ export function ChatArea({
   onCouncilModeChange,
   selectedProjectId: selectedProjectIdProp,
   onProjectChange,
+  selectedModel = DEFAULT_AI_ASSISTANT_MODEL,
+  onModelChange,
   onInputChange,
   onSubmit,
   onToolApprovalResponse,
@@ -969,9 +1030,10 @@ export function ChatArea({
 
   // Project selector
   const [projectOpen, setProjectOpen] = useState(false);
+  const [modelOpen, setModelOpen] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<FileList | undefined>();
   const [uploadedPreviews, setUploadedPreviews] = useState<
-    Array<{ url: string; name: string }>
+    Array<{ url?: string; name: string; type: string; isImage: boolean }>
   >([]);
   const [isRecording, setIsRecording] = useState(false);
   const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
@@ -985,6 +1047,9 @@ export function ChatArea({
   const [loadingSpeechMessageId, setLoadingSpeechMessageId] = useState<string | null>(null);
   const { projects, isLoading: projectsLoading } = useProjects({ limit: 50 });
   const selectedProject = projects.find((p) => p.id === selectedProjectIdProp) ?? null;
+  const selectedModelOption =
+    AI_ASSISTANT_MODELS.find((model) => model.id === selectedModel) ??
+    AI_ASSISTANT_MODELS[0];
   const councilMode = councilModeProp ?? councilModeInternal;
 
   useEffect(() => {
@@ -1036,7 +1101,9 @@ export function ChatArea({
 
   useEffect(() => {
     return () => {
-      uploadedPreviews.forEach((preview) => URL.revokeObjectURL(preview.url));
+      uploadedPreviews.forEach((preview) => {
+        if (preview.url) URL.revokeObjectURL(preview.url);
+      });
     };
   }, [uploadedPreviews]);
 
@@ -1064,10 +1131,23 @@ export function ChatArea({
     setCouncilModeInternal(next);
     onCouncilModeChange?.(next);
   }, [councilMode, onCouncilModeChange]);
-  const handleSubmit = useCallback(() => {
+  const handleSubmit = useCallback(async () => {
     const trimmed = input.trim();
     if ((!trimmed && !uploadedFiles?.length) || isStreaming) return;
-    onSubmit(trimmed || "Describe this image", uploadedFiles);
+    try {
+      const prepared = await prepareMessageWithReadableAttachments(
+        trimmed || "Review these attachments",
+        uploadedFiles,
+      );
+      onSubmit(prepared.message, prepared.files);
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? `Attachment read failed: ${error.message}`
+          : "Attachment read failed.",
+      );
+      return;
+    }
     onInputChange("");
     setUploadedFiles(undefined);
     setUploadedPreviews([]);
@@ -1081,26 +1161,15 @@ export function ChatArea({
       const files = event.target.files;
       if (!files?.length) return;
 
-      const imageFiles = Array.from(files).filter((file) =>
-        file.type.startsWith("image/"),
-      );
-
-      if (imageFiles.length !== files.length) {
-        toast.error("Only image attachments are supported in chat right now.");
-      }
-
-      if (imageFiles.length === 0) {
-        event.target.value = "";
-        return;
-      }
-
       const transfer = new DataTransfer();
-      imageFiles.forEach((file) => transfer.items.add(file));
+      Array.from(files).forEach((file) => transfer.items.add(file));
       setUploadedFiles(transfer.files);
       setUploadedPreviews(
-        imageFiles.map((file) => ({
-          url: URL.createObjectURL(file),
+        Array.from(files).map((file) => ({
+          url: file.type.startsWith("image/") ? URL.createObjectURL(file) : undefined,
           name: file.name,
+          type: file.type || "Unknown file type",
+          isImage: file.type.startsWith("image/"),
         })),
       );
     },
@@ -1129,23 +1198,40 @@ export function ChatArea({
       return;
     }
 
+    if (!navigator.mediaDevices?.getUserMedia) {
+      toast.error("Voice input is not available because this browser does not expose microphone permissions to the app.");
+      return;
+    }
+
     baseTextRef.current = input;
     finalTranscriptsRef.current = "";
-    recognitionRef.current.start();
-    setIsRecording(true);
-
     navigator.mediaDevices
       .getUserMedia({ audio: true })
       .then((stream) => {
         setMediaStream(stream);
+        try {
+          recognitionRef.current?.start();
+          setIsRecording(true);
+        } catch (error) {
+          stream.getTracks().forEach((track) => track.stop());
+          setMediaStream(null);
+          toast.error(
+            error instanceof Error
+              ? `Voice input failed: ${error.message}`
+              : "Voice input failed.",
+          );
+        }
       })
       .catch((error: unknown) => {
-        recognitionRef.current?.stop();
         setIsRecording(false);
+        const message =
+          error instanceof DOMException && error.name === "NotAllowedError"
+            ? "Microphone permission is blocked for this site. Enable microphone access in your browser site settings, then try voice input again."
+            : error instanceof Error
+              ? `Microphone access failed: ${error.message}`
+              : "Microphone access failed.";
         toast.error(
-          error instanceof Error
-            ? `Microphone access failed: ${error.message}`
-            : "Microphone access failed",
+          message,
         );
       });
   }, [input, isRecording, mediaStream]);
@@ -1303,7 +1389,6 @@ export function ChatArea({
       <Input
         ref={fileInputRef}
         type="file"
-        accept="image/*"
         multiple
         className="sr-only"
         tabIndex={-1}
@@ -1314,16 +1399,21 @@ export function ChatArea({
         <div className="flex gap-2 overflow-x-auto px-1 pb-2">
           {uploadedPreviews.map((preview) => (
             <div
-              key={preview.url}
-              className="image-bounce relative h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-border bg-muted"
+              key={`${preview.name}-${preview.type}`}
+              className="image-bounce relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted"
             >
-              <Image
-                src={preview.url}
-                alt={preview.name}
-                fill
-                className="object-cover"
-                sizes="48px"
-              />
+              {preview.isImage && preview.url ? (
+                <Image
+                  src={preview.url}
+                  alt={preview.name}
+                  fill
+                  className="object-cover"
+                  sizes="48px"
+                />
+              ) : (
+                <FileTextIcon className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
+              )}
+              <span className="sr-only">{preview.name}</span>
             </div>
           ))}
           <Button
@@ -1350,14 +1440,14 @@ export function ChatArea({
       />
       <PromptInputActions className="flex items-center justify-between gap-2 px-0 pb-0">
         <div className="flex min-w-0 items-center gap-1 overflow-x-auto pr-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <PromptInputAction tooltip="Attach image">
+          <PromptInputAction tooltip="Attach files">
             <Button
               type="button"
               variant="ghost"
               size="icon-sm"
               className={composerIconButtonClass}
               onClick={() => fileInputRef.current?.click()}
-              aria-label="Attach image"
+              aria-label="Attach files"
             >
               <PaperclipIcon className="h-4 w-4" />
             </Button>
@@ -1386,102 +1476,149 @@ export function ChatArea({
               <AudioWaveform isRecording={isRecording} stream={mediaStream} />
             </div>
           )}
-          <Popover open={projectOpen} onOpenChange={setProjectOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                type="button"
-                variant="ghost"
-                className={cn(
-                  "flex h-10 shrink-0 items-center gap-2 rounded-full bg-transparent px-0 py-0 pr-2 text-xs font-medium transition-colors sm:h-11",
-                  selectedProject
-                    ? "text-foreground"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-                aria-label="Select project context"
-              >
-                <span className={cn("inline-flex shrink-0 items-center justify-center", composerIconButtonClass)}>
-                  <Building2Icon className="h-4 w-4" />
-                </span>
-                <span className="hidden max-w-24 truncate sm:inline sm:max-w-36">
-                  {selectedProject ? (selectedProject.name ?? "Project") : "All projects"}
-                </span>
-                {selectedProject ? (
-                  <XIcon
-                    className="h-3.5 w-3.5 shrink-0 opacity-60 hover:opacity-100"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onProjectChange?.(null);
-                    }}
-                  />
-                ) : (
-                  <ChevronDownIcon className="hidden h-3.5 w-3.5 shrink-0 opacity-50 sm:block" />
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-64 p-0" align="start" side="top">
-              <Command>
-                <CommandInput placeholder="Search projects…" className="h-9" />
-                <CommandList>
-                  <CommandEmpty>
-                    {projectsLoading ? "Loading…" : "No projects found"}
-                  </CommandEmpty>
-                  <CommandGroup>
-                    {projects.map((project) => (
-                      <CommandItem
-                        key={project.id}
-                        value={`${project.name ?? ""} ${project.project_number ?? ""}`}
-                        onSelect={() => {
-                          onProjectChange?.(project.id === selectedProjectIdProp ? null : project.id);
-                          setProjectOpen(false);
-                        }}
-                      >
-                        <span className="flex-1 truncate">{project.name}</span>
-                        {project.project_number && (
-                          <span className="ml-2 shrink-0 text-xs text-muted-foreground">
-                            #{project.project_number}
-                          </span>
+          <TooltipProvider delayDuration={150}>
+            <Tooltip>
+              <Popover open={projectOpen} onOpenChange={setProjectOpen}>
+                <TooltipTrigger asChild>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      className={cn(
+                        composerIconButtonClass,
+                        selectedProject && "bg-primary/10 text-primary hover:bg-primary/15",
+                      )}
+                      aria-label="Select project context"
+                    >
+                      <FolderIcon className="h-4 w-4" />
+                    </Button>
+                  </PopoverTrigger>
+                </TooltipTrigger>
+                <PopoverContent className="w-64 p-0" align="start" side="top">
+                  <Command>
+                    <CommandInput placeholder="Search projects…" className="h-9" />
+                    <CommandList>
+                      <CommandEmpty>
+                        {projectsLoading ? "Loading…" : "No projects found"}
+                      </CommandEmpty>
+                      <CommandGroup>
+                        {selectedProject && (
+                          <CommandItem
+                            value="clear selected project"
+                            onSelect={() => {
+                              onProjectChange?.(null);
+                              setProjectOpen(false);
+                            }}
+                          >
+                            <span className="flex-1 truncate text-muted-foreground">
+                              Clear project selection
+                            </span>
+                            <XIcon className="ml-2 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                          </CommandItem>
                         )}
-                        {project.id === selectedProjectIdProp && (
-                          <CheckIcon className="ml-2 h-3.5 w-3.5 shrink-0 text-primary" />
-                        )}
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
+                        {projects.map((project) => (
+                          <CommandItem
+                            key={project.id}
+                            value={`${project.name ?? ""} ${project.project_number ?? ""}`}
+                            onSelect={() => {
+                              onProjectChange?.(project.id === selectedProjectIdProp ? null : project.id);
+                              setProjectOpen(false);
+                            }}
+                          >
+                            <span className="flex-1 truncate">{project.name}</span>
+                            {project.project_number && (
+                              <span className="ml-2 shrink-0 text-xs text-muted-foreground">
+                                #{project.project_number}
+                              </span>
+                            )}
+                            {project.id === selectedProjectIdProp && (
+                              <CheckIcon className="ml-2 h-3.5 w-3.5 shrink-0 text-primary" />
+                            )}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+              <TooltipContent side="top">
+                {selectedProject
+                  ? `Project context: ${selectedProject.name ?? "Selected project"}`
+                  : "Select a project"}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
 
-          <Button
-            type="button"
-            variant="ghost"
-            role="switch"
-            aria-checked={councilMode}
-            onClick={handleCouncilToggle}
-            className={cn(
-              "flex h-10 shrink-0 items-center gap-2 rounded-full bg-transparent px-0 py-0 pr-2 text-xs font-medium transition-colors sm:h-11",
-              councilMode
-                ? "text-primary"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            <span
+          <PromptInputAction tooltip={councilMode ? "Council mode on" : "Council mode"}>
+            <Button
+              type="button"
+              variant="ghost"
+              role="switch"
+              aria-checked={councilMode}
+              size="icon-sm"
+              onClick={handleCouncilToggle}
               className={cn(
-                "inline-flex shrink-0 items-center justify-center",
                 composerIconButtonClass,
                 councilMode && "bg-primary/10 text-primary hover:bg-primary/15",
               )}
+              aria-label={councilMode ? "Turn off council mode" : "Turn on council mode"}
             >
               <UsersRoundIcon className="h-4 w-4" />
-            </span>
-            <span className="hidden sm:inline">Council Mode</span>
-          </Button>
-          <div className="flex h-10 shrink-0 items-center gap-2 rounded-full pr-2 text-xs font-medium text-muted-foreground sm:h-11">
-            <span className={cn("inline-flex shrink-0 items-center justify-center", composerIconButtonClass)}>
-              <BrainIcon className="h-4 w-4" />
-            </span>
-            <span className="hidden sm:inline">Gemini</span>
-          </div>
+            </Button>
+          </PromptInputAction>
+          <TooltipProvider delayDuration={150}>
+            <Tooltip>
+              <Popover open={modelOpen} onOpenChange={setModelOpen}>
+                <TooltipTrigger asChild>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      className={composerIconButtonClass}
+                      aria-label="Select AI model"
+                    >
+                      <BrainIcon className="h-4 w-4" />
+                    </Button>
+                  </PopoverTrigger>
+                </TooltipTrigger>
+                <PopoverContent className="w-64 p-0" align="start" side="top">
+                  <Command>
+                    <CommandInput placeholder="Search models..." className="h-9" />
+                    <CommandList>
+                      <CommandEmpty>No models found</CommandEmpty>
+                      <CommandGroup>
+                        {AI_ASSISTANT_MODELS.map((model) => (
+                          <CommandItem
+                            key={model.id}
+                            value={`${model.label} ${model.description} ${model.id}`}
+                            onSelect={() => {
+                              onModelChange?.(model.id);
+                              setModelOpen(false);
+                            }}
+                          >
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate">{model.label}</span>
+                              <span className="block truncate text-xs text-muted-foreground">
+                                {model.description}
+                              </span>
+                            </span>
+                            {model.id === selectedModel && (
+                              <CheckIcon className="ml-2 h-3.5 w-3.5 shrink-0 text-primary" />
+                            )}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+              <TooltipContent side="top">
+                Model: {selectedModelOption.label}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
         <div className="flex shrink-0 items-center justify-end gap-2">
           <PromptInputAction tooltip={isStreaming ? "Stop" : "Send"}>

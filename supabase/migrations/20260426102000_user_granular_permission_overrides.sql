@@ -7,7 +7,6 @@
 -- ============================================================================
 
 BEGIN;
-
 CREATE TABLE IF NOT EXISTS public.user_granular_permission_overrides (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   project_id  INTEGER REFERENCES public.projects(id) ON DELETE CASCADE,
@@ -17,20 +16,15 @@ CREATE TABLE IF NOT EXISTS public.user_granular_permission_overrides (
   updated_by  UUID    REFERENCES auth.users(id) ON DELETE SET NULL,
   updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-
 CREATE UNIQUE INDEX IF NOT EXISTS ugpo_company_unique
   ON public.user_granular_permission_overrides (person_id, flag)
   WHERE project_id IS NULL;
-
 CREATE UNIQUE INDEX IF NOT EXISTS ugpo_project_unique
   ON public.user_granular_permission_overrides (project_id, person_id, flag)
   WHERE project_id IS NOT NULL;
-
 CREATE INDEX IF NOT EXISTS idx_ugpo_person
   ON public.user_granular_permission_overrides (person_id);
-
 ALTER TABLE public.user_granular_permission_overrides ENABLE ROW LEVEL SECURITY;
-
 CREATE POLICY "ugpo_select" ON public.user_granular_permission_overrides
   FOR SELECT TO authenticated
   USING (
@@ -54,7 +48,6 @@ CREATE POLICY "ugpo_select" ON public.user_granular_permission_overrides
       )
     )
   );
-
 CREATE POLICY "ugpo_write" ON public.user_granular_permission_overrides
   FOR ALL TO authenticated
   USING (
@@ -69,7 +62,6 @@ CREATE POLICY "ugpo_write" ON public.user_granular_permission_overrides
       WHERE id = auth.uid() AND is_admin = true
     )
   );
-
 -- Seed the all-project system role requested by AAI-141/AAI-162.
 INSERT INTO public.permission_templates (
   name,
@@ -100,5 +92,4 @@ WHERE NOT EXISTS (
   WHERE name = 'Senior Project Manager'
     AND scope = 'company'
 );
-
 COMMIT;

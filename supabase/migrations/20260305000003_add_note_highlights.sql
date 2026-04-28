@@ -7,7 +7,6 @@ ALTER TABLE public.notes
   ADD COLUMN IF NOT EXISTS source_metadata_id TEXT,
   ADD COLUMN IF NOT EXISTS source_chunk_id UUID,
   ADD COLUMN IF NOT EXISTS source_context JSONB NOT NULL DEFAULT '{}'::jsonb;
-
 DO $$
 BEGIN
   IF EXISTS (
@@ -23,7 +22,6 @@ BEGIN
       USING NULLIF(source_chunk_id, '')::uuid;
   END IF;
 END $$;
-
 DO $$
 BEGIN
   IF NOT EXISTS (
@@ -36,7 +34,6 @@ BEGIN
       CHECK (note_type IN ('manual', 'highlight'));
   END IF;
 END $$;
-
 DO $$
 BEGIN
   IF NOT EXISTS (
@@ -52,7 +49,6 @@ BEGIN
       );
   END IF;
 END $$;
-
 DO $$
 BEGIN
   IF NOT EXISTS (
@@ -67,7 +63,6 @@ BEGIN
       ON DELETE SET NULL;
   END IF;
 END $$;
-
 DO $$
 BEGIN
   IF NOT EXISTS (
@@ -82,11 +77,9 @@ BEGIN
       ON DELETE SET NULL;
   END IF;
 END $$;
-
 CREATE INDEX IF NOT EXISTS idx_notes_note_type ON public.notes(note_type);
 CREATE INDEX IF NOT EXISTS idx_notes_source_type ON public.notes(source_type);
 CREATE INDEX IF NOT EXISTS idx_notes_source_metadata_id ON public.notes(source_metadata_id);
-
 CREATE TABLE IF NOT EXISTS public.note_highlights (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   note_id BIGINT NOT NULL REFERENCES public.notes(id) ON DELETE CASCADE,
@@ -114,14 +107,11 @@ CREATE TABLE IF NOT EXISTS public.note_highlights (
     )
   )
 );
-
 CREATE INDEX IF NOT EXISTS idx_note_highlights_note_id ON public.note_highlights(note_id);
 CREATE INDEX IF NOT EXISTS idx_note_highlights_project_id ON public.note_highlights(project_id);
 CREATE INDEX IF NOT EXISTS idx_note_highlights_source_metadata_id ON public.note_highlights(source_metadata_id);
 CREATE INDEX IF NOT EXISTS idx_note_highlights_source_type ON public.note_highlights(source_type);
-
 ALTER TABLE public.note_highlights ENABLE ROW LEVEL SECURITY;
-
 DO $$
 BEGIN
   IF NOT EXISTS (
@@ -138,7 +128,6 @@ BEGIN
       WITH CHECK (true);
   END IF;
 END $$;
-
 GRANT ALL ON TABLE public.note_highlights TO anon;
 GRANT ALL ON TABLE public.note_highlights TO authenticated;
 GRANT ALL ON TABLE public.note_highlights TO service_role;

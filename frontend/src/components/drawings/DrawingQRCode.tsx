@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Download, Printer, QrCode } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,22 +28,79 @@ export function DrawingQRCode({
 }: DrawingQRCodeProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [requestNonce, setRequestNonce] = useState(Date.now());
+  const [qrImageUrl, setQrImageUrl] = useState("");
 
-  const qrUrl = `/api/projects/${projectId}/drawings/${drawingId}/qr-code`;
+  const qrUrl = `/api/projects/${projectId}/drawings/${drawingId}/qr-code?cacheBust=${requestNonce}`;
+  const loadQrCode = useCallback(async (url: string): Promise<string | null> => {
+    setIsLoading(true);
+    setHasError(false);
+    try {
+      const response = await fetch(url, {
+        cache: "no-store",
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        throw new Error(`QR generation failed (${response.status})`);
+      }
+
+      const blob = await response.blob();
+      if (!blob || blob.size === 0) {
+        throw new Error("QR generation returned empty response");
+      }
+
+      const nextImageUrl = URL.createObjectURL(blob);
+      setQrImageUrl((prevImageUrl) => {
+        if (prevImageUrl) URL.revokeObjectURL(prevImageUrl);
+        return nextImageUrl;
+      });
+      setHasError(false);
+      return nextImageUrl;
+    } catch (error) {
+      console.error("Failed to generate QR code image", error);
+      setHasError(true);
+      setQrImageUrl((prevImageUrl) => {
+        if (prevImageUrl) URL.revokeObjectURL(prevImageUrl);
+        return "";
+      });
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isOpen) {
+      const nextNonce = Date.now();
+      setRequestNonce(nextNonce);
+      loadQrCode(`/api/projects/${projectId}/drawings/${drawingId}/qr-code?cacheBust=${nextNonce}`);
+    }
+    return () => {
+      setQrImageUrl((prevImageUrl) => {
+        if (prevImageUrl) URL.revokeObjectURL(prevImageUrl);
+        return "";
+      });
+      setIsLoading(false);
+      setHasError(false);
+    };
+  }, [isOpen, projectId, drawingId, loadQrCode]);
 
   const handleDownload = async () => {
-    const response = await fetch(qrUrl);
-    if (!response.ok) return;
-    const blob = await response.blob();
-    const url = URL.createObjectURL(blob);
+    const imageSourceUrl = qrImageUrl || (await loadQrCode(qrUrl));
+    if (!imageSourceUrl) {
+      setHasError(true);
+      return;
+    }
+
     const a = document.createElement("a");
-    a.href = url;
+    a.href = imageSourceUrl;
     a.download = `${drawingNumber}-qr.png`;
     a.click();
-    URL.revokeObjectURL(url);
   };
 
   const handlePrint = () => {
+    if (!qrImageUrl || hasError) return;
     const printWindow = window.open("", "_blank");
     if (!printWindow) return;
     printWindow.document.write(`
@@ -51,7 +108,7 @@ export function DrawingQRCode({
         <head><title>QR Code — ${drawingNumber}</title></head>
         <body style="display:flex;flex-direction:column;align-items:center;padding:40px;font-family:sans-serif;">
           <h2>${drawingNumber}</h2>
-          <img src="${window.location.origin}${qrUrl}" style="width:300px;height:300px;" />
+          <img src="${qrImageUrl}" style="width:300px;height:300px;" />
           <p style="margin-top:12px;font-size:14px;color:#666;">Scan to view drawing</p>
         </body>
       </html>
@@ -75,9 +132,14 @@ export function DrawingQRCode({
             {isLoading && !hasError && (
               <Skeleton className="absolute inset-0 rounded-lg" />
             )}
-            {!hasError ? (
+            {hasError ? (
+              <div className="text-center text-muted-foreground text-sm p-4">
+                <QrCode className="h-8 w-8 mx-auto mb-2 opacity-40" />
+                Failed to generate QR code
+              </div>
+            ) : (
               <img
-                src={qrUrl}
+                src={qrImageUrl}
                 alt={`QR code for drawing ${drawingNumber}`}
                 className="w-64 h-64 rounded-lg"
                 onLoad={() => setIsLoading(false)}
@@ -86,11 +148,6 @@ export function DrawingQRCode({
                   setHasError(true);
                 }}
               />
-            ) : (
-              <div className="text-center text-muted-foreground text-sm p-4">
-                <QrCode className="h-8 w-8 mx-auto mb-2 opacity-40" />
-                Failed to generate QR code
-              </div>
             )}
           </div>
 

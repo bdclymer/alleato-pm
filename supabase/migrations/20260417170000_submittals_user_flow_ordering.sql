@@ -6,7 +6,6 @@
 -- Temporarily drop the high-priority traceability constraint so data migrations
 -- can touch existing HIGH rows that predate the traceability requirement.
 ALTER TABLE public.test_cases DROP CONSTRAINT IF EXISTS test_cases_high_priority_traceability_chk;
-
 DO $$
 DECLARE
   v_suite_id uuid;
@@ -41,7 +40,6 @@ BEGIN
   )
   WHERE ts.id = v_suite_id;
 END $$;
-
 -- Re-add the constraint as NOT VALID (enforces on new inserts/updates going forward,
 -- does not validate existing rows that predate the traceability requirement).
 DO $$

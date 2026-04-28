@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from .client import get_graph_client
+from .project_inference import infer_project_id
 
 logger = logging.getLogger(__name__)
 
@@ -170,6 +171,12 @@ def sync_onedrive_folder(
         try:
             # Strip null bytes — PostgreSQL text columns reject \u0000
             clean_content = text_content[:50000].replace("\x00", "")
+            project_id, assignment_method, assignment_confidence = infer_project_id(
+                supabase_client,
+                title=name,
+                content=clean_content,
+                participants=[created_by, user_email],
+            )
             supabase_client.from_("document_metadata").insert({
                 "id": doc_id,
                 "title": name,
@@ -179,11 +186,20 @@ def sync_onedrive_folder(
                 "content": clean_content,  # Cap stored content
                 "date": modified[:10] if modified else None,
                 "url": web_url,
-                "participants": [created_by],
+                "participants": ", ".join([created_by, user_email]),
                 "status": "raw_ingested",
-                "tags": ["onedrive", ext.lstrip(".")],
+                "tags": ",".join(["onedrive", ext.lstrip("."), f"project_auto:{assignment_method}" if project_id else "unassigned"]),
+                "project_id": project_id,
             }).execute()
             synced += 1
+            if project_id:
+                logger.info(
+                    "[OneDrive] Auto-assigned project_id=%s for %s via %s (%.2f)",
+                    project_id,
+                    item_id,
+                    assignment_method,
+                    assignment_confidence,
+                )
         except Exception as e:
             logger.warning(f"[OneDrive] Failed to insert metadata for {name}: {e}")
 
@@ -283,18 +299,26 @@ def sync_sharepoint_folder(
             continue
 
         try:
+            clean_content = text_content[:50000].replace("\x00", "")
+            project_id, assignment_method, _ = infer_project_id(
+                supabase_client,
+                title=name,
+                content=clean_content,
+                participants=[created_by, site_name],
+            )
             supabase_client.from_("document_metadata").insert({
                 "id": doc_id,
                 "title": name,
                 "source": "microsoft_graph",
                 "category": "document",
                 "type": "document",
-                "content": text_content[:50000],
+                "content": clean_content,
                 "date": modified[:10] if modified else None,
                 "url": web_url,
-                "participants": [created_by],
+                "participants": ", ".join([created_by, site_name]),
                 "status": "raw_ingested",
-                "tags": ["sharepoint", site_name.lower(), ext.lstrip(".")],
+                "tags": ",".join(["sharepoint", site_name.lower(), ext.lstrip("."), f"project_auto:{assignment_method}" if project_id else "unassigned"]),
+                "project_id": project_id,
             }).execute()
             synced += 1
         except Exception as e:

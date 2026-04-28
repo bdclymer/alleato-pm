@@ -29,6 +29,15 @@ Leader reviews all pending handoffs here.
 | `docs/ops/handoffs/2026-04-24-S17-budget-feature-run.md` | S17 | ORCH-020 | 2026-04-24 | Partial | Needs Rework | Continued slice added cases 11.1, 12.1, 12.2, 12.3, 13.1 with a slice report; parent run remains incomplete with 4 pass, 4 fail, and 17 not_tested. |
 | `docs/ops/handoffs/2026-04-26-S18-frontend-qa-audit.md` | S18 | ORCH-021 | 2026-04-26 | Yes | Pending Review | Browser QA audit completed with route/responsive artifacts, scoped shared mobile chrome fixes, tab/action/table mobile pattern cleanup, budget scroll sync fix, and passing focused Playwright regressions. |
 | `docs/ops/handoffs/2026-04-26-S19-linear-codex-process.md` | S19 | ORCH-022 / AAI-165 | 2026-04-26 | Yes | Pending Review | Linear-Codex process installed with mandatory issue/comment/sub-issue/evidence contract, guardrail command, worker-status enforcement, and Linear evidence posted to AAI-165. |
+<<<<<<< ours
+<<<<<<< ours
+| `docs/ops/handoffs/2026-04-27-S20-welcome-onboarding-ai-foundations.md` | S20 | AAI-183 | 2026-04-27 | Yes | Pending Review | Welcome onboarding, Ask Alleato widget, AI prompt/memory foundation, KB marker guardrail, focused E2E, Storybook, browser evidence, and feedback persistence verification complete; production build has unrelated `/_document` blocker documented. |
+=======
+| `docs/ops/handoffs/2026-04-28-S20-rag-pm-briefing-eval.md` | S20 | ORCH-023 / AAI-186 | 2026-04-28 | Yes | Pending Review | Tuned PM-briefing retrieval ranking/source-selection (gateway-safe embedding model IDs + briefing diversity pass) and aligned the PM briefing eval script; targeted lint check passes, but local eval remains blocked by embedding fetch failures in this container. |
+>>>>>>> theirs
+=======
+| `docs/ops/handoffs/2026-04-28-S20-rag-pm-briefing-eval.md` | S20 | ORCH-023 / AAI-186 | 2026-04-28 | Yes | Pending Review | Tuned PM-briefing retrieval ranking/source-selection (gateway-safe embedding model IDs + briefing diversity pass) and aligned the PM briefing eval script; targeted lint check passes, but local eval remains blocked by embedding fetch failures in this container. |
+>>>>>>> theirs
 
 ## Disposition Rules
 

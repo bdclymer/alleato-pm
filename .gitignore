@@ -97,3 +97,9 @@ backend/output/
 docs/BMAD/e2e-screenshots/
 docs/PRPs/**/screenshots/
 logs/
+
+# Adversarial harness runtime output
+scripts/adversarial-harness/workspace/
+scripts/adversarial-harness/node_modules/
+scripts/adversarial-harness/bun.lock
+scripts/adversarial-harness/package-lock.json

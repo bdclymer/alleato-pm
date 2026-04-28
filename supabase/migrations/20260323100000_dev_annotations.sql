@@ -17,15 +17,12 @@ create table if not exists dev_annotations (
   resolved_at timestamptz,
   created_by uuid references auth.users(id)
 );
-
 -- Only authenticated users can insert/read their own annotations
 alter table dev_annotations enable row level security;
-
 create policy "Users can manage own annotations"
   on dev_annotations
   for all
   using (auth.uid() = created_by)
   with check (auth.uid() = created_by);
-
 -- Service role (used by Claude Code watcher script) can read and update all
--- This is handled by the service client — no additional policy needed.
+-- This is handled by the service client — no additional policy needed.;

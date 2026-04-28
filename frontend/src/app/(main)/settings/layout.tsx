@@ -4,7 +4,7 @@ import type * as React from "react";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Building2, Puzzle, SlidersHorizontal, UserCircle, Users } from "lucide-react";
+import { Brain, Building2, SlidersHorizontal, UserCircle, Users } from "lucide-react";
 
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
@@ -26,6 +26,7 @@ const navGroups: NavGroup[] = [
     items: [
       { label: "Profile", href: "/settings/profile", icon: UserCircle },
       { label: "Preferences", href: "/settings/preferences", icon: SlidersHorizontal },
+      { label: "AI Memory", href: "/settings/memory", icon: Brain },
     ],
   },
   {

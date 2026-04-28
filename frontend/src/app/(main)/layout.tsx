@@ -9,7 +9,7 @@ import { SiteHeader } from "@/components/header";
 import { ProcoreReferencePanel } from "@/components/header/procore-reference-panel";
 import { CommentsSidebarPanel } from "@/components/header/comments-sidebar";
 import { LiveCursors } from "@/components/live-cursors/LiveCursors";
-import { AlleatoAiOnboarding } from "@/components/onboarding/AlleatoAiOnboarding";
+import { WelcomeOnboarding } from "@/components/onboarding/WelcomeOnboarding";
 // AdminFeedbackWidget replaced by UnifiedFeedbackWidget in root layout
 import { feedbackTargetProps } from "@/lib/admin-feedback/constants";
 
@@ -19,7 +19,7 @@ function Overlays() {
     <React.Suspense fallback={null}>
       <div className="contents">
         <LiveCursors />
-        <AlleatoAiOnboarding />
+        <WelcomeOnboarding />
       </div>
     </React.Suspense>
   );

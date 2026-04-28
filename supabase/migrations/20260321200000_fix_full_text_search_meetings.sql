@@ -6,7 +6,6 @@
 
 -- Must drop first because return type changed (timestamp -> timestamptz)
 DROP FUNCTION IF EXISTS public.full_text_search_meetings(text, integer);
-
 CREATE OR REPLACE FUNCTION public.full_text_search_meetings(
   search_query text,
   match_count integer DEFAULT 5

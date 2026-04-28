@@ -4,7 +4,6 @@
 
 ALTER TABLE public.test_results
   DROP CONSTRAINT IF EXISTS test_results_status_check;
-
 ALTER TABLE public.test_results
   ADD CONSTRAINT test_results_status_check
   CHECK (status IN ('pass', 'fail', 'skip', 'not_tested', 'fixed'));

@@ -8,7 +8,6 @@ on conflict (tool_name, suite_type) do update set
   display_name      = excluded.display_name,
   last_generated_at = now()
 returning id;
-
 -- NOTE: Replace <smoke_suite_id> with the id returned above before running.
 /*
 delete from public.test_cases where suite_id = '<smoke_suite_id>';
@@ -101,4 +100,4 @@ values
 update public.test_suites
    set total_cases = (select count(*) from public.test_cases where suite_id = '<smoke_suite_id>')
  where id = '<smoke_suite_id>';
-*/
+*/;

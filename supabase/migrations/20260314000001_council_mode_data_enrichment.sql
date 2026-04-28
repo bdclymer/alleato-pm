@@ -14,37 +14,29 @@ ALTER TABLE public.meeting_segments
   ADD COLUMN IF NOT EXISTS project_impact   text[]    DEFAULT '{}', -- ['schedule','cost','quality','relationship','safety']
   ADD COLUMN IF NOT EXISTS mentioned_people text[]    DEFAULT '{}',
   ADD COLUMN IF NOT EXISTS enriched_at      timestamp with time zone,
-  ADD COLUMN IF NOT EXISTS enrichment_model text;     -- track which model version enriched this row
+  ADD COLUMN IF NOT EXISTS enrichment_model text;
+-- track which model version enriched this row
 
 -- Index for agent queries: "find all risk signals for project X"
 CREATE INDEX IF NOT EXISTS idx_meeting_segments_data_class
   ON public.meeting_segments USING GIN (data_class);
-
 CREATE INDEX IF NOT EXISTS idx_meeting_segments_sentiment
   ON public.meeting_segments (sentiment)
   WHERE sentiment IS NOT NULL;
-
 CREATE INDEX IF NOT EXISTS idx_meeting_segments_project_impact
   ON public.meeting_segments USING GIN (project_impact);
-
 -- Index for enrichment backfill job: find un-enriched segments efficiently
 CREATE INDEX IF NOT EXISTS idx_meeting_segments_unenriched
   ON public.meeting_segments (created_at)
   WHERE enriched_at IS NULL;
-
 COMMENT ON COLUMN public.meeting_segments.data_class IS
   'AI-classified content types. Values: decision, risk_signal, financial_event, action_item, relationship_signal, lesson_learned, schedule_event, change_event';
-
 COMMENT ON COLUMN public.meeting_segments.sentiment IS
   'Overall tone of this segment. Escalation = raised voices / dispute signals detected.';
-
 COMMENT ON COLUMN public.meeting_segments.project_impact IS
   'Which project dimensions are affected. Values: schedule, cost, quality, relationship, safety, scope';
-
 COMMENT ON COLUMN public.meeting_segments.mentioned_people IS
   'Names of people mentioned or speaking in this segment, extracted during enrichment.';
-
-
 -- ─── 2. Project risk snapshots (CRO trajectory data) ──────────
 
 CREATE TABLE IF NOT EXISTS public.project_risk_snapshots (
@@ -72,24 +64,17 @@ CREATE TABLE IF NOT EXISTS public.project_risk_snapshots (
   -- One snapshot per project per day
   UNIQUE (project_id, snapshot_date)
 );
-
 CREATE INDEX IF NOT EXISTS idx_risk_snapshots_project_date
   ON public.project_risk_snapshots (project_id, snapshot_date DESC);
-
 CREATE INDEX IF NOT EXISTS idx_risk_snapshots_trend
   ON public.project_risk_snapshots (trend, snapshot_date DESC)
   WHERE trend = 'deteriorating';
-
 COMMENT ON TABLE public.project_risk_snapshots IS
   'Daily risk health snapshots per project. Powers CRO trend analysis: "Goodwill Tremont has been deteriorating for 6 weeks."';
-
 COMMENT ON COLUMN public.project_risk_snapshots.trend IS
   'Compared to the previous snapshot. New = first snapshot for this project.';
-
 COMMENT ON COLUMN public.project_risk_snapshots.risk_narrative IS
   'One-sentence AI-generated summary of the dominant risk signal this day.';
-
-
 -- ─── 3. Convenience view: latest snapshot per project ─────────
 
 CREATE OR REPLACE VIEW public.project_risk_current AS
@@ -99,11 +84,8 @@ SELECT DISTINCT ON (project_id)
 FROM public.project_risk_snapshots s
 JOIN public.projects p ON p.id = s.project_id
 ORDER BY project_id, snapshot_date DESC;
-
 COMMENT ON VIEW public.project_risk_current IS
   'Latest risk snapshot per project. Primary query target for CRO agent.';
-
-
 -- ─── 4. Convenience view: deteriorating projects ──────────────
 
 CREATE OR REPLACE VIEW public.project_risk_deteriorating AS
@@ -130,6 +112,5 @@ WHERE s.snapshot_date = (
 )
 AND s.trend = 'deteriorating'
 GROUP BY s.project_id, p.name, s.snapshot_date, s.risk_score, s.trend, s.risk_narrative;
-
 COMMENT ON VIEW public.project_risk_deteriorating IS
   'Projects currently in deteriorating trend, with count of consecutive deteriorating days.';

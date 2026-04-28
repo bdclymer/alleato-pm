@@ -25,7 +25,6 @@ CREATE TABLE IF NOT EXISTS subcontractor_invoices (
     (subcontract_id IS NULL AND purchase_order_id IS NOT NULL)
   )
 );
-
 CREATE TABLE IF NOT EXISTS subcontractor_invoice_line_items (
   id                          BIGSERIAL PRIMARY KEY,
   invoice_id                  BIGINT        NOT NULL REFERENCES subcontractor_invoices(id) ON DELETE CASCADE,
@@ -50,7 +49,6 @@ CREATE TABLE IF NOT EXISTS subcontractor_invoice_line_items (
   total_completed_stored NUMERIC(15,2)
     GENERATED ALWAYS AS (work_completed_previous + work_completed_period + materials_stored) STORED
 );
-
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_subcontractor_invoices_project_id    ON subcontractor_invoices(project_id);
 CREATE INDEX IF NOT EXISTS idx_subcontractor_invoices_subcontract_id ON subcontractor_invoices(subcontract_id);
@@ -58,18 +56,15 @@ CREATE INDEX IF NOT EXISTS idx_subcontractor_invoices_po_id          ON subcontr
 CREATE INDEX IF NOT EXISTS idx_subcontractor_invoices_billing_period ON subcontractor_invoices(billing_period_id);
 CREATE INDEX IF NOT EXISTS idx_subcontractor_invoices_status         ON subcontractor_invoices(status);
 CREATE INDEX IF NOT EXISTS idx_sub_invoice_line_items_invoice_id     ON subcontractor_invoice_line_items(invoice_id);
-
 -- RLS
 ALTER TABLE subcontractor_invoices            ENABLE ROW LEVEL SECURITY;
 ALTER TABLE subcontractor_invoice_line_items  ENABLE ROW LEVEL SECURITY;
-
 -- Authenticated users can read/write (project-level access enforced at API layer)
 CREATE POLICY "Authenticated users can manage subcontractor_invoices"
   ON subcontractor_invoices FOR ALL
   TO authenticated
   USING (true)
   WITH CHECK (true);
-
 CREATE POLICY "Authenticated users can manage subcontractor_invoice_line_items"
   ON subcontractor_invoice_line_items FOR ALL
   TO authenticated

@@ -8,7 +8,6 @@ DROP FUNCTION IF EXISTS search_ai_memories(vector, uuid, int, float, text, int);
 DROP FUNCTION IF EXISTS search_ai_memories(vector(1536), uuid, int, float, text, int);
 DROP FUNCTION IF EXISTS search_ai_memories(halfvec, uuid, int, float, text, int);
 DROP FUNCTION IF EXISTS search_ai_memories(halfvec(3072), uuid, int, float, text, int);
-
 CREATE OR REPLACE FUNCTION search_ai_memories(
   query_embedding   halfvec(3072),
   p_user_id         UUID,
@@ -62,15 +61,12 @@ BEGIN
   LIMIT match_count;
 END;
 $$;
-
 GRANT EXECUTE ON FUNCTION search_ai_memories(halfvec(3072), UUID, INT, FLOAT, TEXT, INT)
   TO anon, authenticated, service_role;
-
 DROP FUNCTION IF EXISTS find_duplicate_memory(vector, uuid, text, float);
 DROP FUNCTION IF EXISTS find_duplicate_memory(vector(1536), uuid, text, float);
 DROP FUNCTION IF EXISTS find_duplicate_memory(halfvec, uuid, text, float);
 DROP FUNCTION IF EXISTS find_duplicate_memory(halfvec(3072), uuid, text, float);
-
 CREATE OR REPLACE FUNCTION find_duplicate_memory(
   query_embedding      halfvec(3072),
   p_user_id            UUID,
@@ -110,15 +106,12 @@ BEGIN
   LIMIT 1;
 END;
 $$;
-
 GRANT EXECUTE ON FUNCTION find_duplicate_memory(halfvec(3072), UUID, TEXT, FLOAT)
   TO anon, authenticated, service_role;
-
 DROP FUNCTION IF EXISTS search_team_memories(vector, int, float, text);
 DROP FUNCTION IF EXISTS search_team_memories(vector(1536), int, float, text);
 DROP FUNCTION IF EXISTS search_team_memories(halfvec, int, float, text);
 DROP FUNCTION IF EXISTS search_team_memories(halfvec(3072), int, float, text);
-
 CREATE OR REPLACE FUNCTION search_team_memories(
   query_embedding   halfvec(3072),
   match_count       INT   DEFAULT 5,
@@ -167,6 +160,5 @@ BEGIN
   LIMIT match_count;
 END;
 $$;
-
 GRANT EXECUTE ON FUNCTION search_team_memories(halfvec(3072), INT, FLOAT, TEXT)
   TO anon, authenticated, service_role;

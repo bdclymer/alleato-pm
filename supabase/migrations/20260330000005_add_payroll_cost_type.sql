@@ -3,7 +3,6 @@
 
 ALTER TABLE public.direct_costs
 DROP CONSTRAINT IF EXISTS direct_costs_cost_type_check;
-
 ALTER TABLE public.direct_costs
 ADD CONSTRAINT direct_costs_cost_type_check
 CHECK (

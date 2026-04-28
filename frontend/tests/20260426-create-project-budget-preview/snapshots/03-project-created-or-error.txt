@@ -1,0 +1,8 @@
+- link "Update Directory Add team members and assign roles" [ref=e1]
+- link "Create Budget Set up project budget and line items" [ref=e2]
+- link "Create Prime Contract Establish primary contract terms" [ref=e3]
+- link "Add Specifications Upload project specifications" [ref=e4]
+- link "Upload Drawings Add architectural and engineering drawings" [ref=e5]
+- link "Create Schedule Build project timeline and milestones" [ref=e6]
+- button "View Dashboard" [ref=e7]
+- button "Close" [ref=e8]

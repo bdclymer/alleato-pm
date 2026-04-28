@@ -1,5 +1,6 @@
 import { soul } from "./soul";
 import { identity } from "./identity";
+import { I_DONT_KNOW_REFLEX_PROMPT } from "./persona-and-memory";
 
 /**
  * Builds the Alleato AI system prompt by composing:
@@ -17,6 +18,8 @@ Embody the soul and identity below. Let them shape every word you write — not 
 ${soul}
 
 ${identity}
+
+${I_DONT_KNOW_REFLEX_PROMPT}
 
 ---
 

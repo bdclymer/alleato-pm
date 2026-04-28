@@ -39,6 +39,7 @@ import {
 import { strategistSystemPrompt } from "@/lib/ai/agents/strategist";
 import { soul } from "@/lib/ai/soul";
 import { identity } from "@/lib/ai/identity";
+import { I_DONT_KNOW_REFLEX_PROMPT } from "@/lib/ai/persona-and-memory";
 import { cfoSystemPrompt } from "@/lib/ai/agents/cfo";
 import { cooSystemPrompt } from "@/lib/ai/agents/coo";
 import { croSystemPrompt } from "@/lib/ai/agents/cro";
@@ -1140,6 +1141,8 @@ export function getStrategistSystemPrompt(): string {
   return `${soul}
 
 ${identity}
+
+${I_DONT_KNOW_REFLEX_PROMPT}
 
 ${strategistSystemPrompt}
 

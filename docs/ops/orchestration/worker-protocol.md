@@ -48,6 +48,7 @@ Each worker handoff must include this exact block so the leader can auto-review 
 9) Top 3 findings (frontend-visible issues first)
 10) Recommended next action (one line)
 11) Handoff file path
+12) Migration ledger evidence: required for every touched `supabase/migrations/*.sql`; include `npm run db:migrations:verify-applied -- <migration-file>` output or an explicit deferred reason.
 
 ## Completion Rules
 
@@ -56,6 +57,7 @@ Do not mark complete without:
 - command output summary
 - artifact paths
 - list of changed files
+- migration ledger evidence for every changed Supabase migration, when applicable
 - next step for leader/reviewer
 - Linear issue update comment
 

@@ -13,30 +13,23 @@ CREATE TABLE IF NOT EXISTS bot_user_mappings (
 
   UNIQUE (platform_user_id)
 );
-
 -- Index for fast lookups by platform user ID
 CREATE INDEX IF NOT EXISTS idx_bot_user_mappings_platform_user_id
   ON bot_user_mappings(platform_user_id);
-
 -- Index for looking up all mappings for a Supabase user
 CREATE INDEX IF NOT EXISTS idx_bot_user_mappings_supabase_user_id
   ON bot_user_mappings(supabase_user_id);
-
 -- RLS: only authenticated users can read/write their own mappings
 ALTER TABLE bot_user_mappings ENABLE ROW LEVEL SECURITY;
-
 CREATE POLICY "Users can read their own mappings"
   ON bot_user_mappings FOR SELECT
   USING (supabase_user_id = auth.uid());
-
 CREATE POLICY "Users can insert their own mappings"
   ON bot_user_mappings FOR INSERT
   WITH CHECK (supabase_user_id = auth.uid());
-
 CREATE POLICY "Users can update their own mappings"
   ON bot_user_mappings FOR UPDATE
   USING (supabase_user_id = auth.uid());
-
 -- Service role bypasses RLS, so the bot (using createServiceClient) can
 -- read any mapping without restrictions.
 

@@ -30,7 +30,6 @@ DO $$ BEGIN
       ON public.prime_contract_payments FOR DELETE TO authenticated USING (true);
   END IF;
 END $$;
-
 -- Also add policies for prime_contract_payment_applications if missing
 DO $$ BEGIN
   IF NOT EXISTS (

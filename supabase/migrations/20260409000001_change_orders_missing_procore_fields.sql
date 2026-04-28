@@ -4,12 +4,10 @@ ALTER TABLE prime_contract_change_orders
   ADD COLUMN IF NOT EXISTS review_date date,
   ADD COLUMN IF NOT EXISTS designated_reviewer text,
   ADD COLUMN IF NOT EXISTS revised_substantial_completion_date date;
-
 -- Normalize prime_contract_change_orders status to lowercase
 UPDATE prime_contract_change_orders
 SET status = LOWER(status)
 WHERE status IS NOT NULL AND status != LOWER(status);
-
 -- Add missing Procore fields to contract_change_orders (commitment COs)
 ALTER TABLE contract_change_orders
   ADD COLUMN IF NOT EXISTS title text,

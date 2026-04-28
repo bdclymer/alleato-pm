@@ -5,9 +5,7 @@
 ALTER TABLE public.test_cases
   ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'active'
     CHECK (status IN ('active', 'inactive'));
-
 CREATE INDEX IF NOT EXISTS idx_test_cases_status
   ON public.test_cases (status);
-
 COMMENT ON COLUMN public.test_cases.status IS
   'Lifecycle state: active (default) or inactive (soft-deleted / archived).';

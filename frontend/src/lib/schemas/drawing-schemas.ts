@@ -8,6 +8,11 @@
  */
 
 import { z } from 'zod';
+import {
+  DRAWING_MAX_UPLOAD_BYTES,
+  DRAWING_MAX_UPLOAD_LABEL,
+  isAllowedDrawingFileType,
+} from "@/lib/drawings/upload-constraints";
 
 // =============================================================================
 // FILE VALIDATION HELPER
@@ -15,27 +20,19 @@ import { z } from 'zod';
 
 /**
  * Drawing file validation schema
- * Max size: 100MB
+ * Max size: 200MB
  * Types: PDF, PNG, JPEG, TIFF, DWG, DXF
  *
  * CRITICAL: Uses .refine() not .max() for file size validation
  */
 const drawingFileSchema = z
   .instanceof(File)
-  .refine((file) => file.size <= 100 * 1024 * 1024, {
-    message: 'File must be under 100MB',
+  .refine((file) => file.size <= DRAWING_MAX_UPLOAD_BYTES, {
+    message: `File must be under ${DRAWING_MAX_UPLOAD_LABEL}`,
   })
-  .refine(
-    (file) =>
-      ['application/pdf', 'image/png', 'image/jpeg', 'image/tiff', 'application/acad', 'application/dxf'].includes(
-        file.type
-      ) ||
-      file.name.endsWith('.dwg') ||
-      file.name.endsWith('.dxf'),
-    {
-      message: 'Accepted formats: PDF, PNG, JPEG, TIFF, DWG, DXF',
-    }
-  );
+  .refine(isAllowedDrawingFileType, {
+    message: 'Accepted formats: PDF, PNG, JPEG, TIFF, SVG, WEBP, DWG, DXF',
+  });
 
 // =============================================================================
 // DRAWING UPLOAD & EDIT SCHEMAS
@@ -214,29 +211,14 @@ export type DrawingFiltersFormData = z.infer<typeof drawingFiltersSchema>;
  * Validates file size before upload starts (client-side optimization)
  * Prevents unnecessary upload attempts for oversized files
  */
-export function validateFileSize(file: File, maxSizeMB: number = 100): boolean {
+export function validateFileSize(file: File, maxSizeMB: number = 200): boolean {
   return file.size <= maxSizeMB * 1024 * 1024;
 }
 
 /**
  * Validates drawing file type before upload starts
  */
-export function validateDrawingFileType(file: File): boolean {
-  const allowedTypes = [
-    'application/pdf',
-    'image/png',
-    'image/jpeg',
-    'image/tiff',
-    'application/acad',
-    'application/dxf',
-  ];
-
-  return (
-    allowedTypes.includes(file.type) ||
-    file.name.endsWith('.dwg') ||
-    file.name.endsWith('.dxf')
-  );
-}
+export const validateDrawingFileType = isAllowedDrawingFileType;
 
 /**
  * Format file size for display (bytes to human-readable)

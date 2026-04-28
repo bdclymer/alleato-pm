@@ -9,17 +9,14 @@
 -- ---------------------------------------------------------------------------
 CREATE INDEX IF NOT EXISTS idx_prime_contract_payment_apps_contract
   ON public.prime_contract_payment_applications (contract_id);
-
 CREATE INDEX IF NOT EXISTS idx_prime_contract_payments_contract
   ON public.prime_contract_payments (contract_id);
-
 -- ---------------------------------------------------------------------------
 -- 2. Composite index for the common list filter: project_id + status
 --    (query-composite-indexes)
 -- ---------------------------------------------------------------------------
 CREATE INDEX IF NOT EXISTS idx_prime_contracts_project_status
   ON public.prime_contracts (project_id, status);
-
 -- ---------------------------------------------------------------------------
 -- 3. GIN trigram indexes for ILIKE search on contract_number and title
 --    pg_trgm is already enabled (used by idx_chunks_content_trgm).
@@ -28,10 +25,8 @@ CREATE INDEX IF NOT EXISTS idx_prime_contracts_project_status
 -- ---------------------------------------------------------------------------
 CREATE INDEX IF NOT EXISTS idx_prime_contracts_contract_number_trgm
   ON public.prime_contracts USING gin (contract_number public.gin_trgm_ops);
-
 CREATE INDEX IF NOT EXISTS idx_prime_contracts_title_trgm
   ON public.prime_contracts USING gin (title public.gin_trgm_ops);
-
 -- ---------------------------------------------------------------------------
 -- 4. Proper RLS for prime_contract_payments and prime_contract_payment_applications
 --    Replace USING (true) wide-open policies with project-scoped checks.
@@ -45,7 +40,6 @@ CREATE INDEX IF NOT EXISTS idx_prime_contracts_title_trgm
 -- Enable RLS on payment tables (was missing before)
 ALTER TABLE public.prime_contract_payments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.prime_contract_payment_applications ENABLE ROW LEVEL SECURITY;
-
 -- Drop the existing wide-open policies
 DROP POLICY IF EXISTS "Authenticated users can read payments"
   ON public.prime_contract_payments;
@@ -55,7 +49,6 @@ DROP POLICY IF EXISTS "Authenticated users can update payments"
   ON public.prime_contract_payments;
 DROP POLICY IF EXISTS "Authenticated users can delete payments"
   ON public.prime_contract_payments;
-
 DROP POLICY IF EXISTS "Authenticated users can read payment applications"
   ON public.prime_contract_payment_applications;
 DROP POLICY IF EXISTS "Authenticated users can insert payment applications"
@@ -64,7 +57,6 @@ DROP POLICY IF EXISTS "Authenticated users can update payment applications"
   ON public.prime_contract_payment_applications;
 DROP POLICY IF EXISTS "Authenticated users can delete payment applications"
   ON public.prime_contract_payment_applications;
-
 -- Helper: returns true if the current user is a member of the project
 -- that owns a given prime_contract id.
 CREATE OR REPLACE FUNCTION public.user_is_project_member_for_contract(p_contract_id uuid)
@@ -84,43 +76,34 @@ AS $$
       AND ua.auth_user_id = (SELECT auth.uid())
   )
 $$;
-
 -- prime_contract_payments — project-scoped policies
 CREATE POLICY "Project members can select payments"
   ON public.prime_contract_payments FOR SELECT TO authenticated
   USING (public.user_is_project_member_for_contract(contract_id));
-
 CREATE POLICY "Project members can insert payments"
   ON public.prime_contract_payments FOR INSERT TO authenticated
   WITH CHECK (public.user_is_project_member_for_contract(contract_id));
-
 CREATE POLICY "Project members can update payments"
   ON public.prime_contract_payments FOR UPDATE TO authenticated
   USING (public.user_is_project_member_for_contract(contract_id))
   WITH CHECK (public.user_is_project_member_for_contract(contract_id));
-
 CREATE POLICY "Project members can delete payments"
   ON public.prime_contract_payments FOR DELETE TO authenticated
   USING (public.user_is_project_member_for_contract(contract_id));
-
 -- prime_contract_payment_applications — project-scoped policies
 CREATE POLICY "Project members can select payment applications"
   ON public.prime_contract_payment_applications FOR SELECT TO authenticated
   USING (public.user_is_project_member_for_contract(contract_id));
-
 CREATE POLICY "Project members can insert payment applications"
   ON public.prime_contract_payment_applications FOR INSERT TO authenticated
   WITH CHECK (public.user_is_project_member_for_contract(contract_id));
-
 CREATE POLICY "Project members can update payment applications"
   ON public.prime_contract_payment_applications FOR UPDATE TO authenticated
   USING (public.user_is_project_member_for_contract(contract_id))
   WITH CHECK (public.user_is_project_member_for_contract(contract_id));
-
 CREATE POLICY "Project members can delete payment applications"
   ON public.prime_contract_payment_applications FOR DELETE TO authenticated
   USING (public.user_is_project_member_for_contract(contract_id));
-
 -- ---------------------------------------------------------------------------
 -- 5. Keep prime_contracts.revised_contract_value in sync with approved COs
 --    Eliminates the drift between the stored column and computed values.
@@ -148,9 +131,7 @@ BEGIN
   RETURN NEW;
 END;
 $$;
-
 DROP TRIGGER IF EXISTS trg_sync_revised_value ON public.contract_change_orders;
-
 CREATE TRIGGER trg_sync_revised_value
 AFTER INSERT OR UPDATE OF amount, status OR DELETE
 ON public.contract_change_orders

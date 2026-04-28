@@ -6,7 +6,6 @@ VALUES ('budget', 'Budget', 10)
 ON CONFLICT (tool_name) DO UPDATE
   SET display_name = EXCLUDED.display_name,
       last_generated_at = now();
-
 WITH suite AS (
   SELECT id FROM public.test_suites WHERE tool_name = 'budget'
 )
@@ -80,7 +79,6 @@ ON CONFLICT (suite_id, test_number) DO UPDATE
       category        = EXCLUDED.category,
       subcategory     = EXCLUDED.subcategory,
       updated_at      = now();
-
 UPDATE public.test_suites
    SET total_cases = (SELECT count(*) FROM public.test_cases WHERE suite_id = test_suites.id)
  WHERE tool_name = 'budget';

@@ -23,7 +23,6 @@ ALTER TABLE document_metadata
   ADD COLUMN IF NOT EXISTS is_silent_meeting BOOLEAN,
   ADD COLUMN IF NOT EXISTS calendar_type TEXT,
   ADD COLUMN IF NOT EXISTS privacy TEXT;
-
 -- Indexes for searchable fields
 CREATE INDEX IF NOT EXISTS idx_document_metadata_organizer_email ON document_metadata(organizer_email);
 CREATE INDEX IF NOT EXISTS idx_document_metadata_meeting_type ON document_metadata(meeting_type);

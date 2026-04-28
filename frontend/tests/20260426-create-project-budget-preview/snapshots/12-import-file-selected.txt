@@ -1,0 +1,5 @@
+- button "Close overlay" [ref=e1]
+- button "Download" [ref=e2]
+- button [ref=e3]
+- button "Cancel" [ref=e4]
+- button "Import" [ref=e5]

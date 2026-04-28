@@ -14,7 +14,6 @@ DO $$ BEGIN
     CREATE POLICY "Authenticated users can delete drawing sets" ON public.drawing_sets FOR DELETE TO authenticated USING (true);
   END IF;
 END $$;
-
 -- drawing_areas
 DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Authenticated users can insert drawing areas' AND tablename = 'drawing_areas') THEN
@@ -27,7 +26,6 @@ DO $$ BEGIN
     CREATE POLICY "Authenticated users can delete drawing areas" ON public.drawing_areas FOR DELETE TO authenticated USING (true);
   END IF;
 END $$;
-
 -- drawing_revisions
 DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Authenticated users can insert drawing revisions' AND tablename = 'drawing_revisions') THEN
@@ -37,7 +35,6 @@ DO $$ BEGIN
     CREATE POLICY "Authenticated users can update drawing revisions" ON public.drawing_revisions FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
   END IF;
 END $$;
-
 -- drawing_downloads
 DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Authenticated users can insert drawing downloads' AND tablename = 'drawing_downloads') THEN

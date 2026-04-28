@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { CircleHelp, Settings } from "lucide-react";
 import { EmptyState } from "@/components/ds";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -69,6 +69,8 @@ export default function CreateProjectPage() {
 
 function CreateProjectForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isOnboardingTestProject = searchParams.get("testProject") === "1";
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fileResetKey, setFileResetKey] = useState(0);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -79,7 +81,10 @@ function CreateProjectForm() {
 
   const form = useForm<CreateProjectFormValues>({
     resolver: zodResolver(createProjectSchema) as any,
-    defaultValues,
+    defaultValues: {
+      ...defaultValues,
+      test_project: isOnboardingTestProject || defaultValues.test_project,
+    },
   });
 
   const { DevAutoFillButton } = useDevAutoFill("project", form.setValue as any);
@@ -146,6 +151,7 @@ function CreateProjectForm() {
         work_scope: values.work_scope || null,
         project_sector: values.project_sector || null,
         delivery_method: values.delivery_method || null,
+        onedrive: values.onedrive || null,
         // Keep other metadata in summary_metadata
         summary_metadata: {
           square_footage: values.square_footage ?? null,

@@ -6,12 +6,10 @@ create table if not exists public.team_chat_channels (
   created_by  uuid references auth.users(id) on delete set null,
   created_at  timestamptz not null default now()
 );
-
 -- Ensure there is always at least one default channel available.
 insert into public.team_chat_channels (id, name, topic)
 values ('general', 'General', 'Company-wide conversation')
 on conflict (id) do nothing;
-
 -- Backfill channels from existing message history.
 insert into public.team_chat_channels (id, name, topic)
 select distinct
@@ -22,7 +20,6 @@ from public.team_chat_messages m
 where m.channel_id is not null
   and m.channel_id <> ''
 on conflict (id) do nothing;
-
 -- Enforce message-to-channel referential integrity.
 do $$
 begin
@@ -38,20 +35,16 @@ begin
       on delete cascade;
   end if;
 end $$;
-
 -- Helpful index for channel list ordering.
 create index if not exists team_chat_channels_created_idx
   on public.team_chat_channels (created_at desc);
-
 alter table public.team_chat_channels enable row level security;
-
 -- Authenticated users can read channels.
 create policy "authenticated users can read team chat channels"
   on public.team_chat_channels
   for select
   to authenticated
   using (true);
-
 -- Admin users can create channels.
 create policy "admins can create team chat channels"
   on public.team_chat_channels
@@ -65,7 +58,6 @@ create policy "admins can create team chat channels"
         and p.is_admin = true
     )
   );
-
 -- Admin users can delete channels.
 create policy "admins can delete team chat channels"
   on public.team_chat_channels

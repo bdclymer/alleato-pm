@@ -16,18 +16,14 @@ CREATE TABLE public.meeting_digests (
     created_at TIMESTAMPTZ DEFAULT now(),
     UNIQUE(metadata_id)
 );
-
 CREATE INDEX idx_meeting_digests_project ON meeting_digests(project_id);
 CREATE INDEX idx_meeting_digests_created ON meeting_digests(created_at DESC);
-
 -- RLS: allow all roles (internal tool)
 ALTER TABLE public.meeting_digests ENABLE ROW LEVEL SECURITY;
-
 CREATE POLICY "Allow all access to meeting_digests"
     ON public.meeting_digests FOR ALL
     USING (true)
     WITH CHECK (true);
-
 GRANT ALL ON TABLE public.meeting_digests TO anon;
 GRANT ALL ON TABLE public.meeting_digests TO authenticated;
 GRANT ALL ON TABLE public.meeting_digests TO service_role;

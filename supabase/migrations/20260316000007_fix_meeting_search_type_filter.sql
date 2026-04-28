@@ -40,6 +40,5 @@ BEGIN
   LIMIT match_count;
 END;
 $$;
-
 COMMENT ON FUNCTION public.full_text_search_meetings(text, integer) IS
   'Full-text search across meeting content and titles. Covers both type=''meeting'' and type=''meeting_transcript''.';

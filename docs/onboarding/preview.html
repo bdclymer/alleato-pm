@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Welcome Onboarding · Step 1 preview</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    background: #f4f3ee;
+    color: #18181b;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 48px 24px 80px;
+  }
+  .preview-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #71717a;
+    margin-bottom: 16px;
+  }
+  .modal {
+    background: #ffffff;
+    width: 560px;
+    max-width: 100%;
+    border-radius: 16px;
+    border: 0.5px solid rgba(0,0,0,0.08);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.08);
+    overflow: hidden;
+  }
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    border-bottom: 0.5px solid rgba(0,0,0,0.06);
+  }
+  .header-eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #71717a;
+  }
+  .accent-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #EA580C;
+  }
+  .step-dots {
+    display: flex;
+    gap: 4px;
+  }
+  .dot {
+    height: 6px;
+    border-radius: 999px;
+    transition: all 0.3s;
+  }
+  .dot.active { width: 24px; background: #EA580C; }
+  .dot.future { width: 6px; background: #e7e5e4; }
+
+  .modal-body {
+    padding: 28px 28px 24px;
+    display: flex;
+    flex-direction: column;
+    min-height: 400px;
+  }
+
+  .badge {
+    display: inline-flex;
+    width: fit-content;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fde68a;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    margin-bottom: 20px;
+  }
+  .badge-dot {
+    width: 5px;
+    height: 5px;
+    background: #d97706;
+    border-radius: 50%;
+  }
+
+  h1 {
+    font-size: 24px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: #18181b;
+    margin: 0 0 12px;
+    line-height: 1.25;
+  }
+
+  .body-text {
+    font-size: 14px;
+    line-height: 1.65;
+    color: #52525b;
+    margin: 0 0 24px;
+  }
+
+  .pact-panel {
+    background: #fafaf9;
+    border-radius: 12px;
+    padding: 18px 20px;
+    border-left: 2px solid #EA580C;
+  }
+  .pact-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #71717a;
+    margin-bottom: 12px;
+  }
+  .pact-items {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .pact-item {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    cursor: pointer;
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: #18181b;
+  }
+  .pact-item input {
+    margin-top: 3px;
+    accent-color: #EA580C;
+    cursor: pointer;
+  }
+
+  .stats {
+    margin-top: auto;
+    padding-top: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    font-size: 12px;
+    color: #71717a;
+  }
+  .stats strong {
+    color: #18181b;
+    font-weight: 500;
+  }
+
+  .modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    border-top: 0.5px solid rgba(0,0,0,0.06);
+    background: #fafaf9;
+  }
+  .skip-btn {
+    background: transparent;
+    border: none;
+    font-size: 13px;
+    color: #71717a;
+    cursor: pointer;
+    padding: 8px 0;
+    font-family: inherit;
+  }
+  .nav-btns {
+    display: flex;
+    gap: 8px;
+  }
+  .btn {
+    height: 36px;
+    padding: 0 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+  .btn-secondary {
+    border: 0.5px solid rgba(0,0,0,0.12);
+    background: #ffffff;
+    color: #a8a29e;
+  }
+  .btn-primary {
+    border: none;
+    background: #18181b;
+    color: #ffffff;
+    padding: 0 18px;
+  }
+  .btn-primary:hover {
+    background: #000;
+  }
+
+  .meta {
+    margin-top: 32px;
+    max-width: 560px;
+    font-size: 13px;
+    color: #71717a;
+    line-height: 1.6;
+  }
+  .meta strong {
+    color: #18181b;
+    font-weight: 500;
+  }
+  .meta-block {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 16px 20px;
+    border: 0.5px solid rgba(0,0,0,0.08);
+    margin-top: 12px;
+  }
+</style>
+</head>
+<body>
+
+  <div class="preview-label">Welcome Onboarding · Step 1 of 4 · After fix</div>
+
+  <div class="modal">
+    <div class="modal-header">
+      <div class="header-eyebrow">
+        <span class="accent-dot"></span>
+        <span>Alleato OS · Welcome</span>
+      </div>
+      <div class="step-dots">
+        <div class="dot active"></div>
+        <div class="dot future"></div>
+        <div class="dot future"></div>
+        <div class="dot future"></div>
+      </div>
+    </div>
+
+    <div class="modal-body">
+      <div class="badge">
+        <span class="badge-dot"></span>
+        Internal beta · You're shaping this
+      </div>
+
+      <h1>You're not testing software.<br/>You're shaping it.</h1>
+
+      <p class="body-text">
+        Whatever you've ever wanted a platform like this to do — this is where
+        it gets built. Some of what's here will feel rough. That's the point:
+        you're seeing it in the bones, so what gets built next is what you
+        actually need.
+      </p>
+
+      <div class="pact-panel">
+        <div class="pact-label">The Tester Pact</div>
+        <div class="pact-items">
+          <label class="pact-item">
+            <input type="checkbox" checked />
+            <span>I'll click <strong style="font-weight:500;">Ask Alleato</strong> instead of guessing.</span>
+          </label>
+          <label class="pact-item">
+            <input type="checkbox" checked />
+            <span>I'll say specifically what's missing — especially for construction.</span>
+          </label>
+          <label class="pact-item">
+            <input type="checkbox" checked />
+            <span>I'll watch how fast things move when I speak up.</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="stats">
+        <span><strong>47</strong> fixes shipped this month</span>
+        <span><strong>12</strong> testers active</span>
+        <span><strong>3</strong> launches this week</span>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="skip-btn">Skip tour</button>
+      <div class="nav-btns">
+        <button class="btn btn-secondary" disabled>Back</button>
+        <button class="btn btn-primary">Continue →</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="meta">
+    <div class="meta-block">
+      <strong>Three sentences. One panel. Three items.</strong><br/>
+      The body collapsed back to a single tight paragraph. The pact returned to
+      a single panel with three pre-checked items, replacing the two-column
+      six-item grid. The "Megan will ship the fixes" line is gone — the third
+      item ("watch how fast things move when I speak up") preserves the
+      promise/dare rhythm without naming anyone.
+    </div>
+    <div class="meta-block">
+      <strong>Note on color:</strong> this preview shows Procore orange
+      (<code style="font-family:monospace;font-size:12px;">#EA580C</code>),
+      which is your brand accent. The current live render is showing purple
+      because <code style="font-family:monospace;font-size:12px;">--primary</code>
+      in your global Tailwind/theme config is mapped to purple, not orange.
+      That's a global theme issue affecting every <code style="font-family:monospace;font-size:12px;">text-primary</code>
+      / <code style="font-family:monospace;font-size:12px;">bg-primary</code>
+      surface in the app — worth fixing as a separate small task.
+    </div>
+  </div>
+
+</body>
+</html>

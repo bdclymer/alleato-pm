@@ -26,6 +26,5 @@ BEGIN
       ) NOT VALID;
   END IF;
 END $$;
-
 ALTER TABLE public.test_cases
   VALIDATE CONSTRAINT test_cases_scenario_quality_chk;

@@ -77,6 +77,14 @@ async function getAuthedUserWithAdminFlag() {
 
 export const GET = withApiGuardrails("team-chat/channels#GET", async () => {
   const { supabase, isAdmin } = await getAuthedUserWithAdminFlag();
+  if (!isAdmin) {
+    throw new GuardrailError({
+      code: "FORBIDDEN",
+      where: "team-chat/channels#GET",
+      message: "Admin access required.",
+      status: 403,
+    });
+  }
 
   const [{ data: messages, error: messagesError }, { data: adminUsers, error: adminsError }] =
     await Promise.all([

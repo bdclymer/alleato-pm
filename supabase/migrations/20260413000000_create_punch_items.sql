@@ -62,20 +62,15 @@ CREATE TABLE IF NOT EXISTS public.punch_items (
 
   UNIQUE (project_id, number)
 );
-
 -- Indexes for common filter/sort patterns
 CREATE INDEX IF NOT EXISTS idx_punch_items_project_id
   ON public.punch_items(project_id);
-
 CREATE INDEX IF NOT EXISTS idx_punch_items_status
   ON public.punch_items(project_id, status) WHERE is_deleted = false;
-
 CREATE INDEX IF NOT EXISTS idx_punch_items_assignee
   ON public.punch_items(project_id, assignee_id) WHERE is_deleted = false;
-
 CREATE INDEX IF NOT EXISTS idx_punch_items_active
   ON public.punch_items(project_id, number DESC) WHERE is_deleted = false;
-
 -- updated_at trigger
 CREATE OR REPLACE FUNCTION public.set_punch_items_updated_at()
 RETURNS TRIGGER LANGUAGE plpgsql AS $$
@@ -84,20 +79,16 @@ BEGIN
   RETURN NEW;
 END;
 $$;
-
 DROP TRIGGER IF EXISTS trg_punch_items_updated_at ON public.punch_items;
 CREATE TRIGGER trg_punch_items_updated_at
   BEFORE UPDATE ON public.punch_items
   FOR EACH ROW EXECUTE FUNCTION public.set_punch_items_updated_at();
-
 -- RLS
 ALTER TABLE public.punch_items ENABLE ROW LEVEL SECURITY;
-
 DROP POLICY IF EXISTS "punch_items_select" ON public.punch_items;
 DROP POLICY IF EXISTS "punch_items_insert" ON public.punch_items;
 DROP POLICY IF EXISTS "punch_items_update" ON public.punch_items;
 DROP POLICY IF EXISTS "punch_items_delete" ON public.punch_items;
-
 CREATE POLICY "punch_items_select" ON public.punch_items
   FOR SELECT TO authenticated
   USING (
@@ -108,7 +99,6 @@ CREATE POLICY "punch_items_select" ON public.punch_items
       WHERE ua.auth_user_id = auth.uid()
     )
   );
-
 CREATE POLICY "punch_items_insert" ON public.punch_items
   FOR INSERT TO authenticated
   WITH CHECK (
@@ -119,7 +109,6 @@ CREATE POLICY "punch_items_insert" ON public.punch_items
       WHERE ua.auth_user_id = auth.uid()
     )
   );
-
 CREATE POLICY "punch_items_update" ON public.punch_items
   FOR UPDATE TO authenticated
   USING (
@@ -130,7 +119,6 @@ CREATE POLICY "punch_items_update" ON public.punch_items
       WHERE ua.auth_user_id = auth.uid()
     )
   );
-
 CREATE POLICY "punch_items_delete" ON public.punch_items
   FOR DELETE TO authenticated
   USING (
@@ -141,7 +129,6 @@ CREATE POLICY "punch_items_delete" ON public.punch_items
       WHERE ua.auth_user_id = auth.uid()
     )
   );
-
 -- ----------------------------------------------------------------------------
 -- punch_item_comments
 -- ----------------------------------------------------------------------------
@@ -156,16 +143,12 @@ CREATE TABLE IF NOT EXISTS public.punch_item_comments (
   updated_at     TIMESTAMPTZ,
   created_by     UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE
 );
-
 CREATE INDEX IF NOT EXISTS idx_punch_item_comments_item
   ON public.punch_item_comments(punch_item_id);
-
 ALTER TABLE public.punch_item_comments ENABLE ROW LEVEL SECURITY;
-
 DROP POLICY IF EXISTS "punch_item_comments_select" ON public.punch_item_comments;
 DROP POLICY IF EXISTS "punch_item_comments_insert" ON public.punch_item_comments;
 DROP POLICY IF EXISTS "punch_item_comments_update" ON public.punch_item_comments;
-
 CREATE POLICY "punch_item_comments_select" ON public.punch_item_comments
   FOR SELECT TO authenticated
   USING (
@@ -176,7 +159,6 @@ CREATE POLICY "punch_item_comments_select" ON public.punch_item_comments
       WHERE ua.auth_user_id = auth.uid()
     )
   );
-
 CREATE POLICY "punch_item_comments_insert" ON public.punch_item_comments
   FOR INSERT TO authenticated
   WITH CHECK (
@@ -187,7 +169,6 @@ CREATE POLICY "punch_item_comments_insert" ON public.punch_item_comments
       WHERE ua.auth_user_id = auth.uid()
     )
   );
-
 CREATE POLICY "punch_item_comments_update" ON public.punch_item_comments
   FOR UPDATE TO authenticated
   USING (created_by = auth.uid());

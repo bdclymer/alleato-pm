@@ -2,14 +2,11 @@
 ALTER TABLE drawings
   ADD COLUMN IF NOT EXISTS deleted_at timestamptz DEFAULT NULL,
   ADD COLUMN IF NOT EXISTS deleted_by uuid DEFAULT NULL REFERENCES auth.users(id);
-
 -- Index for efficient filtering of non-deleted drawings
 CREATE INDEX IF NOT EXISTS idx_drawings_deleted_at ON drawings(deleted_at) WHERE deleted_at IS NULL;
-
 -- Recreate the drawing_log view to include deleted_at column
 -- Must DROP first because CREATE OR REPLACE cannot change column order
 DROP VIEW IF EXISTS drawing_log;
-
 CREATE VIEW drawing_log AS
 SELECT
   d.id,

@@ -8,18 +8,13 @@ CREATE TABLE IF NOT EXISTS public.prime_contract_attachments (
   created_at timestamptz NOT NULL DEFAULT now(),
   CONSTRAINT prime_contract_attachments_contract_attachment_key UNIQUE (contract_id, attachment_id)
 );
-
 COMMENT ON TABLE public.prime_contract_attachments IS
   'Join table linking attachments to prime contracts with FK enforcement';
-
 CREATE INDEX IF NOT EXISTS idx_prime_contract_attachments_contract_id
   ON public.prime_contract_attachments (contract_id);
-
 CREATE INDEX IF NOT EXISTS idx_prime_contract_attachments_attachment_id
   ON public.prime_contract_attachments (attachment_id);
-
 ALTER TABLE public.prime_contract_attachments ENABLE ROW LEVEL SECURITY;
-
 DO $$
 BEGIN
   IF NOT EXISTS (
@@ -64,7 +59,6 @@ BEGIN
       USING (true);
   END IF;
 END $$;
-
 -- Backfill join links from legacy polymorphic pointers.
 INSERT INTO public.prime_contract_attachments (contract_id, attachment_id)
 SELECT pc.id, a.id

@@ -3,9 +3,7 @@
 -- Used by the Financial Insights scan engine to compare budgets across systems.
 
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS acumatica_project_id TEXT;
-
 COMMENT ON COLUMN projects.acumatica_project_id IS 'Maps to Acumatica ERP project code (e.g. 25108). Used for budget cross-referencing.';
-
 -- Index for efficient lookups during cross-reference scans
 CREATE INDEX IF NOT EXISTS idx_projects_acumatica_project_id
   ON projects (acumatica_project_id)

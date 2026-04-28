@@ -9,7 +9,6 @@ VALUES ('commitments', 'Commitments', 0)
 ON CONFLICT (tool_name) DO UPDATE SET
   display_name = EXCLUDED.display_name,
   last_generated_at = now();
-
 -- Seed all scenario test cases
 WITH suite AS (SELECT id FROM public.test_suites WHERE tool_name = 'commitments')
 INSERT INTO public.test_cases
@@ -369,7 +368,6 @@ ON CONFLICT (suite_id, test_number) DO UPDATE SET
   category        = EXCLUDED.category,
   subcategory     = EXCLUDED.subcategory,
   updated_at      = now();
-
 -- Update suite total_cases count
 UPDATE public.test_suites
    SET total_cases = (

@@ -23,6 +23,7 @@ import {
   getSelectableElement,
   type FeedbackTargetSnapshot,
 } from "@/lib/admin-feedback/targeting";
+import { captureTargetScreenshot } from "@/lib/admin-feedback/screenshot";
 import { useCurrentUserProfile } from "@/hooks/use-current-user-profile";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { apiFetch } from "@/lib/api-client";
@@ -98,53 +99,6 @@ function inferProjectId(pathname: string) {
 
   const parsed = Number.parseInt(match[1], 10);
   return Number.isFinite(parsed) ? parsed : null;
-}
-
-async function captureTargetScreenshot(target: HTMLElement) {
-  // Capture the target's closest meaningful container for surrounding context.
-  // Uses html-to-image (SVG foreignObject) instead of html2canvas because
-  // html2canvas v1 cannot parse modern CSS color functions (oklab, oklch)
-  // that are used by shadcn/ui and browser extensions.
-  const captureRoot =
-    (target.closest(
-      "main, section, [role='region'], [data-feedback-id]",
-    ) as HTMLElement) ?? target;
-
-  // Hide overlays (dialog, feedback widget) during capture
-  const overlays = document.querySelectorAll(
-    `[${ADMIN_FEEDBACK_OVERLAY_ATTRIBUTE}], [data-radix-dialog-overlay], [role="dialog"]`,
-  );
-  const hidden: { el: HTMLElement; prev: string }[] = [];
-  overlays.forEach((el) => {
-    if (el instanceof HTMLElement) {
-      hidden.push({ el, prev: el.style.visibility });
-      el.style.visibility = "hidden";
-    }
-  });
-
-  try {
-    const { toPng } = await import("html-to-image");
-    const dataUrl = await toPng(captureRoot, {
-      backgroundColor: "#ffffff",
-      pixelRatio: Math.min(window.devicePixelRatio || 1, 2),
-      // Skip nodes that are hidden or belong to dev overlays
-      filter: (node: HTMLElement) => {
-        if (node.nodeType !== 1) return true;
-        const attr = node.getAttribute?.(ADMIN_FEEDBACK_OVERLAY_ATTRIBUTE);
-        return attr !== "true";
-      },
-    });
-
-    if (!dataUrl || dataUrl === "data:,") {
-      throw new Error("Capture produced an empty image");
-    }
-    return dataUrl;
-  } finally {
-    // Restore overlays
-    hidden.forEach(({ el, prev }) => {
-      el.style.visibility = prev;
-    });
-  }
 }
 
 export function AdminFeedbackWidget() {

@@ -64,7 +64,6 @@ BEGIN
   RETURN NULL;
 END;
 $$;
-
 CREATE OR REPLACE FUNCTION public.track_budget_line_delete_before()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -84,21 +83,17 @@ BEGIN
   RETURN OLD;
 END;
 $$;
-
 DROP TRIGGER IF EXISTS budget_line_changes_trigger ON public.budget_lines;
 DROP TRIGGER IF EXISTS budget_line_changes_after_write ON public.budget_lines;
 DROP TRIGGER IF EXISTS budget_line_delete_before ON public.budget_lines;
-
 CREATE TRIGGER budget_line_changes_after_write
 AFTER INSERT OR UPDATE ON public.budget_lines
 FOR EACH ROW
 EXECUTE FUNCTION public.track_budget_line_changes_after_write();
-
 CREATE TRIGGER budget_line_delete_before
 BEFORE DELETE ON public.budget_lines
 FOR EACH ROW
 EXECUTE FUNCTION public.track_budget_line_delete_before();
-
 REVOKE EXECUTE ON FUNCTION public.track_budget_line_changes_after_write() FROM anon;
 REVOKE EXECUTE ON FUNCTION public.track_budget_line_delete_before() FROM anon;
 GRANT EXECUTE ON FUNCTION public.track_budget_line_changes_after_write() TO authenticated, service_role;

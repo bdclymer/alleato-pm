@@ -16,10 +16,8 @@ CREATE TABLE IF NOT EXISTS dev_panel_comments (
   created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-
 CREATE INDEX IF NOT EXISTS dev_panel_comments_feature_idx ON dev_panel_comments (feature);
 CREATE INDEX IF NOT EXISTS dev_panel_comments_parent_idx  ON dev_panel_comments (parent_id);
-
 -- Auto-update updated_at
 CREATE OR REPLACE FUNCTION update_dev_panel_comments_updated_at()
 RETURNS TRIGGER LANGUAGE plpgsql AS $$
@@ -28,14 +26,11 @@ BEGIN
   RETURN NEW;
 END;
 $$;
-
 CREATE TRIGGER dev_panel_comments_updated_at
   BEFORE UPDATE ON dev_panel_comments
   FOR EACH ROW EXECUTE FUNCTION update_dev_panel_comments_updated_at();
-
 -- RLS: authenticated users can read all, write their own
 ALTER TABLE dev_panel_comments ENABLE ROW LEVEL SECURITY;
-
 CREATE POLICY "dev_panel_comments_read"  ON dev_panel_comments FOR SELECT USING (auth.role() = 'authenticated');
 CREATE POLICY "dev_panel_comments_insert" ON dev_panel_comments FOR INSERT WITH CHECK (auth.uid() = author_id OR author_id IS NULL);
 CREATE POLICY "dev_panel_comments_update" ON dev_panel_comments FOR UPDATE USING (auth.uid() = author_id);

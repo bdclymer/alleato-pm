@@ -304,4 +304,5 @@ export interface UseDrawingUploadReturn {
   isUploading: boolean;
   errors: DrawingUploadError[];
   clearErrors: () => void;
+  clearUploadState: () => void;
 }

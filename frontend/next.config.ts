@@ -12,6 +12,12 @@ const nextConfig: NextConfig = {
   },
   productionBrowserSourceMaps: false,
   devIndicators: false,
+  // pdfjs-dist 5.x builds pdf.mjs as a self-contained webpack bundle that contains
+  // `var __webpack_exports__ = {}`. In strict-mode eval (webpack ESM), that var hoists
+  // and shadows webpack's injected __webpack_exports__ parameter, causing
+  // "Object.defineProperty called on non-object". Running it through SWC via
+  // transpilePackages renames the shadowing var before webpack processes the file.
+  transpilePackages: ["pdfjs-dist"],
   experimental: {
     webpackMemoryOptimizations: true,
     serverSourceMaps: false,
@@ -56,6 +62,7 @@ const nextConfig: NextConfig = {
     // Default is (cpuCount - 1) workers; at 2 cores that's already 1, but explicit cap
     // prevents memory spikes when multiple heavy modules compile simultaneously.
     config.parallelism = 1;
+
     return config;
   },
   images: {

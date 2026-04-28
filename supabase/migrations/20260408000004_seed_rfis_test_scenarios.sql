@@ -16,11 +16,9 @@ VALUES (
 ON CONFLICT (tool_name) DO UPDATE
   SET display_name = EXCLUDED.display_name,
       last_generated_at = now();
-
 -- Remove existing cases for a clean re-seed
 DELETE FROM test_cases
 WHERE suite_id = (SELECT id FROM test_suites WHERE tool_name = 'rfis');
-
 -- Insert scenarios
 INSERT INTO test_cases (id, suite_id, test_number, category, subcategory, test_name, steps, expected_result, priority, test_type, start_url, context_note, setup_steps, created_at, updated_at)
 SELECT
@@ -206,7 +204,6 @@ FROM test_suites s,
 
 ) AS v(test_number, category, subcategory, test_name, steps, expected_result, priority, context_note, setup_steps)
 WHERE s.tool_name = 'rfis';
-
 -- Update total_cases
 UPDATE test_suites
 SET total_cases = (SELECT COUNT(*) FROM test_cases WHERE suite_id = test_suites.id)

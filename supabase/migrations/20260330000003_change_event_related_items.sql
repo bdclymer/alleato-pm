@@ -15,16 +15,12 @@ CREATE TABLE IF NOT EXISTS public.change_event_related_items (
   created_by uuid,
   updated_at timestamptz NOT NULL DEFAULT now()
 );
-
 CREATE UNIQUE INDEX IF NOT EXISTS uq_change_event_related_items_unique_link
   ON public.change_event_related_items (change_event_id, related_type, related_id);
-
 CREATE INDEX IF NOT EXISTS idx_change_event_related_items_event_created_desc
   ON public.change_event_related_items (change_event_id, created_at DESC);
-
 CREATE INDEX IF NOT EXISTS idx_change_event_related_items_project_type
   ON public.change_event_related_items (project_id, related_type);
-
 CREATE OR REPLACE FUNCTION public.set_change_event_related_items_updated_at()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -34,10 +30,8 @@ BEGIN
   RETURN NEW;
 END;
 $$;
-
 DROP TRIGGER IF EXISTS trg_change_event_related_items_updated_at
   ON public.change_event_related_items;
-
 CREATE TRIGGER trg_change_event_related_items_updated_at
 BEFORE UPDATE ON public.change_event_related_items
 FOR EACH ROW

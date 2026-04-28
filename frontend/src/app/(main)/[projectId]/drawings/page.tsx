@@ -507,6 +507,7 @@ export default function ProjectDrawingsPage() {
               selected: tableState.selectedIds.includes(item.id),
               onSelect: handleSelectRow,
             },
+            () => setQrTarget({ drawingId: item.id, drawingNumber: item.drawingNumber ?? "Drawing" }),
           ),
         cardGroupBy: (item) => item.discipline || "Ungrouped",
         list: (item) =>
@@ -514,6 +515,7 @@ export default function ProjectDrawingsPage() {
             item,
             (r) => router.push(`/${projectId}/drawings/viewer/${r.id}`),
             handleDeleteDrawing,
+            () => setQrTarget({ drawingId: item.id, drawingNumber: item.drawingNumber ?? "Drawing" }),
           ),
       }}
       emptyState={{

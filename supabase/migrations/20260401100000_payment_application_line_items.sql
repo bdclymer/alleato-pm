@@ -3,7 +3,6 @@ ALTER TABLE prime_contract_payment_applications
   ADD COLUMN IF NOT EXISTS billing_period_id uuid REFERENCES billing_periods(id),
   ADD COLUMN IF NOT EXISTS billing_date date,
   ADD COLUMN IF NOT EXISTS percent_complete numeric DEFAULT 0;
-
 -- SOV line items per payment application (AIA G703)
 CREATE TABLE IF NOT EXISTS payment_application_line_items (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -39,12 +38,9 @@ CREATE TABLE IF NOT EXISTS payment_application_line_items (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
-
 CREATE INDEX IF NOT EXISTS idx_pa_line_items_application_id
   ON payment_application_line_items(payment_application_id);
-
 ALTER TABLE payment_application_line_items ENABLE ROW LEVEL SECURITY;
-
 CREATE POLICY "Users can view payment application line items"
   ON payment_application_line_items FOR SELECT USING (true);
 CREATE POLICY "Users can insert payment application line items"
@@ -53,7 +49,6 @@ CREATE POLICY "Users can update payment application line items"
   ON payment_application_line_items FOR UPDATE USING (true);
 CREATE POLICY "Users can delete payment application line items"
   ON payment_application_line_items FOR DELETE USING (true);
-
 CREATE TRIGGER set_updated_at
   BEFORE UPDATE ON payment_application_line_items
   FOR EACH ROW

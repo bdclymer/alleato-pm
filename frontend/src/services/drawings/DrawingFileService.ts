@@ -5,6 +5,10 @@ import type {
   Result,
   FileUploadResult,
 } from "./types";
+import {
+  DRAWING_MAX_UPLOAD_BYTES,
+  DRAWING_MAX_UPLOAD_LABEL,
+} from "@/lib/drawings/upload-constraints";
 
 /**
  * Service for drawing file operations (upload, download, storage)
@@ -22,10 +26,10 @@ export class DrawingFileService {
     file: File,
   ): Promise<Result<FileUploadResult, DrawingError>> {
     try {
-      if (file.size > 100 * 1024 * 1024) {
+      if (file.size > DRAWING_MAX_UPLOAD_BYTES) {
         return {
           data: null,
-          error: { type: "FILE_TOO_LARGE", message: "File must be under 100MB" },
+          error: { type: "FILE_TOO_LARGE", message: `File must be under ${DRAWING_MAX_UPLOAD_LABEL}` },
         };
       }
 

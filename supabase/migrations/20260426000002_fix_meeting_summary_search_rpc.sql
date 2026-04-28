@@ -42,6 +42,5 @@ BEGIN
     LIMIT match_count;
 END;
 $$;
-
 GRANT EXECUTE ON FUNCTION public.match_document_metadata_by_summary(halfvec(3072), int, float, int)
     TO anon, authenticated, service_role;

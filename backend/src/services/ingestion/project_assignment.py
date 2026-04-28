@@ -1,10 +1,10 @@
 """
-Automatic Project Assignment Logic
+Automatic Project Assignment Logic.
 
-Assigns meetings to projects based on:
-1. Project name in meeting title (highest confidence)
-2. Participant email domains (medium confidence)
-3. Meeting content/context (lower confidence, requires LLM)
+Assigns documents to projects based on:
+1. Project/client/alias matches in title (highest confidence)
+2. Participant email domain overlap with known project contacts
+3. Project/client/alias matches in content
 """
 
 from typing import Optional, Dict, Any, List, Tuple
@@ -20,10 +20,10 @@ class ProjectAssigner:
         self._project_cache: Optional[List[Dict[str, Any]]] = None
 
     def _get_projects(self) -> List[Dict[str, Any]]:
-        """Get all active projects with names."""
+        """Get all active projects with matching signals."""
         if self._project_cache is None:
             response = self.client.table("projects").select(
-                "id, name, client"
+                "id, name, client, aliases, team_members, stakeholders"
             ).execute()
             self._project_cache = response.data or []
         return self._project_cache
@@ -87,77 +87,106 @@ class ProjectAssigner:
         meeting_title: str,
         projects: List[Dict[str, Any]]
     ) -> Tuple[Optional[int], float]:
-        """
-        Match project by name appearing in meeting title.
+        """Match project by name/alias/client appearing in title."""
+        title_lower = self._normalize_text(meeting_title)
+        if not title_lower:
+            return None, 0.0
 
-        Returns: (project_id, confidence)
-        """
-        title_lower = meeting_title.lower()
-
-        # Check for exact project name matches
+        scored_matches: List[Tuple[int, float]] = []
         for project in projects:
-            project_name = project.get("name")
-            client_name = project.get("client")
+            project_id = project.get("id")
+            if not project_id:
+                continue
 
-            # Exact name match
-            if project_name and project_name.lower() in title_lower:
-                return project["id"], 0.95
+            score = 0.0
+            project_name = self._normalize_text(project.get("name"))
+            client_name = self._normalize_text(project.get("client"))
 
-            # Client name match
-            if client_name and client_name.lower() in title_lower:
-                return project["id"], 0.90
+            # Exact phrase matches
+            if project_name and project_name in title_lower:
+                score += 0.95
+            if client_name and client_name in title_lower:
+                score = max(score, 0.90)
 
-        return None, 0.0
+            # Alias/abbreviation matches (e.g., "WFC")
+            for alias in self._extract_aliases(project):
+                alias_norm = self._normalize_text(alias)
+                if not alias_norm:
+                    continue
+                if self._contains_token(title_lower, alias_norm):
+                    score = max(score, 0.92 if len(alias_norm) <= 5 else 0.90)
+
+            if score > 0:
+                scored_matches.append((int(project_id), score))
+
+        if not scored_matches:
+            return None, 0.0
+
+        scored_matches.sort(key=lambda item: item[1], reverse=True)
+        return scored_matches[0]
 
     def _match_by_email_domains(
         self,
         participants: List[str],
         projects: List[Dict[str, Any]]
     ) -> Tuple[Optional[int], float]:
-        """
-        Match project by participant email domains.
+        """Match project by participant email domains."""
+        participant_domains = self._extract_domains(participants)
+        if not participant_domains:
+            return None, 0.0
 
-        NOTE: Requires email_domains column in projects table (not yet implemented).
-        Currently disabled - returns None immediately.
+        best_project_id: Optional[int] = None
+        best_overlap = 0
+        for project in projects:
+            project_domains = self._project_domains(project)
+            overlap = len(participant_domains.intersection(project_domains))
+            if overlap > best_overlap:
+                best_overlap = overlap
+                best_project_id = int(project["id"])
 
-        Returns: (project_id, confidence)
-        """
-        # Email domain matching requires email_domains column in projects table
-        # TODO: Add email_domains column and implement this feature
-        return None, 0.0
+        if best_project_id is None or best_overlap == 0:
+            return None, 0.0
+
+        confidence = min(0.88, 0.72 + (best_overlap - 1) * 0.08)
+        return best_project_id, confidence
 
     def _match_by_content(
         self,
         content: str,
         projects: List[Dict[str, Any]]
     ) -> Tuple[Optional[int], float]:
-        """
-        Match project by project/client names appearing in content.
-
-        Searches for project name or client name mentions in the meeting content.
-
-        Returns: (project_id, confidence)
-        """
-        content_lower = content.lower()[:2000]  # Check first 2000 chars
+        """Match project by project/client/alias mentions in content."""
+        content_lower = self._normalize_text(content[:3000])
+        if not content_lower:
+            return None, 0.0
 
         # Count name mentions per project
-        project_scores: Dict[int, int] = {}
+        project_scores: Dict[int, float] = {}
 
         for project in projects:
-            score = 0
+            score = 0.0
+            project_id = project.get("id")
+            if not project_id:
+                continue
 
             # Project name mentions
-            project_name = project.get("name")
-            if project_name and project_name.lower() in content_lower:
+            project_name = self._normalize_text(project.get("name"))
+            if project_name and project_name in content_lower:
                 score += 3
 
             # Client name mentions
-            client_name = project.get("client")
-            if client_name and client_name.lower() in content_lower:
+            client_name = self._normalize_text(project.get("client"))
+            if client_name and client_name in content_lower:
                 score += 2
 
+            # Alias mentions (short aliases matter, e.g. WFC)
+            for alias in self._extract_aliases(project):
+                alias_norm = self._normalize_text(alias)
+                if alias_norm and self._contains_token(content_lower, alias_norm):
+                    score += 2 if len(alias_norm) <= 5 else 1.5
+
             if score > 0:
-                project_scores[project["id"]] = score
+                project_scores[int(project_id)] = score
 
         if not project_scores:
             return None, 0.0
@@ -170,6 +199,49 @@ class ProjectAssigner:
         confidence = min(0.7, best_score / 5.0)
 
         return best_project_id, confidence
+
+    @staticmethod
+    def _normalize_text(value: Optional[str]) -> str:
+        if not value:
+            return ""
+        return re.sub(r"\s+", " ", value).strip().lower()
+
+    @staticmethod
+    def _contains_token(text: str, token: str) -> bool:
+        if not token:
+            return False
+        return bool(re.search(rf"\b{re.escape(token)}\b", text))
+
+    @staticmethod
+    def _extract_aliases(project: Dict[str, Any]) -> List[str]:
+        aliases = project.get("aliases") or []
+        return [str(a).strip() for a in aliases if str(a).strip()]
+
+    @staticmethod
+    def _extract_domains(values: List[str]) -> set[str]:
+        domains: set[str] = set()
+        for value in values:
+            if not value:
+                continue
+            for match in re.findall(r"[a-zA-Z0-9._%+\-]+@([a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})", value):
+                domains.add(match.lower())
+        return domains
+
+    def _project_domains(self, project: Dict[str, Any]) -> set[str]:
+        domains: set[str] = set()
+        team_members = project.get("team_members") or []
+        for member in team_members:
+            domains.update(self._extract_domains([str(member)]))
+
+        stakeholders = project.get("stakeholders") or []
+        if isinstance(stakeholders, list):
+            for item in stakeholders:
+                domains.update(self._extract_domains([str(item)]))
+        elif isinstance(stakeholders, dict):
+            for value in stakeholders.values():
+                domains.update(self._extract_domains([str(value)]))
+
+        return domains
 
 
 def batch_assign_projects(

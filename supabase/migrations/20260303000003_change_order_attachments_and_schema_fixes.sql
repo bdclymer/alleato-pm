@@ -43,19 +43,15 @@ create table if not exists public.change_order_attachments (
   uploaded_at     timestamptz not null default now(),
   created_at      timestamptz not null default now()
 );
-
 comment on table public.change_order_attachments is
   'File attachments for change orders. Metadata is stored here; '
   'actual files live in the project-files Supabase Storage bucket '
   'at path change-orders/{projectId}/{changeOrderId}/{fileName}.';
-
 comment on column public.change_order_attachments.file_path is
   'Storage path inside the project-files bucket, e.g. '
   '"change-orders/67/123/1700000000000_abc123.pdf".';
-
 comment on column public.change_order_attachments.file_size is
   'File size in bytes. API enforces a maximum of 52428800 (50 MB).';
-
 -- ============================================================
 -- 2. RLS for change_order_attachments
 -- ============================================================
@@ -67,22 +63,18 @@ comment on column public.change_order_attachments.file_size is
 -- ============================================================
 
 alter table public.change_order_attachments enable row level security;
-
 create policy change_order_attachments_select
   on public.change_order_attachments
   for select
   using (auth.uid() is not null);
-
 create policy change_order_attachments_insert
   on public.change_order_attachments
   for insert
   with check (auth.uid() is not null);
-
 create policy change_order_attachments_delete
   on public.change_order_attachments
   for delete
   using (auth.uid() is not null);
-
 -- (No UPDATE policy — attachments are immutable; delete + re-upload to replace.)
 
 -- ============================================================
@@ -92,11 +84,9 @@ create policy change_order_attachments_delete
 -- Primary lookup: all attachments for a given change order, newest first.
 create index if not exists idx_change_order_attachments_change_order_id
   on public.change_order_attachments (change_order_id, uploaded_at desc);
-
 -- RLS policy column — needed so the policy scan on uploaded_by is fast.
 create index if not exists idx_change_order_attachments_uploaded_by
   on public.change_order_attachments (uploaded_by);
-
 -- ============================================================
 -- 4. Missing columns on change_orders
 -- ============================================================
@@ -109,37 +99,28 @@ create index if not exists idx_change_order_attachments_uploaded_by
 -- revision: change order revision number (e.g. 0, 1, 2 …)
 alter table public.change_orders
   add column if not exists revision integer;
-
 comment on column public.change_orders.revision is
   'Revision counter for the change order, starting at 0. Incremented '
   'when a new revision is issued after initial submission.';
-
 -- date_initiated: when the change event that drove this CO was first identified
 alter table public.change_orders
   add column if not exists date_initiated date;
-
 comment on column public.change_orders.date_initiated is
   'Date the change order was initiated / the triggering change event occurred.';
-
 -- review_date: scheduled or actual date for the approval review
 alter table public.change_orders
   add column if not exists review_date date;
-
 comment on column public.change_orders.review_date is
   'Date on which the designated reviewer is expected to review the CO.';
-
 -- scope: whether the work is within or outside the original contract scope
 alter table public.change_orders
   add column if not exists scope text
   check (scope in ('in_scope', 'out_of_scope', 'tbd'));
-
 comment on column public.change_orders.scope is
   'Scope classification: in_scope | out_of_scope | tbd.';
-
 -- schedule_impact: whether the change order affects the project schedule
 alter table public.change_orders
   add column if not exists schedule_impact text
   check (schedule_impact in ('yes', 'no', 'unknown'));
-
 comment on column public.change_orders.schedule_impact is
   'Whether the change order has a schedule impact: yes | no | unknown.';

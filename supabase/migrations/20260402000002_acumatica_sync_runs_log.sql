@@ -18,12 +18,9 @@ CREATE TABLE IF NOT EXISTS public.acumatica_sync_runs (
   stats JSONB,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-
 CREATE INDEX IF NOT EXISTS acumatica_sync_runs_entity_name_idx
   ON public.acumatica_sync_runs (entity_name);
-
 CREATE INDEX IF NOT EXISTS acumatica_sync_runs_started_at_desc_idx
   ON public.acumatica_sync_runs (started_at DESC);
-
 CREATE INDEX IF NOT EXISTS acumatica_sync_runs_entity_started_at_desc_idx
   ON public.acumatica_sync_runs (entity_name, started_at DESC);

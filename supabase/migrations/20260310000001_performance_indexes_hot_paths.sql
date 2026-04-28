@@ -2,7 +2,6 @@
 -- Safe-by-default: every change is guarded by table existence checks and IF NOT EXISTS.
 
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
-
 DO $$
 BEGIN
   -- Drawings: list/filter/search and duplicate checks

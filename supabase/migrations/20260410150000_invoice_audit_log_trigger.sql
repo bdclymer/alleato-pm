@@ -31,7 +31,6 @@ BEGIN
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
-
 -- 2. Trigger function: log status changes
 CREATE OR REPLACE FUNCTION log_subcontractor_invoice_status_change()
 RETURNS TRIGGER AS $$
@@ -58,20 +57,17 @@ BEGIN
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
-
 -- 3. Create triggers
 DROP TRIGGER IF EXISTS trg_subcontractor_invoice_created ON subcontractor_invoices;
 CREATE TRIGGER trg_subcontractor_invoice_created
   AFTER INSERT ON subcontractor_invoices
   FOR EACH ROW
   EXECUTE FUNCTION log_subcontractor_invoice_created();
-
 DROP TRIGGER IF EXISTS trg_subcontractor_invoice_status_change ON subcontractor_invoices;
 CREATE TRIGGER trg_subcontractor_invoice_status_change
   AFTER UPDATE ON subcontractor_invoices
   FOR EACH ROW
   EXECUTE FUNCTION log_subcontractor_invoice_status_change();
-
 -- 4. Backfill: create "invoice.created" entries for existing invoices that have no audit log
 INSERT INTO subcontractor_invoice_audit_log (
   invoice_id,

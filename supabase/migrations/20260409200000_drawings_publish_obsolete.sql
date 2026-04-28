@@ -2,14 +2,11 @@
 ALTER TABLE drawings
   ADD COLUMN IF NOT EXISTS is_published boolean NOT NULL DEFAULT true,
   ADD COLUMN IF NOT EXISTS is_obsolete  boolean NOT NULL DEFAULT false;
-
 -- Index for efficient filtering
 CREATE INDEX IF NOT EXISTS idx_drawings_is_published ON drawings (is_published);
 CREATE INDEX IF NOT EXISTS idx_drawings_is_obsolete  ON drawings (is_obsolete);
-
 -- Drop and recreate drawing_log view to include is_published and is_obsolete
 DROP VIEW IF EXISTS public.drawing_log;
-
 CREATE VIEW public.drawing_log AS
  SELECT d.id,
     d.project_id,

@@ -264,6 +264,21 @@ export default function MemorySettingsPage() {
     }
   }
 
+  async function handleClearAll() {
+    const confirmed = window.confirm(
+      "Clear all active conversation memories for your account? This cannot be undone.",
+    );
+    if (!confirmed) return;
+
+    const res = await fetch("/api/ai-assistant/memories", {
+      method: "DELETE",
+    });
+    if (res.ok) {
+      setMemories([]);
+      setTotal(0);
+    }
+  }
+
   // Group by type for display
   const grouped = React.useMemo(() => {
     const map = new Map<MemoryType, Memory[]>();
@@ -298,15 +313,27 @@ export default function MemorySettingsPage() {
             {total} {total === 1 ? "memory" : "memories"}
           </span>
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => loadMemories(typeFilter)}
-          className="gap-1.5 text-muted-foreground"
-        >
-          <RefreshCw />
-          Refresh
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => loadMemories(typeFilter)}
+            className="gap-1.5 text-muted-foreground"
+          >
+            <RefreshCw />
+            Refresh
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleClearAll}
+            disabled={total === 0}
+            className="gap-1.5"
+          >
+            <Trash2 />
+            Clear my conversation memory
+          </Button>
+        </div>
       </div>
 
       {/* Memory list */}

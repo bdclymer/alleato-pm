@@ -15,7 +15,6 @@ BEGIN
     ALTER TYPE invoice_status ADD VALUE 'approved_as_noted';
   END IF;
 END $$;
-
 -- ─── invoice_payments ────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS invoice_payments (
   id                      BIGSERIAL PRIMARY KEY,
@@ -38,18 +37,15 @@ CREATE TABLE IF NOT EXISTS invoice_payments (
     (owner_invoice_id IS NULL AND subcontractor_invoice_id IS NOT NULL)
   )
 );
-
 CREATE INDEX IF NOT EXISTS idx_invoice_payments_project_id     ON invoice_payments(project_id);
 CREATE INDEX IF NOT EXISTS idx_invoice_payments_owner_invoice  ON invoice_payments(owner_invoice_id);
 CREATE INDEX IF NOT EXISTS idx_invoice_payments_sub_invoice    ON invoice_payments(subcontractor_invoice_id);
 CREATE INDEX IF NOT EXISTS idx_invoice_payments_date           ON invoice_payments(payment_date DESC);
-
 ALTER TABLE invoice_payments ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Authenticated users can manage invoice_payments"
   ON invoice_payments FOR ALL
   TO authenticated
   USING (true) WITH CHECK (true);
-
 -- ─── invoice_attachments ─────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS invoice_attachments (
   id                       BIGSERIAL PRIMARY KEY,
@@ -68,16 +64,13 @@ CREATE TABLE IF NOT EXISTS invoice_attachments (
     (owner_invoice_id IS NULL AND subcontractor_invoice_id IS NOT NULL)
   )
 );
-
 CREATE INDEX IF NOT EXISTS idx_invoice_attach_owner   ON invoice_attachments(owner_invoice_id);
 CREATE INDEX IF NOT EXISTS idx_invoice_attach_sub     ON invoice_attachments(subcontractor_invoice_id);
-
 ALTER TABLE invoice_attachments ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Authenticated users can manage invoice_attachments"
   ON invoice_attachments FOR ALL
   TO authenticated
   USING (true) WITH CHECK (true);
-
 -- ─── invoicing_settings ──────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS invoicing_settings (
   id                                BIGSERIAL PRIMARY KEY,
@@ -95,28 +88,23 @@ CREATE TABLE IF NOT EXISTS invoicing_settings (
   created_at                        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at                        TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-
 ALTER TABLE invoicing_settings ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Authenticated users can manage invoicing_settings"
   ON invoicing_settings FOR ALL
   TO authenticated
   USING (true) WITH CHECK (true);
-
 -- ─── Supabase Storage bucket for invoice attachments ──────────────────────────
 INSERT INTO storage.buckets (id, name, public, file_size_limit)
 VALUES ('invoice-attachments', 'invoice-attachments', false, 52428800)  -- 50MB
 ON CONFLICT (id) DO NOTHING;
-
 CREATE POLICY "Authenticated can upload invoice attachments"
   ON storage.objects FOR INSERT
   TO authenticated
   WITH CHECK (bucket_id = 'invoice-attachments');
-
 CREATE POLICY "Authenticated can read invoice attachments"
   ON storage.objects FOR SELECT
   TO authenticated
   USING (bucket_id = 'invoice-attachments');
-
 CREATE POLICY "Authenticated can delete invoice attachments"
   ON storage.objects FOR DELETE
   TO authenticated

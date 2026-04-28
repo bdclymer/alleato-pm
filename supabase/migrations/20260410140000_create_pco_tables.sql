@@ -29,11 +29,9 @@ CREATE TABLE public.prime_contract_pcos (
     promoted_to_co_id BIGINT REFERENCES public.prime_contract_change_orders(id),
     promoted_at TIMESTAMPTZ
 );
-
 CREATE INDEX idx_prime_contract_pcos_project ON public.prime_contract_pcos(project_id);
 CREATE INDEX idx_prime_contract_pcos_contract ON public.prime_contract_pcos(prime_contract_id);
 CREATE INDEX idx_prime_contract_pcos_status ON public.prime_contract_pcos(status);
-
 -- -------------------------------------------------------
 -- 2. Commitment Potential Change Orders
 -- -------------------------------------------------------
@@ -61,11 +59,9 @@ CREATE TABLE public.commitment_pcos (
     promoted_to_co_id UUID REFERENCES public.contract_change_orders(id),
     promoted_at TIMESTAMPTZ
 );
-
 CREATE INDEX idx_commitment_pcos_project ON public.commitment_pcos(project_id);
 CREATE INDEX idx_commitment_pcos_commitment ON public.commitment_pcos(commitment_id);
 CREATE INDEX idx_commitment_pcos_status ON public.commitment_pcos(status);
-
 -- -------------------------------------------------------
 -- 3. PCO Line Items (shared for both types)
 -- -------------------------------------------------------
@@ -86,10 +82,8 @@ CREATE TABLE public.pco_line_items (
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-
 CREATE INDEX idx_pco_line_items_pco ON public.pco_line_items(pco_id, pco_type);
 CREATE INDEX idx_pco_line_items_change_event ON public.pco_line_items(change_event_id);
-
 -- -------------------------------------------------------
 -- 4. Change Event ↔ PCO Links (many-to-many)
 -- -------------------------------------------------------
@@ -102,18 +96,15 @@ CREATE TABLE public.change_event_pco_links (
     linked_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     linked_by UUID
 );
-
 CREATE UNIQUE INDEX idx_change_event_pco_links_unique
     ON public.change_event_pco_links(change_event_id, pco_id, pco_type);
 CREATE INDEX idx_change_event_pco_links_pco ON public.change_event_pco_links(pco_id, pco_type);
-
 -- -------------------------------------------------------
 -- 5. Add tracking columns to change_events
 -- -------------------------------------------------------
 ALTER TABLE public.change_events
     ADD COLUMN IF NOT EXISTS sent_to_prime_pco BOOLEAN DEFAULT false,
     ADD COLUMN IF NOT EXISTS sent_to_commitment_pco BOOLEAN DEFAULT false;
-
 -- -------------------------------------------------------
 -- 6. RLS Policies
 -- -------------------------------------------------------
@@ -121,49 +112,40 @@ ALTER TABLE public.prime_contract_pcos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.commitment_pcos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.pco_line_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.change_event_pco_links ENABLE ROW LEVEL SECURITY;
-
 -- Allow authenticated users full access (project-level auth handled in app layer)
 CREATE POLICY "Authenticated users can manage prime_contract_pcos"
     ON public.prime_contract_pcos FOR ALL
     TO authenticated
     USING (true) WITH CHECK (true);
-
 CREATE POLICY "Authenticated users can manage commitment_pcos"
     ON public.commitment_pcos FOR ALL
     TO authenticated
     USING (true) WITH CHECK (true);
-
 CREATE POLICY "Authenticated users can manage pco_line_items"
     ON public.pco_line_items FOR ALL
     TO authenticated
     USING (true) WITH CHECK (true);
-
 CREATE POLICY "Authenticated users can manage change_event_pco_links"
     ON public.change_event_pco_links FOR ALL
     TO authenticated
     USING (true) WITH CHECK (true);
-
 -- Service role bypass
 CREATE POLICY "Service role full access to prime_contract_pcos"
     ON public.prime_contract_pcos FOR ALL
     TO service_role
     USING (true) WITH CHECK (true);
-
 CREATE POLICY "Service role full access to commitment_pcos"
     ON public.commitment_pcos FOR ALL
     TO service_role
     USING (true) WITH CHECK (true);
-
 CREATE POLICY "Service role full access to pco_line_items"
     ON public.pco_line_items FOR ALL
     TO service_role
     USING (true) WITH CHECK (true);
-
 CREATE POLICY "Service role full access to change_event_pco_links"
     ON public.change_event_pco_links FOR ALL
     TO service_role
     USING (true) WITH CHECK (true);
-
 -- -------------------------------------------------------
 -- 7. Auto-number function for PCOs
 -- -------------------------------------------------------

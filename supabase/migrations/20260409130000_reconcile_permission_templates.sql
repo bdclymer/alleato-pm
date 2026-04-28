@@ -20,11 +20,9 @@
 -- "Client (View Only)" is superseded by "Owner / Client" and deleted.
 
 BEGIN;
-
 -- 1. Drop superseded template.
 DELETE FROM public.permission_templates
 WHERE name = 'Client (View Only)';
-
 -- 2. Enrich Superintendent defaults — original rules_json only covered
 --    schedule + directory + documents + submittals. Add read access to the
 --    financial + RFI modules so superintendents can see project context
@@ -42,11 +40,9 @@ SET rules_json = '{
 }'::jsonb,
     description = 'Field operations lead. Full control of schedule; write access on field-execution modules (RFIs, submittals, documents); read-only on financials.'
 WHERE name = 'Superintendent';
-
 -- 3. Normalize Project Manager description so the two generations read
 --    consistently (rules_json already matches the richer April version).
 UPDATE public.permission_templates
 SET description = 'Full write access across all project modules. Cannot administer directory or permissions.'
 WHERE name = 'Project Manager';
-
 COMMIT;

@@ -8,7 +8,6 @@ DROP FUNCTION IF EXISTS search_document_chunks_by_category(vector, text, integer
 DROP FUNCTION IF EXISTS search_document_chunks_by_category(vector(1536), text, integer, double precision);
 DROP FUNCTION IF EXISTS search_document_chunks_by_category(vector, text, integer, float);
 DROP FUNCTION IF EXISTS search_document_chunks_by_category(vector(1536), text, integer, float);
-
 CREATE OR REPLACE FUNCTION search_document_chunks_by_category(
     query_embedding  vector(1536),
     filter_category  text,
@@ -66,18 +65,14 @@ BEGIN
     LIMIT match_count;
 END;
 $$;
-
 -- Index for fast category lookups on document_metadata
 CREATE INDEX IF NOT EXISTS idx_document_metadata_category
     ON document_metadata (category);
-
 CREATE INDEX IF NOT EXISTS idx_document_metadata_category_date
     ON document_metadata (category, date DESC NULLS LAST);
-
 -- HNSW index on document_chunks.embedding (if not already present)
 CREATE INDEX IF NOT EXISTS idx_document_chunks_embedding
     ON document_chunks
     USING hnsw (embedding vector_cosine_ops)
     WITH (m = 32, ef_construction = 200);
-
 GRANT EXECUTE ON FUNCTION search_document_chunks_by_category TO anon, authenticated, service_role;

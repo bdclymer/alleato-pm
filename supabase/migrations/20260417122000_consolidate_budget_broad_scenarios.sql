@@ -13,7 +13,6 @@ SET test_name = 'Open Budget and verify table + standard columns',
 WHERE tc.suite_id = (SELECT id FROM suite)
   AND tc.test_type = 'scenario'
   AND tc.test_number = '1.1';
-
 WITH suite AS (
   SELECT id FROM public.test_suites WHERE tool_name = 'budget'
 )
@@ -21,7 +20,6 @@ DELETE FROM public.test_cases tc
 WHERE tc.suite_id = (SELECT id FROM suite)
   AND tc.test_type = 'scenario'
   AND tc.test_number IN ('2.1', '2.2');
-
 WITH suite AS (
   SELECT id FROM public.test_suites WHERE tool_name = 'budget'
 )
@@ -31,7 +29,6 @@ SET test_number = '2.1.tmp',
 WHERE tc.suite_id = (SELECT id FROM suite)
   AND tc.test_type = 'scenario'
   AND tc.test_number = '3.1';
-
 WITH suite AS (
   SELECT id FROM public.test_suites WHERE tool_name = 'budget'
 )
@@ -41,7 +38,6 @@ SET test_number = '2.2.tmp',
 WHERE tc.suite_id = (SELECT id FROM suite)
   AND tc.test_type = 'scenario'
   AND tc.test_number = '3.2';
-
 WITH suite AS (
   SELECT id FROM public.test_suites WHERE tool_name = 'budget'
 )
@@ -51,7 +47,6 @@ SET test_number = '3.1.tmp',
 WHERE tc.suite_id = (SELECT id FROM suite)
   AND tc.test_type = 'scenario'
   AND tc.test_number = '4.1';
-
 WITH suite AS (
   SELECT id FROM public.test_suites WHERE tool_name = 'budget'
 )
@@ -61,7 +56,6 @@ SET test_number = '4.1.tmp',
 WHERE tc.suite_id = (SELECT id FROM suite)
   AND tc.test_type = 'scenario'
   AND tc.test_number = '5.1';
-
 WITH suite AS (
   SELECT id FROM public.test_suites WHERE tool_name = 'budget'
 )
@@ -71,7 +65,6 @@ SET test_number = '5.1.tmp',
 WHERE tc.suite_id = (SELECT id FROM suite)
   AND tc.test_type = 'scenario'
   AND tc.test_number = '6.1';
-
 WITH suite AS (
   SELECT id FROM public.test_suites WHERE tool_name = 'budget'
 )
@@ -81,7 +74,6 @@ SET test_number = '6.1.tmp',
 WHERE tc.suite_id = (SELECT id FROM suite)
   AND tc.test_type = 'scenario'
   AND tc.test_number = '7.1';
-
 WITH suite AS (
   SELECT id FROM public.test_suites WHERE tool_name = 'budget'
 )
@@ -91,7 +83,6 @@ SET test_number = '2.1',
 WHERE tc.suite_id = (SELECT id FROM suite)
   AND tc.test_type = 'scenario'
   AND tc.test_number = '2.1.tmp';
-
 WITH suite AS (
   SELECT id FROM public.test_suites WHERE tool_name = 'budget'
 )
@@ -101,7 +92,6 @@ SET test_number = '2.2',
 WHERE tc.suite_id = (SELECT id FROM suite)
   AND tc.test_type = 'scenario'
   AND tc.test_number = '2.2.tmp';
-
 WITH suite AS (
   SELECT id FROM public.test_suites WHERE tool_name = 'budget'
 )
@@ -111,7 +101,6 @@ SET test_number = '3.1',
 WHERE tc.suite_id = (SELECT id FROM suite)
   AND tc.test_type = 'scenario'
   AND tc.test_number = '3.1.tmp';
-
 WITH suite AS (
   SELECT id FROM public.test_suites WHERE tool_name = 'budget'
 )
@@ -121,7 +110,6 @@ SET test_number = '4.1',
 WHERE tc.suite_id = (SELECT id FROM suite)
   AND tc.test_type = 'scenario'
   AND tc.test_number = '4.1.tmp';
-
 WITH suite AS (
   SELECT id FROM public.test_suites WHERE tool_name = 'budget'
 )
@@ -131,7 +119,6 @@ SET test_number = '5.1',
 WHERE tc.suite_id = (SELECT id FROM suite)
   AND tc.test_type = 'scenario'
   AND tc.test_number = '5.1.tmp';
-
 WITH suite AS (
   SELECT id FROM public.test_suites WHERE tool_name = 'budget'
 )
@@ -141,7 +128,6 @@ SET test_number = '6.1',
 WHERE tc.suite_id = (SELECT id FROM suite)
   AND tc.test_type = 'scenario'
   AND tc.test_number = '6.1.tmp';
-
 UPDATE public.test_suites ts
 SET total_cases = (
   SELECT COUNT(*) FROM public.test_cases tc WHERE tc.suite_id = ts.id

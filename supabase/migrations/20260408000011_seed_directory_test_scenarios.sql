@@ -8,7 +8,6 @@ VALUES ('directory', 'Directory')
 ON CONFLICT (tool_name) DO UPDATE
   SET display_name      = EXCLUDED.display_name,
       last_generated_at = now();
-
 -- ── 2. Insert / update test cases ─────────────────────────────────
 DO $$
 DECLARE

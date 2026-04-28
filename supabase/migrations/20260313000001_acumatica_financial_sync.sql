@@ -13,7 +13,6 @@ CREATE TABLE IF NOT EXISTS public.acumatica_sync_state (
   last_stats JSONB,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-
 CREATE TABLE IF NOT EXISTS public.acumatica_ap_bills (
   id BIGSERIAL PRIMARY KEY,
   external_key TEXT NOT NULL UNIQUE,
@@ -43,7 +42,6 @@ CREATE TABLE IF NOT EXISTS public.acumatica_ap_bills (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-
 CREATE INDEX IF NOT EXISTS acumatica_ap_bills_reference_nbr_idx
   ON public.acumatica_ap_bills (reference_nbr);
 CREATE INDEX IF NOT EXISTS acumatica_ap_bills_project_id_idx
@@ -52,7 +50,6 @@ CREATE INDEX IF NOT EXISTS acumatica_ap_bills_vendor_id_idx
   ON public.acumatica_ap_bills (vendor_id);
 CREATE INDEX IF NOT EXISTS acumatica_ap_bills_last_modified_at_idx
   ON public.acumatica_ap_bills (last_modified_at DESC);
-
 CREATE TABLE IF NOT EXISTS public.acumatica_ap_bill_lines (
   id BIGSERIAL PRIMARY KEY,
   bill_id BIGINT NOT NULL REFERENCES public.acumatica_ap_bills(id) ON DELETE CASCADE,
@@ -75,14 +72,12 @@ CREATE TABLE IF NOT EXISTS public.acumatica_ap_bill_lines (
   raw_payload JSONB,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-
 CREATE INDEX IF NOT EXISTS acumatica_ap_bill_lines_bill_id_idx
   ON public.acumatica_ap_bill_lines (bill_id);
 CREATE INDEX IF NOT EXISTS acumatica_ap_bill_lines_project_code_idx
   ON public.acumatica_ap_bill_lines (project_code);
 CREATE INDEX IF NOT EXISTS acumatica_ap_bill_lines_cost_code_idx
   ON public.acumatica_ap_bill_lines (cost_code);
-
 CREATE TABLE IF NOT EXISTS public.acumatica_checks (
   id BIGSERIAL PRIMARY KEY,
   external_key TEXT NOT NULL UNIQUE,
@@ -104,12 +99,10 @@ CREATE TABLE IF NOT EXISTS public.acumatica_checks (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-
 CREATE INDEX IF NOT EXISTS acumatica_checks_vendor_id_idx
   ON public.acumatica_checks (vendor_id);
 CREATE INDEX IF NOT EXISTS acumatica_checks_application_date_idx
   ON public.acumatica_checks (application_date DESC);
-
 CREATE TABLE IF NOT EXISTS public.acumatica_project_budgets (
   id BIGSERIAL PRIMARY KEY,
   external_key TEXT NOT NULL UNIQUE,
@@ -147,24 +140,20 @@ CREATE TABLE IF NOT EXISTS public.acumatica_project_budgets (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-
 CREATE INDEX IF NOT EXISTS acumatica_project_budgets_project_code_idx
   ON public.acumatica_project_budgets (project_code);
 CREATE INDEX IF NOT EXISTS acumatica_project_budgets_project_id_idx
   ON public.acumatica_project_budgets (project_id);
 CREATE INDEX IF NOT EXISTS acumatica_project_budgets_cost_code_idx
   ON public.acumatica_project_budgets (cost_code);
-
 ALTER TABLE public.direct_costs
   ADD COLUMN IF NOT EXISTS acumatica_document_key TEXT,
   ADD COLUMN IF NOT EXISTS acumatica_ref_nbr TEXT,
   ADD COLUMN IF NOT EXISTS acumatica_doc_type TEXT,
   ADD COLUMN IF NOT EXISTS acumatica_financial_period TEXT,
   ADD COLUMN IF NOT EXISTS acumatica_sync_at TIMESTAMPTZ;
-
 CREATE UNIQUE INDEX IF NOT EXISTS direct_costs_acumatica_document_key_key
   ON public.direct_costs (acumatica_document_key);
-
 CREATE INDEX IF NOT EXISTS direct_costs_acumatica_ref_nbr_idx
   ON public.direct_costs (acumatica_ref_nbr)
   WHERE acumatica_ref_nbr IS NOT NULL;

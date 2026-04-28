@@ -67,7 +67,6 @@ BEGIN
   RETURN;
 END;
 $$;
-
 REVOKE ALL ON FUNCTION public.upsert_budget_line_amount(
   bigint, text, uuid, uuid, text, numeric, numeric, text, numeric, uuid
 ) FROM PUBLIC;
@@ -77,7 +76,6 @@ GRANT EXECUTE ON FUNCTION public.upsert_budget_line_amount(
 GRANT EXECUTE ON FUNCTION public.upsert_budget_line_amount(
   bigint, text, uuid, uuid, text, numeric, numeric, text, numeric, uuid
 ) TO service_role;
-
 -- ---------------------------------------------------------------------------
 -- Budget table RLS tightening
 -- ---------------------------------------------------------------------------
@@ -88,12 +86,10 @@ ALTER TABLE public.budget_modifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.budget_modification_lines ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.budget_views ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.budget_view_columns ENABLE ROW LEVEL SECURITY;
-
 DROP POLICY IF EXISTS budget_lines_select ON public.budget_lines;
 DROP POLICY IF EXISTS budget_lines_insert ON public.budget_lines;
 DROP POLICY IF EXISTS budget_lines_update ON public.budget_lines;
 DROP POLICY IF EXISTS budget_lines_delete ON public.budget_lines;
-
 CREATE POLICY budget_lines_select
   ON public.budget_lines
   FOR SELECT
@@ -102,7 +98,6 @@ CREATE POLICY budget_lines_select
     public.current_is_app_admin()
     OR public.current_is_project_member(project_id)
   );
-
 CREATE POLICY budget_lines_insert
   ON public.budget_lines
   FOR INSERT
@@ -111,7 +106,6 @@ CREATE POLICY budget_lines_insert
     public.current_is_app_admin()
     OR public.current_is_project_member(project_id)
   );
-
 CREATE POLICY budget_lines_update
   ON public.budget_lines
   FOR UPDATE
@@ -124,7 +118,6 @@ CREATE POLICY budget_lines_update
     public.current_is_app_admin()
     OR public.current_is_project_member(project_id)
   );
-
 CREATE POLICY budget_lines_delete
   ON public.budget_lines
   FOR DELETE
@@ -133,10 +126,8 @@ CREATE POLICY budget_lines_delete
     public.current_is_app_admin()
     OR public.current_is_project_member(project_id)
   );
-
 DROP POLICY IF EXISTS budget_line_history_select_for_authenticated ON public.budget_line_history;
 DROP POLICY IF EXISTS budget_line_history_insert_for_authenticated ON public.budget_line_history;
-
 CREATE POLICY budget_line_history_select_for_authenticated
   ON public.budget_line_history
   FOR SELECT
@@ -145,7 +136,6 @@ CREATE POLICY budget_line_history_select_for_authenticated
     public.current_is_app_admin()
     OR public.current_is_project_member(project_id)
   );
-
 CREATE POLICY budget_line_history_insert_for_authenticated
   ON public.budget_line_history
   FOR INSERT
@@ -154,12 +144,10 @@ CREATE POLICY budget_line_history_insert_for_authenticated
     public.current_is_app_admin()
     OR public.current_is_project_member(project_id)
   );
-
 DROP POLICY IF EXISTS budget_mod_lines_select ON public.budget_mod_lines;
 DROP POLICY IF EXISTS budget_mod_lines_insert ON public.budget_mod_lines;
 DROP POLICY IF EXISTS budget_mod_lines_update ON public.budget_mod_lines;
 DROP POLICY IF EXISTS budget_mod_lines_delete ON public.budget_mod_lines;
-
 CREATE POLICY budget_mod_lines_select
   ON public.budget_mod_lines
   FOR SELECT
@@ -168,7 +156,6 @@ CREATE POLICY budget_mod_lines_select
     public.current_is_app_admin()
     OR public.current_is_project_member(project_id)
   );
-
 CREATE POLICY budget_mod_lines_insert
   ON public.budget_mod_lines
   FOR INSERT
@@ -177,7 +164,6 @@ CREATE POLICY budget_mod_lines_insert
     public.current_is_app_admin()
     OR public.current_is_project_member(project_id)
   );
-
 CREATE POLICY budget_mod_lines_update
   ON public.budget_mod_lines
   FOR UPDATE
@@ -190,7 +176,6 @@ CREATE POLICY budget_mod_lines_update
     public.current_is_app_admin()
     OR public.current_is_project_member(project_id)
   );
-
 CREATE POLICY budget_mod_lines_delete
   ON public.budget_mod_lines
   FOR DELETE
@@ -199,12 +184,10 @@ CREATE POLICY budget_mod_lines_delete
     public.current_is_app_admin()
     OR public.current_is_project_member(project_id)
   );
-
 DROP POLICY IF EXISTS budget_modifications_select ON public.budget_modifications;
 DROP POLICY IF EXISTS budget_modifications_insert ON public.budget_modifications;
 DROP POLICY IF EXISTS budget_modifications_update ON public.budget_modifications;
 DROP POLICY IF EXISTS budget_modifications_delete ON public.budget_modifications;
-
 CREATE POLICY budget_modifications_select
   ON public.budget_modifications
   FOR SELECT
@@ -213,7 +196,6 @@ CREATE POLICY budget_modifications_select
     public.current_is_app_admin()
     OR public.current_is_project_member(project_id)
   );
-
 CREATE POLICY budget_modifications_insert
   ON public.budget_modifications
   FOR INSERT
@@ -222,7 +204,6 @@ CREATE POLICY budget_modifications_insert
     public.current_is_app_admin()
     OR public.current_is_project_member(project_id)
   );
-
 CREATE POLICY budget_modifications_update
   ON public.budget_modifications
   FOR UPDATE
@@ -235,7 +216,6 @@ CREATE POLICY budget_modifications_update
     public.current_is_app_admin()
     OR public.current_is_project_member(project_id)
   );
-
 CREATE POLICY budget_modifications_delete
   ON public.budget_modifications
   FOR DELETE
@@ -244,12 +224,10 @@ CREATE POLICY budget_modifications_delete
     public.current_is_app_admin()
     OR public.current_is_project_member(project_id)
   );
-
 DROP POLICY IF EXISTS budget_views_select ON public.budget_views;
 DROP POLICY IF EXISTS budget_views_insert ON public.budget_views;
 DROP POLICY IF EXISTS budget_views_update ON public.budget_views;
 DROP POLICY IF EXISTS budget_views_delete ON public.budget_views;
-
 CREATE POLICY budget_views_select
   ON public.budget_views
   FOR SELECT
@@ -258,7 +236,6 @@ CREATE POLICY budget_views_select
     public.current_is_app_admin()
     OR public.current_is_project_member(project_id::bigint)
   );
-
 CREATE POLICY budget_views_insert
   ON public.budget_views
   FOR INSERT
@@ -267,7 +244,6 @@ CREATE POLICY budget_views_insert
     public.current_is_app_admin()
     OR public.current_is_project_member(project_id::bigint)
   );
-
 CREATE POLICY budget_views_update
   ON public.budget_views
   FOR UPDATE
@@ -280,7 +256,6 @@ CREATE POLICY budget_views_update
     public.current_is_app_admin()
     OR public.current_is_project_member(project_id::bigint)
   );
-
 CREATE POLICY budget_views_delete
   ON public.budget_views
   FOR DELETE
@@ -289,12 +264,10 @@ CREATE POLICY budget_views_delete
     public.current_is_app_admin()
     OR public.current_is_project_member(project_id::bigint)
   );
-
 DROP POLICY IF EXISTS budget_view_columns_select ON public.budget_view_columns;
 DROP POLICY IF EXISTS budget_view_columns_insert ON public.budget_view_columns;
 DROP POLICY IF EXISTS budget_view_columns_update ON public.budget_view_columns;
 DROP POLICY IF EXISTS budget_view_columns_delete ON public.budget_view_columns;
-
 CREATE POLICY budget_view_columns_select
   ON public.budget_view_columns
   FOR SELECT
@@ -308,7 +281,6 @@ CREATE POLICY budget_view_columns_select
         AND public.current_is_project_member(bv.project_id::bigint)
     )
   );
-
 CREATE POLICY budget_view_columns_insert
   ON public.budget_view_columns
   FOR INSERT
@@ -322,7 +294,6 @@ CREATE POLICY budget_view_columns_insert
         AND public.current_is_project_member(bv.project_id::bigint)
     )
   );
-
 CREATE POLICY budget_view_columns_update
   ON public.budget_view_columns
   FOR UPDATE
@@ -345,7 +316,6 @@ CREATE POLICY budget_view_columns_update
         AND public.current_is_project_member(bv.project_id::bigint)
     )
   );
-
 CREATE POLICY budget_view_columns_delete
   ON public.budget_view_columns
   FOR DELETE
@@ -359,12 +329,10 @@ CREATE POLICY budget_view_columns_delete
         AND public.current_is_project_member(bv.project_id::bigint)
     )
   );
-
 DROP POLICY IF EXISTS budget_modification_lines_select ON public.budget_modification_lines;
 DROP POLICY IF EXISTS budget_modification_lines_insert ON public.budget_modification_lines;
 DROP POLICY IF EXISTS budget_modification_lines_update ON public.budget_modification_lines;
 DROP POLICY IF EXISTS budget_modification_lines_delete ON public.budget_modification_lines;
-
 CREATE POLICY budget_modification_lines_select
   ON public.budget_modification_lines
   FOR SELECT
@@ -378,7 +346,6 @@ CREATE POLICY budget_modification_lines_select
         AND public.current_is_project_member(bm.project_id)
     )
   );
-
 CREATE POLICY budget_modification_lines_insert
   ON public.budget_modification_lines
   FOR INSERT
@@ -392,7 +359,6 @@ CREATE POLICY budget_modification_lines_insert
         AND public.current_is_project_member(bm.project_id)
     )
   );
-
 CREATE POLICY budget_modification_lines_update
   ON public.budget_modification_lines
   FOR UPDATE
@@ -415,7 +381,6 @@ CREATE POLICY budget_modification_lines_update
         AND public.current_is_project_member(bm.project_id)
     )
   );
-
 CREATE POLICY budget_modification_lines_delete
   ON public.budget_modification_lines
   FOR DELETE
@@ -429,7 +394,6 @@ CREATE POLICY budget_modification_lines_delete
         AND public.current_is_project_member(bm.project_id)
     )
   );
-
 -- Remove anonymous access on budget financial tables and functions.
 REVOKE ALL ON TABLE public.budget_lines FROM anon;
 REVOKE ALL ON TABLE public.budget_line_history FROM anon;
@@ -438,7 +402,6 @@ REVOKE ALL ON TABLE public.budget_modifications FROM anon;
 REVOKE ALL ON TABLE public.budget_modification_lines FROM anon;
 REVOKE ALL ON TABLE public.budget_views FROM anon;
 REVOKE ALL ON TABLE public.budget_view_columns FROM anon;
-
 REVOKE EXECUTE ON FUNCTION public.refresh_budget_rollup(bigint) FROM anon;
 REVOKE EXECUTE ON FUNCTION public.clone_budget_view(uuid, character varying, text) FROM anon;
 REVOKE EXECUTE ON FUNCTION public.track_budget_line_changes() FROM anon;

@@ -9,27 +9,21 @@ ALTER TABLE memories
   ADD COLUMN IF NOT EXISTS session_id text,
   ADD COLUMN IF NOT EXISTS memory_type text DEFAULT 'conversation_summary',
   ADD COLUMN IF NOT EXISTS created_at timestamptz DEFAULT now();
-
 -- 2. Indexes for efficient lookup
 CREATE INDEX IF NOT EXISTS idx_memories_user_id ON memories(user_id);
 CREATE INDEX IF NOT EXISTS idx_memories_session_id ON memories(session_id);
 CREATE INDEX IF NOT EXISTS idx_memories_type ON memories(memory_type);
-
 -- 3. RLS: users can only read their own memories
 ALTER TABLE memories ENABLE ROW LEVEL SECURITY;
-
 CREATE POLICY "Users can view their own memories"
   ON memories FOR SELECT
   USING (auth.uid() = user_id);
-
 CREATE POLICY "Service role can manage all memories"
   ON memories FOR ALL
   USING (true)
   WITH CHECK (true);
-
 -- Grant the service role full access (used by the after() hook)
 GRANT ALL ON memories TO service_role;
-
 -- 4. Semantic search RPC — separate from search_all_knowledge
 --    to keep conversation memories user-scoped (privacy).
 CREATE OR REPLACE FUNCTION search_conversation_memories(

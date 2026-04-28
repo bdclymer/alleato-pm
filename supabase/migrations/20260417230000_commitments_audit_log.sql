@@ -13,19 +13,15 @@ CREATE TABLE IF NOT EXISTS public.commitment_audit_log (
   actor_id      uuid REFERENCES auth.users(id) ON DELETE SET NULL,
   created_at    timestamptz NOT NULL DEFAULT now()
 );
-
 CREATE INDEX IF NOT EXISTS idx_commitment_audit_log_commitment
   ON public.commitment_audit_log (commitment_id, created_at DESC);
-
 ALTER TABLE public.commitment_audit_log ENABLE ROW LEVEL SECURITY;
-
 DROP POLICY IF EXISTS commitment_audit_log_select ON public.commitment_audit_log;
 CREATE POLICY commitment_audit_log_select
   ON public.commitment_audit_log
   FOR SELECT
   TO authenticated
   USING (true);
-
 -- Generic trigger function. Uses current_setting('request.jwt.claims', true)
 -- to capture the acting user when available (set by Supabase on authenticated calls).
 CREATE OR REPLACE FUNCTION public.log_commitment_change()
@@ -92,12 +88,10 @@ BEGIN
   RETURN NULL;
 END;
 $$;
-
 DROP TRIGGER IF EXISTS trg_audit_subcontracts ON public.subcontracts;
 CREATE TRIGGER trg_audit_subcontracts
   AFTER INSERT OR UPDATE OR DELETE ON public.subcontracts
   FOR EACH ROW EXECUTE FUNCTION public.log_commitment_change();
-
 DROP TRIGGER IF EXISTS trg_audit_purchase_orders ON public.purchase_orders;
 CREATE TRIGGER trg_audit_purchase_orders
   AFTER INSERT OR UPDATE OR DELETE ON public.purchase_orders

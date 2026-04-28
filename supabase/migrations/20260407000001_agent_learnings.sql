@@ -32,38 +32,28 @@ CREATE TABLE IF NOT EXISTS public.agent_learnings (
   last_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   activated_at TIMESTAMPTZ
 );
-
 COMMENT ON TABLE public.agent_learnings IS
   'Durable agent failure-prevention patterns promoted from feedback, eval failures, and resolved issues.';
-
 COMMENT ON COLUMN public.agent_learnings.learning_key IS
   'Deterministic fingerprint used to merge repeated signals into the same learning.';
-
 COMMENT ON COLUMN public.agent_learnings.prevention_prompt IS
   'Short instruction block injected into future prompts when this learning is relevant.';
-
 CREATE INDEX IF NOT EXISTS idx_agent_learnings_status_last_seen
   ON public.agent_learnings(status, last_seen_at DESC);
-
 CREATE INDEX IF NOT EXISTS idx_agent_learnings_tool
   ON public.agent_learnings(tool_id)
   WHERE tool_id IS NOT NULL;
-
 CREATE INDEX IF NOT EXISTS idx_agent_learnings_project
   ON public.agent_learnings(project_id)
   WHERE project_id IS NOT NULL;
-
 CREATE INDEX IF NOT EXISTS idx_agent_learnings_scope_tags
   ON public.agent_learnings
   USING GIN(scope_tags);
-
 CREATE INDEX IF NOT EXISTS idx_agent_learnings_embedding
   ON public.agent_learnings
   USING hnsw (embedding halfvec_cosine_ops)
   WITH (m = 32, ef_construction = 200);
-
 ALTER TABLE public.agent_learnings ENABLE ROW LEVEL SECURITY;
-
 DO $$ BEGIN
   IF NOT EXISTS (
     SELECT 1
@@ -79,13 +69,11 @@ DO $$ BEGIN
       WITH CHECK (true);
   END IF;
 END $$;
-
 DROP TRIGGER IF EXISTS set_agent_learnings_updated_at ON public.agent_learnings;
 CREATE TRIGGER set_agent_learnings_updated_at
   BEFORE UPDATE ON public.agent_learnings
   FOR EACH ROW
   EXECUTE FUNCTION public.update_updated_at_column();
-
 CREATE TABLE IF NOT EXISTS public.agent_learning_usages (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -99,21 +87,15 @@ CREATE TABLE IF NOT EXISTS public.agent_learning_usages (
   message_excerpt TEXT,
   metadata JSONB NOT NULL DEFAULT '{}'::JSONB
 );
-
 COMMENT ON TABLE public.agent_learning_usages IS
   'Tracks when agent learnings were injected into a session and whether the outcome was positive or negative.';
-
 CREATE UNIQUE INDEX IF NOT EXISTS idx_agent_learning_usages_learning_session
   ON public.agent_learning_usages(learning_id, session_id);
-
 CREATE INDEX IF NOT EXISTS idx_agent_learning_usages_session
   ON public.agent_learning_usages(session_id, created_at DESC);
-
 CREATE INDEX IF NOT EXISTS idx_agent_learning_usages_outcome
   ON public.agent_learning_usages(outcome, created_at DESC);
-
 ALTER TABLE public.agent_learning_usages ENABLE ROW LEVEL SECURITY;
-
 DO $$ BEGIN
   IF NOT EXISTS (
     SELECT 1
@@ -129,7 +111,6 @@ DO $$ BEGIN
       WITH CHECK (true);
   END IF;
 END $$;
-
 CREATE OR REPLACE FUNCTION public.search_agent_learnings(
   query_embedding halfvec(3072),
   match_count INT DEFAULT 5,

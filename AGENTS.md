@@ -256,6 +256,24 @@ npx supabase gen types typescript --project-id "lgveqfnpkxvzbnnwuled" --schema p
 
 Then read `frontend/src/types/database.types.ts` — verify tables/columns exist. FK column type **must** match the PK type (e.g., `projects.id` is INTEGER, not UUID — a common source of silent failures).
 
+### 1A. Supabase Migration Application Gate
+
+Writing a migration is not a completed database fix. If a task creates or changes any file under `supabase/migrations/*.sql`, Codex owns applying it or explicitly recording why it is intentionally deferred.
+
+Required closeout:
+
+```bash
+npm run db:migrations:verify-applied -- supabase/migrations/<timestamp>_<name>.sql
+```
+
+Completion rules:
+
+- Do not claim a database-backed fix is done while its migration is only present locally.
+- Verify the linked Supabase remote ledger shows the migration version in both Local and Remote columns.
+- Record the migration ledger evidence in the handoff `Migration ledger evidence` field.
+- If `supabase db push` would apply unrelated pending migrations, apply the task migration deliberately and then repair/check the exact migration version.
+- If applying a migration is intentionally deferred, the final answer and handoff must say `Blocked/Deferred`, include the exact migration file, cause, detection gap, prevention step, and next owner action.
+
 ### 2. Route Naming Gate
 
 Always use specific parameter names. **Never** use generic `[id]` — causes Next.js routing conflicts that crash the dev server.

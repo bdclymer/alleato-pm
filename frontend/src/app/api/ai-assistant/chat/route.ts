@@ -15,8 +15,11 @@ import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { getLanguageModel } from "@/lib/ai/providers";
 import {
+  DEFAULT_AI_ASSISTANT_MODEL,
+  isAiAssistantModelId,
+} from "@/lib/ai/assistant-models";
+import {
   createStrategistTools,
-  STRATEGIST_MODEL,
 } from "@/lib/ai/orchestrator";
 import {
   assembleSystemPrompt,
@@ -1310,19 +1313,84 @@ function formatSourceSpecificRagContent(
 async function buildSourceSpecificRagAnswer(params: {
   supabase: ReturnType<typeof createServiceClient>;
   request: SourceSpecificRagRequest;
+  scope: Awaited<ReturnType<ReturnType<typeof createToolGuardrails>["getScope"]>>;
 }): Promise<SourceSpecificRagAnswer> {
-  const { supabase, request } = params;
+  const { supabase, request, scope } = params;
   let rows: SourceSpecificRagRow[] = [];
 
+  const adminOnlyKinds = new Set<SourceSpecificRagKind>([
+    "recent_emails",
+    "recent_teams_discussions",
+  ]);
+
+  if (adminOnlyKinds.has(request.kind) && !scope.isAdmin) {
+    const content = [
+      `**${request.label}**`,
+      "",
+      `${request.label} access is admin-only in Alleato. I can still use meetings, project records, and documents you have access to.`,
+      "",
+      `**Observability**`,
+      `- Blocked by permissions (user is not an admin).`,
+      "",
+      "**Next Step**",
+      "- Ask an admin to run this query or share the relevant thread/email context you want analyzed.",
+    ].join("\n");
+
+    return {
+      content,
+      rows: [],
+      trace: {
+        tool: "sourceSpecificRagRetrieval",
+        input: request,
+        output: { blocked: true, reason: "admin_only", kind: request.kind },
+        timestamp: new Date().toISOString(),
+      },
+    };
+  }
+
+  if (!scope.isAdmin && scope.allowedProjectIds.length === 0) {
+    const content = [
+      `**${request.label}**`,
+      "",
+      "I cannot run this source-specific query because you are not assigned to any projects in the current database scope.",
+      "",
+      `**Observability**`,
+      `- Project scope resolved to 0 allowed projects for this user.`,
+      "",
+      "**Next Step**",
+      "- Confirm the user has an active project directory membership before expecting project-scoped retrieval to work.",
+    ].join("\n");
+
+    return {
+      content,
+      rows: [],
+      trace: {
+        tool: "sourceSpecificRagRetrieval",
+        input: request,
+        output: { blocked: true, reason: "no_project_scope" },
+        timestamp: new Date().toISOString(),
+      },
+    };
+  }
+
+  const applyProjectScope = <T extends { in: (column: string, values: number[]) => T }>(
+    query: T,
+  ): T => {
+    if (scope.isAdmin) return query;
+    return query.in("project_id", scope.allowedProjectIds);
+  };
+
   if (request.kind === "meetings_on_date") {
-    const { data, error } = await supabase
-      .from("document_metadata")
-      .select("id,title,source,category,type,date,created_at,content")
-      .or("source.eq.fireflies,source.eq.Zapier,type.eq.meeting,type.eq.meeting_transcript,category.eq.meeting")
-      .gte("date", `${request.date}T00:00:00.000Z`)
-      .lte("date", `${request.date}T23:59:59.999Z`)
-      .order("date", { ascending: false })
-      .limit(request.limit);
+    const { data, error } = await applyProjectScope(
+      supabase
+        .from("document_metadata")
+        .select("id,title,source,category,type,date,created_at,content,project_id")
+        .or("source.eq.fireflies,source.eq.Zapier,type.eq.meeting,type.eq.meeting_transcript,category.eq.meeting")
+        .gte("date", `${request.date}T00:00:00.000Z`)
+        .lte("date", `${request.date}T23:59:59.999Z`)
+        .order("date", { ascending: false })
+        .limit(request.limit),
+    );
     if (error) throw new Error(error.message);
     rows = (data ?? []) as SourceSpecificRagRow[];
   }
@@ -1341,14 +1409,16 @@ async function buildSourceSpecificRagAnswer(params: {
   }
 
   if (request.kind === "recent_onedrive_documents") {
-    const { data, error } = await supabase
-      .from("document_metadata")
-      .select("id,title,source,category,type,date,created_at,content")
-      .eq("source", "microsoft_graph")
-      .eq("category", "document")
-      .order("date", { ascending: false, nullsFirst: false })
-      .order("created_at", { ascending: false })
-      .limit(request.limit);
+    const { data, error } = await applyProjectScope(
+      supabase
+        .from("document_metadata")
+        .select("id,title,source,category,type,date,created_at,content,project_id")
+        .eq("source", "microsoft_graph")
+        .eq("category", "document")
+        .order("date", { ascending: false, nullsFirst: false })
+        .order("created_at", { ascending: false })
+        .limit(request.limit),
+    );
     if (error) throw new Error(error.message);
     rows = (data ?? []) as SourceSpecificRagRow[];
   }
@@ -1844,6 +1914,7 @@ async function generateRecoveryResponse(params: {
   userMessage: string;
   cause: string;
   selectedProjectId?: number;
+  modelId: string;
   toolTrace: Array<Record<string, unknown>>;
 }): Promise<string> {
   const fallback = createStrategistFailureResponse(params);
@@ -1857,7 +1928,7 @@ async function generateRecoveryResponse(params: {
 
   try {
     const result = await generateText({
-      model: getLanguageModel(STRATEGIST_MODEL),
+      model: getLanguageModel(params.modelId),
       system:
         "You are Alleato's Chief Strategist. The primary tool-enabled run failed to produce final text. " +
         "Write a concise, natural recovery response to the user. Do not pretend data was retrieved. " +
@@ -1898,6 +1969,7 @@ async function persistAssistantMessage(params: {
   };
   responseQuality: ResponseQuality;
   councilMode?: boolean;
+  modelId: string;
   loopDiagnostic?: LoopDiagnostic;
   projectBriefingSnapshot?: ProjectBriefingSnapshot | null;
   executiveBriefingRetrieval?: ExecutiveBriefingRetrievalPacket | null;
@@ -1913,6 +1985,7 @@ async function persistAssistantMessage(params: {
     totalUsage,
     responseQuality,
     councilMode,
+    modelId,
     loopDiagnostic,
     projectBriefingSnapshot,
     executiveBriefingRetrieval,
@@ -1926,7 +1999,7 @@ async function persistAssistantMessage(params: {
     metadata: JSON.parse(
       JSON.stringify({
         tool_trace: toolTrace,
-        model: STRATEGIST_MODEL,
+        model: modelId,
         architecture: "csuite",
         councilMode: councilMode ?? false,
         memory_usage: memoryUsage
@@ -2065,12 +2138,16 @@ export const POST = withApiGuardrails(
     }
 
     const body = await request.json();
-    const { id: sessionId, messages, councilMode, selectedProjectId } = body as {
+    const { id: sessionId, messages, councilMode, selectedProjectId, selectedModel } = body as {
       id: string;
       messages: UIMessage[];
       councilMode?: boolean;
       selectedProjectId?: number;
+      selectedModel?: unknown;
     };
+    const activeModel = isAiAssistantModelId(selectedModel)
+      ? selectedModel
+      : DEFAULT_AI_ASSISTANT_MODEL;
 
     if (!sessionId || !messages?.length) {
       return new Response("session id and messages are required", {
@@ -2156,9 +2233,13 @@ export const POST = withApiGuardrails(
             status: "loading",
           });
 
+          const scope = await createToolGuardrails(user.id, {
+            pinnedProjectId: selectedProjectId,
+          }).getScope();
           const sourceSpecificAnswer = await buildSourceSpecificRagAnswer({
             supabase,
             request: sourceSpecificRagRequest,
+            scope,
           });
           toolTrace.push(sourceSpecificAnswer.trace);
 
@@ -2192,6 +2273,7 @@ export const POST = withApiGuardrails(
             totalUsage: undefined,
             responseQuality,
             councilMode,
+            modelId: activeModel,
             loopDiagnostic: buildLoopDiagnostic({
               stepStarts: stepStartDiagnostics,
               steps: stepDiagnostics,
@@ -2567,6 +2649,7 @@ export const POST = withApiGuardrails(
               userMessage: lastUserContent,
               cause: "Project briefing retrieval did not return enough source data to synthesize a full answer.",
               selectedProjectId,
+              modelId: activeModel,
               toolTrace,
             }));
 
@@ -2616,6 +2699,7 @@ export const POST = withApiGuardrails(
             totalUsage: undefined,
             responseQuality,
             councilMode,
+            modelId: activeModel,
             loopDiagnostic: buildLoopDiagnostic({
               stepStarts: stepStartDiagnostics,
               steps: stepDiagnostics,
@@ -2666,7 +2750,7 @@ export const POST = withApiGuardrails(
               ...(mcpToolBundle?.tools ?? {}),
             } as ToolSet);
         const result = streamText({
-            model: getLanguageModel(STRATEGIST_MODEL),
+            model: getLanguageModel(activeModel),
             system: systemPrompt,
             messages: modelMessages,
             tools: modelTools,
@@ -2764,7 +2848,7 @@ export const POST = withApiGuardrails(
             toolTrace.push({
               tool: "sourceGroundedSynthesisFallback",
               input: {
-                primaryModel: STRATEGIST_MODEL,
+                primaryModel: activeModel,
                 synthesisModel: "openai/gpt-4.1",
                 reason: cause,
               },
@@ -2780,6 +2864,7 @@ export const POST = withApiGuardrails(
               userMessage: lastUserContent,
               cause,
               selectedProjectId,
+              modelId: activeModel,
               toolTrace,
             }));
 
@@ -2837,6 +2922,7 @@ export const POST = withApiGuardrails(
           totalUsage,
           responseQuality,
           councilMode,
+          modelId: activeModel,
           loopDiagnostic: buildLoopDiagnostic({
             stepStarts: stepStartDiagnostics,
             steps: stepDiagnostics,

@@ -4,7 +4,7 @@
  * After each AI chat response, this service:
  * 1. Fetches the conversation messages from `chat_history`
  * 2. Summarizes them with gpt-4.1-nano (cheapest model, ~$0.0001)
- * 3. Embeds the summary with text-embedding-3-small
+ * 3. Embeds the summary with text-embedding-3-small (1536 dims)
  * 4. Upserts into the `memories` table (keyed by session_id)
  *
  * The `recallPastConversations` tool in operational.ts then searches
@@ -96,7 +96,7 @@ Write in past tense. Do NOT include greetings or pleasantries.`,
 
 /**
  * Embed a summary and upsert into the memories table.
- * Uses text-embedding-3-small (same model as the RAG pipeline).
+ * Uses text-embedding-3-small (1536 dims) to match `memories.embedding` (vector(1536)).
  * Upserts by session_id — if the conversation continues, the memory is updated.
  */
 async function embedAndStoreMemory(
@@ -109,9 +109,8 @@ async function embedAndStoreMemory(
 
   // Generate embedding
   const embeddingResponse = await client.embeddings.create({
-    model: "text-embedding-3-large",
-    dimensions: 3072,
-    input: summary.substring(0, 8000), // Same truncation as backend pipeline
+    model: "text-embedding-3-small",
+    input: summary.substring(0, 8000),
   });
 
   const embedding = embeddingResponse.data[0].embedding;

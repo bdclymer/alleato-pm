@@ -15,6 +15,7 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from .client import get_graph_client
+from .project_inference import infer_project_id
 
 logger = logging.getLogger(__name__)
 
@@ -165,7 +166,9 @@ def sync_outlook_emails(
         msg_id = msg.get("id", "")
         subject = msg.get("subject", "(no subject)")
         received = msg.get("receivedDateTime", datetime.now(timezone.utc).isoformat())
-        sender_name = msg.get("from", {}).get("emailAddress", {}).get("name", user_email)
+        sender = msg.get("from", {}).get("emailAddress", {}) or {}
+        sender_name = sender.get("name", user_email)
+        sender_addr = sender.get("address", "")
 
         doc_id = f"outlook_{msg_id}"
 
@@ -188,6 +191,25 @@ def sync_outlook_emails(
 
         # Insert document_metadata — DB trigger fires the full pipeline
         try:
+            participants = [f"{sender_name} <{sender_addr}>"] if sender_addr else [sender_name]
+            for recipient in msg.get("toRecipients", []) + msg.get("ccRecipients", []):
+                email_address = recipient.get("emailAddress", {}) or {}
+                name = email_address.get("name", "")
+                address = email_address.get("address", "")
+                if address:
+                    participants.append(f"{name} <{address}>".strip())
+
+            project_id, assignment_method, assignment_confidence = infer_project_id(
+                supabase_client,
+                title=f"Email: {subject}",
+                content=body_text,
+                participants=participants,
+            )
+
+            tags = ["email", "outlook"]
+            if project_id:
+                tags.append(f"project_auto:{assignment_method}")
+
             supabase_client.from_("document_metadata").insert({
                 "id": doc_id,
                 "title": f"Email: {subject}",
@@ -196,11 +218,20 @@ def sync_outlook_emails(
                 "type": "email",
                 "content": body_text,
                 "date": received[:10] if received else None,
-                "participants": [sender_name],
+                "participants": ", ".join(participants[:50]),
                 "status": "raw_ingested",
-                "tags": ["email", "outlook"],
+                "tags": ",".join(tags),
+                "project_id": project_id,
             }).execute()
             synced += 1
+            if project_id:
+                logger.info(
+                    "[Outlook] Auto-assigned project_id=%s for %s via %s (%.2f)",
+                    project_id,
+                    msg_id,
+                    assignment_method,
+                    assignment_confidence,
+                )
         except Exception as e:
             logger.warning(f"[Outlook] Failed to insert metadata for {msg_id}: {e}")
 

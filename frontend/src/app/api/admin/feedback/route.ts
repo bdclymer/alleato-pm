@@ -247,8 +247,16 @@ async function uploadScreenshot(userId: string, screenshotDataUrl: string) {
   };
 }
 
-async function requireAdminUser() {
+async function requireFeedbackUser() {
   const requestUser = await getApiRouteUser();
+  if (!requestUser) {
+    return null;
+  }
+  return requestUser;
+}
+
+async function requireAdminUser() {
+  const requestUser = await requireFeedbackUser();
   if (!requestUser) {
     return null;
   }
@@ -256,11 +264,11 @@ async function requireAdminUser() {
   const serviceSupabase = createServiceClient();
   const { data: profile, error } = await serviceSupabase
     .from("user_profiles")
-    .select("id, is_admin")
+    .select("is_admin")
     .eq("id", requestUser.id)
     .maybeSingle();
 
-  if (error || !profile?.is_admin) {
+  if (error || profile?.is_admin !== true) {
     return null;
   }
 
@@ -268,9 +276,9 @@ async function requireAdminUser() {
 }
 
 export const POST = withApiGuardrails("/api/admin/feedback#POST", async ({ request }) => {
-  const requestUser = await requireAdminUser();
+  const requestUser = await requireFeedbackUser();
   if (!requestUser) {
-    throw new GuardrailError({ code: "FORBIDDEN", where: "/api/admin/feedback#POST", message: "Admin access required.", status: 403 });
+    throw new GuardrailError({ code: "AUTH_EXPIRED", where: "/api/admin/feedback#POST", message: "Authentication required.", status: 401 });
   }
 
   const rawBody = await request.json();

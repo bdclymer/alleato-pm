@@ -4,14 +4,17 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { apiErrorResponse } from "@/lib/api-error";
+import {
+  DRAWING_MAX_UPLOAD_BYTES,
+  DRAWING_MAX_UPLOAD_LABEL,
+  isAllowedDrawingFileType,
+} from "@/lib/drawings/upload-constraints";
 
 interface SignedRevisionUploadRequest {
   file_name: string;
   file_size: number;
   file_type?: string;
 }
-
-const DRAWING_MAX_UPLOAD_BYTES = 100 * 1024 * 1024;
 
 /** Builds a safe storage file name for Supabase object paths. */
 function sanitizeFilename(filename: string): string {
@@ -51,7 +54,16 @@ export const POST = withApiGuardrails<{ projectId: string; drawingId: string }>(
 
       if (body.file_size > DRAWING_MAX_UPLOAD_BYTES) {
         return NextResponse.json(
-          { error: "File too large. Maximum size is 100MB." },
+          { error: `File too large. Maximum size is ${DRAWING_MAX_UPLOAD_LABEL}.` },
+          { status: 400 },
+        );
+      }
+
+      if (!isAllowedDrawingFileType({ name: body.file_name, type: body.file_type ?? "" })) {
+        return NextResponse.json(
+          {
+            error: `Unsupported file type: ${body.file_type || body.file_name}. Drawings must be PDF or image files (PNG, JPEG, TIFF, SVG, WEBP) or DWG/DXF files.`,
+          },
           { status: 400 },
         );
       }

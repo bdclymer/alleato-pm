@@ -7,6 +7,7 @@ import {
   type MemoryType,
   type MemoryVisibility,
 } from "@/lib/ai/services/ai-memory-service";
+import { createServiceClient } from "@/lib/supabase/service";
 
 /** GET /api/ai-assistant/memories — list the current user's memories */
 export const GET = withApiGuardrails(
@@ -83,5 +84,37 @@ export const POST = withApiGuardrails(
     }
 
     return Response.json(result);
+  },
+);
+
+/** DELETE /api/ai-assistant/memories — clear the current user's active memories */
+export const DELETE = withApiGuardrails(
+  "ai-assistant/memories#DELETE",
+  async () => {
+    const user = await getApiRouteUser();
+    if (!user) {
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "ai-assistant/memories#DELETE",
+        message: "Authentication required.",
+      });
+    }
+
+    const supabase = createServiceClient();
+    const { error } = await supabase
+      .from("ai_memories")
+      .update({ is_active: false })
+      .eq("user_id", user.id)
+      .eq("is_active", true);
+
+    if (error) {
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: "ai-assistant/memories#DELETE",
+        message: error.message,
+      });
+    }
+
+    return Response.json({ success: true });
   },
 );

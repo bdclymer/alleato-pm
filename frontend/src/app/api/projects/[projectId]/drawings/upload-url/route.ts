@@ -4,30 +4,17 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { apiErrorResponse } from "@/lib/api-error";
+import {
+  DRAWING_MAX_UPLOAD_BYTES,
+  DRAWING_MAX_UPLOAD_LABEL,
+  isAllowedDrawingFileType,
+} from "@/lib/drawings/upload-constraints";
 
 interface SignedUploadRequest {
   file_name: string;
   file_size: number;
   file_type?: string;
 }
-
-const DRAWING_MAX_UPLOAD_BYTES = 100 * 1024 * 1024;
-
-/**
- * Allowed MIME types for drawing uploads.
- * Only PDF and common raster/vector image formats are accepted.
- * Non-PDF files (e.g. .docx, .xlsx) must be rejected — they cannot be rendered
- * in the PDF viewer and have caused data integrity issues.
- */
-const ALLOWED_DRAWING_MIME_TYPES = new Set([
-  "application/pdf",
-  "image/png",
-  "image/jpeg",
-  "image/tiff",
-  "image/tif",
-  "image/svg+xml",
-  "image/webp",
-]);
 
 /** Builds a safe storage file name for Supabase object paths. */
 function sanitizeFilename(filename: string): string {
@@ -67,15 +54,15 @@ export const POST = withApiGuardrails<{ projectId: string }>(
 
       if (body.file_size > DRAWING_MAX_UPLOAD_BYTES) {
         return NextResponse.json(
-          { error: "File too large. Maximum size is 100MB." },
+          { error: `File too large. Maximum size is ${DRAWING_MAX_UPLOAD_LABEL}.` },
           { status: 400 },
         );
       }
 
-      if (body.file_type && !ALLOWED_DRAWING_MIME_TYPES.has(body.file_type)) {
+      if (!isAllowedDrawingFileType({ name: body.file_name, type: body.file_type ?? "" })) {
         return NextResponse.json(
           {
-            error: `Unsupported file type: ${body.file_type}. Drawings must be PDF or image files (PNG, JPEG, TIFF, SVG).`,
+            error: `Unsupported file type: ${body.file_type || body.file_name}. Drawings must be PDF or image files (PNG, JPEG, TIFF, SVG, WEBP) or DWG/DXF files.`,
           },
           { status: 400 },
         );

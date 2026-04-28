@@ -21,21 +21,17 @@ CREATE TABLE IF NOT EXISTS public.email_events (
   delivered_at    timestamptz,
   updated_at      timestamptz NOT NULL DEFAULT now()
 );
-
 CREATE INDEX IF NOT EXISTS idx_email_events_to_email     ON public.email_events (to_email);
 CREATE INDEX IF NOT EXISTS idx_email_events_template     ON public.email_events (template);
 CREATE INDEX IF NOT EXISTS idx_email_events_entity       ON public.email_events (entity_type, entity_id);
 CREATE INDEX IF NOT EXISTS idx_email_events_status       ON public.email_events (status);
 CREATE INDEX IF NOT EXISTS idx_email_events_created_at   ON public.email_events (created_at DESC);
-
 ALTER TABLE public.email_events ENABLE ROW LEVEL SECURITY;
-
 -- Only service role writes; authenticated users can read their own email history.
 CREATE POLICY "Users can view their own email events"
   ON public.email_events
   FOR SELECT
   USING (user_id = auth.uid());
-
 CREATE TRIGGER email_events_set_updated_at
   BEFORE UPDATE ON public.email_events
   FOR EACH ROW

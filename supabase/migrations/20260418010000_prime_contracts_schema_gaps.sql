@@ -17,13 +17,11 @@ BEGIN
     RAISE EXCEPTION 'Cannot remove out_for_bid enum value: % rows still use this status. Migrate them to draft first.', v_count;
   END IF;
 END $$;
-
 -- ============================================================
 -- Drop views that depend on prime_contracts.status
 -- (required before enum type change)
 -- ============================================================
 DROP VIEW IF EXISTS prime_contract_financial_summary;
-
 -- ============================================================
 -- 1. Remove out_for_bid from prime_contract_status_v2 enum
 -- PostgreSQL requires creating a new enum, swapping the column, then dropping the old enum
@@ -35,51 +33,39 @@ CREATE TYPE prime_contract_status_v3 AS ENUM (
   'complete',
   'terminated'
 );
-
 ALTER TABLE prime_contracts
   ALTER COLUMN status DROP DEFAULT;
-
 ALTER TABLE prime_contracts
   ALTER COLUMN status TYPE prime_contract_status_v3
   USING status::text::prime_contract_status_v3;
-
 ALTER TABLE prime_contracts
   ALTER COLUMN status SET DEFAULT 'draft';
-
 DROP TYPE prime_contract_status_v2;
 ALTER TYPE prime_contract_status_v3 RENAME TO prime_contract_status_v2;
-
 -- ============================================================
 -- 2. Add erp_status column to prime_contracts
 -- ============================================================
 ALTER TABLE prime_contracts
   ADD COLUMN IF NOT EXISTS erp_status text NOT NULL DEFAULT 'unsynced'
   CHECK (erp_status IN ('unsynced', 'synced', 'error'));
-
 COMMENT ON COLUMN prime_contracts.erp_status IS 'ERP sync status: unsynced (not yet sent), synced (successfully sent), error (sync failed)';
-
 -- ============================================================
 -- 3. Add allowed_user_ids column to prime_contracts
 -- ============================================================
 ALTER TABLE prime_contracts
   ADD COLUMN IF NOT EXISTS allowed_user_ids uuid[] NOT NULL DEFAULT '{}';
-
 COMMENT ON COLUMN prime_contracts.allowed_user_ids IS 'When is_private=true, only these user UUIDs (plus admins) can access this contract';
-
 -- ============================================================
 -- 4. Add allow_sov_view column to prime_contracts
 -- ============================================================
 ALTER TABLE prime_contracts
   ADD COLUMN IF NOT EXISTS allow_sov_view boolean NOT NULL DEFAULT false;
-
 COMMENT ON COLUMN prime_contracts.allow_sov_view IS 'When is_private=true, whether allowed_user_ids can also view the Schedule of Values';
-
 -- ============================================================
 -- Index: erp_status for filter queries
 -- ============================================================
 CREATE INDEX IF NOT EXISTS idx_prime_contracts_erp_status
   ON prime_contracts (erp_status);
-
 -- ============================================================
 -- Recreate prime_contract_financial_summary view
 -- (with erp_status added to the output for convenience)

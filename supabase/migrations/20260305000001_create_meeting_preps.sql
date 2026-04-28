@@ -12,17 +12,13 @@ CREATE TABLE public.meeting_preps (
     updated_at TIMESTAMPTZ DEFAULT now(),
     UNIQUE(meeting_id)
 );
-
 CREATE INDEX idx_meeting_preps_project ON meeting_preps(project_id);
-
 -- RLS: allow all roles (internal tool)
 ALTER TABLE public.meeting_preps ENABLE ROW LEVEL SECURITY;
-
 CREATE POLICY "Allow all access to meeting_preps"
     ON public.meeting_preps FOR ALL
     USING (true)
     WITH CHECK (true);
-
 GRANT ALL ON TABLE public.meeting_preps TO anon;
 GRANT ALL ON TABLE public.meeting_preps TO authenticated;
 GRANT ALL ON TABLE public.meeting_preps TO service_role;

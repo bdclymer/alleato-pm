@@ -4,7 +4,6 @@
 
 ALTER TABLE contract_line_items
   DROP CONSTRAINT IF EXISTS contract_line_items_budget_code_id_fkey;
-
 ALTER TABLE contract_line_items
   ADD CONSTRAINT contract_line_items_budget_code_id_fkey
   FOREIGN KEY (budget_code_id) REFERENCES project_cost_codes(id) ON DELETE SET NULL;

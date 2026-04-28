@@ -13,7 +13,6 @@ VALUES ('prime-contracts', 'Prime Contracts', 0)
 ON CONFLICT (tool_name) DO UPDATE SET
   display_name = EXCLUDED.display_name,
   last_generated_at = now();
-
 -- Insert all scenarios
 WITH suite AS (SELECT id FROM public.test_suites WHERE tool_name = 'prime-contracts')
 INSERT INTO public.test_cases
@@ -262,7 +261,6 @@ ON CONFLICT (suite_id, test_number) DO UPDATE SET
   priority        = EXCLUDED.priority,
   test_type       = EXCLUDED.test_type,
   start_url       = EXCLUDED.start_url;
-
 -- Update total_cases count
 UPDATE public.test_suites
 SET total_cases = (

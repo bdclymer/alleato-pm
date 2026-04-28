@@ -10,15 +10,12 @@ CREATE TABLE IF NOT EXISTS public.pipeline_config (
   key   TEXT PRIMARY KEY,
   value TEXT NOT NULL DEFAULT ''
 );
-
 -- Seed with an empty URL (update after deploying the backend)
 INSERT INTO public.pipeline_config (key, value)
 VALUES ('pipeline_url', '')
 ON CONFLICT (key) DO NOTHING;
-
 -- RLS: only service role can read/write
 ALTER TABLE public.pipeline_config ENABLE ROW LEVEL SECURITY;
-
 -- ============================================================
 -- Update trigger function to read from config table
 -- ============================================================

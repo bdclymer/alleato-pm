@@ -19,7 +19,6 @@ CREATE TABLE IF NOT EXISTS acumatica_ar_invoices (
   updated_at      TIMESTAMPTZ DEFAULT now(),
   CONSTRAINT acumatica_ar_invoices_reference_nbr_type_key UNIQUE (reference_nbr, type)
 );
-
 CREATE TABLE IF NOT EXISTS acumatica_ar_invoice_lines (
   id                      BIGSERIAL PRIMARY KEY,
   invoice_id              BIGINT NOT NULL REFERENCES acumatica_ar_invoices(id) ON DELETE CASCADE,
@@ -37,7 +36,6 @@ CREATE TABLE IF NOT EXISTS acumatica_ar_invoice_lines (
   uom                     TEXT,
   created_at              TIMESTAMPTZ DEFAULT now()
 );
-
 CREATE INDEX IF NOT EXISTS acumatica_ar_invoice_lines_invoice_id_idx ON acumatica_ar_invoice_lines(invoice_id);
 CREATE INDEX IF NOT EXISTS acumatica_ar_invoices_customer_idx ON acumatica_ar_invoices(customer);
 CREATE INDEX IF NOT EXISTS acumatica_ar_invoices_project_idx ON acumatica_ar_invoices(project);

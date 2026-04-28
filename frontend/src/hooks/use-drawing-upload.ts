@@ -2,18 +2,29 @@
 
 import { useState, useCallback } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
 import { apiFetch } from "@/lib/api-client";
 import { createClient as createSupabaseClient } from "@/lib/supabase/client";
 import type { UploadDrawingFormData } from "@/lib/schemas/drawing-schemas";
+import { getDrawingUploadFileError } from "@/lib/drawings/upload-constraints";
 import type {
   DrawingUploadProgress,
   DrawingUploadError,
 } from "@/types/drawings.types";
 
 interface UploadedDrawingResult {
+  fileName: string;
   drawingId: string;
   revisionId?: string;
+}
+
+export class DrawingUploadBatchError extends Error {
+  constructor(
+    readonly results: UploadedDrawingResult[],
+    readonly failures: DrawingUploadError[],
+  ) {
+    super(`Uploaded ${results.length} of ${results.length + failures.length} drawings`);
+    this.name = "DrawingUploadBatchError";
+  }
 }
 
 /**
@@ -28,28 +39,18 @@ export function useDrawingUpload(projectId: string) {
     setErrors([]);
   }, []);
 
+  const clearUploadState = useCallback(() => {
+    setProgress([]);
+    setErrors([]);
+  }, []);
+
   const validateFile = useCallback((file: File): DrawingUploadError | null => {
-    const allowedTypes = [
-      "application/pdf",
-      "image/png",
-      "image/jpeg",
-      "image/tiff",
-    ];
-
-    if (!allowedTypes.includes(file.type)) {
+    const error = getDrawingUploadFileError(file);
+    if (error) {
       return {
         fileName: file.name,
-        error: "File type not allowed. Please upload PDF, PNG, JPEG, or TIFF files.",
-        code: "INVALID_TYPE",
-      };
-    }
-
-    const maxSize = 100 * 1024 * 1024; // 100MB — must match drawing-schemas.ts
-    if (file.size > maxSize) {
-      return {
-        fileName: file.name,
-        error: "File too large. Maximum size is 100MB.",
-        code: "FILE_TOO_LARGE",
+        error,
+        code: error.includes("too large") ? "FILE_TOO_LARGE" : "INVALID_TYPE",
       };
     }
 
@@ -104,6 +105,12 @@ export function useDrawingUpload(projectId: string) {
         throw new Error(`Failed to upload file to storage: ${directUploadError.message}`);
       }
 
+      setProgress((prev) =>
+        prev.map((p) =>
+          p.fileName === file.name ? { ...p, progress: 70, status: "processing" } : p,
+        ),
+      );
+
       const result = await apiFetch<{
         id: string;
         current_revision?: { id: string };
@@ -143,6 +150,7 @@ export function useDrawingUpload(projectId: string) {
       );
 
       return {
+        fileName: file.name,
         drawingId: result.id,
         revisionId: result.current_revision?.id,
       } satisfies UploadedDrawingResult;
@@ -151,7 +159,6 @@ export function useDrawingUpload(projectId: string) {
       queryClient.invalidateQueries({
         queryKey: ["drawings", projectId],
       });
-      toast.success("Drawing uploaded successfully");
     },
     onError: (error: Error, variables) => {
       // Update progress to error
@@ -171,10 +178,6 @@ export function useDrawingUpload(projectId: string) {
           code: "SERVER_ERROR",
         },
       ]);
-
-      toast.error("Failed to upload drawing", {
-        description: error.message,
-      });
     },
   });
 
@@ -191,6 +194,7 @@ export function useDrawingUpload(projectId: string) {
       metadata: Partial<UploadDrawingFormData>,
     ): Promise<UploadedDrawingResult[]> => {
       const results: UploadedDrawingResult[] = [];
+      const failures: DrawingUploadError[] = [];
 
       for (const file of Array.from(files)) {
         try {
@@ -212,10 +216,18 @@ export function useDrawingUpload(projectId: string) {
           results.push(revision);
         } catch (err) {
           console.error(`Failed to upload ${file.name}:`, err);
+          failures.push({
+            fileName: file.name,
+            error: err instanceof Error ? err.message : "An unexpected error occurred",
+            code: "SERVER_ERROR",
+          });
         }
       }
 
-      toast.success(`Uploaded ${results.length} of ${files.length} drawings`);
+      if (failures.length > 0) {
+        throw new DrawingUploadBatchError(results, failures);
+      }
+
       return results;
     },
     [uploadDrawing],
@@ -228,5 +240,6 @@ export function useDrawingUpload(projectId: string) {
     isUploading: uploadMutation.isPending,
     errors,
     clearErrors,
+    clearUploadState,
   };
 }

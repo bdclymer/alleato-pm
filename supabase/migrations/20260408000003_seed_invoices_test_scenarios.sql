@@ -7,7 +7,6 @@ VALUES ('invoices', 'Invoicing', 3, 0, NOW())
 ON CONFLICT (tool_name) DO UPDATE SET
   display_name = EXCLUDED.display_name,
   last_generated_at = NOW();
-
 DO $$
 DECLARE
   v_suite_id uuid;

@@ -17,22 +17,17 @@ CREATE TABLE IF NOT EXISTS public.pcco_attachments (
   uploaded_by     uuid REFERENCES auth.users (id) ON DELETE SET NULL,
   uploaded_at     timestamptz NOT NULL DEFAULT now()
 );
-
 COMMENT ON TABLE public.pcco_attachments IS
   'File attachments for prime contract change orders. Files stored in project-files bucket.';
-
 ALTER TABLE public.pcco_attachments ENABLE ROW LEVEL SECURITY;
-
 CREATE POLICY pcco_attachments_select ON public.pcco_attachments
   FOR SELECT USING (auth.uid() IS NOT NULL);
 CREATE POLICY pcco_attachments_insert ON public.pcco_attachments
   FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
 CREATE POLICY pcco_attachments_delete ON public.pcco_attachments
   FOR DELETE USING (auth.uid() IS NOT NULL);
-
 CREATE INDEX IF NOT EXISTS idx_pcco_attachments_pcco_id
   ON public.pcco_attachments (pcco_id, uploaded_at DESC);
-
 -- 2. Commitment Change Order Attachments
 CREATE TABLE IF NOT EXISTS public.cco_attachments (
   id              uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -45,18 +40,14 @@ CREATE TABLE IF NOT EXISTS public.cco_attachments (
   uploaded_by     uuid REFERENCES auth.users (id) ON DELETE SET NULL,
   uploaded_at     timestamptz NOT NULL DEFAULT now()
 );
-
 COMMENT ON TABLE public.cco_attachments IS
   'File attachments for commitment change orders. Files stored in project-files bucket.';
-
 ALTER TABLE public.cco_attachments ENABLE ROW LEVEL SECURITY;
-
 CREATE POLICY cco_attachments_select ON public.cco_attachments
   FOR SELECT USING (auth.uid() IS NOT NULL);
 CREATE POLICY cco_attachments_insert ON public.cco_attachments
   FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
 CREATE POLICY cco_attachments_delete ON public.cco_attachments
   FOR DELETE USING (auth.uid() IS NOT NULL);
-
 CREATE INDEX IF NOT EXISTS idx_cco_attachments_cco_id
   ON public.cco_attachments (cco_id, uploaded_at DESC);

@@ -51,6 +51,7 @@ export const createProjectSchema = z.object({
   completion_date: z.string().optional(),
   erp_sync: z.boolean().optional().default(true),
   test_project: z.boolean().optional().default(false),
+  onedrive: z.string().optional(),
 });
 
 export type CreateProjectFormValues = z.infer<typeof createProjectSchema>;
@@ -365,6 +366,14 @@ export const formSections: FormSection[] = [
         control: "textarea",
         colSpan: "full",
       },
+      {
+        name: "onedrive",
+        label: "OneDrive Folder URL",
+        control: "text",
+        colSpan: "full",
+        placeholder: "https://alleato.sharepoint.com/...",
+        description: "Link to the OneDrive folder for this project.",
+      },
     ],
   },
   {
@@ -511,6 +520,7 @@ export const defaultValues: DefaultValues<CreateProjectFormValues> = {
   completion_date: "",
   erp_sync: true,
   test_project: false,
+  onedrive: "",
 };
 
 export const formatNumberWithCommas = (

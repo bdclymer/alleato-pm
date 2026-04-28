@@ -10,7 +10,6 @@ VALUES ('photos', 'Photos', 0)
 ON CONFLICT (tool_name) DO UPDATE SET
   display_name = EXCLUDED.display_name,
   last_generated_at = now();
-
 -- Step 2: Insert all scenario-type test cases
 WITH suite AS (SELECT id FROM public.test_suites WHERE tool_name = 'photos')
 INSERT INTO public.test_cases
@@ -811,4 +810,4 @@ SELECT ts.tool_name, ts.total_cases,
 FROM test_suites ts
 JOIN test_cases tc ON tc.suite_id = ts.id AND tc.test_type = 'scenario'
 WHERE ts.tool_name = 'photos'
-GROUP BY ts.tool_name, ts.total_cases;
+GROUP BY ts.tool_name, ts.total_cases;;

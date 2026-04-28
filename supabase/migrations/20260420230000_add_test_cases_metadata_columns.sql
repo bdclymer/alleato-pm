@@ -9,7 +9,6 @@ ALTER TABLE public.test_cases
   ADD COLUMN IF NOT EXISTS source_article_id    INTEGER,
   ADD COLUMN IF NOT EXISTS source_chunk_id      INTEGER,
   ADD COLUMN IF NOT EXISTS procore_feature_id   TEXT;
-
 COMMENT ON COLUMN public.test_cases.gap_type IS 'Parity gap classification (e.g. missing, partial, different).';
 COMMENT ON COLUMN public.test_cases.tool IS 'FK to procore_tools — which Procore tool this case covers.';
 COMMENT ON COLUMN public.test_cases.source_url IS 'URL of the source page this test case was generated from.';

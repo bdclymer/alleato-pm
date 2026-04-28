@@ -2,17 +2,14 @@
 -- Idempotent: re-running this file regenerates the suite + cases cleanly.
 
 begin;
-
 insert into public.test_suites (tool_name, suite_type, display_name, total_cases)
 values ('prime-contracts', 'smoke', 'Prime Contracts — Smoke', 0)
 on conflict (tool_name, suite_type) do update set
   display_name = excluded.display_name,
   last_generated_at = now();
-
 delete from public.test_cases
  where suite_id = (select id from public.test_suites
                      where tool_name = 'prime-contracts' and suite_type = 'smoke');
-
 insert into public.test_cases
   (suite_id, test_number, category, subcategory, test_name,
    context_note, setup_steps, steps, expected_result, priority,
@@ -103,9 +100,7 @@ cross join (values
    'MEDIUM', '/67/prime-contracts')
 ) as v(test_number, category, subcategory, test_name, context_note, setup_steps, steps, expected_result, priority, start_url)
 where s.tool_name = 'prime-contracts' and s.suite_type = 'smoke';
-
 update public.test_suites
    set total_cases = (select count(*) from public.test_cases where suite_id = test_suites.id)
  where tool_name = 'prime-contracts' and suite_type = 'smoke';
-
 commit;

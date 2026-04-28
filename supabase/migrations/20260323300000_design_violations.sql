@@ -38,12 +38,9 @@ create table if not exists design_violations (
 
   submitted_by uuid references auth.users(id)
 );
-
 create index design_violations_status_idx on design_violations(status, created_at desc);
-
 -- RLS: authenticated users manage their own violations, service role sees all
 alter table design_violations enable row level security;
-
 create policy "Users manage own violations"
   on design_violations for all
   using (auth.uid() = submitted_by)

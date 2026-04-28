@@ -55,29 +55,23 @@ EXCEPTION
       'invited'
     );
 END $$;
-
 -- Step 2: Migrate existing 'pending' rows to 'under_review'
 -- (pending was the old name for the same workflow state)
 UPDATE owner_invoices
 SET status = 'under_review'
 WHERE status = 'pending';
-
 -- Step 3: Migrate existing 'submitted' rows to 'under_review'
 -- (submitted was the old name before aligning with Procore terminology)
 UPDATE owner_invoices
 SET status = 'under_review'
 WHERE status = 'submitted';
-
 -- Step 4: Add performance indexes that were missing
 CREATE INDEX IF NOT EXISTS idx_owner_invoices_status
   ON owner_invoices(status);
-
 CREATE INDEX IF NOT EXISTS idx_owner_invoices_billing_period_id
   ON owner_invoices(billing_period_id);
-
 CREATE INDEX IF NOT EXISTS idx_owner_invoices_prime_contract_status
   ON owner_invoices(prime_contract_id, status);
-
 -- Step 5: Add missing financial columns to owner_invoices
 ALTER TABLE owner_invoices
   ADD COLUMN IF NOT EXISTS gross_amount        numeric(15, 2),
@@ -86,11 +80,9 @@ ALTER TABLE owner_invoices
   ADD COLUMN IF NOT EXISTS percent_complete    numeric(5, 2),
   ADD COLUMN IF NOT EXISTS due_date            date,
   ADD COLUMN IF NOT EXISTS billing_date        date;
-
 -- Step 6: Add name column to billing_periods for display labels
 ALTER TABLE billing_periods
   ADD COLUMN IF NOT EXISTS name varchar(255);
-
 -- Backfill name from date range for existing rows
 UPDATE billing_periods
 SET name = to_char(start_date, 'MM/DD/YY') || ' - ' || to_char(end_date, 'MM/DD/YY')

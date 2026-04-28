@@ -26,7 +26,6 @@
 
 -- pg_net is pre-installed on all Supabase projects
 CREATE EXTENSION IF NOT EXISTS pg_net WITH SCHEMA extensions;
-
 -- ============================================================
 -- Trigger function
 -- ============================================================
@@ -63,12 +62,10 @@ BEGIN
   RETURN NEW;
 END;
 $$;
-
 -- ============================================================
 -- Trigger
 -- ============================================================
 DROP TRIGGER IF EXISTS trg_enqueue_document_metadata_rag_job ON public.document_metadata;
-
 CREATE TRIGGER trg_enqueue_document_metadata_rag_job
   AFTER INSERT ON public.document_metadata
   FOR EACH ROW

@@ -44,13 +44,11 @@ CREATE TABLE IF NOT EXISTS ai_memories (
   superseded_by  UUID        REFERENCES ai_memories(id) ON DELETE SET NULL,
   is_active      BOOLEAN     NOT NULL DEFAULT TRUE
 );
-
 -- ---------------------------------------------------------------------------
 -- Row Level Security
 -- ---------------------------------------------------------------------------
 
 ALTER TABLE ai_memories ENABLE ROW LEVEL SECURITY;
-
 -- Users can read/write their own memories
 DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Users can manage their own memories' AND tablename = 'ai_memories') THEN
@@ -60,7 +58,6 @@ DO $$ BEGIN
       WITH CHECK (auth.uid() = user_id);
   END IF;
 END $$;
-
 -- Service role (used by API routes) has full access
 DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Service role has full access to ai_memories' AND tablename = 'ai_memories') THEN
@@ -71,7 +68,6 @@ DO $$ BEGIN
       WITH CHECK (true);
   END IF;
 END $$;
-
 -- ---------------------------------------------------------------------------
 -- Indexes
 -- ---------------------------------------------------------------------------
@@ -80,27 +76,22 @@ END $$;
 CREATE INDEX IF NOT EXISTS idx_ai_memories_user_active
   ON ai_memories (user_id, is_active)
   WHERE is_active = true;
-
 -- Type-filtered queries (e.g. fetch all preferences for a user)
 CREATE INDEX IF NOT EXISTS idx_ai_memories_user_type
   ON ai_memories (user_id, type)
   WHERE is_active = true;
-
 -- Project-scoped lookups
 CREATE INDEX IF NOT EXISTS idx_ai_memories_project
   ON ai_memories (project_id)
   WHERE project_id IS NOT NULL;
-
 -- Vector similarity search (cosine distance)
 CREATE INDEX IF NOT EXISTS idx_ai_memories_embedding
   ON ai_memories USING ivfflat (embedding vector_cosine_ops)
   WITH (lists = 50);
-
 -- Expiry cleanup queries
 CREATE INDEX IF NOT EXISTS idx_ai_memories_expires
   ON ai_memories (expires_at)
   WHERE expires_at IS NOT NULL;
-
 -- ---------------------------------------------------------------------------
 -- RPC: Semantic search
 -- ---------------------------------------------------------------------------
@@ -156,7 +147,6 @@ BEGIN
   LIMIT match_count;
 END;
 $$;
-
 -- ---------------------------------------------------------------------------
 -- RPC: Mark memories accessed (call after injection to track usage)
 -- ---------------------------------------------------------------------------
@@ -174,7 +164,6 @@ BEGIN
   WHERE id = ANY(memory_ids);
 END;
 $$;
-
 -- ---------------------------------------------------------------------------
 -- RPC: Expire stale context memories (run periodically or at session start)
 -- ---------------------------------------------------------------------------

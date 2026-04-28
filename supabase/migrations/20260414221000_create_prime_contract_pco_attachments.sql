@@ -22,24 +22,17 @@ CREATE TABLE IF NOT EXISTS public.prime_contract_pco_attachments (
   uploaded_by  uuid REFERENCES auth.users(id) ON DELETE SET NULL,
   uploaded_at  timestamptz NOT NULL DEFAULT now()
 );
-
 COMMENT ON TABLE public.prime_contract_pco_attachments IS
   'File attachments for Prime Contract Potential Change Orders (PCOs). Files are stored in Supabase Storage; metadata is stored here.';
-
 COMMENT ON COLUMN public.prime_contract_pco_attachments.file_path IS
   'Path/key in Supabase Storage bucket (for example: project-files/<project>/<pco>/<filename>).';
-
 COMMENT ON COLUMN public.prime_contract_pco_attachments.uploaded_by IS
   'Auth user who uploaded the file; null if uploader was removed.';
-
 CREATE INDEX IF NOT EXISTS idx_prime_contract_pco_attachments_pco_id
   ON public.prime_contract_pco_attachments (pco_id, uploaded_at DESC);
-
 CREATE INDEX IF NOT EXISTS idx_prime_contract_pco_attachments_uploaded_by
   ON public.prime_contract_pco_attachments (uploaded_by);
-
 ALTER TABLE public.prime_contract_pco_attachments ENABLE ROW LEVEL SECURITY;
-
 DO $$
 BEGIN
   IF NOT EXISTS (

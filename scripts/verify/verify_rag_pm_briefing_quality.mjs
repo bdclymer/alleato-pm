@@ -62,6 +62,9 @@ const OPENAI_KEY = process.env.AI_GATEWAY_API_KEY || process.env.OPENAI_API_KEY;
 const AI_GATEWAY_BASE = process.env.AI_GATEWAY_API_KEY
   ? "https://ai-gateway.vercel.sh/v1"
   : "https://api.openai.com/v1";
+const EMBEDDING_MODEL = process.env.AI_GATEWAY_API_KEY
+  ? "openai/text-embedding-3-large"
+  : "text-embedding-3-large";
 
 if (!SUPABASE_URL || !SERVICE_KEY) {
   console.error(
@@ -115,7 +118,7 @@ async function generateEmbedding(text) {
       Authorization: `Bearer ${OPENAI_KEY}`,
     },
     body: JSON.stringify({
-      model: "text-embedding-3-large",
+      model: EMBEDDING_MODEL,
       dimensions: 3072,
       input: text,
     }),

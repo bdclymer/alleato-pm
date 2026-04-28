@@ -11,7 +11,6 @@
 DROP VIEW IF EXISTS public.commitment_change_orders_with_scope CASCADE;
 DROP VIEW IF EXISTS public.commitments_unified CASCADE;
 DROP VIEW IF EXISTS public.subcontracts_with_totals CASCADE;
-
 -- ============================================================
 -- 1. Fix subcontracts date columns: TEXT → DATE (no-op if already date)
 --    Regex guard converts malformed values to NULL rather than failing.
@@ -34,7 +33,6 @@ BEGIN
     );
   END LOOP;
 END $$;
-
 -- ============================================================
 -- Recreate subcontracts_with_totals (unchanged logic)
 -- ============================================================
@@ -83,7 +81,6 @@ CREATE OR REPLACE VIEW public.subcontracts_with_totals AS
            FROM subcontract_attachments
           GROUP BY subcontract_attachments.subcontract_id) att_count ON s.id = att_count.subcontract_id
      LEFT JOIN companies c ON s.contract_company_id = c.id;
-
 -- ============================================================
 -- Recreate commitments_unified — both SC and PO sides now use date
 -- (SC cols were text before; removed ::text casts on PO side for UNION
@@ -134,7 +131,6 @@ UNION ALL
     purchase_orders.issued_on_date,
     purchase_orders.default_retainage_percent
    FROM purchase_orders;
-
 -- ============================================================
 -- Recreate commitment_change_orders_with_scope (unchanged logic)
 -- ============================================================
@@ -181,7 +177,6 @@ CREATE OR REPLACE VIEW public.commitment_change_orders_with_scope AS
     cu.status AS commitment_status
    FROM contract_change_orders cco
      JOIN commitments_unified cu ON cu.id = cco.contract_id AND cu.deleted_at IS NULL;
-
 -- ============================================================
 -- 2. Add missing columns to purchase_orders
 --    (inclusions/exclusions and date fields that subcontracts have)
@@ -193,7 +188,6 @@ ALTER TABLE public.purchase_orders
   ADD COLUMN IF NOT EXISTS start_date date,
   ADD COLUMN IF NOT EXISTS estimated_completion_date date,
   ADD COLUMN IF NOT EXISTS actual_completion_date date;
-
 -- ============================================================
 -- 3. Add missing columns to subcontract_sov_items
 --    (unit/qty accounting parity with purchase_order_sov_items,
@@ -207,7 +201,6 @@ ALTER TABLE public.subcontract_sov_items
   ADD COLUMN IF NOT EXISTS retainage_percent numeric(5,2)
     CONSTRAINT subcontract_sov_items_retainage_check
     CHECK (retainage_percent IS NULL OR (retainage_percent >= 0 AND retainage_percent <= 100));
-
 -- ============================================================
 -- 4. Create purchase_order_attachments table
 --    (mirrors subcontract_attachments)
@@ -225,24 +218,17 @@ CREATE TABLE IF NOT EXISTS public.purchase_order_attachments (
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT purchase_order_attachments_pkey PRIMARY KEY (id)
 );
-
 ALTER TABLE public.purchase_order_attachments OWNER TO postgres;
-
 COMMENT ON TABLE public.purchase_order_attachments IS 'File attachments for purchase orders';
-
 CREATE INDEX IF NOT EXISTS idx_purchase_order_attachments_po_id
   ON public.purchase_order_attachments USING btree (purchase_order_id);
-
 ALTER TABLE public.purchase_order_attachments ENABLE ROW LEVEL SECURITY;
-
 DROP POLICY IF EXISTS "purchase_order_attachments_select" ON public.purchase_order_attachments;
 CREATE POLICY "purchase_order_attachments_select"
   ON public.purchase_order_attachments FOR SELECT USING (true);
-
 DROP POLICY IF EXISTS "purchase_order_attachments_insert" ON public.purchase_order_attachments;
 CREATE POLICY "purchase_order_attachments_insert"
   ON public.purchase_order_attachments FOR INSERT WITH CHECK (true);
-
 DROP POLICY IF EXISTS "purchase_order_attachments_delete" ON public.purchase_order_attachments;
 CREATE POLICY "purchase_order_attachments_delete"
   ON public.purchase_order_attachments FOR DELETE USING (true);

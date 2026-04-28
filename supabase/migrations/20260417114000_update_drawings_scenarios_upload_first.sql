@@ -8,7 +8,6 @@ DELETE FROM public.test_cases
 WHERE suite_id = (SELECT id FROM suite)
   AND test_type = 'scenario'
   AND test_number = '2.1';
-
 WITH suite AS (
   SELECT id FROM public.test_suites WHERE tool_name = 'drawings'
 )
@@ -19,7 +18,6 @@ WHERE tc.suite_id = (SELECT id FROM suite)
   AND tc.test_type = 'scenario'
   AND tc.test_number = '2.2'
   AND tc.test_name = 'Try to upload a drawing without a file attached';
-
 WITH suite AS (
   SELECT id FROM public.test_suites WHERE tool_name = 'drawings'
 )
@@ -30,7 +28,6 @@ WHERE tc.suite_id = (SELECT id FROM suite)
   AND tc.test_type = 'scenario'
   AND tc.test_number = '2.3'
   AND tc.test_name = 'Try to upload a drawing without a Drawing Number';
-
 WITH suite AS (
   SELECT id FROM public.test_suites WHERE tool_name = 'drawings'
 )
@@ -40,7 +37,6 @@ SET test_number = '2.1',
 WHERE tc.suite_id = (SELECT id FROM suite)
   AND tc.test_type = 'scenario'
   AND tc.test_number = '2.1.tmp';
-
 WITH suite AS (
   SELECT id FROM public.test_suites WHERE tool_name = 'drawings'
 )
@@ -50,7 +46,6 @@ SET test_number = '2.2',
 WHERE tc.suite_id = (SELECT id FROM suite)
   AND tc.test_type = 'scenario'
   AND tc.test_number = '2.2.tmp';
-
 WITH suite AS (
   SELECT id FROM public.test_suites WHERE tool_name = 'drawings'
 )
@@ -67,7 +62,6 @@ SET category = 'Upload',
 WHERE tc.suite_id = (SELECT id FROM suite)
   AND tc.test_type = 'scenario'
   AND tc.test_number = '1.1';
-
 UPDATE public.test_suites ts
 SET total_cases = (
   SELECT COUNT(*)

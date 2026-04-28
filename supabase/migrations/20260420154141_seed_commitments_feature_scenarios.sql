@@ -2,7 +2,6 @@
 -- Idempotent: re-running this file regenerates the suite + cases cleanly.
 
 begin;
-
 with s as (
   insert into public.test_suites (tool_name, suite_type, display_name, total_cases)
   values ('commitments', 'feature', 'Commitments — Feature', 0)
@@ -12,7 +11,6 @@ with s as (
   returning id
 )
 delete from public.test_cases where suite_id = (select id from s);
-
 insert into public.test_cases
   (suite_id, test_number, category, subcategory, test_name,
    context_note, setup_steps, steps, expected_result, priority,
@@ -246,9 +244,7 @@ cross join (values
 
 ) as v(test_number, category, subcategory, test_name, context_note, setup_steps, steps, expected_result, priority, start_url)
 where s.tool_name = 'commitments' and s.suite_type = 'feature';
-
 update public.test_suites
    set total_cases = (select count(*) from public.test_cases where suite_id = test_suites.id)
  where tool_name = 'commitments' and suite_type = 'feature';
-
 commit;

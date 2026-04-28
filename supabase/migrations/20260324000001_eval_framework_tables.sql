@@ -25,9 +25,7 @@ CREATE TABLE IF NOT EXISTS eval_scenarios_raw (
     notes TEXT,
     created_at TIMESTAMPTZ DEFAULT now()
 );
-
 COMMENT ON TABLE eval_scenarios_raw IS 'Raw problem scenarios mined from emails/transcripts for eval set bootstrapping';
-
 -- ─────────────────────────────────────────────────────────────────────────────
 -- 2. Structured eval test cases (Phase 2 input)
 -- ─────────────────────────────────────────────────────────────────────────────
@@ -50,9 +48,7 @@ CREATE TABLE IF NOT EXISTS eval_test_cases (
     created_at TIMESTAMPTZ DEFAULT now(),
     updated_at TIMESTAMPTZ DEFAULT now()
 );
-
 COMMENT ON TABLE eval_test_cases IS 'Structured test cases for Business Strategist Agent evaluation';
-
 -- ─────────────────────────────────────────────────────────────────────────────
 -- 3. Eval run results (Phase 2 output)
 -- ─────────────────────────────────────────────────────────────────────────────
@@ -69,9 +65,7 @@ CREATE TABLE IF NOT EXISTS eval_runs (
     started_at TIMESTAMPTZ DEFAULT now(),
     completed_at TIMESTAMPTZ
 );
-
 COMMENT ON TABLE eval_runs IS 'Top-level eval run metadata and aggregate scores';
-
 CREATE TABLE IF NOT EXISTS eval_results (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     run_id UUID NOT NULL REFERENCES eval_runs(id) ON DELETE CASCADE,
@@ -85,9 +79,7 @@ CREATE TABLE IF NOT EXISTS eval_results (
     metadata JSONB DEFAULT '{}'::jsonb,
     created_at TIMESTAMPTZ DEFAULT now()
 );
-
 COMMENT ON TABLE eval_results IS 'Per-test-case results from an eval run';
-
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_eval_scenarios_raw_curated ON eval_scenarios_raw(curated) WHERE curated = TRUE;
 CREATE INDEX IF NOT EXISTS idx_eval_scenarios_raw_problem_type ON eval_scenarios_raw(problem_type);

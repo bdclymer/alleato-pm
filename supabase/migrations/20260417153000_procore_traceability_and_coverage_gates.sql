@@ -10,7 +10,6 @@ ALTER TABLE public.test_cases
   ADD COLUMN IF NOT EXISTS source_url TEXT,
   ADD COLUMN IF NOT EXISTS source_manifest_path TEXT,
   ADD COLUMN IF NOT EXISTS gap_type TEXT NOT NULL DEFAULT 'unknown';
-
 DO $$
 BEGIN
   IF NOT EXISTS (
@@ -21,16 +20,12 @@ BEGIN
       CHECK (gap_type IN ('matched', 'missing', 'mismatch', 'custom', 'blocked', 'unknown'));
   END IF;
 END $$;
-
 CREATE INDEX IF NOT EXISTS idx_test_cases_procore_feature_id
   ON public.test_cases (procore_feature_id);
-
 CREATE INDEX IF NOT EXISTS idx_test_cases_source_article_id
   ON public.test_cases (source_article_id);
-
 CREATE INDEX IF NOT EXISTS idx_test_cases_source_chunk_id
   ON public.test_cases (source_chunk_id);
-
 -- New high-priority test cases must include source traceability and a feature mapping.
 DO $$
 BEGIN
@@ -53,7 +48,6 @@ BEGIN
       ) NOT VALID;
   END IF;
 END $$;
-
 -- 2) Canonical one-row-per-feature implementation mapping.
 CREATE TABLE IF NOT EXISTS public.procore_feature_implementations (
   feature_id UUID PRIMARY KEY REFERENCES public.procore_features(id) ON DELETE CASCADE,
@@ -69,7 +63,6 @@ CREATE TABLE IF NOT EXISTS public.procore_feature_implementations (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-
 DO $$
 BEGIN
   IF NOT EXISTS (
@@ -80,7 +73,6 @@ BEGIN
       CHECK (mapping_status IN ('matched', 'missing', 'mismatch', 'custom', 'blocked', 'unknown'));
   END IF;
 END $$;
-
 DO $$
 BEGIN
   IF NOT EXISTS (
@@ -99,17 +91,13 @@ BEGIN
       );
   END IF;
 END $$;
-
 CREATE INDEX IF NOT EXISTS idx_procore_feature_impl_tool_id
   ON public.procore_feature_implementations (tool_id);
-
 CREATE INDEX IF NOT EXISTS idx_procore_feature_impl_status
   ON public.procore_feature_implementations (mapping_status);
-
 CREATE UNIQUE INDEX IF NOT EXISTS idx_procore_feature_impl_linked_test_case_id
   ON public.procore_feature_implementations (linked_test_case_id)
   WHERE linked_test_case_id IS NOT NULL;
-
 DO $$
 BEGIN
   IF NOT EXISTS (
@@ -120,7 +108,6 @@ BEGIN
       FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
   END IF;
 END $$;
-
 -- 3) Coverage + gap views for dashboarding and CI checks.
 CREATE OR REPLACE VIEW public.procore_feature_mapping_gaps AS
 SELECT
@@ -139,7 +126,6 @@ WHERE coalesce(f.include_in_rebuild, true)
     i.feature_id IS NULL
     OR i.mapping_status IN ('missing', 'mismatch', 'blocked', 'unknown')
   );
-
 CREATE OR REPLACE VIEW public.procore_test_traceability_gaps AS
 SELECT
   tc.id AS case_id,
@@ -167,7 +153,6 @@ WHERE tc.priority = 'HIGH'
       AND length(trim(coalesce(tc.source_manifest_path, ''))) = 0
     )
   );
-
 CREATE OR REPLACE VIEW public.procore_coverage_summary AS
 WITH high_tests AS (
   SELECT
@@ -219,7 +204,6 @@ SELECT
   END AS feature_mapping_percent
 FROM high_tests h
 CROSS JOIN feature_map f;
-
 -- 4) CI gate: fail loudly when coverage drifts below threshold.
 CREATE OR REPLACE FUNCTION public.assert_procore_coverage_gate(
   min_high_traceability_percent NUMERIC DEFAULT 100.0,

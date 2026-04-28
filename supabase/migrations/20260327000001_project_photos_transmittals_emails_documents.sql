@@ -27,11 +27,9 @@ CREATE TABLE IF NOT EXISTS project_photos (
   updated_at    TIMESTAMPTZ DEFAULT NOW(),
   deleted_at    TIMESTAMPTZ
 );
-
 CREATE INDEX idx_project_photos_project ON project_photos(project_id);
 CREATE INDEX idx_project_photos_album ON project_photos(project_id, album);
 CREATE INDEX idx_project_photos_deleted ON project_photos(deleted_at) WHERE deleted_at IS NULL;
-
 -- ─── Project Transmittals ────────────────────────────────────────────────────
 
 CREATE TABLE IF NOT EXISTS project_transmittals (
@@ -57,11 +55,9 @@ CREATE TABLE IF NOT EXISTS project_transmittals (
   updated_at          TIMESTAMPTZ DEFAULT NOW(),
   deleted_at          TIMESTAMPTZ
 );
-
 CREATE INDEX idx_project_transmittals_project ON project_transmittals(project_id);
 CREATE INDEX idx_project_transmittals_status ON project_transmittals(project_id, status);
 CREATE INDEX idx_project_transmittals_deleted ON project_transmittals(deleted_at) WHERE deleted_at IS NULL;
-
 -- Transmittal items (linked documents/drawings/etc.)
 CREATE TABLE IF NOT EXISTS transmittal_items (
   id              BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -73,9 +69,7 @@ CREATE TABLE IF NOT EXISTS transmittal_items (
   remarks         TEXT,
   created_at      TIMESTAMPTZ DEFAULT NOW()
 );
-
 CREATE INDEX idx_transmittal_items_transmittal ON transmittal_items(transmittal_id);
-
 -- ─── Project Emails ──────────────────────────────────────────────────────────
 
 CREATE TABLE IF NOT EXISTS project_emails (
@@ -104,12 +98,10 @@ CREATE TABLE IF NOT EXISTS project_emails (
   updated_at          TIMESTAMPTZ DEFAULT NOW(),
   deleted_at          TIMESTAMPTZ
 );
-
 CREATE INDEX idx_project_emails_project ON project_emails(project_id);
 CREATE INDEX idx_project_emails_status ON project_emails(project_id, status);
 CREATE INDEX idx_project_emails_thread ON project_emails(thread_id) WHERE thread_id IS NOT NULL;
 CREATE INDEX idx_project_emails_deleted ON project_emails(deleted_at) WHERE deleted_at IS NULL;
-
 -- Email attachments
 CREATE TABLE IF NOT EXISTS email_attachments (
   id          BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -120,9 +112,7 @@ CREATE TABLE IF NOT EXISTS email_attachments (
   content_type TEXT,
   created_at  TIMESTAMPTZ DEFAULT NOW()
 );
-
 CREATE INDEX idx_email_attachments_email ON email_attachments(email_id);
-
 -- ─── Project Documents ───────────────────────────────────────────────────────
 
 CREATE TABLE IF NOT EXISTS project_documents (
@@ -147,12 +137,10 @@ CREATE TABLE IF NOT EXISTS project_documents (
   updated_at      TIMESTAMPTZ DEFAULT NOW(),
   deleted_at      TIMESTAMPTZ
 );
-
 CREATE INDEX idx_project_documents_project ON project_documents(project_id);
 CREATE INDEX idx_project_documents_folder ON project_documents(project_id, folder);
 CREATE INDEX idx_project_documents_status ON project_documents(project_id, status);
 CREATE INDEX idx_project_documents_deleted ON project_documents(deleted_at) WHERE deleted_at IS NULL;
-
 -- ─── RLS Policies ────────────────────────────────────────────────────────────
 
 ALTER TABLE project_photos ENABLE ROW LEVEL SECURITY;
@@ -161,22 +149,16 @@ ALTER TABLE transmittal_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE project_emails ENABLE ROW LEVEL SECURITY;
 ALTER TABLE email_attachments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE project_documents ENABLE ROW LEVEL SECURITY;
-
 -- Permissive policies for authenticated users
 CREATE POLICY "Authenticated users can manage project_photos"
   ON project_photos FOR ALL TO authenticated USING (true) WITH CHECK (true);
-
 CREATE POLICY "Authenticated users can manage project_transmittals"
   ON project_transmittals FOR ALL TO authenticated USING (true) WITH CHECK (true);
-
 CREATE POLICY "Authenticated users can manage transmittal_items"
   ON transmittal_items FOR ALL TO authenticated USING (true) WITH CHECK (true);
-
 CREATE POLICY "Authenticated users can manage project_emails"
   ON project_emails FOR ALL TO authenticated USING (true) WITH CHECK (true);
-
 CREATE POLICY "Authenticated users can manage email_attachments"
   ON email_attachments FOR ALL TO authenticated USING (true) WITH CHECK (true);
-
 CREATE POLICY "Authenticated users can manage project_documents"
   ON project_documents FOR ALL TO authenticated USING (true) WITH CHECK (true);

@@ -4,6 +4,5 @@
 
 ALTER TABLE prime_contract_change_orders
   ADD COLUMN IF NOT EXISTS prime_contract_id UUID REFERENCES prime_contracts(id) ON DELETE SET NULL;
-
 CREATE INDEX IF NOT EXISTS idx_pcco_prime_contract_id
   ON prime_contract_change_orders(prime_contract_id);

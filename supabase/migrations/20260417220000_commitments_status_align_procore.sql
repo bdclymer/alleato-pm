@@ -5,7 +5,6 @@
 -- Drop old CHECK first so the data migration does not violate it
 ALTER TABLE public.subcontracts DROP CONSTRAINT IF EXISTS subcontracts_status_check;
 ALTER TABLE public.purchase_orders DROP CONSTRAINT IF EXISTS purchase_orders_status_check;
-
 -- Map legacy values to Procore spec (case-insensitive)
 UPDATE public.subcontracts SET status = CASE lower(status)
   WHEN 'draft' THEN 'Draft'
@@ -22,7 +21,6 @@ UPDATE public.subcontracts SET status = CASE lower(status)
   ELSE 'Draft'
 END
 WHERE status IS NOT NULL;
-
 UPDATE public.purchase_orders SET status = CASE lower(status)
   WHEN 'draft' THEN 'Draft'
   WHEN 'sent' THEN 'Out for Bid'
@@ -40,10 +38,8 @@ UPDATE public.purchase_orders SET status = CASE lower(status)
   ELSE 'Draft'
 END
 WHERE status IS NOT NULL;
-
 -- Re-add CHECK constraints with Procore spec values
 ALTER TABLE public.subcontracts ADD CONSTRAINT subcontracts_status_check
   CHECK (status IN ('Draft','Out for Bid','Out for Signature','Approved','Complete','Terminated'));
-
 ALTER TABLE public.purchase_orders ADD CONSTRAINT purchase_orders_status_check
   CHECK (status IN ('Draft','Out for Bid','Out for Signature','Approved','Complete','Terminated'));

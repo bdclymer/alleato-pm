@@ -1,0 +1,18 @@
+data: {"type":"start","messageId":"2QwmXRZScXliUbUF"}
+
+data: {"type":"start-step"}
+
+data: {"type":"text-start","id":"0"}
+
+data: {"type":"text-end","id":"0"}
+
+data: {"type":"finish-step"}
+
+data: {"type":"text-start","id":"strategist-failure-response"}
+
+data: {"type":"text-delta","id":"strategist-failure-response","delta":"I couldn’t produce a trustworthy project-manager briefing for Exol Morrisville because the retrieval/generation run failed before any source lookup began.\n\nWhat failed:\n- The run completed without returning final assistant text.\n\nWhat I checked:\n- No tool trace was produced.\n- No project was pinned.\n- Retrieval did not start, so I did not verify project records, meetings, email, Teams, OneDrive, or Acumatica data.\n\nWhat that means:\n- I don’t have enough validated context to brief Exol Morrisville without risking fabrication.\n- “Exol Morrisville” may also be ambiguous without a pinned project or a narrower scope.\n\nBest next move:\n- Re-run the request with one of these anchors:\n  - the exact project name or internal job number\n  - the specific decision/workstream you want briefed\n  - a date range\n- Good example: “Give me a PM briefing for Exol Morrisville focused on schedule, open risks, customer actions, and financial status for the last 30 days.”\n\nIf the next run succeeds, I can turn the retrieved material into a concise PM briefing and, if data is still missing, explicitly list which systems were checked and what wasn’t found."}
+
+data: {"type":"text-end","id":"strategist-failure-response"}
+
+data: [DONE]
+

@@ -6,9 +6,7 @@
 
 ALTER TABLE public.owner_invoices
   ADD COLUMN IF NOT EXISTS prime_contract_id UUID REFERENCES public.prime_contracts(id) ON DELETE CASCADE;
-
 ALTER TABLE public.owner_invoices
   ALTER COLUMN contract_id DROP NOT NULL;
-
 CREATE INDEX IF NOT EXISTS idx_owner_invoices_prime_contract
   ON public.owner_invoices USING btree (prime_contract_id);

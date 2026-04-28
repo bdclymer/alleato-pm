@@ -2384,6 +2384,42 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_tool_write_audits: {
+        Row: {
+          created_at: string
+          id: string
+          idempotency_key: string
+          project_id: number | null
+          request_payload: Json
+          response_payload: Json | null
+          status: string
+          tool_name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          idempotency_key: string
+          project_id?: number | null
+          request_payload?: Json
+          response_payload?: Json | null
+          status: string
+          tool_name: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          idempotency_key?: string
+          project_id?: number | null
+          request_payload?: Json
+          response_payload?: Json | null
+          status?: string
+          tool_name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       app_crawl_sessions: {
         Row: {
           completed_at: string | null

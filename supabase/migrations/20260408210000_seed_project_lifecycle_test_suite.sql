@@ -14,7 +14,6 @@ VALUES ('project-lifecycle', 'Project Lifecycle', 0)
 ON CONFLICT (tool_name) DO UPDATE SET
   display_name = EXCLUDED.display_name,
   last_generated_at = now();
-
 -- Insert all scenarios
 WITH suite AS (SELECT id FROM public.test_suites WHERE tool_name = 'project-lifecycle')
 INSERT INTO public.test_cases
@@ -28,7 +27,7 @@ VALUES
   ((SELECT id FROM suite), '1.1', 'Project Setup', 'Open project',
    'Open an existing project',
    'This is the entry point for the whole lifecycle. You are opening the Alleato AI project. Everything else in this test matrix builds on the project being accessible here.',
-   NULL,
+   'Log in as test1@mail.com before starting.',
    E'1. Navigate to http://localhost:3000/67\n2. Wait for the project home/dashboard page to load\n3. Observe the project name and any summary cards',
    'The page loads without errors. The project name is visible in the header or sidebar. No spinner remains on screen.',
    'HIGH', 'scenario', '/67'),
@@ -321,7 +320,6 @@ ON CONFLICT (suite_id, test_number) DO UPDATE SET
   test_type       = EXCLUDED.test_type,
   start_url       = EXCLUDED.start_url,
   updated_at      = now();
-
 -- Update total_cases count
 UPDATE public.test_suites
 SET total_cases = (

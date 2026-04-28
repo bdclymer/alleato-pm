@@ -1,6 +1,6 @@
 # Session Board
 
-Last updated: 2026-04-26
+Last updated: 2026-04-27
 
 Use this as the live ownership registry.
 
@@ -28,6 +28,16 @@ Use this as the live ownership registry.
 | S17 | Codex Worker | ORCH-020 | Feature-test run using `test-scenario-run-feature` for budget | `docs/ops/handoffs/2026-04-24-S17-budget-feature-run.md`, `tests/agent-browser-runs/*feature-budget*/**`, `docs/testing/results/*budget-feature-*.md` | Needs Rework | 2026-04-24 | 2026-04-24 |
 | S18 | Codex | ORCH-021 | Senior frontend QA browser audit for core navigation, project workflows, responsive layouts, accessibility, and scoped frontend fixes | `frontend/src/**`, `frontend/tests/**`, `frontend/next.config.ts`, `tests/agent-browser-runs/*frontend-qa*/**`, `tests/agent-browser-runs/*mobile-design-audit*/**`, `docs/ops/handoffs/2026-04-26-S18-frontend-qa-audit.md` | Pending Review | 2026-04-26 | 2026-04-26 |
 | S19 | Codex | ORCH-022 / AAI-165 | Linear-Codex execution process, handoff guardrails, sub-issue policy, and Linear comment generation | `AGENTS.md`, `docs/ops/orchestration/**`, `docs/ops/handoffs/HANDOFF-TEMPLATE.md`, `docs/ops/handoffs/2026-04-26-S19-linear-codex-process.md`, `scripts/ops/**`, `package.json` | Pending Review | 2026-04-26 | 2026-04-26 |
+<<<<<<< ours
+<<<<<<< ours
+| S20 | Codex | AAI-183 | Welcome onboarding modal, Ask Alleato widget, and AI prompt foundation slice | `frontend/src/components/onboarding/**`, `frontend/src/components/ask-alleato/**`, `frontend/src/lib/onboarding/**`, `frontend/src/lib/ask-alleato/**`, `frontend/src/lib/ai/**`, `docs/onboarding/**`, `docs/ai-plan/**`, `docs/ops/handoffs/2026-04-27-S20-welcome-onboarding-ai-foundations.md` | Pending Review | 2026-04-27 | 2026-04-27 |
+| S21 | Codex | AAI-185 | RAG/memory retrieval audit + trust fixes (schema/RLS/observability/citations) | `supabase/migrations/**`, `backend/src/services/**`, `frontend/src/lib/ai/**`, `frontend/src/app/(main)/ai-assistant/**`, `docs/ops/handoffs/2026-04-27-S21-rag-retrieval-trust.md` | In Progress | 2026-04-27 | 2026-04-27 |
+=======
+| S20 | Codex | ORCH-023 / AAI-186 | PM briefing RAG quality eval + retrieval/source-selection tuning for strategist responses | `frontend/src/lib/ai/tools/operational.ts`, `scripts/verify/verify_rag_pm_briefing_quality.mjs`, `docs/ops/handoffs/2026-04-28-S20-rag-pm-briefing-eval.md` | Pending Review | 2026-04-28 | 2026-04-28 |
+>>>>>>> theirs
+=======
+| S20 | Codex | ORCH-023 / AAI-186 | PM briefing RAG quality eval + retrieval/source-selection tuning for strategist responses | `frontend/src/lib/ai/tools/operational.ts`, `scripts/verify/verify_rag_pm_briefing_quality.mjs`, `docs/ops/handoffs/2026-04-28-S20-rag-pm-briefing-eval.md` | Pending Review | 2026-04-28 | 2026-04-28 |
+>>>>>>> theirs
 
 ## Status Rules
 

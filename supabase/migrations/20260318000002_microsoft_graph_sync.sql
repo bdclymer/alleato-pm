@@ -15,10 +15,8 @@ CREATE TABLE IF NOT EXISTS graph_sync_state (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     UNIQUE (source, resource_id)
 );
-
 CREATE INDEX IF NOT EXISTS idx_graph_sync_state_source ON graph_sync_state(source);
 CREATE INDEX IF NOT EXISTS idx_graph_sync_state_last_sync ON graph_sync_state(last_sync_at);
-
 -- Auto-update updated_at
 CREATE OR REPLACE FUNCTION update_graph_sync_state_updated_at()
 RETURNS TRIGGER AS $$
@@ -27,7 +25,6 @@ BEGIN
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
-
 DROP TRIGGER IF EXISTS trg_graph_sync_state_updated_at ON graph_sync_state;
 CREATE TRIGGER trg_graph_sync_state_updated_at
     BEFORE UPDATE ON graph_sync_state

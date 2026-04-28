@@ -15,6 +15,10 @@ import {
   useDeleteConversation,
 } from "@/hooks/use-rag-conversations";
 import { apiFetch } from "@/lib/api-client";
+import {
+  DEFAULT_AI_ASSISTANT_MODEL,
+  type AiAssistantModelId,
+} from "@/lib/ai/assistant-models";
 import { ConversationSidebar } from "./conversation-sidebar";
 import { ChatArea, type ResponseQuality } from "./chat-area";
 import type { ToolTraceItem } from "./trace-panel";
@@ -140,6 +144,8 @@ function ChatWithSession({
   onCouncilModeChange,
   selectedProjectId,
   onProjectChange,
+  selectedModel,
+  onModelChange,
   onFinishMessage,
 }: {
   sessionId: string;
@@ -158,6 +164,8 @@ function ChatWithSession({
   onCouncilModeChange: (val: boolean) => void;
   selectedProjectId: number | null;
   onProjectChange: (id: number | null) => void;
+  selectedModel: AiAssistantModelId;
+  onModelChange: (model: AiAssistantModelId) => void;
   onFinishMessage: (sessionId: string) => void;
 }) {
   const [input, setInput] = useState("");
@@ -170,6 +178,8 @@ function ChatWithSession({
 
   const selectedProjectIdRef = useRef(selectedProjectId);
   selectedProjectIdRef.current = selectedProjectId;
+  const selectedModelRef = useRef(selectedModel);
+  selectedModelRef.current = selectedModel;
 
   const {
     messages,
@@ -194,6 +204,7 @@ function ChatWithSession({
             messages: cleanedMessages,
             councilMode: councilModeRef.current,
             selectedProjectId: selectedProjectIdRef.current ?? undefined,
+            selectedModel: selectedModelRef.current,
           },
         };
       },
@@ -256,6 +267,8 @@ function ChatWithSession({
       onCouncilModeChange={onCouncilModeChange}
       selectedProjectId={selectedProjectId}
       onProjectChange={onProjectChange}
+      selectedModel={selectedModel}
+      onModelChange={onModelChange}
       onInputChange={setInput}
       onSubmit={handleSubmit}
       onToolApprovalResponse={addToolApprovalResponse}
@@ -292,6 +305,9 @@ export function RagChatPage() {
   const [noSessionInput, setNoSessionInput] = useState("");
   const [councilMode, setCouncilMode] = useState(false);
   const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
+  const [selectedModel, setSelectedModel] = useState<AiAssistantModelId>(
+    DEFAULT_AI_ASSISTANT_MODEL,
+  );
 
   // Conversation CRUD (React Query — unchanged)
   const { data: conversations = [], isLoading: isLoadingConvos } =
@@ -448,6 +464,8 @@ export function RagChatPage() {
             onCouncilModeChange={setCouncilMode}
             selectedProjectId={selectedProjectId}
             onProjectChange={setSelectedProjectId}
+            selectedModel={selectedModel}
+            onModelChange={setSelectedModel}
             onFinishMessage={handleFinishMessage}
           />
         ) : (
@@ -463,6 +481,8 @@ export function RagChatPage() {
             onCouncilModeChange={setCouncilMode}
             selectedProjectId={selectedProjectId}
             onProjectChange={setSelectedProjectId}
+            selectedModel={selectedModel}
+            onModelChange={setSelectedModel}
             onInputChange={setNoSessionInput}
             onSubmit={(msg: string, files?: FileList) => {
               setNoSessionInput("");

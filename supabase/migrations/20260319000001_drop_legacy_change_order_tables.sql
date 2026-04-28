@@ -14,14 +14,11 @@ DROP TABLE IF EXISTS public.change_order_approvals CASCADE;
 DROP TABLE IF EXISTS public.change_order_attachments CASCADE;
 DROP TABLE IF EXISTS public.change_order_costs CASCADE;
 DROP TABLE IF EXISTS public.change_order_lines CASCADE;
-
 -- 2. The parent legacy table
 DROP TABLE IF EXISTS public.change_orders CASCADE;
-
 -- 3. Other orphaned tables (0 rows, 0 code references)
 DROP TABLE IF EXISTS public.prime_potential_change_orders CASCADE;
 DROP TABLE IF EXISTS public.change_event_rfq_attachments CASCADE;
-
 -- Note: acumatica_change_orders (1817 rows) is NOT dropped here.
 -- It may still be used by the Python sync pipeline. Drop separately
--- after confirming with the backend team.
+-- after confirming with the backend team.;

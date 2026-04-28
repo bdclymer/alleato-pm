@@ -13,7 +13,6 @@ CREATE TABLE IF NOT EXISTS public.subcontractor_sov_submissions (
   updated_at      timestamptz DEFAULT now(),
   UNIQUE (commitment_id)
 );
-
 -- Subcontractor SOV: line items per submission
 CREATE TABLE IF NOT EXISTS public.subcontractor_sov_items (
   id             uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -26,17 +25,13 @@ CREATE TABLE IF NOT EXISTS public.subcontractor_sov_items (
   created_at     timestamptz DEFAULT now(),
   updated_at     timestamptz DEFAULT now()
 );
-
 CREATE INDEX IF NOT EXISTS idx_ssov_submissions_commitment
   ON public.subcontractor_sov_submissions(commitment_id);
-
 CREATE INDEX IF NOT EXISTS idx_ssov_items_submission
   ON public.subcontractor_sov_items(submission_id);
-
 -- RLS
 ALTER TABLE public.subcontractor_sov_submissions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.subcontractor_sov_items ENABLE ROW LEVEL SECURITY;
-
 CREATE POLICY "Project members can access subcontractor SOV submissions"
   ON public.subcontractor_sov_submissions
   FOR ALL
@@ -49,7 +44,6 @@ CREATE POLICY "Project members can access subcontractor SOV submissions"
         AND pdm.status = 'active'
     )
   );
-
 CREATE POLICY "Project members can access subcontractor SOV items"
   ON public.subcontractor_sov_items
   FOR ALL

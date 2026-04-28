@@ -8,6 +8,42 @@ export const GET = withApiGuardrails(
   async () => {
   const supabase = await createClient();
 
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    throw new GuardrailError({
+      code: "AUTH_EXPIRED",
+      where: "team-chat/previews#GET",
+      message: "Authentication required.",
+    });
+  }
+
+  const { data: profile, error: profileError } = await supabase
+    .from("user_profiles")
+    .select("is_admin")
+    .eq("id", user.id)
+    .single();
+
+  if (profileError) {
+    throw new GuardrailError({
+      code: "INTERNAL_ERROR",
+      where: "team-chat/previews#GET",
+      message: profileError.message,
+    });
+  }
+
+  if (!profile?.is_admin) {
+    throw new GuardrailError({
+      code: "FORBIDDEN",
+      where: "team-chat/previews#GET",
+      message: "Admin access required.",
+      status: 403,
+    });
+  }
+
   // Get the most recent message per channel
   const { data, error } = await supabase
     .from("team_chat_messages")
@@ -15,7 +51,11 @@ export const GET = withApiGuardrails(
     .order("created_at", { ascending: false });
 
   if (error) {
-    return NextResponse.json({});
+    throw new GuardrailError({
+      code: "INTERNAL_ERROR",
+      where: "team-chat/previews#GET",
+      message: error.message,
+    });
   }
 
   // Keep only the latest message per channel

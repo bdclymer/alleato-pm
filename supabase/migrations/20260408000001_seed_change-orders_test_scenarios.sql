@@ -19,7 +19,6 @@ VALUES (
 ON CONFLICT (tool_name) DO UPDATE SET
   display_name        = EXCLUDED.display_name,
   last_generated_at   = now();
-
 -- ---------------------------------------------------------------------------
 -- 2. Insert test cases
 -- ---------------------------------------------------------------------------
@@ -137,7 +136,6 @@ BEGIN
     'MEDIUM', 'feature', '/767/change-orders', 'At least one Approved and one non-Approved prime contract change order must exist.', NULL, now(), now());
 
 END $$;
-
 -- ---------------------------------------------------------------------------
 -- 3. Update total_cases count
 -- ---------------------------------------------------------------------------

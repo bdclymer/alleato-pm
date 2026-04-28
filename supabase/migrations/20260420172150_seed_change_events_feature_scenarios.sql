@@ -11,6 +11,5 @@ on conflict (tool_name, suite_type) do update set
   display_name      = excluded.display_name,
   last_generated_at = now()
 returning id;
-
 -- Replace <feature_suite_id> with the returned id, then run the insert below.
--- (Full insert omitted here for brevity; see Supabase for live data.)
+-- (Full insert omitted here for brevity; see Supabase for live data.);

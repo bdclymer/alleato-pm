@@ -5,16 +5,13 @@
 ALTER TABLE subcontractor_invoice_line_items
   ADD COLUMN IF NOT EXISTS work_retainage_released numeric DEFAULT 0 NOT NULL,
   ADD COLUMN IF NOT EXISTS materials_retainage_released numeric DEFAULT 0 NOT NULL;
-
 -- Copy existing retainage_released to work_retainage_released (was only tracking work)
 UPDATE subcontractor_invoice_line_items
   SET work_retainage_released = retainage_released
   WHERE retainage_released != 0;
-
 -- Add budget_code column for G703 display
 ALTER TABLE subcontractor_invoice_line_items
   ADD COLUMN IF NOT EXISTS budget_code text;
-
 -- Add the same missing columns to owner_invoice_line_items
 ALTER TABLE owner_invoice_line_items
   ADD COLUMN IF NOT EXISTS previous_work_retainage numeric DEFAULT 0 NOT NULL,
@@ -22,7 +19,6 @@ ALTER TABLE owner_invoice_line_items
   ADD COLUMN IF NOT EXISTS work_retainage_released numeric DEFAULT 0 NOT NULL,
   ADD COLUMN IF NOT EXISTS materials_retainage_released numeric DEFAULT 0 NOT NULL,
   ADD COLUMN IF NOT EXISTS budget_code text;
-
 -- Change owner_invoices.status from text to use invoice_status enum
 -- First check if the enum type exists
 DO $$

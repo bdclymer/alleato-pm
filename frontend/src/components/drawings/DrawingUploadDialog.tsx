@@ -4,6 +4,7 @@ import * as React from "react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQueryClient } from "@tanstack/react-query";
 import { Loader2, AlertCircle, CheckCircle2, ChevronDown, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 
@@ -32,15 +33,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { ErrorState } from "@/components/ds";
 import { FileUploadField } from "@/components/forms/FileUploadField";
 import { RHFDateField } from "@/components/forms/fields/RHFDateField";
 
-import { useDrawingUpload } from "@/hooks/use-drawing-upload";
+import { DrawingUploadBatchError, useDrawingUpload } from "@/hooks/use-drawing-upload";
 import { useDrawingSets } from "@/hooks/use-drawing-sets";
 import {
   uploadDrawingFormSchema,
   type UploadDrawingFormData,
 } from "@/lib/schemas/drawing-schemas";
+import {
+  DRAWING_MAX_UPLOAD_LABEL,
+  getDrawingUploadFileError,
+} from "@/lib/drawings/upload-constraints";
 import { ApiError, apiFetch } from "@/lib/api-client";
 import { createClient as createSupabaseClient } from "@/lib/supabase/client";
 import {
@@ -96,9 +103,20 @@ export function DrawingUploadDialog({
   const [newSetName, setNewSetName] = useState("");
   const [duplicateDrawing, setDuplicateDrawing] = useState<DuplicateDrawing | null>(null);
   const [isUploadingRevision, setIsUploadingRevision] = useState(false);
+  const [isSubmittingUpload, setIsSubmittingUpload] = useState(false);
+  const [uploadPhase, setUploadPhase] = useState<"idle" | "preparing" | "creating-set" | "uploading" | "finalizing">("idle");
+  const uploadInFlightRef = React.useRef(false);
+  const queryClient = useQueryClient();
 
   const { data: sets = [] } = useDrawingSets(projectId);
-  const { uploadMultipleDrawings, isUploading, errors, clearErrors } = useDrawingUpload(projectId);
+  const {
+    uploadMultipleDrawings,
+    isUploading,
+    progress,
+    errors,
+    clearUploadState,
+  } = useDrawingUpload(projectId);
+  const isBusy = isSubmittingUpload || isUploading || isUploadingRevision;
 
   const form = useForm<UploadDrawingFormData>({
     resolver: zodResolver(uploadDrawingFormSchema),
@@ -130,11 +148,19 @@ export function DrawingUploadDialog({
       toast.error("Please enter a name for the new drawing set");
       return null;
     }
+    const trimmedSetName = newSetName.trim();
+    const existingSet = sets.find(
+      (set) => set.name.trim().toLowerCase() === trimmedSetName.toLowerCase(),
+    );
+    if (existingSet) {
+      return existingSet.id;
+    }
     try {
       const newSet = await apiFetch<{ id: string }>(`/api/projects/${projectId}/drawings/sets`, {
         method: "POST",
-        body: JSON.stringify({ name: newSetName.trim(), issued_at: new Date().toISOString() }),
+        body: JSON.stringify({ name: trimmedSetName, issued_at: new Date().toISOString() }),
       });
+      queryClient.invalidateQueries({ queryKey: ["drawing-sets", projectId] });
       return newSet.id;
     } catch (error) {
       toast.error("Failed to create drawing set", {
@@ -145,19 +171,49 @@ export function DrawingUploadDialog({
   };
 
   const handleUpload = async (data: UploadDrawingFormData) => {
+    if (uploadInFlightRef.current) return;
+
     if (selectedFiles.length === 0) {
       toast.error("You must attach a file");
       return;
     }
 
-    clearErrors();
+    const invalidFiles = selectedFiles
+      .map((fileInfo) => ({
+        fileName: fileInfo.name,
+        error: getDrawingUploadFileError(fileInfo.file),
+      }))
+      .filter((item): item is { fileName: string; error: string } => Boolean(item.error));
+
+    if (invalidFiles.length > 0) {
+      toast.error("Remove invalid drawing files", {
+        description: invalidFiles
+          .map((item) => `${item.fileName}: ${item.error}`)
+          .join("; "),
+      });
+      return;
+    }
+
+    uploadInFlightRef.current = true;
+    setIsSubmittingUpload(true);
+    setUploadPhase("preparing");
+    clearUploadState();
     setDuplicateDrawing(null);
 
     try {
+      setUploadPhase(data.drawing_set_id === "__new__" ? "creating-set" : "preparing");
       const setId = await resolveSetId(data.drawing_set_id);
       if (setId === null) return;
 
       const uploadData = { ...data, drawing_set_id: setId };
+      if (data.drawing_set_id === "__new__") {
+        form.setValue("drawing_set_id", setId, {
+          shouldDirty: true,
+          shouldValidate: true,
+        });
+        setNewSetName("");
+      }
+      setUploadPhase("uploading");
 
       if (selectedFiles.length === 1) {
         const file = selectedFiles[0].file;
@@ -206,6 +262,7 @@ export function DrawingUploadDialog({
               file_type: file.type,
             }),
           });
+          queryClient.invalidateQueries({ queryKey: ["drawings", projectId] });
         } catch (error) {
           if (error instanceof ApiError && error.status === 409) {
             const duplicate = (error.body as { existing_drawing?: DuplicateDrawing }).existing_drawing;
@@ -221,20 +278,42 @@ export function DrawingUploadDialog({
       } else {
         const fileList = new DataTransfer();
         selectedFiles.forEach((fileInfo) => fileList.items.add(fileInfo.file));
-        await uploadMultipleDrawings(fileList.files, uploadData);
+        try {
+          await uploadMultipleDrawings(fileList.files, uploadData);
+        } catch (error) {
+          if (error instanceof DrawingUploadBatchError) {
+            const uploadedCount = error.results.length;
+            const failedFileNames = new Set(error.failures.map((failure) => failure.fileName));
+            setSelectedFiles((currentFiles) =>
+              currentFiles.filter((fileInfo) => failedFileNames.has(fileInfo.name)),
+            );
+            queryClient.invalidateQueries({ queryKey: ["drawings", projectId] });
+            if (uploadedCount > 0) {
+              toast.success(`Uploaded ${uploadedCount} of ${selectedFiles.length} drawings`);
+            }
+            return;
+          }
+
+          throw error;
+        }
       }
 
+      setUploadPhase("finalizing");
       toast.success(
         `Successfully uploaded ${selectedFiles.length} drawing${selectedFiles.length > 1 ? "s" : ""}`
       );
 
-      handleClose();
+      handleClose(true);
     } catch (error) {
       console.error("Upload failed:", error);
       toast.error("Upload failed", {
         description:
           error instanceof Error ? error.message : "An unexpected error occurred",
       });
+    } finally {
+      uploadInFlightRef.current = false;
+      setIsSubmittingUpload(false);
+      setUploadPhase("idle");
     }
   };
 
@@ -289,9 +368,11 @@ export function DrawingUploadDialog({
           file_type: file.type,
         }),
       });
+      queryClient.invalidateQueries({ queryKey: ["drawings", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["drawing", projectId, duplicateDrawing.id] });
 
       toast.success("New revision uploaded successfully");
-      handleClose();
+      handleClose(true);
     } catch (error) {
       toast.error("Failed to upload revision", {
         description: error instanceof Error ? error.message : "An unexpected error occurred",
@@ -301,13 +382,21 @@ export function DrawingUploadDialog({
     }
   };
 
-  const handleClose = () => {
+  const handleClose = (force = false) => {
+    if (isBusy && !force) return;
     form.reset();
     setSelectedFiles([]);
     setShowAdvanced(false);
     setDuplicateDrawing(null);
+    setUploadPhase("idle");
+    clearUploadState();
     onOpenChange(false);
     onUploadComplete?.();
+  };
+
+  const handleDialogOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen && isBusy) return;
+    onOpenChange(nextOpen);
   };
 
   const formatFileSize = (bytes: number) => {
@@ -316,9 +405,57 @@ export function DrawingUploadDialog({
     return (bytes / (1024 * 1024)).toFixed(1) + " MB";
   };
 
+  const completedUploadCount = progress.filter((item) => item.status === "completed").length;
+  const failedUploadCount = progress.filter((item) => item.status === "error").length;
+  const activeUpload = progress.find((item) => item.status === "uploading" || item.status === "processing");
+  const totalUploadCount = selectedFiles.length;
+  const finishedUploadCount = completedUploadCount + failedUploadCount;
+  const batchProgressValue =
+    totalUploadCount > 1
+      ? Math.round((finishedUploadCount / totalUploadCount) * 100)
+      : uploadPhase === "finalizing"
+        ? 95
+        : uploadPhase === "uploading"
+          ? 60
+          : uploadPhase === "creating-set"
+            ? 25
+            : isSubmittingUpload
+              ? 10
+              : 0;
+  const progressLabel =
+    totalUploadCount > 1
+      ? `${finishedUploadCount} of ${totalUploadCount} drawings processed`
+      : uploadPhase === "creating-set"
+        ? "Creating drawing set"
+        : uploadPhase === "finalizing"
+          ? "Finalizing upload"
+          : "Uploading drawing";
+  const progressDetail =
+    activeUpload?.fileName ??
+    (failedUploadCount > 0
+      ? `${failedUploadCount} failed, ${completedUploadCount} completed`
+      : "Keep this dialog open while drawings are processed.");
+  const uploadErrorSummary = errors
+    .map((error) => `${error.fileName}: ${error.error}`)
+    .join("; ");
+  const selectedFileErrors = selectedFiles
+    .map((fileInfo, index) => ({
+      index,
+      error: getDrawingUploadFileError(fileInfo.file),
+    }))
+    .filter((item): item is { index: number; error: string } => Boolean(item.error));
+  const hasSelectedFileErrors = selectedFileErrors.length > 0;
+  const selectedFileErrorSummary = selectedFileErrors
+    .map((item) => `${selectedFiles[item.index].name}: ${item.error}`)
+    .join("; ");
+  const submitLabel =
+    errors.length > 0 && selectedFiles.length > 0
+      ? `Retry failed ${selectedFiles.length === 1 ? "drawing" : "drawings"}`
+      : "Process";
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
+    <Dialog open={open} onOpenChange={handleDialogOpenChange}>
+      <DialogContent className="max-h-dvh overflow-y-auto sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>Upload Drawings</DialogTitle>
         </DialogHeader>
@@ -330,22 +467,33 @@ export function DrawingUploadDialog({
               label=""
               accept=".pdf,.png,.jpg,.jpeg,.tiff,.tif"
               multiple
-              maxSize={100 * 1024 * 1024}
+              maxSize={0}
               onFilesSelected={handleFilesSelected}
-              hint="or Drag & Drop"
+              hint={`Max ${DRAWING_MAX_UPLOAD_LABEL} per file, or drag and drop`}
               required
+              disabled={isBusy}
             />
 
             {/* Selected Files */}
             {selectedFiles.length > 0 && (
               <div className="space-y-2">
-                {selectedFiles.map((file, index) => (
+                {selectedFiles.map((file, index) => {
+                  const fileError = getDrawingUploadFileError(file.file);
+                  return (
                   <div
                     key={index}
-                    className="flex items-center justify-between p-3 bg-muted/50 rounded-md"
+                    className={`flex items-center justify-between rounded-md p-3 ${
+                      fileError
+                        ? "border border-destructive/30 bg-destructive/5"
+                        : "bg-muted/50"
+                    }`}
                   >
                     <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" />
+                      {fileError ? (
+                        <AlertCircle className="h-4 w-4 flex-shrink-0 text-destructive" />
+                      ) : (
+                        <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" />
+                      )}
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate">{file.name}</p>
                         <div className="flex items-center gap-2">
@@ -356,9 +504,12 @@ export function DrawingUploadDialog({
                             {file.type.split("/")[1]?.toUpperCase()}
                           </Badge>
                         </div>
+                        {fileError ? (
+                          <p className="mt-1 text-xs text-destructive">{fileError}</p>
+                        ) : null}
                       </div>
                     </div>
-                    {!isUploading && (
+                    {!isBusy && (
                       <Button
                         type="button"
                         variant="ghost"
@@ -370,9 +521,18 @@ export function DrawingUploadDialog({
                       </Button>
                     )}
                   </div>
-                ))}
+                );
+              })}
               </div>
             )}
+
+            {hasSelectedFileErrors ? (
+              <ErrorState
+                title="Some drawings cannot be uploaded"
+                error={selectedFileErrorSummary}
+                className="items-start rounded-md border border-destructive/20 bg-destructive/5 px-3 py-3 text-left [&>div:first-child]:hidden [&_p]:max-w-none"
+              />
+            ) : null}
 
             {/* Drawing Set */}
             <FormField
@@ -389,7 +549,7 @@ export function DrawingUploadDialog({
                   <Select
                     onValueChange={field.onChange}
                     value={field.value}
-                    disabled={isUploading}
+                    disabled={isBusy}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -418,7 +578,7 @@ export function DrawingUploadDialog({
                   value={newSetName}
                   onChange={(e) => setNewSetName(e.target.value)}
                   placeholder="e.g. IFC Set 01 - 2024"
-                  disabled={isUploading}
+                  disabled={isBusy}
                 />
               </FormItem>
             )}
@@ -429,7 +589,7 @@ export function DrawingUploadDialog({
                 control={form.control}
                 name="drawing_date"
                 label="Default Drawing Date"
-                disabled={isUploading}
+                disabled={isBusy}
                 placeholder="Pick drawing date"
               />
 
@@ -437,7 +597,7 @@ export function DrawingUploadDialog({
                 control={form.control}
                 name="received_date"
                 label="Default Received Date"
-                disabled={isUploading}
+                disabled={isBusy}
                 placeholder="Pick received date"
               />
             </div>
@@ -467,7 +627,7 @@ export function DrawingUploadDialog({
                       <FormItem>
                         <FormLabel>Drawing Number</FormLabel>
                         <FormControl>
-                          <Input {...field} placeholder="A-101" disabled={isUploading} />
+                          <Input {...field} placeholder="A-101" disabled={isBusy} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -481,7 +641,7 @@ export function DrawingUploadDialog({
                       <FormItem>
                         <FormLabel>Revision</FormLabel>
                         <FormControl>
-                          <Input {...field} placeholder="A" disabled={isUploading} />
+                          <Input {...field} placeholder="A" disabled={isBusy} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -498,7 +658,7 @@ export function DrawingUploadDialog({
                           <Input
                             {...field}
                             placeholder="First Floor Plan"
-                            disabled={isUploading}
+                            disabled={isBusy}
                           />
                         </FormControl>
                         <FormMessage />
@@ -515,7 +675,7 @@ export function DrawingUploadDialog({
                         <Select
                           onValueChange={field.onChange}
                           value={field.value}
-                          disabled={isUploading}
+                          disabled={isBusy}
                         >
                           <FormControl>
                             <SelectTrigger>
@@ -544,7 +704,7 @@ export function DrawingUploadDialog({
                         <Select
                           onValueChange={field.onChange}
                           value={field.value}
-                          disabled={isUploading}
+                          disabled={isBusy}
                         >
                           <FormControl>
                             <SelectTrigger>
@@ -575,7 +735,7 @@ export function DrawingUploadDialog({
                             {...field}
                             placeholder="Additional notes about this drawing..."
                             rows={3}
-                            disabled={isUploading}
+                            disabled={isBusy}
                           />
                         </FormControl>
                         <FormMessage />
@@ -585,6 +745,25 @@ export function DrawingUploadDialog({
                 </div>
               )}
             </div>
+
+            {(isSubmittingUpload || progress.length > 0) && (
+              <div className="space-y-3 rounded-md border border-border bg-muted/30 p-3">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0 space-y-1">
+                    <p className="text-sm font-medium text-foreground">{progressLabel}</p>
+                    <p className="truncate text-xs text-muted-foreground">{progressDetail}</p>
+                  </div>
+                  {isSubmittingUpload ? (
+                    <Loader2 className="mt-0.5 h-4 w-4 shrink-0 animate-spin text-primary" />
+                  ) : failedUploadCount > 0 ? (
+                    <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+                  ) : (
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" />
+                  )}
+                </div>
+                <Progress value={batchProgressValue} className="h-1.5" />
+              </div>
+            )}
 
             {/* Duplicate drawing warning */}
             {duplicateDrawing && (
@@ -599,7 +778,7 @@ export function DrawingUploadDialog({
                   <Button
                     type="button"
                     size="sm"
-                    disabled={isUploadingRevision}
+                    disabled={isBusy}
                     onClick={handleUploadAsRevision}
                   >
                     {isUploadingRevision ? (
@@ -615,7 +794,7 @@ export function DrawingUploadDialog({
                     type="button"
                     size="sm"
                     variant="ghost"
-                    disabled={isUploadingRevision}
+                    disabled={isBusy}
                     onClick={() => setDuplicateDrawing(null)}
                   >
                     Cancel
@@ -626,20 +805,11 @@ export function DrawingUploadDialog({
 
             {/* Errors */}
             {errors.length > 0 && (
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 text-destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <span className="text-sm font-medium">Upload Errors:</span>
-                </div>
-                {errors.map((error, index) => (
-                  <div
-                    key={index}
-                    className="text-sm text-destructive bg-destructive/10 p-2 rounded"
-                  >
-                    <strong>{error.fileName}:</strong> {error.error}
-                  </div>
-                ))}
-              </div>
+              <ErrorState
+                title="Some drawings did not upload"
+                error={uploadErrorSummary}
+                className="items-start rounded-md border border-destructive/20 bg-destructive/5 px-3 py-3 text-left [&>div:first-child]:hidden [&_p]:max-w-none"
+              />
             )}
 
             {/* Validation hint */}
@@ -654,22 +824,22 @@ export function DrawingUploadDialog({
                 <Button
                   type="button"
                   variant="ghost"
-                  onClick={handleClose}
-                  disabled={isUploading || isUploadingRevision}
+                  onClick={() => handleClose()}
+                  disabled={isBusy}
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
-                  disabled={isUploading || isUploadingRevision}
+                  disabled={isBusy || selectedFiles.length === 0 || hasSelectedFileErrors}
                 >
-                  {isUploading ? (
+                  {isBusy ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Processing...
+                      {isUploadingRevision ? "Uploading revision..." : "Processing..."}
                     </>
                   ) : (
-                    "Process"
+                    submitLabel
                   )}
                 </Button>
               </div>

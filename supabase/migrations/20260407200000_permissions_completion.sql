@@ -19,9 +19,7 @@ CREATE TABLE IF NOT EXISTS public.user_module_permissions (
   updated_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
   UNIQUE (project_id, person_id, module)
 );
-
 ALTER TABLE public.user_module_permissions ENABLE ROW LEVEL SECURITY;
-
 CREATE POLICY "ump_select" ON public.user_module_permissions
   FOR SELECT TO authenticated
   USING (
@@ -32,7 +30,6 @@ CREATE POLICY "ump_select" ON public.user_module_permissions
       WHERE ua.auth_user_id = auth.uid() AND pdm.status = 'active'
     )
   );
-
 CREATE POLICY "ump_write" ON public.user_module_permissions
   FOR ALL TO authenticated
   USING (
@@ -47,7 +44,6 @@ CREATE POLICY "ump_write" ON public.user_module_permissions
       WHERE id = auth.uid() AND is_admin = true
     )
   );
-
 -- ----------------------------------------------------------------------------
 -- 2. permission_audit_log
 -- ----------------------------------------------------------------------------
@@ -63,9 +59,7 @@ CREATE TABLE IF NOT EXISTS public.permission_audit_log (
   template_id  UUID    REFERENCES public.permission_templates(id),
   created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-
 ALTER TABLE public.permission_audit_log ENABLE ROW LEVEL SECURITY;
-
 CREATE POLICY "pal_select" ON public.permission_audit_log
   FOR SELECT TO authenticated
   USING (
@@ -76,7 +70,6 @@ CREATE POLICY "pal_select" ON public.permission_audit_log
       WHERE ua.auth_user_id = auth.uid() AND pdm.status = 'active'
     )
   );
-
 CREATE POLICY "pal_insert" ON public.permission_audit_log
   FOR INSERT TO authenticated
   WITH CHECK (
@@ -91,17 +84,14 @@ CREATE POLICY "pal_insert" ON public.permission_audit_log
       WHERE id = auth.uid() AND is_admin = true
     )
   );
-
 CREATE INDEX IF NOT EXISTS idx_pal_project_person
   ON public.permission_audit_log (project_id, person_id);
-
 -- ----------------------------------------------------------------------------
 -- 3. Fix RLS on permission_templates — restrict mutations to app admins
 -- ----------------------------------------------------------------------------
 DROP POLICY IF EXISTS "permission_templates_insert" ON public.permission_templates;
 DROP POLICY IF EXISTS "permission_templates_update" ON public.permission_templates;
 DROP POLICY IF EXISTS "permission_templates_delete" ON public.permission_templates;
-
 CREATE POLICY "pt_insert" ON public.permission_templates
   FOR INSERT TO authenticated
   WITH CHECK (
@@ -110,7 +100,6 @@ CREATE POLICY "pt_insert" ON public.permission_templates
       WHERE id = auth.uid() AND is_admin = true
     )
   );
-
 CREATE POLICY "pt_update" ON public.permission_templates
   FOR UPDATE TO authenticated
   USING (
@@ -125,7 +114,6 @@ CREATE POLICY "pt_update" ON public.permission_templates
       WHERE id = auth.uid() AND is_admin = true
     )
   );
-
 CREATE POLICY "pt_delete" ON public.permission_templates
   FOR DELETE TO authenticated
   USING (
@@ -135,7 +123,6 @@ CREATE POLICY "pt_delete" ON public.permission_templates
       WHERE id = auth.uid() AND is_admin = true
     )
   );
-
 -- ----------------------------------------------------------------------------
 -- 4. Seed default system permission templates
 -- ----------------------------------------------------------------------------

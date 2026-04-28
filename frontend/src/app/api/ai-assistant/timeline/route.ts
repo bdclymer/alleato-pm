@@ -1,5 +1,6 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
+import { createToolGuardrails } from "@/lib/ai/tools/guardrails";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 
@@ -68,6 +69,23 @@ export const GET = withApiGuardrails(
     }
 
     const supabase = createServiceClient();
+    const guardrails = createToolGuardrails(user.id, {
+      pinnedProjectId: projectId ?? undefined,
+    });
+    const scope = await guardrails.getScope();
+
+    // Timeline is project-scoped by default. Avoid leaking cross-project comms by
+    // requiring an explicit projectId unless the caller is an admin.
+    if (!projectId && !scope.isAdmin) {
+      return new Response("projectId is required", { status: 400 });
+    }
+
+    if (projectId) {
+      const access = await guardrails.enforceProjectAccess(projectId);
+      if (!access.ok) {
+        return new Response(access.error, { status: 403 });
+      }
+    }
 
     const projectNamePromise = projectId
       ? supabase
@@ -77,7 +95,9 @@ export const GET = withApiGuardrails(
           .single()
       : Promise.resolve({ data: null, error: null } as const);
 
-    const emailsPromise = projectId
+    const allowAdminCommsSources = scope.isAdmin;
+
+    const emailsPromise = projectId && allowAdminCommsSources
       ? supabase
           .from("project_emails")
           .select(
@@ -113,13 +133,15 @@ export const GET = withApiGuardrails(
           .limit(150)
       : Promise.resolve({ data: [], error: null } as const);
 
-    const teamsPromise = supabase
-      .from("team_chat_messages")
-      .select("id, channel_id, user_name, content, created_at")
-      .gte("created_at", startIso)
-      .lte("created_at", endIso)
-      .order("created_at", { ascending: false })
-      .limit(300);
+    const teamsPromise = allowAdminCommsSources
+      ? supabase
+          .from("team_chat_messages")
+          .select("id, channel_id, user_name, content, created_at")
+          .gte("created_at", startIso)
+          .lte("created_at", endIso)
+          .order("created_at", { ascending: false })
+          .limit(300)
+      : Promise.resolve({ data: [], error: null } as const);
 
     const [projectNameRes, emailsRes, meetingsRes, insightsRes, teamsRes] =
       await Promise.all([
@@ -232,8 +254,8 @@ export const GET = withApiGuardrails(
       items,
       range: { startDate: startIso, endDate: endIso },
       counts: {
-        email: emailItems.length,
-        teams: teamItems.length,
+        email: allowAdminCommsSources ? emailItems.length : 0,
+        teams: allowAdminCommsSources ? teamItems.length : 0,
         meeting: meetingItems.length,
         insight: insightItems.length,
       },

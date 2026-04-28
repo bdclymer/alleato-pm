@@ -21,7 +21,6 @@
 --     jobs and migrations continue to work.
 
 BEGIN;
-
 -- ---------------------------------------------------------------------------
 -- Helper functions
 -- ---------------------------------------------------------------------------
@@ -36,10 +35,8 @@ SET search_path = public, pg_temp
 AS $$
   SELECT id FROM public.people WHERE auth_user_id = auth.uid() LIMIT 1;
 $$;
-
 COMMENT ON FUNCTION public.current_person_id() IS
   'Returns people.id for the current auth.uid(). Used inside RLS policies.';
-
 -- Is the current auth user flagged as an app admin?
 CREATE OR REPLACE FUNCTION public.current_is_app_admin()
 RETURNS boolean
@@ -53,7 +50,6 @@ AS $$
     false
   );
 $$;
-
 -- Is the current user an active member of the given project?
 CREATE OR REPLACE FUNCTION public.current_is_project_member(p_project_id bigint)
 RETURNS boolean
@@ -70,7 +66,6 @@ AS $$
       AND m.status = 'active'
   );
 $$;
-
 -- Can the current user view PRIVATE commitments on the given project?
 -- Matches Procore semantics:
 --   * app admin, OR
@@ -98,20 +93,17 @@ AS $$
         )
     );
 $$;
-
 -- ---------------------------------------------------------------------------
 -- Drop the unreachable "USING (true)" SOV policies
 -- ---------------------------------------------------------------------------
 DROP POLICY IF EXISTS "Users can manage SOVs for their projects" ON public.schedule_of_values;
 DROP POLICY IF EXISTS "Users can view SOVs for their projects"   ON public.schedule_of_values;
-
 -- ---------------------------------------------------------------------------
 -- Enable RLS
 -- ---------------------------------------------------------------------------
 ALTER TABLE public.subcontracts       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.purchase_orders    ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.schedule_of_values ENABLE ROW LEVEL SECURITY;
-
 -- ---------------------------------------------------------------------------
 -- subcontracts
 -- ---------------------------------------------------------------------------
@@ -131,7 +123,6 @@ CREATE POLICY subcontracts_select
       )
     )
   );
-
 DROP POLICY IF EXISTS subcontracts_write ON public.subcontracts;
 CREATE POLICY subcontracts_write
   ON public.subcontracts
@@ -145,7 +136,6 @@ CREATE POLICY subcontracts_write
     public.current_is_app_admin()
     OR public.current_is_project_member(project_id)
   );
-
 -- ---------------------------------------------------------------------------
 -- purchase_orders
 -- ---------------------------------------------------------------------------
@@ -165,7 +155,6 @@ CREATE POLICY purchase_orders_select
       )
     )
   );
-
 DROP POLICY IF EXISTS purchase_orders_write ON public.purchase_orders;
 CREATE POLICY purchase_orders_write
   ON public.purchase_orders
@@ -179,7 +168,6 @@ CREATE POLICY purchase_orders_write
     public.current_is_app_admin()
     OR public.current_is_project_member(project_id)
   );
-
 -- ---------------------------------------------------------------------------
 -- schedule_of_values — visibility inherits from the parent contract
 -- ---------------------------------------------------------------------------
@@ -219,7 +207,6 @@ CREATE POLICY schedule_of_values_select
         AND public.current_is_project_member(pc.project_id)
     )
   );
-
 DROP POLICY IF EXISTS schedule_of_values_write ON public.schedule_of_values;
 CREATE POLICY schedule_of_values_write
   ON public.schedule_of_values
@@ -262,21 +249,16 @@ CREATE POLICY schedule_of_values_write
         AND public.current_is_project_member(pc.project_id)
     )
   );
-
 -- ---------------------------------------------------------------------------
 -- Performance indexes for the joins RLS will use on every row read
 -- ---------------------------------------------------------------------------
 CREATE INDEX IF NOT EXISTS idx_people_auth_user_id
   ON public.people(auth_user_id);
-
 CREATE INDEX IF NOT EXISTS idx_project_directory_memberships_person_project
   ON public.project_directory_memberships(person_id, project_id) WHERE status = 'active';
-
 -- GIN index for the `= ANY(invoice_contact_ids)` lookups
 CREATE INDEX IF NOT EXISTS idx_subcontracts_invoice_contact_ids
   ON public.subcontracts USING GIN (invoice_contact_ids);
-
 CREATE INDEX IF NOT EXISTS idx_purchase_orders_invoice_contact_ids
   ON public.purchase_orders USING GIN (invoice_contact_ids);
-
 COMMIT;

@@ -4,10 +4,51 @@ import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
 
+async function assertAdminAccess(where: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    throw new GuardrailError({
+      code: "AUTH_EXPIRED",
+      where,
+      message: "Authentication required.",
+    });
+  }
+
+  const { data: profile, error: profileError } = await supabase
+    .from("user_profiles")
+    .select("is_admin")
+    .eq("id", user.id)
+    .single();
+
+  if (profileError) {
+    throw new GuardrailError({
+      code: "INTERNAL_ERROR",
+      where,
+      message: profileError.message,
+    });
+  }
+
+  if (!profile?.is_admin) {
+    throw new GuardrailError({
+      code: "FORBIDDEN",
+      where,
+      message: "Admin access required.",
+      status: 403,
+    });
+  }
+
+  return { supabase, userId: user.id, email: user.email ?? null };
+}
+
 export const GET = withApiGuardrails(
   "team-chat/messages#GET",
   async ({ request }) => {
-    const supabase = await createClient();
+    const { supabase } = await assertAdminAccess("team-chat/messages#GET");
     const { searchParams } = new URL(request.url);
     const channelId = searchParams.get("channel");
     const limit = Math.min(Number(searchParams.get("limit") ?? "100"), 200);
@@ -34,20 +75,9 @@ export const GET = withApiGuardrails(
 export const POST = withApiGuardrails(
   "team-chat/messages#POST",
   async ({ request }) => {
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      throw new GuardrailError({
-        code: "AUTH_EXPIRED",
-        where: "team-chat/messages#POST",
-        message: "Authentication required.",
-      });
-    }
+    const { supabase, userId, email } = await assertAdminAccess(
+      "team-chat/messages#POST",
+    );
 
     const body = await request.json();
     const { channelId, content } = body as {
@@ -75,7 +105,7 @@ export const POST = withApiGuardrails(
         supabase
           .from("user_profiles")
           .select("full_name, email")
-          .eq("id", user.id)
+          .eq("id", userId)
           .maybeSingle(),
         supabase
           .from("team_chat_messages")
@@ -99,8 +129,8 @@ export const POST = withApiGuardrails(
       .from("team_chat_messages")
       .insert({
         channel_id: channelId,
-        user_id: user.id,
-        user_name: profile?.full_name ?? profile?.email ?? user.email ?? "User",
+        user_id: userId,
+        user_name: profile?.full_name ?? profile?.email ?? email ?? "Admin",
         content: normalizedContent,
       })
       .select("id, channel_id, user_name, content, created_at")

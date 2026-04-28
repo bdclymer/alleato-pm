@@ -65,12 +65,14 @@ const evidence = getIntakeValue("Evidence artifacts (screenshot/video/report/log
 const findings = getIntakeValue("Top 3 findings (frontend-visible issues first)");
 const nextAction = getIntakeValue("Recommended next action (one line)");
 const handoffFilePath = getIntakeValue("Handoff file path");
+const migrationLedgerEvidence = getIntakeValue("Migration ledger evidence");
 
 const linearUpdates = getSection("Linear Updates");
 const currentStatus = getSection("Current Status");
 const knownPitfalls = getSection("Known Pitfalls");
 
 const failures = [];
+const migrationTouched = /supabase\/migrations\/\d{14}_[^\s;,)]+\.sql/.test(text);
 if (!sessionId) failures.push("Missing Session ID");
 if (!taskId) failures.push("Missing Task ID");
 if (!/^AAI-\d+$/i.test(linearIssue)) {
@@ -85,6 +87,9 @@ if (!commands) failures.push("Missing commands run and outcome");
 if (!evidence) failures.push("Missing evidence artifacts");
 if (!nextAction) failures.push("Missing recommended next action");
 if (!handoffFilePath && !relativeHandoff) failures.push("Missing handoff file path");
+if (migrationTouched && !migrationLedgerEvidence) {
+  failures.push("Missing migration ledger evidence for touched Supabase migration");
+}
 if (!linearUpdates || /Kickoff comment:\s*$/im.test(linearUpdates)) {
   failures.push("Missing Linear update evidence");
 }
@@ -118,6 +123,9 @@ const body = [
   "",
   "Commands:",
   normalizeList(commands),
+  "",
+  "Migration ledger evidence:",
+  normalizeList(migrationLedgerEvidence || (migrationTouched ? "" : "Not applicable")),
   "",
   "Risks / blockers:",
   normalizeList(knownPitfalls),

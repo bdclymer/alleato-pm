@@ -16,10 +16,8 @@
 
 ALTER TABLE document_chunks
   ADD COLUMN IF NOT EXISTS source_type text DEFAULT 'document';
-
 CREATE INDEX IF NOT EXISTS idx_document_chunks_source_type
   ON document_chunks(source_type);
-
 -- ─── 2. Backfill source_type ────────────────────────────────────────────────
 
 UPDATE document_chunks dc
@@ -33,7 +31,6 @@ SET source_type = CASE
 END
 FROM document_metadata dm
 WHERE dc.document_id = dm.id;
-
 -- ─── 3. Drop restrictive constraint ────────────────────────────────────────
 -- chunk_id is already PK + unique. The (document_id, chunk_index) constraint
 -- prevents storing multiple chunk types (summary, transcript, segment) for
@@ -41,7 +38,6 @@ WHERE dc.document_id = dm.id;
 
 ALTER TABLE document_chunks
   DROP CONSTRAINT IF EXISTS document_chunks_document_id_chunk_index_key;
-
 -- ─── 4. Migrate Fireflies embeddings ───────────────────────────────────────
 -- documents table has 11,207 embedded Fireflies chunks at vector(3072).
 -- Cast to halfvec(3072) for compatibility with document_chunks HNSW index.
@@ -56,7 +52,6 @@ SELECT
 FROM documents d
 WHERE d.embedding IS NOT NULL AND d.source = 'fireflies' AND d.metadata->>'doc_type' = 'meeting_summary'
 ON CONFLICT (chunk_id) DO NOTHING;
-
 -- 4b. Transcript chunks
 INSERT INTO document_chunks (chunk_id, document_id, chunk_index, text, metadata, content_hash, embedding, source_type, created_at)
 SELECT
@@ -67,7 +62,6 @@ SELECT
 FROM documents d
 WHERE d.embedding IS NOT NULL AND d.source = 'fireflies' AND d.metadata->>'doc_type' = 'chunk'
 ON CONFLICT (chunk_id) DO NOTHING;
-
 -- 4c. Segment summaries
 INSERT INTO document_chunks (chunk_id, document_id, chunk_index, text, metadata, content_hash, embedding, source_type, created_at)
 SELECT
@@ -78,7 +72,6 @@ SELECT
 FROM documents d
 WHERE d.embedding IS NOT NULL AND d.source = 'fireflies' AND d.metadata->>'doc_type' = 'segment_summary'
 ON CONFLICT (chunk_id) DO NOTHING;
-
 -- 4d. Section chunks + notes topics
 INSERT INTO document_chunks (chunk_id, document_id, chunk_index, text, metadata, content_hash, embedding, source_type, created_at)
 SELECT
@@ -96,7 +89,6 @@ FROM documents d
 WHERE d.embedding IS NOT NULL AND d.source = 'fireflies'
   AND d.metadata->>'doc_type' NOT IN ('meeting_summary', 'chunk', 'segment_summary')
 ON CONFLICT (chunk_id) DO NOTHING;
-
 -- ─── 5. Create unified search RPC ──────────────────────────────────────────
 
 CREATE OR REPLACE FUNCTION search_document_chunks(
@@ -151,6 +143,5 @@ BEGIN
     LIMIT match_count;
 END;
 $$;
-
 GRANT EXECUTE ON FUNCTION search_document_chunks(halfvec(3072), text[], bigint, int, float)
     TO anon, authenticated, service_role;

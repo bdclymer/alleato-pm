@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from .client import get_graph_client
+from .project_inference import infer_project_id
 
 logger = logging.getLogger(__name__)
 
@@ -136,6 +137,20 @@ def _process_teams_message(supabase_client, graph, msg, team_id, team_name, chan
     from_field = msg.get("from")
     sender = (from_field if isinstance(from_field, dict) else {}).get("user") or {}
     sender_name = sender.get("displayName", "Unknown") if isinstance(sender, dict) else "Unknown"
+    participants = [sender_name]
+    for thread_msg in thread_messages:
+        msg_from = (thread_msg or {}).get("from", {}) or {}
+        user_data = msg_from.get("user", {}) if isinstance(msg_from, dict) else {}
+        display_name = (user_data or {}).get("displayName")
+        if display_name:
+            participants.append(display_name)
+
+    project_id, assignment_method, assignment_confidence = infer_project_id(
+        supabase_client,
+        title=f"Teams: {team_name} / {channel_name}",
+        content=thread_text,
+        participants=participants,
+    )
 
     supabase_client.from_("document_metadata").insert({
         "id": doc_id,
@@ -145,10 +160,19 @@ def _process_teams_message(supabase_client, graph, msg, team_id, team_name, chan
         "type": "teams_message",
         "content": thread_text,
         "date": created[:10] if created else None,
-        "participants": [sender_name],
+        "participants": ", ".join(sorted(set(participants))),
         "status": "raw_ingested",
-        "tags": ["teams", team_name.lower(), channel_name.lower()],
+        "tags": ",".join(["teams", team_name.lower(), channel_name.lower(), f"project_auto:{assignment_method}" if project_id else "unassigned"]),
+        "project_id": project_id,
     }).execute()
+    if project_id:
+        logger.info(
+            "[Teams] Auto-assigned project_id=%s for %s via %s (%.2f)",
+            project_id,
+            msg_id,
+            assignment_method,
+            assignment_confidence,
+        )
 
 
 def get_all_teams_and_channels(supabase_client) -> list[dict]:
@@ -317,6 +341,12 @@ def _process_chat_message(
         raise
 
     participants = sorted(set((chat_members or []) + [sender_name]))
+    project_id, assignment_method, assignment_confidence = infer_project_id(
+        supabase_client,
+        title=f"Teams DM Conversation: {chat_display_name}",
+        content=text,
+        participants=participants,
+    )
     row = {
         "id": doc_id,
         "title": f"Teams DM Conversation: {chat_display_name}",
@@ -325,9 +355,10 @@ def _process_chat_message(
         "type": "teams_dm_conversation",
         "content": text,
         "date": date_key,
-        "participants": participants,
+        "participants": ", ".join(participants),
         "status": "raw_ingested",
-        "tags": ["teams", "direct_message", chat_display_name.lower()],
+        "tags": ",".join(["teams", "direct_message", chat_display_name.lower(), f"project_auto:{assignment_method}" if project_id else "unassigned"]),
+        "project_id": project_id,
     }
     if existing_doc:
         supabase_client.from_("document_metadata").update(row).eq("id", doc_id).execute()

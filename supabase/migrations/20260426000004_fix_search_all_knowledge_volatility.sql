@@ -52,7 +52,5 @@ BEGIN
     LIMIT match_count;
 END;
 $$;
-
 GRANT EXECUTE ON FUNCTION public.search_all_knowledge(halfvec(3072), int, float)
     TO anon, authenticated, service_role;
-

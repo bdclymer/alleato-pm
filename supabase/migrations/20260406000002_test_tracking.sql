@@ -12,7 +12,6 @@ CREATE TABLE IF NOT EXISTS public.test_suites (
   created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
   last_generated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-
 -- ─── test_cases ──────────────────────────────────────────────────────────────
 -- Individual test items extracted from the Procore docs matrix
 CREATE TABLE IF NOT EXISTS public.test_cases (
@@ -29,12 +28,10 @@ CREATE TABLE IF NOT EXISTS public.test_cases (
   updated_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
   UNIQUE (suite_id, test_number)
 );
-
 CREATE INDEX IF NOT EXISTS idx_test_cases_suite_id
   ON public.test_cases (suite_id);
 CREATE INDEX IF NOT EXISTS idx_test_cases_priority
   ON public.test_cases (suite_id, priority);
-
 -- ─── test_runs ───────────────────────────────────────────────────────────────
 -- A single testing session
 CREATE TABLE IF NOT EXISTS public.test_runs (
@@ -47,10 +44,8 @@ CREATE TABLE IF NOT EXISTS public.test_runs (
   notes         TEXT,
   created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-
 CREATE INDEX IF NOT EXISTS idx_test_runs_suite_id
   ON public.test_runs (suite_id, run_date DESC);
-
 -- ─── test_results ────────────────────────────────────────────────────────────
 -- Outcome of a single test case within a run
 CREATE TABLE IF NOT EXISTS public.test_results (
@@ -64,12 +59,10 @@ CREATE TABLE IF NOT EXISTS public.test_results (
   updated_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
   UNIQUE (run_id, case_id)
 );
-
 CREATE INDEX IF NOT EXISTS idx_test_results_run_id
   ON public.test_results (run_id);
 CREATE INDEX IF NOT EXISTS idx_test_results_status
   ON public.test_results (run_id, status);
-
 -- ─── test_screenshots ────────────────────────────────────────────────────────
 -- Screenshots attached to test results (stored in Supabase Storage)
 CREATE TABLE IF NOT EXISTS public.test_screenshots (
@@ -80,10 +73,8 @@ CREATE TABLE IF NOT EXISTS public.test_screenshots (
   label         TEXT,
   created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-
 CREATE INDEX IF NOT EXISTS idx_test_screenshots_result_id
   ON public.test_screenshots (result_id);
-
 -- ─── updated_at triggers ─────────────────────────────────────────────────────
 CREATE OR REPLACE FUNCTION public.set_updated_at()
 RETURNS TRIGGER LANGUAGE plpgsql AS $$
@@ -92,7 +83,6 @@ BEGIN
   RETURN NEW;
 END;
 $$;
-
 DO $$ BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM pg_trigger WHERE tgname = 'set_test_cases_updated_at'
@@ -102,7 +92,6 @@ DO $$ BEGIN
       FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
   END IF;
 END $$;
-
 DO $$ BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM pg_trigger WHERE tgname = 'set_test_results_updated_at'

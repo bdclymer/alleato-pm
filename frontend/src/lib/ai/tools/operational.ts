@@ -195,6 +195,16 @@ async function rerankWithLLM(
   }
 }
 
+function rankBriefingSourcePriority(sourceTable: string): number {
+  if (sourceTable === "meeting_transcript") return 0;
+  if (sourceTable === "meeting_summary") return 1;
+  if (sourceTable === "email") return 2;
+  if (sourceTable === "teams_message") return 3;
+  if (sourceTable === "insight") return 4;
+  if (sourceTable === "knowledge_base") return 5;
+  return 6;
+}
+
 /** Lazy OpenAI client for embedding generation (routed through AI Gateway when available). */
 let _openai: OpenAI | null = null;
 function getOpenAI(): OpenAI {
@@ -230,6 +240,17 @@ export function createOperationalTools(
   const guardrails = createToolGuardrails(userId, {
     pinnedProjectId: options.pinnedProjectId,
   });
+
+  async function requireAdminForCommunications(sourceLabel: string) {
+    const scope = await guardrails.getScope();
+    if (scope.isAdmin) return { ok: true as const };
+    return {
+      ok: false as const,
+      error:
+        `${sourceLabel} access is admin-only in Alleato. ` +
+        `I can still use meetings, project records, and documents you have access to.`,
+    };
+  }
 
   return {
     // -----------------------------------------------------------------------
@@ -1452,6 +1473,10 @@ export function createOperationalTools(
         "semanticSearch",
         options,
         async ({ query, projectId, projectName, matchCount, threshold, skipRerank }) => {
+          const scope = await guardrails.getScope();
+          const allowAdminCommsSources = scope.isAdmin;
+          const allowedProjectIds = scope.allowedProjectIds;
+          const allowedProjectIdSet = new Set<number>(allowedProjectIds);
           // Resolve project name to ID if provided
           let resolvedProjectId = projectId;
           if (!resolvedProjectId && projectName) {
@@ -1461,11 +1486,29 @@ export function createOperationalTools(
             }
             // If project name doesn't resolve, still search across all projects
           }
+
+          if (!scope.isAdmin) {
+            if (allowedProjectIds.length === 0) {
+              return {
+                error:
+                  "You are not assigned to any projects in the current database scope, so I cannot run semantic search safely.",
+              };
+            }
+            if (
+              typeof resolvedProjectId === "number" &&
+              !allowedProjectIdSet.has(resolvedProjectId)
+            ) {
+              return {
+                error:
+                  "You do not have access to that project. Pick a project you are assigned to or change the project context.",
+              };
+            }
+          }
           try {
             // All active RAG tables use halfvec(3072) — single embedding generation.
             const openai = getOpenAI();
             const embResp3072 = await openai.embeddings.create({
-              model: "text-embedding-3-large",
+              model: getOpenAIModelId("text-embedding-3-large"),
               dimensions: 3072,
               input: query,
             });
@@ -1527,18 +1570,40 @@ export function createOperationalTools(
 
             const rawKnowledgeRows = (knowledgeRes.data ?? []) as AnyRow[];
             const knowledgeRows = rawKnowledgeRows.filter((row) => {
-              if (!resolvedProjectId) return true;
               const projectIds = Array.isArray(row.project_ids)
                 ? (row.project_ids as unknown[]).filter(
                     (v): v is number => typeof v === "number",
                   )
                 : [];
-              return projectIds.includes(resolvedProjectId);
+
+              if (typeof resolvedProjectId === "number") {
+                return projectIds.includes(resolvedProjectId);
+              }
+
+              if (scope.isAdmin) return true;
+              return projectIds.some((id) => allowedProjectIdSet.has(id));
             });
             // Unified document_chunks: meetings, emails, Teams, OneDrive, transcripts
             const rawChunkRows = ((chunksRes as { data?: unknown[] }).data ?? []) as AnyRow[];
-            // Project filtering is done in the RPC now, no need to filter client-side
-            const chunkRows = rawChunkRows;
+            // Project filtering is done in the RPC now; still apply comms gating here
+            // because this tool uses the service role client (bypasses RLS).
+            const chunkRows = rawChunkRows
+              .filter((row) => {
+                const docProjectId = row.doc_project_id;
+
+                if (typeof resolvedProjectId === "number") {
+                  return docProjectId === resolvedProjectId;
+                }
+
+                if (scope.isAdmin) return true;
+
+                return typeof docProjectId === "number" && allowedProjectIdSet.has(docProjectId);
+              })
+              .filter((row) => {
+                if (allowAdminCommsSources) return true;
+                const sourceType = String(row.source_type ?? "");
+                return !["email", "teams_message"].includes(sourceType);
+              });
 
             const merged: Array<{
               key: string;
@@ -1577,7 +1642,15 @@ export function createOperationalTools(
 
             // 3) Knowledge base entries (company_knowledge with embeddings)
             const rawKBRows = (knowledgeBaseRes.data ?? []) as AnyRow[];
-            for (const row of rawKBRows) {
+            const kbRows = rawKBRows.filter((row) => {
+              const rowProjectId = row.project_id;
+              if (typeof resolvedProjectId === "number") {
+                return rowProjectId === resolvedProjectId;
+              }
+              if (scope.isAdmin) return true;
+              return typeof rowProjectId === "number" && allowedProjectIdSet.has(rowProjectId);
+            });
+            for (const row of kbRows) {
               const similarity = Math.round(asNumber(row.similarity) * 1000) / 1000;
               const kbId = String(row.id ?? "");
               merged.push({
@@ -1709,7 +1782,11 @@ export function createOperationalTools(
             // than generic reference documents when the user is asking for a status update.
             const sourceBoost = (sourceTable: string): number => {
               if (!briefing) return 0;
-              if (["email", "teams_message", "meeting_transcript", "meeting_summary"].includes(sourceTable)) return 0.05;
+              if (sourceTable === "meeting_transcript") return 0.08;
+              if (sourceTable === "meeting_summary") return 0.07;
+              if (sourceTable === "email") return 0.065;
+              if (sourceTable === "teams_message") return 0.06;
+              if (sourceTable === "insight") return 0.04;
               return 0;
             };
 
@@ -1742,6 +1819,39 @@ export function createOperationalTools(
               results = candidates.slice(0, targetCount);
             }
 
+            if (briefing && results.length > 1) {
+              const bySource = new Map<string, typeof results>();
+              for (const result of results) {
+                const group = bySource.get(result.sourceTable) ?? [];
+                group.push(result);
+                bySource.set(result.sourceTable, group);
+              }
+
+              const diversified: typeof results = [];
+              const orderedSourceTypes = Array.from(bySource.keys()).sort(
+                (a, b) => rankBriefingSourcePriority(a) - rankBriefingSourcePriority(b),
+              );
+
+              for (const sourceType of orderedSourceTypes) {
+                const best = bySource.get(sourceType)?.[0];
+                if (!best) continue;
+                diversified.push(best);
+                if (diversified.length >= targetCount) break;
+              }
+
+              if (diversified.length < targetCount) {
+                const seenKeys = new Set(diversified.map((item) => item.key));
+                for (const result of results) {
+                  if (diversified.length >= targetCount) break;
+                  if (seenKeys.has(result.key)) continue;
+                  diversified.push(result);
+                  seenKeys.add(result.key);
+                }
+              }
+
+              results = diversified;
+            }
+
             if (results.length === 0) {
               return {
                 results: [],
@@ -1766,6 +1876,7 @@ export function createOperationalTools(
                 knowledgeMatches: knowledgeRows.length,
                 externalChunkMatches: chunkRows.length,
                 usedProjectFilter: Boolean(resolvedProjectId),
+                filteredAdminOnlySources: allowAdminCommsSources ? [] : ["email", "teams_message"],
               },
             };
           } catch (err) {
@@ -1949,10 +2060,9 @@ export function createOperationalTools(
         async ({ query, matchCount }) => {
           try {
             const openaiClient = getOpenAI();
-            // memories.embedding is halfvec(3072) — must use text-embedding-3-large at 3072 dims
+            // memories.embedding is vector(1536) — use text-embedding-3-small.
             const embeddingResponse = await openaiClient.embeddings.create({
-              model: "text-embedding-3-large",
-              dimensions: 3072,
+              model: "text-embedding-3-small",
               input: query,
             });
 
@@ -2044,12 +2154,34 @@ export function createOperationalTools(
         "searchMeetingsByTopic",
         options,
         async ({ topic, projectId, projectName, maxResults }) => {
+          const scope = await guardrails.getScope();
+
           // Resolve project name
           let resolvedProjectId = projectId;
           if (!resolvedProjectId && projectName) {
             const resolved = await resolveProject(supabase, guardrails, undefined, projectName);
             if (!("error" in resolved)) {
               resolvedProjectId = resolved.id;
+            }
+          }
+
+          if (!scope.isAdmin) {
+            if (scope.allowedProjectIds.length === 0) {
+              return {
+                results: [],
+                message:
+                  "You are not assigned to any projects in the current database scope, so I cannot search meetings safely.",
+              };
+            }
+            if (
+              typeof resolvedProjectId === "number" &&
+              !scope.allowedProjectIds.includes(resolvedProjectId)
+            ) {
+              return {
+                results: [],
+                message:
+                  "You do not have access to that project. Pick a project you are assigned to or change the project context.",
+              };
             }
           }
 
@@ -2116,6 +2248,9 @@ export function createOperationalTools(
           if (resolvedProjectId) {
             meetingQuery = meetingQuery.eq("project_id", resolvedProjectId);
           }
+          if (!scope.isAdmin) {
+            meetingQuery = meetingQuery.in("project_id", scope.allowedProjectIds);
+          }
 
           const meetingsRes = await meetingQuery;
           const meetings = (meetingsRes.data ?? []) as AnyRow[];
@@ -2170,19 +2305,31 @@ export function createOperationalTools(
         "getMeetingDetails",
         options,
         async ({ meetingId, meetingTitle }) => {
+          const scope = await guardrails.getScope();
+
+          if (!scope.isAdmin && scope.allowedProjectIds.length === 0) {
+            return {
+              error:
+                "You are not assigned to any projects in the current database scope, so I cannot retrieve meeting details safely.",
+            };
+          }
+
           // Resolve ID from title if no meetingId provided (or if meetingId lookup fails)
           let resolvedId = meetingId;
 
           if (!resolvedId && meetingTitle) {
             // Search by title — ilike for case-insensitive partial match
-            const { data: found } = await supabase
+            let searchQuery = supabase
               .from("document_metadata")
               .select("id, title")
               .or("type.eq.meeting,category.eq.meeting,type.eq.meeting_transcript")
               .ilike("title", `%${meetingTitle}%`)
               .order("date", { ascending: false })
-              .limit(1)
-              .maybeSingle();
+              .limit(1);
+            if (!scope.isAdmin) {
+              searchQuery = searchQuery.in("project_id", scope.allowedProjectIds);
+            }
+            const { data: found } = await searchQuery.maybeSingle();
 
             if (!found) {
               return {
@@ -2196,12 +2343,17 @@ export function createOperationalTools(
             return { error: "Provide either meetingId or meetingTitle" };
           }
 
+          const meetingLookup = supabase
+            .from("document_metadata")
+            .select("*")
+            .eq("id", resolvedId);
+          const scopedMeetingLookup =
+            scope.isAdmin
+              ? meetingLookup
+              : meetingLookup.in("project_id", scope.allowedProjectIds);
+
           const [meetingRes, insightsRes] = await Promise.all([
-            supabase
-              .from("document_metadata")
-              .select("*")
-              .eq("id", resolvedId)
-              .single(),
+            scopedMeetingLookup.single(),
             // Structured insights extracted from this meeting (decisions/risks/opportunities)
             supabase
               .from("insights")
@@ -2619,13 +2771,25 @@ export function createOperationalTools(
         "findProject",
         options,
         async ({ projectName, listAll }) => {
+          const scope = await guardrails.getScope();
+
           if (listAll) {
-            const { data, error } = await supabase
+            if (!scope.isAdmin && scope.allowedProjectIds.length === 0) {
+              return { error: "You do not have access to any projects." };
+            }
+
+            let query = supabase
               .from("projects")
               .select("id, name, phase")
               .eq("archived", false)
               .order("name", { ascending: true })
               .limit(50);
+
+            if (!scope.isAdmin) {
+              query = query.in("id", scope.allowedProjectIds);
+            }
+
+            const { data, error } = await query;
             if (error) return { error: error.message };
             return {
               projects: ((data ?? []) as unknown as AnyRow[]).map((p) => ({
@@ -2640,17 +2804,27 @@ export function createOperationalTools(
             return { error: "Provide a projectName to search for, or set listAll: true" };
           }
 
+          if (!scope.isAdmin && scope.allowedProjectIds.length === 0) {
+            return { error: "You do not have access to any projects." };
+          }
+
           // Step 1: Resolve the project name from the database first so that
           // the communication searches use the canonical project name (bestMatch.name)
           // rather than the raw user-supplied query — this scopes email/Teams/doc
           // results to the specific resolved project and avoids cross-project leakage.
-          const dbResult = await supabase
+          let dbQuery = supabase
             .from("projects")
             .select("id, name, phase")
             .eq("archived", false)
             .ilike("name", `%${projectName}%`)
             .order("name", { ascending: true })
             .limit(5);
+
+          if (!scope.isAdmin) {
+            dbQuery = dbQuery.in("id", scope.allowedProjectIds);
+          }
+
+          const dbResult = await dbQuery;
 
           const { data, error } = dbResult;
           if (error) return { error: error.message };
@@ -2662,40 +2836,61 @@ export function createOperationalTools(
           const resolvedQuery =
             matches.length > 0 ? String(matches[0].name ?? projectName) : projectName;
 
-          // Step 2: Run all communication searches in parallel using the resolved name.
+          // Step 2: Run communication searches using the resolved name.
+          // Emails + Teams are admin-only; documents are allowed for all.
+          const commsAccess = await requireAdminForCommunications("Email and Teams");
+
+          const docsPromise = searchDocumentChunksByCategory({
+            supabase,
+            query: resolvedQuery,
+            category: "document",
+            matchCount: 4,
+            sourceLabel: "document",
+            scope,
+          });
+
+          const emailPromise = commsAccess.ok
+            ? searchDocumentChunksByCategory({
+                supabase,
+                query: resolvedQuery,
+                category: "email",
+                matchCount: 6,
+                sourceLabel: "email",
+                scope,
+              })
+            : Promise.resolve({ error: commsAccess.error, results: [] });
+
+          const teamsPromise = commsAccess.ok
+            ? searchDocumentChunksByCategory({
+                supabase,
+                query: resolvedQuery,
+                category: "teams_message",
+                matchCount: 6,
+                sourceLabel: "Teams message",
+                scope,
+              })
+            : Promise.resolve({ error: commsAccess.error, results: [] });
+
           const [emailResult, teamsResult, docsResult] = await Promise.all([
-            searchDocumentChunksByCategory({
-              supabase,
-              query: resolvedQuery,
-              category: "email",
-              matchCount: 6,
-              sourceLabel: "email",
-            }),
-            searchDocumentChunksByCategory({
-              supabase,
-              query: resolvedQuery,
-              category: "teams_message",
-              matchCount: 6,
-              sourceLabel: "Teams message",
-            }),
-            searchDocumentChunksByCategory({
-              supabase,
-              query: resolvedQuery,
-              category: "document",
-              matchCount: 4,
-              sourceLabel: "document",
-            }),
+            emailPromise,
+            teamsPromise,
+            docsPromise,
           ]);
 
-          const communicationsNote =
-            "IMPORTANT: The following emails, Teams messages, and documents were retrieved automatically. " +
-            "Use this communication intelligence to answer questions about recent activity, even if the project is not found in the database. " +
-            "Lead with the most recent and actionable signals from emails and Teams before diving into project data.";
+          const communicationsNote = commsAccess.ok
+            ? "IMPORTANT: The following emails, Teams messages, and documents were retrieved automatically. " +
+              "Use this communication intelligence to answer questions about recent activity, even if the project is not found in the database. " +
+              "Lead with the most recent and actionable signals from emails and Teams before diving into project data."
+            : `IMPORTANT: Email and Teams access is admin-only in Alleato. ${commsAccess.error}`;
 
           if (matches.length === 0) {
             return {
               matches: [],
-              message: `No projects found matching "${projectName}" in the database. However, communications data was searched — use the emails, Teams messages, and documents below to answer questions about this project.`,
+              message: `No projects found matching "${projectName}" in the database. ${
+                commsAccess.ok
+                  ? "However, communications data was searched — use the emails, Teams messages, and documents below to answer questions about this project."
+                  : "However, document search still ran; email and Teams were blocked by permissions."
+              }`,
               communicationsNote,
               emails: emailResult,
               teamsMessages: teamsResult,
@@ -2748,12 +2943,16 @@ export function createOperationalTools(
         "searchEmails",
         options,
         async ({ query, matchCount }) => {
+          const access = await requireAdminForCommunications("Email");
+          if (!access.ok) return { error: access.error };
+          const scope = await guardrails.getScope();
           return searchDocumentChunksByCategory({
             supabase,
             query,
             category: "email",
             matchCount: matchCount ?? 8,
             sourceLabel: "email",
+            scope,
           });
         },
       ),
@@ -2788,12 +2987,16 @@ export function createOperationalTools(
         "searchTeamsMessages",
         options,
         async ({ query, matchCount }) => {
+          const access = await requireAdminForCommunications("Teams");
+          if (!access.ok) return { error: access.error };
+          const scope = await guardrails.getScope();
           return searchDocumentChunksByCategory({
             supabase,
             query,
             category: "teams_message",
             matchCount: matchCount ?? 8,
             sourceLabel: "Teams message",
+            scope,
           });
         },
       ),
@@ -2827,12 +3030,14 @@ export function createOperationalTools(
         "searchExternalDocuments",
         options,
         async ({ query, matchCount }) => {
+          const scope = await guardrails.getScope();
           return searchDocumentChunksByCategory({
             supabase,
             query,
             category: "document",
             matchCount: matchCount ?? 8,
             sourceLabel: "document",
+            scope,
           });
         },
       ),
@@ -3197,6 +3402,37 @@ export function createOperationalTools(
         "queryDocumentRows",
         options,
         async ({ datasetId, sheetFilter }) => {
+          const scope = await guardrails.getScope();
+          if (!scope.isAdmin && scope.allowedProjectIds.length === 0) {
+            return {
+              error:
+                "You are not assigned to any projects in the current database scope, so I cannot query structured documents safely.",
+            };
+          }
+
+          const { data: dataset, error: datasetError } = await supabase
+            .from("document_metadata")
+            .select("id, title, category, project_id")
+            .eq("id", datasetId)
+            .maybeSingle();
+          if (datasetError) {
+            return { error: `Dataset lookup failed: ${datasetError.message}` };
+          }
+          if (!dataset) {
+            return { error: `No dataset found for id "${datasetId}".` };
+          }
+
+          const projectId = (dataset as AnyRow).project_id as number | null;
+          const category = String((dataset as AnyRow).category ?? "");
+          if (!scope.isAdmin) {
+            if (!projectId || !scope.allowedProjectIds.includes(projectId)) {
+              return { error: "You do not have access to that dataset." };
+            }
+            if (["email", "teams_message"].includes(category)) {
+              return { error: "Email and Teams datasets are admin-only in Alleato." };
+            }
+          }
+
           let query = supabase
             .from("document_rows")
             .select("*")
@@ -3214,10 +3450,230 @@ export function createOperationalTools(
 
           return {
             datasetId,
+            datasetTitle: (dataset as AnyRow).title ?? null,
+            projectId,
             totalRows: rows.length,
             rows: rows.map((r) => ({
               id: r.id,
               rowData: r.row_data,
+            })),
+          };
+        },
+      ),
+    }),
+
+    searchStructuredFinancialRows: tool({
+      description:
+        "Search structured spreadsheet/financial rows extracted into document_rows for a project. " +
+        "Use this when the user asks about numbers inside uploaded spreadsheets (budgets, estimates, invoices, tabular exports). " +
+        "This is structured-first retrieval (token match on row_data) — better than semantic chunking for numeric questions.",
+      inputSchema: z.object({
+        query: z.string().describe("The financial question or keywords to match against structured rows."),
+        projectId: z.number().optional().describe("Project ID if known (defaults to pinned project when available)."),
+        projectName: z.string().optional().describe("Project name to resolve when ID is unknown."),
+        matchCount: z.number().optional().default(8).describe("Max structured rows to return."),
+        scanLimit: z
+          .number()
+          .optional()
+          .default(400)
+          .describe("How many recent rows to scan across candidate datasets (higher = slower)."),
+      }),
+      execute: withTrace(
+        "searchStructuredFinancialRows",
+        options,
+        async ({ query, projectId, projectName, matchCount, scanLimit }) => {
+          const resolved = await resolveProject(supabase, guardrails, projectId, projectName);
+          if ("error" in resolved) return resolved;
+
+          const rawTokens =
+            query.toLowerCase().match(/[a-z0-9$%./-]+/g) ?? [];
+          const stopwords = new Set([
+            "the",
+            "a",
+            "an",
+            "and",
+            "or",
+            "for",
+            "to",
+            "of",
+            "in",
+            "on",
+            "at",
+            "with",
+            "by",
+            "from",
+            "is",
+            "are",
+            "was",
+            "were",
+            "be",
+            "been",
+            "being",
+            "what",
+            "which",
+            "who",
+            "when",
+            "where",
+            "why",
+            "how",
+            "need",
+            "show",
+            "tell",
+            "details",
+            "detail",
+            "about",
+          ]);
+
+          const tokens: string[] = [];
+          const seen = new Set<string>();
+          for (const tokenRaw of rawTokens) {
+            let token = tokenRaw.trim();
+            if (!token) continue;
+            if (token.startsWith("$")) token = token.slice(1);
+            if (!token) continue;
+            if (stopwords.has(token)) continue;
+            if (token.length < 3 && !/^q[1-4]$/.test(token)) continue;
+            if (!seen.has(token)) {
+              seen.add(token);
+              tokens.push(token);
+            }
+          }
+
+          if (tokens.length === 0) {
+            return {
+              results: [],
+              message:
+                "Your query did not include any useful keywords to match against structured rows. Try including a cost code, vendor name, invoice number, quarter (q1–q4), or a specific amount.",
+            };
+          }
+
+          const { data: datasets, error: datasetError } = await supabase
+            .from("document_metadata")
+            .select("id, title, category, file_name, captured_at, date")
+            .eq("project_id", resolved.id)
+            .order("captured_at", { ascending: false })
+            .limit(140);
+
+          if (datasetError) {
+            return { error: `Structured dataset lookup failed: ${datasetError.message}` };
+          }
+
+          const candidateIds = (datasets ?? [])
+            .filter((row) => {
+              const category = String((row as AnyRow).category ?? "").toLowerCase();
+              const fileName = String((row as AnyRow).file_name ?? "").toLowerCase();
+              return (
+                category.includes("financial") ||
+                category === "financial_document" ||
+                fileName.endsWith(".csv") ||
+                fileName.endsWith(".tsv") ||
+                fileName.endsWith(".xls") ||
+                fileName.endsWith(".xlsx") ||
+                ["budget", "estimate", "invoice", "p&l", "balance"].some((k) => fileName.includes(k))
+              );
+            })
+            .map((row) => String((row as AnyRow).id ?? ""))
+            .filter(Boolean)
+            .slice(0, 30);
+
+          if (candidateIds.length === 0) {
+            return {
+              results: [],
+              message:
+                "I did not find any recent spreadsheet/financial datasets for this project. Upload a spreadsheet or tag it as a financial document so it is parsed into structured rows.",
+            };
+          }
+
+          const datasetById = new Map<string, AnyRow>(
+            (datasets ?? []).map((row) => [String((row as AnyRow).id ?? ""), row as AnyRow]),
+          );
+
+          const { data: rows, error: rowError } = await supabase
+            .from("document_rows")
+            .select("id, dataset_id, row_data")
+            .in("dataset_id", candidateIds)
+            .order("id", { ascending: false })
+            .limit(scanLimit ?? 400);
+
+          if (rowError) {
+            return { error: `Structured row scan failed: ${rowError.message}` };
+          }
+
+          const queryLc = query.toLowerCase().trim();
+          const scored = (rows ?? [])
+            .map((row) => {
+              const rowData = (row as AnyRow).row_data;
+              const haystack =
+                typeof rowData === "object" && rowData !== null
+                  ? JSON.stringify(rowData).toLowerCase()
+                  : String(rowData ?? "").toLowerCase();
+              const tokenHits = tokens.reduce((sum, t) => (haystack.includes(t) ? sum + 1 : sum), 0);
+              if (tokenHits === 0) return null;
+              const phraseBonus = queryLc && haystack.includes(queryLc) ? 4 : 0;
+              const score = tokenHits + phraseBonus;
+
+              const datasetId = String((row as AnyRow).dataset_id ?? "");
+              const dataset = datasetById.get(datasetId) ?? null;
+
+              const columns =
+                typeof rowData === "object" && rowData !== null
+                  ? (rowData as AnyRow).columns
+                  : null;
+              const preview =
+                columns && typeof columns === "object"
+                  ? Object.entries(columns as Record<string, unknown>)
+                      .filter(([, v]) => v !== null && v !== "")
+                      .slice(0, 8)
+                      .map(([k, v]) => `${k}=${String(v)}`)
+                      .join("; ")
+                  : "";
+
+              return {
+                score,
+                datasetId,
+                datasetTitle: dataset ? String(dataset.title ?? "(untitled)") : "(unknown dataset)",
+                datasetDate: dataset ? String(dataset.date ?? dataset.captured_at ?? "") : "",
+                rowId: (row as AnyRow).id,
+                rowData,
+                preview,
+              };
+            })
+            .filter(Boolean) as Array<{
+            score: number;
+            datasetId: string;
+            datasetTitle: string;
+            datasetDate: string;
+            rowId: number;
+            rowData: unknown;
+            preview: string;
+          }>;
+
+          scored.sort((a, b) => b.score - a.score);
+          const top = scored.slice(0, matchCount ?? 8);
+
+          if (top.length === 0) {
+            return {
+              results: [],
+              message:
+                "No structured rows matched your query tokens. Try a different cost code/vendor name or confirm the spreadsheet was parsed into document_rows.",
+            };
+          }
+
+          return {
+            project: { id: resolved.id, name: resolved.name },
+            query,
+            tokenCount: tokens.length,
+            scannedRows: (rows ?? []).length,
+            resultCount: top.length,
+            results: top.map((row) => ({
+              datasetId: row.datasetId,
+              datasetTitle: row.datasetTitle,
+              datasetDate: row.datasetDate || null,
+              rowId: row.rowId,
+              score: row.score,
+              preview: row.preview || null,
+              rowData: row.rowData,
+              citation: `[Source: Structured Row - dataset ${row.datasetId} row ${row.rowId}]`,
             })),
           };
         },
@@ -3235,12 +3691,14 @@ async function searchDocumentChunksByCategory({
   category,
   matchCount,
   sourceLabel,
+  scope,
 }: {
   supabase: ReturnType<typeof createServiceClient>;
   query: string;
   category: string;
   matchCount: number;
   sourceLabel: string;
+  scope: Awaited<ReturnType<ToolGuardrails["getScope"]>>;
 }) {
   try {
     const openaiClient = getOpenAI();
@@ -3288,7 +3746,23 @@ async function searchDocumentChunksByCategory({
       doc_created_at: string | null;
     };
 
-    const rows = (data ?? []) as ChunkRow[];
+    let rows = (data ?? []) as ChunkRow[];
+
+    if (!scope.isAdmin) {
+      if (scope.allowedProjectIds.length === 0) {
+        return {
+          results: [],
+          error:
+            "You are not assigned to any projects in the current database scope, so I cannot search documents safely.",
+        };
+      }
+
+      rows = rows.filter((row) => {
+        const projectId = row.doc_project_id;
+        if (typeof projectId !== "number") return false;
+        return scope.allowedProjectIds.includes(projectId);
+      });
+    }
 
     if (rows.length === 0) {
       return {

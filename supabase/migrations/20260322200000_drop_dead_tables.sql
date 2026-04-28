@@ -29,14 +29,12 @@ DROP TABLE IF EXISTS chat_thread_attachments CASCADE;
 DROP TABLE IF EXISTS chat_thread_feedback CASCADE;
 DROP TABLE IF EXISTS chat_thread_items CASCADE;
 DROP TABLE IF EXISTS chat_threads CASCADE;
-
 -- ============================================================
 -- 2. Drop chat_messages before chat_sessions (potential FK)
 -- ============================================================
 
 DROP TABLE IF EXISTS chat_messages CASCADE;
 DROP TABLE IF EXISTS chat_sessions CASCADE;
-
 -- ============================================================
 -- 3. Drop remaining standalone dead tables
 -- ============================================================
@@ -47,7 +45,6 @@ DROP TABLE IF EXISTS chunks CASCADE;
 DROP TABLE IF EXISTS document_insights CASCADE;
 -- fm_text_chunks kept per user request
 DROP TABLE IF EXISTS rag_pipeline_state CASCADE;
-
 -- ============================================================
 -- 4. actionable_insights — may be a VIEW or TABLE, handle both
 -- ============================================================

@@ -29,30 +29,24 @@ CREATE TABLE drawing_markup_pins (
   created_at timestamptz DEFAULT now(),
   updated_at timestamptz DEFAULT now()
 );
-
 -- Index for fast lookup by drawing
 CREATE INDEX drawing_markup_pins_drawing_id_idx ON drawing_markup_pins(drawing_id);
 CREATE INDEX drawing_markup_pins_project_id_idx ON drawing_markup_pins(project_id);
-
 -- RLS
 ALTER TABLE drawing_markup_pins ENABLE ROW LEVEL SECURITY;
-
 -- Authenticated users can view and create pins (matches drawing_sets/drawing_revisions pattern)
 CREATE POLICY "Authenticated users can view drawing pins"
   ON drawing_markup_pins FOR SELECT
   TO authenticated
   USING (true);
-
 CREATE POLICY "Authenticated users can insert drawing pins"
   ON drawing_markup_pins FOR INSERT
   TO authenticated
   WITH CHECK (true);
-
 CREATE POLICY "Pin creator can delete drawing pins"
   ON drawing_markup_pins FOR DELETE
   TO authenticated
   USING (created_by = auth.uid());
-
 -- Service role full access
 CREATE POLICY "Service role full access to drawing pins"
   ON drawing_markup_pins FOR ALL

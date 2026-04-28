@@ -49,18 +49,15 @@ CREATE TABLE IF NOT EXISTS insights (
     created_at      timestamptz NOT NULL DEFAULT now(),
     updated_at      timestamptz NOT NULL DEFAULT now()
 );
-
 CREATE INDEX idx_insights_type        ON insights(type);
 CREATE INDEX idx_insights_metadata_id ON insights(metadata_id);
 CREATE INDEX idx_insights_project_id  ON insights(project_id);
 CREATE INDEX idx_insights_status      ON insights(status);
-
 -- HNSW index for semantic search (halfvec cosine)
 CREATE INDEX idx_insights_embedding
     ON insights
     USING hnsw (embedding halfvec_cosine_ops)
     WITH (m = 32, ef_construction = 200);
-
 -- updated_at trigger
 CREATE OR REPLACE FUNCTION update_insights_updated_at()
 RETURNS TRIGGER LANGUAGE plpgsql AS $$
@@ -69,18 +66,14 @@ $$;
 CREATE TRIGGER update_insights_timestamp
     BEFORE UPDATE ON insights
     FOR EACH ROW EXECUTE FUNCTION update_insights_updated_at();
-
 -- RLS
 ALTER TABLE insights ENABLE ROW LEVEL SECURITY;
-
 DROP POLICY IF EXISTS "Users can read insights" ON insights;
 CREATE POLICY "Users can read insights" ON insights FOR SELECT
     USING (auth.role() IN ('authenticated', 'service_role'));
-
 DROP POLICY IF EXISTS "Service role can manage insights" ON insights;
 CREATE POLICY "Service role can manage insights" ON insights FOR ALL
     USING (auth.role() = 'service_role');
-
 -- ─── 2. Migrate existing rows ─────────────────────────────────────────────────
 
 -- Decisions → insights
@@ -106,7 +99,6 @@ SELECT
 FROM decisions
 WHERE description IS NOT NULL AND description <> ''
 ON CONFLICT DO NOTHING;
-
 -- Risks → insights
 INSERT INTO insights (
     metadata_id, project_id, project_ids, type, description,
@@ -131,7 +123,6 @@ SELECT
 FROM risks
 WHERE description IS NOT NULL AND description <> ''
 ON CONFLICT DO NOTHING;
-
 -- Opportunities → insights
 INSERT INTO insights (
     metadata_id, project_id, project_ids, type, description,
@@ -154,7 +145,6 @@ SELECT
 FROM opportunities
 WHERE description IS NOT NULL AND description <> ''
 ON CONFLICT DO NOTHING;
-
 -- ─── 3. Drop legacy tables ───────────────────────────────────────────────────
 
 -- Drop RPCs first (they reference the tables)
@@ -162,25 +152,20 @@ DROP FUNCTION IF EXISTS match_decisions(vector, int, float);
 DROP FUNCTION IF EXISTS match_decisions(halfvec(3072), int, float);
 DROP FUNCTION IF EXISTS match_decisions_by_project(vector, int[], int, float);
 DROP FUNCTION IF EXISTS match_decisions_by_project(halfvec(3072), int[], int, float);
-
 DROP FUNCTION IF EXISTS match_risks(vector, int, float);
 DROP FUNCTION IF EXISTS match_risks(halfvec(3072), int, float);
 DROP FUNCTION IF EXISTS match_risks_by_project(vector, bigint[], int, float);
 DROP FUNCTION IF EXISTS match_risks_by_project(halfvec(3072), bigint[], int, float);
-
 DROP FUNCTION IF EXISTS match_opportunities(vector, int, float);
 DROP FUNCTION IF EXISTS match_opportunities(halfvec(3072), int, float);
 DROP FUNCTION IF EXISTS match_opportunities_by_project(vector, int[], int, float);
 DROP FUNCTION IF EXISTS match_opportunities_by_project(halfvec(3072), int[], int, float);
-
 DROP TABLE IF EXISTS decisions CASCADE;
 DROP TABLE IF EXISTS risks CASCADE;
 DROP TABLE IF EXISTS opportunities CASCADE;
-
 -- ─── 4. Drop meeting_digests ─────────────────────────────────────────────────
 
 DROP TABLE IF EXISTS meeting_digests CASCADE;
-
 -- ─── 5. Remove summary_embedding from meeting_segments ───────────────────────
 -- Also drop the match_meeting_segments RPCs since they search summary_embedding.
 
@@ -189,27 +174,22 @@ DROP FUNCTION IF EXISTS match_meeting_segments(vector, int, float);
 DROP FUNCTION IF EXISTS match_meeting_segments(halfvec(3072), int, float, int);
 DROP FUNCTION IF EXISTS match_meeting_segments_by_project(halfvec(3072), int[], int, float);
 DROP FUNCTION IF EXISTS match_meeting_segments_by_project(vector, int[], int, float);
-
 DROP INDEX IF EXISTS meeting_segments_summary_embedding_idx;
 ALTER TABLE meeting_segments DROP COLUMN IF EXISTS summary_embedding;
-
 -- ─── 6. Add summary_embedding to document_metadata ───────────────────────────
 
 ALTER TABLE document_metadata
     ADD COLUMN IF NOT EXISTS summary_embedding halfvec(3072);
-
 CREATE INDEX IF NOT EXISTS idx_document_metadata_summary_embedding
     ON document_metadata
     USING hnsw (summary_embedding halfvec_cosine_ops)
     WITH (m = 32, ef_construction = 200);
-
 -- ─── 7. Replace search_all_knowledge RPC ─────────────────────────────────────
 -- Now queries the single insights table instead of 3-way UNION.
 
 DROP FUNCTION IF EXISTS search_all_knowledge(halfvec(3072), int, float);
 DROP FUNCTION IF EXISTS search_all_knowledge(vector(1536), int, float);
 DROP FUNCTION IF EXISTS search_all_knowledge(vector, int, float);
-
 CREATE OR REPLACE FUNCTION search_all_knowledge(
     query_embedding  halfvec(3072),
     match_count      int     DEFAULT 10,
@@ -255,16 +235,13 @@ BEGIN
     LIMIT match_count;
 END;
 $$;
-
 GRANT EXECUTE ON FUNCTION search_all_knowledge(halfvec(3072), int, float)
     TO anon, authenticated, service_role;
-
 -- ─── 8. Add match_document_metadata_by_summary RPC ───────────────────────────
 -- Semantic search on real Fireflies meeting summaries.
 -- Used by searchMeetingsByTopic instead of match_meeting_segments.
 
 DROP FUNCTION IF EXISTS match_document_metadata_by_summary(halfvec(3072), int, float, int);
-
 CREATE OR REPLACE FUNCTION match_document_metadata_by_summary(
     query_embedding   halfvec(3072),
     match_count       int     DEFAULT 10,
@@ -302,9 +279,7 @@ BEGIN
     LIMIT match_count;
 END;
 $$;
-
 GRANT EXECUTE ON FUNCTION match_document_metadata_by_summary(halfvec(3072), int, float, int)
     TO anon, authenticated, service_role;
-
 -- ─── Grants ───────────────────────────────────────────────────────────────────
 GRANT ALL ON TABLE insights TO anon, authenticated, service_role;

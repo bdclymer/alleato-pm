@@ -13,81 +13,61 @@
 -- ─── document_chunks ─────────────────────────────────────────────────────────
 DROP INDEX IF EXISTS document_chunks_embedding_idx;
 DROP INDEX IF EXISTS idx_document_chunks_embedding;
-
 ALTER TABLE document_chunks
   ALTER COLUMN embedding TYPE halfvec(3072) USING NULL::halfvec(3072);
-
 CREATE INDEX idx_document_chunks_embedding
   ON document_chunks
   USING hnsw (embedding halfvec_cosine_ops)
   WITH (m = 32, ef_construction = 200);
-
 -- ─── meeting_segments ────────────────────────────────────────────────────────
 DROP INDEX IF EXISTS meeting_segments_summary_embedding_idx;
-
 ALTER TABLE meeting_segments
   ALTER COLUMN summary_embedding TYPE halfvec(3072) USING NULL::halfvec(3072);
-
 CREATE INDEX meeting_segments_summary_embedding_idx
   ON meeting_segments
   USING hnsw (summary_embedding halfvec_cosine_ops)
   WITH (m = 32, ef_construction = 200);
-
 -- ─── decisions ───────────────────────────────────────────────────────────────
 DROP INDEX IF EXISTS decisions_embedding_idx;
-
 ALTER TABLE decisions
   ALTER COLUMN embedding TYPE halfvec(3072) USING NULL::halfvec(3072);
-
 CREATE INDEX decisions_embedding_idx
   ON decisions
   USING hnsw (embedding halfvec_cosine_ops)
   WITH (m = 32, ef_construction = 200);
-
 -- ─── risks ───────────────────────────────────────────────────────────────────
 DROP INDEX IF EXISTS risks_embedding_idx;
-
 ALTER TABLE risks
   ALTER COLUMN embedding TYPE halfvec(3072) USING NULL::halfvec(3072);
-
 CREATE INDEX risks_embedding_idx
   ON risks
   USING hnsw (embedding halfvec_cosine_ops)
   WITH (m = 32, ef_construction = 200);
-
 -- ─── opportunities ───────────────────────────────────────────────────────────
 DROP INDEX IF EXISTS opportunities_embedding_idx;
-
 ALTER TABLE opportunities
   ALTER COLUMN embedding TYPE halfvec(3072) USING NULL::halfvec(3072);
-
 CREATE INDEX opportunities_embedding_idx
   ON opportunities
   USING hnsw (embedding halfvec_cosine_ops)
   WITH (m = 32, ef_construction = 200);
-
 -- ─── tasks ───────────────────────────────────────────────────────────────────
 ALTER TABLE tasks
   ALTER COLUMN embedding TYPE halfvec(3072) USING NULL::halfvec(3072);
-
 -- ─── ai_memories ─────────────────────────────────────────────────────────────
 DROP INDEX IF EXISTS idx_ai_memories_embedding;
-
 ALTER TABLE ai_memories
   ALTER COLUMN embedding TYPE halfvec(3072) USING NULL::halfvec(3072);
-
 CREATE INDEX idx_ai_memories_embedding
   ON ai_memories
   USING hnsw (embedding halfvec_cosine_ops)
   WITH (m = 32, ef_construction = 200);
-
 -- ─── search_document_chunks_by_category ──────────────────────────────────────
 DROP FUNCTION IF EXISTS search_document_chunks_by_category(vector, text, integer, double precision);
 DROP FUNCTION IF EXISTS search_document_chunks_by_category(vector(1536), text, integer, double precision);
 DROP FUNCTION IF EXISTS search_document_chunks_by_category(vector(3072), text, integer, double precision);
 DROP FUNCTION IF EXISTS search_document_chunks_by_category(halfvec, text, integer, double precision);
 DROP FUNCTION IF EXISTS search_document_chunks_by_category(halfvec(3072), text, integer, double precision);
-
 CREATE OR REPLACE FUNCTION search_document_chunks_by_category(
     query_embedding  halfvec(3072),
     filter_category  text,
@@ -144,8 +124,6 @@ BEGIN
     LIMIT match_count;
 END;
 $$;
-
 GRANT EXECUTE ON FUNCTION search_document_chunks_by_category TO anon, authenticated, service_role;
-
 -- NULL out unconstrained documents.embedding (old 1536-dim vectors would break 3072-dim queries)
 UPDATE documents SET embedding = NULL WHERE embedding IS NOT NULL;

@@ -16,10 +16,7 @@
 -- -----------------------------------------------------------------------------
 -- 1. match_meeting_segments
 -- -----------------------------------------------------------------------------
-DROP FUNCTION IF EXISTS match_meeting_segments(vector, integer, double precision);
-DROP FUNCTION IF EXISTS match_meeting_segments(vector(1536), integer, double precision);
-DROP FUNCTION IF EXISTS match_meeting_segments(vector, integer, float);
-DROP FUNCTION IF EXISTS match_meeting_segments(vector(1536), integer, float);
+DROP FUNCTION IF EXISTS match_meeting_segments;
 CREATE OR REPLACE FUNCTION match_meeting_segments(
     query_embedding vector(1536),
     match_count int DEFAULT 10,
@@ -63,8 +60,6 @@ BEGIN
     LIMIT match_count;
 END;
 $$;
-
-
 -- -----------------------------------------------------------------------------
 -- 2. match_decisions
 -- -----------------------------------------------------------------------------
@@ -116,15 +111,10 @@ BEGIN
     LIMIT match_count;
 END;
 $$;
-
-
 -- -----------------------------------------------------------------------------
 -- 3. match_risks (drop first — return type changed)
 -- -----------------------------------------------------------------------------
-DROP FUNCTION IF EXISTS match_risks(vector, integer, double precision);
-DROP FUNCTION IF EXISTS match_risks(vector(1536), integer, double precision);
-DROP FUNCTION IF EXISTS match_risks(vector, integer, float);
-DROP FUNCTION IF EXISTS match_risks(vector(1536), integer, float);
+DROP FUNCTION IF EXISTS match_risks;
 CREATE OR REPLACE FUNCTION match_risks(
     query_embedding vector(1536),
     match_count int DEFAULT 10,
@@ -174,8 +164,6 @@ BEGIN
     LIMIT match_count;
 END;
 $$;
-
-
 -- -----------------------------------------------------------------------------
 -- 4. match_opportunities
 -- -----------------------------------------------------------------------------
@@ -225,8 +213,6 @@ BEGIN
     LIMIT match_count;
 END;
 $$;
-
-
 -- -----------------------------------------------------------------------------
 -- 5. match_documents_full
 -- -----------------------------------------------------------------------------
@@ -274,8 +260,6 @@ BEGIN
     LIMIT match_count;
 END;
 $$;
-
-
 -- -----------------------------------------------------------------------------
 -- 6. search_all_knowledge
 --    Note: threshold default was already 0.4 — lowered to 0.3 for consistency
@@ -386,8 +370,6 @@ BEGIN
     LIMIT match_count;
 END;
 $$;
-
-
 -- -----------------------------------------------------------------------------
 -- 7. search_knowledge_base
 --    Threshold default was 0.5 — lowered to 0.3
@@ -442,8 +424,6 @@ BEGIN
     LIMIT match_count;
 END;
 $$;
-
-
 -- =============================================================================
 -- SECTION 3: Rebuild HNSW indexes with better parameters (m=32, ef_construction=200)
 -- Current indexes were created with m=16, ef_construction=64
@@ -455,22 +435,18 @@ CREATE INDEX meeting_segments_summary_embedding_idx
     ON meeting_segments
     USING hnsw (summary_embedding vector_cosine_ops)
     WITH (m = 32, ef_construction = 200);
-
 -- decisions: was HNSW m=16, ef_construction=64
 DROP INDEX IF EXISTS decisions_embedding_idx;
 CREATE INDEX decisions_embedding_idx
     ON decisions
     USING hnsw (embedding vector_cosine_ops)
     WITH (m = 32, ef_construction = 200);
-
 -- risks: was HNSW m=16, ef_construction=64
 DROP INDEX IF EXISTS risks_embedding_idx;
 CREATE INDEX risks_embedding_idx
     ON risks
     USING hnsw (embedding vector_cosine_ops)
     WITH (m = 32, ef_construction = 200);
-
-
 -- =============================================================================
 -- SECTION 4: Migrate IVFFlat indexes → HNSW
 -- =============================================================================
@@ -481,15 +457,12 @@ CREATE INDEX opportunities_embedding_idx
     ON opportunities
     USING hnsw (embedding vector_cosine_ops)
     WITH (m = 32, ef_construction = 200);
-
 -- company_knowledge: was IVFFlat lists=50 — migrate to HNSW
 DROP INDEX IF EXISTS idx_company_knowledge_embedding;
 CREATE INDEX idx_company_knowledge_embedding_hnsw
     ON company_knowledge
     USING hnsw (embedding vector_cosine_ops)
     WITH (m = 32, ef_construction = 200);
-
-
 -- =============================================================================
 -- Re-grant permissions (idempotent — safe to run again)
 -- =============================================================================

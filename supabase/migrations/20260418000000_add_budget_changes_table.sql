@@ -11,6 +11,5 @@ CREATE TABLE IF NOT EXISTS budget_changes (
   updated_at timestamptz NOT NULL DEFAULT now(),
   created_by uuid REFERENCES auth.users(id)
 );
-
 CREATE INDEX IF NOT EXISTS budget_changes_project_id_idx ON budget_changes(project_id);
 CREATE INDEX IF NOT EXISTS budget_changes_change_event_id_idx ON budget_changes(change_event_id);

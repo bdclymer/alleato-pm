@@ -19,16 +19,12 @@ CREATE TABLE IF NOT EXISTS commitment_related_items (
   updated_at       timestamptz NOT NULL DEFAULT now(),
   UNIQUE (commitment_id, related_type, related_id)
 );
-
 ALTER TABLE commitment_related_items ENABLE ROW LEVEL SECURITY;
-
 CREATE POLICY "commitment_related_items_select"
   ON commitment_related_items FOR SELECT USING (true);
-
 CREATE POLICY "commitment_related_items_insert"
   ON commitment_related_items FOR INSERT
   WITH CHECK (auth.uid() IS NOT NULL);
-
 CREATE POLICY "commitment_related_items_delete"
   ON commitment_related_items FOR DELETE
   USING (auth.uid() IS NOT NULL);
