@@ -14,7 +14,7 @@ export function FormGrid({
   return (
     <div
       className={cn(
-        "grid grid-cols-1 gap-6",
+        "grid grid-cols-1 gap-x-12 gap-y-6",
         columns === 2 && "md:grid-cols-2",
         columns === 3 && "md:grid-cols-2 xl:grid-cols-3",
         columns === 12 && "md:grid-cols-12",
