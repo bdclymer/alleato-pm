@@ -335,9 +335,7 @@ function CreateProjectForm() {
             onCheckedChange={(checked) =>
               form.setValue(field.name, checked as never, { shouldValidate: true })
             }
-            hint={field.description}
             error={error}
-            className="rounded-md border border-input bg-background px-4 py-4"
           />
         </div>
       );
@@ -433,18 +431,17 @@ function CreateProjectForm() {
       : activeTemplateConfig.layout
     : "sections";
 
-  const renderSection = (section: FormSection, sectionIndex: number) => {
+  const renderSection = (section: FormSection) => {
     const sectionColumns =
-      section.id === "project-status" ? 3 : activeLayout === "single-column" ? 1 : 2;
+      section.id === "project-status" ? 1 : activeLayout === "single-column" ? 1 : 2;
     const hideSectionDescription = section.id === "logo" || section.id === "dates";
-    const isLastSection = sectionIndex === effectiveFormSections.length - 1;
 
     return (
       <StandardFormSection
         key={section.id}
         title={section.title}
         description={hideSectionDescription ? undefined : section.description}
-        showDivider={isLastSection}
+        showDivider={false}
       >
         <FormGrid columns={sectionColumns}>{section.fields.map(renderField)}</FormGrid>
       </StandardFormSection>
@@ -466,7 +463,7 @@ function CreateProjectForm() {
         projectName={createdProject?.name ?? ""}
       />
 
-      <Form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
+      <Form onSubmit={form.handleSubmit(handleSubmit)}>
         {effectiveFormSections.length > 0 ? (
           effectiveFormSections.map(renderSection)
         ) : (
@@ -481,7 +478,6 @@ function CreateProjectForm() {
           submitLabel={isSubmitting ? "Creating Project..." : "Create Project"}
           onCancel={() => router.push("/")}
           isSubmitting={isSubmitting}
-          className="border-t border-border"
         >
           <div className="flex flex-wrap items-center gap-3">
             <DevAutoFillButton />
