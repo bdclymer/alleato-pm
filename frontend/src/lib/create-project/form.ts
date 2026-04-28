@@ -426,12 +426,6 @@ export const formSections: FormSection[] = [
     title: "Project Location",
     fields: [
       {
-        name: "office",
-        label: "Office",
-        control: "select",
-        options: OFFICE_OPTIONS,
-      },
-      {
         name: "street_address",
         label: "Street Address",
         control: "text",
@@ -452,6 +446,12 @@ export const formSections: FormSection[] = [
         name: "postal_code",
         label: "Postal Code",
         control: "text",
+      },
+      {
+        name: "office",
+        label: "Office",
+        control: "select",
+        options: OFFICE_OPTIONS,
       },
     ],
   },
