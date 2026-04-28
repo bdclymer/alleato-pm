@@ -1,5 +1,6 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import { useFormLayout } from "./FormField";
 
 interface FormGridProps {
   children: React.ReactNode;
@@ -12,14 +13,16 @@ export function FormGrid({
   columns = 1,
   className,
 }: FormGridProps) {
+  const layout = useFormLayout();
+  const effectiveColumns = layout === "horizontal" ? 1 : columns;
+
   return (
     <div
       className={cn(
         "grid grid-cols-1 gap-6",
-        columns === 1 && "md:grid-cols-1",
-        columns === 2 && "md:grid-cols-2",
-        columns === 3 && "md:grid-cols-2 xl:grid-cols-3",
-        columns === 12 && "md:grid-cols-12",
+        effectiveColumns === 2 && "md:grid-cols-2",
+        effectiveColumns === 3 && "md:grid-cols-2 xl:grid-cols-3",
+        effectiveColumns === 12 && "md:grid-cols-12",
         className,
       )}
     >

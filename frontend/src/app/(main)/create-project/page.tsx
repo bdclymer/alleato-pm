@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { CircleHelp, Settings } from "lucide-react";
+import { Settings } from "lucide-react";
 import { EmptyState } from "@/components/ds";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -13,6 +13,7 @@ import { useDevAutoFill } from "@/hooks/use-dev-autofill";
 import {
   Form,
   FormGrid,
+  FormLayoutProvider,
   TextField,
   TextareaField,
   SelectField,
@@ -346,27 +347,18 @@ function CreateProjectForm() {
         typeof File !== "undefined" && currentValue instanceof File ? currentValue : null;
       const tooltipContent = PROJECT_MEDIA_TOOLTIP[field.name];
       const fieldLabel = tooltipContent ? (
-        <span className="inline-flex items-center gap-1.5">
-          <span>{field.label}</span>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="inline-flex h-4 w-4 items-center justify-center text-muted-foreground transition-colors hover:text-foreground p-0"
-                  aria-label={`${field.label} guidance`}
-                >
-                  <CircleHelp className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="max-w-sm text-left">
-                {tooltipContent}
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </span>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="cursor-help underline decoration-dotted underline-offset-2">
+                {field.label}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="max-w-sm text-left">
+              {tooltipContent}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       ) : (
         field.label
       );
@@ -464,15 +456,17 @@ function CreateProjectForm() {
       />
 
       <Form onSubmit={form.handleSubmit(handleSubmit)}>
-        {effectiveFormSections.length > 0 ? (
-          effectiveFormSections.map(renderSection)
-        ) : (
-          <EmptyState
-            icon={<Settings />}
-            title="No fields visible"
-            description="No fields are currently visible for the selected template."
-          />
-        )}
+        <FormLayoutProvider layout="horizontal">
+          {effectiveFormSections.length > 0 ? (
+            effectiveFormSections.map(renderSection)
+          ) : (
+            <EmptyState
+              icon={<Settings />}
+              title="No fields visible"
+              description="No fields are currently visible for the selected template."
+            />
+          )}
+        </FormLayoutProvider>
 
         <FormActions
           submitLabel={isSubmitting ? "Creating Project..." : "Create Project"}

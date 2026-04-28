@@ -25,12 +25,39 @@ interface FormFieldProps {
   fullWidth?: boolean;
 }
 
+// ── Layout context ─────────────────────────────────────────────────────────
+
+export type FormFieldLayout = "stacked" | "horizontal";
+const FormLayoutContext = React.createContext<FormFieldLayout>("stacked");
+
+export function useFormLayout(): FormFieldLayout {
+  return React.useContext(FormLayoutContext);
+}
+
+export function FormLayoutProvider({
+  layout,
+  children,
+}: {
+  layout: FormFieldLayout;
+  children: React.ReactNode;
+}) {
+  return (
+    <FormLayoutContext.Provider value={layout}>
+      {children}
+    </FormLayoutContext.Provider>
+  );
+}
+
+// ── Field id context ───────────────────────────────────────────────────────
+
 const FormFieldContext = React.createContext<string | undefined>(undefined);
 
 /** Returns the auto-generated input id from the nearest FormField. */
 export function useFormFieldId(): string | undefined {
   return React.useContext(FormFieldContext);
 }
+
+// ── FormField ──────────────────────────────────────────────────────────────
 
 export function FormField({
   label,
@@ -42,6 +69,34 @@ export function FormField({
   fullWidth = false,
 }: FormFieldProps) {
   const inputId = React.useId();
+  const layout = useFormLayout();
+
+  if (layout === "horizontal") {
+    return (
+      <FormFieldContext.Provider value={inputId}>
+        <div className={cn("flex items-start gap-x-6", className)}>
+          <label
+            htmlFor={inputId}
+            className="w-44 shrink-0 pt-2 text-sm font-medium text-foreground text-right"
+          >
+            {label}
+            {required && <span className="ml-1 text-destructive">*</span>}
+          </label>
+          <div className="flex-1 min-w-0">
+            {hint && !error && (
+              <p className="mb-1.5 text-sm text-muted-foreground">{hint}</p>
+            )}
+            {children}
+            {error && (
+              <p className="mt-1.5 text-sm text-destructive" data-field-error="">
+                {error}
+              </p>
+            )}
+          </div>
+        </div>
+      </FormFieldContext.Provider>
+    );
+  }
 
   return (
     <FormFieldContext.Provider value={inputId}>
