@@ -1,0 +1,37 @@
+name: Deploy to Vercel
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Trigger Vercel deployment
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_PROJECT_ID: prj_eWVjvq6iYieADQy8xvjm3hmwRSnj
+          VERCEL_TEAM_ID: team_lZighRY9Xpkb6qZBqDApczKZ
+        run: |
+          SHA=$(git rev-parse HEAD)
+          RESPONSE=$(curl -s -X POST "https://api.vercel.com/v13/deployments?teamId=$VERCEL_TEAM_ID&forceNew=1" \
+            -H "Authorization: Bearer $VERCEL_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"name\": \"alleato-hub\",
+              \"project\": \"$VERCEL_PROJECT_ID\",
+              \"target\": \"production\",
+              \"gitSource\": {
+                \"type\": \"github\",
+                \"repoId\": \"1107606690\",
+                \"ref\": \"main\",
+                \"sha\": \"$SHA\"
+              }
+            }")
+          DEPLOY_ID=$(echo $RESPONSE | python3 -c "import sys,json; print(json.load(sys.stdin).get('id','ERROR'))")
+          DEPLOY_URL=$(echo $RESPONSE | python3 -c "import sys,json; print(json.load(sys.stdin).get('url',''))")
+          echo "Deployment triggered: $DEPLOY_ID"
+          echo "URL: https://$DEPLOY_URL"
