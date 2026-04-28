@@ -66,7 +66,7 @@ const variantConfig: Record<
 > = {
   dashboard: { containerMaxWidth: "full", contentMaxWidth: "max-w-[1800px]", spacing: "space-y-14" },
   table:     { containerMaxWidth: "full", spacing: "space-y-4" },
-  form:      { containerMaxWidth: "full", contentMaxWidth: "max-w-4xl",  spacing: "space-y-8" },
+  form:      { containerMaxWidth: "full", contentMaxWidth: "max-w-5xl",  spacing: "space-y-8" },
   detail:    { containerMaxWidth: "full", contentMaxWidth: "max-w-6xl",  spacing: "space-y-6" },
   detailWide:{ containerMaxWidth: "full", contentMaxWidth: "max-w-screen-2xl",  spacing: "space-y-6" },
   content:   { containerMaxWidth: "full", contentMaxWidth: "max-w-4xl",  spacing: "space-y-8" },
