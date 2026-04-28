@@ -3,6 +3,15 @@
 # Fast pre-commit: route check + root file guard + lint-staged only.
 # Full typecheck and unit tests run in CI.
 
+# ── Vercel author gate ───────────────────────────────────────────
+# Vercel Hobby Plan blocks deployments from unauthorized commit authors.
+# Block the commit locally so the broken deploy never ships.
+# See docs/patterns/vercel-hobby-author-gate.md
+node scripts/check-commit-author.mjs
+if [ $? -ne 0 ]; then
+  exit 1
+fi
+
 # ── Root file guard ──────────────────────────────────────────────
 # Only these files are allowed at the project root. Everything else
 # (especially .md, .js, .ts, .py, .sh) must go in docs/, scripts/, etc.

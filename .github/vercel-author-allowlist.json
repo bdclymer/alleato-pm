@@ -1,0 +1,7 @@
+{
+  "_comment": "Emails authorized to commit to this repo without breaking Vercel Hobby Plan deployments. Vercel Hobby blocks deployments from any commit author that is not the project owner. See docs/patterns/vercel-hobby-author-gate.md.",
+  "emails": [
+    "109628141+MeganHarrison@users.noreply.github.com",
+    "Megan@megankharrison.com"
+  ]
+}
