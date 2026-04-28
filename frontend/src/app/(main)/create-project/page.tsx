@@ -350,9 +350,7 @@ function CreateProjectForm() {
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <span className="cursor-help underline decoration-dotted underline-offset-2">
-                {field.label}
-              </span>
+              <span>{field.label}</span>
             </TooltipTrigger>
             <TooltipContent side="top" className="max-w-sm text-left">
               {tooltipContent}
