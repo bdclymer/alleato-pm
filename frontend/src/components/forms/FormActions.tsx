@@ -24,7 +24,7 @@ export function FormActions({
   submitDisabled = false,
   cancelDisabled = false,
   align = "end",
-  stickyOnMobile = true,
+  stickyOnMobile = false,
   children,
   className,
 }: FormActionsProps) {
