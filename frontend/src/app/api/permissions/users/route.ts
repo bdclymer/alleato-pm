@@ -7,6 +7,9 @@ import { logger } from "@/lib/logger";
 import { ALL_GRANULAR_FLAGS, type GranularFlag } from "@/lib/permissions-shared";
 import { findPermissionUserLinkDiagnostics } from "@/lib/permissions/user-link-reconciliation";
 import { z } from "zod";
+import InviteUser from "@/emails/auth/InviteUser";
+import { APP_BASE_URL } from "@/lib/email/client";
+import { sendEmail } from "@/lib/email/send";
 
 const InviteUserSchema = z.object({
   first_name: z.string().trim().min(1, "First name is required"),
@@ -37,6 +40,18 @@ function getAuthMetadataAvatarUrl(metadata: Record<string, unknown> | null | und
   }
 
   return null;
+}
+
+function buildInviteAcceptUrl(actionLink: string) {
+  const actionUrl = new URL(actionLink);
+  const token = actionUrl.searchParams.get("token");
+
+  if (!token) {
+    return actionLink;
+  }
+
+  const passwordSetupUrl = `/auth/update-password?next=${encodeURIComponent("/")}`;
+  return `${APP_BASE_URL}/auth/confirm?token_hash=${token}&type=invite&next=${encodeURIComponent(passwordSetupUrl)}`;
 }
 
 async function requireAdmin(where: string) {
@@ -369,15 +384,20 @@ export const POST = withApiGuardrails(
     if (existingProfile?.id) {
       authUserId = existingProfile.id;
     } else {
-      const { data: inviteData, error: inviteError } =
-        await service.auth.admin.inviteUserByEmail(email, {
-          data: {
-            full_name: fullName,
-            role: body.job_title || template.name,
+      const { data: linkData, error: inviteError } =
+        await service.auth.admin.generateLink({
+          type: "invite",
+          email,
+          options: {
+            redirectTo: `${APP_BASE_URL}/auth/callback`,
+            data: {
+              full_name: fullName,
+              role: body.job_title || template.name,
+            },
           },
         });
 
-      if (inviteError || !inviteData.user) {
+      if (inviteError || !linkData.user || !linkData.properties?.action_link) {
         throw new GuardrailError({
           code: "UPSTREAM_FAILURE",
           where: "permissions/users#POST",
@@ -386,7 +406,37 @@ export const POST = withApiGuardrails(
         });
       }
 
-      authUserId = inviteData.user.id;
+      authUserId = linkData.user.id;
+
+      const emailResult = await sendEmail({
+        template: "user-invite",
+        to: email,
+        subject: "You're invited to Alleato",
+        react: InviteUser({
+          inviterName: actor.email ?? "Alleato",
+          inviteeName: fullName,
+          role: template.name,
+          acceptUrl: buildInviteAcceptUrl(linkData.properties.action_link),
+          expiresInHours: 24,
+        }),
+        entity: { type: "user_invite", id: authUserId },
+        userId: authUserId,
+        idempotencyKey: `user-invite/${authUserId}/${email}`,
+        metadata: {
+          accessScope: body.access_scope,
+          templateId: body.template_id,
+          templateName: template.name,
+        },
+      });
+
+      if (emailResult.error) {
+        throw new GuardrailError({
+          code: "UPSTREAM_FAILURE",
+          where: "permissions/users#POST:send-email",
+          message: `Could not send invite email: ${emailResult.error.message}`,
+          details: emailResult.error,
+        });
+      }
     }
 
     const { error: profileError } = await service.from("user_profiles").upsert(
