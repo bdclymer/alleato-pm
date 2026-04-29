@@ -59,7 +59,11 @@ echo "4) Migration validation"
 node scripts/playwright-crawl/scripts/utils/validate-migrations.js
 
 echo "5) API smoke contracts"
-node scripts/api-smoke-contracts.mjs
+if [ -n "${API_SMOKE_BASE_URL:-}" ]; then
+  node scripts/api-smoke-contracts.mjs
+else
+  echo "Skipping: API_SMOKE_BASE_URL not set. Smoke contracts run via cron job post-deploy."
+fi
 
 echo "6) AI memory contract"
 npm run rag:verify:memory
