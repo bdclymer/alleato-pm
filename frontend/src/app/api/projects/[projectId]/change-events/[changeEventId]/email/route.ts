@@ -127,7 +127,10 @@ export const POST = withApiGuardrails(
         },
       ];
     } catch (pdfError) {
-      logger.error({ msg: "[change-events/email] PDF generation failed, sending without attachment", error: pdfError instanceof Error ? pdfError.message : String(pdfError) });
+      logger.error({
+        msg: "[change-events/email] PDF generation failed, sending without attachment",
+        error: pdfError instanceof Error ? pdfError.message : String(pdfError),
+      });
     }
 
     const messageHtml = message
