@@ -55,6 +55,7 @@ interface OpenSubmittal {
 const SOV_STATUS_LABELS: Record<string, { label: string; color: string }> = {
   draft: { label: "Draft — Not submitted", color: "text-muted-foreground" },
   submitted: { label: "Submitted — Awaiting review", color: "text-blue-600" },
+  under_review: { label: "Under Review — Awaiting review", color: "text-blue-600" },
   approved: { label: "Approved", color: "text-green-600" },
   rejected: { label: "Rejected — Revision required", color: "text-red-600" },
   revise_resubmit: { label: "Revision requested", color: "text-amber-600" },
