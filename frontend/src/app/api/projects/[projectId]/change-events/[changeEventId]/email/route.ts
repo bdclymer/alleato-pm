@@ -130,6 +130,7 @@ export const POST = withApiGuardrails(
       logger.error({
         msg: "[change-events/email] PDF generation failed, sending without attachment",
         error: pdfError instanceof Error ? pdfError.message : String(pdfError),
+        stack: pdfError instanceof Error ? pdfError.stack : undefined,
       });
     }
 
@@ -173,7 +174,10 @@ export const POST = withApiGuardrails(
     });
 
     if (sendError) {
-      logger.error({ msg: "[email/route] Resend error:", data: sendError });
+      logger.error({
+        msg: "[change-events/email] Resend send failed",
+        error: sendError.message || String(sendError),
+      });
       return NextResponse.json(
         { error: sendError.message || "Failed to send email" },
         { status: 500 },
