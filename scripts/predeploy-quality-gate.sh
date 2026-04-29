@@ -66,6 +66,10 @@ else
 fi
 
 echo "6) AI memory contract"
-npm run rag:verify:memory
+if [ -n "${DATABASE_URL:-}" ] || [ -n "${SUPABASE_DB_URL:-}" ]; then
+  npm run rag:verify:memory
+else
+  echo "Skipping: DATABASE_URL / SUPABASE_DB_URL not set. AI memory contract runs via cron job."
+fi
 
 echo "Pre-deploy quality gate passed."
