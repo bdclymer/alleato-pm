@@ -48,7 +48,12 @@ export const GET = withApiGuardrails<{ projectId: string; documentId: string }>(
 
     if (error) {
       if (error.code === "PGRST116") {
-        return NextResponse.json({ error: "Document not found" }, { status: 404 });
+        throw new GuardrailError({
+          code: "NOT_FOUND",
+          where: "projects/[projectId]/documents/[documentId]/download#GET",
+          message: "Document not found.",
+          status: 404,
+        });
       }
       return apiErrorResponse(error);
     }
@@ -80,13 +85,12 @@ export const GET = withApiGuardrails<{ projectId: string; documentId: string }>(
       );
 
       if (!document.file_url) {
-        return NextResponse.json(
-          {
-            error:
-              "Document storage copy exists, but a signed download link could not be created.",
-          },
-          { status: 502 },
-        );
+        throw new GuardrailError({
+          code: "INTERNAL_ERROR",
+          where: "projects/[projectId]/documents/[documentId]/download#GET",
+          message: "Document storage copy exists, but a signed download link could not be created.",
+          status: 502,
+        });
       }
 
       return redirectTo(document.file_url, {
@@ -97,10 +101,12 @@ export const GET = withApiGuardrails<{ projectId: string; documentId: string }>(
     }
 
     if (!document.file_url) {
-      return NextResponse.json(
-        { error: "Document does not have a storage copy or source URL." },
-        { status: 404 },
-      );
+      throw new GuardrailError({
+        code: "NOT_FOUND",
+        where: "projects/[projectId]/documents/[documentId]/download#GET",
+        message: "Document does not have a storage copy or source URL.",
+        status: 404,
+      });
     }
 
     return redirectTo(document.file_url, {

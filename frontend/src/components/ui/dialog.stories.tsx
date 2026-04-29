@@ -91,7 +91,7 @@ export const WideForm = {
           </div>
           <div className="space-y-1">
             <Label>Contract Value</Label>
-            <Input placeholder="$0.00" />
+            <Input placeholder="" />
           </div>
         </div>
         <DialogFooter>

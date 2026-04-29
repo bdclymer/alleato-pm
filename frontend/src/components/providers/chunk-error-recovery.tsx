@@ -1,6 +1,7 @@
 "use client";
 
 import { Component, type ReactNode } from "react";
+import { Button } from "@/components/ui/button";
 
 /**
  * ChunkLoadErrorRecovery
@@ -133,15 +134,14 @@ export class ChunkLoadErrorRecovery extends Component<Props, State> {
           <p className="text-muted-foreground text-center max-w-md">
             The app has been updated. Please refresh to load the latest version.
           </p>
-          <button
+          <Button
             onClick={() => {
               markReload();
               window.location.reload();
             }}
-            className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
           >
             Refresh Now
-          </button>
+          </Button>
         </div>
       );
     }

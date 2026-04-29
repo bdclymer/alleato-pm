@@ -29,7 +29,7 @@ export const WithLeadingText = {
       <InputGroupAddon align="inline-start">
         <DollarSign className="h-4 w-4" />
       </InputGroupAddon>
-      <Input placeholder="0.00" className="text-right" />
+      <Input placeholder="" className="text-right" />
     </InputGroup>
   ),
 };
@@ -37,7 +37,7 @@ export const WithLeadingText = {
 export const WithTrailingText = {
   render: () => (
     <InputGroup className="w-40">
-      <Input placeholder="0" className="text-right" />
+      <Input placeholder="" className="text-right" />
       <InputGroupAddon align="inline-end">
         <Percent className="h-4 w-4" />
       </InputGroupAddon>

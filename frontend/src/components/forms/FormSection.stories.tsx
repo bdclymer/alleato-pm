@@ -28,7 +28,7 @@ export const Default = {
           ]}
         />
         <TextField label="Vendor Name" required />
-        <TextField label="Contract Value" placeholder="$0.00" />
+        <TextField label="Contract Value" placeholder="" />
       </FormGrid>
     </FormSection>
   ),

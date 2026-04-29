@@ -114,10 +114,21 @@ export const POST = withApiGuardrails(
     const lineItems = changeEvent.change_event_line_items || [];
     const mappedProject = project ? { ...project, number: project.project_number } : null;
     const htmlContent = buildChangeEventHtml({ ...changeEvent, creator }, lineItems, mappedProject);
-    const pdfBuffer = await renderPdfFromHtml(htmlContent);
 
     const ceNumber = changeEvent.number || changeEvent.id;
-    const pdfBase64 = pdfBuffer.toString("base64");
+
+    let attachments: Array<{ filename: string; content: string }> = [];
+    try {
+      const pdfBuffer = await renderPdfFromHtml(htmlContent);
+      attachments = [
+        {
+          filename: `change-event-${ceNumber}.pdf`,
+          content: pdfBuffer.toString("base64"),
+        },
+      ];
+    } catch (pdfError) {
+      logger.error({ msg: "[change-events/email] PDF generation failed, sending without attachment:", data: pdfError });
+    }
 
     const messageHtml = message
       ? `<p style="font-family:Arial,sans-serif;font-size:14px;color:#333;white-space:pre-wrap;">${escHtml(message)}</p><br/>`
@@ -149,12 +160,7 @@ export const POST = withApiGuardrails(
       to: recipients,
       subject,
       html: emailHtml,
-      attachments: [
-        {
-          filename: `change-event-${ceNumber}.pdf`,
-          content: pdfBase64,
-        },
-      ],
+      attachments,
     });
 
     if (sendError) {
