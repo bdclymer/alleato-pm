@@ -1,6 +1,7 @@
 import * as React from "react";
-import type { ReactElement } from "react";
-import { ArrowUpRight, FileText, Flame, Pencil, Trash2 } from "lucide-react";
+
+import Link from "next/link";
+import { ArrowUpRight, FileText, Pencil, Trash2, Zap } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,6 +41,7 @@ export interface EditContext {
   editingCell: { meetingId: string; field: EditableField } | null;
   editingValue: string;
   projectOptions: Array<{ value: string; label: string }>;
+  projectIdByName: Map<string, number>;
   handleCellClick: (meeting: Meeting, field: EditableField) => void;
   setEditingValue: (value: string) => void;
   handleInlineSave: (options?: {
@@ -441,12 +443,21 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
           <EditableCellWrapper
             isEditing={Boolean(isEditing)}
             displayContent={
-              item.project?.trim() ? (
-                <TableTagBadge
-                  label={item.project}
-                  variant={item.project.toLowerCase().includes("internal") ? "secondary" : "outline"}
-                />
-              ) : null
+              item.project?.trim() ? (() => {
+                const pid = editContext?.projectIdByName.get((item.project ?? "").trim());
+                return pid ? (
+                  <Link
+                    href={`/${pid}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                  >
+                    {item.project}
+                    <ArrowUpRight className="h-3 w-3 shrink-0" />
+                  </Link>
+                ) : (
+                  <span className="text-xs text-muted-foreground">{item.project}</span>
+                );
+              })() : null
             }
             onClickToEdit={(e) => {
               e.stopPropagation();
@@ -586,7 +597,7 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
                 ? [{ href: item.source, icon: FileText, label: "Open transcript / source file" }]
                 : []),
               ...(item.fireflies_link
-                ? [{ href: item.fireflies_link, icon: Flame, label: "View Fireflies recording" }]
+                ? [{ href: item.fireflies_link, icon: Zap, label: "View Fireflies recording" }]
                 : []),
             ]}
             className="gap-3 [&_svg]:h-4.5 [&_svg]:w-4.5"
@@ -616,7 +627,7 @@ export function renderMeetingRowActions(
   onDelete: (meeting: Meeting) => void,
   onOpenSource: (meeting: Meeting) => void,
   onOpenRecording: (meeting: Meeting) => void,
-): ReactElement {
+): React.ReactElement {
   return (
     <TableRowActionsMenu
       items={[
@@ -629,7 +640,7 @@ export function renderMeetingRowActions(
         {
           key: "edit",
           label: "Edit details",
-          icon: FileText,
+          icon: Pencil,
           onSelect: () => onEdit(item),
         },
         ...(item.source
@@ -647,7 +658,7 @@ export function renderMeetingRowActions(
               {
                 key: "fireflies",
                 label: "View Fireflies",
-                icon: Flame,
+                icon: Zap,
                 onSelect: () => onOpenRecording(item),
               },
             ]
@@ -666,7 +677,7 @@ export function renderMeetingRowActions(
 
 // ─── Card / list renderers ────────────────────────────────────────────────────
 
-export function renderMeetingCard(item: Meeting, onClick: (meeting: Meeting) => void): ReactElement {
+export function renderMeetingCard(item: Meeting, onClick: (meeting: Meeting) => void): React.ReactElement {
   return (
     <div
       className="border rounded-lg p-4 cursor-pointer hover:bg-muted/50 transition-colors"
@@ -688,7 +699,7 @@ export function renderMeetingCard(item: Meeting, onClick: (meeting: Meeting) => 
   );
 }
 
-export function renderMeetingList(item: Meeting, onClick: (meeting: Meeting) => void): ReactElement {
+export function renderMeetingList(item: Meeting, onClick: (meeting: Meeting) => void): React.ReactElement {
   return (
     <div
       className="flex items-center justify-between py-2 px-3 rounded-md cursor-pointer hover:bg-muted/50 transition-colors"

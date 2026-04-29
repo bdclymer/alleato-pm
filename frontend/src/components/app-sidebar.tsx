@@ -8,6 +8,7 @@ import {
   Folder,
   Bell,
   CalendarDays,
+  ChevronDown,
   ChevronsLeft,
   ChevronsRight,
   DollarSign,
@@ -216,57 +217,83 @@ function ExpandedNavGroup({
   tools,
   projectId,
   pathname,
+  isOpen,
+  onToggle,
 }: {
   group: SidebarNavGroup
   tools: NavigationTool[]
   projectId: number | null
   pathname: string
+  isOpen: boolean
+  onToggle: () => void
 }) {
   return (
-    <div className="flex flex-col gap-0.5">
-      <div className="px-3 pb-1 pt-4 first:pt-2">
+    <div className="flex flex-col">
+      <Button
+        type="button"
+        variant="ghost"
+        onClick={onToggle}
+        className="h-auto w-full justify-between px-3 pb-1 pt-4 text-left first:pt-2 hover:bg-transparent"
+      >
         <span className="text-[11px] font-semibold uppercase tracking-wider text-primary">
           {group.label}
         </span>
-      </div>
-      {tools.map((tool) => {
-        const isExternal = tool.path.startsWith("http")
-        const href = isExternal
-          ? tool.path
-          : tool.path.startsWith("/")
-            ? tool.path
-            : buildToolUrl(tool.path, projectId, tool.requiresProject)
-        const isActive = !isExternal && (tool.path.startsWith("/")
-          ? pathname === tool.path || pathname.startsWith(tool.path + "/")
-          : isActivePath(pathname, tool.path))
-        const Icon = tool.icon
-        const linkClass = cn(
-          "mx-2 flex items-center rounded-md px-2.5 py-[7px] text-[13px] transition-colors duration-150",
-          isActive
-            ? "font-medium text-sidebar-foreground"
-            : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-        )
+        <ChevronDown
+          className={cn(
+            "h-3 w-3 text-primary/60 transition-transform duration-200",
+            isOpen ? "rotate-0" : "-rotate-90"
+          )}
+          strokeWidth={2.5}
+        />
+      </Button>
+      <div
+        className={cn(
+          "grid transition-all duration-200 ease-in-out",
+          isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+        )}
+      >
+        <div className="overflow-hidden">
+          <div className="flex flex-col gap-0.5 pb-1">
+            {tools.map((tool) => {
+              const isExternal = tool.path.startsWith("http")
+              const href = isExternal
+                ? tool.path
+                : tool.path.startsWith("/")
+                  ? tool.path
+                  : buildToolUrl(tool.path, projectId, tool.requiresProject)
+              const isActive = !isExternal && (tool.path.startsWith("/")
+                ? pathname === tool.path || pathname.startsWith(`${tool.path}/`)
+                : isActivePath(pathname, tool.path))
+              const linkClass = cn(
+                "mx-2 flex items-center rounded-md px-2.5 py-[7px] text-[13px] transition-colors duration-150",
+                isActive
+                  ? "font-medium text-sidebar-foreground"
+                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+              )
 
-        return isExternal ? (
-          <a
-            key={`${tool.path}:${tool.name}`}
-            href={href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={linkClass}
-          >
-            <span className="truncate">{tool.name}</span>
-          </a>
-        ) : (
-          <Link
-            key={`${tool.path}:${tool.name}`}
-            href={href}
-            className={linkClass}
-          >
-            <span className="truncate">{tool.name}</span>
-          </Link>
-        )
-      })}
+              return isExternal ? (
+                <a
+                  key={`${tool.path}:${tool.name}`}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={linkClass}
+                >
+                  <span className="truncate">{tool.name}</span>
+                </a>
+              ) : (
+                <Link
+                  key={`${tool.path}:${tool.name}`}
+                  href={href}
+                  className={linkClass}
+                >
+                  <span className="truncate">{tool.name}</span>
+                </Link>
+              )
+            })}
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
@@ -349,7 +376,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     (tools: NavigationTool[]): boolean => {
       return tools.some((tool) => {
         if (tool.path.startsWith("/")) {
-          return pathname === tool.path || pathname.startsWith(tool.path + "/")
+          return pathname === tool.path || pathname.startsWith(`${tool.path}/`)
         }
         return isActivePath(pathname, tool.path)
       })
@@ -371,6 +398,31 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       .filter((group) => group.tools.length > 0)
   }, [filterTools, isSubcontractor, projectId])
 
+  // Collapsible section state — first group open by default
+  const [openGroupIds, setOpenGroupIds] = React.useState<Set<string>>(
+    () => new Set([sidebarNavGroups[0]?.id ?? ""])
+  )
+
+  const toggleGroup = React.useCallback((groupId: string) => {
+    setOpenGroupIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(groupId)) next.delete(groupId)
+      else next.add(groupId)
+      return next
+    })
+  }, [])
+
+  // Auto-expand the group that contains the active route
+  React.useEffect(() => {
+    const activeGroup = filteredGroups.find((g) => groupHasActiveChild(g.tools))
+    if (activeGroup) {
+      setOpenGroupIds((prev) => {
+        if (prev.has(activeGroup.id)) return prev
+        return new Set([...prev, activeGroup.id])
+      })
+    }
+  }, [filteredGroups, groupHasActiveChild])
+
   const teamChatCollapsedShortcuts = React.useMemo(
     () => [
       { id: "activity", label: "Activity", icon: Bell },
@@ -391,7 +443,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       {...props}
     >
       {/* ── Header ── */}
-      <SidebarHeader className={cn(isCollapsed ? "px-0 pt-6 pb-4" : "px-6 pt-7 pb-6")}>
+      <SidebarHeader className="px-0 pb-4 pt-5">
         {isCollapsed ? (
           // Collapsed: logo icon + expand toggle
           <div className="flex flex-col items-center gap-1.5">
@@ -415,24 +467,29 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </button>
           </div>
         ) : (
-          // Expanded: logo (centered) + project selector + toggle
+          // Expanded: keep the favicon anchored to the collapsed position, then reveal the brand.
           <div className="flex flex-col gap-4">
-            <div className="relative flex items-center justify-center">
-              <Link href="/" className="flex items-center hover:opacity-80 transition-opacity">
+            <div className="flex h-7 items-center justify-between gap-3 px-3.5">
+              <Link
+                href="/"
+                className="flex min-w-0 items-center gap-2.5 rounded-md transition-opacity hover:opacity-80"
+              >
                 <Image
-                  src="/Alleato-Group-Logo_Dark.png"
-                  alt="Alleato Group"
-                  width={144}
-                  height={32}
-                  className="h-auto w-36"
-                  style={{ height: "auto" }}
+                  src="/alleato-favicon.png"
+                  alt="Alleato"
+                  width={28}
+                  height={28}
+                  className="shrink-0 rounded"
                 />
+                <span className="truncate text-sm font-semibold text-sidebar-foreground">
+                  Alleato
+                </span>
               </Link>
               {/* eslint-disable-next-line design-system/no-design-violations -- sidebar toggle with custom sidebar tokens */}
               <button
                 type="button"
                 onClick={toggleSidebar}
-                className="absolute right-0 flex h-7 w-7 items-center justify-center rounded-md text-sidebar-foreground/40 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-sidebar-foreground/40 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
                 aria-label="Collapse sidebar"
               >
                 <ChevronsLeft className="h-4 w-4" strokeWidth={1.6} />
@@ -510,6 +567,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 tools={group.tools}
                 projectId={projectId}
                 pathname={pathname}
+                isOpen={openGroupIds.has(group.id)}
+                onToggle={() => toggleGroup(group.id)}
               />
             ))}
           </div>

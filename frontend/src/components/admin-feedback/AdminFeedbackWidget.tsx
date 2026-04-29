@@ -39,16 +39,31 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
+type FeedbackType = "Issue" | "Wishlist" | "General thought";
+type PriorityLevel = "high" | "medium" | "low";
 
 type SubmissionState = {
   title: string;
   comment: string;
   feedbackType: FeedbackType;
+  priority: PriorityLevel;
+  affectedTool: string;
 };
-
-type FeedbackType = "Issue" | "Wishlist" | "General thought";
 
 type RectState = {
   left: number;
@@ -57,18 +72,66 @@ type RectState = {
   height: number;
 };
 
-const DEFAULT_FORM: SubmissionState = {
-  title: "",
-  comment: "",
-  feedbackType: "Issue",
-};
-
 const FEEDBACK_TYPES = ["Issue", "Wishlist", "General thought"] as const;
-const FEEDBACK_TYPE_IDS: Record<FeedbackType, string> = {
-  Issue: "issue",
-  Wishlist: "wishlist",
-  "General thought": "general-thought",
-};
+const PRIORITY_LEVELS: { value: PriorityLevel; label: string }[] = [
+  { value: "high", label: "High" },
+  { value: "medium", label: "Medium" },
+  { value: "low", label: "Low" },
+];
+
+const TOOL_LIST = [
+  "Budget",
+  "Change Events",
+  "Change Management",
+  "Commitments",
+  "Direct Costs",
+  "Drawings",
+  "Estimates",
+  "Invoicing",
+  "Prime Contracts",
+  "RFIs",
+  "Submittals",
+  "Directory",
+  "Schedule",
+  "AI Assistant",
+  "Portfolio",
+  "Other",
+] as const;
+
+const TOOL_PATH_MAP: [string, string][] = [
+  ["/budget", "Budget"],
+  ["/change-events", "Change Events"],
+  ["/change-management", "Change Management"],
+  ["/commitments", "Commitments"],
+  ["/direct-costs", "Direct Costs"],
+  ["/drawings", "Drawings"],
+  ["/estimates", "Estimates"],
+  ["/invoicing", "Invoicing"],
+  ["/prime-contracts", "Prime Contracts"],
+  ["/rfis", "RFIs"],
+  ["/submittals", "Submittals"],
+  ["/directory", "Directory"],
+  ["/schedule", "Schedule"],
+  ["/ai-assistant", "AI Assistant"],
+  ["/portfolio", "Portfolio"],
+];
+
+function inferToolFromPath(pathname: string): string {
+  for (const [segment, name] of TOOL_PATH_MAP) {
+    if (pathname.includes(segment)) return name;
+  }
+  return "";
+}
+
+function getDefaultForm(pathname: string): SubmissionState {
+  return {
+    title: "",
+    comment: "",
+    feedbackType: "Issue",
+    priority: "medium",
+    affectedTool: inferToolFromPath(pathname),
+  };
+}
 
 function mapFeedbackTypeToRequestType(
   feedbackType: FeedbackType,
@@ -138,7 +201,7 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
     null,
   );
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [form, setForm] = useState<SubmissionState>(DEFAULT_FORM);
+  const [form, setForm] = useState<SubmissionState>(() => getDefaultForm(pagePath));
   const [screenshotDataUrl, setScreenshotDataUrl] = useState<string | null>(
     null,
   );
@@ -295,7 +358,7 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
       setSelectedTarget(snapshot);
       setHoveredTarget(snapshot);
       setScreenshotDataUrl(null);
-      setForm(DEFAULT_FORM);
+      setForm(getDefaultForm(pagePath));
       setDialogOpen(true);
     };
 
@@ -305,7 +368,7 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
         OPEN_ADMIN_FEEDBACK_COMPOSER_EVENT,
         openComposer,
       );
-  }, []);
+  }, [pagePath]);
 
   // Set cursor to crosshair when selecting
   useEffect(() => {
@@ -329,7 +392,7 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
     setSelectedTarget(null);
     setHoveredTarget(null);
     setScreenshotDataUrl(null);
-    setForm(DEFAULT_FORM);
+    setForm(getDefaultForm(pagePath));
   };
 
   const refreshScreenshot = () => {
@@ -381,7 +444,7 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
             title: form.title.trim() || undefined,
             comment: form.comment.trim(),
             requestType: mapFeedbackTypeToRequestType(form.feedbackType),
-            severity: "medium",
+            severity: form.feedbackType === "Issue" ? form.priority : "medium",
             pageUrl: window.location.href,
             pagePath,
             pageTitle: document.title || null,
@@ -403,6 +466,10 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
             metadata: {
               pathname: pagePath,
               feedbackType: form.feedbackType,
+              priority: form.feedbackType === "Issue" ? form.priority : undefined,
+              affectedTool: form.affectedTool || undefined,
+              submitterName: profile?.fullName,
+              submitterEmail: profile?.email,
               source: "admin-feedback-widget",
               userAgent: navigator.userAgent,
               viewport: {
@@ -493,10 +560,11 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
         }}
       >
         <DialogContent
-          className="max-h-[calc(100svh-2rem)] gap-0 overflow-y-auto p-0 sm:max-w-2xl"
+          size="form"
+          className="max-h-[calc(100svh-2rem)] overflow-y-auto p-8"
           {...{ [ADMIN_FEEDBACK_OVERLAY_ATTRIBUTE]: "true" }}
         >
-          <DialogHeader className="border-b border-border px-6 py-5">
+          <DialogHeader className="pb-4">
             <DialogTitle>Submit Admin Feedback</DialogTitle>
             <DialogDescription>
               Describe what should change. The app will attach the page context
@@ -505,39 +573,84 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
           </DialogHeader>
 
           {selectedTarget && (
-            <div className="space-y-6 px-6 py-5">
-              <div className="space-y-2">
-                <Label id="feedback-type-label">Feedback type</Label>
-                <RadioGroup
-                  aria-labelledby="feedback-type-label"
-                  value={form.feedbackType}
-                  onValueChange={(feedbackType) =>
-                    setForm((current) => ({
-                      ...current,
-                      feedbackType: feedbackType as FeedbackType,
-                    }))
-                  }
-                  className="gap-3"
-                >
-                  {FEEDBACK_TYPES.map((feedbackType) => {
-                    const id = `feedback-type-${FEEDBACK_TYPE_IDS[feedbackType]}`;
+            <div className="space-y-8">
+              <div className="flex gap-3">
+                <div className="flex-1 space-y-3">
+                  <Label>Type</Label>
+                  <Select
+                    value={form.feedbackType}
+                    onValueChange={(feedbackType) =>
+                      setForm((current) => ({
+                        ...current,
+                        feedbackType: feedbackType as FeedbackType,
+                      }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {FEEDBACK_TYPES.map((feedbackType) => (
+                        <SelectItem key={feedbackType} value={feedbackType}>
+                          {feedbackType}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-                    return (
-                    <div key={feedbackType} className="flex items-center gap-3">
-                      <RadioGroupItem value={feedbackType} id={id} />
-                      <Label
-                        htmlFor={id}
-                        className="cursor-pointer text-sm font-normal text-foreground"
-                      >
-                        {feedbackType}
-                      </Label>
-                    </div>
-                    );
-                  })}
-                </RadioGroup>
+                {form.feedbackType === "Issue" && (
+                  <div className="flex-1 space-y-3">
+                    <Label>Priority</Label>
+                    <Select
+                      value={form.priority}
+                      onValueChange={(value) =>
+                        setForm((current) => ({
+                          ...current,
+                          priority: value as PriorityLevel,
+                        }))
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select priority" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {PRIORITY_LEVELS.map(({ value, label }) => (
+                          <SelectItem key={value} value={value}>
+                            {label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                <div className="flex-1 space-y-3">
+                  <Label htmlFor="feedback-tool">Tool</Label>
+                  <Select
+                    value={form.affectedTool}
+                    onValueChange={(value) =>
+                      setForm((current) => ({
+                        ...current,
+                        affectedTool: value,
+                      }))
+                    }
+                  >
+                    <SelectTrigger id="feedback-tool">
+                      <SelectValue placeholder="Optional" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {TOOL_LIST.map((tool) => (
+                        <SelectItem key={tool} value={tool}>
+                          {tool}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <Label htmlFor="feedback-title">Title</Label>
                 <Input
                   id="feedback-title"
@@ -552,7 +665,7 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
                 />
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <Label htmlFor="feedback-comment">Description</Label>
                 <Textarea
                   id="feedback-comment"
@@ -572,11 +685,8 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <Label>Screenshot</Label>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      Optional. Upload an image or capture the selected area.
-                    </p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1">
                     <input
                       ref={fileInputRef}
                       type="file"
@@ -584,93 +694,75 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
                       className="hidden"
                       onChange={handleFileUpload}
                     />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      <Upload />
-                      Upload
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={refreshScreenshot}
-                      disabled={isCapturingScreenshot}
-                    >
-                      {isCapturingScreenshot ? (
-                        <>
-                          <RefreshCw className="animate-spin" />
-                          Capturing
-                        </>
-                      ) : screenshotDataUrl ? (
-                        <>
-                          <RefreshCw />
-                          Retake
-                        </>
-                      ) : (
-                        <>
-                          <Camera />
-                          Capture
-                        </>
-                      )}
-                    </Button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-sm"
+                          onClick={() => fileInputRef.current?.click()}
+                          aria-label="Upload screenshot"
+                        >
+                          <Upload className="h-3.5 w-3.5" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Upload screenshot</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-sm"
+                          onClick={refreshScreenshot}
+                          disabled={isCapturingScreenshot}
+                          aria-label={isCapturingScreenshot ? "Capturing" : screenshotDataUrl ? "Retake screenshot" : "Capture screenshot"}
+                        >
+                          <RefreshCw className={`h-3.5 w-3.5 ${isCapturingScreenshot ? "animate-spin" : ""}`} />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {isCapturingScreenshot ? "Capturing…" : screenshotDataUrl ? "Retake screenshot" : "Capture screenshot"}
+                      </TooltipContent>
+                    </Tooltip>
                     {screenshotDataUrl && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setScreenshotDataUrl(null)}
-                      >
-                        <Trash2 className="mr-2 h-3.5 w-3.5" />
-                        Remove
-                      </Button>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon-sm"
+                            onClick={() => setScreenshotDataUrl(null)}
+                            aria-label="Remove screenshot"
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Remove screenshot</TooltipContent>
+                      </Tooltip>
                     )}
                   </div>
                 </div>
 
-                <div className="overflow-hidden rounded-xl border border-border bg-muted/20">
-                  {screenshotDataUrl ? (
-                    <img
-                      src={screenshotDataUrl}
-                      alt="Selected area screenshot"
-                      className="h-56 w-full object-cover object-top"
-                    />
-                  ) : (
-                    <div
-                      className="flex h-56 cursor-pointer flex-col items-center justify-center gap-3 px-6 text-center transition-colors hover:bg-muted/40"
-                      onClick={() => fileInputRef.current?.click()}
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.preventDefault();
-                          fileInputRef.current?.click();
-                        }
-                      }}
-                    >
-                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-background text-muted-foreground shadow-sm">
-                        <Upload className="h-5 w-5" />
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium text-foreground">
-                          Click to upload a screenshot
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Or use the Capture button to grab the selected area.
-                        </p>
-                      </div>
+                {screenshotDataUrl && (
+                  <div className="w-full max-w-sm overflow-hidden rounded shadow-sm">
+                    <div className="aspect-video">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={screenshotDataUrl}
+                        alt="Selected area screenshot"
+                        className="h-full w-full object-contain object-top"
+                      />
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
 
-          <DialogFooter className="border-t border-border px-6 py-4">
-            <Button type="button" variant="outline" onClick={resetComposer}>
+          <DialogFooter>
+            <Button type="button" variant="link" onClick={resetComposer}>
               Cancel
             </Button>
             <Button

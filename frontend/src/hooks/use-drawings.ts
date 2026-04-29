@@ -255,10 +255,10 @@ export function useDeletedDrawings(projectId: string) {
   return useQuery<DeletedDrawingRow[]>({
     queryKey: ["drawings-recycle-bin", projectId],
     queryFn: async () => {
-      const response = await apiFetch<DeletedDrawingsResponse>(
+      const rows = await apiFetch<DrawingLogViewRow[]>(
         `/api/projects/${projectId}/drawings/recycle-bin`,
       );
-      return (response.drawings ?? []).map((row) => ({
+      return (rows ?? []).map((row) => ({
         ...mapDrawingLogRow(row),
         deletedAt: row.deleted_at ?? null,
       }));
