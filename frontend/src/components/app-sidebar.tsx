@@ -470,10 +470,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         ) : (
           // Expanded: keep the favicon anchored to the collapsed position, then reveal the brand.
           <div className="flex flex-col gap-4">
-            <div className="flex h-7 items-center justify-between gap-3 px-3.5">
+            <div className="flex h-7 items-center justify-between gap-3 pl-6 pr-2">
               <Link
                 href="/"
-                className="flex min-w-0 items-center gap-2.5 rounded-md transition-opacity hover:opacity-80"
+                className="flex items-center rounded-md transition-opacity hover:opacity-80"
               >
                 <Image
                   src="/alleato-favicon.png"
@@ -482,9 +482,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   height={28}
                   className="shrink-0 rounded"
                 />
-                <span className="truncate text-sm font-semibold text-sidebar-foreground">
-                  Alleato
-                </span>
               </Link>
               {/* eslint-disable-next-line design-system/no-design-violations -- sidebar toggle with custom sidebar tokens */}
               <button
