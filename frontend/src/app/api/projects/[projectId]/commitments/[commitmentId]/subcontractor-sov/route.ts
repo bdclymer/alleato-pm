@@ -11,8 +11,14 @@ import SubcontractorSovInvite from "@/emails/subcontractor/SubcontractorSovInvit
 import SSOVSubmittedToPM from "@/emails/subcontractor/SSOVSubmittedToPM";
 import { APP_BASE_URL } from "@/lib/email/client";
 import { isAuthError, verifyProjectAccess } from "@/lib/supabase/auth-guard";
-import { requirePermission } from "@/lib/permissions-guard";
 import { createServiceClient } from "@/lib/supabase/service";
+import {
+  canEditSubcontractorSov,
+  mergeSubcontractorSovAccessIds,
+  type SubcontractorSovCommitmentAccess,
+} from "@/lib/commitments/subcontractor-sov-access";
+
+type ServiceClient = ReturnType<typeof createServiceClient>;
 
 interface RouteParams {
   params: Promise<{ projectId: string; commitmentId: string }>;
@@ -31,14 +37,10 @@ interface SsovLineItemInput {
 const STATUS_VALUES = ["draft", "under_review", "approved", "revise_resubmit"] as const;
 type SsovStatus = (typeof STATUS_VALUES)[number];
 
-interface CommitmentContext {
+interface CommitmentContext extends SubcontractorSovCommitmentAccess {
   contract_number: string | null;
   title: string | null;
   status: string | null;
-  is_private: boolean | null;
-  invoice_contact_ids: string[] | null;
-  non_admin_user_ids: string[] | null;
-  allow_non_admin_view_sov_items: boolean | null;
 }
 
 interface SsovPermissions {
@@ -148,28 +150,6 @@ async function getActorRoleContext(supabase: any, authUserId: string, projectId:
   return { isAdmin, isPm, isUpstream };
 }
 
-function canEditSsov(params: {
-  actorPersonId: string;
-  isUpstream: boolean;
-  commitment: CommitmentContext;
-}): boolean {
-  const { actorPersonId, isUpstream, commitment } = params;
-  if (isUpstream) return true;
-
-  const invoiceContacts = commitment.invoice_contact_ids || [];
-  const nonAdminUsers = commitment.non_admin_user_ids || [];
-  const isInvoiceContact = invoiceContacts.includes(actorPersonId);
-  const isNonAdminAllowed =
-    nonAdminUsers.includes(actorPersonId) &&
-    commitment.allow_non_admin_view_sov_items === true;
-
-  if (commitment.is_private) {
-    return isInvoiceContact && isNonAdminAllowed;
-  }
-
-  return isInvoiceContact || isNonAdminAllowed;
-}
-
 async function getInvoiceContactEmails(supabase: any, invoiceContactIds: string[]) {
   if (invoiceContactIds.length === 0) return [];
   const { data } = await supabase
@@ -184,6 +164,41 @@ async function getInvoiceContactEmails(supabase: any, invoiceContactIds: string[
       name: `${person.first_name || ""} ${person.last_name || ""}`.trim() || "Invoice Contact",
       email: person.email,
     }));
+}
+
+async function grantSsovAccessToInvoiceContacts(args: {
+  supabase: ServiceClient;
+  commitmentId: string;
+  recipientPersonIds: string[];
+}) {
+  const { supabase, commitmentId, recipientPersonIds } = args;
+  if (recipientPersonIds.length === 0) return;
+
+  const { data: commitment, error } = await supabase
+    .from("subcontracts")
+    .select("non_admin_user_ids")
+    .eq("id", commitmentId)
+    .single();
+
+  if (error || !commitment) {
+    throw error || new Error("Unable to grant SSOV access because the commitment was not found.");
+  }
+
+  const mergedPersonIds = mergeSubcontractorSovAccessIds(
+    commitment.non_admin_user_ids || [],
+    recipientPersonIds,
+  );
+
+  const { error: updateError } = await supabase
+    .from("subcontracts")
+    .update({
+      non_admin_user_ids: mergedPersonIds,
+      allow_non_admin_view_sov_items: true,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", commitmentId);
+
+  if (updateError) throw updateError;
 }
 
 async function sendSsovInviteEmail(args: {
@@ -236,6 +251,12 @@ async function sendSsovInviteEmail(args: {
     .eq("is_system", true)
     .maybeSingle();
   const subcontractorTemplateId = subcontractorTemplate?.id ?? null;
+
+  await grantSsovAccessToInvoiceContacts({
+    supabase: adminSupabase,
+    commitmentId,
+    recipientPersonIds: recipients.map((recipient) => recipient.id),
+  });
 
   // Check which recipients already have auth accounts
   const { data: existingAuthLinks } = await adminSupabase
@@ -579,7 +600,7 @@ export const GET = withApiGuardrails(
       membership.personId,
     );
     const permissions: SsovPermissions = {
-      canEdit: canEditSsov({
+      canEdit: canEditSubcontractorSov({
         actorPersonId: membership.personId,
         isUpstream: actor.isUpstream,
         commitment,
@@ -633,9 +654,6 @@ export const PUT = withApiGuardrails(
     if (isAuthError(authResult)) return authResult;
     const { serviceClient: supabase, membership } = authResult;
 
-    const guard = await requirePermission(numericProjectId, "contracts", "write");
-    if (guard.denied) return guard.response;
-
     const body = (await request.json()) as { lineItems: SsovLineItemInput[] };
     if (!Array.isArray(body.lineItems)) {
       return NextResponse.json(
@@ -653,7 +671,7 @@ export const PUT = withApiGuardrails(
       membership.personId,
     );
 
-    if (!canEditSsov({
+    if (!canEditSubcontractorSov({
       actorPersonId: membership.personId,
       isUpstream: actor.isUpstream,
       commitment,
@@ -753,9 +771,6 @@ export const POST = withApiGuardrails(
     if (isAuthError(authResult)) return authResult;
     const { serviceClient: supabase, membership } = authResult;
 
-    const guard = await requirePermission(numericProjectId, "contracts", "write");
-    if (guard.denied) return guard.response;
-
     const body = (await request.json()) as {
       action:
         | "submit"
@@ -778,7 +793,7 @@ export const POST = withApiGuardrails(
     );
     const { sourceSov, targetAmount } = await getTargetAndSourceSov(supabase, commitmentId);
 
-    const canEdit = canEditSsov({
+    const canEdit = canEditSubcontractorSov({
       actorPersonId: membership.personId,
       isUpstream: actor.isUpstream,
       commitment,
