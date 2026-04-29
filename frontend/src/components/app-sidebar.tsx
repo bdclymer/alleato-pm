@@ -230,19 +230,19 @@ function ExpandedNavGroup({
   onToggle: () => void
 }) {
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col mt-4 first:mt-1">
       <Button
         type="button"
         variant="ghost"
         onClick={onToggle}
-        className="h-auto w-full justify-between px-3 pb-1 pt-4 text-left first:pt-2 hover:bg-transparent"
+        className="h-auto w-full justify-between rounded-md px-2 pb-1 pt-0 text-left hover:bg-transparent"
       >
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-primary">
+        <span className="text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/50">
           {group.label}
         </span>
         <ChevronDown
           className={cn(
-            "h-3 w-3 text-primary/60 transition-transform duration-200",
+            "h-3 w-3 text-sidebar-foreground/40 transition-transform duration-200",
             isOpen ? "rotate-0" : "-rotate-90"
           )}
           strokeWidth={2.5}
@@ -266,11 +266,12 @@ function ExpandedNavGroup({
               const isActive = !isExternal && (tool.path.startsWith("/")
                 ? pathname === tool.path || pathname.startsWith(`${tool.path}/`)
                 : isActivePath(pathname, tool.path))
+              const Icon = tool.icon
               const linkClass = cn(
-                "mx-2 flex items-center rounded-md px-2.5 py-[7px] text-[13px] transition-colors duration-150",
+                "flex items-center gap-2.5 rounded-md px-2 py-[7px] text-[13px] transition-colors duration-150",
                 isActive
-                  ? "font-medium text-sidebar-foreground"
-                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                  ? "bg-sidebar-accent font-medium text-sidebar-foreground"
+                  : "text-sidebar-foreground/65 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
               )
 
               return isExternal ? (
@@ -281,6 +282,7 @@ function ExpandedNavGroup({
                   rel="noopener noreferrer"
                   className={linkClass}
                 >
+                  {Icon && <Icon className="h-4 w-4 shrink-0" strokeWidth={1.5} />}
                   <span className="truncate">{tool.name}</span>
                 </a>
               ) : (
@@ -289,6 +291,7 @@ function ExpandedNavGroup({
                   href={href}
                   className={linkClass}
                 >
+                  {Icon && <Icon className="h-4 w-4 shrink-0" strokeWidth={1.5} />}
                   <span className="truncate">{tool.name}</span>
                 </Link>
               )
@@ -515,7 +518,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       {/* ── Content ── */}
       <SidebarContent
         className={cn(
-          isCollapsed ? "items-center pl-1 pr-0 py-2" : "pl-6 pr-2 py-1",
+          isCollapsed ? "items-center pl-1 pr-0 py-2" : "px-3 py-1",
           "group-data-[hover-expanded=true]:overflow-y-auto"
         )}
       >
