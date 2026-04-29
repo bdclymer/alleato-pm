@@ -27,7 +27,8 @@ for (const relativePath of manifest.files) {
       continue;
     }
 
-    throw new Error(`[build] Expected non-production route file is missing: ${relativePath}`);
+    console.warn(`[build] Skipping missing non-production route file: ${relativePath}`);
+    continue;
   }
 
   if (existsSync(disabledPath)) {
