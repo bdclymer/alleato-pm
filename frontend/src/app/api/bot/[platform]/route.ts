@@ -10,21 +10,19 @@
  */
 
 import { after } from "next/server";
-import { bot } from "@/lib/bot";
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 
 export const maxDuration = 120;
-
-type Platform = keyof typeof bot.webhooks;
 
 export const POST = withApiGuardrails<Promise<{ platform: string }>>(
   "/api/bot/[platform]#POST",
   async ({ request, params }) => {
   try {
     const { platform } = await params;
+    const { bot } = await import("@/lib/bot");
 
-    const handler = bot.webhooks[platform as Platform];
+    const handler = bot.webhooks[platform as keyof typeof bot.webhooks];
     if (!handler) {
       throw new GuardrailError({
         code: "ROUTE_BINDING_MISSING",

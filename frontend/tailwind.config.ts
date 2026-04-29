@@ -1,6 +1,10 @@
-import type { Config } from "tailwindcss";
-import tailwindcssAnimate from "tailwindcss-animate";
-import tailwindScrollbarHide from "tailwind-scrollbar-hide";
+const tailwindcssAnimateModule = require("tailwindcss-animate");
+const tailwindScrollbarHideModule = require("tailwind-scrollbar-hide");
+
+const tailwindcssAnimate =
+  tailwindcssAnimateModule.default ?? tailwindcssAnimateModule;
+const tailwindScrollbarHide =
+  tailwindScrollbarHideModule.default ?? tailwindScrollbarHideModule;
 
 /**
  * Tailwind CSS Configuration — Superhuman-inspired v2
@@ -14,7 +18,7 @@ import tailwindScrollbarHide from "tailwind-scrollbar-hide";
  * - Animations: spring physics, Superhuman timing
  */
 
-export default {
+const config = {
   darkMode: ["class", ".dark"],
   content: [
     "./src/**/*.{js,ts,jsx,tsx,mdx}",
@@ -240,4 +244,6 @@ export default {
     tailwindcssAnimate,
     tailwindScrollbarHide,
   ],
-} satisfies Config;
+};
+
+module.exports = config;

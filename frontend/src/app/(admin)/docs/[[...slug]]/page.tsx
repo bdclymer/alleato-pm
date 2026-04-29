@@ -27,6 +27,8 @@ interface DocPageProps {
   }>;
 }
 
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata({ params }: DocPageProps): Promise<Metadata> {
   const resolvedParams = await params;
   const slug = resolvedParams.slug?.join("/") ?? "";
@@ -50,13 +52,6 @@ export async function generateMetadata({ params }: DocPageProps): Promise<Metada
     title: article.frontmatter.title,
     description: article.frontmatter.description,
   };
-}
-
-export async function generateStaticParams() {
-  const articles = await getHelpArticles({ clientHelpCenterOnly: true });
-  return articles.map((article) => ({
-    slug: article.slug.split("/"),
-  }));
 }
 
 export default async function DocPage({ params, searchParams }: DocPageProps) {

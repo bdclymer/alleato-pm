@@ -7,14 +7,8 @@ import { HeaderProvider } from "@/components/layout/header-context";
 import { ProjectProvider } from "@/contexts/project-context";
 import { FavoritesProvider } from "@/contexts/favorites-context";
 import { Toaster } from "@/components/ui/sonner";
-import { DevAutoFillForms } from "@/components/dev/DevAutoFillForms";
-import { AgentationThemeSync } from "@/components/dev/AgentationThemeSync";
-import { DevAnnotationOverlay } from "@/components/dev/dev-annotation-overlay";
-import { DesignViolationOverlay } from "@/components/dev/design-violation-overlay";
 import { Providers } from "./Providers";
-import { UnifiedFeedbackWidget } from "@/components/dev/UnifiedFeedbackWidget";
-import { AskAlleatoRoot } from "@/components/ask-alleato/AskAlleatoRoot";
-import { AdminFeedbackWidget } from "@/components/admin-feedback/AdminFeedbackWidget";
+import { RootClientWidgets } from "./root-client-widgets";
 import { ChunkLoadErrorRecovery } from "@/components/providers/chunk-error-recovery";
 import "./globals.css";
 import "swagger-ui-dist/swagger-ui.css";
@@ -75,7 +69,6 @@ export default function RootLayout({
                   <FavoritesProvider>
                     <HeaderProvider>
                       {children}
-                      <DevAutoFillForms />
                     </HeaderProvider>
                   </FavoritesProvider>
                 </ProjectProvider>
@@ -85,17 +78,7 @@ export default function RootLayout({
         </QueryProvider>
         </ChunkLoadErrorRecovery>
         <Toaster />
-        <Suspense fallback={null}>
-          <AskAlleatoRoot />
-          <AdminFeedbackWidget showLauncher={false} />
-        </Suspense>
-        {process.env.NODE_ENV === "development" && (
-          <>
-            <AgentationThemeSync />
-            <UnifiedFeedbackWidget />
-            <DesignViolationOverlay />
-          </>
-        )}
+        <RootClientWidgets />
       </body>
     </html>
   );
