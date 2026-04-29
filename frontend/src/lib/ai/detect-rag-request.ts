@@ -79,6 +79,32 @@ function parseExplicitDateRange(message: string): { startDate: string; endDate: 
   };
 }
 
+// Static phrase list — module-level to avoid per-call reallocation.
+// All phrases implicitly contain "meeting", so the normalized.includes("meeting")
+// guard in detectSourceSpecificRagRequest acts as a cheap short-circuit.
+const GENERAL_MEETING_PHRASES = [
+  "review recent meetings",
+  "recent meetings",
+  "latest meetings",
+  "show me meetings",
+  "tell me about meetings",
+  "what meetings did",
+  "what meetings have",
+  "what meetings were held",
+  "what meetings do we have",
+  "meeting updates",
+  "meetings this week",
+  "meetings this month",
+  "meetings last week",
+  "meetings last month",
+  "any meetings",
+  "our meetings",
+  "meeting notes",
+  "meeting summaries",
+  "meeting recap",
+  "meeting recaps",
+];
+
 /**
  * Detects whether the user message targets a specific data source that should be
  * retrieved server-side before the model responds.
@@ -93,7 +119,7 @@ export function detectSourceSpecificRagRequest(message: string): SourceSpecificR
   const normalized = message.toLowerCase();
 
   // SPECIFIC FIRST: date-anchored meeting queries must be evaluated before the
-  // general meeting phrases below. Several generalMeetingPhrases substrings
+  // general meeting phrases below. Several GENERAL_MEETING_PHRASES substrings
   // ("what meetings were held", "our meetings", etc.) can match queries that
   // contain a date qualifier — routing them to recent_meetings (60-day, limit 10)
   // instead of meetings_on_date (date-specific, limit 20). The original route.ts
@@ -120,31 +146,9 @@ export function detectSourceSpecificRagRequest(message: string): SourceSpecificR
 
   // GENERAL SECOND: broad recent-meeting queries. Evaluated after date-specific
   // patterns to avoid swallowing queries like "what meetings were held on friday".
-  const generalMeetingPhrases = [
-    "review recent meetings",
-    "recent meetings",
-    "latest meetings",
-    "show me meetings",
-    "tell me about meetings",
-    "what meetings did",
-    "what meetings have",
-    "what meetings were held",
-    "what meetings do we have",
-    "meeting updates",
-    "meetings this week",
-    "meetings this month",
-    "meetings last week",
-    "meetings last month",
-    "any meetings",
-    "our meetings",
-    "meeting notes",
-    "meeting summaries",
-    "meeting recap",
-    "meeting recaps",
-  ];
   const asksForRecentMeetings =
     normalized.includes("meeting") &&
-    generalMeetingPhrases.some((phrase) => normalized.includes(phrase));
+    GENERAL_MEETING_PHRASES.some((phrase) => normalized.includes(phrase));
   if (asksForRecentMeetings) {
     return {
       kind: "recent_meetings",

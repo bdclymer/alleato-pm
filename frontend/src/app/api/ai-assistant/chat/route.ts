@@ -2077,11 +2077,10 @@ export const POST = withApiGuardrails(
             toolTrace,
             content: sourceSpecificAnswer.content,
           });
-          // TODO(P2 #282): when responseQuality.hasMetaCommentary is true, trigger the
-          // noToolRetry path (line ~2728) to fetch real data and replace this response.
-          // Currently the -30 penalty is logged only — it does not prevent the filler
-          // from reaching the user. For the source-specific path this is low-risk
-          // (model is not called), but the hook is missing for the general path.
+          // TODO(P2): wire meta-commentary retry for the source-specific path here.
+          // The general path retry is implemented at ~line 2714. This path is low-risk
+          // (model not called) but may still emit filler when source-specific synthesis
+          // produces intent-narration text.
           await persistAssistantMessage({
             supabase,
             sessionId,
@@ -2708,39 +2707,59 @@ export const POST = withApiGuardrails(
         // Meta-commentary retry: if the model returned a filler response
         // ("Let me search for that…") instead of an actual answer, trigger
         // generateText with no tools and append the corrected answer to the
-        // still-open stream (sendFinish: false keeps writer open).
+        // still-open stream. The writer remains open because writer.merge() above
+        // was called with `sendFinish: false` — do not close it before this block.
         // NOTE: The filler has already streamed to the client. The correction
         // is appended immediately after.
         {
           const preRetryQuality = scoreResponseQuality({ toolTrace, content });
-          if (preRetryQuality.hasMetaCommentary && content) {
+          if (preRetryQuality.hasMetaCommentary && preRetryQuality.score < 60) {
             try {
-              const retryResult = await generateText({
-                model: getLanguageModel("openai/gpt-4.1"),
-                system: systemPrompt,
-                messages: modelMessages,
-                maxOutputTokens: 1500,
-              });
-              const retryContent = retryResult.text.trim();
-              if (retryContent) {
-                content = retryContent;
+              const retryResultOrTimeout = await withTimeout(
+                generateText({
+                  model: getLanguageModel("openai/gpt-4.1"),
+                  system: systemPrompt,
+                  messages: modelMessages,
+                  maxOutputTokens: 1500,
+                }),
+                15_000,
+                "metaCommentaryRetry timed out after 15 s",
+              );
+              if (isTimeoutResult(retryResultOrTimeout)) {
                 toolTrace.push({
-                  tool: "metaCommentaryRetry",
-                  input: {
-                    primaryModel: activeModel,
-                    retryModel: "openai/gpt-4.1",
-                    fillerReasons: preRetryQuality.reasons,
-                  },
-                  output: { contentLength: content.length, succeeded: true },
+                  tool: "metaCommentaryRetryFailed",
+                  input: { primaryModel: activeModel, retryModel: "openai/gpt-4.1" },
+                  error: retryResultOrTimeout.error,
                   timestamp: new Date().toISOString(),
                 });
-                writer.write({ type: "text-start", id: "meta-commentary-correction" });
-                writer.write({
-                  type: "text-delta",
-                  id: "meta-commentary-correction",
-                  delta: "\n\n" + content,
-                });
-                writer.write({ type: "text-end", id: "meta-commentary-correction" });
+              } else {
+                const retryContent = retryResultOrTimeout.text.trim();
+                if (retryContent) {
+                  // Write to stream FIRST — only mutate content after writes succeed
+                  writer.write({ type: "text-start", id: "meta-commentary-correction" });
+                  writer.write({
+                    type: "text-delta",
+                    id: "meta-commentary-correction",
+                    delta: "\n\n" + retryContent,
+                  });
+                  writer.write({ type: "text-end", id: "meta-commentary-correction" });
+                  // Now safe to mutate — client has the content
+                  content = retryContent;
+                  toolTrace.push({
+                    tool: "metaCommentaryRetry",
+                    input: {
+                      primaryModel: activeModel,
+                      retryModel: "openai/gpt-4.1",
+                      fillerReasons: preRetryQuality.reasons,
+                    },
+                    output: {
+                      contentLength: content.length,
+                      succeeded: true,
+                      finishReason: retryResultOrTimeout.finishReason,
+                    },
+                    timestamp: new Date().toISOString(),
+                  });
+                }
               }
             } catch (retryError) {
               toolTrace.push({
