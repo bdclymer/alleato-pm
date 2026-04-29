@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { PageShell } from "@/components/layout";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,6 +21,7 @@ import {
   useUnifiedTableState,
   type FilterValue,
 } from "@/components/tables/unified";
+import { useCurrentUserProfile } from "@/hooks/use-current-user-profile";
 import {
   useKnowledgeArticles,
   useDeleteKnowledgeArticle,
@@ -41,6 +43,8 @@ export function KnowledgeTablePage() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { profile, isLoading: isLoadingProfile } = useCurrentUserProfile();
+  const isAdmin = profile?.isAdmin === true;
 
   // Table state
   const tableState = useUnifiedTableState({
@@ -164,16 +168,45 @@ export function KnowledgeTablePage() {
   const isFiltered =
     !!tableState.debouncedSearch || Object.keys(activeFilters).length > 0;
 
+  if (isLoadingProfile) {
+    return (
+      <PageShell
+        variant="content"
+        title="Manage Knowledge Sources"
+        description="Checking your access before loading source management."
+      >
+        <div className="h-24 animate-pulse rounded-lg bg-muted/30" />
+      </PageShell>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <PageShell
+        variant="content"
+        title="Manage Knowledge Sources"
+        description="Company knowledge source management is limited to admins."
+      >
+        <div className="space-y-2">
+          <p className="text-sm text-foreground">You can still browse approved knowledge from the Knowledge Base.</p>
+          <Button asChild variant="outline" size="sm">
+            <a href="/knowledge">Open Knowledge Base</a>
+          </Button>
+        </div>
+      </PageShell>
+    );
+  }
+
   return (
     <>
       <UnifiedTablePage<KnowledgeArticle>
         header={{
-          title: "Knowledge Base",
-          description: "Your team's second brain — capture insights, lessons, and expertise",
+          title: "Manage Knowledge Sources",
+          description: "Admin source manager for company knowledge entries, imports, and AI-searchable content.",
           actions: (
             <Button onClick={handleCreate} size="sm">
               <Plus />
-              Add Entry
+              Add Source
             </Button>
           ),
         }}
@@ -232,13 +265,13 @@ export function KnowledgeTablePage() {
         emptyState={{
           title: "No knowledge entries yet",
           description:
-            "Start building your team's second brain by adding insights from meetings, client conversations, and lessons learned.",
+            "Start building the company knowledge base by adding approved sources, lessons learned, and operating guidance.",
           filteredDescription: "No entries match your current filters.",
           isFiltered,
           action: (
             <Button onClick={handleCreate} size="sm">
               <Plus />
-              Add First Entry
+              Add First Source
             </Button>
           ),
         }}

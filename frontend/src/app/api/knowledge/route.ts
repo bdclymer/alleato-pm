@@ -29,6 +29,35 @@ async function generateEmbedding(text: string): Promise<number[]> {
   return response.data[0].embedding;
 }
 
+async function assertKnowledgeAdmin(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  where: string,
+) {
+  const { data, error } = await supabase
+    .from("user_profiles")
+    .select("is_admin")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (error) {
+    throw new GuardrailError({
+      code: "UPSTREAM_FAILURE",
+      where,
+      message: "Unable to verify company knowledge management access.",
+      cause: error.message,
+    });
+  }
+
+  if (data?.is_admin !== true) {
+    throw new GuardrailError({
+      code: "AUTH_FORBIDDEN",
+      where,
+      message: "Admin access is required to manage company knowledge sources.",
+    });
+  }
+}
+
 // ---------------------------------------------------------------------------
 // GET /api/knowledge — list knowledge articles
 // ---------------------------------------------------------------------------
@@ -104,6 +133,7 @@ export const POST = withApiGuardrails(
   if (!user) {
     throw new GuardrailError({ code: "AUTH_EXPIRED", where: "knowledge#POST", message: "Authentication required." });
   }
+  await assertKnowledgeAdmin(supabase, user.id, "knowledge#POST");
 
   const body = await request.json();
 
@@ -157,6 +187,7 @@ export const PATCH = withApiGuardrails(
   if (!user) {
     throw new GuardrailError({ code: "AUTH_EXPIRED", where: "knowledge#PATCH", message: "Authentication required." });
   }
+  await assertKnowledgeAdmin(supabase, user.id, "knowledge#PATCH");
 
   const body = await request.json();
   const { id, ...updates } = body;
@@ -218,6 +249,7 @@ export const DELETE = withApiGuardrails(
   if (!user) {
     throw new GuardrailError({ code: "AUTH_EXPIRED", where: "knowledge#DELETE", message: "Authentication required." });
   }
+  await assertKnowledgeAdmin(supabase, user.id, "knowledge#DELETE");
 
   const url = new URL(request.url);
   const id = url.searchParams.get("id");
