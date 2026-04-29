@@ -28,7 +28,11 @@ interface SovSubmission {
     id: string;
     contract_number: string | null;
     title: string | null;
-    amount: number | null;
+    contract_company_id: string | null;
+    invoice_contact_ids: string[] | null;
+    is_private: boolean | null;
+    non_admin_user_ids: string[] | null;
+    allow_non_admin_view_sov_items: boolean | null;
   } | null;
 }
 
@@ -131,26 +135,28 @@ export default async function MyWorkPage({
 
   // Fetch all data in parallel
   const [sovResult, rfisResult, submittalsResult, projectResult] = await Promise.all([
-    // SOV submissions for commitments linked to this subcontractor's company
-    companyId
-      ? serviceClient
-          .from("subcontractor_sov_submissions")
-          .select(`
-            id,
-            status,
-            submitted_at,
-            reviewed_at,
-            invite_sent_at,
-            commitment:subcontracts (
-              id,
-              contract_number,
-              title,
-              amount
-            )
-          `)
-          .eq("project_id", numericProjectId)
-          .order("created_at", { ascending: false })
-      : Promise.resolve({ data: [] }),
+    // SOV submissions for commitments assigned to this subcontractor.
+    serviceClient
+      .from("subcontractor_sov_submissions")
+      .select(`
+        id,
+        status,
+        submitted_at,
+        reviewed_at,
+        invite_sent_at,
+        commitment:subcontracts (
+          id,
+          contract_number,
+          title,
+          contract_company_id,
+          invoice_contact_ids,
+          is_private,
+          non_admin_user_ids,
+          allow_non_admin_view_sov_items
+        )
+      `)
+      .eq("project_id", numericProjectId)
+      .order("created_at", { ascending: false }),
 
     // Open RFIs on this project
     serviceClient
@@ -178,7 +184,36 @@ export default async function MyWorkPage({
       .maybeSingle(),
   ]);
 
-  const sovSubmissions = (sovResult.data ?? []) as unknown as SovSubmission[];
+  if (sovResult.error) {
+    throw new Error(`Failed to load subcontractor SOV assignments: ${sovResult.error.message}`);
+  }
+  if (rfisResult.error) {
+    throw new Error(`Failed to load subcontractor RFI assignments: ${rfisResult.error.message}`);
+  }
+  if (submittalsResult.error) {
+    throw new Error(`Failed to load subcontractor submittal assignments: ${submittalsResult.error.message}`);
+  }
+  if (projectResult.error) {
+    throw new Error(`Failed to load project name: ${projectResult.error.message}`);
+  }
+
+  const allSovSubmissions = (sovResult.data ?? []) as unknown as SovSubmission[];
+  const sovSubmissions = allSovSubmissions.filter((sov) => {
+    const commitment = sov.commitment;
+    if (!commitment) return false;
+
+    const isInvoiceContact = (commitment.invoice_contact_ids || []).includes(personId);
+    const hasExplicitSovAccess =
+      (commitment.non_admin_user_ids || []).includes(personId) &&
+      commitment.allow_non_admin_view_sov_items === true;
+    const isCompanyCommitment = !!companyId && commitment.contract_company_id === companyId;
+
+    if (commitment.is_private) {
+      return isInvoiceContact && hasExplicitSovAccess;
+    }
+
+    return isInvoiceContact || hasExplicitSovAccess || isCompanyCommitment;
+  });
   const openRfis = (rfisResult.data ?? []) as OpenRfi[];
   const openSubmittals = (submittalsResult.data ?? []) as OpenSubmittal[];
   const projectName = projectResult.data?.name ?? `Project #${projectId}`;
