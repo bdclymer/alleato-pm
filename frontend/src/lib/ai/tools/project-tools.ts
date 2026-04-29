@@ -5,7 +5,7 @@ import { createFinancialTools } from "./financial";
 import { createAcumaticaTools } from "./acumatica";
 import { createOperationalTools } from "./operational";
 import { createToolGuardrails } from "./guardrails";
-import { type ToolTracePayload, asNumber } from "./tool-utils";
+import { type ToolTracePayload, asNumber, withTrace as _withTrace } from "./tool-utils";
 
 // Existing AI tool outputs are heterogeneous Supabase rows from many tables/views.
 // Keep this broad row shape until the tool layer is split into typed modules.
@@ -131,33 +131,12 @@ function withTrace<TInput extends Record<string, unknown>, TResult>(
   options: CreateProjectToolsOptions,
   execute: (input: TInput) => Promise<TResult>,
 ) {
-  return async (input: TInput): Promise<TResult> => {
-    try {
-      const output = await execute(input);
-      options.onTrace?.({
-        tool: name,
-        input,
-        output,
-        timestamp: new Date().toISOString(),
-      });
-      return output;
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Unknown tool error";
-      options.onTrace?.({
-        tool: name,
-        input,
-        error: message,
-        timestamp: new Date().toISOString(),
-      });
-      return {
-        error: message,
-        source: name,
-        guidance:
-          "This data source failed during retrieval. Tell the user exactly what could not be checked, then continue with any other successful sources instead of ending the response.",
-      } as TResult;
-    }
-  };
+  return _withTrace(
+    name,
+    options,
+    execute,
+    "This data source failed during retrieval. Tell the user exactly what could not be checked, then continue with any other successful sources instead of ending the response.",
+  );
 }
 
 export function createProjectTools(

@@ -545,7 +545,7 @@ export const agentRegistry: Record<string, AgentConfig> = {
       return {
         ...createProjectTools(userId, options),
         ...createWebSearchTools(options),
-      } as unknown as ToolSet;
+      } as ToolSet; // ToolSet is an index signature — spread inference requires explicit cast
     },
   },
 };
