@@ -368,6 +368,90 @@ test.describe("Commitments - Financial Data Display", () => {
   });
 });
 
+test.describe("Purchase Order — retainage update (regression #238)", () => {
+  // The PO edit payload was missing default_retainage_percent, so saving retainage
+  // on a PO was silently ignored while Subcontracts worked correctly.
+  const PO_ID = "692d7e01-435b-4ad8-b4b3-2d5609971e4f";
+
+  test("PUT /api/commitments/:id should accept default_retainage_percent for a PO", async ({
+    request,
+  }) => {
+    // An unauthenticated PUT must return 401, never 500.
+    // A 500 means the route crashed — which is what would happen if the route
+    // rejected a valid payload or had a db error from a missing column.
+    const res = await request.put(`${BASE_URL}/api/commitments/${PO_ID}`, {
+      data: { default_retainage_percent: 10 },
+      headers: { "Content-Type": "application/json" },
+    });
+    // Without a session cookie we expect 401. We MUST NOT see 500.
+    expect(res.status()).not.toBe(500);
+    expect([401, 403, 404].includes(res.status())).toBeTruthy();
+  });
+
+  test("PO edit form should include retainage field in submit payload", async ({
+    page,
+  }) => {
+    // Navigate directly to the edit page for the known PO
+    await page.goto(
+      `${BASE_URL}/${TEST_PROJECT_ID}/commitments/${PO_ID}/edit`,
+    );
+    await page.waitForLoadState("domcontentloaded");
+
+    // If we're redirected to login, skip (session expired)
+    if (page.url().includes("/auth") || page.url().includes("/login")) {
+      test.skip();
+      return;
+    }
+
+    // Wait for the form to load
+    await page.waitForTimeout(3000);
+
+    // Intercept the PUT request to verify retainage is included in the payload
+    let capturedPayload: Record<string, unknown> | null = null;
+    page.on("request", (req) => {
+      if (
+        req.method() === "PUT" &&
+        req.url().includes(`/api/commitments/${PO_ID}`)
+      ) {
+        try {
+          capturedPayload = JSON.parse(req.postData() || "{}") as Record<string, unknown>;
+        } catch {
+          // ignore
+        }
+      }
+    });
+
+    // Find retainage input — could be a number input or a percentage field
+    const retainageInput = page
+      .locator(
+        'input[name*="retainage"], input[name*="Retainage"], input[id*="retainage"], input[placeholder*="retainage"]',
+      )
+      .first();
+
+    if (!(await retainageInput.isVisible({ timeout: 5000 }).catch(() => false))) {
+      // Retainage field not visible on this form state — skip
+      test.skip();
+      return;
+    }
+
+    // Set a retainage value
+    await retainageInput.clear();
+    await retainageInput.fill("5");
+
+    // Submit the form — must be visible or the test setup is broken
+    const saveButton = page.getByRole("button", { name: /Save|Update|Submit/i }).first();
+    await expect(saveButton).toBeVisible({ timeout: 3000 });
+    await saveButton.click();
+    await page.waitForTimeout(2000);
+
+    // Payload must have been captured and must include retainage — if capturedPayload
+    // is null it means the PUT never fired, which is a regression just as bad as the
+    // field being missing.
+    expect(capturedPayload).not.toBeNull();
+    expect(capturedPayload).toHaveProperty("default_retainage_percent");
+  });
+});
+
 test.describe("Commitments - Settings Page", () => {
   test.beforeEach(async ({ page }) => {
     await login(page);

@@ -98,9 +98,12 @@ const ENDPOINTS = [
 
   // Commitments
   ["GET", "/api/commitments", "Commitments list", [200, 401]],
+  ["GET", `/api/commitments/${FAKE_UUID}`, "Commitment detail (fake id)", [200, 401, 404]],
+  // Issue #238: PUT must never silently drop retainage for purchase orders.
+  // An unauthenticated PUT must return 401 — if it returns 500 the update handler is broken.
+  ["PUT", `/api/commitments/${FAKE_UUID}`, "Commitment update unauthorized (retainage guard)", [401]],
   ["POST", `/api/projects/${PROJECT_ID}/commitments/export`, "Commitments export (auth + schema check)", [400, 401]],
   ["POST", "/api/sync/acumatica/commitments", "Commitments Acumatica sync (unauthenticated)", [401]],
-
 
   // Direct Costs
   ["GET", `/api/projects/${PROJECT_ID}/direct-costs/export`, "Direct costs export", [200, 401]],

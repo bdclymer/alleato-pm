@@ -128,7 +128,7 @@ export default function EditCommitmentPage() {
           contractDate: typeof r.contract_date === "string" ? r.contract_date : undefined,
           deliveryDate: typeof r.delivery_date === "string" ? r.delivery_date : undefined,
           signedPoReceivedDate: typeof r.signed_po_received_date === "string" ? r.signed_po_received_date : undefined,
-          issuedOnDate: undefined,
+          issuedOnDate: typeof r.issued_on_date === "string" ? r.issued_on_date : undefined,
         },
         privacy: {
           isPrivate: typeof r.is_private === "boolean" ? r.is_private : true,
@@ -284,10 +284,11 @@ export default function EditCommitmentPage() {
         non_admin_user_ids: data.privacy?.nonAdminUserIds || [],
         allow_non_admin_view_sov_items: data.privacy?.allowNonAdminViewSovItems ?? false,
         invoice_contact_ids: data.invoiceContactIds || [],
+        default_retainage_percent: data.defaultRetainagePercent ?? null,
         contract_date: data.dates?.contractDate || null,
         delivery_date: data.dates?.deliveryDate || null,
         signed_po_received_date: data.dates?.signedPoReceivedDate || null,
-        default_retainage_percent: data.defaultRetainagePercent ?? null,
+        issued_on_date: data.dates?.issuedOnDate || null,
       }),
     });
 
