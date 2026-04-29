@@ -27,14 +27,14 @@ There is no way to disable this check on the Hobby Plan.
 ## What Vercel actually accepts
 
 The Vercel project is owned by the GitHub account `MeganHarrison`
-(GitHub user ID `109628141`). Vercel will accept any commit whose author
-email matches:
+(GitHub user ID `109628141`). Use the GitHub-provided noreply email tied
+to that account ID:
 
-- The GitHub-provided noreply email tied to that account ID:
-  `109628141+MeganHarrison@users.noreply.github.com`
-- Any verified email on the Vercel account (currently `Megan@megankharrison.com`)
+- `109628141+MeganHarrison@users.noreply.github.com`
 
-The full allowlist lives in `.github/vercel-author-allowlist.json`.
+Do not add personal/custom emails unless a live Vercel deployment proves
+that exact email maps to the Hobby project owner. The full allowlist lives
+in `.github/vercel-author-allowlist.json`.
 
 ## The fix
 
