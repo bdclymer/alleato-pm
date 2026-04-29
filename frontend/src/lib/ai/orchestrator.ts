@@ -770,6 +770,42 @@ export async function consultAgents(
  * Also includes the user's regular project tools so the Strategist can
  * answer questions directly when no specialist is needed.
  */
+function makeConsultTool(
+  agentId: string,
+  toolDescription: string,
+  questionDescribe: string,
+  contextRole: string,
+  userId: string,
+  options: { onTrace?: (trace: Record<string, unknown>) => void; pinnedProjectId?: number },
+) {
+  return tool({
+    description: toolDescription,
+    inputSchema: z.object({
+      question: z.string().describe(questionDescribe),
+      context: z
+        .string()
+        .optional()
+        .describe(
+          `Optional additional context to help the ${contextRole} understand the broader question being answered.`,
+        ),
+    }),
+    execute: async ({ question, context }) => {
+      const response = await consultAgent(agentId, question, userId, context, {
+        onTrace: options.onTrace,
+        pinnedProjectId: options.pinnedProjectId,
+      });
+      return {
+        agent: response.agent,
+        analysis: response.content,
+        confidence: response.confidence,
+        toolsUsed: response.toolsCalled,
+        durationMs: response.durationMs,
+        alerts: response.alerts,
+      };
+    },
+  });
+}
+
 export function createStrategistTools(
   userId: string,
   options: {
@@ -799,89 +835,39 @@ export function createStrategistTools(
     ...webSearchTools,
     ...structuredOutputTools,
     // The Strategist's specialist consultation tools
-    consultCFO: tool({
-      description:
-        "Consult the CFO (Chief Financial Officer) for financial analysis. " +
+    consultCFO: makeConsultTool(
+      "cfo",
+      "Consult the CFO (Chief Financial Officer) for financial analysis. " +
         "Use this for ANY question about money: budgets, costs, margins, " +
         "cash flow, contracts, change orders, invoicing, retention, pay " +
         "applications, financial health, or profitability. The CFO has " +
         "access to real financial data and will call its own tools to " +
         "analyze it. Pass the user's question (or your reformulated " +
         "version) as the question parameter.",
-      inputSchema: z.object({
-        question: z
-          .string()
-          .describe(
-            "The financial question to analyze. Be specific — include " +
-              "project names if the user mentioned them.",
-          ),
-        context: z
-          .string()
-          .optional()
-          .describe(
-            "Optional additional context to help the CFO understand " +
-              "the broader question being answered.",
-          ),
-      }),
-      execute: async ({ question, context }) => {
-        const response = await consultAgent("cfo", question, userId, context, {
-          onTrace: options.onTrace,
-          pinnedProjectId: options.pinnedProjectId,
-        });
-        return {
-          agent: response.agent,
-          analysis: response.content,
-          confidence: response.confidence,
-          toolsUsed: response.toolsCalled,
-          durationMs: response.durationMs,
-          alerts: response.alerts,
-        };
-      },
-    }),
+      "The financial question to analyze. Be specific — include project names if the user mentioned them.",
+      "CFO",
+      userId,
+      options,
+    ),
 
-    consultCOO: tool({
-      description:
-        "Consult the COO (Chief Operating Officer) for operational analysis. " +
+    consultCOO: makeConsultTool(
+      "coo",
+      "Consult the COO (Chief Operating Officer) for operational analysis. " +
         "Use this for ANY question about project execution: schedule health, " +
         "milestones, overdue tasks, critical path, RFI status, submittal " +
         "pipeline, subcontractor performance, procurement velocity, action " +
         "item accountability, field progress, or meeting prep. The COO has " +
         "access to real operational data and will call its own tools to " +
         "analyze it.",
-      inputSchema: z.object({
-        question: z
-          .string()
-          .describe(
-            "The operational question to analyze. Be specific — include " +
-              "project names and the type of operational data needed.",
-          ),
-        context: z
-          .string()
-          .optional()
-          .describe(
-            "Optional additional context to help the COO understand " +
-              "the broader question being answered.",
-          ),
-      }),
-      execute: async ({ question, context }) => {
-        const response = await consultAgent("coo", question, userId, context, {
-          onTrace: options.onTrace,
-          pinnedProjectId: options.pinnedProjectId,
-        });
-        return {
-          agent: response.agent,
-          analysis: response.content,
-          confidence: response.confidence,
-          toolsUsed: response.toolsCalled,
-          durationMs: response.durationMs,
-          alerts: response.alerts,
-        };
-      },
-    }),
+      "The operational question to analyze. Be specific — include project names and the type of operational data needed.",
+      "COO",
+      userId,
+      options,
+    ),
 
-    consultCRO: tool({
-      description:
-        "Consult the CRO (Chief Risk Officer) for risk analysis. " +
+    consultCRO: makeConsultTool(
+      "cro",
+      "Consult the CRO (Chief Risk Officer) for risk analysis. " +
         "Use this for ANY question about project or portfolio risk: financial " +
         "exposure, unpriced change events, contract risk, claim signals, " +
         "procurement risk (aging RFIs/submittals), schedule risk, budget " +
@@ -889,126 +875,39 @@ export function createStrategistTools(
         "Also use for 'what could go wrong?' or 'what should I be worried about?' " +
         "questions. The CRO has access to real risk data and will call its " +
         "own tools to analyze it.",
-      inputSchema: z.object({
-        question: z
-          .string()
-          .describe(
-            "The risk question to analyze. Be specific — include " +
-              "project names and the type of risk being assessed.",
-          ),
-        context: z
-          .string()
-          .optional()
-          .describe(
-            "Optional additional context to help the CRO understand " +
-              "the broader question being answered.",
-          ),
-      }),
-      execute: async ({ question, context }) => {
-        const response = await consultAgent("cro", question, userId, context, {
-          onTrace: options.onTrace,
-          pinnedProjectId: options.pinnedProjectId,
-        });
-        return {
-          agent: response.agent,
-          analysis: response.content,
-          confidence: response.confidence,
-          toolsUsed: response.toolsCalled,
-          durationMs: response.durationMs,
-          alerts: response.alerts,
-        };
-      },
-    }),
+      "The risk question to analyze. Be specific — include project names and the type of risk being assessed.",
+      "CRO",
+      userId,
+      options,
+    ),
 
-    consultCHRO: tool({
-      description:
-        "Consult the CHRO (Chief Human Resources Officer) for people and capacity analysis. " +
+    consultCHRO: makeConsultTool(
+      "chro",
+      "Consult the CHRO (Chief Human Resources Officer) for people and capacity analysis. " +
         "Use this for ANY question about team composition, staffing gaps, capacity constraints, " +
         "action item accountability patterns, subcontractor relationships, institutional knowledge, " +
         "or lessons learned. Examples: 'Who is on this project?', 'Is anyone stretched too thin?', " +
         "'Who owns this action item?', 'What have we learned about [topic]?'.",
-      inputSchema: z.object({
-        question: z
-          .string()
-          .describe(
-            "The people or capacity question to analyze. Be specific — include " +
-              "project names and the type of information needed.",
-          ),
-        context: z
-          .string()
-          .optional()
-          .describe(
-            "Optional additional context to help the CHRO understand " +
-              "the broader question being answered.",
-          ),
-      }),
-      execute: async ({ question, context }) => {
-        const response = await consultAgent(
-          "chro",
-          question,
-          userId,
-          context,
-          {
-            onTrace: options.onTrace,
-            pinnedProjectId: options.pinnedProjectId,
-          },
-        );
-        return {
-          agent: response.agent,
-          analysis: response.content,
-          confidence: response.confidence,
-          toolsUsed: response.toolsCalled,
-          durationMs: response.durationMs,
-          alerts: response.alerts,
-        };
-      },
-    }),
+      "The people or capacity question to analyze. Be specific — include project names and the type of information needed.",
+      "CHRO",
+      userId,
+      options,
+    ),
 
-    consultVPBD: tool({
-      description:
-        "Consult the VP of Business Development for pipeline, client relationship, " +
+    consultVPBD: makeConsultTool(
+      "vpbd",
+      "Consult the VP of Business Development for pipeline, client relationship, " +
         "and growth analysis. Use this for ANY question about the pursuit pipeline, " +
         "projects in estimating or planning, revenue trajectory, client relationship health, " +
         "competitive positioning, company differentiators, proposal preparation, " +
         "or past project references. Examples: 'What's in our pipeline?', " +
         "'How is the client relationship on X?', 'What are our differentiators?', " +
         "'Help me prep for a BD meeting'.",
-      inputSchema: z.object({
-        question: z
-          .string()
-          .describe(
-            "The business development question to analyze. Be specific — include " +
-              "client names, project types, or sectors where relevant.",
-          ),
-        context: z
-          .string()
-          .optional()
-          .describe(
-            "Optional additional context to help the VP BD understand " +
-              "the broader question being answered.",
-          ),
-      }),
-      execute: async ({ question, context }) => {
-        const response = await consultAgent(
-          "vpbd",
-          question,
-          userId,
-          context,
-          {
-            onTrace: options.onTrace,
-            pinnedProjectId: options.pinnedProjectId,
-          },
-        );
-        return {
-          agent: response.agent,
-          analysis: response.content,
-          confidence: response.confidence,
-          toolsUsed: response.toolsCalled,
-          durationMs: response.durationMs,
-          alerts: response.alerts,
-        };
-      },
-    }),
+      "The business development question to analyze. Be specific — include client names, project types, or sectors where relevant.",
+      "VP BD",
+      userId,
+      options,
+    ),
 
     // Include base project tools so the Strategist can answer
     // questions directly when no specialist route is needed
