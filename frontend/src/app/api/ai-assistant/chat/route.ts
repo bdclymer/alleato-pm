@@ -32,6 +32,7 @@ import { createToolGuardrails } from "@/lib/ai/tools/guardrails";
 import { createAiAssistantMcpTools } from "@/lib/ai/tools/mcp-tools";
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
+import { createStrategistFailureResponse } from "@/lib/ai/strategist-failure-response";
 
 export const maxDuration = 120;
 
@@ -1876,46 +1877,8 @@ async function buildSourceHealthPreflight(
   };
 }
 
-function createStrategistFailureResponse(params: {
-  cause: string;
-  selectedProjectId?: number;
-  toolTrace: Array<Record<string, unknown>>;
-  userMessage?: string;
-}): string {
-  const failedTools = params.toolTrace
-    .filter((trace) => trace.error)
-    .map((trace) => String(trace.tool ?? "unknown tool"));
-  const successfulTools = params.toolTrace
-    .filter((trace) => trace.output && !trace.error)
-    .map((trace) => String(trace.tool ?? "unknown tool"));
-
-  const sourceSummary =
-    failedTools.length > 0 || successfulTools.length > 0
-      ? `I checked ${successfulTools.length} source${successfulTools.length === 1 ? "" : "s"} successfully` +
-        (failedTools.length > 0
-          ? `, but ${failedTools.join(", ")} failed before I could finish the answer.`
-          : ".")
-      : "I did not get far enough to retrieve project, meeting, email, Teams, OneDrive, or Acumatica context.";
-
-  const projectHint = params.selectedProjectId
-    ? "The pinned project context was included, so the failure is in retrieval or generation rather than project selection."
-    : "No project was pinned, so a narrower project or topic would reduce retrieval ambiguity on the retry.";
-
-  const scopedFollowUp = params.userMessage
-    ? `I still need a successful retrieval pass before I can give a sourced strategic read on: "${params.userMessage.slice(0, 180)}${params.userMessage.length > 180 ? "..." : ""}".`
-    : "I still need a successful retrieval pass before I can give a sourced strategic read.";
-
-  return [
-    "I hit a retrieval/generation failure before I could give you a trustworthy strategist answer.",
-    "",
-    `What happened: ${params.cause}`,
-    `What I could confirm: ${sourceSummary}`,
-    `What that means: ${projectHint}`,
-    scopedFollowUp,
-    "",
-    "The right next move is to retry the same question with the project or decision you care about most. If this repeats, the persisted tool trace now shows exactly which source failed instead of leaving the chat blank.",
-  ].join("\n");
-}
+// createStrategistFailureResponse is imported from @/lib/ai/strategist-failure-response
+// (extracted to allow unit testing without importing the full route module's heavy deps)
 
 async function generateRecoveryResponse(params: {
   userMessage: string;
@@ -1935,7 +1898,9 @@ async function generateRecoveryResponse(params: {
 
   try {
     const result = await generateText({
-      model: getLanguageModel(params.modelId),
+      // Always use gpt-4.1 here regardless of params.modelId — the active model
+      // may be the same one that just produced empty text due to the AI Gateway bug.
+      model: getLanguageModel("openai/gpt-4.1"),
       system:
         "You are Alleato's Chief Strategist. The primary tool-enabled run failed to produce final text. " +
         "Write a concise, natural recovery response to the user. Do not pretend data was retrieved. " +
@@ -1956,7 +1921,12 @@ async function generateRecoveryResponse(params: {
     });
 
     return result.text.trim() || fallback;
-  } catch {
+  } catch (recoveryError) {
+    params.toolTrace.push({
+      tool: "recoveryResponseFailed",
+      error: recoveryError instanceof Error ? recoveryError.message : String(recoveryError),
+      timestamp: new Date().toISOString(),
+    });
     return fallback;
   }
 }
@@ -2739,23 +2709,13 @@ export const POST = withApiGuardrails(
           return;
         }
 
-        const hasDeterministicRetrieval =
-          (deterministicRetrieval?.results ?? []).length > 0;
-        const mcpToolBundle = hasDeterministicRetrieval
-          ? null
-          : await createAiAssistantMcpTools();
-        if (mcpToolBundle?.trace.length) {
-          toolTrace.push(...mcpToolBundle.trace);
-        }
-        // AI Gateway currently returns empty `finishReason: other` responses
-        // for OpenAI chat tool calls. When retrieval already succeeded
-        // server-side, synthesize from the injected context without tools.
-        const modelTools = hasDeterministicRetrieval
-          ? undefined
-          : ({
-              ...(tools as unknown as ToolSet),
-              ...(mcpToolBundle?.tools ?? {}),
-            } as ToolSet);
+        // AI Gateway returns empty `finishReason: other` for OpenAI tool calls,
+        // causing empty text and triggering the failure chain. Always disable
+        // tools — all context is already injected into systemPrompt server-side.
+        const mcpToolBundle = null;
+        // modelTools is always undefined: passing tools triggers the AI Gateway
+        // bug regardless of whether deterministic retrieval succeeded.
+        const modelTools = undefined;
         const result = streamText({
             model: getLanguageModel(activeModel),
             system: systemPrompt,
@@ -2769,18 +2729,10 @@ export const POST = withApiGuardrails(
             },
             // Strategist gets enough steps to route, consult specialists, and synthesize.
             // Each specialist gets up to 5 internal tool-call steps.
+            // Tools are disabled globally (AI Gateway bug); kept here so config is ready when tools are re-enabled.
             stopWhen: stepCountIs(10),
-            prepareStep: ({ stepNumber }) => {
-              if (!forceBusinessRetrieval || stepNumber !== 0) return undefined;
-              if (hasDeterministicRetrieval) return undefined;
-
-              return {
-                toolChoice: { type: "tool", toolName: "semanticSearch" },
-                activeTools: [
-                  "semanticSearch",
-                ],
-              };
-            },
+            // Tools are disabled globally (AI Gateway bug); prepareStep is a no-op.
+            prepareStep: () => undefined,
             onError: ({ error }) => {
               streamErrorMessage =
                 error instanceof Error ? error.message : String(error);
@@ -2830,14 +2782,9 @@ export const POST = withApiGuardrails(
           }),
         );
 
-        let content: string;
-        let totalUsage: Awaited<typeof result.totalUsage>;
-        try {
-          content = (await result.text).trim();
-          totalUsage = await result.totalUsage;
-        } finally {
-          await mcpToolBundle?.close();
-        }
+        // mcpToolBundle is always null (tools disabled); no cleanup needed.
+        let content = (await result.text).trim();
+        const totalUsage = await result.totalUsage;
 
         if (!content) {
           const cause = streamErrorMessage
@@ -2865,8 +2812,38 @@ export const POST = withApiGuardrails(
               timestamp: new Date().toISOString(),
             });
           }
+          // No-tool retry: if streamText produced empty text (AI Gateway tool-call
+          // bug) and no source-grounded fallback is available, retry with
+          // generateText() + no tools before escalating to recovery response.
+          let noToolRetryContent: string | null = null;
+          if (!sourceGroundedFallback) {
+            try {
+              const retryResult = await generateText({
+                model: getLanguageModel("openai/gpt-4.1"),
+                system: systemPrompt,
+                messages: modelMessages,
+                maxOutputTokens: 1500,
+              });
+              noToolRetryContent = retryResult.text.trim() || null;
+              toolTrace.push({
+                tool: "noToolRetry",
+                input: { primaryModel: activeModel, retryModel: "openai/gpt-4.1", reason: cause },
+                output: { contentLength: noToolRetryContent?.length ?? 0, succeeded: !!noToolRetryContent },
+                timestamp: new Date().toISOString(),
+              });
+            } catch (retryError) {
+              toolTrace.push({
+                tool: "noToolRetryFailed",
+                input: { primaryModel: activeModel, retryModel: "openai/gpt-4.1", reason: cause },
+                error: retryError instanceof Error ? retryError.message : String(retryError),
+                timestamp: new Date().toISOString(),
+              });
+              // Fall through to generateRecoveryResponse
+            }
+          }
           content =
             sourceGroundedFallback ??
+            noToolRetryContent ??
             (await generateRecoveryResponse({
               userMessage: lastUserContent,
               cause,
