@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Plus } from "lucide-react";
 
@@ -64,6 +65,28 @@ export function KnowledgeTablePage() {
       filters: {},
     },
   });
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const migrationKey = "knowledge:visibleColumns:add-content-2026-04-29";
+    if (window.localStorage.getItem(migrationKey) === "1") return;
+
+    tableState.setVisibleColumns((prev) => {
+      if (prev.includes("content")) return prev;
+      const titleIndex = prev.indexOf("title");
+      if (titleIndex === -1) {
+        return ["title", "content", ...prev];
+      }
+      return [
+        ...prev.slice(0, titleIndex + 1),
+        "content",
+        ...prev.slice(titleIndex + 1),
+      ];
+    });
+
+    window.localStorage.setItem(migrationKey, "1");
+  }, [tableState]);
 
   // Data fetching
   const { data: articles = [], isLoading } = useKnowledgeArticles({
@@ -190,7 +213,7 @@ export function KnowledgeTablePage() {
         <div className="space-y-2">
           <p className="text-sm text-foreground">You can still browse approved knowledge from the Knowledge Base.</p>
           <Button asChild variant="outline" size="sm">
-            <a href="/knowledge">Open Knowledge Base</a>
+            <Link href="/knowledge">Open Knowledge Base</Link>
           </Button>
         </div>
       </PageShell>

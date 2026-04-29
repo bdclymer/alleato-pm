@@ -24,6 +24,7 @@ import {
 
 import { IconBadge } from "@/components/ds";
 import { PageShell } from "@/components/layout";
+import { SectionRuleHeading } from "@/components/layout/spacing";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -237,7 +238,7 @@ export function KnowledgeBasePage() {
     >
       <div>
         <div className="mb-8 flex flex-wrap items-center gap-2.5">
-          <div className="relative min-w-[220px] flex-1 sm:max-w-sm">
+          <div className="relative min-w-56 flex-1 sm:max-w-sm">
             <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/50" />
             <Input
               placeholder="Search company knowledge..."
@@ -348,9 +349,9 @@ export function KnowledgeBasePage() {
                   >
                     <div className="mb-3 flex items-center gap-3">
                       <IconBadge size="md">{getCategoryIcon(category)}</IconBadge>
-                      <h3 className="text-sm font-semibold text-foreground">
+                      <span className="text-sm font-semibold text-foreground">
                         {getCategoryLabel(category)}
-                      </h3>
+                      </span>
                     </div>
                     <p className="w-full text-xs leading-relaxed text-muted-foreground">
                       {getCategoryDescription(category)}
@@ -376,9 +377,7 @@ export function KnowledgeBasePage() {
 
             {secondaryCategories.length > 0 && (
               <div className="mt-12">
-                <h2 className="mb-6 text-lg font-semibold text-foreground">
-                  More categories
-                </h2>
+                <SectionRuleHeading label="More categories" />
                 <div className="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2">
                   {secondaryCategories.map((category) => (
                     <Button
@@ -392,9 +391,9 @@ export function KnowledgeBasePage() {
                         {getCategoryIcon(category)}
                       </IconBadge>
                       <div>
-                        <h3 className="text-sm font-medium text-foreground transition-colors group-hover:text-primary">
+                        <span className="text-sm font-medium text-foreground transition-colors group-hover:text-primary">
                           {getCategoryLabel(category)}
-                        </h3>
+                        </span>
                         <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
                           {getCategoryDescription(category)}
                         </p>
@@ -413,13 +412,13 @@ export function KnowledgeBasePage() {
                   <IconBadge size="sm">{getCategoryIcon(selectedCategory)}</IconBadge>
                 )}
                 <div>
-                  <h2 className="text-lg font-semibold tracking-tight text-foreground">
+                  <p className="text-lg font-semibold tracking-tight text-foreground">
                     {searchTerm
                       ? `Results for "${search.trim()}"`
                       : selectedCategory
                         ? getCategoryLabel(selectedCategory)
                         : "Company knowledge"}
-                  </h2>
+                  </p>
                   <p className="text-xs text-muted-foreground">
                     {filteredArticles.length}{" "}
                     {filteredArticles.length === 1 ? "entry" : "entries"}
@@ -465,11 +464,12 @@ export function KnowledgeBasePage() {
                       )}
                       <div className="space-y-px overflow-hidden rounded-lg bg-card">
                         {groupArticles.map((article) => (
-                          <button
+                          <Button
                             key={article.id}
                             type="button"
+                            variant="ghost"
                             onClick={() => setSelectedArticle(article)}
-                            className="group flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-muted"
+                            className="group flex h-auto w-full items-center justify-between rounded-none px-4 py-3 text-left whitespace-normal hover:bg-muted"
                           >
                             <div className="flex min-w-0 items-start gap-3">
                               <FileText className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground/40 transition-colors group-hover:text-primary" />
@@ -483,7 +483,7 @@ export function KnowledgeBasePage() {
                               </div>
                             </div>
                             <ChevronRight className="ml-4 h-3.5 w-3.5 shrink-0 text-muted-foreground/20 transition-all group-hover:translate-x-0.5 group-hover:text-muted-foreground" />
-                          </button>
+                          </Button>
                         ))}
                       </div>
                     </div>

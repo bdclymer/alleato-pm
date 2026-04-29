@@ -40,6 +40,7 @@ const ORIGIN_LABELS: Record<string, string> = {
 
 export const knowledgeColumns: ColumnConfig[] = [
   { id: "title", label: "Title", alwaysVisible: true },
+  { id: "content", label: "Content", defaultVisible: true },
   { id: "category", label: "Category", defaultVisible: true },
   { id: "tags", label: "Tags", defaultVisible: true },
   { id: "origin", label: "Source", defaultVisible: true },
@@ -94,17 +95,23 @@ export function buildKnowledgeTableColumns(options: {
       sortable: true,
       sortValue: (item) => item.title,
       render: (item) => (
-        <div className="min-w-0">
-          <div className="max-w-96 truncate font-medium text-foreground">
-            {item.title}
-          </div>
-          <div className="mt-0.5 max-w-96 truncate text-xs text-muted-foreground">
-            {item.content.substring(0, 120)}
-            {item.content.length > 120 ? "…" : ""}
-          </div>
-        </div>
+        <span className="block max-w-72 truncate font-medium text-foreground">
+          {item.title}
+        </span>
       ),
       csvValue: (item) => item.title,
+    },
+    {
+      id: "content",
+      label: "Content",
+      defaultVisible: true,
+      render: (item) => (
+        <span className="block max-w-xl truncate text-sm text-muted-foreground">
+          {item.content.substring(0, 160)}
+          {item.content.length > 160 ? "…" : ""}
+        </span>
+      ),
+      csvValue: (item) => item.content,
     },
     {
       id: "category",
