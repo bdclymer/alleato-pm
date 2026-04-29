@@ -42,7 +42,7 @@ function getAuthMetadataAvatarUrl(metadata: Record<string, unknown> | null | und
   return null;
 }
 
-function buildInviteAcceptUrl(actionLink: string) {
+function buildInviteAcceptUrl(actionLink: string, email: string) {
   const actionUrl = new URL(actionLink);
   const token = actionUrl.searchParams.get("token");
 
@@ -50,7 +50,7 @@ function buildInviteAcceptUrl(actionLink: string) {
     return actionLink;
   }
 
-  const passwordSetupUrl = `/auth/update-password?next=${encodeURIComponent("/")}`;
+  const passwordSetupUrl = `/auth/update-password?email=${encodeURIComponent(email)}&next=${encodeURIComponent("/")}`;
   return `${APP_BASE_URL}/auth/confirm?token_hash=${token}&type=invite&next=${encodeURIComponent(passwordSetupUrl)}`;
 }
 
@@ -415,8 +415,9 @@ export const POST = withApiGuardrails(
         react: InviteUser({
           inviterName: actor.email ?? "Alleato",
           inviteeName: fullName,
+          email,
           role: template.name,
-          acceptUrl: buildInviteAcceptUrl(linkData.properties.action_link),
+          acceptUrl: buildInviteAcceptUrl(linkData.properties.action_link, email),
           expiresInHours: 24,
         }),
         entity: { type: "user_invite", id: authUserId },

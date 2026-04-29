@@ -13,22 +13,22 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 interface UpdatePasswordFormProps extends React.ComponentPropsWithoutRef<"div"> {
+  email?: string;
   next?: string;
 }
 
 export function UpdatePasswordForm({
   className,
+  email,
   next,
   ...props
 }: UpdatePasswordFormProps) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,7 +44,7 @@ export function UpdatePasswordForm({
       }
       const { error } = await supabase.auth.updateUser({ password });
       if (error) throw error;
-      router.push(next && next.startsWith("/") ? next : "/");
+      window.location.href = next && next.startsWith("/") ? next : "/";
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "Could not update password — please try again");
     } finally {
@@ -61,13 +61,19 @@ export function UpdatePasswordForm({
           </CardTitle>
           <CardDescription>
             {next
-              ? "Set a password to secure your account, then you'll be taken straight to your task."
+              ? "Set a password to secure your account. You'll use your email and this password to log in."
               : "Please enter your new password below."}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleForgotPassword}>
             <div className="flex flex-col gap-6">
+              {email ? (
+                <div className="grid gap-1 text-sm">
+                  <span className="text-muted-foreground">Username</span>
+                  <span className="font-medium text-foreground">{email}</span>
+                </div>
+              ) : null}
               <div className="grid gap-2">
                 <Label htmlFor="password">New password</Label>
                 <Input

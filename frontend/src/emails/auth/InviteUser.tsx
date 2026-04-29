@@ -4,6 +4,7 @@ import { EmailShell } from "../_shell/EmailShell";
 export interface InviteUserProps {
   inviterName: string;
   inviteeName?: string;
+  email?: string;
   role?: string;
   acceptUrl: string;
   expiresInHours?: number;
@@ -12,6 +13,7 @@ export interface InviteUserProps {
 export default function InviteUser({
   inviterName,
   inviteeName,
+  email,
   role,
   acceptUrl,
   expiresInHours = 72,
@@ -40,7 +42,16 @@ export default function InviteUser({
         .
       </p>
       <p style={{ margin: "0 0 12px" }}>
-        Click the button below to accept and set up your account.
+        Click the button below to accept the invitation and create your
+        password.
+      </p>
+      {email ? (
+        <p style={{ margin: "0 0 12px" }}>
+          Your username is <strong>{email}</strong>.
+        </p>
+      ) : null}
+      <p style={{ margin: "0 0 12px" }}>
+        After your password is saved, use that email and password to log in.
       </p>
     </EmailShell>
   );
