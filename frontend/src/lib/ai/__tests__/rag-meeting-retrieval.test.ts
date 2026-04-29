@@ -61,6 +61,30 @@ describe("detectSourceSpecificRagRequest — meeting-intent queries (#282 regres
     expect(result?.kind).toBe("meetings_on_date");
   });
 
+  it('returns meetings_on_date for "what meetings were held on friday" (detection-order regression)', () => {
+    // Regression: "what meetings were held" is in generalMeetingPhrases. Without the
+    // date-specific block running first, this routes to recent_meetings (60-day)
+    // instead of meetings_on_date (Friday-specific). Fix: asksForMeetingsOnFriday
+    // must be evaluated before generalMeetingPhrases.
+    const result = detectSourceSpecificRagRequest("what meetings were held on friday");
+    expect(result).not.toBeNull();
+    expect(result?.kind).toBe("meetings_on_date");
+  });
+
+  it('returns meetings_on_date for "tell me about meetings on friday" (detection-order regression)', () => {
+    // "tell me about meetings" is in generalMeetingPhrases — must not swallow date-qualified queries.
+    const result = detectSourceSpecificRagRequest("tell me about meetings on friday");
+    expect(result).not.toBeNull();
+    expect(result?.kind).toBe("meetings_on_date");
+  });
+
+  it('returns meetings_on_date for "our meetings on friday" (detection-order regression)', () => {
+    // "our meetings" is in generalMeetingPhrases — must not swallow date-qualified queries.
+    const result = detectSourceSpecificRagRequest("our meetings on friday");
+    expect(result).not.toBeNull();
+    expect(result?.kind).toBe("meetings_on_date");
+  });
+
   it('returns null for non-meeting queries', () => {
     const result = detectSourceSpecificRagRequest("what is the current budget for the project");
     expect(result).toBeNull();

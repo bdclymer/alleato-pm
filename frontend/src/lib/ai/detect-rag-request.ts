@@ -92,10 +92,34 @@ function parseExplicitDateRange(message: string): { startDate: string; endDate: 
 export function detectSourceSpecificRagRequest(message: string): SourceSpecificRagRequest | null {
   const normalized = message.toLowerCase();
 
-  // General meeting-intent: "review recent meetings", "what meetings did we have",
-  // "tell me about meetings", "show me the latest meetings", etc.
-  // These use server-side pre-retrieval (same path as meetings_on_date) to bypass
-  // the AI Gateway tool-calling bug (modelTools = undefined).
+  // SPECIFIC FIRST: date-anchored meeting queries must be evaluated before the
+  // general meeting phrases below. Several generalMeetingPhrases substrings
+  // ("what meetings were held", "our meetings", etc.) can match queries that
+  // contain a date qualifier — routing them to recent_meetings (60-day, limit 10)
+  // instead of meetings_on_date (date-specific, limit 20). The original route.ts
+  // ordering evaluated this block first; preserve that behaviour here.
+  const asksForMeetingsOnFriday =
+    normalized.includes("meeting") &&
+    (normalized.includes("conducted on friday") ||
+      normalized.includes("meetings on friday") ||
+      normalized.includes("held on friday") ||
+      normalized.includes("meetings were conducted") ||
+      normalized.includes("friday april 24"));
+  if (asksForMeetingsOnFriday) {
+    const date =
+      normalized.includes("april 24") || normalized.includes("2026-04-24")
+        ? "2026-04-24"
+        : previousWeekdayIsoDate(5);
+    return {
+      kind: "meetings_on_date",
+      label: "Meeting transcripts",
+      date,
+      limit: 20,
+    };
+  }
+
+  // GENERAL SECOND: broad recent-meeting queries. Evaluated after date-specific
+  // patterns to avoid swallowing queries like "what meetings were held on friday".
   const generalMeetingPhrases = [
     "review recent meetings",
     "recent meetings",
@@ -126,25 +150,6 @@ export function detectSourceSpecificRagRequest(message: string): SourceSpecificR
       kind: "recent_meetings",
       label: "Recent meeting transcripts",
       limit: 10,
-    };
-  }
-
-  const asksForMeetingsOnFriday =
-    normalized.includes("meeting") &&
-    (normalized.includes("conducted on friday") ||
-      normalized.includes("meetings on friday") ||
-      normalized.includes("meetings were conducted") ||
-      normalized.includes("friday april 24"));
-  if (asksForMeetingsOnFriday) {
-    const date =
-      normalized.includes("april 24") || normalized.includes("2026-04-24")
-        ? "2026-04-24"
-        : previousWeekdayIsoDate(5);
-    return {
-      kind: "meetings_on_date",
-      label: "Meeting transcripts",
-      date,
-      limit: 20,
     };
   }
 

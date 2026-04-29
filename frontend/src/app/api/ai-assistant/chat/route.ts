@@ -935,8 +935,9 @@ function scoreResponseQuality(params: {
 
   // Detect meta-commentary: model narrated its intent instead of answering.
   // These phrases appear when tools are disabled but the system prompt still
-  // references them. A response consisting primarily of these phrases is a
-  // silent failure — it looks valid but contains no retrieved data.
+  // references them. Even a single occurrence signals the model produced
+  // intent narration rather than retrieved data — a silent failure class.
+  // Penalise by -30 so noToolRetry can attempt a direct retrieval pass.
   const metaCommentaryPhrases = [
     "give me a second",
     "let me search",
@@ -2149,6 +2150,11 @@ export const POST = withApiGuardrails(
             toolTrace,
             content: sourceSpecificAnswer.content,
           });
+          // TODO(P2 #282): when responseQuality.hasMetaCommentary is true, trigger the
+          // noToolRetry path (line ~2728) to fetch real data and replace this response.
+          // Currently the -30 penalty is logged only — it does not prevent the filler
+          // from reaching the user. For the source-specific path this is low-risk
+          // (model is not called), but the hook is missing for the general path.
           await persistAssistantMessage({
             supabase,
             sessionId,
