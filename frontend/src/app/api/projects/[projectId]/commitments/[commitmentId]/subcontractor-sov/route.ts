@@ -3,9 +3,6 @@ import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
 
 import { sendEmail } from "@/lib/email/send";
-import SOVInvitation from "@/emails/subcontractor/SOVInvitation";
-import SubcontractorSovInvite from "@/emails/subcontractor/SubcontractorSovInvite";
-import SSOVSubmittedToPM from "@/emails/subcontractor/SSOVSubmittedToPM";
 import { APP_BASE_URL } from "@/lib/email/client";
 import { isAuthError, verifyProjectAccess } from "@/lib/supabase/auth-guard";
 import { createServiceClient } from "@/lib/supabase/service";
@@ -297,6 +294,7 @@ async function sendSsovInviteEmail(args: {
   return Promise.all(
     recipients.map(async (recipient) => {
       const isNewUser = !existingPersonIds.has(recipient.id);
+      const { default: SOVInvitation } = await import("@/emails/subcontractor/SOVInvitation");
 
       if (isNewUser) {
         // Generate a Supabase magic invite link for account creation.
@@ -367,6 +365,7 @@ async function sendSsovInviteEmail(args: {
             { onConflict: "person_id,project_id", ignoreDuplicates: false },
           );
 
+        const { default: SubcontractorSovInvite } = await import("@/emails/subcontractor/SubcontractorSovInvite");
         return sendEmail({
           template: "sov-invite-new-user",
           to: recipient.email,
@@ -507,6 +506,7 @@ async function notifyPMsOfSsovSubmission(args: {
   });
   const subject = `Subcontractor SOV submitted${commitmentNumber ? ` — ${commitmentNumber}` : ""} — review needed`;
 
+  const { default: SSOVSubmittedToPM } = await import("@/emails/subcontractor/SSOVSubmittedToPM");
   await Promise.all(
     recipients.map((r) =>
       sendEmail({

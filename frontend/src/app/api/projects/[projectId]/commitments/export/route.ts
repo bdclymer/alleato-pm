@@ -8,7 +8,6 @@
  */
 
 import { NextResponse } from "next/server";
-import * as XLSX from "xlsx";
 import { createClient } from "@/lib/supabase/server";
 import { parseJsonBody, withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
@@ -147,7 +146,7 @@ export const POST = withApiGuardrails<Promise<{ projectId: string }>>(
     }
 
     if (exportParams.format === "excel") {
-      const excelBuffer = generateExcel(commitments, exportParams);
+      const excelBuffer = await generateExcel(commitments, exportParams);
       const excelBlob = new Blob([excelBuffer]);
       return new NextResponse(excelBlob, {
         status: 200,
@@ -527,10 +526,11 @@ function formatDate(value: string | null | undefined): string {
 // EXCEL GENERATION
 // =============================================================================
 
-function generateExcel(
+async function generateExcel(
   commitments: CommitmentExportRow[],
   params: { template: string }
-): ArrayBuffer {
+): Promise<ArrayBuffer> {
+  const XLSX = await import("xlsx");
   const { template } = params;
   const workbook = XLSX.utils.book_new();
   const headers = getHeadersForTemplate(template);

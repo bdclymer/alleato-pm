@@ -37,6 +37,21 @@ const nextConfig: NextConfig = {
       "@liveblocks/react-lexical",
       "date-fns",
       "lodash",
+      "@lexical/react",
+      "@lexical/rich-text",
+      "@lexical/link",
+      "@lexical/list",
+      "@lexical/markdown",
+      "@lexical/code",
+      "@lexical/selection",
+      "@lexical/utils",
+      "@lexical/yjs",
+      "@lexical/headless",
+      "@codemirror/view",
+      "@codemirror/state",
+      "@codemirror/lang-python",
+      "@codemirror/theme-one-dark",
+      "@liveblocks/client",
     ],
   },
   serverExternalPackages: [
@@ -56,6 +71,7 @@ const nextConfig: NextConfig = {
     // Heavy doc/API packages only used in specific admin routes
     "redoc",
     "swagger-ui-dist",
+    "xlsx",
   ],
   webpack: (config) => {
     // Limit webpack worker parallelism to prevent OOM on Vercel's 8 GB build machines.

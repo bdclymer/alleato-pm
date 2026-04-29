@@ -10,9 +10,7 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
-import * as XLSX from "xlsx";
 import { createClient } from "@/lib/supabase/server";
-import { renderPdfFromHtml } from "@/lib/documents/pdf";
 
 interface ExportParams {
   format: "csv" | "excel" | "pdf";
@@ -168,7 +166,7 @@ export const POST = withApiGuardrails<{ commitmentId: string }>(
         },
       });
     } else if (exportParams.format === "excel") {
-      const excelBuffer = generateExcel(commitmentData, exportParams);
+      const excelBuffer = await generateExcel(commitmentData, exportParams);
       return new NextResponse(excelBuffer, {
         status: 200,
         headers: {
@@ -179,6 +177,7 @@ export const POST = withApiGuardrails<{ commitmentId: string }>(
       });
     } else if (exportParams.format === "pdf") {
       const html = generatePDFHTML(commitmentData, exportParams);
+      const { renderPdfFromHtml } = await import("@/lib/documents/pdf");
       const pdfBuffer = await renderPdfFromHtml(html);
       return new NextResponse(new Uint8Array(pdfBuffer), {
         status: 200,
@@ -484,7 +483,8 @@ function generateCSV(data: CommitmentData, params: ExportParams): string {
 // EXCEL GENERATION
 // =============================================================================
 
-function generateExcel(data: CommitmentData, params: ExportParams): ArrayBuffer {
+async function generateExcel(data: CommitmentData, params: ExportParams): Promise<ArrayBuffer> {
+  const XLSX = await import("xlsx");
   const workbook = XLSX.utils.book_new();
 
   // Summary Sheet
