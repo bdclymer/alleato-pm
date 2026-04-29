@@ -4,7 +4,10 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 import { fetchWithPolicy } from "@/lib/guardrails/dependency";
 import { validateResponseContract, withApiGuardrails } from "@/lib/guardrails/api";
 
-const BACKEND_URL = process.env.BACKEND_URL || "http://127.0.0.1:8000";
+const BACKEND_URL =
+  process.env.BACKEND_URL ||
+  process.env.PYTHON_BACKEND_URL ||
+  (process.env.NODE_ENV === "development" ? "http://127.0.0.1:8000" : "");
 const HealthResponseSchema = z.object({
   status: z.literal("healthy"),
   backend: z.literal(true),
@@ -19,8 +22,9 @@ export const GET = withApiGuardrails("/api/health#GET", async ({ requestId }) =>
     throw new GuardrailError({
       code: "MISSING_ENV_VAR",
       where: "/api/health#GET",
-      message: `Invalid BACKEND_URL value: ${BACKEND_URL}`,
-      details: { BACKEND_URL },
+      message:
+        "Missing or invalid backend URL. Set BACKEND_URL or PYTHON_BACKEND_URL.",
+      details: { BACKEND_URL, PYTHON_BACKEND_URL: process.env.PYTHON_BACKEND_URL },
     });
   }
 
