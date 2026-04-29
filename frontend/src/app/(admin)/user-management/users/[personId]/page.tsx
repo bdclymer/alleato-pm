@@ -15,7 +15,7 @@ import {
 } from "../../_lib/user-access-data";
 import { UserAccessPanel } from "../../_components/user-access-panel";
 import { PageShell } from "@/components/layout";
-import { Button } from "@/components/ui/button";
+import { Button, EmptyState, ErrorState } from "@/components/ds";
 import { apiFetch } from "@/lib/api-client";
 import type { GranularFlag } from "@/lib/permissions-shared";
 
@@ -27,6 +27,7 @@ export default function PermissionUserDetailPage() {
   const usersQuery = useQuery({
     queryKey: ["permission-users"],
     queryFn: () => fetchUsers(),
+    retry: false,
   });
 
   const allTemplatesQuery = useQuery({
@@ -43,7 +44,9 @@ export default function PermissionUserDetailPage() {
     () => (usersQuery.data?.data ?? []).map(toAccessSummary),
     [usersQuery.data?.data],
   );
-  const user = users.find((item) => item.personId === personId) ?? null;
+  const user =
+    users.find((item) => item.personId === personId || item.authUserId === personId) ??
+    null;
 
   const assignMutation = useMutation({
     mutationFn: async ({
@@ -127,17 +130,20 @@ export default function PermissionUserDetailPage() {
     usersQuery.isLoading ||
     allTemplatesQuery.isLoading ||
     companyTemplatesQuery.isLoading;
+  const pageTitle = usersQuery.isError
+    ? "Unable to load user"
+    : user?.fullName ?? (isLoading ? "Loading user..." : "User not found");
 
   return (
     <PageShell
       variant="detail"
-      title={user?.fullName ?? (isLoading ? "Loading user..." : "User not found")}
+      title={pageTitle}
       description={user?.email ?? "Manage company access, project roles, and exceptions."}
       onBack={() => router.push("/user-management")}
       actions={
-        <Button type="button" variant="outline" size="sm" onClick={() => router.push("/user-management")}>
+        <Button type="button" variant="ghost" size="sm" onClick={() => router.push("/user-management")}>
           <ArrowLeft className="h-4 w-4" />
-          Back to User Management
+          Back
         </Button>
       }
     >
@@ -147,6 +153,14 @@ export default function PermissionUserDetailPage() {
           <div className="h-40 animate-pulse bg-muted" />
           <div className="h-64 animate-pulse bg-muted" />
         </div>
+      ) : usersQuery.isError ? (
+        <ErrorState
+          title="Unable to load user access"
+          description="User Management rejected this request. Admin permission is required before this profile can load."
+          error={usersQuery.error}
+          onRetry={() => usersQuery.refetch()}
+          className="border-y border-border py-14"
+        />
       ) : user ? (
         <UserAccessPanel
           user={user}
@@ -167,11 +181,16 @@ export default function PermissionUserDetailPage() {
           }
         />
       ) : (
-        <div className="border border-dashed border-border px-4 py-10 text-center">
-          <p className="text-sm text-muted-foreground">
-            This user was not found in User Management. Return to User Management and choose a current user.
-          </p>
-        </div>
+        <EmptyState
+          title="User not found"
+          description="This profile is not in the current User Management list. Return to User Management and choose a current person record."
+          action={
+            <Button type="button" variant="outline" onClick={() => router.push("/user-management")}>
+              Back
+            </Button>
+          }
+          className="border-y border-border py-14"
+        />
       )}
     </PageShell>
   );

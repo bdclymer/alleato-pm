@@ -1,15 +1,33 @@
 "use client";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
+  FolderKanban,
+  KeyRound,
+  ShieldCheck,
+  UserRound,
+} from "lucide-react";
+
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+  Badge,
+  EmptyState,
+  InlineTable,
+  InlineTableBody,
+  InlineTableCell,
+  InlineTableHeader,
+  InlineTableHeaderCell,
+  InlineTableHeaderRow,
+  InlineTableRow,
+  KpiRow,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+  StatusBadge,
+} from "@/components/ds";
 import { SectionRuleHeading } from "@/components/layout";
 import { cn } from "@/lib/utils";
 import {
@@ -51,68 +69,126 @@ export function UserAccessPanel({
     effect: GranularOverrideEffect | null,
   ) => void;
 }) {
+  const assignmentProgress =
+    user.projectCount > 0
+      ? Math.round((user.assignedProjectCount / user.projectCount) * 100)
+      : 100;
+  const companyOverrideCount = user.granularOverrides.filter(
+    (override) => override.projectId == null,
+  ).length;
+  const accessMode = user.isAdmin
+    ? "Admin"
+    : user.companyTemplateName
+      ? "All-project access"
+      : user.projectCount > 0
+        ? "Selected projects"
+        : "No project access";
+
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-        <div className="flex min-w-0 items-start gap-4">
-          <UserAvatar user={user} size="lg" />
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <h2 className="truncate text-xl font-semibold text-foreground">
-                {user.fullName}
-              </h2>
-              {user.isAdmin && <Badge>Admin</Badge>}
-              {user.companyTemplateId && (
-                <Badge variant="outline" className="border-primary/30 text-primary">
-                  All projects
-                </Badge>
-              )}
-            </div>
-            <p className="mt-1 truncate text-sm text-muted-foreground">
-              {user.email || "No email"}
-            </p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Badge variant="outline">{formatProjectCount(user.projectCount)}</Badge>
-              <Badge variant={user.missingTemplateCount > 0 ? "secondary" : "outline"}>
-                {user.assignedProjectCount} assigned
-              </Badge>
-              {user.missingTemplateCount > 0 && (
-                <Badge variant="outline" className="border-destructive/30 text-destructive">
-                  {user.missingTemplateCount} missing
-                </Badge>
-              )}
+    <div className="space-y-8">
+      <section className="space-y-5">
+        <div className="border-b border-border pb-6">
+          <div className="flex min-w-0 items-start gap-4">
+            <UserAvatar user={user} size="lg" />
+            <div className="min-w-0 space-y-3">
+              <div className="min-w-0">
+                <h2 className="truncate text-xl font-semibold text-foreground">
+                  {user.fullName}
+                </h2>
+                <p className="mt-1 truncate text-sm text-muted-foreground">
+                  {user.email || "No email on file"}
+                </p>
+              </div>
             </div>
           </div>
         </div>
 
-        {!user.authUserId && <Badge variant="outline">No auth</Badge>}
-      </div>
+        <KpiRow
+          size="small"
+          metrics={[
+            {
+              label: "Access mode",
+              value: accessMode,
+              context: user.companyTemplateName ?? user.primaryTemplateName,
+            },
+            {
+              label: "Project roles",
+              value: `${user.assignedProjectCount}/${user.projectCount}`,
+              context: user.projectCount === 0 ? "No memberships" : "Assigned memberships",
+              progress: {
+                value: assignmentProgress,
+                tone: user.missingTemplateCount > 0 ? "warning" : "neutral",
+              },
+            },
+            {
+              label: "Exceptions",
+              value: String(companyOverrideCount),
+              context: "Company-level overrides",
+            },
+            {
+              label: "Auth link",
+              value: user.authUserId ? "Linked" : "Missing",
+              context: user.authUserId ? "Can sign in" : "Needs reconciliation",
+              progress: {
+                value: user.authUserId ? 100 : 0,
+                tone: user.authUserId ? "neutral" : "danger",
+              },
+            },
+          ]}
+        />
+      </section>
 
-      <div className="space-y-3">
-        <SectionRuleHeading label="Company Access" />
-        <p className="text-sm text-muted-foreground">
-          Assign a company permission template to grant access to every project automatically. Choose specific project access below only when the user should be limited to certain projects.
-        </p>
-        <div className="flex items-center gap-3">
-          <Select
-            value={user.companyTemplateId ?? "none"}
-            disabled={isTemplatesLoading || isCompanyTemplateSaving || companyTemplates.length === 0}
-            onValueChange={(val) => onAssignCompanyTemplate(user.personId, val === "none" ? null : val)}
-          >
-            <SelectTrigger className="h-9 w-64 text-sm">
-              <SelectValue placeholder="No company access" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">No company access</SelectItem>
-              {companyTemplates.map((tpl) => (
-                <SelectItem key={tpl.id} value={tpl.id}>
-                  {tpl.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      <section className="grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+        <div className="space-y-4">
+          <SectionRuleHeading
+            label="Company access"
+            icon={<ShieldCheck className="h-4 w-4" />}
+          />
+          <div className="space-y-3">
+            <p className="text-sm leading-6 text-muted-foreground">
+              Use company access when this person should inherit one role across every project.
+              Leave it empty for project-by-project control.
+            </p>
+            <div className="max-w-sm">
+              <Select
+                value={user.companyTemplateId ?? "none"}
+                disabled={isTemplatesLoading || isCompanyTemplateSaving || companyTemplates.length === 0}
+                onValueChange={(val) => onAssignCompanyTemplate(user.personId, val === "none" ? null : val)}
+              >
+                <SelectTrigger className="h-9 w-full text-sm">
+                  <SelectValue placeholder="No company access" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No company access</SelectItem>
+                  {companyTemplates.map((tpl) => (
+                    <SelectItem key={tpl.id} value={tpl.id}>
+                      {tpl.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
         </div>
-      </div>
+
+        <div className="space-y-4">
+          <SectionRuleHeading
+            label="Identity"
+            icon={<UserRound className="h-4 w-4" />}
+          />
+          <dl className="grid gap-3 text-sm sm:grid-cols-2">
+            <IdentityField label="Email" value={user.email || "No email"} />
+            <IdentityField label="Person ID" value={user.personId} monospace />
+            <IdentityField
+              label="Auth user"
+              value={user.authUserId ?? "Not linked"}
+              monospace
+              missing={!user.authUserId}
+            />
+            <IdentityField label="Primary role" value={user.primaryTemplateName} />
+          </dl>
+        </div>
+      </section>
 
       <GranularExceptionPanel
         user={user}
@@ -122,31 +198,50 @@ export function UserAccessPanel({
         onSetGranularOverride={onSetGranularOverride}
       />
 
-      <div className="space-y-4">
+      <section className="space-y-4">
         <div>
-          <SectionRuleHeading label="Project Access" />
+          <SectionRuleHeading
+            label="Project access"
+            icon={<FolderKanban className="h-4 w-4" />}
+          />
           <p className="text-sm text-muted-foreground">
-            Assign one permission template per project membership.
-            {user.isAdmin && " Project assignments are bypassed by the Admin company template."}
-            {user.companyTemplateId && !user.isAdmin && " Project assignments override the company permission template."}
+            Each membership needs one project role unless the user is covered by admin access.
           </p>
         </div>
 
         {user.memberships.length === 0 ? (
-          <div className="border border-dashed border-border px-4 py-8 text-center">
-            <p className="text-sm text-muted-foreground">
-              This user is not a member of any project.
-            </p>
-          </div>
+          <EmptyState
+            title="No project memberships"
+            description="This person is in the company directory, but has not been added to any project yet."
+            className="border-y border-border py-12"
+          />
         ) : (
           <div className="overflow-hidden border-y border-border">
-            <div className="grid grid-cols-[minmax(0,1fr)_220px] gap-4 border-b border-border bg-muted/30 px-4 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground max-sm:hidden">
-              <span>Project</span>
-              <span>Role</span>
-            </div>
-            <div className="divide-y divide-border">
+            <InlineTable variant="read" className="hidden sm:block">
+              <InlineTableHeader>
+                <InlineTableHeaderRow>
+                  <InlineTableHeaderCell>Project</InlineTableHeaderCell>
+                  <InlineTableHeaderCell>Status</InlineTableHeaderCell>
+                  <InlineTableHeaderCell className="w-60">Role</InlineTableHeaderCell>
+                </InlineTableHeaderRow>
+              </InlineTableHeader>
+              <InlineTableBody>
+                {user.memberships.map((membership) => (
+                  <ProjectAccessTableRow
+                    key={`${user.personId}-${membership.projectId}`}
+                    user={user}
+                    membership={membership}
+                    templates={templates}
+                    isTemplatesLoading={isTemplatesLoading}
+                    isAssignmentSaving={isAssignmentSaving}
+                    onAssignTemplate={onAssignTemplate}
+                  />
+                ))}
+              </InlineTableBody>
+            </InlineTable>
+            <div className="divide-y divide-border sm:hidden">
               {user.memberships.map((membership) => (
-                <ProjectAccessRow
+                <ProjectAccessMobileRow
                   key={`${user.personId}-${membership.projectId}`}
                   user={user}
                   membership={membership}
@@ -159,7 +254,34 @@ export function UserAccessPanel({
             </div>
           </div>
         )}
-      </div>
+      </section>
+    </div>
+  );
+}
+
+function IdentityField({
+  label,
+  value,
+  monospace,
+  missing,
+}: {
+  label: string;
+  value: string;
+  monospace?: boolean;
+  missing?: boolean;
+}) {
+  return (
+    <div className="min-w-0 border-t border-border/70 pt-3">
+      <dt className="text-xs text-muted-foreground">{label}</dt>
+      <dd
+        className={cn(
+          "mt-1 truncate text-sm font-medium text-foreground",
+          monospace && "font-mono text-xs",
+          missing && "text-muted-foreground",
+        )}
+      >
+        {value}
+      </dd>
     </div>
   );
 }
@@ -223,76 +345,69 @@ function GranularExceptionPanel({
   ).length;
 
   return (
-    <div className="space-y-4">
+    <section className="space-y-4">
       <div>
         <div className="flex flex-wrap items-center gap-2">
-          <SectionRuleHeading label="Granular Exceptions" />
+          <SectionRuleHeading
+            label="Granular exceptions"
+            icon={<KeyRound className="h-4 w-4" />}
+          />
           {activeOverrideCount > 0 && (
             <Badge variant="outline">{activeOverrideCount} active</Badge>
           )}
         </div>
         <p className="text-sm text-muted-foreground">
-          Override individual capabilities without cloning the user role. Deny takes precedence over role grants.
+          Override individual capabilities without cloning a role. Deny takes precedence over role grants.
         </p>
       </div>
 
       <div className="overflow-hidden border-y border-border">
-        <div className="grid grid-cols-[minmax(0,1fr)_160px] gap-4 border-b border-border bg-muted/30 px-4 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground max-sm:hidden">
-          <span>Capability</span>
-          <span>Exception</span>
-        </div>
-        <div className="divide-y divide-border">
+        <InlineTable variant="read" className="hidden sm:block">
+          <InlineTableHeader>
+            <InlineTableHeaderRow>
+              <InlineTableHeaderCell>Capability</InlineTableHeaderCell>
+              <InlineTableHeaderCell>Status</InlineTableHeaderCell>
+              <InlineTableHeaderCell className="w-48">Exception</InlineTableHeaderCell>
+            </InlineTableHeaderRow>
+          </InlineTableHeader>
+          <InlineTableBody>
+            {ALL_GRANULAR_FLAGS.map((flag) => {
+              const override = getCompanyGranularOverride(user, flag);
+              const inherited = inheritedFlags.has(flag);
+              const effective = override ?? (inherited ? "allow" : "deny");
+
+              return (
+                <GranularExceptionRow
+                  key={flag}
+                  flag={flag}
+                  user={user}
+                  override={override}
+                  inherited={inherited}
+                  effective={effective}
+                  isSaving={isSaving}
+                  onSetGranularOverride={onSetGranularOverride}
+                />
+              );
+            })}
+          </InlineTableBody>
+        </InlineTable>
+        <div className="divide-y divide-border sm:hidden">
           {ALL_GRANULAR_FLAGS.map((flag) => {
             const override = getCompanyGranularOverride(user, flag);
             const inherited = inheritedFlags.has(flag);
             const effective = override ?? (inherited ? "allow" : "deny");
 
             return (
-              <div
+              <GranularExceptionMobileRow
                 key={flag}
-                className="grid gap-3 px-4 py-3 sm:grid-cols-[minmax(0,1fr)_160px] sm:items-center sm:gap-4"
-              >
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <p className="text-sm font-medium text-foreground">
-                      {GRANULAR_FLAG_LABELS[flag] ?? flag}
-                    </p>
-                    {flag === "approve_change_orders" && (
-                      <Badge variant="outline" className="text-xs">
-                        Change orders
-                      </Badge>
-                    )}
-                  </div>
-                  <p className="mt-0.5 text-xs text-muted-foreground">
-                    {override
-                      ? `${override === "allow" ? "Allowed" : "Denied"} by exception`
-                      : `${inherited ? "Allowed" : "Denied"} by assigned role`}
-                  </p>
-                </div>
-
-                <Select
-                  value={override ?? "inherit"}
-                  disabled={user.isAdmin || isSaving}
-                  onValueChange={(value) => {
-                    onSetGranularOverride(
-                      user.personId,
-                      flag,
-                      value === "inherit" ? null : (value as GranularOverrideEffect),
-                    );
-                  }}
-                >
-                  <SelectTrigger className="h-9 w-full text-sm">
-                    <SelectValue placeholder="Inherit" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="inherit">
-                      Inherit ({effective === "allow" ? "Allowed" : "Denied"})
-                    </SelectItem>
-                    <SelectItem value="allow">Always allow</SelectItem>
-                    <SelectItem value="deny">Deny</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+                flag={flag}
+                user={user}
+                override={override}
+                inherited={inherited}
+                effective={effective}
+                isSaving={isSaving}
+                onSetGranularOverride={onSetGranularOverride}
+              />
             );
           })}
         </div>
@@ -303,11 +418,212 @@ function GranularExceptionPanel({
           Exceptions are bypassed because this user is a Super Admin.
         </p>
       )}
+    </section>
+  );
+}
+
+function GranularCapabilityLabel({
+  flag,
+  override,
+  inherited,
+}: {
+  flag: GranularFlag;
+  override: GranularOverrideEffect | null;
+  inherited: boolean;
+}) {
+  return (
+    <div className="min-w-0">
+      <div className="flex flex-wrap items-center gap-2">
+        <p className="text-sm font-medium text-foreground">
+          {GRANULAR_FLAG_LABELS[flag] ?? flag}
+        </p>
+        {flag === "approve_change_orders" && (
+          <Badge variant="outline" className="text-xs">
+            Change orders
+          </Badge>
+        )}
+      </div>
+      <p className="mt-0.5 text-xs text-muted-foreground">
+        {override
+          ? `${override === "allow" ? "Allowed" : "Denied"} by exception`
+          : `${inherited ? "Allowed" : "Denied"} by assigned role`}
+      </p>
     </div>
   );
 }
 
-function ProjectAccessRow({
+function GranularExceptionSelect({
+  user,
+  flag,
+  override,
+  effective,
+  isSaving,
+  onSetGranularOverride,
+}: {
+  user: UserAccessSummary;
+  flag: GranularFlag;
+  override: GranularOverrideEffect | null;
+  effective: GranularOverrideEffect;
+  isSaving: boolean;
+  onSetGranularOverride: (
+    personId: string,
+    flag: GranularFlag,
+    effect: GranularOverrideEffect | null,
+  ) => void;
+}) {
+  return (
+    <Select
+      value={override ?? "inherit"}
+      disabled={user.isAdmin || isSaving}
+      onValueChange={(value) => {
+        onSetGranularOverride(
+          user.personId,
+          flag,
+          value === "inherit" ? null : (value as GranularOverrideEffect),
+        );
+      }}
+    >
+      <SelectTrigger className="h-9 w-full text-sm">
+        <SelectValue placeholder="Inherit" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="inherit">
+          Inherit ({effective === "allow" ? "Allowed" : "Denied"})
+        </SelectItem>
+        <SelectItem value="allow">Always allow</SelectItem>
+        <SelectItem value="deny">Deny</SelectItem>
+      </SelectContent>
+    </Select>
+  );
+}
+
+function GranularExceptionRow({
+  user,
+  flag,
+  override,
+  inherited,
+  effective,
+  isSaving,
+  onSetGranularOverride,
+}: {
+  user: UserAccessSummary;
+  flag: GranularFlag;
+  override: GranularOverrideEffect | null;
+  inherited: boolean;
+  effective: GranularOverrideEffect;
+  isSaving: boolean;
+  onSetGranularOverride: (
+    personId: string,
+    flag: GranularFlag,
+    effect: GranularOverrideEffect | null,
+  ) => void;
+}) {
+  return (
+    <InlineTableRow>
+      <InlineTableCell>
+        <GranularCapabilityLabel flag={flag} override={override} inherited={inherited} />
+      </InlineTableCell>
+      <InlineTableCell>
+        <StatusBadge
+          status={override ? "Exception" : effective === "allow" ? "Allowed" : "Denied"}
+          variant={override ? "warning" : effective === "allow" ? "success" : "neutral"}
+        />
+      </InlineTableCell>
+      <InlineTableCell>
+        <GranularExceptionSelect
+          user={user}
+          flag={flag}
+          override={override}
+          effective={effective}
+          isSaving={isSaving}
+          onSetGranularOverride={onSetGranularOverride}
+        />
+      </InlineTableCell>
+    </InlineTableRow>
+  );
+}
+
+function GranularExceptionMobileRow({
+  user,
+  flag,
+  override,
+  inherited,
+  effective,
+  isSaving,
+  onSetGranularOverride,
+}: {
+  user: UserAccessSummary;
+  flag: GranularFlag;
+  override: GranularOverrideEffect | null;
+  inherited: boolean;
+  effective: GranularOverrideEffect;
+  isSaving: boolean;
+  onSetGranularOverride: (
+    personId: string,
+    flag: GranularFlag,
+    effect: GranularOverrideEffect | null,
+  ) => void;
+}) {
+  return (
+    <div className="space-y-3 px-4 py-4">
+      <div className="flex items-start justify-between gap-3">
+        <GranularCapabilityLabel flag={flag} override={override} inherited={inherited} />
+        <StatusBadge
+          status={override ? "Exception" : effective === "allow" ? "Allowed" : "Denied"}
+          variant={override ? "warning" : effective === "allow" ? "success" : "neutral"}
+        />
+      </div>
+      <GranularExceptionSelect
+        user={user}
+        flag={flag}
+        override={override}
+        effective={effective}
+        isSaving={isSaving}
+        onSetGranularOverride={onSetGranularOverride}
+      />
+    </div>
+  );
+}
+
+function RoleSelect({
+  value,
+  disabled,
+  templates,
+  onValueChange,
+}: {
+  value: string | null;
+  disabled: boolean;
+  templates: PermissionTemplate[];
+  onValueChange: (templateId: string) => void;
+}) {
+  return (
+    <Select
+      value={value ?? "none"}
+      disabled={disabled}
+      onValueChange={(templateId) => {
+        if (templateId === "none") return;
+        onValueChange(templateId);
+      }}
+    >
+      <SelectTrigger className="h-9 w-full text-sm">
+        <SelectValue placeholder="Select role" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="none" disabled>
+          No role
+        </SelectItem>
+        {templates.map((template) => (
+          <SelectItem key={template.id} value={template.id}>
+            {template.name}
+            {template.is_system ? " (System)" : ""}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
+function ProjectAccessTableRow({
   user,
   membership,
   templates,
@@ -326,39 +642,85 @@ function ProjectAccessRow({
     templateId: string,
   ) => void;
 }) {
+  const hasRole = Boolean(membership.templateId);
+
   return (
-    <div className="grid gap-3 px-4 py-3 sm:grid-cols-[minmax(0,1fr)_220px] sm:items-center sm:gap-4">
-      <div className="min-w-0">
-        <p className="truncate text-sm font-medium text-foreground">
-          {membership.projectName ?? `Project #${membership.projectId}`}
-        </p>
-        <p className="mt-0.5 text-xs text-muted-foreground">
-          Current: {membership.templateName ?? "No role"}
-        </p>
+    <InlineTableRow>
+      <InlineTableCell>
+        <div className="min-w-0">
+          <p className="truncate text-sm font-medium text-foreground">
+            {membership.projectName ?? `Project #${membership.projectId}`}
+          </p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Project #{membership.projectId}
+          </p>
+        </div>
+      </InlineTableCell>
+      <InlineTableCell>
+        <StatusBadge
+          status={hasRole ? "Assigned" : "Missing role"}
+          variant={hasRole ? "success" : "warning"}
+        />
+      </InlineTableCell>
+      <InlineTableCell>
+        <RoleSelect
+          value={membership.templateId}
+          disabled={isTemplatesLoading || isAssignmentSaving || templates.length === 0}
+          templates={templates}
+          onValueChange={(templateId) =>
+            onAssignTemplate(membership.projectId, user.personId, templateId)
+          }
+        />
+      </InlineTableCell>
+    </InlineTableRow>
+  );
+}
+
+function ProjectAccessMobileRow({
+  user,
+  membership,
+  templates,
+  isTemplatesLoading,
+  isAssignmentSaving,
+  onAssignTemplate,
+}: {
+  user: UserAccessSummary;
+  membership: UserAccessSummary["memberships"][number];
+  templates: PermissionTemplate[];
+  isTemplatesLoading: boolean;
+  isAssignmentSaving: boolean;
+  onAssignTemplate: (
+    projectId: number | string,
+    personId: string,
+    templateId: string,
+  ) => void;
+}) {
+  const hasRole = Boolean(membership.templateId);
+
+  return (
+    <div className="space-y-3 px-4 py-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="truncate text-sm font-medium text-foreground">
+            {membership.projectName ?? `Project #${membership.projectId}`}
+          </p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Current: {membership.templateName ?? "No role"}
+          </p>
+        </div>
+        <StatusBadge
+          status={hasRole ? "Assigned" : "Missing"}
+          variant={hasRole ? "success" : "warning"}
+        />
       </div>
-      <Select
-        value={membership.templateId ?? "none"}
+      <RoleSelect
+        value={membership.templateId}
         disabled={isTemplatesLoading || isAssignmentSaving || templates.length === 0}
-        onValueChange={(templateId) => {
-          if (templateId === "none") return;
-          onAssignTemplate(membership.projectId, user.personId, templateId);
-        }}
-      >
-        <SelectTrigger className="h-9 w-full text-sm">
-          <SelectValue placeholder="Select role" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="none" disabled>
-            No role
-          </SelectItem>
-          {templates.map((template) => (
-            <SelectItem key={template.id} value={template.id}>
-              {template.name}
-              {template.is_system ? " (System)" : ""}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+        templates={templates}
+        onValueChange={(templateId) =>
+          onAssignTemplate(membership.projectId, user.personId, templateId)
+        }
+      />
     </div>
   );
 }

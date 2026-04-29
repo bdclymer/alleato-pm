@@ -22,7 +22,7 @@ const shouldRun =
 test.describe("subcontractor SOV submission", () => {
   test.skip(!shouldRun, "Set SUBCONTRACTOR_SOV_TEST_* env vars to run this external-user flow.");
 
-  test("subcontractor can find, save, and submit their assigned SOV", async ({ page }) => {
+  test("subcontractor can submit SOV and only sees invoice CTA after approval", async ({ page }) => {
     const supabase = createClient(supabaseUrl!, serviceRoleKey!, {
       auth: { persistSession: false },
     });
@@ -77,5 +77,26 @@ test.describe("subcontractor SOV submission", () => {
     await page.getByRole("button", { name: /submit for review/i }).click();
     await expect(page.getByText("Under Review")).toBeVisible();
     await expect(page.getByPlaceholder("Line item description")).toBeDisabled();
+
+    await page.goto(`/${projectId}/my-work`);
+    await expect(page.getByText("Under Review — Awaiting review")).toBeVisible();
+    await expect(page.getByRole("link", { name: /submit an invoice/i })).toHaveCount(0);
+    await expect(
+      page.getByText("Invoice submission opens after your Schedule of Values is approved."),
+    ).toBeVisible();
+
+    const { error: approvalError } = await supabase
+      .from("subcontractor_sov_submissions")
+      .update({
+        status: "approved",
+        reviewed_at: new Date().toISOString(),
+        review_notes: null,
+      })
+      .eq("id", submission!.id);
+    expect(approvalError).toBeNull();
+
+    await page.reload();
+    await expect(page.getByText("Approved")).toBeVisible();
+    await expect(page.getByRole("link", { name: /submit an invoice/i })).toBeVisible();
   });
 });

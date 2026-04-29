@@ -268,7 +268,7 @@ function scoreHelpArticle(
   const { frontmatter } = article;
   const title = normalizeSearchText(frontmatter.title);
   const description = normalizeSearchText(frontmatter.description);
-  const module = normalizeSearchText(frontmatter.module);
+  const moduleName = normalizeSearchText(frontmatter.module);
   const category = normalizeSearchText(frontmatter.category);
   const tags = normalizeSearchText(frontmatter.tags.join(" "));
   const routes = normalizeSearchText(frontmatter.related_routes.join(" "));
@@ -288,7 +288,7 @@ function scoreHelpArticle(
     if (actions.includes(term)) score += 5;
     if (routes.includes(term)) score += 4;
     if (tags.includes(term)) score += 4;
-    if (module.includes(term)) score += 3;
+    if (moduleName.includes(term)) score += 3;
     if (category.includes(term)) score += 2;
     if (content.includes(term)) score += 1;
   }
@@ -407,7 +407,7 @@ function normalizeFrontmatter(
     "visibility",
     errors,
   );
-  const module = requireString(frontmatter.module, relativePath, "module", errors);
+  const moduleName = requireString(frontmatter.module, relativePath, "module", errors);
   const category = requireString(frontmatter.category, relativePath, "category", errors);
   const tags = requireStringArray(frontmatter.tags, relativePath, "tags", errors);
   const featured = requireBoolean(frontmatter.featured, relativePath, "featured", errors);
@@ -437,7 +437,7 @@ function normalizeFrontmatter(
     !description ||
     !audience ||
     !visibility ||
-    !module ||
+    !moduleName ||
     !category ||
     !tags ||
     featured === null ||
@@ -463,7 +463,7 @@ function normalizeFrontmatter(
     description,
     audience,
     visibility,
-    module,
+    module: moduleName,
     category,
     tags,
     featured,
@@ -486,7 +486,7 @@ function normalizeFrontmatter(
     description,
     audience,
     visibility,
-    module,
+    module: moduleName,
     category,
     tags,
     featured,

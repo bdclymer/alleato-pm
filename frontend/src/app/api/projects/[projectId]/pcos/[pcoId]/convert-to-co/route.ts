@@ -95,7 +95,7 @@ export const POST = withApiGuardrails(
     const { data: lineItems } = await supabase
       .from("pco_line_items")
       .select("*")
-      .eq("pco_id", numericPcoId)
+      .eq("pco_id", pcoId)
       .order("id", { ascending: true });
 
     // 3. Auto-generate next PCCO number (safe parsing — treat non-numeric as 0)

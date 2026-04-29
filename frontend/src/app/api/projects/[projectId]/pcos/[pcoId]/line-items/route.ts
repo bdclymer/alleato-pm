@@ -9,7 +9,7 @@
  * DELETE /api/projects/[projectId]/pcos/[pcoId]/line-items - Remove line item
  *
  * Schema: pco_line_items table
- * - id, pco_id (bigint), change_event_line_item_id
+ * - id, pco_id (uuid), change_event_line_item_id
  * - cost_code, description, quantity, uom, unit_cost
  * - line_amount (generated), line_type, category, subcontractor_id
  */
@@ -34,17 +34,12 @@ export const GET = withApiGuardrails(
   async ({ request, params }) => {
 
     const { pcoId } = await params;
-    const numericPcoId = parseInt(pcoId, 10);
-    if (Number.isNaN(numericPcoId)) {
-      return NextResponse.json({ error: "Invalid PCO id" }, { status: 400 });
-    }
-
     const supabase = await createClient();
 
     const { data, error } = await supabase
       .from("pco_line_items")
       .select("*")
-      .eq("pco_id", numericPcoId)
+      .eq("pco_id", pcoId)
       .order("id", { ascending: true });
 
     if (error) {
@@ -114,7 +109,7 @@ export const POST = withApiGuardrails(
     // (cost_code, uom, line_type, category, subcontractor_id, line_amount) were
     // replaced by (budget_code_id, unit_of_measure, amount, pco_type).
     const insertData = {
-      pco_id: numericPcoId,
+      pco_id: pcoId,
       pco_type: body.pco_type || "commitment",
       description: body.description,
       budget_code_id: body.budget_code_id || null,
@@ -195,7 +190,7 @@ export const PATCH = withApiGuardrails(
       .from("pco_line_items")
       .select("id")
       .eq("id", body.id)
-      .eq("pco_id", numericPcoId)
+      .eq("pco_id", pcoId)
       .single();
 
     if (fetchError || !existing) {
@@ -311,7 +306,7 @@ export const DELETE = withApiGuardrails(
       .from("pco_line_items")
       .delete()
       .eq("id", body.lineItemId)
-      .eq("pco_id", numericPcoId)
+      .eq("pco_id", pcoId)
       .select()
       .single();
 

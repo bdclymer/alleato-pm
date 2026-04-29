@@ -174,8 +174,6 @@ export default async function ProjectHomePage({
     rfisResult,
     dailyLogsResult,
     commitmentsResult,
-    approvedSubcontractTotalsResult,
-    approvedPurchaseOrderTotalsResult,
     contractsResult,
     contractLineItemsResult,
     budgetResult,
@@ -265,19 +263,6 @@ export default async function ProjectHomePage({
       .eq("project_id", numericProjectId)
       .is("deleted_at", null)
       .order("created_at", { ascending: false }),
-
-    // Fetch approved/executed commitment totals for Home financial rollups
-    supabase
-      .from("subcontracts_with_totals")
-      .select("id, total_sov_amount")
-      .eq("project_id", numericProjectId)
-      .in("status", ["Approved", "Complete", "Executed"]),
-
-    supabase
-      .from("purchase_orders_with_totals")
-      .select("id, total_sov_amount")
-      .eq("project_id", numericProjectId)
-      .in("status", ["Approved", "Completed", "Executed"]),
 
     // Fetch prime contracts
     supabase
@@ -442,6 +427,7 @@ export default async function ProjectHomePage({
     created_at: string;
     updated_at: string;
     original_amount?: number;
+    revised_contract_amount?: number;
   }>;
   const seenCommitmentIds = new Set<string>();
   const commitments = rawCommitments.filter((c) => {
@@ -469,15 +455,15 @@ export default async function ProjectHomePage({
     },
   );
 
-  const commitmentTotal =
-    (approvedSubcontractTotalsResult.data || []).reduce(
-      (sum, row) => sum + (row.total_sov_amount ?? 0),
-      0,
-    ) +
-    (approvedPurchaseOrderTotalsResult.data || []).reduce(
-      (sum, row) => sum + (row.total_sov_amount ?? 0),
-      0,
-    );
+  const commitmentTotal = commitments.reduce((sum, commitment) => {
+    const resolvedAmount =
+      commitment.revised_contract_amount ??
+      commitment.contract_amount ??
+      commitment.original_amount ??
+      0;
+
+    return sum + resolvedAmount;
+  }, 0);
 
   const contracts = contractsResult.data || [];
   const ownerInvoices = ownerInvoicesResult.data || [];

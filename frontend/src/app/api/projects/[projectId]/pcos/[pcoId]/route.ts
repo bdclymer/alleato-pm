@@ -14,6 +14,10 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
+
+type PcoChangeEventRow = {
+  change_event_id: string;
+};
 import { requirePermission } from "@/lib/permissions-guard";
 import { logger } from "@/lib/logger";
 
@@ -79,8 +83,8 @@ export const GET = withApiGuardrails(
       .order("sort_order", { ascending: true });
 
     // Fetch full change event details for grouped events
-    const changeEventIds = (pcoChangeEvents || []).map(
-      (pce: any) => pce.change_event_id
+    const changeEventIds = ((pcoChangeEvents || []) as PcoChangeEventRow[]).map(
+      (pce) => pce.change_event_id,
     );
     const changeEventsMap: Record<string, unknown> = {};
     if (changeEventIds.length > 0) {
@@ -94,7 +98,7 @@ export const GET = withApiGuardrails(
       }
     }
 
-    const groupedChangeEvents = (pcoChangeEvents || []).map((pce: any) => ({
+    const groupedChangeEvents = ((pcoChangeEvents || []) as PcoChangeEventRow[]).map((pce) => ({
       ...pce,
       changeEvent: changeEventsMap[pce.change_event_id] || null,
     }));
@@ -103,7 +107,7 @@ export const GET = withApiGuardrails(
     const { data: lineItems } = await supabase
       .from("pco_line_items")
       .select("*")
-      .eq("pco_id", numericPcoId)
+      .eq("pco_id", pcoId)
       .order("id", { ascending: true });
 
     // Fetch timeline events

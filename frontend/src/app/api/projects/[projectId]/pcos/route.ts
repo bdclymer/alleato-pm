@@ -88,18 +88,24 @@ export const GET = withApiGuardrails(
     }
 
     // Batch-fetch change event and line item counts (no FK join available for pco_line_items).
-    // Both `pco_change_events.pco_id` and `pco_line_items.pco_id` are numeric in the live schema.
+    // pco_change_events is the legacy numeric PCO path; pco_line_items now belongs
+    // to the UUID-based prime/commitment PCO path.
     const pcoIdStrings = (data || []).map((pco: Record<string, unknown>) => String(pco.id));
     const pcoIdNumbers = pcoIdStrings
       .map((id) => Number(id))
       .filter((n) => Number.isFinite(n));
+    const uuidPcoIds = pcoIdStrings.filter((id) =>
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id),
+    );
     const ceCountMap: Record<string, number> = {};
     const liCountMap: Record<string, number> = {};
 
     if (pcoIdStrings.length > 0) {
       const [ceResult, liResult] = await Promise.all([
         supabase.from("pco_change_events").select("pco_id").in("pco_id", pcoIdNumbers),
-        supabase.from("pco_line_items").select("pco_id").in("pco_id", pcoIdNumbers),
+        uuidPcoIds.length > 0
+          ? supabase.from("pco_line_items").select("pco_id").in("pco_id", uuidPcoIds)
+          : Promise.resolve({ data: [] }),
       ]);
 
       if (ceResult.data) {

@@ -162,6 +162,50 @@ export const POST = withApiGuardrails("/api/projects#POST", async ({ request }) 
   const body = await parseJsonBody(request, CreateProjectSchema, "/api/projects#POST");
   const bodyRecord = body as Record<string, unknown>;
 
+  // Resolve the creator before inserting the project so a project cannot be
+  // created without an owner membership.
+  const { data: authLink, error: authLinkError } = await supabase
+    .from("users_auth")
+    .select("person_id")
+    .eq("auth_user_id", user.id)
+    .maybeSingle();
+
+  if (authLinkError || !authLink?.person_id) {
+    throw new GuardrailError({
+      code: "PRECONDITION_FAILED",
+      where: "/api/projects#POST",
+      message: "Project creator is not linked to a directory person.",
+      status: 412,
+      severity: "high",
+      details: {
+        reason: authLinkError?.message ?? "Missing users_auth.person_id",
+        authUserId: user.id,
+      },
+      cause: authLinkError ?? undefined,
+    });
+  }
+
+  const { data: adminTemplate, error: adminTemplateError } = await supabase
+    .from("permission_templates")
+    .select("id")
+    .eq("is_system", true)
+    .eq("name", "Project Admin")
+    .maybeSingle();
+
+  if (adminTemplateError || !adminTemplate?.id) {
+    throw new GuardrailError({
+      code: "PRECONDITION_FAILED",
+      where: "/api/projects#POST",
+      message: "Project Admin permission template is required to create a project.",
+      status: 412,
+      severity: "high",
+      details: {
+        reason: adminTemplateError?.message ?? "Missing system admin permission template",
+      },
+      cause: adminTemplateError ?? undefined,
+    });
+  }
+
   // Set default phase to "Current" if not provided
   const projectData: Record<string, unknown> = {
     phase: "Current",
@@ -196,28 +240,33 @@ export const POST = withApiGuardrails("/api/projects#POST", async ({ request }) 
   }
 
   // Auto-add the creator as a project member with admin permissions
-  const { data: authLink } = await supabase
-    .from("users_auth")
-    .select("person_id")
-    .eq("auth_user_id", user.id)
-    .maybeSingle();
+  const { error: membershipError } = await supabase.from("project_directory_memberships").insert({
+    person_id: authLink.person_id,
+    project_id: data.id,
+    user_type: "employee",
+    status: "active",
+    role: "Project Admin",
+    permission_template_id: adminTemplate.id,
+  });
 
-  if (authLink?.person_id) {
-    // Find the "Project Admin" permission template (or any admin-level system template)
-    const { data: adminTemplate } = await supabase
-      .from("permission_templates")
-      .select("id")
-      .eq("is_system", true)
-      .ilike("name", "%admin%")
-      .maybeSingle();
+  if (membershipError) {
+    const { error: cleanupError } = await supabase
+      .from("projects")
+      .delete()
+      .eq("id", data.id);
 
-    await supabase.from("project_directory_memberships").insert({
-      person_id: authLink.person_id,
-      project_id: data.id,
-      user_type: "internal",
-      status: "active",
-      role: "Project Admin",
-      permission_template_id: adminTemplate?.id ?? null,
+    throw new GuardrailError({
+      code: "INTERNAL_ERROR",
+      where: "/api/projects#POST",
+      message: "Project was not created because creator access could not be assigned.",
+      status: 500,
+      severity: "high",
+      details: {
+        projectId: data.id,
+        membershipReason: membershipError.message,
+        cleanupReason: cleanupError?.message ?? null,
+      },
+      cause: membershipError,
     });
   }
 

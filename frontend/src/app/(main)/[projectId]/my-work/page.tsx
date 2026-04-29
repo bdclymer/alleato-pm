@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { PageShell } from "@/components/layout";
-import { EmptyState } from "@/components/ds";
+import { EmptyState, InfoAlert } from "@/components/ds";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,7 +10,6 @@ import {
   CheckCircle,
   MessageCircle,
   Package,
-  AlertCircle,
   ChevronRight,
   Clock,
 } from "lucide-react";
@@ -235,12 +234,9 @@ export default async function MyWorkPage({
 
       {/* Attention banner for pending SOV */}
       {hasPendingSov && (
-        <div className="mb-6 flex items-start gap-3 rounded-lg bg-amber-50 px-4 py-3 dark:bg-amber-950/30">
-          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
-          <p className="text-sm text-amber-800 dark:text-amber-300">
-            You have a Schedule of Values that hasn&apos;t been submitted yet.
-          </p>
-        </div>
+        <InfoAlert variant="warning" className="mb-6">
+          You have a Schedule of Values that hasn&apos;t been submitted yet.
+        </InfoAlert>
       )}
 
       <div className="grid gap-4 lg:grid-cols-2">

@@ -694,11 +694,11 @@ export default function ProjectCommitmentsPage(): ReactElement {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={handleCreateSubcontract}>
+                  <DropdownMenuItem onSelect={handleCreateSubcontract}>
                     <FileSignature className="mr-2 h-4 w-4 text-muted-foreground" />
                     Subcontract
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleCreatePurchaseOrder}>
+                  <DropdownMenuItem onSelect={handleCreatePurchaseOrder}>
                     <ShoppingCart className="mr-2 h-4 w-4 text-muted-foreground" />
                     Purchase Order
                   </DropdownMenuItem>

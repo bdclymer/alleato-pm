@@ -203,7 +203,6 @@ export function buildCommitmentTableColumns(
       render: (item) => (
         <Link
           href={`/${projectId}/commitments/${item.id}`}
-          onClick={(event) => event.stopPropagation()}
           className="text-primary hover:underline underline-offset-2"
         >
           {item.title ?? "-"}

@@ -80,7 +80,7 @@ export const POST = withApiGuardrails(
     const { data: lineItems } = await supabase
       .from("pco_line_items")
       .select("*")
-      .eq("pco_id", numericPcoId);
+      .eq("pco_id", pcoId);
 
     const { data: groupedCEs } = await supabase
       .from("pco_change_events")

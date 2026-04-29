@@ -344,9 +344,12 @@ export function renderDocumentList(
 
 export function renderDocumentRowActions(
   item: ProjectDocument,
+  projectId: string,
   onEdit: (doc: ProjectDocument) => void,
   onDelete: (doc: ProjectDocument) => void,
 ): ReactElement {
+  const documentUrl = `/api/projects/${projectId}/documents/${item.id}/download`;
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -355,10 +358,10 @@ export function renderDocumentRowActions(
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        {item.file_url && (
+        {(item.storage_path || item.file_url) && (
           <DropdownMenuItem asChild>
             <a
-              href={item.file_url}
+              href={documentUrl}
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -367,9 +370,9 @@ export function renderDocumentRowActions(
             </a>
           </DropdownMenuItem>
         )}
-        {item.file_url && (
+        {(item.storage_path || item.file_url) && (
           <DropdownMenuItem asChild>
-            <a href={item.file_url} download={item.file_name}>
+            <a href={documentUrl} download={item.file_name}>
               <Download className="mr-2 h-4 w-4" />
               Download
             </a>

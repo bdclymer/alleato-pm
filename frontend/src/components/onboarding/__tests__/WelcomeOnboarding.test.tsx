@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 
 import { WelcomeOnboarding } from "../WelcomeOnboarding";
@@ -15,7 +15,7 @@ jest.mock("@/hooks/use-current-user-profile", () => ({
   useCurrentUserProfile: () => ({
     profile: {
       email: "sub@example.com",
-      fullName: "Sub Contractor",
+      fullName: "Brandon Clymer",
     },
   }),
 }));
@@ -45,5 +45,18 @@ describe("WelcomeOnboarding", () => {
     render(<WelcomeOnboarding forceOpen suppressAutoOpen />);
 
     expect(await screen.findByText("Welcome to Alleato AI")).toBeInTheDocument();
+  });
+
+  it("combines the welcome and feedback screens into a two-step flow", async () => {
+    render(<WelcomeOnboarding forceOpen suppressAutoOpen />);
+
+    expect(await screen.findByText("Welcome, Brandon")).toBeInTheDocument();
+    expect(screen.getByText("Feedback is only a click away.")).toBeInTheDocument();
+    expect(screen.getByLabelText("Step 1 of 2")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /continue/i }));
+
+    expect(await screen.findByText("Set up your first test project.")).toBeInTheDocument();
+    expect(screen.getByLabelText("Step 2 of 2")).toBeInTheDocument();
   });
 });

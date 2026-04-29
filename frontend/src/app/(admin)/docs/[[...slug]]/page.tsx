@@ -2,10 +2,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { ArrowLeft, BookOpen, Search } from "lucide-react";
+import { ArrowLeft, BookOpen, ChevronRight, FileText, Search, Sparkles } from "lucide-react";
 
 import { MarkdownRenderer } from "@/components/docs/markdown-renderer";
 import { EmptyState } from "@/components/ds";
+import { IconBadge } from "@/components/ds";
+import { PageShell } from "@/components/layout";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { getHelpActionsForIds } from "@/lib/help-actions";
 import { canArticleAppearInClientHelpCenter } from "@/lib/help-visibility";
 import {
@@ -20,7 +24,6 @@ interface DocPageProps {
   }>;
   searchParams?: Promise<{
     q?: string;
-    category?: string;
   }>;
 }
 
@@ -30,16 +33,16 @@ export async function generateMetadata({ params }: DocPageProps): Promise<Metada
 
   if (!slug) {
     return {
-      title: "Help Center",
-      description: "Controlled Alleato OS help documentation",
+      title: "Documentation",
+      description: "Controlled Alleato OS application documentation",
     };
   }
 
   const article = await getHelpArticleBySlug(slug);
   if (!article) {
     return {
-      title: "Help Center",
-      description: "Controlled Alleato OS help documentation",
+      title: "Documentation",
+      description: "Controlled Alleato OS application documentation",
     };
   }
 
@@ -70,90 +73,61 @@ export default async function DocPage({ params, searchParams }: DocPageProps) {
 
   const resolvedSearchParams = await searchParams;
   const query = resolvedSearchParams?.q?.trim() ?? "";
-  const category = resolvedSearchParams?.category?.trim() ?? "";
   const articles = await getHelpArticles({ clientHelpCenterOnly: true });
-  const filteredArticles = filterArticles(articles, { query, category });
-  const featuredArticles = filteredArticles.filter((article) => article.frontmatter.featured);
-  const standardArticles = filteredArticles.filter((article) => !article.frontmatter.featured);
-  const categories = Array.from(
-    new Set(articles.map((article) => article.frontmatter.category)),
-  ).sort((a, b) => a.localeCompare(b));
+  const filteredArticles = filterArticles(articles, { query });
 
   return (
-    <main className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-4 py-10 sm:px-6 lg:px-8">
-      <header className="space-y-3">
-        <p className="text-xs font-semibold uppercase text-muted-foreground">
-          Help Center
-        </p>
-        <div className="space-y-2">
-          <h1 className="text-2xl font-semibold text-foreground">
-            Alleato OS Help
+    <PageShell
+      variant="content"
+      title="Documentation"
+      titleContent={
+        <div>
+          <div className="mb-3 inline-flex items-center gap-2 text-primary">
+            <Sparkles className="h-3 w-3 text-primary" />
+            <span className="text-xs font-medium text-primary">
+              Alleato OS
+            </span>
+          </div>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+            Documentation
           </h1>
-          <p className="max-w-2xl text-sm text-muted-foreground">
-            Controlled guides for using Alleato OS. Only reviewed, published
-            help articles appear here.
-          </p>
         </div>
-      </header>
-
-      <form action="/docs" className="flex flex-col gap-3 sm:flex-row">
-        <label className="relative flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <span className="sr-only">Search help articles</span>
-          <input
-            name="q"
-            defaultValue={query}
-            placeholder="Search help articles"
-            className="h-10 w-full rounded-md border border-input bg-background pl-9 pr-3 text-sm outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20"
-          />
-        </label>
-        {category ? <input type="hidden" name="category" value={category} /> : null}
-        <button
-          type="submit"
-          className="h-10 rounded-md border border-input px-4 text-sm font-medium transition hover:bg-muted"
-        >
-          Search
-        </button>
-      </form>
-
-      {categories.length > 0 ? (
-        <nav aria-label="Help categories" className="flex flex-wrap gap-2">
-          <CategoryLink label="All" href="/docs" active={!category} />
-          {categories.map((item) => (
-            <CategoryLink
-              key={item}
-              label={item}
-              href={`/docs?category=${encodeURIComponent(item)}`}
-              active={category === item}
+      }
+    >
+      <div>
+        <form action="/docs" className="mb-10 flex flex-col gap-2.5 sm:flex-row">
+          <label className="relative flex-1 sm:max-w-sm">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/50" />
+            <span className="sr-only">Search documentation</span>
+            <Input
+              name="q"
+              defaultValue={query}
+              placeholder="Search documentation..."
+              className="h-9 border-border/50 bg-background pl-9 text-sm shadow-none placeholder:text-muted-foreground/50"
             />
-          ))}
-        </nav>
-      ) : null}
+          </label>
+          <Button
+            type="submit"
+            variant="outline"
+            className="h-9 border-border/50 bg-background px-4 text-sm shadow-none"
+          >
+            Search
+          </Button>
+        </form>
 
-      {filteredArticles.length === 0 ? (
-        <EmptyState
-          icon={<BookOpen />}
-          title="No help articles found"
-          description="Try a different search or category."
-        />
-      ) : (
-        <div className="space-y-8">
-          {featuredArticles.length > 0 ? (
-            <section className="space-y-3">
-              <h2 className="text-lg font-semibold text-foreground">Start here</h2>
-              <ArticleList articles={featuredArticles} />
-            </section>
-          ) : null}
-
-          {standardArticles.length > 0 ? (
-            <section className="space-y-3">
-              <h2 className="text-lg font-semibold text-foreground">All guides</h2>
-              <ArticleList articles={standardArticles} />
-            </section>
-          ) : null}
-        </div>
-      )}
-    </main>
+        {filteredArticles.length === 0 ? (
+          <EmptyState
+            icon={<BookOpen />}
+            title="No documentation found"
+            description="Try a broader search phrase."
+          />
+        ) : (
+          <section>
+            <ArticleList articles={filteredArticles} />
+          </section>
+        )}
+      </div>
+    </PageShell>
   );
 }
 
@@ -240,65 +214,37 @@ function formatSafetyLevel(level: string): string {
 
 function ArticleList({ articles }: { articles: HelpArticle[] }) {
   return (
-    <div className="divide-y divide-border border-y border-border">
+    <div className="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2">
       {articles.map((article) => (
         <Link
           key={article.slug}
           href={article.href}
-          className="block py-4 transition hover:bg-muted/40 sm:px-3"
+          className="group -mx-3 flex min-h-12 items-start gap-3 rounded-md px-3 py-2 text-left transition-colors hover:bg-muted"
         >
-          <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
-            <div className="min-w-0 space-y-1">
-              <h3 className="text-sm font-semibold text-foreground">
-                {article.frontmatter.title}
-              </h3>
-              <p className="max-w-2xl text-sm text-muted-foreground">
-                {article.frontmatter.description}
-              </p>
-            </div>
-            <span className="shrink-0 text-xs text-muted-foreground">
-              {article.frontmatter.category}
-            </span>
+          <IconBadge size="sm" className="mt-0.5">
+            <FileText className="h-3.5 w-3.5" />
+          </IconBadge>
+          <div className="min-w-0 flex-1">
+            <h3 className="text-sm font-medium text-foreground transition-colors group-hover:text-primary">
+              {article.frontmatter.title}
+            </h3>
+            <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+              {article.frontmatter.description}
+            </p>
           </div>
+          <ChevronRight className="mt-2 h-3.5 w-3.5 shrink-0 text-muted-foreground/20 transition-all group-hover:translate-x-0.5 group-hover:text-muted-foreground" />
         </Link>
       ))}
     </div>
   );
 }
 
-function CategoryLink({
-  label,
-  href,
-  active,
-}: {
-  label: string;
-  href: string;
-  active: boolean;
-}) {
-  return (
-    <Link
-      href={href}
-      className={
-        active
-          ? "rounded-md bg-foreground px-3 py-1.5 text-xs font-medium text-background"
-          : "rounded-md border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground transition hover:bg-muted hover:text-foreground"
-      }
-    >
-      {label}
-    </Link>
-  );
-}
-
 function filterArticles(
   articles: HelpArticle[],
-  filters: { query: string; category: string },
+  filters: { query: string },
 ) {
   const query = filters.query.toLowerCase();
   return articles.filter((article) => {
-    if (filters.category && article.frontmatter.category !== filters.category) {
-      return false;
-    }
-
     if (!query) return true;
 
     const searchable = [

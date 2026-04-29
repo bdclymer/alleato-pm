@@ -203,9 +203,16 @@ export function DocumentsClient({ projectId }: DocumentsClientProps): ReactEleme
   };
 
   const handleRowClick = (item: ProjectDocument) => {
-    if (item.file_url) {
-      window.open(item.file_url, "_blank");
+    if (!item.storage_path && !item.file_url) {
+      toast.error("This document does not have a file attached");
+      return;
     }
+
+    window.open(
+      `/api/projects/${projectId}/documents/${item.id}/download`,
+      "_blank",
+      "noopener,noreferrer",
+    );
   };
 
   const handleEdit = (_item: ProjectDocument) => {
@@ -365,7 +372,12 @@ export function DocumentsClient({ projectId }: DocumentsClientProps): ReactEleme
           getRowId: (item) => String(item.id),
           onRowClick: handleRowClick,
           rowActions: (item) =>
-            renderDocumentRowActions(item, handleEdit, handleDeleteIntent),
+            renderDocumentRowActions(
+              item,
+              projectId,
+              handleEdit,
+              handleDeleteIntent,
+            ),
         }}
         sorting={{
           sortBy: tableState.sortBy,

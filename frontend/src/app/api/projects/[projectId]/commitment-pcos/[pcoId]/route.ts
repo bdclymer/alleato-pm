@@ -229,7 +229,6 @@ export const DELETE = withApiGuardrails<{ projectId: string; pcoId: string }>(
   
     const { projectId, pcoId } = await params;
     const projectIdNum = parseInt(projectId, 10);
-    const pcoIdNum = parseInt(pcoId, 10);
     const supabase = await createClient();
 
     // Auth check
@@ -283,7 +282,7 @@ export const DELETE = withApiGuardrails<{ projectId: string; pcoId: string }>(
     const { error: lineItemDeleteError } = await supabase
       .from("pco_line_items")
       .delete()
-      .eq("pco_id", pcoIdNum)
+      .eq("pco_id", pcoId)
       .eq("pco_type", "commitment");
 
     if (lineItemDeleteError) {

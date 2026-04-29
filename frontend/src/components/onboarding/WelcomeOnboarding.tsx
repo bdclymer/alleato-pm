@@ -15,9 +15,8 @@ import {
 } from "@/lib/onboarding/copy";
 import { findAlleatoAiProfile } from "@/config/aiPersonalization";
 import { cn } from "@/lib/utils";
-import { FoundationStep } from "./steps/FoundationStep";
+import { IntroFeedbackStep } from "./steps/IntroFeedbackStep";
 import { MissionStep } from "./steps/MissionStep";
-import { WidgetShowcaseStep } from "./steps/WidgetShowcaseStep";
 
 export type WelcomeOnboardingProps = {
   forceOpen?: boolean;
@@ -28,7 +27,7 @@ export type WelcomeOnboardingProps = {
   suppressStorageValue?: string;
 };
 
-const TOTAL_STEPS = 3;
+const TOTAL_STEPS = 2;
 
 export function WelcomeOnboarding({
   forceOpen,
@@ -132,8 +131,8 @@ export function WelcomeOnboarding({
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && close(false)}>
       <DialogContent
         showCloseButton={false}
-        className="flex max-h-[calc(100svh-1.5rem)] flex-col gap-0 overflow-hidden border-0 bg-background p-0 text-foreground sm:max-w-3xl"
-        style={{ height: "min(40rem, calc(100svh - 1.5rem))" }}
+        className="flex max-h-[calc(100svh-1.5rem)] flex-col gap-0 overflow-hidden border-0 bg-background p-0 text-foreground sm:max-w-5xl"
+        style={{ height: "min(42rem, calc(100svh - 1.5rem))" }}
         aria-describedby={undefined}
       >
         <DialogTitle className="sr-only">Welcome to Alleato AI</DialogTitle>
@@ -157,9 +156,8 @@ export function WelcomeOnboarding({
           </div>
 
           <div className="relative min-h-0 flex-1 overflow-y-auto px-6 py-6 sm:min-h-96 sm:px-12 sm:py-8">
-            {step === 0 && <FoundationStep firstName={firstName} stats={stats} />}
-            {step === 1 && <WidgetShowcaseStep />}
-            {step === 2 && <MissionStep onCreateTestProject={handleCreateTestProject} />}
+            {step === 0 && <IntroFeedbackStep firstName={firstName} stats={stats} />}
+            {step === 1 && <MissionStep onCreateTestProject={handleCreateTestProject} />}
           </div>
 
           <div className="relative flex justify-end px-6 pb-6 pt-7 sm:px-12 sm:pb-8 sm:pt-10">

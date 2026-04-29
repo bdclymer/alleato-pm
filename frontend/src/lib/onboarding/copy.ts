@@ -27,14 +27,15 @@ export const onboardingCopy = {
     badge: "You’re getting the first look at what’s next",
     preheadingWithName: (firstName: string) => `Welcome, ${firstName}`,
     preheadingFallback: "Welcome",
-    headline: "THIS ISN'T TESTING... IT'S CO-CREATION.",
-    headlineWithName: () => "THIS ISN'T TESTING... IT'S CO-CREATION.",
-    headlineFallback: "THIS ISN'T TESTING... IT'S CO-CREATION.",
+    headline: "You’re here to help shape what comes next",
+    headlineWithName: () => "You’re here to help shape what comes next",
+    headlineFallback: "You’re here to help shape what comes next",
     body: [
       "This is your first look at Alleato’s new AI-powered project platform.",
-      "You may find things that need work. That is expected. What matters is that every bug, idea, missing detail, and “what if it worked this way?” can help shape the system around how Alleato actually operates.",
-      "The goal is not just to test software.",
-      "The goal is to help build what comes next.",
+      "This first version is only the beginning. The real power comes from improving it with the people who know the business best.",
+      "If something is broken, tell us.",
+      "If something is annoying, tell us.",
+      "If you have an idea that would save time, reduce confusion, or make your work easier, definitely tell us.",
     ],
     statLabels: {
       fixesShipped: "fixes shipped this month",
@@ -54,7 +55,7 @@ export const onboardingCopy = {
   widget: {
     headline: "Feedback is only a click away.",
     body:
-      "The Ask Alleato pill travels with you on every page. When something feels off, click Submit feedback, describe what happened, and attach the current screen so the team can see exactly what you saw.",
+      "Submit feedback from the bottom-right button on any page. Bugs, ideas, questions, and wish-list items are all welcome.",
     askTab: "Ask AI",
     feedbackTab: "Send feedback",
     tryAsking: "Try asking",

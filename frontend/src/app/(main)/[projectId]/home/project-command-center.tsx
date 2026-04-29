@@ -84,6 +84,7 @@ interface Commitment {
   created_at: string;
   updated_at: string;
   original_amount?: number;
+  revised_contract_amount?: number;
 }
 
 interface OwnerInvoice {
@@ -777,7 +778,11 @@ function CommitmentsSection({
                   </p>
                 </div>
                 <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
-                  {fmtCompact(c.contract_amount ?? c.original_amount)}
+                  {fmtCompact(
+                    c.revised_contract_amount ??
+                      c.contract_amount ??
+                      c.original_amount,
+                  )}
                 </span>
               </Link>
             ))}

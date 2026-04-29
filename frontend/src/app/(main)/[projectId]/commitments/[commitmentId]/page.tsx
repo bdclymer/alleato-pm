@@ -124,7 +124,7 @@ const normalizeCommitment = (raw: unknown): CommitmentDetail | null => {
       : "";
 
   const accountingMethod: CommitmentDetail["accounting_method"] =
-    accountingMethodRaw === "unit_quantity"
+    accountingMethodRaw === "unit_quantity" || accountingMethodRaw === "unit-quantity"
       ? "unit"
       : accountingMethodRaw === "amount_based"
         ? "amount"
@@ -601,6 +601,7 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
           projectId={projectId}
           commitmentId={commitmentId}
           commitmentType={commitment.type}
+          accountingMethod={commitment.accounting_method}
           showHeader={false}
           onImportComplete={onImportComplete}
         />
@@ -1030,6 +1031,7 @@ export default function CommitmentDetailPage() {
             projectId={projectId}
             commitmentId={commitment.id}
             commitmentType={commitment.type}
+            accountingMethod={commitment.accounting_method}
             onImportComplete={() => void fetchCommitment()}
           />
         )}

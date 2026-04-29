@@ -60,8 +60,6 @@ export const GET = withApiGuardrails<{ projectId: string; pcoId: string }>(
     }
 
     const projectIdNum = parseInt(projectId, 10);
-    const pcoIdNum = parseInt(pcoId, 10);
-
     // Get PCO with prime contract info
     const { data: pco, error } = await supabase
       .from("prime_contract_pcos")
@@ -103,7 +101,7 @@ export const GET = withApiGuardrails<{ projectId: string; pcoId: string }>(
         )
       `,
       )
-      .eq("pco_id", pcoIdNum)
+      .eq("pco_id", pcoId)
       .eq("pco_type", "prime")
       .order("sort_order", { ascending: true });
 
@@ -304,8 +302,6 @@ export const DELETE = withApiGuardrails<{ projectId: string; pcoId: string }>(
     }
 
     const projectIdNum = parseInt(projectId, 10);
-    const pcoIdNum = parseInt(pcoId, 10);
-
     // Get existing PCO
     const { data: existingPco, error: fetchError } = await supabase
       .from("prime_contract_pcos")
@@ -336,7 +332,7 @@ export const DELETE = withApiGuardrails<{ projectId: string; pcoId: string }>(
     await supabase
       .from("pco_line_items")
       .delete()
-      .eq("pco_id", pcoIdNum)
+      .eq("pco_id", pcoId)
       .eq("pco_type", "prime");
 
     // Delete associated change event links

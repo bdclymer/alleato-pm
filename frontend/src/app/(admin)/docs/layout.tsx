@@ -2,10 +2,10 @@ import { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: {
-    template: "%s | Help Center",
-    default: "Help Center",
+    template: "%s | Documentation",
+    default: "Documentation",
   },
-  description: "Controlled Alleato OS help documentation",
+  description: "Controlled Alleato OS application documentation",
 };
 
 export default function DocsLayout({

@@ -36,7 +36,6 @@ export const POST = withApiGuardrails<{ projectId: string; pcoId: string }>(
     }
 
     const projectIdNum = parseInt(projectId, 10);
-    const pcoIdNum = parseInt(pcoId, 10);
 
     // Get existing PCO with line items total
     const { data: pco, error: fetchError } = await supabase
@@ -80,7 +79,7 @@ export const POST = withApiGuardrails<{ projectId: string; pcoId: string }>(
     const { data: lineItems } = await supabase
       .from("pco_line_items")
       .select("amount")
-      .eq("pco_id", pcoIdNum)
+      .eq("pco_id", pcoId)
       .eq("pco_type", "prime");
 
     const totalAmount = (lineItems || []).reduce(
@@ -126,7 +125,71 @@ export const POST = withApiGuardrails<{ projectId: string; pcoId: string }>(
       return apiErrorResponse(pccoError);
     }
 
-    // Update the PCO with promotion reference
+    // Copy line items from PCO to PCCO
+    if (lineItems && lineItems.length > 0) {
+      const { data: fullLineItems } = await supabase
+        .from("pco_line_items")
+        .select("*")
+        .eq("pco_id", pcoId)
+        .eq("pco_type", "prime");
+
+      if (fullLineItems && fullLineItems.length > 0) {
+        const pccoLineItems = fullLineItems.map((item) => ({
+          pcco_id: pcco.id,
+          description: item.description,
+          cost_code: item.budget_code_id,
+          quantity: item.quantity,
+          unit_cost: item.unit_cost,
+          uom: item.unit_of_measure,
+        }));
+
+        const { error: lineItemCopyError } = await supabase
+          .from("pcco_line_items")
+          .insert(pccoLineItems);
+
+        if (lineItemCopyError) {
+          logger.error({ msg: "[POST /promote] Failed to copy line items:", data: lineItemCopyError });
+          await supabase.from("pcco_line_items").delete().eq("pcco_id", pcco.id);
+          await supabase.from("prime_contract_change_orders").delete().eq("id", pcco.id);
+
+          const rollbackPatch = {
+            promoted_to_co_id: null,
+            promoted_at: null,
+            updated_at: now,
+            updated_by: user.id,
+          } as Record<string, unknown>;
+
+          if (pco.status === "pending") {
+            rollbackPatch.status = "pending";
+            rollbackPatch.approved_at = null;
+            rollbackPatch.approved_by = null;
+          }
+
+          const { error: rollbackError } = await supabase
+            .from("prime_contract_pcos")
+            .update(rollbackPatch)
+            .eq("id", pcoId);
+
+          if (rollbackError) {
+            logger.error({
+              msg: "[POST /promote] Failed to rollback PCO after line-item copy failure:",
+              data: rollbackError,
+            });
+          }
+
+          return NextResponse.json(
+            {
+              error: "PCO promotion failed",
+              details:
+                "Line item copy failed while creating the change order. No promotion was applied.",
+            },
+            { status: 500 },
+          );
+        }
+      }
+    }
+
+    // Update the PCO with promotion reference only after all child rows copied.
     const { error: updateError } = await supabase
       .from("prime_contract_pcos")
       .update({
@@ -142,41 +205,15 @@ export const POST = withApiGuardrails<{ projectId: string; pcoId: string }>(
 
     if (updateError) {
       logger.error({ msg: "[POST /promote] Failed to update PCO:", data: updateError });
-      // Attempt to clean up the created PCCO
+      await supabase
+        .from("pcco_line_items")
+        .delete()
+        .eq("pcco_id", pcco.id);
       await supabase
         .from("prime_contract_change_orders")
         .delete()
         .eq("id", pcco.id);
       return apiErrorResponse(updateError);
-    }
-
-    // Copy line items from PCO to PCCO
-    if (lineItems && lineItems.length > 0) {
-      const { data: fullLineItems } = await supabase
-        .from("pco_line_items")
-        .select("*")
-        .eq("pco_id", pcoIdNum)
-        .eq("pco_type", "prime");
-
-      if (fullLineItems && fullLineItems.length > 0) {
-        const pccoLineItems = fullLineItems.map((item) => ({
-          pcco_id: pcco.id,
-          description: item.description,
-          cost_code: item.budget_code_id,
-          quantity: item.quantity,
-          unit_cost: item.unit_cost,
-          uom: item.unit_of_measure,
-          line_amount: item.amount,
-        }));
-
-        const { error: lineItemCopyError } = await supabase
-          .from("pcco_line_items")
-          .insert(pccoLineItems);
-
-        if (lineItemCopyError) {
-          logger.error({ msg: "[POST /promote] Failed to copy line items:", data: lineItemCopyError });
-        }
-      }
     }
 
     return NextResponse.json(

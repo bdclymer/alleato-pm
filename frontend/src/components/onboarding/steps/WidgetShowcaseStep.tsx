@@ -29,7 +29,7 @@ export function WidgetShowcaseStep() {
   );
 }
 
-function FeedbackPreview() {
+export function FeedbackPreview({ compact = false }: { compact?: boolean }) {
   const [tag, setTag] = React.useState<AskAlleatoFeedbackTag | null>(null);
   return (
     <div className="border border-border bg-background p-4 text-foreground">
@@ -44,7 +44,10 @@ function FeedbackPreview() {
       </div>
       <Textarea
         placeholder={onboardingCopy.widget.feedbackPlaceholder}
-        className="min-h-28 bg-background text-[13px]"
+        className={cn(
+          "bg-background text-[13px]",
+          compact ? "min-h-20" : "min-h-28",
+        )}
         readOnly
       />
       <div className="mt-2.5 flex flex-wrap gap-1.5">
@@ -62,7 +65,7 @@ function FeedbackPreview() {
           Send feedback
         </Button>
       </div>
-      <div className="mt-2.5 text-[11.5px] text-muted-foreground">
+      <div className="mt-2.5 text-[11px] leading-5 text-muted-foreground">
         {onboardingCopy.widget.feedbackFooter}
       </div>
     </div>

@@ -41,6 +41,9 @@ interface LineItem {
   amount?: number | null;
   billed_to_date?: number | null;
   retainage_percent?: number | null;
+  quantity?: number | null;
+  uom?: string | null;
+  unit_cost?: number | null;
   isNew?: boolean;
   isDirty?: boolean;
 }
@@ -50,6 +53,7 @@ interface ScheduleOfValuesTabProps {
   projectId: number;
   commitmentId: string;
   commitmentType?: "subcontract" | "purchase_order" | string;
+  accountingMethod?: "amount" | "unit" | "percent";
   showHeader?: boolean;
   onImportComplete?: () => void | Promise<void>;
   onLineItemsChange?: (items: LineItem[]) => void;
@@ -62,6 +66,7 @@ export function ScheduleOfValuesTab({
   projectId,
   commitmentId,
   commitmentType,
+  accountingMethod = "amount",
   showHeader = true,
   onImportComplete,
   onLineItemsChange,
@@ -126,7 +131,7 @@ export function ScheduleOfValuesTab({
 
   const updateItem = (
     id: string,
-    field: "budget_code" | "description" | "amount" | "retainage_percent",
+    field: "budget_code" | "description" | "amount" | "retainage_percent" | "quantity" | "uom" | "unit_cost",
     value: string | number | undefined,
   ) => {
     setItems((prev) =>
@@ -142,6 +147,10 @@ export function ScheduleOfValuesTab({
             retainage_percent: value === undefined || value === "" ? null : Number(value),
             isDirty: true,
           };
+        }
+        if (field === "quantity" || field === "unit_cost") {
+          if (isLocked(item)) return item;
+          return { ...item, [field]: value === undefined || value === "" ? null : Number(value), isDirty: true };
         }
         return { ...item, [field]: typeof value === "string" ? value : "", isDirty: true };
       }),
@@ -189,6 +198,9 @@ export function ScheduleOfValuesTab({
               amount: item.amount,
               billed_to_date: item.billed_to_date,
               retainage_percent: item.retainage_percent,
+              quantity: item.quantity,
+              uom: item.uom,
+              unit_cost: item.unit_cost,
             })),
             commitmentType,
           }),
@@ -349,6 +361,13 @@ export function ScheduleOfValuesTab({
             <InlineTableHeaderCell className="w-10">#</InlineTableHeaderCell>
             <InlineTableHeaderCell>Budget Code</InlineTableHeaderCell>
             <InlineTableHeaderCell>Description</InlineTableHeaderCell>
+            {accountingMethod === "unit" ? (
+              <>
+                <InlineTableHeaderCell align="right">Qty</InlineTableHeaderCell>
+                <InlineTableHeaderCell>UOM</InlineTableHeaderCell>
+                <InlineTableHeaderCell align="right">Unit Cost</InlineTableHeaderCell>
+              </>
+            ) : null}
             <InlineTableHeaderCell align="right">Amount</InlineTableHeaderCell>
             <InlineTableHeaderCell align="right">Retainage %</InlineTableHeaderCell>
             <InlineTableHeaderCell align="right">Billed to Date</InlineTableHeaderCell>
@@ -409,6 +428,40 @@ export function ScheduleOfValuesTab({
                     onChange={(e) => updateItem(item.id, "description", e.target.value)}
                   />
                 </InlineTableCell>
+                {accountingMethod === "unit" ? (
+                  <>
+                    <InlineTableCell align="right">
+                      <Input
+                        type="number"
+                        min={0}
+                        step="0.01"
+                        className="text-right w-24 ml-auto"
+                        aria-label={`Quantity ${index + 1}`}
+                        value={item.quantity ?? ""}
+                        onChange={(e) => updateItem(item.id, "quantity", e.target.value)}
+                        disabled={locked}
+                      />
+                    </InlineTableCell>
+                    <InlineTableCell>
+                      <Input
+                        aria-label={`UOM ${index + 1}`}
+                        value={item.uom ?? ""}
+                        onChange={(e) => updateItem(item.id, "uom", e.target.value)}
+                        disabled={locked}
+                      />
+                    </InlineTableCell>
+                    <InlineTableCell align="right">
+                      <MoneyField
+                        label={`Unit cost ${index + 1}`}
+                        inline
+                        showCurrency={false}
+                        value={item.unit_cost ?? undefined}
+                        onChange={(value) => updateItem(item.id, "unit_cost", value)}
+                        disabled={locked}
+                      />
+                    </InlineTableCell>
+                  </>
+                ) : null}
                 <InlineTableCell align="right">
                   <MoneyField
                     label={`Amount ${index + 1}`}
@@ -482,7 +535,7 @@ export function ScheduleOfValuesTab({
         </InlineTableBody>
         <InlineTableFooter>
           <InlineTableFooterRow type="totals">
-            <InlineTableFooterCell align="right" colSpan={3}>Totals</InlineTableFooterCell>
+            <InlineTableFooterCell align="right" colSpan={accountingMethod === "unit" ? 6 : 3}>Totals</InlineTableFooterCell>
             <InlineTableFooterCell align="right" numeric>{formatCurrency(totals.amount)}</InlineTableFooterCell>
             <InlineTableFooterCell />
             <InlineTableFooterCell align="right" numeric>{formatCurrency(totals.billed)}</InlineTableFooterCell>
