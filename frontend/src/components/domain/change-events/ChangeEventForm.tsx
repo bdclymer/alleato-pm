@@ -157,6 +157,7 @@ export function ChangeEventForm({
             onCancel={onCancel}
             isSubmitting={isSubmitting}
             submitLabel={mode === "create" ? "Create Change Event" : "Update Change Event"}
+            submitDataTestId={mode === "create" ? "change-event-create-submit" : "change-event-update-submit"}
           >
             <p className="text-sm text-muted-foreground">
               <span className="text-destructive">*</span> Required fields

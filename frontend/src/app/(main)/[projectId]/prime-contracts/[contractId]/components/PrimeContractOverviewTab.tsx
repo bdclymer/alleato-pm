@@ -189,7 +189,11 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
     changeOrders.length > 0
       ? computedChangeOrderTotals.draft
       : Number(contract.draft_change_orders) || 0;
-  const revisedContractAmount = displayedSovTotal + approvedChangeOrdersTotal;
+  const originalContractAmount =
+    displayedSovTotal > 0
+      ? displayedSovTotal
+      : Number(contract.original_contract_value) || 0;
+  const revisedContractAmount = originalContractAmount + approvedChangeOrdersTotal;
   const pendingRevisedContractAmount =
     revisedContractAmount + pendingChangeOrdersTotal;
   const invoicesTotal = Number(contract.invoiced_amount) || 0;
@@ -380,7 +384,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
             <DetailPanel>
               <SectionRuleHeading label="Financial Summary" className="mb-6 pb-0" />
               <dl className="space-y-3 text-sm">
-                <SummaryValueRow label="Original Amount" value={formatCurrency(displayedSovTotal)} />
+                <SummaryValueRow label="Original Amount" value={formatCurrency(originalContractAmount)} />
                 <SummaryValueRow label="Revised Amount" value={formatCurrency(revisedContractAmount)} />
                 <SummaryValueRow label="Pending Amount" value={formatCurrency(pendingRevisedContractAmount)} />
                 <SummaryValueRow label="Pending COs" value={formatCurrency(pendingChangeOrdersTotal)} />

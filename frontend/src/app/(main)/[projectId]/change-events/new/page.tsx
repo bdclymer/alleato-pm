@@ -8,6 +8,7 @@ import { Sparkles } from "lucide-react";
 import { apiFetch } from "@/lib/api-client";
 import { ChangeEventForm } from "@/components/domain/change-events/ChangeEventForm";
 import type { ChangeEventFormData } from "@/components/domain/change-events/ChangeEventForm";
+import { FormServerError } from "@/components/forms/FormServerError";
 import { PageShell } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 
@@ -17,9 +18,11 @@ export default function NewChangeEventPage() {
   const projectId = parseInt(params.projectId as string, 10);
 
   const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const handleSubmit = async (data: ChangeEventFormData) => {
     setIsSaving(true);
+    setSaveError(null);
     try {
       const STATUS_MAP: Record<string, string> = {
         open: "Open",
@@ -89,7 +92,7 @@ export default function NewChangeEventPage() {
             );
           })
           .map(async (lineItem, index) => {
-            const res = await fetch(
+            return apiFetch(
               `/api/projects/${projectId}/change-events/${newEvent.id}/line-items`,
               {
                 method: "POST",
@@ -122,11 +125,6 @@ export default function NewChangeEventPage() {
                 }),
               },
             );
-            if (!res.ok) {
-              const errData = await res.json().catch(() => ({ error: "Unknown error" }));
-              throw new Error(`Line item ${index + 1}: ${errData.error || res.statusText}`);
-            }
-            return res;
           }),
       );
       const failedLineItems = lineItemResults.filter((r) => r.status === "rejected");
@@ -142,33 +140,24 @@ export default function NewChangeEventPage() {
         data.attachments.map(async (file) => {
           const formData = new FormData();
           formData.append("files", file);
-          const uploadResponse = await fetch(
+          await apiFetch(
             `/api/projects/${projectId}/change-events/${newEvent.id}/attachments`,
             {
               method: "POST",
               body: formData,
             },
           );
-
-          if (!uploadResponse.ok) {
-            const errorData = await uploadResponse
-              .json()
-              .catch(() => ({ error: "Unknown attachment upload error" }));
-            throw new Error(
-              `Failed to upload attachment "${file.name}": ${errorData.error || "Unknown error"}`,
-            );
-          }
         }),
       );
 
       toast.success("Change event created successfully");
       router.push(`/${projectId}/change-events/${newEvent.id}`);
     } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Failed to create change event",
-      );
+      const message = error instanceof Error
+        ? error.message
+        : "Failed to create change event";
+      setSaveError(message);
+      toast.error(message);
     } finally {
       setIsSaving(false);
     }
@@ -214,6 +203,7 @@ export default function NewChangeEventPage() {
       onBack={handleCancel}
       actions={headerActions}
     >
+      {saveError ? <FormServerError message={saveError} /> : null}
       <ChangeEventForm
         initialData={initialData}
         onSubmit={handleSubmit}

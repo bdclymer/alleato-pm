@@ -130,6 +130,27 @@ def graph_get(path_or_url: str, token: str, max_retries: int = 4) -> Dict[str, A
     raise RuntimeError(f"Graph GET failed after {max_retries} attempts: {last_error}")
 
 
+def graph_download_bytes(drive_id: str, item_id: str, token: str, max_retries: int = 4) -> bytes:
+    url = f"{GRAPH_BASE}/drives/{drive_id}/items/{item_id}/content"
+    last_error: Optional[Exception] = None
+    for attempt in range(max_retries):
+        request = urllib.request.Request(url, headers={"Authorization": f"Bearer {token}"})
+        try:
+            with urllib.request.urlopen(request, timeout=180) as response:
+                return response.read()
+        except urllib.error.HTTPError as exc:
+            last_error = exc
+            if exc.code not in {429, 503, 504}:
+                raise
+            retry_after = exc.headers.get("Retry-After")
+            delay = float(retry_after) if retry_after and retry_after.isdigit() else 2.0 * (2 ** attempt)
+            time.sleep(min(delay, 30.0))
+        except urllib.error.URLError as exc:
+            last_error = exc
+            time.sleep(min(2.0 * (2 ** attempt), 30.0))
+    raise RuntimeError(f"Graph download failed after {max_retries} attempts: {last_error}")
+
+
 def get_graph_token() -> str:
     client_id = os.getenv("MICROSOFT_CLIENT_ID")
     client_secret = os.getenv("MICROSOFT_CLIENT_SECRET")
@@ -591,13 +612,30 @@ def clean_project_document_row(row: Dict[str, Any]) -> Dict[str, Any]:
     return cleaned
 
 
-def apply_project_document_rows(items: List[PreviewItem]) -> Dict[str, int]:
+def upload_storage_object(client, bucket: str, storage_path: str, payload: bytes, content_type: Optional[str]) -> None:
+    options = {"upsert": "true"}
+    if content_type:
+        options["content-type"] = content_type
+
+    storage = client.storage.from_(bucket)
+    try:
+        storage.upload(storage_path, payload, options)
+    except Exception:
+        storage.update(storage_path, payload, options)
+
+
+def apply_project_document_rows(
+    items: List[PreviewItem],
+    token: Optional[str],
+    copy_to_storage: bool,
+) -> Dict[str, int]:
     from services.supabase_helpers import get_supabase_client
 
     client = get_supabase_client()
     inserted = 0
     updated = 0
     skipped = 0
+    copied = 0
 
     for item in items:
         if item.project_documents_action != "upsert_project_documents":
@@ -605,6 +643,26 @@ def apply_project_document_rows(items: List[PreviewItem]) -> Dict[str, int]:
             continue
 
         row = clean_project_document_row(item.project_documents_row)
+        if copy_to_storage:
+            if not token:
+                raise RuntimeError("Graph token is required when --copy-to-storage is used.")
+            storage_path = item.project_documents_row["source_metadata"]["storage_candidate_path"]
+            payload = graph_download_bytes(
+                str(row["source_drive_id"]),
+                str(row["source_item_id"]),
+                token,
+            )
+            upload_storage_object(
+                client,
+                str(row["storage_bucket"] or "documents"),
+                storage_path,
+                payload,
+                row.get("content_type"),
+            )
+            row["storage_bucket"] = row["storage_bucket"] or "documents"
+            row["storage_path"] = storage_path
+            copied += 1
+
         existing = (
             client.table("project_documents")
             .select("id")
@@ -625,7 +683,37 @@ def apply_project_document_rows(items: List[PreviewItem]) -> Dict[str, int]:
             client.table("project_documents").insert(row).execute()
             inserted += 1
 
-    return {"inserted": inserted, "updated": updated, "skipped": skipped}
+    return {"inserted": inserted, "updated": updated, "skipped": skipped, "copied_to_storage": copied}
+
+
+def apply_document_metadata_rows(items: List[PreviewItem]) -> Dict[str, int]:
+    from services.supabase_helpers import get_supabase_client
+
+    client = get_supabase_client()
+    upserted = 0
+    skipped = 0
+    queued = 0
+
+    for item in items:
+        row = item.document_metadata_row
+        if not row:
+            skipped += 1
+            continue
+
+        client.table("document_metadata").upsert(row).execute()
+        client.table("fireflies_ingestion_jobs").upsert(
+            {
+                "fireflies_id": row["id"],
+                "metadata_id": row["id"],
+                "stage": "raw_ingested",
+                "error_message": None,
+            },
+            on_conflict="fireflies_id",
+        ).execute()
+        upserted += 1
+        queued += 1
+
+    return {"upserted": upserted, "queued": queued, "skipped": skipped}
 
 
 def parse_args() -> argparse.Namespace:
@@ -643,7 +731,17 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--apply-project-documents",
         action="store_true",
-        help="Write project_documents rows. Does not copy files or write document_metadata.",
+        help="Write project_documents rows. Does not write document_metadata.",
+    )
+    parser.add_argument(
+        "--copy-to-storage",
+        action="store_true",
+        help="With --apply-project-documents, copy original files into Supabase Storage and set storage_path.",
+    )
+    parser.add_argument(
+        "--apply-document-metadata",
+        action="store_true",
+        help="Write document_metadata rows and enqueue parser/RAG jobs for eligible files.",
     )
     parser.add_argument(
         "--max-rag-size-mb",
@@ -677,11 +775,17 @@ def main() -> int:
 
     summary = summarize(items, folder_counter[0], root, args)
     apply_result: Optional[Dict[str, int]] = None
+    metadata_apply_result: Optional[Dict[str, int]] = None
     if args.apply_project_documents:
         if args.project_id is None:
             raise RuntimeError("--project-id is required with --apply-project-documents")
-        apply_result = apply_project_document_rows(items)
+        apply_result = apply_project_document_rows(items, token, args.copy_to_storage)
         summary["apply_project_documents"] = apply_result
+    if args.apply_document_metadata:
+        if args.project_id is None:
+            raise RuntimeError("--project-id is required with --apply-document-metadata")
+        metadata_apply_result = apply_document_metadata_rows(items)
+        summary["apply_document_metadata"] = metadata_apply_result
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     slug_source = args.project_number or args.project_name or root.get("name") or "sharepoint-folder"
@@ -714,6 +818,7 @@ def main() -> int:
         "media_upserts": summary["media_upserts"],
         "unsupported_count": summary["unsupported_count"],
         "apply_project_documents": apply_result,
+        "apply_document_metadata": metadata_apply_result,
     }, indent=2))
     return 0
 

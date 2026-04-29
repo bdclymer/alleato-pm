@@ -14,6 +14,8 @@ interface FormActionsProps {
   stickyOnMobile?: boolean;
   children?: React.ReactNode;
   className?: string;
+  submitDataTestId?: string;
+  cancelDataTestId?: string;
 }
 
 export function FormActions({
@@ -27,6 +29,8 @@ export function FormActions({
   stickyOnMobile = false,
   children,
   className,
+  submitDataTestId,
+  cancelDataTestId,
 }: FormActionsProps) {
   const justifyClass =
     align === "start"
@@ -61,6 +65,7 @@ export function FormActions({
             onClick={onCancel}
             disabled={cancelDisabled || isSubmitting}
             className="w-full sm:w-auto"
+            data-testid={cancelDataTestId}
           >
             {cancelLabel}
           </Button>
@@ -70,6 +75,7 @@ export function FormActions({
           type="submit"
           disabled={submitDisabled || isSubmitting}
           className="w-full sm:w-auto"
+          data-testid={submitDataTestId}
         >
           {isSubmitting ? (
             <>
