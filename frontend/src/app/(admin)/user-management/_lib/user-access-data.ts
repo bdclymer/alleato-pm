@@ -5,6 +5,7 @@ import type {
 } from "@/lib/permissions-shared";
 
 export type TemplateScope = "company" | "project";
+export type PermissionUsersAccess = "app" | "project";
 export type GranularOverrideEffect = "allow" | "deny";
 
 export type PermissionUser = {
@@ -83,8 +84,9 @@ export async function fetchAllTemplates(): Promise<PermissionTemplate[]> {
   return data;
 }
 
-export async function fetchUsers(): Promise<PermissionUsersResponse> {
-  return apiFetch<PermissionUsersResponse>("/api/permissions/users");
+export async function fetchUsers(access?: PermissionUsersAccess): Promise<PermissionUsersResponse> {
+  const suffix = access ? `?access=${access}` : "";
+  return apiFetch<PermissionUsersResponse>(`/api/permissions/users${suffix}`);
 }
 
 function getInitials(firstName: string, lastName: string, fallback: string): string {
@@ -105,7 +107,7 @@ export function toAccessSummary(user: PermissionUser): UserAccessSummary {
   const assignedProjectCount = user.memberships.filter((m) => !!m.templateId).length;
   const missingTemplateCount = user.isAdmin ? 0 : user.memberships.length - assignedProjectCount;
   const primaryTemplateName = user.isAdmin
-    ? "App Admin"
+    ? "Admin"
     : user.companyTemplateName ?? user.memberships[0]?.templateName ?? "No role";
 
   return {

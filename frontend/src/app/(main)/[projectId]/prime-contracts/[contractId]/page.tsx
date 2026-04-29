@@ -875,7 +875,7 @@ export default function ProjectContractDetailPage() {
         <div className="flex items-center gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="default" size="sm"><Plus />Create<ChevronDown /></Button>
+                <Button variant="default" size="sm"><Plus />Create</Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => router.push(`/${projectId}/change-events/new?contractId=${contractId}`)}><GitBranch className="h-4 w-4 mr-2" />Create Change Event</DropdownMenuItem>

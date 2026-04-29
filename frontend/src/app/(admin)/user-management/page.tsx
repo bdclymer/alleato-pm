@@ -7,7 +7,11 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   AlertTriangle,
+  Eye,
+  MoreVertical,
+  Pencil,
   Plus,
+  Trash2,
   UserPlus,
 } from "lucide-react";
 
@@ -33,6 +37,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -64,12 +74,13 @@ import {
   fetchUsers,
   formatProjectCount,
   toAccessSummary,
+  type PermissionUsersAccess,
   type TemplateScope,
   type UserAccessSummary,
   type UserLinkDiagnostic,
 } from "./_lib/user-access-data";
 
-type PermissionsTab = "users" | "project-templates" | "company-templates";
+type PermissionsTab = "app-users" | "project-access" | "project-templates" | "company-templates";
 type AccessScope = "all_projects" | "selected_projects";
 
 type ProjectOption = {
@@ -118,8 +129,6 @@ function getUserSortValue(user: UserAccessSummary, sortBy: string) {
       return user.projectCount;
     case "exceptions":
       return user.granularOverrides.length;
-    case "status":
-      return user.isAdmin ? "admin" : "member";
     case "name":
     default:
       return user.fullName;
@@ -128,6 +137,8 @@ function getUserSortValue(user: UserAccessSummary, sortBy: string) {
 
 function getTemplateSortValue(template: PermissionTemplate, sortBy: string) {
   switch (sortBy) {
+    case "description":
+      return template.description ?? "";
     case "scope":
       return template.scope ?? "project";
     case "granular":
@@ -149,7 +160,9 @@ export default function PermissionsAdminPage() {
       ? "company-templates"
       : tabParam === "project-templates"
         ? "project-templates"
-        : "users";
+        : tabParam === "project-access"
+          ? "project-access"
+          : "app-users";
   const tableState = useUnifiedTableState({
     entityKey: "permissions-users",
     searchParams,
@@ -163,7 +176,7 @@ export default function PermissionsAdminPage() {
       search: "",
       sortBy: "name",
       sortDirection: "asc",
-      visibleColumns: ["name", "email", "role", "projects", "exceptions", "status"],
+      visibleColumns: ["name", "email", "role", "projects", "exceptions"],
       filters: {},
     },
   });
@@ -172,11 +185,16 @@ export default function PermissionsAdminPage() {
   const [createScope, setCreateScope] = useState<TemplateScope>("project");
   const [editTarget, setEditTarget] = useState<PermissionTemplate | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<PermissionTemplate | null>(null);
+  const [userDeleteTarget, setUserDeleteTarget] = useState<UserAccessSummary | null>(null);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
 
-  const usersQuery = useQuery({
-    queryKey: ["permission-users"],
-    queryFn: fetchUsers,
+  const appUsersQuery = useQuery({
+    queryKey: ["permission-users", "app"],
+    queryFn: () => fetchUsers("app"),
+  });
+  const projectAccessUsersQuery = useQuery({
+    queryKey: ["permission-users", "project"],
+    queryFn: () => fetchUsers("project"),
   });
   const lastReconcileKeyRef = useRef<string | null>(null);
 
@@ -195,11 +213,51 @@ export default function PermissionsAdminPage() {
     queryFn: fetchProjects,
   });
 
-  const linkDiagnostics = usersQuery.data?.diagnostics?.missingAuthLinks ?? [];
+  const userAccess: PermissionUsersAccess =
+    activeTab === "project-access" ? "project" : "app";
+  const activeUsersQuery =
+    userAccess === "project" ? projectAccessUsersQuery : appUsersQuery;
+  const linkDiagnostics = activeUsersQuery.data?.diagnostics?.missingAuthLinks ?? [];
   const users = useMemo(
-    () => (usersQuery.data?.data ?? []).map(toAccessSummary),
-    [usersQuery.data?.data],
+    () => (activeUsersQuery.data?.data ?? []).map(toAccessSummary),
+    [activeUsersQuery.data?.data],
   );
+  const appUserCount = appUsersQuery.data?.data.length ?? 0;
+  const projectAccessUserCount = projectAccessUsersQuery.data?.data.length ?? 0;
+  const usersDescription =
+    activeTab === "project-access"
+      ? "Project-limited users who can access the site because they were added to one or more projects. This is where subcontractors, owner contacts, and other external project contacts belong."
+      : "Internal app users who administer the system or have company-wide access across projects.";
+  const usersSearchPlaceholder =
+    activeTab === "project-access"
+      ? "Search project access users..."
+      : "Search app users...";
+  const usersEmptyTitle =
+    activeTab === "project-access" ? "No project access users" : "No app users";
+  const usersEmptyDescription =
+    activeTab === "project-access"
+      ? "Project access is granted from the Project Directory inside each individual project."
+      : "Invite an app user to assign company-wide access or admin responsibility.";
+
+  const usersFilteredDescription =
+    activeTab === "project-access"
+      ? "No project access users match your search."
+      : "No app users match your search.";
+
+  const usersAddLabel =
+    activeTab === "project-access" ? "Add Project Access" : "Add App User";
+  const usersTotalCount =
+    activeTab === "project-access" ? projectAccessUserCount : appUserCount;
+  const canInviteFromActiveTab = activeTab !== "project-access";
+  const canManageUserRows = activeTab === "app-users";
+
+  const usersTopContent =
+    activeTab === "project-access" ? (
+      <p className="mt-0 max-w-3xl pb-4 text-sm leading-6 text-muted-foreground">
+        Users who have been granted access to individual projects. Users can be added or removed
+        from the project directory inside each project.
+      </p>
+    ) : null;
 
   const filteredUsers = useMemo(() => {
     const search = tableState.debouncedSearch.trim().toLowerCase();
@@ -274,7 +332,7 @@ export default function PermissionsAdminPage() {
       },
       {
         id: "role",
-        label: "Role",
+        label: "Permission Template",
         defaultVisible: true,
         sortable: true,
         sortValue: (user) => user.primaryTemplateName,
@@ -318,18 +376,6 @@ export default function PermissionsAdminPage() {
               ? "None"
               : `${user.granularOverrides.length} active`}
           </span>
-        ),
-      },
-      {
-        id: "status",
-        label: "Status",
-        defaultVisible: true,
-        sortable: true,
-        sortValue: (user) => (user.isAdmin ? "admin" : "member"),
-        render: (user) => (
-          <Badge variant={user.isAdmin ? "default" : "outline"}>
-            {user.isAdmin ? "Admin" : "Member"}
-          </Badge>
         ),
       },
     ],
@@ -450,6 +496,20 @@ export default function PermissionsAdminPage() {
     },
   });
 
+  const deleteUserMutation = useMutation({
+    mutationFn: async (personId: string) => {
+      await apiFetch(`/api/permissions/users/${personId}`, { method: "DELETE" });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["permission-users"] });
+      setUserDeleteTarget(null);
+      toast.success("User removed from App Users");
+    },
+    onError: (err) => {
+      toast.error(err instanceof Error ? err.message : "Failed to delete user");
+    },
+  });
+
   const reconcileLinksMutation = useMutation({
     mutationFn: async () => {
       return apiFetch<{
@@ -473,7 +533,7 @@ export default function PermissionsAdminPage() {
   });
 
   useEffect(() => {
-    if (activeTab !== "users" || linkDiagnostics.length === 0) return;
+    if ((activeTab !== "app-users" && activeTab !== "project-access") || linkDiagnostics.length === 0) return;
 
     const reconcileKey = linkDiagnostics
       .map((diagnostic) => `${diagnostic.authUserId}:${diagnostic.issues.join(",")}`)
@@ -524,15 +584,21 @@ export default function PermissionsAdminPage() {
     null;
 
   const tabs = [
-    { label: "Users", href: "/user-management", count: users.length, isActive: activeTab === "users" },
+    { label: "App Users", href: "/user-management", count: appUserCount, isActive: activeTab === "app-users" },
     {
-      label: "Project Roles",
+      label: "Project Access",
+      href: "/user-management?tab=project-access",
+      count: projectAccessUserCount,
+      isActive: activeTab === "project-access",
+    },
+    {
+      label: "Project Permission Templates",
       href: "/user-management?tab=project-templates",
       count: projectTemplates.length,
       isActive: activeTab === "project-templates",
     },
     {
-      label: "Company Roles",
+      label: "Company Permission Templates",
       href: "/user-management?tab=company-templates",
       count: companyTemplates.length,
       isActive: activeTab === "company-templates",
@@ -549,15 +615,19 @@ export default function PermissionsAdminPage() {
         sortable: true,
         sortValue: (role) => role.name,
         render: (role) => (
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="truncate text-sm font-medium text-foreground">{role.name}</span>
-              {role.is_system && <Badge variant="outline">System</Badge>}
-            </div>
-            {role.description && (
-              <p className="mt-0.5 truncate text-xs text-muted-foreground">{role.description}</p>
-            )}
-          </div>
+          <span className="block truncate text-sm font-medium text-foreground">{role.name}</span>
+        ),
+      },
+      {
+        id: "description",
+        label: "Description",
+        defaultVisible: true,
+        sortable: true,
+        sortValue: (role) => role.description ?? "",
+        render: (role) => (
+          <span className="block truncate text-sm text-muted-foreground">
+            {role.description || "No description"}
+          </span>
         ),
       },
       {
@@ -567,9 +637,12 @@ export default function PermissionsAdminPage() {
         sortable: true,
         sortValue: (role) => role.scope ?? "project",
         render: (role) => (
-          <Badge variant="outline">
-            {role.scope === "company" ? "All projects" : "Project"}
-          </Badge>
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant="outline">
+              {role.scope === "company" ? "All projects" : "Project"}
+            </Badge>
+            {role.is_system && <Badge variant="outline">System</Badge>}
+          </div>
         ),
       },
       {
@@ -590,26 +663,26 @@ export default function PermissionsAdminPage() {
 
   return (
     <>
-      {activeTab === "users" ? (
+      {activeTab === "app-users" || activeTab === "project-access" ? (
         <UnifiedTablePage<UserAccessSummary>
           header={{
-            title: "User Management",
-            description: "Invite users, assign roles, choose project access, and manage exceptions.",
-            actions: (
-              <Button size="sm" onClick={() => setShowInvite(true)}>
-                <UserPlus className="h-4 w-4" />
-                Add User
-              </Button>
-            ),
+            title: "Manage Users",
+            description: usersDescription,
+            actions: canInviteFromActiveTab ? (
+                <Button size="sm" onClick={() => setShowInvite(true)}>
+                  <UserPlus className="h-4 w-4" />
+                  {usersAddLabel}
+                </Button>
+              ) : null,
           }}
           tabs={tabs}
           toolbar={{
-            totalItems: users.length,
+            totalItems: usersTotalCount,
             filteredItems: sortedUsers.length,
             selectedCount: tableState.selectedIds.length,
             searchValue: tableState.searchInput,
             onSearchChange: tableState.setSearchInput,
-            searchPlaceholder: "Search users...",
+            searchPlaceholder: usersSearchPlaceholder,
             currentView: tableState.currentView,
             onViewChange: (view) => {
               tableState.setCurrentView(view);
@@ -622,23 +695,65 @@ export default function PermissionsAdminPage() {
           }}
           data={{
             items: pagedUsers,
-            isLoading: usersQuery.isLoading,
-            isFetching: usersQuery.isFetching,
-            error: usersQuery.error instanceof Error ? usersQuery.error : null,
+            isLoading: activeUsersQuery.isLoading,
+            isFetching: activeUsersQuery.isFetching,
+            error: activeUsersQuery.error instanceof Error ? activeUsersQuery.error : null,
           }}
           topContent={
-            linkDiagnostics.length > 0 ? (
-              <UserLinkDiagnosticsAlert
-                diagnostics={linkDiagnostics}
-                isRepairing={reconcileLinksMutation.isPending}
-                onRepair={() => reconcileLinksMutation.mutate()}
-              />
-            ) : null
+            <div className="-mt-3 space-y-3">
+              {usersTopContent}
+              {linkDiagnostics.length > 0 ? (
+                <UserLinkDiagnosticsAlert
+                  diagnostics={linkDiagnostics}
+                  isRepairing={reconcileLinksMutation.isPending}
+                  onRepair={() => reconcileLinksMutation.mutate()}
+                />
+              ) : null}
+            </div>
           }
           table={{
             columns: userColumns,
             getRowId: (user) => user.id,
             onRowClick: (user) => router.push(`/user-management/users/${user.personId}`),
+            rowActions: canManageUserRows
+              ? (user) => (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        aria-label={`Actions for ${user.fullName}`}
+                      >
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={() => router.push(`/user-management/users/${user.personId}`)}
+                      >
+                        <Eye className="mr-2 h-4 w-4" />
+                        View
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() =>
+                          router.push(`/user-management/users/${user.personId}?mode=edit`)
+                        }
+                      >
+                        <Pencil className="mr-2 h-4 w-4" />
+                        Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="text-destructive focus:text-destructive"
+                        onClick={() => setUserDeleteTarget(user)}
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )
+              : undefined,
             stickyHeader: true,
             density: "compact",
           }}
@@ -652,16 +767,16 @@ export default function PermissionsAdminPage() {
             },
           }}
           emptyState={{
-            title: "No users",
-            description: "Invite a user to assign roles and project access.",
-            filteredDescription: "No users match your search.",
+            title: usersEmptyTitle,
+            description: usersEmptyDescription,
+            filteredDescription: usersFilteredDescription,
             isFiltered: Boolean(tableState.debouncedSearch),
-            action: (
+            action: canInviteFromActiveTab ? (
               <Button size="sm" onClick={() => setShowInvite(true)}>
                 <UserPlus className="h-4 w-4" />
-                Add User
+                {usersAddLabel}
               </Button>
-            ),
+            ) : undefined,
           }}
           pagination={{
             page: tableState.page,
@@ -671,7 +786,6 @@ export default function PermissionsAdminPage() {
             onPerPageChange: (perPage) => tableState.setPerPage(Number(perPage)),
             clientSide: true,
           }}
-          layout={{ maxWidth: "full", fullBleedTable: true }}
           features={{
             enableSearch: true,
             enableViews: false,
@@ -680,17 +794,17 @@ export default function PermissionsAdminPage() {
             enableExport: false,
             enableBulkDelete: false,
             enableRowSelection: false,
-            enableRowActions: false,
+            enableRowActions: canManageUserRows,
           }}
         />
       ) : (
         <UnifiedTablePage<PermissionTemplate>
           header={{
-            title: activeTab === "company-templates" ? "Company Roles" : "Project Roles",
+            title: "Manage Users",
             description:
               activeTab === "company-templates"
-                ? "Manage company-wide roles for users who need access across every project."
-                : "Manage project roles assigned to users on individual projects.",
+                ? "Manage company-wide permission templates for users who need access across every project."
+                : "Manage permission templates assigned to users on individual projects.",
             actions: (
               <Button
                 size="sm"
@@ -699,7 +813,9 @@ export default function PermissionsAdminPage() {
                 }
               >
                 <Plus className="h-4 w-4" />
-                {activeTab === "company-templates" ? "New Company Role" : "New Project Role"}
+                {activeTab === "company-templates"
+                  ? "New Company Permission Template"
+                  : "New Project Permission Template"}
               </Button>
             ),
           }}
@@ -712,12 +828,12 @@ export default function PermissionsAdminPage() {
             onSearchChange: tableState.setSearchInput,
             searchPlaceholder:
               activeTab === "company-templates"
-                ? "Search company roles..."
-                : "Search project roles...",
+                ? "Search company permission templates..."
+                : "Search project permission templates...",
             currentView: "table",
             onViewChange: () => undefined,
             columns: roleColumns,
-            visibleColumns: ["name", "scope", "granular"],
+            visibleColumns: ["name", "description", "scope", "granular"],
             onColumnVisibilityChange: () => undefined,
           }}
           data={{
@@ -729,7 +845,30 @@ export default function PermissionsAdminPage() {
             getRowId: (role) => role.id,
             activeRowId: selectedTemplate?.id ?? null,
             onRowClick: (template) => setSelectedTemplateId(template.id),
-            onDelete: (template) => setDeleteTarget(template),
+            rowActions: (template) =>
+              template.is_system ? null : (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      aria-label={`Actions for ${template.name}`}
+                    >
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem
+                      className="text-destructive focus:text-destructive"
+                      onClick={() => setDeleteTarget(template)}
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ),
             stickyHeader: true,
             density: "compact",
           }}
@@ -743,12 +882,12 @@ export default function PermissionsAdminPage() {
             },
           }}
           emptyState={{
-            title: "No roles",
+            title: "No permission templates",
             description:
               activeTab === "company-templates"
-                ? "Create a company role for all-project access."
-                : "Create a project role for project-specific access.",
-            filteredDescription: "No roles match your search.",
+                ? "Create a company permission template for all-project access."
+                : "Create a project permission template for project-specific access.",
+            filteredDescription: "No permission templates match your search.",
             isFiltered: Boolean(tableState.debouncedSearch),
             action: (
               <Button
@@ -758,7 +897,9 @@ export default function PermissionsAdminPage() {
                 }
               >
                 <Plus className="h-4 w-4" />
-                {activeTab === "company-templates" ? "New Company Role" : "New Project Role"}
+                {activeTab === "company-templates"
+                  ? "New Company Permission Template"
+                  : "New Project Permission Template"}
               </Button>
             ),
           }}
@@ -770,7 +911,6 @@ export default function PermissionsAdminPage() {
             onPerPageChange: (perPage) => tableState.setPerPage(Number(perPage)),
             clientSide: true,
           }}
-          layout={{ maxWidth: "full", fullBleedTable: true }}
           features={{
             enableSearch: true,
             enableViews: false,
@@ -799,10 +939,10 @@ export default function PermissionsAdminPage() {
         <DialogContent size="form" className="max-h-[calc(100svh-2rem)] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              New {createScope === "company" ? "Company" : "Project"} Role
+              New {createScope === "company" ? "Company" : "Project"} Permission Template
             </DialogTitle>
             <DialogDescription>
-              Define the module access and granular capabilities included in this role.
+              Define the module access and granular capabilities included in this permission template.
             </DialogDescription>
           </DialogHeader>
           <PermissionTemplateForm
@@ -824,7 +964,7 @@ export default function PermissionsAdminPage() {
               )}
             </DialogTitle>
             <DialogDescription>
-              Adjust this role so future assignments inherit the updated access profile.
+              Adjust this permission template so future assignments inherit the updated access profile.
             </DialogDescription>
           </DialogHeader>
           {editTarget && (
@@ -846,9 +986,9 @@ export default function PermissionsAdminPage() {
       <Dialog open={!!selectedTemplate} onOpenChange={(open) => !open && setSelectedTemplateId(null)}>
         <DialogContent size="form" className="max-h-[calc(100svh-2rem)] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Manage role access</DialogTitle>
+            <DialogTitle>Manage permission template access</DialogTitle>
             <DialogDescription>
-              Adjust the module access and granular capabilities included in this role.
+              Adjust the module access and granular capabilities included in this permission template.
             </DialogDescription>
           </DialogHeader>
           {selectedTemplate && (
@@ -900,6 +1040,32 @@ export default function PermissionsAdminPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <AlertDialog open={!!userDeleteTarget} onOpenChange={() => setUserDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete user?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This removes {userDeleteTarget?.fullName ?? "this user"} from App Users by removing
+              company-wide access and admin status. Project access is still controlled from each
+              project directory.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (userDeleteTarget) {
+                  deleteUserMutation.mutate(userDeleteTarget.personId);
+                }
+              }}
+              disabled={deleteUserMutation.isPending}
+            >
+              Delete user
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
@@ -935,7 +1101,7 @@ function InviteUserDialog({
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [jobTitle, setJobTitle] = useState("");
-  const [accessScope, setAccessScope] = useState<AccessScope>("selected_projects");
+  const [accessScope, setAccessScope] = useState<AccessScope>("all_projects");
   const [projectTemplateId, setProjectTemplateId] = useState("");
   const [companyTemplateId, setCompanyTemplateId] = useState("");
   const [selectedProjectIds, setSelectedProjectIds] = useState<Set<number>>(new Set());
@@ -947,7 +1113,7 @@ function InviteUserDialog({
       setLastName("");
       setEmail("");
       setJobTitle("");
-      setAccessScope("selected_projects");
+      setAccessScope("all_projects");
       setProjectTemplateId("");
       setCompanyTemplateId("");
       setSelectedProjectIds(new Set());
@@ -956,7 +1122,13 @@ function InviteUserDialog({
     }
 
     setProjectTemplateId((current) => current || findTemplateId(projectTemplates, "Project Manager"));
-    setCompanyTemplateId((current) => current || companyTemplates[0]?.id || "");
+    setCompanyTemplateId(
+      (current) =>
+        current ||
+        findTemplateId(companyTemplates, "Project Manager") ||
+        companyTemplates[0]?.id ||
+        "",
+    );
   }, [open, projectTemplates, companyTemplates]);
 
   const selectedTemplateId =
@@ -976,7 +1148,7 @@ function InviteUserDialog({
     setError(null);
 
     if (!canSubmit) {
-      setError("Add the user details, role, and project access before sending the invite.");
+      setError("Add the user details, permission template, and project access before sending the invite.");
       return;
     }
 
@@ -1001,7 +1173,7 @@ function InviteUserDialog({
         <DialogHeader>
           <DialogTitle>Add user</DialogTitle>
           <DialogDescription>
-            Invite a user, choose their role, and assign either specific projects or all-project access.
+            Invite a user, choose their permission template, and assign all-project access by default or limit them to specific projects.
           </DialogDescription>
         </DialogHeader>
 
@@ -1061,27 +1233,6 @@ function InviteUserDialog({
                 type="button"
                 variant="outline"
                 onClick={() => {
-                  setAccessScope("selected_projects");
-                  setProjectTemplateId((current) => current || projectTemplates[0]?.id || "");
-                }}
-                className={cn(
-                  "h-auto justify-start rounded-md px-4 py-3 text-left transition-colors",
-                  accessScope === "selected_projects"
-                    ? "border-primary bg-primary/5 hover:bg-primary/5"
-                    : "hover:bg-muted/50",
-                )}
-              >
-                <span className="block min-w-0">
-                  <span className="block text-sm font-semibold text-foreground">Specific projects</span>
-                  <span className="mt-1 block whitespace-normal text-sm font-normal text-muted-foreground">
-                    Best for a new PM, field staff, or limited rollout.
-                  </span>
-                </span>
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
                   setAccessScope("all_projects");
                   setCompanyTemplateId((current) => current || companyTemplates[0]?.id || "");
                 }}
@@ -1095,7 +1246,28 @@ function InviteUserDialog({
                 <span className="block min-w-0">
                   <span className="block text-sm font-semibold text-foreground">All projects</span>
                   <span className="mt-1 block whitespace-normal text-sm font-normal text-muted-foreground">
-                    Best for a senior PM or project management admin.
+                    Default for employees who should see every current and future project.
+                  </span>
+                </span>
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setAccessScope("selected_projects");
+                  setProjectTemplateId((current) => current || projectTemplates[0]?.id || "");
+                }}
+                className={cn(
+                  "h-auto justify-start rounded-md px-4 py-3 text-left transition-colors",
+                  accessScope === "selected_projects"
+                    ? "border-primary bg-primary/5 hover:bg-primary/5"
+                    : "hover:bg-muted/50",
+                )}
+              >
+                <span className="block min-w-0">
+                  <span className="block text-sm font-semibold text-foreground">Specific projects</span>
+                  <span className="mt-1 block whitespace-normal text-sm font-normal text-muted-foreground">
+                    Downgrade path for limited project access.
                   </span>
                 </span>
               </Button>
@@ -1105,7 +1277,7 @@ function InviteUserDialog({
           <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
             <div className="space-y-1.5">
               <label htmlFor="invite-role" className="text-sm font-medium text-foreground">
-                Role
+                Permission template
               </label>
               <Select
                 value={selectedTemplateId}
@@ -1119,7 +1291,7 @@ function InviteUserDialog({
                 }}
               >
                 <SelectTrigger id="invite-role" className="h-9 text-sm">
-                  <SelectValue placeholder="Select role" />
+                  <SelectValue placeholder="Select permission template" />
                 </SelectTrigger>
                 <SelectContent>
                   {(accessScope === "all_projects" ? companyTemplates : projectTemplates).map((template) => (
@@ -1130,7 +1302,7 @@ function InviteUserDialog({
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
-                Start with a role, then customize the user later if needed.
+                Start with a permission template, then customize the user later if needed.
               </p>
             </div>
 
@@ -1147,7 +1319,7 @@ function InviteUserDialog({
               </div>
               {accessScope === "all_projects" ? (
                 <div className="rounded-md border border-border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
-                  This user will inherit access across every current and future project through the selected company role.
+                  This user will inherit access across every current and future project through the selected company permission template.
                 </div>
               ) : (
                 <MultiSelectField

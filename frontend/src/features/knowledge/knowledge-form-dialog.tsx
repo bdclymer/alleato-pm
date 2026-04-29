@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -37,7 +38,9 @@ import {
   useUpdateKnowledgeArticle,
   KNOWLEDGE_CATEGORIES,
   type KnowledgeArticle,
+  type KnowledgeApprovalStatus,
   type KnowledgeCategory,
+  type KnowledgeVisibility,
 } from "@/hooks/use-company-knowledge";
 
 // ---------------------------------------------------------------------------
@@ -50,6 +53,9 @@ const knowledgeFormSchema = z.object({
   category: z.string().min(1, "Category is required"),
   source: z.string().nullable().optional(),
   tags: z.array(z.string()).default([]),
+  approval_status: z.enum(["draft", "approved", "archived"]).default("approved"),
+  visibility: z.enum(["internal", "admin_only", "client_visible"]).default("internal"),
+  ai_searchable: z.boolean().default(true),
 });
 
 type KnowledgeFormValues = z.infer<typeof knowledgeFormSchema>;
@@ -63,6 +69,9 @@ function buildDefaults(
     category: article?.category ?? "general",
     source: article?.source ?? null,
     tags: article?.tags ?? [],
+    approval_status: article?.approval_status ?? "approved",
+    visibility: article?.visibility ?? "internal",
+    ai_searchable: article?.ai_searchable ?? true,
   };
 }
 
@@ -105,6 +114,9 @@ export function KnowledgeFormDialog({
       category: values.category as KnowledgeCategory,
       source: values.source || undefined,
       tags: values.tags,
+      approval_status: values.approval_status as KnowledgeApprovalStatus,
+      visibility: values.visibility as KnowledgeVisibility,
+      ai_searchable: values.ai_searchable,
     };
 
     if (isEditing && article) {
@@ -234,6 +246,75 @@ export function KnowledgeFormDialog({
                       onChange={(e) =>
                         field.onChange(e.target.value || null)
                       }
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="approval_status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Approval</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select approval status" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="approved">Approved</SelectItem>
+                        <SelectItem value="draft">Draft</SelectItem>
+                        <SelectItem value="archived">Archived</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="visibility"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Visibility</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select visibility" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="internal">Internal</SelectItem>
+                        <SelectItem value="admin_only">Admin only</SelectItem>
+                        <SelectItem value="client_visible">Client visible</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="ai_searchable"
+              render={({ field }) => (
+                <FormItem className="flex items-center justify-between gap-4 rounded-md border border-border/50 px-3 py-2">
+                  <div>
+                    <FormLabel>Available to Ask Alleato</FormLabel>
+                    <p className="text-xs text-muted-foreground">
+                      Approved entries can be used by AI search when this is on.
+                    </p>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
                     />
                   </FormControl>
                 </FormItem>

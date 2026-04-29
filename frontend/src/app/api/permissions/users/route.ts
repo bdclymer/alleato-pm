@@ -72,10 +72,12 @@ async function requireAdmin(where: string) {
  */
 export const GET = withApiGuardrails(
   "permissions/users#GET",
-  async () => {
+  async ({ request }) => {
     const supabase = await createClient();
     await requireAdmin("permissions/users#GET");
     const service = createServiceClient();
+    const url = new URL(request.url);
+    const access = url.searchParams.get("access");
 
     const { data: people, error: peopleError } = await supabase
       .from("people")
@@ -263,11 +265,22 @@ export const GET = withApiGuardrails(
         granularOverrides: granularOverridesByPerson.get(p.id) ?? [],
       };
     });
+    const filteredUsers = users.filter((user) => {
+      if (access === "app") {
+        return user.isAdmin || Boolean(user.companyTemplateId);
+      }
+
+      if (access === "project") {
+        return !user.isAdmin && !user.companyTemplateId && user.memberships.length > 0;
+      }
+
+      return true;
+    });
 
     const linkDiagnostics = await findPermissionUserLinkDiagnostics(service);
 
     return NextResponse.json({
-      data: users,
+      data: filteredUsers,
       diagnostics: {
         missingAuthLinks: linkDiagnostics,
       },
@@ -345,6 +358,7 @@ export const POST = withApiGuardrails(
       });
     }
 
+    const grantsAdmin = body.access_scope === "all_projects" && template.name === "Admin";
     let authUserId: string | null = null;
     const { data: existingProfile } = await service
       .from("user_profiles")
@@ -382,7 +396,7 @@ export const POST = withApiGuardrails(
         full_name: fullName,
         role: body.job_title || template.name,
         is_active: true,
-        is_admin: false,
+        is_admin: grantsAdmin,
         updated_at: new Date().toISOString(),
       },
       { onConflict: "id" },

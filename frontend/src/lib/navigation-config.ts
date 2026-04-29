@@ -490,7 +490,7 @@ export const headerNavGroups: HeaderNavGroup[] = [
         description: "Project task board",
       },
       {
-        name: "Project User Management",
+        name: "Manage Users",
         path: "user-management",
         requiresProject: true,
         icon: Lock,

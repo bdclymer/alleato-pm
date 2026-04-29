@@ -2,6 +2,7 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { assignCompanyTemplate, removeCompanyTemplate } from "@/lib/permissions";
 import { z } from "zod";
 
@@ -35,8 +36,44 @@ export const PUT = withApiGuardrails(
       return NextResponse.json({ error: "template_id (uuid) is required" }, { status: 400 });
     }
 
+    const service = createServiceClient();
+    const { data: template, error: templateError } = await service
+      .from("permission_templates")
+      .select("name, scope")
+      .eq("id", body.data.template_id)
+      .maybeSingle();
+
+    if (templateError || !template) {
+      return NextResponse.json({ error: "Selected permission template no longer exists." }, { status: 404 });
+    }
+
+    if (template.scope !== "company") {
+      return NextResponse.json({ error: "Company access requires a company permission template." }, { status: 400 });
+    }
+
     const result = await assignCompanyTemplate(personId, body.data.template_id);
     if (!result.success) return NextResponse.json({ error: result.error }, { status: 500 });
+
+    const { data: person, error: personError } = await service
+      .from("people")
+      .select("auth_user_id")
+      .eq("id", personId)
+      .maybeSingle();
+
+    if (personError) {
+      return NextResponse.json({ error: personError.message }, { status: 500 });
+    }
+
+    if (person?.auth_user_id) {
+      const { error: profileError } = await service
+        .from("user_profiles")
+        .update({ is_admin: template.name === "Admin", updated_at: new Date().toISOString() })
+        .eq("id", person.auth_user_id);
+
+      if (profileError) {
+        return NextResponse.json({ error: profileError.message }, { status: 500 });
+      }
+    }
 
     return NextResponse.json({ success: true });
   },
@@ -54,6 +91,28 @@ export const DELETE = withApiGuardrails(
 
     const result = await removeCompanyTemplate(personId);
     if (!result.success) return NextResponse.json({ error: result.error }, { status: 500 });
+
+    const service = createServiceClient();
+    const { data: person, error: personError } = await service
+      .from("people")
+      .select("auth_user_id")
+      .eq("id", personId)
+      .maybeSingle();
+
+    if (personError) {
+      return NextResponse.json({ error: personError.message }, { status: 500 });
+    }
+
+    if (person?.auth_user_id) {
+      const { error: profileError } = await service
+        .from("user_profiles")
+        .update({ is_admin: false, updated_at: new Date().toISOString() })
+        .eq("id", person.auth_user_id);
+
+      if (profileError) {
+        return NextResponse.json({ error: profileError.message }, { status: 500 });
+      }
+    }
 
     return NextResponse.json({ success: true });
   },

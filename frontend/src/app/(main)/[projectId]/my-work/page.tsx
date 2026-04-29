@@ -222,6 +222,7 @@ export default async function MyWorkPage({
   const hasPendingSov = sovSubmissions.some(
     (s) => s.status === "draft" || s.status === "revise_resubmit",
   );
+  const hasApprovedSov = sovSubmissions.some((s) => s.status === "approved");
 
   return (
     <PageShell variant="dashboard" title="My Work">
@@ -290,7 +291,7 @@ export default async function MyWorkPage({
                   </Link>
                 );
               })}
-              {isSubcontractor && (
+              {isSubcontractor && hasApprovedSov && (
                 <div className="pt-1">
                   <Button asChild size="sm" variant="outline">
                     <Link href={`/${projectId}/invoicing/subcontractor/new`}>
@@ -298,6 +299,11 @@ export default async function MyWorkPage({
                     </Link>
                   </Button>
                 </div>
+              )}
+              {isSubcontractor && !hasApprovedSov && (
+                <p className="pt-1 text-xs text-muted-foreground">
+                  Invoice submission opens after your Schedule of Values is approved.
+                </p>
               )}
             </div>
           )}

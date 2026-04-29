@@ -79,6 +79,10 @@ export const GET = withApiGuardrails(
   const projectId = url.searchParams.get("projectId");
   const origin = url.searchParams.get("origin");
   const tag = url.searchParams.get("tag");
+  const manage = url.searchParams.get("manage") === "true";
+  const approvalStatus = url.searchParams.get("approvalStatus");
+  const visibility = url.searchParams.get("visibility");
+  const aiSearchable = url.searchParams.get("aiSearchable");
 
   let query = supabase
     .from("company_knowledge")
@@ -86,6 +90,14 @@ export const GET = withApiGuardrails(
     .eq("is_active", true)
     .order("updated_at", { ascending: false })
     .limit(200);
+
+  if (manage) {
+    await assertKnowledgeAdmin(supabase, user.id, "knowledge#GET");
+  } else {
+    query = query
+      .eq("approval_status", "approved")
+      .neq("visibility", "admin_only");
+  }
 
   if (category && category !== "all") {
     query = query.eq("category", category);
@@ -107,6 +119,18 @@ export const GET = withApiGuardrails(
 
   if (tag) {
     query = query.contains("tags", [tag]);
+  }
+
+  if (approvalStatus && approvalStatus !== "all") {
+    query = query.eq("approval_status", approvalStatus);
+  }
+
+  if (visibility && visibility !== "all") {
+    query = query.eq("visibility", visibility);
+  }
+
+  if (aiSearchable === "true" || aiSearchable === "false") {
+    query = query.eq("ai_searchable", aiSearchable === "true");
   }
 
   const { data, error } = await query;
@@ -160,6 +184,16 @@ export const POST = withApiGuardrails(
       project_id: body.project_id ?? null,
       meeting_id: body.meeting_id ?? null,
       origin: body.origin ?? "manual",
+      approval_status: body.approval_status ?? "approved",
+      visibility: body.visibility ?? "internal",
+      ai_searchable: body.ai_searchable ?? true,
+      source_document_id: body.source_document_id ?? null,
+      approved_at:
+        (body.approval_status ?? "approved") === "approved"
+          ? new Date().toISOString()
+          : null,
+      approved_by:
+        (body.approval_status ?? "approved") === "approved" ? user.id : null,
       ...(embedding ? { embedding: JSON.stringify(embedding) } : {}),
     })
     .select()
@@ -197,6 +231,11 @@ export const PATCH = withApiGuardrails(
       { error: "Missing article id" },
       { status: 400 },
     );
+  }
+
+  if (updates.approval_status === "approved") {
+    updates.approved_at = new Date().toISOString();
+    updates.approved_by = user.id;
   }
 
   // Re-generate embedding if title or content changed

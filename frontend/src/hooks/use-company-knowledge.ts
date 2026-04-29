@@ -76,6 +76,8 @@ export const KNOWLEDGE_CATEGORIES: {
 ];
 
 export type KnowledgeOrigin = "manual" | "meeting_extraction" | "ai_assistant" | "import";
+export type KnowledgeApprovalStatus = "draft" | "approved" | "archived";
+export type KnowledgeVisibility = "internal" | "admin_only" | "client_visible";
 
 export interface KnowledgeArticle {
   id: string;
@@ -89,6 +91,12 @@ export interface KnowledgeArticle {
   project_id: number | null;
   meeting_id: string | null;
   origin: KnowledgeOrigin;
+  approval_status: KnowledgeApprovalStatus;
+  visibility: KnowledgeVisibility;
+  ai_searchable: boolean;
+  source_document_id: string | null;
+  approved_at: string | null;
+  approved_by: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -145,6 +153,10 @@ export interface KnowledgeFilters {
   projectId?: number;
   origin?: string;
   tag?: string;
+  approvalStatus?: string;
+  visibility?: string;
+  aiSearchable?: boolean;
+  manage?: boolean;
 }
 
 export function useKnowledgeArticles(filters?: KnowledgeFilters) {
@@ -163,6 +175,18 @@ export function useKnowledgeArticles(filters?: KnowledgeFilters) {
   }
   if (filters?.tag) {
     params.set("tag", filters.tag);
+  }
+  if (filters?.approvalStatus && filters.approvalStatus !== "all") {
+    params.set("approvalStatus", filters.approvalStatus);
+  }
+  if (filters?.visibility && filters.visibility !== "all") {
+    params.set("visibility", filters.visibility);
+  }
+  if (typeof filters?.aiSearchable === "boolean") {
+    params.set("aiSearchable", String(filters.aiSearchable));
+  }
+  if (filters?.manage) {
+    params.set("manage", "true");
   }
 
   return useQuery({
@@ -187,6 +211,10 @@ export function useCreateKnowledgeArticle() {
         project_id?: number;
         meeting_id?: string;
         origin?: KnowledgeOrigin;
+        approval_status?: KnowledgeApprovalStatus;
+        visibility?: KnowledgeVisibility;
+        ai_searchable?: boolean;
+        source_document_id?: string | null;
       },
     ) =>
       apiFetch("/api/knowledge", {

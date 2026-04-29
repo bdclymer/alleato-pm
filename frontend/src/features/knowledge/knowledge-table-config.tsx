@@ -34,6 +34,18 @@ const ORIGIN_LABELS: Record<string, string> = {
   import: "Imported",
 };
 
+const APPROVAL_LABELS: Record<string, string> = {
+  approved: "Approved",
+  draft: "Draft",
+  archived: "Archived",
+};
+
+const VISIBILITY_LABELS: Record<string, string> = {
+  internal: "Internal",
+  admin_only: "Admin only",
+  client_visible: "Client visible",
+};
+
 // ---------------------------------------------------------------------------
 // Column definitions
 // ---------------------------------------------------------------------------
@@ -42,6 +54,9 @@ export const knowledgeColumns: ColumnConfig[] = [
   { id: "title", label: "Title", alwaysVisible: true },
   { id: "content", label: "Content", defaultVisible: true },
   { id: "category", label: "Category", defaultVisible: true },
+  { id: "approval_status", label: "Approval", defaultVisible: true },
+  { id: "visibility", label: "Visibility", defaultVisible: true },
+  { id: "ai_searchable", label: "AI", defaultVisible: true },
   { id: "tags", label: "Tags", defaultVisible: true },
   { id: "origin", label: "Source", defaultVisible: true },
   { id: "updated_at", label: "Updated", defaultVisible: true },
@@ -75,6 +90,26 @@ export const knowledgeFilters: FilterConfig[] = [
       { value: "meeting_extraction", label: "From Meeting" },
       { value: "ai_assistant", label: "AI Generated" },
       { value: "import", label: "Imported" },
+    ],
+  },
+  {
+    id: "approvalStatus",
+    label: "Approval",
+    type: "select",
+    options: [
+      { value: "approved", label: "Approved" },
+      { value: "draft", label: "Draft" },
+      { value: "archived", label: "Archived" },
+    ],
+  },
+  {
+    id: "visibility",
+    label: "Visibility",
+    type: "select",
+    options: [
+      { value: "internal", label: "Internal" },
+      { value: "admin_only", label: "Admin only" },
+      { value: "client_visible", label: "Client visible" },
     ],
   },
 ];
@@ -145,6 +180,45 @@ export function buildKnowledgeTableColumns(options: {
         </div>
       ),
       csvValue: (item) => (item.tags ?? []).join(", "),
+    },
+    {
+      id: "approval_status",
+      label: "Approval",
+      defaultVisible: true,
+      sortable: true,
+      sortValue: (item) => item.approval_status,
+      render: (item) => (
+        <Badge variant={item.approval_status === "approved" ? "secondary" : "outline"} className="text-xs font-normal">
+          {APPROVAL_LABELS[item.approval_status] ?? item.approval_status}
+        </Badge>
+      ),
+      csvValue: (item) => APPROVAL_LABELS[item.approval_status] ?? item.approval_status,
+    },
+    {
+      id: "visibility",
+      label: "Visibility",
+      defaultVisible: true,
+      sortable: true,
+      sortValue: (item) => item.visibility,
+      render: (item) => (
+        <span className="text-sm text-muted-foreground">
+          {VISIBILITY_LABELS[item.visibility] ?? item.visibility}
+        </span>
+      ),
+      csvValue: (item) => VISIBILITY_LABELS[item.visibility] ?? item.visibility,
+    },
+    {
+      id: "ai_searchable",
+      label: "AI",
+      defaultVisible: true,
+      sortable: true,
+      sortValue: (item) => String(item.ai_searchable),
+      render: (item) => (
+        <Badge variant={item.ai_searchable ? "secondary" : "outline"} className="text-xs font-normal">
+          {item.ai_searchable ? "Searchable" : "Off"}
+        </Badge>
+      ),
+      csvValue: (item) => (item.ai_searchable ? "Searchable" : "Off"),
     },
     {
       id: "origin",

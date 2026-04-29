@@ -26,7 +26,7 @@ export default function PermissionUserDetailPage() {
 
   const usersQuery = useQuery({
     queryKey: ["permission-users"],
-    queryFn: fetchUsers,
+    queryFn: () => fetchUsers(),
   });
 
   const allTemplatesQuery = useQuery({
@@ -44,22 +44,6 @@ export default function PermissionUserDetailPage() {
     [usersQuery.data?.data],
   );
   const user = users.find((item) => item.personId === personId) ?? null;
-
-  const adminMutation = useMutation({
-    mutationFn: async ({ authUserId, isAdmin }: { authUserId: string; isAdmin: boolean }) => {
-      await apiFetch("/api/admin/set-admin-status", {
-        method: "POST",
-        body: JSON.stringify({ auth_user_id: authUserId, is_admin: isAdmin }),
-      });
-    },
-    onSuccess: (_data, variables) => {
-      toast.success(variables.isAdmin ? "App admin granted" : "App admin removed");
-      qc.invalidateQueries({ queryKey: ["permission-users"] });
-    },
-    onError: (err) => {
-      toast.error(err instanceof Error ? err.message : "Failed to update admin access");
-    },
-  });
 
   const assignMutation = useMutation({
     mutationFn: async ({
@@ -166,16 +150,12 @@ export default function PermissionUserDetailPage() {
       ) : user ? (
         <UserAccessPanel
           user={user}
-          templates={allTemplatesQuery.data ?? []}
+          templates={(allTemplatesQuery.data ?? []).filter((template) => template.scope !== "company")}
           companyTemplates={companyTemplatesQuery.data ?? []}
           isTemplatesLoading={allTemplatesQuery.isLoading}
-          isAdminSaving={adminMutation.isPending}
           isAssignmentSaving={assignMutation.isPending}
           isCompanyTemplateSaving={companyTemplateMutation.isPending}
           isGranularOverrideSaving={granularOverrideMutation.isPending}
-          onToggleAdmin={(authUserId, isAdmin) =>
-            adminMutation.mutate({ authUserId, isAdmin })
-          }
           onAssignTemplate={(projectId, personId, templateId) =>
             assignMutation.mutate({ projectId, personId, templateId })
           }

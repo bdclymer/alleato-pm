@@ -11,16 +11,26 @@ import { ProcoreReferencePanel } from "@/components/header/procore-reference-pan
 import { CommentsSidebarPanel } from "@/components/header/comments-sidebar";
 import { LiveCursors } from "@/components/live-cursors/LiveCursors";
 import { WelcomeOnboarding } from "@/components/onboarding/WelcomeOnboarding";
+import { useProject } from "@/contexts/project-context";
+import { useProjectPermissions } from "@/hooks/use-project-permissions";
 // AdminFeedbackWidget replaced by UnifiedFeedbackWidget in root layout
 import { feedbackTargetProps } from "@/lib/admin-feedback/constants";
 
 /** Floating overlays extracted to a single component to avoid mixed static/dynamic children key warnings. */
 function Overlays() {
+  const { projectId } = useProject();
+  const { userType, isLoading } = useProjectPermissions(projectId);
+  const isSubcontractor = userType?.toLowerCase() === "subcontractor";
+
   return (
     <React.Suspense fallback={null}>
       <div className="contents">
         <LiveCursors />
-        <WelcomeOnboarding />
+        <WelcomeOnboarding
+          deferAutoOpen={isLoading}
+          suppressAutoOpen={isSubcontractor}
+          suppressStorageValue="skipped:subcontractor"
+        />
       </div>
     </React.Suspense>
   );

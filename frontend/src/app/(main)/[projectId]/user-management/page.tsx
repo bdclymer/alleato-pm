@@ -10,7 +10,7 @@ export default function ProjectPermissionsPage() {
   return (
     <PageShell
       variant="content"
-      title="Project User Management"
+      title="Manage Users"
       description="Assign project roles and module-level access for every member of this project."
     >
       <MembersTab projectId={projectId} />

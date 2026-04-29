@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Plus } from "lucide-react";
+import { Plus, Upload } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { PageShell } from "@/components/layout";
@@ -35,6 +35,7 @@ import {
   buildKnowledgeTableColumns,
 } from "./knowledge-table-config";
 import { KnowledgeFormDialog } from "./knowledge-form-dialog";
+import { KnowledgeUploadDialog } from "./knowledge-upload-dialog";
 
 // ---------------------------------------------------------------------------
 // Component
@@ -69,18 +70,20 @@ export function KnowledgeTablePage() {
   React.useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const migrationKey = "knowledge:visibleColumns:add-content-2026-04-29";
+    const migrationKey = "knowledge:visibleColumns:add-governance-2026-04-29";
     if (window.localStorage.getItem(migrationKey) === "1") return;
 
     tableState.setVisibleColumns((prev) => {
-      if (prev.includes("content")) return prev;
+      const nextColumns = ["content", "approval_status", "visibility", "ai_searchable"];
+      const missingColumns = nextColumns.filter((column) => !prev.includes(column));
+      if (missingColumns.length === 0) return prev;
       const titleIndex = prev.indexOf("title");
       if (titleIndex === -1) {
-        return ["title", "content", ...prev];
+        return ["title", ...missingColumns, ...prev];
       }
       return [
         ...prev.slice(0, titleIndex + 1),
-        "content",
+        ...missingColumns,
         ...prev.slice(titleIndex + 1),
       ];
     });
@@ -93,6 +96,9 @@ export function KnowledgeTablePage() {
     category: (tableState.activeFilters.category as string) ?? undefined,
     search: tableState.debouncedSearch || undefined,
     origin: (tableState.activeFilters.origin as string) ?? undefined,
+    approvalStatus: (tableState.activeFilters.approvalStatus as string) ?? undefined,
+    visibility: (tableState.activeFilters.visibility as string) ?? undefined,
+    manage: true,
   });
 
   // Mutations
@@ -100,6 +106,7 @@ export function KnowledgeTablePage() {
 
   // UI state
   const [formOpen, setFormOpen] = React.useState(false);
+  const [uploadOpen, setUploadOpen] = React.useState(false);
   const [editingArticle, setEditingArticle] = React.useState<
     KnowledgeArticle | undefined
   >(undefined);
@@ -159,13 +166,16 @@ export function KnowledgeTablePage() {
   }
 
   function handleExport() {
-    const headers = ["Title", "Category", "Tags", "Source", "Content", "Created", "Updated"];
+    const headers = ["Title", "Content", "Category", "Approval", "Visibility", "AI Searchable", "Tags", "Source", "Created", "Updated"];
     const rows = sortedArticles.map((a) => [
       a.title,
+      a.content.replace(/\n/g, " "),
       a.category,
+      a.approval_status,
+      a.visibility,
+      a.ai_searchable ? "yes" : "no",
       (a.tags ?? []).join("; "),
       a.source ?? "",
-      a.content.replace(/\n/g, " "),
       new Date(a.created_at).toLocaleDateString(),
       new Date(a.updated_at).toLocaleDateString(),
     ]);
@@ -187,6 +197,8 @@ export function KnowledgeTablePage() {
   const activeFilters: Record<string, FilterValue> = {};
   if (tableState.activeFilters.category) activeFilters.category = tableState.activeFilters.category;
   if (tableState.activeFilters.origin) activeFilters.origin = tableState.activeFilters.origin;
+  if (tableState.activeFilters.approvalStatus) activeFilters.approvalStatus = tableState.activeFilters.approvalStatus;
+  if (tableState.activeFilters.visibility) activeFilters.visibility = tableState.activeFilters.visibility;
 
   const isFiltered =
     !!tableState.debouncedSearch || Object.keys(activeFilters).length > 0;
@@ -227,10 +239,16 @@ export function KnowledgeTablePage() {
           title: "Manage Knowledge Sources",
           description: "Admin source manager for company knowledge entries, imports, and AI-searchable content.",
           actions: (
-            <Button onClick={handleCreate} size="sm">
-              <Plus />
-              Add Source
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button onClick={() => setUploadOpen(true)} size="sm" variant="outline">
+                <Upload />
+                Upload Source
+              </Button>
+              <Button onClick={handleCreate} size="sm">
+                <Plus />
+                Add Entry
+              </Button>
+            </div>
           ),
         }}
         layout={{
@@ -315,6 +333,10 @@ export function KnowledgeTablePage() {
           if (!open) setEditingArticle(undefined);
         }}
         article={editingArticle}
+      />
+      <KnowledgeUploadDialog
+        open={uploadOpen}
+        onOpenChange={setUploadOpen}
       />
 
       {/* Delete Confirmation */}

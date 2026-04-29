@@ -28,7 +28,7 @@ export function PageContainer({
   return (
     <div
       className={cn(
-        "mx-auto w-full min-w-0 min-h-full pb-20",
+        "flex flex-col flex-1 mx-auto w-full min-w-0",
         maxWidthClasses[maxWidth],
         padding && "px-4 sm:px-6 lg:px-8 pt-0.5 sm:pt-1 pb-1 sm:pb-2",
         // Prevent horizontal overflow on all screen sizes

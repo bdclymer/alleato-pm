@@ -161,8 +161,30 @@ Guidelines:
 - For reports: each major section is a segment"""
 
     raw = llm._call_llm(prompt, json_mode=True)
-    parsed = json.loads(raw)
-    return parsed.get("segments", [])
+    if not raw or not raw.strip():
+        logger.warning(
+            "[DocParser] LLM returned empty segmentation response for %s; using fallback segment",
+            title,
+        )
+        return []
+
+    try:
+        parsed = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        logger.warning(
+            "[DocParser] Invalid segmentation JSON for %s; using fallback segment: %s",
+            title,
+            exc,
+        )
+        return []
+    segments = parsed.get("segments", [])
+    if not isinstance(segments, list):
+        logger.warning(
+            "[DocParser] Segmentation response for %s did not include a segments array; using fallback segment",
+            title,
+        )
+        return []
+    return segments
 
 
 def _build_document_summary_excerpt(text: str) -> str:

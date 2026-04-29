@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Calendar, Check, ChevronsUpDown, FolderOpen, MoreHorizontal, Plus, Users } from "lucide-react";
+import { Building2, Calendar, Check, ChevronsUpDown, FileText, Globe, MapPin, MoreHorizontal, Plus, Users } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { formatDate } from "@/lib/format";
@@ -11,8 +11,8 @@ import { createClient } from "@/lib/supabase/client";
 import { useConfirm } from "@/hooks/use-confirm";
 import { createContact, updateContact } from "@/app/(main)/actions/table-actions";
 import { PageShell } from "@/components/layout";
-import { ErrorState } from "@/components/ds";
-import { EmptyState as DsEmptyState } from "@/components/ds";
+import { ErrorState, EmptyState as DsEmptyState, SectionHeader as DsSectionHeader, StatusBadge, KpiRow } from "@/components/ds";
+import { DetailField } from "@/components/ds/DetailField";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -156,45 +156,6 @@ function getInitials(firstName?: string | null, lastName?: string | null): strin
   return initials || "--";
 }
 
-function CompactStatRow({
-  title,
-  value,
-  icon,
-}: {
-  title: string;
-  value: number;
-  icon: React.ReactNode;
-}) {
-  return (
-    <div className="flex items-center justify-between gap-4 py-2">
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <span className="text-muted-foreground">{icon}</span>
-        <span>{title}</span>
-      </div>
-      <span className="text-base font-semibold text-foreground">{value}</span>
-    </div>
-  );
-}
-
-function SectionHeader({ title, description }: { title: string; description?: string }) {
-  return (
-    <div className="space-y-1">
-      {/* eslint-disable-next-line design-system/no-raw-heading */}
-      <h2 className="text-lg font-semibold text-foreground">{title}</h2>
-      {description ? <p className="text-sm text-muted-foreground">{description}</p> : null}
-    </div>
-  );
-}
-
-
-function DetailField({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div className="space-y-1">
-      <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</dt>
-      <dd className="text-sm text-foreground">{value}</dd>
-    </div>
-  );
-}
 
 export default function CompanyDetailsPage() {
   const router = useRouter();
@@ -597,7 +558,7 @@ export default function CompanyDetailsPage() {
     <PageShell
       variant="detail"
       title={company.name}
-      description={companyLocation || company.website || "Company details"}
+      statusBadge={<StatusBadge status={company.status || "Unknown"} />}
       onBack={() => router.back()}
       actions={
         <DropdownMenu>
@@ -617,27 +578,44 @@ export default function CompanyDetailsPage() {
         </DropdownMenu>
       }
     >
-        <div className="grid gap-16 lg:grid-cols-[minmax(0,1fr)_320px]">
-          <div className="space-y-12">
-            <section className="space-y-3">
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge variant={statusVariant(company.status)}>{company.status || "Unknown"}</Badge>
-                {company.type ? <Badge variant="outline">{company.type}</Badge> : null}
-              </div>
-            </section>
+      {/* Company meta strip */}
+      {(company.type || companyLocation || company.website) && (
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 -mt-2 mb-2">
+          {company.type && (
+            <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+              <Building2 className="h-3.5 w-3.5 shrink-0" />
+              {company.type}
+            </span>
+          )}
+          {companyLocation && (
+            <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+              <MapPin className="h-3.5 w-3.5 shrink-0" />
+              {companyLocation}
+            </span>
+          )}
+          {company.website && (
+            <a
+              href={company.website.startsWith("http") ? company.website : `https://${company.website}`}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-1.5 text-sm text-primary hover:underline"
+            >
+              <Globe className="h-3.5 w-3.5 shrink-0" />
+              {company.website}
+            </a>
+          )}
+        </div>
+      )}
 
-            <section className="space-y-4">
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <SectionHeader title="Company Contacts" />
-                <button
-                  type="button"
-                  onClick={() => void openAddContactModal()}
-                  className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  Add Contact
-                </button>
-              </div>
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_288px] lg:gap-12">
+        <div className="space-y-8 min-w-0">
+
+          <section className="space-y-4">
+            <DsSectionHeader
+              title="Contacts"
+              count={contacts.length > 0 ? contacts.length : undefined}
+              action={{ label: "Add contact", onClick: () => void openAddContactModal() }}
+            />
               {contacts.length === 0 ? (
                 <DsEmptyState title="No contacts associated with this company" description="Add contacts to track people associated with this company." />
               ) : (
@@ -701,23 +679,20 @@ export default function CompanyDetailsPage() {
               )}
             </section>
 
-            <section className="space-y-4">
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <SectionHeader title="Projects" />
-                <button
-                  type="button"
-                  onClick={async () => {
-                    setAddToProjectOpen(true);
-                    setProjectQuery("");
-                    setProjectComboboxOpen(false);
-                    await loadProjects();
-                  }}
-                  className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  Add Project
-                </button>
-              </div>
+          <section className="space-y-4">
+            <DsSectionHeader
+              title="Projects"
+              count={associatedProjects.length > 0 ? associatedProjects.length : undefined}
+              action={{
+                label: "Add project",
+                onClick: () => {
+                  setAddToProjectOpen(true);
+                  setProjectQuery("");
+                  setProjectComboboxOpen(false);
+                  void loadProjects();
+                },
+              }}
+            />
               {associatedProjects.length === 0 ? (
                 <DsEmptyState title="No projects associated with this company" description="Projects will appear here once this company is added to a project." />
               ) : (
@@ -758,19 +733,19 @@ export default function CompanyDetailsPage() {
               )}
             </section>
 
-            <section className="space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <SectionHeader title="Invoices" />
-                <Tabs
-                  value={invoiceFilter}
-                  onValueChange={(value) => setInvoiceFilter(value as "open" | "all")}
-                >
-                  <TabsList>
-                    <TabsTrigger value="open">Open only</TabsTrigger>
-                    <TabsTrigger value="all">All</TabsTrigger>
-                  </TabsList>
-                </Tabs>
-              </div>
+          <section className="space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <DsSectionHeader title="Invoices" count={filteredInvoices.length > 0 ? filteredInvoices.length : undefined} />
+              <Tabs
+                value={invoiceFilter}
+                onValueChange={(value) => setInvoiceFilter(value as "open" | "all")}
+              >
+                <TabsList>
+                  <TabsTrigger value="open">Open</TabsTrigger>
+                  <TabsTrigger value="all">All</TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
               {filteredInvoices.length === 0 ? (
                 <DsEmptyState
                   title={invoiceFilter === "open" ? "No open invoices found" : "No invoices found"}
@@ -810,8 +785,8 @@ export default function CompanyDetailsPage() {
               )}
             </section>
 
-            <section className="space-y-4">
-              <SectionHeader title="Meetings" />
+          <section className="space-y-4">
+            <DsSectionHeader title="Meetings" count={meetingsByProject.length > 0 ? meetings.length : undefined} />
               {meetingsByProject.length === 0 ? (
                 <DsEmptyState title="No meetings found" description="No meetings have been recorded for this company's projects." />
               ) : (
@@ -855,49 +830,49 @@ export default function CompanyDetailsPage() {
                 </Table>
               )}
             </section>
-          </div>
-
-          <aside className="space-y-10 lg:sticky lg:top-4 lg:self-start">
-            <section className="space-y-4">
-              <SectionHeader title="Overview" />
-              <div>
-                <dl className="space-y-4">
-                  <DetailField label="Address" value={company.address || "-"} />
-                  <DetailField
-                    label="Website"
-                    value={
-                      company.website ? (
-                        <a
-                          className="text-primary underline-offset-4 hover:underline"
-                          href={company.website.startsWith("http") ? company.website : `https://${company.website}`}
-                          rel="noreferrer"
-                          target="_blank"
-                        >
-                          {company.website}
-                        </a>
-                      ) : (
-                        "-"
-                      )
-                    }
-                  />
-                </dl>
-              </div>
-            </section>
-
-            <section className="space-y-4">
-              <SectionHeader title="Summary" description="Record counts." />
-              <div className="px-0 py-0">
-                <CompactStatRow title="Contacts" value={summary.contact_count} icon={<Users className="h-4 w-4" />} />
-                <div className="border-t border-border" />
-                <CompactStatRow title="Projects" value={summary.project_count} icon={<FolderOpen className="h-4 w-4" />} />
-                <div className="border-t border-border" />
-                <CompactStatRow title="Meetings" value={summary.meeting_count} icon={<Calendar className="h-4 w-4" />} />
-                <div className="border-t border-border" />
-                <CompactStatRow title="Invoices" value={summary.invoice_count} icon={<Calendar className="h-4 w-4" />} />
-              </div>
-            </section>
-          </aside>
         </div>
+
+        <aside className="space-y-8 lg:sticky lg:top-4 lg:self-start">
+          <section className="space-y-3">
+            <DsSectionHeader title="Details" />
+            <div className="space-y-2">
+              <DetailField label="Status" value={<StatusBadge status={company.status || "Unknown"} />} />
+              {company.type && <DetailField label="Type" value={company.type} />}
+              <DetailField label="Address" value={company.address || undefined} />
+              <DetailField label="Location" value={companyLocation || undefined} />
+              <DetailField
+                label="Website"
+                value={
+                  company.website ? (
+                    <a
+                      className="flex items-center gap-1 text-primary underline-offset-4 hover:underline"
+                      href={company.website.startsWith("http") ? company.website : `https://${company.website}`}
+                      rel="noreferrer"
+                      target="_blank"
+                    >
+                      <Globe className="h-3.5 w-3.5 shrink-0" />
+                      {company.website}
+                    </a>
+                  ) : undefined
+                }
+              />
+            </div>
+          </section>
+
+          <section className="space-y-3">
+            <DsSectionHeader title="Activity" />
+            <KpiRow
+              size="small"
+              metrics={[
+                { label: "Contacts", value: String(summary.contact_count) },
+                { label: "Projects", value: String(summary.project_count) },
+                { label: "Meetings", value: String(summary.meeting_count) },
+                { label: "Invoices", value: String(summary.invoice_count) },
+              ]}
+            />
+          </section>
+        </aside>
+      </div>
       <Modal open={editOpen} onOpenChange={setEditOpen}>
         <ModalContent className="sm:max-w-xl">
           <ModalHeader>

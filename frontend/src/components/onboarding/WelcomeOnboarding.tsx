@@ -23,6 +23,9 @@ export type WelcomeOnboardingProps = {
   forceOpen?: boolean;
   stats?: MomentumStats;
   storageKey?: string;
+  deferAutoOpen?: boolean;
+  suppressAutoOpen?: boolean;
+  suppressStorageValue?: string;
 };
 
 const TOTAL_STEPS = 3;
@@ -31,6 +34,9 @@ export function WelcomeOnboarding({
   forceOpen,
   stats = defaultMomentumStats,
   storageKey = WELCOME_ONBOARDING_STORAGE_KEY,
+  deferAutoOpen = false,
+  suppressAutoOpen = false,
+  suppressStorageValue = "skipped",
 }: WelcomeOnboardingProps) {
   const searchParams = useSearchParams();
   const { profile: currentUserProfile } = useCurrentUserProfile();
@@ -56,6 +62,16 @@ export function WelcomeOnboarding({
       forceOpen ||
       queryForceOpen ||
       new URLSearchParams(window.location.search).get("onboarding") === "1";
+
+    if (!shouldForceOpen && deferAutoOpen) {
+      return;
+    }
+    if (!shouldForceOpen && suppressAutoOpen) {
+      window.localStorage.setItem(storageKey, suppressStorageValue);
+      setOpen(false);
+      return;
+    }
+
     if (shouldForceOpen) {
       setStep(0);
       setOpen(true);
@@ -67,7 +83,14 @@ export function WelcomeOnboarding({
       setStep(0);
       setOpen(true);
     }
-  }, [forceOpen, queryForceOpen, storageKey]);
+  }, [
+    deferAutoOpen,
+    forceOpen,
+    queryForceOpen,
+    storageKey,
+    suppressAutoOpen,
+    suppressStorageValue,
+  ]);
 
   React.useEffect(() => {
     window.dispatchEvent(

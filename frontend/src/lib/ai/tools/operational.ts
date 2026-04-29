@@ -297,6 +297,8 @@ export function createOperationalTools(
             category: category ?? "all",
             resultCount: matches.length,
             results: matches.map(({ article, score, excerpt }) => ({
+              sourceLabel: "App Help",
+              knowledgeType: "app_help",
               title: article.frontmatter.title,
               description: article.frontmatter.description,
               href: article.href,
@@ -1736,11 +1738,17 @@ export function createOperationalTools(
                 similarity,
                 projectIds: typeof row.project_id === "number" ? [row.project_id] : [],
                 metadata: {
+                  sourceLabel: "Company Knowledge Base",
+                  knowledgeType: "company_knowledge",
+                  sourceRoute: "/knowledge",
                   title: row.title,
                   category: row.category,
                   tags: row.tags,
                   source: row.source,
                   origin: row.origin,
+                  visibility: row.visibility,
+                  approvalStatus: row.approval_status,
+                  aiSearchable: row.ai_searchable,
                 },
                 createdAt:
                   typeof row.created_at === "string" ? row.created_at : null,
@@ -2060,6 +2068,9 @@ export function createOperationalTools(
               .from("company_knowledge")
               .select("*")
               .eq("is_active", true)
+              .eq("approval_status", "approved")
+              .neq("visibility", "admin_only")
+              .eq("ai_searchable", true)
               .order("updated_at", { ascending: false })
               .limit(20);
 
@@ -2077,12 +2088,18 @@ export function createOperationalTools(
 
             const articleList = ((articles ?? []) as unknown as AnyRow[]).map(
               (a) => ({
+                sourceLabel: "Company Knowledge Base",
+                knowledgeType: "company_knowledge",
+                sourceRoute: "/knowledge",
                 id: a.id,
                 category: a.category,
                 title: a.title,
                 content: (a.content as string)?.substring(0, 800),
                 tags: a.tags,
                 source: a.source,
+                visibility: a.visibility,
+                approvalStatus: a.approval_status,
+                aiSearchable: a.ai_searchable,
                 updatedAt: a.updated_at,
               }),
             );
@@ -2502,8 +2519,9 @@ export function createOperationalTools(
         "Save knowledge, lessons learned, best practices, or institutional " +
         "memory to the company knowledge base. Use this when the user says " +
         "'save this', 'remember this', 'I want to capture this', or " +
-        "'add this to the knowledge base'. The saved knowledge becomes " +
-        "searchable and available to all users via the AI assistant. " +
+        "'add this to the knowledge base'. Admin saves are approved and " +
+        "searchable immediately; non-admin saves are captured as drafts for " +
+        "admin review before they become available through the AI assistant. " +
         "Categories: lessons_learned, best_practice, process, policy, " +
         "market_intel, general, strategy, org_update.",
       inputSchema: z.object({
@@ -2539,11 +2557,13 @@ export function createOperationalTools(
         options,
         async ({ title, content, category, tags, source }) => {
           try {
+            const scope = await guardrails.getScope();
+            const isAdminSave = scope.isAdmin;
             // Generate embedding so the entry is searchable via semantic search.
             // company_knowledge.embedding is halfvec(3072) — use text-embedding-3-large at 3072 dims.
             const openaiClient = getOpenAI();
             const embResp = await openaiClient.embeddings.create({
-              model: "text-embedding-3-large",
+              model: getOpenAIModelId("text-embedding-3-large"),
               dimensions: 3072,
               input: `${title}\n\n${content}`.substring(0, 8000),
             });
@@ -2559,17 +2579,29 @@ export function createOperationalTools(
                 source: source ?? "AI Assistant",
                 author_id: userId,
                 is_active: true,
+                approval_status: isAdminSave ? "approved" : "draft",
+                visibility: "internal",
+                ai_searchable: isAdminSave,
+                approved_at: isAdminSave ? new Date().toISOString() : null,
+                approved_by: isAdminSave ? userId : null,
                 embedding,
               })
-              .select("id, title, category, tags")
+              .select("id, title, category, tags, approval_status, visibility, ai_searchable")
               .single();
 
             if (error) return { error: `Failed to save knowledge: ${error.message}` };
 
             return {
               success: true,
-              savedEntry: data,
-              message: `Knowledge saved: "${title}" (${category}). This is now searchable by all users via the AI assistant.`,
+              savedEntry: {
+                ...data,
+                sourceLabel: "Company Knowledge Base",
+                knowledgeType: "company_knowledge",
+                sourceRoute: "/knowledge",
+              },
+              message: isAdminSave
+                ? `Knowledge saved: "${title}" (${category}). This is approved and searchable in the AI assistant.`
+                : `Knowledge saved as a draft: "${title}" (${category}). An admin needs to approve it before it becomes searchable in the AI assistant.`,
             };
           } catch (err) {
             const msg = err instanceof Error ? err.message : "Unknown error";

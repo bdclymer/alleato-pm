@@ -6765,6 +6765,10 @@ export type Database = {
       }
       company_knowledge: {
         Row: {
+          ai_searchable: boolean
+          approval_status: string
+          approved_at: string | null
+          approved_by: string | null
           author_id: string | null
           category: string
           content: string
@@ -6776,11 +6780,17 @@ export type Database = {
           origin: string
           project_id: number | null
           source: string | null
+          source_document_id: string | null
           tags: string[] | null
           title: string
           updated_at: string | null
+          visibility: string
         }
         Insert: {
+          ai_searchable?: boolean
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           author_id?: string | null
           category: string
           content: string
@@ -6792,11 +6802,17 @@ export type Database = {
           origin?: string
           project_id?: number | null
           source?: string | null
+          source_document_id?: string | null
           tags?: string[] | null
           title: string
           updated_at?: string | null
+          visibility?: string
         }
         Update: {
+          ai_searchable?: boolean
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           author_id?: string | null
           category?: string
           content?: string
@@ -6808,9 +6824,11 @@ export type Database = {
           origin?: string
           project_id?: number | null
           source?: string | null
+          source_document_id?: string | null
           tags?: string[] | null
           title?: string
           updated_at?: string | null
+          visibility?: string
         }
         Relationships: [
           {
@@ -6874,6 +6892,20 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_knowledge_source_document_id_fkey"
+            columns: ["source_document_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_knowledge_source_document_id_fkey"
+            columns: ["source_document_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_manual_only"
             referencedColumns: ["id"]
           },
         ]
@@ -27847,28 +27879,51 @@ export type Database = {
           title: string
         }[]
       }
-      search_knowledge_base: {
-        Args: {
-          filter_category?: string
-          filter_project_id?: number
-          match_count?: number
-          match_threshold?: number
-          query_embedding: unknown
-        }
-        Returns: {
-          category: string
-          content: string
-          created_at: string
-          id: string
-          meeting_id: string
-          origin: string
-          project_id: number
-          similarity: number
-          source: string
-          tags: string[]
-          title: string
-        }[]
-      }
+      search_knowledge_base:
+        | {
+            Args: {
+              filter_category?: string
+              filter_project_id?: number
+              match_count?: number
+              match_threshold?: number
+              query_embedding: unknown
+            }
+            Returns: {
+              category: string
+              content: string
+              created_at: string
+              id: string
+              meeting_id: string
+              origin: string
+              project_id: number
+              similarity: number
+              source: string
+              tags: string[]
+              title: string
+            }[]
+          }
+        | {
+            Args: {
+              filter_category?: string
+              filter_project_id?: number
+              match_count?: number
+              match_threshold?: number
+              query_embedding: string
+            }
+            Returns: {
+              category: string
+              content: string
+              created_at: string
+              id: string
+              meeting_id: string
+              origin: string
+              project_id: number
+              similarity: number
+              source: string
+              tags: string[]
+              title: string
+            }[]
+          }
       search_meeting_chunks:
         | {
             Args: {

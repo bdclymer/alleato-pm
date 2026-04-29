@@ -10,7 +10,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 import { SectionRuleHeading } from "@/components/layout";
 import { cn } from "@/lib/utils";
 import {
@@ -30,11 +29,9 @@ export function UserAccessPanel({
   templates,
   companyTemplates,
   isTemplatesLoading,
-  isAdminSaving,
   isAssignmentSaving,
   isCompanyTemplateSaving,
   isGranularOverrideSaving,
-  onToggleAdmin,
   onAssignTemplate,
   onAssignCompanyTemplate,
   onSetGranularOverride,
@@ -43,11 +40,9 @@ export function UserAccessPanel({
   templates: PermissionTemplate[];
   companyTemplates: PermissionTemplate[];
   isTemplatesLoading: boolean;
-  isAdminSaving: boolean;
   isAssignmentSaving: boolean;
   isCompanyTemplateSaving: boolean;
   isGranularOverrideSaving: boolean;
-  onToggleAdmin: (authUserId: string, isAdmin: boolean) => void;
   onAssignTemplate: (projectId: number | string, personId: string, templateId: string) => void;
   onAssignCompanyTemplate: (personId: string, templateId: string | null) => void;
   onSetGranularOverride: (
@@ -66,8 +61,8 @@ export function UserAccessPanel({
               <h2 className="truncate text-xl font-semibold text-foreground">
                 {user.fullName}
               </h2>
-              {user.isAdmin && <Badge>App Admin</Badge>}
-              {user.companyTemplateId && !user.isAdmin && (
+              {user.isAdmin && <Badge>Admin</Badge>}
+              {user.companyTemplateId && (
                 <Badge variant="outline" className="border-primary/30 text-primary">
                   All projects
                 </Badge>
@@ -90,34 +85,18 @@ export function UserAccessPanel({
           </div>
         </div>
 
-        <div className="px-0 py-1">
-          <div className="flex items-center gap-3">
-            <div>
-              <p className="text-sm font-medium text-foreground">Super Admin</p>
-              <p className="text-xs text-muted-foreground">Full access to every project</p>
-            </div>
-            {user.authUserId ? (
-              <Switch
-                checked={user.isAdmin}
-                disabled={isAdminSaving}
-                onCheckedChange={(checked) => onToggleAdmin(user.authUserId!, checked)}
-              />
-            ) : (
-              <Badge variant="outline">No auth</Badge>
-            )}
-          </div>
-        </div>
+        {!user.authUserId && <Badge variant="outline">No auth</Badge>}
       </div>
 
       <div className="space-y-3">
         <SectionRuleHeading label="Company Access" />
         <p className="text-sm text-muted-foreground">
-          Assign a company-wide role to grant access to every project automatically. Project-specific assignments override this.
+          Assign a company permission template to grant access to every project automatically. Choose specific project access below only when the user should be limited to certain projects.
         </p>
         <div className="flex items-center gap-3">
           <Select
             value={user.companyTemplateId ?? "none"}
-            disabled={user.isAdmin || isTemplatesLoading || isCompanyTemplateSaving || companyTemplates.length === 0}
+            disabled={isTemplatesLoading || isCompanyTemplateSaving || companyTemplates.length === 0}
             onValueChange={(val) => onAssignCompanyTemplate(user.personId, val === "none" ? null : val)}
           >
             <SelectTrigger className="h-9 w-64 text-sm">
@@ -132,9 +111,6 @@ export function UserAccessPanel({
               ))}
             </SelectContent>
           </Select>
-          {user.isAdmin && (
-            <p className="text-xs text-muted-foreground">Bypassed — user is Super Admin.</p>
-          )}
         </div>
       </div>
 
@@ -150,9 +126,9 @@ export function UserAccessPanel({
         <div>
           <SectionRuleHeading label="Project Access" />
           <p className="text-sm text-muted-foreground">
-            Assign one role per project membership.
-            {user.isAdmin && " Roles are bypassed by Super Admin access."}
-            {user.companyTemplateId && !user.isAdmin && " Project assignments override the company role."}
+            Assign one permission template per project membership.
+            {user.isAdmin && " Project assignments are bypassed by the Admin company template."}
+            {user.companyTemplateId && !user.isAdmin && " Project assignments override the company permission template."}
           </p>
         </div>
 
