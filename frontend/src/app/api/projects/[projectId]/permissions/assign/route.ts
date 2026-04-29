@@ -42,9 +42,16 @@ export const POST = withApiGuardrails(
     );
 
     if (!result.success) {
+      const status =
+        result.error === "Selected permission template no longer exists."
+          ? 404
+          : result.error === "Project access requires a project permission template."
+            ? 400
+            : 500;
+
       return NextResponse.json(
         { error: result.error || "Failed to assign template" },
-        { status: 500 }
+        { status }
       );
     }
 

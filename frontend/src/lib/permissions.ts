@@ -274,6 +274,18 @@ export async function assignPermissionTemplate(
     data: { user },
   } = await supabase.auth.getUser();
 
+  const { data: template, error: templateError } = await supabase
+    .from("permission_templates")
+    .select("scope")
+    .eq("id", templateId)
+    .maybeSingle();
+
+  if (templateError) return { success: false, error: templateError.message };
+  if (!template) return { success: false, error: "Selected permission template no longer exists." };
+  if (template.scope !== "project") {
+    return { success: false, error: "Project access requires a project permission template." };
+  }
+
   const { error } = await supabase
     .from("project_directory_memberships")
     .update({
