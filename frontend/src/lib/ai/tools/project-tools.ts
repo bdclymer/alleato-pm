@@ -5,35 +5,17 @@ import { createFinancialTools } from "./financial";
 import { createAcumaticaTools } from "./acumatica";
 import { createOperationalTools } from "./operational";
 import { createToolGuardrails } from "./guardrails";
+import { type ToolTracePayload, asNumber } from "./tool-utils";
 
 // Existing AI tool outputs are heterogeneous Supabase rows from many tables/views.
 // Keep this broad row shape until the tool layer is split into typed modules.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyRow = Record<string, any>;
 
-type ToolTracePayload = {
-  tool: string;
-  input: Record<string, unknown>;
-  output?: unknown;
-  error?: string;
-  timestamp: string;
-};
-
 export type CreateProjectToolsOptions = {
   onTrace?: (trace: ToolTracePayload) => void;
   pinnedProjectId?: number;
 };
-
-function asNumber(value: unknown): number {
-  if (typeof value === "number") {
-    return Number.isFinite(value) ? value : 0;
-  }
-  if (typeof value === "string") {
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : 0;
-  }
-  return 0;
-}
 
 function isMissingBudgetViewError(error: unknown): boolean {
   const serialized = JSON.stringify(error ?? {});

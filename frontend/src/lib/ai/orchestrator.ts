@@ -912,7 +912,7 @@ export function createStrategistTools(
     // Include base project tools so the Strategist can answer
     // questions directly when no specialist route is needed
     ...strategistBaseTools,
-  } as unknown as ToolSet;
+  } as ToolSet; // ToolSet is an index signature — spread inference requires explicit cast
 }
 
 // ---------------------------------------------------------------------------
@@ -1050,22 +1050,4 @@ Today is ${today} (YYYY-MM-DD).
 Interpret relative date phrases (today, yesterday, this week) against this date and verify with tools before answering.`;
 }
 
-// ---------------------------------------------------------------------------
-// Convenience: Check if C-Suite routing should be used
-// ---------------------------------------------------------------------------
 
-/**
- * Determines whether a message should be handled by the C-Suite orchestrator
- * (Strategist + specialist agents) or the legacy single-agent path.
- *
- * For now, this always returns true since the Strategist can fall back to
- * being a generalist. The chat route can use this to gradually roll out
- * the C-Suite architecture.
- *
- * @param _message - The user's message (unused for now)
- * @returns Whether to use C-Suite routing
- */
-export function shouldUseCsuite(_message: string): boolean {
-  // Always use the C-Suite path — the Strategist handles fallback
-  return true;
-}
