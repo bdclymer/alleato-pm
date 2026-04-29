@@ -14,6 +14,11 @@
 /tmp
 /verify-output
 /vermillian
+/.claude
+/.codex
+/.venv*
+/claude-memory-compiler-main
+/tools
 
 # Large subdirs inside docs (keep docs/design which the build reads)
 /docs/.archive
@@ -33,5 +38,7 @@
 
 # Frontend dev-only artifacts
 frontend/config/playwright
+frontend/.devtools
+frontend/e2e-recordings
 frontend/playwright-report
 frontend/tests
