@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -41,25 +41,38 @@ import {
 } from "@/lib/admin-feedback/constants";
 import { HeaderUserMenu } from "./header-user-menu";
 import { createClient } from "@/lib/supabase/client";
+import { apiFetch } from "@/lib/api-client";
 import { headerSelectTriggerClassName } from "./header-control-styles";
+
+type PermissionUserBreadcrumbRecord = {
+  personId: string;
+  authUserId: string | null;
+  firstName: string;
+  lastName: string;
+  email: string;
+};
+
+const userManagementBreadcrumbTitleCache = new Map<string, string>();
 
 function ProcoreReferenceToggle() {
   const { open, toggle } = useProcorePanelStore();
   return (
-    <button
+    <Button
       type="button"
+      variant="ghost"
+      size="icon-sm"
       onClick={toggle}
       aria-label="Toggle Procore reference panel"
       aria-pressed={open ? "true" : "false"}
       className={cn(
-        "inline-flex h-8 w-8 items-center justify-center rounded-md transition-colors",
+        "h-8 w-8",
         open
           ? "bg-primary/10 text-primary hover:bg-primary/20"
           : "text-muted-foreground hover:bg-accent hover:text-foreground",
       )}
     >
       <GitCompare className="h-4 w-4" />
-    </button>
+    </Button>
   );
 }
 
@@ -68,12 +81,15 @@ function ProcoreReferenceToggle() {
  */
 export function SiteHeader() {
   const router = useRouter();
+  const pathname = usePathname();
   const nav = useHeaderNav();
   const { permissions, userType, isAppAdmin } = useProjectPermissions(
     nav.projectId,
   );
   const [user, setUser] = React.useState<User | null>(null);
   const [mobileNavOpen, setMobileNavOpen] = React.useState(false);
+  const [userManagementBreadcrumbTitle, setUserManagementBreadcrumbTitle] =
+    React.useState<string | null>(null);
 
   React.useEffect(() => {
     const supabase = createClient();
@@ -103,6 +119,77 @@ export function SiteHeader() {
     };
   }, [mobileNavOpen]);
 
+  const userManagementUserId = React.useMemo(() => {
+    const segments = pathname?.split("/").filter(Boolean) ?? [];
+    if (
+      segments.length >= 3 &&
+      segments[0] === "user-management" &&
+      segments[1] === "users" &&
+      /^[0-9a-f-]{36}$/i.test(segments[2])
+    ) {
+      return segments[2];
+    }
+
+    return null;
+  }, [pathname]);
+
+  React.useEffect(() => {
+    if (!userManagementUserId) {
+      setUserManagementBreadcrumbTitle(null);
+      return;
+    }
+
+    const cachedTitle = userManagementBreadcrumbTitleCache.get(userManagementUserId);
+    if (cachedTitle) {
+      setUserManagementBreadcrumbTitle(cachedTitle);
+      return;
+    }
+
+    let isActive = true;
+    const loadUserTitle = async () => {
+      try {
+        const response = await apiFetch<{ data: PermissionUserBreadcrumbRecord[] }>(
+          "/api/permissions/users",
+        );
+        const userRecord = response.data.find(
+          (item) =>
+            item.personId === userManagementUserId ||
+            item.authUserId === userManagementUserId,
+        );
+        if (!userRecord || !isActive) return;
+
+        const fullName = [userRecord.firstName, userRecord.lastName]
+          .filter(Boolean)
+          .join(" ")
+          .trim();
+        const title = fullName || userRecord.email;
+        if (!title) return;
+
+        userManagementBreadcrumbTitleCache.set(userManagementUserId, title);
+        setUserManagementBreadcrumbTitle(title);
+      } catch {
+        if (isActive) setUserManagementBreadcrumbTitle(null);
+      }
+    };
+
+    loadUserTitle();
+    return () => {
+      isActive = false;
+    };
+  }, [userManagementUserId]);
+
+  const breadcrumbs = React.useMemo(() => {
+    if (!userManagementUserId || !userManagementBreadcrumbTitle) {
+      return nav.breadcrumbs;
+    }
+
+    return nav.breadcrumbs.map((crumb, index) =>
+      index === nav.breadcrumbs.length - 1
+        ? { ...crumb, label: userManagementBreadcrumbTitle }
+        : crumb,
+    );
+  }, [nav.breadcrumbs, userManagementBreadcrumbTitle, userManagementUserId]);
+
   return (
     <header
       className="relative z-40 flex h-12 shrink-0 items-center text-foreground"
@@ -129,9 +216,9 @@ export function SiteHeader() {
           </Link>
 
           {/* Breadcrumbs — Desktop */}
-          {nav.breadcrumbs.length > 1 && (
+          {breadcrumbs.length > 1 && (
             <div className="hidden md:flex items-center gap-1 text-xs min-w-0 overflow-hidden">
-              {nav.breadcrumbs.map((crumb, index) => (
+              {breadcrumbs.map((crumb, index) => (
                 <span
                   key={`${crumb.href}-${index}`}
                   className="flex items-center gap-1"
@@ -139,7 +226,7 @@ export function SiteHeader() {
                   {index > 0 && (
                     <ChevronRight className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground/50" />
                   )}
-                  {index === nav.breadcrumbs.length - 1 ? (
+                  {index === breadcrumbs.length - 1 ? (
                     <span className="truncate font-medium text-foreground">
                       {crumb.label}
                     </span>
@@ -212,14 +299,16 @@ export function SiteHeader() {
         </div>
 
         {/* Mobile: Menu button on right */}
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="icon"
           onClick={() => setMobileNavOpen(true)}
           aria-label="Open menu"
-          className="md:hidden inline-flex h-11 w-11 items-center justify-center rounded-md text-foreground"
+          className="md:hidden h-11 w-11 text-foreground"
         >
-          <Menu style={{ width: 22, height: 22 }} />
-        </button>
+          <Menu className="h-5 w-5" />
+        </Button>
       </div>
 
       {/* Mobile full-screen nav overlay */}
@@ -317,14 +406,16 @@ function MobileNavOverlay({
           className="h-auto w-24 dark:invert"
           style={{ height: "auto" }}
         />
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="icon"
           onClick={onClose}
           aria-label="Close menu"
-          className="inline-flex h-11 w-11 items-center justify-center rounded-md text-foreground"
+          className="h-11 w-11 text-foreground"
         >
-          <X style={{ width: 22, height: 22 }} />
-        </button>
+          <X className="h-5 w-5" />
+        </Button>
       </div>
 
       {/* Project selector */}
@@ -466,7 +557,11 @@ function ToolsDropdown({
       <PopoverContent
         align="end"
         sideOffset={6}
-        className="w-[min(860px,calc(100vw-1.5rem))] max-w-[calc(100vw-1.5rem)] p-0 border border-border shadow-sm"
+        className="border border-border p-0 shadow-sm"
+        style={{
+          width: "min(860px, calc(100vw - 1.5rem))",
+          maxWidth: "calc(100vw - 1.5rem)",
+        }}
       >
         {/* Panel header */}
         <div className="flex items-center justify-between border-b border-border/50 px-5 py-2.5">
@@ -474,7 +569,7 @@ function ToolsDropdown({
             Navigate to
           </span>
           {!projectId && (
-            <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-950 dark:text-amber-300">
+            <span className="rounded-full bg-status-warning/10 px-2 py-0.5 text-[10px] font-medium text-status-warning">
               Select a project to unlock more tools
             </span>
           )}
@@ -482,7 +577,7 @@ function ToolsDropdown({
 
         {/* Groups */}
         <div className="overflow-x-auto">
-          <div className="flex min-w-[760px] divide-x divide-border/40">
+          <div className="flex divide-x divide-border/40" style={{ minWidth: 760 }}>
             {groups.map((group) => (
               <ToolsGroup
                 key={group.id}
