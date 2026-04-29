@@ -73,7 +73,7 @@ function LiveAvatarStackRoom({ roomId }: { roomId: string }) {
     image: user.image,
   }));
 
-  if (allUsers.length <= 1) return null;
+  if (allUsers.length === 0) return null;
 
   const visibleUsers = allUsers.slice(0, MAX_VISIBLE);
   const overflow = allUsers.length - MAX_VISIBLE;

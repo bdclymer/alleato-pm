@@ -6,7 +6,6 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { formatDate } from "@/lib/format";
 import {
-  ArrowUpRight,
   Building2,
   ChevronLeft,
   ChevronRight,
@@ -276,7 +275,7 @@ function VendorPreviewPane({
   return (
     <div className="flex flex-col h-full">
       {/* Panel header with navigation */}
-      <div className="flex items-center justify-between gap-1 px-4 border-b border-border h-11">
+      <div className="flex items-center justify-between gap-1 px-4 h-11">
         <div className="flex items-center gap-1">
           <Button
             size="icon"
@@ -303,17 +302,6 @@ function VendorPreviewPane({
           </span>
         </div>
         <div className="flex items-center gap-1">
-          <Button size="icon" variant="ghost" className="h-5 w-5" asChild>
-            <a
-              href={`/directory/vendors/${encodeURIComponent(vendor.id)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Open full page"
-              title="Open full page"
-            >
-              <ArrowUpRight />
-            </a>
-          </Button>
           <Button
             size="icon"
             variant="ghost"
@@ -394,10 +382,10 @@ function VendorPreviewPane({
       </div>
 
       {/* Footer action */}
-      <div className="px-4 py-3 border-t border-border shrink-0">
+      <div className="px-5 pb-5 shrink-0">
         <Button asChild className="w-full" variant="outline" size="sm">
           <Link href={`/directory/vendors/${encodeURIComponent(vendor.id)}`}>
-            View Details
+            View Vendor
           </Link>
         </Button>
       </div>
@@ -633,11 +621,7 @@ export default function DirectoryVendorsPage(): ReactElement {
   const tabs = getDirectoryTabs(pathname);
   const selectedVendorId = searchParams.get("detail");
   const selectedVendor =
-    (selectedVendorId
-      ? vendors.find((vendor) => vendor.id === selectedVendorId)
-      : null) ??
-    vendors[0] ??
-    null;
+    selectedVendorId ? vendors.find((vendor) => vendor.id === selectedVendorId) ?? null : null;
   const activeVendorId = selectedVendor?.id ?? null;
   const isFiltered =
     Boolean(searchInput) ||

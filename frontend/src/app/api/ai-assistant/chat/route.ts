@@ -1376,6 +1376,9 @@ async function buildSourceSpecificRagAnswer(params: {
   const applyProjectScope = <T extends { in: (column: string, values: number[]) => T }>(
     query: T,
   ): T => {
+    if (typeof scope.pinnedProjectId === "number") {
+      return query.in("project_id", [scope.pinnedProjectId]);
+    }
     if (scope.isAdmin) return query;
     return query.in("project_id", scope.allowedProjectIds);
   };
@@ -1396,14 +1399,16 @@ async function buildSourceSpecificRagAnswer(params: {
   }
 
   if (request.kind === "recent_emails") {
-    const { data, error } = await supabase
-      .from("document_metadata")
-      .select("id,title,source,category,type,date,created_at,content")
-      .eq("source", "microsoft_graph")
-      .eq("category", "email")
-      .order("date", { ascending: false, nullsFirst: false })
-      .order("created_at", { ascending: false })
-      .limit(request.limit);
+    const { data, error } = await applyProjectScope(
+      supabase
+        .from("document_metadata")
+        .select("id,title,source,category,type,date,created_at,content,project_id")
+        .eq("source", "microsoft_graph")
+        .eq("category", "email")
+        .order("date", { ascending: false, nullsFirst: false })
+        .order("created_at", { ascending: false })
+        .limit(request.limit),
+    );
     if (error) throw new Error(error.message);
     rows = (data ?? []) as SourceSpecificRagRow[];
   }
@@ -1424,16 +1429,18 @@ async function buildSourceSpecificRagAnswer(params: {
   }
 
   if (request.kind === "recent_teams_discussions") {
-    const { data, error } = await supabase
-      .from("document_metadata")
-      .select("id,title,source,category,type,date,created_at,content")
-      .eq("source", "microsoft_graph")
-      .eq("category", "teams_message")
-      .gte("date", `${request.startDate}T00:00:00.000Z`)
-      .lte("date", `${request.endDate}T23:59:59.999Z`)
-      .order("date", { ascending: false, nullsFirst: false })
-      .order("created_at", { ascending: false })
-      .limit(request.limit);
+    const { data, error } = await applyProjectScope(
+      supabase
+        .from("document_metadata")
+        .select("id,title,source,category,type,date,created_at,content,project_id")
+        .eq("source", "microsoft_graph")
+        .eq("category", "teams_message")
+        .gte("date", `${request.startDate}T00:00:00.000Z`)
+        .lte("date", `${request.endDate}T23:59:59.999Z`)
+        .order("date", { ascending: false, nullsFirst: false })
+        .order("created_at", { ascending: false })
+        .limit(request.limit),
+    );
     if (error) throw new Error(error.message);
     rows = (data ?? []) as SourceSpecificRagRow[];
   }

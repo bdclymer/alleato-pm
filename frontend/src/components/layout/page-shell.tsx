@@ -40,6 +40,7 @@ export interface PageShellProps {
 
   // Header
   title: string;
+  eyebrow?: React.ReactNode;
   description?: string;
   showHeader?: boolean;
   titleContent?: React.ReactNode;
@@ -75,6 +76,7 @@ const variantConfig: Record<
 export function PageShell({
   variant,
   title,
+  eyebrow,
   showHeader = true,
   titleContent,
   actions,
@@ -106,6 +108,7 @@ export function PageShell({
   const header = showHeader ? (
     <PageHeader
       title={title}
+      eyebrow={eyebrow}
       description={description}
       titleContent={titleContent}
       actions={resolvedActions}

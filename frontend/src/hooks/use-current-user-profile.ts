@@ -23,6 +23,7 @@ type UserMetadata = {
 };
 
 export type CurrentUserProfile = {
+  id: string;
   fullName: string;
   email: string;
   avatarUrl?: string;
@@ -69,6 +70,7 @@ const buildProfile = (user: User): CurrentUserProfile => {
   const metadata = (user.user_metadata ?? {}) as UserMetadata;
 
   const profile: CurrentUserProfile = {
+    id: user.id,
     fullName:
       metadata.full_name ||
       metadata.name ||

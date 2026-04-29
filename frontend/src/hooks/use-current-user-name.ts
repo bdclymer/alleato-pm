@@ -1,6 +1,24 @@
 import { createClient } from "@/lib/supabase/client";
 import { useEffect, useState } from "react";
 
+type UserMetadata = {
+  full_name?: string;
+  name?: string;
+};
+
+function getDisplayName(user: {
+  email?: string | null;
+  user_metadata?: UserMetadata | null;
+}) {
+  const metadata = user.user_metadata ?? {};
+  return (
+    metadata.full_name?.trim() ||
+    metadata.name?.trim() ||
+    user.email?.split("@")[0] ||
+    "Unknown user"
+  );
+}
+
 export const useCurrentUserName = () => {
   const [name, setName] = useState<string | null>(null);
 
@@ -14,7 +32,7 @@ export const useCurrentUserName = () => {
       }
 
       if (!cancelled) {
-        setName(data.session?.user.user_metadata.full_name ?? "?");
+        setName(data.session?.user ? getDisplayName(data.session.user) : null);
       }
     };
 
@@ -25,5 +43,5 @@ export const useCurrentUserName = () => {
     };
   }, []);
 
-  return name || "?";
+  return name || "Unknown user";
 };

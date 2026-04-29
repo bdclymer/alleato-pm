@@ -479,22 +479,40 @@ export function TruncatedCell({
   className,
 }: TruncatedCellProps): React.ReactElement {
   const display = value?.trim();
+  const spanRef = React.useRef<HTMLSpanElement>(null);
+  const [isTruncated, setIsTruncated] = React.useState(false);
+
+  // display and maxWidth change the rendered layout, so both are valid deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  React.useLayoutEffect(() => {
+    const el = spanRef.current;
+    if (el) {
+      setIsTruncated(el.scrollWidth > el.offsetWidth);
+    }
+  }, [display, maxWidth]);
 
   if (!display) {
     return <span className="text-muted-foreground">{emptyLabel}</span>;
   }
 
+  /* eslint-disable react/forbid-dom-props */
+  const span = (
+    <span
+      ref={spanRef}
+      className={cn("block truncate", className)}
+      style={{ maxWidth }}
+    >
+      {display}
+    </span>
+  );
+  /* eslint-enable react/forbid-dom-props */
+
+  if (!isTruncated) return span;
+
   return (
     <TooltipProvider delayDuration={300}>
       <Tooltip>
-        <TooltipTrigger asChild>
-          <span
-            className={cn("block truncate", className)}
-            style={{ maxWidth }}
-          >
-            {display}
-          </span>
-        </TooltipTrigger>
+        <TooltipTrigger asChild>{span}</TooltipTrigger>
         <TooltipContent
           side="top"
           align="start"

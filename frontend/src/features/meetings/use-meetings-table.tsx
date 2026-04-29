@@ -397,6 +397,7 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
     editingCell,
     editingValue,
     projectOptions,
+    projectIdByName,
     handleCellClick,
     setEditingValue,
     handleInlineSave,

@@ -285,9 +285,9 @@ function EntityCommentsContent({
 
       <div
         className={cn(
-          "space-y-2 rounded-md border border-border p-3",
+          "space-y-2",
           stickyComposer
-            ? "sticky bottom-0 mt-4 w-full border-t border-border/60 bg-card/95 pt-3 backdrop-blur supports-[backdrop-filter]:bg-card/80"
+            ? "sticky bottom-0 mt-4 w-full bg-card/95 pt-3 backdrop-blur supports-backdrop-filter:bg-card/80"
             : "mt-6",
         )}
       >

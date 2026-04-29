@@ -6,6 +6,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { CreateProjectDevConfigProvider } from "@/components/project/create-project-dev-config";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { SiteHeader } from "@/components/header";
+import { SiteFooter } from "@/components/layout/site-footer";
 import { ProcoreReferencePanel } from "@/components/header/procore-reference-panel";
 import { CommentsSidebarPanel } from "@/components/header/comments-sidebar";
 import { LiveCursors } from "@/components/live-cursors/LiveCursors";
@@ -57,14 +58,15 @@ export default function MainLayout({
       <SidebarInset key="app-shell" className="h-svh overflow-hidden">
         <CreateProjectDevConfigProvider>
           <div className="flex min-h-0 flex-1 overflow-hidden">
-            <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+            <div className="flex min-w-0 flex-1 flex-col overflow-auto scrollbar-hide">
               {!isDrawingViewer && <SiteHeader key="site-header" />}
               <main
                 key="main-content"
-                className="flex flex-1 flex-col overflow-auto scrollbar-hide min-w-0 min-h-0"
+                className="flex flex-1 flex-col min-w-0 min-h-0"
                 {...feedbackTargetProps("app.main-content")}
               >
                 <React.Fragment key="route-content">{children}</React.Fragment>
+                {!isDrawingViewer && <SiteFooter key="site-footer" />}
               </main>
               <ProcoreReferencePanel key="procore-reference-panel" />
             </div>

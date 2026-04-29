@@ -88,7 +88,6 @@ export function PageTabs({
                   data-testid={tab.testId}
                   className={cn(
                     buttonClasses,
-                    variant === "inline" && index === 0 && "ml-0 pl-0",
                     isActive
                       ? "text-primary font-medium"
                       : "text-foreground/70 font-medium hover:text-foreground/90",

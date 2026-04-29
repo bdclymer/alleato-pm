@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ArrowRight, Check, ChevronsUpDown, Loader2 } from "lucide-react";
+import { ArrowRight, Check, ChevronDown, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,6 +17,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { headerSelectTriggerClassName } from "./header-control-styles";
 
 interface Project {
   id: number;
@@ -94,18 +95,18 @@ export function ProjectSelector({
           variant="ghost"
           role="combobox"
           aria-expanded={open}
-          className="project-selector-trigger h-8 w-56 justify-between gap-1.5 border border-border/60 bg-transparent px-2.5 hover:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
+          className={cn("project-selector-trigger w-56", headerSelectTriggerClassName)}
         >
           <span className="flex min-w-0 items-center gap-1.5">
             {currentProject ? (
-              <span className="truncate text-sm text-foreground/80">
+              <span className="truncate text-xs text-foreground/80">
                 {currentProject.name}
               </span>
             ) : (
-              <span className="text-sm text-muted-foreground">Select project</span>
+              <span className="text-xs text-muted-foreground">Select Project</span>
             )}
           </span>
-          <ChevronsUpDown
+          <ChevronDown
             className="h-3 w-3 shrink-0 text-muted-foreground/60"
             strokeWidth={1.6}
           />

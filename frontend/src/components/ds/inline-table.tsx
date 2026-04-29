@@ -238,12 +238,11 @@ export function InlineTableCell({
 }: InlineTableCellProps) {
   const { variant } = useInlineTable();
   const px = variant === "edit" ? "px-1" : "px-3";
-  const py = variant === "edit" ? "py-1.5" : "py-2.5";
   return (
     <td
       className={cn(
         px,
-        py,
+        "py-2.5",
         align === "right" && "text-right",
         align === "center" && "text-center",
         numeric && "tabular-nums whitespace-nowrap font-normal",

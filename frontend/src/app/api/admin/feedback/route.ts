@@ -13,6 +13,7 @@ import {
   ADMIN_FEEDBACK_SEVERITIES,
 } from "@/lib/admin-feedback/constants";
 import { createGitHubIssue } from "@/lib/admin-feedback/github";
+import { buildAdminFeedbackTitle } from "@/lib/admin-feedback/title";
 import { matchFeedbackToTool, getToolById } from "@/lib/admin-feedback/tool-matcher";
 import { resolveToolContext, contextToAgentPayload } from "@/lib/admin-feedback/context-resolver";
 import { ingestAdminFeedbackLearning } from "@/lib/ai/services/agent-learning-service";
@@ -81,25 +82,6 @@ function toErrorDetails(value: unknown) {
   }
 
   return { message: "Unexpected error" };
-}
-
-function buildTitle(
-  providedTitle: string | undefined,
-  requestType: (typeof ADMIN_FEEDBACK_REQUEST_TYPES)[number],
-  targetText: string | null | undefined,
-  pageTitle: string | null | undefined,
-) {
-  if (providedTitle?.trim()) {
-    return providedTitle.trim();
-  }
-
-  const typeLabel =
-    requestType === "change_request"
-      ? "Change request"
-      : requestType.charAt(0).toUpperCase() + requestType.slice(1);
-  const targetLabel = targetText?.trim() || pageTitle?.trim() || "page element";
-
-  return `${typeLabel}: ${targetLabel.slice(0, 120)}`;
 }
 
 function toJsonValue(value: unknown): JsonValue {
@@ -301,12 +283,13 @@ export const POST = withApiGuardrails("/api/admin/feedback#POST", async ({ reque
     screenshotUrl = uploaded.screenshotUrl;
   }
 
-  const title = buildTitle(
-    payload.title,
-    payload.requestType,
-    payload.target.text,
-    payload.pageTitle,
-  );
+  const title = buildAdminFeedbackTitle({
+    providedTitle: payload.title,
+    requestType: payload.requestType,
+    comment: payload.comment,
+    targetText: payload.target.text,
+    pageTitle: payload.pageTitle,
+  });
 
   const matchedTool = await matchFeedbackToTool(
     title,

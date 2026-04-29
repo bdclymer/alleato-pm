@@ -4,7 +4,7 @@ You are Codex running inside the Codex CLI on the user's Mac.
 
 ## Proactive Systems Thinking Rules
 
-Rule 1: Never create one-off components, one-off styling, or page-local hard-coded UI when an existing shared primitive, pattern, or design-system component can reasonably be used. If a one-off implementation is absolutely mandatory, document why in the code, explain why no shared primitive fits, and create or reference a follow-up to move it into a shared abstraction when appropriate.
+Rule 1: Never create one-off components, one-off styling, page-local hard-coded UI, or page-level visual overrides when an existing shared primitive, pattern, or design-system component can reasonably be used. If a one-off implementation or local override is explicitly requested and absolutely mandatory, document why in the code, explain why no shared primitive fits, and create or reference a follow-up to move it into a shared abstraction when appropriate.
 Rule 2: Do not ship silent failures.
 Rule 3: Do not return generic errors.
 Rule 4: Do not fix a recurring bug without adding a guardrail.
@@ -414,8 +414,9 @@ Design fixes must be applied at the shared primitive/component level when the is
 
 Required behavior:
 - If the defect comes from a shared primitive (`components/ui/*`, shared layout/table primitives), fix that primitive globally.
-- Do not apply page-level or feature-level visual overrides to compensate for primitive defects unless explicitly requested.
-- If a local override is temporarily necessary, document it inline with a TODO and open a follow-up task to move it to the primitive.
+- Page-level or feature-level visual overrides are forbidden as a default fix path.
+- Do not apply local overrides to compensate for primitive defects. Fix the primitive instead.
+- A local override is allowed only in a rare, explicitly requested exception. It must include an inline TODO that states why the shared primitive cannot own the behavior yet, plus a follow-up task to move the behavior into the primitive.
 - Never bypass design-system lint rules using force flags (`--force`, `--no-verify`) to push style drift.
 
 Decision rule:

@@ -21,6 +21,30 @@ def _strip_html(text: str) -> str:
     return re.sub(r'\s+', ' ', text).strip()
 
 
+def _user_identity_signals(user: dict) -> list[str]:
+    """Return display/email signals usable for project inference."""
+    if not isinstance(user, dict):
+        return []
+
+    signals: list[str] = []
+    display_name = str(user.get("displayName") or "").strip()
+    email = str(
+        user.get("email")
+        or user.get("mail")
+        or user.get("userPrincipalName")
+        or ""
+    ).strip()
+
+    if display_name:
+        signals.append(display_name)
+    if email:
+        signals.append(email)
+        if display_name:
+            signals.append(f"{display_name} <{email}>")
+
+    return signals
+
+
 def _conversation_doc_id(prefix: str, conversation_id: str, date_key: str) -> str:
     digest = hashlib.sha256(conversation_id.encode("utf-8")).hexdigest()[:16]
     return f"{prefix}_{digest}_{date_key}"
@@ -141,9 +165,7 @@ def _process_teams_message(supabase_client, graph, msg, team_id, team_name, chan
     for thread_msg in thread_messages:
         msg_from = (thread_msg or {}).get("from", {}) or {}
         user_data = msg_from.get("user", {}) if isinstance(msg_from, dict) else {}
-        display_name = (user_data or {}).get("displayName")
-        if display_name:
-            participants.append(display_name)
+        participants.extend(_user_identity_signals(user_data or {}))
 
     project_id, assignment_method, assignment_confidence = infer_project_id(
         supabase_client,
@@ -217,10 +239,15 @@ def _chat_display_name(chat: dict) -> tuple[str, list[str]]:
     """
     members_raw = chat.get("members") or []
     member_names = [
-        m.get("displayName", "").strip()
+        str(m.get("displayName", "")).strip()
         for m in members_raw
         if isinstance(m, dict) and m.get("displayName")
     ]
+    member_signals: list[str] = []
+    for member in members_raw:
+        if not isinstance(member, dict):
+            continue
+        member_signals.extend(_user_identity_signals(member))
 
     topic = (chat.get("topic") or "").strip()
     chat_type = chat.get("chatType", "")
@@ -236,7 +263,7 @@ def _chat_display_name(chat: dict) -> tuple[str, list[str]]:
     else:
         display = chat.get("id", "Unknown")[:12]
 
-    return display, member_names
+    return display, member_signals or member_names
 
 
 def get_user_chats(user_email: str) -> list[dict]:
@@ -250,7 +277,7 @@ def get_user_chats(user_email: str) -> list[dict]:
 
     # Try with member expansion first; fall back without it if forbidden
     for params in [
-        {"$select": "id,chatType,topic", "$expand": "members($select=displayName,email)"},
+        {"$select": "id,chatType,topic", "$expand": "members($select=displayName,email,mail,userPrincipalName)"},
         {"$select": "id,chatType,topic"},
     ]:
         try:
@@ -308,7 +335,7 @@ def _process_chat_message(
     if existing and existing.data:
         existing_resp = (
             supabase_client.from_("document_metadata")
-            .select("id, content, participants")
+            .select("id, content, participants, project_id")
             .eq("id", doc_id)
             .single()
             .execute()
@@ -346,6 +373,7 @@ def _process_chat_message(
         title=f"Teams DM Conversation: {chat_display_name}",
         content=text,
         participants=participants,
+        existing_project_id=(existing_doc or {}).get("project_id"),
     )
     row = {
         "id": doc_id,

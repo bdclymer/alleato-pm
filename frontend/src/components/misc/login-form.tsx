@@ -61,7 +61,6 @@ export function LoginForm({
       }
 
       setSuccessMessage("Login successful! Redirecting you now...");
-      toast.success("Logged in successfully");
 
       // Determine the redirect path then do a full-page navigation.
       // window.location.href instead of router.push() avoids a race condition

@@ -67,15 +67,15 @@ function FormattedNotes({ text }: { text: string }): ReactElement {
     const parts = str.split(/(\*\*[^*]+\*\*)/g);
     return (
       <>
-        {parts.map((part) => {
+        {parts.map((part, i) => {
           if (part.startsWith("**") && part.endsWith("**")) {
             return (
-              <span key={`b-${part}`} className="font-semibold text-foreground">
+              <span key={`b-${i}-${part.slice(2, 22)}`} className="font-semibold text-foreground">
                 {part.slice(2, -2)}
               </span>
             );
           }
-          return <span key={`t-${part.slice(0, 40)}`}>{part}</span>;
+          return <span key={`t-${i}-${part.slice(0, 20)}`}>{part}</span>;
         })}
       </>
     );

@@ -1036,6 +1036,7 @@ export function ChatArea({
     Array<{ url?: string; name: string; type: string; isImage: boolean }>
   >([]);
   const [isRecording, setIsRecording] = useState(false);
+  const [isMicrophoneBlocked, setIsMicrophoneBlocked] = useState(false);
   const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
@@ -1208,6 +1209,7 @@ export function ChatArea({
     navigator.mediaDevices
       .getUserMedia({ audio: true })
       .then((stream) => {
+        setIsMicrophoneBlocked(false);
         setMediaStream(stream);
         try {
           recognitionRef.current?.start();
@@ -1224,14 +1226,21 @@ export function ChatArea({
       })
       .catch((error: unknown) => {
         setIsRecording(false);
-        const message =
-          error instanceof DOMException && error.name === "NotAllowedError"
-            ? "Microphone permission is blocked for this site. Enable microphone access in your browser site settings, then try voice input again."
-            : error instanceof Error
-              ? `Microphone access failed: ${error.message}`
-              : "Microphone access failed.";
+        if (error instanceof DOMException && error.name === "NotAllowedError") {
+          setIsMicrophoneBlocked(true);
+          toast.error("Microphone access is blocked", {
+            id: "ai-assistant-microphone-blocked",
+            description:
+              "Enable microphone access for this site in browser site settings, then try voice input again.",
+          });
+          return;
+        }
+
+        setIsMicrophoneBlocked(false);
         toast.error(
-          message,
+          error instanceof Error
+            ? `Microphone access failed: ${error.message}`
+            : "Microphone access failed.",
         );
       });
   }, [input, isRecording, mediaStream]);
@@ -1474,6 +1483,12 @@ export function ChatArea({
           {isRecording && (
             <div className="w-24 shrink-0">
               <AudioWaveform isRecording={isRecording} stream={mediaStream} />
+            </div>
+          )}
+          {isMicrophoneBlocked && !isRecording && (
+            <div className="flex min-w-44 items-center gap-1.5 whitespace-nowrap px-1 text-xs text-muted-foreground">
+              <MicOffIcon className="h-3.5 w-3.5 shrink-0 text-destructive" />
+              <span>Enable mic access in site settings.</span>
             </div>
           )}
           <TooltipProvider delayDuration={150}>

@@ -339,14 +339,17 @@ export default function DrawingDetailPage() {
     drawing_type: "",
   });
 
-  // Fetch signed preview URL once drawing is loaded
+  // Verify the pdf-proxy can serve the file before rendering the iframe.
+  // We use a Range: bytes=0-0 probe — cheap (1 byte) and confirms the file
+  // actually exists in storage. If the file is missing, previewUrl stays null
+  // and the EmptyState renders instead of raw JSON from Supabase.
   useEffect(() => {
     if (!drawing?.current_revision?.file_url) return;
     setPreviewLoading(true);
-    fetch(`/api/projects/${projectId}/drawings/${drawingId}/download`)
-      .then((r) => r.ok ? r.json() : null)
-      .then((data) => {
-        if (data?.downloadUrl) setPreviewUrl(data.downloadUrl);
+    const proxyUrl = `/api/projects/${projectId}/drawings/${drawingId}/pdf-proxy`;
+    fetch(proxyUrl, { headers: { Range: "bytes=0-0" } })
+      .then((r) => {
+        if (r.ok || r.status === 206) setPreviewUrl(proxyUrl);
       })
       .catch(() => {})
       .finally(() => setPreviewLoading(false));
@@ -881,6 +884,12 @@ export default function DrawingDetailPage() {
                             alt={`Preview of ${drawing.title}`}
                             className="w-full rounded-md border border-border object-contain bg-muted"
                             style={{ maxHeight: 340 }}
+                          />
+                        ) : !previewLoading ? (
+                          <EmptyState
+                            icon={<ImageOff />}
+                            title="Preview unavailable"
+                            description="The file could not be loaded from storage."
                           />
                         ) : null}
 

@@ -365,7 +365,7 @@ export function ProcoreReferencePanel() {
 
   return (
     <div
-      className="w-full shrink-0 border-t border-border bg-card overflow-hidden"
+      className={`w-full shrink-0 bg-card overflow-hidden${open ? " border-t border-border" : ""}`}
       style={{ height: resolvedHeight, transition: dragRef.current ? "none" : "height 0.3s ease-in-out" }}
     >
       {open && (

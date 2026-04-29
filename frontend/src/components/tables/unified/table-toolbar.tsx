@@ -833,7 +833,7 @@ export function TableToolbar({
 
             <Sheet open={mobileFilterOpen} onOpenChange={setMobileFilterOpen}>
               <SheetContent side="right" className="w-full max-w-none gap-0 p-0">
-                <SheetHeader className="border-b px-4 py-4">
+                <SheetHeader className="px-4 py-4">
                   <div className="flex items-center justify-between gap-3">
                     <SheetTitle>Filter</SheetTitle>
                     {activeFilterCount > 0 ? (
@@ -855,7 +855,7 @@ export function TableToolbar({
 
             <Sheet open={mobileColumnsOpen} onOpenChange={setMobileColumnsOpen}>
               <SheetContent side="right" className="w-full max-w-none gap-0 p-0">
-                <SheetHeader className="border-b px-4 py-4">
+                <SheetHeader className="px-4 py-4">
                   <SheetTitle>Property visibility</SheetTitle>
                 </SheetHeader>
                 <div className="max-h-[calc(90dvh-76px)] overflow-y-auto px-4 py-4">
@@ -891,7 +891,7 @@ export function TableToolbar({
 
             <Sheet open={mobileSortOpen} onOpenChange={setMobileSortOpen}>
               <SheetContent side="right" className="w-full max-w-none gap-0 p-0">
-                <SheetHeader className="border-b px-4 py-4">
+                <SheetHeader className="px-4 py-4">
                   <SheetTitle>Sort</SheetTitle>
                 </SheetHeader>
                 <div className="space-y-4 px-4 py-4">

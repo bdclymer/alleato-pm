@@ -147,9 +147,9 @@ export function PermissionTemplateForm({ template, onSave, onCancel }: Props) {
         </div>
       </div>
 
-      {/* Module permissions */}
+      {/* Module access */}
       <div className="space-y-2">
-        <p className="text-sm font-medium text-foreground">Module Permissions</p>
+        <p className="text-sm font-medium text-foreground">Module Access</p>
         <div className="rounded-md border border-border divide-y divide-border">
           {MODULES.map(({ key, label }) => (
             <div
@@ -179,7 +179,7 @@ export function PermissionTemplateForm({ template, onSave, onCancel }: Props) {
 
       {/* Granular flags */}
       <div className="space-y-2">
-        <p className="text-sm font-medium text-foreground">Granular Permissions</p>
+        <p className="text-sm font-medium text-foreground">Granular Access</p>
         <p className="text-xs text-muted-foreground">
           Fine-grained capabilities layered on top of module access levels.
         </p>

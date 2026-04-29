@@ -42,8 +42,7 @@ This document covers every Supabase table involved in user management, company/p
 │ (id = auth     │  Bypasses ALL permission checks
 │  user id)      │
 └────────────────┘
-```markdown
----
+```
 
 ## Tables
 

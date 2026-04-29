@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { Badge } from "@/components/ui/badge";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -22,6 +23,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Copy, ExternalLink, Plus, RefreshCw, Send, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { apiFetch, ApiError } from "@/lib/api-client";
@@ -184,6 +186,77 @@ function scoreLabel(score: number) {
 }
 
 export default function AnnotationInboxPage() {
+  // ── Panel resize / collapse ────────────────────────────────────────────────
+  const [leftWidth, setLeftWidth] = useState(() => {
+    if (typeof window === "undefined") return 280;
+    return Number(localStorage.getItem("annotation-inbox-left-width") ?? 280);
+  });
+  const [rightWidth, setRightWidth] = useState(() => {
+    if (typeof window === "undefined") return 224;
+    return Number(localStorage.getItem("annotation-inbox-right-width") ?? 224);
+  });
+  const [leftCollapsed, setLeftCollapsed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("annotation-inbox-left-collapsed") === "true";
+  });
+  const [rightCollapsed, setRightCollapsed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("annotation-inbox-right-collapsed") === "true";
+  });
+  const leftDragRef = useRef(false);
+  const rightDragRef = useRef(false);
+
+  const startLeftResize = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    leftDragRef.current = true;
+    const startX = e.clientX;
+    const startW = leftWidth;
+    const onMove = (ev: MouseEvent) => {
+      if (!leftDragRef.current) return;
+      const next = Math.max(180, Math.min(480, startW + ev.clientX - startX));
+      setLeftWidth(next);
+      localStorage.setItem("annotation-inbox-left-width", String(next));
+    };
+    const onUp = () => {
+      leftDragRef.current = false;
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  }, [leftWidth]);
+
+  const startRightResize = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    rightDragRef.current = true;
+    const startX = e.clientX;
+    const startW = rightWidth;
+    const onMove = (ev: MouseEvent) => {
+      if (!rightDragRef.current) return;
+      const next = Math.max(160, Math.min(400, startW - (ev.clientX - startX)));
+      setRightWidth(next);
+      localStorage.setItem("annotation-inbox-right-width", String(next));
+    };
+    const onUp = () => {
+      rightDragRef.current = false;
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  }, [rightWidth]);
+
+  const toggleLeft = () => {
+    const next = !leftCollapsed;
+    setLeftCollapsed(next);
+    localStorage.setItem("annotation-inbox-left-collapsed", String(next));
+  };
+  const toggleRight = () => {
+    const next = !rightCollapsed;
+    setRightCollapsed(next);
+    localStorage.setItem("annotation-inbox-right-collapsed", String(next));
+  };
+
   const [items, setItems] = useState<FeedbackItem[]>([]);
   const [comments, setComments] = useState<FeedbackComment[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -541,6 +614,13 @@ export default function AnnotationInboxPage() {
     return "bg-amber-400";
   }
 
+  function priorityDot(score: number) {
+    if (score >= 90) return "bg-red-600";
+    if (score >= 70) return "bg-orange-500";
+    if (score >= 45) return "bg-amber-400";
+    return "bg-blue-400";
+  }
+
   function severityColor(sev: string | null) {
     if (sev === "high" || sev === "blocking") return "text-red-500";
     if (sev === "medium" || sev === "important") return "text-amber-500";
@@ -550,30 +630,16 @@ export default function AnnotationInboxPage() {
   return (
     <>
     <div className="flex h-full flex-col overflow-hidden">
-        {/* Top bar — Linear-style */}
-        <div className="flex items-center justify-between border-b border-border px-4 h-10 shrink-0">
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-medium text-foreground">Inbox</span>
-            <span className="text-xs text-muted-foreground">{counts.total}</span>
-            <div className="flex items-center gap-1">
-              {(["all", "open", "in_progress", "resolved"] as const).map((f) => {
-                const labels: Record<typeof f, string> = { all: "All", open: "Open", in_progress: "In Progress", resolved: "Done" };
-                const badge = f === "open" ? counts.open : f === "in_progress" ? counts.inProgress : f === "resolved" ? counts.resolved : null;
-                return (
-                  <Button
-                    key={f}
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setStatusFilter(f)}
-                    className={`h-6 rounded px-2 text-xs transition-colors ${statusFilter === f ? "bg-muted text-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}
-                  >
-                    {labels[f]}{badge !== null && <span className="ml-1 opacity-60">{badge}</span>}
-                  </Button>
-                );
-              })}
-            </div>
-          </div>
+        {/* Top bar */}
+        <div className="flex items-center justify-between px-4 h-10 shrink-0">
+          <Tabs value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
+            <TabsList variant="default">
+              <TabsTrigger value="all">All</TabsTrigger>
+              <TabsTrigger value="open">Open {counts.open > 0 && <span className="ml-1 opacity-60 text-[10px]">{counts.open}</span>}</TabsTrigger>
+              <TabsTrigger value="in_progress">In Progress {counts.inProgress > 0 && <span className="ml-1 opacity-60 text-[10px]">{counts.inProgress}</span>}</TabsTrigger>
+              <TabsTrigger value="resolved">Done {counts.resolved > 0 && <span className="ml-1 opacity-60 text-[10px]">{counts.resolved}</span>}</TabsTrigger>
+            </TabsList>
+          </Tabs>
           <div className="flex items-center gap-1">
             <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => void loadItems()}>
               <RefreshCw className="h-3.5 w-3.5" />
@@ -587,7 +653,11 @@ export default function AnnotationInboxPage() {
 
         <div className="flex flex-1 min-h-0">
           {/* Issue list */}
-          <section className="flex w-110 min-w-70 flex-col border-r border-border shrink-0">
+          <section
+            className="relative flex flex-col border-r border-border shrink-0 overflow-hidden transition-[width] duration-150"
+            // eslint-disable-next-line react/forbid-component-props
+            style={{ width: leftCollapsed ? 0 : leftWidth, minWidth: leftCollapsed ? 0 : undefined }}
+          >
             {/* Search + filters */}
             <div className="px-3 py-2 border-b border-border flex items-center gap-2">
               <Input
@@ -632,11 +702,8 @@ export default function AnnotationInboxPage() {
                       isActive ? "bg-primary/8" : ""
                     }`}
                   >
-                    <span className={`h-2 w-2 rounded-full shrink-0 ${statusDot(item.status)}`} />
-                    <span className="flex-1 truncate text-xs text-foreground">{item.title}</span>
-                    <span className={`shrink-0 text-[10px] font-medium ${severityColor(item.severity)}`}>
-                      {scoreLabel(score)}
-                    </span>
+                    <span className={`h-2 w-2 rounded-full shrink-0 ${priorityDot(score)}`} />
+                    <span className="flex-1 truncate text-left text-xs text-foreground">{item.title}</span>
                     {duplicateCount > 1 && (
                       <span className="shrink-0 text-[10px] text-muted-foreground">{duplicateCount}×</span>
                     )}
@@ -646,6 +713,25 @@ export default function AnnotationInboxPage() {
               })}
             </div>
           </section>
+
+          {/* Left resize handle + collapse toggle */}
+          <div className="relative flex shrink-0 items-stretch">
+            {!leftCollapsed && (
+              <div
+                className="w-1 cursor-col-resize hover:bg-primary/30 active:bg-primary/50 transition-colors"
+                onMouseDown={startLeftResize}
+                aria-hidden="true"
+              />
+            )}
+            <button
+              type="button"
+              onClick={toggleLeft}
+              className="absolute -right-2.5 top-1/2 z-10 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background text-muted-foreground shadow-sm hover:text-foreground"
+              aria-label={leftCollapsed ? "Expand left panel" : "Collapse left panel"}
+            >
+              {leftCollapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
+            </button>
+          </div>
 
           {/* Detail panel */}
           <section className="flex flex-1 flex-col min-w-0 overflow-hidden">
@@ -772,8 +858,31 @@ export default function AnnotationInboxPage() {
                   </div>
                 </div>
 
+                {/* Right resize handle + collapse toggle */}
+                <div className="relative flex shrink-0 items-stretch">
+                  <button
+                    type="button"
+                    onClick={toggleRight}
+                    className="absolute -left-2.5 top-1/2 z-10 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background text-muted-foreground shadow-sm hover:text-foreground"
+                    aria-label={rightCollapsed ? "Expand right panel" : "Collapse right panel"}
+                  >
+                    {rightCollapsed ? <ChevronLeft className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                  </button>
+                  {!rightCollapsed && (
+                    <div
+                      className="w-1 cursor-col-resize hover:bg-primary/30 active:bg-primary/50 transition-colors"
+                      onMouseDown={startRightResize}
+                      aria-hidden="true"
+                    />
+                  )}
+                </div>
+
                 {/* Properties sidebar — Linear-style right rail */}
-                <aside className="w-56 shrink-0 border-l border-border overflow-y-auto py-4 px-1">
+                <aside
+                  className="shrink-0 border-l border-border overflow-y-auto py-4 px-1 overflow-hidden transition-[width] duration-150"
+                  // eslint-disable-next-line react/forbid-component-props
+                  style={{ width: rightCollapsed ? 0 : rightWidth, minWidth: rightCollapsed ? 0 : undefined }}
+                >
                   <div className="space-y-0.5">
                     {/* Status */}
                     <div className="flex items-center h-8 px-3 gap-3 rounded hover:bg-muted/40 group">

@@ -212,7 +212,7 @@ function GroupPreviewPane({
   return (
     <div className="flex flex-col h-full">
       {/* Panel header — h-11 matches table header height */}
-      <div className="flex items-center justify-between gap-1 px-4 border-b border-border h-11">
+      <div className="flex items-center justify-between gap-1 px-4 h-11">
         <div className="flex items-center gap-1">
           <Button
             size="icon"
@@ -407,9 +407,7 @@ export default function DistributionGroupsPage(): ReactElement {
 
   const selectedGroupId = searchParams.get("detail");
   const selectedGroup =
-    (selectedGroupId ? groups.find((g) => g.id === selectedGroupId) : null) ||
-    groups[0] ||
-    null;
+    selectedGroupId ? groups.find((g) => g.id === selectedGroupId) ?? null : null;
   const activeGroupId = selectedGroup?.id ?? null;
 
   // ─── Keyboard nav ────────────────────────────────────────────────────────────

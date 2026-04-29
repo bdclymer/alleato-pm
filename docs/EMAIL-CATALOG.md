@@ -24,7 +24,7 @@ All transactional emails sent by the platform. Organized by category with trigge
 
 | # | Trigger Page | Name | Template ID | Subject Line | Recipients | Body Summary | Component | Attachment | Idempotency | Status |
 |---|-------------|------|-------------|-------------|------------|-------------|-----------|-----------|-------------|--------|
-| 1 | `/settings/users` → Invite User dialog | **Platform Invitation** | `user-invite` | "You've been invited to Alleato" | Invitee email address | Inviter name, invitee name, role, accept link, 24h expiry | `emails/auth/InviteUser.tsx` | None | `user-invite/{email}` | ✅ Built |
+| 1 | `/user-management` → User Management invite flow | **Platform Invitation** | `user-invite` | "You've been invited to Alleato" | Invitee email address | Inviter name, invitee name, role, accept link, 24h expiry | `emails/auth/InviteUser.tsx` | None | `user-invite/{email}` | ✅ Built |
 | 2 | `/auth/forgot-password` (Supabase Auth form) | **Password Reset** | `forgot-password` | "Reset your Alleato password" | Requesting user | Reset link, expiry time (60 min), requesting IP | `emails/auth/ForgotPassword.tsx` | None | Per-request | ✅ Built |
 | 3 | `/auth/signup` (auto-triggered by Supabase) | **Email Confirmation** | *(Supabase managed)* | "Confirm your email" | Signing-up user | Supabase default — confirmation link | Supabase default template | None | Supabase managed | ✅ Built |
 | 4 | Account settings (planned) | **Welcome Email** | `welcome` | TBD | New user | Welcome message, getting-started links | **Not built** | None | — | 🔲 Planned |
@@ -39,7 +39,7 @@ NEXT_PUBLIC_APP_URL=https://app.alleato.com
 ```
 
 **Trigger code:**
-- Platform Invitation → `POST /api/settings/users/invite` (`frontend/src/app/api/settings/users/invite/route.ts:95`)
+- Platform Invitation → `POST /api/permissions/users` (`frontend/src/app/api/permissions/users/route.ts`)
 - Password Reset → component ready, no standalone API route yet (Supabase handles delivery)
 
 ---

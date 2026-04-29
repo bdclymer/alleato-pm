@@ -433,6 +433,7 @@ export function UnifiedTablePage<T>({
   const [panelToggleLeft, setPanelToggleLeft] = React.useState<number | null>(null);
   const panelResizeRef = React.useRef<{ startX: number; startWidth: number } | null>(null);
   const gridRef = React.useRef<HTMLDivElement>(null);
+  const isSidePanelOpen = Boolean(sidePanel && table.activeRowId);
 
   // Hydrate from localStorage after mount (avoids SSR mismatch)
   React.useEffect(() => {
@@ -465,6 +466,12 @@ export function UnifiedTablePage<T>({
     [panelStorageKey],
   );
 
+  React.useEffect(() => {
+    if (!isSidePanelOpen) return;
+    setPanelCollapsed(false);
+    persistPanel(false, panelWidth);
+  }, [isSidePanelOpen, panelWidth, persistPanel]);
+
   const togglePanelCollapsed = React.useCallback(() => {
     setPanelCollapsed((prev) => {
       const next = !prev;
@@ -474,7 +481,7 @@ export function UnifiedTablePage<T>({
   }, [panelWidth, persistPanel]);
 
   const updatePanelTogglePosition = React.useCallback(() => {
-    if (!sidePanel || !panelMounted) {
+    if (!isSidePanelOpen || !panelMounted) {
       setPanelToggleLeft(null);
       return;
     }
@@ -484,7 +491,7 @@ export function UnifiedTablePage<T>({
     const dividerX = panelCollapsed ? gridRect.right : gridRect.right - panelWidth;
     // Button width is 20px (w-5); offset by half width so its center sits on the divider.
     setPanelToggleLeft(dividerX - 10);
-  }, [panelCollapsed, panelMounted, panelWidth, sidePanel]);
+  }, [isSidePanelOpen, panelCollapsed, panelMounted, panelWidth]);
 
   // Panel resize drag handlers (mirrors column resize pattern)
   const handlePanelResizeStart = React.useCallback(
@@ -536,7 +543,7 @@ export function UnifiedTablePage<T>({
   }, [updatePanelTogglePosition]);
 
   React.useEffect(() => {
-    if (!sidePanel || !panelMounted) return;
+    if (!isSidePanelOpen || !panelMounted) return;
 
     const syncTogglePosition = () => {
       updatePanelTogglePosition();
@@ -554,7 +561,7 @@ export function UnifiedTablePage<T>({
       window.removeEventListener("resize", syncTogglePosition);
       observer?.disconnect();
     };
-  }, [panelMounted, sidePanel, updatePanelTogglePosition]);
+  }, [isSidePanelOpen, panelMounted, updatePanelTogglePosition]);
 
   const sortedItems = React.useMemo(() => {
     if (!sorting?.sortBy) return data.items;
@@ -1720,13 +1727,13 @@ export function UnifiedTablePage<T>({
                   (sidePanel
                     ? "-ml-4 sm:-ml-6 lg:-ml-8"
                     : "-mx-4 sm:-mx-6 lg:-mx-8"),
-                !panelMounted && "lg:grid-cols-[minmax(0,1fr)_35rem]",
-                !panelMounted && sidePanel.columnClassName,
+                !panelMounted && isSidePanelOpen && "lg:grid-cols-[minmax(0,1fr)_35rem]",
+                !panelMounted && isSidePanelOpen && sidePanel.columnClassName,
               )}
               style={
                 panelMounted
                   ? {
-                      gridTemplateColumns: panelCollapsed
+                      gridTemplateColumns: !isSidePanelOpen || panelCollapsed
                         ? "minmax(0, 1fr)"
                         : `minmax(0, 1fr) ${panelWidth}px`,
                       transition: isResizingPanel
@@ -1739,30 +1746,32 @@ export function UnifiedTablePage<T>({
               <div className="min-w-0">{tableAreaContent}</div>
 
               {/* Side panel with resize handle */}
-              <aside
-                className={cn(
-                  "hidden lg:flex lg:flex-col bg-muted border-b border-l border-border/50 relative",
-                  panelSticky
-                    ? "lg:sticky lg:top-12 lg:max-h-[calc(100dvh-3rem)]"
-                    : "lg:relative lg:max-h-none",
-                  panelCollapsed ? "lg:!hidden" : "lg:overflow-y-auto",
-                  sidePanel.widthClassName,
-                )}
-              >
-                {panelResizable && (
-                  <div
-                    className="absolute left-0 top-0 h-full w-1.5 cursor-col-resize select-none z-10 hover:bg-primary/20 active:bg-primary/30 transition-colors"
-                    onMouseDown={handlePanelResizeStart}
-                    aria-hidden="true"
-                  />
-                )}
-                <div className="flex-1 flex flex-col min-h-0 px-4">
-                  {sidePanel.content}
-                </div>
-              </aside>
+              {isSidePanelOpen && (
+                <aside
+                  className={cn(
+                    "hidden lg:flex lg:flex-col bg-card relative",
+                    panelSticky
+                      ? "lg:sticky lg:top-12 lg:max-h-[calc(100dvh-3rem)]"
+                      : "lg:relative lg:max-h-none",
+                    panelCollapsed ? "lg:!hidden" : "lg:overflow-y-auto",
+                    sidePanel.widthClassName,
+                  )}
+                >
+                  {panelResizable && (
+                    <div
+                      className="absolute left-0 top-0 h-full w-1.5 cursor-col-resize select-none z-10 hover:bg-primary/20 active:bg-primary/30 transition-colors"
+                      onMouseDown={handlePanelResizeStart}
+                      aria-hidden="true"
+                    />
+                  )}
+                  <div className="flex-1 flex flex-col min-h-0 px-4">
+                    {sidePanel.content}
+                  </div>
+                </aside>
+              )}
 
               {/* Collapse/expand toggle button */}
-              {panelCollapsible && panelMounted && (
+              {panelCollapsible && panelMounted && isSidePanelOpen && (
                 <Button
                   type="button"
                   variant="ghost"
@@ -1806,7 +1815,7 @@ export function UnifiedTablePage<T>({
       {/* Mobile side panel overlay */}
       {sidePanel && table.activeRowId && (
         <div className="fixed inset-0 z-50 flex flex-col bg-background sm:hidden">
-          <div className="flex items-center justify-between border-b border-border px-4 h-12">
+          <div className="flex items-center justify-between px-4 h-12">
             <span className="text-sm font-medium">Details</span>
             <Button
               variant="ghost"

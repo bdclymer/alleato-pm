@@ -459,7 +459,7 @@ export function EditProjectDialog({
           onMouseDown={handleResizeStart}
         />
 
-        <SheetHeader className="border-b px-6 py-4">
+        <SheetHeader className="px-6 py-4">
           <SheetTitle>Edit Project</SheetTitle>
         </SheetHeader>
 

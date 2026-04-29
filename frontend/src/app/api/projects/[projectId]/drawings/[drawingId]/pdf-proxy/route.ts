@@ -67,6 +67,12 @@ export const GET = withApiGuardrails<{ projectId: string; drawingId: string }>(
 
   const upstream = await fetch(fetchUrl, { headers: upstreamHeaders });
 
+  // Don't forward non-ok Supabase responses as-is — they contain raw JSON that
+  // would render visibly inside an <iframe> or <object> element.
+  if (!upstream.ok && upstream.status !== 206) {
+    return new NextResponse(null, { status: upstream.status });
+  }
+
   const responseHeaders = new Headers();
   responseHeaders.set("Content-Type", upstream.headers.get("Content-Type") || "application/pdf");
   responseHeaders.set("Accept-Ranges", "bytes");

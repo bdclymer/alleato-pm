@@ -51,7 +51,6 @@ const primeCoTitleCache = new Map<string, string>();
 const invoiceTitleCache = new Map<string, string>();
 const rfiTitleCache = new Map<string, string>();
 const submittalTitleCache = new Map<string, string>();
-const settingsUserTitleCache = new Map<string, string>();
 const subcontractorInvoiceTitleCache = new Map<string, { commitmentLabel: string; invoiceLabel: string }>();
 const drawingTitleCache = new Map<string, string>();
 const testRunTitleCache = new Map<string, string>();
@@ -85,7 +84,6 @@ export function useHeaderNav(): UseHeaderNavReturn {
   const [invoiceTitle, setInvoiceTitle] = useState<string | null>(null);
   const [rfiTitle, setRfiTitle] = useState<string | null>(null);
   const [submittalTitle, setSubmittalTitle] = useState<string | null>(null);
-  const [settingsUserTitle, setSettingsUserTitle] = useState<string | null>(null);
   const [subcontractorInvoiceInfo, setSubcontractorInvoiceInfo] = useState<{ commitmentLabel: string; invoiceLabel: string } | null>(null);
   const [drawingTitle, setDrawingTitle] = useState<string | null>(null);
   const [testRunTitle, setTestRunTitle] = useState<string | null>(null);
@@ -257,11 +255,6 @@ export function useHeaderNav(): UseHeaderNavReturn {
       segments[2] !== "new" &&
       segments[2] !== "recycle-bin" &&
       segments[2] !== "settings";
-    const isSettingsUserDetailRoute =
-      segments.length >= 3 &&
-      segments[0] === "settings" &&
-      segments[1] === "users" &&
-      /^[0-9a-f-]{36}$/i.test(segments[2]);
     const isSubcontractorInvoiceDetailRoute =
       segments.length >= 4 &&
       /^\d+$/.test(segments[0]) &&
@@ -372,8 +365,6 @@ export function useHeaderNav(): UseHeaderNavReturn {
         label = rfiTitle || "RFI";
       } else if (isSubmittalDetailRoute && index === 2) {
         label = submittalTitle || "Submittal";
-      } else if (isSettingsUserDetailRoute && index === 2) {
-        label = settingsUserTitle || "User";
       } else if (isSubcontractorInvoiceDetailRoute && index === 2) {
         label = subcontractorInvoiceInfo?.commitmentLabel ?? "Subcontractor";
       } else if (isSubcontractorInvoiceDetailRoute && index === 3) {
@@ -433,7 +424,7 @@ export function useHeaderNav(): UseHeaderNavReturn {
     });
 
     return crumbs;
-  }, [pathname, companyTitle, vendorTitle, contactTitle, currentProject, meetingTitle, globalMeetingTitle, primeContractTitle, commitmentTitle, primePcoTitle, changeEventTitle, primeCoTitle, invoiceTitle, rfiTitle, submittalTitle, settingsUserTitle, subcontractorInvoiceInfo, drawingTitle, testRunTitle]);
+  }, [pathname, companyTitle, vendorTitle, contactTitle, currentProject, meetingTitle, globalMeetingTitle, primeContractTitle, commitmentTitle, primePcoTitle, changeEventTitle, primeCoTitle, invoiceTitle, rfiTitle, submittalTitle, subcontractorInvoiceInfo, drawingTitle, testRunTitle]);
   useEffect(() => {
     const segments = pathname?.split("/").filter(Boolean) ?? [];
     const isMeetingDetailRoute =
@@ -1258,46 +1249,6 @@ export function useHeaderNav(): UseHeaderNavReturn {
     return () => {
       isActive = false;
     };
-  }, [pathname]);
-
-  useEffect(() => {
-    const segments = pathname?.split("/").filter(Boolean) ?? [];
-    const isSettingsUserRoute =
-      segments.length >= 3 &&
-      segments[0] === "settings" &&
-      segments[1] === "users" &&
-      /^[0-9a-f-]{36}$/i.test(segments[2]);
-
-    if (!isSettingsUserRoute) {
-      setSettingsUserTitle(null);
-      return;
-    }
-
-    const userId = segments[2];
-    const cached = settingsUserTitleCache.get(userId);
-    if (cached) {
-      setSettingsUserTitle(cached);
-      return;
-    }
-
-    let isActive = true;
-    const fetchTitle = async () => {
-      try {
-        const response = await fetch(`/api/settings/users/${userId}`);
-        if (!response.ok) return;
-        const data = await response.json();
-        const name = data?.data?.full_name || data?.data?.email || null;
-        if (isActive && name) {
-          settingsUserTitleCache.set(userId, name);
-          setSettingsUserTitle(name);
-        }
-      } catch {
-        // Best-effort only
-      }
-    };
-
-    fetchTitle();
-    return () => { isActive = false; };
   }, [pathname]);
 
   useEffect(() => {

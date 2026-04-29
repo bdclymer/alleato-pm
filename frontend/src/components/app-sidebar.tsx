@@ -460,8 +460,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <button
               type="button"
               onClick={toggleSidebar}
-              className="mt-1 flex h-7 w-7 items-center justify-center rounded-md text-sidebar-foreground/40 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
+              className="mt-1 flex h-7 w-7 items-center justify-center rounded-md text-sidebar-foreground/60 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
               aria-label="Expand sidebar"
+              title="Pin sidebar open"
             >
               <ChevronsRight className="h-4 w-4" strokeWidth={1.4} />
             </button>
@@ -489,8 +490,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               <button
                 type="button"
                 onClick={toggleSidebar}
-                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-sidebar-foreground/40 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-sidebar-foreground/60 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
                 aria-label="Collapse sidebar"
+                title="Collapse sidebar"
               >
                 <ChevronsLeft className="h-4 w-4" strokeWidth={1.6} />
               </button>

@@ -1,0 +1,2 @@
+export const headerSelectTriggerClassName =
+  "h-8 justify-between gap-1.5 rounded-none border-0 border-b border-border/70 bg-transparent px-0 shadow-none hover:bg-transparent hover:text-primary focus-visible:border-primary focus-visible:ring-0 focus-visible:ring-offset-0 data-[state=open]:border-primary data-[state=open]:text-primary [&_svg]:transition-colors hover:[&_svg]:text-primary data-[state=open]:[&_svg]:text-primary";

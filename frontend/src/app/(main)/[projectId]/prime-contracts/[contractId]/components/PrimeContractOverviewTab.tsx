@@ -204,7 +204,6 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
       : 0;
   const renderDateOrDash = (value: string | null | undefined) =>
     value ? formatDate(value) : <span className="text-muted-foreground/40">—</span>;
-  const keyDatesLabelWidthClass = "w-40";
   const handleAttachmentFilesSelected = (files: File[]) => {
     void (async () => {
       for (const file of files) {
@@ -214,43 +213,27 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
   };
 
   return (
-    <ContentSectionStack className="space-y-16 pb-20">
-      {/* ─── General section: 3-column layout matching Procore ─── */}
+    <ContentSectionStack className="space-y-8 pb-20">
       <section>
-        <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_minmax(320px,400px)] gap-x-16 gap-y-10">
-          {/* Left column with inner rows */}
-          <div className="space-y-8">
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-x-20 gap-y-10">
-              {/* Details */}
-              <div>
-                <SectionRuleHeading label="Details"  />
+        <div className="grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(320px,400px)]">
+          <div className="space-y-6">
+            <div className="rounded-md bg-card p-6">
+              <SectionRuleHeading label="General Information" className="mb-6 pb-0" />
+              <div className="grid grid-cols-1 gap-x-10 gap-y-4 lg:grid-cols-2">
                 <dl className="space-y-4 text-sm">
-                  <LabelValueRow label="Contract #" labelClassName="w-44">
+                  <LabelValueRow label="Contract #" labelClassName="w-36">
                     {contract.contract_number || "—"}
                   </LabelValueRow>
-                  <LabelValueRow label="Title" labelClassName="w-44">
+                  <LabelValueRow label="Title" labelClassName="w-36">
                     {contract.title}
                   </LabelValueRow>
-                  <LabelValueRow label="Status" labelClassName="w-44">
+                  <LabelValueRow label="Status" labelClassName="w-36">
                     {formatStatusLabel(contract.status)}
                   </LabelValueRow>
-                  <LabelValueRow label="Executed" labelClassName="w-44">
+                  <LabelValueRow label="Executed" labelClassName="w-36">
                     {contract.executed ? formatDate(contract.executed_at) || "Yes" : "No"}
                   </LabelValueRow>
-                  <LabelValueRow label="Contractor" labelClassName="w-44" missing={!contract.contractor?.name}>
-                    {contract.contractor?.name && contract.contractor?.id ? (
-                      <Link
-                        href={`/directory/companies/${contract.contractor.id}`}
-                        className="font-medium text-primary underline underline-offset-2 hover:text-primary/90"
-                      >
-                        {contract.contractor.name}
-                      </Link>
-                    ) : (contract.contractor?.name || "—")}
-                  </LabelValueRow>
-                  <LabelValueRow label="Architect" labelClassName="w-44" missing={!contract.architect_engineer?.name}>
-                    {contract.architect_engineer?.name || "—"}
-                  </LabelValueRow>
-                  <LabelValueRow label="Owner" labelClassName="w-44" missing={!ownerName}>
+                  <LabelValueRow label="Owner/Client" labelClassName="w-36" missing={!ownerName}>
                     {ownerName && (contract.contract_company?.id || contract.client?.id) ? (
                       <Link
                         href={`/directory/vendors/${contract.contract_company?.id || contract.client?.id}`}
@@ -260,51 +243,96 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                       </Link>
                     ) : (ownerName || "—")}
                   </LabelValueRow>
-                  <LabelValueRow label="Default Retainage" labelClassName="w-44">
+                  <LabelValueRow label="Contractor" labelClassName="w-36" missing={!contract.contractor?.name}>
+                    {contract.contractor?.name && contract.contractor?.id ? (
+                      <Link
+                        href={`/directory/companies/${contract.contractor.id}`}
+                        className="font-medium text-primary underline underline-offset-2 hover:text-primary/90"
+                      >
+                        {contract.contractor.name}
+                      </Link>
+                    ) : (contract.contractor?.name || "—")}
+                  </LabelValueRow>
+                  <LabelValueRow label="Architect" labelClassName="w-36" missing={!contract.architect_engineer?.name}>
+                    {contract.architect_engineer?.name || "—"}
+                  </LabelValueRow>
+                </dl>
+                <dl className="space-y-4 text-sm">
+                  <LabelValueRow label="Start Date" labelClassName="w-40">
+                    {renderDateOrDash(contract.start_date)}
+                  </LabelValueRow>
+                  <LabelValueRow label="Est. Completion" labelClassName="w-40">
+                    {renderDateOrDash(contract.end_date)}
+                  </LabelValueRow>
+                  <LabelValueRow label="Substantial Date" labelClassName="w-40">
+                    {renderDateOrDash(contract.substantial_completion_date)}
+                  </LabelValueRow>
+                  <LabelValueRow label="Actual Completion" labelClassName="w-40">
+                    {renderDateOrDash(contract.actual_completion_date)}
+                  </LabelValueRow>
+                  <LabelValueRow label="Signed Date" labelClassName="w-40">
+                    {renderDateOrDash(contract.signed_contract_received_date)}
+                  </LabelValueRow>
+                  <LabelValueRow label="Termination Date" labelClassName="w-40">
+                    {renderDateOrDash(contract.contract_termination_date)}
+                  </LabelValueRow>
+                  <LabelValueRow label="Default Retainage" labelClassName="w-40">
                     {contract.retention_percentage ?? 0}%
                   </LabelValueRow>
                 </dl>
               </div>
+              <LabelValueRow
+                label="Description"
+                labelClassName="w-36"
+                className="mt-6"
+                missing={getTextValue(contract.description).isMissing}
+                valueClassName="leading-relaxed font-normal text-foreground text-sm"
+              >
+                {getTextValue(contract.description).text}
+              </LabelValueRow>
+            </div>
 
-              {/* Key Dates + Attachments */}
-              <div className="space-y-4">
-                <SectionRuleHeading label="Key Dates"  />
-                <dl className="space-y-4 text-sm">
-                  <LabelValueRow label="Start Date" labelClassName={keyDatesLabelWidthClass}>
-                    {renderDateOrDash(contract.start_date)}
-                  </LabelValueRow>
-                  <LabelValueRow label="Est. Completion" labelClassName={keyDatesLabelWidthClass}>
-                    {renderDateOrDash(contract.end_date)}
-                  </LabelValueRow>
-                  <LabelValueRow label="Substantial Completion" labelClassName={keyDatesLabelWidthClass}>
-                    {renderDateOrDash(contract.substantial_completion_date)}
-                  </LabelValueRow>
-                  <LabelValueRow label="Actual Completion" labelClassName={keyDatesLabelWidthClass}>
-                    {renderDateOrDash(contract.actual_completion_date)}
-                  </LabelValueRow>
-                  <LabelValueRow label="Signed Contract Received" labelClassName={keyDatesLabelWidthClass}>
-                    {renderDateOrDash(contract.signed_contract_received_date)}
-                  </LabelValueRow>
-                  <LabelValueRow label="Contract Termination" labelClassName={keyDatesLabelWidthClass}>
-                    {renderDateOrDash(contract.contract_termination_date)}
-                  </LabelValueRow>
-                </dl>
-
-                {/* Attachments */}
-                <div className="space-y-3 pt-2">
-                  <SectionRuleHeading label="Attachments"  />
+            <div className="rounded-md bg-card p-6">
+              <SectionRuleHeading label="Inclusions + Exclusions" className="mb-6 pb-0" />
+              <dl className="space-y-6 text-sm">
+                <LabelValueRow label="Inclusions" labelClassName="w-36">
+                  {inclusionsList.length === 0 ? (
+                    <span className="text-muted-foreground/50">—</span>
+                  ) : (
+                    <div className="space-y-1 leading-relaxed">
+                      {inclusionsList.map((line, index) => (
+                        <p key={`inclusion-${index}`}>
+                          {line}
+                        </p>
+                      ))}
+                    </div>
+                  )}
+                </LabelValueRow>
+                <LabelValueRow label="Exclusions" labelClassName="w-36">
+                  {exclusionsList.length === 0 ? (
+                    <span className="text-muted-foreground/50">—</span>
+                  ) : (
+                    <div className="space-y-1 leading-relaxed">
+                      {exclusionsList.map((line, index) => (
+                        <p key={`exclusion-${index}`}>
+                          {line}
+                        </p>
+                      ))}
+                    </div>
+                  )}
+                </LabelValueRow>
+                <LabelValueRow label="Attachments" labelClassName="w-36">
                   {attachmentsLoading ? (
-                    <div className="space-y-2">
+                    <div className="flex flex-wrap gap-3">
                       {Array.from({ length: 3 }).map((_, i) => (
-                        <div key={i} className="flex items-center gap-3">
+                        <div key={i} className="flex items-center gap-2">
                           <Skeleton className="h-4 w-4" />
-                          <Skeleton className="h-4 w-48" />
-                          <Skeleton className="h-4 w-16 ml-auto" />
+                          <Skeleton className="h-4 w-28" />
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <div className="space-y-3">
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
                       <FileUploadField
                         label={<span className="sr-only">Upload attachment</span>}
                         variant="link"
@@ -314,10 +342,8 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                         disabled={isUploadingAttachment}
                         onFilesSelected={handleAttachmentFilesSelected}
                       />
-                      {attachments.length > 0 && (
-                        <div className="flex flex-wrap gap-3">
                       {attachments.map((att) => (
-                        <div key={att.id} className="group flex items-center gap-1.5">
+                        <div key={att.id} className="group inline-flex items-center gap-1.5">
                           <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                           {att.downloadUrl || att.url ? (
                             <a
@@ -342,74 +368,30 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                           </Button>
                         </div>
                       ))}
-                        </div>
-                      )}
                     </div>
                   )}
-                </div>
-              </div>
-            </div>
-
-            {/* Description + Inclusions/Exclusions side by side */}
-            <div className="space-y-6">
-              <LabelValueRow
-                label="Description"
-                labelClassName="w-44"
-                missing={getTextValue(contract.description).isMissing}
-                valueClassName="leading-relaxed font-normal text-foreground text-sm"
-              >
-                {getTextValue(contract.description).text}
-              </LabelValueRow>
-
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-x-14 gap-y-6">
-                <div className="space-y-2">
-                  <p className="text-xs text-muted-foreground">Inclusions</p>
-                  {inclusionsList.length === 0 ? (
-                    <p className="text-sm text-muted-foreground/50">—</p>
-                  ) : (
-                    <div className="space-y-1 text-sm leading-relaxed text-foreground">
-                      {inclusionsList.map((line, index) => (
-                        <p key={`inclusion-${index}`}>{line}</p>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <p className="text-xs text-muted-foreground">Exclusions</p>
-                  {exclusionsList.length === 0 ? (
-                    <p className="text-sm text-muted-foreground/50">—</p>
-                  ) : (
-                    <div className="space-y-1 text-sm leading-relaxed text-foreground">
-                      {exclusionsList.map((line, index) => (
-                        <p key={`exclusion-${index}`}>{line}</p>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
+                </LabelValueRow>
+              </dl>
             </div>
           </div>
 
-          {/* Right sidebar: Financial Summary */}
-          <div className="space-y-8">
-            <div className="space-y-4">
-              <div className="rounded-md bg-muted/35 p-6">
-                <SectionRuleHeading label="Financial Summary" className="mb-6 pb-0" />
-                <dl className="space-y-3 text-sm">
-                  <SummaryValueRow label="Original Contract Amount" value={formatCurrency(displayedSovTotal)} />
-                  <SummaryValueRow label="Revised Contract Amount" value={formatCurrency(revisedContractAmount)} />
-                  <SummaryValueRow label="Pending Revised Amount" value={formatCurrency(pendingRevisedContractAmount)} />
-                  <SummaryValueRow label="Pending Change Orders" value={formatCurrency(pendingChangeOrdersTotal)} />
-                  <SummaryValueRow label="Approved Change Orders" value={formatCurrency(approvedChangeOrdersTotal)} />
-                  <SummaryValueRow label="Draft Change Orders" value={formatCurrency(draftChangeOrdersTotal)} />
-                  <SummaryValueRow label="Invoices" value={formatCurrency(invoicesTotal)} />
-                  <SummaryValueRow label="Payments Received" value={formatCurrency(paymentsReceivedTotal)} />
-                  <SummaryValueRow label="Remaining Balance" value={formatCurrency(remainingBalanceTotal)} />
-                  <SummaryValueRow label="Percent Paid" value={formatPercent(percentPaid, 2)} bold border />
-                </dl>
-              </div>
+          <aside>
+            <div className="rounded-md bg-card p-6">
+              <SectionRuleHeading label="Financial Summary" className="mb-6 pb-0" />
+              <dl className="space-y-3 text-sm">
+                <SummaryValueRow label="Original Amount" value={formatCurrency(displayedSovTotal)} />
+                <SummaryValueRow label="Revised Amount" value={formatCurrency(revisedContractAmount)} />
+                <SummaryValueRow label="Pending Amount" value={formatCurrency(pendingRevisedContractAmount)} />
+                <SummaryValueRow label="Pending COs" value={formatCurrency(pendingChangeOrdersTotal)} />
+                <SummaryValueRow label="Approved COs" value={formatCurrency(approvedChangeOrdersTotal)} />
+                <SummaryValueRow label="Draft COs" value={formatCurrency(draftChangeOrdersTotal)} />
+                <SummaryValueRow label="Invoices" value={formatCurrency(invoicesTotal)} />
+                <SummaryValueRow label="Payments" value={formatCurrency(paymentsReceivedTotal)} />
+                <SummaryValueRow label="Balance" value={formatCurrency(remainingBalanceTotal)} />
+                <SummaryValueRow label="Percent Paid" value={formatPercent(percentPaid, 2)} bold border />
+              </dl>
             </div>
-          </div>
+          </aside>
         </div>
       </section>
 

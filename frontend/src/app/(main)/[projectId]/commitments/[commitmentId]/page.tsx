@@ -473,16 +473,10 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
                   <LabelValueRow label="Created By" missing={!commitment.created_by_name && !commitment.created_by}>
                     {commitment.created_by_name || "—"}
                   </LabelValueRow>
+                  <LabelValueRow label="Executed">
+                    {commitment.executed ? "Yes" : "No"}
+                  </LabelValueRow>
                 </dl>
-                <div className="space-y-4">
-                  <ToggleField
-                    label="Executed"
-                    hint="Shows whether a signed contract has been fully executed."
-                    labelClassName="font-normal text-muted-foreground"
-                    checked={Boolean(commitment.executed)}
-                    disabled
-                  />
-                </div>
               </div>
             </div>
 
@@ -554,23 +548,23 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
               <SectionRuleHeading label="Key Dates" />
               <dl className="space-y-3 text-sm">
                 {!isPO && (
-                  <LabelValueRow label="Start Date">
+                  <LabelValueRow label="Start Date" labelClassName="w-52">
                     {renderDateOrDash(commitment.start_date)}
                   </LabelValueRow>
                 )}
-                <LabelValueRow label={isPO ? "Delivery Date" : "Estimated Completion"}>
+                <LabelValueRow label={isPO ? "Delivery Date" : "Estimated Completion"} labelClassName="w-52">
                   {renderDateOrDash(commitment.substantial_completion_date)}
                 </LabelValueRow>
-                <LabelValueRow label="Contract Date">
+                <LabelValueRow label="Contract Date" labelClassName="w-52">
                   {renderDateOrDash(commitment.executed_date)}
                 </LabelValueRow>
-                <LabelValueRow label="Signed Contract Received">
+                <LabelValueRow label="Signed Contract Received" labelClassName="w-52">
                   {renderDateOrDash(commitment.signed_received_date)}
                 </LabelValueRow>
-                <LabelValueRow label="Actual Completion">
+                <LabelValueRow label="Actual Completion" labelClassName="w-52">
                   {renderDateOrDash(commitment.actual_completion_date)}
                 </LabelValueRow>
-                <LabelValueRow label="Issued On">
+                <LabelValueRow label="Issued On" labelClassName="w-52">
                   {renderDateOrDash(commitment.issued_on_date)}
                 </LabelValueRow>
               </dl>

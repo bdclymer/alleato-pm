@@ -4,7 +4,6 @@ import * as React from "react";
 import type { ReactElement } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
-  ArrowUpRight,
   Building2,
   ChevronDown,
   ChevronLeft,
@@ -231,7 +230,7 @@ function CompanyPreviewPane({
   return (
     <div className="flex flex-col h-full">
       {/* Panel header with navigation */}
-      <div className="flex items-center justify-between gap-1 px-4 border-b border-border h-11">
+      <div className="flex items-center justify-between gap-1 px-4 h-11">
         <div className="flex items-center gap-1">
           <Button
             size="icon"
@@ -258,16 +257,6 @@ function CompanyPreviewPane({
           </span>
         </div>
         <div className="flex items-center gap-1">
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-5 w-5"
-            onClick={() => onOpenCompanyPage(company)}
-            aria-label="Open full page"
-            title="Open full page"
-          >
-            <ArrowUpRight />
-          </Button>
           <Button
             size="icon"
             variant="ghost"
@@ -355,6 +344,12 @@ function CompanyPreviewPane({
             </dl>
           </div>
         )}
+      </div>
+
+      <div className="shrink-0 px-5 pb-5">
+        <Button className="w-full" variant="outline" onClick={() => onOpenCompanyPage(company)}>
+          View Company
+        </Button>
       </div>
     </div>
   );
@@ -494,9 +489,7 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
   const tableColumns = React.useMemo(() => buildCompanyTableColumns(), []);
   const selectedCompanyId = searchParams.get("detail");
   const selectedCompany =
-    (selectedCompanyId ? companies.find((company) => company.id === selectedCompanyId) : null) ||
-    companies[0] ||
-    null;
+    selectedCompanyId ? companies.find((company) => company.id === selectedCompanyId) ?? null : null;
   const activeCompanyId = selectedCompany?.id ?? null;
 
   const handleDeleteCompany = React.useCallback(

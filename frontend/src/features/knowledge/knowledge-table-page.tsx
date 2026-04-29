@@ -32,7 +32,6 @@ import {
   buildKnowledgeTableColumns,
 } from "./knowledge-table-config";
 import { KnowledgeFormDialog } from "./knowledge-form-dialog";
-import { KnowledgeDetailPanel } from "./knowledge-detail-panel";
 
 // ---------------------------------------------------------------------------
 // Component
@@ -51,6 +50,7 @@ export function KnowledgeTablePage() {
     router,
     defaults: {
       view: "table",
+      allowedViews: ["table"],
       page: 1,
       perPage: 25,
       search: "",
@@ -79,16 +79,6 @@ export function KnowledgeTablePage() {
   const [deleteTarget, setDeleteTarget] = React.useState<
     KnowledgeArticle | null
   >(null);
-  const [selectedArticle, setSelectedArticle] = React.useState<
-    KnowledgeArticle | null
-  >(null);
-
-  // Auto-select first row when data loads and nothing is selected
-  React.useEffect(() => {
-    if (!selectedArticle && articles.length > 0) {
-      setSelectedArticle(articles[0]);
-    }
-  }, [articles, selectedArticle]);
 
   // Sorting
   const sortedArticles = React.useMemo(() => {
@@ -132,15 +122,6 @@ export function KnowledgeTablePage() {
     if (!deleteTarget) return;
     await deleteMutation.mutateAsync(deleteTarget.id);
     setDeleteTarget(null);
-    if (selectedArticle?.id === deleteTarget.id) {
-      setSelectedArticle(null);
-    }
-  }
-
-  function handleRowClick(item: KnowledgeArticle) {
-    setSelectedArticle(
-      selectedArticle?.id === item.id ? null : item,
-    );
   }
 
   function handleFilterChange(
@@ -208,6 +189,7 @@ export function KnowledgeTablePage() {
           searchPlaceholder: "Search knowledge base…",
           currentView: tableState.currentView,
           onViewChange: tableState.setCurrentView,
+          enabledViews: ["table"],
           filters: knowledgeFilters,
           activeFilters,
           onFilterChange: handleFilterChange,
@@ -227,8 +209,6 @@ export function KnowledgeTablePage() {
         table={{
           columns: tableColumns,
           getRowId: (item) => item.id,
-          onRowClick: handleRowClick,
-          activeRowId: selectedArticle?.id ?? null,
         }}
         sorting={{
           sortBy: tableState.sortBy,
@@ -249,18 +229,6 @@ export function KnowledgeTablePage() {
           },
           clientSide: true,
         }}
-        sidePanel={{
-          content: selectedArticle ? (
-            <KnowledgeDetailPanel
-              article={selectedArticle}
-              onEdit={() => {
-                setEditingArticle(selectedArticle);
-                setFormOpen(true);
-              }}
-              onClose={() => setSelectedArticle(null)}
-            />
-          ) : null,
-        }}
         emptyState={{
           title: "No knowledge entries yet",
           description:
@@ -279,6 +247,7 @@ export function KnowledgeTablePage() {
           enableFilters: true,
           enableColumnToggle: true,
           enableExport: true,
+          enableViews: false,
         }}
       />
 

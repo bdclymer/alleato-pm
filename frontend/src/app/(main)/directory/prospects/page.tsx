@@ -5,7 +5,6 @@ import type { ReactElement } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { formatDate } from "@/lib/format";
 import {
-  ArrowUpRight,
   Building2,
   ChevronLeft,
   ChevronRight,
@@ -180,7 +179,7 @@ function ProspectPreviewPane({
   return (
     <div className="flex flex-col h-full">
       {/* Panel header with navigation */}
-      <div className="flex items-center justify-between gap-1 px-4 border-b border-border h-11">
+      <div className="flex items-center justify-between gap-1 px-4 h-11">
         <div className="flex items-center gap-1">
           <Button
             size="icon"
@@ -207,16 +206,6 @@ function ProspectPreviewPane({
           </span>
         </div>
         <div className="flex items-center gap-1">
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-5 w-5"
-            aria-label="Open full page"
-            title="Open full page"
-            disabled
-          >
-            <ArrowUpRight />
-          </Button>
           <Button
             size="icon"
             variant="ghost"
@@ -493,9 +482,7 @@ export default function DirectoryProspectsPage(): ReactElement {
   const selectedProspect =
     (selectedProspectId
       ? filteredProspects.find((p) => String(p.id) === selectedProspectId)
-      : null) ||
-    filteredProspects[0] ||
-    null;
+      : null) ?? null;
   const activeProspectId = selectedProspect ? String(selectedProspect.id) : null;
 
   const handleDeleteProspect = React.useCallback(

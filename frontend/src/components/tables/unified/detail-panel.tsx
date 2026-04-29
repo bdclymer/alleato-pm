@@ -285,7 +285,7 @@ export function DetailPanel<T extends Record<string, unknown>>({
         style={{ width: `${width}px`, maxWidth: "100vw" }}
       >
         {/* Header */}
-        <SheetHeader className="px-4 py-4 border-b flex-shrink-0 bg-card">
+        <SheetHeader className="px-4 py-4 shrink-0 bg-card">
           <div className="flex items-center justify-between">
             <SheetTitle className="text-base font-semibold truncate pr-2">
               {title}

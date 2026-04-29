@@ -6,11 +6,10 @@ import Link from "next/link";
 import Image from "next/image";
 import {
   ChevronRight,
-  ChevronsUpDown,
+  ChevronDown,
   GitCompare,
   Inbox,
   Menu,
-  MessageSquarePlus,
   Sparkles,
   X,
 } from "lucide-react";
@@ -38,11 +37,11 @@ import { CommentsSidebar } from "./comments-sidebar";
 import { useProcorePanelStore } from "@/lib/stores/procore-panel-store";
 import { LiveAvatarStack } from "./live-avatar-stack";
 import {
-  OPEN_ADMIN_FEEDBACK_COMPOSER_EVENT,
   feedbackTargetProps,
 } from "@/lib/admin-feedback/constants";
 import { HeaderUserMenu } from "./header-user-menu";
 import { createClient } from "@/lib/supabase/client";
+import { headerSelectTriggerClassName } from "./header-control-styles";
 
 function ProcoreReferenceToggle() {
   const { open, toggle } = useProcorePanelStore();
@@ -160,13 +159,6 @@ export function SiteHeader() {
 
         {/* ── Right: Tools dropdown + Project selector (desktop only) ── */}
         <div className="hidden md:flex items-center gap-2 flex-shrink-0">
-          <ToolsDropdown
-            projectId={nav.projectId}
-            activeToolName={nav.activeToolName}
-            permissions={permissions}
-            isAppAdmin={isAppAdmin}
-            userType={userType}
-          />
           <ProjectSelector
             projectId={nav.projectId}
             currentProject={nav.currentProject}
@@ -176,27 +168,16 @@ export function SiteHeader() {
             onProjectSelect={nav.handleProjectSelect}
             onViewAll={() => router.push("/")}
           />
+          <ToolsDropdown
+            projectId={nav.projectId}
+            activeToolName={nav.activeToolName}
+            permissions={permissions}
+            isAppAdmin={isAppAdmin}
+            userType={userType}
+          />
           <React.Suspense fallback={null}>
             <LiveAvatarStack />
           </React.Suspense>
-          <React.Suspense fallback={null}>
-            <CommentsSidebar />
-          </React.Suspense>
-          <ProcoreReferenceToggle />
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            onClick={() =>
-              window.dispatchEvent(
-                new CustomEvent(OPEN_ADMIN_FEEDBACK_COMPOSER_EVENT),
-              )
-            }
-            className="text-muted-foreground hover:text-foreground"
-            aria-label="Share feedback"
-          >
-            <MessageSquarePlus className="h-4 w-4" />
-          </Button>
           <Link
             href="/feedback-inbox"
             className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
@@ -204,6 +185,13 @@ export function SiteHeader() {
           >
             <Inbox className="h-4 w-4" />
           </Link>
+          <React.Suspense fallback={null}>
+            <CommentsSidebar />
+          </React.Suspense>
+          <React.Suspense fallback={null}>
+            <NotificationBell />
+          </React.Suspense>
+          {user?.email === "megan@megankharrison.com" && <ProcoreReferenceToggle />}
           {(isAppAdmin || userType === "developer") && (
             <Link
               href="/annotation-inbox"
@@ -213,9 +201,6 @@ export function SiteHeader() {
               <Sparkles className="h-4 w-4" />
             </Link>
           )}
-          <React.Suspense fallback={null}>
-            <NotificationBell />
-          </React.Suspense>
           <HeaderUserMenu
             user={user}
             projectId={nav.projectId}
@@ -459,19 +444,19 @@ function ToolsDropdown({
           type="button"
           variant="ghost"
           size="sm"
-          className="h-8 w-52 justify-between gap-1.5 border border-border/60 bg-transparent px-2.5 hover:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
+          className={cn("w-52", headerSelectTriggerClassName)}
         >
           <span
             className={cn(
-              "truncate text-sm",
+              "truncate text-xs",
               activeToolName === "Projects"
                 ? "text-muted-foreground"
                 : "text-foreground/80",
             )}
           >
-            {activeToolName === "Projects" ? "Switch Tool" : activeToolName}
+            {activeToolName === "Projects" ? "Select Tool" : activeToolName}
           </span>
-          <ChevronsUpDown
+          <ChevronDown
             className="h-3 w-3 shrink-0 text-muted-foreground/60"
             strokeWidth={1.6}
           />

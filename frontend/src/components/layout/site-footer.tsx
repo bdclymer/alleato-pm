@@ -4,7 +4,14 @@ import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
 import { ChevronUp } from "lucide-react";
 
+import { useCurrentUserProfile } from "@/hooks/use-current-user-profile";
+import { Button } from "@/components/ui/button";
+
 const currentYear = new Date().getFullYear();
+
+const adminDropdownAllowedUserIds = new Set([
+  "6ae4299f-6c21-4e99-b6a1-ccb1fe5aa7f6",
+]);
 
 const adminSections = [
   {
@@ -61,15 +68,16 @@ function AdminDropdown() {
 
   return (
     <div ref={ref} className="relative">
-      {/* eslint-disable-next-line design-system/no-design-violations -- minimal footer toggle */}
-      <button
+      <Button
         type="button"
+        variant="ghost"
+        size="sm"
         onClick={() => setOpen(!open)}
-        className="inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
+        className="h-auto gap-1 p-0 text-sm font-normal text-muted-foreground hover:bg-transparent hover:text-foreground"
       >
         Admin
         <ChevronUp className={`h-3 w-3 transition-transform ${open ? "" : "rotate-180"}`} />
-      </button>
+      </Button>
       {open && (
         <div className="absolute bottom-full left-0 mb-1 rounded-md border border-border bg-popover p-5 shadow-sm">
           <div className="flex gap-8">
@@ -101,11 +109,15 @@ function AdminDropdown() {
 }
 
 export function SiteFooter() {
+  const { profile } = useCurrentUserProfile();
+  const canViewAdminDropdown =
+    profile?.isAdmin === true && adminDropdownAllowedUserIds.has(profile.id);
+
   return (
     <footer className="shrink-0 border-t border-border/50">
       <div className="flex flex-col items-center gap-3 px-4 py-3 sm:flex-row sm:justify-between sm:px-6 lg:px-8">
         <nav className="flex flex-wrap items-center gap-x-4 gap-y-1">
-          <AdminDropdown />
+          {canViewAdminDropdown ? <AdminDropdown /> : null}
         </nav>
         <p className="text-xs text-muted-foreground">
           &copy; {currentYear} Alleato Group. All rights reserved.

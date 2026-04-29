@@ -1,12 +1,11 @@
 import { Metadata } from "next";
-import { DocsChat } from "@/components/procore-docs/docs-chat";
 
 export const metadata: Metadata = {
   title: {
-    template: "%s | Documentation",
-    default: "Documentation",
+    template: "%s | Help Center",
+    default: "Help Center",
   },
-  description: "Browse Alleato-Procore documentation",
+  description: "Controlled Alleato OS help documentation",
 };
 
 export default function DocsLayout({
@@ -15,9 +14,8 @@ export default function DocsLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-muted dark:bg-background">
+    <div className="min-h-screen bg-background">
       {children}
-      <DocsChat />
     </div>
   );
 }

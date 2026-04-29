@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertCircle, Mail, Shield } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { useMemo } from "react";
 
 import { PageShell } from "@/components/layout";
@@ -37,7 +37,7 @@ export default function ProfilePage() {
   }, [profile?.fullName]);
 
   return (
-    <PageShell variant="content" title="Profile">
+    <PageShell variant="content" title="Profile" showHeader={false}>
         {error ? (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
@@ -100,25 +100,6 @@ export default function ProfilePage() {
             <Separator />
             <InfoRow label="Role" value={profile?.role} />
           </div>
-        </section>
-
-        <section className="space-y-4">
-          <SectionRuleHeading label="System access" />
-          <div className="flex items-start gap-3 text-sm text-muted-foreground">
-            <Shield className="mt-0.5 h-4 w-4 shrink-0" />
-            <p>
-              {profile?.isAdmin
-                ? "This account has Super Admin privileges."
-                : "This account has standard privileges based on project memberships."}
-            </p>
-          </div>
-          <div className="flex items-start gap-3 text-sm text-muted-foreground">
-            <Mail className="mt-0.5 h-4 w-4 shrink-0" />
-            <p>Authentication and password management are handled by Supabase Auth.</p>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            Only verified, active account fields are shown on this page.
-          </p>
         </section>
     </PageShell>
   );

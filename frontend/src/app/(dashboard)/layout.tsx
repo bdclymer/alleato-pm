@@ -17,15 +17,17 @@ export default function DashboardLayout({
   return (
     <SidebarProvider defaultOpen={false}>
       <AppSidebar />
-      <SidebarInset className="overflow-hidden">
+      <SidebarInset className="h-svh overflow-hidden">
         <CreateProjectDevConfigProvider>
-          <SiteHeader />
-          <div
-            className="flex flex-1 flex-col overflow-auto min-w-0"
-            {...feedbackTargetProps("app.main-content")}
-          >
-            <div className="flex-1">{children}</div>
-            <SiteFooter />
+          <div className="flex min-h-0 flex-1 flex-col overflow-auto scrollbar-hide">
+            <SiteHeader />
+            <div
+              className="flex flex-1 flex-col min-w-0"
+              {...feedbackTargetProps("app.main-content")}
+            >
+              <div className="flex-1">{children}</div>
+              <SiteFooter />
+            </div>
           </div>
         </CreateProjectDevConfigProvider>
         <React.Suspense fallback={null}>

@@ -18,10 +18,12 @@ export default function AdminLayout({
     <SidebarProvider defaultOpen={false}>
       <AppSidebar />
       <SidebarInset className="h-svh overflow-hidden">
-        <SiteHeader />
-        <div className="flex flex-1 flex-col overflow-auto min-w-0 min-h-0">
-          <div className="flex-1">{children}</div>
-          <SiteFooter />
+        <div className="flex min-h-0 flex-1 flex-col overflow-auto scrollbar-hide">
+          <SiteHeader />
+          <div className="flex flex-1 flex-col min-w-0 min-h-0">
+            <div className="flex-1">{children}</div>
+            <SiteFooter />
+          </div>
         </div>
       </SidebarInset>
     </SidebarProvider>

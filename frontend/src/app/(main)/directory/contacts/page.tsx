@@ -5,7 +5,6 @@ import type { ReactElement } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { formatDate } from "@/lib/format";
 import {
-  ArrowUpRight,
   Building2,
   Check,
   ChevronLeft,
@@ -245,7 +244,7 @@ function ContactPreviewPane({
   return (
     <div className="flex flex-col h-full">
       {/* Panel header with navigation */}
-      <div className="flex items-center justify-between gap-1 px-4 border-b border-border h-11">
+      <div className="flex items-center justify-between gap-1 px-4 h-11">
         <div className="flex items-center gap-1">
           <Button
             size="icon"
@@ -272,16 +271,6 @@ function ContactPreviewPane({
           </span>
         </div>
         <div className="flex items-center gap-1">
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-5 w-5"
-            onClick={() => router.push(`/directory/contacts/${contact.id}`)}
-            aria-label="Open full page"
-            title="Open full page"
-          >
-            <ArrowUpRight />
-          </Button>
           <Button
             size="icon"
             variant="ghost"
@@ -376,6 +365,16 @@ function ContactPreviewPane({
             </dl>
           </div>
         )}
+      </div>
+
+      <div className="shrink-0 px-5 pb-5">
+        <Button
+          className="w-full"
+          variant="outline"
+          onClick={() => router.push(`/directory/contacts/${contact.id}`)}
+        >
+          View Contact
+        </Button>
       </div>
     </div>
   );
@@ -548,9 +547,7 @@ export default function DirectoryContactsPage(): ReactElement {
 
   const selectedContactId = searchParams.get("detail");
   const selectedContact =
-    (selectedContactId ? tableData.find((c) => c.id === selectedContactId) : null) ||
-    tableData[0] ||
-    null;
+    selectedContactId ? tableData.find((c) => c.id === selectedContactId) ?? null : null;
   const activeContactId = selectedContact?.id ?? null;
 
   const tabs = getDirectoryTabs(pathname);

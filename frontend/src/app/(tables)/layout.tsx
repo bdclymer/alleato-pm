@@ -17,12 +17,14 @@ export default function TablesLayout({
   return (
     <SidebarProvider defaultOpen={false}>
       <AppSidebar />
-      <SidebarInset className="overflow-hidden">
-        <SiteHeader />
-        <main className="flex flex-1 flex-col gap-4 px-4 pt-4 pb-4 overflow-auto min-w-0">
-          {children}
-        </main>
-        <SiteFooter />
+      <SidebarInset className="h-svh overflow-hidden">
+        <div className="flex min-h-0 flex-1 flex-col overflow-auto scrollbar-hide">
+          <SiteHeader />
+          <main className="flex flex-1 flex-col gap-4 px-4 pt-4 pb-4 min-w-0">
+            {children}
+          </main>
+          <SiteFooter />
+        </div>
       </SidebarInset>
     </SidebarProvider>
   );

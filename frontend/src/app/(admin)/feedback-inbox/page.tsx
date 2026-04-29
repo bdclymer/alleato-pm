@@ -12,7 +12,6 @@ import {
   CheckCircle2,
   ChevronDown,
   Circle,
-  Clock,
   Copy,
   ExternalLink,
   GitBranch,
@@ -37,6 +36,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { apiFetch } from "@/lib/api-client";
+import { displayAdminFeedbackTitle } from "@/lib/admin-feedback/title";
 import { useConfirm } from "@/hooks/use-confirm";
 
 // ---------------------------------------------------------------------------
@@ -146,7 +146,7 @@ const STATUS_META: Record<DisplayStatus, { icon: typeof Circle; className: strin
 
 const REQUEST_TYPE_LABELS: Record<string, string> = {
   bug: "Bug",
-  change_request: "Change request",
+  change_request: "Change Events",
   copy: "Copy",
   question: "Question",
 };
@@ -1431,6 +1431,13 @@ function FeedbackDetail({
 }) {
   const displayStatus = toDisplayStatus(item.status);
   const { confirm: confirmDetailDelete, ConfirmDialog: DetailConfirmDialog } = useConfirm();
+  const displayTitle = displayAdminFeedbackTitle({
+    storedTitle: item.title,
+    requestType: item.request_type,
+    comment: item.comment,
+    targetText: item.target_text,
+    pageTitle: item.page_title,
+  });
 
   return (
     <>
@@ -1451,11 +1458,11 @@ function FeedbackDetail({
       )}
 
       {/* Header + Actions */}
-      <div className="border-b border-border/60 pb-4">
+      <div>
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
             <h2 className="text-xl font-semibold text-foreground">
-              {item.title}
+              {displayTitle}
             </h2>
             <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
               <Button
@@ -1469,7 +1476,9 @@ function FeedbackDetail({
                 }}
                 title={`Copy full ID: ${item.id}`}
               >
-                <Hash className="h-3 w-3" />
+                <span className="font-sans text-[11px] font-medium text-muted-foreground">
+                  ID:
+                </span>
                 {item.id.slice(0, 8)}
               </Button>
               <span className="text-border">·</span>
@@ -1591,7 +1600,7 @@ function FeedbackDetail({
       </div>
 
       {/* Page context */}
-      <div className="border-t border-border/60 pt-4">
+      <div>
         <SectionRuleHeading label="Page Context" />
         <div className="space-y-1.5">
           <div className="flex items-center gap-2 text-xs">
@@ -1634,18 +1643,18 @@ function FeedbackDetail({
         </div>
       </div>
 
-      <div className="border-t border-border/60 pt-4">
+      <div>
         <ToolContextSection item={item} />
       </div>
 
       {/* Comments */}
-      <div className="border-t border-border/60 pt-4">
+      <div>
         <CommentsSection feedbackItemId={item.id} commentInputRef={commentInputRef} />
       </div>
 
       {/* GitHub Activity */}
       {item.github_issue_number && (
-        <div className="border-t border-border/60 pt-4">
+        <div>
           <GitHubActivitySection issueNumber={item.github_issue_number} />
         </div>
       )}
@@ -1898,10 +1907,11 @@ export default function FeedbackInboxPage() {
       title="Feedback Inbox"
       showHeader={false}
       className="bg-muted/30 px-0! py-0!"
+      contentClassName="space-y-0 pt-0 pb-0"
       description="Review feedback, assign tools, and sync issues to GitHub."
     >
       <div className="flex h-full min-h-0 flex-col">
-      <div className="flex min-h-0 flex-1 border-y border-border/60">
+      <div className="flex min-h-0 flex-1 border-b border-border/60">
         {/* ---- Left: list panel ---- */}
         <div
           ref={listPanelRef}
@@ -1914,24 +1924,12 @@ export default function FeedbackInboxPage() {
         >
           <div className="border-b border-border/60 px-3 py-2.5">
             <div className="flex items-center justify-between gap-2">
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-foreground">
-                  Feedback Inbox
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {total} {total === 1 ? "issue" : "issues"}
-                </p>
-              </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                onClick={fetchItems}
-                className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                title="Refresh inbox"
-              >
-                <Clock className="h-3.5 w-3.5" />
-              </Button>
+              <p className="truncate text-sm font-semibold text-foreground">
+                Feedback Inbox
+              </p>
+              <p className="shrink-0 text-xs text-muted-foreground">
+                {total} {total === 1 ? "issue" : "issues"}
+              </p>
             </div>
           </div>
 
@@ -1976,23 +1974,21 @@ export default function FeedbackInboxPage() {
 
             {!loading &&
               listSections.map((section) => {
-                const sectionMeta = STATUS_META[section.status];
-                const SectionIcon = sectionMeta.icon;
                 return (
                   <section key={section.status}>
-                    <div className="sticky top-0 z-10 border-y border-border/60 bg-muted/85 px-3 py-1.5 backdrop-blur">
-                      <div className="flex items-center gap-1.5 text-xs font-medium text-foreground">
-                        <SectionIcon className={cn("h-3.5 w-3.5 shrink-0", sectionMeta.className, section.status === "in_progress" && "animate-spin")} />
-                        <span>{section.label}</span>
-                        <span className="text-muted-foreground">{section.items.length}</span>
-                      </div>
-                    </div>
                     {section.items.map((item) => {
                       const displayStatus = toDisplayStatus(item.status);
                       const meta = STATUS_META[displayStatus];
                       const itemIndex = items.findIndex((entry) => entry.id === item.id);
                       const isSelected = selectedId === item.id;
                       const isFocused = focusedIndex === itemIndex;
+                      const itemDisplayTitle = displayAdminFeedbackTitle({
+                        storedTitle: item.title,
+                        requestType: item.request_type,
+                        comment: item.comment,
+                        targetText: item.target_text,
+                        pageTitle: item.page_title,
+                      });
 
                       const toolLabel = toolLabelFromPath(item.page_path);
                       return (
@@ -2024,7 +2020,7 @@ export default function FeedbackInboxPage() {
                             <div className="min-w-0 flex-1">
                               <div className="flex items-start gap-2">
                                 <span className="line-clamp-2 text-[13px] font-medium leading-snug text-foreground">
-                                  {item.title}
+                                  {itemDisplayTitle}
                                 </span>
                                 {item.severity === "high" && (
                                   <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-status-error">

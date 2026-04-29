@@ -698,11 +698,6 @@ export default function PortfolioPage() {
         href: buildScopeHref("internal"),
         isActive: activeScope === "internal",
       },
-      {
-        label: "All",
-        href: buildScopeHref("all"),
-        isActive: activeScope === "all",
-      },
     ];
   }, [activeScope, pathname, projects, searchParams]);
 

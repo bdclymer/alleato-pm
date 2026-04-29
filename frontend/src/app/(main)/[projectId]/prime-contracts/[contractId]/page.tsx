@@ -867,7 +867,8 @@ export default function ProjectContractDetailPage() {
   return (
     <PageShell
       variant="detailWide"
-      title={`#${contract.contract_number || contract.id.slice(0, 8)} — ${contract.title}`}
+      eyebrow={contract.contract_number ? `#${contract.contract_number}` : `#${contract.id.slice(0, 8)}`}
+      title={contract.title}
       description={contract.contractor ? `Contractor: ${contract.contractor.name}` : contract.vendor ? `Contractor: ${contract.vendor.name}` : "No contractor assigned"}
       onBack={() => router.push(`/${projectId}/prime-contracts`)}
       actions={

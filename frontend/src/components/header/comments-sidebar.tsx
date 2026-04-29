@@ -224,7 +224,7 @@ export function CommentsSidebarPanel() {
       {mounted && (
         <div className="flex h-full w-95 flex-col">
           {/* Header */}
-          <div className="flex h-12 shrink-0 items-center justify-between border-b border-border/40 px-4">
+          <div className="flex shrink-0 items-center justify-between px-4 pt-4 pb-2">
             <span className="text-sm font-medium text-foreground">
               {entityContext ? `${entityContext.label} Comments` : "Comments"}
             </span>

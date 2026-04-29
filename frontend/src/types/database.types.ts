@@ -29,6 +29,39 @@ export type Database = {
         }
         Relationships: []
       }
+      _prisma_migrations: {
+        Row: {
+          applied_steps_count: number
+          checksum: string
+          finished_at: string | null
+          id: string
+          logs: string | null
+          migration_name: string
+          rolled_back_at: string | null
+          started_at: string
+        }
+        Insert: {
+          applied_steps_count?: number
+          checksum: string
+          finished_at?: string | null
+          id: string
+          logs?: string | null
+          migration_name: string
+          rolled_back_at?: string | null
+          started_at?: string
+        }
+        Update: {
+          applied_steps_count?: number
+          checksum?: string
+          finished_at?: string | null
+          id?: string
+          logs?: string | null
+          migration_name?: string
+          rolled_back_at?: string | null
+          started_at?: string
+        }
+        Relationships: []
+      }
       acumatica_accounts: {
         Row: {
           account_cd: string | null
@@ -8822,6 +8855,7 @@ export type Database = {
           date: string | null
           decisions: Json | null
           description: string | null
+          division: string | null
           duration_minutes: number | null
           extended_sections: Json | null
           file_id: number | null
@@ -8851,6 +8885,16 @@ export type Database = {
           raw_text: string | null
           sentiment: Json | null
           source: string | null
+          source_drive_id: string | null
+          source_etag: string | null
+          source_item_id: string | null
+          source_last_modified_at: string | null
+          source_metadata: Json
+          source_path: string | null
+          source_site_id: string | null
+          source_size: number | null
+          source_system: string | null
+          source_web_url: string | null
           speakers: Json | null
           status: string | null
           storage_bucket: string | null
@@ -8860,10 +8904,12 @@ export type Database = {
           tags: string | null
           title: string | null
           topics_discussed: string[] | null
+          trade: string | null
           transcript_chapters: string | null
           type: string | null
           url: string | null
           video: string | null
+          workflow_target: string | null
         }
         Insert: {
           access_level?: string | null
@@ -8881,6 +8927,7 @@ export type Database = {
           date?: string | null
           decisions?: Json | null
           description?: string | null
+          division?: string | null
           duration_minutes?: number | null
           extended_sections?: Json | null
           file_id?: number | null
@@ -8910,6 +8957,16 @@ export type Database = {
           raw_text?: string | null
           sentiment?: Json | null
           source?: string | null
+          source_drive_id?: string | null
+          source_etag?: string | null
+          source_item_id?: string | null
+          source_last_modified_at?: string | null
+          source_metadata?: Json
+          source_path?: string | null
+          source_site_id?: string | null
+          source_size?: number | null
+          source_system?: string | null
+          source_web_url?: string | null
           speakers?: Json | null
           status?: string | null
           storage_bucket?: string | null
@@ -8919,10 +8976,12 @@ export type Database = {
           tags?: string | null
           title?: string | null
           topics_discussed?: string[] | null
+          trade?: string | null
           transcript_chapters?: string | null
           type?: string | null
           url?: string | null
           video?: string | null
+          workflow_target?: string | null
         }
         Update: {
           access_level?: string | null
@@ -8940,6 +8999,7 @@ export type Database = {
           date?: string | null
           decisions?: Json | null
           description?: string | null
+          division?: string | null
           duration_minutes?: number | null
           extended_sections?: Json | null
           file_id?: number | null
@@ -8969,6 +9029,16 @@ export type Database = {
           raw_text?: string | null
           sentiment?: Json | null
           source?: string | null
+          source_drive_id?: string | null
+          source_etag?: string | null
+          source_item_id?: string | null
+          source_last_modified_at?: string | null
+          source_metadata?: Json
+          source_path?: string | null
+          source_site_id?: string | null
+          source_size?: number | null
+          source_system?: string | null
+          source_web_url?: string | null
           speakers?: Json | null
           status?: string | null
           storage_bucket?: string | null
@@ -8978,10 +9048,12 @@ export type Database = {
           tags?: string | null
           title?: string | null
           topics_discussed?: string[] | null
+          trade?: string | null
           transcript_chapters?: string | null
           type?: string | null
           url?: string | null
           video?: string | null
+          workflow_target?: string | null
         }
         Relationships: [
           {
@@ -13347,6 +13419,62 @@ export type Database = {
         }
         Relationships: []
       }
+      organization_members: {
+        Row: {
+          createdAt: string
+          id: string
+          organizationId: string
+          role: string
+          updatedAt: string
+          userId: string
+        }
+        Insert: {
+          createdAt?: string
+          id: string
+          organizationId: string
+          role?: string
+          updatedAt: string
+          userId: string
+        }
+        Update: {
+          createdAt?: string
+          id?: string
+          organizationId?: string
+          role?: string
+          updatedAt?: string
+          userId?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_members_organizationId_fkey"
+            columns: ["organizationId"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organizations: {
+        Row: {
+          createdAt: string
+          id: string
+          name: string
+          updatedAt: string
+        }
+        Insert: {
+          createdAt?: string
+          id: string
+          name: string
+          updatedAt: string
+        }
+        Update: {
+          createdAt?: string
+          id?: string
+          name?: string
+          updatedAt?: string
+        }
+        Relationships: []
+      }
       owner_invoice_line_items: {
         Row: {
           acumatica_line_nbr: number | null
@@ -16977,69 +17105,126 @@ export type Database = {
       project_documents: {
         Row: {
           category: string | null
+          content_hash: string | null
           content_type: string | null
           created_at: string | null
           created_by: string | null
           deleted_at: string | null
           description: string | null
+          division: string | null
           file_name: string
           file_size: number | null
           file_url: string
           folder: string | null
           id: number
           is_private: boolean | null
+          last_synced_at: string | null
           project_id: number
           reviewed_at: string | null
           reviewed_by: string | null
+          source_drive_id: string | null
+          source_etag: string | null
+          source_item_id: string | null
+          source_last_modified_at: string | null
+          source_metadata: Json
+          source_path: string | null
+          source_site_id: string | null
+          source_size: number | null
+          source_system: string | null
+          source_web_url: string | null
           status: string
+          storage_bucket: string | null
+          storage_path: string | null
+          sync_error: string | null
+          sync_status: string
           title: string
+          trade: string | null
           updated_at: string | null
           uploaded_by: string | null
           version: number | null
+          workflow_target: string | null
         }
         Insert: {
           category?: string | null
+          content_hash?: string | null
           content_type?: string | null
           created_at?: string | null
           created_by?: string | null
           deleted_at?: string | null
           description?: string | null
+          division?: string | null
           file_name: string
           file_size?: number | null
           file_url: string
           folder?: string | null
           id?: never
           is_private?: boolean | null
+          last_synced_at?: string | null
           project_id: number
           reviewed_at?: string | null
           reviewed_by?: string | null
+          source_drive_id?: string | null
+          source_etag?: string | null
+          source_item_id?: string | null
+          source_last_modified_at?: string | null
+          source_metadata?: Json
+          source_path?: string | null
+          source_site_id?: string | null
+          source_size?: number | null
+          source_system?: string | null
+          source_web_url?: string | null
           status?: string
+          storage_bucket?: string | null
+          storage_path?: string | null
+          sync_error?: string | null
+          sync_status?: string
           title: string
+          trade?: string | null
           updated_at?: string | null
           uploaded_by?: string | null
           version?: number | null
+          workflow_target?: string | null
         }
         Update: {
           category?: string | null
+          content_hash?: string | null
           content_type?: string | null
           created_at?: string | null
           created_by?: string | null
           deleted_at?: string | null
           description?: string | null
+          division?: string | null
           file_name?: string
           file_size?: number | null
           file_url?: string
           folder?: string | null
           id?: never
           is_private?: boolean | null
+          last_synced_at?: string | null
           project_id?: number
           reviewed_at?: string | null
           reviewed_by?: string | null
+          source_drive_id?: string | null
+          source_etag?: string | null
+          source_item_id?: string | null
+          source_last_modified_at?: string | null
+          source_metadata?: Json
+          source_path?: string | null
+          source_site_id?: string | null
+          source_size?: number | null
+          source_system?: string | null
+          source_web_url?: string | null
           status?: string
+          storage_bucket?: string | null
+          storage_path?: string | null
+          sync_error?: string | null
+          sync_status?: string
           title?: string
+          trade?: string | null
           updated_at?: string | null
           uploaded_by?: string | null
           version?: number | null
+          workflow_target?: string | null
         }
         Relationships: [
           {
@@ -26322,6 +26507,8 @@ export type Database = {
         Returns: undefined
       }
       auto_archive_old_chats: { Args: never; Returns: number }
+      autoprewarm_dump_now: { Args: never; Returns: number }
+      autoprewarm_start_worker: { Args: never; Returns: undefined }
       backfill_meeting_participants_to_contacts: {
         Args: never
         Returns: {
@@ -27026,6 +27213,10 @@ export type Database = {
         }[]
       }
       is_admin: { Args: never; Returns: boolean }
+      is_org_member: {
+        Args: { p_org_id: string; p_roles?: string[] }
+        Returns: boolean
+      }
       list_punch_item_comments: {
         Args: { p_project_id: number; p_punch_item_id: string }
         Returns: {
@@ -27602,6 +27793,7 @@ export type Database = {
       search_document_chunks_by_category: {
         Args: {
           filter_category: string
+          filter_project_id?: number
           match_count?: number
           match_threshold?: number
           query_embedding: unknown

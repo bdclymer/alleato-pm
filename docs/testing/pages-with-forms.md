@@ -112,8 +112,6 @@ All pages in the application that contain a form, create/edit dialog, or inline 
 | URL | Form Type |
 |-----|-----------|
 | `/create-project` | Create project form |
-| `/settings/users` | Invite dialog |
-| `/settings/users/[userId]` | Edit user form |
 
 ## Global / Other
 | URL | Form Type |

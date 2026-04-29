@@ -15,6 +15,7 @@ import {
 import { Container } from "@/components/layout/container";
 import { Stack } from "@/components/layout/stack";
 import { Inline } from "@/components/layout/inline";
+import { Eyebrow } from "@/components/ds/eyebrow";
 import { Heading } from "@/components/ds/heading";
 import { Text } from "@/components/ds/text";
 import {
@@ -36,6 +37,7 @@ interface PageHeaderProps {
   // Content
   title: string;
   titleContent?: React.ReactNode;
+  eyebrow?: React.ReactNode;
   description?: string;
 
   // Layout options
@@ -97,6 +99,7 @@ interface PageHeaderProps {
 export function PageHeader({
   title,
   titleContent,
+  eyebrow,
   description,
   variant = "default",
   actions,
@@ -198,7 +201,7 @@ export function PageHeader({
         {/* Title and Actions */}
         <div
           className={cn(
-            "min-w-0 pt-1.5 pb-3",
+            "min-w-0 pt-4 pb-3",
             mobileActionsInline
               ? "flex items-center justify-between gap-3"
               : "flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4",
@@ -223,6 +226,11 @@ export function PageHeader({
             )}
 
             {/* Page Title */}
+            {eyebrow ? (
+              <div className="mb-2">
+                <Eyebrow>{eyebrow}</Eyebrow>
+              </div>
+            ) : null}
             {titleContent ? (
               titleContent
             ) : (

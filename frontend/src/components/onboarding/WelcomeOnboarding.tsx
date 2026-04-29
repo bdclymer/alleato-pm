@@ -83,10 +83,8 @@ export function WelcomeOnboarding({
   }, [open]);
 
   const close = React.useCallback(
-    (completed: boolean) => {
-      if (completed) {
-        window.localStorage.setItem(storageKey, new Date().toISOString());
-      }
+    (_completed: boolean) => {
+      window.localStorage.setItem(storageKey, new Date().toISOString());
       setOpen(false);
     },
     [storageKey],

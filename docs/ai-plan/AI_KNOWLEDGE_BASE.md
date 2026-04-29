@@ -44,18 +44,21 @@ risks before they become problems, and answers questions about your actual
 work. Procore stores. Alleato understands.
 
 ### Who built this?
-Alleato Group is building it. You're an early tester — what gets built next
-depends on the gaps you flag.
+Alleato Group's internal team built this as proprietary software for Alleato's
+own operations. It is designed to help the company scale how it manages
+projects, people, documents, financials, and project intelligence across the
+business.
 
 ### Is this production-ready?
-Not yet. You're in an internal beta. Workflows you'd expect from a mature
-platform might not be here. The ones that are will have rough edges. That's
-the point of this phase — we're shipping fast based on what you tell us.
+Alleato OS is in controlled internal rollout. Core workflows are being used
+and hardened around Alleato's real operating needs, but some areas are still
+being expanded or refined. If something looks incomplete, treat it as a gap
+to route back to the internal team rather than as final product behavior.
 
 ### Should I trust it with real client data?
-For now, treat your test projects as test projects. Don't make project
-decisions purely off what the AI tells you without verifying. The platform
-is the source of truth for data; the AI is your fastest way to navigate it.
+Use Alleato OS for authorized company work only. The platform is intended to
+centralize project and business data, but decisions should still be verified
+against the underlying record when the AI summarizes or interprets something.
 [VERIFY: Megan — data retention / backup / security guarantees.]
 
 ---
@@ -63,9 +66,10 @@ is the source of truth for data; the AI is your fastest way to navigate it.
 ## Section 2 — Getting started
 
 ### Where do I start?
-Create a test project. Walk through it like a real one — add a meeting,
-create an RFI, run a submittal. Note what feels off. Tell us in the widget.
-That round trip teaches you the platform faster than any tour.
+Start with the workflow you already own: open the relevant project, review
+the dashboard, then add or update the record you came here to manage. If
+something is missing, unclear, or slows the work down, send it through the
+feedback widget so the internal team can triage it.
 
 ### How do I create a project?
 [CHECK: confirm exact button location and flow in current build.]
@@ -224,7 +228,7 @@ train external models.
 ### Why did the AI give me a wrong answer?
 Possible reasons: the question relied on data not yet indexed, the answer
 isn't in the knowledge base, or the AI made a mistake. Click the feedback
-tab and flag it — that's how we close the gap.
+tab and flag it — that's how the internal team closes the gap.
 
 ### Can I correct the AI?
 Yes — push back. The assistant should adjust based on context within a
@@ -240,13 +244,14 @@ Click "Ask Alleato" in the bottom-right of any page → "Send feedback" tab.
 Pick a tag (Bug, Idea, Confused), write what's on your mind, send.
 
 ### What happens to my feedback?
-It lands on the Client Feedback page within seconds. The team triages
-daily. Status moves through: new → triaged → shipping → shipped (or
-won't-fix with a reason).
+It lands in the internal feedback inbox within seconds. The team triages
+items by severity, operational impact, and whether the issue blocks active
+work. Status moves through: new → triaged → shipping → shipped (or won't-fix
+with a reason).
 
 ### How fast does feedback get addressed?
 Bugs that block work: same day or next day. Ideas: triaged weekly into
-the roadmap. You'll see status changes on the Client Feedback page.
+the roadmap. Status changes are visible from the feedback and roadmap views.
 
 ### Where's the roadmap?
 Sidebar → Roadmap. Shows what's shipping next, what's planned, what's
@@ -254,7 +259,7 @@ under consideration.
 
 ### How do I submit a wishlist item?
 Same widget. Pick the "Idea" tag. Wishlist is a view of all
-Idea-tagged feedback, sorted by upvotes.
+Idea-tagged feedback, prioritized by operational impact and internal votes.
 
 ### Can I upvote other people's wishlist items?
 [CHECK: live or not?]
@@ -264,7 +269,8 @@ Idea-tagged feedback, sorted by upvotes.
 ## Section 11 — Account, data, privacy
 
 ### Who can see my feedback?
-[FILL: confirm — internal team only? Visible to other testers?]
+[FILL: confirm — internal Alleato team only, role-restricted, or visible to
+all authorized users?]
 
 ### Who can see my project data?
 [FILL: confirm permissioning model.]
@@ -306,8 +312,8 @@ specific product, sample, or method for approval.]
 
 ## Section 13 — Known limitations and rough edges
 
-> Be honest with testers. Pretending something works when it doesn't is the
-> fastest way to lose trust.
+> Be direct about known limitations. Pretending something works when it
+> doesn't is the fastest way to lose trust.
 
 ### What doesn't work yet?
 [FILL: maintain a list of known gaps. Update weekly as features ship.]
@@ -328,8 +334,9 @@ Examples to populate:
 ## Section 14 — Edge cases the AI gets asked
 
 ### "Who built this?"
-Alleato Group is building it. You're an early tester — what gets built next
-depends on the gaps you flag.
+Alleato Group's internal team built this as proprietary software for Alleato's
+own operations. It is designed to help the company scale how it manages
+projects, people, documents, financials, and project intelligence.
 
 ### "Can I use this on mobile?"
 [CHECK.]
@@ -357,9 +364,9 @@ triggered it. Review the log weekly:
 - **One-offs with broad relevance** → add here
 - **One-offs with narrow relevance** → leave for next time
 
-Within a month of testing, this document should roughly double in size and
-the "I don't know" rate should drop sharply. That trajectory is the real
-measure of whether the AI is becoming trustworthy.
+As the internal team uses the platform, this document should grow around the
+questions and gaps that actually come up in day-to-day work. The useful
+measure is whether repeated "I don't know" answers decline over time.
 
 ---
 
