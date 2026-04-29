@@ -220,7 +220,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
           <div className="space-y-6">
             <DetailPanel>
               <SectionRuleHeading label="General Information" className="mb-6 pb-0" />
-              <div className="grid grid-cols-1 gap-x-10 gap-y-4 lg:grid-cols-2">
+              <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,300px),1fr))] gap-x-10 gap-y-4">
                 <dl className="space-y-4 text-sm">
                   <LabelValueRow label="Contract #" labelClassName="w-36">
                     {contract.contract_number || "—"}
