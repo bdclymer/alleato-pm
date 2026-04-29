@@ -1100,6 +1100,7 @@ export function ChatArea({
 
       if (event.error === "audio-capture") {
         toast.error("No microphone found", {
+          id: "ai-assistant-audio-capture",
           description:
             "Make sure a microphone is connected and enabled in your system settings.",
         });

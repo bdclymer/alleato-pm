@@ -29,6 +29,7 @@ interface ErrorHandlerCallbacks {
 
 /**
  * Mirrors the exact onerror guard logic from chat-area.tsx after the fix.
+ * @sync-with frontend/src/components/ai-assistant/chat-area.tsx:1084-1114
  * Keep in sync with the handler in chat-area.tsx.
  */
 function handleSpeechRecognitionError(
@@ -51,6 +52,7 @@ function handleSpeechRecognitionError(
 
   if (event.error === "audio-capture") {
     callbacks.showError("No microphone found", {
+      id: "ai-assistant-audio-capture",
       description:
         "Make sure a microphone is connected and enabled in your system settings.",
     });
@@ -110,7 +112,10 @@ describe("SpeechRecognition onerror handler", () => {
     expect(setIsMicrophoneBlocked).not.toHaveBeenCalled();
     expect(showError).toHaveBeenCalledWith(
       "No microphone found",
-      expect.objectContaining({ description: expect.stringContaining("microphone") }),
+      expect.objectContaining({
+        id: "ai-assistant-audio-capture",
+        description: expect.stringContaining("microphone"),
+      }),
     );
   });
 
