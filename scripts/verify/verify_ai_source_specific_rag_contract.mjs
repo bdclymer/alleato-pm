@@ -8,6 +8,11 @@ const route = readFileSync(
   resolve(repoRoot, "frontend/src/app/api/ai-assistant/chat/route.ts"),
   "utf8",
 );
+const detector = readFileSync(
+  resolve(repoRoot, "frontend/src/lib/ai/detect-rag-request.ts"),
+  "utf8",
+);
+const contractSource = `${route}\n${detector}`;
 
 const requiredRouteFragments = [
   "detectSourceSpecificRagRequest",
@@ -30,13 +35,15 @@ const requiredRouteFragments = [
 ];
 
 const failures = requiredRouteFragments
-  .filter((fragment) => !route.includes(fragment))
+  .filter((fragment) => !contractSource.includes(fragment))
   .map((fragment) => `chat route missing source-specific RAG contract fragment: ${fragment}`);
 
 const aprilRangePattern =
-  /april\|may\|june/i.test(route) &&
-  /through\|to\|until/.test(route) &&
-  /20\\d\{2\}/.test(route);
+  /april/i.test(contractSource) &&
+  /may/i.test(contractSource) &&
+  /june/i.test(contractSource) &&
+  /through\|to\|until/.test(contractSource) &&
+  /20\\d\{2\}/.test(contractSource);
 
 if (!aprilRangePattern) {
   failures.push("chat route does not parse natural-language month date ranges for source-specific RAG prompts");

@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { getProjectRfis } from "@/lib/supabase/queries";
 import { RfisClient } from "./rfis-client";
 
@@ -10,7 +10,7 @@ export default async function RfisPage({
   const { projectId } = await params;
   const numericProjectId = parseInt(projectId, 10);
 
-  const supabase = await createClient();
+  const supabase = createServiceClient();
   const { data: rfis, error } = await getProjectRfis(
     supabase,
     numericProjectId,

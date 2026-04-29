@@ -21,6 +21,41 @@ logger = logging.getLogger(__name__)
 
 COMPANY_DOMAINS = [d.strip() for d in os.environ.get("COMPANY_EMAIL_DOMAINS", "alleatogroup.com").split(",")]
 MIN_BODY_CHARS = 50  # Skip very short emails (auto-replies, etc.)
+EMAIL_BODY_MAX_CHARS = 8000
+
+
+def _strip_email_html(raw_html: str) -> str:
+    text = re.sub(r"(?is)<blockquote.*?</blockquote>", " ", raw_html)
+    text = re.sub(r"(?is)<style.*?</style>|<script.*?</script>", " ", text)
+    text = re.sub(r"(?i)<br\s*/?>", "\n", text)
+    text = re.sub(r"(?i)</p\s*>", "\n", text)
+    text = re.sub(r"<[^>]+>", " ", text)
+    text = re.sub(r"\r\n?", "\n", text)
+    text = re.sub(r"[ \t]+", " ", text)
+    return re.sub(r"\n{3,}", "\n\n", text).strip()
+
+
+def _strip_quoted_email_history(text: str) -> str:
+    quote_markers = [
+        r"(?im)^On .+ wrote:\s*$",
+        r"(?im)^From:\s+.+$",
+        r"(?im)^Sent:\s+.+$",
+        r"(?im)^-----Original Message-----\s*$",
+        r"(?im)^_{5,}\s*$",
+    ]
+    cutoff = len(text)
+    for pattern in quote_markers:
+        match = re.search(pattern, text)
+        if match:
+            cutoff = min(cutoff, match.start())
+
+    text = text[:cutoff]
+    lines = [
+        line.strip()
+        for line in text.splitlines()
+        if line.strip() and not line.lstrip().startswith(">")
+    ]
+    return re.sub(r"\s+", " ", " ".join(lines)).strip()
 
 
 def _is_relevant_email(msg: dict, project_keywords: list[str]) -> bool:
@@ -70,9 +105,8 @@ def _format_email_as_text(msg: dict) -> str:
     # bodyPreview is 255 chars max — if we have full body, use it
     if msg.get("body", {}).get("content"):
         raw_html = msg["body"]["content"]
-        body = re.sub(r'<[^>]+>', ' ', raw_html)
-        body = re.sub(r'\s+', ' ', body).strip()
-        body = body[:8000]  # Cap for embedding
+        body = _strip_quoted_email_history(_strip_email_html(raw_html))
+        body = body[:EMAIL_BODY_MAX_CHARS]  # Cap for embedding
 
     return f"""Subject: {subject}
 Date: {date_str}

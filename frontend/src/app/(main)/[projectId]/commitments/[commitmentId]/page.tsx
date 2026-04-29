@@ -124,9 +124,16 @@ const normalizeCommitment = (raw: unknown): CommitmentDetail | null => {
       : "";
 
   const accountingMethod: CommitmentDetail["accounting_method"] =
-    accountingMethodRaw === "unit_quantity" || accountingMethodRaw === "unit-quantity"
+    accountingMethodRaw === "unit" ||
+    accountingMethodRaw === "unit_quantity" ||
+    accountingMethodRaw === "unit-quantity" ||
+    accountingMethodRaw === "unit quantity" ||
+    accountingMethodRaw === "unit/quantity"
       ? "unit"
-      : accountingMethodRaw === "amount_based"
+      : accountingMethodRaw === "amount" ||
+          accountingMethodRaw === "amount_based" ||
+          accountingMethodRaw === "amount-based" ||
+          accountingMethodRaw === "amount based"
         ? "amount"
         : accountingMethodRaw === "percent"
           ? "percent"
@@ -177,7 +184,12 @@ const normalizeCommitment = (raw: unknown): CommitmentDetail | null => {
       typeof item.quantity === "number" || typeof item.quantity === "string"
         ? Number(item.quantity)
         : null,
-    uom: typeof item.uom === "string" ? item.uom : null,
+    uom:
+      typeof item.uom === "string"
+        ? item.uom
+        : typeof item.unit_of_measure === "string"
+          ? item.unit_of_measure
+          : null,
     unit_cost:
       typeof item.unit_cost === "number" || typeof item.unit_cost === "string"
         ? Number(item.unit_cost)

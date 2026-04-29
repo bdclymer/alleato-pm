@@ -261,15 +261,12 @@ export function buildChangeEventHtml(
 }
 
 export async function renderPdfFromHtml(html: string): Promise<Buffer> {
-  const puppeteer = await import("puppeteer");
-  const browser = await puppeteer.default.launch({
-    headless: true,
-    args: ["--no-sandbox", "--disable-setuid-sandbox"],
-  });
+  const { chromium } = await import("playwright");
+  const browser = await chromium.launch({ headless: true });
 
   try {
     const page = await browser.newPage();
-    await page.setViewport({ width: 1280, height: 900, deviceScaleFactor: 1 });
+    await page.setViewportSize({ width: 1280, height: 900 });
     // "load" is sufficient for inline-only HTML — avoids the 500ms networkidle0 wait
     await page.setContent(html, { waitUntil: "load" });
 

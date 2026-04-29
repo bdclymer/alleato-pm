@@ -39,6 +39,7 @@ type DialogTab = "download" | "email";
 interface DocumentDeliveryDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onEmailSent?: () => void;
   recordType: DocumentRecordType;
   recordId: string;
   title: string;
@@ -53,6 +54,7 @@ function validateEmail(email: string): boolean {
 export function DocumentDeliveryDialog({
   open,
   onOpenChange,
+  onEmailSent,
   recordType,
   recordId,
   title,
@@ -222,13 +224,14 @@ export function DocumentDeliveryDialog({
       toast.success(
         `Email sent to ${recipients.length} recipient${recipients.length === 1 ? "" : "s"}`,
       );
+      onEmailSent?.();
       onOpenChange(false);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Send failed");
     } finally {
       setIsSending(false);
     }
-  }, [message, onOpenChange, recipients, recordId, recordType, subject]);
+  }, [message, onEmailSent, onOpenChange, recipients, recordId, recordType, subject]);
 
   return (
     <Modal open={open} onOpenChange={onOpenChange}>

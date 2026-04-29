@@ -1,51 +1,42 @@
 import { type NextRequest, NextResponse } from "next/server";
 
-import { createServerClient } from "@supabase/ssr";
-
-import { getSupabaseConfig } from "./config";
+import { getBestSupabaseAuthToken } from "./auth-cookie";
 import { validateCallbackUrl } from "@/lib/validation/callback-url";
-import type { Database } from "@/types/database.types";
 
 export async function updateSession(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({ request });
+  const supabaseResponse = NextResponse.next({ request });
+  const pathname = request.nextUrl.pathname;
 
-  const { url, anonKey } = getSupabaseConfig();
-  const supabase = createServerClient<Database>(url, anonKey, {
-    cookies: {
-      getAll() {
-        return request.cookies.getAll();
-      },
-      setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value }) => {
-          request.cookies.set(name, value);
-        });
-        supabaseResponse = NextResponse.next({ request });
-        cookiesToSet.forEach(({ name, value, options }) => {
-          supabaseResponse.cookies.set(name, value, options);
-        });
-      },
-    },
-  });
+  if (shouldBypassSessionMiddleware(pathname)) {
+    return supabaseResponse;
+  }
 
-  // Use getUser() for protected routes so tokens are validated by Supabase.
-  // Decoding JWTs from cookies alone is not a trust boundary.
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    if (request.nextUrl.pathname.startsWith("/api")) {
-      return supabaseResponse;
-    }
+  const tokenData = getBestSupabaseAuthToken(request.cookies.getAll());
+  if (
+    !tokenData?.userId ||
+    (typeof tokenData.expiresAtMs === "number" &&
+      tokenData.expiresAtMs <= Date.now() + 15_000)
+  ) {
     return redirectToLogin(request);
   }
 
   return supabaseResponse;
 }
 
+export function shouldBypassSessionMiddleware(pathname: string): boolean {
+  return (
+    pathname.startsWith("/api/") ||
+    pathname.startsWith("/auth") ||
+    pathname.startsWith("/_next/") ||
+    pathname === "/favicon.ico" ||
+    /\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|map|txt|xml)$/i.test(pathname)
+  );
+}
+
 function redirectToLogin(request: NextRequest): NextResponse {
   const url = request.nextUrl.clone();
   url.pathname = "/auth/login";
+  url.search = "";
   const rawCallback = request.nextUrl.pathname + request.nextUrl.search;
   url.searchParams.set("callbackUrl", validateCallbackUrl(rawCallback));
   return NextResponse.redirect(url);

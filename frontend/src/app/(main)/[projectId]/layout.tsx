@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 
 /**
@@ -25,12 +25,9 @@ export default async function ProjectLayout({
     redirect("/access-denied?reason=invalid-project");
   }
 
-  // Anon client for authentication (verifies JWT from cookie)
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Read auth from the cookie JWT so project pages do not block on Supabase
+  // Auth network calls during render.
+  const user = await getApiRouteUser();
 
   if (!user) {
     redirect("/auth/login");

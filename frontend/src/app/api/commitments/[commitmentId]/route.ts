@@ -140,7 +140,7 @@ export const GET = withApiGuardrails<{ commitmentId: string }>(
           supabase
             .from("subcontract_sov_items")
             .select(
-              "id, line_number, budget_code, description, amount, billed_to_date, sort_order",
+              "id, line_number, budget_code, description, amount, quantity, unit_of_measure, unit_cost, billed_to_date, sort_order",
             )
             .eq("subcontract_id", commitmentId)
             .order("line_number", { ascending: true }),
@@ -172,7 +172,7 @@ export const GET = withApiGuardrails<{ commitmentId: string }>(
           supabase
             .from("purchase_order_sov_items")
             .select(
-              "id, line_number, budget_code, description, amount, billed_to_date, sort_order",
+              "id, line_number, budget_code, description, amount, quantity, uom, unit_cost, billed_to_date, sort_order",
             )
             .eq("purchase_order_id", commitmentId)
             .order("line_number", { ascending: true }),

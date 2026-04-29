@@ -44,6 +44,7 @@ interface EmailComposeDialogProps {
   projectId: number;
   email?: ProjectEmail | null;
   onSuccess?: () => void;
+  createPayloadOverrides?: Partial<CreateEmailInput>;
 }
 
 function parseCommaSeparated(value: string | undefined): string[] | null {
@@ -60,6 +61,7 @@ export function EmailComposeDialog({
   projectId,
   email,
   onSuccess,
+  createPayloadOverrides,
 }: EmailComposeDialogProps) {
   const isEditing = Boolean(email);
   const createEmail = useCreateEmail(projectId);
@@ -119,7 +121,10 @@ export function EmailComposeDialog({
     if (isEditing && email) {
       await updateEmail.mutateAsync(payload);
     } else {
-      await createEmail.mutateAsync(payload);
+      await createEmail.mutateAsync({
+        ...payload,
+        ...createPayloadOverrides,
+      });
     }
 
     onOpenChange(false);

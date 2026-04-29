@@ -175,6 +175,16 @@ function extractToolNames(relativePath) {
   return [...names].sort();
 }
 
+function extractStrategistConsultToolNames() {
+  const names = new Set(extractToolNames(files.orchestrator).filter((name) => name.startsWith("consult")));
+  const re = /\n\s*(consult[A-Za-z0-9_]+)\s*:\s*makeConsultTool\s*\(/g;
+  let match;
+  while ((match = re.exec(orchestrator))) {
+    names.add(match[1]);
+  }
+  return [...names].sort();
+}
+
 function missing(expectedNames, actualNames) {
   const actual = new Set(actualNames);
   return expectedNames.filter((name) => !actual.has(name));
@@ -208,7 +218,7 @@ const inventory = {
     "@ai-sdk/mcp": frontendPackage.dependencies?.["@ai-sdk/mcp"] ?? null,
   },
   tools: {
-    consult: extractToolNames(files.orchestrator).filter((name) => name.startsWith("consult")),
+    consult: extractStrategistConsultToolNames(),
     project: extractToolNames(files.projectTools),
     operational: extractToolNames(files.operationalTools),
     financial: extractToolNames(files.financialTools),

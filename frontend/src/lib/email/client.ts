@@ -20,5 +20,31 @@ export function getResend(): Resend {
 export const EMAIL_FROM =
   process.env.EMAIL_FROM_ADDRESS ?? "Alleato <notifications@alleato.app>";
 
-export const APP_BASE_URL =
-  process.env.NEXT_PUBLIC_APP_URL ?? "https://app.alleato.com";
+export const DEFAULT_APP_BASE_URL = "https://projects.alleatogroup.com";
+
+const LEGACY_APP_HOSTS = new Set(["app.alleato.com"]);
+
+export function resolveAppBaseUrl(value = process.env.NEXT_PUBLIC_APP_URL) {
+  const rawValue = value?.trim();
+
+  if (!rawValue) {
+    return DEFAULT_APP_BASE_URL;
+  }
+
+  let parsedUrl: URL;
+  try {
+    parsedUrl = new URL(rawValue);
+  } catch {
+    throw new Error(
+      `Invalid NEXT_PUBLIC_APP_URL for email links: "${rawValue}". Expected an absolute URL such as ${DEFAULT_APP_BASE_URL}.`,
+    );
+  }
+
+  if (LEGACY_APP_HOSTS.has(parsedUrl.hostname)) {
+    return DEFAULT_APP_BASE_URL;
+  }
+
+  return parsedUrl.origin;
+}
+
+export const APP_BASE_URL = resolveAppBaseUrl();

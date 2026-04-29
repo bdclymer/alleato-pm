@@ -1082,7 +1082,30 @@ export function ChatArea({
       }
     };
     recognition.onerror = (event) => {
+      // "aborted" fires when recognition.stop() is called deliberately — not a real error
+      // Regression: GH#281 — this was shown as "Voice input failed: aborted" to users
+      if (event.error === "aborted") return;
+
       setIsRecording(false);
+
+      if (event.error === "not-allowed") {
+        setIsMicrophoneBlocked(true);
+        toast.error("Microphone access is blocked", {
+          id: "ai-assistant-microphone-blocked",
+          description:
+            "Enable microphone access for this site in browser site settings, then try voice input again.",
+        });
+        return;
+      }
+
+      if (event.error === "audio-capture") {
+        toast.error("No microphone found", {
+          description:
+            "Make sure a microphone is connected and enabled in your system settings.",
+        });
+        return;
+      }
+
       toast.error(
         event.error
           ? `Voice input failed: ${event.error}`

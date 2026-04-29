@@ -22,10 +22,28 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { DateAvatar, EmptyState } from "@/components/ds";
 import { PageContainer } from "@/components/layout";
 import { AttendeeAvatarStack } from "@/components/meetings/attendee-avatar-stack";
+import { useProjects } from "@/hooks/use-projects";
+import { apiFetch } from "@/lib/api-client";
 import type { Database } from "@/types/database.types";
+import { toast } from "sonner";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -244,6 +262,84 @@ function FirefliesSectionContent({ value }: { value: string }) {
   );
 }
 
+// ─── Project Assignment Dialog ───────────────────────────────────────────────
+
+function ProjectAssignmentDialog({
+  open,
+  onOpenChange,
+  meetingTitle,
+  selectedProjectId,
+  onSelectedProjectIdChange,
+  onSave,
+  projects,
+  isLoadingProjects,
+  projectLoadError,
+  isSaving,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  meetingTitle: string;
+  selectedProjectId: string;
+  onSelectedProjectIdChange: (value: string) => void;
+  onSave: () => void;
+  projects: ReturnType<typeof useProjects>["projects"];
+  isLoadingProjects: boolean;
+  projectLoadError: Error | null;
+  isSaving: boolean;
+}) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Assign to project</DialogTitle>
+          <DialogDescription>{meetingTitle}</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-2 py-2">
+          <Select
+            value={selectedProjectId || "__none__"}
+            onValueChange={(value) => {
+              onSelectedProjectIdChange(value === "__none__" ? "" : value);
+            }}
+            disabled={isLoadingProjects || isSaving}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder={isLoadingProjects ? "Loading projects..." : "Select a project"} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__none__">No project</SelectItem>
+              {projects.map((project) => (
+                <SelectItem key={project.id} value={String(project.id)}>
+                  {project.project_number
+                    ? `${project.project_number} - ${project.name || "Unnamed Project"}`
+                    : project.name || `Project #${project.id}`}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {projectLoadError ? (
+            <p className="text-xs text-destructive">
+              Failed to load projects: {projectLoadError.message}
+            </p>
+          ) : null}
+        </div>
+        <DialogFooter>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={isSaving}
+          >
+            Cancel
+          </Button>
+          <Button type="button" onClick={onSave} disabled={isLoadingProjects || isSaving}>
+            {isSaving ? "Saving..." : "Save"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // ─── Main Component ─────────────────────────────────────────────────────────
 
 export function MeetingDetailContent({
@@ -264,6 +360,66 @@ export function MeetingDetailContent({
   transcriptSlot,
   summarySlot,
 }: MeetingDetailContentProps) {
+  const { projects, isLoading: isLoadingProjects, error: projectLoadError } = useProjects({
+    limit: 500,
+  });
+  const [assignmentDialogOpen, setAssignmentDialogOpen] = React.useState(false);
+  const [selectedProjectId, setSelectedProjectId] = React.useState(
+    meeting.project_id ? String(meeting.project_id) : "",
+  );
+  const [assignedProjectId, setAssignedProjectId] = React.useState<number | null>(
+    meeting.project_id,
+  );
+  const [assignedProjectName, setAssignedProjectName] = React.useState<string | null>(
+    meeting.project,
+  );
+  const [isSavingProject, setIsSavingProject] = React.useState(false);
+
+  React.useEffect(() => {
+    setSelectedProjectId(meeting.project_id ? String(meeting.project_id) : "");
+    setAssignedProjectId(meeting.project_id);
+    setAssignedProjectName(meeting.project);
+  }, [meeting.id, meeting.project, meeting.project_id]);
+
+  const selectedProject = React.useMemo(
+    () => projects.find((project) => String(project.id) === selectedProjectId) ?? null,
+    [projects, selectedProjectId],
+  );
+
+  const assignedProject = React.useMemo(
+    () => projects.find((project) => project.id === assignedProjectId) ?? null,
+    [assignedProjectId, projects],
+  );
+
+  const projectLabel =
+    assignedProject?.name ||
+    assignedProjectName ||
+    (assignedProjectId ? `Project #${assignedProjectId}` : null);
+
+  const handleSaveProjectAssignment = async () => {
+    const nextProjectId = selectedProjectId ? Number(selectedProjectId) : null;
+    if (selectedProjectId && !Number.isFinite(nextProjectId)) {
+      toast.error("Select a valid project before saving");
+      return;
+    }
+
+    setIsSavingProject(true);
+    try {
+      await apiFetch(`/api/documents/${meeting.id}/assign-project`, {
+        method: "PATCH",
+        body: JSON.stringify({ project_id: nextProjectId }),
+      });
+      setAssignedProjectId(nextProjectId);
+      setAssignedProjectName(nextProjectId ? selectedProject?.name ?? null : null);
+      setAssignmentDialogOpen(false);
+      toast.success(nextProjectId ? "Meeting assigned to project" : "Project assignment removed");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to assign meeting to project");
+    } finally {
+      setIsSavingProject(false);
+    }
+  };
+
   const overviewContent =
     parsedSections?.shortSummary?.trim() ||
     parsedSections?.shortOverview?.trim() ||
@@ -308,10 +464,10 @@ export function MeetingDetailContent({
             {meeting.duration} min
           </span>
         ) : null}
-        {meeting.project ? (
+        {projectLabel ? (
           <span className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground">
             <FolderOpen className="h-3.5 w-3.5" />
-            {meeting.project}
+            {projectLabel}
           </span>
         ) : (
           <Button
@@ -319,6 +475,7 @@ export function MeetingDetailContent({
             variant="ghost"
             size="sm"
             className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground/60 hover:text-muted-foreground h-auto px-0"
+            onClick={() => setAssignmentDialogOpen(true)}
           >
             <FolderOpen className="h-3.5 w-3.5" />
             Assign to project
@@ -569,6 +726,18 @@ export function MeetingDetailContent({
           )}
         </aside>
       </div>
+      <ProjectAssignmentDialog
+        open={assignmentDialogOpen}
+        onOpenChange={setAssignmentDialogOpen}
+        meetingTitle={meeting.title || "Untitled Meeting"}
+        selectedProjectId={selectedProjectId}
+        onSelectedProjectIdChange={setSelectedProjectId}
+        onSave={handleSaveProjectAssignment}
+        projects={projects}
+        isLoadingProjects={isLoadingProjects}
+        projectLoadError={projectLoadError}
+        isSaving={isSavingProject}
+      />
     </PageContainer>
   );
 }

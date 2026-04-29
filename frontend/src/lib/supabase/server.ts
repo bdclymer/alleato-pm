@@ -41,10 +41,8 @@ export async function createClient() {
 }
 
 /**
- * Get the authenticated user for API routes with rate-limit resilience.
- * Tries getSession() first (may refresh token via network call).
- * Falls back to decoding the JWT from cookies if rate-limited (no network call).
- * Returns a minimal User-like object or null.
+ * Get the authenticated user from the Supabase cookie JWT without an Auth
+ * network call. Returns a minimal User-like object or null.
  */
 export async function getApiRouteUser(): Promise<Pick<User, "id" | "email"> | null> {
   // Read the user directly from the cookie JWT first — zero network calls.
@@ -55,13 +53,7 @@ export async function getApiRouteUser(): Promise<Pick<User, "id" | "email"> | nu
     return cookieUser;
   }
 
-  // Fallback to getSession() if cookie parsing failed (e.g., no cookies at all)
-  const supabase = await createClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
-  return session?.user ?? null;
+  return null;
 }
 
 async function getUserFromCookieJwt(): Promise<Pick<User, "id" | "email"> | null> {

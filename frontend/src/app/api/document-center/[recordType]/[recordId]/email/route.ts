@@ -26,6 +26,11 @@ interface EmailRecipient {
   name: string;
 }
 
+interface DocumentProjectContext {
+  projectId: number;
+  relatedTool: string;
+}
+
 function isDocumentRecordType(value: string): value is DocumentRecordType {
   return (
     value === "prime-contract" ||
@@ -33,6 +38,46 @@ function isDocumentRecordType(value: string): value is DocumentRecordType {
     value === "change-order" ||
     value === "prime-contract-change-order"
   );
+}
+
+async function getDocumentProjectContext(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  recordType: DocumentRecordType,
+  recordId: string,
+): Promise<DocumentProjectContext | null> {
+  if (recordType === "prime-contract") {
+    const { data, error } = await supabase
+      .from("prime_contracts")
+      .select("project_id")
+      .eq("id", recordId)
+      .single();
+
+    if (error || data?.project_id == null) return null;
+    return { projectId: data.project_id, relatedTool: "prime-contract" };
+  }
+
+  if (recordType === "commitment") {
+    const { data, error } = await supabase
+      .from("commitments_unified")
+      .select("project_id")
+      .eq("id", recordId)
+      .single();
+
+    if (error || data?.project_id == null) return null;
+    return { projectId: data.project_id, relatedTool: "commitment" };
+  }
+
+  const numericRecordId = Number(recordId);
+  if (!Number.isFinite(numericRecordId)) return null;
+
+  const { data, error } = await supabase
+    .from("prime_contract_change_orders")
+    .select("project_id")
+    .eq("id", numericRecordId)
+    .single();
+
+  if (error || data?.project_id == null) return null;
+  return { projectId: data.project_id, relatedTool: recordType };
 }
 
 export const runtime = "nodejs";
@@ -120,9 +165,45 @@ export const POST = withApiGuardrails(
       attachments,
     });
 
+    const projectContext = await getDocumentProjectContext(supabase, recordType, recordId);
+    if (!projectContext) {
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: "document-center/[recordType]/[recordId]/email#POST",
+        message: "Email sent, but the project context could not be resolved for history logging.",
+      });
+    }
+
+    const sentAt = new Date().toISOString();
+    const { error: emailHistoryError } = await supabase.from("project_emails").insert({
+      project_id: projectContext.projectId,
+      subject,
+      body: emailText,
+      body_html: emailHtml,
+      from_email: user.email ?? null,
+      from_name: senderName || null,
+      to_list: recipients.map((recipient) => recipient.email.trim()),
+      status: "Sent",
+      sent_at: sentAt,
+      created_by: user.id,
+      related_tool: projectContext.relatedTool,
+      related_id: recordId,
+      has_attachments: attachments.length > 0,
+      thread_id: result.id,
+    });
+
+    if (emailHistoryError) {
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: "document-center/[recordType]/[recordId]/email#POST",
+        message: `Email sent, but history logging failed: ${emailHistoryError.message}`,
+      });
+    }
+
     return NextResponse.json({
       success: true,
       id: result.id,
+      historyLogged: true,
       recipients: recipients.map((recipient) => recipient.email.trim()),
     });
     },

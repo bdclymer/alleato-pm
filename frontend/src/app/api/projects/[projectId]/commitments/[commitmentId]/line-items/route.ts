@@ -15,6 +15,7 @@ interface LineItemInput {
   billed_to_date: number | null;
   quantity?: number | null;
   unit_cost?: number | null;
+  uom?: string | null;
   unit_of_measure?: string | null;
   retainage_percent?: number | null;
 }
@@ -203,7 +204,7 @@ function buildSubcontractSovData(
     billed_to_date: item.billed_to_date ?? 0,
     quantity: item.quantity ?? null,
     unit_cost: item.unit_cost ?? null,
-    unit_of_measure: item.unit_of_measure ?? null,
+    unit_of_measure: item.unit_of_measure ?? item.uom ?? null,
     retainage_percent: item.retainage_percent ?? null,
     updated_at: new Date().toISOString(),
   };
@@ -223,7 +224,7 @@ function buildPurchaseOrderSovData(
     billed_to_date: item.billed_to_date ?? 0,
     quantity: item.quantity ?? null,
     unit_cost: item.unit_cost ?? null,
-    uom: item.unit_of_measure ?? null,
+    uom: item.uom ?? item.unit_of_measure ?? null,
     updated_at: new Date().toISOString(),
   };
 }

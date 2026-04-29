@@ -19,6 +19,11 @@ logger = logging.getLogger(__name__)
 
 CHUNK_MAX_CHARS = 3000
 CHUNK_OVERLAP_CHARS = 400
+MIN_EMBEDDABLE_CHARS_BY_TYPE = {
+    "teams_dm_conversation": 200,
+    "teams_message": 200,
+    "email": 300,
+}
 EMBEDDING_MODEL = "text-embedding-3-large"
 EMBEDDING_DIMENSIONS = 3072
 AI_GATEWAY_BASE_URL = "https://ai-gateway.vercel.sh/v1"
@@ -100,12 +105,45 @@ def _content_hash(text: str) -> str:
 def _source_type_for_document(doc: Dict[str, Any]) -> str:
     category = doc.get("category")
     if category == "teams_message":
+        doc_type = doc.get("type")
+        if doc_type in ("teams_dm_conversation", "teams_dm"):
+            return "teams_dm"
+        if doc_type == "teams_message":
+            return "teams_channel"
         return "teams_message"
     if category == "email":
         return "email"
     if category == "document":
         return "onedrive_document"
     return "microsoft_graph"
+
+
+def _min_embeddable_chars(doc: Dict[str, Any]) -> int:
+    doc_type = str(doc.get("type") or "")
+    category = str(doc.get("category") or "")
+    return MIN_EMBEDDABLE_CHARS_BY_TYPE.get(
+        doc_type,
+        MIN_EMBEDDABLE_CHARS_BY_TYPE.get(category, 1),
+    )
+
+
+def _substantive_text_length(text: str) -> int:
+    without_markers = re.sub(r"\[[^\]]+\]", " ", text)
+    tokens = re.findall(r"[A-Za-z0-9][A-Za-z0-9'-]*", without_markers.lower())
+    filler = {
+        "ok",
+        "okay",
+        "thanks",
+        "thank",
+        "thx",
+        "yes",
+        "no",
+        "sent",
+        "done",
+        "got",
+        "good",
+    }
+    return sum(len(token) for token in tokens if len(token) > 2 and token not in filler)
 
 
 def _batch_embed(texts: List[str]) -> List[List[float]]:
@@ -180,6 +218,21 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
         supabase_client.from_("document_metadata").update({"status": "embedded"}).eq("id", metadata_id).execute()
         return 0
 
+    substantive_chars = _substantive_text_length(content)
+    min_chars = _min_embeddable_chars(doc)
+    if substantive_chars < min_chars:
+        logger.info(
+            "[GraphEmbed] Document %s skipped_low_content (%d < %d chars)",
+            metadata_id,
+            substantive_chars,
+            min_chars,
+        )
+        supabase_client.from_("document_chunks").delete().eq("document_id", metadata_id).execute()
+        supabase_client.from_("document_metadata").update(
+            {"status": "skipped_low_content"}
+        ).eq("id", metadata_id).execute()
+        return 0
+
     title = doc.get("title") or "Untitled"
     # Prepend title for better retrieval context
     full_text = f"[{title}]\n\n{content}"
@@ -237,7 +290,9 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
 
     # Mark embedded
     try:
-        supabase_client.from_("document_metadata").update({"status": "embedded"}).eq("id", metadata_id).execute()
+        supabase_client.from_("document_metadata").update({
+            "status": "embedded",
+        }).eq("id", metadata_id).execute()
     except Exception as e:
         logger.warning("[GraphEmbed] Could not update status for %s: %s", metadata_id, e)
 

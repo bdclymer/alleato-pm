@@ -34,6 +34,10 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { createStrategistFailureResponse } from "@/lib/ai/strategist-failure-response";
 import {
+  scoreResponseQuality,
+  type ResponseQuality,
+} from "@/lib/ai/score-response-quality";
+import {
   detectSourceSpecificRagRequest,
   type SourceSpecificRagKind,
   type SourceSpecificRagRequest,
@@ -916,83 +920,6 @@ async function generateSourceGroundedSynthesis(params: {
   }
 }
 
-type ResponseQuality = {
-  confidence: "high" | "medium" | "low";
-  sourceQuality: "high" | "medium" | "low";
-  score: number;
-  reasons: string[];
-};
-
-function scoreResponseQuality(params: {
-  toolTrace: Array<Record<string, unknown>>;
-  content: string;
-}): ResponseQuality {
-  const reasons: string[] = [];
-  const trace = params.toolTrace;
-  const successfulToolCalls = trace.filter((t) => !t.error).length;
-  const failedToolCalls = trace.filter((t) => t.error).length;
-  const sourceRefsInText = (params.content.match(/\[Source:/g) ?? []).length;
-
-  // Detect meta-commentary: model narrated its intent instead of answering.
-  // These phrases appear when tools are disabled but the system prompt still
-  // references them. Even a single occurrence signals the model produced
-  // intent narration rather than retrieved data — a silent failure class.
-  // Penalise by -30 so noToolRetry can attempt a direct retrieval pass.
-  const metaCommentaryPhrases = [
-    "give me a second",
-    "let me search",
-    "i'll look into",
-    "i'll search for",
-    "let me pull up",
-    "one moment",
-    "searching for",
-    "i'll find",
-    "looking that up",
-  ];
-  const lowerContent = params.content.toLowerCase();
-  const hasMetaCommentary = metaCommentaryPhrases.some((phrase) => lowerContent.includes(phrase));
-
-  let score = 50;
-
-  if (hasMetaCommentary) {
-    score -= 30;
-    reasons.push("meta-commentary detected: model narrated intent instead of answering");
-  }
-
-  if (successfulToolCalls >= 3) {
-    score += 25;
-    reasons.push("multiple successful tool calls");
-  } else if (successfulToolCalls >= 1) {
-    score += 12;
-    reasons.push("at least one successful tool call");
-  } else {
-    reasons.push("no successful tool calls");
-  }
-
-  if (sourceRefsInText >= 2) {
-    score += 15;
-    reasons.push("multiple source citations");
-  } else if (sourceRefsInText === 1) {
-    score += 8;
-    reasons.push("single source citation");
-  } else {
-    reasons.push("no source citations in final response");
-  }
-
-  if (failedToolCalls > 0) {
-    score -= Math.min(20, failedToolCalls * 5);
-    reasons.push(`${failedToolCalls} tool call failure(s)`);
-  }
-
-  score = Math.max(0, Math.min(100, score));
-
-  const confidence: ResponseQuality["confidence"] =
-    score >= 80 ? "high" : score >= 60 ? "medium" : "low";
-  const sourceQuality: ResponseQuality["sourceQuality"] =
-    sourceRefsInText >= 2 ? "high" : sourceRefsInText === 1 ? "medium" : "low";
-
-  return { confidence, sourceQuality, score, reasons };
-}
 
 function extractTextFromParts(parts: UIMessage["parts"]): string {
   return parts
@@ -2776,6 +2703,55 @@ export const POST = withApiGuardrails(
             delta: content,
           });
           writer.write({ type: "text-end", id: fallbackTextId });
+        }
+
+        // Meta-commentary retry: if the model returned a filler response
+        // ("Let me search for that…") instead of an actual answer, trigger
+        // generateText with no tools and append the corrected answer to the
+        // still-open stream (sendFinish: false keeps writer open).
+        // NOTE: The filler has already streamed to the client. The correction
+        // is appended immediately after.
+        {
+          const preRetryQuality = scoreResponseQuality({ toolTrace, content });
+          if (preRetryQuality.hasMetaCommentary && content) {
+            try {
+              const retryResult = await generateText({
+                model: getLanguageModel("openai/gpt-4.1"),
+                system: systemPrompt,
+                messages: modelMessages,
+                maxOutputTokens: 1500,
+              });
+              const retryContent = retryResult.text.trim();
+              if (retryContent) {
+                content = retryContent;
+                toolTrace.push({
+                  tool: "metaCommentaryRetry",
+                  input: {
+                    primaryModel: activeModel,
+                    retryModel: "openai/gpt-4.1",
+                    fillerReasons: preRetryQuality.reasons,
+                  },
+                  output: { contentLength: content.length, succeeded: true },
+                  timestamp: new Date().toISOString(),
+                });
+                writer.write({ type: "text-start", id: "meta-commentary-correction" });
+                writer.write({
+                  type: "text-delta",
+                  id: "meta-commentary-correction",
+                  delta: "\n\n" + content,
+                });
+                writer.write({ type: "text-end", id: "meta-commentary-correction" });
+              }
+            } catch (retryError) {
+              toolTrace.push({
+                tool: "metaCommentaryRetryFailed",
+                input: { primaryModel: activeModel, retryModel: "openai/gpt-4.1" },
+                error: retryError instanceof Error ? retryError.message : String(retryError),
+                timestamp: new Date().toISOString(),
+              });
+              // Fall through — persist original content
+            }
+          }
         }
 
         const contentBeforeContract = content;

@@ -16,11 +16,18 @@ function getBaseCookieName(cookieName: string): string {
 }
 
 function decodeSessionValue(rawValue: string): string {
-  if (!rawValue.startsWith("base64-")) {
-    return rawValue;
+  let value = rawValue;
+  try {
+    value = decodeURIComponent(rawValue);
+  } catch {
+    value = rawValue;
   }
 
-  const b64url = rawValue.slice(7).replace(/-/g, "+").replace(/_/g, "/");
+  if (!value.startsWith("base64-")) {
+    return value;
+  }
+
+  const b64url = value.slice(7).replace(/-/g, "+").replace(/_/g, "/");
   const padding = "=".repeat((4 - (b64url.length % 4)) % 4);
   return Buffer.from(b64url + padding, "base64").toString("utf-8");
 }

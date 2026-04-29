@@ -9,6 +9,7 @@ import SSOVSubmittedToPM from "@/emails/subcontractor/SSOVSubmittedToPM";
 import { APP_BASE_URL } from "@/lib/email/client";
 import { isAuthError, verifyProjectAccess } from "@/lib/supabase/auth-guard";
 import { createServiceClient } from "@/lib/supabase/service";
+import type { Database } from "@/types/database.types";
 import {
   canEditSubcontractorSov,
   mergeSubcontractorSovAccessIds,
@@ -16,6 +17,24 @@ import {
 } from "@/lib/commitments/subcontractor-sov-access";
 
 type ServiceClient = ReturnType<typeof createServiceClient>;
+type SubcontractorSovSubmissionRow =
+  Database["public"]["Tables"]["subcontractor_sov_submissions"]["Row"];
+type SourceSovLine = Pick<
+  Database["public"]["Tables"]["subcontract_sov_items"]["Row"],
+  "id" | "line_number" | "budget_code" | "description" | "amount" | "billed_to_date"
+>;
+type ProjectMemberForReview = Pick<
+  Database["public"]["Tables"]["project_directory_memberships"]["Row"],
+  "person_id" | "role"
+>;
+type AuthLinkForTodo = Pick<
+  Database["public"]["Tables"]["users_auth"]["Row"],
+  "person_id" | "auth_user_id"
+>;
+type PersonEmailRow = Pick<
+  Database["public"]["Tables"]["people"]["Row"],
+  "id" | "first_name" | "last_name" | "email"
+>;
 
 interface SsovLineItemInput {
   id?: string;
@@ -43,10 +62,10 @@ interface SsovPermissions {
 }
 
 async function ensureSubmission(
-  supabase: any,
+  supabase: ServiceClient,
   projectId: number,
   commitmentId: string,
-) {
+): Promise<SubcontractorSovSubmissionRow> {
   const existing = await supabase
     .from("subcontractor_sov_submissions")
     .select("*")
@@ -54,6 +73,7 @@ async function ensureSubmission(
     .eq("commitment_id", commitmentId)
     .maybeSingle();
 
+  if (existing.error) throw existing.error;
   if (existing.data) return existing.data;
 
   const created = await supabase
@@ -70,7 +90,7 @@ async function ensureSubmission(
   return created.data;
 }
 
-async function getCommitmentType(supabase: any, commitmentId: string) {
+async function getCommitmentType(supabase: ServiceClient, commitmentId: string) {
   const { data, error } = await supabase
     .from("commitments_unified")
     .select("commitment_type")
@@ -82,7 +102,7 @@ async function getCommitmentType(supabase: any, commitmentId: string) {
   }
   return data.commitment_type as string | null;
 }
-async function getTargetAndSourceSov(supabase: any, commitmentId: string) {
+async function getTargetAndSourceSov(supabase: ServiceClient, commitmentId: string) {
   const { data: sourceSov, error } = await supabase
     .from("subcontract_sov_items")
     .select("id, line_number, budget_code, description, amount, billed_to_date")
@@ -91,16 +111,17 @@ async function getTargetAndSourceSov(supabase: any, commitmentId: string) {
 
   if (error) throw error;
 
-  const targetAmount = (sourceSov || []).reduce(
-    (sum: number, row: { amount: number | null }) => sum + Number(row.amount ?? 0),
+  const rows = (sourceSov || []) as SourceSovLine[];
+  const targetAmount = rows.reduce(
+    (sum, row) => sum + Number(row.amount ?? 0),
     0,
   );
 
-  return { sourceSov: sourceSov || [], targetAmount };
+  return { sourceSov: rows, targetAmount };
 }
 
 async function getCommitmentContext(
-  supabase: any,
+  supabase: ServiceClient,
   commitmentId: string,
 ): Promise<CommitmentContext> {
   const { data, error } = await supabase
@@ -118,8 +139,16 @@ async function getCommitmentContext(
   return data as CommitmentContext;
 }
 
-async function getActorRoleContext(supabase: any, authUserId: string, projectId: number, personId: string) {
-  const [{ data: profile }, { data: membership }] = await Promise.all([
+async function getActorRoleContext(
+  supabase: ServiceClient,
+  authUserId: string,
+  projectId: number,
+  personId: string,
+) {
+  const [
+    { data: profile, error: profileError },
+    { data: membership, error: membershipError },
+  ] = await Promise.all([
     supabase
       .from("user_profiles")
       .select("is_admin")
@@ -134,6 +163,9 @@ async function getActorRoleContext(supabase: any, authUserId: string, projectId:
       .maybeSingle(),
   ]);
 
+  if (profileError) throw profileError;
+  if (membershipError) throw membershipError;
+
   const role = (membership?.role || "").toLowerCase();
   const userType = (membership?.user_type || "").toLowerCase();
   const isAdmin = profile?.is_admin === true;
@@ -143,16 +175,18 @@ async function getActorRoleContext(supabase: any, authUserId: string, projectId:
   return { isAdmin, isPm, isUpstream };
 }
 
-async function getInvoiceContactEmails(supabase: any, invoiceContactIds: string[]) {
+async function getInvoiceContactEmails(supabase: ServiceClient, invoiceContactIds: string[]) {
   if (invoiceContactIds.length === 0) return [];
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("people")
     .select("id, first_name, last_name, email")
     .in("id", invoiceContactIds);
 
+  if (error) throw error;
+
   return (data || [])
-    .filter((person: { email: string | null }) => !!person.email)
-    .map((person: { id: string; first_name: string | null; last_name: string | null; email: string }) => ({
+    .filter((person): person is PersonEmailRow & { email: string } => !!person.email)
+    .map((person) => ({
       id: person.id,
       name: `${person.first_name || ""} ${person.last_name || ""}`.trim() || "Invoice Contact",
       email: person.email,
@@ -389,7 +423,7 @@ async function sendSsovInviteEmail(args: {
 }
 
 async function notifyPMsOfSsovSubmission(args: {
-  supabase: any;
+  supabase: ServiceClient;
   projectId: number;
   commitmentId: string;
   commitmentNumber: string | null;
@@ -414,12 +448,13 @@ async function notifyPMsOfSsovSubmission(args: {
     .eq("project_id", projectId)
     .eq("status", "active");
 
-  const pmPersonIds = (pmMembers || [])
-    .filter((m: { role: string | null }) => {
+  const projectMembers = (pmMembers || []) as ProjectMemberForReview[];
+  const pmPersonIds = projectMembers
+    .filter((m) => {
       const r = (m.role || "").toLowerCase();
       return r.includes("project manager") || r === "pm";
     })
-    .map((m: { person_id: string }) => m.person_id);
+    .map((m) => m.person_id);
 
   if (pmPersonIds.length === 0) return;
 
@@ -441,20 +476,14 @@ async function notifyPMsOfSsovSubmission(args: {
         .maybeSingle(),
     ]);
 
-  const recipients: Array<{ name: string; email: string }> = (people || [])
-    .filter((p: { email: string | null }) => !!p.email)
-    .map(
-      (p: {
-        first_name: string | null;
-        last_name: string | null;
-        email: string | null;
-      }) => ({
-        name:
-          `${p.first_name || ""} ${p.last_name || ""}`.trim() ||
-          "Project manager",
-        email: p.email as string,
-      }),
-    );
+  const recipients: Array<{ name: string; email: string }> = ((people || []) as PersonEmailRow[])
+    .filter((p): p is PersonEmailRow & { email: string } => !!p.email)
+    .map((p) => ({
+      name:
+        `${p.first_name || ""} ${p.last_name || ""}`.trim() ||
+        "Project manager",
+      email: p.email,
+    }));
 
   if (recipients.length === 0) return;
 
@@ -501,7 +530,7 @@ async function notifyPMsOfSsovSubmission(args: {
 }
 
 async function createPmReviewTodos(params: {
-  supabase: any;
+  supabase: ServiceClient;
   projectId: number;
   commitmentId: string;
   commitmentNumber?: string | null;
@@ -515,22 +544,23 @@ async function createPmReviewTodos(params: {
     .eq("project_id", projectId)
     .eq("status", "active");
 
-  const pms = (pmMembers || []).filter((m: { role: string | null }) =>
+  const projectMembers = (pmMembers || []) as ProjectMemberForReview[];
+  const pms = projectMembers.filter((m) =>
     (m.role || "").toLowerCase().includes("project manager") ||
     (m.role || "").toLowerCase() === "pm",
   );
 
   if (pms.length === 0) return;
 
-  const personIds = pms.map((member: { person_id: string }) => member.person_id);
+  const personIds = pms.map((member) => member.person_id);
   const { data: authLinks } = await supabase
     .from("users_auth")
     .select("person_id, auth_user_id")
     .in("person_id", personIds);
 
-  const tasks = (authLinks || [])
-    .filter((row: { auth_user_id: string | null }) => !!row.auth_user_id)
-    .map((row: { auth_user_id: string }) => ({
+  const tasks = ((authLinks || []) as AuthLinkForTodo[])
+    .filter((row) => !!row.auth_user_id)
+    .map((row) => ({
       user_id: row.auth_user_id,
       task: `Review subcontractor SOV for commitment ${commitmentNumber || commitmentTitle || commitmentId} in project ${projectId}: /${projectId}/commitments/${commitmentId}?tab=subcontractor-sov`,
       is_complete: false,
@@ -812,7 +842,7 @@ export const POST = withApiGuardrails(
       if (clearError) throw clearError;
 
       if (sourceSov.length > 0) {
-        const mapped = sourceSov.map((row: any, index: number) => ({
+        const mapped = sourceSov.map((row, index) => ({
           submission_id: submission.id,
           source_sov_item_id: row.id,
           line_number: row.line_number ?? index + 1,

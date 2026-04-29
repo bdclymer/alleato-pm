@@ -1,5 +1,5 @@
 import { PageShell } from "@/components/layout";
-import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 
 import { RfiDetail } from "./rfi-detail";
 import { RfiHeaderActions } from "./rfi-header-actions";
@@ -15,10 +15,11 @@ export default async function RfiDetailPage({
   const { mode } = await searchParams;
   const numericProjectId = parseInt(projectId, 10);
 
-  const supabase = await createClient();
+  const supabase = createServiceClient();
   const { data: rfi, error } = await supabase
     .from("rfis")
     .select("*")
+    .eq("project_id", numericProjectId)
     .eq("id", rfiId)
     .single();
 

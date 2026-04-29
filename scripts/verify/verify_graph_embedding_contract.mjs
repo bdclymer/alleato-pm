@@ -18,6 +18,13 @@ const embedPath = path.join(
   "backend/src/services/integrations/microsoft_graph/embed.py"
 );
 const source = fs.readFileSync(embedPath, "utf8");
+const migrationPath = path.join(
+  root,
+  "supabase/migrations/20260429162000_graph_rag_source_type_cleanup_guardrails.sql",
+);
+const migration = fs.existsSync(migrationPath)
+  ? fs.readFileSync(migrationPath, "utf8")
+  : "";
 
 const failures = [];
 
@@ -41,9 +48,23 @@ requireContains("Graph embedding failed across all providers", "Graph embeddings
 requireContains("len(embedding) != EMBEDDING_DIMENSIONS", "Graph embeddings must validate vector dimensions before writes.");
 requireContains('"source_type": source_type', "Graph chunks must write source_type so Teams/email retrieval can filter correctly.");
 requireContains('category == "teams_message"', "Graph chunks must classify Teams chunks as teams_message.");
+requireContains('"teams_dm"', "Graph chunks must split Teams DMs from channel messages.");
+requireContains('"teams_channel"', "Graph chunks must split Teams channel messages from DMs.");
 requireContains('category == "email"', "Graph chunks must classify email chunks as email.");
 requireContains('"onedrive_document"', "Graph chunks must preserve the existing OneDrive source_type name.");
+requireContains("MIN_EMBEDDABLE_CHARS_BY_TYPE", "Graph embedding must keep low-content comms out of the vector index.");
+requireContains("skipped_low_content", "Graph embedding must mark low-content skips loudly.");
 requireNotContains("return [[] for _ in texts]", "Graph embeddings must not return empty vectors after provider failure.");
+
+if (!migration.includes("repair_graph_document_chunk_source_types_batch")) {
+  failures.push("Graph source-type drift must have a batchable repair function.");
+}
+if (!migration.includes("graph_document_chunk_source_type")) {
+  failures.push("Graph source-type normalization must be centralized in SQL.");
+}
+if (!migration.includes("skip locked")) {
+  failures.push("Graph source-type repair must use skip locked for hot-table safety.");
+}
 
 if (failures.length > 0) {
   console.error("Graph embedding contract: FAIL");

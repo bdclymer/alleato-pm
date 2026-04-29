@@ -20,7 +20,7 @@
  * - Add new extensions as needed for new columns
  */
 
-import type { Database } from "./database.types";
+import type { Database, Json } from "./database.types";
 
 // =============================================================================
 // Base Table Types (re-exported for convenience)
@@ -38,7 +38,14 @@ export type Contract = Database["public"]["Tables"]["prime_contracts"]["Row"];
 export type Subcontract = Database["public"]["Tables"]["subcontracts"]["Row"];
 export type PurchaseOrder =
   Database["public"]["Tables"]["purchase_orders"]["Row"];
-export type RFI = Database["public"]["Tables"]["rfis"]["Row"];
+export type RFI = Database["public"]["Tables"]["rfis"]["Row"] & {
+  source_system?: string | null;
+  source_project_document_id?: number | null;
+  response_project_document_id?: number | null;
+  source_document_metadata_id?: string | null;
+  response_document_metadata_id?: string | null;
+  source_metadata?: Json | null;
+};
 export type AdminFeedbackItem =
   Database["public"]["Tables"]["admin_feedback_items"]["Row"];
 

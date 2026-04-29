@@ -84,19 +84,8 @@ interface ContractChangeOrderRow {
   requested_date: string;
 }
 
-interface PrimeContractChangeOrderRow {
-  id: string;
-  contract_id: string;
-  change_order_number: string;
-  description: string;
-  amount: number;
-  status: string;
-  requested_date: string | null;
-  approved_date: string | null;
-  rejection_reason: string | null;
-  created_at: string;
-  updated_at: string;
-}
+type PrimeContractChangeOrderRow =
+  Database["public"]["Tables"]["prime_contract_change_orders"]["Row"];
 
 interface CommitmentUnifiedRow {
   commitment_type: string;
@@ -1593,10 +1582,15 @@ async function loadPrimeContractChangeOrderBundle(
   supabase: TypedSupabaseClient,
   recordId: string,
 ): Promise<DocumentBundle> {
+  const numericRecordId = Number(recordId);
+  if (!Number.isFinite(numericRecordId) || numericRecordId <= 0) {
+    throw new Error("Invalid prime contract change order id");
+  }
+
   const { data: changeOrderData, error: changeOrderError } = await supabase
-    .from("contract_change_orders")
+    .from("prime_contract_change_orders")
     .select("*")
-    .eq("id", recordId)
+    .eq("id", numericRecordId)
     .single();
 
   if (changeOrderError || !changeOrderData) {
@@ -1604,6 +1598,7 @@ async function loadPrimeContractChangeOrderBundle(
   }
 
   const changeOrder = changeOrderData as PrimeContractChangeOrderRow;
+  const contractId = changeOrder.prime_contract_id ?? changeOrder.contract_id;
 
   const { data: contractData, error: contractError } = await supabase
     .from("prime_contracts")
@@ -1619,7 +1614,7 @@ async function loadPrimeContractChangeOrderBundle(
         contractor:companies!prime_contracts_contractor_id_fkey(id, name)
       `,
     )
-    .eq("id", changeOrder.contract_id)
+    .eq("id", contractId ?? "")
     .single();
 
   if (contractError || !contractData) {
@@ -1627,6 +1622,20 @@ async function loadPrimeContractChangeOrderBundle(
   }
 
   const contract = contractData as unknown as PrimeContractRow;
+  const { data: projectData } = changeOrder.project_id
+    ? await supabase
+        .from("projects")
+        .select("id, name, project_number, address")
+        .eq("id", changeOrder.project_id)
+        .single()
+    : { data: null };
+
+  const { data: lineItemsData } = await supabase
+    .from("pcco_line_items")
+    .select("description, quantity, uom, unit_cost, line_amount")
+    .eq("pcco_id", numericRecordId)
+    .order("id", { ascending: true });
+
   const client = coerceSingle(contract.client);
   const ownerCompany = coerceSingle(contract.contract_company);
   const contractor = coerceSingle(contract.contractor);
@@ -1646,9 +1655,30 @@ async function loadPrimeContractChangeOrderBundle(
     ],
   );
 
-  const number = changeOrder.change_order_number || `PCCO-${changeOrder.id.slice(0, 8)}`;
-  const title = changeOrder.description || "Prime Contract Change Order";
+  const number = changeOrder.pcco_number || `PCCO-${changeOrder.id}`;
+  const title =
+    changeOrder.title || changeOrder.description || "Prime Contract Change Order";
   const filename = `${slugify(number)}-${slugify(title)}.pdf`;
+  const lineItems =
+    lineItemsData && lineItemsData.length > 0
+      ? lineItemsData.map((item, index) => ({
+          lineNumber: String(index + 1),
+          description: item.description || "Line item",
+          quantity: String(item.quantity ?? 1),
+          unit: item.uom || "LS",
+          unitCost: formatCurrency(item.unit_cost),
+          total: formatCurrency(item.line_amount),
+        }))
+      : [
+          {
+            lineNumber: "1",
+            description: changeOrder.description || title,
+            quantity: "1",
+            unit: "LS",
+            unitCost: formatCurrency(changeOrder.total_amount),
+            total: formatCurrency(changeOrder.total_amount),
+          },
+        ];
 
   return {
     recordType: "prime-contract-change-order",
@@ -1659,6 +1689,15 @@ async function loadPrimeContractChangeOrderBundle(
     status: formatPlainValue(changeOrder.status),
     filename,
     defaultSubject: `${number} - ${contract.contract_number || contract.title}`,
+    project: projectData
+      ? {
+          name: projectData.name || "Not set",
+          address: projectData.address || "Not set",
+          jobNumber:
+            projectData.project_number ||
+            String(projectData.id),
+        }
+      : undefined,
     sections: [
       {
         title: "Overview",
@@ -1667,33 +1706,25 @@ async function loadPrimeContractChangeOrderBundle(
           { label: "Contract Title", value: contract.title || "Not set" },
           { label: "Owner / Client", value: client?.name || ownerCompany?.name || "Not set" },
           { label: "Description", value: formatPlainValue(changeOrder.description) },
+          { label: "Change Reason", value: formatPlainValue(changeOrder.change_reason) },
         ],
       },
       {
         title: "Workflow",
         fields: [
-          { label: "Requested Date", value: formatDate(changeOrder.requested_date) },
-          { label: "Approved Date", value: formatDate(changeOrder.approved_date) },
+          { label: "Submitted At", value: formatDate(changeOrder.submitted_at) },
+          { label: "Approved At", value: formatDate(changeOrder.approved_at) },
+          { label: "Due Date", value: formatDate(changeOrder.due_date) },
           { label: "Created At", value: formatDate(changeOrder.created_at) },
-          { label: "Last Updated", value: formatDate(changeOrder.updated_at) },
         ],
       },
     ],
     totals: [
-      { label: "Change Order Amount", value: formatCurrency(changeOrder.amount) },
+      { label: "Change Order Amount", value: formatCurrency(changeOrder.total_amount) },
       { label: "Original Contract Value", value: formatCurrency(contract.original_contract_value ?? 0) },
       { label: "Current Revised Contract Value", value: formatCurrency(contract.revised_contract_value ?? 0) },
     ],
-    lineItems: [
-      {
-        lineNumber: "1",
-        description: changeOrder.description || "Change order",
-        quantity: "1",
-        unit: "LS",
-        unitCost: formatCurrency(changeOrder.amount),
-        total: formatCurrency(changeOrder.amount),
-      },
-    ],
+    lineItems,
     listSections: [
       {
         title: "Notes",

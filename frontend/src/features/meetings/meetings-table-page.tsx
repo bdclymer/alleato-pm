@@ -21,7 +21,6 @@ import {
   renderMeetingRowActions,
 } from "@/features/meetings/meetings-table-config";
 import { useMeetingsTable, EMPTY_FILTERS } from "@/features/meetings/use-meetings-table";
-import { MeetingPreviewPane } from "@/features/meetings/meeting-preview-pane";
 
 interface MeetingsTablePageProps {
   initialMeetings: Meeting[];
@@ -38,11 +37,9 @@ export function MeetingsTablePage({ initialMeetings, projectId }: MeetingsTableP
     filters,
     activeFilters,
     detailFields,
-    selectedMeeting,
     editingMeeting,
     detailPanelOpen,
     tableColumns,
-    activeMeetingId,
     isFiltered,
     deleteDialogOpen,
     setDeleteDialogOpen,
@@ -54,7 +51,6 @@ export function MeetingsTablePage({ initialMeetings, projectId }: MeetingsTableP
     handleRowClick,
     handleOpenMeetingPage,
     handleEdit,
-    handleTableKeyDown,
     handlePanelOpenChange,
     handleSave,
     handleDeleteConfirm,
@@ -106,9 +102,6 @@ export function MeetingsTablePage({ initialMeetings, projectId }: MeetingsTableP
         table={{
           columns: tableColumns,
           getRowId: (item) => item.id,
-          activeRowId: activeMeetingId,
-          autoFocusOnLoad: true,
-          onTableKeyDown: handleTableKeyDown,
           onRowClick: handleRowClick,
           rowActions: (item) =>
             renderMeetingRowActions(
@@ -122,16 +115,6 @@ export function MeetingsTablePage({ initialMeetings, projectId }: MeetingsTableP
               handleOpenSource,
               handleOpenRecording,
             ),
-        }}
-        sidePanel={{
-          content: (
-            <MeetingPreviewPane
-              meeting={selectedMeeting ?? pagedMeetings[0] ?? null}
-              onOpenMeetingPage={handleOpenMeetingPage}
-            />
-          ),
-          defaultWidth: 512,
-          storageKey: "meetings-panel",
         }}
         sorting={{
           sortBy: tableState.sortBy,

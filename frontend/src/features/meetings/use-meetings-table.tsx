@@ -116,11 +116,9 @@ export interface UseMeetingsTableResult {
   filters: FilterConfig[];
   activeFilters: FilterState;
   detailFields: DetailFieldConfig[];
-  selectedMeeting: Meeting | null;
   editingMeeting: Meeting | null;
   detailPanelOpen: boolean;
   tableColumns: TableColumn<Meeting>[];
-  activeMeetingId: string | null;
   isFiltered: boolean;
   deleteDialogOpen: boolean;
   setDeleteDialogOpen: React.Dispatch<React.SetStateAction<boolean>>;
@@ -132,10 +130,6 @@ export interface UseMeetingsTableResult {
   handleRowClick: (meeting: Meeting) => void;
   handleOpenMeetingPage: (meeting: Meeting) => void;
   handleEdit: (meeting: Meeting) => void;
-  handleTableKeyDown: (
-    event: React.KeyboardEvent<HTMLDivElement>,
-    visibleItems: Meeting[],
-  ) => void;
   handlePanelOpenChange: (open: boolean) => void;
   handleSave: (data: Partial<Meeting>) => Promise<void>;
   handleDeleteConfirm: () => Promise<void>;
@@ -450,14 +444,10 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
 
   // ── Detail panel ──────────────────────────────────────────────────────────────
   const detailParam = tableState.detailParam;
-  const selectedMeeting = detailParam
-    ? meetings.find((meeting) => meeting.id === detailParam) || null
-    : null;
   const editingMeeting = editingMeetingId
     ? meetings.find((meeting) => meeting.id === editingMeetingId) || null
     : null;
   const detailPanelOpen = Boolean(editingMeetingId);
-  const activeMeetingId = selectedMeeting?.id ?? pagedMeetings[0]?.id ?? null;
 
   // ── Handlers ─────────────────────────────────────────────────────────────────
   const handleFilterChange = (nextFilters: FilterState) => {
@@ -472,7 +462,7 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
   };
 
   const handleRowClick = (meeting: Meeting) => {
-    tableState.setSearchParams({ detail: meeting.id });
+    handleOpenMeetingPage(meeting);
   };
 
   const handleOpenMeetingPage = (meeting: Meeting) => {
@@ -485,46 +475,6 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
 
   const handleEdit = (meeting: Meeting) => {
     setEditingMeetingId(meeting.id);
-  };
-
-  const handleTableKeyDown = (
-    event: React.KeyboardEvent<HTMLDivElement>,
-    visibleItems: Meeting[],
-  ) => {
-    if (editingCell) return;
-
-    const target = event.target as HTMLElement | null;
-    if (target && ["INPUT", "TEXTAREA", "SELECT", "BUTTON", "A"].includes(target.tagName)) {
-      return;
-    }
-
-    if (visibleItems.length === 0) return;
-
-    const currentIndex = visibleItems.findIndex((meeting) => meeting.id === activeMeetingId);
-    const hasSelection = currentIndex >= 0;
-    const fallbackIndex = hasSelection ? currentIndex : 0;
-
-    if (event.key === "j") {
-      event.preventDefault();
-      const nextIndex = hasSelection ? Math.min(visibleItems.length - 1, fallbackIndex + 1) : 0;
-      tableState.setSearchParams({ detail: visibleItems[nextIndex].id });
-      return;
-    }
-
-    if (event.key === "k") {
-      event.preventDefault();
-      const nextIndex = hasSelection ? Math.max(0, fallbackIndex - 1) : 0;
-      tableState.setSearchParams({ detail: visibleItems[nextIndex].id });
-      return;
-    }
-
-    if (event.key === "Enter") {
-      event.preventDefault();
-      const current = visibleItems[fallbackIndex];
-      if (current) {
-        handleOpenMeetingPage(current);
-      }
-    }
   };
 
   const handlePanelOpenChange = (open: boolean) => {
@@ -708,11 +658,9 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
     filters,
     activeFilters,
     detailFields,
-    selectedMeeting,
     editingMeeting,
     detailPanelOpen,
     tableColumns,
-    activeMeetingId,
     isFiltered,
     deleteDialogOpen,
     setDeleteDialogOpen,
@@ -724,7 +672,6 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
     handleRowClick,
     handleOpenMeetingPage,
     handleEdit,
-    handleTableKeyDown,
     handlePanelOpenChange,
     handleSave,
     handleDeleteConfirm,

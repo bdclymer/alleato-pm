@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
+import { ExternalLink, FileText } from "lucide-react";
 import { useForm } from "react-hook-form";
 
 import {
@@ -69,6 +70,53 @@ function SidebarField({ label, value }: { label: string; value?: string | null }
   );
 }
 
+type ImportedRfiDocument = {
+  project_document_id?: number | null;
+  file_name?: string | null;
+};
+
+type ImportedRfiMetadata = {
+  question_document?: ImportedRfiDocument | null;
+  response_document?: ImportedRfiDocument | null;
+};
+
+function getImportedRfiMetadata(value: RFI["source_metadata"]): ImportedRfiMetadata {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  return value as ImportedRfiMetadata;
+}
+
+function ImportedDocumentLink({
+  label,
+  documentId,
+  fileName,
+  projectId,
+}: {
+  label: string;
+  documentId?: number | null;
+  fileName?: string | null;
+  projectId: number;
+}) {
+  if (!documentId) return null;
+
+  return (
+    <a
+      href={`/api/projects/${projectId}/documents/${documentId}/download`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-start gap-2 rounded-md px-2 py-2 text-xs text-foreground transition-colors hover:bg-muted/60"
+    >
+      <FileText className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+      <span className="min-w-0 flex-1">
+        <span className="block font-medium">{label}</span>
+        <span className="block break-words text-muted-foreground">
+          {fileName || `Document ${documentId}`}
+        </span>
+      </span>
+      <ExternalLink className="mt-0.5 h-3 w-3 shrink-0 text-muted-foreground" />
+    </a>
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Main component
 // ---------------------------------------------------------------------------
@@ -116,6 +164,10 @@ export function RfiDetail({ rfi, projectId, isEditing = false }: RfiDetailProps)
   }
 
   const cancelUrl = `/${projectId}/rfis/${rfi.id}`;
+  const importedMetadata = getImportedRfiMetadata(rfi.source_metadata);
+  const hasImportedDocuments =
+    Boolean(rfi.source_project_document_id) ||
+    Boolean(rfi.response_project_document_id);
 
   const handleSave = async (data: RfiEditValues) => {
     await updateRfi.mutateAsync({ rfiId: rfi.id, data });
@@ -523,6 +575,26 @@ export function RfiDetail({ rfi, projectId, isEditing = false }: RfiDetailProps)
             <SidebarField label="Reference" value={rfi.reference} />
           </div>
         </div>
+
+        {hasImportedDocuments && (
+          <div className="mt-6 border-t border-border/40 pt-6">
+            <SectionLabel>Imported Documents</SectionLabel>
+            <div className="mt-3 space-y-1">
+              <ImportedDocumentLink
+                label="Question PDF"
+                documentId={rfi.source_project_document_id}
+                fileName={importedMetadata.question_document?.file_name}
+                projectId={projectId}
+              />
+              <ImportedDocumentLink
+                label="Response PDF"
+                documentId={rfi.response_project_document_id}
+                fileName={importedMetadata.response_document?.file_name}
+                projectId={projectId}
+              />
+            </div>
+          </div>
+        )}
 
         {/* Impact */}
         <div className="mt-6 border-t border-border/40 pt-6">

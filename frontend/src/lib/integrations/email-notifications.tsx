@@ -29,16 +29,16 @@ import type {
 } from "../../../liveblocks.config";
 import { Resend } from "resend";
 import { createServiceClient } from "@/lib/supabase/service";
+import { resolveAppBaseUrl } from "@/lib/email/client";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const FROM_ADDRESS =
   process.env.EMAIL_FROM_ADDRESS ?? "Alleato <notifications@alleato.app>";
 
-const APP_BASE_URL =
-  process.env.LIVEBLOCKS_NOTIFICATION_BASE_URL ??
-  process.env.NEXT_PUBLIC_APP_URL ??
-  "https://app.alleato.com";
+const APP_BASE_URL = resolveAppBaseUrl(
+  process.env.LIVEBLOCKS_NOTIFICATION_BASE_URL ?? process.env.NEXT_PUBLIC_APP_URL,
+);
 
 const COLORS = {
   pageBackground: "hsl(var(--muted-subtle))",

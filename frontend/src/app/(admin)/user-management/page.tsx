@@ -7,6 +7,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   AlertTriangle,
+  Check,
+  ChevronsUpDown,
   Eye,
   MoreVertical,
   Pencil,
@@ -38,6 +40,13 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from "@/components/ui/command";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -52,6 +61,11 @@ import {
 } from "@/components/ui/dialog";
 import { MultiSelectField } from "@/components/forms/MultiSelectField";
 import { Input } from "@/components/ui/input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -89,6 +103,14 @@ type ProjectOption = {
   jobNumber: string | null;
 };
 
+type EmployeeOption = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string | null;
+  jobTitle: string | null;
+};
+
 const TEMPLATE_MODULES: Array<{ key: PermissionModule; label: string }> = [
   { key: "directory", label: "Directory" },
   { key: "budget", label: "Budget" },
@@ -116,6 +138,26 @@ async function fetchProjects(): Promise<ProjectOption[]> {
     id: project.id,
     name: project.name ?? `Project #${project.id}`,
     jobNumber: project["job number"] ?? null,
+  }));
+}
+
+async function fetchEmployeeOptions(): Promise<EmployeeOption[]> {
+  const { data } = await apiFetch<{
+    data: Array<{
+      id: string;
+      first_name: string | null;
+      last_name: string | null;
+      email: string | null;
+      job_title: string | null;
+    }>;
+  }>("/api/people?type=user&status=active&per_page=500");
+
+  return data.map((person) => ({
+    id: person.id,
+    firstName: person.first_name ?? "",
+    lastName: person.last_name ?? "",
+    email: person.email ?? null,
+    jobTitle: person.job_title ?? null,
   }));
 }
 
@@ -212,6 +254,10 @@ export default function PermissionsAdminPage() {
     queryKey: ["permissions-project-options"],
     queryFn: fetchProjects,
   });
+  const employeeOptionsQuery = useQuery({
+    queryKey: ["permissions-employee-options"],
+    queryFn: fetchEmployeeOptions,
+  });
 
   const userAccess: PermissionUsersAccess =
     activeTab === "project-access" ? "project" : "app";
@@ -245,7 +291,7 @@ export default function PermissionsAdminPage() {
       : "No app users match your search.";
 
   const usersAddLabel =
-    activeTab === "project-access" ? "Add Project Access" : "Add App User";
+    activeTab === "project-access" ? "Add Project Access" : "Grant App Access";
   const usersTotalCount =
     activeTab === "project-access" ? projectAccessUserCount : appUserCount;
   const canInviteFromActiveTab = activeTab !== "project-access";
@@ -929,8 +975,14 @@ export default function PermissionsAdminPage() {
         onOpenChange={setShowInvite}
         projectTemplates={projectTemplatesQuery.data ?? []}
         companyTemplates={companyTemplatesQuery.data ?? []}
+        employees={employeeOptionsQuery.data ?? []}
         projects={projectsQuery.data ?? []}
-        isLoading={projectTemplatesQuery.isLoading || companyTemplatesQuery.isLoading || projectsQuery.isLoading}
+        isLoading={
+          projectTemplatesQuery.isLoading ||
+          companyTemplatesQuery.isLoading ||
+          employeeOptionsQuery.isLoading ||
+          projectsQuery.isLoading
+        }
         isSaving={inviteMutation.isPending}
         onInvite={(payload) => inviteMutation.mutateAsync(payload)}
       />
@@ -1075,6 +1127,7 @@ function InviteUserDialog({
   onOpenChange,
   projectTemplates,
   companyTemplates,
+  employees,
   projects,
   isLoading,
   isSaving,
@@ -1084,6 +1137,7 @@ function InviteUserDialog({
   onOpenChange: (open: boolean) => void;
   projectTemplates: PermissionTemplate[];
   companyTemplates: PermissionTemplate[];
+  employees: EmployeeOption[];
   projects: ProjectOption[];
   isLoading: boolean;
   isSaving: boolean;
@@ -1097,6 +1151,7 @@ function InviteUserDialog({
     project_ids: number[];
   }) => Promise<void>;
 }) {
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -1109,6 +1164,7 @@ function InviteUserDialog({
 
   useEffect(() => {
     if (!open) {
+      setSelectedEmployeeId(null);
       setFirstName("");
       setLastName("");
       setEmail("");
@@ -1130,6 +1186,26 @@ function InviteUserDialog({
         "",
     );
   }, [open, projectTemplates, companyTemplates]);
+
+  const selectedEmployee =
+    employees.find((employee) => employee.id === selectedEmployeeId) ?? null;
+
+  const selectEmployee = (employee: EmployeeOption | null) => {
+    setSelectedEmployeeId(employee?.id ?? null);
+
+    if (!employee) {
+      setFirstName("");
+      setLastName("");
+      setEmail("");
+      setJobTitle("");
+      return;
+    }
+
+    setFirstName(employee.firstName);
+    setLastName(employee.lastName);
+    setEmail(employee.email ?? "");
+    setJobTitle(employee.jobTitle ?? "");
+  };
 
   const selectedTemplateId =
     accessScope === "all_projects"
@@ -1171,13 +1247,39 @@ function InviteUserDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent size="form" className="max-h-[calc(100svh-2rem)] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Add user</DialogTitle>
+          <DialogTitle>Grant app access</DialogTitle>
           <DialogDescription>
-            Invite a user, choose their permission template, and assign all-project access by default or limit them to specific projects.
+            Start from an existing employee in People when possible, then choose their permission template and project access.
           </DialogDescription>
         </DialogHeader>
 
         <form className="space-y-6" onSubmit={submit}>
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-foreground">
+              Employee
+            </label>
+            <EmployeeCombobox
+              employees={employees}
+              selectedEmployeeId={selectedEmployeeId}
+              disabled={isLoading}
+              onSelect={selectEmployee}
+            />
+            <p className="text-xs text-muted-foreground">
+              Start from People when the employee already exists, or leave this empty to create a new employee and invite them.
+            </p>
+            {selectedEmployee ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-auto px-0 text-xs text-muted-foreground hover:bg-transparent hover:text-foreground"
+                onClick={() => selectEmployee(null)}
+              >
+                Clear selection and enter a new employee
+              </Button>
+            ) : null}
+          </div>
+
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
               <label htmlFor="invite-first-name" className="text-sm font-medium text-foreground">
@@ -1363,6 +1465,93 @@ function InviteUserDialog({
       </DialogContent>
     </Dialog>
   );
+}
+
+function EmployeeCombobox({
+  employees,
+  selectedEmployeeId,
+  disabled,
+  onSelect,
+}: {
+  employees: EmployeeOption[];
+  selectedEmployeeId: string | null;
+  disabled: boolean;
+  onSelect: (employee: EmployeeOption | null) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const selectedEmployee =
+    employees.find((employee) => employee.id === selectedEmployeeId) ?? null;
+  const selectedLabel = selectedEmployee
+    ? formatEmployeeLabel(selectedEmployee)
+    : "Search People before inviting...";
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          disabled={disabled}
+          className={cn(
+            "h-auto min-h-10 w-full justify-between px-3 py-2 text-left font-normal",
+            !selectedEmployee && "text-muted-foreground",
+          )}
+        >
+          <span className="min-w-0 truncate">{selectedLabel}</span>
+          <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-96 p-0" align="start">
+        <Command>
+          <CommandInput placeholder="Search employees..." />
+          <CommandEmpty>No employee found.</CommandEmpty>
+          <CommandGroup>
+            {employees.map((employee) => (
+              <CommandItem
+                key={employee.id}
+                value={[
+                  employee.firstName,
+                  employee.lastName,
+                  employee.email ?? "",
+                  employee.jobTitle ?? "",
+                ].join(" ")}
+                onSelect={() => {
+                  onSelect(employee);
+                  setOpen(false);
+                }}
+              >
+                <Check
+                  className={cn(
+                    "mr-2 h-4 w-4",
+                    employee.id === selectedEmployeeId ? "opacity-100" : "opacity-0",
+                  )}
+                />
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-medium">
+                    {formatEmployeeName(employee)}
+                  </span>
+                  <span className="block truncate text-xs text-muted-foreground">
+                    {[employee.email, employee.jobTitle].filter(Boolean).join(" · ") || "No email on file"}
+                  </span>
+                </span>
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function formatEmployeeName(employee: EmployeeOption) {
+  return [employee.firstName, employee.lastName].filter(Boolean).join(" ") || "Unnamed employee";
+}
+
+function formatEmployeeLabel(employee: EmployeeOption) {
+  const detail = [employee.email, employee.jobTitle].filter(Boolean).join(" · ");
+  return detail ? `${formatEmployeeName(employee)} (${detail})` : formatEmployeeName(employee);
 }
 
 function findTemplateId(templates: PermissionTemplate[], name: string) {

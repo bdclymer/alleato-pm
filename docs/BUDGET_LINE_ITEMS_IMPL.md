@@ -30,7 +30,7 @@ grep -rl "currency\|unitCost\|unit_cost\|formatCurrency" src/ --include="*.tsx" 
 
 ## 2. COMPONENT MAPPING
 
-The reference design (`BudgetLineItems.jsx`) contains hand-rolled versions of primitives that must be replaced with the project's actual components. Map them as follows before implementing:
+The reference design (`docs/reference/budget/BudgetLineItems.reference.jsx`) contains hand-rolled versions of primitives that must be replaced with the project's actual components. Map them as follows before implementing:
 
 | Reference Design Element | Replace With |
 |---|---|

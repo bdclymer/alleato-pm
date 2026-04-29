@@ -20,6 +20,14 @@ build/
 # OS
 .DS_Store
 
+# Local tool state and scratch work
+.playwright-mcp/
+.pnpm-store/
+.venv-crawl/
+.extract-design-system/
+.qodo/
+.superdesign/
+
 # Testing
 coverage/
 .coverage

@@ -31,6 +31,9 @@ requireContains("teams_dm_conversation", "Teams DM ingestion must store conversa
 requireContains("message_marker", "Teams DM ingestion must dedupe individual messages inside a conversation document.");
 requireContains("previous_content", "Teams DM ingestion must append new messages to existing conversation content.");
 requireContains('"status": "raw_ingested"', "Updated Teams conversation documents must be re-queued for embedding.");
+requireContains("MIN_CONVERSATION_CHARS = 200", "Teams DM ingestion must keep tiny daily conversations out of embedding.");
+requireContains("skipped_low_content", "Teams DM ingestion must mark low-content conversations loudly.");
+requireContains("_substantive_text_length", "Teams DM ingestion must measure useful text, not raw marker length.");
 requireContains('f"teams/chats/{chat_id}/{date_key}.txt"', "Teams DM storage should be conversation/day scoped.");
 
 if (failures.length > 0) {

@@ -35,7 +35,7 @@ All transactional emails sent by the platform. Organized by category with trigge
 ```env
 RESEND_API_KEY=re_...
 EMAIL_FROM_ADDRESS="Alleato <notifications@alleato.app>"
-NEXT_PUBLIC_APP_URL=https://app.alleato.com
+NEXT_PUBLIC_APP_URL=https://projects.alleatogroup.com
 ```
 
 **Trigger code:**
@@ -216,7 +216,7 @@ These template IDs are declared in `EmailTemplate` union (`frontend/src/lib/emai
 |---------|---------|----------|
 | `RESEND_API_KEY` | Resend API key for all transactional email | Yes |
 | `EMAIL_FROM_ADDRESS` | Default from address (`Alleato <notifications@alleato.app>`) | Yes (production) |
-| `NEXT_PUBLIC_APP_URL` | Base URL for links in emails (`https://app.alleato.com`) | Yes |
+| `NEXT_PUBLIC_APP_URL` | Base URL for links in emails (`https://projects.alleatogroup.com`) | Yes |
 | `RESEND_FROM_EMAIL` | Override from address for document/invoice emails | Optional |
 | `DIGEST_FROM_EMAIL` | Fallback from address for digest emails | Optional |
 

@@ -14,6 +14,7 @@ import {
 import { toast } from "sonner";
 import {
   ADMIN_FEEDBACK_OVERLAY_ATTRIBUTE,
+  FEEDBACK_LAUNCHER_POSITION_CLASS,
   OPEN_ADMIN_FEEDBACK_COMPOSER_EVENT,
   type AdminFeedbackRequestType,
   feedbackTargetProps,
@@ -522,7 +523,10 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
         <div
           {...feedbackTargetProps("admin.feedback-widget")}
           {...{ [ADMIN_FEEDBACK_OVERLAY_ATTRIBUTE]: "true" }}
-          className="fixed bottom-24 right-20 z-[9999] flex items-center gap-2 sm:bottom-8"
+          className={cn(
+            FEEDBACK_LAUNCHER_POSITION_CLASS,
+            "flex items-center gap-2 z-[9999]",
+          )}
         >
           {isSelecting && (
             <div className="hidden rounded-full bg-foreground px-3 py-1.5 text-xs text-background shadow-sm md:block">

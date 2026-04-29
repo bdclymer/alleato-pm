@@ -10,6 +10,7 @@ import {
   FileUp,
   Link2,
   List,
+  Mail,
   MoreHorizontal,
   Paperclip,
   Pencil,
@@ -37,6 +38,7 @@ import {
   StatusBadge,
 } from "@/components/ds";
 import { ChangeEventRelatedItemsTab } from "@/components/domain/change-events/ChangeEventRelatedItemsTab";
+import { DocumentDeliveryDialog } from "@/components/documents/DocumentDeliveryDialog";
 import type {
   ChangeEventRelatedItem,
   ChangeEventRelatedItemOption,
@@ -160,6 +162,20 @@ interface PrimeContractOption {
   title: string | null;
 }
 
+interface ProjectEmail {
+  id: number;
+  subject: string;
+  from_email: string | null;
+  from_name: string | null;
+  body: string | null;
+  status: string;
+  sent_at: string | null;
+  received_at: string | null;
+  has_attachments: boolean | null;
+  to_list: string[] | null;
+  created_at: string | null;
+}
+
 // ---------------------------------------------------------------------------
 // Edit schema
 // ---------------------------------------------------------------------------
@@ -217,6 +233,11 @@ const STATUS_OPTIONS = [
 
 function statusLabel(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+function stripHtml(html: string | null): string {
+  if (!html) return "";
+  return html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
 }
 
 const CHANGE_REASONS = [
@@ -337,6 +358,7 @@ export default function PrimeContractCODetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [deliveryDialogOpen, setDeliveryDialogOpen] = useState(false);
   const [primeContracts, setPrimeContracts] = useState<PrimeContractOption[]>(
     [],
   );
@@ -353,6 +375,10 @@ export default function PrimeContractCODetailPage() {
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [attachmentsLoading, setAttachmentsLoading] = useState(true);
   const [attachmentsError, setAttachmentsError] = useState<string | null>(null);
+
+  const [emails, setEmails] = useState<ProjectEmail[]>([]);
+  const [emailsLoading, setEmailsLoading] = useState(true);
+  const [emailsError, setEmailsError] = useState<string | null>(null);
 
   // Related Items
   const [relatedItems, setRelatedItems] = useState<ChangeEventRelatedItem[]>([]);
@@ -402,6 +428,28 @@ export default function PrimeContractCODetailPage() {
   });
 
   const apiBase = `/api/projects/${projectId}/prime-contract-change-orders/${primeCoId}`;
+
+  const fetchEmails = useCallback(async () => {
+    setEmailsLoading(true);
+    setEmailsError(null);
+
+    try {
+      const res = await fetch(`${apiBase}/emails`);
+      if (!res.ok) {
+        throw new Error("Failed to fetch emails");
+      }
+      const json = (await res.json()) as {
+        data?: ProjectEmail[];
+      };
+      setEmails(json.data ?? []);
+    } catch (err) {
+      setEmailsError(
+        err instanceof Error ? err.message : "Failed to load emails",
+      );
+    } finally {
+      setEmailsLoading(false);
+    }
+  }, [apiBase]);
 
   // ---- Vertical Markup ----------------------------------------------------
   const { markupRows } = useVerticalMarkup(
@@ -688,9 +736,17 @@ export default function PrimeContractCODetailPage() {
     };
     fetchData();
     fetchAttachments();
+    fetchEmails();
     fetchLineItems();
     fetchRelatedItems();
-  }, [apiBase, projectId, fetchAttachments, fetchLineItems, fetchRelatedItems]);
+  }, [
+    apiBase,
+    projectId,
+    fetchAttachments,
+    fetchEmails,
+    fetchLineItems,
+    fetchRelatedItems,
+  ]);
 
   useEffect(() => {
     if (searchParams.get("edit") === "1") setIsEditing(true);
@@ -1459,6 +1515,10 @@ export default function PrimeContractCODetailPage() {
                     Export PDF
                   </a>
                 </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setDeliveryDialogOpen(true)}>
+                  <Mail className="mr-2 h-4 w-4" />
+                  Email PDF
+                </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <a
                     href={`/api/projects/${projectId}/prime-contract-change-orders/export?status=${co.status}`}
@@ -1490,7 +1550,7 @@ export default function PrimeContractCODetailPage() {
               Related Items ({relatedItems.length})
             </TabsTrigger>
             <TabsTrigger value="emails" className="px-3 py-1.5 text-xs">
-              Emails (0)
+              Emails ({emails.length})
             </TabsTrigger>
             <TabsTrigger value="history" className="px-3 py-1.5 text-xs">
               Change History
@@ -2151,11 +2211,85 @@ export default function PrimeContractCODetailPage() {
           </TabsContent>
 
           <TabsContent value="emails">
-            <EmptyState
-              icon={<Paperclip />}
-              title="No emails"
-              description="Emails linked to this change order will appear here"
-            />
+            {emailsLoading ? (
+              <div className="space-y-3">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+            ) : emailsError ? (
+              <p className="text-sm text-destructive">{emailsError}</p>
+            ) : emails.length === 0 ? (
+              <EmptyState
+                icon={<Mail />}
+                title="No emails"
+                description="Send the current change order PDF to owner contacts or manually entered recipients."
+                action={
+                  <Button size="sm" onClick={() => setDeliveryDialogOpen(true)}>
+                    <Mail />
+                    Email change order
+                  </Button>
+                }
+              />
+            ) : (
+              <section className="space-y-4">
+                <div className="flex items-center justify-between gap-4">
+                  <SectionRuleHeading
+                    label="Email History"
+                    className="flex-1 [&_span]:text-primary"
+                  />
+                  <Button size="sm" onClick={() => setDeliveryDialogOpen(true)}>
+                    <Mail />
+                    Email change order
+                  </Button>
+                </div>
+                <InlineTable variant="read">
+                  <InlineTableHeader>
+                    <InlineTableHeaderRow>
+                      <InlineTableHeaderCell>Subject</InlineTableHeaderCell>
+                      <InlineTableHeaderCell>Recipients</InlineTableHeaderCell>
+                      <InlineTableHeaderCell>Status</InlineTableHeaderCell>
+                      <InlineTableHeaderCell>Preview</InlineTableHeaderCell>
+                      <InlineTableHeaderCell>Date</InlineTableHeaderCell>
+                      <InlineTableHeaderCell className="w-10" />
+                    </InlineTableHeaderRow>
+                  </InlineTableHeader>
+                  <InlineTableBody>
+                    {emails.map((email) => {
+                      const sentDate =
+                        email.sent_at ?? email.received_at ?? email.created_at;
+                      const preview = stripHtml(email.body).slice(0, 120);
+
+                      return (
+                        <InlineTableRow key={email.id}>
+                          <InlineTableCell className="max-w-sm truncate font-medium">
+                            {email.subject || "—"}
+                          </InlineTableCell>
+                          <InlineTableCell className="max-w-xs truncate">
+                            {email.to_list?.length
+                              ? email.to_list.join(", ")
+                              : "—"}
+                          </InlineTableCell>
+                          <InlineTableCell>
+                            <StatusBadge status={email.status || "Unknown"} />
+                          </InlineTableCell>
+                          <InlineTableCell className="max-w-md truncate text-muted-foreground">
+                            {preview || "—"}
+                          </InlineTableCell>
+                          <InlineTableCell className="whitespace-nowrap text-muted-foreground">
+                            {sentDate ? formatDate(sentDate) : "—"}
+                          </InlineTableCell>
+                          <InlineTableCell>
+                            {email.has_attachments ? (
+                              <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />
+                            ) : null}
+                          </InlineTableCell>
+                        </InlineTableRow>
+                      );
+                    })}
+                  </InlineTableBody>
+                </InlineTable>
+              </section>
+            )}
           </TabsContent>
 
           <TabsContent value="history">
@@ -2165,6 +2299,17 @@ export default function PrimeContractCODetailPage() {
       </PageShell>
 
       {ConfirmDialog}
+
+      <DocumentDeliveryDialog
+        open={deliveryDialogOpen}
+        onOpenChange={setDeliveryDialogOpen}
+        recordType="prime-contract-change-order"
+        recordId={String(co.id)}
+        number={co.pcco_number || `PCCO-${co.id}`}
+        title={co.title || "Prime Contract Change Order"}
+        initialTab="email"
+        onEmailSent={() => void fetchEmails()}
+      />
 
       {/* Rejection dialog */}
       <Dialog

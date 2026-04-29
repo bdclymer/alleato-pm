@@ -43,7 +43,7 @@ function loadEnv() {
 }
 
 function runPsql(databaseUrl, sql) {
-  return execFileSync("psql", [databaseUrl, "-qAt", "-v", "ON_ERROR_STOP=1", "-c", sql], {
+  return execFileSync("psql", [databaseUrl, "-qAt", "-v", "ON_ERROR_STOP=1", "-c", `set statement_timeout='30s';\n${sql}`], {
     cwd: repoRoot,
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
@@ -209,6 +209,7 @@ if (!databaseUrl) {
           select embedding::text as emb, user_id
           from public.ai_memories
           where embedding is not null
+          order by created_at desc
           limit 1
         )
         select case

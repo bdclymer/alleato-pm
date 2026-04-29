@@ -31,6 +31,11 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Configure git author
+        run: |
+          git config user.name "MeganHarrison"
+          git config user.email "109628141+MeganHarrison@users.noreply.github.com"
+
       - name: Claude Code Action Official
         uses: anthropics/claude-code-action@v1
         with:

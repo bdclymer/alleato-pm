@@ -120,10 +120,12 @@ function rankBriefingSourcePriority(sourceTable: string): number {
   if (sourceTable === "meeting_transcript") return 0;
   if (sourceTable === "meeting_summary") return 1;
   if (sourceTable === "email") return 2;
-  if (sourceTable === "teams_message") return 3;
-  if (sourceTable === "insight") return 4;
-  if (sourceTable === "knowledge_base") return 5;
-  return 6;
+  if (sourceTable === "teams_channel") return 3;
+  if (sourceTable === "teams_message") return 4;
+  if (sourceTable === "teams_dm") return 5;
+  if (sourceTable === "insight") return 6;
+  if (sourceTable === "knowledge_base") return 7;
+  return 8;
 }
 
 /** Lazy OpenAI client for embedding generation (routed through AI Gateway when available). */
@@ -1598,7 +1600,7 @@ export function createOperationalTools(
               .filter((row) => {
                 if (allowAdminCommsSources) return true;
                 const sourceType = String(row.source_type ?? "");
-                return !["email", "teams_message"].includes(sourceType);
+                return !["email", "teams_message", "teams_channel", "teams_dm"].includes(sourceType);
               });
 
             const merged: Array<{
@@ -1787,7 +1789,9 @@ export function createOperationalTools(
               if (sourceTable === "meeting_transcript") return 0.08;
               if (sourceTable === "meeting_summary") return 0.07;
               if (sourceTable === "email") return 0.065;
-              if (sourceTable === "teams_message") return 0.06;
+              if (sourceTable === "teams_channel") return 0.06;
+              if (sourceTable === "teams_message") return 0.055;
+              if (sourceTable === "teams_dm") return 0.045;
               if (sourceTable === "insight") return 0.04;
               return 0;
             };
@@ -1878,7 +1882,9 @@ export function createOperationalTools(
                 knowledgeMatches: knowledgeRows.length,
                 externalChunkMatches: chunkRows.length,
                 usedProjectFilter: Boolean(resolvedProjectId),
-                filteredAdminOnlySources: allowAdminCommsSources ? [] : ["email", "teams_message"],
+                filteredAdminOnlySources: allowAdminCommsSources
+                  ? []
+                  : ["email", "teams_message", "teams_channel", "teams_dm"],
               },
             };
           } catch (err) {

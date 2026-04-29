@@ -14,11 +14,41 @@ from .project_inference import infer_project_id
 logger = logging.getLogger(__name__)
 
 MIN_MESSAGE_CHARS = 20
+MIN_CONVERSATION_CHARS = 200
+LOW_VALUE_MESSAGE_WORDS = {
+    "ok",
+    "okay",
+    "k",
+    "yes",
+    "no",
+    "thanks",
+    "thank",
+    "thx",
+    "got",
+    "it",
+    "done",
+    "sent",
+    "received",
+    "sounds",
+    "good",
+}
 
 
 def _strip_html(text: str) -> str:
     text = re.sub(r'<[^>]+>', ' ', text)
     return re.sub(r'\s+', ' ', text).strip()
+
+
+def _substantive_text_length(text: str) -> int:
+    """Approximate useful conversation signal after dropping markers and filler."""
+    without_markers = re.sub(r"\[[^\]]+\]", " ", text)
+    tokens = re.findall(r"[A-Za-z0-9][A-Za-z0-9'-]*", without_markers.lower())
+    useful_tokens = [
+        token
+        for token in tokens
+        if len(token) > 2 and token not in LOW_VALUE_MESSAGE_WORDS
+    ]
+    return sum(len(token) for token in useful_tokens)
 
 
 def _user_identity_signals(user: dict) -> list[str]:
@@ -375,6 +405,17 @@ def _process_chat_message(
         participants=participants,
         existing_project_id=(existing_doc or {}).get("project_id"),
     )
+    substantive_chars = _substantive_text_length(text)
+    is_embedding_ready = substantive_chars >= MIN_CONVERSATION_CHARS
+    tags = [
+        "teams",
+        "direct_message",
+        chat_display_name.lower(),
+        f"project_auto:{assignment_method}" if project_id else "unassigned",
+    ]
+    if not is_embedding_ready:
+        tags.append("skipped_low_content")
+
     row = {
         "id": doc_id,
         "title": f"Teams DM Conversation: {chat_display_name}",
@@ -384,8 +425,8 @@ def _process_chat_message(
         "content": text,
         "date": date_key,
         "participants": ", ".join(participants),
-        "status": "raw_ingested",
-        "tags": ",".join(["teams", "direct_message", chat_display_name.lower(), f"project_auto:{assignment_method}" if project_id else "unassigned"]),
+        "status": "raw_ingested" if is_embedding_ready else "skipped_low_content",
+        "tags": ",".join(tags),
         "project_id": project_id,
     }
     if existing_doc:
