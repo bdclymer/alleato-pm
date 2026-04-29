@@ -33,6 +33,11 @@ import { createAiAssistantMcpTools } from "@/lib/ai/tools/mcp-tools";
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { createStrategistFailureResponse } from "@/lib/ai/strategist-failure-response";
+import {
+  detectSourceSpecificRagRequest,
+  type SourceSpecificRagKind,
+  type SourceSpecificRagRequest,
+} from "@/lib/ai/detect-rag-request";
 
 export const maxDuration = 120;
 
@@ -928,7 +933,31 @@ function scoreResponseQuality(params: {
   const failedToolCalls = trace.filter((t) => t.error).length;
   const sourceRefsInText = (params.content.match(/\[Source:/g) ?? []).length;
 
+  // Detect meta-commentary: model narrated its intent instead of answering.
+  // These phrases appear when tools are disabled but the system prompt still
+  // references them. A response consisting primarily of these phrases is a
+  // silent failure — it looks valid but contains no retrieved data.
+  const metaCommentaryPhrases = [
+    "give me a second",
+    "let me search",
+    "i'll look into",
+    "i'll search for",
+    "let me pull up",
+    "one moment",
+    "searching for",
+    "i'll find",
+    "looking that up",
+  ];
+  const lowerContent = params.content.toLowerCase();
+  const hasMetaCommentary = metaCommentaryPhrases.some((phrase) => lowerContent.includes(phrase));
+
   let score = 50;
+
+  if (hasMetaCommentary) {
+    score -= 30;
+    reasons.push("meta-commentary detected: model narrated intent instead of answering");
+  }
+
   if (successfulToolCalls >= 3) {
     score += 25;
     reasons.push("multiple successful tool calls");
@@ -1037,20 +1066,8 @@ function shouldForceBusinessRetrieval(message: string): boolean {
   return broadUpdatePhrases.some((phrase) => normalized.includes(phrase));
 }
 
-type SourceSpecificRagKind =
-  | "meetings_on_date"
-  | "recent_emails"
-  | "recent_onedrive_documents"
-  | "recent_teams_discussions";
-
-type SourceSpecificRagRequest = {
-  kind: SourceSpecificRagKind;
-  label: string;
-  date?: string;
-  startDate?: string;
-  endDate?: string;
-  limit: number;
-};
+// SourceSpecificRagKind, SourceSpecificRagRequest, and detectSourceSpecificRagRequest
+// are imported from @/lib/ai/detect-rag-request (extracted for unit-testability).
 
 type SourceSpecificRagRow = {
   id: string;
@@ -1068,138 +1085,6 @@ type SourceSpecificRagAnswer = {
   trace: Record<string, unknown>;
   rows: SourceSpecificRagRow[];
 };
-
-function isoDate(date: Date): string {
-  return date.toISOString().slice(0, 10);
-}
-
-function previousWeekdayIsoDate(targetDay: number, now = new Date()): string {
-  const date = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-  const diff = (date.getUTCDay() - targetDay + 7) % 7;
-  date.setUTCDate(date.getUTCDate() - diff);
-  return isoDate(date);
-}
-
-function parseExplicitDateRange(message: string): { startDate: string; endDate: string } | null {
-  const monthNames: Record<string, number> = {
-    january: 0,
-    february: 1,
-    march: 2,
-    april: 3,
-    may: 4,
-    june: 5,
-    july: 6,
-    august: 7,
-    september: 8,
-    october: 9,
-    november: 10,
-    december: 11,
-  };
-
-  const isoRange = message.match(
-    /\b(20\d{2}-\d{2}-\d{2})\b\s*(?:through|to|until|-|–|—)\s*\b(20\d{2}-\d{2}-\d{2})\b/i,
-  );
-  if (isoRange) {
-    return { startDate: isoRange[1], endDate: isoRange[2] };
-  }
-
-  const monthRange = message.match(
-    /\b(january|february|march|april|may|june|july|august|september|october|november|december)\s+(\d{1,2})\s*(?:through|to|until|-|–|—)\s*(?:(january|february|march|april|may|june|july|august|september|october|november|december)\s+)?(\d{1,2}),?\s+(20\d{2})\b/i,
-  );
-  if (!monthRange) return null;
-
-  const startMonth = monthNames[monthRange[1].toLowerCase()];
-  const endMonth = monthNames[(monthRange[3] ?? monthRange[1]).toLowerCase()];
-  const year = Number(monthRange[5]);
-  const startDate = new Date(Date.UTC(year, startMonth, Number(monthRange[2])));
-  const endDate = new Date(Date.UTC(year, endMonth, Number(monthRange[4])));
-
-  return {
-    startDate: isoDate(startDate),
-    endDate: isoDate(endDate),
-  };
-}
-
-function detectSourceSpecificRagRequest(message: string): SourceSpecificRagRequest | null {
-  const normalized = message.toLowerCase();
-  const asksForMeetingsOnFriday =
-    normalized.includes("meeting") &&
-    (normalized.includes("conducted on friday") ||
-      normalized.includes("meetings on friday") ||
-      normalized.includes("meetings were conducted") ||
-      normalized.includes("friday april 24"));
-  if (asksForMeetingsOnFriday) {
-    const date = normalized.includes("april 24") || normalized.includes("2026-04-24")
-      ? "2026-04-24"
-      : previousWeekdayIsoDate(5);
-    return {
-      kind: "meetings_on_date",
-      label: "Meeting transcripts",
-      date,
-      limit: 20,
-    };
-  }
-
-  const asksForRecentOneDrive =
-    (normalized.includes("onedrive") || normalized.includes("one drive")) &&
-    (normalized.includes("most recent") ||
-      normalized.includes("latest") ||
-      normalized.includes("recent") ||
-      normalized.includes("last five") ||
-      normalized.includes("last 5"));
-  if (asksForRecentOneDrive) {
-    return {
-      kind: "recent_onedrive_documents",
-      label: "OneDrive documents",
-      limit: 5,
-    };
-  }
-
-  const asksForRecentEmails =
-    normalized.includes("email") &&
-    !normalized.includes("do not use email") &&
-    (normalized.includes("last five") ||
-      normalized.includes("last 5") ||
-      normalized.includes("five most recent") ||
-      normalized.includes("most recent") ||
-      normalized.includes("latest"));
-  if (asksForRecentEmails) {
-    return {
-      kind: "recent_emails",
-      label: "Outlook emails",
-      limit: 5,
-    };
-  }
-
-  const asksForRecentTeams =
-    normalized.includes("teams") &&
-    (normalized.includes("teams rag") ||
-      normalized.includes("using only teams") ||
-      normalized.includes("past week") ||
-      normalized.includes("this past week") ||
-      normalized.includes("main discussion") ||
-      normalized.includes("main discussions") ||
-      normalized.includes("teams discussion") ||
-      normalized.includes("teams discussions") ||
-      normalized.includes("chat/thread") ||
-      normalized.includes("thread titles") ||
-      normalized.includes("recent"));
-  if (asksForRecentTeams) {
-    const explicitRange = parseExplicitDateRange(message);
-    const end = new Date();
-    const start = new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate()));
-    start.setUTCDate(start.getUTCDate() - 7);
-    return {
-      kind: "recent_teams_discussions",
-      label: "Teams messages",
-      startDate: explicitRange?.startDate ?? isoDate(start),
-      endDate: explicitRange?.endDate ?? isoDate(end),
-      limit: 12,
-    };
-  }
-
-  return null;
-}
 
 function formatSourceSpecificDate(row: SourceSpecificRagRow): string {
   const value = row.date ?? row.created_at;
@@ -1291,16 +1176,24 @@ function formatSourceSpecificRagContent(
   const heading =
     request.kind === "meetings_on_date"
       ? `Meetings Conducted on ${request.date}`
-      : request.kind === "recent_emails"
-        ? "Last Five Emails in Supabase"
-        : "Most Recent OneDrive Documents";
+      : request.kind === "recent_meetings"
+        ? "Recent Meetings"
+        : request.kind === "recent_emails"
+          ? "Last Five Emails in Supabase"
+          : "Most Recent OneDrive Documents";
+
+  // For recent_meetings, include a content snippet so the model can ground its answer
+  const rowFormatter =
+    request.kind === "recent_meetings"
+      ? (row: SourceSpecificRagRow, index: number) =>
+          `${index + 1}. **${sourceSpecificTitle(row)}** — ${formatSourceSpecificDate(row)}\n   ${sourceSpecificSnippet(row, 300)} [Source: ${row.id}]`
+      : (row: SourceSpecificRagRow, index: number) =>
+          `${index + 1}. **${sourceSpecificTitle(row)}** — ${formatSourceSpecificDate(row)} [Source: ${row.id}]`;
 
   return [
     `**${heading}**`,
     "",
-    ...rows.slice(0, request.limit).map((row, index) =>
-      `${index + 1}. **${sourceSpecificTitle(row)}** — ${formatSourceSpecificDate(row)} [Source: ${row.id}]`,
-    ),
+    ...rows.slice(0, request.limit).map((row, index) => rowFormatter(row, index)),
     "",
     `**Observability**`,
     `- ${sourceLine}`,
@@ -1392,6 +1285,23 @@ async function buildSourceSpecificRagAnswer(params: {
         .or("source.eq.fireflies,source.eq.Zapier,type.eq.meeting,type.eq.meeting_transcript,category.eq.meeting")
         .gte("date", `${request.date}T00:00:00.000Z`)
         .lte("date", `${request.date}T23:59:59.999Z`)
+        .order("date", { ascending: false })
+        .limit(request.limit),
+    );
+    if (error) throw new Error(error.message);
+    rows = (data ?? []) as SourceSpecificRagRow[];
+  }
+
+  if (request.kind === "recent_meetings") {
+    // Query the last 60 days of meetings; no narrow date filter required for general queries.
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 60);
+    const { data, error } = await applyProjectScope(
+      supabase
+        .from("document_metadata")
+        .select("id,title,source,category,type,date,created_at,content,project_id")
+        .or("source.eq.fireflies,source.eq.Zapier,type.eq.meeting,type.eq.meeting_transcript,category.eq.meeting")
+        .gte("date", cutoff.toISOString())
         .order("date", { ascending: false })
         .limit(request.limit),
     );
