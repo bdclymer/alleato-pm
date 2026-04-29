@@ -81,7 +81,7 @@ function SidebarFlyout({
     >
       <div className="w-52 rounded-lg border border-border/60 bg-popover py-2 shadow-sm">
         <div className="px-3 pb-1.5 pt-0.5">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-primary">
+          <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
             {group.label}
           </span>
         </div>
@@ -98,10 +98,10 @@ function SidebarFlyout({
               : isActivePath(pathname, tool.path))
             const Icon = tool.icon
             const linkClass = cn(
-              "flex items-center rounded-md px-2.5 py-1.5 text-[13px] transition-colors",
+              "flex items-center gap-2 rounded-md px-2.5 py-1.5 text-[13px] transition-colors",
               isActive
-                ? "font-medium text-sidebar-foreground"
-                : "text-foreground/80 hover:bg-sidebar-accent/60 hover:text-foreground"
+                ? "bg-accent font-medium text-accent-foreground"
+                : "text-foreground/75 hover:bg-accent/60 hover:text-foreground"
             )
 
             return isExternal ? (
@@ -112,6 +112,7 @@ function SidebarFlyout({
                 rel="noopener noreferrer"
                 className={linkClass}
               >
+                {Icon && <Icon className="h-3.5 w-3.5 shrink-0" strokeWidth={1.5} />}
                 <span className="truncate">{tool.name}</span>
               </a>
             ) : (
@@ -120,6 +121,7 @@ function SidebarFlyout({
                 href={href}
                 className={linkClass}
               >
+                {Icon && <Icon className="h-3.5 w-3.5 shrink-0" strokeWidth={1.5} />}
                 <span className="truncate">{tool.name}</span>
               </Link>
             )
