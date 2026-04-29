@@ -1933,6 +1933,7 @@ export default function FeedbackInboxPage() {
       showHeader={false}
       className="bg-muted/30 px-0! py-0!"
       contentClassName="space-y-0 pt-0 pb-0"
+      fillHeight
       description="Review feedback, assign tools, and sync issues to GitHub."
     >
       <div className="flex h-full min-h-0 flex-col">
