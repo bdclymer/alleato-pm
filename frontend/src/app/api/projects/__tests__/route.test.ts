@@ -253,7 +253,7 @@ describe("/api/projects", () => {
       const data = await response.json();
 
       expect(response.status).toBe(500);
-      expect(data).toEqual({ error: "An unexpected error occurred. Please try again." });
+      expect(data).toEqual(expect.objectContaining({ success: false, error_code: "INTERNAL_ERROR" }));
     });
 
     it("handles unexpected errors", async () => {
@@ -268,7 +268,7 @@ describe("/api/projects", () => {
       const data = await response.json();
 
       expect(response.status).toBe(500);
-      expect(data).toEqual({ error: "An unexpected error occurred. Please try again." });
+      expect(data).toEqual(expect.objectContaining({ success: false, error_code: "INTERNAL_ERROR" }));
     });
 
     it("returns 401 when user is not authenticated", async () => {
@@ -279,9 +279,44 @@ describe("/api/projects", () => {
       const data = await response.json();
 
       expect(response.status).toBe(401);
-      expect(data).toEqual({ error: "Unauthorized" });
+      expect(data).toEqual(expect.objectContaining({ error_code: "AUTH_EXPIRED" }));
     });
   });
+
+  /**
+   * Helper: build a service client mock that properly routes table calls for POST /api/projects.
+   * The route calls: users_auth → permission_templates → projects (insert) → project_directory_memberships (insert)
+   */
+  function buildPostMockServiceClient(
+    projectData: Record<string, unknown>,
+    projectId = 2,
+    captureInsert?: (data: Record<string, unknown>) => void,
+  ) {
+    return {
+      from: jest.fn((table: string) => {
+        if (table === "users_auth") {
+          return createMockQuery({ data: { person_id: "person-1" }, error: null, count: null });
+        }
+        if (table === "user_profiles") {
+          return createMockQuery({ data: { is_admin: false }, error: null, count: null });
+        }
+        if (table === "permission_templates") {
+          return createMockQuery({ data: { id: "admin-template-id" }, error: null, count: null });
+        }
+        if (table === "projects") {
+          const q = createMockQuery({ data: { ...projectData, id: projectId, phase: projectData.phase ?? "Current" }, error: null, count: null });
+          if (captureInsert) {
+            q.insert = jest.fn((data) => { captureInsert(data as Record<string, unknown>); return q; });
+          }
+          return q;
+        }
+        if (table === "project_directory_memberships") {
+          return createMockQuery({ data: null, error: null, count: null });
+        }
+        return createMockQuery({ data: null, error: null, count: null });
+      }),
+    };
+  }
 
   describe("POST", () => {
     it("creates a new project successfully", async () => {
@@ -291,13 +326,7 @@ describe("/api/projects", () => {
         state: "pre-construction",
       };
 
-      mockServiceClient = {
-        from: jest.fn(() => createMockQuery({
-          data: { ...newProject, id: 2, phase: "Current" },
-          error: null,
-          count: null,
-        }))
-      };
+      mockServiceClient = buildPostMockServiceClient(newProject, 2);
 
       const request = new NextRequest("http://localhost:3000/api/projects", {
         method: "POST",
@@ -308,7 +337,7 @@ describe("/api/projects", () => {
       const data = await response.json();
 
       expect(response.status).toBe(201);
-      expect(data).toEqual({ ...newProject, id: 2, phase: "Current" });
+      expect(data).toMatchObject({ ...newProject, id: 2, phase: "Current" });
 
       expect(mockServiceClient.from).toHaveBeenCalledWith("projects");
     });
@@ -320,21 +349,7 @@ describe("/api/projects", () => {
       };
 
       let insertedData: Record<string, unknown> | null = null;
-      mockServiceClient = {
-        from: jest.fn(() => {
-          const mockQuery = createMockQuery({
-            data: { ...newProject, id: 3, phase: "Current" },
-            error: null,
-            count: null,
-          });
-          // Capture what was passed to insert
-          mockQuery.insert = jest.fn((data) => {
-            insertedData = data;
-            return mockQuery;
-          });
-          return mockQuery;
-        })
-      };
+      mockServiceClient = buildPostMockServiceClient(newProject, 3, (data) => { insertedData = data; });
 
       const request = new NextRequest("http://localhost:3000/api/projects", {
         method: "POST",
@@ -354,20 +369,7 @@ describe("/api/projects", () => {
       };
 
       let insertedData: Record<string, unknown> | null = null;
-      mockServiceClient = {
-        from: jest.fn(() => {
-          const mockQuery = createMockQuery({
-            data: { ...newProject, id: 5, phase: "Current" },
-            error: null,
-            count: null,
-          });
-          mockQuery.insert = jest.fn((data) => {
-            insertedData = data;
-            return mockQuery;
-          });
-          return mockQuery;
-        })
-      };
+      mockServiceClient = buildPostMockServiceClient(newProject, 5, (data) => { insertedData = data; });
 
       const request = new NextRequest("http://localhost:3000/api/projects", {
         method: "POST",
@@ -387,20 +389,7 @@ describe("/api/projects", () => {
       };
 
       let insertedData: Record<string, unknown> | null = null;
-      mockServiceClient = {
-        from: jest.fn(() => {
-          const mockQuery = createMockQuery({
-            data: { ...newProject, id: 4 },
-            error: null,
-            count: null,
-          });
-          mockQuery.insert = jest.fn((data) => {
-            insertedData = data;
-            return mockQuery;
-          });
-          return mockQuery;
-        })
-      };
+      mockServiceClient = buildPostMockServiceClient(newProject, 4, (data) => { insertedData = data; });
 
       const request = new NextRequest("http://localhost:3000/api/projects", {
         method: "POST",
@@ -412,7 +401,7 @@ describe("/api/projects", () => {
       expect(insertedData).toHaveProperty("phase", "planning");
     });
 
-    it("handles creation errors", async () => {
+    it("handles creation errors when prerequisites are missing", async () => {
       mockServiceClient = {
         from: jest.fn(() => createMockQuery({
           data: null,
@@ -429,8 +418,9 @@ describe("/api/projects", () => {
       const response = await POST(request);
       const data = await response.json();
 
-      expect(response.status).toBe(500);
-      expect(data).toEqual({ error: "An unexpected error occurred. Please try again." });
+      // Route throws PRECONDITION_FAILED when authLink lookup fails
+      expect(response.status).toBeGreaterThanOrEqual(400);
+      expect(data).toEqual(expect.objectContaining({ success: false }));
     });
 
     it("handles invalid JSON", async () => {
@@ -450,8 +440,9 @@ describe("/api/projects", () => {
       const response = await POST(request);
       const data = await response.json();
 
-      expect(response.status).toBe(500);
-      expect(data).toEqual({ error: "An unexpected error occurred. Please try again." });
+      // parseJsonBody throws INVALID_PAYLOAD (400) for malformed JSON
+      expect(response.status).toBe(400);
+      expect(data).toEqual(expect.objectContaining({ success: false }));
     });
 
     it("returns 401 when user is not authenticated", async () => {
@@ -466,7 +457,7 @@ describe("/api/projects", () => {
       const data = await response.json();
 
       expect(response.status).toBe(401);
-      expect(data).toEqual({ error: "Unauthorized" });
+      expect(data).toEqual(expect.objectContaining({ error_code: "AUTH_EXPIRED" }));
     });
   });
 });

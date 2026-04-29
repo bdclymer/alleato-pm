@@ -28,14 +28,18 @@ describe("BackendStatusIndicator", () => {
   });
 
   it("shows connected state when backend is healthy", async () => {
+    const payload = JSON.stringify({
+      status: "healthy",
+      backend: true,
+      openai_configured: true,
+      timestamp: new Date().toISOString(),
+    });
     (global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
-      json: async () => ({
-        status: "healthy",
-        backend: true,
-        openai_configured: true,
-        timestamp: new Date().toISOString(),
-      }),
+      status: 200,
+      headers: { get: () => null },
+      text: async () => payload,
+      json: async () => JSON.parse(payload),
     });
 
     render(<BackendStatusIndicator />);
@@ -49,6 +53,8 @@ describe("BackendStatusIndicator", () => {
     (global.fetch as jest.Mock).mockRejectedValueOnce(
       new Error("Network error"),
     );
+    // apiFetch wraps fetch — when fetch rejects, BackendStatusIndicator catches
+    // the error and shows "Backend offline"
 
     render(<BackendStatusIndicator />);
 
@@ -58,14 +64,18 @@ describe("BackendStatusIndicator", () => {
   });
 
   it("shows AI not configured when openai_configured is false", async () => {
+    const payload = JSON.stringify({
+      status: "healthy",
+      backend: true,
+      openai_configured: false,
+      timestamp: new Date().toISOString(),
+    });
     (global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
-      json: async () => ({
-        status: "healthy",
-        backend: true,
-        openai_configured: false,
-        timestamp: new Date().toISOString(),
-      }),
+      status: 200,
+      headers: { get: () => null },
+      text: async () => payload,
+      json: async () => JSON.parse(payload),
     });
 
     render(<BackendStatusIndicator />);
@@ -76,15 +86,19 @@ describe("BackendStatusIndicator", () => {
   });
 
   it("shows error message when backend returns error", async () => {
+    const payload = JSON.stringify({
+      status: "error",
+      backend: false,
+      openai_configured: false,
+      timestamp: new Date().toISOString(),
+      error: "Backend unavailable",
+    });
     (global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
-      json: async () => ({
-        status: "error",
-        backend: false,
-        openai_configured: false,
-        timestamp: new Date().toISOString(),
-        error: "Backend unavailable",
-      }),
+      status: 200,
+      headers: { get: () => null },
+      text: async () => payload,
+      json: async () => JSON.parse(payload),
     });
 
     render(<BackendStatusIndicator />);
@@ -97,14 +111,18 @@ describe("BackendStatusIndicator", () => {
   it("polls health check periodically", async () => {
     jest.useFakeTimers();
 
+    const payload = JSON.stringify({
+      status: "healthy",
+      backend: true,
+      openai_configured: true,
+      timestamp: new Date().toISOString(),
+    });
     (global.fetch as jest.Mock).mockResolvedValue({
       ok: true,
-      json: async () => ({
-        status: "healthy",
-        backend: true,
-        openai_configured: true,
-        timestamp: new Date().toISOString(),
-      }),
+      status: 200,
+      headers: { get: () => null },
+      text: async () => payload,
+      json: async () => JSON.parse(payload),
     });
 
     render(<BackendStatusIndicator />);

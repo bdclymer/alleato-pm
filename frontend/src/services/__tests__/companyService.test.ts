@@ -32,16 +32,17 @@ describe('CompanyService', () => {
         id: 'company-1',
         project_id: 1,
         company_id: 'global-company-1',
-        business_phone: '555-1234',
         email_address: 'company@example.com',
         company_type: 'VENDOR',
         status: 'ACTIVE',
+        // business_phone is derived from company.contact_phone by withBusinessPhone()
         company: {
           id: 'global-company-1',
           name: 'Test Company',
           address: '123 Main St',
           city: 'New York',
           state: 'NY',
+          contact_phone: '555-1234',
         },
       };
 
@@ -104,11 +105,14 @@ describe('CompanyService', () => {
         id: 'new-project-company',
         project_id: 1,
         company_id: mockGlobalCompany.id,
-        business_phone: createData.business_phone,
         email_address: createData.email_address,
         company_type: createData.company_type,
         status: 'ACTIVE',
-        company: mockGlobalCompany,
+        // business_phone is derived from company.contact_phone by withBusinessPhone()
+        company: {
+          ...mockGlobalCompany,
+          contact_phone: createData.business_phone,
+        },
       };
 
       // Mock companies table insert
@@ -143,7 +147,13 @@ describe('CompanyService', () => {
       const result = await service.createCompany('1', createData);
 
       expect(result).toMatchObject({
-        ...mockProjectCompany,
+        id: mockProjectCompany.id,
+        project_id: mockProjectCompany.project_id,
+        company_id: mockProjectCompany.company_id,
+        email_address: mockProjectCompany.email_address,
+        company_type: mockProjectCompany.company_type,
+        status: mockProjectCompany.status,
+        business_phone: createData.business_phone,
         user_count: 0,
       });
     });

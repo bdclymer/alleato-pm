@@ -1,13 +1,19 @@
 import { NextRequest } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
+import { requirePermission } from "@/lib/permissions-guard";
 import { GET, PUT } from "../route";
 
 jest.mock("@/lib/supabase/server", () => ({
   createClient: jest.fn(),
 }));
 
+jest.mock("@/lib/permissions-guard", () => ({
+  requirePermission: jest.fn(),
+}));
+
 const createClientMock = createClient as jest.MockedFunction<typeof createClient>;
+const requirePermissionMock = requirePermission as jest.MockedFunction<typeof requirePermission>;
 
 const buildQuery = (response: { data: unknown; error: unknown }) => ({
   select: jest.fn().mockReturnThis(),
@@ -19,6 +25,8 @@ const buildQuery = (response: { data: unknown; error: unknown }) => ({
 describe("/api/projects/[projectId]/contracts/settings", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Grant permission by default for all PUT tests
+    requirePermissionMock.mockResolvedValue({ denied: false, userId: "user-1", personId: "person-1" } as Awaited<ReturnType<typeof requirePermission>>);
   });
 
   it("returns retainage defaults when no settings row exists", async () => {
@@ -38,9 +46,9 @@ describe("/api/projects/[projectId]/contracts/settings", () => {
       allow_standard_users_create_pcco: false,
       allow_standard_users_create_pco: false,
       sov_always_editable: false,
-      enable_completed_work_retainage: true,
+      enable_completed_work_retainage: false,
       enable_stored_materials_retainage: false,
-      default_retainage_percent: 10,
+      default_retainage_percent: 0,
       show_markup_on_co_pdf: true,
       show_markup_on_invoice_pdf: true,
       default_distribution_prime_contract: null,

@@ -55,8 +55,8 @@ describe("PageTabs", () => {
     const activeTab = screen.getByRole("button", { name: "Active" });
     const allTab = screen.getByRole("button", { name: "All Contracts" });
 
-    expect(activeTab).toHaveClass("border-brand", "text-brand");
-    expect(allTab).toHaveClass("border-b-2", "border-transparent");
+    expect(activeTab).toHaveClass("text-primary");
+    expect(allTab).not.toHaveClass("text-primary");
   });
 
   it("navigates to tab href on click", () => {
@@ -82,8 +82,8 @@ describe("PageTabs", () => {
 
     expect(screen.getByText("12")).toHaveClass(
       "rounded-full",
-      "px-2.5",
-      "py-0.5",
+      "inline-flex",
+      "h-5",
     );
   });
 });

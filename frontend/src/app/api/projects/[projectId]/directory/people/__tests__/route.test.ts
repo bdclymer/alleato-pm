@@ -80,7 +80,7 @@ describe("Directory people route", () => {
       const response = await GET(request, { params: Promise.resolve({ projectId: "42" }) });
 
       expect(response.status).toBe(500);
-      expect(await response.json()).toHaveProperty("error");
+      expect(await response.json()).toHaveProperty("error_code");
     });
   });
 

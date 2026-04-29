@@ -62,9 +62,9 @@ describe("budget line PATCH route", () => {
     );
 
     expect(response.status).toBe(401);
-    await expect(response.json()).resolves.toEqual({
-      error: "Unauthorized - please log in",
-    });
+    await expect(response.json()).resolves.toEqual(
+      expect.objectContaining({ error_code: "AUTH_EXPIRED" }),
+    );
   });
 });
 
@@ -192,9 +192,10 @@ describe("budget line DELETE route — Procore-parity guards", () => {
     });
 
     expect(response.status).toBe(403);
-    const body = (await response.json()) as { code?: string; error?: string };
-    expect(body.code).toBe("BUDGET_LOCKED");
-    expect(body.error).toMatch(/locked/i);
+    const body = (await response.json()) as { error_code?: string; error_message?: string; details?: { code?: string } };
+    // The route throws GuardrailError(AUTH_FORBIDDEN) with details.code="BUDGET_LOCKED"
+    expect(body.details?.code).toBe("BUDGET_LOCKED");
+    expect(body.error_message).toMatch(/locked/i);
   });
 
   it("blocks delete with 409 LINE_HAS_BUDGET when original_amount > 0", async () => {
@@ -226,11 +227,11 @@ describe("budget line DELETE route — Procore-parity guards", () => {
 
     expect(response.status).toBe(409);
     const body = (await response.json()) as {
-      code?: string;
-      originalAmount?: number;
+      details?: { code?: string; originalAmount?: number };
     };
-    expect(body.code).toBe("LINE_HAS_BUDGET");
-    expect(body.originalAmount).toBe(1500);
+    // The route throws GuardrailError(INVALID_PAYLOAD) with details.code="LINE_HAS_BUDGET"
+    expect(body.details?.code).toBe("LINE_HAS_BUDGET");
+    expect(body.details?.originalAmount).toBe(1500);
   });
 
   it("blocks delete with 409 LINE_HAS_ACTIVE_MODIFICATIONS when an active mod references the cost code", async () => {
@@ -272,11 +273,11 @@ describe("budget line DELETE route — Procore-parity guards", () => {
 
     expect(response.status).toBe(409);
     const body = (await response.json()) as {
-      code?: string;
-      modifications?: Array<{ id: string; status: string }>;
+      details?: { code?: string; modifications?: Array<{ id: string; status: string }> };
     };
-    expect(body.code).toBe("LINE_HAS_ACTIVE_MODIFICATIONS");
-    expect(body.modifications?.[0]?.status).toBe("draft");
+    // The route throws GuardrailError(INVALID_PAYLOAD) with details.code="LINE_HAS_ACTIVE_MODIFICATIONS"
+    expect(body.details?.code).toBe("LINE_HAS_ACTIVE_MODIFICATIONS");
+    expect(body.details?.modifications?.[0]?.status).toBe("draft");
   });
 
   it("allows delete when unlocked, $0 original budget, and no active mods", async () => {

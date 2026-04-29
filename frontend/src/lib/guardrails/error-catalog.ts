@@ -101,6 +101,15 @@ export const ERROR_CATALOG: Record<string, ErrorCatalogEntry> = {
     httpStatus: 500,
     safeToRetry: false,
   },
+  FORBIDDEN: {
+    code: "FORBIDDEN",
+    humanMessage: "You do not have permission to perform this action.",
+    typicalCause: "Authenticated user is missing required role/scope.",
+    preventionRule: "Apply role/permission checks at route entry and return explicit denial.",
+    alertSeverity: "medium",
+    httpStatus: 403,
+    safeToRetry: false,
+  },
 };
 
 export function getErrorCatalogEntry(code: string): ErrorCatalogEntry {
