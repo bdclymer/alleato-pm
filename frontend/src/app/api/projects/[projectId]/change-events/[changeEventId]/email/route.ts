@@ -127,12 +127,18 @@ export const POST = withApiGuardrails(
         },
       ];
     } catch (pdfError) {
-      logger.error({ msg: "[change-events/email] PDF generation failed, sending without attachment:", data: pdfError });
+      logger.error({ msg: "[change-events/email] PDF generation failed, sending without attachment", error: pdfError instanceof Error ? pdfError.message : String(pdfError) });
     }
 
     const messageHtml = message
       ? `<p style="font-family:Arial,sans-serif;font-size:14px;color:#333;white-space:pre-wrap;">${escHtml(message)}</p><br/>`
       : "";
+
+    // Only mention the PDF attachment if one was actually generated.
+    // On Vercel (Puppeteer unavailable), attachments stays [] — avoid lying to recipients.
+    const pdfNote = attachments.length > 0
+      ? `<p style="font-size:13px;color:#444;">Please find the change event details attached as a PDF.</p>`
+      : `<p style="font-size:13px;color:#444;">The change event details are available in your Alleato project dashboard.</p>`;
 
     const emailHtml = `
       <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#1a1a1a;">
@@ -145,7 +151,7 @@ export const POST = withApiGuardrails(
             Project: ${escHtml(project?.name) || "Unknown Project"}${project?.project_number ? ` (${escHtml(String(project.project_number))})` : ""}
           </p>
           ${messageHtml}
-          <p style="font-size:13px;color:#444;">Please find the change event details attached as a PDF.</p>
+          ${pdfNote}
           <hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
           <p style="font-size:11px;color:#999;">This email was sent from Alleato Group project management software.</p>
         </div>

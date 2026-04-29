@@ -59,6 +59,9 @@ const ENDPOINTS = [
   ["GET", `/api/projects/${PROJECT_ID}/change-events/origin-options`, "Change event origin options", [200, 401]],
   // Line items — regression guard for 5.1/5.2 (Add/Edit were missing before 2026-04-21)
   ["GET", `/api/projects/${PROJECT_ID}/change-events/${FAKE_UUID}/line-items`, "Change event line items (fake id)", [200, 401, 404]],
+  // Email — regression guard for issue #193: Puppeteer failure caused 500 before fix in commit 24e1d0009
+  // Unauthenticated POST must return 401 (auth check runs before any PDF/Resend work), never 500.
+  ["POST", `/api/projects/${PROJECT_ID}/change-events/${FAKE_UUID}/email`, "Change event email (unauthed)", [401]],
 
   // Change Orders / PCOs
   ["GET", `/api/projects/${PROJECT_ID}/prime-contract-pcos`, "Prime PCOs list", [200, 401]],
