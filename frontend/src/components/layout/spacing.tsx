@@ -37,6 +37,19 @@ export function DetailThreeColumnGrid({
   );
 }
 
+export interface DetailPanelProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+export function DetailPanel({ children, className }: DetailPanelProps) {
+  return (
+    <div className={cn("rounded-md bg-muted/30 p-6", className)}>
+      {children}
+    </div>
+  );
+}
+
 export interface SectionRuleHeadingProps {
   label: React.ReactNode;
   className?: string;

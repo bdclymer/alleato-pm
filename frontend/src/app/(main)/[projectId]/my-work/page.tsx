@@ -217,7 +217,6 @@ export default async function MyWorkPage({
   const openRfis = (rfisResult.data ?? []) as OpenRfi[];
   const openSubmittals = (submittalsResult.data ?? []) as OpenSubmittal[];
   const projectName = projectResult.data?.name ?? `Project #${projectId}`;
-  const firstName = person?.first_name ?? "there";
 
   const hasPendingSov = sovSubmissions.some(
     (s) => s.status === "draft" || s.status === "revise_resubmit",

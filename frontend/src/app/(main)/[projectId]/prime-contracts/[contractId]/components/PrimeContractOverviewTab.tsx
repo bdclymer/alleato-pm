@@ -27,6 +27,7 @@ import { CSS } from "@dnd-kit/utilities";
 
 import {
   ContentSectionStack,
+  DetailPanel,
   LabelValueRow,
   SectionRuleHeading,
   SummaryValueRow,
@@ -217,7 +218,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
       <section>
         <div className="grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(320px,400px)]">
           <div className="space-y-6">
-            <div className="rounded-md bg-card p-6">
+            <DetailPanel>
               <SectionRuleHeading label="General Information" className="mb-6 pb-0" />
               <div className="grid grid-cols-1 gap-x-10 gap-y-4 lg:grid-cols-2">
                 <dl className="space-y-4 text-sm">
@@ -290,9 +291,9 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
               >
                 {getTextValue(contract.description).text}
               </LabelValueRow>
-            </div>
+            </DetailPanel>
 
-            <div className="rounded-md bg-card p-6">
+            <DetailPanel>
               <SectionRuleHeading label="Inclusions + Exclusions" className="mb-6 pb-0" />
               <dl className="space-y-6 text-sm">
                 <LabelValueRow label="Inclusions" labelClassName="w-36">
@@ -372,11 +373,11 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                   )}
                 </LabelValueRow>
               </dl>
-            </div>
+            </DetailPanel>
           </div>
 
           <aside>
-            <div className="rounded-md bg-card p-6">
+            <DetailPanel>
               <SectionRuleHeading label="Financial Summary" className="mb-6 pb-0" />
               <dl className="space-y-3 text-sm">
                 <SummaryValueRow label="Original Amount" value={formatCurrency(displayedSovTotal)} />
@@ -390,7 +391,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                 <SummaryValueRow label="Balance" value={formatCurrency(remainingBalanceTotal)} />
                 <SummaryValueRow label="Percent Paid" value={formatPercent(percentPaid, 2)} bold border />
               </dl>
-            </div>
+            </DetailPanel>
           </aside>
         </div>
       </section>

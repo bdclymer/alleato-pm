@@ -35,6 +35,7 @@ export { PageTabs } from "./PageTabs";
 export { PageTabsV2 } from "./PageTabsV2";
 export {
   ContentSectionStack,
+  DetailPanel,
   DetailThreeColumnGrid,
   LabelValueRow,
   SectionRuleHeading,

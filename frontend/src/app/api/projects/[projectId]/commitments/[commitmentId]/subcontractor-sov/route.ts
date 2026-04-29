@@ -1,10 +1,7 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
-import { GuardrailError } from "@/lib/guardrails/errors";
-import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
 
-import { apiErrorResponse } from "@/lib/api-error";
 import { sendEmail } from "@/lib/email/send";
 import SOVInvitation from "@/emails/subcontractor/SOVInvitation";
 import SubcontractorSovInvite from "@/emails/subcontractor/SubcontractorSovInvite";
@@ -19,10 +16,6 @@ import {
 } from "@/lib/commitments/subcontractor-sov-access";
 
 type ServiceClient = ReturnType<typeof createServiceClient>;
-
-interface RouteParams {
-  params: Promise<{ projectId: string; commitmentId: string }>;
-}
 
 interface SsovLineItemInput {
   id?: string;
