@@ -449,6 +449,9 @@ export const GET = withApiGuardrails("/api/admin/feedback#GET", async ({ request
     } else if (statuses.length > 1) {
       query = query.in("status", statuses);
     }
+  } else {
+    // Always exclude archived items unless explicitly requested
+    query = query.neq("status", "archived");
   }
 
   if (requestType) {
@@ -471,7 +474,7 @@ export const GET = withApiGuardrails("/api/admin/feedback#GET", async ({ request
 
 const patchSchema = z.object({
   id: z.string().uuid(),
-  status: z.enum(["open", "submitted", "github_failed", "in_progress", "triaged", "diagnosing", "fixing", "verifying", "in_review", "resolved", "closed"]).optional(),
+  status: z.enum(["open", "submitted", "github_failed", "in_progress", "triaged", "diagnosing", "fixing", "verifying", "in_review", "resolved", "closed", "archived"]).optional(),
   title: z.string().trim().min(1).max(200).optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
 });

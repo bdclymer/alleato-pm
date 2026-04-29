@@ -8,6 +8,7 @@ import {
   useState,
 } from "react";
 import {
+  Archive,
   ArrowLeft,
   CheckCircle2,
   ChevronDown,
@@ -103,7 +104,7 @@ type GitHubComment = {
 };
 
 type StatusFilter = "open" | "in_progress" | "resolved" | "all";
-type DisplayStatus = Exclude<StatusFilter, "all">;
+type DisplayStatus = Exclude<StatusFilter, "all"> | "archived";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -119,6 +120,7 @@ const STATUS_OPTIONS: { value: DisplayStatus; label: string }[] = [
   { value: "open", label: "Open" },
   { value: "in_progress", label: "In Progress" },
   { value: "resolved", label: "Resolved" },
+  { value: "archived", label: "Archived" },
 ];
 
 const STATUS_META: Record<DisplayStatus, { icon: typeof Circle; className: string; dotClassName: string; label: string; showInList?: boolean }> = {
@@ -140,6 +142,13 @@ const STATUS_META: Record<DisplayStatus, { icon: typeof Circle; className: strin
     className: "text-status-success",
     dotClassName: "bg-status-success",
     label: "Resolved",
+    showInList: true,
+  },
+  archived: {
+    icon: Archive,
+    className: "text-muted-foreground",
+    dotClassName: "bg-muted-foreground",
+    label: "Archived",
     showInList: true,
   },
 };
@@ -166,6 +175,7 @@ const IN_PROGRESS_STATUSES = new Set([
   "in_review",
 ]);
 const RESOLVED_STATUSES = new Set(["resolved", "closed"]);
+const ARCHIVED_STATUSES = new Set(["archived"]);
 const LIST_SECTION_ORDER: DisplayStatus[] = ["in_progress", "open", "resolved"];
 
 // ---------------------------------------------------------------------------
@@ -212,6 +222,7 @@ function relativeTime(dateStr: string) {
 }
 
 function toDisplayStatus(status: string): DisplayStatus {
+  if (ARCHIVED_STATUSES.has(status)) return "archived";
   if (RESOLVED_STATUSES.has(status)) return "resolved";
   if (IN_PROGRESS_STATUSES.has(status)) return "in_progress";
   return "open";
@@ -941,6 +952,9 @@ function ListItemContextMenu({
         navigator.clipboard.writeText(item.id);
         toast.success("ID copied to clipboard");
         break;
+      case "archive":
+        onUpdateStatus(item.id, "archived");
+        break;
       case "delete": {
         const ok = await confirmDelete({
           description: "Delete this feedback item? This cannot be undone.",
@@ -1039,6 +1053,17 @@ function ListItemContextMenu({
           >
             <Hash className="h-3.5 w-3.5" />
             Copy ID
+          </Button>
+
+          <Button
+            type="button"
+            variant="ghost"
+            size="default"
+            className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-xs text-foreground hover:bg-muted transition-colors"
+            onClick={() => handleAction("archive")}
+          >
+            <Archive className="h-3.5 w-3.5" />
+            Archive
           </Button>
 
           <div className="my-1 h-px bg-border" />
