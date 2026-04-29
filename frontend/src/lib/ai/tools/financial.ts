@@ -2,7 +2,7 @@ import { tool } from "ai";
 import { z } from "zod";
 import { createServiceClient } from "@/lib/supabase/service";
 import { createToolGuardrails, type ToolGuardrails } from "./guardrails";
-import { type ToolTracePayload, asNumber, resolveProject } from "./tool-utils";
+import { type ToolTracePayload, asNumber, resolveProject, withTrace as _withTrace } from "./tool-utils";
 
 type AnyRow = Record<string, unknown>;
 
@@ -42,33 +42,12 @@ function withTrace<TInput extends Record<string, unknown>, TResult>(
   options: CreateFinancialToolsOptions,
   execute: (input: TInput) => Promise<TResult>,
 ) {
-  return async (input: TInput): Promise<TResult> => {
-    try {
-      const output = await execute(input);
-      options.onTrace?.({
-        tool: name,
-        input,
-        output,
-        timestamp: new Date().toISOString(),
-      });
-      return output;
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Unknown tool error";
-      options.onTrace?.({
-        tool: name,
-        input,
-        error: message,
-        timestamp: new Date().toISOString(),
-      });
-      return {
-        error: message,
-        source: name,
-        guidance:
-          "This financial data source failed during retrieval. Be explicit about the missing source and do not invent totals.",
-      } as TResult;
-    }
-  };
+  return _withTrace(
+    name,
+    options,
+    execute,
+    "This financial data source failed during retrieval. Be explicit about the missing source and do not invent totals.",
+  );
 }
 
 /** Loads pending prime change-order line allocations, or an empty set when the legacy table is absent. */

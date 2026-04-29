@@ -3,7 +3,7 @@ import { z } from "zod";
 import { createServiceClient } from "@/lib/supabase/service";
 import OpenAI from "openai";
 import { createToolGuardrails, type ToolGuardrails } from "./guardrails";
-import { type ToolTracePayload, asNumber, resolveProject } from "./tool-utils";
+import { type ToolTracePayload, asNumber, resolveProject, withTrace as _withTrace } from "./tool-utils";
 import {
   searchMemories as searchAiMemories,
   writeMemory as writeAiMemory,
@@ -25,33 +25,12 @@ function withTrace<TInput extends Record<string, unknown>, TResult>(
   options: CreateOperationalToolsOptions,
   execute: (input: TInput) => Promise<TResult>,
 ) {
-  return async (input: TInput): Promise<TResult> => {
-    try {
-      const output = await execute(input);
-      options.onTrace?.({
-        tool: name,
-        input,
-        output,
-        timestamp: new Date().toISOString(),
-      });
-      return output;
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Unknown tool error";
-      options.onTrace?.({
-        tool: name,
-        input,
-        error: message,
-        timestamp: new Date().toISOString(),
-      });
-      return {
-        error: message,
-        source: name,
-        guidance:
-          "This operational knowledge source failed during retrieval. Explain the gap plainly and use other available sources before asking for more detail.",
-      } as TResult;
-    }
-  };
+  return _withTrace(
+    name,
+    options,
+    execute,
+    "This operational knowledge source failed during retrieval. Explain the gap plainly and use other available sources before asking for more detail.",
+  );
 }
 
 // ---------------------------------------------------------------------------

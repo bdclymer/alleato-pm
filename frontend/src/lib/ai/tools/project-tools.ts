@@ -5,35 +5,17 @@ import { createFinancialTools } from "./financial";
 import { createAcumaticaTools } from "./acumatica";
 import { createOperationalTools } from "./operational";
 import { createToolGuardrails } from "./guardrails";
+import { type ToolTracePayload, asNumber, withTrace as _withTrace } from "./tool-utils";
 
 // Existing AI tool outputs are heterogeneous Supabase rows from many tables/views.
 // Keep this broad row shape until the tool layer is split into typed modules.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyRow = Record<string, any>;
 
-type ToolTracePayload = {
-  tool: string;
-  input: Record<string, unknown>;
-  output?: unknown;
-  error?: string;
-  timestamp: string;
-};
-
 export type CreateProjectToolsOptions = {
   onTrace?: (trace: ToolTracePayload) => void;
   pinnedProjectId?: number;
 };
-
-function asNumber(value: unknown): number {
-  if (typeof value === "number") {
-    return Number.isFinite(value) ? value : 0;
-  }
-  if (typeof value === "string") {
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : 0;
-  }
-  return 0;
-}
 
 function isMissingBudgetViewError(error: unknown): boolean {
   const serialized = JSON.stringify(error ?? {});
@@ -149,33 +131,12 @@ function withTrace<TInput extends Record<string, unknown>, TResult>(
   options: CreateProjectToolsOptions,
   execute: (input: TInput) => Promise<TResult>,
 ) {
-  return async (input: TInput): Promise<TResult> => {
-    try {
-      const output = await execute(input);
-      options.onTrace?.({
-        tool: name,
-        input,
-        output,
-        timestamp: new Date().toISOString(),
-      });
-      return output;
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Unknown tool error";
-      options.onTrace?.({
-        tool: name,
-        input,
-        error: message,
-        timestamp: new Date().toISOString(),
-      });
-      return {
-        error: message,
-        source: name,
-        guidance:
-          "This data source failed during retrieval. Tell the user exactly what could not be checked, then continue with any other successful sources instead of ending the response.",
-      } as TResult;
-    }
-  };
+  return _withTrace(
+    name,
+    options,
+    execute,
+    "This data source failed during retrieval. Tell the user exactly what could not be checked, then continue with any other successful sources instead of ending the response.",
+  );
 }
 
 export function createProjectTools(
