@@ -176,7 +176,7 @@ def _create_section_chunks(
         prefix = f"[{meeting_title}] {section_name}:\n\n"
         text_parts = _split_text(prefix + content)
 
-        for part_idx, text in enumerate(text_parts):
+        for text in text_parts:
             chunks.append(DocumentChunk(
                 content=text,
                 chunk_index=chunk_idx,
@@ -194,7 +194,7 @@ def _create_section_chunks(
         prefix = f"[{meeting_title}] Notes — {topic_name}:\n\n"
         text_parts = _split_text(prefix + topic_content)
 
-        for part_idx, text in enumerate(text_parts):
+        for text in text_parts:
             chunks.append(DocumentChunk(
                 content=text,
                 chunk_index=chunk_idx,
@@ -459,10 +459,8 @@ def _get_existing_chunks_by_hash(client, metadata_id: str) -> Dict[str, str]:
         .execute()
     )
     existing = existing_resp.data or []
-    by_hash: Dict[str, str] = {}
-    for row in existing:
-        content_hash = row.get("content_hash")
-        cid = row.get("chunk_id")
-        if content_hash and cid:
-            by_hash[content_hash] = cid
-    return by_hash
+    return {
+        row["content_hash"]: row["chunk_id"]
+        for row in existing
+        if row.get("content_hash") and row.get("chunk_id")
+    }

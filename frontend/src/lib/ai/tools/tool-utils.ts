@@ -56,16 +56,19 @@ export function isBriefingQuery(query: string): boolean {
   ].some((kw) => q.includes(kw));
 }
 
+const BRIEFING_SOURCE_PRIORITY: Record<string, number> = {
+  meeting_transcript: 0,
+  meeting_summary: 1,
+  email: 2,
+  teams_channel: 3,
+  teams_message: 4,
+  teams_dm: 5,
+  insight: 6,
+  knowledge_base: 7,
+};
+
 export function rankBriefingSourcePriority(sourceTable: string): number {
-  if (sourceTable === "meeting_transcript") return 0;
-  if (sourceTable === "meeting_summary") return 1;
-  if (sourceTable === "email") return 2;
-  if (sourceTable === "teams_channel") return 3;
-  if (sourceTable === "teams_message") return 4;
-  if (sourceTable === "teams_dm") return 5;
-  if (sourceTable === "insight") return 6;
-  if (sourceTable === "knowledge_base") return 7;
-  return 8;
+  return BRIEFING_SOURCE_PRIORITY[sourceTable] ?? 8;
 }
 
 /** Rerank candidates using LLM as cross-encoder. Returns indices sorted by relevance. */
