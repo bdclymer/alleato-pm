@@ -3,6 +3,8 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { toNumber, roundMoney, asIsoDate, getMaxDate } from "@/lib/accounting/utils";
+import { calculateWipPosition, isClosedInvoiceStatus } from "@/lib/accounting/wip-calculator";
 
 type BudgetLine = {
   project_code: string;
@@ -72,35 +74,6 @@ type WipSummary = {
   forecastGrossProfit: number;
 };
 
-function toNumber(value: number | null | undefined): number {
-  return Number(value ?? 0);
-}
-
-function roundMoney(value: number): number {
-  return Math.round(value * 100) / 100;
-}
-
-function asIsoDate(value: string | null | undefined): string | null {
-  if (!value) return null;
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return null;
-  return parsed.toISOString();
-}
-
-function getMaxDate(values: Array<string | null | undefined>): string | null {
-  let maxTs = 0;
-  for (const value of values) {
-    const parsed = asIsoDate(value);
-    if (!parsed) continue;
-    const ts = new Date(parsed).getTime();
-    if (ts > maxTs) maxTs = ts;
-  }
-  return maxTs ? new Date(maxTs).toISOString() : null;
-}
-
-function isClosedInvoiceStatus(status: string | null): boolean {
-  return status === "Voided";
-}
 
 function getInvoiceSignedAmount(invoice: ArInvoiceRow): number {
   const amount = toNumber(invoice.amount);
@@ -279,13 +252,8 @@ export const GET = withApiGuardrails("/api/accounting/wip#GET", async () => {
     const estimatedFinalCost = aggregate.estimatedFinalCost > 0
       ? aggregate.estimatedFinalCost
       : aggregate.costsToDate + aggregate.costToComplete;
-    const percentCompleteRaw = estimatedFinalCost > 0
-      ? aggregate.costsToDate / estimatedFinalCost
-      : 0;
-    const percentComplete = Math.min(Math.max(percentCompleteRaw, 0), 1);
-    const earnedRevenue = contractValue * percentComplete;
     const billedToDate = invoiceAgg?.billedToDate ?? 0;
-    const overUnderBilling = billedToDate - earnedRevenue;
+    const wip = calculateWipPosition(contractValue, aggregate.costsToDate, estimatedFinalCost, billedToDate);
     const forecastGrossProfit = contractValue - estimatedFinalCost;
     const forecastGrossMarginPct = contractValue !== 0
       ? (forecastGrossProfit / contractValue) * 100
@@ -293,13 +261,6 @@ export const GET = withApiGuardrails("/api/accounting/wip#GET", async () => {
     const costVariance = aggregate.explicitVariance !== 0
       ? aggregate.explicitVariance
       : aggregate.revisedCostBudget - estimatedFinalCost;
-
-    const wipPosition: WipRow["wipPosition"] =
-      overUnderBilling > 0.01
-        ? "overbilled"
-        : overUnderBilling < -0.01
-          ? "underbilled"
-          : "balanced";
 
     const row: WipRow = {
       projectCode: aggregate.projectCode,
@@ -314,13 +275,13 @@ export const GET = withApiGuardrails("/api/accounting/wip#GET", async () => {
       costToComplete: roundMoney(aggregate.costToComplete),
       estimatedFinalCost: roundMoney(estimatedFinalCost),
       costVariance: roundMoney(costVariance),
-      percentComplete: roundMoney(percentComplete),
-      earnedRevenue: roundMoney(earnedRevenue),
+      percentComplete: wip.percentComplete,
+      earnedRevenue: wip.earnedRevenue,
       billedToDate: roundMoney(billedToDate),
-      overUnderBilling: roundMoney(overUnderBilling),
+      overUnderBilling: wip.overUnderBilling,
       forecastGrossProfit: roundMoney(forecastGrossProfit),
       forecastGrossMarginPct: roundMoney(forecastGrossMarginPct),
-      wipPosition,
+      wipPosition: wip.position,
       budgetLineCount: aggregate.budgetLineCount,
       latestSyncAt: getMaxDate([
         aggregate.latestSyncAt,

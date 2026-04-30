@@ -27,6 +27,36 @@ logger = logging.getLogger(__name__)
 scheduler: Optional[AsyncIOScheduler] = None
 
 
+class ConfigurationError(RuntimeError):
+    """Raised when a required env var is absent at scheduler start-up.
+
+    Catching this separately from generic exceptions lets job wrappers
+    distinguish permanent misconfiguration (remove the job, log CRITICAL)
+    from transient failures (keep scheduled, log WARNING).
+    """
+
+
+def validate_scheduler_config() -> None:
+    """Check required env vars before any jobs are registered.
+
+    Raises ConfigurationError naming the missing var so a misconfigured
+    deployment fails loudly at start-up rather than appearing healthy
+    while silently skipping every run.
+    """
+    checks = [
+        # (enabled_var, required_var, job_label)
+        ("FIREFLIES_SYNC_ENABLED", "FIREFLIES_API_KEY", "Fireflies sync"),
+        ("ACUMATICA_FINANCIAL_SYNC_ENABLED", "ACUMATICA_SERVICE_URL", "Acumatica financial sync"),
+    ]
+    for enabled_var, required_var, job_label in checks:
+        job_enabled = os.getenv(enabled_var, "true").lower() not in ("0", "false", "no")
+        if job_enabled and not os.getenv(required_var):
+            raise ConfigurationError(
+                f"{job_label} is enabled but {required_var} is not set. "
+                f"Set {required_var} or disable the job with {enabled_var}=false."
+            )
+
+
 def init_scheduler() -> None:
     """Initialize and start the scheduler. Called from FastAPI startup."""
     global scheduler
@@ -35,6 +65,7 @@ def init_scheduler() -> None:
         logger.info("[Scheduler] Disabled via DISABLE_SCHEDULER env var")
         return
 
+    validate_scheduler_config()
     scheduler = AsyncIOScheduler()
 
     # Fireflies transcript sync — every 15 minutes by default
@@ -145,8 +176,12 @@ async def run_fireflies_sync_job(limit: int = 10) -> None:
             result.get("processed", 0) - result.get("error_count", 0),
             result.get("error_count", 0),
         )
+    except ConfigurationError as e:
+        logger.critical("[Scheduler] Fireflies sync disabled — fix config and restart: %s", e)
+        if scheduler:
+            scheduler.remove_job("fireflies_sync")
     except Exception as e:
-        logger.error("[Scheduler] Fireflies sync failed: %s", e, exc_info=True)
+        logger.warning("[Scheduler] Fireflies sync failed (will retry): %s", e, exc_info=True)
 
 
 async def run_daily_digest_job() -> None:
@@ -172,8 +207,12 @@ async def run_daily_digest_job() -> None:
         recipients = _get_daily_recipients()
         if recipients and result.get("recap_id"):
             _send_recap_email(recipients, result)
+    except ConfigurationError as e:
+        logger.critical("[Scheduler] Daily digest disabled — fix config and restart: %s", e)
+        if scheduler:
+            scheduler.remove_job("daily_digest")
     except Exception as e:
-        logger.error("[Scheduler] Daily digest job failed: %s", e, exc_info=True)
+        logger.warning("[Scheduler] Daily digest job failed (will retry): %s", e, exc_info=True)
 
 
 async def run_acumatica_financial_sync_job() -> None:
@@ -187,8 +226,12 @@ async def run_acumatica_financial_sync_job() -> None:
         logger.info("[Scheduler] Acumatica financial sync complete: %s", result.get("status"))
         if result.get("errors"):
             logger.warning("[Scheduler] Acumatica financial sync reported errors: %s", result["errors"])
+    except ConfigurationError as e:
+        logger.critical("[Scheduler] Acumatica financial sync disabled — fix config and restart: %s", e)
+        if scheduler:
+            scheduler.remove_job("acumatica_financial_sync")
     except Exception as e:
-        logger.error("[Scheduler] Acumatica financial sync failed: %s", e, exc_info=True)
+        logger.warning("[Scheduler] Acumatica financial sync failed (will retry): %s", e, exc_info=True)
 
 
 def _run_fireflies_sync(limit: int = 10):
@@ -232,8 +275,12 @@ async def run_graph_sync_job() -> None:
         )
         if result.get("errors"):
             logger.warning("[Scheduler] Graph sync reported errors: %s", result["errors"])
+    except ConfigurationError as e:
+        logger.critical("[Scheduler] Microsoft Graph sync disabled — fix config and restart: %s", e)
+        if scheduler:
+            scheduler.remove_job("graph_sync")
     except Exception as e:
-        logger.error("[Scheduler] Microsoft Graph sync failed: %s", e, exc_info=True)
+        logger.warning("[Scheduler] Microsoft Graph sync failed (will retry): %s", e, exc_info=True)
 
 
 def _run_graph_sync():

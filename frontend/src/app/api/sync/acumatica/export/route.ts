@@ -9,7 +9,7 @@ import {
   exportOwnerInvoicesToAcumatica,
   exportPaymentApplicationsToAcumatica,
   exportPrimeContractsToAcumatica,
-} from "@/lib/acumatica/sync";
+} from "@/lib/acumatica/export-service";
 
 type ExportEntity =
   | "commitments"

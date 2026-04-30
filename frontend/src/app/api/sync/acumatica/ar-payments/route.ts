@@ -3,7 +3,7 @@ import { z } from "zod";
 import { parseJsonBody, withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
-import { syncARPayments } from "@/lib/acumatica/sync";
+import { syncARPayments } from "@/lib/acumatica/sync-service";
 
 /**
  * POST /api/sync/acumatica/ar-payments

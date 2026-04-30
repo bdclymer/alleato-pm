@@ -15,7 +15,7 @@ import {
   syncARPayments,
   syncDirectCosts,
   syncVendors,
-} from "@/lib/acumatica/sync";
+} from "@/lib/acumatica/sync-service";
 import type { Database } from "@/types/database.types";
 import type { Json } from "@/types/database.types";
 

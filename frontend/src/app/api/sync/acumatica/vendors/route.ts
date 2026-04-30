@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
-import { syncVendors } from "@/lib/acumatica/sync";
+import { syncVendors } from "@/lib/acumatica/sync-service";
 
 /**
  * POST /api/sync/acumatica/vendors
