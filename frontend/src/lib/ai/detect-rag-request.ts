@@ -10,6 +10,10 @@
  * via detectSourceSpecificRagRequest is the only data path for queries that match
  * known patterns. Keeping this logic in a standalone module makes it testable and
  * prevents silent regression when patterns are added or removed.
+ *
+ * TODO(tool-reenable): This entire module is a workaround for the AI Gateway
+ * finishReason:other bug (modelTools = undefined). When tools are re-enabled,
+ * delete this file and restore the tool-calling path in chat/route.ts.
  */
 
 export type SourceSpecificRagKind =
@@ -129,13 +133,9 @@ export function detectSourceSpecificRagRequest(message: string): SourceSpecificR
     (normalized.includes("conducted on friday") ||
       normalized.includes("meetings on friday") ||
       normalized.includes("held on friday") ||
-      normalized.includes("meetings were conducted") ||
-      normalized.includes("friday april 24"));
+      normalized.includes("meetings were conducted"));
   if (asksForMeetingsOnFriday) {
-    const date =
-      normalized.includes("april 24") || normalized.includes("2026-04-24")
-        ? "2026-04-24"
-        : previousWeekdayIsoDate(5);
+    const date = previousWeekdayIsoDate(5);
     return {
       kind: "meetings_on_date",
       label: "Meeting transcripts",

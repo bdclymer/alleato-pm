@@ -49,7 +49,6 @@ import type {
   AgentName,
   AgentResponse,
   ConfidenceLevel,
-  RoutingDecision,
 } from "@/lib/ai/agents/types";
 
 type StrategistToolOptions = CreateProjectToolsOptions &
@@ -83,8 +82,9 @@ export interface AgentConfig {
    * Receives the userId so tools can scope data access.
    * Optionally receives onTrace so sub-agent tool calls are reported
    * back to the top-level trace collector.
+   * Omit to use the default createProjectTools(userId, options).
    */
-  createTools: (
+  createTools?: (
     userId: string,
     options?: StrategistToolOptions,
   ) => ToolSet;
@@ -190,19 +190,6 @@ export const agentRegistry: Record<string, AgentConfig> = {
       "project budget",
       "project list",
     ],
-    createTools: (userId: string, options?: StrategistToolOptions) => {
-      // CFO gets the full project tools which include:
-      // - Base tools: portfolio overview, risk analysis, financial analysis,
-      //   budget summary, action items, document search, project details
-      // - Financial tools: commitments overview, change order details,
-      //   direct costs summary, budget line items, cost trends, margin analysis
-      // - Acumatica ERP tools: AP/AR aging, cash position, vendor spend,
-      //   recent bills, recent invoices, purchase order summary (LIVE data)
-      // - Operational tools: schedule analysis, people & roles, vendor performance,
-      //   RFI status, submittal status, cross-project comparison, historical trends,
-      //   forecast comparison, semantic search, company knowledge
-      return createProjectTools(userId, options);
-    },
   },
 
   coo: {
@@ -273,13 +260,6 @@ export const agentRegistry: Record<string, AgentConfig> = {
       "blocker",
       "bottleneck",
     ],
-    createTools: (userId: string, options?: StrategistToolOptions) => {
-      // COO gets the full project tools which include all operational tools:
-      // schedule analysis, people & roles, vendor performance, RFI status,
-      // submittal status, cross-project comparison, historical trends,
-      // action items, meeting search, and semantic search.
-      return createProjectTools(userId, options);
-    },
   },
 
   cro: {
@@ -344,13 +324,6 @@ export const agentRegistry: Record<string, AgentConfig> = {
       "risk signal",
       "risk signals",
     ],
-    createTools: (userId: string, options?: StrategistToolOptions) => {
-      // CRO gets the full project tools which include all risk-related tools:
-      // getProjectsWithRisks, getProjectRiskAnalysis, getPortfolioOverview,
-      // getRFIStatus, getSubmittalStatus, getChangeOrderDetails, budget summary,
-      // meeting search, action items, and semantic search.
-      return createProjectTools(userId, options);
-    },
   },
 
   chro: {
@@ -445,13 +418,6 @@ export const agentRegistry: Record<string, AgentConfig> = {
       "how does",
       "opinion",
     ],
-    createTools: (userId: string, options?: StrategistToolOptions) => {
-      // CHRO gets the full project tools which include:
-      // getPeopleAndRoles, getActionItemsAndInsights, getCrossProjectComparison,
-      // getVendorPerformance, getPortfolioOverview, searchMeetingsByTopic,
-      // getMeetingDetails, getCompanyKnowledge, and semanticSearch.
-      return createProjectTools(userId, options);
-    },
   },
 
   vpbd: {
@@ -551,84 +517,6 @@ export const agentRegistry: Record<string, AgentConfig> = {
 };
 
 // ---------------------------------------------------------------------------
-// Route Detection
-// ---------------------------------------------------------------------------
-
-/**
- * Keyword-based intent detection.
- *
- * Analyzes the user's message and returns which agent(s) to consult.
- * This is a simple first pass — later we can upgrade to Claude-powered
- * routing for ambiguous or multi-domain questions.
- */
-export function detectRoute(message: string): RoutingDecision {
-  const text = message.toLowerCase();
-  const matches: Array<{ agent: AgentName; score: number }> = [];
-
-  for (const [agentId, config] of Object.entries(agentRegistry)) {
-    let score = 0;
-    for (const keyword of config.triggerKeywords) {
-      // Use word-boundary-aware matching for short keywords
-      if (keyword.length <= 4) {
-        const regex = new RegExp(`\\b${escapeRegex(keyword)}\\b`, "i");
-        if (regex.test(text)) {
-          score += 1;
-        }
-      } else {
-        if (text.includes(keyword.toLowerCase())) {
-          score += 1;
-        }
-      }
-    }
-    if (score > 0) {
-      matches.push({ agent: agentId as AgentName, score });
-    }
-  }
-
-  // Sort by score descending
-  matches.sort((a, b) => b.score - a.score);
-
-  if (matches.length === 0) {
-    return {
-      agents: [],
-      rationale: "No specialist matched. Strategist will handle directly.",
-      requiresSynthesis: false,
-      query: message,
-    };
-  }
-
-  // If top match has a significant lead, single-agent route.
-  // If multiple agents are close, multi-agent route.
-  const top = matches[0];
-  const runnerUp = matches[1];
-  const isMultiAgent =
-    runnerUp !== undefined && runnerUp.score >= top.score * 0.6;
-
-  if (isMultiAgent) {
-    const agents = matches
-      .filter((m) => m.score >= top.score * 0.4)
-      .map((m) => m.agent);
-    return {
-      agents,
-      rationale: `Cross-domain question. Consulting: ${agents.join(", ")}`,
-      requiresSynthesis: true,
-      query: message,
-    };
-  }
-
-  return {
-    agents: [top.agent],
-    rationale: `Single-domain question routed to ${top.agent} (score: ${top.score})`,
-    requiresSynthesis: false,
-    query: message,
-  };
-}
-
-function escapeRegex(str: string): string {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-// ---------------------------------------------------------------------------
 // Agent Execution
 // ---------------------------------------------------------------------------
 
@@ -670,10 +558,13 @@ export async function consultAgent(
 
   // Build the agent's tools with tracing — thread onTrace so sub-agent
   // tool calls are reported back to the top-level trace collector
-  const agentTools = config.createTools(userId, {
+  const toolOptions = {
     onTrace: options?.onTrace,
     pinnedProjectId: options?.pinnedProjectId,
-  });
+  };
+  const agentTools = config.createTools
+    ? config.createTools(userId, toolOptions)
+    : createProjectTools(userId, toolOptions);
 
   const userMessage = context
     ? `Context from the Chief Strategist:\n${context}\n\nQuestion:\n${question}`

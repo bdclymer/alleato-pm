@@ -2041,6 +2041,8 @@ export const POST = withApiGuardrails(
           },
         });
 
+        // TODO(tool-reenable): remove this branch; let the model call the tool
+        // instead. This block exists solely because modelTools = undefined.
         if (sourceSpecificRagRequest) {
           writeStrategistStatus(writer, {
             stage: "knowledge",
@@ -2555,8 +2557,9 @@ export const POST = withApiGuardrails(
         // causing empty text and triggering the failure chain. Always disable
         // tools — all context is already injected into systemPrompt server-side.
         const mcpToolBundle = null;
-        // modelTools is always undefined: passing tools triggers the AI Gateway
-        // bug regardless of whether deterministic retrieval succeeded.
+        // TODO(tool-reenable): restore modelTools here when AI Gateway
+        // finishReason:other bug is fixed. modelTools is always undefined:
+        // passing tools triggers the bug regardless of retrieval outcome.
         const modelTools = undefined;
         const result = streamText({
             model: getLanguageModel(activeModel),
