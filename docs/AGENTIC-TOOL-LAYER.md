@@ -43,7 +43,10 @@ Tools that already work (read/analyze):
 | `project-tools.ts` | Portfolio overview, risk analysis, financial analysis, budget summary |
 | `financial.ts` | Commitments, change orders, direct costs, budget trends, margin |
 | `acumatica.ts` | Live AP/AR aging, cash position, vendor spend, purchase orders |
-| `operational.ts` | Schedule, people, vendors, RFIs, submittals, semantic search |
+| `operational.ts` | People/roles, vendors, RFIs, submittals, cross-project comparison, semantic search, meeting/memory tools |
+| `schedule-tools.ts` | Schedule health: overdue tasks, milestones at risk, critical path, % complete |
+| `forecast-tools.ts` | Budget forecast vs actuals comparison per cost code |
+| `app-help-tools.ts` | Help center article search and navigation action lookup |
 | `web-search.ts` | External web search |
 | `create-document.ts` | Document creation (partially built) |
 | `update-document.ts` | Document updates (partially built) |

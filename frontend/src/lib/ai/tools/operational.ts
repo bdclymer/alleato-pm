@@ -2,15 +2,13 @@ import { tool } from "ai";
 import { z } from "zod";
 import { createServiceClient } from "@/lib/supabase/service";
 import { createToolGuardrails, type ToolGuardrails } from "./guardrails";
-import { type ToolTracePayload, asNumber, resolveProject, withTrace as _withTrace, getOpenAI, getOpenAIModelId } from "./tool-utils";
+import { type ToolTracePayload, asNumber, resolveProject, withTrace as _withTrace, getOpenAI, getOpenAIModelId, generateEmbedding, EMBEDDING, isBriefingQuery, rerankWithLLM, rankBriefingSourcePriority } from "./tool-utils";
 import {
   searchMemories as searchAiMemories,
   writeMemory as writeAiMemory,
   type MemoryType,
   type MemoryVisibility,
 } from "@/lib/ai/services/ai-memory-service";
-import { getHelpActionsForIds } from "@/lib/help-actions";
-import { searchHelpArticles } from "@/lib/help-articles";
 
 type AnyRow = Record<string, unknown>;
 
@@ -31,102 +29,6 @@ function withTrace<TInput extends Record<string, unknown>, TResult>(
     "This operational knowledge source failed during retrieval. Explain the gap plainly and use other available sources before asking for more detail.",
   );
 }
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-/** Rerank candidates using LLM as cross-encoder. Returns indices sorted by relevance. */
-/** Keywords that signal a PM briefing intent — used to tune ranking and recall. */
-function isBriefingQuery(query: string): boolean {
-  const q = query.toLowerCase();
-  return [
-    "latest",
-    "brief",
-    "briefing",
-    "catch me up",
-    "update",
-    "what's happening",
-    "what is happening",
-    "status",
-    "how is",
-    "how's",
-    "progress",
-    "any news",
-    "what happened",
-    "recent",
-    "risk",
-    "risks",
-    "tracking",
-    "right now",
-    "should know",
-  ].some((kw) => q.includes(kw));
-}
-
-async function rerankWithLLM(
-  query: string,
-  candidates: Array<{ content: string; sourceTable: string }>,
-  topK: number = 10,
-): Promise<number[]> {
-  try {
-    const openai = getOpenAI();
-    const candidateList = candidates
-      .slice(0, 20)
-      .map((c, i) => `[${i}] (${c.sourceTable}) ${c.content.substring(0, 300)}`)
-      .join("\n\n");
-
-    // PM briefings need recent meeting content surfaced above older generic docs.
-    const briefingHint = isBriefingQuery(query)
-      ? " For project status or briefing queries, prefer recent meeting transcripts, emails, and Teams messages over general reference documents."
-      : "";
-
-    const response = await openai.chat.completions.create({
-      model: getOpenAIModelId("gpt-4.1-mini"),
-      temperature: 0,
-      max_tokens: 200,
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are a relevance judge for a construction project management assistant. " +
-            "Given a query and numbered text passages, return ONLY a JSON array of passage " +
-            "indices sorted by relevance to the query, most relevant first. " +
-            "Include only passages that are actually relevant." +
-            briefingHint +
-            " Example output: [3, 0, 7, 1]",
-        },
-        {
-          role: "user",
-          content: `Query: ${query}\n\nPassages:\n${candidateList}`,
-        },
-      ],
-    });
-
-    const text = response.choices[0]?.message?.content?.trim() || "[]";
-    // Strip any markdown code fences the model may add
-    const jsonText = text.replace(/^```[a-z]*\n?/i, "").replace(/\n?```$/i, "").trim();
-    const indices = JSON.parse(jsonText) as number[];
-    return indices
-      .filter((i) => typeof i === "number" && i >= 0 && i < candidates.length)
-      .slice(0, topK);
-  } catch {
-    // Fallback: return original order
-    return candidates.slice(0, topK).map((_, i) => i);
-  }
-}
-
-function rankBriefingSourcePriority(sourceTable: string): number {
-  if (sourceTable === "meeting_transcript") return 0;
-  if (sourceTable === "meeting_summary") return 1;
-  if (sourceTable === "email") return 2;
-  if (sourceTable === "teams_channel") return 3;
-  if (sourceTable === "teams_message") return 4;
-  if (sourceTable === "teams_dm") return 5;
-  if (sourceTable === "insight") return 6;
-  if (sourceTable === "knowledge_base") return 7;
-  return 8;
-}
-
 
 // ---------------------------------------------------------------------------
 // Factory
@@ -151,243 +53,6 @@ export function createOperationalTools(
         `I can still use meetings, project records, and documents you have access to.`,
     };
   }
-
-  return {
-    // -----------------------------------------------------------------------
-    // 0. App Help
-    // -----------------------------------------------------------------------
-    searchAppHelp: tool({
-      description:
-        "Search the controlled Alleato OS help center for instructions on how " +
-        "to use this application. Use this first for questions like 'how do I', " +
-        "'where do I', 'show me how to', app setup, user management, profile " +
-        "settings, permissions, and feature walkthroughs. Only published " +
-        "AI-visible help articles are returned.",
-      inputSchema: z.object({
-        query: z
-          .string()
-          .describe("The user's app-help question or feature name to search for."),
-        category: z
-          .string()
-          .optional()
-          .describe("Optional help category filter when the user names a category."),
-        limit: z
-          .number()
-          .int()
-          .min(1)
-          .max(8)
-          .optional()
-          .default(5)
-          .describe("Maximum number of help articles to return."),
-      }),
-      execute: withTrace(
-        "searchAppHelp",
-        options,
-        async ({ query, category, limit }) => {
-          const matches = await searchHelpArticles(query, {
-            defaultAiHelpOnly: true,
-            category,
-            limit,
-          });
-
-          return {
-            query,
-            category: category ?? "all",
-            resultCount: matches.length,
-            results: matches.map(({ article, score, excerpt }) => ({
-              sourceLabel: "App Help",
-              knowledgeType: "app_help",
-              title: article.frontmatter.title,
-              description: article.frontmatter.description,
-              href: article.href,
-              module: article.frontmatter.module,
-              category: article.frontmatter.category,
-              tags: article.frontmatter.tags,
-              relatedRoutes: article.frontmatter.related_routes,
-              relatedActions: article.frontmatter.related_actions,
-              actionCapabilities: getHelpActionsForIds(
-                article.frontmatter.related_actions,
-              ).map((action) => ({
-                id: action.id,
-                label: action.label,
-                description: action.description,
-                status: action.status,
-                safetyLevel: action.safetyLevel,
-                toolName: action.toolName ?? null,
-                unavailableReason: action.unavailableReason ?? null,
-              })),
-              score,
-              excerpt,
-            })),
-            message:
-              matches.length > 0
-                ? `Found ${matches.length} app help article(s).`
-                : "No AI-visible help article matched that question yet.",
-          };
-        },
-      ),
-    }),
-
-    // -----------------------------------------------------------------------
-    // 1. Schedule Analysis
-    // -----------------------------------------------------------------------
-    getScheduleAnalysis: tool({
-      description:
-        "Analyze the project schedule: overdue tasks, milestones at risk, " +
-        "critical path items, completion percentage, and task dependencies. " +
-        "Use when asked about schedule, timeline, delays, milestones, " +
-        "or task progress for a project.",
-      inputSchema: z.object({
-        projectId: z.number().optional().describe("Project ID if known"),
-        projectName: z
-          .string()
-          .optional()
-          .describe("Project name to search for"),
-      }),
-      execute: withTrace(
-        "getScheduleAnalysis",
-        options,
-        async ({ projectId, projectName }) => {
-          const resolved = await resolveProject(
-            supabase,
-            guardrails,
-            projectId,
-            projectName,
-          );
-          if ("error" in resolved) return resolved;
-
-          const tasksRes = await supabase
-            .from("schedule_tasks")
-            .select("*")
-            .eq("project_id", resolved.id)
-            .order("start_date", { ascending: true })
-            .limit(200);
-
-          const tasks = (tasksRes.data ?? []) as AnyRow[];
-
-          // schedule_dependencies has no project_id column, so
-          // fetch deps scoped to the task IDs we already loaded
-          const taskIds = tasks.map((t) => t.id as string);
-          let deps: AnyRow[] = [];
-          if (taskIds.length > 0) {
-            const depsRes = await supabase
-              .from("schedule_dependencies")
-              .select("*")
-              .in("task_id", taskIds)
-              .limit(1000);
-            deps = (depsRes.data ?? []) as AnyRow[];
-          }
-          const now = new Date().toISOString().split("T")[0];
-
-          // Analytics
-          const totalTasks = tasks.length;
-          const completedTasks = tasks.filter(
-            (t) =>
-              t.status === "completed" || asNumber(t.percent_complete) >= 100,
-          );
-          const overdueTasks = tasks.filter(
-            (t) =>
-              t.finish_date &&
-              (t.finish_date as string) < now &&
-              t.status !== "completed" &&
-              asNumber(t.percent_complete) < 100,
-          );
-          const milestones = tasks.filter((t) => t.is_milestone);
-          const milestonesAtRisk = milestones.filter(
-            (t) =>
-              t.finish_date &&
-              (t.finish_date as string) < now &&
-              t.status !== "completed",
-          );
-          const upcomingMilestones = milestones
-            .filter(
-              (t) =>
-                t.finish_date &&
-                (t.finish_date as string) >= now &&
-                t.status !== "completed",
-            )
-            .slice(0, 10);
-
-          // Average completion
-          const avgCompletion =
-            totalTasks > 0
-              ? Math.round(
-                  tasks.reduce(
-                    (sum, t) => sum + asNumber(t.percent_complete),
-                    0,
-                  ) / totalTasks,
-                )
-              : 0;
-
-          // Tasks starting soon (next 14 days)
-          const twoWeeksOut = new Date();
-          twoWeeksOut.setDate(twoWeeksOut.getDate() + 14);
-          const twoWeeksStr = twoWeeksOut.toISOString().split("T")[0];
-          const upcomingTasks = tasks.filter(
-            (t) =>
-              t.start_date &&
-              (t.start_date as string) >= now &&
-              (t.start_date as string) <= twoWeeksStr &&
-              t.status !== "completed",
-          );
-
-          // Dependency count per task (most dependencies = most critical)
-          const depCountMap = new Map<number, number>();
-          deps.forEach((d) => {
-            const taskId = d.task_id as number;
-            depCountMap.set(taskId, (depCountMap.get(taskId) ?? 0) + 1);
-          });
-          const criticalTasks = tasks
-            .filter((t) => (depCountMap.get(t.id as number) ?? 0) > 0)
-            .sort(
-              (a, b) =>
-                (depCountMap.get(b.id as number) ?? 0) -
-                (depCountMap.get(a.id as number) ?? 0),
-            )
-            .slice(0, 10);
-
-          return {
-            project: { id: resolved.id, name: resolved.name },
-            summary: {
-              totalTasks,
-              completedTasks: completedTasks.length,
-              overdueTasks: overdueTasks.length,
-              totalMilestones: milestones.length,
-              milestonesAtRisk: milestonesAtRisk.length,
-              avgCompletionPct: avgCompletion,
-              totalDependencies: deps.length,
-              upcomingTasksNext14Days: upcomingTasks.length,
-            },
-            overdueTasks: overdueTasks.slice(0, 15).map((t) => ({
-              name: t.name,
-              finishDate: t.finish_date,
-              percentComplete: t.percent_complete,
-              status: t.status,
-              isMilestone: t.is_milestone,
-              wbsCode: t.wbs_code,
-            })),
-            milestonesAtRisk: milestonesAtRisk.map((t) => ({
-              name: t.name,
-              finishDate: t.finish_date,
-              percentComplete: t.percent_complete,
-            })),
-            upcomingMilestones: upcomingMilestones.map((t) => ({
-              name: t.name,
-              finishDate: t.finish_date,
-              percentComplete: t.percent_complete,
-            })),
-            criticalPathItems: criticalTasks.map((t) => ({
-              name: t.name,
-              startDate: t.start_date,
-              finishDate: t.finish_date,
-              percentComplete: t.percent_complete,
-              dependencyCount: depCountMap.get(t.id as number) ?? 0,
-              status: t.status,
-            })),
-          };
-        },
-      ),
-    }),
 
     // -----------------------------------------------------------------------
     // 2. People & Roles
@@ -1274,132 +939,6 @@ export function createOperationalTools(
     }),
 
     // -----------------------------------------------------------------------
-    // 8. Forecast Comparison (Phase 1D)
-    // -----------------------------------------------------------------------
-    getForecastComparison: tool({
-      description:
-        "Compare original budget vs. revised budget vs. actual costs for a project. " +
-        "Shows budget line-by-line variance, cost code analysis, and over/under budget items. " +
-        "Use when asked about forecast, budget vs actual, variance analysis, " +
-        "or which cost codes are over budget.",
-      inputSchema: z.object({
-        projectId: z.number().optional().describe("Project ID if known"),
-        projectName: z
-          .string()
-          .optional()
-          .describe("Project name to search for"),
-        sortBy: z
-          .enum(["variance", "amount", "code"])
-          .optional()
-          .default("variance")
-          .describe("Sort budget lines by variance (default), amount, or code"),
-      }),
-      execute: withTrace(
-        "getForecastComparison",
-        options,
-        async ({ projectId, projectName, sortBy }) => {
-          const resolved = await resolveProject(
-            supabase,
-            guardrails,
-            projectId,
-            projectName,
-          );
-          if ("error" in resolved) return resolved;
-
-          // Fetch budget lines with full financial data
-           
-          const { data: budgetRows, error } = await supabase
-            .from("v_budget_lines" as never)
-            .select("*")
-            .eq("project_id", resolved.id) as { data: Array<Record<string, unknown>> | null; error: { message: string } | null };
-
-          if (error) return { error: error.message };
-          const lines = (budgetRows ?? []) as AnyRow[];
-
-          // Compute per-line variance
-          const enrichedLines = lines.map((line) => {
-            const original = asNumber(line.original_amount);
-            const revised = asNumber(line.revised_budget);
-            const approvedCOs = asNumber(line.approved_co_total);
-            const budgetMods = asNumber(line.budget_mod_total);
-            const variance = revised - original;
-            const variancePct =
-              original > 0
-                ? Math.round((variance / original) * 100)
-                : 0;
-
-            return {
-              costCode: line.cost_code,
-              description: line.description,
-              originalBudget: original,
-              revisedBudget: revised,
-              approvedCOs,
-              budgetModifications: budgetMods,
-              variance,
-              variancePct,
-              isOverBudget: variance > 0,
-            };
-          });
-
-          // Sort
-          if (sortBy === "variance") {
-            enrichedLines.sort(
-              (a, b) => Math.abs(b.variance) - Math.abs(a.variance),
-            );
-          } else if (sortBy === "amount") {
-            enrichedLines.sort((a, b) => b.revisedBudget - a.revisedBudget);
-          } else {
-            enrichedLines.sort((a, b) =>
-              ((a.costCode as string) ?? "").localeCompare(
-                (b.costCode as string) ?? "",
-              ),
-            );
-          }
-
-          // Portfolio totals
-          const totalOriginal = enrichedLines.reduce(
-            (sum, l) => sum + l.originalBudget,
-            0,
-          );
-          const totalRevised = enrichedLines.reduce(
-            (sum, l) => sum + l.revisedBudget,
-            0,
-          );
-          const totalVariance = totalRevised - totalOriginal;
-          const overBudgetItems = enrichedLines.filter((l) => l.isOverBudget);
-          const underBudgetItems = enrichedLines.filter(
-            (l) => l.variance < 0,
-          );
-
-          return {
-            project: { id: resolved.id, name: resolved.name },
-            summary: {
-              totalBudgetLines: lines.length,
-              totalOriginalBudget: totalOriginal,
-              totalRevisedBudget: totalRevised,
-              totalVariance,
-              variancePct:
-                totalOriginal > 0
-                  ? Math.round((totalVariance / totalOriginal) * 100)
-                  : 0,
-              overBudgetLineCount: overBudgetItems.length,
-              underBudgetLineCount: underBudgetItems.length,
-            },
-            topVariances: enrichedLines.slice(0, 20),
-            overBudgetItems: overBudgetItems.slice(0, 10).map((l) => ({
-              costCode: l.costCode,
-              description: l.description,
-              original: l.originalBudget,
-              revised: l.revisedBudget,
-              variance: l.variance,
-              variancePct: l.variancePct,
-            })),
-          };
-        },
-      ),
-    }),
-
-    // -----------------------------------------------------------------------
     // 9. Semantic Search (unified document_chunks + insights + knowledge base)
     // -----------------------------------------------------------------------
     semanticSearch: tool({
@@ -1482,13 +1021,7 @@ export function createOperationalTools(
           try {
             // All active RAG tables use halfvec(3072) — single embedding generation.
             const openai = getOpenAI();
-            const embResp3072 = await openai.embeddings.create({
-              model: getOpenAIModelId("text-embedding-3-large"),
-              dimensions: 3072,
-              input: query,
-            });
-
-            const embeddingArg3072 = JSON.stringify(embResp3072.data[0].embedding);
+            const embeddingArg3072 = await generateEmbedding(openai, query, EMBEDDING.LARGE);
             const briefing = isBriefingQuery(query);
             // Briefing queries cast a wider net (more candidates, lower threshold) so the
             // LLM reranker has recent comms to surface. Non-briefing queries use tighter defaults.
@@ -1788,7 +1321,7 @@ export function createOperationalTools(
             // LLM reranker: always re-score candidates by actual relevance to the query
             let results: typeof candidates;
             if (candidates.length > 0 && !skipRerank) {
-              const rerankedIndices = await rerankWithLLM(query, candidates, targetCount);
+              const rerankedIndices = await rerankWithLLM(openai, query, candidates, targetCount);
               results = rerankedIndices.map((i) => candidates[i]).filter(Boolean);
               // Fill remaining slots if reranker returned fewer than targetCount
               if (results.length < targetCount) {
@@ -2055,17 +1588,12 @@ export function createOperationalTools(
           try {
             const openaiClient = getOpenAI();
             // memories.embedding is vector(1536) — use text-embedding-3-small.
-            const embeddingResponse = await openaiClient.embeddings.create({
-              model: "text-embedding-3-small",
-              input: query,
-            });
-
-            const queryEmbedding = embeddingResponse.data[0].embedding;
+            const queryEmbedding = await generateEmbedding(openaiClient, query, EMBEDDING.SMALL);
 
             const { data, error } = await supabase.rpc(
               "search_conversation_memories",
               {
-                query_embedding: JSON.stringify(queryEmbedding),
+                query_embedding: queryEmbedding,
                 match_count: matchCount ?? 5,
                 filter_user_id: userId,
               },
@@ -2195,12 +1723,7 @@ export function createOperationalTools(
             (async () => {
               try {
                 const openai = getOpenAI();
-                const embResp = await openai.embeddings.create({
-                  model: "text-embedding-3-large",
-                  dimensions: 3072,
-                  input: topic,
-                });
-                const emb = JSON.stringify(embResp.data[0].embedding);
+                const emb = await generateEmbedding(openai, topic, EMBEDDING.LARGE);
                 return supabase.rpc("match_document_metadata_by_summary", {
                   query_embedding: emb,
                   match_count: targetCount * 2,
@@ -2464,12 +1987,11 @@ export function createOperationalTools(
             // Generate embedding so the entry is searchable via semantic search.
             // company_knowledge.embedding is halfvec(3072) — use text-embedding-3-large at 3072 dims.
             const openaiClient = getOpenAI();
-            const embResp = await openaiClient.embeddings.create({
-              model: getOpenAIModelId("text-embedding-3-large"),
-              dimensions: 3072,
-              input: `${title}\n\n${content}`.substring(0, 8000),
-            });
-            const embedding = JSON.stringify(embResp.data[0].embedding);
+            const embedding = await generateEmbedding(
+              openaiClient,
+              `${title}\n\n${content}`.substring(0, 8000),
+              EMBEDDING.LARGE,
+            );
 
             const { data, error } = await supabase
               .from("company_knowledge")

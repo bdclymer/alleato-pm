@@ -1,9 +1,12 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { createServiceClient } from "@/lib/supabase/service";
-import { createFinancialTools } from "./financial";
+import { createFinancialTools, isMissingBudgetViewError, fetchBudgetRowsForBriefing } from "./financial";
 import { createAcumaticaTools } from "./acumatica";
 import { createOperationalTools } from "./operational";
+import { createScheduleTools } from "./schedule-tools";
+import { createAppHelpTools } from "./app-help-tools";
+import { createForecastTools } from "./forecast-tools";
 import { createToolGuardrails } from "./guardrails";
 import { type ToolTracePayload, asNumber, withTrace as _withTrace } from "./tool-utils";
 
@@ -16,56 +19,6 @@ export type CreateProjectToolsOptions = {
   onTrace?: (trace: ToolTracePayload) => void;
   pinnedProjectId?: number;
 };
-
-function isMissingBudgetViewError(error: unknown): boolean {
-  const serialized = JSON.stringify(error ?? {});
-  return (
-    serialized.includes("v_budget_lines") ||
-    serialized.includes("PGRST205") ||
-    serialized.includes("schema cache")
-  );
-}
-
-async function fetchBudgetRowsForBriefing(
-  supabase: ReturnType<typeof createServiceClient>,
-  projectId: number,
-): Promise<{
-  data: AnyRow[] | null;
-  error: { message: string } | null;
-  source: "v_budget_lines" | "budget_lines";
-}> {
-  const viewResult = (await supabase
-    .from("v_budget_lines" as never)
-    .select("id, original_amount, revised_budget, approved_co_total, budget_mod_total")
-    .eq("project_id", projectId)) as unknown as {
-    data: AnyRow[] | null;
-    error: { message: string } | null;
-  };
-
-  if (!viewResult.error || !isMissingBudgetViewError(viewResult.error)) {
-    return {
-      ...viewResult,
-      source: "v_budget_lines",
-    };
-  }
-
-  const tableResult = await supabase
-    .from("budget_lines")
-    .select("id, original_amount")
-    .eq("project_id", projectId);
-
-  return {
-    data:
-      tableResult.data?.map((row) => ({
-        ...row,
-        revised_budget: row.original_amount,
-        approved_co_total: 0,
-        budget_mod_total: 0,
-      })) ?? null,
-    error: tableResult.error,
-    source: "budget_lines",
-  };
-}
 
 function parseTextList(value: unknown): string[] {
   if (typeof value !== "string" || !value.trim()) return [];
@@ -154,13 +107,21 @@ export function createProjectTools(
   // Acumatica ERP tools (live AP/AR aging, cash position, vendor spend, POs)
   const acumaticaTools = createAcumaticaTools(_userId, options);
 
-  // Operational tools (schedule, people, vendors, RFIs, submittals, cross-project, trends, forecast, semantic search)
+  // Operational tools (people, vendors, RFIs, submittals, cross-project, trends, semantic search)
   const operationalTools = createOperationalTools(_userId, options);
+
+  // Domain-specific tool groups extracted from operationalTools for clarity
+  const scheduleTools = createScheduleTools(_userId, options);
+  const appHelpTools = createAppHelpTools(options);
+  const forecastTools = createForecastTools(_userId, options);
 
   return {
     ...financialTools,
     ...acumaticaTools,
     ...operationalTools,
+    ...scheduleTools,
+    ...appHelpTools,
+    ...forecastTools,
 
     getProjectBriefingSnapshot: tool({
       description:

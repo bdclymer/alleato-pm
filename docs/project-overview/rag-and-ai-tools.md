@@ -347,18 +347,34 @@ All tools are available to all specialist agents (CFO, COO, CRO, CHRO, VP BD) vi
 | `getAcumaticaProjectList` | List of projects in Acumatica ERP | Acumatica `/PMProject` |
 | `getPurchaseOrderSummary` | Open purchase orders: vendor, amount, status | Acumatica `/POOrder` |
 
-### Operational Tools (`operational.ts`)
+### Schedule Tools (`schedule-tools.ts`)
 
 | Tool | Description | Tables / Functions |
 |------|-------------|-------------------|
 | `getScheduleAnalysis` | Schedule health: overdue tasks, milestones at risk, critical path, % complete | `schedule_tasks`, `schedule_dependencies` |
+
+### Forecast Tools (`forecast-tools.ts`)
+
+| Tool | Description | Tables / Functions |
+|------|-------------|-------------------|
+| `getForecastComparison` | Budget forecast vs actuals comparison per cost code | `v_budget_lines` |
+
+### App Help Tools (`app-help-tools.ts`)
+
+| Tool | Description | Tables / Functions |
+|------|-------------|-------------------|
+| `searchAppHelp` | Search the Alleato OS help center for instructions; returns articles + matched navigation actions | `help_articles` (static), `getHelpActionsForIds` |
+
+### Operational Tools (`operational.ts`)
+
+| Tool | Description | Tables / Functions |
+|------|-------------|-------------------|
 | `getPeopleAndRoles` | Team composition for a project: names, roles, companies | `project_directory_memberships` |
 | `getVendorPerformance` | Vendor/subcontractor performance: billing rate, change orders, payment status | `subcontracts`, `companies`, `schedule_of_values` |
 | `getRFIStatus` | RFI pipeline: open, overdue, ball-in-court, average response time | `rfis` |
 | `getSubmittalStatus` | Submittal pipeline: open, overdue, approval status | `submittals` |
 | `getCrossProjectComparison` | Side-by-side comparison of 2+ projects across financial and operational KPIs | `projects`, `prime_contract_financial_summary`, `rfis`, `submittals`, `schedule_tasks`, `change_events_summary` |
 | `getHistoricalTrends` | Trend lines over time: RFIs opened/closed, COs issued, schedule variance | `rfis`, `submittals`, `prime_contract_change_orders`, `ai_insights`, `v_budget_lines` |
-| `getForecastComparison` | Budget forecast vs actuals comparison per cost code | `v_budget_lines` |
 | `semanticSearch` | pgvector semantic search across meeting chunks and documents | `search_all_knowledge`, `search_knowledge_base`, `search_document_chunks_by_category` (RPC) |
 | `getCompanyKnowledge` | Retrieve company-level knowledge base entries (lessons learned, best practices, standards) | `company_context`, `company_knowledge` |
 | `recallPastConversations` | Search prior AI conversation history for relevant context | `ai_memories` (via `search_ai_memories` RPC) |

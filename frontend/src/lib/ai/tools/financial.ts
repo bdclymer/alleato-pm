@@ -98,6 +98,59 @@ async function fetchRuntimeBudgetLines(
   return baseQuery.eq("cost_code_id", costCodeId);
 }
 
+/** Detect errors caused by the v_budget_lines view being absent or stale in the schema cache. */
+export function isMissingBudgetViewError(error: unknown): boolean {
+  const serialized = JSON.stringify(error ?? {});
+  return (
+    serialized.includes("v_budget_lines") ||
+    serialized.includes("PGRST205") ||
+    serialized.includes("schema cache")
+  );
+}
+
+/**
+ * Fetch budget rows for briefing tools, falling back from v_budget_lines to
+ * budget_lines when the view is unavailable. Returns a source tag so callers
+ * can surface a data-gap warning when the fallback is used.
+ */
+export async function fetchBudgetRowsForBriefing(
+  supabase: ReturnType<typeof createServiceClient>,
+  projectId: number,
+): Promise<{
+  data: Array<Record<string, unknown>> | null;
+  error: { message: string } | null;
+  source: "v_budget_lines" | "budget_lines";
+}> {
+  const viewResult = (await supabase
+    .from("v_budget_lines" as never)
+    .select("id, original_amount, revised_budget, approved_co_total, budget_mod_total")
+    .eq("project_id", projectId)) as unknown as {
+    data: Array<Record<string, unknown>> | null;
+    error: { message: string } | null;
+  };
+
+  if (!viewResult.error || !isMissingBudgetViewError(viewResult.error)) {
+    return { ...viewResult, source: "v_budget_lines" };
+  }
+
+  const tableResult = await supabase
+    .from("budget_lines")
+    .select("id, original_amount")
+    .eq("project_id", projectId);
+
+  return {
+    data:
+      tableResult.data?.map((row) => ({
+        ...row,
+        revised_budget: row.original_amount,
+        approved_co_total: 0,
+        budget_mod_total: 0,
+      })) ?? null,
+    error: tableResult.error,
+    source: "budget_lines",
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Factory
 // ---------------------------------------------------------------------------
