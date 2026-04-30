@@ -7,7 +7,6 @@
 
 set statement_timeout = 0;
 set lock_timeout = '5min';
-
 create or replace function public.set_project_id_from_title()
 returns trigger
 language plpgsql
@@ -103,10 +102,8 @@ begin
   return new;
 end;
 $$;
-
 drop function if exists public.search_document_chunks_by_category(halfvec(3072), text, integer, double precision);
 drop function if exists public.search_document_chunks_by_category(halfvec(3072), text, integer, double precision, bigint);
-
 create or replace function public.search_document_chunks_by_category(
     query_embedding  halfvec(3072),
     filter_category  text,
@@ -165,10 +162,8 @@ begin
     limit match_count;
 end;
 $$;
-
 grant execute on function public.search_document_chunks_by_category(halfvec(3072), text, int, float, bigint)
   to anon, authenticated, service_role;
-
 with candidate_scores as (
   select
     dm.id as document_id,

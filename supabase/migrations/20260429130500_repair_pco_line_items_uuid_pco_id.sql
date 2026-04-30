@@ -40,9 +40,7 @@ BEGIN
       ALTER COLUMN pco_id TYPE uuid USING NULL;
   END IF;
 END $$;
-
 ALTER TABLE public.pco_line_items
   ALTER COLUMN pco_id SET NOT NULL;
-
 CREATE INDEX IF NOT EXISTS idx_pco_line_items_pco
   ON public.pco_line_items(pco_id, pco_type);

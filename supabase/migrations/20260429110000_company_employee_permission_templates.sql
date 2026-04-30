@@ -6,12 +6,9 @@
 -- specific projects without learning a second naming system.
 
 BEGIN;
-
 DROP INDEX IF EXISTS public.permission_templates_name_unique;
-
 CREATE UNIQUE INDEX IF NOT EXISTS permission_templates_scope_name_unique
   ON public.permission_templates (scope, name);
-
 INSERT INTO public.permission_templates (
   name,
   description,
@@ -98,7 +95,6 @@ SET description = EXCLUDED.description,
     rules_json = EXCLUDED.rules_json,
     granular_flags = EXCLUDED.granular_flags,
     updated_at = now();
-
 WITH admin_template AS (
   SELECT id
   FROM public.permission_templates
@@ -125,5 +121,4 @@ ON CONFLICT (person_id) DO UPDATE
 SET template_id = EXCLUDED.template_id,
     assigned_by = EXCLUDED.assigned_by,
     assigned_at = EXCLUDED.assigned_at;
-
 COMMIT;

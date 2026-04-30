@@ -12,17 +12,14 @@ ALTER TABLE company_knowledge
   ADD COLUMN IF NOT EXISTS source_document_id text REFERENCES document_metadata(id) ON DELETE SET NULL,
   ADD COLUMN IF NOT EXISTS approved_at timestamptz,
   ADD COLUMN IF NOT EXISTS approved_by uuid REFERENCES auth.users(id) ON DELETE SET NULL;
-
 ALTER TABLE company_knowledge
   DROP CONSTRAINT IF EXISTS company_knowledge_approval_status_check,
   ADD CONSTRAINT company_knowledge_approval_status_check
     CHECK (approval_status IN ('draft', 'approved', 'archived'));
-
 ALTER TABLE company_knowledge
   DROP CONSTRAINT IF EXISTS company_knowledge_visibility_check,
   ADD CONSTRAINT company_knowledge_visibility_check
     CHECK (visibility IN ('internal', 'admin_only', 'client_visible'));
-
 UPDATE company_knowledge
 SET
   approval_status = COALESCE(approval_status, 'approved'),
@@ -34,21 +31,16 @@ WHERE
   OR visibility IS NULL
   OR ai_searchable IS NULL
   OR approved_at IS NULL;
-
 CREATE INDEX IF NOT EXISTS idx_company_knowledge_approval_status
   ON company_knowledge (approval_status);
-
 CREATE INDEX IF NOT EXISTS idx_company_knowledge_visibility
   ON company_knowledge (visibility);
-
 CREATE INDEX IF NOT EXISTS idx_company_knowledge_ai_searchable
   ON company_knowledge (ai_searchable)
   WHERE ai_searchable = true;
-
 CREATE INDEX IF NOT EXISTS idx_company_knowledge_source_document
   ON company_knowledge (source_document_id)
   WHERE source_document_id IS NOT NULL;
-
 CREATE OR REPLACE FUNCTION search_knowledge_base(
   query_embedding vector(1536),
   match_count int DEFAULT 10,
