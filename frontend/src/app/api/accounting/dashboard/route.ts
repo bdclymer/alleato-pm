@@ -103,10 +103,10 @@ function classifyIntoAging(items: Array<{ due_date: string | null; balance: numb
     if (bucket === "current") {
       buckets.current.count++;
       buckets.current.total += amount;
-    } else if (bucket === "1-30") {
+    } else if (bucket === "31-60") {
       buckets.days31to60.count++;
       buckets.days31to60.total += amount;
-    } else if (bucket === "31-60") {
+    } else if (bucket === "61-90") {
       buckets.days61to90.count++;
       buckets.days61to90.total += amount;
     } else {

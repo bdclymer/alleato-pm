@@ -10,7 +10,7 @@ export function toNumber(value: number | null | undefined): number {
   return Number(value ?? 0);
 }
 
-/** Round to 2 decimal places (banker-safe for display; not for storage). */
+/** Round to 2 decimal places (display rounding only — not for financial storage or accumulation). */
 export function roundMoney(value: number): number {
   return Math.round(value * 100) / 100;
 }

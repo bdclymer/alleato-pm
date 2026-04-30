@@ -25,15 +25,20 @@ export interface FinancialGuardrailAlert {
 // ---------------------------------------------------------------------------
 
 /**
- * Classify a number of days-past-due into an aging bucket label.
- * 0–30 days is considered "current" (invoice not yet overdue or just overdue).
+ * Classify a number of days-past-due into an AR/AP aging bucket label.
+ *
+ * Buckets follow standard aging conventions:
+ *   "current"  = 0–30 days  (within payment terms)
+ *   "31-60"    = 31–60 days past due
+ *   "61-90"    = 61–90 days past due
+ *   "90+"      = more than 90 days past due
  */
 export function classifyAgingBucket(
   daysOutstanding: number,
-): "current" | "1-30" | "31-60" | "61-90" | "90+" {
+): "current" | "31-60" | "61-90" | "90+" {
   if (daysOutstanding <= 30) return "current";
-  if (daysOutstanding <= 60) return "1-30";
-  if (daysOutstanding <= 90) return "31-60";
+  if (daysOutstanding <= 60) return "31-60";
+  if (daysOutstanding <= 90) return "61-90";
   return "90+";
 }
 
