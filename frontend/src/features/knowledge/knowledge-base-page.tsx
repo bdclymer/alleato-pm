@@ -4,43 +4,21 @@ import * as React from "react";
 import Link from "next/link";
 import {
   BookOpen,
-  Check,
   ChevronRight,
-  ChevronsUpDown,
   FileText,
-  GraduationCap,
-  HardHat,
-  LineChart,
-  PackageCheck,
   Search,
   Settings,
-  ShieldCheck,
   Sparkles,
   Tag,
-  Users,
-  Workflow,
   X,
 } from "lucide-react";
 
-import { IconBadge } from "@/components/ds";
+import { IconBadge, EmptyState } from "@/components/ds";
+import { StatusBadge } from "@/components/ds";
 import { PageShell } from "@/components/layout";
-import { SectionRuleHeading } from "@/components/layout/spacing";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
 import { Input } from "@/components/ui/input";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import {
   Sheet,
   SheetContent,
@@ -48,161 +26,40 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import {
-  KNOWLEDGE_CATEGORIES,
-  useKnowledgeArticles,
-  type KnowledgeArticle,
-  type KnowledgeCategory,
-} from "@/hooks/use-company-knowledge";
+  useKnowledgeDocuments,
+  type KnowledgeDocument,
+} from "@/hooks/use-knowledge-documents";
 import { useCurrentUserProfile } from "@/hooks/use-current-user-profile";
-import { cn } from "@/lib/utils";
 
-const CATEGORY_ICONS: Record<string, React.ReactNode> = {
-  system_design: <Workflow className="h-4 w-4" />,
-  pricing_intel: <LineChart className="h-4 w-4" />,
-  vendor_intel: <Users className="h-4 w-4" />,
-  client_education: <GraduationCap className="h-4 w-4" />,
-  technical_reference: <FileText className="h-4 w-4" />,
-  safety_compliance: <HardHat className="h-4 w-4" />,
-  installation_ops: <PackageCheck className="h-4 w-4" />,
-  lessons_learned: <Sparkles className="h-4 w-4" />,
-  best_practice: <ShieldCheck className="h-4 w-4" />,
-  market_intel: <LineChart className="h-4 w-4" />,
-  strategy: <BookOpen className="h-4 w-4" />,
-  process: <Workflow className="h-4 w-4" />,
-  policy: <ShieldCheck className="h-4 w-4" />,
-  org_update: <Users className="h-4 w-4" />,
-  general: <BookOpen className="h-4 w-4" />,
-};
-
-const HERO_CATEGORY_IDS: KnowledgeCategory[] = [
-  "process",
-  "policy",
-  "best_practice",
-  "lessons_learned",
-  "technical_reference",
-  "client_education",
-];
-
-const CATEGORY_LABELS = Object.fromEntries(
-  KNOWLEDGE_CATEGORIES.map((category) => [category.value, category.label]),
-);
-
-const CATEGORY_DESCRIPTIONS = Object.fromEntries(
-  KNOWLEDGE_CATEGORIES.map((category) => [
-    category.value,
-    category.description,
-  ]),
-);
-
-const ORIGIN_LABELS: Record<string, string> = {
-  manual: "Manual",
-  meeting_extraction: "Meeting",
-  ai_assistant: "AI",
-  import: "Imported",
-};
-
-function getCategoryIcon(category: string): React.ReactNode {
-  return CATEGORY_ICONS[category] ?? <BookOpen className="h-4 w-4" />;
-}
-
-function getCategoryLabel(category: string): string {
-  return CATEGORY_LABELS[category] ?? category;
-}
-
-function getCategoryDescription(category: string): string {
-  return CATEGORY_DESCRIPTIONS[category] ?? "Browse related company knowledge.";
-}
-
-function getUpdatedDate(article: KnowledgeArticle): string {
-  const value = article.updated_at ?? article.created_at;
+function getDisplayDate(doc: KnowledgeDocument): string {
+  const value = doc.date ?? doc.created_at;
   if (!value) return "No date";
   return new Date(value).toLocaleDateString();
 }
 
-function getExcerpt(content: string): string {
-  const normalized = content.replace(/\s+/g, " ").trim();
-  return normalized.length > 170
-    ? `${normalized.slice(0, 170).trim()}...`
-    : normalized;
-}
-
 export function KnowledgeBasePage() {
-  const { data: articles = [], isLoading } = useKnowledgeArticles();
+  const { data: documents = [], isLoading } = useKnowledgeDocuments();
   const { profile } = useCurrentUserProfile();
   const [search, setSearch] = React.useState("");
-  const [selectedCategory, setSelectedCategory] = React.useState<string | null>(
-    null,
-  );
-  const [comboOpen, setComboOpen] = React.useState(false);
-  const [selectedArticle, setSelectedArticle] =
-    React.useState<KnowledgeArticle | null>(null);
+  const [selectedDocument, setSelectedDocument] =
+    React.useState<KnowledgeDocument | null>(null);
 
   const isAdmin = profile?.isAdmin === true;
   const searchTerm = search.trim().toLowerCase();
 
-  const activeCategories = React.useMemo(() => {
-    const categoryIds = new Set(articles.map((article) => article.category));
-    return KNOWLEDGE_CATEGORIES.filter((category) =>
-      categoryIds.has(category.value),
-    );
-  }, [articles]);
-
-  const heroCategories = React.useMemo(() => {
-    const activeIds = new Set(activeCategories.map((category) => category.value));
-    const preferred = HERO_CATEGORY_IDS.filter((category) =>
-      activeIds.has(category),
-    );
-    const fallback = activeCategories
-      .map((category) => category.value)
-      .filter((category) => !preferred.includes(category));
-    return [...preferred, ...fallback].slice(0, 6);
-  }, [activeCategories]);
-
-  const secondaryCategories = React.useMemo(() => {
-    const heroSet = new Set(heroCategories);
-    return activeCategories
-      .map((category) => category.value)
-      .filter((category) => !heroSet.has(category));
-  }, [activeCategories, heroCategories]);
-
-  const filteredArticles = React.useMemo(() => {
-    return articles.filter((article) => {
-      if (selectedCategory && article.category !== selectedCategory) {
-        return false;
-      }
-      if (!searchTerm) return true;
+  const filteredDocuments = React.useMemo(() => {
+    if (!searchTerm) return documents;
+    return documents.filter((doc) => {
       const haystack = [
-        article.title,
-        article.content,
-        article.source ?? "",
-        ...(article.tags ?? []),
-        getCategoryLabel(article.category),
+        doc.title ?? "",
+        doc.file_name ?? "",
+        doc.tags ?? "",
       ]
         .join(" ")
         .toLowerCase();
       return haystack.includes(searchTerm);
     });
-  }, [articles, searchTerm, selectedCategory]);
-
-  const groupedArticles = React.useMemo(() => {
-    return filteredArticles.reduce<Record<string, KnowledgeArticle[]>>(
-      (groups, article) => {
-        const category = article.category || "general";
-        groups[category] = groups[category] ?? [];
-        groups[category].push(article);
-        return groups;
-      },
-      {},
-    );
-  }, [filteredArticles]);
-
-  const showHero = !selectedCategory && !searchTerm;
-
-  function selectCategory(category: string | null) {
-    setSelectedCategory(category);
-    setSearch("");
-    setComboOpen(false);
-  }
+  }, [documents, searchTerm]);
 
   return (
     <PageShell
@@ -220,8 +77,8 @@ export function KnowledgeBasePage() {
             Knowledge Base
           </h1>
           <p className="mt-1.5 max-w-xl text-sm leading-relaxed text-muted-foreground">
-            Search approved company standards, lessons learned, operating
-            processes, and reference material that Ask Alleato can use.
+            Browse company documents, lessons learned, and reference material
+            that Ask Alleato can use.
           </p>
         </div>
       }
@@ -237,16 +94,14 @@ export function KnowledgeBasePage() {
       }
     >
       <div>
+        {/* Search */}
         <div className="mb-8 flex flex-wrap items-center gap-2.5">
           <div className="relative min-w-56 flex-1 sm:max-w-sm">
             <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/50" />
             <Input
               placeholder="Search company knowledge..."
               value={search}
-              onChange={(event) => {
-                setSearch(event.target.value);
-                if (event.target.value) setSelectedCategory(null);
-              }}
+              onChange={(event) => setSearch(event.target.value)}
               className="h-9 border-border/50 bg-card pl-9 text-sm shadow-none placeholder:text-muted-foreground/50"
             />
             {search && (
@@ -262,302 +117,118 @@ export function KnowledgeBasePage() {
               </Button>
             )}
           </div>
-
-          <Popover open={comboOpen} onOpenChange={setComboOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                role="combobox"
-                aria-expanded={comboOpen}
-                className="h-9 w-52 justify-between border-border/50 bg-card text-sm font-normal shadow-none"
-              >
-                <span
-                  className={cn(
-                    "truncate",
-                    !selectedCategory && "text-muted-foreground/70",
-                  )}
-                >
-                  {selectedCategory
-                    ? getCategoryLabel(selectedCategory)
-                    : "All categories"}
-                </span>
-                <ChevronsUpDown className="shrink-0 text-muted-foreground/50" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-56 p-0" align="start">
-              <Command>
-                <CommandInput placeholder="Filter categories..." />
-                <CommandList>
-                  <CommandEmpty>No categories found.</CommandEmpty>
-                  <CommandGroup>
-                    <CommandItem
-                      value="all-categories"
-                      onSelect={() => selectCategory(null)}
-                    >
-                      <Check
-                        className={cn(
-                          "mr-2 h-3.5 w-3.5",
-                          !selectedCategory ? "opacity-100" : "opacity-0",
-                        )}
-                      />
-                      All categories
-                    </CommandItem>
-                    {activeCategories.map((category) => (
-                      <CommandItem
-                        key={category.value}
-                        value={category.value}
-                        onSelect={() => selectCategory(category.value)}
-                      >
-                        <Check
-                          className={cn(
-                            "mr-2 h-3.5 w-3.5",
-                            selectedCategory === category.value
-                              ? "opacity-100"
-                              : "opacity-0",
-                          )}
-                        />
-                        <span className="mr-2 text-muted-foreground/70">
-                          {getCategoryIcon(category.value)}
-                        </span>
-                        {category.label}
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
         </div>
 
+        {/* Document list */}
         {isLoading ? (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {[1, 2, 3, 4, 5, 6].map((item) => (
-              <div key={item} className="h-32 animate-pulse rounded-lg bg-muted/30" />
+          <div className="space-y-2">
+            {[1, 2, 3, 4, 5].map((item) => (
+              <div key={item} className="h-14 animate-pulse rounded-lg bg-muted/30" />
             ))}
           </div>
-        ) : showHero ? (
-          <>
-            {heroCategories.length > 0 ? (
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {heroCategories.map((category) => (
-                  <Button
-                    key={category}
-                    type="button"
-                    variant="ghost"
-                    onClick={() => selectCategory(category)}
-                    className="group relative flex h-auto flex-col items-start rounded-lg border border-border/50 bg-background p-5 text-left whitespace-normal transition-all hover:border-border hover:bg-muted"
-                  >
-                    <div className="mb-3 flex items-center gap-3">
-                      <IconBadge size="md">{getCategoryIcon(category)}</IconBadge>
-                      <span className="text-sm font-semibold text-foreground">
-                        {getCategoryLabel(category)}
-                      </span>
-                    </div>
-                    <p className="w-full text-xs leading-relaxed text-muted-foreground">
-                      {getCategoryDescription(category)}
-                    </p>
-                    <ChevronRight className="absolute right-4 top-5 h-4 w-4 text-muted-foreground/30 transition-all group-hover:translate-x-0.5 group-hover:text-muted-foreground" />
-                  </Button>
-                ))}
-              </div>
-            ) : (
-              <div className="py-16 text-center">
-                <IconBadge size="xl" className="mx-auto mb-4 rounded-full">
-                  <BookOpen className="h-5 w-5" />
-                </IconBadge>
-                <p className="mb-1 text-sm font-medium text-foreground">
-                  No knowledge entries yet
-                </p>
-                <p className="mx-auto max-w-sm text-xs leading-relaxed text-muted-foreground">
-                  Admins can add approved company knowledge from the source
-                  manager.
-                </p>
-              </div>
-            )}
-
-            {secondaryCategories.length > 0 && (
-              <div className="mt-12">
-                <SectionRuleHeading label="More categories" />
-                <div className="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2">
-                  {secondaryCategories.map((category) => (
-                    <Button
-                      key={category}
-                      type="button"
-                      variant="ghost"
-                      onClick={() => selectCategory(category)}
-                      className="group flex h-auto items-start justify-start gap-3 text-left"
-                    >
-                      <IconBadge size="sm" className="mt-0.5">
-                        {getCategoryIcon(category)}
-                      </IconBadge>
-                      <div>
-                        <span className="text-sm font-medium text-foreground transition-colors group-hover:text-primary">
-                          {getCategoryLabel(category)}
-                        </span>
-                        <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
-                          {getCategoryDescription(category)}
-                        </p>
-                      </div>
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </>
+        ) : filteredDocuments.length === 0 ? (
+          <EmptyState
+            icon={searchTerm ? <FileText className="h-5 w-5" /> : <BookOpen className="h-5 w-5" />}
+            title={searchTerm ? "No entries found" : "No knowledge entries yet"}
+            description={
+              searchTerm
+                ? "Try a broader phrase."
+                : "Admins can add approved knowledge from the source manager."
+            }
+          />
         ) : (
-          <>
-            <div className="mb-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                {selectedCategory && (
-                  <IconBadge size="sm">{getCategoryIcon(selectedCategory)}</IconBadge>
-                )}
-                <div>
-                  <p className="text-lg font-semibold tracking-tight text-foreground">
-                    {searchTerm
-                      ? `Results for "${search.trim()}"`
-                      : selectedCategory
-                        ? getCategoryLabel(selectedCategory)
-                        : "Company knowledge"}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {filteredArticles.length}{" "}
-                    {filteredArticles.length === 1 ? "entry" : "entries"}
-                  </p>
-                </div>
-              </div>
-              {(selectedCategory || searchTerm) && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setSelectedCategory(null);
-                    setSearch("");
-                  }}
-                  className="text-xs text-muted-foreground"
-                >
-                  Clear
-                </Button>
-              )}
-            </div>
-
-            {filteredArticles.length === 0 ? (
-              <div className="py-16 text-center">
-                <IconBadge size="xl" className="mx-auto mb-4 rounded-full">
-                  <FileText className="h-5 w-5" />
-                </IconBadge>
-                <p className="mb-1 text-sm font-medium text-foreground">
-                  No entries found
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Try a broader phrase or browse by category.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-6">
-                {Object.entries(groupedArticles).map(
-                  ([category, groupArticles]) => (
-                    <div key={category}>
-                      {Object.keys(groupedArticles).length > 1 && (
-                        <p className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/50">
-                          {getCategoryLabel(category)}
-                        </p>
+          <div className="space-y-px overflow-hidden rounded-lg bg-card">
+            {filteredDocuments.map((doc) => (
+              <Button
+                key={doc.id}
+                type="button"
+                variant="ghost"
+                onClick={() => setSelectedDocument(doc)}
+                className="group flex h-auto w-full items-center justify-between rounded-none px-4 py-3 text-left whitespace-normal hover:bg-muted"
+              >
+                <div className="flex min-w-0 items-start gap-3">
+                  <FileText className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground/40 transition-colors group-hover:text-primary" />
+                  <div className="min-w-0">
+                    <p className="truncate text-sm text-foreground transition-colors group-hover:text-primary">
+                      {doc.title ?? doc.file_name ?? "Untitled"}
+                    </p>
+                    <div className="mt-0.5 flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">
+                        {getDisplayDate(doc)}
+                      </span>
+                      {doc.file_name && doc.file_name !== doc.title && (
+                        <span className="text-xs text-muted-foreground/60">
+                          {doc.file_name}
+                        </span>
                       )}
-                      <div className="space-y-px overflow-hidden rounded-lg bg-card">
-                        {groupArticles.map((article) => (
-                          <Button
-                            key={article.id}
-                            type="button"
-                            variant="ghost"
-                            onClick={() => setSelectedArticle(article)}
-                            className="group flex h-auto w-full items-center justify-between rounded-none px-4 py-3 text-left whitespace-normal hover:bg-muted"
-                          >
-                            <div className="flex min-w-0 items-start gap-3">
-                              <FileText className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground/40 transition-colors group-hover:text-primary" />
-                              <div className="min-w-0">
-                                <p className="truncate text-sm text-foreground transition-colors group-hover:text-primary">
-                                  {article.title}
-                                </p>
-                                <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
-                                  {getExcerpt(article.content)}
-                                </p>
-                              </div>
-                            </div>
-                            <ChevronRight className="ml-4 h-3.5 w-3.5 shrink-0 text-muted-foreground/20 transition-all group-hover:translate-x-0.5 group-hover:text-muted-foreground" />
-                          </Button>
-                        ))}
-                      </div>
                     </div>
-                  ),
-                )}
-              </div>
-            )}
-          </>
+                  </div>
+                </div>
+                <ChevronRight className="ml-4 h-3.5 w-3.5 shrink-0 text-muted-foreground/20 transition-all group-hover:translate-x-0.5 group-hover:text-muted-foreground" />
+              </Button>
+            ))}
+          </div>
         )}
       </div>
 
+      {/* Detail sheet */}
       <Sheet
-        open={Boolean(selectedArticle)}
+        open={Boolean(selectedDocument)}
         onOpenChange={(open) => {
-          if (!open) setSelectedArticle(null);
+          if (!open) setSelectedDocument(null);
         }}
       >
         <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-2xl">
-          {selectedArticle && (
+          {selectedDocument && (
             <>
               <SheetHeader className="mb-5 text-left">
                 <div className="mb-3 flex items-center gap-2">
-                  <Badge variant="secondary" className="font-normal">
-                    {getCategoryLabel(selectedArticle.category)}
-                  </Badge>
+                  <StatusBadge status={selectedDocument.status ?? "uploaded"} />
                   <span className="text-xs text-muted-foreground">
-                    Updated {getUpdatedDate(selectedArticle)}
+                    {getDisplayDate(selectedDocument)}
                   </span>
                 </div>
                 <SheetTitle className="text-xl font-semibold leading-tight">
-                  {selectedArticle.title}
+                  {selectedDocument.title ?? selectedDocument.file_name ?? "Untitled"}
                 </SheetTitle>
               </SheetHeader>
 
               <div className="space-y-6">
-                <div className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
-                  {selectedArticle.content}
-                </div>
+                {selectedDocument.file_name && (
+                  <div>
+                    <div className="mb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                      File
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {selectedDocument.file_name}
+                    </p>
+                  </div>
+                )}
 
-                {(selectedArticle.tags ?? []).length > 0 && (
+                {selectedDocument.tags && (
                   <div>
                     <div className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
                       <Tag className="h-3.5 w-3.5" />
                       Tags
                     </div>
                     <div className="flex flex-wrap gap-1.5">
-                      {(selectedArticle.tags ?? []).map((tag) => (
-                        <Badge key={tag} variant="outline" className="font-normal">
-                          {tag}
-                        </Badge>
-                      ))}
+                      {selectedDocument.tags
+                        .split(",")
+                        .map((t) => t.trim())
+                        .filter(Boolean)
+                        .map((tag) => (
+                          <Badge key={tag} variant="outline" className="font-normal">
+                            {tag}
+                          </Badge>
+                        ))}
                     </div>
-                  </div>
-                )}
-
-                {selectedArticle.source && (
-                  <div>
-                    <div className="mb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                      Source
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {selectedArticle.source}
-                    </p>
                   </div>
                 )}
 
                 <div className="flex flex-wrap items-center gap-2 border-t pt-4">
-                  <Badge variant="outline" className="font-normal">
-                    {ORIGIN_LABELS[selectedArticle.origin] ??
-                      selectedArticle.origin}
-                  </Badge>
                   {isAdmin && (
                     <Button asChild variant="outline" size="sm">
-                      <Link href="/knowledge/manage">Manage entry</Link>
+                      <Link href="/knowledge/manage">Manage sources</Link>
                     </Button>
                   )}
                 </div>

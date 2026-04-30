@@ -63,7 +63,9 @@ The Alleato-PM platform exposes a comprehensive REST API surface built on Next.j
 | POST | `/api/auth/post-login-redirect` | Determine redirect URL after successful login |
 | POST | `/api/admin/set-admin-status` | Set or revoke admin status for a user |
 | GET/POST | `/api/admin/company-context` | Get/set company-wide context for AI |
-| GET/POST | `/api/admin/company-knowledge` | Manage company knowledge base |
+| GET | `/api/knowledge` | List knowledge documents (reads from document_metadata WHERE category='knowledge') |
+| DELETE | `/api/knowledge` | Delete a knowledge document by id |
+| POST | `/api/knowledge/upload` | Upload a file to the knowledge base (writes to document_metadata + triggers ingestion) |
 | POST | `/api/dev/make-admin` | Dev tool: promote user to admin |
 | GET | `/api/dev/schema` | Dev tool: retrieve database schema information |
 | POST | `/api/dev/schema` | Dev tool: execute schema operations |
@@ -743,7 +745,7 @@ Auth pattern: Supabase SSR session via `proxy.ts` -> `updateSession()`. All requ
 | POST | `/api/procore-docs/ask` | Ask question against Procore docs RAG |
 | GET | `/api/docs-search` | Search documentation |
 | GET | `/api/docs/check` | Check doc availability |
-| GET/POST | `/api/knowledge` | Knowledge base management |
+| GET | `/api/knowledge` | List knowledge documents (see Knowledge section above) |
 
 ---
 

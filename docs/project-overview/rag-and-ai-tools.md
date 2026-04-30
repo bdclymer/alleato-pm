@@ -184,7 +184,7 @@ Reads all `meeting_segments`, calls `gpt-4o-mini` (JSON mode, temperature 0.3) t
 | `chat_history` | All user + assistant messages; stores tool call traces in `metadata` |
 | `ai_insights` | AI-generated project insights (risk flags, decisions surfaced by agents) |
 | `ai_memories` | Long-term typed memories (project, decision, relationship, risk); `halfvec(3072)` for semantic recall |
-| `company_knowledge` | Company-level knowledge base entries; queried by `getCompanyKnowledge` tool |
+| `document_chunks` (source_type='knowledge') | Company-level knowledge base entries; queried by `getCompanyKnowledge` tool (migrated from `company_knowledge` in PR #303) |
 | `company_context` | Structured company context (mission, differentiators, values) |
 
 ### Project Data Tables (Queried by Tools)
@@ -237,7 +237,7 @@ Called via `supabase.rpc(...)`. All require matching embedding dimensions.
 | `full_text_search_meetings` | N/A (FTS only) | Keyword meeting search |
 | `match_document_metadata_by_summary` | `text-embedding-3-large` (3072-dim) | Semantic match on meeting summaries |
 | `search_all_knowledge` | `text-embedding-3-large` (3072-dim) | Search across all knowledge sources |
-| `search_knowledge_base` | `text-embedding-3-large` (3072-dim) | Company knowledge base search |
+| `search_knowledge_base` | `text-embedding-3-large` (3072-dim) | Company knowledge base search (removed — knowledge now stored in `document_chunks` with source_type='knowledge'; use `search_document_chunks_by_category` instead) |
 | `search_document_chunks_by_category` | `text-embedding-3-large` (3072-dim) | Category-filtered chunk search |
 | `search_ai_memories` | `text-embedding-3-large` (3072-dim) | AI memory semantic search |
 | `search_team_memories` | `text-embedding-3-large` (3072-dim) | Team-scoped memory search |
@@ -375,12 +375,13 @@ All tools are available to all specialist agents (CFO, COO, CRO, CHRO, VP BD) vi
 | `getSubmittalStatus` | Submittal pipeline: open, overdue, approval status | `submittals` |
 | `getCrossProjectComparison` | Side-by-side comparison of 2+ projects across financial and operational KPIs | `projects`, `prime_contract_financial_summary`, `rfis`, `submittals`, `schedule_tasks`, `change_events_summary` |
 | `getHistoricalTrends` | Trend lines over time: RFIs opened/closed, COs issued, schedule variance | `rfis`, `submittals`, `prime_contract_change_orders`, `ai_insights`, `v_budget_lines` |
-| `semanticSearch` | pgvector semantic search across meeting chunks and documents | `search_all_knowledge`, `search_knowledge_base`, `search_document_chunks_by_category` (RPC) |
-| `getCompanyKnowledge` | Retrieve company-level knowledge base entries (lessons learned, best practices, standards) | `company_context`, `company_knowledge` |
+| `getForecastComparison` | Budget forecast vs actuals comparison per cost code | `v_budget_lines` |
+| `semanticSearch` | pgvector semantic search across meeting chunks and documents | `search_all_knowledge`, `search_document_chunks_by_category` (RPC) |
+| `getCompanyKnowledge` | Retrieve company-level knowledge base entries (lessons learned, best practices, standards) | `company_context`, `document_chunks` (source_type='knowledge') |
 | `recallPastConversations` | Search prior AI conversation history for relevant context | `ai_memories` (via `search_ai_memories` RPC) |
 | `searchMeetingsByTopic` | Semantic + keyword search across meeting transcripts | `document_metadata`, `full_text_search_meetings` RPC, `match_document_metadata_by_summary` RPC |
 | `getMeetingDetails` | Full meeting transcript, sections, action items, and decisions for a specific meeting | `document_metadata`, `insights` |
-| `saveToKnowledgeBase` | Write a lesson learned or best practice to the company knowledge base | `company_knowledge` |
+| `saveToKnowledgeBase` | Write a lesson learned or best practice to the company knowledge base | `document_chunks` (source_type='knowledge') |
 | `saveInsight` | Save an AI-generated insight (decision, risk, opportunity) for a project | `ai_insights` |
 | `searchMemories` | Search typed AI memories for a user (semantic + filter by type/project) | `search_ai_memories` RPC, `search_team_memories` RPC |
 | `writeMemory` | Write a new typed memory to `ai_memories` (project, decision, relationship, risk, etc.) | `ai_memories` (via `writeAiMemory` service) |

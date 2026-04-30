@@ -257,7 +257,9 @@ ON CONFLICT (chunk_id) DO NOTHING;
 
 Replace the 3-way parallel RPC call in `operational.ts` with a single call to the new `search_document_chunks` RPC. Keep the old RPCs as fallbacks initially.
 
-### Step 2.5: Embed the 1 company_knowledge entry and future entries
+### Step 2.5: Embed the 1 company_knowledge entry and future entries ✅ DONE (PR #303)
+
+> PR #303 completed this work: `company_knowledge` table has been replaced by `document_metadata` (category='knowledge') + `document_chunks` (source_type='knowledge'). The upload pipeline writes directly to `document_metadata` and triggers ingestion into `document_chunks`. The `search_knowledge_base` RPC is no longer used — queries route through `search_document_chunks_by_category` instead.
 
 Modify `saveToKnowledgeBase` tool to also write a chunk to `document_chunks` with `source_type = 'knowledge_base'`.
 

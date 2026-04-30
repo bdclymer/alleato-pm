@@ -1,6 +1,5 @@
 import * as React from "react";
-import type { ReactNode } from "react";
-import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { MoreHorizontal, Trash2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -8,43 +7,11 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { StatusBadge } from "@/components/ds";
 import type { ColumnConfig, FilterConfig, TableColumn } from "@/components/tables/unified";
-import type { KnowledgeArticle } from "@/hooks/use-company-knowledge";
-import { KNOWLEDGE_CATEGORIES } from "@/hooks/use-company-knowledge";
-
-// ---------------------------------------------------------------------------
-// Category display helpers
-// ---------------------------------------------------------------------------
-
-const CATEGORY_LABELS: Record<string, string> = Object.fromEntries(
-  KNOWLEDGE_CATEGORIES.map((c) => [c.value, c.label]),
-);
-
-function getCategoryLabel(category: string): string {
-  return CATEGORY_LABELS[category] ?? category;
-}
-
-const ORIGIN_LABELS: Record<string, string> = {
-  manual: "Manual",
-  meeting_extraction: "From Meeting",
-  ai_assistant: "AI Generated",
-  import: "Imported",
-};
-
-const APPROVAL_LABELS: Record<string, string> = {
-  approved: "Approved",
-  draft: "Draft",
-  archived: "Archived",
-};
-
-const VISIBILITY_LABELS: Record<string, string> = {
-  internal: "Internal",
-  admin_only: "Admin only",
-  client_visible: "Client visible",
-};
+import type { KnowledgeDocument } from "@/hooks/use-knowledge-documents";
 
 // ---------------------------------------------------------------------------
 // Column definitions
@@ -52,14 +19,10 @@ const VISIBILITY_LABELS: Record<string, string> = {
 
 export const knowledgeColumns: ColumnConfig[] = [
   { id: "title", label: "Title", alwaysVisible: true },
-  { id: "content", label: "Content", defaultVisible: true },
-  { id: "category", label: "Category", defaultVisible: true },
-  { id: "approval_status", label: "Approval", defaultVisible: true },
-  { id: "visibility", label: "Visibility", defaultVisible: true },
-  { id: "ai_searchable", label: "AI", defaultVisible: true },
+  { id: "status", label: "Status", defaultVisible: true },
   { id: "tags", label: "Tags", defaultVisible: true },
-  { id: "origin", label: "Source", defaultVisible: true },
-  { id: "updated_at", label: "Updated", defaultVisible: true },
+  { id: "file_name", label: "File", defaultVisible: true },
+  { id: "date", label: "Date", defaultVisible: true },
   { id: "created_at", label: "Created", defaultVisible: false },
 ];
 
@@ -73,43 +36,15 @@ export const knowledgeDefaultVisibleColumns = knowledgeColumns
 
 export const knowledgeFilters: FilterConfig[] = [
   {
-    id: "category",
-    label: "Category",
-    type: "select",
-    options: KNOWLEDGE_CATEGORIES.map((c) => ({
-      value: c.value,
-      label: c.label,
-    })),
-  },
-  {
-    id: "origin",
-    label: "Source",
+    id: "status",
+    label: "Status",
     type: "select",
     options: [
-      { value: "manual", label: "Manual" },
-      { value: "meeting_extraction", label: "From Meeting" },
-      { value: "ai_assistant", label: "AI Generated" },
-      { value: "import", label: "Imported" },
-    ],
-  },
-  {
-    id: "approvalStatus",
-    label: "Approval",
-    type: "select",
-    options: [
-      { value: "approved", label: "Approved" },
-      { value: "draft", label: "Draft" },
-      { value: "archived", label: "Archived" },
-    ],
-  },
-  {
-    id: "visibility",
-    label: "Visibility",
-    type: "select",
-    options: [
-      { value: "internal", label: "Internal" },
-      { value: "admin_only", label: "Admin only" },
-      { value: "client_visible", label: "Client visible" },
+      { value: "uploaded", label: "Uploaded" },
+      { value: "extracted", label: "Extracted" },
+      { value: "embedded", label: "Embedded" },
+      { value: "complete", label: "Complete" },
+      { value: "failed", label: "Failed" },
     ],
   },
 ];
@@ -119,145 +54,103 @@ export const knowledgeFilters: FilterConfig[] = [
 // ---------------------------------------------------------------------------
 
 export function buildKnowledgeTableColumns(options: {
-  onEdit: (item: KnowledgeArticle) => void;
-  onDelete: (item: KnowledgeArticle) => void;
-}): TableColumn<KnowledgeArticle>[] {
+  onDelete: (item: KnowledgeDocument) => void;
+}): TableColumn<KnowledgeDocument>[] {
   return [
     {
       id: "title",
       label: "Title",
       alwaysVisible: true,
       sortable: true,
-      sortValue: (item) => item.title,
+      sortValue: (item) => item.title ?? item.file_name ?? "",
       render: (item) => (
         <span className="block max-w-72 truncate font-medium text-foreground">
-          {item.title}
+          {item.title ?? item.file_name ?? "Untitled"}
         </span>
       ),
-      csvValue: (item) => item.title,
+      csvValue: (item) => item.title ?? item.file_name ?? "",
     },
     {
-      id: "content",
-      label: "Content",
-      defaultVisible: true,
-      render: (item) => (
-        <span className="block max-w-xl truncate text-sm text-muted-foreground">
-          {item.content.substring(0, 160)}
-          {item.content.length > 160 ? "…" : ""}
-        </span>
-      ),
-      csvValue: (item) => item.content,
-    },
-    {
-      id: "category",
-      label: "Category",
+      id: "status",
+      label: "Status",
       defaultVisible: true,
       sortable: true,
-      sortValue: (item) => getCategoryLabel(item.category),
+      sortValue: (item) => item.status ?? "uploaded",
       render: (item) => (
-        <Badge variant="secondary" className="text-xs font-normal">
-          {getCategoryLabel(item.category)}
-        </Badge>
+        <StatusBadge status={item.status ?? "uploaded"} />
       ),
-      csvValue: (item) => getCategoryLabel(item.category),
+      csvValue: (item) => item.status ?? "uploaded",
     },
     {
       id: "tags",
       label: "Tags",
       defaultVisible: true,
-      render: (item) => (
-        <div className="flex max-w-48 flex-wrap gap-1">
-          {(item.tags ?? []).slice(0, 3).map((tag) => (
-            <Badge key={tag} variant="outline" className="text-xs font-normal">
-              {tag}
-            </Badge>
-          ))}
-          {(item.tags ?? []).length > 3 && (
-            <span className="text-xs text-muted-foreground">
-              +{(item.tags ?? []).length - 3}
-            </span>
-          )}
-        </div>
-      ),
-      csvValue: (item) => (item.tags ?? []).join(", "),
+      render: (item) => {
+        const tagList = item.tags?.split(",").map((t) => t.trim()).filter(Boolean) ?? [];
+        if (tagList.length === 0) return null;
+        return (
+          <div className="flex max-w-48 flex-wrap gap-1">
+            {tagList.slice(0, 3).map((tag) => (
+              <Badge key={tag} variant="outline" className="text-xs font-normal">
+                {tag}
+              </Badge>
+            ))}
+            {tagList.length > 3 && (
+              <span className="text-xs text-muted-foreground">
+                +{tagList.length - 3}
+              </span>
+            )}
+          </div>
+        );
+      },
+      csvValue: (item) => item.tags ?? "",
     },
     {
-      id: "approval_status",
-      label: "Approval",
+      id: "file_name",
+      label: "File",
       defaultVisible: true,
       sortable: true,
-      sortValue: (item) => item.approval_status,
-      render: (item) => (
-        <Badge variant={item.approval_status === "approved" ? "secondary" : "outline"} className="text-xs font-normal">
-          {APPROVAL_LABELS[item.approval_status] ?? item.approval_status}
-        </Badge>
-      ),
-      csvValue: (item) => APPROVAL_LABELS[item.approval_status] ?? item.approval_status,
-    },
-    {
-      id: "visibility",
-      label: "Visibility",
-      defaultVisible: true,
-      sortable: true,
-      sortValue: (item) => item.visibility,
+      sortValue: (item) => item.file_name ?? "",
       render: (item) => (
         <span className="text-sm text-muted-foreground">
-          {VISIBILITY_LABELS[item.visibility] ?? item.visibility}
+          {item.file_name ?? "—"}
         </span>
       ),
-      csvValue: (item) => VISIBILITY_LABELS[item.visibility] ?? item.visibility,
+      csvValue: (item) => item.file_name ?? "",
     },
     {
-      id: "ai_searchable",
-      label: "AI",
+      id: "date",
+      label: "Date",
       defaultVisible: true,
       sortable: true,
-      sortValue: (item) => String(item.ai_searchable),
-      render: (item) => (
-        <Badge variant={item.ai_searchable ? "secondary" : "outline"} className="text-xs font-normal">
-          {item.ai_searchable ? "Searchable" : "Off"}
-        </Badge>
-      ),
-      csvValue: (item) => (item.ai_searchable ? "Searchable" : "Off"),
-    },
-    {
-      id: "origin",
-      label: "Source",
-      defaultVisible: true,
-      sortable: true,
-      sortValue: (item) => item.origin,
-      render: (item) => (
-        <span className="text-sm text-muted-foreground">
-          {ORIGIN_LABELS[item.origin] ?? item.origin}
-        </span>
-      ),
-      csvValue: (item) => ORIGIN_LABELS[item.origin] ?? item.origin,
-    },
-    {
-      id: "updated_at",
-      label: "Updated",
-      defaultVisible: true,
-      sortable: true,
-      sortValue: (item) => item.updated_at,
-      render: (item) => (
-        <span className="text-sm text-muted-foreground">
-          {new Date(item.updated_at).toLocaleDateString()}
-        </span>
-      ),
-      csvValue: (item) => new Date(item.updated_at).toLocaleDateString(),
+      sortValue: (item) => item.date ?? item.created_at ?? "",
+      render: (item) => {
+        const dateStr = item.date ?? item.created_at;
+        if (!dateStr) return <span className="text-sm text-muted-foreground">—</span>;
+        return (
+          <span className="text-sm text-muted-foreground">
+            {new Date(dateStr).toLocaleDateString()}
+          </span>
+        );
+      },
+      csvValue: (item) => {
+        const dateStr = item.date ?? item.created_at;
+        return dateStr ? new Date(dateStr).toLocaleDateString() : "";
+      },
     },
     {
       id: "created_at",
       label: "Created",
       defaultVisible: false,
       sortable: true,
-      sortValue: (item) => item.created_at,
+      sortValue: (item) => item.created_at ?? "",
       render: (item) => (
         <span className="text-sm text-muted-foreground">
-          {new Date(item.created_at).toLocaleDateString()}
+          {item.created_at ? new Date(item.created_at).toLocaleDateString() : "—"}
         </span>
       ),
-      csvValue: (item) => new Date(item.created_at).toLocaleDateString(),
+      csvValue: (item) =>
+        item.created_at ? new Date(item.created_at).toLocaleDateString() : "",
     },
     {
       id: "actions",
@@ -271,11 +164,6 @@ export function buildKnowledgeTableColumns(options: {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => options.onEdit(item)}>
-              <Pencil className="mr-2 h-3.5 w-3.5" />
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={() => options.onDelete(item)}
               className="text-destructive"

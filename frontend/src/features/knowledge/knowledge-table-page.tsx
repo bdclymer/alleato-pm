@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Plus, Upload } from "lucide-react";
+import { Upload } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { PageShell } from "@/components/layout";
@@ -24,17 +24,16 @@ import {
 } from "@/components/tables/unified";
 import { useCurrentUserProfile } from "@/hooks/use-current-user-profile";
 import {
-  useKnowledgeArticles,
-  useDeleteKnowledgeArticle,
-  type KnowledgeArticle,
-} from "@/hooks/use-company-knowledge";
+  useKnowledgeDocuments,
+  useDeleteKnowledgeDocument,
+  type KnowledgeDocument,
+} from "@/hooks/use-knowledge-documents";
 import {
   knowledgeColumns,
   knowledgeDefaultVisibleColumns,
   knowledgeFilters,
   buildKnowledgeTableColumns,
 } from "./knowledge-table-config";
-import { KnowledgeFormDialog } from "./knowledge-form-dialog";
 import { KnowledgeUploadDialog } from "./knowledge-upload-dialog";
 
 // ---------------------------------------------------------------------------
@@ -60,75 +59,48 @@ export function KnowledgeTablePage() {
       page: 1,
       perPage: 25,
       search: "",
-      sortBy: "updated_at",
+      sortBy: "created_at",
       sortDirection: "desc",
       visibleColumns: knowledgeDefaultVisibleColumns,
       filters: {},
     },
   });
 
-  React.useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const migrationKey = "knowledge:visibleColumns:add-governance-2026-04-29";
-    if (window.localStorage.getItem(migrationKey) === "1") return;
-
-    tableState.setVisibleColumns((prev) => {
-      const nextColumns = ["content", "approval_status", "visibility", "ai_searchable"];
-      const missingColumns = nextColumns.filter((column) => !prev.includes(column));
-      if (missingColumns.length === 0) return prev;
-      const titleIndex = prev.indexOf("title");
-      if (titleIndex === -1) {
-        return ["title", ...missingColumns, ...prev];
-      }
-      return [
-        ...prev.slice(0, titleIndex + 1),
-        ...missingColumns,
-        ...prev.slice(titleIndex + 1),
-      ];
-    });
-
-    window.localStorage.setItem(migrationKey, "1");
-  }, [tableState]);
-
   // Data fetching
-  const { data: articles = [], isLoading } = useKnowledgeArticles({
-    category: (tableState.activeFilters.category as string) ?? undefined,
+  const { data: documents = [], isLoading } = useKnowledgeDocuments({
     search: tableState.debouncedSearch || undefined,
-    origin: (tableState.activeFilters.origin as string) ?? undefined,
-    approvalStatus: (tableState.activeFilters.approvalStatus as string) ?? undefined,
-    visibility: (tableState.activeFilters.visibility as string) ?? undefined,
     manage: true,
   });
 
   // Mutations
-  const deleteMutation = useDeleteKnowledgeArticle();
+  const deleteMutation = useDeleteKnowledgeDocument();
 
   // UI state
-  const [formOpen, setFormOpen] = React.useState(false);
   const [uploadOpen, setUploadOpen] = React.useState(false);
-  const [editingArticle, setEditingArticle] = React.useState<
-    KnowledgeArticle | undefined
-  >(undefined);
-  const [deleteTarget, setDeleteTarget] = React.useState<
-    KnowledgeArticle | null
-  >(null);
+  const [deleteTarget, setDeleteTarget] = React.useState<KnowledgeDocument | null>(null);
 
   // Sorting
-  const sortedArticles = React.useMemo(() => {
-    if (!tableState.sortBy) return articles;
-    return [...articles].sort((a, b) => {
-      const key = tableState.sortBy as keyof KnowledgeArticle;
+  const sortedDocuments = React.useMemo(() => {
+    if (!tableState.sortBy) return documents;
+    return [...documents].sort((a, b) => {
+      const key = tableState.sortBy as keyof KnowledgeDocument;
       const aVal = a[key] ?? "";
       const bVal = b[key] ?? "";
       const cmp = String(aVal).localeCompare(String(bVal));
       return tableState.sortDirection === "desc" ? -cmp : cmp;
     });
-  }, [articles, tableState.sortBy, tableState.sortDirection]);
+  }, [documents, tableState.sortBy, tableState.sortDirection]);
+
+  // Filter by status if selected
+  const filteredDocuments = React.useMemo(() => {
+    const statusFilter = tableState.activeFilters.status as string | undefined;
+    if (!statusFilter) return sortedDocuments;
+    return sortedDocuments.filter((d) => d.status === statusFilter);
+  }, [sortedDocuments, tableState.activeFilters.status]);
 
   // Pagination
-  const totalPages = Math.ceil(sortedArticles.length / tableState.perPage);
-  const pagedArticles = sortedArticles.slice(
+  const totalPages = Math.ceil(filteredDocuments.length / tableState.perPage);
+  const pagedDocuments = filteredDocuments.slice(
     (tableState.page - 1) * tableState.perPage,
     tableState.page * tableState.perPage,
   );
@@ -137,20 +109,10 @@ export function KnowledgeTablePage() {
   const tableColumns = React.useMemo(
     () =>
       buildKnowledgeTableColumns({
-        onEdit: (item) => {
-          setEditingArticle(item);
-          setFormOpen(true);
-        },
         onDelete: (item) => setDeleteTarget(item),
       }),
     [],
   );
-
-  // Handlers
-  function handleCreate() {
-    setEditingArticle(undefined);
-    setFormOpen(true);
-  }
 
   async function handleDelete() {
     if (!deleteTarget) return;
@@ -158,47 +120,39 @@ export function KnowledgeTablePage() {
     setDeleteTarget(null);
   }
 
-  function handleFilterChange(
-    filters: Record<string, FilterValue>,
-  ) {
+  function handleFilterChange(filters: Record<string, FilterValue>) {
     tableState.setActiveFilters(filters);
     tableState.setPage(1);
   }
 
   function handleExport() {
-    const headers = ["Title", "Content", "Category", "Approval", "Visibility", "AI Searchable", "Tags", "Source", "Created", "Updated"];
-    const rows = sortedArticles.map((a) => [
-      a.title,
-      a.content.replace(/\n/g, " "),
-      a.category,
-      a.approval_status,
-      a.visibility,
-      a.ai_searchable ? "yes" : "no",
-      (a.tags ?? []).join("; "),
-      a.source ?? "",
-      new Date(a.created_at).toLocaleDateString(),
-      new Date(a.updated_at).toLocaleDateString(),
+    const headers = ["Title", "Status", "Tags", "File", "Date", "Created"];
+    const rows = filteredDocuments.map((d) => [
+      d.title ?? d.file_name ?? "",
+      d.status ?? "",
+      d.tags ?? "",
+      d.file_name ?? "",
+      d.date ?? d.created_at ?? "",
+      d.created_at ? new Date(d.created_at).toLocaleDateString() : "",
     ]);
 
     const csv = [headers, ...rows]
-      .map((row) => row.map((v) => `"${v.replace(/"/g, '""')}"`).join(","))
+      .map((row) => row.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(","))
       .join("\n");
 
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "knowledge-base-export.csv";
+    a.download = "knowledge-documents-export.csv";
     a.click();
     URL.revokeObjectURL(url);
   }
 
-  // Active filters for toolbar
   const activeFilters: Record<string, FilterValue> = {};
-  if (tableState.activeFilters.category) activeFilters.category = tableState.activeFilters.category;
-  if (tableState.activeFilters.origin) activeFilters.origin = tableState.activeFilters.origin;
-  if (tableState.activeFilters.approvalStatus) activeFilters.approvalStatus = tableState.activeFilters.approvalStatus;
-  if (tableState.activeFilters.visibility) activeFilters.visibility = tableState.activeFilters.visibility;
+  if (tableState.activeFilters.status) {
+    activeFilters.status = tableState.activeFilters.status;
+  }
 
   const isFiltered =
     !!tableState.debouncedSearch || Object.keys(activeFilters).length > 0;
@@ -223,7 +177,9 @@ export function KnowledgeTablePage() {
         description="Company knowledge source management is limited to admins."
       >
         <div className="space-y-2">
-          <p className="text-sm text-foreground">You can still browse approved knowledge from the Knowledge Base.</p>
+          <p className="text-sm text-foreground">
+            You can still browse approved knowledge from the Knowledge Base.
+          </p>
           <Button asChild variant="outline" size="sm">
             <Link href="/knowledge">Open Knowledge Base</Link>
           </Button>
@@ -234,33 +190,28 @@ export function KnowledgeTablePage() {
 
   return (
     <>
-      <UnifiedTablePage<KnowledgeArticle>
+      <UnifiedTablePage<KnowledgeDocument>
         header={{
           title: "Manage Knowledge Sources",
-          description: "Admin source manager for company knowledge entries, imports, and AI-searchable content.",
+          description:
+            "Admin source manager for knowledge documents uploaded to the RAG pipeline.",
           actions: (
-            <div className="flex items-center gap-2">
-              <Button onClick={() => setUploadOpen(true)} size="sm" variant="outline">
-                <Upload />
-                Upload Source
-              </Button>
-              <Button onClick={handleCreate} size="sm">
-                <Plus />
-                Add Entry
-              </Button>
-            </div>
+            <Button onClick={() => setUploadOpen(true)} size="sm">
+              <Upload />
+              Upload Source
+            </Button>
           ),
         }}
         layout={{
           toolbarInlineWithHeader: true,
         }}
         toolbar={{
-          totalItems: articles.length,
-          filteredItems: sortedArticles.length,
+          totalItems: documents.length,
+          filteredItems: filteredDocuments.length,
           selectedCount: 0,
           searchValue: tableState.searchInput,
           onSearchChange: tableState.setSearchInput,
-          searchPlaceholder: "Search knowledge base…",
+          searchPlaceholder: "Search knowledge sources…",
           currentView: tableState.currentView,
           onViewChange: tableState.setCurrentView,
           enabledViews: ["table"],
@@ -277,7 +228,7 @@ export function KnowledgeTablePage() {
           onExport: handleExport,
         }}
         data={{
-          items: pagedArticles,
+          items: pagedDocuments,
           isLoading,
         }}
         table={{
@@ -304,15 +255,15 @@ export function KnowledgeTablePage() {
           clientSide: true,
         }}
         emptyState={{
-          title: "No knowledge entries yet",
+          title: "No knowledge sources yet",
           description:
-            "Start building the company knowledge base by adding approved sources, lessons learned, and operating guidance.",
-          filteredDescription: "No entries match your current filters.",
+            "Upload documents to build the company knowledge base. Files are processed through the RAG pipeline and become searchable by Ask Alleato.",
+          filteredDescription: "No sources match your current filters.",
           isFiltered,
           action: (
-            <Button onClick={handleCreate} size="sm">
-              <Plus />
-              Add First Source
+            <Button onClick={() => setUploadOpen(true)} size="sm">
+              <Upload />
+              Upload First Source
             </Button>
           ),
         }}
@@ -325,19 +276,7 @@ export function KnowledgeTablePage() {
         }}
       />
 
-      {/* Create/Edit Dialog */}
-      <KnowledgeFormDialog
-        open={formOpen}
-        onOpenChange={(open) => {
-          setFormOpen(open);
-          if (!open) setEditingArticle(undefined);
-        }}
-        article={editingArticle}
-      />
-      <KnowledgeUploadDialog
-        open={uploadOpen}
-        onOpenChange={setUploadOpen}
-      />
+      <KnowledgeUploadDialog open={uploadOpen} onOpenChange={setUploadOpen} />
 
       {/* Delete Confirmation */}
       <AlertDialog
@@ -348,10 +287,11 @@ export function KnowledgeTablePage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete knowledge entry?</AlertDialogTitle>
+            <AlertDialogTitle>Delete knowledge source?</AlertDialogTitle>
             <AlertDialogDescription>
-              &ldquo;{deleteTarget?.title}&rdquo; will be removed from the
-              knowledge base. This action can be undone by an admin.
+              &ldquo;{deleteTarget?.title ?? deleteTarget?.file_name}&rdquo; and
+              its storage file will be permanently deleted. This cannot be
+              undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

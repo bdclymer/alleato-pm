@@ -332,9 +332,10 @@
 - 9 company profile fields
 - 8 knowledge article categories
 - File upload with progress tracking
-- Searchable via RAG: `search_knowledge_base` RPC
+- File upload ingested through RAG pipeline into `document_chunks` with source_type='knowledge'
+- Searchable via `search_document_chunks_by_category` RPC (replaces deprecated `search_knowledge_base`)
 
-**Tables:** `company_knowledge`, `company_context`
+**Tables:** `document_metadata` (category='knowledge'), `document_chunks` (source_type='knowledge'), `company_context`
 
 ---
 

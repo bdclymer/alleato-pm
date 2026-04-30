@@ -1,7 +1,8 @@
+export const dynamic = "force-dynamic";
+
 import { NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
 
-import { apiErrorResponse } from "@/lib/api-error";
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { logger } from "@/lib/logger";
@@ -32,7 +33,7 @@ async function requireKnowledgeAdmin() {
     throw new GuardrailError({
       code: "UPSTREAM_FAILURE",
       where: "knowledge/upload#POST",
-      message: "Unable to verify company knowledge upload access.",
+      message: "Unable to verify knowledge upload access.",
       cause: error.message,
     });
   }
@@ -41,7 +42,7 @@ async function requireKnowledgeAdmin() {
     throw new GuardrailError({
       code: "AUTH_FORBIDDEN",
       where: "knowledge/upload#POST",
-      message: "Admin access is required to upload company knowledge sources.",
+      message: "Admin access is required to upload knowledge sources.",
     });
   }
 
@@ -49,7 +50,7 @@ async function requireKnowledgeAdmin() {
 }
 
 export const POST = withApiGuardrails("knowledge/upload#POST", async ({ request }) => {
-  const { supabase, user } = await requireKnowledgeAdmin();
+  const { supabase } = await requireKnowledgeAdmin();
   const formData = await request.formData();
   const file = formData.get("file") as File | null;
 
@@ -87,18 +88,13 @@ export const POST = withApiGuardrails("knowledge/upload#POST", async ({ request 
   const title =
     (formData.get("title") as string | null)?.trim() ||
     file.name.replace(/\.[^/.]+$/, "");
-  const category = (formData.get("category") as string | null) || "general";
-  const visibility = (formData.get("visibility") as string | null) || "internal";
-  const approvalStatus =
-    (formData.get("approval_status") as string | null) || "draft";
-  const aiSearchable = formData.get("ai_searchable") !== "false";
   const tags = ((formData.get("tags") as string | null) ?? "")
     .split(",")
     .map((tag) => tag.trim())
     .filter(Boolean);
 
   const metadataId = uuidv4();
-  const storagePath = `company-knowledge/${metadataId}/${file.name}`;
+  const storagePath = `knowledge/${metadataId}/${file.name}`;
   const fileBuffer = Buffer.from(await file.arrayBuffer());
 
   const { error: uploadError } = await supabase.storage
@@ -109,62 +105,51 @@ export const POST = withApiGuardrails("knowledge/upload#POST", async ({ request 
     });
 
   if (uploadError) {
-    logger.error({ msg: "Company knowledge storage upload failed", data: uploadError });
-    return apiErrorResponse(uploadError);
+    logger.error({ msg: "Knowledge storage upload failed", data: uploadError });
+    throw new GuardrailError({
+      code: "UPSTREAM_FAILURE",
+      where: "knowledge/upload#POST",
+      message: "File upload failed. Please try again.",
+      cause: uploadError.message,
+    });
   }
 
-  const { error: metadataError } = await supabase
+  const { data, error: metadataError } = await supabase
     .from("document_metadata")
     .insert({
       id: metadataId,
       title,
-      category: "company_knowledge",
+      category: "knowledge",
       type: "document",
-      source: "company_knowledge_upload",
+      source: "knowledge_upload",
       status: "uploaded",
       file_name: file.name,
       file_path: storagePath,
       storage_bucket: "documents",
       date: new Date().toISOString().split("T")[0],
       tags: tags.join(","),
-      access_level: visibility,
-    });
-
-  if (metadataError) {
-    await supabase.storage.from("documents").remove([storagePath]);
-    logger.error({ msg: "Company knowledge metadata insert failed", data: metadataError });
-    return apiErrorResponse(metadataError);
-  }
-
-  const readableContent =
-    extension === ".txt" || extension === ".md" || extension === ".markdown"
-      ? Buffer.from(fileBuffer).toString("utf8").slice(0, 12000)
-      : `Uploaded document: ${file.name}. The source file has been stored and queued for ingestion.`;
-
-  const { data, error: knowledgeError } = await supabase
-    .from("company_knowledge")
-    .insert({
-      title,
-      content: readableContent,
-      category,
-      tags,
-      source: file.name,
-      author_id: user.id,
-      is_active: true,
-      origin: "import",
-      approval_status: approvalStatus,
-      visibility,
-      ai_searchable: aiSearchable,
-      source_document_id: metadataId,
-      approved_at: approvalStatus === "approved" ? new Date().toISOString() : null,
-      approved_by: approvalStatus === "approved" ? user.id : null,
     })
     .select()
     .single();
 
-  if (knowledgeError) {
-    logger.error({ msg: "Company knowledge source insert failed", data: knowledgeError });
-    return apiErrorResponse(knowledgeError);
+  if (metadataError) {
+    // Clean up orphaned storage file
+    const { error: cleanupError } = await supabase.storage
+      .from("documents")
+      .remove([storagePath]);
+    if (cleanupError) {
+      logger.error({
+        msg: "Knowledge storage cleanup failed after metadata insert error — orphaned file",
+        data: { path: storagePath, error: cleanupError.message },
+      });
+    }
+    logger.error({ msg: "Knowledge metadata insert failed", data: metadataError });
+    throw new GuardrailError({
+      code: "UPSTREAM_FAILURE",
+      where: "knowledge/upload#POST",
+      message: "Failed to register document. Please try again.",
+      cause: metadataError.message,
+    });
   }
 
   return NextResponse.json({ data }, { status: 201 });

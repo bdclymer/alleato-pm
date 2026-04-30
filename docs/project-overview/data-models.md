@@ -876,7 +876,6 @@ Additional tables beyond the `chunks` table documented above.
 | `crawled_pages` | Web-crawled page content + embeddings |
 | `code_examples` | Code example embeddings |
 | `company_context` | Company-level AI context |
-| `company_knowledge` | Company knowledge base documents |
 
 ---
 

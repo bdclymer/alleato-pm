@@ -89,7 +89,7 @@ export const staticRoutes: SitemapRoute[] = [
   { url: "/settings/audit", title: "Audit Log", category: "Settings", type: "settings", dynamic: false },
 
   // Admin
-  { url: "/admin/company-knowledge", title: "Company Knowledge", category: "Admin", type: "admin", dynamic: false },
+  { url: "/knowledge/manage", title: "Knowledge Sources", category: "Admin", type: "admin", dynamic: false },
 
   // AI
   { url: "/ai-assistant", title: "AI Assistant", category: "AI", type: "chat", dynamic: false },

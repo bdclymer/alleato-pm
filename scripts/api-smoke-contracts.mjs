@@ -219,7 +219,9 @@ const ENDPOINTS = [
   ["GET", "/api/admin/feedback", "Admin feedback", [200, 401]],
   ["GET", "/api/admin/feedback/tools", "Feedback tools", [200, 401]],
   ["GET", "/api/admin/company-context", "Company context", [200, 401]],
-  ["GET", "/api/admin/company-knowledge", "Company knowledge", [200, 401]],
+  ["GET",  "/api/knowledge",             "Knowledge documents (public)", [200, 401]],
+  ["GET",  "/api/knowledge?manage=true", "Knowledge documents (admin)",  [200, 401, 403]],
+  ["POST", "/api/knowledge/upload",      "Knowledge upload (auth guard)", [201, 400, 401, 403]],
 
   // Dev
   ["GET", "/api/dev/violations", "Design violations", [200, 401]],
@@ -230,7 +232,6 @@ const ENDPOINTS = [
   ["GET", "/api/documents/status", "Document status", [200, 401]],
   ["GET", "/api/initiative-cards", "Initiative cards", [200, 401]],
   ["GET", "/api/clients", "Clients", [200, 401]],
-  ["GET", "/api/knowledge", "Knowledge", [200, 401]],
   ["GET", "/api/monitoring/dashboard", "Monitoring dashboard", [200, 401]],
   ["GET", "/api/docs-search", "Docs search", [200, 401]],
 

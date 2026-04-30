@@ -14,19 +14,8 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 import { apiFetch } from "@/lib/api-client";
-import {
-  KNOWLEDGE_CATEGORIES,
-  knowledgeKeys,
-} from "@/hooks/use-company-knowledge";
+import { knowledgeDocumentKeys } from "@/hooks/use-knowledge-documents";
 import { useQueryClient } from "@tanstack/react-query";
 
 interface KnowledgeUploadDialogProps {
@@ -41,29 +30,36 @@ export function KnowledgeUploadDialog({
   const queryClient = useQueryClient();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [title, setTitle] = React.useState("");
-  const [category, setCategory] = React.useState("general");
-  const [visibility, setVisibility] = React.useState("internal");
-  const [approvalStatus, setApprovalStatus] = React.useState("draft");
-  const [aiSearchable, setAiSearchable] = React.useState(true);
   const [tags, setTags] = React.useState("");
   const [isUploading, setIsUploading] = React.useState(false);
+  const [fileError, setFileError] = React.useState<string | null>(null);
+
+  function handleClose() {
+    setTitle("");
+    setTags("");
+    setFileError(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    onOpenChange(false);
+  }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const file = fileInputRef.current?.files?.[0];
     if (!file) {
-      toast.error("Choose a file before uploading");
+      setFileError("Choose a file before uploading.");
       return;
     }
+    const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB
+    if (file.size > MAX_FILE_SIZE) {
+      setFileError("File exceeds the 50 MB limit. Please choose a smaller file.");
+      return;
+    }
+    setFileError(null);
 
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("title", title);
-    formData.append("category", category);
-    formData.append("visibility", visibility);
-    formData.append("approval_status", approvalStatus);
-    formData.append("ai_searchable", String(aiSearchable));
-    formData.append("tags", tags);
+    if (title.trim()) formData.append("title", title.trim());
+    if (tags.trim()) formData.append("tags", tags.trim());
 
     setIsUploading(true);
     try {
@@ -71,12 +67,11 @@ export function KnowledgeUploadDialog({
         method: "POST",
         body: formData,
       });
-      await queryClient.invalidateQueries({ queryKey: knowledgeKeys.all });
-      toast.success("Knowledge source uploaded");
-      setTitle("");
-      setTags("");
-      if (fileInputRef.current) fileInputRef.current.value = "";
-      onOpenChange(false);
+      await queryClient.invalidateQueries({
+        queryKey: knowledgeDocumentKeys.all,
+      });
+      toast.success("Knowledge source uploaded and queued for processing");
+      handleClose();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Upload failed");
     } finally {
@@ -85,7 +80,7 @@ export function KnowledgeUploadDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>Upload Knowledge Source</DialogTitle>
@@ -93,13 +88,22 @@ export function KnowledgeUploadDialog({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="knowledge-file">File</Label>
+            <Label htmlFor="knowledge-file">File *</Label>
             <Input
               ref={fileInputRef}
               id="knowledge-file"
               type="file"
               accept=".pdf,.docx,.doc,.txt,.md,.markdown"
+              onChange={() => {
+                if (fileError) setFileError(null);
+              }}
             />
+            <p className="text-xs text-muted-foreground">
+              PDF, Word, or plain text. Max 50MB.
+            </p>
+            {fileError && (
+              <p className="text-sm text-destructive">{fileError}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -112,64 +116,6 @@ export function KnowledgeUploadDialog({
             />
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label>Category</Label>
-              <Select value={category} onValueChange={setCategory}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {KNOWLEDGE_CATEGORIES.map((item) => (
-                    <SelectItem key={item.value} value={item.value}>
-                      {item.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Approval</Label>
-              <Select value={approvalStatus} onValueChange={setApprovalStatus}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="approved">Approved</SelectItem>
-                  <SelectItem value="archived">Archived</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label>Visibility</Label>
-              <Select value={visibility} onValueChange={setVisibility}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="internal">Internal</SelectItem>
-                  <SelectItem value="admin_only">Admin only</SelectItem>
-                  <SelectItem value="client_visible">Client visible</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex items-center justify-between gap-4 rounded-md border border-border/50 px-3 py-2">
-              <div>
-                <Label>Available to Ask Alleato</Label>
-                <p className="text-xs text-muted-foreground">
-                  Keep off for drafts or unreviewed source files.
-                </p>
-              </div>
-              <Switch checked={aiSearchable} onCheckedChange={setAiSearchable} />
-            </div>
-          </div>
-
           <div className="space-y-2">
             <Label htmlFor="knowledge-tags">Tags</Label>
             <Input
@@ -178,13 +124,17 @@ export function KnowledgeUploadDialog({
               onChange={(event) => setTags(event.target.value)}
               placeholder="Comma-separated tags"
             />
+            <p className="text-xs text-muted-foreground">
+              The document will be processed by the RAG pipeline and become
+              searchable once embedded.
+            </p>
           </div>
 
           <DialogFooter>
             <Button
               type="button"
               variant="outline"
-              onClick={() => onOpenChange(false)}
+              onClick={handleClose}
               disabled={isUploading}
             >
               Cancel
