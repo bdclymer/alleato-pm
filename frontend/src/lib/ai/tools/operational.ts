@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createServiceClient } from "@/lib/supabase/service";
 import { createToolGuardrails, type ToolGuardrails } from "./guardrails";
 import { type ToolTracePayload, asNumber, resolveProject, withTrace as _withTrace, getOpenAI, getOpenAIModelId, generateEmbedding, EMBEDDING, isBriefingQuery, rerankWithLLM, rankBriefingSourcePriority } from "./tool-utils";
+import { createStructuredQueryTools } from "./structured-queries";
 import {
   searchMemories as searchAiMemories,
   writeMemory as writeAiMemory,
@@ -54,6 +55,7 @@ export function createOperationalTools(
     };
   }
 
+  return {
     // -----------------------------------------------------------------------
     // 2. People & Roles
     // -----------------------------------------------------------------------

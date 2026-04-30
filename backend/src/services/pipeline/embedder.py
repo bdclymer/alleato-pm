@@ -447,7 +447,7 @@ def _upsert_chunk(
             chunk_data, on_conflict="chunk_id"
         ).execute()
     except Exception as exc:
-        logger.warning("[Embedder] Failed to upsert chunk %s: %s", chunk_id, exc)
+        logger.error("[Embedder] Failed to upsert chunk %s: %s", chunk_id, exc)
 
 
 def _get_existing_chunks_by_hash(client, metadata_id: str) -> Dict[str, str]:

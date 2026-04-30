@@ -163,12 +163,14 @@ export const POST = withApiGuardrails(
 
   // Generate embedding from title + content
   let embedding: number[] | null = null;
+  const warnings: string[] = [];
   try {
     const embeddingText = `${body.title}\n\n${body.content}`;
     embedding = await generateEmbedding(embeddingText);
   } catch (err) {
-    logger.error({ msg: "Failed to generate embedding for knowledge article:", error: err instanceof Error ? err.message : String(err) });
+    logger.error({ msg: "Failed to generate embedding for knowledge article", error: err instanceof Error ? err.message : String(err) });
     // Continue without embedding — can be backfilled later
+    warnings.push("embedding_failed");
   }
 
   const { data, error } = await supabase
@@ -203,7 +205,10 @@ export const POST = withApiGuardrails(
     return apiErrorResponse(error);
   }
 
-  return NextResponse.json({ data }, { status: 201 });
+  return NextResponse.json(
+    { data, ...(warnings.length ? { warnings } : {}) },
+    { status: 201 },
+  );
   },
 );
 
@@ -239,6 +244,7 @@ export const PATCH = withApiGuardrails(
   }
 
   // Re-generate embedding if title or content changed
+  const patchWarnings: string[] = [];
   if (updates.title || updates.content) {
     try {
       // Fetch current article to merge fields
@@ -255,7 +261,8 @@ export const PATCH = withApiGuardrails(
         updates.embedding = JSON.stringify(embedding);
       }
     } catch (err) {
-      logger.error({ msg: "Failed to re-generate embedding:", error: err instanceof Error ? err.message : String(err) });
+      logger.error({ msg: "Failed to re-generate embedding", error: err instanceof Error ? err.message : String(err) });
+      patchWarnings.push("embedding_refresh_failed");
     }
   }
 
@@ -270,7 +277,7 @@ export const PATCH = withApiGuardrails(
     return apiErrorResponse(error);
   }
 
-  return NextResponse.json({ data });
+  return NextResponse.json({ data, ...(patchWarnings.length ? { warnings: patchWarnings } : {}) });
   },
 );
 

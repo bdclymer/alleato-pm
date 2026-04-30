@@ -51,7 +51,7 @@ export function createStructuredQueryTools(
           const resolved = await resolveProject(supabase, guardrails, projectId, projectName);
           if ("error" in resolved) return resolved;
 
-          let query = supabase
+          const query = supabase
             .from("budget_lines")
             .select("*, cost_codes:cost_code_id(id, title), cost_types:cost_type_id(id, title)")
             .eq("project_id", resolved.id)
