@@ -33,6 +33,8 @@ if (!databaseUrl) {
 
 const STALENESS_DAYS = 7;
 const RECENT_WINDOW_DAYS = 14;
+const HISTORY_WINDOW_DAYS = 180;
+const MEETING_SIGNAL_LIMIT = 2_000;
 const RECENT_MIN_EMBEDDED_RATIO = 0.5;
 const RECENT_MIN_CHUNK_RATIO = 0.5;
 
@@ -131,52 +133,97 @@ async function probeEmbeddingProvider() {
 }
 
 try {
+  await sql`set statement_timeout = '45s'`;
+
   const [metadata] = await sql`
+    with meeting_ids as materialized (
+      select id from (
+        select id from public.document_metadata
+        where source = 'fireflies'
+        order by created_at desc
+        limit ${MEETING_SIGNAL_LIMIT}
+      ) source_rows
+      union
+      select id from (
+        select id from public.document_metadata
+        where type in ('meeting', 'meeting_transcript')
+        order by created_at desc
+        limit ${MEETING_SIGNAL_LIMIT}
+      ) type_rows
+      union
+      select id from (
+        select id from public.document_metadata
+        where category = 'meeting'
+        order by created_at desc
+        limit ${MEETING_SIGNAL_LIMIT}
+      ) category_rows
+      union
+      select id from (
+        select id from public.document_metadata
+        where fireflies_id is not null
+        order by created_at desc
+        limit ${MEETING_SIGNAL_LIMIT}
+      ) fireflies_rows
+    )
     select
       count(*)::int as total_meetings,
       count(*) filter (where summary_embedding is not null)::int as embedded_summaries,
       max(coalesce(captured_at, date, created_at::timestamptz)) as latest_meeting_at,
       max(coalesce(captured_at, created_at::timestamptz)) filter (where summary_embedding is not null) as latest_summary_embedding_at
     from public.document_metadata
-    where source = 'fireflies'
-       or type in ('meeting', 'meeting_transcript')
-       or category = 'meeting'
-       or fireflies_id is not null
+    where id in (select id from meeting_ids)
   `;
 
   const [recent] = await sql`
+    with meeting_ids as materialized (
+      select id from public.document_metadata where source = 'fireflies'
+      union
+      select id from public.document_metadata where type in ('meeting', 'meeting_transcript')
+      union
+      select id from public.document_metadata where category = 'meeting'
+      union
+      select id from public.document_metadata where fireflies_id is not null
+    )
     select
       count(*)::int as recent_meetings,
       count(*) filter (where summary_embedding is not null)::int as recent_embedded_summaries
     from public.document_metadata
-    where (source = 'fireflies'
-       or type in ('meeting', 'meeting_transcript')
-       or category = 'meeting'
-       or fireflies_id is not null)
+    where id in (select id from meeting_ids)
       and coalesce(captured_at, date, created_at::timestamptz) >= now() - (${RECENT_WINDOW_DAYS} || ' days')::interval
   `;
 
   const [chunks] = await sql`
+    with meeting_ids as materialized (
+      select id from public.document_metadata where source = 'fireflies'
+      union
+      select id from public.document_metadata where type in ('meeting', 'meeting_transcript')
+      union
+      select id from public.document_metadata where category = 'meeting'
+      union
+      select id from public.document_metadata where fireflies_id is not null
+    )
     select
       count(*)::int as total_chunks,
       count(*) filter (where dc.embedding is not null)::int as embedded_chunks,
       max(dc.updated_at) as latest_chunk_embedding_at
     from public.document_chunks dc
-    join public.document_metadata dm on dm.id = dc.document_id
-    where dm.source = 'fireflies'
-       or dm.type in ('meeting', 'meeting_transcript')
-       or dm.category = 'meeting'
-       or dm.fireflies_id is not null
+    where dc.document_id in (select id from meeting_ids)
   `;
 
   const [recentChunkCoverage] = await sql`
-    with recent_meetings as (
+    with meeting_ids as materialized (
+      select id from public.document_metadata where source = 'fireflies'
+      union
+      select id from public.document_metadata where type in ('meeting', 'meeting_transcript')
+      union
+      select id from public.document_metadata where category = 'meeting'
+      union
+      select id from public.document_metadata where fireflies_id is not null
+    ),
+    recent_meetings as materialized (
       select id
       from public.document_metadata
-      where (source = 'fireflies'
-         or type in ('meeting', 'meeting_transcript')
-         or category = 'meeting'
-         or fireflies_id is not null)
+      where id in (select id from meeting_ids)
         and coalesce(captured_at, date, created_at::timestamptz) >= now() - (${RECENT_WINDOW_DAYS} || ' days')::interval
     ),
     per_meeting as (
@@ -200,10 +247,21 @@ try {
   `;
 
   const [summaryProbe] = await sql`
-    with q as (
+    with meeting_ids as materialized (
+      select id from public.document_metadata where source = 'fireflies'
+      union
+      select id from public.document_metadata where type in ('meeting', 'meeting_transcript')
+      union
+      select id from public.document_metadata where category = 'meeting'
+      union
+      select id from public.document_metadata where fireflies_id is not null
+    ),
+    q as (
       select summary_embedding
       from public.document_metadata
       where summary_embedding is not null
+        and id in (select id from meeting_ids)
+      order by coalesce(captured_at, date, created_at::timestamptz) desc
       limit 1
     )
     select count(*)::int as result_count, max(similarity) as max_similarity
@@ -211,19 +269,31 @@ try {
   `;
 
   const [chunkProbe] = await sql`
-    with q as (
+    with meeting_ids as materialized (
+      select id from public.document_metadata where source = 'fireflies'
+      union
+      select id from public.document_metadata where type in ('meeting', 'meeting_transcript')
+      union
+      select id from public.document_metadata where category = 'meeting'
+      union
+      select id from public.document_metadata where fireflies_id is not null
+    ),
+    q as (
       select dc.embedding
       from public.document_chunks dc
-      join public.document_metadata dm on dm.id = dc.document_id
       where dc.embedding is not null
-        and (dm.source = 'fireflies'
-          or dm.type in ('meeting', 'meeting_transcript')
-          or dm.category = 'meeting'
-          or dm.fireflies_id is not null)
+        and dc.document_id in (select id from meeting_ids)
+      order by dc.updated_at desc nulls last
       limit 1
     )
     select count(*)::int as result_count, max(similarity) as max_similarity
-    from q, public.search_document_chunks(q.embedding, null, null, 5, 0.3)
+    from q, public.search_document_chunks(
+      q.embedding,
+      array['meeting_transcript', 'meeting_summary', 'meeting_segment_summary'],
+      null,
+      5,
+      0.3
+    )
   `;
 
   const pipelineJobs = await sql`

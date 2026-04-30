@@ -60,25 +60,31 @@ export function deepEqualIgnoringFns(
   return true;
 }
 
-export function withLatestFunctionWrappers<T extends Record<string, any>>(ref: {
+export function withLatestFunctionWrappers<T extends Record<string, unknown>>(ref: {
   current: T;
 }): T {
   const path: (string | number)[] = [];
 
-  const getByPath = (root: any, p: (string | number)[]) =>
-    p.reduce((acc, k) => (acc == null ? acc : acc[k]), root);
+  const getByPath = (root: unknown, p: (string | number)[]) =>
+    p.reduce<unknown>((acc, k) => {
+      if (acc == null || typeof acc !== "object") return undefined;
+      return (acc as Record<string | number, unknown>)[k];
+    }, root);
 
   const wrap = (parentPath: (string | number)[], key: string | number) => {
-    return (...args: any[]) => {
+    return (...args: unknown[]) => {
       const latestParent = getByPath(ref.current, parentPath);
-      const latestFn: any = latestParent?.[key];
+      const latestFn =
+        latestParent && typeof latestParent === "object"
+          ? (latestParent as Record<string | number, unknown>)[key]
+          : undefined;
       if (typeof latestFn === "function") {
-        return latestFn.apply(latestParent, args);
+        return Reflect.apply(latestFn, latestParent, args);
       }
     };
   };
 
-  const visit = (v: any): any => {
+  const visit = (v: unknown): unknown => {
     if (typeof v === "function") {
       const key = path[path.length - 1]!;
       const parentPath = path.slice(0, -1);
@@ -92,25 +98,25 @@ export function withLatestFunctionWrappers<T extends Record<string, any>>(ref: {
         out[i] = visit(v[i]);
       }
       path.length = base;
-      return out as any;
+      return out;
     }
     if (v && typeof v === "object") {
       const base = path.length;
-      const out: Record<string, any> = {};
+      const out: Record<string, unknown> = {};
       for (const k of Object.keys(v)) {
         path[base] = k;
-        out[k] = visit(v[k]);
+        out[k] = visit((v as Record<string, unknown>)[k]);
       }
       path.length = base;
-      return out as any;
+      return out;
     }
     return v;
   };
 
-  return visit(ref.current);
+  return visit(ref.current) as T;
 }
 
-export function useStableOptions<T extends Record<string, any>>(options: T): T {
+export function useStableOptions<T extends Record<string, unknown>>(options: T): T {
   const latestOptions = React.useRef(options);
   latestOptions.current = options;
   const cache = React.useRef<{ snapshot: T; shaped: T } | null>(null);

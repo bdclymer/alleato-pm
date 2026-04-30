@@ -30,19 +30,12 @@ import {
   AvatarFallback,
   Button,
   CompactSectionHeader as SectionHeading,
-  DashedActionLink,
-  EmptyState,
   KpiRow,
-  RecordPreview,
-  RecordPreviewField,
-  RecordPreviewGrid,
-  RecordPreviewState,
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
   StatusBadge,
-  ToneDot,
   type KpiBlockProps,
 } from "@/components/ds";
 import { ContentSectionStack } from "@/components/layout";
@@ -214,13 +207,6 @@ interface HealthCell {
   tone: HomeTone;
 }
 
-function toneDotClass(tone: HomeTone): string {
-  if (tone === "success") return "bg-status-success";
-  if (tone === "warning") return "bg-primary";
-  if (tone === "danger") return "bg-destructive";
-  return "bg-muted-foreground/40";
-}
-
 function toneTextClass(tone: HomeTone): string {
   if (tone === "success") return "text-status-success";
   if (tone === "warning") return "text-primary";
@@ -323,7 +309,7 @@ function AttentionSidebarSection({ items }: { items: AttentionItem[] }) {
           >
             <span
               className={cn(
-                "absolute bottom-3 left-0 top-3 w-1 rounded-r-full",
+                "absolute bottom-0 left-0 top-0 w-1 rounded-l-md",
                 item.tone === "danger" ? "bg-destructive/70" : "bg-primary/70",
               )}
             />
@@ -538,257 +524,6 @@ function ProjectTeamSection({ projectId }: { projectId: string }) {
         onSave={updateRoleMembers}
         projectId={projectId}
       />
-    </section>
-  );
-}
-
-/* ─────────────────────────────────────────────────────────────
-   Section: Recent Meetings
-───────────────────────────────────────────────────────────── */
-
-function RecentMeetingsSection({
-  projectId,
-  meetings,
-}: {
-  projectId: string;
-  meetings: Meeting[];
-}) {
-  return (
-    <section>
-      <SectionHeading action={<ViewAllLink href={`/${projectId}/meetings`} />}>
-        Recent Meetings
-      </SectionHeading>
-
-      {meetings.length === 0 ? (
-        <EmptyState
-          icon={<Calendar />}
-          title="No meetings recorded"
-          description="Meetings will appear here once scheduled for this project."
-        />
-      ) : (
-        <div className="space-y-1">
-          {meetings.map((m) => {
-            const dateLabel = m.date ? format(new Date(m.date), "MMM d") : null;
-            return (
-              <Link
-                key={m.id}
-                href={`/${projectId}/meetings/${m.id}`}
-                className="-mx-2 group flex items-center gap-3 rounded-md px-2 py-2 transition-colors hover:bg-muted/50"
-              >
-                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
-                  <Calendar className="h-3.5 w-3.5" />
-                </div>
-                <p className="min-w-0 flex-1 truncate text-sm transition-colors group-hover:text-primary">
-                  {m.title ?? "Meeting"}
-                </p>
-                {dateLabel && (
-                  <span className="shrink-0 tabular-nums text-xs text-muted-foreground">
-                    {dateLabel}
-                  </span>
-                )}
-              </Link>
-            );
-          })}
-        </div>
-      )}
-    </section>
-  );
-}
-
-/* ─────────────────────────────────────────────────────────────
-   Section: Prime Contract
-───────────────────────────────────────────────────────────── */
-
-function PrimeContractSection({
-  projectId,
-  contracts,
-  contractLineItems,
-}: {
-  projectId: string;
-  contracts: Contract[];
-  contractLineItems: Pick<
-    ContractLineItem,
-    "contract_id" | "total_cost" | "quantity" | "unit_cost"
-  >[];
-}) {
-  const primary = contracts[0] ?? null;
-
-  return (
-    <section>
-      <SectionHeading
-        action={
-          <ViewAllLink
-            href={`/${projectId}/prime-contracts`}
-            label="View All"
-          />
-        }
-      >
-        Prime Contract
-      </SectionHeading>
-
-      {!primary ? (
-        <DashedActionLink
-          href={`/${projectId}/prime-contracts/new`}
-          icon={<Building2 className="h-4 w-4" strokeWidth={1.5} />}
-        >
-          No prime contract — create one
-        </DashedActionLink>
-      ) : (
-        <div className="space-y-2">
-          <RecordPreview
-            href={`/${projectId}/prime-contracts/${primary.id}`}
-            title={
-              primary.title ??
-              primary.contract_number ??
-              "Prime Contract"
-            }
-            subtitle={
-              primary.contract_number && primary.title
-                ? primary.contract_number
-                : undefined
-            }
-            status={<StatusBadge status={primary.status ?? "Draft"} />}
-            footer={
-              primary.executed ? (
-                <RecordPreviewState tone="success" icon={<Check className="h-3 w-3" />}>
-                  Executed
-                </RecordPreviewState>
-              ) : (
-                <RecordPreviewState>Not executed</RecordPreviewState>
-              )
-            }
-          >
-            <RecordPreviewGrid>
-              <RecordPreviewField
-                label="Contract Value"
-                value={fmtFull(
-                  primary.revised_contract_value ||
-                    primary.original_contract_value ||
-                    null,
-                )}
-                valueClassName="text-base font-semibold tabular-nums"
-                detail={
-                  primary.revised_contract_value > 0 &&
-                  primary.original_contract_value > 0 &&
-                  primary.revised_contract_value !== primary.original_contract_value
-                    ? `Original ${fmtCompact(primary.original_contract_value)}`
-                    : undefined
-                }
-              />
-                {primary.retention_percentage != null && (
-                  <RecordPreviewField
-                    label="Retention"
-                    value={`${primary.retention_percentage}%`}
-                    valueClassName="text-base font-semibold tabular-nums"
-                  />
-                )}
-
-                {primary.start_date && (
-                  <RecordPreviewField
-                    label="Start Date"
-                    value={format(new Date(primary.start_date), "MMM d, yyyy")}
-                  />
-                )}
-
-                {primary.end_date && (
-                  <RecordPreviewField
-                    label="Completion"
-                    value={format(new Date(primary.end_date), "MMM d, yyyy")}
-                    valueClassName={
-                      isPast(new Date(primary.end_date)) &&
-                      primary.status !== "complete"
-                        ? "text-destructive"
-                        : undefined
-                    }
-                  />
-                )}
-            </RecordPreviewGrid>
-          </RecordPreview>
-        </div>
-      )}
-    </section>
-  );
-}
-
-/* ─────────────────────────────────────────────────────────────
-   Section: Commitments
-───────────────────────────────────────────────────────────── */
-
-function CommitmentsSection({
-  projectId,
-  commitments,
-  commitmentTotal,
-}: {
-  projectId: string;
-  commitments: Commitment[];
-  commitmentTotal: number;
-}) {
-  const byStatus = commitments.reduce<Record<string, number>>((acc, c) => {
-    const s = c.status ?? "Draft";
-    acc[s] = (acc[s] ?? 0) + 1;
-    return acc;
-  }, {});
-  const topStatuses = Object.entries(byStatus)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 3);
-
-  return (
-    <section>
-      <SectionHeading
-        action={
-          <ViewAllLink href={`/${projectId}/commitments`} label="View All" />
-        }
-      >
-        Commitments
-      </SectionHeading>
-      {commitments.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No commitments</p>
-      ) : (
-        <div className="space-y-2">
-          <div className="flex items-baseline justify-between">
-            <span className="text-xl font-semibold tabular-nums">
-              {fmtCompact(commitmentTotal || null)}
-            </span>
-            <span className="text-xs text-muted-foreground">
-              {commitments.length} commitment
-              {commitments.length !== 1 ? "s" : ""}
-            </span>
-          </div>
-          <div className="flex flex-wrap gap-1.5">
-            {topStatuses.map(([status, count]) => (
-              <span
-                key={status}
-                className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground"
-              >
-                <span className="font-medium text-foreground">{count}</span>
-                {status}
-              </span>
-            ))}
-          </div>
-          <div className="pt-1">
-            {commitments.slice(0, 3).map((c) => (
-              <Link
-                key={c.id}
-                href={`/${projectId}/commitments/${c.id}`}
-                className="-mx-2 flex items-center gap-2.5 rounded-md border-b border-border/50 px-2 py-2 last:border-0 transition-colors hover:bg-muted/50"
-              >
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm">
-                    {c.title ?? c.number ?? "Commitment"}
-                  </p>
-                </div>
-                <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
-                  {fmtCompact(
-                    c.revised_contract_amount ??
-                      c.contract_amount ??
-                      c.original_amount,
-                  )}
-                </span>
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
     </section>
   );
 }
@@ -1214,237 +949,6 @@ function AlertsSection({
   );
 }
 
-/* ─────────────────────────────────────────────────────────────
-   Section: Action Required
-───────────────────────────────────────────────────────────── */
-
-interface ActionRequiredSectionProps {
-  projectId: string;
-  rfisOverdue: RFI[];
-  overdueTasks: Task[];
-}
-
-function ActionRequiredSection({
-  projectId,
-  rfisOverdue,
-  overdueTasks,
-}: ActionRequiredSectionProps) {
-  const hasActions = rfisOverdue.length > 0 || overdueTasks.length > 0;
-
-  return (
-    <section>
-      <SectionHeading>Action Required</SectionHeading>
-
-      {!hasActions ? (
-        <div className="flex items-center gap-2 rounded-md bg-status-success/10 px-3 py-2.5 text-sm text-status-success">
-          <CheckCircle2 className="h-4 w-4 shrink-0" />
-          <span>No overdue items</span>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {rfisOverdue.length > 0 && (
-            <Link
-              href={`/${projectId}/rfis`}
-              className="flex items-center justify-between rounded-md bg-destructive/10 px-3 py-2.5 transition-colors hover:bg-destructive/15"
-            >
-              <div className="flex items-center gap-2">
-                <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-destructive" />
-                <span className="text-sm font-medium text-destructive">
-                  {rfisOverdue.length} overdue RFI
-                  {rfisOverdue.length !== 1 ? "s" : ""}
-                </span>
-              </div>
-              <ChevronRight className="h-3.5 w-3.5 text-destructive" />
-            </Link>
-          )}
-
-          {overdueTasks.length > 0 && (
-            <div className="flex items-center gap-2 rounded-md bg-status-warning/10 px-3 py-2.5">
-              <Clock className="h-3.5 w-3.5 shrink-0 text-status-warning" />
-              <span className="text-sm font-medium text-status-warning">
-                {overdueTasks.length} overdue task
-                {overdueTasks.length !== 1 ? "s" : ""}
-              </span>
-            </div>
-          )}
-        </div>
-      )}
-    </section>
-  );
-}
-
-/* ─────────────────────────────────────────────────────────────
-   Section: Open RFIs
-───────────────────────────────────────────────────────────── */
-
-function OpenRFIsSection({
-  projectId,
-  rfisOpen,
-  rfisSort,
-}: {
-  projectId: string;
-  rfisOpen: RFI[];
-  rfisSort: RFI[];
-}) {
-  return (
-    <section>
-      <SectionHeading
-        action={<ViewAllLink href={`/${projectId}/rfis`} label="All RFIs" />}
-      >
-        Open RFIs{rfisOpen.length > 0 ? ` (${rfisOpen.length})` : ""}
-      </SectionHeading>
-
-      {rfisSort.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No open RFIs</p>
-      ) : (
-        <div>
-          {rfisSort.slice(0, 5).map((rfi) => {
-            const overdue = rfi.due_date && isPast(new Date(rfi.due_date));
-            return (
-              <Link
-                key={rfi.id}
-                href={`/${projectId}/rfis/${rfi.id}`}
-                className="-mx-2 flex items-start gap-2.5 rounded-md border-b border-border/50 px-2 py-2.5 last:border-0 transition-colors hover:bg-muted/50"
-              >
-                <ToneDot tone={overdue ? "danger" : "warning"} className="mt-1" />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm">{rfi.subject}</p>
-                  {rfi.due_date && (
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      Due {format(new Date(rfi.due_date), "MMM d")}
-                    </p>
-                  )}
-                </div>
-                <StatusBadge status={rfi.status} />
-              </Link>
-            );
-          })}
-        </div>
-      )}
-    </section>
-  );
-}
-
-/* ─────────────────────────────────────────────────────────────
-   Section: Open Submittals
-───────────────────────────────────────────────────────────── */
-
-function OpenSubmittalsSection({
-  projectId,
-  submittals,
-}: {
-  projectId: string;
-  submittals: Submittal[];
-}) {
-  const open = submittals.filter(
-    (s) => !["Closed", "closed"].includes(s.status ?? ""),
-  );
-  const sorted = [...open].sort(
-    (a, b) =>
-      new Date(b.updated_at ?? b.created_at ?? 0).getTime() -
-      new Date(a.updated_at ?? a.created_at ?? 0).getTime(),
-  );
-
-  return (
-    <section>
-      <SectionHeading
-        action={
-          <ViewAllLink
-            href={`/${projectId}/submittals`}
-            label="All Submittals"
-          />
-        }
-      >
-        Open Submittals{open.length > 0 ? ` (${open.length})` : ""}
-      </SectionHeading>
-
-      {sorted.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No open submittals</p>
-      ) : (
-        <div>
-          {sorted.slice(0, 5).map((s) => {
-            const overdue =
-              s.final_due_date && isPast(new Date(s.final_due_date));
-            return (
-              <Link
-                key={s.id}
-                href={`/${projectId}/submittals/${s.id}`}
-                className="-mx-2 flex items-start gap-2.5 rounded-md border-b border-border/50 px-2 py-2.5 last:border-0 transition-colors hover:bg-muted/50"
-              >
-                <ToneDot tone={overdue ? "danger" : "info"} className="mt-1" />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm">
-                    {s.submittal_number ? `${s.submittal_number} – ` : ""}
-                    {s.title}
-                  </p>
-                  {s.final_due_date && (
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      Due {format(new Date(s.final_due_date), "MMM d")}
-                    </p>
-                  )}
-                </div>
-                <StatusBadge status={s.status ?? "Open"} />
-              </Link>
-            );
-          })}
-        </div>
-      )}
-    </section>
-  );
-}
-
-/* ─────────────────────────────────────────────────────────────
-   Section: Next Actions
-───────────────────────────────────────────────────────────── */
-
-interface NextActionItem {
-  id: string;
-  title: string;
-  detail: string;
-  href: string;
-  tone: HomeTone;
-}
-
-function NextActionsSection({ actions }: { actions: NextActionItem[] }) {
-  return (
-    <section>
-      <SectionHeading>Next actions</SectionHeading>
-      {actions.length === 0 ? (
-        <div className="flex items-center gap-2 text-sm text-status-success">
-          <CheckCircle2 className="h-4 w-4 shrink-0" />
-          <span>Core project setup and reviews are current</span>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {actions.slice(0, 5).map((action) => (
-            <Link
-              key={action.id}
-              href={action.href}
-              className="-mx-2 flex items-start gap-3 rounded-md px-2 py-1.5 transition-colors hover:bg-muted/45"
-            >
-              <span
-                className={cn(
-                  "mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full",
-                  toneDotClass(action.tone),
-                )}
-              />
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-foreground">
-                  {action.title}
-                </p>
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  {action.detail}
-                </p>
-              </div>
-              <ChevronRight className="mt-1 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-            </Link>
-          ))}
-        </div>
-      )}
-    </section>
-  );
-}
-
 interface DueSoonItem {
   id: string;
   title: string;
@@ -1491,50 +995,6 @@ function DueSoonSection({ items }: { items: DueSoonItem[] }) {
                 )}
               >
                 {format(new Date(item.dueDate), "MMM d")}
-              </span>
-            </Link>
-          ))}
-        </div>
-      )}
-    </section>
-  );
-}
-
-interface ActivityItem {
-  id: string;
-  title: string;
-  detail: string;
-  href: string;
-  date: string;
-}
-
-function RecentProjectActivitySection({ items }: { items: ActivityItem[] }) {
-  return (
-    <section>
-      <SectionHeading>Recently changed</SectionHeading>
-      {items.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          Recent project activity will appear here.
-        </p>
-      ) : (
-        <div className="divide-y divide-border">
-          {items.slice(0, 6).map((item) => (
-            <Link
-              key={item.id}
-              href={item.href}
-              className="-mx-2 flex items-start gap-3 rounded-md px-2 py-2.5 transition-colors hover:bg-muted/45"
-            >
-              <FileText className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-foreground">
-                  {item.title}
-                </p>
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  {item.detail}
-                </p>
-              </div>
-              <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
-                {format(new Date(item.date), "MMM d")}
               </span>
             </Link>
           ))}
@@ -1739,7 +1199,6 @@ function ProjectSetupSheet({
 export function ProjectCommandCenter({
   project,
   tasks,
-  meetings,
   changeOrders,
   rfis,
   commitments,
@@ -1785,21 +1244,10 @@ export function ProjectCommandCenter({
   const rfisOverdue = rfisOpen.filter(
     (r) => r.due_date && isPast(new Date(r.due_date)),
   );
-  const rfisSort = [...rfisOpen].sort((a, b) => {
-    if (a.due_date && b.due_date)
-      return new Date(a.due_date).getTime() - new Date(b.due_date).getTime();
-    if (a.due_date) return -1;
-    if (b.due_date) return 1;
-    return 0;
-  });
-
   /* ── Tasks ─────────────────────────────────────────────── */
   const openTasks = tasks
     .filter((t) => !["done", "cancelled"].includes(t.status.toLowerCase()))
     .slice(0, 6);
-  const overdueTasks = openTasks.filter(
-    (t) => t.due_date && isPast(new Date(t.due_date)),
-  );
 
   /* ── Alerts ────────────────────────────────────────────── */
   const showPrimeContractMarkupAlert =
@@ -1809,16 +1257,6 @@ export function ProjectCommandCenter({
 
   /* ── Project meta ──────────────────────────────────────── */
   const jobNumber = project["job number"] ?? project.project_number;
-
-  /* ── Meetings ──────────────────────────────────────────── */
-  const recentMeetings = [...meetings]
-    .filter((m) => m.type === "meeting")
-    .sort((a, b) => {
-      if (a.date && b.date)
-        return new Date(b.date).getTime() - new Date(a.date).getTime();
-      return 0;
-    })
-    .slice(0, 4);
 
   const hasTeam = (team ?? []).length > 0;
   const hasBudget = (budget ?? []).length > 0 || revisedBudget > 0;
@@ -1991,88 +1429,6 @@ export function ProjectCommandCenter({
     },
   ];
 
-  const nextActions: NextActionItem[] = [
-    ...(!hasTeam
-      ? [
-          {
-            id: "setup-team",
-            title: "Assign project team",
-            detail: "Add core roles so ownership is clear.",
-            href: `/${projectId}/directory`,
-            tone: "warning" as const,
-          },
-        ]
-      : []),
-    ...(!hasBudget
-      ? [
-          {
-            id: "setup-budget",
-            title: "Build project budget",
-            detail: "Create budget lines before tracking commitments and cost.",
-            href: `/${projectId}/budget`,
-            tone: "warning" as const,
-          },
-        ]
-      : []),
-    ...(!hasContracts
-      ? [
-          {
-            id: "setup-prime-contract",
-            title: "Create prime contract",
-            detail: "Establish owner contract value and billing basis.",
-            href: `/${projectId}/prime-contracts`,
-            tone: "warning" as const,
-          },
-        ]
-      : []),
-    ...(showPrimeContractMarkupAlert
-      ? [
-          {
-            id: "fix-markup",
-            title: "Add financial markup",
-            detail:
-              "Prime contract financials are incomplete until markup is configured.",
-            href: `/${projectId}/prime-contracts`,
-            tone: "danger" as const,
-          },
-        ]
-      : []),
-    ...(pendingSsovReviews.length > 0
-      ? [
-          {
-            id: "review-ssov",
-            title: "Review submitted subcontractor SOV",
-            detail: `${pendingSsovReviews.length} schedule of values submission${pendingSsovReviews.length !== 1 ? "s" : ""} waiting.`,
-            href: `/${projectId}/commitments`,
-            tone: "warning" as const,
-          },
-        ]
-      : []),
-    ...(commitments.length === 0 && hasContracts
-      ? [
-          {
-            id: "create-commitments",
-            title: "Create commitments",
-            detail: "Start buyout so contract exposure is visible.",
-            href: `/${projectId}/commitments`,
-            tone: "warning" as const,
-          },
-        ]
-      : []),
-    ...(!hasSchedule
-      ? [
-          {
-            id: "setup-schedule",
-            title: "Add schedule baseline",
-            detail:
-              "Milestones help due dates and risk reporting stay meaningful.",
-            href: `/${projectId}/schedule`,
-            tone: "neutral" as const,
-          },
-        ]
-      : []),
-  ];
-
   const dueSoonItems: DueSoonItem[] = [
     ...rfisOpen
       .filter((rfi) => rfi.due_date)
@@ -2110,37 +1466,6 @@ export function ProjectCommandCenter({
     (a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime(),
   );
 
-  const recentActivityItems: ActivityItem[] = [
-    ...changeEvents.map((event) => ({
-      id: `change-event-${event.id}`,
-      title: event.title ?? `Change Event #${event.number}`,
-      detail: `Change event ${event.status ?? "updated"}`,
-      href: `/${projectId}/change-events/${event.id}`,
-      date: event.updated_at ?? event.created_at,
-    })),
-    ...changeOrders.map((order: ChangeOrder) => {
-      const isPrime = !order.change_order_number;
-      return {
-        id: `change-order-${order.id}`,
-        title: order.title ?? "Change Order",
-        detail: `Change order ${order.status ?? "updated"}`,
-        href: isPrime
-          ? `/${projectId}/change-orders/prime/${order.id}`
-          : `/${projectId}/change-orders/commitment/${order.id}`,
-        date: order.updated_at ?? order.created_at,
-      };
-    }),
-    ...recentMeetings.map((meeting) => ({
-      id: `meeting-${meeting.id}`,
-      title: meeting.title ?? "Meeting",
-      detail: "Meeting record",
-      href: `/${projectId}/meetings`,
-      date: meeting.date ?? meeting.created_at,
-    })),
-  ]
-    .filter((item) => item.date)
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
   return (
     <div className="flex min-h-0 flex-col">
       <RealtimeCursors roomName={roomName} username={currentUserName} />
@@ -2156,22 +1481,10 @@ export function ProjectCommandCenter({
           onEditProject={() => setIsEditProjectSidebarOpen(true)}
         />
 
-        <div className="grid grid-cols-1 gap-y-12 xl:grid-cols-[minmax(0,1fr)_360px] xl:gap-x-24 xl:gap-y-0 2xl:gap-x-32">
+        <div className="grid grid-cols-1 gap-y-12 xl:grid-cols-[minmax(0,1fr)_420px] xl:gap-x-20 xl:gap-y-0 2xl:gap-x-28">
           <div className="min-w-0 space-y-10">
             <ProjectCommandSurface healthCells={healthCells} />
             <ContentSectionStack>
-              <PrimeContractSection
-                projectId={projectId}
-                contracts={contracts}
-                contractLineItems={contractLineItems}
-              />
-              {commitments.length > 0 && (
-                <CommitmentsSection
-                  projectId={projectId}
-                  commitments={commitments}
-                  commitmentTotal={commitmentTotal}
-                />
-              )}
               {changeEvents.length > 0 && (
                 <ChangeEventsSection
                   projectId={projectId}
@@ -2198,36 +1511,10 @@ export function ProjectCommandCenter({
           <aside>
             <ContentSectionStack className="space-y-12">
               <AttentionSidebarSection items={attentionItems} />
-              {nextActions.length > 0 && (
-                <NextActionsSection actions={nextActions} />
-              )}
-              {(rfisOverdue.length > 0 || overdueTasks.length > 0) && (
-                <ActionRequiredSection
-                  projectId={projectId}
-                  rfisOverdue={rfisOverdue}
-                  overdueTasks={overdueTasks}
-                />
-              )}
               {dueSoonItems.length > 0 && (
                 <DueSoonSection items={dueSoonItems} />
               )}
-              {recentActivityItems.length > 0 && (
-                <RecentProjectActivitySection items={recentActivityItems} />
-              )}
               <ProjectTeamSection projectId={projectId} />
-              {rfisSort.length > 0 && (
-                <OpenRFIsSection
-                  projectId={projectId}
-                  rfisOpen={rfisOpen}
-                  rfisSort={rfisSort}
-                />
-              )}
-              {openSubmittals.length > 0 && (
-                <OpenSubmittalsSection
-                  projectId={projectId}
-                  submittals={submittals}
-                />
-              )}
             </ContentSectionStack>
           </aside>
         </div>

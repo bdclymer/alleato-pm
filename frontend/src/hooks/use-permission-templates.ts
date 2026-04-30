@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
+import type { Json } from "@/types/database.types";
 
 export interface PermissionTemplate {
   id: string;
@@ -9,7 +10,7 @@ export interface PermissionTemplate {
   description: string | null;
   is_system: boolean | null;
   scope: string | null;
-  rules_json: any;
+  rules_json: Json;
   created_at: string | null;
   updated_at: string | null;
 }

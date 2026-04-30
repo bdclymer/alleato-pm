@@ -5,38 +5,10 @@ import {
   PostgrestQueryBuilder,
   type PostgrestClientOptions,
 } from "@supabase/postgrest-js";
-import { type SupabaseClient } from "@supabase/supabase-js";
 import { useCallback, useEffect, useRef, useSyncExternalStore } from "react";
+import type { Database } from "@/types/database.types";
 
 const supabase = createClient();
-
-// The following types are used to make the hook type-safe. It extracts the database type from the supabase client.
-type SupabaseClientType = typeof supabase;
-
-// Utility type to check if the type is any
-type IfAny<T, Y, N> = 0 extends 1 & T ? Y : N;
-
-// Extracts the database type from the supabase client. If the supabase client doesn't have a type, it will fallback properly.
-type Database =
-  SupabaseClientType extends SupabaseClient<infer U>
-    ? IfAny<
-        U,
-        {
-          public: {
-            Tables: Record<string, any>;
-            Views: Record<string, any>;
-            Functions: Record<string, any>;
-          };
-        },
-        U
-      >
-    : {
-        public: {
-          Tables: Record<string, any>;
-          Views: Record<string, any>;
-          Functions: Record<string, any>;
-        };
-      };
 
 // Change this to the database schema you want to use
 type DatabaseSchema = Database["public"];
@@ -187,7 +159,7 @@ function createStore<
 }
 
 // Empty initial state to avoid hydration errors.
-const initialState: any = {
+const initialState = {
   data: [],
   count: 0,
   isSuccess: false,
@@ -195,7 +167,7 @@ const initialState: any = {
   isFetching: false,
   error: null,
   hasInitialFetch: false,
-};
+} satisfies StoreState<never>;
 
 function useInfiniteQuery<
   TData extends SupabaseTableData<T>,

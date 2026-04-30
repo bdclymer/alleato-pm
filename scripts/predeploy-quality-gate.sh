@@ -50,7 +50,7 @@ fi
 echo "3) Frontend lint + typecheck + build"
 cd frontend
 npm run quality:build-routes
-npm run lint
+npm run lint:errors
 npm run typecheck
 npm run build:production
 npm run test:unit:ci

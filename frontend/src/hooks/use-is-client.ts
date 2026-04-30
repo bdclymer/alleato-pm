@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useParams } from "next/navigation";
-import { User } from "@supabase/supabase-js";
 
 interface ClientStatus {
   isClient: boolean;
   isLoading: boolean;
   error: Error | null;
-  clientCompanyId?: number;
+  clientCompanyId?: string;
   role?: string;
 }
 
@@ -47,38 +46,53 @@ export function useIsClient(): ClientStatus {
           return;
         }
 
-        const { data, error } = await supabase
+        const { data: person, error: personError } = await supabase
+          .from("people")
+          .select("id, company_id")
+          .eq("auth_user_id", user.id)
+          .maybeSingle();
+
+        if (personError) {
+          setStatus({
+            isClient: false,
+            isLoading: false,
+            error: personError,
+          });
+          return;
+        }
+
+        if (!person) {
+          setStatus({
+            isClient: false,
+            isLoading: false,
+            error: null,
+          });
+          return;
+        }
+
+        const { data: membership, error } = await supabase
           .from("project_directory_memberships")
-          .select("*")
-          .eq("project_id", parseInt(projectId))
-          .eq("user_id", user.id)
-          .eq("is_active", true)
-          .single();
+          .select("user_type, permission_template_id")
+          .eq("project_id", Number.parseInt(projectId, 10))
+          .eq("person_id", person.id)
+          .eq("status", "active")
+          .maybeSingle();
 
         if (error) {
-          // User might not be on this project at all
-          if (error.code === "PGRST116") {
-            setStatus({
-              isClient: false,
-              isLoading: false,
-              error: null,
-            });
-          } else {
-            setStatus({
-              isClient: false,
-              isLoading: false,
-              error,
-            });
-          }
+          setStatus({
+            isClient: false,
+            isLoading: false,
+            error,
+          });
           return;
         }
 
         setStatus({
-          isClient: (data as any)?.user_type === 'Client' || false,
+          isClient: membership?.user_type === "Client",
           isLoading: false,
           error: null,
-          clientCompanyId: (data as any)?.company_id,
-          role: (data as any)?.permission_template_id,
+          clientCompanyId: person.company_id ?? undefined,
+          role: membership?.permission_template_id ?? undefined,
         });
       } catch (err) {
         setStatus({

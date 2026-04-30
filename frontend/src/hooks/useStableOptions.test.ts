@@ -138,7 +138,7 @@ describe("withLatestFunctionWrappers", () => {
   it("preserves `this` binding to the latest parent object", () => {
     const ref = latestRef({
       mult: 2,
-      times(this: any, x: number) {
+      times(this: { mult: number }, x: number) {
         return this.mult * x;
       },
     });
@@ -148,7 +148,7 @@ describe("withLatestFunctionWrappers", () => {
 
     ref.current = {
       mult: 5,
-      times(this: any, x: number) {
+      times(this: { mult: number }, x: number) {
         return this.mult * x;
       },
     };

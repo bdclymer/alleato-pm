@@ -39,6 +39,8 @@ Use this as the live ownership registry.
 | S20 | Codex | ORCH-023 / AAI-186 | PM briefing RAG quality eval + retrieval/source-selection tuning for strategist responses | `frontend/src/lib/ai/tools/operational.ts`, `scripts/verify/verify_rag_pm_briefing_quality.mjs`, `docs/ops/handoffs/2026-04-28-S20-rag-pm-briefing-eval.md` | Pending Review | 2026-04-28 | 2026-04-28 |
 >>>>>>> theirs
 
+| S25 | Codex | AAI-249 | Vercel frontend build-time reduction: production route isolation, dependency pruning, root import deferral, and build guardrails | `frontend/package.json`, `frontend/pnpm-lock.yaml`, `frontend/vercel.json`, `frontend/tailwind.config.ts`, `frontend/src/app/layout.tsx`, `frontend/src/app/root-client-widgets.tsx`, `frontend/src/app/api/bot/[platform]/route.ts`, `frontend/src/app/(admin)/docs/[[...slug]]/page.tsx`, `scripts/build/**`, `scripts/predeploy-quality-gate.sh`, `docs/ops/handoffs/2026-04-29-S25-vercel-build-performance.md` | Pending Review | 2026-04-29 | 2026-04-29 |
+
 ## Status Rules
 
 - `In Progress`: actively implementing assigned task

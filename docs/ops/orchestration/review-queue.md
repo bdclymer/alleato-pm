@@ -39,6 +39,8 @@ Leader reviews all pending handoffs here.
 | `docs/ops/handoffs/2026-04-28-S20-rag-pm-briefing-eval.md` | S20 | ORCH-023 / AAI-186 | 2026-04-28 | Yes | Pending Review | Tuned PM-briefing retrieval ranking/source-selection (gateway-safe embedding model IDs + briefing diversity pass) and aligned the PM briefing eval script; targeted lint check passes, but local eval remains blocked by embedding fetch failures in this container. |
 >>>>>>> theirs
 
+| `docs/ops/handoffs/2026-04-29-S25-vercel-build-performance.md` | S25 | AAI-249 | 2026-04-29 | Yes | Pending Review | Reduced Vercel production build graph by pruning unused deps, isolating 44 non-production route files during production build, deferring heavy root widgets, lazy-loading bot adapter graph, disabling docs static params, fixing Tailwind config warning, and wiring predeploy guardrails. Typecheck and production build passed in verification worker. |
+
 ## Disposition Rules
 
 - `Accepted`: evidence complete, scope met, risks documented
