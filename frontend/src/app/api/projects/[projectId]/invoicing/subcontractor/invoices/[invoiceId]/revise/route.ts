@@ -37,7 +37,7 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
     const invoiceIdNum = parseInt(invoiceId, 10);
 
     const body = await request.json().catch(() => ({}));
-    const { reason } = body as { reason?: string };
+    const { reason, notes } = body as { reason?: string; notes?: string };
 
     const { data: invoice, error: fetchError } = await supabase
       .from("subcontractor_invoices")
@@ -76,7 +76,8 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
     }
 
     const updatePayload: Record<string, unknown> = { status: "revise_and_resubmit" };
-    if (reason) updatePayload.notes = reason;
+    const reviewNotes = reason?.trim() || notes?.trim();
+    if (reviewNotes) updatePayload.notes = reviewNotes;
 
     const { data: updated, error: updateError } = await supabase
       .from("subcontractor_invoices")

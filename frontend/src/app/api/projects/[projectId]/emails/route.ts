@@ -73,6 +73,8 @@ export const GET = withApiGuardrails(
     const status = searchParams.get("status");
     const search = searchParams.get("search");
     const starred = searchParams.get("starred");
+    const relatedTool = searchParams.get("related_tool");
+    const relatedId = searchParams.get("related_id");
 
     let query = supabase
       .from("project_emails")
@@ -87,6 +89,14 @@ export const GET = withApiGuardrails(
 
     if (starred === "true") {
       query = query.eq("is_starred", true);
+    }
+
+    if (relatedTool) {
+      query = query.eq("related_tool", relatedTool);
+    }
+
+    if (relatedId) {
+      query = query.eq("related_id", relatedId);
     }
 
     if (search) {

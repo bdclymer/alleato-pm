@@ -125,8 +125,10 @@ export const GET = withApiGuardrails<{ commitmentId: string }>(
     // Map to expected frontend format
     const formattedChangeOrders = changeOrders.map((co) => ({
       id: co.id,
+      change_order_number: co.change_order_number,
       number: co.change_order_number,
-      title: co.description,
+      title: co.title ?? co.description ?? null,
+      description: co.description ?? null,
       status: co.status?.toLowerCase() || "draft",
       amount: Number(co.amount) || 0,
       requested_date: co.requested_date,

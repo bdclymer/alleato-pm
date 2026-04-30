@@ -12,6 +12,7 @@ const files = {
   projectTools: "frontend/src/lib/ai/tools/project-tools.ts",
   financialTools: "frontend/src/lib/ai/tools/financial.ts",
   operationalTools: "frontend/src/lib/ai/tools/operational.ts",
+  failureResponse: "frontend/src/lib/ai/strategist-failure-response.ts",
 };
 
 function read(relativePath) {
@@ -32,8 +33,17 @@ const checks = [
       content.includes("shouldForceBusinessRetrieval") &&
       content.includes("experimental_onStepStart") &&
       content.includes("preparedStepCount") &&
-      content.includes('toolChoice: { type: "tool", toolName: "semanticSearch" }') &&
-      content.includes("What I could confirm"),
+      content.includes("clientProjectIntelligencePacket") &&
+      content.includes("provider_path"),
+  },
+  {
+    file: files.failureResponse,
+    description: "strategist failure response explains cause, confirmed sources, and next step",
+    test: (content) =>
+      content.includes("What happened:") &&
+      content.includes("What I could confirm:") &&
+      content.includes("What that means:") &&
+      content.includes("persisted tool trace"),
   },
   {
     file: files.route,
@@ -54,8 +64,7 @@ const checks = [
       content.includes("Sources Checked") &&
       !content.includes("source-grounded synthesis exceeded the fast briefing budget") &&
       !content.includes("reason: \"deterministic broad briefing path\"") &&
-      content.includes("const hasDeterministicRetrieval") &&
-      content.includes("const modelTools = hasDeterministicRetrieval") &&
+      content.includes("const modelTools = shouldEnableStreamingModelTools(providerDecision)") &&
       content.includes("tools: modelTools") &&
       content.includes("availableToolNames"),
   },

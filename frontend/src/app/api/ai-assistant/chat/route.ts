@@ -42,6 +42,23 @@ import {
   type SourceSpecificRagKind,
   type SourceSpecificRagRequest,
 } from "@/lib/ai/detect-rag-request";
+import {
+  getAssistantToolCallingDecision,
+  shouldEnableStreamingModelTools,
+  type AssistantToolCallingDecision,
+} from "@/lib/ai/provider-routing";
+import {
+  classifyAssistantIntent,
+  shouldUsePacketFirstIntent,
+} from "@/lib/ai/intent-router";
+import {
+  loadCurrentIntelligencePacket,
+  resolveIntelligenceTarget,
+} from "@/lib/ai/intelligence/packet-service";
+import {
+  synthesizeAdvisorResponse,
+  synthesizeMissingPacketResponse,
+} from "@/lib/ai/intelligence/advisor-synthesis";
 
 export const maxDuration = 120;
 
@@ -1788,6 +1805,7 @@ async function persistAssistantMessage(params: {
   loopDiagnostic?: LoopDiagnostic;
   projectBriefingSnapshot?: ProjectBriefingSnapshot | null;
   executiveBriefingRetrieval?: ExecutiveBriefingRetrievalPacket | null;
+  providerDecision: AssistantToolCallingDecision;
 }) {
   const {
     supabase,
@@ -1804,6 +1822,7 @@ async function persistAssistantMessage(params: {
     loopDiagnostic,
     projectBriefingSnapshot,
     executiveBriefingRetrieval,
+    providerDecision,
   } = params;
 
   await supabase.from("chat_history").insert({
@@ -1815,6 +1834,8 @@ async function persistAssistantMessage(params: {
       JSON.stringify({
         tool_trace: toolTrace,
         model: modelId,
+        provider_path: providerDecision.providerPath,
+        provider_decision: providerDecision,
         architecture: "csuite",
         councilMode: councilMode ?? false,
         memory_usage: memoryUsage
@@ -1963,6 +1984,9 @@ export const POST = withApiGuardrails(
     const activeModel = isAiAssistantModelId(selectedModel)
       ? selectedModel
       : DEFAULT_AI_ASSISTANT_MODEL;
+    const providerDecision = getAssistantToolCallingDecision({
+      modelId: activeModel,
+    });
 
     if (!sessionId || !messages?.length) {
       return new Response("session id and messages are required", {
@@ -2009,6 +2033,7 @@ export const POST = withApiGuardrails(
     const actionFollowUpResponse = shouldUseActionFollowUpResponse(lastUserContent);
     const sourceQualityFollowUpResponse = shouldUseSourceQualityFollowUpResponse(lastUserContent);
     const sourceSpecificRagRequest = detectSourceSpecificRagRequest(lastUserContent);
+    const assistantIntent = classifyAssistantIntent(lastUserContent);
     const forceBusinessRetrieval =
       shouldForceBusinessRetrieval(lastUserContent) ||
       actionFollowUpResponse ||
@@ -2101,6 +2126,7 @@ export const POST = withApiGuardrails(
             }),
             projectBriefingSnapshot,
             executiveBriefingRetrieval,
+            providerDecision,
           });
 
           await supabase
@@ -2115,6 +2141,107 @@ export const POST = withApiGuardrails(
             status: "success",
           });
           return;
+        }
+
+        if (shouldUsePacketFirstIntent(assistantIntent)) {
+          writeStrategistStatus(writer, {
+            stage: "knowledge",
+            message: "Checking current project intelligence packet",
+            status: "loading",
+          });
+
+          const resolvedTarget = await resolveIntelligenceTarget({
+            query: lastUserContent,
+            selectedProjectId,
+            supabase,
+          });
+
+          if (resolvedTarget) {
+            const intelligencePacket = await loadCurrentIntelligencePacket({
+              targetId: resolvedTarget.id,
+              supabase,
+            });
+
+            const content = intelligencePacket
+              ? synthesizeAdvisorResponse({
+                  target: resolvedTarget,
+                  packet: intelligencePacket,
+                  intent: assistantIntent,
+                  query: lastUserContent,
+                })
+              : synthesizeMissingPacketResponse({
+                  target: resolvedTarget,
+                  query: lastUserContent,
+                });
+
+            toolTrace.push({
+              tool: "clientProjectIntelligencePacket",
+              input: {
+                intent: assistantIntent,
+                query: lastUserContent,
+                selectedProjectId: selectedProjectId ?? null,
+              },
+              output: {
+                resolvedTarget: {
+                  id: resolvedTarget.id,
+                  slug: resolvedTarget.slug,
+                  projectId: resolvedTarget.projectId,
+                  source: resolvedTarget.source,
+                },
+                packetId: intelligencePacket?.id ?? null,
+                freshnessStatus: intelligencePacket?.freshnessStatus ?? "missing",
+                cardCount: intelligencePacket?.cards.length ?? 0,
+              },
+              timestamp: new Date().toISOString(),
+            });
+
+            const textId = "client-project-intelligence-packet";
+            writer.write({ type: "text-start", id: textId });
+            writer.write({
+              type: "text-delta",
+              id: textId,
+              delta: content,
+            });
+            writer.write({ type: "text-end", id: textId });
+
+            const responseQuality = scoreResponseQuality({
+              toolTrace,
+              content,
+            });
+            await persistAssistantMessage({
+              supabase,
+              sessionId,
+              userId: user.id,
+              content,
+              toolTrace,
+              memoryUsage,
+              learningUsage,
+              totalUsage: undefined,
+              responseQuality,
+              councilMode,
+              modelId: activeModel,
+              providerDecision,
+              loopDiagnostic: buildLoopDiagnostic({
+                stepStarts: stepStartDiagnostics,
+                steps: stepDiagnostics,
+              }),
+              projectBriefingSnapshot,
+              executiveBriefingRetrieval,
+            });
+
+            await supabase
+              .from("conversations")
+              .update({ last_message_at: new Date().toISOString() })
+              .eq("session_id", sessionId)
+              .eq("user_id", user.id);
+
+            writeStrategistStatus(writer, {
+              stage: "complete",
+              message: "Project intelligence packet complete",
+              status: "success",
+            });
+            return;
+          }
         }
 
         if (forceBusinessRetrieval) {
@@ -2527,6 +2654,7 @@ export const POST = withApiGuardrails(
             }),
             projectBriefingSnapshot,
             executiveBriefingRetrieval,
+            providerDecision,
           });
 
           await supabase
@@ -2553,14 +2681,14 @@ export const POST = withApiGuardrails(
           return;
         }
 
-        // AI Gateway returns empty `finishReason: other` for OpenAI tool calls,
-        // causing empty text and triggering the failure chain. Always disable
-        // tools — all context is already injected into systemPrompt server-side.
+        // Phase 0 provider matrix confirmed the prior failure mode:
+        // AI Gateway streamText tool calls still return finishReason "other"
+        // with empty text and no tool results. Keep tools disabled unless a
+        // controlled env override explicitly opts into the validated route.
         const mcpToolBundle = null;
-        // TODO(tool-reenable): restore modelTools here when AI Gateway
-        // finishReason:other bug is fixed. modelTools is always undefined:
-        // passing tools triggers the bug regardless of retrieval outcome.
-        const modelTools = undefined;
+        const modelTools = shouldEnableStreamingModelTools(providerDecision)
+          ? (tools as ToolSet)
+          : undefined;
         const result = streamText({
             model: getLanguageModel(activeModel),
             system: systemPrompt,
@@ -2821,6 +2949,7 @@ export const POST = withApiGuardrails(
           responseQuality,
           councilMode,
           modelId: activeModel,
+          providerDecision,
           loopDiagnostic: buildLoopDiagnostic({
             stepStarts: stepStartDiagnostics,
             steps: stepDiagnostics,

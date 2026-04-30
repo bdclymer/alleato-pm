@@ -34,7 +34,21 @@ export const POST = withApiGuardrails<{ projectId: string }>(
 
     const supabase = await createClient();
     const body = await request.json();
-    const { prime_contract_id, invoice_number, period_start, period_end, billing_period_id, billing_date, status, payment_application_id } = body;
+    const {
+      prime_contract_id,
+      invoice_number,
+      period_start,
+      period_end,
+      billing_period_id,
+      billing_date,
+      due_date,
+      status,
+      payment_application_id,
+      gross_amount,
+      net_amount,
+      percent_complete,
+      notes,
+    } = body;
 
     // Validate required fields
     if (!prime_contract_id) {
@@ -75,8 +89,14 @@ export const POST = withApiGuardrails<{ projectId: string }>(
         period_end: normalizeOptionalField(period_end),
         billing_period_id: normalizeOptionalField(billing_period_id),
         billing_date: normalizeOptionalField(billing_date),
+        due_date: normalizeOptionalField(due_date),
         status: status ?? "draft",
         payment_application_id: normalizeOptionalField(payment_application_id),
+        gross_amount: typeof gross_amount === "number" ? gross_amount : null,
+        net_amount: typeof net_amount === "number" ? net_amount : null,
+        percent_complete:
+          typeof percent_complete === "number" ? percent_complete : null,
+        notes: normalizeOptionalField(notes),
       })
       .select()
       .single();

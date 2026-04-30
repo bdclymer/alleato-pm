@@ -9,6 +9,7 @@ import {
   adminSettingsTools,
   type HeaderNavigationTool,
 } from "@/lib/navigation-config";
+import { apiFetch } from "@/lib/api-client";
 import { createClient } from "@/lib/supabase/client";
 
 interface Project {
@@ -48,6 +49,7 @@ const commitmentTitleCache = new Map<string, string>();
 const primePcoTitleCache = new Map<string, string>();
 const changeEventTitleCache = new Map<string, string>();
 const primeCoTitleCache = new Map<string, string>();
+const commitmentCoTitleCache = new Map<string, string>();
 const invoiceTitleCache = new Map<string, string>();
 const rfiTitleCache = new Map<string, string>();
 const submittalTitleCache = new Map<string, string>();
@@ -81,6 +83,7 @@ export function useHeaderNav(): UseHeaderNavReturn {
   const [primePcoTitle, setPrimePcoTitle] = useState<string | null>(null);
   const [changeEventTitle, setChangeEventTitle] = useState<string | null>(null);
   const [primeCoTitle, setPrimeCoTitle] = useState<string | null>(null);
+  const [commitmentCoTitle, setCommitmentCoTitle] = useState<string | null>(null);
   const [invoiceTitle, setInvoiceTitle] = useState<string | null>(null);
   const [rfiTitle, setRfiTitle] = useState<string | null>(null);
   const [submittalTitle, setSubmittalTitle] = useState<string | null>(null);
@@ -217,6 +220,12 @@ export function useHeaderNav(): UseHeaderNavReturn {
       segments[1] === "change-orders" &&
       segments[2] === "prime" &&
       segments[3] !== "new";
+    const isCommitmentCoDetailRoute =
+      segments.length >= 4 &&
+      /^\d+$/.test(segments[0]) &&
+      segments[1] === "change-orders" &&
+      segments[2] === "commitment" &&
+      segments[3] !== "new";
     const isInvoiceDetailRoute =
       segments.length >= 5 &&
       segments[1] === "prime-contracts" &&
@@ -351,6 +360,8 @@ export function useHeaderNav(): UseHeaderNavReturn {
         label = changeEventTitle || "Change Event";
       } else if (isPrimeCoDetailRoute && index === 3) {
         label = primeCoTitle || "Prime CO";
+      } else if (isCommitmentCoDetailRoute && index === 3) {
+        label = commitmentCoTitle || "Commitment CO";
       } else if (isInvoiceDetailRoute && index === 4) {
         label = invoiceTitle || "Invoice";
       } else if (isGlobalCompanyDetailRoute && index === 2) {
@@ -424,7 +435,7 @@ export function useHeaderNav(): UseHeaderNavReturn {
     });
 
     return crumbs;
-  }, [pathname, companyTitle, vendorTitle, contactTitle, currentProject, meetingTitle, globalMeetingTitle, primeContractTitle, commitmentTitle, primePcoTitle, changeEventTitle, primeCoTitle, invoiceTitle, rfiTitle, submittalTitle, subcontractorInvoiceInfo, drawingTitle, testRunTitle]);
+  }, [pathname, companyTitle, vendorTitle, contactTitle, currentProject, meetingTitle, globalMeetingTitle, primeContractTitle, commitmentTitle, primePcoTitle, changeEventTitle, primeCoTitle, commitmentCoTitle, invoiceTitle, rfiTitle, submittalTitle, subcontractorInvoiceInfo, drawingTitle, testRunTitle]);
   useEffect(() => {
     const segments = pathname?.split("/").filter(Boolean) ?? [];
     const isMeetingDetailRoute =
@@ -1061,6 +1072,72 @@ export function useHeaderNav(): UseHeaderNavReturn {
 
     fetchTitle();
     return () => { isActive = false; };
+  }, [pathname]);
+
+  // Fetch title for commitment CO detail routes ([projectId]/change-orders/commitment/[commitmentCoId])
+  useEffect(() => {
+    const segments = pathname?.split("/").filter(Boolean) ?? [];
+    const isCommitmentCoRoute =
+      segments.length >= 4 &&
+      /^\d+$/.test(segments[0]) &&
+      segments[1] === "change-orders" &&
+      segments[2] === "commitment" &&
+      segments[3] !== "new";
+
+    if (!isCommitmentCoRoute) {
+      setCommitmentCoTitle(null);
+      return;
+    }
+
+    const projectId = segments[0];
+    const commitmentCoId = segments[3];
+    const cacheKey = `${projectId}:${commitmentCoId}`;
+    const cached = commitmentCoTitleCache.get(cacheKey);
+    if (cached) {
+      setCommitmentCoTitle(cached);
+      return;
+    }
+
+    let isActive = true;
+    const fetchTitle = async () => {
+      try {
+        const data = await apiFetch<{
+          title?: unknown;
+          change_order_number?: unknown;
+        }>(
+          `/api/projects/${projectId}/commitment-change-orders/${commitmentCoId}`,
+        );
+        const titlePart =
+          typeof data?.title === "string" && data.title.trim().length > 0
+            ? data.title.trim()
+            : null;
+        const numberPart =
+          typeof data?.change_order_number === "string" &&
+          data.change_order_number.trim().length > 0
+            ? `CO ${data.change_order_number.trim()}`
+            : null;
+        const title =
+          titlePart && numberPart
+            ? `${numberPart} — ${titlePart}`
+            : (titlePart ?? numberPart);
+
+        if (isActive) {
+          if (title) {
+            commitmentCoTitleCache.set(cacheKey, title);
+            setCommitmentCoTitle(title);
+          } else {
+            setCommitmentCoTitle(null);
+          }
+        }
+      } catch {
+        // Best-effort only; fallback label remains
+      }
+    };
+
+    fetchTitle();
+    return () => {
+      isActive = false;
+    };
   }, [pathname]);
 
   // Fetch title for invoice detail routes ([projectId]/prime-contracts/[contractId]/invoices/[invoiceId])

@@ -165,6 +165,14 @@ export const POST = withApiGuardrails(
     }
 
     let originalChangeEventFlags = new Map<string, boolean>();
+    let sourceLineItems: Array<{
+      id: string;
+      description: string | null;
+      cost_rom: number | string | null;
+      revenue_rom: number | string | null;
+      budget_line_id: string | null;
+      budget_code_id: string | null;
+    }> = [];
 
     if (changeEventIds.length > 0) {
       const { data: changeEvents, error: changeEventsError } = await supabase
@@ -193,14 +201,92 @@ export const POST = withApiGuardrails(
           Boolean(changeEvent.sent_to_commitment_pco),
         ]),
       );
+
+      const { data: lineItems, error: lineItemsError } = await supabase
+        .from("change_event_line_items")
+        .select("id, description, cost_rom, revenue_rom, budget_line_id, budget_code_id")
+        .in("change_event_id", changeEventIds);
+
+      if (lineItemsError) {
+        return apiErrorResponse(lineItemsError);
+      }
+
+      sourceLineItems = lineItems ?? [];
     }
+
+    const lineItemIds = sourceLineItems.map((item) => item.id).filter(Boolean);
+    const latestRfqAmountByLineItemId = new Map<string, number>();
+    if (lineItemIds.length > 0) {
+      const { data: rfqResponses, error: rfqResponsesError } = await supabase
+        .from("change_event_rfq_responses")
+        .select("line_item_id, extended_amount, submitted_at, created_at")
+        .in("line_item_id", lineItemIds)
+        .order("submitted_at", { ascending: false, nullsFirst: false })
+        .order("created_at", { ascending: false });
+
+      if (rfqResponsesError) {
+        return apiErrorResponse(rfqResponsesError);
+      }
+
+      for (const response of rfqResponses ?? []) {
+        if (!response.line_item_id || latestRfqAmountByLineItemId.has(response.line_item_id)) {
+          continue;
+        }
+        const amount = Number(response.extended_amount);
+        latestRfqAmountByLineItemId.set(
+          response.line_item_id,
+          Number.isFinite(amount) ? amount : 0,
+        );
+      }
+    }
+
+    const sourceBudgetLineIds = [
+      ...new Set(
+        sourceLineItems
+          .map((item) => item.budget_line_id ?? item.budget_code_id)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    ];
+    const budgetLineById = new Map<
+      string,
+      { cost_code_id: string; cost_type_id: string }
+    >();
+    if (sourceBudgetLineIds.length > 0) {
+      const { data: budgetLines, error: budgetLinesError } = await supabase
+        .from("budget_lines")
+        .select("id, cost_code_id, cost_type_id")
+        .in("id", sourceBudgetLineIds);
+
+      if (budgetLinesError) {
+        return apiErrorResponse(budgetLinesError);
+      }
+
+      for (const budgetLine of budgetLines ?? []) {
+        budgetLineById.set(budgetLine.id, {
+          cost_code_id: budgetLine.cost_code_id,
+          cost_type_id: budgetLine.cost_type_id,
+        });
+      }
+    }
+
+    const sourceAmount = sourceLineItems.reduce((sum, item) => {
+      const value =
+        latestRfqAmountByLineItemId.get(item.id) ??
+        item.cost_rom ??
+        item.revenue_rom ??
+        0;
+      return sum + (Number(value) || 0);
+    }, 0);
+    const requestedAmount = Number(body.amount ?? 0);
+    const changeOrderAmount = requestedAmount !== 0 ? requestedAmount : sourceAmount;
 
     const { data, error } = await supabase
       .from("contract_change_orders")
       .insert({
+        project_id: projectIdNum,
         change_order_number: body.change_order_number,
         description: body.description ?? "",
-        amount: body.amount ?? 0,
+        amount: changeOrderAmount,
         contract_id: body.contract_id,
         status: body.status || "draft",
         requested_date: body.requested_date ?? new Date().toISOString().split("T")[0],
@@ -233,6 +319,42 @@ export const POST = withApiGuardrails(
     }
 
     if (changeEventIds.length > 0 && data?.id) {
+      if (sourceLineItems.length > 0) {
+        const { error: lineInsertError } = await supabase
+          .from("commitment_change_order_lines")
+          .insert(
+            sourceLineItems.map((item) => ({
+              commitment_change_order_id: data.id,
+              description: item.description ?? null,
+              amount:
+                Number(
+                  latestRfqAmountByLineItemId.get(item.id) ??
+                    item.cost_rom ??
+                    item.revenue_rom ??
+                    0,
+                ) || 0,
+              budget_line_id: item.budget_line_id ?? item.budget_code_id ?? null,
+              cost_code_id: budgetLineById.get(item.budget_line_id ?? item.budget_code_id ?? "")
+                ?.cost_code_id ?? null,
+              cost_type_id: budgetLineById.get(item.budget_line_id ?? item.budget_code_id ?? "")
+                ?.cost_type_id ?? null,
+            })),
+          );
+
+        if (lineInsertError) {
+          await supabase.from("contract_change_orders").delete().eq("id", data.id);
+
+          return NextResponse.json(
+            {
+              error:
+                "Failed to create commitment change order line items.",
+              details: lineInsertError.message,
+            },
+            { status: 500 },
+          );
+        }
+      }
+
       const { error: ceUpdateError } = await supabase
         .from("change_events")
         .update({ sent_to_commitment_pco: true })
@@ -254,7 +376,7 @@ export const POST = withApiGuardrails(
       const links = changeEventIds.map((ceId) => ({
         change_event_id: ceId,
         pco_id: data.id,
-        pco_type: "commitment_co",
+        pco_type: "commitment",
       }));
 
       const { error: linkError } = await supabase

@@ -10,6 +10,25 @@ const RUNS_ROOT = path.join(CWD, "tests", "agent-browser-runs");
 const DEFAULT_URL = process.env.PLAYWRIGHT_BASE_URL || process.env.BASE_URL || "http://localhost:3000";
 const DEFAULT_RETENTION_HOURS = 48;
 
+function loadEnvFile(relativePath) {
+  const file = path.resolve(CWD, relativePath);
+  if (!fs.existsSync(file)) return;
+
+  for (const line of fs.readFileSync(file, "utf8").split(/\n/)) {
+    const match = line.match(/^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/);
+    if (!match) continue;
+
+    let value = match[2].trim();
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
+    }
+    process.env[match[1]] ||= value;
+  }
+}
+
 function slugify(value) {
   return value
     .toLowerCase()
@@ -180,6 +199,8 @@ function summarize(actionsOutput, metadata) {
 
 function main() {
   const options = parseArgs(process.argv.slice(2));
+  loadEnvFile(".env");
+  loadEnvFile("frontend/.env.local");
   ensureDir(RUNS_ROOT);
 
   if (!options.skipCleanup) {
@@ -215,7 +236,7 @@ function main() {
     runAgentBrowser(options.session, ["close"], { allowFailure: true });
 
     runAgentBrowser(options.session, ["open", options.url]);
-    runAgentBrowser(options.session, ["wait", "--load", "networkidle"]);
+    runAgentBrowser(options.session, ["wait", "3000"]);
 
     const initialSnapshot = runAgentBrowser(options.session, ["snapshot", "-i"], { capture: true });
     writeFile(initialSnapshotPath, (initialSnapshot.stdout || "").toString());

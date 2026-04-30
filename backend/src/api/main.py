@@ -496,6 +496,11 @@ class PipelineProcessRequest(BaseModel):
     metadataId: str
 
 
+class TeamsCompilerRunRequest(BaseModel):
+    batch_size: int = 25
+    dry_run: bool = False
+
+
 @app.post("/api/pipeline/process", tags=["Ingestion"], summary="Run full RAG pipeline for a document")
 async def pipeline_process_endpoint(
     payload: PipelineProcessRequest,
@@ -519,6 +524,52 @@ async def pipeline_process_endpoint(
     """
     background_tasks.add_task(_run_pipeline_limited, payload.metadataId)
     return {"status": "queued", "metadataId": payload.metadataId}
+
+
+@app.post("/api/intelligence/teams-compiler/run", tags=["Intelligence"], summary="Run Teams conversation compiler")
+async def run_teams_compiler(
+    request: TeamsCompilerRunRequest,
+    background_tasks: BackgroundTasks,
+) -> Dict[str, Any]:
+    """Compile a bounded batch of Teams DM conversations into structured intelligence."""
+    import uuid
+
+    job_id = str(uuid.uuid4())
+    if request.batch_size < 1 or request.batch_size > 50:
+        raise HTTPException(status_code=422, detail="batch_size must be between 1 and 50")
+    if request.dry_run:
+        return {"job_id": job_id, "status": "dry_run", "results": {"batch_size": request.batch_size}}
+
+    try:
+        from src.services.intelligence.teams_compiler import run_compiler_batch
+        from src.services.supabase_helpers import get_supabase_client
+
+        client = get_supabase_client()
+        results = run_compiler_batch(client, batch_size=request.batch_size)
+        return {"job_id": job_id, "status": "completed", "results": results}
+    except Exception as exc:
+        logger.error("[TeamsCompilerAPI] run failed job_id=%s: %s", job_id, exc, exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Teams compiler run failed for job {job_id}: {exc}",
+        ) from exc
+
+
+@app.get("/api/intelligence/teams-compiler/status", tags=["Intelligence"], summary="Teams compiler status")
+async def get_teams_compiler_status() -> Dict[str, Any]:
+    """Return Teams compiler monitoring metrics from Supabase."""
+    try:
+        from src.services.supabase_helpers import get_supabase_client
+
+        client = get_supabase_client()
+        result = client.rpc("get_teams_compiler_status").execute()
+        return result.data or {}
+    except Exception as exc:
+        logger.error("[TeamsCompilerAPI] status failed: %s", exc, exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Teams compiler status query failed: {exc}",
+        ) from exc
 
 
 # === Scheduled Analysis Engine ===

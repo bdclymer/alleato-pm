@@ -3,6 +3,7 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { requirePermission } from "@/lib/permissions-guard";
+import { syncLinkedOwnerPaymentApplication } from "@/lib/invoicing/owner-payment-application-sync";
 
 // POST /api/projects/[projectId]/invoicing/owner/[invoiceId]/approve
 // Approve an invoice
@@ -93,6 +94,14 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
         cause: updateError,
       });
     }
+
+    await syncLinkedOwnerPaymentApplication({
+      supabase,
+      projectId: projectIdNum,
+      invoice,
+      status: "approved",
+      where: "projects/[projectId]/invoicing/owner/[invoiceId]/approve#POST",
+    });
 
     return NextResponse.json({
       data: updatedInvoice,

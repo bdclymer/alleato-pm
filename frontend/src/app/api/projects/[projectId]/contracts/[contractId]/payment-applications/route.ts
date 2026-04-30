@@ -15,6 +15,7 @@ const createPaymentApplicationSchema = z.object({
   application_number: z.string().min(1, "Application number is required"),
   amount: z.number().min(0, "Amount must be non-negative"),
   retention_amount: z.number().min(0).default(0),
+  percent_complete: z.number().min(0).max(100).default(0),
   status: z
     .enum(["draft", "under_review", "revise_and_resubmit", "approved"])
     .default("draft"),
@@ -118,6 +119,7 @@ export const POST = withApiGuardrails(
         application_number: validatedData.application_number,
         amount: validatedData.amount,
         retention_amount: validatedData.retention_amount,
+        percent_complete: validatedData.percent_complete,
         status: validatedData.status,
         period_from: validatedData.period_from ?? null,
         period_to: validatedData.period_to ?? null,

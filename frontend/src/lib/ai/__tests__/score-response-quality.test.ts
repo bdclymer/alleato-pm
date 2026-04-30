@@ -102,6 +102,22 @@ describe("scoreResponseQuality", () => {
       expect(result.sourceQuality).toBe("high");
       expect(result.score).toBeGreaterThanOrEqual(80);
     });
+
+    it("treats a compiled intelligence packet as multi-evidence even with one tool trace", () => {
+      const result = scoreResponseQuality({
+        toolTrace: [
+          {
+            tool: "clientProjectIntelligencePacket",
+            output: { cardCount: 6 },
+            timestamp: "",
+          },
+        ],
+        content:
+          "Current read: closeout coordination. [Source: Teams thread] [Source: Invoice follow-up]",
+      });
+      expect(result.confidence).toBe("high");
+      expect(result.reasons).toContain("compiled intelligence packet with multiple evidence cards");
+    });
   });
 
   describe("failed tool calls", () => {

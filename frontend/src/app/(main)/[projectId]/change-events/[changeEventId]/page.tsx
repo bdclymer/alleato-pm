@@ -69,6 +69,8 @@ import { EntityRoom } from "@/components/comments/entity-room";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ChangeEventRfqForm } from "@/components/domain/change-events/ChangeEventRfqForm";
 import type { ChangeEventRfqFormValues } from "@/components/domain/change-events/ChangeEventRfqForm";
+import { useDropdownData } from "@/components/domain/change-events/change-event-form/useDropdownData";
+import type { ProjectEmail } from "@/hooks/use-emails";
 
 /* ── Helpers ──────────────────────────────────────────────────────── */
 
@@ -100,6 +102,17 @@ function mapApiStatusToFormStatus(status?: string | null): string {
   return status.trim();
 }
 
+function formatEmailDate(value: string | null): string {
+  if (!value) return "-";
+  return new Date(value).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
 /* ── Page component ──────────────────────────────────────────────── */
 
 export default function ChangeEventDetailPage() {
@@ -123,10 +136,69 @@ export default function ChangeEventDetailPage() {
 
   const [showRfqSheet, setShowRfqSheet] = useState(false);
   const [isCreatingRfq, setIsCreatingRfq] = useState(false);
+  const [projectContacts, setProjectContacts] = useState<
+    Array<{ id: string; name: string; email?: string }>
+  >([]);
+  const { contracts } = useDropdownData({ projectId });
+
+  useEffect(() => {
+    let isActive = true;
+    const fetchProjectContacts = async () => {
+      try {
+        const contacts = await apiFetch<
+          Array<{ id: string; name: string; email?: string | null }>
+        >(`/api/projects/${projectId}/contacts`);
+        if (!isActive) return;
+        setProjectContacts(
+          contacts.map((contact) => ({
+            id: contact.id,
+            name: contact.name,
+            email: contact.email ?? undefined,
+          })),
+        );
+      } catch {
+        if (isActive) setProjectContacts([]);
+      }
+    };
+
+    void fetchProjectContacts();
+    return () => {
+      isActive = false;
+    };
+  }, [projectId]);
+
+  const rfqLineItems = useMemo(
+    () =>
+      lineItems.map((item) => {
+        const commitmentNumber = item.commitment?.contract_number ?? "";
+        const inferredCommitmentType = commitmentNumber
+          .trim()
+          .toLowerCase()
+          .startsWith("po")
+          ? "po"
+          : "sub";
+        const linkedCommitmentId =
+          item.commitmentId
+            ? `${item.commitmentType === "purchase_order" ? "po" : inferredCommitmentType}-${item.commitmentId}`
+            : null;
+        return {
+          id: item.id,
+          description: item.description,
+          contractId:
+            linkedCommitmentId ??
+            (item.contractId != null ? String(item.contractId) : null),
+        };
+      }),
+    [lineItems],
+  );
 
   const handleSendRfq = useCallback(async (values: ChangeEventRfqFormValues) => {
     setIsCreatingRfq(true);
     try {
+      const assignedLine = values.commitmentLines.find((line) => line.contractId);
+      const assignedContract = assignedLine
+        ? contracts.find((contract) => contract.id === assignedLine.contractId)
+        : undefined;
       await apiFetch(`/api/projects/${projectId}/change-events/rfqs`, {
         method: "POST",
         body: JSON.stringify({
@@ -135,6 +207,8 @@ export default function ChangeEventDetailPage() {
           dueDate: values.dueDate || undefined,
           includeAttachments: values.includeAttachments,
           notes: values.requestDetails.trim() || undefined,
+          assignedCompanyId: assignedContract?.vendorId || undefined,
+          assignedContactId: values.distributionPersonId || undefined,
         }),
       });
       toast.success("RFQ created");
@@ -145,7 +219,7 @@ export default function ChangeEventDetailPage() {
     } finally {
       setIsCreatingRfq(false);
     }
-  }, [projectId, changeEventId, actions]);
+  }, [projectId, changeEventId, actions, contracts]);
 
   const { markupRows } = useVerticalMarkup(projectId);
 
@@ -161,6 +235,32 @@ export default function ChangeEventDetailPage() {
   const [lineageRefreshSignal, setLineageRefreshSignal] = useState(0);
   const [existingPrimePCOs, setExistingPrimePCOs] = useState<Array<{id: string; pco_number: string; title: string; status: string}>>([]);
   const [hasFetchedPCOs, setHasFetchedPCOs] = useState(false);
+  const [changeEventEmails, setChangeEventEmails] = useState<ProjectEmail[]>([]);
+  const [isLoadingEmails, setIsLoadingEmails] = useState(false);
+
+  const fetchChangeEventEmails = useCallback(async () => {
+    setIsLoadingEmails(true);
+    try {
+      const emails = await apiFetch<ProjectEmail[]>(
+        `/api/projects/${projectId}/emails?related_tool=change-event&related_id=${encodeURIComponent(changeEventId)}`,
+        { cache: "no-store" as RequestCache },
+      );
+      setChangeEventEmails(emails);
+    } catch {
+      setChangeEventEmails([]);
+    } finally {
+      setIsLoadingEmails(false);
+    }
+  }, [projectId, changeEventId]);
+
+  useEffect(() => {
+    void fetchChangeEventEmails();
+  }, [fetchChangeEventEmails]);
+
+  const handleEmailDialogOpenChange = useCallback((open: boolean) => {
+    setShowEmailDialog(open);
+    if (!open) void fetchChangeEventEmails();
+  }, [fetchChangeEventEmails]);
 
   const fetchLineageSummary = useCallback(async () => {
     const payload = await apiFetch<{ summary?: { count?: number } }>(
@@ -675,7 +775,7 @@ export default function ChangeEventDetailPage() {
             Related Items ({relatedItems.length})
           </TabsTrigger>
           <TabsTrigger value="comments">Comments (0)</TabsTrigger>
-          <TabsTrigger value="emails">Emails (0)</TabsTrigger>
+          <TabsTrigger value="emails">Emails ({changeEventEmails.length})</TabsTrigger>
           <TabsTrigger value="history" data-testid="change-event-tab-history">
             Change History ({historyEntries.length})
           </TabsTrigger>
@@ -729,7 +829,13 @@ export default function ChangeEventDetailPage() {
             <ChangeEventRfqsTab
               projectId={projectId}
               changeEventId={changeEventId}
+              lineItems={lineItems.map((item) => ({
+                id: item.id,
+                description: item.description,
+                quantity: item.quantity,
+              }))}
               onSendRfq={() => setShowRfqSheet(true)}
+              onResponseRecorded={() => void actions.refetch()}
             />
           </TabsContent>
 
@@ -754,11 +860,43 @@ export default function ChangeEventDetailPage() {
           </TabsContent>
 
           <TabsContent value="emails">
-            <EmptyState
-              icon={<Mail />}
-              title="No emails"
-              description="Emails related to this change event will appear here."
-            />
+            {isLoadingEmails ? (
+              <div className="space-y-3">
+                <Skeleton className="h-16 w-full" />
+                <Skeleton className="h-16 w-full" />
+              </div>
+            ) : changeEventEmails.length === 0 ? (
+              <EmptyState
+                icon={<Mail />}
+                title="No emails"
+                description="Emails related to this change event will appear here."
+              />
+            ) : (
+              <div className="divide-y rounded-md border">
+                {changeEventEmails.map((email) => (
+                  <div key={email.id} className="grid gap-2 p-4 md:grid-cols-[1fr_auto] md:items-start">
+                    <div className="space-y-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Text weight="medium">{email.subject}</Text>
+                        <StatusBadge status={email.status} />
+                        {email.has_attachments ? (
+                          <span className="text-xs text-muted-foreground">Attachment</span>
+                        ) : null}
+                      </div>
+                      <Text size="sm" tone="muted">
+                        To {(email.to_list ?? []).join(", ") || "-"}
+                      </Text>
+                      <Text size="sm" tone="muted">
+                        From {email.from_email || email.from_name || "-"}
+                      </Text>
+                    </div>
+                    <Text size="sm" tone="muted">
+                      {formatEmailDate(email.sent_at ?? email.created_at)}
+                    </Text>
+                  </div>
+                ))}
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="history">
@@ -770,7 +908,7 @@ export default function ChangeEventDetailPage() {
       {/* Dialogs */}
       <ChangeEventEmailDialog
         open={showEmailDialog}
-        onOpenChange={setShowEmailDialog}
+        onOpenChange={handleEmailDialogOpenChange}
         changeEventTitle={changeEvent.title || "Untitled"}
         changeEventNumber={ceNumber}
         projectId={projectId}
@@ -819,6 +957,9 @@ export default function ChangeEventDetailPage() {
             {changeEvent && (
               <ChangeEventRfqForm
                 changeEvent={changeEvent}
+                lineItems={rfqLineItems}
+                contracts={contracts}
+                projectUsers={projectContacts}
                 isSubmitting={isCreatingRfq}
                 onSubmit={handleSendRfq}
                 onCancel={() => setShowRfqSheet(false)}

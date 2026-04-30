@@ -117,6 +117,10 @@ function computeLatestCost(li: ChangeEventDetailLineItem): number {
   return li.costRom ?? 0;
 }
 
+function computeRfqCost(li: ChangeEventDetailLineItem): number {
+  return li.rfqCost ?? 0;
+}
+
 type GroupBy = "none" | "vendor" | "budgetCode";
 
 /* ---- Column config ---- */
@@ -263,12 +267,13 @@ export function ChangeEventLineItemsTable({
       filteredItems.reduce(
         (acc, li) => ({
           costRom: acc.costRom + (li.costRom ?? 0),
+          rfqCost: acc.rfqCost + computeRfqCost(li),
           revenueRom: acc.revenueRom + (li.revenueRom ?? 0),
           nonCommittedCost: acc.nonCommittedCost + (li.nonCommittedCost ?? 0),
           latestPrice: acc.latestPrice + computeLatestPrice(li),
           latestCost: acc.latestCost + computeLatestCost(li),
         }),
-        { costRom: 0, revenueRom: 0, nonCommittedCost: 0, latestPrice: 0, latestCost: 0 },
+        { costRom: 0, rfqCost: 0, revenueRom: 0, nonCommittedCost: 0, latestPrice: 0, latestCost: 0 },
       ),
     [filteredItems],
   );
@@ -292,6 +297,7 @@ export function ChangeEventLineItemsTable({
   const totals = useMemo(
     () => ({
       costRom: lineItemSubtotals.costRom,
+      rfqCost: lineItemSubtotals.rfqCost,
       revenueRom: lineItemSubtotals.revenueRom + markupTotalRevenue,
       nonCommittedCost: lineItemSubtotals.nonCommittedCost,
       latestPrice: lineItemSubtotals.latestPrice + markupTotalRevenue,
@@ -741,6 +747,7 @@ export function ChangeEventLineItemsTable({
                 {group.items.map((li) => {
                   const latestPrice = computeLatestPrice(li);
                   const latestCost = computeLatestCost(li);
+                  const rfqCost = computeRfqCost(li);
                   const liOverUnder = latestPrice - latestCost;
 
                   return (
@@ -853,7 +860,7 @@ export function ChangeEventLineItemsTable({
                       )}
                       {visibleCols.cost_rfq && (
                         <InlineTableCell align="right" numeric divider={firstCostCol === "cost_rfq"}>
-                          --
+                          {li.rfqCost != null ? formatCurrency(rfqCost) : "--"}
                         </InlineTableCell>
                       )}
                       {visibleCols.cost_commitment && (
@@ -1037,7 +1044,11 @@ export function ChangeEventLineItemsTable({
                   {formatCurrency(totals.costRom)}
                 </InlineTableFooterCell>
               )}
-              {visibleCols.cost_rfq && <InlineTableFooterCell divider={firstCostCol === "cost_rfq"} />}
+              {visibleCols.cost_rfq && (
+                <InlineTableFooterCell align="right" numeric divider={firstCostCol === "cost_rfq"}>
+                  {formatCurrency(totals.rfqCost)}
+                </InlineTableFooterCell>
+              )}
               {visibleCols.cost_commitment && <InlineTableFooterCell divider={firstCostCol === "cost_commitment"} />}
               {visibleCols.cost_nonCommitted && (
                 <InlineTableFooterCell align="right" numeric divider={firstCostCol === "cost_nonCommitted"}>

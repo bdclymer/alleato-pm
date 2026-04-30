@@ -674,6 +674,9 @@ export const POST = withApiGuardrails<{ projectId: string }>(
         retainage_released?: number;
         work_completed_pct?: number;
         sort_order?: number;
+        line_item_type?: string | null;
+        commitment_value?: number | null;
+        change_value?: number | null;
       }, index: number) => {
         const scheduled = Number(item.scheduled_value) || 0;
         const previous = Number(item.work_completed_previous) || 0;
@@ -714,6 +717,15 @@ export const POST = withApiGuardrails<{ projectId: string }>(
           work_retainage_released: Number(item.work_retainage_released) || 0,
           materials_retainage_released: Number(item.materials_retainage_released) || 0,
           retainage_released: Number(item.retainage_released) || 0,
+          line_item_type: item.line_item_type ?? null,
+          commitment_value:
+            item.commitment_value != null
+              ? Number(item.commitment_value) || 0
+              : null,
+          change_value:
+            item.change_value != null
+              ? Number(item.change_value) || 0
+              : null,
           work_completed_pct:
             item.work_completed_pct != null
               ? Number(item.work_completed_pct) || 0
@@ -727,6 +739,10 @@ export const POST = withApiGuardrails<{ projectId: string }>(
         .insert(lineItemRows);
 
       if (lineItemsError) {
+        await supabase
+          .from("subcontractor_invoices")
+          .delete()
+          .eq("id", invoice.id);
         return NextResponse.json(
           { error: "Invoice created but failed to insert line items", details: lineItemsError.message },
           { status: 500 },

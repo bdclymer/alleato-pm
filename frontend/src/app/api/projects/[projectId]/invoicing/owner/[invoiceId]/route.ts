@@ -70,6 +70,34 @@ export const GET = withApiGuardrails<{ projectId: string; invoiceId: string }>(
       0,
     );
 
+    const { data: payments, error: paymentsError } = await supabase
+      .from("invoice_payments")
+      .select("amount")
+      .eq("project_id", projectIdNum)
+      .eq("owner_invoice_id", invoiceIdNum);
+
+    if (paymentsError) {
+      return NextResponse.json(
+        { error: "Failed to fetch invoice payments", details: paymentsError.message },
+        { status: 500 },
+      );
+    }
+
+    const total_paid = (payments ?? []).reduce(
+      (sum, payment) => sum + (payment.amount || 0),
+      0,
+    );
+    const billedTotal =
+      (invoice.net_amount ?? 0) ||
+      (invoice.gross_amount ?? 0) ||
+      total_amount;
+    let payment_status: "unpaid" | "partially_paid" | "paid" = "unpaid";
+    if (billedTotal > 0 && total_paid >= billedTotal) {
+      payment_status = "paid";
+    } else if (total_paid > 0) {
+      payment_status = "partially_paid";
+    }
+
     // Extract retention_percentage from contracts join, then strip join data
     const contractRetentionPercentage =
       Array.isArray(invoice.prime_contracts)
@@ -82,6 +110,9 @@ export const GET = withApiGuardrails<{ projectId: string; invoiceId: string }>(
       data: {
         ...invoiceData,
         total_amount,
+        paid_amount: invoice.paid_amount ?? total_paid,
+        total_paid,
+        payment_status,
         contract_retention_percentage: contractRetentionPercentage,
       },
     });

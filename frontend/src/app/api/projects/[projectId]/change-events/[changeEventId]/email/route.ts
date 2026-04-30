@@ -1,9 +1,11 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
 import { requirePermission } from "@/lib/permissions-guard";
 import { renderPdfFromHtml, buildChangeEventHtml } from "@/lib/documents/pdf";
 import { logger } from "@/lib/logger";
+import { EMAIL_FROM } from "@/lib/email/client";
 
 // Puppeteer requires the Node.js runtime — Edge runtime does not support it.
 export const runtime = "nodejs";
@@ -50,6 +52,10 @@ export const POST = withApiGuardrails(
     }
 
     const supabase = await createClient();
+    const serviceClient = createServiceClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     const { data: changeEvent, error: ceError } = await supabase
       .from("change_events")
@@ -116,6 +122,7 @@ export const POST = withApiGuardrails(
     const htmlContent = buildChangeEventHtml({ ...changeEvent, creator }, lineItems, mappedProject);
 
     const ceNumber = changeEvent.number || changeEvent.id;
+    const fromAddress = EMAIL_FROM;
 
     let attachments: Array<{ filename: string; content: string }> = [];
     try {
@@ -162,11 +169,108 @@ export const POST = withApiGuardrails(
       </div>
     `;
 
+    const { data: emailEvent, error: emailEventError } = await serviceClient
+      .from("email_events")
+      .insert({
+        template: "status-report",
+        to_email: recipients[0],
+        from_email: fromAddress,
+        subject,
+        status: "queued",
+        entity_type: "change_event",
+        entity_id: String(changeEventId),
+        user_id: user?.id ?? null,
+        metadata: {
+          project_id: projectIdNum,
+          change_event_id: changeEventId,
+          change_event_number: ceNumber,
+          recipient_count: recipients.length,
+          attachment_count: attachments.length,
+        },
+      })
+      .select("id")
+      .single();
+
+    if (emailEventError || !emailEvent?.id) {
+      return NextResponse.json(
+        {
+          error: "Email audit log could not be created.",
+          details:
+            emailEventError?.message ??
+            "The change event email was blocked so it cannot be sent without an audit trail.",
+        },
+        { status: 500 },
+      );
+    }
+
+    const { data: emailHistory, error: emailHistoryError } = await serviceClient
+      .from("project_emails")
+      .insert({
+        project_id: projectIdNum,
+        subject,
+        body: message ?? "",
+        body_html: emailHtml,
+        from_name: "Alleato",
+        from_email: fromAddress,
+        to_list: recipients,
+        status: "Draft",
+        sent_at: null,
+        has_attachments: attachments.length > 0,
+        related_tool: "change-event",
+        related_id: String(changeEventId),
+        created_by: user?.id ?? null,
+      })
+      .select("id")
+      .single();
+
+    if (emailHistoryError || !emailHistory?.id) {
+      await serviceClient
+        .from("email_events")
+        .update({
+          status: "failed",
+          error: {
+            message:
+              emailHistoryError?.message ??
+              "Project email history row could not be created.",
+          },
+        })
+        .eq("id", emailEvent.id);
+
+      return NextResponse.json(
+        {
+          error: "Email history could not be created.",
+          details:
+            emailHistoryError?.message ??
+            "The change event email was blocked so it cannot be sent without visible history.",
+        },
+        { status: 500 },
+      );
+    }
+
+    if (!process.env.RESEND_API_KEY) {
+      const error = { message: "Missing RESEND_API_KEY" };
+      await Promise.all([
+        serviceClient
+          .from("email_events")
+          .update({ status: "failed", error })
+          .eq("id", emailEvent.id),
+        serviceClient
+          .from("project_emails")
+          .update({ status: "Failed" })
+          .eq("id", emailHistory.id),
+      ]);
+
+      return NextResponse.json(
+        { error: "Email service not configured.", details: error.message },
+        { status: 500 },
+      );
+    }
+
     const { Resend } = await import("resend");
     const resend = new Resend(process.env.RESEND_API_KEY);
 
     const { data, error: sendError } = await resend.emails.send({
-      from: "Alleato <noreply@alleato.group>",
+      from: fromAddress,
       to: recipients,
       subject,
       html: emailHtml,
@@ -178,12 +282,46 @@ export const POST = withApiGuardrails(
         msg: "[change-events/email] Resend send failed",
         error: sendError.message || String(sendError),
       });
+      await Promise.all([
+        serviceClient
+          .from("email_events")
+          .update({
+            status: "failed",
+            error: { message: sendError.message || "Failed to send email" },
+          })
+          .eq("id", emailEvent.id),
+        serviceClient
+          .from("project_emails")
+          .update({ status: "Failed" })
+          .eq("id", emailHistory.id),
+      ]);
       return NextResponse.json(
         { error: sendError.message || "Failed to send email" },
         { status: 500 },
       );
     }
 
-    return NextResponse.json({ success: true, id: data?.id });
+    const sentAt = new Date().toISOString();
+    await Promise.all([
+      serviceClient
+        .from("email_events")
+        .update({
+          status: "sent",
+          resend_id: data?.id ?? null,
+          sent_at: sentAt,
+        })
+        .eq("id", emailEvent.id),
+      serviceClient
+        .from("project_emails")
+        .update({ status: "Sent", sent_at: sentAt })
+        .eq("id", emailHistory.id),
+    ]);
+
+    return NextResponse.json({
+      success: true,
+      id: data?.id,
+      email_event_id: emailEvent.id,
+      project_email_id: emailHistory.id,
+    });
   },
 );

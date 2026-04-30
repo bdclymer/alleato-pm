@@ -35,7 +35,48 @@ export const GET = withApiGuardrails(
 
     if (error) return apiErrorResponse(error);
 
-    return NextResponse.json({ data: data ?? [] });
+    const rows = data ?? [];
+    const budgetLineIds = [
+      ...new Set(
+        rows
+          .map((row) => row.budget_line_id)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    ];
+    const budgetLineById = new Map<
+      string,
+      { cost_code_id: string; cost_type_id: string }
+    >();
+
+    if (budgetLineIds.length > 0) {
+      const { data: budgetLines, error: budgetLinesError } = await supabase
+        .from("budget_lines")
+        .select("id, cost_code_id, cost_type_id")
+        .in("id", budgetLineIds);
+
+      if (budgetLinesError) return apiErrorResponse(budgetLinesError);
+
+      for (const budgetLine of budgetLines ?? []) {
+        budgetLineById.set(budgetLine.id, {
+          cost_code_id: budgetLine.cost_code_id,
+          cost_type_id: budgetLine.cost_type_id,
+        });
+      }
+    }
+
+    return NextResponse.json({
+      data: rows.map((row) => {
+        const budgetLine = row.budget_line_id
+          ? budgetLineById.get(row.budget_line_id)
+          : null;
+
+        return {
+          ...row,
+          cost_code_id: row.cost_code_id ?? budgetLine?.cost_code_id ?? null,
+          cost_type_id: row.cost_type_id ?? budgetLine?.cost_type_id ?? null,
+        };
+      }),
+    });
     },
 );
 

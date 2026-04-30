@@ -159,15 +159,29 @@ export const GET = withApiGuardrails<{ projectId: string; invoiceId: string }>(
     const enrichedLineItems = rawLineItems.map((li) => {
       const sortOrder = Number(li.sort_order) || 0;
       const sovMatch = sovBySort.get(sortOrder);
-      const commitmentValue = sovMatch ? (Number(sovMatch.amount) || 0) : null;
+      const storedLineItemType =
+        typeof li.line_item_type === "string" ? li.line_item_type : null;
+      const isChangeOrderLine =
+        storedLineItemType?.toLowerCase().includes("change") ?? false;
+      const commitmentValue = isChangeOrderLine
+        ? Number(li.commitment_value ?? 0) || 0
+        : sovMatch
+          ? (Number(sovMatch.amount) || 0)
+          : null;
       const scheduledValue = Number(li.scheduled_value) || 0;
-      const changeValue = commitmentValue != null ? scheduledValue - commitmentValue : null;
+      const changeValue = isChangeOrderLine
+        ? Number(li.change_value ?? scheduledValue) || 0
+        : commitmentValue != null
+          ? scheduledValue - commitmentValue
+          : null;
       const workPrev = Number(li.work_completed_previous) || 0;
       const workPrevPct = scheduledValue > 0 ? (workPrev / scheduledValue) * 100 : 0;
       return {
         ...li,
-        budget_code: sovMatch?.budget_code ?? (li.description as string) ?? null,
-        line_item_type: "SOV",
+        budget_code:
+          sovMatch?.budget_code ??
+          (typeof li.budget_code === "string" ? li.budget_code : null),
+        line_item_type: storedLineItemType ?? "SOV",
         commitment_value: commitmentValue,
         change_value: changeValue,
         work_completed_previous_pct: workPrevPct,

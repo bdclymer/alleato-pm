@@ -10,6 +10,7 @@ import { z } from "zod";
 import InviteUser from "@/emails/auth/InviteUser";
 import { APP_BASE_URL } from "@/lib/email/client";
 import { sendEmail } from "@/lib/email/send";
+import { buildInviteAcceptUrl } from "@/lib/email/invite-links";
 
 const InviteUserSchema = z.object({
   first_name: z.string().trim().min(1, "First name is required"),
@@ -40,18 +41,6 @@ function getAuthMetadataAvatarUrl(metadata: Record<string, unknown> | null | und
   }
 
   return null;
-}
-
-function buildInviteAcceptUrl(actionLink: string, email: string) {
-  const actionUrl = new URL(actionLink);
-  const token = actionUrl.searchParams.get("token");
-
-  if (!token) {
-    return actionLink;
-  }
-
-  const passwordSetupUrl = `/auth/update-password?email=${encodeURIComponent(email)}&next=${encodeURIComponent("/")}`;
-  return `${APP_BASE_URL}/auth/confirm?token_hash=${token}&type=invite&next=${encodeURIComponent(passwordSetupUrl)}`;
 }
 
 async function requireAdmin(where: string) {

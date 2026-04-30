@@ -3,6 +3,7 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { requirePermission } from "@/lib/permissions-guard";
+import { syncLinkedOwnerPaymentApplication } from "@/lib/invoicing/owner-payment-application-sync";
 
 // POST /api/projects/[projectId]/invoicing/owner/[invoiceId]/revise
 // Request revision of an invoice (UNDER REVIEW → REVISE AND RESUBMIT)
@@ -25,7 +26,7 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
     // Verify invoice exists and belongs to the project
     const { data: invoice, error: fetchError } = await supabase
       .from("owner_invoices")
-      .select(`id, status, prime_contracts!inner(project_id)`)
+      .select(`id, status, prime_contract_id, payment_application_id, prime_contracts!inner(project_id)`)
       .eq("id", invoiceIdNum)
       .eq("prime_contracts.project_id", projectIdNum)
       .single();
@@ -75,6 +76,14 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
         details: updateError.message,
       });
     }
+
+    await syncLinkedOwnerPaymentApplication({
+      supabase,
+      projectId: projectIdNum,
+      invoice,
+      status: "revise_and_resubmit",
+      where: "projects/[projectId]/invoicing/owner/[invoiceId]/revise#POST",
+    });
 
     return NextResponse.json({
       data: updated,

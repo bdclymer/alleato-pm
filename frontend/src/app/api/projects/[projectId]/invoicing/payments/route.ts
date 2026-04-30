@@ -2,6 +2,7 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { syncLinkedOwnerPaymentApplication } from "@/lib/invoicing/owner-payment-application-sync";
 
 // GET /api/projects/[projectId]/invoicing/payments
 // List all payments for a project, joined with owner/subcontractor invoice info.
@@ -183,7 +184,7 @@ export const POST = withApiGuardrails<{ projectId: string }>(
     if (hasOwner) {
       const { data: ownerInv, error: oErr } = await supabase
         .from("owner_invoices")
-        .select("id, prime_contracts!inner(project_id)")
+        .select("id, net_amount, gross_amount, prime_contracts!inner(project_id)")
         .eq("id", Number(owner_invoice_id))
         .eq("prime_contracts.project_id", projectIdNum)
         .maybeSingle();
@@ -233,6 +234,77 @@ export const POST = withApiGuardrails<{ projectId: string }>(
         message: "Failed to create payment.",
         details: insertError.message,
       });
+    }
+
+    if (hasOwner) {
+      const ownerInvoiceId = Number(owner_invoice_id);
+      const { data: ownerInvoice, error: ownerInvoiceError } = await supabase
+        .from("owner_invoices")
+        .select("id, prime_contract_id, payment_application_id, net_amount, gross_amount")
+        .eq("id", ownerInvoiceId)
+        .single();
+
+      if (ownerInvoiceError) {
+        throw new GuardrailError({
+          code: "INTERNAL_ERROR",
+          where: "projects/[projectId]/invoicing/payments#POST",
+          message: "Failed to refresh owner invoice payment totals.",
+          details: ownerInvoiceError.message,
+        });
+      }
+
+      const { data: ownerPayments, error: ownerPaymentsError } = await supabase
+        .from("invoice_payments")
+        .select("amount")
+        .eq("project_id", projectIdNum)
+        .eq("owner_invoice_id", ownerInvoiceId);
+
+      if (ownerPaymentsError) {
+        throw new GuardrailError({
+          code: "INTERNAL_ERROR",
+          where: "projects/[projectId]/invoicing/payments#POST",
+          message: "Failed to refresh owner invoice payment totals.",
+          details: ownerPaymentsError.message,
+        });
+      }
+
+      const totalPaid = (ownerPayments ?? []).reduce(
+        (sum, row) => sum + (row.amount || 0),
+        0,
+      );
+      const invoiceTotal =
+        (ownerInvoice.net_amount ?? 0) ||
+        (ownerInvoice.gross_amount ?? 0);
+      const statusUpdate =
+        invoiceTotal > 0 && totalPaid >= invoiceTotal ? "paid" : undefined;
+
+      const { error: ownerUpdateError } = await supabase
+        .from("owner_invoices")
+        .update({
+          paid_amount: totalPaid,
+          ...(statusUpdate ? { status: statusUpdate } : {}),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", ownerInvoiceId);
+
+      if (ownerUpdateError) {
+        throw new GuardrailError({
+          code: "INTERNAL_ERROR",
+          where: "projects/[projectId]/invoicing/payments#POST",
+          message: "Failed to update owner invoice payment status.",
+          details: ownerUpdateError.message,
+        });
+      }
+
+      if (statusUpdate === "paid") {
+        await syncLinkedOwnerPaymentApplication({
+          supabase,
+          projectId: projectIdNum,
+          invoice: ownerInvoice,
+          status: "approved",
+          where: "projects/[projectId]/invoicing/payments#POST",
+        });
+      }
     }
 
     return NextResponse.json({ data: payment }, { status: 201 });

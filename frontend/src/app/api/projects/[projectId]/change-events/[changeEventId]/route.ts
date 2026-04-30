@@ -27,8 +27,16 @@ interface VerticalMarkupRow {
 }
 
 interface ChangeEventLineItemRow {
+  id?: string | null;
   budget_code_id?: string | null;
-  }
+}
+
+interface RfqResponseAmountRow {
+  line_item_id: string | null;
+  extended_amount: number | string | null;
+  submitted_at: string | null;
+  created_at: string | null;
+}
 
 function computeMarkupAdditions(
   _baseCost: number,
@@ -327,6 +335,34 @@ export const GET = withApiGuardrails(
       }
     }
 
+    const lineItemIds = lineItems
+      .map((li: ChangeEventLineItemRow) => li.id)
+      .filter((id): id is string => Boolean(id));
+    const latestRfqAmountByLineItemId = new Map<string, number>();
+    if (lineItemIds.length > 0) {
+      const { data: rfqResponses, error: rfqResponsesError } = await supabase
+        .from("change_event_rfq_responses")
+        .select("line_item_id, extended_amount, submitted_at, created_at")
+        .in("line_item_id", lineItemIds)
+        .order("submitted_at", { ascending: false, nullsFirst: false })
+        .order("created_at", { ascending: false });
+
+      if (rfqResponsesError) {
+        return apiErrorResponse(rfqResponsesError);
+      }
+
+      for (const response of (rfqResponses ?? []) as RfqResponseAmountRow[]) {
+        if (!response.line_item_id || latestRfqAmountByLineItemId.has(response.line_item_id)) {
+          continue;
+        }
+        const amount = Number(response.extended_amount);
+        latestRfqAmountByLineItemId.set(
+          response.line_item_id,
+          Number.isFinite(amount) ? amount : 0,
+        );
+      }
+    }
+
     const baseRevenueRom = lineItems.reduce(
       (sum: number, item: any) => sum + (item.revenue_rom || 0),
       0,
@@ -435,6 +471,7 @@ export const GET = withApiGuardrails(
           extendedAmount: quantity * unitCost,
           revenueRom: item.revenue_rom,
           costRom: item.cost_rom,
+          rfqCost: latestRfqAmountByLineItemId.get(item.id) ?? null,
           nonCommittedCost: item.non_committed_cost,
           vendorId: item.vendor_id,
           vendor: item.vendor || null,

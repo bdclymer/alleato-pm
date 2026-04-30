@@ -60,25 +60,39 @@ const trace = Array.isArray(data.metadata?.tool_trace)
   ? data.metadata.tool_trace
   : [];
 const toolNames = trace.map((entry) => String(entry.tool ?? ""));
-const requiredSections = [
-  "Hard Facts",
-  "Sources Checked",
-  "Recent Communication Signals",
-  "What Changed",
-  "Insider Analysis",
-  "Recommended Actions",
-  "Next Step",
-];
-const requiredTools = [
-  "serverBusinessContextPreflight",
-  "sourceHealthPreflight",
-  "getProjectBriefingSnapshot",
-  "semanticSearch",
-  "searchMeetingsByTopic",
-  "searchTeamsMessages",
-  "searchEmails",
-  "searchExternalDocuments",
-];
+const isPacketBriefing = toolNames.includes("clientProjectIntelligencePacket");
+const requiredSections = isPacketBriefing
+  ? [
+      "Current read",
+      "What changed recently",
+      "Financial/change-management exposure",
+      "Schedule/operational risk",
+      "Recommended next action",
+      "Evidence basis and confidence",
+      "Packet status",
+      "Resolved target",
+    ]
+  : [
+      "Hard Facts",
+      "Sources Checked",
+      "Recent Communication Signals",
+      "What Changed",
+      "Insider Analysis",
+      "Recommended Actions",
+      "Next Step",
+    ];
+const requiredTools = isPacketBriefing
+  ? ["clientProjectIntelligencePacket"]
+  : [
+      "serverBusinessContextPreflight",
+      "sourceHealthPreflight",
+      "getProjectBriefingSnapshot",
+      "semanticSearch",
+      "searchMeetingsByTopic",
+      "searchTeamsMessages",
+      "searchEmails",
+      "searchExternalDocuments",
+    ];
 const forbiddenToolErrors = trace
   .filter((entry) => entry.error)
   .map((entry) => `${entry.tool ?? "unknown"}: ${entry.error}`);
@@ -95,6 +109,10 @@ const failures = [
 
 if (content.length < 800) {
   failures.push(`briefing too short: ${content.length} characters`);
+}
+
+if (isPacketBriefing && !content.includes("[Source:")) {
+  failures.push("packet briefing missing source citations");
 }
 
 const responseQualityScore = Number(data.metadata?.response_quality?.score ?? 0);

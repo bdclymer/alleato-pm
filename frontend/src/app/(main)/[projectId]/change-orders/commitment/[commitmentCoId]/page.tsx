@@ -570,14 +570,14 @@ export default function CommitmentCODetailPage() {
     }
     setIsSaving(true);
     try {
-      const updated = await apiFetch<CommitmentCOData>(
+      const updated = await apiFetch<{ data: CommitmentCOData }>(
         `/api/commitments/${contractId}/change-orders/${commitmentCoId}`,
         {
           method: "PUT",
           body: JSON.stringify({
             change_order_number: data.change_order_number,
             title: data.title || null,
-            description: data.description || null,
+            description: data.description ?? "",
             status: data.status,
             amount: data.amount,
             change_reason: data.change_reason || null,
@@ -595,7 +595,7 @@ export default function CommitmentCODetailPage() {
           }),
         },
       );
-      setCo(updated);
+      setCo(updated.data);
       setIsEditing(false);
       toast.success("Change order updated");
     } catch (err) {

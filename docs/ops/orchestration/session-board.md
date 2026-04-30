@@ -40,6 +40,8 @@ Use this as the live ownership registry.
 >>>>>>> theirs
 
 | S25 | Codex | AAI-249 | Vercel frontend build-time reduction: production route isolation, dependency pruning, root import deferral, and build guardrails | `frontend/package.json`, `frontend/pnpm-lock.yaml`, `frontend/vercel.json`, `frontend/tailwind.config.ts`, `frontend/src/app/layout.tsx`, `frontend/src/app/root-client-widgets.tsx`, `frontend/src/app/api/bot/[platform]/route.ts`, `frontend/src/app/(admin)/docs/[[...slug]]/page.tsx`, `scripts/build/**`, `scripts/predeploy-quality-gate.sh`, `docs/ops/handoffs/2026-04-29-S25-vercel-build-performance.md` | Pending Review | 2026-04-29 | 2026-04-29 |
+| S26 | Codex | AAI-270 | Execute Alleato AI Intelligence System PRP: provider validation, packet-first Westfield intelligence, schema, seed, services, assistant integration, tests, and evidence | `docs/PRPs/alleato-ai-intelligence-system/**`, `docs/ai-plan/evals/**`, `scripts/verify/**`, `scripts/seed-db/**`, `supabase/migrations/**`, `frontend/src/lib/ai/**`, `frontend/src/app/api/ai-assistant/chat/route.ts`, `docs/ops/handoffs/2026-04-30-S26-alleato-ai-intelligence-prp.md` | Pending Review | 2026-04-30 | 2026-04-30 |
+| S29 | Codex | AAI-283 | Execute Teams conversation compiler PRP: backend compiler, attribution candidates, status API, migration guardrails, and batch verification | `backend/src/services/intelligence/**`, `backend/src/api/main.py`, `backend/src/services/integrations/microsoft_graph/embed.py`, `scripts/fix-teams-attribution.py`, `supabase/migrations/2026043013*.sql`, `docs/PRPs/teams-conversation-compiler/**`, `docs/ops/handoffs/2026-04-30-S29-teams-conversation-compiler.md` | Blocked | 2026-04-30 | 2026-04-30 |
 
 ## Status Rules
 

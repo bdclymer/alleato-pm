@@ -2,6 +2,7 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { renderInvoicePdfBuffer } from "@/lib/invoice-pdf";
 import { fetchInvoicePdfData } from "../pdf/route";
 import { requirePermission } from "@/lib/permissions-guard";
@@ -48,6 +49,10 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
     if (guard.denied) return guard.response;
 
     const supabase = await createClient();
+    const serviceClient = createServiceClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     const body = (await request.json()) as EmailRequestBody;
     const toList = normalizeEmails(body.to);
@@ -83,6 +88,42 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
     const message =
       body.message?.trim() ||
       `Please find attached invoice #${invoiceNumber}.`;
+    const fromAddress = getFromAddress();
+
+    const { data: emailEvent, error: emailEventError } = await serviceClient
+      .from("email_events")
+      .insert({
+        template: "owner-invoice-issued",
+        to_email: toList[0],
+        from_email: fromAddress,
+        subject,
+        status: "queued",
+        entity_type: "owner_invoice",
+        entity_id: String(invoiceIdNum),
+        user_id: user?.id ?? null,
+        metadata: {
+          project_id: projectIdNum,
+          invoice_id: invoiceIdNum,
+          invoice_number: invoiceNumber,
+          cc: ccList,
+          recipient_count: toList.length,
+        },
+      })
+      .select("id")
+      .single();
+
+    if (emailEventError || !emailEvent?.id) {
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: "projects/[projectId]/invoicing/owner/[invoiceId]/email#POST",
+        message: "Email audit log could not be created.",
+        details:
+          emailEventError?.message ??
+          "The email send was blocked so the invoice email cannot be sent without an audit trail.",
+      });
+    }
+
+    const emailEventId = emailEvent.id;
 
     // Generate PDF
     const pdfBuffer = await renderInvoicePdfBuffer(data);
@@ -114,6 +155,16 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
 
     const apiKey = process.env.RESEND_API_KEY;
     if (!apiKey) {
+      if (emailEventId) {
+        await serviceClient
+          .from("email_events")
+          .update({
+            status: "failed",
+            error: { message: "Missing RESEND_API_KEY" },
+          })
+          .eq("id", emailEventId);
+      }
+
       throw new GuardrailError({
         code: "INTERNAL_ERROR",
         where: "projects/[projectId]/invoicing/owner/[invoiceId]/email#POST",
@@ -126,7 +177,7 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
     const resend = new Resend(apiKey);
 
     const { data: sendResult, error: sendError } = await resend.emails.send({
-      from: getFromAddress(),
+      from: fromAddress,
       to: toList,
       cc: ccList.length > 0 ? ccList : undefined,
       subject,
@@ -140,6 +191,16 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
     });
 
     if (sendError) {
+      if (emailEventId) {
+        await serviceClient
+          .from("email_events")
+          .update({
+            status: "failed",
+            error: { message: sendError.message, name: sendError.name },
+          })
+          .eq("id", emailEventId);
+      }
+
       logger.error({ msg: "[invoice email] Resend error:", data: sendError });
       throw new GuardrailError({
         code: "INTERNAL_ERROR",
@@ -149,6 +210,21 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
       });
     }
 
-    return NextResponse.json({ success: true, id: sendResult?.id });
+    if (emailEventId) {
+      await serviceClient
+        .from("email_events")
+        .update({
+          status: "sent",
+          resend_id: sendResult?.id ?? null,
+          sent_at: new Date().toISOString(),
+        })
+        .eq("id", emailEventId);
+    }
+
+    return NextResponse.json({
+      success: true,
+      id: sendResult?.id,
+      email_event_id: emailEventId ?? null,
+    });
     },
 );

@@ -149,6 +149,9 @@ export const PUT = withApiGuardrails<{ commitmentId: string; changeOrderId: stri
       ...validated,
       updated_at: new Date().toISOString(),
     };
+    if ("description" in updateData) {
+      updateData.description = updateData.description ?? "";
+    }
 
     // If status is changing to approved, set approved_date and approved_by
     if (

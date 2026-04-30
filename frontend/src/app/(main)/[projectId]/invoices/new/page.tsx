@@ -119,6 +119,65 @@ const toErrorMessage = (error: unknown): string => {
   return "Invoice creation failed because the request did not return a usable error message.";
 };
 
+interface OwnerInvoiceCreateResponse {
+  data: {
+    id: number;
+  };
+}
+
+interface PaymentApplicationCreateResponse {
+  id: string;
+}
+
+const toDateOnly = (date: Date): string => date.toISOString().slice(0, 10);
+
+const resolveBillingPeriodDates = (
+  billingPeriod: string,
+  fallbackDate: Date,
+): { periodStart: string; periodEnd: string } => {
+  const trimmed = billingPeriod.trim();
+  const explicitDate = new Date(trimmed);
+
+  if (!Number.isNaN(explicitDate.getTime())) {
+    return {
+      periodStart: toDateOnly(explicitDate),
+      periodEnd: toDateOnly(explicitDate),
+    };
+  }
+
+  const monthYear = /^([A-Za-z]+)\s+(\d{4})$/.exec(trimmed);
+  if (monthYear) {
+    const parsedMonth = new Date(`${monthYear[1]} 1, ${monthYear[2]}`);
+    if (!Number.isNaN(parsedMonth.getTime())) {
+      const periodEnd = new Date(
+        parsedMonth.getFullYear(),
+        parsedMonth.getMonth() + 1,
+        0,
+      );
+      return {
+        periodStart: toDateOnly(parsedMonth),
+        periodEnd: toDateOnly(periodEnd),
+      };
+    }
+  }
+
+  const fallback = toDateOnly(fallbackDate);
+  return { periodStart: fallback, periodEnd: fallback };
+};
+
+const toOwnerInvoiceStatus = (status: string): string => {
+  if (status === "submitted") return "under_review";
+  return status;
+};
+
+const toPaymentApplicationStatus = (
+  status: string,
+): "draft" | "under_review" | "approved" => {
+  if (status === "submitted") return "under_review";
+  if (status === "approved" || status === "paid") return "approved";
+  return "draft";
+};
+
 export default function NewInvoicePage() {
   const router = useRouter();
   const params = useParams();
@@ -133,7 +192,9 @@ export default function NewInvoicePage() {
   const initialContractId =
     searchParams.get("commitmentId") ?? searchParams.get("contractId") ?? "";
 
-  const { options: contractOptions, isLoading: contractsLoading } = useContracts();
+  const { options: contractOptions, isLoading: contractsLoading } = useContracts({
+    projectId: Number.isFinite(parsedProjectId) ? parsedProjectId : undefined,
+  });
   const { options: commitmentOptions, isLoading: commitmentsLoading } = useCommitments();
 
   const [formData, setFormData] = useState<InvoiceFormData>({
@@ -263,24 +324,93 @@ export default function NewInvoicePage() {
     setIsSubmitting(true);
 
     try {
-      await apiFetch("/api/invoices", {
-        method: "POST",
-        body: JSON.stringify({
-          invoice_number: formData.invoiceNumber.trim(),
-          project_id: parsedProjectId,
-          contract_id: formData.contractType === "prime" ? formData.contractId : null,
-          commitment_id: formData.contractType === "commitment" ? formData.contractId : null,
-          billing_period_start: formData.billingPeriod,
-          billing_period_end: formData.billingPeriod,
-          invoice_date: formData.invoiceDate.toISOString(),
-          due_date: formData.dueDate?.toISOString() ?? null,
-          status: formData.status,
-          amount: totals.thisMonthBilling,
-          retention_amount: totals.retentionAmount,
-          net_amount: totals.netDue,
-          notes: formData.description.trim() || null,
-        }),
-      });
+      if (formData.contractType === "prime") {
+        const { periodStart, periodEnd } = resolveBillingPeriodDates(
+          formData.billingPeriod,
+          formData.invoiceDate,
+        );
+        const percentComplete =
+          totals.contractAmount > 0
+            ? (totals.totalCompleted / totals.contractAmount) * 100
+            : null;
+        const paymentApplication =
+          await apiFetch<PaymentApplicationCreateResponse>(
+            `/api/projects/${projectId}/contracts/${formData.contractId}/payment-applications`,
+            {
+              method: "POST",
+              body: JSON.stringify({
+                application_number: formData.invoiceNumber.trim(),
+                amount: totals.thisMonthBilling,
+                retention_amount: totals.retentionAmount,
+                percent_complete: percentComplete ?? 0,
+                status: toPaymentApplicationStatus(formData.status),
+                period_from: periodStart,
+                period_to: periodEnd,
+                billing_date: toDateOnly(formData.invoiceDate),
+                notes: formData.description.trim() || null,
+              }),
+            },
+          );
+
+        const ownerInvoice = await apiFetch<OwnerInvoiceCreateResponse>(
+          `/api/projects/${projectId}/invoicing/owner`,
+          {
+            method: "POST",
+            body: JSON.stringify({
+              prime_contract_id: formData.contractId,
+              invoice_number: formData.invoiceNumber.trim(),
+              period_start: periodStart,
+              period_end: periodEnd,
+              billing_date: toDateOnly(formData.invoiceDate),
+              due_date: formData.dueDate ? toDateOnly(formData.dueDate) : null,
+              status: toOwnerInvoiceStatus(formData.status),
+              payment_application_id: paymentApplication.id,
+              gross_amount: totals.thisMonthBilling,
+              net_amount: totals.netDue,
+              percent_complete: percentComplete,
+              notes: formData.description.trim() || null,
+            }),
+          },
+        );
+
+        for (const [index, item] of lineItems.entries()) {
+          await apiFetch(
+            `/api/projects/${projectId}/invoicing/owner/${ownerInvoice.data.id}/line-items`,
+            {
+              method: "POST",
+              body: JSON.stringify({
+                category: item.costCode.trim() || null,
+                description: item.description.trim() || null,
+                scheduled_value: parseAmount(item.contractAmount),
+                work_completed_previous: parseAmount(item.previouslyBilled),
+                work_completed_period: parseAmount(item.thisMonthAmount),
+                retainage_pct: includeRetention ? retentionPercentValue : 0,
+                retainage_amount: parseAmount(item.retention),
+                approved_amount: parseAmount(item.netDue),
+                sort_order: index,
+              }),
+            },
+          );
+        }
+      } else {
+        await apiFetch("/api/invoices", {
+          method: "POST",
+          body: JSON.stringify({
+            invoice_number: formData.invoiceNumber.trim(),
+            project_id: parsedProjectId,
+            commitment_id: formData.contractId,
+            billing_period_start: formData.billingPeriod,
+            billing_period_end: formData.billingPeriod,
+            invoice_date: formData.invoiceDate.toISOString(),
+            due_date: formData.dueDate?.toISOString() ?? null,
+            status: formData.status,
+            amount: totals.thisMonthBilling,
+            retention_amount: totals.retentionAmount,
+            net_amount: totals.netDue,
+            notes: formData.description.trim() || null,
+          }),
+        });
+      }
 
       router.push(`/${projectId}/invoices`);
     } catch (error) {

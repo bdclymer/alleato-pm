@@ -16,7 +16,6 @@ import {
   DollarSign,
   FileText,
   Image,
-  Receipt,
   TrendingDown,
   Users,
 } from "lucide-react";
@@ -205,6 +204,20 @@ interface HealthCell {
   detail: string;
   href: string;
   tone: HomeTone;
+}
+
+interface OperationalRowStat {
+  label: string;
+  value: string;
+  tone?: HomeTone;
+}
+
+interface OperationalRowItem {
+  id: string;
+  title: string;
+  href: string;
+  meta?: string;
+  status?: string | null;
 }
 
 function toneTextClass(tone: HomeTone): string {
@@ -529,99 +542,121 @@ function ProjectTeamSection({ projectId }: { projectId: string }) {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   Section: Change Events
+   Section: Project Activity
 ───────────────────────────────────────────────────────────── */
 
-function ChangeEventsSection({
+function OperationalSummaryRow({
+  title,
+  href,
+  summary,
+  stats,
+  items,
+  emptyLabel,
+}: {
+  title: string;
+  href: string;
+  summary: string;
+  stats: OperationalRowStat[];
+  items: OperationalRowItem[];
+  emptyLabel: string;
+}) {
+  return (
+    <div className="grid gap-4 px-4 py-4 md:grid-cols-[10rem_minmax(0,1fr)] md:gap-6">
+      <div className="min-w-0">
+        <Link
+          href={href}
+          className="group inline-flex items-center gap-1 text-sm font-semibold text-foreground transition-colors hover:text-primary"
+        >
+          {title}
+          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
+        </Link>
+        <p className="mt-1 text-xs leading-5 text-muted-foreground">
+          {summary}
+        </p>
+      </div>
+      <div className="min-w-0 space-y-3">
+        <div className="grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-4">
+          {stats.map((stat) => (
+            <div key={`${title}-${stat.label}`} className="min-w-0">
+              <p
+                className={cn(
+                  "truncate text-sm font-semibold tabular-nums text-foreground",
+                  stat.tone ? toneTextClass(stat.tone) : null,
+                )}
+              >
+                {stat.value}
+              </p>
+              <p className="mt-0.5 truncate text-[11px] uppercase tracking-wide text-muted-foreground">
+                {stat.label}
+              </p>
+            </div>
+          ))}
+        </div>
+        {items.length === 0 ? (
+          <p className="text-sm text-muted-foreground">{emptyLabel}</p>
+        ) : (
+          <div className="divide-y divide-border/70">
+            {items.slice(0, 3).map((item) => (
+              <Link
+                key={item.id}
+                href={item.href}
+                className="-mx-2 flex items-center gap-3 rounded-md px-2 py-2 transition-colors hover:bg-muted/45"
+              >
+                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-muted-foreground/40" />
+                <span className="min-w-0 flex-1 truncate text-sm text-foreground">
+                  {item.title}
+                </span>
+                {item.meta && (
+                  <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+                    {item.meta}
+                  </span>
+                )}
+                {item.status && <StatusBadge status={item.status} />}
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ProjectActivitySection({
   projectId,
   changeEvents,
+  changeOrders,
+  ownerInvoices,
+  subcontractorInvoices,
 }: {
   projectId: string;
   changeEvents: ChangeEvent[];
+  changeOrders: ChangeOrder[];
+  ownerInvoices: OwnerInvoice[];
+  subcontractorInvoices: SubcontractorInvoice[];
 }) {
-  const open = changeEvents.filter(
+  const openChangeEvents = changeEvents.filter(
     (ce) =>
       !["closed", "rejected", "approved"].includes(
         (ce.status ?? "").toLowerCase(),
       ),
   );
-  const approved = changeEvents.filter(
+  const approvedChangeEvents = changeEvents.filter(
     (ce) => (ce.status ?? "").toLowerCase() === "approved",
   );
-  const recent = [...changeEvents]
+  const recentChangeEvents = [...changeEvents]
     .sort(
       (a, b) =>
         new Date(b.updated_at ?? b.created_at).getTime() -
         new Date(a.updated_at ?? a.created_at).getTime(),
     )
-    .slice(0, 3);
+    .slice(0, 3)
+    .map((event) => ({
+      id: `change-event-${event.id}`,
+      title: event.title ?? `Change Event #${event.number}`,
+      href: `/${projectId}/change-events/${event.id}`,
+      status: event.status ?? "Draft",
+    }));
 
-  return (
-    <section>
-      <SectionHeading
-        action={
-          <ViewAllLink href={`/${projectId}/change-events`} label="View All" />
-        }
-      >
-        Change Events
-      </SectionHeading>
-      {changeEvents.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No change events</p>
-      ) : (
-        <div className="space-y-2">
-          <div className="flex gap-3">
-            <span className="text-xs text-muted-foreground">
-              <span className="font-semibold text-foreground">
-                {open.length}
-              </span>{" "}
-              open
-            </span>
-            <span className="text-xs text-muted-foreground">
-              <span className="font-semibold text-foreground">
-                {approved.length}
-              </span>{" "}
-              approved
-            </span>
-            <span className="text-xs text-muted-foreground">
-              <span className="font-semibold text-foreground">
-                {changeEvents.length}
-              </span>{" "}
-              total
-            </span>
-          </div>
-          <div>
-            {recent.map((ce) => (
-              <Link
-                key={ce.id}
-                href={`/${projectId}/change-events/${ce.id}`}
-                className="-mx-2 flex items-center gap-2.5 rounded-md border-b border-border/50 px-2 py-2 last:border-0 transition-colors hover:bg-muted/50"
-              >
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm">
-                    {ce.title ?? `Change Event #${ce.number}`}
-                  </p>
-                </div>
-                <StatusBadge status={ce.status ?? "Draft"} />
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
-    </section>
-  );
-}
-
-/* ─────────────────────────────────────────────────────────────
-   Section: Change Orders
-───────────────────────────────────────────────────────────── */
-
-function ChangeOrdersSection({
-  projectId,
-  changeOrders,
-}: {
-  projectId: string;
-  changeOrders: ChangeOrder[];
-}) {
   const pending = changeOrders.filter(
     (co: ChangeOrder) =>
       !["approved", "rejected", "closed"].includes(
@@ -635,81 +670,26 @@ function ChangeOrdersSection({
     (sum: number, co: ChangeOrder) => sum + (co.amount ?? co.total_amount ?? 0),
     0,
   );
-  const recent: ChangeOrder[] = [...changeOrders]
+  const recentChangeOrders = [...changeOrders]
     .sort(
       (a: ChangeOrder, b: ChangeOrder) =>
         new Date(b?.updated_at ?? b?.created_at ?? 0).getTime() -
         new Date(a?.updated_at ?? a?.created_at ?? 0).getTime(),
     )
-    .slice(0, 3);
+    .slice(0, 3)
+    .map((order: ChangeOrder) => {
+      const isPrime = !order.change_order_number;
+      return {
+        id: `change-order-${order.id}`,
+        title: order.title ?? "Change Order",
+        href: isPrime
+          ? `/${projectId}/change-orders/prime/${order.id}`
+          : `/${projectId}/change-orders/commitment/${order.id}`,
+        meta: fmtCompact(order.amount ?? order.total_amount),
+        status: order.status ?? "Pending",
+      };
+    });
 
-  return (
-    <section>
-      <SectionHeading
-        action={
-          <ViewAllLink href={`/${projectId}/change-orders`} label="View All" />
-        }
-      >
-        Change Orders
-      </SectionHeading>
-      {changeOrders.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No change orders</p>
-      ) : (
-        <div className="space-y-2">
-          <div className="flex items-baseline justify-between">
-            <span className="text-xl font-semibold tabular-nums">
-              {fmtCompact(approvedTotal || null)}
-            </span>
-            <span className="text-xs text-muted-foreground">
-              {pending.length} pending · {approved.length} approved
-            </span>
-          </div>
-          <div>
-            {recent.map((co: ChangeOrder) => {
-              const isPrime = !co.change_order_number;
-              const href = isPrime
-                ? `/${projectId}/change-orders/prime/${co.id}`
-                : `/${projectId}/change-orders/commitment/${co.id}`;
-              return (
-                <Link
-                  key={co.id}
-                  href={href}
-                  className="-mx-2 flex items-center gap-2.5 rounded-md border-b border-border/50 px-2 py-2 last:border-0 transition-colors hover:bg-muted/50"
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm">
-                      {co.title ?? "Change Order"}
-                    </p>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-2">
-                    <span className="text-xs tabular-nums text-muted-foreground">
-                      {fmtCompact(co.amount ?? co.total_amount)}
-                    </span>
-                    <StatusBadge status={co.status ?? "Pending"} />
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-      )}
-    </section>
-  );
-}
-
-/* ─────────────────────────────────────────────────────────────
-   Section: Invoices & Payments
-───────────────────────────────────────────────────────────── */
-
-function InvoicesPaymentsSection({
-  projectId,
-  ownerInvoices,
-  subcontractorInvoices,
-}: {
-  projectId: string;
-  ownerInvoices: OwnerInvoice[];
-  subcontractorInvoices: SubcontractorInvoice[];
-}) {
   const totalBilled = ownerInvoices.reduce(
     (sum, inv) => sum + (inv.gross_amount ?? 0),
     0,
@@ -722,81 +702,94 @@ function InvoicesPaymentsSection({
     (inv) =>
       !["approved", "paid", "void"].includes((inv.status ?? "").toLowerCase()),
   );
-  const hasAny = ownerInvoices.length > 0 || subcontractorInvoices.length > 0;
+  const recentInvoices: OperationalRowItem[] = [
+    ...ownerInvoices.map((invoice) => ({
+      id: `owner-invoice-${invoice.id}`,
+      title: invoice.invoice_number ?? `Owner invoice #${invoice.id}`,
+      href: `/${projectId}/invoices`,
+      meta: fmtCompact(invoice.gross_amount),
+      status: invoice.status ?? "Draft",
+    })),
+    ...subcontractorInvoices.map((invoice) => ({
+      id: `subcontractor-invoice-${invoice.id}`,
+      title:
+        invoice.invoice_number ?? `Subcontractor invoice #${invoice.id}`,
+      href: `/${projectId}/invoices`,
+      status: invoice.status ?? "Draft",
+    })),
+  ].slice(0, 3);
 
   return (
-    <section>
+    <section className="space-y-4">
       <SectionHeading
         action={
-          <ViewAllLink href={`/${projectId}/invoices`} label="View All" />
+          <div className="flex items-center gap-4">
+            <ViewAllLink
+              href={`/${projectId}/change-events`}
+              label="Change Events"
+            />
+            <ViewAllLink
+              href={`/${projectId}/change-orders`}
+              label="Change Orders"
+            />
+            <ViewAllLink href={`/${projectId}/invoices`} label="Invoices" />
+          </div>
         }
       >
-        Invoices &amp; Payments
+        Project activity
       </SectionHeading>
-      {!hasAny ? (
-        <p className="text-sm text-muted-foreground">No invoices</p>
-      ) : (
-        <div className="space-y-3">
-          {ownerInvoices.length > 0 && (
-            <div className="rounded-md bg-muted/50 px-3 py-2.5">
-              <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                Owner Invoices
-              </p>
-              <div className="flex gap-4">
-                <div>
-                  <p className="text-xs text-muted-foreground">Billed</p>
-                  <p className="text-sm font-semibold tabular-nums">
-                    {fmtCompact(totalBilled)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Paid</p>
-                  <p className="text-sm font-semibold tabular-nums">
-                    {fmtCompact(totalPaid)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Count</p>
-                  <p className="text-sm font-semibold">
-                    {ownerInvoices.length}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-          {subcontractorInvoices.length > 0 && (
-            <div className="rounded-md bg-muted/50 px-3 py-2.5">
-              <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                Subcontractor Invoices
-              </p>
-              <div className="flex gap-4">
-                <div>
-                  <p className="text-xs text-muted-foreground">Total</p>
-                  <p className="text-sm font-semibold">
-                    {subcontractorInvoices.length}
-                  </p>
-                </div>
-                {subPending.length > 0 && (
-                  <div>
-                    <p className="text-xs text-muted-foreground">Pending</p>
-                    <p className="text-sm font-semibold text-status-warning">
-                      {subPending.length}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-          <Link
-            href={`/${projectId}/invoices`}
-            className="flex items-center gap-2 text-xs text-primary transition-colors hover:text-primary/80"
-          >
-            <Receipt className="h-3.5 w-3.5" />
-            View invoicing dashboard
-            <ChevronRight className="h-3 w-3" />
-          </Link>
-        </div>
-      )}
+      <div className="overflow-hidden rounded-md border border-border bg-background">
+        <OperationalSummaryRow
+          title="Change events"
+          href={`/${projectId}/change-events`}
+          summary="Scope movement and field-driven cost exposure."
+          stats={[
+            { label: "Open", value: String(openChangeEvents.length) },
+            { label: "Approved", value: String(approvedChangeEvents.length) },
+            { label: "Total", value: String(changeEvents.length) },
+          ]}
+          items={recentChangeEvents}
+          emptyLabel="No change events yet."
+        />
+        <div className="border-t border-border" />
+        <OperationalSummaryRow
+          title="Change orders"
+          href={`/${projectId}/change-orders`}
+          summary="Pending and approved contract adjustments."
+          stats={[
+            { label: "Value", value: fmtCompact(approvedTotal || null) },
+            {
+              label: "Pending",
+              value: String(pending.length),
+              tone: pending.length > 0 ? "warning" : undefined,
+            },
+            { label: "Approved", value: String(approved.length) },
+          ]}
+          items={recentChangeOrders}
+          emptyLabel="No change orders yet."
+        />
+        <div className="border-t border-border" />
+        <OperationalSummaryRow
+          title="Invoices & payments"
+          href={`/${projectId}/invoices`}
+          summary="Owner billing and subcontractor payment activity."
+          stats={[
+            { label: "Billed", value: fmtCompact(totalBilled) },
+            { label: "Paid", value: fmtCompact(totalPaid) },
+            {
+              label: "Sub pending",
+              value: String(subPending.length),
+              tone: subPending.length > 0 ? "warning" : undefined,
+            },
+            {
+              label: "Total",
+              value: String(ownerInvoices.length + subcontractorInvoices.length),
+            },
+          ]}
+          items={recentInvoices}
+          emptyLabel="No invoices yet."
+        />
+      </div>
     </section>
   );
 }
@@ -943,61 +936,6 @@ function AlertsSection({
               <ChevronRight className="h-3.5 w-3.5 text-destructive" />
             </Link>
           )}
-        </div>
-      )}
-    </section>
-  );
-}
-
-interface DueSoonItem {
-  id: string;
-  title: string;
-  detail: string;
-  href: string;
-  dueDate: string;
-  overdue: boolean;
-}
-
-function DueSoonSection({ items }: { items: DueSoonItem[] }) {
-  return (
-    <section>
-      <SectionHeading>Due soon</SectionHeading>
-      {items.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          No dated RFIs, submittals, or tasks need attention.
-        </p>
-      ) : (
-        <div className="divide-y divide-border">
-          {items.slice(0, 6).map((item) => (
-            <Link
-              key={item.id}
-              href={item.href}
-              className="-mx-2 flex items-start gap-3 rounded-md px-2 py-2.5 transition-colors hover:bg-muted/45"
-            >
-              <Clock
-                className={cn(
-                  "mt-0.5 h-3.5 w-3.5 shrink-0",
-                  item.overdue ? "text-destructive" : "text-muted-foreground",
-                )}
-              />
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-foreground">
-                  {item.title}
-                </p>
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  {item.detail}
-                </p>
-              </div>
-              <span
-                className={cn(
-                  "shrink-0 text-xs tabular-nums",
-                  item.overdue ? "text-destructive" : "text-muted-foreground",
-                )}
-              >
-                {format(new Date(item.dueDate), "MMM d")}
-              </span>
-            </Link>
-          ))}
         </div>
       )}
     </section>
@@ -1198,7 +1136,6 @@ function ProjectSetupSheet({
 
 export function ProjectCommandCenter({
   project,
-  tasks,
   changeOrders,
   rfis,
   commitments,
@@ -1244,11 +1181,6 @@ export function ProjectCommandCenter({
   const rfisOverdue = rfisOpen.filter(
     (r) => r.due_date && isPast(new Date(r.due_date)),
   );
-  /* ── Tasks ─────────────────────────────────────────────── */
-  const openTasks = tasks
-    .filter((t) => !["done", "cancelled"].includes(t.status.toLowerCase()))
-    .slice(0, 6);
-
   /* ── Alerts ────────────────────────────────────────────── */
   const showPrimeContractMarkupAlert =
     homeAlerts?.hasPrimeContractWithoutFinancialMarkup ?? false;
@@ -1429,43 +1361,6 @@ export function ProjectCommandCenter({
     },
   ];
 
-  const dueSoonItems: DueSoonItem[] = [
-    ...rfisOpen
-      .filter((rfi) => rfi.due_date)
-      .map((rfi) => ({
-        id: `rfi-${rfi.id}`,
-        title: rfi.subject ?? "RFI",
-        detail: "RFI response due",
-        href: `/${projectId}/rfis/${rfi.id}`,
-        dueDate: rfi.due_date as string,
-        overdue: isPast(new Date(rfi.due_date as string)),
-      })),
-    ...openSubmittals
-      .filter((submittal) => submittal.final_due_date)
-      .map((submittal) => ({
-        id: `submittal-${submittal.id}`,
-        title: submittal.title ?? "Submittal",
-        detail: "Submittal final due date",
-        href: `/${projectId}/submittals/${submittal.id}`,
-        dueDate: submittal.final_due_date as string,
-        overdue: isPast(new Date(submittal.final_due_date as string)),
-      })),
-    ...openTasks
-      .filter((task) => task.due_date)
-      .map((task) => ({
-        id: `task-${task.id}`,
-        title: task.description,
-        detail: task.assignee_name
-          ? `Assigned to ${task.assignee_name}`
-          : "Open task",
-        href: `/${projectId}/tasks`,
-        dueDate: task.due_date as string,
-        overdue: isPast(new Date(task.due_date as string)),
-      })),
-  ].sort(
-    (a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime(),
-  );
-
   return (
     <div className="flex min-h-0 flex-col">
       <RealtimeCursors roomName={roomName} username={currentUserName} />
@@ -1484,36 +1379,10 @@ export function ProjectCommandCenter({
         <div className="grid grid-cols-1 gap-y-12 xl:grid-cols-[minmax(0,1fr)_420px] xl:gap-x-20 xl:gap-y-0 2xl:gap-x-28">
           <div className="min-w-0 space-y-10">
             <ProjectCommandSurface healthCells={healthCells} />
-            <ContentSectionStack>
-              {changeEvents.length > 0 && (
-                <ChangeEventsSection
-                  projectId={projectId}
-                  changeEvents={changeEvents}
-                />
-              )}
-              {changeOrders.length > 0 && (
-                <ChangeOrdersSection
-                  projectId={projectId}
-                  changeOrders={changeOrders}
-                />
-              )}
-              {(ownerInvoices.length > 0 ||
-                subcontractorInvoices.length > 0) && (
-                <InvoicesPaymentsSection
-                  projectId={projectId}
-                  ownerInvoices={ownerInvoices}
-                  subcontractorInvoices={subcontractorInvoices}
-                />
-              )}
-            </ContentSectionStack>
           </div>
 
           <aside>
             <ContentSectionStack className="space-y-12">
-              <AttentionSidebarSection items={attentionItems} />
-              {dueSoonItems.length > 0 && (
-                <DueSoonSection items={dueSoonItems} />
-              )}
               <ProjectTeamSection projectId={projectId} />
             </ContentSectionStack>
           </aside>

@@ -85,6 +85,9 @@ export const PUT = withApiGuardrails(
       commitment_number: _cn,
       ...updateData
     } = body;
+    if ("description" in updateData) {
+      updateData.description = updateData.description ?? "";
+    }
 
     const { data, error } = await supabase
       .from("contract_change_orders")

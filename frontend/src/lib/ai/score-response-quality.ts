@@ -45,6 +45,11 @@ export function scoreResponseQuality(params: {
   const successfulToolCalls = trace.filter((t) => !t.error).length;
   const failedToolCalls = trace.filter((t) => t.error).length;
   const sourceRefsInText = (params.content.match(/\[Source:/g) ?? []).length;
+  const hasCompiledPacket = trace.some((entry) => {
+    if (entry.tool !== "clientProjectIntelligencePacket" || entry.error) return false;
+    const output = entry.output as { cardCount?: unknown } | undefined;
+    return typeof output?.cardCount === "number" && output.cardCount >= 3;
+  });
 
   const normalizedContent = params.content.toLowerCase();
   const hasMetaCommentary = META_COMMENTARY_PHRASES.some((phrase) =>
@@ -53,7 +58,10 @@ export function scoreResponseQuality(params: {
 
   let score = 50;
 
-  if (successfulToolCalls >= 3) {
+  if (hasCompiledPacket) {
+    score += 25;
+    reasons.push("compiled intelligence packet with multiple evidence cards");
+  } else if (successfulToolCalls >= 3) {
     score += 25;
     reasons.push("multiple successful tool calls");
   } else if (successfulToolCalls >= 1) {

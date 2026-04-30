@@ -1,8 +1,9 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { createAuthClient } from "@/lib/supabase/client-auth";
+import { apiFetch } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
+import { ErrorState } from "@/components/ds/error-state";
 import {
   Card,
   CardContent,
@@ -26,16 +27,16 @@ export function ForgotPasswordForm({
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    const supabase = createAuthClient();
     setIsLoading(true);
     setError(null);
 
     try {
-      // The url which will be included in the email. This URL needs to be configured in your redirect URLs in the Supabase dashboard at https://supabase.com/dashboard/project/_/auth/url-configuration
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/update-password`,
+      await apiFetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
       });
-      if (error) throw error;
+
       setSuccess(true);
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "Could not send reset email — please try again");
@@ -83,7 +84,13 @@ export function ForgotPasswordForm({
                     onChange={(e) => setEmail(e.target.value)}
                   />
                 </div>
-                {error && <p className="text-sm text-destructive">{error}</p>}
+              {error && (
+                <ErrorState
+                  title="Reset email could not be sent"
+                  error={error}
+                  className="py-2"
+                />
+              )}
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? "Sending..." : "Send reset email"}
                 </Button>

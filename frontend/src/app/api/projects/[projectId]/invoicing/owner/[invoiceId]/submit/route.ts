@@ -3,6 +3,7 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { requirePermission } from "@/lib/permissions-guard";
+import { syncLinkedOwnerPaymentApplication } from "@/lib/invoicing/owner-payment-application-sync";
 
 // POST /api/projects/[projectId]/invoicing/owner/[invoiceId]/submit
 // Submit an invoice for approval
@@ -26,7 +27,7 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
         `
         *,
         prime_contracts!inner(project_id)
-      `,
+        `,
       )
       .eq("id", invoiceIdNum)
       .eq("prime_contracts.project_id", projectIdNum)
@@ -94,6 +95,14 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
         cause: updateError,
       });
     }
+
+    await syncLinkedOwnerPaymentApplication({
+      supabase,
+      projectId: projectIdNum,
+      invoice,
+      status: "under_review",
+      where: "projects/[projectId]/invoicing/owner/[invoiceId]/submit#POST",
+    });
 
     return NextResponse.json({
       data: updatedInvoice,

@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DateField } from "@/components/forms/DateField";
+import { MoneyField } from "@/components/forms/MoneyField";
 import {
   Table,
   TableBody,
@@ -53,6 +54,8 @@ interface SovEdit {
   work_completed_period: string;
   materials_stored: string;
 }
+
+type BillingEdit = SovEdit;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -118,6 +121,7 @@ export default function NewSubcontractorInvoicePage() {
 
   // SOV line item edits: { [itemId]: { work_completed_period, materials_stored } }
   const [sovEdits, setSovEdits] = useState<Record<string, SovEdit>>({});
+  const [coEdits, setCoEdits] = useState<Record<string, BillingEdit>>({});
 
   // Loaded data
   const [contractInfo, setContractInfo] = useState<{
@@ -177,6 +181,7 @@ export default function NewSubcontractorInvoicePage() {
     setLoading(true);
     setSovItems([]);
     setSovEdits({});
+    setCoEdits({});
     setApprovedCOs([]);
     setContractInfo(null);
 
@@ -262,6 +267,17 @@ export default function NewSubcontractorInvoicePage() {
               }),
             );
           setApprovedCOs(approved);
+          setCoEdits(
+            Object.fromEntries(
+              approved.map((co) => [
+                co.id,
+                {
+                  work_completed_period: "",
+                  materials_stored: "",
+                },
+              ]),
+            ),
+          );
         }
       } catch {
         toast.error("Failed to load commitment data");
@@ -294,6 +310,22 @@ export default function NewSubcontractorInvoicePage() {
     );
   }, [sovItems, sovEdits]);
 
+  const coTotals = useMemo(() => {
+    return approvedCOs.reduce(
+      (acc, co) => {
+        const e = coEdits[co.id] ?? {
+          work_completed_period: "",
+          materials_stored: "",
+        };
+        acc.scheduled += co.amount;
+        acc.thisPeriod += parseNum(e.work_completed_period);
+        acc.materialsStored += parseNum(e.materials_stored);
+        return acc;
+      },
+      { scheduled: 0, fromPrevious: 0, thisPeriod: 0, materialsStored: 0 },
+    );
+  }, [approvedCOs, coEdits]);
+
   // ---------------------------------------------------------------------------
   // Submit
   // ---------------------------------------------------------------------------
@@ -323,6 +355,36 @@ export default function NewSubcontractorInvoicePage() {
         };
       });
 
+      const coLineItems = approvedCOs
+        .map((co, index) => {
+          const e = coEdits[co.id] ?? {
+            work_completed_period: "",
+            materials_stored: "",
+          };
+          const label = [co.change_order_number, co.title ?? co.description]
+            .filter(Boolean)
+            .join(" - ");
+          return {
+            description: label || "Approved Commitment Change Order",
+            budget_code: co.change_order_number || null,
+            scheduled_value: co.amount,
+            work_completed_previous: 0,
+            work_completed_period: parseNum(e.work_completed_period),
+            materials_stored: parseNum(e.materials_stored),
+            retainage_pct: 0,
+            materials_retainage_pct: 0,
+            sort_order: sovItems.length + index + 1,
+            line_item_type: "Change Order",
+            commitment_value: 0,
+            change_value: co.amount,
+          };
+        })
+        .filter(
+          (item) =>
+            item.work_completed_period > 0 ||
+            item.materials_stored > 0,
+        );
+
       const contractKey =
         commitmentType === "subcontract" ? "subcontract_id" : "purchase_order_id";
 
@@ -333,7 +395,7 @@ export default function NewSubcontractorInvoicePage() {
         billing_date: billingDate ? format(billingDate, "yyyy-MM-dd") : null,
         invoice_number: invoiceNumber || null,
         status,
-        line_items: lineItems,
+        line_items: [...lineItems, ...coLineItems],
       };
 
       const res = await fetch(
@@ -693,31 +755,107 @@ export default function NewSubcontractorInvoicePage() {
                           </TableCell>
                         </TableRow>
                       ) : (
-                        approvedCOs.map((co) => (
-                          <TableRow key={co.id}>
-                            <TableCell className="text-sm font-medium">
-                              {co.change_order_number}
+                        <>
+                          {approvedCOs.map((co) => {
+                            const e = coEdits[co.id] ?? {
+                              work_completed_period: "",
+                              materials_stored: "",
+                            };
+                            return (
+                              <TableRow key={co.id}>
+                                <TableCell className="text-sm font-medium">
+                                  {co.change_order_number}
+                                </TableCell>
+                                <TableCell className="text-sm">
+                                  {co.title ?? co.description ?? "—"}
+                                </TableCell>
+                                <TableCell className="text-right tabular-nums text-sm">
+                                  {formatCurrency(co.amount)}
+                                </TableCell>
+                                <TableCell className="text-right tabular-nums text-sm">
+                                  {formatCurrency(0)}
+                                </TableCell>
+                                <TableCell className="text-right tabular-nums text-sm text-muted-foreground">
+                                  {pct(0, co.amount)}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  <div className="flex items-center justify-end gap-1">
+                                    <span className="text-sm text-muted-foreground">$</span>
+                                    <MoneyField
+                                      label={`Change order ${co.change_order_number} work completed this period`}
+                                      inline
+                                      showCurrency={false}
+                                      className="h-8 w-28 text-right tabular-nums text-sm"
+                                      value={
+                                        e.work_completed_period
+                                          ? parseNum(e.work_completed_period)
+                                          : undefined
+                                      }
+                                      placeholder=""
+                                      onChange={(value) =>
+                                        setCoEdits((prev) => ({
+                                          ...prev,
+                                          [co.id]: {
+                                            ...prev[co.id],
+                                            work_completed_period:
+                                              value == null ? "" : String(value),
+                                          },
+                                        }))
+                                      }
+                                    />
+                                  </div>
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  <div className="flex items-center justify-end gap-1">
+                                    <span className="text-sm text-muted-foreground">$</span>
+                                    <MoneyField
+                                      label={`Change order ${co.change_order_number} materials stored`}
+                                      inline
+                                      showCurrency={false}
+                                      className="h-8 w-28 text-right tabular-nums text-sm"
+                                      value={
+                                        e.materials_stored
+                                          ? parseNum(e.materials_stored)
+                                          : undefined
+                                      }
+                                      placeholder=""
+                                      onChange={(value) =>
+                                        setCoEdits((prev) => ({
+                                          ...prev,
+                                          [co.id]: {
+                                            ...prev[co.id],
+                                            materials_stored:
+                                              value == null ? "" : String(value),
+                                          },
+                                        }))
+                                      }
+                                    />
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                          <TableRow className="bg-muted/50 font-semibold text-sm border-t border-border">
+                            <TableCell colSpan={2} className="text-muted-foreground">
+                              Total
                             </TableCell>
-                            <TableCell className="text-sm">
-                              {co.title ?? co.description ?? "—"}
+                            <TableCell className="text-right tabular-nums">
+                              {formatCurrency(coTotals.scheduled)}
                             </TableCell>
-                            <TableCell className="text-right tabular-nums text-sm">
-                              {formatCurrency(co.amount)}
+                            <TableCell className="text-right tabular-nums">
+                              {formatCurrency(coTotals.fromPrevious)}
                             </TableCell>
-                            <TableCell className="text-right tabular-nums text-sm text-muted-foreground">
-                              —
+                            <TableCell className="text-right tabular-nums text-muted-foreground">
+                              {pct(coTotals.fromPrevious, coTotals.scheduled)}
                             </TableCell>
-                            <TableCell className="text-right tabular-nums text-sm text-muted-foreground">
-                              —
+                            <TableCell className="text-right tabular-nums">
+                              {formatCurrency(coTotals.thisPeriod)}
                             </TableCell>
-                            <TableCell className="text-right tabular-nums text-sm text-muted-foreground">
-                              —
-                            </TableCell>
-                            <TableCell className="text-right tabular-nums text-sm text-muted-foreground">
-                              —
+                            <TableCell className="text-right tabular-nums">
+                              {formatCurrency(coTotals.materialsStored)}
                             </TableCell>
                           </TableRow>
-                        ))
+                        </>
                       )}
                     </TableBody>
                   </Table>

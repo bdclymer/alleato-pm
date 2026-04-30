@@ -6,6 +6,8 @@ import { toast } from "sonner";
 import {
   ArrowLeft,
   ChevronDown,
+  CheckCircle2,
+  CircleDollarSign,
   Download,
   FilePlus2,
   Mail,
@@ -83,11 +85,19 @@ async function patchStatus(
 async function postTransition(
   projectId: string,
   invoiceId: string | number,
-  action: "approve-as-noted" | "pending-owner-approval",
+  action:
+    | "approve"
+    | "approve-as-noted"
+    | "pending-owner-approval"
+    | "revise",
+  body?: Record<string, unknown>,
 ) {
   return apiFetch(
     `/api/projects/${projectId}/invoicing/subcontractor/invoices/${invoiceId}/${action}`,
-    { method: "POST" },
+    {
+      method: "POST",
+      body: body ? JSON.stringify(body) : undefined,
+    },
   );
 }
 
@@ -128,6 +138,13 @@ export function SubcontractorInvoiceDetail({
   const [emailSubject, setEmailSubject] = useState("");
   const [emailMessage, setEmailMessage] = useState("");
   const [emailBusy, setEmailBusy] = useState(false);
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+  const [paymentAmount, setPaymentAmount] = useState("");
+  const [paymentDate, setPaymentDate] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("check");
+  const [paymentNumber, setPaymentNumber] = useState("");
+  const [paymentCheckNumber, setPaymentCheckNumber] = useState("");
+  const [paymentNotes, setPaymentNotes] = useState("");
 
   async function handleStatus(next: string, successMsg: string) {
     setBusy(true);
@@ -150,6 +167,21 @@ export function SubcontractorInvoiceDetail({
     try {
       await postTransition(projectId, invoiceId, action);
       toast.success(successMsg);
+      await refetch();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Status update failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleRecordOwnerApproval() {
+    setBusy(true);
+    try {
+      await postTransition(projectId, invoiceId, "approve", {
+        notes: invoice?.notes ?? undefined,
+      });
+      toast.success("Owner approval recorded");
       await refetch();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Status update failed");
@@ -258,6 +290,45 @@ export function SubcontractorInvoiceDetail({
     }
   }
 
+  function openPaymentDialog() {
+    const due = invoice?.rollup?.current_payment_due ?? 0;
+    setPaymentAmount(due > 0 ? due.toFixed(2) : "");
+    setPaymentDate(new Date().toISOString().slice(0, 10));
+    setPaymentMethod("check");
+    setPaymentNumber("");
+    setPaymentCheckNumber("");
+    setPaymentNotes("");
+    setPaymentDialogOpen(true);
+  }
+
+  async function handleMarkPaid() {
+    setBusy(true);
+    try {
+      await apiFetch(
+        `/api/projects/${projectId}/invoicing/subcontractor/invoices/${invoiceId}/mark-paid`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            amount: Number(paymentAmount),
+            payment_date: paymentDate,
+            payment_method: paymentMethod,
+            payment_number: paymentNumber.trim() || undefined,
+            check_number: paymentCheckNumber.trim() || undefined,
+            notes: paymentNotes.trim() || undefined,
+          }),
+        },
+      );
+      toast.success("Invoice marked paid");
+      setPaymentDialogOpen(false);
+      await refetch();
+      setActiveTab("history");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to mark paid");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   if (isLoading) {
     return (
       <PageShell variant="dashboard" title="Loading invoice…">
@@ -294,6 +365,7 @@ export function SubcontractorInvoiceDetail({
   const isInvited = status === "invited";
   const isNotInvited = status === "not_invited";
   const isUnderReview = status === "under_review";
+  const isPendingOwnerApproval = status === "pending_owner_approval";
   const isReviseAndResubmit = status === "revise_and_resubmit";
   const canEdit = isDraft || isInvited || isReviseAndResubmit;
   const canInviteSubcontractor = isNotInvited || isInvited || isDraft || isReviseAndResubmit;
@@ -301,6 +373,7 @@ export function SubcontractorInvoiceDetail({
   const canResendErp = ["approved", "approved_as_noted", "paid"].includes(
     status,
   );
+  const canMarkPaid = ["approved", "approved_as_noted"].includes(status);
 
   const lineItems: SovLineItem[] =
     invoice.subcontractor_invoice_line_items ?? [];
@@ -362,6 +435,16 @@ export function SubcontractorInvoiceDetail({
               Finish Review
             </Button>
           )}
+          {isPendingOwnerApproval && (
+            <Button
+              size="sm"
+              disabled={busy}
+              onClick={handleRecordOwnerApproval}
+            >
+              <CheckCircle2 className="mr-2 h-4 w-4" />
+              Record Owner Approval
+            </Button>
+          )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button size="sm" variant="outline">
@@ -403,6 +486,12 @@ export function SubcontractorInvoiceDetail({
                 disabled={!canResendErp}
               >
                 <Send className="h-4 w-4 mr-2" /> Resend to ERP
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={openPaymentDialog}
+                disabled={!canMarkPaid || busy}
+              >
+                <CircleDollarSign className="h-4 w-4 mr-2" /> Mark Paid
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
@@ -543,28 +632,27 @@ export function SubcontractorInvoiceDetail({
               onClick={async () => {
                 setBusy(true);
                 try {
-                  if (
-                    reviewStatus === "approved_as_noted" ||
-                    reviewStatus === "pending_owner_approval"
-                  ) {
-                    const action =
-                      reviewStatus === "approved_as_noted"
-                        ? "approve-as-noted"
-                        : "pending-owner-approval";
-                    await postTransition(projectId, invoiceId, action);
-                  } else {
-                    await patchStatus(projectId, invoiceId, reviewStatus);
-                  }
-                  // Save comment if changed
-                  if (reviewComment !== (invoice.notes ?? "")) {
-                    await apiFetch(
-                      `/api/projects/${projectId}/invoicing/subcontractor/invoices/${invoiceId}`,
-                      {
-                        method: "PATCH",
-                        body: JSON.stringify({ notes: reviewComment }),
-                      },
-                    );
-                  }
+                  const trimmedComment = reviewComment.trim();
+                  const transitionBody =
+                    trimmedComment.length > 0
+                      ? reviewStatus === "revise_and_resubmit"
+                        ? { reason: trimmedComment }
+                        : { notes: trimmedComment }
+                      : undefined;
+                  const actionMap = {
+                    approved: "approve",
+                    approved_as_noted: "approve-as-noted",
+                    pending_owner_approval: "pending-owner-approval",
+                    revise_and_resubmit: "revise",
+                  } as const;
+                  await postTransition(
+                    projectId,
+                    invoiceId,
+                    actionMap[
+                      reviewStatus as keyof typeof actionMap
+                    ],
+                    transitionBody,
+                  );
                   const statusLabels: Record<string, string> = {
                     approved: "Invoice approved",
                     approved_as_noted: "Invoice approved as noted",
@@ -586,6 +674,99 @@ export function SubcontractorInvoiceDetail({
               }}
             >
               Update
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={paymentDialogOpen} onOpenChange={setPaymentDialogOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Mark Invoice Paid</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Amount</label>
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={paymentAmount}
+                  onChange={(e) => setPaymentAmount(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Payment Date</label>
+                <Input
+                  type="date"
+                  value={paymentDate}
+                  onChange={(e) => setPaymentDate(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Payment Method</label>
+                <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="check">Check</SelectItem>
+                    <SelectItem value="ach">ACH</SelectItem>
+                    <SelectItem value="wire">Wire</SelectItem>
+                    <SelectItem value="electronic">Electronic</SelectItem>
+                    <SelectItem value="credit_card">Credit Card</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Payment #</label>
+                <Input
+                  value={paymentNumber}
+                  onChange={(e) => setPaymentNumber(e.target.value)}
+                  placeholder="Optional"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Check #</label>
+              <Input
+                value={paymentCheckNumber}
+                onChange={(e) => setPaymentCheckNumber(e.target.value)}
+                placeholder="Optional"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Notes</label>
+              <Textarea
+                value={paymentNotes}
+                onChange={(e) => setPaymentNotes(e.target.value)}
+                className="min-h-20"
+                placeholder="Optional"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setPaymentDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              disabled={
+                busy ||
+                !paymentAmount ||
+                Number(paymentAmount) <= 0 ||
+                !paymentDate ||
+                !paymentMethod
+              }
+              onClick={handleMarkPaid}
+            >
+              Mark Paid
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -124,10 +124,13 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
       description,
       category,
       scheduled_value = 0,
+      work_completed_previous = 0,
       work_completed_period = 0,
       materials_stored = 0,
       retainage_pct = 0,
+      retainage_amount = 0,
       retainage_released = 0,
+      approved_amount = 0,
       sort_order = 0,
     } = body;
 
@@ -137,10 +140,13 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
         invoice_id: invoiceIdNum,
         description: description ?? null,
         category: category ?? null,
+        approved_amount,
         scheduled_value,
+        work_completed_previous,
         work_completed_period,
         materials_stored,
         retainage_pct,
+        retainage_amount,
         retainage_released,
         sort_order,
       })

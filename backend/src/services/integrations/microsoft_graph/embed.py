@@ -314,7 +314,7 @@ def embed_pending_graph_documents(supabase_client, limit: int = 100) -> Dict[str
             supabase_client.from_("document_metadata")
             .select("id, category")
             .eq("source", "microsoft_graph")
-            .in_("status", ["raw_ingested", "segmented"])
+            .in_("status", ["raw_ingested", "segmented", "compiled"])
             .limit(limit)
             .execute()
         )

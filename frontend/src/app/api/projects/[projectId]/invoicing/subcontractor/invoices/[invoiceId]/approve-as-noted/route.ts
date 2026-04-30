@@ -35,6 +35,8 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
 
     const projectIdNum = parseInt(projectId, 10);
     const invoiceIdNum = parseInt(invoiceId, 10);
+    const body = await request.json().catch(() => ({}));
+    const { notes } = body as { notes?: string };
 
     const { data: invoice, error: fetchError } = await supabase
       .from("subcontractor_invoices")
@@ -72,12 +74,17 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
       });
     }
 
+    const updatePayload: Record<string, unknown> = {
+      status: "approved_as_noted",
+      approved_at: new Date().toISOString(),
+    };
+    if (notes?.trim()) {
+      updatePayload.notes = notes.trim();
+    }
+
     const { data: updated, error: updateError } = await supabase
       .from("subcontractor_invoices")
-      .update({
-        status: "approved_as_noted",
-        approved_at: new Date().toISOString(),
-      })
+      .update(updatePayload)
       .eq("id", invoiceIdNum)
       .select()
       .single();

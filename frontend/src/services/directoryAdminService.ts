@@ -6,6 +6,7 @@ import {
   type DirectoryFilters,
   type PersonWithDetails,
 } from "./directoryService";
+import { InviteService } from "./inviteService";
 import type {
   PersonCreateDTO,
   PersonUpdateDTO,
@@ -115,10 +116,12 @@ const COMPANY_HEADERS = [
 export class DirectoryAdminService {
   private directoryService: DirectoryService;
   private companyService: CompanyService;
+  private inviteService: InviteService;
 
   constructor(private supabase: ReturnType<typeof createClient<Database>>) {
     this.directoryService = new DirectoryService(this.supabase);
     this.companyService = new CompanyService(this.supabase);
+    this.inviteService = new InviteService(this.supabase);
   }
 
   async importFromCsv(
@@ -290,7 +293,10 @@ export class DirectoryAdminService {
 
     for (const personId of personIds) {
       try {
-        await this.directoryService.resendInvite(projectId, personId);
+        const result = await this.inviteService.resendInvite(projectId, personId);
+        if (!result.success) {
+          throw new Error(result.error ?? "Failed to send invite to user");
+        }
         invited += 1;
       } catch (error) {
         errors.push({

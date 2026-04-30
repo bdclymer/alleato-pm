@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useForm, type Control } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ArrowLeft, Edit, Trash2, Download, Check, CheckCheck, Ban, Send, RotateCcw, Plus, Save, Mail } from "lucide-react";
+import { ArrowLeft, Edit, Trash2, Download, Check, CheckCheck, Ban, Send, RotateCcw, Plus, Save, Mail, CreditCard } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -49,6 +49,13 @@ import { PageShell } from "@/components/layout";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 import { useProjectTitle } from "@/hooks/useProjectTitle";
 import { useSendInvoiceEmail } from "@/hooks/use-invoicing";
@@ -101,6 +108,17 @@ const invoiceStatusOptions = [
   { value: "paid", label: "Paid" },
   { value: "void", label: "Void" },
 ];
+
+const paymentMethodOptions = [
+  { value: "ach", label: "ACH" },
+  { value: "check", label: "Check" },
+  { value: "wire", label: "Wire" },
+  { value: "credit_card", label: "Credit Card" },
+  { value: "electronic", label: "Electronic" },
+  { value: "other", label: "Other" },
+];
+
+const toDateOnly = (date: Date): string => date.toISOString().slice(0, 10);
 
 // ---------------------------------------------------------------------------
 // Add line item schema
@@ -760,6 +778,13 @@ export default function InvoiceDetailPage() {
   const [emailCc, setEmailCc] = useState("");
   const [emailSubject, setEmailSubject] = useState("");
   const [emailMessage, setEmailMessage] = useState("");
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+  const [paymentAmount, setPaymentAmount] = useState("");
+  const [paymentDate, setPaymentDate] = useState(toDateOnly(new Date()));
+  const [paymentMethod, setPaymentMethod] = useState("ach");
+  const [paymentReference, setPaymentReference] = useState("");
+  const [paymentNotes, setPaymentNotes] = useState("");
+  const [isRecordingPayment, setIsRecordingPayment] = useState(false);
   const sendInvoiceEmail = useSendInvoiceEmail(String(projectId));
 
   // SOV draft state — tracks unsaved edits keyed by line item id
@@ -1064,6 +1089,65 @@ export default function InvoiceDetailPage() {
     }
   };
 
+  const getPaymentDue = () => {
+    const invoiceTotal = invoice?.net_amount ?? invoice?.total_amount ?? 0;
+    const paidTotal = invoice?.paid_amount ?? invoice?.total_paid ?? 0;
+    return Math.max(invoiceTotal - paidTotal, 0);
+  };
+
+  const openPaymentDialog = () => {
+    setPaymentAmount(getPaymentDue().toFixed(2));
+    setPaymentDate(toDateOnly(new Date()));
+    setPaymentMethod("ach");
+    setPaymentReference("");
+    setPaymentNotes("");
+    setPaymentDialogOpen(true);
+  };
+
+  const handleRecordPayment = async () => {
+    if (!invoice) return;
+
+    const amount = Number.parseFloat(paymentAmount);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      toast.error("Payment amount must be greater than zero.");
+      return;
+    }
+
+    if (!paymentDate) {
+      toast.error("Payment date is required.");
+      return;
+    }
+
+    setIsRecordingPayment(true);
+    try {
+      const response = await fetch(`/api/projects/${projectId}/invoicing/payments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          owner_invoice_id: invoice.id,
+          payment_method: paymentMethod,
+          amount,
+          payment_date: paymentDate,
+          check_number: paymentReference.trim() || null,
+          notes: paymentNotes.trim() || null,
+        }),
+      });
+
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        throw new Error(body.message || body.error || "Failed to record payment");
+      }
+
+      toast.success("Payment recorded successfully");
+      setPaymentDialogOpen(false);
+      await fetchInvoice();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to record payment");
+    } finally {
+      setIsRecordingPayment(false);
+    }
+  };
+
   const handleLineItemAdded = (item: OwnerInvoiceLineItem) => {
     setInvoice((prev) => {
       if (!prev) return prev;
@@ -1215,6 +1299,12 @@ export default function InvoiceDetailPage() {
               <Mail />
               Email Invoice
             </Button>
+            {["approved", "approved_as_noted"].includes(invoice.status) && getPaymentDue() > 0 && (
+              <Button variant="outline" size="sm" onClick={openPaymentDialog}>
+                <CreditCard />
+                Record Payment
+              </Button>
+            )}
             {invoice.status !== "paid" && invoice.status !== "void" && (
               <Button
                 variant="destructive"
@@ -1226,7 +1316,7 @@ export default function InvoiceDetailPage() {
                 Void
               </Button>
             )}
-            {invoice.status !== "approved" && (
+            {!["approved", "approved_as_noted", "paid"].includes(invoice.status) && (
               <Button
                 variant="destructive"
                 size="sm"
@@ -1468,6 +1558,93 @@ export default function InvoiceDetailPage() {
             >
               <Send />
               {sendInvoiceEmail.isPending ? "Sending..." : "Send"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Record Payment Dialog */}
+      <Dialog open={paymentDialogOpen} onOpenChange={setPaymentDialogOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Record Payment Received</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="payment-amount">Amount *</Label>
+                <Input
+                  id="payment-amount"
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  value={paymentAmount}
+                  onChange={(event) => setPaymentAmount(event.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="payment-date">Payment Date *</Label>
+                <Input
+                  id="payment-date"
+                  type="date"
+                  value={paymentDate}
+                  onChange={(event) => setPaymentDate(event.target.value)}
+                />
+              </div>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="payment-method">Method</Label>
+                <Select
+                  value={paymentMethod}
+                  onValueChange={setPaymentMethod}
+                >
+                  <SelectTrigger id="payment-method">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {paymentMethodOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="payment-reference">Reference</Label>
+                <Input
+                  id="payment-reference"
+                  value={paymentReference}
+                  onChange={(event) => setPaymentReference(event.target.value)}
+                  placeholder="Check or transaction #"
+                />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="payment-notes">Notes</Label>
+              <Textarea
+                id="payment-notes"
+                rows={3}
+                value={paymentNotes}
+                onChange={(event) => setPaymentNotes(event.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setPaymentDialogOpen(false)}
+              disabled={isRecordingPayment}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => void handleRecordPayment()}
+              disabled={isRecordingPayment}
+            >
+              <CreditCard />
+              {isRecordingPayment ? "Recording..." : "Record Payment"}
             </Button>
           </DialogFooter>
         </DialogContent>

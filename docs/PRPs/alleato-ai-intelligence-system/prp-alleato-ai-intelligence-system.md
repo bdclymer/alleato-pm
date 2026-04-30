@@ -3,7 +3,7 @@
 Date: 2026-04-30
 Status: Implementation PRP
 Primary proof target: Westfield Collective, project id 43
-Primary source: `docs/ai-plan/rag-pipeline/RAG-STRATEGY-2026-04-29.md/CLIENT-PROJECT-INTELLIGENCE-PRP-SCOPE-2026-04-30.md`
+Primary source: `docs/ai-plan/rag-pipeline/RAG-STRATEGY-2026-04-29/CLIENT-PROJECT-INTELLIGENCE-PRP-SCOPE-2026-04-30.md`
 Confidence score: 8.5/10
 
 ## Goal
@@ -44,17 +44,17 @@ The assistant must:
 
 ### Planning Docs Read
 
-- `docs/ai-plan/rag-pipeline/RAG-STRATEGY-2026-04-29.md/CLIENT-PROJECT-INTELLIGENCE-PRP-SCOPE-2026-04-30.md`
-- `docs/ai-plan/rag-pipeline/RAG-STRATEGY-2026-04-29.md/CURRENT-AI-ASSISTANT-DIAGNOSIS-AND-VALIDATION-GATE-2026-04-30.md`
-- `docs/ai-plan/rag-pipeline/RAG-STRATEGY-2026-04-29.md/RAG-STRATEGY-WORKING-DECISIONS-2026-04-30.md`
-- `docs/ai-plan/rag-pipeline/RAG-STRATEGY-2026-04-29.md/RAG-STORAGE-MODEL-V1-2026-04-30.md`
-- `docs/ai-plan/rag-pipeline/RAG-STRATEGY-2026-04-29.md/RAG-COMPILER-AND-ASSISTANT-BEHAVIOR-V1-2026-04-30.md`
-- `docs/ai-plan/rag-pipeline/RAG-STRATEGY-2026-04-29.md/CLIENT-PROJECT-GOLD-STANDARD-CHAT-EXAMPLES-2026-04-30.md`
-- `docs/ai-plan/rag-pipeline/RAG-STRATEGY-2026-04-29.md/RAG-GOLD-STANDARD-CHAT-EXAMPLES-2026-04-30.md`
-- `docs/ai-plan/rag-pipeline/RAG-STRATEGY-2026-04-29.md/JOBPLANNER-REPLACEMENT-INTELLIGENCE-PACKET-V1-2026-04-30.md`
-- `docs/ai-plan/rag-pipeline/RAG-STRATEGY-2026-04-29.md/AI-JOBPLANNER-INTERNAL-INITIATIVES-IDEATION-2026-04-30.md`
-- `docs/ai-plan/rag-pipeline/RAG-STRATEGY-2026-04-29.md/AI-ASSISTANT-RAG-STRATEGY-2026-04-29.md`
-- `docs/ai-plan/rag-pipeline/RAG-STRATEGY-2026-04-29.md/rag-upgrade.md`
+- `docs/ai-plan/rag-pipeline/RAG-STRATEGY-2026-04-29/CLIENT-PROJECT-INTELLIGENCE-PRP-SCOPE-2026-04-30.md`
+- `docs/ai-plan/rag-pipeline/RAG-STRATEGY-2026-04-29/CURRENT-AI-ASSISTANT-DIAGNOSIS-AND-VALIDATION-GATE-2026-04-30.md`
+- `docs/ai-plan/rag-pipeline/RAG-STRATEGY-2026-04-29/RAG-STRATEGY-WORKING-DECISIONS-2026-04-30.md`
+- `docs/ai-plan/rag-pipeline/RAG-STRATEGY-2026-04-29/RAG-STORAGE-MODEL-V1-2026-04-30.md`
+- `docs/ai-plan/rag-pipeline/RAG-STRATEGY-2026-04-29/RAG-COMPILER-AND-ASSISTANT-BEHAVIOR-V1-2026-04-30.md`
+- `docs/ai-plan/rag-pipeline/RAG-STRATEGY-2026-04-29/CLIENT-PROJECT-GOLD-STANDARD-CHAT-EXAMPLES-2026-04-30.md`
+- `docs/ai-plan/rag-pipeline/RAG-STRATEGY-2026-04-29/RAG-GOLD-STANDARD-CHAT-EXAMPLES-2026-04-30.md`
+- `docs/ai-plan/rag-pipeline/RAG-STRATEGY-2026-04-29/JOBPLANNER-REPLACEMENT-INTELLIGENCE-PACKET-V1-2026-04-30.md`
+- `docs/ai-plan/rag-pipeline/RAG-STRATEGY-2026-04-29/AI-JOBPLANNER-INTERNAL-INITIATIVES-IDEATION-2026-04-30.md`
+- `docs/ai-plan/rag-pipeline/RAG-STRATEGY-2026-04-29/AI-ASSISTANT-RAG-STRATEGY-2026-04-29.md`
+- `docs/ai-plan/rag-pipeline/RAG-STRATEGY-2026-04-29/rag-upgrade.md`
 
 ### Current Assistant Architecture
 

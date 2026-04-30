@@ -4,8 +4,10 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
+import { EMAIL_FROM } from "@/lib/email/client";
 
 interface RouteParams {
   params: Promise<{ projectId: string }>;
@@ -17,6 +19,8 @@ const createRfqSchema = z.object({
   dueDate: z.string().optional(),
   includeAttachments: z.boolean().optional(),
   notes: z.string().max(2000).optional(),
+  assignedCompanyId: z.string().uuid().optional(),
+  assignedContactId: z.string().uuid().optional(),
 });
 
 const DATE_FORMAT_LENGTH = 10;
@@ -154,6 +158,7 @@ export const POST = withApiGuardrails(
     }
 
     const supabase = await createClient();
+    const serviceClient = createServiceClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -173,6 +178,34 @@ export const POST = withApiGuardrails(
       return NextResponse.json(
         { error: "Change event not found" },
         { status: 404 },
+      );
+    }
+
+    if (!parsed.data.assignedContactId) {
+      return NextResponse.json(
+        { error: "A distribution contact is required to send an RFQ." },
+        { status: 422 },
+      );
+    }
+
+    const { data: contact, error: contactError } = await supabase
+      .from("people")
+      .select("id, first_name, last_name, email, company_id")
+      .eq("id", parsed.data.assignedContactId)
+      .single();
+
+    if (contactError || !contact) {
+      return NextResponse.json(
+        { error: "Distribution contact not found." },
+        { status: 404 },
+      );
+    }
+
+    const recipientEmail = contact.email?.trim();
+    if (!recipientEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipientEmail)) {
+      return NextResponse.json(
+        { error: "The selected distribution contact does not have a valid email address." },
+        { status: 422 },
       );
     }
 
@@ -196,6 +229,8 @@ export const POST = withApiGuardrails(
         rfq_number: rfqNumber,
         title: parsed.data.title?.trim() || `RFQ for ${changeEvent.title}`,
         include_attachments: parsed.data.includeAttachments ?? true,
+        assigned_company_id: parsed.data.assignedCompanyId ?? null,
+        assigned_contact_id: parsed.data.assignedContactId ?? null,
         due_date: dueDate,
         notes: parsed.data.notes ?? null,
         status: "Draft",
@@ -212,14 +247,208 @@ export const POST = withApiGuardrails(
       );
     }
 
+    const subject = `${inserted.rfq_number} - ${inserted.title}`;
+    const contactName =
+      [contact.first_name, contact.last_name].filter(Boolean).join(" ") ||
+      recipientEmail;
+    const message = [
+      `Hi ${contactName},`,
+      "",
+      `Please review and respond to ${inserted.rfq_number} for change event ${changeEvent.number ?? changeEvent.id}: ${changeEvent.title ?? "Untitled"}.`,
+      "",
+      parsed.data.notes?.trim() || "Please provide pricing and any schedule impact for the requested scope.",
+      "",
+      `Due date: ${dueDate}`,
+    ].join("\n");
+    const safeMessage = message
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/\n/g, "<br/>");
+    const emailHtml = `
+      <div style="font-family:Arial,sans-serif;max-width:640px;margin:0 auto;color:#111827;">
+        <h2 style="margin:0 0 8px 0;">${inserted.rfq_number}</h2>
+        <p style="margin:0 0 16px 0;color:#4b5563;">${inserted.title}</p>
+        <p style="line-height:1.5;">${safeMessage}</p>
+      </div>
+    `;
+
+    const { data: emailEvent, error: emailEventError } = await serviceClient
+      .from("email_events")
+      .insert({
+        template: "rfq-invitation",
+        to_email: recipientEmail,
+        from_email: EMAIL_FROM,
+        subject,
+        status: "queued",
+        entity_type: "change_event_rfq",
+        entity_id: inserted.id,
+        user_id: user.id,
+        metadata: {
+          project_id: numericProjectId,
+          change_event_id: changeEvent.id,
+          change_event_number: changeEvent.number,
+          rfq_id: inserted.id,
+          rfq_number: inserted.rfq_number,
+          assigned_company_id: parsed.data.assignedCompanyId ?? null,
+          assigned_contact_id: parsed.data.assignedContactId,
+        },
+      })
+      .select("id")
+      .single();
+
+    if (emailEventError || !emailEvent?.id) {
+      await serviceClient.from("change_event_rfqs").delete().eq("id", inserted.id);
+      return NextResponse.json(
+        {
+          error: "RFQ email audit log could not be created.",
+          details:
+            emailEventError?.message ??
+            "The RFQ was not sent because an audit trail could not be created.",
+        },
+        { status: 500 },
+      );
+    }
+
+    const { data: emailHistory, error: emailHistoryError } = await serviceClient
+      .from("project_emails")
+      .insert({
+        project_id: numericProjectId,
+        subject,
+        body: message,
+        body_html: emailHtml,
+        from_name: "Alleato",
+        from_email: EMAIL_FROM,
+        to_list: [recipientEmail],
+        status: "Draft",
+        sent_at: null,
+        has_attachments: false,
+        related_tool: "change-event-rfq",
+        related_id: inserted.id,
+        created_by: user.id,
+      })
+      .select("id")
+      .single();
+
+    if (emailHistoryError || !emailHistory?.id) {
+      await Promise.all([
+        serviceClient
+          .from("email_events")
+          .update({
+            status: "failed",
+            error: {
+              message:
+                emailHistoryError?.message ??
+                "Project email history row could not be created.",
+            },
+          })
+          .eq("id", emailEvent.id),
+        serviceClient.from("change_event_rfqs").delete().eq("id", inserted.id),
+      ]);
+
+      return NextResponse.json(
+        {
+          error: "RFQ email history could not be created.",
+          details:
+            emailHistoryError?.message ??
+            "The RFQ was not sent because visible email history could not be created.",
+        },
+        { status: 500 },
+      );
+    }
+
+    if (!process.env.RESEND_API_KEY) {
+      const error = { message: "Missing RESEND_API_KEY" };
+      await Promise.all([
+        serviceClient
+          .from("email_events")
+          .update({ status: "failed", error })
+          .eq("id", emailEvent.id),
+        serviceClient
+          .from("project_emails")
+          .update({ status: "Failed" })
+          .eq("id", emailHistory.id),
+      ]);
+
+      return NextResponse.json(
+        { error: "Email service not configured.", details: error.message },
+        { status: 500 },
+      );
+    }
+
+    const { Resend } = await import("resend");
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    const { data: sendResult, error: sendError } = await resend.emails.send({
+      from: EMAIL_FROM,
+      to: [recipientEmail],
+      subject,
+      html: emailHtml,
+    });
+
+    if (sendError) {
+      await Promise.all([
+        serviceClient
+          .from("email_events")
+          .update({
+            status: "failed",
+            error: { message: sendError.message || "Failed to send RFQ email" },
+          })
+          .eq("id", emailEvent.id),
+        serviceClient
+          .from("project_emails")
+          .update({ status: "Failed" })
+          .eq("id", emailHistory.id),
+      ]);
+
+      return NextResponse.json(
+        { error: sendError.message || "Failed to send RFQ email" },
+        { status: 500 },
+      );
+    }
+
+    const sentAt = new Date().toISOString();
+    const { data: sentRfq, error: sentRfqError } = await serviceClient
+      .from("change_event_rfqs")
+      .update({
+        status: "Sent",
+        sent_at: sentAt,
+        updated_by: user.id,
+      })
+      .eq("id", inserted.id)
+      .select("*")
+      .single();
+
+    await Promise.all([
+      serviceClient
+        .from("email_events")
+        .update({
+          status: "sent",
+          resend_id: sendResult?.id ?? null,
+          sent_at: sentAt,
+        })
+        .eq("id", emailEvent.id),
+      serviceClient
+        .from("project_emails")
+        .update({ status: "Sent", sent_at: sentAt })
+        .eq("id", emailHistory.id),
+    ]);
+
+    if (sentRfqError || !sentRfq) {
+      return NextResponse.json(
+        { error: "RFQ email sent but RFQ status could not be updated.", details: sentRfqError?.message },
+        { status: 500 },
+      );
+    }
+
     return NextResponse.json({
       data: {
-        ...inserted,
+        ...sentRfq,
         change_event_number: changeEvent.number,
         change_event_title: changeEvent.title,
         response_count: 0,
+        email_event_id: emailEvent.id,
+        project_email_id: emailHistory.id,
       },
     });
     },
 );
-

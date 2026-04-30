@@ -1,4 +1,5 @@
 ---
+name: PRP Execute
 description: "Execute a completed PRP to implement a feature with progressive validation"
 argument-hint: "<path/to/prp.md>"
 ---

@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
 // POST /api/projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/approve
-// Transition invoice to approved. Pre-condition: must be under_review.
+// Transition invoice to approved. Pre-condition: must be under_review or pending owner approval.
 export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
   "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/approve#POST",
   async ({ request, params }) => {
@@ -35,6 +35,8 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
 
     const projectIdNum = parseInt(projectId, 10);
     const invoiceIdNum = parseInt(invoiceId, 10);
+    const body = await request.json().catch(() => ({}));
+    const { notes } = body as { notes?: string };
 
     const { data: invoice, error: fetchError } = await supabase
       .from("subcontractor_invoices")
@@ -62,22 +64,27 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
       });
     }
 
-    if (invoice.status !== "under_review") {
+    if (!["under_review", "pending_owner_approval"].includes(invoice.status)) {
       throw new GuardrailError({
         code: "INVALID_PAYLOAD",
         where: "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/approve#POST",
-        message: "Invoice must be Under Review to approve",
+        message: "Invoice must be Under Review or Pending Owner Approval to approve",
         status: 400,
         severity: "low",
       });
     }
 
+    const updatePayload: Record<string, unknown> = {
+      status: "approved",
+      approved_at: new Date().toISOString(),
+    };
+    if (notes?.trim()) {
+      updatePayload.notes = notes.trim();
+    }
+
     const { data: updated, error: updateError } = await supabase
       .from("subcontractor_invoices")
-      .update({
-        status: "approved",
-        approved_at: new Date().toISOString(),
-      })
+      .update(updatePayload)
       .eq("id", invoiceIdNum)
       .select()
       .single();

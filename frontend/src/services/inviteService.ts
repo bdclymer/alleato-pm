@@ -1,5 +1,10 @@
 import type { createClient } from "@supabase/supabase-js";
 import type { Database } from "../types/database.types";
+import InviteUser from "@/emails/auth/InviteUser";
+import { APP_BASE_URL } from "@/lib/email/client";
+import { buildInviteAcceptUrl } from "@/lib/email/invite-links";
+import { sendEmail } from "@/lib/email/send";
+import { createServiceClient } from "@/lib/supabase/service";
 
 export interface InviteResult {
   success: boolean;
@@ -60,7 +65,23 @@ export class InviteService {
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + 7); // 7 days expiration
 
-      // Update membership with invite info
+      const emailResult = await this.sendProjectInviteEmail({
+        projectId: projectIdNum,
+        personId,
+        token,
+        email: person.email,
+        firstName: person.first_name,
+        lastName: person.last_name,
+        projectName: project.name,
+        role: membership.role,
+        expiresAt,
+      });
+
+      if (!emailResult.success) {
+        return emailResult;
+      }
+
+      // Update membership with invite info only after the email send is traceable.
       const { error: updateError } = await this.supabase
         .from("project_directory_memberships")
         .update({
@@ -75,22 +96,6 @@ export class InviteService {
 
       if (updateError) {
         return { success: false, error: `Could not update invite status: ${updateError.message}` };
-      }
-
-      // Send email
-      if (this.emailService) {
-        const inviteUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/invite?token=${token}`;
-
-        await this.emailService.send({
-          to: person.email,
-          template: "project-invite",
-          data: {
-            firstName: person.first_name,
-            projectName: project.name,
-            inviteUrl,
-            expiresAt: expiresAt.toLocaleDateString(),
-          },
-        });
       }
 
       return {
@@ -313,21 +318,23 @@ export class InviteService {
       const membership = person.project_directory_memberships[0];
       const project = membership.project;
 
-      if (this.emailService) {
-        const inviteUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/invite?token=${token}`;
+      const expiresAt = membership.invite_expires_at
+        ? new Date(membership.invite_expires_at)
+        : undefined;
+      const emailResult = await this.sendProjectInviteEmail({
+        projectId: projectIdNum,
+        personId,
+        token,
+        email: person.email,
+        firstName: person.first_name,
+        lastName: person.last_name,
+        projectName: project.name,
+        role: membership.role,
+        expiresAt,
+      });
 
-        await this.emailService.send({
-          to: person.email,
-          template: "project-invite",
-          data: {
-            firstName: person.first_name,
-            projectName: project.name,
-            inviteUrl,
-            expiresAt: membership.invite_expires_at
-              ? new Date(membership.invite_expires_at).toLocaleDateString()
-              : '',
-          },
-        });
+      if (!emailResult.success) {
+        return emailResult;
       }
 
       // Update last invited timestamp
@@ -348,6 +355,92 @@ export class InviteService {
         error: `Could not send invite email: ${error instanceof Error ? error.message : "Unknown error"}`,
       };
     }
+  }
+
+  private async sendProjectInviteEmail(input: {
+    projectId: number;
+    personId: string;
+    token: string;
+    email: string;
+    firstName: string | null;
+    lastName: string | null;
+    projectName: string;
+    role: string | null;
+    expiresAt?: Date;
+  }): Promise<InviteResult> {
+    const inviteeName = [input.firstName, input.lastName].filter(Boolean).join(" ");
+    const expiresAt = input.expiresAt ?? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+    if (this.emailService) {
+      const inviteUrl = `${process.env.NEXT_PUBLIC_BASE_URL ?? APP_BASE_URL}/invite?token=${input.token}`;
+      await this.emailService.send({
+        to: input.email,
+        template: "project-invite",
+        data: {
+          firstName: input.firstName,
+          projectName: input.projectName,
+          inviteUrl,
+          expiresAt: expiresAt.toLocaleDateString(),
+        },
+      });
+      return { success: true };
+    }
+
+    const serviceClient = createServiceClient();
+    const { data: linkData, error: linkError } = await serviceClient.auth.admin.generateLink({
+      type: "invite",
+      email: input.email,
+      options: {
+        redirectTo: `${APP_BASE_URL}/auth/callback`,
+        data: {
+          full_name: inviteeName || input.email,
+          project_name: input.projectName,
+          role: input.role ?? undefined,
+        },
+      },
+    });
+
+    if (linkError || !linkData.properties?.action_link) {
+      return {
+        success: false,
+        error: linkError?.message ?? "Could not create invite link",
+      };
+    }
+
+    const acceptUrl = buildInviteAcceptUrl(linkData.properties.action_link, input.email);
+    const emailResult = await sendEmail({
+      template: "user-invite",
+      to: input.email,
+      subject: `You're invited to ${input.projectName}`,
+      react: InviteUser({
+        inviterName: "Alleato",
+        inviteeName: inviteeName || undefined,
+        email: input.email,
+        role: input.role ?? "Project user",
+        acceptUrl,
+        expiresInHours: Math.max(
+          1,
+          Math.round((expiresAt.getTime() - Date.now()) / (60 * 60 * 1000)),
+        ),
+      }),
+      entity: { type: "project_directory_invite", id: input.personId },
+      idempotencyKey: `project-directory-invite/${input.projectId}/${input.personId}/${input.token}`,
+      metadata: {
+        project_id: input.projectId,
+        person_id: input.personId,
+        project_name: input.projectName,
+        role: input.role,
+      },
+    });
+
+    if (emailResult.error) {
+      return {
+        success: false,
+        error: `Could not send invite email: ${emailResult.error.message}`,
+      };
+    }
+
+    return { success: true };
   }
 }
 

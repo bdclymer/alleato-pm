@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useMemo } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { Trash2 } from "lucide-react";
 
@@ -53,7 +54,11 @@ export interface ChangeEventRfqFormValues {
 
 interface ChangeEventRfqFormProps {
   changeEvent: ChangeEvent;
-  lineItems?: Array<{ id: string; description: string | null }>;
+  lineItems?: Array<{
+    id: string;
+    description: string | null;
+    contractId?: string | null;
+  }>;
   contracts?: Array<{ id: string; label: string; vendorName?: string | null }>;
   projectUsers?: Array<{ id: string; name: string; email?: string }>;
   isSubmitting?: boolean;
@@ -78,15 +83,24 @@ function getDefaultDueDate(): string {
 }
 
 function buildDefaultCommitmentLines(
-  lineItems: Array<{ id: string; description: string | null }>,
+  lineItems: Array<{
+    id: string;
+    description: string | null;
+    contractId?: string | null;
+  }>,
+  contracts: Array<{ id: string; label: string; vendorName?: string | null }>,
 ): ChangeEventRfqFormValues["commitmentLines"] {
-  return lineItems.map((item) => ({
-    lineItemId: item.id,
-    lineItemDescription: item.description ?? "",
-    scopeDescription: "",
-    contractId: "",
-    recipients: "",
-  }));
+  return lineItems.map((item) => {
+    const contractId = item.contractId ?? "";
+    const contract = contracts.find((candidate) => candidate.id === contractId);
+    return {
+      lineItemId: item.id,
+      lineItemDescription: item.description ?? "",
+      scopeDescription: item.description ?? "",
+      contractId,
+      recipients: contract?.vendorName ?? "",
+    };
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -102,6 +116,11 @@ export function ChangeEventRfqForm({
   onSubmit,
   onCancel,
 }: ChangeEventRfqFormProps) {
+  const defaultCommitmentLines = useMemo(
+    () => buildDefaultCommitmentLines(lineItems, contracts),
+    [lineItems, contracts],
+  );
+
   const form = useForm<ChangeEventRfqFormValues>({
     reValidateMode: "onBlur",
     defaultValues: {
@@ -110,14 +129,27 @@ export function ChangeEventRfqForm({
       requestDetails: "",
       distributionPersonId: "",
       includeAttachments: true,
-      commitmentLines: buildDefaultCommitmentLines(lineItems),
+      commitmentLines: defaultCommitmentLines,
     },
   });
 
-  const { fields, remove } = useFieldArray({
+  const { fields, remove, replace } = useFieldArray({
     control: form.control,
     name: "commitmentLines",
   });
+
+  useEffect(() => {
+    const currentLines = form.getValues("commitmentLines");
+    const currentHasContract = currentLines.some((line) => line.contractId);
+    const nextHasContract = defaultCommitmentLines.some((line) => line.contractId);
+
+    if (
+      defaultCommitmentLines.length > 0 &&
+      (currentLines.length === 0 || (!currentHasContract && nextHasContract))
+    ) {
+      replace(defaultCommitmentLines);
+    }
+  }, [defaultCommitmentLines, form, replace]);
 
   const handleSubmit = form.handleSubmit(async (values) => {
     await onSubmit(values);

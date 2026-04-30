@@ -33,21 +33,25 @@ export function PrimeContractInvoicesTab({
   formatCurrency,
 }: PrimeContractInvoicesTabProps) {
   const router = useRouter();
-  const totalAmount = useMemo(
-    () => paymentApplications.reduce((sum, app) => sum + app.amount, 0),
+  const invoicedPaymentApplications = useMemo(
+    () => paymentApplications.filter((application) => application.status === "approved"),
     [paymentApplications],
   );
+  const totalAmount = useMemo(
+    () => invoicedPaymentApplications.reduce((sum, app) => sum + app.amount, 0),
+    [invoicedPaymentApplications],
+  );
   const totalRetainage = useMemo(
-    () => paymentApplications.reduce((sum, app) => sum + app.retention_amount, 0),
-    [paymentApplications],
+    () => invoicedPaymentApplications.reduce((sum, app) => sum + app.retention_amount, 0),
+    [invoicedPaymentApplications],
   );
   const totalPaymentDue = useMemo(
     () =>
-      paymentApplications.reduce(
+      invoicedPaymentApplications.reduce(
         (sum, app) => sum + (app.net_amount ?? app.amount - app.retention_amount),
         0,
       ),
-    [paymentApplications],
+    [invoicedPaymentApplications],
   );
 
   const columns: ColumnDef<PaymentApplication>[] = useMemo(
@@ -144,7 +148,7 @@ export function PrimeContractInvoicesTab({
 
   const footerRow = useMemo<DataTableFooterCell[]>(
     () => [
-      { value: "Total", colSpan: 3, align: "left" },
+      { value: "Approved total", colSpan: 3, align: "left" },
       { value: formatCurrency(totalAmount) },
       { value: formatCurrency(totalRetainage) },
       { value: formatCurrency(totalPaymentDue) },
@@ -182,11 +186,7 @@ export function PrimeContractInvoicesTab({
         {paymentApplications.length > 0 ? (
           <p className="text-sm text-muted-foreground -mt-3 mb-4">
             Total invoiced:{" "}
-            {formatCurrency(
-              paymentApplications
-                .filter((a) => a.status === "approved")
-                .reduce((sum, a) => sum + a.amount, 0),
-            )}
+            {formatCurrency(totalAmount)}
           </p>
         ) : null}
 

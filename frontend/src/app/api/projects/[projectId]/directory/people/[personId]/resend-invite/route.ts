@@ -2,7 +2,7 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { DirectoryService } from "@/services/directoryService";
+import { InviteService } from "@/services/inviteService";
 import { apiErrorResponse } from "@/lib/api-error";
 
 export const POST = withApiGuardrails<{ projectId: string; personId: string }>(
@@ -21,19 +21,21 @@ export const POST = withApiGuardrails<{ projectId: string; personId: string }>(
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/directory/people/[personId]/resend-invite#POST", message: "Authentication required." });
     }
 
-    // Create DirectoryService and resend invite
-    const directoryService = new DirectoryService(supabase);
-    const membership = await directoryService.resendInvite(projectId, personId);
+    const inviteService = new InviteService(supabase);
+    const result = await inviteService.resendInvite(projectId, personId);
 
-    // TODO: Send actual invitation email
-    // This would integrate with your email service
+    if (!result.success) {
+      return NextResponse.json(
+        { error: result.error || "Failed to resend invite" },
+        { status: 400 },
+      );
+    }
+
     return NextResponse.json(
       {
         user_id: personId,
-        email: membership.person_id, // Would need to fetch person email
-        status: membership.invite_status,
-        invitation_sent_at: membership.last_invited_at,
-        message: "Invitation resent successfully",
+        status: "invited",
+        message: result.message || "Invitation resent successfully",
       },
       { status: 200 },
     );

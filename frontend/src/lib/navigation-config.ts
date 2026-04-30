@@ -246,6 +246,7 @@ export const sidebarNavGroups: SidebarNavGroup[] = [
     label: "Company",
     icon: Building2,
     tools: [
+      { name: "Project Intelligence", path: "intelligence", icon: Brain, requiresProject: true },
       { name: "Company Directory", path: "directory/companies", icon: Building2, requiresProject: false, module: "directory" },
       {
         name: "Meetings",
@@ -488,6 +489,13 @@ export const headerNavGroups: HeaderNavGroup[] = [
         requiresProject: true,
         icon: CheckCircle,
         description: "Project task board",
+      },
+      {
+        name: "Project Intelligence",
+        path: "intelligence",
+        requiresProject: true,
+        icon: Brain,
+        description: "Compiled project intelligence, risks, and evidence",
       },
       {
         name: "Manage Users",
