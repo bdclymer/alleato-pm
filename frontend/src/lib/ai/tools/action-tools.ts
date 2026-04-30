@@ -7,34 +7,10 @@
 
 import { tool } from "ai";
 import { z } from "zod";
-import OpenAI from "openai";
 import { createHash } from "crypto";
 import { createServiceClient } from "@/lib/supabase/service";
 import { createToolGuardrails } from "./guardrails";
-
-let _openai: OpenAI | null = null;
-function getOpenAI(): OpenAI {
-  if (!_openai) {
-    const gatewayKey = process.env.AI_GATEWAY_API_KEY;
-    if (gatewayKey) {
-      _openai = new OpenAI({
-        apiKey: gatewayKey,
-        baseURL: "https://ai-gateway.vercel.sh/v1",
-      });
-    } else {
-      throw new Error("AI_GATEWAY_API_KEY not set — run `vercel env pull` to provision OIDC credentials");
-    }
-  }
-  return _openai;
-}
-
-type ToolTracePayload = {
-  tool: string;
-  input: Record<string, unknown>;
-  output?: unknown;
-  error?: string;
-  timestamp: string;
-};
+import { type ToolTracePayload, getOpenAI, withWriteTrace } from "./tool-utils";
 
 export type ActionToolsOptions = {
   onTrace?: (trace: ToolTracePayload) => void;
@@ -113,23 +89,6 @@ type RuntimeCommitmentWriteClient = {
   };
 };
 
-function withTrace<TInput extends Record<string, unknown>, TResult>(
-  name: string,
-  options: ActionToolsOptions,
-  execute: (input: TInput) => Promise<TResult>,
-) {
-  return async (input: TInput): Promise<TResult> => {
-    try {
-      const output = await execute(input);
-      options.onTrace?.({ tool: name, input, output, timestamp: new Date().toISOString() });
-      return output;
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      options.onTrace?.({ tool: name, input, error: message, timestamp: new Date().toISOString() });
-      throw error;
-    }
-  };
-}
 
 export function createActionTools(
   userId: string,
@@ -262,7 +221,7 @@ export function createActionTools(
           .describe("Optional idempotency key to prevent duplicate writes"),
       }),
       needsApproval: needsConfirmedWriteApproval,
-      execute: withTrace("createChangeOrder", options, async (input) => {
+      execute: withWriteTrace("createChangeOrder", options, async (input) => {
         const { projectId, contractId, title, totalAmount, status, confirmed } = input;
         const access = await enforceProjectWriteAccess(projectId);
         if (!access.ok) return { success: false, error: access.error };
@@ -360,7 +319,7 @@ export function createActionTools(
           .describe("Optional idempotency key to prevent duplicate writes"),
       }),
       needsApproval: needsConfirmedWriteApproval,
-      execute: withTrace("createChangeEvent", options, async (input) => {
+      execute: withWriteTrace("createChangeEvent", options, async (input) => {
         const { projectId, title, description, scope, type, status, confirmed } = input;
         const access = await enforceProjectWriteAccess(projectId);
         if (!access.ok) return { success: false, error: access.error };
@@ -460,7 +419,7 @@ export function createActionTools(
           .describe("Optional idempotency key to prevent duplicate writes"),
       }),
       needsApproval: needsConfirmedWriteApproval,
-      execute: withTrace("updateProjectStatus", options, async (input) => {
+      execute: withWriteTrace("updateProjectStatus", options, async (input) => {
         const { projectId, healthStatus, phase, reason, confirmed } = input;
         const access = await enforceProjectWriteAccess(projectId);
         if (!access.ok) return { success: false, error: access.error };
@@ -543,7 +502,7 @@ export function createActionTools(
           .describe("Optional idempotency key to prevent duplicate writes"),
       }),
       needsApproval: needsConfirmedWriteApproval,
-      execute: withTrace("createRFI", options, async (input) => {
+      execute: withWriteTrace("createRFI", options, async (input) => {
         const { projectId, subject, question, ballInCourt, dueDate, costImpact, scheduleImpact, confirmed } = input;
         const access = await enforceProjectWriteAccess(projectId);
         if (!access.ok) return { success: false, error: access.error };
@@ -639,7 +598,7 @@ export function createActionTools(
           .describe("Optional idempotency key to prevent duplicate writes"),
       }),
       needsApproval: needsConfirmedWriteApproval,
-      execute: withTrace("createTask", options, async (input) => {
+      execute: withWriteTrace("createTask", options, async (input) => {
         const { projectId, name, assignee, dueDate, notes, priority, confirmed } = input;
         const access = await enforceProjectWriteAccess(projectId);
         if (!access.ok) return { success: false, error: access.error };
@@ -732,7 +691,7 @@ export function createActionTools(
         idempotencyKey: z.string().optional(),
       }),
       needsApproval: needsConfirmedWriteApproval,
-      execute: withTrace("flagProjectRisk", options, async (input) => {
+      execute: withWriteTrace("flagProjectRisk", options, async (input) => {
         const { projectId, title, description, severity, insightType, financialImpact, timelineImpactDays, confirmed } = input;
         const access = await enforceProjectWriteAccess(projectId);
         if (!access.ok) return { success: false, error: access.error };
@@ -812,7 +771,7 @@ export function createActionTools(
         idempotencyKey: z.string().optional(),
       }),
       needsApproval: needsConfirmedWriteApproval,
-      execute: withTrace("updateRFIStatus", options, async (input) => {
+      execute: withWriteTrace("updateRFIStatus", options, async (input) => {
         const { rfiId, rfiNumber, projectId, newStatus, response, confirmed } = input;
         const access = await enforceProjectWriteAccess(projectId);
         if (!access.ok) return { success: false, error: access.error };
@@ -912,7 +871,7 @@ export function createActionTools(
         idempotencyKey: z.string().optional(),
       }),
       needsApproval: needsConfirmedWriteApproval,
-      execute: withTrace("createMeetingNote", options, async (input) => {
+      execute: withWriteTrace("createMeetingNote", options, async (input) => {
         const { projectId, title, date, summary, actionItems, participants, durationMinutes, confirmed } = input;
         const access = await enforceProjectWriteAccess(projectId);
         if (!access.ok) return { success: false, error: access.error };
@@ -997,7 +956,7 @@ export function createActionTools(
         idempotencyKey: z.string().optional(),
       }),
       needsApproval: needsConfirmedWriteApproval,
-      execute: withTrace("createSubmittal", options, async (input) => {
+      execute: withWriteTrace("createSubmittal", options, async (input) => {
         const { projectId, title, specSection, dueDate, submittedBy, status, confirmed } = input;
         const access = await enforceProjectWriteAccess(projectId);
         if (!access.ok) return { success: false, error: access.error };
@@ -1092,7 +1051,7 @@ export function createActionTools(
         idempotencyKey: z.string().optional(),
       }),
       needsApproval: needsConfirmedWriteApproval,
-      execute: withTrace("logDailyReport", options, async (input) => {
+      execute: withWriteTrace("logDailyReport", options, async (input) => {
         const { projectId, logDate, weather, crewCount, workPerformed, notes, confirmed } = input;
         const access = await enforceProjectWriteAccess(projectId);
         if (!access.ok) return { success: false, error: access.error };
@@ -1175,7 +1134,7 @@ export function createActionTools(
         idempotencyKey: z.string().optional(),
       }),
       needsApproval: needsConfirmedWriteApproval,
-      execute: withTrace("generateProjectSummary", options, async (input) => {
+      execute: withWriteTrace("generateProjectSummary", options, async (input) => {
         const { projectId, projectName, confirmed } = input;
 
         if (!confirmed) {
@@ -1495,7 +1454,7 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
         idempotencyKey: z.string().optional(),
       }),
       needsApproval: needsConfirmedWriteApproval,
-      execute: withTrace("createInitiativeCard", options, async (input) => {
+      execute: withWriteTrace("createInitiativeCard", options, async (input) => {
         const {
           title,
           description,
@@ -1644,7 +1603,7 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
           .describe("Optional idempotency key to prevent duplicate writes"),
       }),
       needsApproval: needsConfirmedWriteApproval,
-      execute: withTrace("createCommitment", options, async (input) => {
+      execute: withWriteTrace("createCommitment", options, async (input) => {
         const {
           projectId,
           type,

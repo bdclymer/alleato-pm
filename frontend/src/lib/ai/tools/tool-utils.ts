@@ -1,3 +1,4 @@
+import OpenAI from "openai";
 import { createServiceClient } from "@/lib/supabase/service";
 import { type ToolGuardrails } from "./guardrails";
 
@@ -50,6 +51,50 @@ export function withTrace<TInput extends Record<string, unknown>, TResult>(
         source: name,
         guidance: errorGuidance,
       } as TResult;
+    }
+  };
+}
+
+/** Lazy OpenAI singleton — AI Gateway with OPENAI_API_KEY fallback. */
+let _openai: OpenAI | null = null;
+export function getOpenAI(): OpenAI {
+  if (!_openai) {
+    const gatewayKey = process.env.AI_GATEWAY_API_KEY;
+    if (gatewayKey) {
+      _openai = new OpenAI({ apiKey: gatewayKey, baseURL: "https://ai-gateway.vercel.sh/v1" });
+    } else {
+      const apiKey = process.env.OPENAI_API_KEY;
+      if (!apiKey) throw new Error("AI_GATEWAY_API_KEY or OPENAI_API_KEY not set");
+      _openai = new OpenAI({ apiKey });
+    }
+  }
+  return _openai;
+}
+
+export function getOpenAIModelId(modelId: string): string {
+  return process.env.AI_GATEWAY_API_KEY ? `openai/${modelId}` : modelId;
+}
+
+/**
+ * withWriteTrace — for mutation tools.
+ * Re-throws on error so failures surface loudly in the stream rather than
+ * returning a silent structured {error} response. Contrast with withTrace
+ * (read tools) which catches and returns structured errors.
+ */
+export function withWriteTrace<TInput extends Record<string, unknown>, TResult>(
+  name: string,
+  options: { onTrace?: (trace: ToolTracePayload) => void },
+  execute: (input: TInput) => Promise<TResult>,
+): (input: TInput) => Promise<TResult> {
+  return async (input: TInput): Promise<TResult> => {
+    try {
+      const output = await execute(input);
+      options.onTrace?.({ tool: name, input, output, timestamp: new Date().toISOString() });
+      return output;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      options.onTrace?.({ tool: name, input, error: message, timestamp: new Date().toISOString() });
+      throw error;
     }
   };
 }
