@@ -23,7 +23,7 @@ function getOpenAIClient(): OpenAI {
 async function generateEmbedding(text: string): Promise<number[]> {
   const client = getOpenAIClient();
   const response = await client.embeddings.create({
-    model: "text-embedding-3-small",
+    model: "text-embedding-3-large",
     input: text.substring(0, 8000),
   });
   return response.data[0].embedding;
