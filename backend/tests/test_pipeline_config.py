@@ -13,8 +13,6 @@ from __future__ import annotations
 import json
 from unittest.mock import patch
 
-import pytest
-
 from backend.src.services.pipeline.config import (
     CHUNK_OVERLAP_CHARS,
     CHUNK_TARGET_CHARS,
