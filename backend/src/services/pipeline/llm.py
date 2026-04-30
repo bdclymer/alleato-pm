@@ -12,6 +12,7 @@ from typing import Any, Dict, List, Optional
 from openai import OpenAI
 
 from .config import EMBEDDING_MODEL, EMBEDDING_DIMENSIONS
+from .models import DecisionItem, MeetingSegment, OpportunityItem, RiskItem, StructuredData, TaskItem
 
 # Maps each supported embedding model to its native output dimension.
 # If batch_embed is called with a non-default model, we look up the correct
@@ -22,7 +23,6 @@ _MODEL_DIMENSIONS: dict[str, int] = {
     "text-embedding-3-small": 1_536,
     "text-embedding-ada-002": 1_536,
 }
-from .models import DecisionItem, MeetingSegment, OpportunityItem, RiskItem, StructuredData, TaskItem
 
 # Maps each supported embedding model to its native output dimension.
 # If batch_embed is called with a non-default model, we look up the correct
