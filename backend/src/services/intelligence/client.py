@@ -109,6 +109,10 @@ def extract_with_retry(
 
                 response = _client(provider).chat.completions.create(**kwargs)
                 raw = response.choices[0].message.content or ""
+                # Strip markdown fences that non-json_object providers may wrap output in.
+                raw = raw.strip()
+                if raw.startswith("```"):
+                    raw = raw.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
                 parsed = json.loads(raw)
                 if not isinstance(parsed, dict):
                     raise json.JSONDecodeError("top-level JSON value is not an object", raw, 0)

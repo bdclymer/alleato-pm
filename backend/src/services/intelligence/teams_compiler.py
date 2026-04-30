@@ -166,7 +166,7 @@ def _fetch_projects(supabase) -> List[Dict[str, Any]]:
     return response.data or []
 
 
-def _project_name(supabase, project_id: Optional[int], projects: Optional[List[Dict[str, Any]]] = None) -> Optional[str]:
+def _project_name(supabase, project_id: Optional[int], projects: Optional[List[Dict[str, Any]]] = None) -> Optional[str]:  # noqa: E501
     if not project_id:
         return None
     for project in projects or []:
@@ -229,9 +229,11 @@ def attribute_project(
     doc_id: str,
     normalized: Dict[str, Any],
     existing_project_id: Optional[int],
+    projects: Optional[List[Dict[str, Any]]] = None,
 ) -> Dict[str, Any]:
     """Run Teams-specific project attribution with title override protection."""
-    projects = _fetch_projects(supabase)
+    if projects is None:
+        projects = _fetch_projects(supabase)
     title_matches = _title_candidates(projects, normalized)
     if title_matches:
         best = title_matches[0]
@@ -389,6 +391,9 @@ def write_attribution_candidates(supabase, doc_id: str, candidates: List[Dict[st
         )
     if not rows:
         return 0
+    # Remove stale candidates before inserting — prevents duplicates when a document
+    # is retried or recompiled (no unique constraint exists on this table).
+    supabase.table("document_attribution_candidates").delete().eq("source_document_id", doc_id).execute()
     supabase.table("document_attribution_candidates").insert(rows).execute()
     return len(rows)
 
@@ -476,10 +481,12 @@ def write_structured_insights(
         )
     if not rows:
         return 0
-    supabase.table("insights").upsert(
-        rows,
-        on_conflict="metadata_id,type,description",
-    ).execute()
+    # DELETE + INSERT rather than upsert: the insights table has no unique constraint
+    # on (metadata_id, type, description), and description text can exceed btree's key
+    # size limit making a constraint impractical. Recompilation is idempotent because
+    # compile_conversation always rebuilds from source content.
+    supabase.table("insights").delete().eq("metadata_id", doc_id).execute()
+    supabase.table("insights").insert(rows).execute()
     return len(rows)
 
 
@@ -547,7 +554,11 @@ def _mark_status(
     supabase.table("document_metadata").update(update).eq("id", doc_id).execute()
 
 
-def compile_conversation(supabase, doc_id: str) -> Dict[str, Any]:
+def compile_conversation(
+    supabase,
+    doc_id: str,
+    projects_cache: Optional[List[Dict[str, Any]]] = None,
+) -> Dict[str, Any]:
     """Compile a single teams_dm_conversation document."""
     result = {
         "doc_id": doc_id,
@@ -598,6 +609,7 @@ def compile_conversation(supabase, doc_id: str) -> Dict[str, Any]:
             doc_id,
             normalized,
             doc.get("project_id"),
+            projects=projects_cache,
         )
 
         stage = "extract"
@@ -727,13 +739,15 @@ def run_compiler_batch(
     }
 
     try:
+        # Ordering by created_at keeps the query on idx_document_metadata_type_created
+        # instead of forcing a broad date-index scan on the hot document_metadata table.
         response = (
             supabase.table("document_metadata")
             .select("id")
             .eq("type", "teams_dm_conversation")
             .in_("status", statuses)
             .or_("overview.is.null,overview.eq.")
-            .order("date", desc=True)
+            .order("created_at", desc=True)
             .limit(batch_size)
             .execute()
         )
@@ -742,6 +756,13 @@ def run_compiler_batch(
         logger.error("[TeamsCompiler] Failed to query batch: %s", exc)
         stats.update({"failed": 1, "failed_doc_ids": ["batch_query"], "processing_time_ms": int((time.monotonic() - started) * 1000)})
         return stats
+
+    # Fetch projects once for the entire batch — avoids N+1 SELECT per document.
+    try:
+        projects_cache = _fetch_projects(supabase)
+    except Exception as exc:
+        logger.warning("[TeamsCompiler] Could not pre-fetch projects, will fetch per-doc: %s", exc)
+        projects_cache = None
 
     for doc in docs:
         elapsed_ms = int((time.monotonic() - started) * 1000)
@@ -760,7 +781,7 @@ def run_compiler_batch(
         stats["total_processed"] += 1
         result: Dict[str, Any] = {}
         for attempt in range(max_retries + 1):
-            result = compile_conversation(supabase, doc_id)
+            result = compile_conversation(supabase, doc_id, projects_cache=projects_cache)
             if result.get("status") != "error":
                 break
             logger.warning(
