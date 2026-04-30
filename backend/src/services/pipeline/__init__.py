@@ -5,7 +5,7 @@ Stages:
   1a. parser.py          — parse Fireflies markdown, LLM semantic segmentation
   1b. document_parser.py — parse PDF/DOCX/text documents, LLM semantic segmentation
   1c. financial_parser.py — parse CSV/XLS(X) docs to structured rows + sections
-  2.  embedder.py        — chunk + embed with OpenAI text-embedding-3-small
+  2.  embedder.py        — chunk + embed with OpenAI text-embedding-3-large
   3.  extractor.py       — LLM structured extraction (decisions/risks/tasks/opportunities)
 
 Entry point:

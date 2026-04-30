@@ -19,11 +19,9 @@ from ..supabase_helpers import get_supabase_client
 from ..ingestion.fireflies_pipeline import FirefliesIngestionPipeline
 from .models import DocumentChunk, MeetingSegment, TranscriptLine
 from . import llm
+from .config import CHUNK_TARGET_CHARS, CHUNK_OVERLAP_CHARS
 
 logger = logging.getLogger(__name__)
-
-CHUNK_TARGET_CHARS = 3000   # ~750 tokens
-CHUNK_OVERLAP_CHARS = 500   # ~125 tokens
 
 # Segment index conventions for non-transcript chunks
 SEGMENT_IDX_MEETING_SUMMARY = -1

@@ -11,12 +11,21 @@ from typing import Any, Dict, List, Optional
 
 from openai import OpenAI
 
+from .config import EMBEDDING_MODEL, EMBEDDING_DIMENSIONS
 from .models import DecisionItem, MeetingSegment, OpportunityItem, RiskItem, StructuredData, TaskItem
+
+# Maps each supported embedding model to its native output dimension.
+# If batch_embed is called with a non-default model, we look up the correct
+# dimensions here rather than blindly passing EMBEDDING_DIMENSIONS (3072),
+# which would silently fail or truncate for small models (max 1536).
+_MODEL_DIMENSIONS: dict[str, int] = {
+    "text-embedding-3-large": 3_072,
+    "text-embedding-3-small": 1_536,
+    "text-embedding-ada-002": 1_536,
+}
 
 logger = logging.getLogger(__name__)
 
-EMBEDDING_MODEL = "text-embedding-3-large"
-EMBEDDING_DIMENSIONS = 3072  # text-embedding-3-large native dimensions
 CHAT_MODEL = "gpt-4o-mini"
 SEGMENT_TRANSCRIPT_MAX_CHARS = int(os.getenv("SEGMENT_TRANSCRIPT_MAX_CHARS", "0"))
 
@@ -70,15 +79,21 @@ def batch_embed(texts: List[str], model: str = EMBEDDING_MODEL) -> List[List[flo
     """Embed a batch of texts. Returns a list of embedding vectors."""
     if not texts:
         return []
+    dimensions = _MODEL_DIMENSIONS.get(model)
+    if dimensions is None:
+        raise ValueError(
+            f"Unknown embedding model '{model}'. Add it to _MODEL_DIMENSIONS in llm.py "
+            f"with its native dimension count before calling batch_embed."
+        )
     truncated = [t[:8000] for t in texts]
-    logger.info("[LLM] Embedding %d texts with %s (dimensions=%d)", len(texts), model, EMBEDDING_DIMENSIONS)
+    logger.info("[LLM] Embedding %d texts with %s (dimensions=%d)", len(texts), model, dimensions)
     errors: List[str] = []
     for provider in _provider_configs():
         try:
             response = _client(provider).embeddings.create(
                 model=_model_for_provider(model, provider),
                 input=truncated,
-                dimensions=EMBEDDING_DIMENSIONS,
+                dimensions=dimensions,
             )
             embeddings = [item.embedding for item in response.data]
             if len(embeddings) != len(texts):
@@ -205,7 +220,15 @@ Guidelines:
 - Extract decisions, risks, tasks mentioned in each segment"""
 
     raw = _call_llm(prompt, json_mode=True)
-    parsed = json.loads(raw)
+    try:
+        parsed = json.loads(raw)
+    except Exception as exc:
+        logger.warning(
+            "[LLM] segment_transcript returned non-JSON (title=%s); returning empty segments. Error: %s",
+            title, exc,
+        )
+        logger.debug("[LLM] Raw segment_transcript response: %.500s", raw)
+        return []
     return parsed.get("segments", [])
 
 
@@ -397,7 +420,13 @@ executive who missed the meeting.",
 Be specific. Use actual names and details from the meeting data."""
 
     raw = _call_llm(prompt, json_mode=True)
-    return json.loads(raw)
+    try:
+        return json.loads(raw)
+    except Exception as exc:
+        logger.warning(
+            "[LLM] generate_meeting_digest returned non-JSON; returning empty digest: %s", exc
+        )
+        return {}
 
 
 def _parse_date(raw: Optional[str]) -> Optional[str]:
