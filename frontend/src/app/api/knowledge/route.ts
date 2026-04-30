@@ -5,7 +5,6 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { logger } from "@/lib/logger";
-
 async function assertKnowledgeAdmin(
   supabase: Awaited<ReturnType<typeof createClient>>,
   userId: string,
