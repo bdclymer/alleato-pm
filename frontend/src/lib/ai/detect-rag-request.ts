@@ -43,21 +43,13 @@ function previousWeekdayIsoDate(targetDay: number, now = new Date()): string {
   return isoDate(date);
 }
 
+const MONTH_NAMES: Record<string, number> = {
+  january: 0, february: 1, march: 2, april: 3,
+  may: 4, june: 5, july: 6, august: 7,
+  september: 8, october: 9, november: 10, december: 11,
+};
+
 function parseExplicitDateRange(message: string): { startDate: string; endDate: string } | null {
-  const monthNames: Record<string, number> = {
-    january: 0,
-    february: 1,
-    march: 2,
-    april: 3,
-    may: 4,
-    june: 5,
-    july: 6,
-    august: 7,
-    september: 8,
-    october: 9,
-    november: 10,
-    december: 11,
-  };
 
   const isoRange = message.match(
     /\b(20\d{2}-\d{2}-\d{2})\b\s*(?:through|to|until|-|–|—)\s*\b(20\d{2}-\d{2}-\d{2})\b/i,
@@ -71,8 +63,8 @@ function parseExplicitDateRange(message: string): { startDate: string; endDate: 
   );
   if (!monthRange) return null;
 
-  const startMonth = monthNames[monthRange[1].toLowerCase()];
-  const endMonth = monthNames[(monthRange[3] ?? monthRange[1]).toLowerCase()];
+  const startMonth = MONTH_NAMES[monthRange[1].toLowerCase()];
+  const endMonth = MONTH_NAMES[(monthRange[3] ?? monthRange[1]).toLowerCase()];
   const year = Number(monthRange[5]);
   const startDate = new Date(Date.UTC(year, startMonth, Number(monthRange[2])));
   const endDate = new Date(Date.UTC(year, endMonth, Number(monthRange[4])));
