@@ -6,8 +6,10 @@ import { Copy, MoreHorizontal, Send, Trash2 } from "lucide-react";
 
 import { PageShell } from "@/components/layout";
 import { AttachmentUploadPanel, StatusBadge, EmptyState } from "@/components/ds";
+import { RelatedItemsPanel } from "@/components/domain/related-items/RelatedItemsPanel";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -290,8 +292,8 @@ function WorkflowBuilder({ projectId, submittalId, users, currentSteps }: Workfl
           <form onSubmit={handleSaveTemplate} className="mt-4 flex gap-2 items-end">
             <div className="flex-1 space-y-1">
               <Label className="text-xs">Template Name</Label>
-              <input
-                className="w-full h-8 rounded-md border border-border bg-background px-3 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+              <Input
+                className="h-8 text-xs"
                 placeholder="e.g. Standard Approval"
                 value={templateName}
                 onChange={(e) => setTemplateName(e.target.value)}
@@ -693,26 +695,11 @@ export function SubmittalDetailClient({ submittal, projectId }: SubmittalDetailC
 
           {/* ── Related Items ── */}
           <TabsContent value="related">
-            {linkedDrawings.length === 0 ? (
-              <EmptyState
-                title="No drawings linked"
-                description="Link drawings to this submittal to connect related documents."
-              />
-            ) : (
-              <div className="rounded-lg bg-muted/50 p-5">
-                <SectionLabel>Linked Drawings ({linkedDrawings.length})</SectionLabel>
-                <ul className="space-y-2">
-                  {linkedDrawings.map((ld, idx) => (
-                    <li key={ld.id} className="flex items-baseline gap-3 text-sm">
-                      <span className="font-medium text-foreground">Drawing {idx + 1}</span>
-                      <span className="text-xs text-muted-foreground font-mono">
-                        {ld.drawing_id}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+            <RelatedItemsPanel
+              entityType="submittal"
+              entityId={submittal.id}
+              projectId={projectId}
+            />
           </TabsContent>
 
           {/* ── Change History ── */}

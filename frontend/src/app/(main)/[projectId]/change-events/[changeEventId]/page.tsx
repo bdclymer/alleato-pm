@@ -61,6 +61,7 @@ import { ChangeEventLineagePanel } from "@/components/domain/change-events/Chang
 import { ChangeEventLineItemsTable } from "@/components/domain/change-events/ChangeEventLineItemsTable";
 import { ChangeEventHistoryTab } from "@/components/domain/change-events/ChangeEventHistoryTab";
 import { ChangeEventRelatedItemsTab } from "@/components/domain/change-events/ChangeEventRelatedItemsTab";
+import { RelatedItemsPanel } from "@/components/domain/related-items/RelatedItemsPanel";
 import { ChangeEventRfqsTab } from "@/components/domain/change-events/ChangeEventRfqsTab";
 import { ChangeEventPrimePCOsSection } from "@/components/domain/change-events/ChangeEventPrimePCOsSection";
 import { ChangeEventCommitmentPCOsSection } from "@/components/domain/change-events/ChangeEventCommitmentPCOsSection";
@@ -840,13 +841,20 @@ export default function ChangeEventDetailPage() {
           </TabsContent>
 
 <TabsContent value="related-items">
-            <ChangeEventRelatedItemsTab
-              relatedItems={relatedItems}
-              isLoading={false}
-              onFetchOptions={actions.fetchRelatedItemOptions}
-              onLink={actions.linkRelatedItem}
-              onUnlink={actions.unlinkRelatedItem}
-            />
+            <div className="space-y-6">
+              <RelatedItemsPanel
+                entityType="change_event"
+                entityId={changeEventId}
+                projectId={projectId}
+              />
+              <ChangeEventRelatedItemsTab
+                relatedItems={relatedItems}
+                isLoading={false}
+                onFetchOptions={actions.fetchRelatedItemOptions}
+                onLink={actions.linkRelatedItem}
+                onUnlink={actions.unlinkRelatedItem}
+              />
+            </div>
           </TabsContent>
 
           <TabsContent value="comments">
