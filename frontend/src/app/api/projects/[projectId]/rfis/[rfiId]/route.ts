@@ -23,6 +23,9 @@ type RouteParams = {
   params: Promise<{ projectId: string; rfiId: string }>;
 };
 
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 /**
  * GET /api/projects/[projectId]/rfis/[rfiId]
  */
@@ -168,17 +171,26 @@ export const PATCH = withApiGuardrails(
       return apiErrorResponse(error);
     }
 
-    // Fire-and-forget: notify relevant people when RFI is closed
+    // Closing an RFI is a user-visible notification action. Do not let it
+    // silently succeed without a traceable email send.
     const newStatus = updateData.status as string | undefined;
     if (newStatus === "closed" || newStatus === "closed-draft") {
       const { projectId } = await params;
-      notifyRfiClosed({
+      const notificationResult = await notifyRfiClosed({
         projectId: parseInt(projectId, 10),
         rfiId,
         closedByUserId: user.id,
-      }).catch((err) => {
-        logger.error({ msg: "[rfi-close] notification failed", error: err instanceof Error ? err.message : String(err) });
       });
+
+      if (notificationResult.failed.length > 0) {
+        return NextResponse.json(
+          {
+            error: "RFI was closed, but one or more close notification emails failed.",
+            details: notificationResult.failed,
+          },
+          { status: 502 },
+        );
+      }
     }
 
     return NextResponse.json(data);
@@ -191,7 +203,7 @@ async function notifyRfiClosed(args: {
   projectId: number;
   rfiId: string;
   closedByUserId: string;
-}) {
+}): Promise<{ sent: number; failed: Array<{ email?: string; error: string }> }> {
   const { projectId, rfiId, closedByUserId } = args;
   const supabase = createServiceClient();
 
@@ -203,65 +215,111 @@ async function notifyRfiClosed(args: {
     )
     .eq("id", rfiId)
     .maybeSingle();
-  if (!rfi) return;
+  if (!rfi) {
+    return { sent: 0, failed: [{ error: "RFI not found for close notification." }] };
+  }
 
   // Build a unique set of person IDs to notify:
   // creator, assignees, distribution list, RFI manager
   const personIds = new Set<string>();
-  if (rfi.created_by) personIds.add(rfi.created_by);
-  if (rfi.rfi_manager) personIds.add(rfi.rfi_manager);
-  for (const a of rfi.assignees || []) personIds.add(a);
-  for (const d of rfi.distribution_list || []) personIds.add(d);
+  const creatorEmails = new Set<string>();
+  if (rfi.created_by) {
+    if (UUID_PATTERN.test(rfi.created_by)) {
+      personIds.add(rfi.created_by);
+    } else if (rfi.created_by.includes("@")) {
+      creatorEmails.add(rfi.created_by);
+    }
+  }
+  if (rfi.rfi_manager && UUID_PATTERN.test(rfi.rfi_manager)) {
+    personIds.add(rfi.rfi_manager);
+  }
+  for (const a of rfi.assignees || []) {
+    if (UUID_PATTERN.test(a)) personIds.add(a);
+  }
+  for (const d of rfi.distribution_list || []) {
+    if (UUID_PATTERN.test(d)) personIds.add(d);
+  }
 
-  if (personIds.size === 0) return;
+  if (personIds.size === 0 && creatorEmails.size === 0) {
+    return { sent: 0, failed: [{ error: "No RFI notification recipients were selected." }] };
+  }
 
   // Resolve people to emails and the closer's name
-  const [{ data: people }, { data: project }, { data: closerProfile }] =
-    await Promise.all([
-      supabase
-        .from("people")
-        .select("id, first_name, last_name, email")
-        .in("id", [...personIds]),
-      supabase
-        .from("projects")
-        .select("name")
-        .eq("id", projectId)
-        .maybeSingle(),
-      supabase
-        .from("user_profiles")
-        .select("full_name, email")
-        .eq("id", closedByUserId)
-        .maybeSingle(),
-    ]);
+  const [
+    { data: peopleById, error: peopleByIdError },
+    { data: peopleByEmail, error: peopleByEmailError },
+    { data: project },
+    { data: closerProfile },
+  ] = await Promise.all([
+    personIds.size > 0
+      ? supabase
+          .from("people")
+          .select("id, first_name, last_name, email")
+          .in("id", [...personIds])
+      : Promise.resolve({ data: [], error: null }),
+    creatorEmails.size > 0
+      ? supabase
+          .from("people")
+          .select("id, first_name, last_name, email")
+          .in("email", [...creatorEmails])
+      : Promise.resolve({ data: [], error: null }),
+    supabase
+      .from("projects")
+      .select("name")
+      .eq("id", projectId)
+      .maybeSingle(),
+    supabase
+      .from("user_profiles")
+      .select("full_name, email")
+      .eq("id", closedByUserId)
+      .maybeSingle(),
+  ]);
+
+  if (peopleByIdError || peopleByEmailError) {
+    return {
+      sent: 0,
+      failed: [
+        {
+          error:
+            peopleByIdError?.message ??
+            peopleByEmailError?.message ??
+            "Failed to resolve RFI notification recipients.",
+        },
+      ],
+    };
+  }
 
   const closedBy =
     closerProfile?.full_name?.trim() ||
     closerProfile?.email?.split("@")[0] ||
     "A team member";
 
-  const recipients: Array<{ name: string; email: string }> = (people || [])
-    .filter((p: { email: string | null }) => !!p.email)
-    .map(
-      (p: {
-        first_name: string | null;
-        last_name: string | null;
-        email: string | null;
-      }) => ({
-        name:
-          `${p.first_name || ""} ${p.last_name || ""}`.trim() || "Team member",
-        email: p.email as string,
-      }),
-    );
+  const people = [...(peopleById || []), ...(peopleByEmail || [])];
+  const recipientByEmail = new Map<string, { name: string; email: string }>();
+  for (const p of people) {
+    if (!p.email) continue;
+    recipientByEmail.set(p.email, {
+      name:
+        `${p.first_name || ""} ${p.last_name || ""}`.trim() || "Team member",
+      email: p.email,
+    });
+  }
 
-  if (recipients.length === 0) return;
+  const recipients: Array<{ name: string; email: string }> = [
+    ...recipientByEmail.values(),
+  ];
+
+  if (recipients.length === 0) {
+    return { sent: 0, failed: [{ error: "No RFI notification recipients have valid email addresses." }] };
+  }
 
   const projectName = project?.name || `Project #${projectId}`;
   const viewUrl = `${APP_BASE_URL}/${projectId}/rfis/${rfiId}`;
   const subject = `RFI #${rfi.number} closed — ${rfi.subject}`;
 
-  await Promise.all(
-    recipients.map((r) =>
-      sendEmail({
+  const results = await Promise.all(
+    recipients.map(async (r) => {
+      const result = await sendEmail({
         template: "rfi-closed",
         to: r.email,
         subject,
@@ -275,9 +333,25 @@ async function notifyRfiClosed(args: {
         }),
         entity: { type: "rfi", id: rfiId },
         idempotencyKey: `rfi-closed/${rfiId}/${r.email}`,
-      }),
-    ),
+        metadata: {
+          project_id: projectId,
+          rfi_id: rfiId,
+          recipient_email: r.email,
+        },
+      });
+
+      return { email: r.email, result };
+    }),
   );
+
+  const failed = results
+    .filter(({ result }) => result.error)
+    .map(({ email, result }) => ({
+      email,
+      error: result.error?.message ?? "Failed to send RFI close notification.",
+    }));
+
+  return { sent: results.length - failed.length, failed };
 }
 
 /**

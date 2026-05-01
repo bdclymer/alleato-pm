@@ -113,8 +113,13 @@ async function syncInvoices() {
 
   for (const inv of invoices) {
     const key = `${inv.ReferenceNbr}|${inv.Type}`;
+    if (!inv.ReferenceNbr) {
+      result.errors.push("Invoice missing ReferenceNbr; skipped");
+      continue;
+    }
 
     const header = {
+      external_key:     key,
       reference_nbr:   inv.ReferenceNbr,
       type:            inv.Type ?? null,
       status:          inv.Status ?? null,
@@ -272,7 +277,6 @@ async function bridgeToOwnerInvoices(supabase) {
       invoice_number:     refNbr,
       status:             mapAcumaticaStatus(inv.status),
       prime_contract_id:  primeContractId,
-      contract_id:        null, // legacy field, not used
       period_start:       toDate(inv.date),
       period_end:         null,
       updated_at:         now,

@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Plus, ArrowRight, FolderOpen } from "lucide-react";
+import { Plus, ArrowRight, FolderOpen, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { formatDate } from "@/lib/format";
 
@@ -25,7 +25,6 @@ import { EmptyState } from "@/components/ds";
 const tabs = (projectId: string) => [
   { label: "Current Drawings", href: `/${projectId}/drawings`, isActive: false },
   { label: "Drawing Sets", href: `/${projectId}/drawings/sets`, isActive: true },
-  { label: "All Sets & Revisions", href: `/${projectId}/drawings/revisions-report`, isActive: false },
   { label: "Recycle Bin", href: `/${projectId}/drawings/recycle-bin`, isActive: false },
 ];
 
@@ -49,6 +48,10 @@ export default function DrawingSetsPage() {
   const filtered = sets.filter((s) =>
     s.name.toLowerCase().includes(search.toLowerCase()),
   );
+
+  const viewSet = (setId: string) => {
+    router.push(`/${projectId}/drawings?view=card&set=${setId}`);
+  };
 
   const startEdit = (set: { id: string; name: string; issued_at: string }) => {
     setEditingId(set.id);
@@ -112,7 +115,7 @@ export default function DrawingSetsPage() {
                 <TableHead>Date</TableHead>
                 <TableHead className="text-center">Published</TableHead>
                 <TableHead className="text-center">Unpublished</TableHead>
-                <TableHead className="w-[80px]" />
+                <TableHead className="w-44" />
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -182,9 +185,17 @@ export default function DrawingSetsPage() {
                 filtered.map((set) => (
                   <TableRow
                     key={set.id}
-                    className="cursor-pointer"
+                    className="group/row cursor-pointer hover:bg-muted/40"
+                    tabIndex={editingId === set.id ? -1 : 0}
                     onClick={() => {
-                      if (editingId !== set.id) startEdit(set);
+                      if (editingId !== set.id) viewSet(set.id);
+                    }}
+                    onKeyDown={(event) => {
+                      if (editingId === set.id) return;
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        viewSet(set.id);
+                      }
                     }}
                   >
                     <TableCell>
@@ -200,7 +211,9 @@ export default function DrawingSetsPage() {
                           }}
                         />
                       ) : (
-                        <span className="font-medium">{set.name}</span>
+                        <span className="font-medium text-primary underline-offset-4 group-hover/row:underline">
+                          {set.name}
+                        </span>
                       )}
                     </TableCell>
                     <TableCell>
@@ -248,16 +261,24 @@ export default function DrawingSetsPage() {
                           </Button>
                         </div>
                       ) : (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() =>
-                            router.push(`/${projectId}/drawings?set=${set.id}`)
-                          }
-                        >
-                          View
-                          <ArrowRight />
-                        </Button>
+                        <div className="flex justify-end gap-1">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => startEdit(set)}
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                            Edit
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => viewSet(set.id)}
+                          >
+                            View Drawings
+                            <ArrowRight />
+                          </Button>
+                        </div>
                       )}
                     </TableCell>
                   </TableRow>

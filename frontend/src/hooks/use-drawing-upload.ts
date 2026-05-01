@@ -4,6 +4,7 @@ import { useState, useCallback } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api-client";
 import { createClient as createSupabaseClient } from "@/lib/supabase/client";
+import { getDrawingUploadFallbackIdentity } from "@/lib/drawings/drawing-identity";
 import type { UploadDrawingFormData } from "@/lib/schemas/drawing-schemas";
 import { getDrawingUploadFileError } from "@/lib/drawings/upload-constraints";
 import type {
@@ -80,7 +81,7 @@ export function useDrawingUpload(projectId: string) {
         },
       ]);
 
-      const fileName = file.name.replace(/\.[^/.]+$/, "");
+      const fallbackIdentity = getDrawingUploadFallbackIdentity(file.name);
 
       const signedUpload = await apiFetch<{ path: string; token: string }>(
         `/api/projects/${projectId}/drawings/upload-url`,
@@ -117,8 +118,8 @@ export function useDrawingUpload(projectId: string) {
       }>(`/api/projects/${projectId}/drawings`, {
         method: "POST",
         body: JSON.stringify({
-          drawing_number: metadata.drawing_number || fileName,
-          title: metadata.title || fileName,
+          drawing_number: metadata.drawing_number || fallbackIdentity.drawingNumber,
+          title: metadata.title || fallbackIdentity.title,
           discipline: metadata.discipline,
           drawing_type: metadata.drawing_type,
           revision_number: metadata.revision_number || "A",
@@ -198,10 +199,10 @@ export function useDrawingUpload(projectId: string) {
 
       for (const file of Array.from(files)) {
         try {
-          const fileName = file.name.replace(/\.[^/.]+$/, "");
+          const fallbackIdentity = getDrawingUploadFallbackIdentity(file.name);
           const drawingMetadata: UploadDrawingFormData = {
-            drawing_number: metadata.drawing_number || fileName,
-            title: metadata.title || fileName,
+            drawing_number: metadata.drawing_number || fallbackIdentity.drawingNumber,
+            title: metadata.title || fallbackIdentity.title,
             discipline: metadata.discipline,
             drawing_type: metadata.drawing_type,
             revision_number: metadata.revision_number || "A",

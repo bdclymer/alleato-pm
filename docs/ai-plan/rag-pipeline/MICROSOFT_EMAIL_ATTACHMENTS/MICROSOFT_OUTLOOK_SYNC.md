@@ -125,7 +125,7 @@ do nothing;
 
 SQLinsert into search_documents (  id,  project_sync_id,  source_type,  source_id,  content,  embedding)values (  gen_random_uuid(),  :project_sync_id,  'email',  :email_id,  :search_text,  :embedding);Show more lines
 
-###  3. Migration Guards for Production Safety
+## 3. Migration Guards for Production Safety
 
 You should never run blind migrations in prod.
 Here’s how we guard everything.
@@ -154,7 +154,6 @@ No long locks
 No downtime
 No orphaned rows
 
-
 ## 4. Supabase RLS Policies (Project‑Scoped Access)
 
 This is very important for security.
@@ -162,7 +161,6 @@ Assumption:
 
 Your JWT includes project_ids (INT8 or UUID)
 Or user is mapped via projects_sync
-
 
 ### Enable RLS
 SQLalter table project_emails enable row level security;alter table email_attachments enable row level security;alter table search_documents enable row level security;Show more lines

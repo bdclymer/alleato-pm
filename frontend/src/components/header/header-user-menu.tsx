@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { IconLogout, IconUserCircle } from "@tabler/icons-react";
+import { IconLogout, IconUserCircle, IconPointer } from "@tabler/icons-react";
 import type { User } from "@supabase/supabase-js";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -16,6 +16,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Switch } from "@/components/ui/switch";
 import { getBestAvatarUrl } from "@/lib/gravatar";
 import { logout } from "@/lib/supabase/logout";
 import {
@@ -23,6 +24,7 @@ import {
   buildToolUrl,
   filterToolsByPermission,
 } from "@/lib/navigation-config";
+import { useLiveCursorsEnabled } from "@/hooks/use-live-cursors-enabled";
 
 interface HeaderUserMenuProps {
   user: User | null;
@@ -42,6 +44,7 @@ export function HeaderUserMenu({
   userType,
 }: HeaderUserMenuProps) {
   const router = useRouter();
+  const { enabled: liveCursorsEnabled, setEnabled: setLiveCursorsEnabled } = useLiveCursorsEnabled();
 
   const settingsTools = useMemo(
     () =>
@@ -166,6 +169,23 @@ export function HeaderUserMenu({
             })}
           </>
         )}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          className="cursor-pointer"
+          onSelect={(e) => {
+            e.preventDefault();
+            setLiveCursorsEnabled(!liveCursorsEnabled);
+          }}
+        >
+          <IconPointer className="mr-2 h-4 w-4" />
+          <span className="flex-1">Live Cursors</span>
+          <Switch
+            checked={liveCursorsEnabled}
+            onCheckedChange={setLiveCursorsEnabled}
+            className="ml-2 scale-75"
+            aria-label="Toggle live cursors"
+          />
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
           className="cursor-pointer text-destructive focus:text-destructive"

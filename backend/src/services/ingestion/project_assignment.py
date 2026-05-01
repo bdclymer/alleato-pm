@@ -2,9 +2,9 @@
 Automatic Project Assignment Logic.
 
 Assigns documents to projects based on:
-1. Project/client/alias matches in title (highest confidence)
+1. Project number/name/client/alias matches in title (highest confidence)
 2. Participant email domain overlap with known project contacts
-3. Project/client/alias matches in content
+3. Project number/name/client/alias matches in content
 """
 
 from typing import Optional, Dict, Any, List, Tuple
@@ -23,7 +23,7 @@ class ProjectAssigner:
         """Get all active projects with matching signals."""
         if self._project_cache is None:
             response = self.client.table("projects").select(
-                "id, name, client, aliases, team_members, stakeholders"
+                "id, name, project_number, client, aliases, team_members, stakeholders"
             ).execute()
             self._project_cache = response.data or []
         return self._project_cache
@@ -59,7 +59,7 @@ class ProjectAssigner:
         if not projects:
             return None, "no_projects", 0.0
 
-        # Strategy 1: Direct name match in title (highest confidence)
+        # Strategy 1: Direct project number/name match in title (highest confidence)
         project_id, confidence = self._match_by_title(meeting_title, projects)
         if project_id and confidence >= 0.8:
             return project_id, "title_match", confidence
@@ -87,7 +87,7 @@ class ProjectAssigner:
         meeting_title: str,
         projects: List[Dict[str, Any]]
     ) -> Tuple[Optional[int], float]:
-        """Match project by name/alias/client appearing in title."""
+        """Match project by number/name/alias/client appearing in title."""
         title_lower = self._normalize_text(meeting_title)
         if not title_lower:
             return None, 0.0
@@ -99,12 +99,15 @@ class ProjectAssigner:
                 continue
 
             score = 0.0
+            project_number = self._normalize_text(project.get("project_number"))
             project_name = self._normalize_text(project.get("name"))
             client_name = self._normalize_text(project.get("client"))
 
             # Exact phrase matches
+            if project_number and self._contains_token(title_lower, project_number):
+                score = max(score, 0.98)
             if project_name and project_name in title_lower:
-                score += 0.95
+                score = max(score, 0.95)
             if client_name and client_name in title_lower:
                 score = max(score, 0.90)
 
@@ -155,7 +158,7 @@ class ProjectAssigner:
         content: str,
         projects: List[Dict[str, Any]]
     ) -> Tuple[Optional[int], float]:
-        """Match project by project/client/alias mentions in content."""
+        """Match project by project number/name/client/alias mentions in content."""
         content_lower = self._normalize_text(content[:3000])
         if not content_lower:
             return None, 0.0
@@ -170,6 +173,10 @@ class ProjectAssigner:
                 continue
 
             # Project name mentions
+            project_number = self._normalize_text(project.get("project_number"))
+            if project_number and self._contains_token(content_lower, project_number):
+                score += 4
+
             project_name = self._normalize_text(project.get("name"))
             if project_name and project_name in content_lower:
                 score += 3

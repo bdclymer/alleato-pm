@@ -74,6 +74,9 @@ interface Annotation {
   position?: Point;
 }
 
+type PdfDocumentProxy = { numPages: number };
+type PdfPageProxy = { originalWidth: number; originalHeight: number };
+
 const PRESET_COLORS = [
   "#ef4444", // red
   "#f97316", // orange
@@ -95,7 +98,7 @@ interface DrawingViewerProps {
   drawingNumber?: string;
   title?: string;
   onError?: (error: Error) => void;
-  onLoadSuccess?: (pdf: any) => void;
+  onLoadSuccess?: (pdf: PdfDocumentProxy) => void;
   className?: string;
   /** Called when the comment tool is active and the user clicks the canvas. Coords are percentages 0–100. */
   onCommentClick?: (x: number, y: number, page: number) => void;
@@ -481,7 +484,7 @@ export function DrawingViewer({
 
   // ── PDF load callbacks ──
   const onDocumentLoadSuccess = useCallback(
-    (pdf: any) => {
+    (pdf: PdfDocumentProxy) => {
       setNumPages(pdf.numPages);
       setIsLoading(false);
       setLoadError(null);
@@ -501,7 +504,7 @@ export function DrawingViewer({
   );
 
   const onPageLoadSuccess = useCallback(
-    (page: any) => {
+    (page: PdfPageProxy) => {
       originalPageSizeRef.current = {
         width: page.originalWidth,
         height: page.originalHeight,
@@ -1078,6 +1081,25 @@ export function DrawingViewer({
                 onMouseMove={handleCanvasMouseMove}
                 onMouseUp={handleCanvasMouseUp}
                 onMouseLeave={handleCanvasMouseUp}
+                onClick={(e) => {
+                  if (resolvedTool !== "text" || textInput) return;
+                  const canvas = annotationCanvasRef.current;
+                  if (!canvas) return;
+                  const pt = getCanvasPoint(e, canvas);
+                  const textAnn = findTextAnnotationAtPoint(pt);
+                  if (textAnn?.position) {
+                    setTextInput({
+                      pos: textAnn.position,
+                      value: textAnn.text || "",
+                      page: textAnn.page,
+                      annotationId: textAnn.id,
+                    });
+                    setSelectedAnnotationId(textAnn.id);
+                    return;
+                  }
+                  setSelectedAnnotationId(null);
+                  setTextInput({ pos: pt, value: "", page: pageNumber });
+                }}
                 onDoubleClick={(e) => {
                   const canvas = annotationCanvasRef.current;
                   if (!canvas) return;

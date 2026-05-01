@@ -5,6 +5,7 @@ import { insertProjectEmail } from "./db/projectEmails";
 import { resolveProjectSync } from "./db/projectsSync";
 import { insertSearchDocument } from "./db/searchDocuments";
 import { fetchAttachments, fetchMessage, fetchMessages } from "./graph/messages";
+import { extractAttachmentText } from "./processing/attachmentExtract";
 import { generateEmbedding } from "./processing/embeddings";
 import { attachmentBytesFromBase64, extractText } from "./processing/textExtract";
 import { withRetry } from "./util/retry";
@@ -73,7 +74,11 @@ async function processGraphMessageOnce(payload: Payload) {
   const attachmentIds = [];
   for (const attachment of await fetchAttachments(payload.userId, payload.messageId)) {
     const bytes = attachmentBytesFromBase64(attachment.contentBytes);
-    const attachmentText = extractText(attachment.name, bytes);
+    const extraction = await extractAttachmentText({
+      bytes,
+      fileName: attachment.name ?? `graph-attachment-${attachment.id}`,
+    });
+    const attachmentText = extraction.text || extractText(attachment.name);
     const attachmentId = await insertEmailAttachment({
       emailId,
       projectSyncId: project.id,

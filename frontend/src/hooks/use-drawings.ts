@@ -268,6 +268,48 @@ export function useDeletedDrawings(projectId: string) {
 }
 
 /**
+ * React Query hook for the current user's project-level drawing subscription.
+ */
+export function useDrawingSubscription(projectId: string) {
+  return useQuery<{ subscribed: boolean }>({
+    queryKey: ["drawings-subscription", projectId],
+    queryFn: () =>
+      apiFetch<{ subscribed: boolean }>(
+        `/api/projects/${projectId}/drawings/subscribe`,
+      ),
+    enabled: !!projectId,
+  });
+}
+
+/**
+ * React Query mutation for subscribing or unsubscribing from drawing updates.
+ */
+export function useToggleDrawingSubscription(projectId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (subscribe: boolean) =>
+      apiFetch<{ subscribed: boolean }>(
+        `/api/projects/${projectId}/drawings/subscribe`,
+        { method: subscribe ? "POST" : "DELETE" },
+      ),
+    onSuccess: (data) => {
+      queryClient.setQueryData(["drawings-subscription", projectId], data);
+      toast.success(
+        data.subscribed
+          ? "Subscribed to drawing updates"
+          : "Unsubscribed from drawing updates",
+      );
+    },
+    onError: (error: Error) => {
+      toast.error("Could not update drawing subscription", {
+        description: error.message,
+      });
+    },
+  });
+}
+
+/**
  * React Query mutation for restoring a soft-deleted drawing
  */
 export function useRestoreDrawing(projectId: string) {

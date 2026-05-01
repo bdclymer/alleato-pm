@@ -1,5 +1,19 @@
 import path from "node:path";
+import { createRequire } from "node:module";
 import type { NextConfig } from "next";
+
+const require = createRequire(import.meta.url);
+
+function resolvePdfjsDistPath(filePath: string) {
+  const reactPdfPackageDir = path.dirname(require.resolve("react-pdf/package.json"));
+  const pdfjsPackagePath = require.resolve("pdfjs-dist/package.json", {
+    paths: [reactPdfPackageDir],
+  });
+
+  return path.join(path.dirname(pdfjsPackagePath), filePath);
+}
+
+const pdfjsBrowserEntry = resolvePdfjsDistPath("build/pdf.min.mjs");
 
 const nextConfig: NextConfig = {
   eslint: {
@@ -12,12 +26,6 @@ const nextConfig: NextConfig = {
   },
   productionBrowserSourceMaps: false,
   devIndicators: false,
-  // pdfjs-dist 5.x builds pdf.mjs as a self-contained webpack bundle that contains
-  // `var __webpack_exports__ = {}`. In strict-mode eval (webpack ESM), that var hoists
-  // and shadows webpack's injected __webpack_exports__ parameter, causing
-  // "Object.defineProperty called on non-object". Running it through SWC via
-  // transpilePackages renames the shadowing var before webpack processes the file.
-  transpilePackages: ["pdfjs-dist"],
   experimental: {
     webpackMemoryOptimizations: true,
     serverSourceMaps: false,
@@ -78,6 +86,13 @@ const nextConfig: NextConfig = {
     // Default is (cpuCount - 1) workers; at 2 cores that's already 1, but explicit cap
     // prevents memory spikes when multiple heavy modules compile simultaneously.
     config.parallelism = 1;
+
+    // react-pdf imports bare `pdfjs-dist`, whose non-minified 5.x ESM entry redeclares
+    // webpack's internal export variable and crashes the drawing viewer in dev.
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      "pdfjs-dist$": pdfjsBrowserEntry,
+    };
 
     return config;
   },

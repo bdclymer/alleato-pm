@@ -1,10 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
-import { ChevronDown, ChevronRight, Plus, Edit2, Trash2, Folder, FolderOpen } from "lucide-react";
+import React from "react";
+import { Edit2, Folder, MoreHorizontal, Plus, Trash2 } from "lucide-react";
+import { SectionRuleHeading } from "@/components/layout/spacing";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { SectionCard } from "@/components/ds/section-card";
 import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
@@ -12,14 +11,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { DrawingAreaCard } from "./DrawingAreaCard";
 import type { DrawingAreaWithCount } from "@/types/drawings.types";
 
 interface DrawingAreaSelectorProps {
@@ -33,8 +24,6 @@ interface DrawingAreaSelectorProps {
   className?: string;
 }
 
-const depthPaddingClasses = ["pl-0", "pl-4", "pl-8", "pl-12", "pl-16"];
-
 export function DrawingAreaSelector({
   areas,
   selectedAreaId,
@@ -45,8 +34,6 @@ export function DrawingAreaSelector({
   isLoading = false,
   className,
 }: DrawingAreaSelectorProps) {
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
-
   // Build hierarchical structure
   const buildHierarchy = (areas: DrawingAreaWithCount[]): DrawingAreaWithCount[] => {
     const areaMap = new Map<string, DrawingAreaWithCount>();
@@ -74,89 +61,49 @@ export function DrawingAreaSelector({
   };
 
   const hierarchicalAreas = buildHierarchy(areas);
-
-  const toggleExpanded = (areaId: string) => {
-    setExpanded(prev => ({ ...prev, [areaId]: !prev[areaId] }));
-  };
+  const totalDrawingCount = areas.reduce((sum, area) => sum + (area.drawing_count || 0), 0);
 
   const renderArea = (area: DrawingAreaWithCount, depth = 0): React.ReactNode => {
-    const isExpanded = expanded[area.id];
     const hasChildren = area.children && area.children.length > 0;
     const isSelected = selectedAreaId === area.id;
-    const paddingClass = depthPaddingClasses[Math.min(depth, depthPaddingClasses.length - 1)];
 
     return (
-      <div key={area.id} className="w-full">
+      <React.Fragment key={area.id}>
         <div
           className={cn(
-            "flex items-center gap-2 p-2 rounded-md hover:bg-muted cursor-pointer transition-colors group",
-            paddingClass,
-            isSelected && "bg-primary/10 border border-primary/20"
+            "group flex min-h-10 items-center gap-3 border-b border-border"
           )}
-          onClick={() => onSelectArea(area.id)}
         >
-          {/* Expand/collapse button */}
           <Button
             variant="ghost"
-            size="sm"
-            className="h-6 w-6 p-0 hover:bg-muted"
-            onClick={(e) => {
-              e.stopPropagation();
-              if (hasChildren) {
-                toggleExpanded(area.id);
-              }
-            }}
-            disabled={!hasChildren}
+            className="h-auto min-w-0 flex-1 justify-start rounded-none px-0 py-2 pr-3 font-normal hover:bg-transparent hover:text-current"
+            style={{ paddingLeft: `${depth * 24}px` }}
+            onClick={() => onSelectArea(area.id)}
+            aria-current={isSelected ? "true" : undefined}
           >
-            {hasChildren ? (
-              isExpanded ? (
-                <ChevronDown />
-              ) : (
-                <ChevronRight />
-              )
-            ) : (
-              <div className="h-3 w-3" />
-            )}
-          </Button>
-
-          {/* Folder icon */}
-          <div className="flex-shrink-0">
-            {hasChildren ? (
-              isExpanded ? (
-                <FolderOpen className="h-4 w-4 text-primary" />
-              ) : (
-                <Folder className="h-4 w-4 text-primary" />
-              )
-            ) : (
-              <Folder className="h-4 w-4 text-muted-foreground" />
-            )}
-          </div>
-
-          {/* Area name and count */}
-          <div className="flex-1 min-w-0">
+            <Folder className={cn("h-4 w-4 shrink-0", hasChildren ? "text-foreground" : "text-muted-foreground")} />
             <span className={cn(
-              "text-sm font-medium truncate",
+              "truncate text-sm",
               isSelected ? "text-primary" : "text-foreground"
             )}>
               {area.name}
             </span>
-          </div>
+          </Button>
 
-          {/* Drawing count badge */}
-          <Badge variant="secondary" className="ml-2">
+          <span className="shrink-0 pr-3 text-sm tabular-nums text-muted-foreground">
             {area.drawing_count}
-          </Badge>
+          </span>
 
-          {/* Actions dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 hover:bg-muted"
+                className="mr-1 h-8 w-8 p-0 opacity-0 hover:bg-muted group-hover:opacity-100 focus:opacity-100"
                 onClick={(e) => e.stopPropagation()}
+                aria-label={`Actions for ${area.name}`}
               >
-                <Plus />
+                <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -185,77 +132,64 @@ export function DrawingAreaSelector({
           </DropdownMenu>
         </div>
 
-        {/* Children */}
-        {isExpanded && hasChildren && (
-          <div className="mt-1">
-            {area.children!.map(child => renderArea(child, depth + 1))}
-          </div>
-        )}
-      </div>
+        {hasChildren && area.children!.map(child => renderArea(child, depth + 1))}
+      </React.Fragment>
     );
   };
 
   if (isLoading) {
     return (
-      <SectionCard 
-        title="Drawing Areas" 
-        className={className}
-        hideCollapse
-      >
-        <div className="space-y-2">
+      <section className={cn("space-y-3", className)}>
+        <SectionRuleHeading label="Drawing Areas" className="mb-0" />
+        <div className="border-t border-border">
           {[1, 2, 3].map(i => (
-            <div key={i} className="flex items-center gap-2 p-2">
-              <div className="h-4 w-4 bg-muted rounded animate-pulse" />
-              <div className="h-4 w-24 bg-muted rounded animate-pulse" />
-              <div className="ml-auto h-4 w-6 bg-muted rounded animate-pulse" />
+            <div key={i} className="flex min-h-10 items-center gap-3 border-b border-border py-2">
+              <div className="h-4 w-4 animate-pulse rounded bg-muted" />
+              <div className="h-4 w-24 animate-pulse rounded bg-muted" />
+              <div className="ml-auto h-4 w-6 animate-pulse rounded bg-muted" />
             </div>
           ))}
         </div>
-      </SectionCard>
+      </section>
     );
   }
 
   return (
-    <SectionCard
-      title="Drawing Areas"
-      className={className}
-      onAdd={onCreateArea ? () => onCreateArea() : undefined}
-      addLabel="Add Area"
-    >
+    <section className={cn("space-y-3", className)}>
+      <SectionRuleHeading label="Drawing Areas" className="mb-0" />
       {hierarchicalAreas.length === 0 ? (
-        <SectionCard.Empty
-          message="No drawing areas created"
-          description="Create areas to organize your drawings"
-          actionLabel="Create First Area"
-          onAction={onCreateArea}
-        />
+        <div className="border-t border-border py-8 text-sm text-muted-foreground">
+          No drawing areas created
+        </div>
       ) : (
-        <div className="space-y-1">
-          {/* All drawings option */}
+        <div className="border-t border-border">
           <div
             className={cn(
-              "flex items-center gap-2 p-2 rounded-md hover:bg-muted cursor-pointer transition-colors",
-              !selectedAreaId && "bg-primary/10 border border-primary/20"
+              "flex min-h-10 items-center gap-3 border-b border-border"
             )}
-            onClick={() => onSelectArea(null)}
           >
-            <div className="h-6 w-6" />
-            <Folder className="h-4 w-4 text-muted-foreground" />
-            <span className={cn(
-              "text-sm font-medium",
-              !selectedAreaId ? "text-primary" : "text-foreground"
-            )}>
-              All Drawings
+            <Button
+              variant="ghost"
+              className="h-auto min-w-0 flex-1 justify-start rounded-none px-0 py-2 pr-3 font-normal hover:bg-transparent hover:text-current"
+              onClick={() => onSelectArea(null)}
+              aria-current={!selectedAreaId ? "true" : undefined}
+            >
+              <Folder className="h-4 w-4 shrink-0 text-muted-foreground" />
+              <span className={cn(
+                "truncate text-sm",
+                !selectedAreaId ? "text-primary" : "text-foreground"
+              )}>
+                All Drawings
+              </span>
+            </Button>
+            <span className="shrink-0 pr-3 text-sm tabular-nums text-muted-foreground">
+              {totalDrawingCount}
             </span>
-            <Badge variant="secondary" className="ml-auto">
-              {areas.reduce((sum, area) => sum + (area.drawing_count || 0), 0)}
-            </Badge>
           </div>
 
-          {/* Hierarchical areas */}
           {hierarchicalAreas.map(area => renderArea(area))}
         </div>
       )}
-    </SectionCard>
+    </section>
   );
 }

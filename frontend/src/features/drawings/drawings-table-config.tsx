@@ -1,6 +1,7 @@
 import type { ReactElement } from "react";
-import { useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FileText, MoreHorizontal, QrCode } from "lucide-react";
+import { pdfjs } from "react-pdf";
 
 import { formatDate } from "@/lib/format";
 import { StatusBadge } from "@/components/ds";
@@ -12,7 +13,7 @@ import type {
 } from "@/components/tables/unified";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { apiFetch } from "@/lib/api-client";
+import { getDrawingDisplayIdentity } from "@/lib/drawings/drawing-identity";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,6 +26,8 @@ import {
   DRAWING_TYPES,
   type DrawingLogTableRow,
 } from "@/types/drawings.types";
+
+pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
 
 // ─── Status formatting helpers ──────────────────────────────────────────────
 
@@ -92,19 +95,24 @@ export function buildDrawingTableColumns(): TableColumn<DrawingLogTableRow>[] {
   return [
     {
       ...drawingColumns[0],
-      render: (item) => (
-        <span className="font-medium">{item.drawingNumber || "-"}</span>
-      ),
-      sortValue: (item) => item.drawingNumber,
+      render: (item) => {
+        const identity = getDrawingDisplayIdentity(item);
+        return <span className="font-medium">{identity.number || "-"}</span>;
+      },
+      sortValue: (item) => getDrawingDisplayIdentity(item).number || item.drawingNumber,
     },
     {
       ...drawingColumns[1],
-      render: (item) => (
-        <span className="max-w-64 truncate block" title={item.title}>
-          {item.title || "Untitled"}
-        </span>
-      ),
-      sortValue: (item) => item.title,
+      render: (item) => {
+        const identity = getDrawingDisplayIdentity(item);
+        const title = identity.title || "Untitled";
+        return (
+          <span className="max-w-64 truncate block" title={title}>
+            {title}
+          </span>
+        );
+      },
+      sortValue: (item) => getDrawingDisplayIdentity(item).title || item.title,
     },
     {
       ...drawingColumns[2],
@@ -203,6 +211,9 @@ export function buildDrawingTableColumns(): TableColumn<DrawingLogTableRow>[] {
 }
 
 export interface DrawingRowActionCallbacks {
+  onEdit: (item: DrawingLogTableRow) => void;
+  onEmail: (item: DrawingLogTableRow) => void;
+  onDownload: (item: DrawingLogTableRow) => void;
   onPublish: (drawingId: string, publish: boolean) => void;
   onObsolete: (drawingId: string, obsolete: boolean) => void;
   onDelete: (item: DrawingLogTableRow) => void;
@@ -223,6 +234,31 @@ export function buildDrawingRowActions(callbacks: DrawingRowActionCallbacks) {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
+        <DropdownMenuItem
+          onClick={(e) => {
+            e.stopPropagation();
+            callbacks.onEdit(item);
+          }}
+        >
+          Edit
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={(e) => {
+            e.stopPropagation();
+            callbacks.onEmail(item);
+          }}
+        >
+          Email
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={(e) => {
+            e.stopPropagation();
+            callbacks.onDownload(item);
+          }}
+        >
+          Download
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={(e) => {
             e.stopPropagation();
@@ -275,22 +311,134 @@ interface DrawingGridCardProps {
   onSelect?: (id: string, checked: boolean) => void;
 }
 
-function DrawingGridCard({ item, onClick, selected, onSelect }: DrawingGridCardProps) {
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+function DrawingPreviewFallback({ error }: { error?: string | null }) {
+  return (
+    <div
+      className="absolute inset-0 flex items-center justify-center text-muted-foreground/40"
+      title={error ?? undefined}
+    >
+      <FileText className="h-8 w-8" />
+    </div>
+  );
+}
+
+function DrawingPdfThumbnail({
+  fileUrl,
+  title,
+}: {
+  fileUrl: string;
+  title: string;
+}) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!item.fileUrl) return;
-    apiFetch<{ downloadUrl?: string }>(
-      `/api/projects/${item.projectId}/drawings/${item.id}/download`,
-    )
-      .then((data) => {
-        if (data?.downloadUrl) {
-          setPreviewUrl(data.downloadUrl);
-        }
-      })
-      .catch(() => {});
-  }, [item.id, item.projectId, item.fileUrl]);
+    const container = containerRef.current;
+    const canvas = canvasRef.current;
+    if (!container || !canvas) return;
 
+    let cancelled = false;
+    let renderTask: { cancel: () => void; promise: Promise<unknown> } | null =
+      null;
+    let loadingTask: ReturnType<typeof pdfjs.getDocument> | null = null;
+    let renderTimeout: number | null = null;
+
+    const renderPreview = () => {
+      if (renderTimeout !== null) {
+        window.clearTimeout(renderTimeout);
+      }
+
+      renderTimeout = window.setTimeout(async () => {
+        const rect = container.getBoundingClientRect();
+        if (!rect.width || !rect.height) return;
+
+        try {
+          setError(null);
+          renderTask?.cancel();
+          loadingTask?.destroy();
+
+          loadingTask = pdfjs.getDocument(fileUrl);
+          const pdf = await loadingTask.promise;
+          const page = await pdf.getPage(1);
+          if (cancelled) return;
+
+          const baseViewport = page.getViewport({ scale: 1 });
+          const scale = Math.min(
+            rect.width / baseViewport.width,
+            rect.height / baseViewport.height,
+          );
+          const pixelRatio = window.devicePixelRatio || 1;
+          const viewport = page.getViewport({ scale: scale * pixelRatio });
+          const cssWidth = baseViewport.width * scale;
+          const cssHeight = baseViewport.height * scale;
+          const context = canvas.getContext("2d");
+
+          if (!context) {
+            setError("Could not render drawing thumbnail.");
+            return;
+          }
+
+          canvas.width = Math.floor(viewport.width);
+          canvas.height = Math.floor(viewport.height);
+          canvas.style.width = `${cssWidth}px`;
+          canvas.style.height = `${cssHeight}px`;
+          context.clearRect(0, 0, canvas.width, canvas.height);
+
+          renderTask = page.render({
+            canvas,
+            canvasContext: context,
+            viewport,
+          });
+          await renderTask.promise;
+        } catch (loadError) {
+          if (cancelled) return;
+          if (
+            loadError instanceof Error &&
+            loadError.name === "RenderingCancelledException"
+          ) {
+            return;
+          }
+          setError(
+            loadError instanceof Error
+              ? loadError.message
+              : "Could not render drawing thumbnail.",
+          );
+        }
+      }, 50);
+    };
+
+    const resizeObserver = new ResizeObserver(renderPreview);
+    resizeObserver.observe(container);
+    renderPreview();
+
+    return () => {
+      cancelled = true;
+      if (renderTimeout !== null) {
+        window.clearTimeout(renderTimeout);
+      }
+      resizeObserver.disconnect();
+      renderTask?.cancel();
+      loadingTask?.destroy();
+    };
+  }, [fileUrl]);
+
+  return (
+    <div
+      ref={containerRef}
+      className="absolute inset-0 flex items-center justify-center overflow-hidden bg-background"
+    >
+      {error ? <DrawingPreviewFallback error={error} /> : null}
+      <canvas
+        ref={canvasRef}
+        aria-label={title}
+        className={error ? "hidden" : "block"}
+      />
+    </div>
+  );
+}
+
+function DrawingGridCard({ item, onClick, selected, onSelect }: DrawingGridCardProps) {
   const isPdf =
     item.fileType?.toLowerCase().includes("pdf") ||
     item.fileUrl?.toLowerCase().endsWith(".pdf");
@@ -299,6 +447,9 @@ function DrawingGridCard({ item, onClick, selected, onSelect }: DrawingGridCardP
     /\.(png|jpe?g|tiff?)$/i.test(item.fileUrl ?? "");
 
   const dimmed = item.isObsolete || !item.isPublished;
+  const identity = getDrawingDisplayIdentity(item);
+  const primaryLabel = identity.number || identity.title || item.fileName || "Untitled";
+  const pdfPreviewUrl = `/api/projects/${item.projectId}/drawings/${item.id}/pdf-proxy`;
 
   return (
     <Button
@@ -323,23 +474,16 @@ function DrawingGridCard({ item, onClick, selected, onSelect }: DrawingGridCardP
 
       {/* Landscape thumbnail (PDF proportions ~11:8.5) */}
       <div className="relative w-full bg-muted" style={{ aspectRatio: "11 / 8.5" }}>
-        {previewUrl && isPdf ? (
-          <iframe
-            src={`${previewUrl}#toolbar=0&navpanes=0&scrollbar=0&view=Fit`}
-            className="absolute inset-0 w-full h-full pointer-events-none"
-            title={item.title}
-            tabIndex={-1}
-          />
-        ) : previewUrl && isImage ? (
+        {isPdf ? (
+          <DrawingPdfThumbnail fileUrl={pdfPreviewUrl} title={item.title} />
+        ) : item.fileUrl && isImage ? (
           <img
-            src={previewUrl}
+            src={item.fileUrl}
             alt={item.title}
             className="absolute inset-0 w-full h-full object-contain"
           />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center text-muted-foreground/40">
-            <FileText className="h-8 w-8" />
-          </div>
+          <DrawingPreviewFallback />
         )}
         {/* State overlay badges */}
         {(item.isObsolete || !item.isPublished) && (
@@ -356,12 +500,13 @@ function DrawingGridCard({ item, onClick, selected, onSelect }: DrawingGridCardP
       {/* Compact footer */}
       <div className="px-1.5 py-1.5 border-t border-border">
         <p className="text-[11px] font-medium text-foreground truncate leading-tight">
-          {item.drawingNumber || item.title || "Untitled"}
+          {primaryLabel}
         </p>
-        <p className="text-[10px] text-muted-foreground truncate mt-0.5 leading-tight">
-          {item.drawingNumber ? (item.title || "") : ""}
-          {item.revisionNumber ? ` · Rev ${item.revisionNumber}` : ""}
-        </p>
+        {identity.subtitle ? (
+          <p className="text-[10px] text-muted-foreground truncate mt-0.5 leading-tight">
+            {identity.subtitle}
+          </p>
+        ) : null}
       </div>
     </Button>
   );
@@ -433,6 +578,11 @@ export function renderDrawingList(
   onQrCode?: () => void,
 ): ReactElement {
   const dimmed = item.isObsolete || !item.isPublished;
+  const identity = getDrawingDisplayIdentity(item);
+  const label =
+    identity.number && identity.title
+      ? `${identity.number} - ${identity.title}`
+      : identity.number || identity.title || "Untitled";
 
   return (
     <div className={`relative${dimmed ? " opacity-60" : ""}`}>
@@ -473,7 +623,7 @@ export function renderDrawingList(
       >
         <div>
           <p className="text-sm font-medium">
-            {item.drawingNumber} — {item.title || "Untitled"}
+            {label}
           </p>
           <p className="text-xs text-muted-foreground">
             {item.revisionNumber ? `Rev. ${item.revisionNumber}` : "No rev."}

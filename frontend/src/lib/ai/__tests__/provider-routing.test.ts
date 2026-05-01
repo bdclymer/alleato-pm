@@ -17,30 +17,31 @@ describe("provider routing", () => {
     process.env = originalEnv;
   });
 
-  it("keeps streaming model tools disabled by default because the matrix found the empty stream failure", () => {
+  it("keeps streaming model tools disabled by default", () => {
     const decision = getAssistantToolCallingDecision({
-      modelId: "openai/gpt-5.4",
+      modelId: "openai/gpt-4.1",
     });
 
     expect(decision.providerPath).toBe("ai_sdk_gateway_openai");
     expect(decision.supportsToolCalling).toBe(false);
-    expect(decision.reason).toContain("streamText tool calling returns finishReason other");
+    expect(shouldEnableStreamingModelTools(decision)).toBe(false);
     expect(decision.diagnosticsArtifactPath).toBe(
       AI_TOOL_CALLING_PROVIDER_MATRIX_ARTIFACT,
     );
-    expect(shouldEnableStreamingModelTools(decision)).toBe(false);
+    expect(decision.reason).toContain("streamText");
   });
 
-  it("requires an explicit environment override to re-enable streaming model tools", () => {
-    process.env.AI_ASSISTANT_TOOL_PROVIDER_PATH = "ai_sdk_direct_openai";
+  it("requires an explicit environment override for streaming model tools", () => {
+    process.env.AI_ASSISTANT_TOOL_PROVIDER_PATH = "ai_sdk_gateway_openai";
     process.env.AI_ASSISTANT_ENABLE_STREAMING_MODEL_TOOLS = "true";
 
     const decision = getAssistantToolCallingDecision({
-      modelId: "openai/gpt-5.4",
+      modelId: "openai/gpt-4.1",
     });
 
-    expect(decision.providerPath).toBe("ai_sdk_direct_openai");
+    expect(decision.providerPath).toBe("ai_sdk_gateway_openai");
     expect(decision.supportsToolCalling).toBe(true);
     expect(shouldEnableStreamingModelTools(decision)).toBe(true);
+    expect(decision.reason).toContain("environment override");
   });
 });

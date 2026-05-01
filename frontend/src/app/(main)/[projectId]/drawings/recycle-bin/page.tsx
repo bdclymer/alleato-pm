@@ -38,7 +38,6 @@ import type { DeletedDrawingRow } from "@/hooks/use-drawings";
 const tabs = (projectId: string) => [
   { label: "Current Drawings", href: `/${projectId}/drawings`, isActive: false },
   { label: "Drawing Sets", href: `/${projectId}/drawings/sets`, isActive: false },
-  { label: "All Sets & Revisions", href: `/${projectId}/drawings/revisions-report`, isActive: false },
   { label: "Recycle Bin", href: `/${projectId}/drawings/recycle-bin`, isActive: true },
 ];
 
@@ -80,7 +79,7 @@ export default function DrawingRecycleBinPage() {
                 <TableHead>Title</TableHead>
                 <TableHead>Discipline</TableHead>
                 <TableHead>Deleted</TableHead>
-                <TableHead className="w-[180px]">Actions</TableHead>
+                <TableHead className="w-44">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

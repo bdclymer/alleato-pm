@@ -32,6 +32,8 @@ const DesignViolationOverlay = dynamic(
   { ssr: false },
 );
 
+const ENABLE_DEV_BRIDGE = process.env.NEXT_PUBLIC_ENABLE_DEV_BRIDGE === "true";
+
 export function RootClientWidgets() {
   return (
     <Suspense fallback={null}>
@@ -40,7 +42,7 @@ export function RootClientWidgets() {
       {process.env.NODE_ENV === "development" && (
         <>
           <AgentationThemeSync />
-          <DevAnnotationOverlay />
+          {ENABLE_DEV_BRIDGE && <DevAnnotationOverlay />}
           <DevAutoFillForms />
           <UnifiedFeedbackWidget />
           <DesignViolationOverlay />

@@ -5435,6 +5435,110 @@ export type Database = {
           },
         ]
       }
+      change_events_documents_links: {
+        Row: {
+          change_event_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          link_type: string
+          note: string | null
+          project_document_id: number
+          project_id: number
+        }
+        Insert: {
+          change_event_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          link_type?: string
+          note?: string | null
+          project_document_id: number
+          project_id: number
+        }
+        Update: {
+          change_event_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          link_type?: string
+          note?: string | null
+          project_document_id?: number
+          project_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "change_events_documents_links_change_event_id_fkey"
+            columns: ["change_event_id"]
+            isOneToOne: false
+            referencedRelation: "change_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "change_events_documents_links_change_event_id_fkey"
+            columns: ["change_event_id"]
+            isOneToOne: false
+            referencedRelation: "change_events_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "change_events_documents_links_project_document_id_fkey"
+            columns: ["project_document_id"]
+            isOneToOne: false
+            referencedRelation: "project_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "change_events_documents_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "change_events_documents_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "change_events_documents_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "change_events_documents_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "change_events_documents_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "change_events_documents_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "change_events_documents_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       change_orders: {
         Row: {
           amount: number | null
@@ -7955,6 +8059,103 @@ export type Database = {
           },
         ]
       }
+      daily_logs_project_photos_links: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          daily_log_id: string
+          id: string
+          link_type: string
+          note: string | null
+          project_id: number
+          project_photo_id: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          daily_log_id: string
+          id?: string
+          link_type?: string
+          note?: string | null
+          project_id: number
+          project_photo_id: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          daily_log_id?: string
+          id?: string
+          link_type?: string
+          note?: string | null
+          project_id?: number
+          project_photo_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_logs_project_photos_links_daily_log_id_fkey"
+            columns: ["daily_log_id"]
+            isOneToOne: false
+            referencedRelation: "daily_logs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_logs_project_photos_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "daily_logs_project_photos_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_logs_project_photos_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_logs_project_photos_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "daily_logs_project_photos_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_logs_project_photos_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_logs_project_photos_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_logs_project_photos_links_project_photo_id_fkey"
+            columns: ["project_photo_id"]
+            isOneToOne: false
+            referencedRelation: "project_photos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       daily_recaps: {
         Row: {
           blockers: Json | null
@@ -9699,6 +9900,200 @@ export type Database = {
           },
         ]
       }
+      documents_rfis_links: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          link_type: string
+          note: string | null
+          project_document_id: number
+          project_id: number
+          rfi_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          link_type?: string
+          note?: string | null
+          project_document_id: number
+          project_id: number
+          rfi_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          link_type?: string
+          note?: string | null
+          project_document_id?: number
+          project_id?: number
+          rfi_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documents_rfis_links_project_document_id_fkey"
+            columns: ["project_document_id"]
+            isOneToOne: false
+            referencedRelation: "project_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_rfis_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "documents_rfis_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_rfis_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_rfis_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "documents_rfis_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_rfis_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_rfis_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_rfis_links_rfi_id_fkey"
+            columns: ["rfi_id"]
+            isOneToOne: false
+            referencedRelation: "rfis"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      documents_submittals_links: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          link_type: string
+          note: string | null
+          project_document_id: number
+          project_id: number
+          submittal_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          link_type?: string
+          note?: string | null
+          project_document_id: number
+          project_id: number
+          submittal_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          link_type?: string
+          note?: string | null
+          project_document_id?: number
+          project_id?: number
+          submittal_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documents_submittals_links_project_document_id_fkey"
+            columns: ["project_document_id"]
+            isOneToOne: false
+            referencedRelation: "project_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_submittals_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "documents_submittals_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_submittals_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_submittals_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "documents_submittals_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_submittals_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_submittals_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_submittals_links_submittal_id_fkey"
+            columns: ["submittal_id"]
+            isOneToOne: false
+            referencedRelation: "submittals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       drawing_areas: {
         Row: {
           created_at: string
@@ -10428,6 +10823,110 @@ export type Database = {
             columns: ["current_revision_id"]
             isOneToOne: false
             referencedRelation: "drawing_revisions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      drawings_rfis_links: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          drawing_id: string
+          id: string
+          link_type: string
+          note: string | null
+          project_id: number
+          rfi_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          drawing_id: string
+          id?: string
+          link_type?: string
+          note?: string | null
+          project_id: number
+          rfi_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          drawing_id?: string
+          id?: string
+          link_type?: string
+          note?: string | null
+          project_id?: number
+          rfi_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drawings_rfis_links_drawing_id_fkey"
+            columns: ["drawing_id"]
+            isOneToOne: false
+            referencedRelation: "drawing_log"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawings_rfis_links_drawing_id_fkey"
+            columns: ["drawing_id"]
+            isOneToOne: false
+            referencedRelation: "drawings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawings_rfis_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "drawings_rfis_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawings_rfis_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawings_rfis_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "drawings_rfis_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawings_rfis_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawings_rfis_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawings_rfis_links_rfi_id_fkey"
+            columns: ["rfi_id"]
+            isOneToOne: false
+            referencedRelation: "rfis"
             referencedColumns: ["id"]
           },
         ]
@@ -12199,6 +12698,27 @@ export type Database = {
           created_by?: string | null
           id?: string
           name?: string
+        }
+        Relationships: []
+      }
+      ingestion_dead_letter: {
+        Row: {
+          created_at: string
+          error: string
+          id: string
+          payload: Json
+        }
+        Insert: {
+          created_at?: string
+          error: string
+          id?: string
+          payload: Json
+        }
+        Update: {
+          created_at?: string
+          error?: string
+          id?: string
+          payload?: Json
         }
         Relationships: []
       }
@@ -14541,6 +15061,103 @@ export type Database = {
             columns: ["type_id"]
             isOneToOne: false
             referencedRelation: "observation_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      observations_project_photos_links: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          link_type: string
+          note: string | null
+          observation_id: string
+          project_id: number
+          project_photo_id: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          link_type?: string
+          note?: string | null
+          observation_id: string
+          project_id: number
+          project_photo_id: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          link_type?: string
+          note?: string | null
+          observation_id?: string
+          project_id?: number
+          project_photo_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "observations_project_photos_links_observation_id_fkey"
+            columns: ["observation_id"]
+            isOneToOne: false
+            referencedRelation: "observations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "observations_project_photos_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "observations_project_photos_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "observations_project_photos_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "observations_project_photos_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "observations_project_photos_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "observations_project_photos_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "observations_project_photos_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "observations_project_photos_links_project_photo_id_fkey"
+            columns: ["project_photo_id"]
+            isOneToOne: false
+            referencedRelation: "project_photos"
             referencedColumns: ["id"]
           },
         ]
@@ -18862,6 +19479,103 @@ export type Database = {
           },
         ]
       }
+      project_photos_punch_items_links: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          link_type: string
+          note: string | null
+          project_id: number
+          project_photo_id: number
+          punch_item_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          link_type?: string
+          note?: string | null
+          project_id: number
+          project_photo_id: number
+          punch_item_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          link_type?: string
+          note?: string | null
+          project_id?: number
+          project_photo_id?: number
+          punch_item_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_photos_punch_items_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "project_photos_punch_items_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_photos_punch_items_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_photos_punch_items_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "project_photos_punch_items_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_photos_punch_items_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_photos_punch_items_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_photos_punch_items_links_project_photo_id_fkey"
+            columns: ["project_photo_id"]
+            isOneToOne: false
+            referencedRelation: "project_photos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_photos_punch_items_links_punch_item_id_fkey"
+            columns: ["punch_item_id"]
+            isOneToOne: false
+            referencedRelation: "punch_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_resources: {
         Row: {
           created_at: string
@@ -21199,6 +21913,103 @@ export type Database = {
           },
         ]
       }
+      rfis_submittals_links: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          link_type: string
+          note: string | null
+          project_id: number
+          rfi_id: string
+          submittal_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          link_type?: string
+          note?: string | null
+          project_id: number
+          rfi_id: string
+          submittal_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          link_type?: string
+          note?: string | null
+          project_id?: number
+          rfi_id?: string
+          submittal_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rfis_submittals_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "rfis_submittals_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rfis_submittals_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rfis_submittals_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "rfis_submittals_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rfis_submittals_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rfis_submittals_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rfis_submittals_links_rfi_id_fkey"
+            columns: ["rfi_id"]
+            isOneToOne: false
+            referencedRelation: "rfis"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rfis_submittals_links_submittal_id_fkey"
+            columns: ["submittal_id"]
+            isOneToOne: false
+            referencedRelation: "submittals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       roadmap_items: {
         Row: {
           bullet_points: string[] | null
@@ -21467,6 +22278,44 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      search_documents: {
+        Row: {
+          content: string
+          created_at: string
+          embedding: unknown
+          id: string
+          project_sync_id: string
+          source_id: number
+          source_type: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          embedding: unknown
+          id?: string
+          project_sync_id: string
+          source_id: number
+          source_type: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          embedding?: unknown
+          id?: string
+          project_sync_id?: string
+          source_id?: number
+          source_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "search_documents_project_sync_id_fkey"
+            columns: ["project_sync_id"]
+            isOneToOne: false
+            referencedRelation: "projects_sync"
             referencedColumns: ["id"]
           },
         ]
@@ -25441,6 +26290,7 @@ export type Database = {
           created_at: string | null
           daily_log_default: boolean | null
           delay_log_default: boolean | null
+          drawings_default: boolean | null
           emails_default: boolean | null
           id: string
           person_id: string
@@ -25456,6 +26306,7 @@ export type Database = {
           created_at?: string | null
           daily_log_default?: boolean | null
           delay_log_default?: boolean | null
+          drawings_default?: boolean | null
           emails_default?: boolean | null
           id?: string
           person_id: string
@@ -25471,6 +26322,7 @@ export type Database = {
           created_at?: string | null
           daily_log_default?: boolean | null
           delay_log_default?: boolean | null
+          drawings_default?: boolean | null
           emails_default?: boolean | null
           id?: string
           person_id?: string
@@ -30026,51 +30878,28 @@ export type Database = {
           title: string
         }[]
       }
-      search_knowledge_base:
-        | {
-            Args: {
-              filter_category?: string
-              filter_project_id?: number
-              match_count?: number
-              match_threshold?: number
-              query_embedding: unknown
-            }
-            Returns: {
-              category: string
-              content: string
-              created_at: string
-              id: string
-              meeting_id: string
-              origin: string
-              project_id: number
-              similarity: number
-              source: string
-              tags: string[]
-              title: string
-            }[]
-          }
-        | {
-            Args: {
-              filter_category?: string
-              filter_project_id?: number
-              match_count?: number
-              match_threshold?: number
-              query_embedding: string
-            }
-            Returns: {
-              category: string
-              content: string
-              created_at: string
-              id: string
-              meeting_id: string
-              origin: string
-              project_id: number
-              similarity: number
-              source: string
-              tags: string[]
-              title: string
-            }[]
-          }
+      search_knowledge_base: {
+        Args: {
+          filter_category?: string
+          filter_project_id?: number
+          match_count?: number
+          match_threshold?: number
+          query_embedding: unknown
+        }
+        Returns: {
+          category: string
+          content: string
+          created_at: string
+          id: string
+          meeting_id: string
+          origin: string
+          project_id: number
+          similarity: number
+          source: string
+          tags: string[]
+          title: string
+        }[]
+      }
       search_meeting_chunks:
         | {
             Args: {

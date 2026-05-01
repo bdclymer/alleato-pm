@@ -254,7 +254,7 @@ export function ConversationSidebar({
 
   return (
     <>
-      <div className="fixed left-5 top-5 z-30 flex items-center justify-start gap-2">
+      <div className="fixed left-16 top-5 z-30 flex items-center justify-start gap-2">
         <Sheet open={historyOpen} onOpenChange={setHistoryOpen}>
           <Tooltip>
             <TooltipTrigger asChild>

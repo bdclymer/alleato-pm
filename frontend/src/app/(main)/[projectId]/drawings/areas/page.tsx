@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { DrawingAreaSelector } from "@/components/drawings/DrawingAreaSelector";
 import { DrawingAreaCard } from "@/components/drawings/DrawingAreaCard";
 import { PageShell } from "@/components/layout";
-import { KpiRow, EmptyState } from "@/components/ds";
+import { EmptyState } from "@/components/ds";
 
 import { Button } from "@/components/ui/button";
 import { useDrawingAreas, useCreateDrawingArea, useUpdateDrawingArea, useDeleteDrawingArea } from "@/hooks/use-drawing-areas";
@@ -30,6 +30,7 @@ export default function DrawingAreasPage() {
 
   const handleSelectArea = (areaId: string | null) => {
     setSelectedAreaId(areaId);
+    router.push(areaId ? `/${projectId}/drawings?area_id=${areaId}` : `/${projectId}/drawings`);
   };
 
   const handleCreateArea = async (parentId?: string) => {
@@ -117,40 +118,26 @@ export default function DrawingAreasPage() {
         </div>
       }
     >
-        {/* Stats */}
-        <div className="mb-4">
-          <KpiRow metrics={[
-            { label: "Total Areas", value: String(areas?.length || 0) },
-            { label: "Total Drawings", value: String(areas?.reduce((sum, area) => sum + (area.drawing_count || 0), 0) || 0) },
-            { label: "Root Areas", value: String(areas?.filter(area => !area.parent_area_id).length || 0) },
-          ]} />
-        </div>
-
-        {/* Drawing Area Selector */}
-        <div className="bg-card rounded-lg p-6">
-          {isLoading ? (
-            <div className="flex items-center justify-center h-64">
-              <div className="text-muted-foreground">Loading drawing areas...</div>
-            </div>
-          ) : areas && areas.length > 0 ? (
-            <DrawingAreaSelector
-              areas={areas}
-              selectedAreaId={selectedAreaId ?? undefined}
-              onSelectArea={handleSelectArea}
-              onCreateArea={handleCreateArea}
-              onEditArea={handleEditArea}
-              onDeleteArea={handleDeleteArea}
-              isLoading={createArea.isPending || updateArea.isPending || deleteArea.isPending}
-            />
-          ) : (
-            <EmptyState
-              icon={<Folder />}
-              title="No drawing areas found"
-              description="Create your first drawing area to start organizing your project drawings."
-              action={<Button onClick={() => handleCreateArea()}><Plus />Create First Area</Button>}
-            />
-          )}
-        </div>
+      {isLoading ? (
+        <div className="py-12 text-sm text-muted-foreground">Loading drawing areas...</div>
+      ) : areas && areas.length > 0 ? (
+        <DrawingAreaSelector
+          areas={areas}
+          selectedAreaId={selectedAreaId ?? undefined}
+          onSelectArea={handleSelectArea}
+          onCreateArea={handleCreateArea}
+          onEditArea={handleEditArea}
+          onDeleteArea={handleDeleteArea}
+          isLoading={createArea.isPending || updateArea.isPending || deleteArea.isPending}
+        />
+      ) : (
+        <EmptyState
+          icon={<Folder />}
+          title="No drawing areas found"
+          description="Create your first drawing area to start organizing your project drawings."
+          action={<Button onClick={() => handleCreateArea()}><Plus />Create First Area</Button>}
+        />
+      )}
 
       {ConfirmDialog}
 

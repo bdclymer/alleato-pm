@@ -477,7 +477,12 @@ class AcumaticaFinancialSyncService:
         return result
 
     def _load_vendor_map(self) -> Dict[str, Dict[str, Any]]:
-        response = self.supabase.table("vendors").select("id, name, company_id, acumatica_vendor_id").execute()
+        response = (
+            self.supabase.table("companies")
+            .select("id, name, acumatica_vendor_id")
+            .eq("is_vendor", True)
+            .execute()
+        )
         vendor_map: Dict[str, Dict[str, Any]] = {}
         for row in response.data or []:
             acu_id = row.get("acumatica_vendor_id")
@@ -515,10 +520,11 @@ class AcumaticaFinancialSyncService:
             return self.project_cost_code_map[cache_key]
 
         existing = (
-            self.supabase.table("project_cost_codes")
+            self.supabase.table("project_budget_codes")
             .select("id")
             .eq("project_id", project_id)
             .eq("cost_code_id", normalized_cost_code_id)
+            .is_("cost_type_id", "null")
             .limit(1)
             .execute()
         )
@@ -530,12 +536,25 @@ class AcumaticaFinancialSyncService:
         if normalized_cost_code_id not in self.cost_codes:
             return None
 
+        cost_code_description = normalized_cost_code_id
+        cost_code_meta = (
+            self.supabase.table("cost_codes")
+            .select("title")
+            .eq("id", normalized_cost_code_id)
+            .limit(1)
+            .execute()
+        )
+        if cost_code_meta.data and cost_code_meta.data[0].get("title"):
+            cost_code_description = cost_code_meta.data[0]["title"]
+
         inserted = (
-            self.supabase.table("project_cost_codes")
+            self.supabase.table("project_budget_codes")
             .insert(
                 {
                     "project_id": project_id,
                     "cost_code_id": normalized_cost_code_id,
+                    "cost_type_id": None,
+                    "description": cost_code_description,
                     "is_active": True,
                 }
             )
@@ -549,10 +568,11 @@ class AcumaticaFinancialSyncService:
 
         if not project_cost_code_id:
             refetch = (
-                self.supabase.table("project_cost_codes")
+                self.supabase.table("project_budget_codes")
                 .select("id")
                 .eq("project_id", project_id)
                 .eq("cost_code_id", normalized_cost_code_id)
+                .is_("cost_type_id", "null")
                 .limit(1)
                 .execute()
             )
@@ -581,8 +601,9 @@ class AcumaticaFinancialSyncService:
             return result
 
         existing = (
-            self.supabase.table("vendors")
-            .select("id, name, acumatica_vendor_id, company_id")
+            self.supabase.table("companies")
+            .select("id, name, acumatica_vendor_id")
+            .eq("is_vendor", True)
             .execute()
         ).data or []
 
@@ -623,17 +644,13 @@ class AcumaticaFinancialSyncService:
 
             existing_row = by_acu_id.get(vendor_id) or by_name.get(vendor_name.lower())
             if existing_row:
-                self.supabase.table("vendors").update(payload).eq("id", existing_row["id"]).execute()
+                self.supabase.table("companies").update({**payload, "is_vendor": True}).eq("id", existing_row["id"]).execute()
                 updated += 1
             else:
-                fallback_company_id = next(iter(self.project_map.values()), {}).get("company_id")
-                if not fallback_company_id:
-                    result.skipped += 1
-                    continue
-                self.supabase.table("vendors").insert(
+                self.supabase.table("companies").insert(
                     {
-                        "company_id": fallback_company_id,
-                        "is_active": True,
+                        "is_vendor": True,
+                        "status": "active",
                         **payload,
                     }
                 ).execute()
@@ -895,6 +912,7 @@ class AcumaticaFinancialSyncService:
             project_row = self._resolve_project_row(project_code)
             headers.append(
                 {
+                    "external_key": f"{invoice.get('Type') or 'Invoice'}|{invoice.get('ReferenceNbr')}",
                     "reference_nbr": invoice.get("ReferenceNbr"),
                     "type": invoice.get("Type"),
                     "status": invoice.get("Status"),
@@ -1227,9 +1245,9 @@ class AcumaticaFinancialSyncService:
         return self._ACUMATICA_STATUS_MAP.get(acumatica_status.lower(), "Draft")
 
     def _get_vendor_company_map(self) -> Dict[str, str]:
-        """Returns {vendor_uuid_str: company_uuid_str} for all vendors."""
-        resp = self.supabase.table("vendors").select("id,company_id").execute()
-        return {v["id"]: v["company_id"] for v in (resp.data or []) if v.get("company_id")}
+        """Returns {vendor_company_uuid_str: company_uuid_str} for company-backed vendors."""
+        resp = self.supabase.table("companies").select("id").eq("is_vendor", True).execute()
+        return {v["id"]: v["id"] for v in (resp.data or []) if v.get("id")}
 
     def _map_co_status_prime(self, acumatica_status: Optional[str]) -> str:
         """Map Acumatica CO status to prime_contract_change_orders.status (free-text)."""

@@ -2,8 +2,9 @@
 
 import * as React from "react";
 import type { ReactElement } from "react";
+import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Mail, Plus } from "lucide-react";
+import { Mail, Paperclip, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -285,17 +286,25 @@ export function EmailsClient({ projectId }: EmailsClientProps): ReactElement {
         header={{
           title: "Emails",
           actions: (
-            <Button
-              size="sm"
-              onClick={() => {
-                setEditingEmail(null);
-                setComposeOpen(true);
-              }}
-              aria-label="Compose new email"
-            >
-              <Plus />
-              Compose
-            </Button>
+            <>
+              <Button variant="outline" size="sm" asChild>
+                <Link href={`/${projectId}/email-attachments`}>
+                  <Paperclip />
+                  Attachments
+                </Link>
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => {
+                  setEditingEmail(null);
+                  setComposeOpen(true);
+                }}
+                aria-label="Compose new email"
+              >
+                <Plus />
+                Compose
+              </Button>
+            </>
           ),
         }}
         layout={{

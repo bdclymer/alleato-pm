@@ -739,15 +739,15 @@ def run_compiler_batch(
     }
 
     try:
-        # Ordering by created_at keeps the query on idx_document_metadata_type_created
-        # instead of forcing a broad date-index scan on the hot document_metadata table.
+        # Order by conversation date (date column) so the batch always processes
+        # the most recent conversations first, regardless of ingestion order.
         response = (
             supabase.table("document_metadata")
             .select("id")
             .eq("type", "teams_dm_conversation")
             .in_("status", statuses)
             .or_("overview.is.null,overview.eq.")
-            .order("created_at", desc=True)
+            .order("date", desc=True)
             .limit(batch_size)
             .execute()
         )

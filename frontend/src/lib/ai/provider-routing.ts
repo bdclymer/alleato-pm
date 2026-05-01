@@ -22,16 +22,16 @@ export function getAssistantToolCallingDecision(input: {
 }): AssistantToolCallingDecision {
   const forcedProviderPath = process.env
     .AI_ASSISTANT_TOOL_PROVIDER_PATH as AssistantProviderPath | undefined;
-  const forceTools =
+  const forceStreamingTools =
     process.env.AI_ASSISTANT_ENABLE_STREAMING_MODEL_TOOLS === "true";
 
-  if (forcedProviderPath && forceTools) {
+  if (forcedProviderPath && forceStreamingTools) {
     return {
       providerPath: forcedProviderPath,
       modelId: input.modelId,
       reason:
-        "Streaming model tools are enabled by explicit environment override. Verify with the provider matrix before using this outside a controlled test.",
-      validatedAt: VALIDATED_AT,
+        "Streaming model tools explicitly enabled by environment override. Use only after provider matrix verification passes.",
+      validatedAt: new Date().toISOString(),
       supportsToolCalling: true,
       diagnosticsArtifactPath: AI_TOOL_CALLING_PROVIDER_MATRIX_ARTIFACT,
     };
@@ -41,7 +41,7 @@ export function getAssistantToolCallingDecision(input: {
     providerPath: "ai_sdk_gateway_openai",
     modelId: input.modelId,
     reason:
-      "Provider matrix showed AI SDK Gateway generateText tool calling works, but streamText tool calling returns finishReason other with empty text and no tool results. Keep streaming assistant tools disabled until that failure is resolved.",
+      "Streaming model tools disabled: provider matrix showed AI SDK Gateway generateText tool calling works, but streamText returned finishReason=other with empty text/no tool results.",
     validatedAt: VALIDATED_AT,
     supportsToolCalling: false,
     diagnosticsArtifactPath: AI_TOOL_CALLING_PROVIDER_MATRIX_ARTIFACT,

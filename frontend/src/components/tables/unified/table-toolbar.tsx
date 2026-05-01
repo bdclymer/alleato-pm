@@ -555,6 +555,7 @@ function ColumnToggle({
             <DropdownMenuCheckboxItem
               key={column.id}
               checked={visibleColumns.includes(column.id)}
+              onSelect={(e) => e.preventDefault()}
               onCheckedChange={(checked) => {
                 if (checked) {
                   onColumnVisibilityChange([...visibleColumns, column.id]);

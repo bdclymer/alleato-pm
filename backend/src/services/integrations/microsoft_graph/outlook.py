@@ -30,12 +30,50 @@ MIN_BODY_CHARS = 50  # Skip very short emails (auto-replies, etc.)
 EMAIL_BODY_MAX_CHARS = 8000
 MAX_ATTACHMENT_BYTES = int(os.environ.get("OUTLOOK_ATTACHMENT_MAX_BYTES", str(50 * 1024 * 1024)))
 MAX_ATTACHMENTS_PER_EMAIL = int(os.environ.get("OUTLOOK_MAX_ATTACHMENTS_PER_EMAIL", "25"))
-MAX_LINKS_PER_EMAIL = int(os.environ.get("OUTLOOK_MAX_LINKS_PER_EMAIL", "25"))
+MAX_LINKS_PER_EMAIL = int(os.environ.get("OUTLOOK_MAX_LINKS_PER_EMAIL", "10"))
 DOCUMENT_BUCKET = os.environ.get("SUPABASE_DOCUMENTS_BUCKET", "documents")
+SYNC_LEGACY_OUTLOOK_ATTACHMENTS = os.environ.get("OUTLOOK_SYNC_LEGACY_ATTACHMENTS", "false").lower() in {"1", "true", "yes"}
+SYNC_LEGACY_OUTLOOK_LINKS = os.environ.get("OUTLOOK_SYNC_LEGACY_LINKS", "false").lower() in {"1", "true", "yes"}
 
 URL_RE = re.compile(r"https?://[^\s<>\"]+", re.IGNORECASE)
 HREF_RE = re.compile(r"(?is)<a\b[^>]*\bhref=[\"']([^\"']+)[\"'][^>]*>(.*?)</a>")
 CID_RE = re.compile(r"(?i)\bcid:([^\"'>\s)]+)")
+NOISY_LINK_HOSTS = {
+    "facebook.com",
+    "instagram.com",
+    "linkedin.com",
+    "youtube.com",
+    "googleusercontent.com",
+    "content.exclaimer.net",
+    "protection.inkyphishfence.com",
+    "shared.outlook.inky.com",
+    "teams.microsoft.com",
+    "outlook.office.com",
+    "alleatogroup.com",
+}
+DOCUMENT_LINK_EXTENSIONS = {
+    ".pdf",
+    ".doc",
+    ".docx",
+    ".xls",
+    ".xlsx",
+    ".csv",
+    ".txt",
+    ".ppt",
+    ".pptx",
+    ".dwg",
+    ".zip",
+}
+DOCUMENT_LINK_HOST_KEYWORDS = {
+    "sharepoint",
+    "onedrive",
+    "dropbox",
+    "box.com",
+    "drive.google.com",
+    "docs.google.com",
+    "coreandmain.com",
+    "deemfirst.com",
+}
 
 
 def _strip_email_html(raw_html: str) -> str:
@@ -86,7 +124,28 @@ def _is_useful_link(url: str) -> bool:
     host = parsed.netloc.lower()
     if not host or host.endswith("aka.ms"):
         return False
-    return True
+    normalized_host = host.removeprefix("www.")
+    if any(normalized_host == noisy or normalized_host.endswith(f".{noisy}") for noisy in NOISY_LINK_HOSTS):
+        return False
+    path = parsed.path.lower()
+    if any(path.endswith(ext) for ext in DOCUMENT_LINK_EXTENSIONS):
+        return True
+    if any(keyword in normalized_host for keyword in DOCUMENT_LINK_HOST_KEYWORDS):
+        return True
+    if re.search(r"(?i)(^|[/?#&_.=-])(document|download|attachment|file|submittal|rfi|drawing|invoice|proposal|permit)([/?#&_.=-]|$)", url):
+        return True
+    return False
+
+
+def _is_decorative_inline_attachment(attachment_name: str, content_type: str, is_inline: bool) -> bool:
+    if not is_inline or not content_type.startswith("image/"):
+        return False
+    normalized = attachment_name.strip().lower()
+    return bool(
+        re.match(r"image\d+\.(png|jpe?g|gif)$", normalized)
+        or normalized.startswith("outlook-")
+        or normalized.startswith("inky-injection-inliner-")
+    )
 
 
 def _extract_links(msg: dict) -> list[dict]:
@@ -298,11 +357,13 @@ def _sync_email_attachment(
         return False
     if size > MAX_ATTACHMENT_BYTES:
         raise ValueError(f"Attachment {attachment_name} exceeds OUTLOOK_ATTACHMENT_MAX_BYTES ({size} bytes)")
+    if _is_decorative_inline_attachment(attachment_name, content_type, is_inline):
+        return False
 
     doc_id = _attachment_doc_id(msg_id, attachment_id)
     existing = (
         supabase_client.from_("document_metadata")
-        .select("id, url, storage_bucket, storage_path, content_hash, source_size, source_metadata")
+        .select("id, url, storage_bucket, file_path, content_hash, source_size, source_metadata")
         .eq("id", doc_id)
         .limit(1)
         .execute()
@@ -332,7 +393,7 @@ def _sync_email_attachment(
                 "sync_status": "synced",
                 "last_synced_at": datetime.now(timezone.utc).isoformat(),
                 "storage_bucket": existing_doc.get("storage_bucket"),
-                "storage_path": existing_doc.get("storage_path"),
+                "storage_path": existing_doc.get("file_path"),
                 "content_hash": existing_doc.get("content_hash"),
                 "source_metadata": existing_doc.get("source_metadata") or {},
             })
@@ -342,7 +403,10 @@ def _sync_email_attachment(
     storage_path = None
     public_url = email_web_link
     content_hash = None
+    metadata_content_hash = None
     extracted_text = ""
+    duplicate_of_doc_id = None
+    storage_content_type = content_type
     _, ext = os.path.splitext(attachment_name)
     ext = ext.lower()
 
@@ -351,15 +415,42 @@ def _sync_email_attachment(
         if raw_bytes is None:
             raise ValueError(f"Attachment {attachment_name} did not include contentBytes")
         content_hash = hashlib.sha256(raw_bytes).hexdigest()
+        metadata_content_hash = content_hash
         storage_path = (
             f"outlook/{_storage_safe_name(user_email)}/{_stable_graph_id(msg_id)}/"
             f"{_stable_graph_id(attachment_id, 12)}-{_storage_safe_name(attachment_name)}"
         )
-        supabase_client.storage.from_(DOCUMENT_BUCKET).upload(
-            storage_path,
-            raw_bytes,
-            {"content-type": content_type, "upsert": "true"},
+        existing_by_hash = (
+            supabase_client.from_("document_metadata")
+            .select("id, url, storage_bucket, file_path, source_size, source_metadata")
+            .eq("content_hash", content_hash)
+            .limit(1)
+            .execute()
         )
+        existing_hash_rows = existing_by_hash.data or []
+        if existing_hash_rows:
+            existing_hash_doc = existing_hash_rows[0]
+            duplicate_of_doc_id = existing_hash_doc.get("id")
+            public_url = existing_hash_doc.get("url") or public_url
+            storage_path = existing_hash_doc.get("file_path") or storage_path
+            metadata_content_hash = None
+        else:
+            try:
+                supabase_client.storage.from_(DOCUMENT_BUCKET).upload(
+                    storage_path,
+                    raw_bytes,
+                    {"content-type": content_type, "upsert": "true"},
+                )
+            except Exception:
+                if not content_type.startswith("image/"):
+                    raise
+                storage_content_type = "application/octet-stream"
+                supabase_client.storage.from_(DOCUMENT_BUCKET).upload(
+                    storage_path,
+                    raw_bytes,
+                    {"content-type": storage_content_type, "upsert": "true"},
+                )
+            public_url = _storage_public_url(supabase_client, DOCUMENT_BUCKET, storage_path)
         public_url = _storage_public_url(supabase_client, DOCUMENT_BUCKET, storage_path)
         if ext in SUPPORTED_EXTENSIONS:
             extracted_text = _extract_text(raw_bytes, ext).replace("\x00", "").strip()
@@ -372,7 +463,11 @@ def _sync_email_attachment(
         "outlook_is_inline": is_inline,
         "outlook_web_link": email_web_link,
         "sender_email": sender_addr,
+        "storage_content_type": storage_content_type,
     }
+    if duplicate_of_doc_id:
+        source_metadata["duplicate_content_hash_of"] = duplicate_of_doc_id
+        source_metadata["original_content_hash"] = content_hash
     metadata_text = _attachment_metadata_text(
         subject=subject,
         sender_name=sender_name,
@@ -411,8 +506,8 @@ def _sync_email_attachment(
         "source_web_url": email_web_link,
         "source_size": size,
         "storage_bucket": DOCUMENT_BUCKET if storage_path else None,
-        "storage_path": storage_path,
-        "content_hash": content_hash,
+        "file_path": storage_path,
+        "content_hash": metadata_content_hash,
         "source_metadata": source_metadata,
     }).execute()
 
@@ -688,7 +783,7 @@ def sync_outlook_emails(
         email_web_link = msg.get("webLink", "")
         raw_html = _body_html(msg)
         cid_refs = _extract_cid_refs(raw_html)
-        extracted_links = _extract_links(msg)
+        extracted_links = _extract_links(msg) if SYNC_LEGACY_OUTLOOK_LINKS else []
 
         doc_id = f"outlook_{msg_id}"
 
@@ -788,18 +883,22 @@ def sync_outlook_emails(
                     "source_path": f"outlook/{user_email}/{msg_id}.txt",
                     "source_web_url": email_web_link,
                     "storage_bucket": DOCUMENT_BUCKET,
-                    "storage_path": storage_path,
+                    "file_path": storage_path,
                     "source_metadata": source_metadata,
                 }).execute()
 
             attachment_count = 0
             link_count = 0
             attachment_errors: list[str] = []
-            try:
-                attachments = _list_message_attachments(graph, user_id, msg, cid_refs)
-            except Exception as exc:
+            had_attachment_errors = bool(effective_source_metadata.get("attachment_errors"))
+            if SYNC_LEGACY_OUTLOOK_ATTACHMENTS:
+                try:
+                    attachments = _list_message_attachments(graph, user_id, msg, cid_refs)
+                except Exception as exc:
+                    attachments = []
+                    attachment_errors.append(f"list_failed: {exc}")
+            else:
                 attachments = []
-                attachment_errors.append(f"list_failed: {exc}")
 
             for attachment in attachments:
                 try:
@@ -843,7 +942,7 @@ def sync_outlook_emails(
                 except Exception as exc:
                     logger.warning("[Outlook] Link sync failed for %s: %s", msg_id, exc)
 
-            if attachment_count or link_count or attachment_errors:
+            if attachment_count or link_count or attachment_errors or had_attachment_errors:
                 update_payload = {
                     "source_metadata": {
                         **effective_source_metadata,

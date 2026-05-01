@@ -145,6 +145,15 @@ export const POST = withApiGuardrails(
       ? [senderProfile.first_name, senderProfile.last_name].filter(Boolean).join(" ").trim()
       : user.email?.split("@")[0] || "Alleato User";
 
+    const projectContext = await getDocumentProjectContext(supabase, recordType, recordId);
+    if (!projectContext) {
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: "document-center/[recordType]/[recordId]/email#POST",
+        message: "The project context could not be resolved for document email audit logging.",
+      });
+    }
+
     const emailHtml = renderDocumentEmailHtml(bundle, message, senderName || "Alleato User");
     const emailText = renderDocumentEmailText(bundle, message, senderName || "Alleato User");
 
@@ -163,16 +172,22 @@ export const POST = withApiGuardrails(
       html: emailHtml,
       text: emailText,
       attachments,
+      audit: {
+        template: "document-delivery",
+        entity: { type: projectContext.relatedTool, id: recordId },
+        userId: user.id,
+        idempotencyKey: `document-delivery/${recordType}/${recordId}/${subject}`,
+        metadata: {
+          project_id: projectContext.projectId,
+          record_type: recordType,
+          record_id: recordId,
+          related_tool: projectContext.relatedTool,
+          recipient_emails: recipients.map((recipient) => recipient.email.trim()),
+          has_attachments: attachments.length > 0,
+          filename: bundle.filename,
+        },
+      },
     });
-
-    const projectContext = await getDocumentProjectContext(supabase, recordType, recordId);
-    if (!projectContext) {
-      throw new GuardrailError({
-        code: "INTERNAL_ERROR",
-        where: "document-center/[recordType]/[recordId]/email#POST",
-        message: "Email sent, but the project context could not be resolved for history logging.",
-      });
-    }
 
     const sentAt = new Date().toISOString();
     const { error: emailHistoryError } = await supabase.from("project_emails").insert({

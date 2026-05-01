@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 
 import { apiErrorResponse } from "@/lib/api-error";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { logger } from "@/lib/logger";
 
 interface RouteParams {
@@ -52,6 +53,8 @@ export const POST = withApiGuardrails(
     }
 
     const created = [];
+    const failures: string[] = [];
+    const service = createServiceClient();
 
     const MAX_FILE_BYTES = 20 * 1024 * 1024; // 20 MB
 
@@ -69,7 +72,7 @@ export const POST = withApiGuardrails(
       const storagePath = `projects/${pid}/photos/${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${ext}`;
 
       // Upload to Supabase Storage
-      const { error: uploadError } = await supabase.storage
+      const { error: uploadError } = await service.storage
         .from("project-files")
         .upload(storagePath, file, {
           contentType: file.type,
@@ -78,13 +81,14 @@ export const POST = withApiGuardrails(
 
       if (uploadError) {
         logger.error({ msg: "Storage upload error:", data: uploadError });
+        failures.push(`${file.name}: ${uploadError.message}`);
         continue;
       }
 
       // Get public URL
       const {
         data: { publicUrl },
-      } = supabase.storage.from("project-files").getPublicUrl(storagePath);
+      } = service.storage.from("project-files").getPublicUrl(storagePath);
 
       // Derive title from filename (strip extension, replace dashes/underscores)
       const title = file.name
@@ -93,7 +97,7 @@ export const POST = withApiGuardrails(
         .replace(/\b\w/g, (c) => c.toUpperCase());
 
       // Create photo record
-      const { data: photo, error: insertError } = await supabase
+      const { data: photo, error: insertError } = await service
         .from("project_photos")
         .insert({
           project_id: pid,
@@ -112,10 +116,23 @@ export const POST = withApiGuardrails(
 
       if (insertError) {
         logger.error({ msg: "Insert error:", data: insertError });
+        failures.push(`${file.name}: ${insertError.message}`);
         continue;
       }
 
       created.push(photo);
+    }
+
+    if (created.length === 0) {
+      return NextResponse.json(
+        {
+          error: "Photo upload failed",
+          details: failures.length > 0
+            ? failures.join("; ")
+            : "No supported image files were uploaded.",
+        },
+        { status: 500 },
+      );
     }
 
     return NextResponse.json(

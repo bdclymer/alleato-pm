@@ -25,7 +25,6 @@ import type { DrawingLogTableRow } from "@/types/drawings.types";
 const tabs = (projectId: string) => [
   { label: "Current Drawings", href: `/${projectId}/drawings`, isActive: false },
   { label: "Drawing Sets", href: `/${projectId}/drawings/sets`, isActive: false },
-  { label: "All Sets & Revisions", href: `/${projectId}/drawings/revisions-report`, isActive: true },
   { label: "Recycle Bin", href: `/${projectId}/drawings/recycle-bin`, isActive: false },
 ];
 
@@ -133,7 +132,7 @@ export default function DrawingsRevisionsReportPage() {
               <TableHead>Status</TableHead>
               <TableHead className="text-center">Published</TableHead>
               <TableHead className="text-center">Obsolete</TableHead>
-              <TableHead className="w-[60px]" />
+              <TableHead className="w-16" />
             </TableRow>
           </TableHeader>
           <TableBody>

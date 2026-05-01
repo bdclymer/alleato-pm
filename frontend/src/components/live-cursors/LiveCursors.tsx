@@ -3,16 +3,18 @@
 import { Cursor } from "@/components/cursor";
 import { useCurrentUserName } from "@/hooks/use-current-user-name";
 import { useRealtimeCursors } from "@/hooks/use-realtime-cursors";
+import { useLiveCursorsEnabled } from "@/hooks/use-live-cursors-enabled";
 import { getRoomId } from "@/lib/liveblocks/rooms";
 import { useEntityContext } from "@/components/header/comments-sidebar";
 
 const THROTTLE_MS = 50;
 
 export function LiveCursors() {
+  const { enabled } = useLiveCursorsEnabled();
   const entityContext = useEntityContext();
   const username = useCurrentUserName();
 
-  if (!entityContext) return null;
+  if (!enabled || !entityContext) return null;
 
   const roomName = getRoomId(entityContext.entityType, entityContext.entityId);
   return <LiveCursorsRoom roomName={roomName} username={username} />;

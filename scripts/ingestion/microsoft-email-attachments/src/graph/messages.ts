@@ -86,7 +86,17 @@ async function fetchAttachment(
     );
   } catch (error) {
     if (error instanceof GraphHttpError && error.status === 400) {
-      return graphFetch<GraphAttachment>(`${basePath}?$select=${ATTACHMENT_SELECT}`);
+      try {
+        return await graphFetch<GraphAttachment>(`${basePath}?$select=${FILE_ATTACHMENT_SELECT}`);
+      } catch (selectError) {
+        if (selectError instanceof GraphHttpError && selectError.status === 400) {
+          // Outlook attachment detail in this tenant rejects selecting contentBytes,
+          // but returns contentBytes on the detail resource. This is the only
+          // non-$select Graph call in this worker and is required for PDF extraction.
+          return graphFetch<GraphAttachment>(basePath);
+        }
+        throw selectError;
+      }
     }
     throw error;
   }

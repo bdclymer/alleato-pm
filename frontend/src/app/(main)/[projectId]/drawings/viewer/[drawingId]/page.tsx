@@ -57,6 +57,7 @@ import { apiFetch } from "@/lib/api-client";
 import dynamic from "next/dynamic";
 import { useDrawing, useDrawings } from "@/hooks/use-drawings";
 import { DrawingComments } from "@/components/drawings/DrawingComments";
+import { getDrawingDisplayIdentity } from "@/lib/drawings/drawing-identity";
 import {
   useDrawingPins,
   useCreateDrawingPin,
@@ -88,6 +89,10 @@ type AnnotationTool = "select" | "pen" | "highlighter" | "rectangle" | "arrow" |
 type RightPanel = "info" | "search" | "activity" | "links" | "filter" | null;
 type LocalAnnotationType = "pen" | "highlighter" | "rectangle" | "arrow" | "text";
 type PinFilterType = DrawingMarkupPin["pin_type"];
+type DrawingSearchItem = {
+  drawingNumber?: string | null;
+  title?: string | null;
+};
 
 // Annotation tools (excludes "link" which is handled separately)
 const ANNOTATION_TOOLS: { tool: AnnotationTool; icon: React.ReactNode; label: string }[] = [
@@ -142,6 +147,19 @@ function formatBytes(bytes: number) {
   const sizes = ["B", "KB", "MB", "GB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
+}
+
+function getSearchItemIdentity(drawing: DrawingSearchItem) {
+  return getDrawingDisplayIdentity({
+    drawingNumber: drawing.drawingNumber,
+    title: drawing.title,
+  });
+}
+
+function getSearchItemLabel(drawing: DrawingSearchItem) {
+  const identity = getSearchItemIdentity(drawing);
+
+  return identity.title || identity.number || "Drawing";
 }
 
 // ── Link pin renderer ─────────────────────────────────────────────────────────
@@ -275,6 +293,14 @@ export default function DrawingViewerPage() {
   const currentIndex = drawings.findIndex((d) => d.id === drawingId);
   const prevDrawing = currentIndex > 0 ? drawings[currentIndex - 1] : null;
   const nextDrawing = currentIndex >= 0 && currentIndex < drawings.length - 1 ? drawings[currentIndex + 1] : null;
+  const drawingIdentity = drawing
+    ? getDrawingDisplayIdentity({
+        drawingNumber: drawing.drawing_number,
+        title: drawing.title,
+        fileName: drawing.current_revision?.file_name,
+        revisionNumber: drawing.current_revision?.revision_number?.toString(),
+      })
+    : null;
 
   const navigateToDrawing = useCallback((id: string) => {
     router.push(`/${projectId}/drawings/viewer/${id}`);
@@ -284,12 +310,16 @@ export default function DrawingViewerPage() {
     if (!drawing) return;
     try {
       const data = await apiFetch<{ downloadUrl?: string; fileName?: string }>(
-        `/api/projects/${projectId}/drawings/${drawingId}/download`
+        `/api/projects/${projectId}/drawings/${drawingId}/download`,
       );
       if (data.downloadUrl) {
         const a = document.createElement("a");
         a.href = data.downloadUrl;
-        a.download = data.fileName ?? `${drawing.drawing_number || drawing.title}.pdf`;
+        const fallbackName = [
+          drawingIdentity?.number,
+          drawingIdentity?.title,
+        ].filter(Boolean).join(" - ");
+        a.download = data.fileName ?? `${fallbackName || "drawing"}.pdf`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -298,7 +328,7 @@ export default function DrawingViewerPage() {
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to download drawing");
     }
-  }, [projectId, drawingId, drawing]);
+  }, [projectId, drawingId, drawing, drawingIdentity]);
 
   const handleClose = () => router.push(`/${projectId}/drawings`);
 
@@ -380,9 +410,15 @@ export default function DrawingViewerPage() {
   // Filtered drawings for search panel
   const filteredDrawings = searchQuery.trim()
     ? drawings.filter(
-        (d) =>
-          d.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          d.drawingNumber?.toLowerCase().includes(searchQuery.toLowerCase())
+        (d) => {
+          const identity = getSearchItemIdentity(d);
+          const query = searchQuery.toLowerCase();
+
+          return (
+            identity.title.toLowerCase().includes(query) ||
+            identity.number.toLowerCase().includes(query)
+          );
+        }
       )
     : drawings;
 
@@ -506,7 +542,9 @@ export default function DrawingViewerPage() {
                   <ChevronLeft />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="bottom">{prevDrawing ? `Previous: ${prevDrawing.title}` : "No previous drawing"}</TooltipContent>
+              <TooltipContent side="bottom">
+                {prevDrawing ? `Previous: ${getSearchItemLabel(prevDrawing)}` : "No previous drawing"}
+              </TooltipContent>
             </Tooltip>
 
             <Tooltip>
@@ -520,7 +558,9 @@ export default function DrawingViewerPage() {
                   <ChevronRight />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="bottom">{nextDrawing ? `Next: ${nextDrawing.title}` : "No next drawing"}</TooltipContent>
+              <TooltipContent side="bottom">
+                {nextDrawing ? `Next: ${getSearchItemLabel(nextDrawing)}` : "No next drawing"}
+              </TooltipContent>
             </Tooltip>
 
             <div className="w-px h-4 bg-muted mx-1" />
@@ -533,24 +573,30 @@ export default function DrawingViewerPage() {
                     variant="ghost"
                     className="flex items-center gap-1.5 px-2 py-1 rounded text-sm font-medium text-foreground hover:bg-muted transition-colors max-w-56 h-auto"
                   >
-                    {drawing.drawing_number && (
-                      <span className="text-muted-foreground text-xs shrink-0">{drawing.drawing_number}</span>
+                    {drawingIdentity?.number && (
+                      <span className="text-muted-foreground text-xs shrink-0">{drawingIdentity.number}</span>
                     )}
-                    <span className="truncate">{drawing.title}</span>
+                    <span className="truncate">{drawingIdentity?.title || drawingIdentity?.number || "Drawing"}</span>
                     <ChevronLeft className="h-3 w-3 rotate-[-90deg] text-muted-foreground shrink-0" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className="max-h-64 overflow-y-auto">
-                  {drawings.map((d) => (
-                    <DropdownMenuItem
-                      key={d.id}
-                      onClick={() => navigateToDrawing(d.id)}
-                      className={cn(d.id === drawingId && "bg-accent")}
-                    >
-                      <span className="text-muted-foreground text-xs mr-2">{d.drawingNumber}</span>
-                      {d.title}
-                    </DropdownMenuItem>
-                  ))}
+                  {drawings.map((d) => {
+                    const identity = getSearchItemIdentity(d);
+
+                    return (
+                      <DropdownMenuItem
+                        key={d.id}
+                        onClick={() => navigateToDrawing(d.id)}
+                        className={cn(d.id === drawingId && "bg-accent")}
+                      >
+                        {identity.number && (
+                          <span className="text-muted-foreground text-xs mr-2">{identity.number}</span>
+                        )}
+                        {identity.title || identity.number || "Drawing"}
+                      </DropdownMenuItem>
+                    );
+                  })}
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
@@ -624,6 +670,7 @@ export default function DrawingViewerPage() {
                         : "text-foreground/80 hover:text-foreground hover:bg-muted"
                     )}
                     onClick={() => togglePanel(panel)}
+                    aria-label={label}
                   >
                     {icon}
                     {panel === "links" && pins.length > 0 && (
@@ -760,9 +807,9 @@ export default function DrawingViewerPage() {
               <DrawingViewerWithComments
                 drawingId={drawingId}
                 fileUrl={proxyFileUrl}
-                fileName={drawing?.title || "Drawing"}
-                drawingNumber={drawing?.drawing_number ?? undefined}
-                title={drawing?.title ?? undefined}
+                fileName={drawingIdentity?.title || drawingIdentity?.number || "Drawing"}
+                drawingNumber={drawingIdentity?.number ?? undefined}
+                title={drawingIdentity?.title || drawingIdentity?.number || undefined}
                 showToolbar={false}
                 controlledTool={viewerTool as "select" | "pen" | "highlighter" | "rectangle" | "arrow" | "text" | "eraser" | "comment" | "link"}
                 controlledColor={annotationColor}
@@ -976,9 +1023,11 @@ export default function DrawingViewerPage() {
                     <>
                       <div className="space-y-2">
                         <p className="text-[10px] uppercase tracking-wider text-muted-foreground/80">Drawing</p>
-                        <p className="text-base font-semibold text-foreground leading-tight">{drawing.title}</p>
-                        {drawing.drawing_number && (
-                          <p className="text-sm text-muted-foreground">{drawing.drawing_number}</p>
+                        <p className="text-base font-semibold text-foreground leading-tight">
+                          {drawingIdentity?.title || drawingIdentity?.number || "Drawing"}
+                        </p>
+                        {drawingIdentity?.number && drawingIdentity.number !== drawingIdentity.title && (
+                          <p className="text-sm text-muted-foreground">{drawingIdentity.number}</p>
                         )}
                       </div>
                       <div className="space-y-3">
@@ -1031,26 +1080,29 @@ export default function DrawingViewerPage() {
                         description="Try a different search term."
                       />
                     ) : (
-                      filteredDrawings.map((d) => (
-                        <Button
-                          key={d.id}
-                          type="button"
-                          variant="ghost"
-                          onClick={() => navigateToDrawing(d.id)}
-                          className={cn(
-                            "w-full justify-start px-3 py-3.5 flex items-start gap-3 hover:bg-muted transition-colors border-b border-border/50",
-                            d.id === drawingId && "bg-accent/60"
-                          )}
-                        >
-                          <FileText className="h-4 w-4 text-muted-foreground/80 mt-0.5 shrink-0" />
-                          <div className="min-w-0">
-                            {d.drawingNumber && (
-                              <p className="text-xs text-muted-foreground/90 leading-none mb-1">{d.drawingNumber}</p>
+                      filteredDrawings.map((d) => {
+                        const identity = getSearchItemIdentity(d);
+
+                        return (
+                          <Button
+                            key={d.id}
+                            type="button"
+                            variant="ghost"
+                            onClick={() => navigateToDrawing(d.id)}
+                            className={cn(
+                              "h-auto w-full justify-start rounded-none border-b border-border/50 px-3 py-2 text-left font-normal hover:bg-muted",
+                              d.id === drawingId && "bg-muted"
                             )}
-                            <p className="text-lg text-foreground leading-tight truncate">{d.title}</p>
-                          </div>
-                        </Button>
-                      ))
+                          >
+                            <span className="w-20 shrink-0 truncate text-left text-xs tabular-nums text-muted-foreground">
+                              {identity.number || "—"}
+                            </span>
+                            <span className="min-w-0 flex-1 truncate text-left text-sm font-medium leading-5 text-foreground">
+                              {identity.title || identity.number || "Drawing"}
+                            </span>
+                          </Button>
+                        );
+                      })
                     )}
                   </div>
                 </div>

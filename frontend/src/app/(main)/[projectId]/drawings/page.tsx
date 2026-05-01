@@ -2,18 +2,39 @@
 
 import * as React from "react";
 import { useState, useCallback, useRef } from "react";
-import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Download, FileUp, Layers, Upload, X } from "lucide-react";
+import {
+  useParams,
+  usePathname,
+  useRouter,
+  useSearchParams,
+} from "next/navigation";
+import {
+  ChevronDown,
+  Download,
+  FileUp,
+  GitCompare,
+  Mail,
+  MapPin,
+  Minus,
+  Pencil,
+  Plus,
+  Trash2,
+  Upload,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import {
   UnifiedTablePage,
   useUnifiedTableState,
+  type FilterConfig,
   type FilterValue,
 } from "@/components/tables/unified";
+import { InfoAlert } from "@/components/ds/InfoAlert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,32 +46,126 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { DrawingUploadDialog } from "@/components/drawings/DrawingUploadDialog";
 import { DrawingQRCode } from "@/components/drawings/DrawingQRCode";
-import { useDrawings, useDeleteDrawing, usePublishDrawing, useObsoleteDrawing, useUpdateDrawing } from "@/hooks/use-drawings";
+import {
+  useDrawings,
+  useDeleteDrawing,
+  usePublishDrawing,
+  useObsoleteDrawing,
+  useUpdateDrawing,
+  useDrawingSubscription,
+  useToggleDrawingSubscription,
+} from "@/hooks/use-drawings";
+import { useDrawingSets } from "@/hooks/use-drawing-sets";
+import { apiFetch, apiFetchBlob } from "@/lib/api-client";
 import type { DrawingLogTableRow } from "@/types/drawings.types";
-import { DRAWING_DISCIPLINES } from "@/types/drawings.types";
+import { DRAWING_DISCIPLINES, DRAWING_TYPES } from "@/types/drawings.types";
 import {
   buildDrawingTableColumns,
   buildDrawingRowActions,
   drawingColumns,
   drawingDefaultVisibleColumns,
-  drawingFilters,
   renderDrawingCard,
   renderDrawingList,
 } from "@/features/drawings/drawings-table-config";
 
 type DrawingFilterState = Record<string, FilterValue>;
+type GalleryImageSize = "small" | "medium" | "large" | "xlarge";
+type DrawingEditDraft = {
+  drawingNumber: string;
+  title: string;
+  discipline: string;
+  drawingType: string;
+};
+type BulkEditDraft = {
+  discipline: string;
+  drawingType: string;
+};
 
 const EMPTY_FILTERS: DrawingFilterState = {
   discipline: undefined,
-  drawingType: undefined,
-  status: undefined,
+  setId: undefined,
 };
+
+const GALLERY_IMAGE_SIZE_STORAGE_KEY = "drawings:gallery-image-size";
+const SELECT_NO_CHANGE = "__no_change__";
+
+const GALLERY_IMAGE_SIZE_OPTIONS: {
+  value: GalleryImageSize;
+  label: string;
+  gridClassName: string;
+}[] = [
+  {
+    value: "small",
+    label: "Small",
+    gridClassName: "grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-3",
+  },
+  {
+    value: "medium",
+    label: "Medium",
+    gridClassName: "grid-cols-[repeat(auto-fill,minmax(170px,1fr))] gap-3",
+  },
+  {
+    value: "large",
+    label: "Large",
+    gridClassName: "grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-4",
+  },
+  {
+    value: "xlarge",
+    label: "XL",
+    gridClassName: "grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-5",
+  },
+];
+
+function isGalleryImageSize(value: string | null): value is GalleryImageSize {
+  return GALLERY_IMAGE_SIZE_OPTIONS.some((option) => option.value === value);
+}
+
+function getNextGalleryImageSize(
+  current: GalleryImageSize,
+  direction: "decrease" | "increase",
+): GalleryImageSize {
+  const currentIndex = GALLERY_IMAGE_SIZE_OPTIONS.findIndex(
+    (option) => option.value === current,
+  );
+  const nextIndex =
+    direction === "increase"
+      ? Math.min(currentIndex + 1, GALLERY_IMAGE_SIZE_OPTIONS.length - 1)
+      : Math.max(currentIndex - 1, 0);
+
+  return GALLERY_IMAGE_SIZE_OPTIONS[nextIndex]?.value ?? "medium";
+}
+
+function escapeCsvValue(value: string | number | null | undefined): string {
+  return `"${String(value ?? "").replaceAll('"', '""')}"`;
+}
 
 export default function ProjectDrawingsPage() {
   const params = useParams<{ projectId: string }>();
@@ -58,10 +173,25 @@ export default function ProjectDrawingsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [uploadOpen, setUploadOpen] = useState(false);
-  const [showUnpublished, setShowUnpublished] = useState(false);
-  const [showObsolete, setShowObsolete] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [droppedFiles, setDroppedFiles] = useState<File[]>([]);
+  const [galleryImageSize, setGalleryImageSize] =
+    useState<GalleryImageSize>("medium");
+  const [hasLoadedGalleryImageSize, setHasLoadedGalleryImageSize] =
+    useState(false);
+  const [editTarget, setEditTarget] = useState<DrawingLogTableRow | null>(null);
+  const [editDraft, setEditDraft] = useState<DrawingEditDraft>({
+    drawingNumber: "",
+    title: "",
+    discipline: "",
+    drawingType: "",
+  });
+  const [bulkEditOpen, setBulkEditOpen] = useState(false);
+  const [bulkEditDraft, setBulkEditDraft] = useState<BulkEditDraft>({
+    discipline: SELECT_NO_CHANGE,
+    drawingType: SELECT_NO_CHANGE,
+  });
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const dragCounter = useRef(0);
 
   const projectId = params.projectId ?? "";
@@ -70,21 +200,28 @@ export default function ProjectDrawingsPage() {
   const publishDrawing = usePublishDrawing(projectId);
   const obsoleteDrawing = useObsoleteDrawing(projectId);
   const updateDrawing = useUpdateDrawing(projectId);
+  const drawingSubscription = useDrawingSubscription(projectId);
+  const toggleDrawingSubscription = useToggleDrawingSubscription(projectId);
+  const { data: drawingSets = [] } = useDrawingSets(projectId);
+  const urlDiscipline = searchParams.get("discipline") ?? undefined;
+  const urlSetId = searchParams.get("set") ?? undefined;
+  const urlAreaId = searchParams.get("area_id") ?? undefined;
 
   // Delete confirmation state
-  const [deleteTarget, setDeleteTarget] = useState<DrawingLogTableRow | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<DrawingLogTableRow | null>(
+    null,
+  );
 
   // QR code state
-  const [qrTarget, setQrTarget] = useState<{ drawingId: string; drawingNumber: string } | null>(null);
-
-  // Bulk edit state
-  const [bulkDisciplineSearch, setBulkDisciplineSearch] = useState("");
-  const [customDisciplines, setCustomDisciplines] = useState<string[]>([]);
+  const [qrTarget, setQrTarget] = useState<{
+    drawingId: string;
+    drawingNumber: string;
+  } | null>(null);
 
   const initialFilters: DrawingFilterState = {
-    discipline: searchParams.get("discipline") ?? undefined,
-    drawingType: searchParams.get("drawingType") ?? undefined,
-    status: searchParams.get("status") ?? undefined,
+    discipline: urlDiscipline,
+    setId: urlSetId,
+    areaId: urlAreaId,
   };
 
   const tableState = useUnifiedTableState({
@@ -106,12 +243,70 @@ export default function ProjectDrawingsPage() {
   });
 
   const activeFilters = tableState.activeFilters as DrawingFilterState;
+  const {
+    setActiveFilters: syncActiveFiltersFromUrl,
+    setSelectedIds: clearSelectionForUrlFilters,
+  } = tableState;
+  const galleryImageSizeOption =
+    GALLERY_IMAGE_SIZE_OPTIONS.find(
+      (option) => option.value === galleryImageSize,
+    ) ?? GALLERY_IMAGE_SIZE_OPTIONS[1];
+
+  React.useEffect(() => {
+    syncActiveFiltersFromUrl((current) => {
+      const currentDrawingFilters = current as DrawingFilterState;
+      if (
+        currentDrawingFilters.discipline === urlDiscipline &&
+        currentDrawingFilters.setId === urlSetId
+      ) {
+        return current;
+      }
+
+      return {
+        ...current,
+        discipline: urlDiscipline,
+        setId: urlSetId,
+      };
+    });
+    clearSelectionForUrlFilters([]);
+  }, [
+    clearSelectionForUrlFilters,
+    syncActiveFiltersFromUrl,
+    urlDiscipline,
+    urlSetId,
+  ]);
+
+  React.useEffect(() => {
+    const storedValue = window.localStorage.getItem(
+      GALLERY_IMAGE_SIZE_STORAGE_KEY,
+    );
+    if (isGalleryImageSize(storedValue)) {
+      setGalleryImageSize(storedValue);
+    }
+    setHasLoadedGalleryImageSize(true);
+  }, []);
+
+  React.useEffect(() => {
+    if (!hasLoadedGalleryImageSize) return;
+
+    window.localStorage.setItem(
+      GALLERY_IMAGE_SIZE_STORAGE_KEY,
+      galleryImageSize,
+    );
+  }, [galleryImageSize, hasLoadedGalleryImageSize]);
 
   const { data: drawingsData, isLoading } = useDrawings(projectId, {
     page: tableState.page,
     page_size: tableState.perPage,
-    include_unpublished: showUnpublished,
-    include_obsolete: showObsolete,
+    search: tableState.debouncedSearch || undefined,
+    discipline:
+      typeof activeFilters.discipline === "string"
+        ? activeFilters.discipline
+        : undefined,
+    set_id:
+      typeof activeFilters.setId === "string" ? activeFilters.setId : undefined,
+    area_id:
+      typeof activeFilters.areaId === "string" ? activeFilters.areaId : undefined,
   });
 
   const drawings: DrawingLogTableRow[] = React.useMemo(
@@ -119,44 +314,50 @@ export default function ProjectDrawingsPage() {
     [drawingsData],
   );
 
-  // Computed disciplines (standard + from data + custom)
+  // Computed disciplines (standard + from data)
   const allDisciplines = React.useMemo(() => {
-    const fromData = new Set(drawings.map((d) => d.discipline).filter(Boolean) as string[]);
-    const merged = new Set([...DRAWING_DISCIPLINES, ...customDisciplines, ...fromData]);
+    const fromData = new Set(
+      drawings.map((d) => d.discipline).filter(Boolean) as string[],
+    );
+    const merged = new Set([
+      ...DRAWING_DISCIPLINES,
+      ...fromData,
+    ]);
     return Array.from(merged).sort();
-  }, [drawings, customDisciplines]);
+  }, [drawings]);
 
-  const handleBulkApply = async (field: "discipline" | "drawing_date", value: string) => {
-    if (!value || tableState.selectedIds.length === 0) return;
-    const count = tableState.selectedIds.length;
-    try {
-      await Promise.all(
-        tableState.selectedIds.map((id) =>
-          updateDrawing.mutateAsync({
-            drawingId: id,
-            data: field === "discipline" ? { discipline: value } : {},
-          })
-        )
-      );
-      toast.success(`Updated ${count} drawing${count === 1 ? "" : "s"}`);
-      tableState.setSelectedIds([]);
-    } catch {
-      toast.error("Failed to update some drawings");
-    }
-  };
+  const drawingFilterOptions = React.useMemo<FilterConfig[]>(
+    () => [
+      {
+        id: "discipline",
+        label: "Discipline",
+        type: "select",
+        options: allDisciplines.map((discipline) => ({
+          value: discipline,
+          label: discipline,
+        })),
+      },
+      {
+        id: "setId",
+        label: "Set",
+        type: "select",
+        options: drawingSets.map((set) => ({
+          value: set.id,
+          label: set.name,
+        })),
+      },
+    ],
+    [allDisciplines, drawingSets],
+  );
 
   const filteredItems = React.useMemo(() => {
     const search = tableState.debouncedSearch.trim().toLowerCase();
     const disciplineFilter =
-      typeof activeFilters.discipline === "string" ? activeFilters.discipline : "";
-    const typeFilter =
-      typeof activeFilters.drawingType === "string" ? activeFilters.drawingType : "";
-    const statusFilter =
-      typeof activeFilters.status === "string" ? activeFilters.status : "";
+      typeof activeFilters.discipline === "string"
+        ? activeFilters.discipline
+        : "";
     return drawings.filter((row) => {
       if (disciplineFilter && row.discipline !== disciplineFilter) return false;
-      if (typeFilter && row.drawingType !== typeFilter) return false;
-      if (statusFilter && row.status !== statusFilter) return false;
       if (!search) return true;
       return (
         row.drawingNumber.toLowerCase().includes(search) ||
@@ -168,23 +369,22 @@ export default function ProjectDrawingsPage() {
   }, [activeFilters, drawings, tableState.debouncedSearch]);
 
   const tableColumns = React.useMemo(() => buildDrawingTableColumns(), []);
+  const activeSetId = urlSetId;
+  const activeSet = activeSetId
+    ? drawingSets.find((set) => set.id === activeSetId)
+    : undefined;
+  const isSetScopedView = Boolean(activeSetId);
 
   const tabs = [
     {
       label: "Current Drawings",
       href: `/${projectId}/drawings`,
-      count: filteredItems.length,
-      isActive: true,
+      isActive: !isSetScopedView,
     },
     {
       label: "Drawing Sets",
       href: `/${projectId}/drawings/sets`,
-      isActive: false,
-    },
-    {
-      label: "All Sets & Revisions",
-      href: `/${projectId}/drawings/revisions-report`,
-      isActive: false,
+      isActive: isSetScopedView,
     },
     {
       label: "Recycle Bin",
@@ -197,18 +397,20 @@ export default function ProjectDrawingsPage() {
     tableState.setActiveFilters(nextFilters);
     tableState.setSearchParams({
       discipline:
-        typeof nextFilters.discipline === "string" ? nextFilters.discipline : null,
-      drawingType:
-        typeof nextFilters.drawingType === "string" ? nextFilters.drawingType : null,
-      status:
-        typeof nextFilters.status === "string" ? nextFilters.status : null,
+        typeof nextFilters.discipline === "string"
+          ? nextFilters.discipline
+          : null,
+      set: typeof nextFilters.setId === "string" ? nextFilters.setId : null,
+      area_id: typeof nextFilters.areaId === "string" ? nextFilters.areaId : urlAreaId ?? null,
       page: "1",
     });
     tableState.setPage(1);
   };
 
   const handleSelectAll = (checked: boolean) => {
-    tableState.setSelectedIds(checked ? filteredItems.map((item) => item.id) : []);
+    tableState.setSelectedIds(
+      checked ? filteredItems.map((item) => item.id) : [],
+    );
   };
 
   const handleSelectRow = (id: string, checked: boolean) => {
@@ -224,13 +426,13 @@ export default function ProjectDrawingsPage() {
     if (count === 0) return;
     toast.info(`Packaging ${count} drawing${count === 1 ? "" : "s"}…`);
     try {
-      const res = await fetch(`/api/projects/${projectId}/drawings/bulk-download`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ drawingIds: tableState.selectedIds }),
-      });
-      if (!res.ok) throw new Error(await res.text());
-      const blob = await res.blob();
+      const blob = await apiFetchBlob(
+        `/api/projects/${projectId}/drawings/bulk-download`,
+        {
+          method: "POST",
+          body: JSON.stringify({ drawingIds: tableState.selectedIds }),
+        },
+      );
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -245,6 +447,174 @@ export default function ProjectDrawingsPage() {
     }
   };
 
+  const selectedItems = React.useMemo(
+    () =>
+      filteredItems.filter((item) => tableState.selectedIds.includes(item.id)),
+    [filteredItems, tableState.selectedIds],
+  );
+
+  const buildDrawingLink = (drawingId: string) =>
+    `${window.location.origin}/${projectId}/drawings/viewer/${drawingId}`;
+
+  const handleEmailDrawings = (items: DrawingLogTableRow[]) => {
+    if (items.length === 0) return;
+
+    const subject =
+      items.length === 1
+        ? `Drawing ${items[0].drawingNumber || items[0].title}`
+        : `${items.length} drawings`;
+    const body = items
+      .map((item) => {
+        const label = [item.drawingNumber, item.title]
+          .filter(Boolean)
+          .join(" - ");
+        return `${label || "Drawing"}\n${buildDrawingLink(item.id)}`;
+      })
+      .join("\n\n");
+
+    window.location.href = `mailto:?subject=${encodeURIComponent(
+      subject,
+    )}&body=${encodeURIComponent(body)}`;
+  };
+
+  const handleDownloadDrawing = async (item: DrawingLogTableRow) => {
+    try {
+      const data = await apiFetch<{ downloadUrl?: string; fileName?: string }>(
+        `/api/projects/${projectId}/drawings/${item.id}/download`,
+      );
+      if (!data.downloadUrl) {
+        toast.error("No downloadable file found for this drawing");
+        return;
+      }
+
+      const anchor = document.createElement("a");
+      anchor.href = data.downloadUrl;
+      anchor.download =
+        data.fileName ??
+        `${item.drawingNumber || item.title || "drawing"}.pdf`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      document.body.removeChild(anchor);
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Failed to download drawing",
+      );
+    }
+  };
+
+  const openEditDialog = (item: DrawingLogTableRow) => {
+    setEditTarget(item);
+    setEditDraft({
+      drawingNumber: item.drawingNumber,
+      title: item.title,
+      discipline: item.discipline ?? "",
+      drawingType: item.drawingType ?? "",
+    });
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editTarget) return;
+    if (!editDraft.drawingNumber.trim() || !editDraft.title.trim()) {
+      toast.error("Drawing number and title are required");
+      return;
+    }
+
+    await updateDrawing.mutateAsync({
+      drawingId: editTarget.id,
+      data: {
+        drawing_number: editDraft.drawingNumber.trim(),
+        title: editDraft.title.trim(),
+        discipline: editDraft.discipline.trim() || undefined,
+        drawing_type: editDraft.drawingType.trim() || undefined,
+      },
+    });
+    setEditTarget(null);
+  };
+
+  const handleSaveBulkEdit = async () => {
+    if (selectedItems.length === 0) return;
+
+    const data: {
+      discipline?: string;
+      drawing_type?: string;
+    } = {};
+
+    if (bulkEditDraft.discipline !== SELECT_NO_CHANGE) {
+      data.discipline = bulkEditDraft.discipline;
+    }
+    if (bulkEditDraft.drawingType !== SELECT_NO_CHANGE) {
+      data.drawing_type = bulkEditDraft.drawingType;
+    }
+
+    if (Object.keys(data).length === 0) {
+      toast.error("Choose at least one field to update");
+      return;
+    }
+
+    await Promise.all(
+      selectedItems.map((item) =>
+        updateDrawing.mutateAsync({
+          drawingId: item.id,
+          data,
+        }),
+      ),
+    );
+    toast.success(
+      `Updated ${selectedItems.length} drawing${
+        selectedItems.length === 1 ? "" : "s"
+      }`,
+    );
+    setBulkEditOpen(false);
+    setBulkEditDraft({
+      discipline: SELECT_NO_CHANGE,
+      drawingType: SELECT_NO_CHANGE,
+    });
+    tableState.setSelectedIds([]);
+  };
+
+  const handleConfirmBulkDelete = async () => {
+    if (selectedItems.length === 0) return;
+
+    await Promise.all(
+      selectedItems.map((item) => deleteDrawing.mutateAsync(item.id)),
+    );
+    setBulkDeleteOpen(false);
+    tableState.setSelectedIds([]);
+  };
+
+  const handleExportCsv = () => {
+    const header = [
+      "Drawing Number",
+      "Drawing Title",
+      "Revision",
+      "Discipline",
+      "Set",
+      "Drawing Date",
+      "Received Date",
+    ];
+    const rows = filteredItems.map((drawing) => [
+      drawing.drawingNumber,
+      drawing.title,
+      drawing.revisionNumber ?? "",
+      drawing.discipline ?? "",
+      drawing.setName ?? "",
+      drawing.drawingDate ?? "",
+      drawing.receivedDate ?? "",
+    ]);
+    const csv = [header, ...rows]
+      .map((row) => row.map(escapeCsvValue).join(","))
+      .join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `drawings-${projectId}-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    URL.revokeObjectURL(url);
+  };
+
   const handleDeleteDrawing = (item: DrawingLogTableRow) => {
     setDeleteTarget(item);
   };
@@ -257,7 +627,12 @@ export default function ProjectDrawingsPage() {
   };
 
   // ─── Drag-and-drop handlers ──────────────────────────────────────────────
-  const ACCEPTED_TYPES = ["application/pdf", "image/png", "image/jpeg", "image/tiff"];
+  const ACCEPTED_TYPES = [
+    "application/pdf",
+    "image/png",
+    "image/jpeg",
+    "image/tiff",
+  ];
 
   const handleDragEnter = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -289,7 +664,9 @@ export default function ProjectDrawingsPage() {
     setIsDragging(false);
 
     const files = Array.from(e.dataTransfer.files).filter(
-      (f) => ACCEPTED_TYPES.includes(f.type) || f.name.match(/\.(pdf|png|jpe?g|tiff?)$/i),
+      (f) =>
+        ACCEPTED_TYPES.includes(f.type) ||
+        f.name.match(/\.(pdf|png|jpe?g|tiff?)$/i),
     );
     if (files.length > 0) {
       setDroppedFiles(files);
@@ -308,10 +685,189 @@ export default function ProjectDrawingsPage() {
   const isFiltered =
     Boolean(tableState.searchInput) ||
     Boolean(activeFilters.discipline) ||
-    Boolean(activeFilters.drawingType) ||
-    Boolean(activeFilters.status);
+    Boolean(activeFilters.setId);
 
   const selectedCount = tableState.selectedIds.length;
+  const canDecreaseGallerySize =
+    galleryImageSize !== GALLERY_IMAGE_SIZE_OPTIONS[0].value;
+  const canIncreaseGallerySize =
+    galleryImageSize !==
+    GALLERY_IMAGE_SIZE_OPTIONS[GALLERY_IMAGE_SIZE_OPTIONS.length - 1].value;
+  const gallerySizeControls =
+    tableState.currentView === "card" ? (
+      <TooltipProvider>
+        <div className="flex h-8 shrink-0 items-center rounded-md border border-border bg-background">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 rounded-r-none"
+                disabled={!canDecreaseGallerySize}
+                aria-label="Decrease gallery image size"
+                onClick={() =>
+                  setGalleryImageSize((current) =>
+                    getNextGalleryImageSize(current, "decrease"),
+                  )
+                }
+              >
+                <Minus className="h-3.5 w-3.5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Decrease image size</TooltipContent>
+          </Tooltip>
+          <span className="min-w-12 border-x border-border px-2 text-center text-[11px] font-medium text-muted-foreground">
+            {galleryImageSizeOption.label}
+          </span>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 rounded-l-none"
+                disabled={!canIncreaseGallerySize}
+                aria-label="Increase gallery image size"
+                onClick={() =>
+                  setGalleryImageSize((current) =>
+                    getNextGalleryImageSize(current, "increase"),
+                  )
+                }
+              >
+                <Plus className="h-3.5 w-3.5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Increase image size</TooltipContent>
+          </Tooltip>
+        </div>
+      </TooltipProvider>
+    ) : null;
+
+  const headerActions =
+    selectedCount > 0 ? (
+      <>
+        <span className="text-xs text-muted-foreground">
+          {selectedCount} selected
+        </span>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => setBulkEditOpen(true)}
+        >
+          <Pencil className="h-3.5 w-3.5" />
+          Edit
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => handleEmailDrawings(selectedItems)}
+        >
+          <Mail className="h-3.5 w-3.5" />
+          Email
+        </Button>
+        <Button size="sm" variant="outline" onClick={handleBulkDownload}>
+          <Download className="h-3.5 w-3.5" />
+          Download
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          className="text-destructive hover:text-destructive"
+          onClick={() => setBulkDeleteOpen(true)}
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+          Delete
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          className="h-7 w-7 p-0"
+          onClick={() => tableState.setSelectedIds([])}
+        >
+          <X className="h-3.5 w-3.5" />
+        </Button>
+      </>
+    ) : (
+      <>
+        <Button size="sm" onClick={() => setUploadOpen(true)}>
+          <FileUp className="h-4 w-4" />
+          Upload
+        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button size="sm" variant="outline">
+              Reports
+              <ChevronDown className="h-3.5 w-3.5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              onClick={() =>
+                router.push(`/${projectId}/drawings/revisions-report`)
+              }
+            >
+              All Sets and Revisions
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() =>
+                toast.info("Sketches report is not connected yet.", {
+                  description:
+                    "The drawings sketches API exists, but this report surface still needs to be built.",
+                })
+              }
+            >
+              Sketches
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() =>
+                toast.info("Measurements report is not connected yet.", {
+                  description:
+                    "This control is visible for Procore parity while the measurement report is still pending.",
+                })
+              }
+            >
+              Measurements
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() =>
+            toast.info("Compare Set is not connected yet.", {
+              description:
+                "The control is now always visible; the compare workflow still needs its route and data contract.",
+            })
+          }
+        >
+          <GitCompare className="h-4 w-4" />
+          Compare Set
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => router.push(`/${projectId}/drawings/areas`)}
+        >
+          <MapPin className="h-4 w-4" />
+          Create Locations
+        </Button>
+        <label className="flex h-8 items-center gap-2 text-sm text-foreground">
+          <Switch
+            checked={drawingSubscription.data?.subscribed ?? false}
+            disabled={
+              drawingSubscription.isLoading ||
+              toggleDrawingSubscription.isPending
+            }
+            onCheckedChange={(checked) =>
+              toggleDrawingSubscription.mutate(checked)
+            }
+            aria-label="Subscribe to drawing updates"
+          />
+          Subscribe
+        </label>
+      </>
+    );
 
   return (
     <div
@@ -324,223 +880,341 @@ export default function ProjectDrawingsPage() {
       {/* Dropbox-style drag overlay */}
       {isDragging && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm transition-all duration-200 animate-in fade-in">
-          <div className="flex flex-col items-center gap-3 rounded-xl border-2 border-dashed border-primary bg-primary/5 px-16 py-12 shadow-sm transition-transform duration-200 scale-100">
-            <div className="rounded-full bg-primary/10 p-4">
-              <Upload className="size-8 text-primary" />
-            </div>
+          <InfoAlert
+            variant="info"
+            icon={<Upload className="size-8 shrink-0" />}
+            className="items-center px-16 py-12 shadow-sm"
+          >
             <p className="text-lg font-semibold text-foreground">
               Drop drawings to upload
             </p>
             <p className="text-sm text-muted-foreground">
               PDF, PNG, JPG, or TIFF files
             </p>
-          </div>
+          </InfoAlert>
         </div>
       )}
 
-    <UnifiedTablePage
-      header={{
-        title: "Drawings",
-        description: "Manage construction drawings with revision tracking",
-        actions: (
-          <>
-            {selectedCount > 0 && (
-              <>
-                <span className="text-xs text-muted-foreground">{selectedCount} selected</span>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button size="sm" variant="outline">
-                      <Layers className="h-3.5 w-3.5" />
-                      Discipline
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-56 p-3" align="end">
-                    <Label className="text-xs text-muted-foreground mb-2 block">Set discipline</Label>
-                    <Input
-                      value={bulkDisciplineSearch}
-                      onChange={(e) => setBulkDisciplineSearch(e.target.value)}
-                      placeholder="Search or create…"
-                      className="h-8 text-xs mb-2"
-                    />
-                    <div className="max-h-40 overflow-y-auto space-y-0.5">
-                      {allDisciplines
-                        .filter((d) => d.toLowerCase().includes(bulkDisciplineSearch.toLowerCase()))
-                        .map((d) => (
-                          <button
-                            key={d}
-                            type="button"
-                            className="w-full text-left text-xs px-2 py-1 rounded hover:bg-muted truncate"
-                            onClick={() => {
-                              handleBulkApply("discipline", d);
-                              setBulkDisciplineSearch("");
-                            }}
-                          >
-                            {d}
-                          </button>
-                        ))}
-                      {bulkDisciplineSearch.trim() &&
-                        !allDisciplines.some((d) => d.toLowerCase() === bulkDisciplineSearch.trim().toLowerCase()) && (
-                          <button
-                            type="button"
-                            className="w-full text-left text-xs px-2 py-1 rounded hover:bg-muted text-primary font-medium"
-                            onClick={() => {
-                              const newDisc = bulkDisciplineSearch.trim();
-                              setCustomDisciplines((prev) => [...prev, newDisc]);
-                              handleBulkApply("discipline", newDisc);
-                              setBulkDisciplineSearch("");
-                            }}
-                          >
-                            + Create &ldquo;{bulkDisciplineSearch.trim()}&rdquo;
-                          </button>
-                        )}
-                    </div>
-                  </PopoverContent>
-                </Popover>
-                <Button size="sm" variant="outline" onClick={handleBulkDownload}>
-                  <Download className="h-3.5 w-3.5" />
-                  Download
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-7 w-7 p-0"
-                  onClick={() => tableState.setSelectedIds([])}
-                >
-                  <X className="h-3.5 w-3.5" />
-                </Button>
-              </>
-            )}
-            {selectedCount === 0 && (
-              <>
-                <Button
-                  size="sm"
-                  variant={showUnpublished ? "secondary" : "outline"}
-                  onClick={() => setShowUnpublished((p) => !p)}
-                >
-                  {showUnpublished ? "Hide Unpublished" : "Show Unpublished"}
-                </Button>
-                <Button
-                  size="sm"
-                  variant={showObsolete ? "secondary" : "outline"}
-                  onClick={() => setShowObsolete((p) => !p)}
-                >
-                  {showObsolete ? "Hide Obsolete" : "Show Obsolete"}
-                </Button>
-                <Button size="sm" onClick={() => setUploadOpen(true)}>
-                  <FileUp className="h-4 w-4" />
-                  Upload
-                </Button>
-              </>
-            )}
-            <DrawingUploadDialog
-              projectId={projectId}
-              open={uploadOpen}
-              onOpenChange={handleUploadOpenChange}
-              initialFiles={droppedFiles.length > 0 ? droppedFiles : undefined}
-            />
-          </>
-        ),
-      }}
-      tabs={tabs}
-      toolbar={{
-        totalItems: drawings.length,
-        filteredItems: filteredItems.length,
-        selectedCount: tableState.selectedIds.length,
-        searchValue: tableState.searchInput,
-        onSearchChange: tableState.setSearchInput,
-        searchPlaceholder: "Search drawings...",
-        currentView: tableState.currentView,
-        onViewChange: (view) => {
-          tableState.setCurrentView(view);
-          tableState.setSearchParams({ view });
-        },
-        enabledViews: ["table", "card", "list"],
-        filters: drawingFilters,
-        activeFilters,
-        onFilterChange: handleFilterChange,
-        onClearFilters: () => handleFilterChange(EMPTY_FILTERS),
-        columns: drawingColumns,
-        visibleColumns: tableState.visibleColumns,
-        onColumnVisibilityChange: tableState.setVisibleColumns,
-      }}
-      data={{
-        items: filteredItems,
-        isLoading,
-        isFetching: false,
-      }}
-      table={{
-        columns: tableColumns,
-        getRowId: (item) => item.id,
-        onRowClick: (item) =>
-          router.push(`/${projectId}/drawings/viewer/${item.id}`),
-        rowActions: buildDrawingRowActions({
-          onPublish: (drawingId, publish) => publishDrawing.mutate({ drawingId, publish }),
-          onObsolete: (drawingId, obsolete) => obsoleteDrawing.mutate({ drawingId, obsolete }),
-          onDelete: handleDeleteDrawing,
-          onQrCode: (drawingId, drawingNumber) => setQrTarget({ drawingId, drawingNumber }),
-        }),
-      }}
-      selection={{
-        selectedIds: tableState.selectedIds,
-        onSelectAll: handleSelectAll,
-        onSelectRow: handleSelectRow,
-      }}
-      sorting={{
-        sortBy: tableState.sortBy,
-        sortDirection: tableState.sortDirection,
-        onSortChange: (sortBy, direction) => {
-          tableState.setSortBy(sortBy);
-          tableState.setSortDirection(direction);
-          tableState.setSearchParams({ sort: sortBy, sort_dir: direction });
-        },
-      }}
-      layout={{
-        cardGridClassName: "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3",
-      }}
-      views={{
-        card: (item) =>
-          renderDrawingCard(
-            item,
-            (r) => router.push(`/${projectId}/drawings/viewer/${r.id}`),
-            handleDeleteDrawing,
-            {
-              selected: tableState.selectedIds.includes(item.id),
-              onSelect: handleSelectRow,
-            },
-            () => setQrTarget({ drawingId: item.id, drawingNumber: item.drawingNumber ?? "Drawing" }),
+      <UnifiedTablePage
+        header={{
+          title: "Drawings",
+          description:
+            "View, manage, and upload all of your drawings from the Drawings log.",
+          actions: headerActions,
+        }}
+        tabs={tabs}
+        toolbar={{
+          totalItems: drawings.length,
+          filteredItems: filteredItems.length,
+          selectedCount: tableState.selectedIds.length,
+          searchValue: tableState.searchInput,
+          onSearchChange: tableState.setSearchInput,
+          searchPlaceholder: "Search drawings...",
+          currentView: tableState.currentView,
+          onViewChange: (view) => {
+            tableState.setCurrentView(view);
+            tableState.setSearchParams({ view });
+          },
+          enabledViews: ["table", "card", "list"],
+          filters: drawingFilterOptions,
+          activeFilters,
+          onFilterChange: handleFilterChange,
+          onClearFilters: () => handleFilterChange(EMPTY_FILTERS),
+          columns: drawingColumns,
+          visibleColumns: tableState.visibleColumns,
+          onColumnVisibilityChange: tableState.setVisibleColumns,
+          onExport: handleExportCsv,
+          customActions: gallerySizeControls,
+        }}
+        data={{
+          items: filteredItems,
+          isLoading,
+          isFetching: false,
+        }}
+        table={{
+          columns: tableColumns,
+          getRowId: (item) => item.id,
+          onRowClick: (item) =>
+            router.push(`/${projectId}/drawings/viewer/${item.id}`),
+          rowActions: buildDrawingRowActions({
+            onEdit: openEditDialog,
+            onEmail: (item) => handleEmailDrawings([item]),
+            onDownload: handleDownloadDrawing,
+            onPublish: (drawingId, publish) =>
+              publishDrawing.mutate({ drawingId, publish }),
+            onObsolete: (drawingId, obsolete) =>
+              obsoleteDrawing.mutate({ drawingId, obsolete }),
+            onDelete: handleDeleteDrawing,
+            onQrCode: (drawingId, drawingNumber) =>
+              setQrTarget({ drawingId, drawingNumber }),
+          }),
+        }}
+        selection={{
+          selectedIds: tableState.selectedIds,
+          onSelectAll: handleSelectAll,
+          onSelectRow: handleSelectRow,
+        }}
+        sorting={{
+          sortBy: tableState.sortBy,
+          sortDirection: tableState.sortDirection,
+          onSortChange: (sortBy, direction) => {
+            tableState.setSortBy(sortBy);
+            tableState.setSortDirection(direction);
+            tableState.setSearchParams({ sort: sortBy, sort_dir: direction });
+          },
+        }}
+        layout={{
+          cardGridClassName: galleryImageSizeOption.gridClassName,
+        }}
+        views={{
+          card: (item) =>
+            renderDrawingCard(
+              item,
+              (r) => router.push(`/${projectId}/drawings/viewer/${r.id}`),
+              handleDeleteDrawing,
+              {
+                selected: tableState.selectedIds.includes(item.id),
+                onSelect: handleSelectRow,
+              },
+              () =>
+                setQrTarget({
+                  drawingId: item.id,
+                  drawingNumber: item.drawingNumber ?? "Drawing",
+                }),
+            ),
+          cardGroupBy: (item) => item.discipline || "Ungrouped",
+          list: (item) =>
+            renderDrawingList(
+              item,
+              (r) => router.push(`/${projectId}/drawings/viewer/${r.id}`),
+              handleDeleteDrawing,
+              () =>
+                setQrTarget({
+                  drawingId: item.id,
+                  drawingNumber: item.drawingNumber ?? "Drawing",
+                }),
+            ),
+        }}
+        emptyState={{
+          title: isSetScopedView
+            ? "No drawings in this set"
+            : "No drawings found",
+          description:
+            "Drag and drop files here, or click Upload to get started.",
+          filteredDescription: isSetScopedView
+            ? activeSet
+              ? `${activeSet.name} does not have any drawings attached yet.`
+              : "This drawing set does not have any drawings attached yet."
+            : "Try adjusting your search or filters.",
+          isFiltered,
+          action: (
+            <Button size="sm" onClick={() => setUploadOpen(true)}>
+              <FileUp className="h-4 w-4" />
+              Upload your first drawing
+            </Button>
           ),
-        cardGroupBy: (item) => item.discipline || "Ungrouped",
-        list: (item) =>
-          renderDrawingList(
-            item,
-            (r) => router.push(`/${projectId}/drawings/viewer/${r.id}`),
-            handleDeleteDrawing,
-            () => setQrTarget({ drawingId: item.id, drawingNumber: item.drawingNumber ?? "Drawing" }),
-          ),
-      }}
-      emptyState={{
-        title: "No drawings found",
-        description: "Drag and drop files here, or click Upload to get started.",
-        filteredDescription: "Try adjusting your search or filters.",
-        isFiltered,
-        action: (
-          <Button size="sm" onClick={() => setUploadOpen(true)}>
-            <FileUp className="h-4 w-4" />
-            Upload your first drawing
-          </Button>
-        ),
-      }}
-      features={{
-        enableExport: true,
-        enableBulkDelete: false,
-        enableRowSelection: true,
-        enableRowActions: true,
-      }}
-    />
+        }}
+        features={{
+          enableSearch: true,
+          enableFilters: true,
+          enableViews: true,
+          enableColumnToggle: true,
+          enableExport: true,
+          enableBulkDelete: false,
+          enableRowSelection: true,
+          enableRowActions: true,
+        }}
+      />
+
+      <Dialog
+        open={editTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setEditTarget(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Drawing</DialogTitle>
+            <DialogDescription>
+              Update the drawing metadata shown in the drawing log.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="drawing-edit-number">Drawing Number</Label>
+              <Input
+                id="drawing-edit-number"
+                value={editDraft.drawingNumber}
+                onChange={(event) =>
+                  setEditDraft((current) => ({
+                    ...current,
+                    drawingNumber: event.target.value,
+                  }))
+                }
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="drawing-edit-title">Title</Label>
+              <Input
+                id="drawing-edit-title"
+                value={editDraft.title}
+                onChange={(event) =>
+                  setEditDraft((current) => ({
+                    ...current,
+                    title: event.target.value,
+                  }))
+                }
+              />
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-2">
+                <Label htmlFor="drawing-edit-discipline">Discipline</Label>
+                <Select
+                  value={editDraft.discipline || undefined}
+                  onValueChange={(value) =>
+                    setEditDraft((current) => ({
+                      ...current,
+                      discipline: value,
+                    }))
+                  }
+                >
+                  <SelectTrigger id="drawing-edit-discipline">
+                    <SelectValue placeholder="Select discipline" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {allDisciplines.map((discipline) => (
+                      <SelectItem key={discipline} value={discipline}>
+                        {discipline}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="drawing-edit-type">Type</Label>
+                <Select
+                  value={editDraft.drawingType || undefined}
+                  onValueChange={(value) =>
+                    setEditDraft((current) => ({
+                      ...current,
+                      drawingType: value,
+                    }))
+                  }
+                >
+                  <SelectTrigger id="drawing-edit-type">
+                    <SelectValue placeholder="Select type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DRAWING_TYPES.map((type) => (
+                      <SelectItem key={type} value={type}>
+                        {type}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditTarget(null)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveEdit} disabled={updateDrawing.isPending}>
+              {updateDrawing.isPending ? "Saving..." : "Save"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={bulkEditOpen} onOpenChange={setBulkEditOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Selected Drawings</DialogTitle>
+            <DialogDescription>
+              Apply metadata changes to {selectedCount} selected drawing
+              {selectedCount === 1 ? "" : "s"}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-2">
+              <Label htmlFor="bulk-drawing-discipline">Discipline</Label>
+              <Select
+                value={bulkEditDraft.discipline}
+                onValueChange={(value) =>
+                  setBulkEditDraft((current) => ({
+                    ...current,
+                    discipline: value,
+                  }))
+                }
+              >
+                <SelectTrigger id="bulk-drawing-discipline">
+                  <SelectValue placeholder="Leave unchanged" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={SELECT_NO_CHANGE}>
+                    Leave unchanged
+                  </SelectItem>
+                  {allDisciplines.map((discipline) => (
+                    <SelectItem key={discipline} value={discipline}>
+                      {discipline}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="bulk-drawing-type">Type</Label>
+              <Select
+                value={bulkEditDraft.drawingType}
+                onValueChange={(value) =>
+                  setBulkEditDraft((current) => ({
+                    ...current,
+                    drawingType: value,
+                  }))
+                }
+              >
+                <SelectTrigger id="bulk-drawing-type">
+                  <SelectValue placeholder="Leave unchanged" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={SELECT_NO_CHANGE}>
+                    Leave unchanged
+                  </SelectItem>
+                  {DRAWING_TYPES.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {type}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkEditOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSaveBulkEdit}
+              disabled={updateDrawing.isPending}
+            >
+              {updateDrawing.isPending ? "Saving..." : "Apply Changes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <DrawingUploadDialog
+        projectId={projectId}
+        open={uploadOpen}
+        onOpenChange={handleUploadOpenChange}
+        initialFiles={droppedFiles.length > 0 ? droppedFiles : undefined}
+      />
 
       <AlertDialog
         open={deleteTarget !== null}
-        onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -575,6 +1249,28 @@ export default function ProjectDrawingsPage() {
           onClose={() => setQrTarget(null)}
         />
       )}
+
+      <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete selected drawings?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will move {selectedCount} selected drawing
+              {selectedCount === 1 ? "" : "s"} to the Recycle Bin.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmBulkDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleteDrawing.isPending}
+            >
+              {deleteDrawing.isPending ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

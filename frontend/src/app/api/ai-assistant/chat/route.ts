@@ -261,6 +261,12 @@ function getMetadataValue(metadata: unknown, key: string): string | undefined {
   return typeof value === "string" && value.trim() ? value : undefined;
 }
 
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
 function formatRetrievedSourceContext(output: SemanticSearchOutput): string | null {
   const results = (output.results ?? []).slice(0, 8);
   if (results.length === 0) return null;
@@ -935,6 +941,224 @@ async function generateSourceGroundedSynthesis(params: {
   } catch {
     return fallback;
   }
+}
+
+function createSourceLookupAnswer(params: {
+  output: SemanticSearchOutput | null;
+  userMessage: string;
+}): string {
+  const keywords = sourceLookupKeywords(params.userMessage);
+  const results = (params.output?.results ?? [])
+    .slice()
+    .sort((a, b) => sourceLookupRank(b, keywords) - sourceLookupRank(a, keywords))
+    .slice(0, 6);
+  const sourceLine =
+    "Source checked: semantic search across vectorized meetings, Teams, email, documents, insights, and memories.";
+
+  if (results.length === 0) {
+    return [
+      "I could not find source records that answer that directly.",
+      "",
+      "**What I checked**",
+      `- ${sourceLine}`,
+      "- Retrieval returned 0 matching source rows, so I am not going to turn this into a project status answer or invent discussion context.",
+      "",
+      "**Next Step**",
+      "- Check whether the source is synced/vectorized and whether it is project-scoped or admin-only before relying on this question in chat.",
+    ].join("\n");
+  }
+
+  const sourceBullets = results.map((result, index) => {
+    const content = String(result.content ?? "").replace(/\s+/g, " ").trim();
+    const excerpt = content.length > 520 ? `${content.slice(0, 520).trim()}...` : content;
+    return [
+      `${index + 1}. **${sourceTitle(result)}** — ${sourceDate(result)} ${sourceLabel(result)}`,
+      `   ${excerpt || "No excerpt text was stored for this source."}`,
+    ].join("\n");
+  });
+
+  return [
+    "I treated this as a source lookup, not a project status request.",
+    "",
+    "**Best Matching Source Context**",
+    ...sourceBullets,
+    "",
+    "**What This Means**",
+    "- The answer above is grounded in the retrieved source snippets. If the exact quote or full thread is needed, open the listed source records rather than relying on a broad project briefing.",
+    "- I did not use the executive project-briefing template because this question asks what someone said in a source channel.",
+    "",
+    "**Observability**",
+    `- ${sourceLine}`,
+    `- Retrieved ${results.length} source row(s) for: ${params.userMessage}`,
+  ].join("\n");
+}
+
+function isRfiActionRequest(message: string): boolean {
+  const normalized = message.toLowerCase();
+
+  return (
+    /\brfi\b/.test(normalized) &&
+    /\b(create|draft|log|open|write|need|start|prepare)\b/.test(normalized)
+  );
+}
+
+function extractRfiTopic(message: string): string {
+  const aboutMatch = message.match(/\babout\s+(.+?)(?:[.?!]|$)/i);
+  const forMatch = message.match(/\bfor\s+(.+?)(?:[.?!]|$)/i);
+  const rawTopic = aboutMatch?.[1] ?? forMatch?.[1] ?? "requested clarification";
+
+  const cleaned = rawTopic
+    .replace(/\bwhat info\b.*$/i, "")
+    .replace(/\band can you\b.*$/i, "")
+    .replace(/\bcan you\b.*$/i, "")
+    .replace(/\bplease\b.*$/i, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return cleaned || "requested clarification";
+}
+
+function titleCaseRfiSubject(topic: string): string {
+  const words = topic
+    .replace(/[^a-zA-Z0-9\s/-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 12);
+
+  const subject = words
+    .map((word) =>
+      word.length <= 3
+        ? word.toUpperCase()
+        : `${word.charAt(0).toUpperCase()}${word.slice(1).toLowerCase()}`,
+    )
+    .join(" ");
+
+  return subject ? `RFI - ${subject}` : "RFI - Requested Clarification";
+}
+
+function buildRfiPreviewQuestion(params: {
+  topic: string;
+  projectName: string;
+}): string {
+  return [
+    `Please clarify the required direction for ${params.topic} on ${params.projectName}.`,
+    "Confirm the affected location/scope, responsible design party, required response date, and whether this has cost or schedule impact.",
+  ].join(" ");
+}
+
+function formatRfiPreviewAnswer(params: {
+  projectName: string;
+  previewOutput: unknown;
+  topic: string;
+}): string {
+  const preview = asRecord(params.previewOutput);
+  const fields = asRecord(asRecord(preview.preview).fields);
+  const subject = typeof fields.subject === "string" ? fields.subject : titleCaseRfiSubject(params.topic);
+  const question =
+    typeof fields.question === "string"
+      ? fields.question
+      : buildRfiPreviewQuestion({
+          topic: params.topic,
+          projectName: params.projectName,
+        });
+  const projectId = typeof fields.project_id === "number" ? fields.project_id : null;
+  const toolError = typeof preview.error === "string" ? preview.error : null;
+
+  if (toolError) {
+    return [
+      "I identified this as an RFI action request, but I did not create anything.",
+      "",
+      "**Blocked Before Preview**",
+      `- ${toolError}`,
+      "",
+      "**Draft I Would Use Once Access/Project Context Is Fixed**",
+      `- Subject: ${subject}`,
+      `- Question: ${question}`,
+      "- Cost impact: TBD",
+      "- Schedule impact: TBD",
+      "",
+      "**Next Step**",
+      "- Select or name the exact project, confirm who owns the answer, and provide a due date before creating the RFI.",
+    ].join("\n");
+  }
+
+  return [
+    "I identified this as an RFI action request and routed it through the server-side `createRFI` tool in preview mode.",
+    "",
+    "**Preview Only - No RFI Was Created**",
+    `- Project: ${params.projectName}${projectId ? ` (#${projectId})` : ""}`,
+    `- Subject: ${subject}`,
+    `- Question: ${question}`,
+    "- Cost impact: TBD",
+    "- Schedule impact: TBD",
+    "- Status if confirmed: open",
+    "",
+    "**Missing Before Create**",
+    "- Exact location or drawing/spec reference",
+    "- Ball-in-court / responsible reviewer",
+    "- Due date",
+    "- Cost and schedule impact if known",
+    "",
+    "**Next Step**",
+    "- Reply with the missing details and explicitly say `confirm` when you want me to create it.",
+  ].join("\n");
+}
+
+function sourceLookupKeywords(message: string): string[] {
+  const ignored = new Set([
+    "about",
+    "actual",
+    "context",
+    "discussion",
+    "need",
+    "project",
+    "report",
+    "said",
+    "source",
+    "status",
+    "what",
+  ]);
+
+  return (message.match(/\b[A-Za-z][A-Za-z0-9.'-]{3,}\b/g) ?? [])
+    .map((term) => term.toLowerCase())
+    .filter((term) => !ignored.has(term))
+    .slice(0, 12);
+}
+
+function sourceLookupRank(result: SemanticSearchResult, keywords: string[]): number {
+  const searchable = [
+    result.content,
+    sourceTitle(result),
+    sourceLabel(result),
+    getMetadataValue(result.metadata, "category"),
+    getMetadataValue(result.metadata, "source_type"),
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+  const compactSearchable = searchable.replace(/[^a-z0-9]/g, "");
+
+  const keywordScore = keywords.reduce(
+    (score, keyword) =>
+      score +
+      (searchable.includes(keyword) ||
+      compactSearchable.includes(keyword.replace(/[^a-z0-9]/g, ""))
+        ? 10
+        : 0),
+    0,
+  );
+  const sourceScore =
+    searchable.includes("teams") || searchable.includes("teams_message") ? 4 : 0;
+  const semanticScore =
+    typeof result.finalScore === "number"
+      ? result.finalScore
+      : typeof result.similarity === "number"
+        ? result.similarity
+        : 0;
+
+  return keywordScore + sourceScore + semanticScore;
 }
 
 
@@ -2066,8 +2290,6 @@ export const POST = withApiGuardrails(
           },
         });
 
-        // TODO(tool-reenable): remove this branch; let the model call the tool
-        // instead. This block exists solely because modelTools = undefined.
         if (sourceSpecificRagRequest) {
           writeStrategistStatus(writer, {
             stage: "knowledge",
@@ -2138,6 +2360,291 @@ export const POST = withApiGuardrails(
           writeStrategistStatus(writer, {
             stage: "complete",
             message: `${sourceSpecificRagRequest.label} check complete`,
+            status: "success",
+          });
+          return;
+        }
+
+        if (assistantIntent === "source_lookup") {
+          writeStrategistStatus(writer, {
+            stage: "knowledge",
+            message: "Searching source records for the requested discussion context",
+            status: "loading",
+          });
+
+          const semanticSearchTool = (tools as Record<string, ExecutableTool>).semanticSearch;
+          let sourceLookupOutput: SemanticSearchOutput | null = null;
+
+          if (semanticSearchTool?.execute) {
+            const searchOutput = await withTimeout(
+              semanticSearchTool.execute({
+                query: lastUserContent,
+                projectId: selectedProjectId,
+                matchCount: 8,
+                threshold: 0.2,
+                skipRerank: true,
+              }),
+              12_000,
+              "semanticSearch timed out during source lookup retrieval",
+            );
+
+            if (isTimeoutResult(searchOutput)) {
+              toolTrace.push({
+                tool: "semanticSearch",
+                input: {
+                  query: lastUserContent,
+                  projectId: selectedProjectId ?? null,
+                  matchCount: 8,
+                  threshold: 0.2,
+                  skipRerank: true,
+                },
+                error: searchOutput.error,
+                timestamp: new Date().toISOString(),
+              });
+            } else {
+              sourceLookupOutput = normalizeSemanticSearchOutput(searchOutput);
+            }
+          } else {
+            toolTrace.push({
+              tool: "semanticSearch",
+              input: {
+                query: lastUserContent,
+                projectId: selectedProjectId ?? null,
+              },
+              error: "semanticSearch tool was not executable during source lookup retrieval",
+              timestamp: new Date().toISOString(),
+            });
+          }
+
+          const content = createSourceLookupAnswer({
+            output: sourceLookupOutput,
+            userMessage: lastUserContent,
+          });
+          toolTrace.push({
+            tool: "sourceLookupIntentRouter",
+            input: {
+              intent: assistantIntent,
+              query: lastUserContent,
+              selectedProjectId: selectedProjectId ?? null,
+            },
+            output: {
+              resultCount: sourceLookupOutput?.results?.length ?? 0,
+              usedProjectBriefingTemplate: false,
+            },
+            timestamp: new Date().toISOString(),
+          });
+
+          writeStrategistStatus(writer, {
+            stage: "synthesis",
+            message: "Writing source-grounded answer",
+            status: "loading",
+          });
+
+          const textId = "source-lookup-answer";
+          writer.write({ type: "text-start", id: textId });
+          writer.write({
+            type: "text-delta",
+            id: textId,
+            delta: content,
+          });
+          writer.write({ type: "text-end", id: textId });
+
+          const responseQuality = scoreResponseQuality({
+            toolTrace,
+            content,
+          });
+          await persistAssistantMessage({
+            supabase,
+            sessionId,
+            userId: user.id,
+            content,
+            toolTrace,
+            memoryUsage,
+            learningUsage,
+            totalUsage: undefined,
+            responseQuality,
+            councilMode,
+            modelId: activeModel,
+            loopDiagnostic: buildLoopDiagnostic({
+              stepStarts: stepStartDiagnostics,
+              steps: stepDiagnostics,
+            }),
+            projectBriefingSnapshot,
+            executiveBriefingRetrieval,
+            providerDecision,
+          });
+
+          await supabase
+            .from("conversations")
+            .update({ last_message_at: new Date().toISOString() })
+            .eq("session_id", sessionId)
+            .eq("user_id", user.id);
+
+          writeStrategistStatus(writer, {
+            stage: "complete",
+            message: "Source lookup complete",
+            status: "success",
+          });
+          return;
+        }
+
+        if (isRfiActionRequest(lastUserContent)) {
+          writeStrategistStatus(writer, {
+            stage: "knowledge",
+            message: "Resolving project context for RFI preview",
+            status: "loading",
+          });
+
+          const resolvedTarget = await resolveIntelligenceTarget({
+            query: lastUserContent,
+            selectedProjectId,
+            supabase,
+          });
+          const projectId = resolvedTarget?.projectId ?? selectedProjectId ?? null;
+          const projectName = resolvedTarget?.name ?? (projectId ? `Project ${projectId}` : "the selected project");
+          const topic = extractRfiTopic(lastUserContent);
+          const subject = titleCaseRfiSubject(topic);
+          const question = buildRfiPreviewQuestion({
+            topic,
+            projectName,
+          });
+
+          let previewOutput: unknown = null;
+          if (projectId) {
+            const createRfiTool = (tools as Record<string, ExecutableTool>).createRFI;
+            if (createRfiTool?.execute) {
+              previewOutput = await withTimeout(
+                createRfiTool.execute({
+                  projectId,
+                  subject,
+                  question,
+                  costImpact: "tbd",
+                  scheduleImpact: "tbd",
+                  confirmed: false,
+                }),
+                12_000,
+                "createRFI preview timed out during action intent routing",
+              );
+
+              if (isTimeoutResult(previewOutput)) {
+                toolTrace.push({
+                  tool: "createRFI",
+                  input: {
+                    projectId,
+                    subject,
+                    question,
+                    confirmed: false,
+                  },
+                  error: previewOutput.error,
+                  timestamp: new Date().toISOString(),
+                });
+              }
+            } else {
+              toolTrace.push({
+                tool: "createRFI",
+                input: {
+                  projectId,
+                  subject,
+                  question,
+                  confirmed: false,
+                },
+                error: "createRFI tool was not executable during action intent routing",
+                timestamp: new Date().toISOString(),
+              });
+            }
+          }
+
+          const content = projectId
+            ? formatRfiPreviewAnswer({
+                projectName,
+                previewOutput,
+                topic,
+              })
+            : [
+                "I identified this as an RFI action request, but I did not create anything.",
+                "",
+                "**Missing Project Context**",
+                "- I could not resolve the project from the selected context or your message.",
+                "",
+                "**Draft Intent**",
+                `- Subject: ${subject}`,
+                `- Question: ${question}`,
+                "",
+                "**Next Step**",
+                "- Select or name the exact project, then provide the ball-in-court and due date before confirming creation.",
+              ].join("\n");
+
+          toolTrace.push({
+            tool: "rfiActionIntentRouter",
+            input: {
+              intent: assistantIntent,
+              query: lastUserContent,
+              selectedProjectId: selectedProjectId ?? null,
+            },
+            output: {
+              resolvedTarget: resolvedTarget
+                ? {
+                    id: resolvedTarget.id,
+                    slug: resolvedTarget.slug,
+                    projectId: resolvedTarget.projectId,
+                    source: resolvedTarget.source,
+                  }
+                : null,
+              usedStreamingModelTools: false,
+              previewOnly: true,
+            },
+            timestamp: new Date().toISOString(),
+          });
+
+          writeStrategistStatus(writer, {
+            stage: "synthesis",
+            message: "Writing safe RFI preview",
+            status: "loading",
+          });
+
+          const textId = "rfi-action-preview";
+          writer.write({ type: "text-start", id: textId });
+          writer.write({
+            type: "text-delta",
+            id: textId,
+            delta: content,
+          });
+          writer.write({ type: "text-end", id: textId });
+
+          const responseQuality = scoreResponseQuality({
+            toolTrace,
+            content,
+          });
+          await persistAssistantMessage({
+            supabase,
+            sessionId,
+            userId: user.id,
+            content,
+            toolTrace,
+            memoryUsage,
+            learningUsage,
+            totalUsage: undefined,
+            responseQuality,
+            councilMode,
+            modelId: activeModel,
+            loopDiagnostic: buildLoopDiagnostic({
+              stepStarts: stepStartDiagnostics,
+              steps: stepDiagnostics,
+            }),
+            projectBriefingSnapshot,
+            executiveBriefingRetrieval,
+            providerDecision,
+          });
+
+          await supabase
+            .from("conversations")
+            .update({ last_message_at: new Date().toISOString() })
+            .eq("session_id", sessionId)
+            .eq("user_id", user.id);
+
+          writeStrategistStatus(writer, {
+            stage: "complete",
+            message: "RFI preview complete",
             status: "success",
           });
           return;
@@ -2681,31 +3188,32 @@ export const POST = withApiGuardrails(
           return;
         }
 
-        // Phase 0 provider matrix confirmed the prior failure mode:
-        // AI Gateway streamText tool calls still return finishReason "other"
-        // with empty text and no tool results. Keep tools disabled unless a
-        // controlled env override explicitly opts into the validated route.
-        const mcpToolBundle = null;
-        const modelTools = shouldEnableStreamingModelTools(providerDecision)
-          ? (tools as ToolSet)
-          : undefined;
+        const streamingModelToolsEnabled = shouldEnableStreamingModelTools(providerDecision);
+        const modelTools = streamingModelToolsEnabled ? (tools as ToolSet) : undefined;
+        toolTrace.push({
+          tool: "streamingToolPolicy",
+          input: {
+            providerPath: providerDecision.providerPath,
+            modelId: providerDecision.modelId,
+          },
+          output: {
+            streamingModelToolsEnabled,
+            reason: providerDecision.reason,
+          },
+          timestamp: new Date().toISOString(),
+        });
         const result = streamText({
             model: getLanguageModel(activeModel),
             system: systemPrompt,
             messages: modelMessages,
-            tools: modelTools,
+            ...(modelTools ? { tools: modelTools } : {}),
             maxOutputTokens: 1500,
             timeout: {
               totalMs: 90_000,
               stepMs: 45_000,
               chunkMs: 20_000,
             },
-            // Strategist gets enough steps to route, consult specialists, and synthesize.
-            // Each specialist gets up to 5 internal tool-call steps.
-            // Tools are disabled globally (AI Gateway bug); kept here so config is ready when tools are re-enabled.
             stopWhen: stepCountIs(10),
-            // Tools are disabled globally (AI Gateway bug); prepareStep is a no-op.
-            prepareStep: () => undefined,
             onError: ({ error }) => {
               streamErrorMessage =
                 error instanceof Error ? error.message : String(error);
@@ -2755,9 +3263,21 @@ export const POST = withApiGuardrails(
           }),
         );
 
-        // mcpToolBundle is always null (tools disabled); no cleanup needed.
-        let content = (await result.text).trim();
-        const totalUsage = await result.totalUsage;
+        let content = "";
+        let totalUsage: Awaited<typeof result.totalUsage> | undefined;
+        try {
+          content = (await result.text).trim();
+          totalUsage = await result.totalUsage;
+        } catch (streamError) {
+          const errorMessage = streamError instanceof Error ? streamError.message : String(streamError);
+          streamErrorMessage = streamErrorMessage ?? errorMessage;
+          console.error("[chat/route] streamText threw:", errorMessage);
+          toolTrace.push({
+            tool: "streamTextError",
+            error: errorMessage,
+            timestamp: new Date().toISOString(),
+          });
+        }
 
         if (!content) {
           const cause = streamErrorMessage

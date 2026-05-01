@@ -43,6 +43,8 @@ From the table name (e.g., `support_articles`):
 Create: `frontend/src/app/{route-group}/{route-slug}/page.tsx`
 
 ```tsx
+export const dynamic = "force-dynamic";
+
 import { createClient } from "@/lib/supabase/server";
 import { __CLIENT_COMPONENT__ } from "./__route-slug__-client";
 
@@ -52,7 +54,8 @@ export default async function __PAGE_FUNCTION__() {
   const { data, error } = await supabase
     .from("__TABLE_NAME__")
     .select("__COLUMNS__")  // explicit column list, no "*"
-    .order("__SORT_COLUMN__", { ascending: true });
+    .order("__SORT_COLUMN__", { ascending: true })
+    .limit(50000);  // Supabase default is 1000 — always set an explicit limit
 
   return (
     <__CLIENT_COMPONENT__
@@ -90,7 +93,7 @@ import { useMemo } from "react";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-import { ExternalLink, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { ExternalLink, MoreHorizontal, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { StatusBadge } from "@/components/ds";
@@ -102,6 +105,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  CellText,
+  TableDateValue,
+  TruncatedCell,
   UnifiedTablePage,
   useUnifiedTableState,
   type ColumnConfig,
@@ -212,6 +218,16 @@ export function __CLIENT_COMPONENT__({
   // Derive filter options from data
   // const categories = useMemo(() => ..., [items]);
 
+  // Derive active filters from URL — NOT from tableState.activeFilters
+  const activeFilters = useMemo<Record<string, FilterValue>>(
+    () => ({
+      // Add one entry per filterable field:
+      // status: searchParams.get("status") || undefined,
+      // category: searchParams.get("category") || undefined,
+    }),
+    [searchParams],
+  );
+
   const tableState = useUnifiedTableState({
     entityKey: "__route-slug__",
     searchParams,
@@ -219,7 +235,7 @@ export function __CLIENT_COMPONENT__({
     router,
     defaults: {
       view: "table",
-      allowedViews: ["table"],
+      allowedViews: ["table", "card"],
       page: 1,
       perPage: 50,
       search: "",
@@ -232,8 +248,45 @@ export function __CLIENT_COMPONENT__({
 
   const tableColumns = useMemo(() => buildTableColumns(), []);
 
-  // ... activeFilters, isFiltered, filteredItems, sortedItems, paginatedItems
-  // ... (same pattern as site-map and commitments pages)
+  const isFiltered =
+    !!tableState.debouncedSearch;
+    // || !!activeFilters.status || !!activeFilters.category;
+
+  const filteredItems = useMemo(
+    () => applyFilters(items, tableState.debouncedSearch, activeFilters),
+    [items, tableState.debouncedSearch, activeFilters],
+  );
+
+  const sortedItems = useMemo(() => {
+    const col = tableColumns.find((c) => c.id === tableState.sortBy);
+    if (!col?.sortValue) return filteredItems;
+    return [...filteredItems].sort((a, b) => {
+      const va = col.sortValue!(a);
+      const vb = col.sortValue!(b);
+      if (va == null) return tableState.sortDirection === "asc" ? -1 : 1;
+      if (vb == null) return tableState.sortDirection === "asc" ? 1 : -1;
+      if (typeof va === "number" && typeof vb === "number")
+        return tableState.sortDirection === "asc" ? va - vb : vb - va;
+      return tableState.sortDirection === "asc"
+        ? String(va).localeCompare(String(vb))
+        : String(vb).localeCompare(String(va));
+    });
+  }, [filteredItems, tableColumns, tableState.sortBy, tableState.sortDirection]);
+
+  const totalPages = Math.max(1, Math.ceil(sortedItems.length / tableState.perPage));
+
+  const paginatedItems = useMemo(() => {
+    const start = (tableState.page - 1) * tableState.perPage;
+    return sortedItems.slice(start, start + tableState.perPage);
+  }, [sortedItems, tableState.page, tableState.perPage]);
+
+  const handleFilterChange = (nextFilters: Record<string, FilterValue>) => {
+    tableState.setSearchParams({
+      // status: typeof nextFilters.status === "string" ? nextFilters.status : null,
+      page: "1",
+    });
+    tableState.setPage(1);
+  };
 
   // ── Selection handlers (MANDATORY) ──────────────────────────────────────
 
@@ -313,7 +366,7 @@ export function __CLIENT_COMPONENT__({
         title: "__PAGE_TITLE__",
         description: `${items.length.toLocaleString()} items`,
       }}
-      layout={{ fullBleedTable: false }}
+      layout={{ fullBleedTable: true }}
       toolbar={{
         totalItems: items.length,
         filteredItems: filteredItems.length,

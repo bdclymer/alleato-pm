@@ -244,6 +244,11 @@ async function bridgeToContractPayments(supabase) {
   const pcpMap = new Map(
     (existingPcp ?? []).map(r => [`${r.acumatica_ref_nbr}|${r.acumatica_doc_type}`, r.id])
   );
+  const pcpByRefNbr = new Map(
+    (existingPcp ?? [])
+      .filter(r => r.acumatica_ref_nbr)
+      .map(r => [r.acumatica_ref_nbr, r.id])
+  );
 
   const result = { created: 0, updated: 0, skipped: 0, errors: [] };
 
@@ -284,7 +289,7 @@ async function bridgeToContractPayments(supabase) {
     };
 
     try {
-      const existingId = pcpMap.get(key);
+      const existingId = pcpMap.get(key) ?? pcpByRefNbr.get(refNbr);
 
       if (existingId) {
         const { error } = await supabase

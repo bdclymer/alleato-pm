@@ -49,6 +49,7 @@ import {
   getDrawingUploadFileError,
 } from "@/lib/drawings/upload-constraints";
 import { ApiError, apiFetch } from "@/lib/api-client";
+import { getDrawingUploadFallbackIdentity } from "@/lib/drawings/drawing-identity";
 import { createClient as createSupabaseClient } from "@/lib/supabase/client";
 import {
   DRAWING_DISCIPLINES,
@@ -217,7 +218,7 @@ export function DrawingUploadDialog({
 
       if (selectedFiles.length === 1) {
         const file = selectedFiles[0].file;
-        const fileName = file.name.replace(/\.[^/.]+$/, "");
+        const fallbackIdentity = getDrawingUploadFallbackIdentity(file.name);
 
         try {
           const signedUpload = await apiFetch<{ path: string; token: string }>(
@@ -246,8 +247,8 @@ export function DrawingUploadDialog({
           await apiFetch(`/api/projects/${projectId}/drawings`, {
             method: "POST",
             body: JSON.stringify({
-              drawing_number: uploadData.drawing_number || fileName,
-              title: uploadData.title || fileName,
+              drawing_number: uploadData.drawing_number || fallbackIdentity.drawingNumber,
+              title: uploadData.title || fallbackIdentity.title,
               discipline: uploadData.discipline,
               drawing_type: uploadData.drawing_type,
               revision_number: uploadData.revision_number || "A",

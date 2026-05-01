@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, type CSSProperties } from "react";
+import { LiveList, LiveObject } from "@liveblocks/client";
 import { RoomProvider, ClientSideSuspense, useThreads } from "@liveblocks/react/suspense";
 import { FloatingComposer, FloatingThread, CommentPin } from "@liveblocks/react-ui";
 import { MessageSquare, X } from "lucide-react";
@@ -22,7 +23,7 @@ interface DrawingViewerWithCommentsProps {
   drawingNumber?: string;
   title?: string;
   onError?: (error: Error) => void;
-  onLoadSuccess?: (pdf: any) => void;
+  onLoadSuccess?: (pdf: { numPages: number }) => void;
   className?: string;
   showToolbar?: boolean;
   controlledTool?: "select" | "pen" | "highlighter" | "rectangle" | "arrow" | "text" | "eraser" | "comment" | "link";
@@ -39,13 +40,28 @@ interface DrawingViewerWithCommentsProps {
   visibleAnnotationTypes?: ("pen" | "highlighter" | "rectangle" | "arrow" | "text")[];
 }
 
+const INITIAL_STORAGE = {
+  meta: new LiveObject({ title: "" }),
+  properties: new LiveObject({
+    progress: "none" as const,
+    priority: "none" as const,
+    assignedTo: "none",
+  }),
+  labels: new LiveList<string>([]),
+  links: new LiveList<string>([]),
+};
+
 // ─── Root export (provides RoomProvider) ────────────────────────────────────
 
 export function DrawingViewerWithComments(props: DrawingViewerWithCommentsProps) {
   const roomId = `alleato:drawing:${props.drawingId}`;
 
   return (
-    <RoomProvider id={roomId} initialPresence={{ cursor: null }} initialStorage={{} as any}>
+    <RoomProvider
+      id={roomId}
+      initialPresence={{ cursor: null }}
+      initialStorage={INITIAL_STORAGE}
+    >
       <ClientSideSuspense
         fallback={
           <DrawingViewer

@@ -2,6 +2,7 @@
 
 import React, { type ReactElement } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 interface Tab {
@@ -49,7 +50,7 @@ export function PageTabs({
       : "-mb-px flex overflow-x-auto overscroll-x-contain pb-1 scrollbar-hide";
   const buttonClasses =
     variant === "inline"
-      ? "group relative inline-flex min-h-11 snap-start items-center gap-2 whitespace-nowrap px-3 py-2 text-sm transition-colors"
+      ? "group relative inline-flex min-h-11 snap-start items-center gap-2 whitespace-nowrap px-1 py-2 text-sm transition-colors"
       : "group relative inline-flex min-h-11 snap-start items-center gap-2 whitespace-nowrap px-3 py-3 text-sm transition-colors";
   const spacingClasses = variant === "inline" ? "mb-2 md:mb-3" : "mb-4 md:mb-6";
 
@@ -78,9 +79,9 @@ export function PageTabs({
 
             return (
               <React.Fragment key={tab.href}>
-                {/* eslint-disable-next-line design-system/no-design-violations -- custom tab primitive */}
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
                   onClick={() =>
                     onTabClick ? onTabClick(tab.href) : router.push(tab.href)
                   }
@@ -88,6 +89,7 @@ export function PageTabs({
                   data-testid={tab.testId}
                   className={cn(
                     buttonClasses,
+                    "rounded-none hover:bg-transparent",
                     isActive
                       ? "text-primary font-medium"
                       : "text-foreground/70 font-medium hover:text-foreground/90",
@@ -117,7 +119,7 @@ export function PageTabs({
                       isActive ? "bg-primary" : "bg-transparent",
                     )}
                   />
-                </button>
+                </Button>
               </React.Fragment>
             );
           })}

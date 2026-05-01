@@ -1,10 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { useRfis, useCreateRfi } from "@/hooks/use-rfis";
+import { useRouter } from "next/navigation";
+import { useRfis } from "@/hooks/use-rfis";
 import { usePunchItems, useCreatePunchItem } from "@/hooks/use-punch-items";
 import { useDrawings } from "@/hooks/use-drawings";
 import { usePhotos, useUploadPhotos } from "@/hooks/use-photos";
+import {
+  PunchItemFormDialog,
+  type PunchItemFormValues,
+} from "@/components/domain/punch-items/punch-item-form-dialog";
 import {
   Dialog,
   DialogContent,
@@ -103,7 +108,7 @@ export function LinkPinModal({
                   )}
                 >
                   <div
-                    className="h-7 w-7 rounded-full flex items-center justify-center text-white"
+                    className="h-7 w-7 rounded-full flex items-center justify-center text-primary-foreground"
                     style={{ backgroundColor: c.color }}
                   >
                     {c.icon}
@@ -394,16 +399,14 @@ function RfiContent({
   onConfirm: (input: CreatePinInput) => void;
   onCancel: () => void;
 }) {
+  const router = useRouter();
   const [mode, setMode] = useState<"link" | "create">("link");
-  const [subject, setSubject] = useState("");
-  const [question, setQuestion] = useState("");
   const [selectedRfiId, setSelectedRfiId] = useState<string | null>(null);
   const [selectedRfiLabel, setSelectedRfiLabel] = useState<string | null>(null);
   const [selectedRfiNumber, setSelectedRfiNumber] = useState<string | null>(null);
 
   const projectIdNum = Number(projectId);
   const { data: rfis, isLoading } = useRfis(projectIdNum);
-  const createRfi = useCreateRfi(projectIdNum);
 
   const handleLink = () => {
     if (!position || !selectedRfiId) return;
@@ -413,27 +416,6 @@ function RfiContent({
       entity_id: selectedRfiId,
       entity_label: selectedRfiLabel ?? undefined,
       entity_number: selectedRfiNumber ?? undefined,
-      color,
-    });
-  };
-
-  const handleCreate = async () => {
-    if (!position || !subject.trim()) return;
-    const rfi = await createRfi.mutateAsync({
-      subject: subject.trim(),
-      question: question.trim(),
-      assignees: [],
-      distribution_list: [],
-      is_private: false,
-      status: "draft",
-    });
-    onConfirm({
-      ...posToPin(position),
-      pin_type: "rfi",
-      entity_id: rfi.id,
-      entity_label: rfi.subject,
-      entity_number: rfi.number ? `RFI-${rfi.number}` : undefined,
-      entity_status: "draft",
       color,
     });
   };
@@ -488,36 +470,18 @@ function RfiContent({
         </TabsContent>
 
         <TabsContent value="create" className="mt-3 space-y-3">
-          <div>
-            <Label htmlFor="rfi-subject">Subject *</Label>
-            <Input
-              id="rfi-subject"
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-              placeholder="What is this RFI about?"
-              className="mt-1"
-            />
-          </div>
-          <div>
-            <Label htmlFor="rfi-question">Question</Label>
-            <Input
-              id="rfi-question"
-              value={question}
-              onChange={(e) => setQuestion(e.target.value)}
-              placeholder="Describe the question or issue…"
-              className="mt-1"
-            />
-          </div>
           <p className="text-xs text-muted-foreground">
-            Creates a Draft RFI. Open the RFI tool to complete and submit it.
+            New RFIs use the full RFI form so required assignees, dates, distribution, and question details are captured correctly.
           </p>
           <DialogFooter>
             <Button variant="outline" onClick={onCancel}>Cancel</Button>
             <Button
-              onClick={handleCreate}
-              disabled={!subject.trim() || createRfi.isPending}
+              onClick={() => {
+                onCancel();
+                router.push(`/${projectId}/rfis/new`);
+              }}
             >
-              {createRfi.isPending ? "Creating…" : "Create & Link"}
+              Open RFI Form
             </Button>
           </DialogFooter>
         </TabsContent>
@@ -542,14 +506,14 @@ function PunchItemContent({
   onCancel: () => void;
 }) {
   const [mode, setMode] = useState<"link" | "create">("link");
-  const [title, setTitle] = useState("");
+  const [formOpen, setFormOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedLabel, setSelectedLabel] = useState<string | null>(null);
   const [selectedNumber, setSelectedNumber] = useState<string | null>(null);
 
   const projectIdNum = Number(projectId);
   const { data: itemsRaw, isLoading } = usePunchItems(projectIdNum);
-  const items = Array.isArray(itemsRaw) ? itemsRaw : (itemsRaw as any)?.items ?? [];
+  const items = itemsRaw?.items ?? [];
   const createItem = useCreatePunchItem(projectIdNum);
 
   const handleLink = () => {
@@ -564,18 +528,19 @@ function PunchItemContent({
     });
   };
 
-  const handleCreate = async () => {
-    if (!position || !title.trim()) return;
-    const item = await createItem.mutateAsync({ title: title.trim(), status: "draft" });
+  const handleCreate = async (data: PunchItemFormValues) => {
+    if (!position) return;
+    const item = await createItem.mutateAsync(data);
     onConfirm({
       ...posToPin(position),
       pin_type: "punch_item",
       entity_id: item.id,
       entity_label: item.title,
       entity_number: item.number ? `#${item.number}` : undefined,
-      entity_status: "open",
+      entity_status: item.status,
       color,
     });
+    setFormOpen(false);
   };
 
   return (
@@ -623,27 +588,26 @@ function PunchItemContent({
         </TabsContent>
 
         <TabsContent value="create" className="mt-3 space-y-3">
-          <div>
-            <Label htmlFor="punch-title">Title *</Label>
-            <Input
-              id="punch-title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Describe the punch item…"
-              className="mt-1"
-            />
-          </div>
+          <p className="text-xs text-muted-foreground">
+            New punch items use the same form as the Punch List page so assignee, ball in court, priority, location, trade, and due date are captured.
+          </p>
           <DialogFooter>
             <Button variant="outline" onClick={onCancel}>Cancel</Button>
-            <Button
-              onClick={handleCreate}
-              disabled={!title.trim() || createItem.isPending}
-            >
-              {createItem.isPending ? "Creating…" : "Create & Link"}
+            <Button onClick={() => setFormOpen(true)}>
+              Open Punch Item Form
             </Button>
           </DialogFooter>
         </TabsContent>
       </Tabs>
+
+      <PunchItemFormDialog
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        onSubmit={(data) => void handleCreate(data)}
+        isLoading={createItem.isPending}
+        mode="create"
+        projectId={projectIdNum}
+      />
     </div>
   );
 }

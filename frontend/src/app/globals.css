@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "../../styles/tailwind.css";
+@import "@liveblocks/react-ui/styles.css";
 
 @config "../../tailwind.config.ts";
 @custom-variant dark (&:is(.dark *));
