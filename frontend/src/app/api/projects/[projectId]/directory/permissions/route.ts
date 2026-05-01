@@ -114,6 +114,7 @@ export const GET = withApiGuardrails(
           company_name: person.company?.name || null,
           permission_level: permissionLevel || "none",
           has_explicit_permission: permissionMap.has(membership.person_id),
+          permission_template_id: template?.id ?? null,
           template_name: template?.name || null,
         };
       })

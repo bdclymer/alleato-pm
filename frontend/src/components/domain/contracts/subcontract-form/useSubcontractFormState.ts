@@ -12,6 +12,11 @@ import {
   type SovLineItem,
 } from "@/lib/schemas/create-subcontract-schema";
 import type { AttachmentItem, BudgetCode, VendorOption } from "./types";
+import {
+  reconcileSovBudgetCodes,
+  synthesizeMissingBudgetCodes,
+} from "./sovBudgetCodeReconciliation";
+import { apiFetch } from "@/lib/api-client";
 
 interface UseSubcontractFormStateOptions {
   projectId: number;
@@ -88,11 +93,10 @@ export function useSubcontractFormState({
 
     const generate = async () => {
       try {
-        const res = await fetch(`/api/projects/${projectId}/subcontracts`);
-        if (!res.ok) return;
-        const payload = (await res.json()) as
+        const payload = await apiFetch<
           | { data?: Array<{ contract_number?: string | null }> }
-          | Array<{ contract_number?: string | null }>;
+          | Array<{ contract_number?: string | null }>
+        >(`/api/projects/${projectId}/subcontracts`);
         const rows = Array.isArray(payload)
           ? payload
           : Array.isArray(payload.data)
@@ -125,12 +129,9 @@ export function useSubcontractFormState({
     const fetchCompanies = async () => {
       try {
         setIsLoadingVendors(true);
-        const response = await fetch(`/api/companies`);
-        if (!response.ok) throw new Error("Failed to load companies");
-        const data = (await response.json()) as Array<{
-          id: string;
-          name: string;
-        }>;
+        const data = await apiFetch<Array<{ id: string; name: string }>>(
+          `/api/companies`,
+        );
         setVendorOptions(
           (data || []).map((c) => ({
             value: c.id,
@@ -213,9 +214,9 @@ export function useSubcontractFormState({
       if (!projectId) return;
       try {
         setLoadingBudgetCodes(true);
-        const response = await fetch(`/api/projects/${projectId}/budget-codes`);
-        if (!response.ok) throw new Error("Failed to load budget codes");
-        const data = (await response.json()) as { budgetCodes: BudgetCode[] };
+        const data = await apiFetch<{ budgetCodes: BudgetCode[] }>(
+          `/api/projects/${projectId}/budget-codes`,
+        );
         setBudgetCodes(data.budgetCodes || []);
       } catch {
         setBudgetCodes([]);
@@ -240,35 +241,18 @@ export function useSubcontractFormState({
 
   // --- Reconcile SOV budget codes ---
   React.useEffect(() => {
-    if (budgetCodes.length === 0) return;
     setSovLines((prevLines) => {
-      let changed = false;
-      const nextLines = prevLines.map((line) => {
-        if (line.isGroup || (line.budgetCodeId && line.budgetCodeLabel)) return line;
-        const storedCode = `${line.budgetCode ?? ""}`.trim();
-        if (!storedCode) return line;
-        const matched = budgetCodes.find(
-          (c) => c.id === storedCode || c.code === storedCode || c.fullLabel === storedCode,
-        );
-        if (!matched) return line;
-        changed = true;
-        return { ...line, budgetCodeId: matched.id, budgetCode: matched.code, budgetCodeLabel: matched.fullLabel };
-      });
-      return changed ? nextLines : prevLines;
+      const { lines, changed } = reconcileSovBudgetCodes(prevLines, budgetCodes);
+      return changed ? lines : prevLines;
     });
   }, [budgetCodes]);
 
   // --- Add synthetic budget codes from SOV ---
+  // Without this, an SOV row whose stored `budget_code` text no longer exists
+  // in `project_budget_codes` would render with an empty BudgetCodeSelector on
+  // edit. Synthesizing a placeholder option preserves the value.
   React.useEffect(() => {
-    const existing = new Set(budgetCodes.flatMap((c) => [c.id, c.code, c.fullLabel]));
-    const synthetic: BudgetCode[] = [];
-    for (const line of sovLines) {
-      if (line.isGroup) continue;
-      const code = `${line.budgetCode ?? ""}`.trim();
-      if (!code || existing.has(code)) continue;
-      existing.add(code);
-      synthetic.push({ id: code, code, costType: null, description: "", fullLabel: code });
-    }
+    const synthetic = synthesizeMissingBudgetCodes(sovLines, budgetCodes);
     if (synthetic.length > 0) setBudgetCodes((prev) => [...prev, ...synthetic]);
   }, [budgetCodes, sovLines]);
 

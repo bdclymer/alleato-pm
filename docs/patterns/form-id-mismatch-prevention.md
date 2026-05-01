@@ -28,9 +28,12 @@ This pattern will recur anywhere a form dropdown loads options from a different 
 | Column | FK Target | Form Dropdown Source | Resolution |
 |--------|-----------|---------------------|------------|
 | `change_event_line_items.budget_line_id` | `budget_lines` | `project_budget_codes` (via `/api/projects/[id]/budget-codes`) | Prefer `budget_lines.project_budget_code_id`; fallback through `cost_code_id` + `cost_type_id` |
-| `change_event_line_items.vendor_id` | `companies` | `vendors` (via `/api/projects/[id]/vendors`) | Match by company name |
+| `change_event_line_items.vendor_id` | `companies` | `/api/projects/[id]/vendors` (already returns `companies.id`) | No mapping needed — there is no separate `vendors` table; the API joins through `project_vendors` and exposes the underlying `companies.id` directly. (The original 2026-03 mismatch has been resolved at the API layer.) |
 | `*.commitment_id` | `subcontracts` or `purchase_orders` | Combined list with `sub-`/`po-` prefixes | Prefix-based parsing (already working) |
 | `direct_costs.vendor_id` | `companies` | `/api/projects/[id]/vendors` (project-scoped companies) | Form injects the record's existing `vendor:companies(*)` as a synthetic option + uses `selectedLabel` fallback so Edit always renders the saved vendor even if it's outside the scoped dropdown set |
+| `subcontract_sov_items.budget_code` (text) | _none — text storage by design_ | `project_budget_codes` (via `BudgetCodeSelector`) | `useSubcontractFormState` uses pure helpers `reconcileSovBudgetCodes` (matches text against id/code/fullLabel) and `synthesizeMissingBudgetCodes` (renders a placeholder option for stale codes). See `frontend/src/components/domain/contracts/subcontract-form/sovBudgetCodeReconciliation.ts` and its unit tests. |
+| `purchase_order_sov_items.budget_code` (text) | _none — text storage by design_ | `project_budget_codes` | Same text-roundtrip pattern as subcontract SOV. |
+| `project_directory_memberships.permission_template_id` | `permission_templates` | `permission_templates` | Resolved by the project directory permissions API which now exposes `permission_template_id` directly, replacing the earlier brittle by-name lookup in `members-tab.tsx`. |
 
 ## Scope Mismatch (variant)
 
@@ -70,3 +73,19 @@ The GET API maps stored IDs to form-compatible IDs:
 The POST/PATCH line items API resolves form IDs back to FK-compatible IDs:
 - If `budgetCodeId` is not found in `budget_lines`, checks `project_budget_codes` and resolves or creates the matching `budget_lines` row
 - If `vendorId` not found in `companies`, checks `vendors` table and gets `company_id`
+
+## Audit history
+
+A full-codebase Form ↔ DB FK audit ran on 2026-05-01
+(`docs/reports/fk-audit-2026-05-01.md`). All historical mismatches were
+verified RESOLVED in production code paths. Two follow-ups landed in the
+same change:
+
+- The orphaned `ChangeEventLineItemsGrid.tsx` (which would have re-introduced
+  the 2026-03 mismatch if anyone wired it back in) was removed.
+- The `members-tab.tsx` permission template dropdown was switched from a
+  brittle name-based lookup to the canonical UUID match, with a regression
+  test on the API.
+
+Re-run the audit (`/fk-audit`) any time a form dropdown is added, modified,
+or pointed at a new options endpoint.
