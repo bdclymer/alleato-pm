@@ -98,7 +98,7 @@ export function OsdDrawingViewer({ fileUrl, className }: OsdDrawingViewerProps) 
         const ctx = canvas.getContext("2d");
         if (!ctx) throw new Error("No 2D context");
 
-        await page.render({ canvasContext: ctx, viewport }).promise;
+        await page.render({ canvas, canvasContext: ctx, viewport }).promise;
         if (isCancelled()) return;
 
         const blob: Blob = await new Promise((resolve, reject) =>

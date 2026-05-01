@@ -2633,7 +2633,23 @@ async function searchDocumentChunksByCategory({
       },
     );
 
-    if (error) return { error: (error as { message: string }).message };
+    if (error) {
+      const message = (error as { message: string }).message;
+      if (message.includes("structure of query does not match function result type")) {
+        return searchDocumentChunksByCategoryFallback({
+          supabase,
+          query,
+          category,
+          matchCount,
+          sourceLabel,
+          scope,
+          filterProjectId,
+          rpcError: message,
+        });
+      }
+
+      return { error: message };
+    }
 
     type ChunkRow = {
       chunk_id: string;
@@ -2716,6 +2732,166 @@ async function searchDocumentChunksByCategory({
       error: `${sourceLabel} search failed: ${msg}`,
     };
   }
+}
+
+async function searchDocumentChunksByCategoryFallback({
+  supabase,
+  query,
+  category,
+  matchCount,
+  sourceLabel,
+  scope,
+  filterProjectId,
+  rpcError,
+}: {
+  supabase: ReturnType<typeof createServiceClient>;
+  query: string;
+  category: string;
+  matchCount: number;
+  sourceLabel: string;
+  scope: Awaited<ReturnType<ToolGuardrails["getScope"]>>;
+  filterProjectId?: number | null;
+  rpcError: string;
+}) {
+  const effectiveProjectId =
+    typeof filterProjectId === "number" ? filterProjectId : scope.pinnedProjectId ?? null;
+
+  if (!scope.isAdmin && scope.allowedProjectIds.length === 0) {
+    return {
+      results: [],
+      error:
+        "You are not assigned to any projects in the current database scope, so I cannot search documents safely.",
+    };
+  }
+
+  let docsQuery = supabase
+    .from("document_metadata")
+    .select("id, title, category, source, type, date, participants, tags, project_id, created_at")
+    .eq("category", category)
+    .limit(200);
+
+  if (typeof effectiveProjectId === "number") {
+    docsQuery = docsQuery.eq("project_id", effectiveProjectId);
+  }
+
+  const { data: docRows, error: docsError } = await docsQuery;
+  if (docsError) {
+    return {
+      error: `${sourceLabel} fallback search failed after RPC mismatch (${rpcError}): ${docsError.message}`,
+    };
+  }
+
+  const docs = ((docRows ?? []) as AnyRow[]).filter((doc) => {
+    if (scope.isAdmin) return true;
+    const projectId = doc.project_id;
+    return typeof projectId === "number" && scope.allowedProjectIds.includes(projectId);
+  });
+
+  if (docs.length === 0) {
+    return {
+      query,
+      sourceType: sourceLabel,
+      resultCount: 0,
+      fallback: true,
+      rpcError,
+      results: [],
+      message: `No ${sourceLabel}s found for "${query}" in the fallback document search.`,
+    };
+  }
+
+  const documentIds = docs
+    .map((doc) => doc.id)
+    .filter((id): id is string => typeof id === "string")
+    .slice(0, 40);
+  const docsById = new Map(documentIds.map((id) => [id, docs.find((doc) => doc.id === id)]));
+
+  const { data: chunkRows, error: chunksError } = await supabase
+    .from("document_chunks")
+    .select("chunk_id, document_id, chunk_index, text, metadata")
+    .in("document_id", documentIds)
+    .limit(500);
+
+  if (chunksError) {
+    return {
+      error: `${sourceLabel} fallback search failed after RPC mismatch (${rpcError}): ${chunksError.message}`,
+    };
+  }
+
+  const queryTerms = normalizeSearchTerms(query);
+  const ranked = ((chunkRows ?? []) as AnyRow[])
+    .map((chunk) => {
+      const doc = docsById.get(String(chunk.document_id));
+      const haystack = [doc?.title, doc?.source, chunk.text].join(" ").toLowerCase();
+      const score = queryTerms.reduce(
+        (total, term) => total + (haystack.includes(term) ? 1 : 0),
+        0,
+      );
+
+      return { chunk, doc, score };
+    })
+    .filter((row) => row.doc && row.score > 0)
+    .sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      const aDate = typeof a.doc?.date === "string" ? Date.parse(a.doc.date) : 0;
+      const bDate = typeof b.doc?.date === "string" ? Date.parse(b.doc.date) : 0;
+      return bDate - aDate;
+    })
+    .slice(0, matchCount);
+
+  return {
+    query,
+    sourceType: sourceLabel,
+    resultCount: ranked.length,
+    fallback: true,
+    rpcError,
+    results: ranked.map(({ chunk, doc }) => ({
+      title: String(doc?.title ?? "(untitled)"),
+      content: String(chunk.text ?? "").substring(0, 2000),
+      similarity: null,
+      date: doc?.date ?? doc?.created_at ?? null,
+      participants: doc?.participants ?? null,
+      source: doc?.source ?? null,
+      type: doc?.type ?? null,
+      projectId: doc?.project_id ?? null,
+      documentId: String(chunk.document_id ?? ""),
+      chunkIndex: typeof chunk.chunk_index === "number" ? chunk.chunk_index : null,
+      citation: formatCitation(sourceLabel, {
+        doc_title: typeof doc?.title === "string" ? doc.title : null,
+        doc_date: typeof doc?.date === "string" ? doc.date : null,
+        doc_created_at: typeof doc?.created_at === "string" ? doc.created_at : null,
+        doc_participants: typeof doc?.participants === "string" ? doc.participants : null,
+        doc_source: typeof doc?.source === "string" ? doc.source : null,
+      }),
+    })),
+  };
+}
+
+function normalizeSearchTerms(query: string): string[] {
+  const ignored = new Set([
+    "about",
+    "action",
+    "actions",
+    "and",
+    "current",
+    "facts",
+    "for",
+    "give",
+    "hard",
+    "including",
+    "latest",
+    "next",
+    "open",
+    "project",
+    "recommended",
+    "risks",
+    "the",
+    "update",
+  ]);
+
+  return (query.match(/\b[A-Za-z][A-Za-z0-9'-]{2,}\b/g) ?? [])
+    .map((term) => term.toLowerCase())
+    .filter((term) => !ignored.has(term))
+    .slice(0, 12);
 }
 
 type ChunkResultRow = {

@@ -410,19 +410,22 @@ export async function generateBrandonDailyUpdate(
   const cutoff = new Date(Date.now() - windowDays * 24 * 60 * 60 * 1000);
   const openai = getOpenAI();
 
-  const rawHits: Array<{
-    spec: QuerySpec;
-    sourceGroup: SourceGroup;
-    row: RagRow;
-  }> = [];
+  const embeddingsBySpec = await Promise.all(
+    QUERY_SPECS.map(async (spec) => ({
+      spec,
+      queryEmbedding: await generateEmbedding(openai, spec.query, EMBEDDING.LARGE),
+    })),
+  );
 
-  for (const spec of QUERY_SPECS) {
-    const queryEmbedding = await generateEmbedding(openai, spec.query, EMBEDDING.LARGE);
-    for (const sourceGroup of SOURCE_GROUPS) {
-      const rows = await runChunkSearch(queryEmbedding, sourceGroup);
-      rawHits.push(...rows.map((row) => ({ spec, sourceGroup, row })));
-    }
-  }
+  const rawHitGroups = await Promise.all(
+    embeddingsBySpec.flatMap(({ spec, queryEmbedding }) =>
+      SOURCE_GROUPS.map(async (sourceGroup) => {
+        const rows = await runChunkSearch(queryEmbedding, sourceGroup);
+        return rows.map((row) => ({ spec, sourceGroup, row }));
+      }),
+    ),
+  );
+  const rawHits = rawHitGroups.flat();
 
   const documentIds = [
     ...new Set(rawHits.map((hit) => hit.row.document_id).filter(Boolean) as string[]),

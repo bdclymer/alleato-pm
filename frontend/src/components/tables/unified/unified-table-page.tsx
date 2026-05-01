@@ -10,6 +10,7 @@ import { PageHeader } from "@/components/layout/page-header-unified";
 import { PageContainer, type PageContainerProps } from "@/components/layout/PageContainer";
 import { PageTabs } from "@/components/layout/PageTabs";
 import { EmptyState } from "@/components/ds";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -34,7 +35,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { TableToolbar, type ColumnConfig, type FilterConfig, type ViewMode } from "./table-toolbar";
 import { Button } from "@/components/ui/button";
-import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, EyeOff, Inbox, MoreVertical, PanelRightClose, PanelRightOpen, Pin, PinOff, Trash2, X } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, EyeOff, Inbox, MoreHorizontal, MoreVertical, PanelRightClose, PanelRightOpen, Pin, PinOff, Trash2, X } from "lucide-react";
 import { MobileCardList } from "./mobile-card-list";
 
 const INTERACTIVE_ROW_TARGET_SELECTOR = [
@@ -1495,7 +1496,7 @@ export function UnifiedTablePage<T>({
                                 },
                               })
                             ) : (
-                            <input
+                            <Input
                               className="h-7 w-full rounded border border-border bg-background px-2 text-sm -my-0.5"
                               value={editingValue}
                               autoFocus
@@ -1671,7 +1672,7 @@ export function UnifiedTablePage<T>({
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <span>Rows per page</span>
             <Select value={String(pagination.perPage)} onValueChange={pagination.onPerPageChange}>
-              <SelectTrigger className="h-8 w-[90px]">
+              <SelectTrigger className="h-8 w-24">
                 <SelectValue placeholder={String(pagination.perPage)} />
               </SelectTrigger>
               <SelectContent>

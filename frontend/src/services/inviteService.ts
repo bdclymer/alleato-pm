@@ -72,7 +72,7 @@ export class InviteService {
         email: person.email,
         firstName: person.first_name,
         lastName: person.last_name,
-        projectName: project.name,
+        projectName: project.name ?? `Project ${projectIdNum}`,
         role: membership.role,
         expiresAt,
       });
@@ -328,7 +328,7 @@ export class InviteService {
         email: person.email,
         firstName: person.first_name,
         lastName: person.last_name,
-        projectName: project.name,
+        projectName: project.name ?? `Project ${projectIdNum}`,
         role: membership.role,
         expiresAt,
       });

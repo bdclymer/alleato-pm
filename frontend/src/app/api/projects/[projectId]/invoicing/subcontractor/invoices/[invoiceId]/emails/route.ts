@@ -165,6 +165,21 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
             content: Buffer.from(pdfBuffer).toString("base64"),
           },
         ],
+        audit: {
+          template: "subcontractor-invoice-delivery",
+          entity: { type: "subcontractor_invoice", id: invoiceIdNum },
+          userId: user.id,
+          idempotencyKey: `subcontractor-invoice/${invoiceIdNum}/${resolvedSubject}`,
+          metadata: {
+            project_id: projectIdNum,
+            invoice_id: invoiceIdNum,
+            invoice_number: invoiceNumber,
+            email_type,
+            recipient_emails: toRecipients,
+            cc_emails: ccRecipients,
+            has_attachments: true,
+          },
+        },
       });
     } catch (error) {
       // Sensitive: persists failed sends so operations can diagnose delivery issues.
