@@ -1015,22 +1015,38 @@ export function UnifiedTablePage<T>({
 
   const isCompactDensity = table.density === "compact";
 
+  // On mobile, force every button rendered through `header.actions` into a 40×40
+  // icon-only shape. We hide text via `text-[0]` (works for raw text nodes that
+  // CSS can't otherwise target) and clamp the box to a square. SVG icons keep
+  // their absolute `size-4` because the Button base styles size them in rem,
+  // not em. Buttons that need to opt out can set `data-keep-text`.
+  const mobileIconOnlyActions =
+    "max-sm:[&_button:not([data-keep-text])]:!size-10 " +
+    "max-sm:[&_button:not([data-keep-text])]:!p-0 " +
+    "max-sm:[&_button:not([data-keep-text])]:!gap-0 " +
+    "max-sm:[&_button:not([data-keep-text])]:!text-[0px] " +
+    "max-sm:[&_button:not([data-keep-text])]:!justify-center";
+
+  const headerActionsSlot = header.actions ? (
+    <div className={cn("contents", mobileIconOnlyActions)}>{header.actions}</div>
+  ) : null;
+
   const headerContent = (
     <PageHeader
       title={header.title}
       description={isCompactDensity ? undefined : header.description}
       variant={header.variant}
-      mobileActionsInline={header.mobileActionsInline}
+      mobileActionsInline={header.mobileActionsInline ?? true}
       className={cn("px-0 sm:px-0 lg:px-0", isCompactDensity && "[&>div]:pt-2 [&>div]:pb-2")}
       actions={
         toolbarInlineWithHeader ? (
           <div className="flex items-center gap-2">
-            {header.actions}
+            {headerActionsSlot}
             {tableToolbar}
           </div>
-        ) : header.actions ? (
+        ) : headerActionsSlot ? (
           <div className="flex items-center gap-2">
-            {header.actions}
+            {headerActionsSlot}
             {renderTableToolbar("sm:hidden")}
           </div>
         ) : (

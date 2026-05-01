@@ -20,7 +20,9 @@ export default function TablesLayout({
       <SidebarInset className="h-svh overflow-hidden">
         <div className="flex min-h-0 flex-1 flex-col overflow-auto scrollbar-hide">
           <SiteHeader />
-          <main className="flex flex-1 flex-col gap-4 px-4 pt-4 pb-4 min-w-0">
+          {/* Horizontal padding is owned by PageContainer / per-page wrappers so mobile
+              and desktop get the same 16/24/32px gutter as every other route. */}
+          <main className="flex flex-1 flex-col gap-4 pt-2 pb-4 min-w-0">
             {children}
           </main>
           <SiteFooter />

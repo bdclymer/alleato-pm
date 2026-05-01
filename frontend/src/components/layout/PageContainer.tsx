@@ -30,7 +30,9 @@ export function PageContainer({
       className={cn(
         "flex flex-col flex-1 mx-auto w-full min-w-0",
         maxWidthClasses[maxWidth],
-        padding && "px-1 sm:px-6 lg:px-8 pt-0.5 sm:pt-1 pb-1 sm:pb-2",
+        // Consistent gutter on every side: 16px on mobile, 24px on tablet, 32px on desktop.
+        // Matches the inset of the (tables) layout so nested PageContainers do not double-pad.
+        padding && "px-4 sm:px-6 lg:px-8 pt-2 pb-4",
         // Prevent horizontal overflow on all screen sizes
         "overflow-x-clip",
         className,

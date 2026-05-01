@@ -318,7 +318,7 @@ export default function ProjectsPage() {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-50px)] min-h-0 bg-neutral-50 rounded-lg overflow-hidden">
+    <div className="mx-4 sm:mx-6 lg:mx-8 flex flex-col h-[calc(100vh-50px)] min-h-0 bg-neutral-50 rounded-lg overflow-hidden">
       {/* Portfolio Header with tabs */}
       <PortfolioHeader
         views={portfolioViews}
