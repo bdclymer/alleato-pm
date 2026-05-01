@@ -53,6 +53,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { apiFetch } from "@/lib/api-client";
 import dynamic from "next/dynamic";
 import { useDrawing, useDrawings } from "@/hooks/use-drawings";
 import { DrawingComments } from "@/components/drawings/DrawingComments";
@@ -282,9 +283,9 @@ export default function DrawingViewerPage() {
   const handleDownload = useCallback(async () => {
     if (!drawing) return;
     try {
-      const response = await fetch(`/api/projects/${projectId}/drawings/${drawingId}/download`);
-      if (!response.ok) throw new Error("Failed to download drawing");
-      const data = await response.json();
+      const data = await apiFetch<{ downloadUrl?: string; fileName?: string }>(
+        `/api/projects/${projectId}/drawings/${drawingId}/download`
+      );
       if (data.downloadUrl) {
         const a = document.createElement("a");
         a.href = data.downloadUrl;
@@ -294,8 +295,8 @@ export default function DrawingViewerPage() {
         document.body.removeChild(a);
         toast.success("Drawing downloaded");
       }
-    } catch {
-      toast.error("Failed to download drawing");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to download drawing");
     }
   }, [projectId, drawingId, drawing]);
 
@@ -575,6 +576,19 @@ export default function DrawingViewerPage() {
 
           {/* Right: panel toggles + download + close */}
           <div className="flex items-center gap-0.5 shrink-0">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 px-2 mr-1 gap-1 text-xs"
+                  onClick={() => router.push(`/${projectId}/drawings/viewer-v2/${drawingId}`)}
+                >
+                  Try v2 prototype
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">Open the OpenSeadragon-based prototype viewer</TooltipContent>
+            </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button

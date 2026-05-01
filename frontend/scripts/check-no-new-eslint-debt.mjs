@@ -2,6 +2,7 @@
 
 import { execFileSync, execSync } from "node:child_process";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const args = process.argv.slice(2);
 const isStaged = args.includes("--staged");
@@ -9,7 +10,11 @@ const baseFlagIndex = args.indexOf("--base");
 const baseFromFlag = baseFlagIndex >= 0 ? args[baseFlagIndex + 1] : undefined;
 const baseRef = baseFromFlag || process.env.GUARDRAIL_BASE_REF || "origin/main";
 
-const frontendRoot = process.cwd();
+// Derive paths from this script's location so the script can be invoked from
+// any cwd (lint-staged 16 invokes from repo root). The script lives at
+// frontend/scripts/check-no-new-eslint-debt.mjs.
+const scriptDir = path.dirname(fileURLToPath(import.meta.url));
+const frontendRoot = path.resolve(scriptDir, "..");
 const repoRoot = path.resolve(frontendRoot, "..");
 const isWindows = process.platform === "win32";
 
