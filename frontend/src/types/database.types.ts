@@ -12202,6 +12202,27 @@ export type Database = {
         }
         Relationships: []
       }
+      ingestion_dead_letter: {
+        Row: {
+          created_at: string
+          error: string
+          id: string
+          payload: Json
+        }
+        Insert: {
+          created_at?: string
+          error: string
+          id?: string
+          payload: Json
+        }
+        Update: {
+          created_at?: string
+          error?: string
+          id?: string
+          payload?: Json
+        }
+        Relationships: []
+      }
       ingestion_jobs: {
         Row: {
           content_hash: string | null
@@ -21471,6 +21492,44 @@ export type Database = {
           },
         ]
       }
+      search_documents: {
+        Row: {
+          content: string
+          created_at: string
+          embedding: unknown
+          id: string
+          project_sync_id: string
+          source_id: number
+          source_type: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          embedding: unknown
+          id?: string
+          project_sync_id: string
+          source_id: number
+          source_type: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          embedding?: unknown
+          id?: string
+          project_sync_id?: string
+          source_id?: number
+          source_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "search_documents_project_sync_id_fkey"
+            columns: ["project_sync_id"]
+            isOneToOne: false
+            referencedRelation: "projects_sync"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sources: {
         Row: {
           category: string | null
@@ -25441,6 +25500,7 @@ export type Database = {
           created_at: string | null
           daily_log_default: boolean | null
           delay_log_default: boolean | null
+          drawings_default: boolean | null
           emails_default: boolean | null
           id: string
           person_id: string
@@ -25456,6 +25516,7 @@ export type Database = {
           created_at?: string | null
           daily_log_default?: boolean | null
           delay_log_default?: boolean | null
+          drawings_default?: boolean | null
           emails_default?: boolean | null
           id?: string
           person_id: string
@@ -25471,6 +25532,7 @@ export type Database = {
           created_at?: string | null
           daily_log_default?: boolean | null
           delay_log_default?: boolean | null
+          drawings_default?: boolean | null
           emails_default?: boolean | null
           id?: string
           person_id?: string
@@ -30026,51 +30088,28 @@ export type Database = {
           title: string
         }[]
       }
-      search_knowledge_base:
-        | {
-            Args: {
-              filter_category?: string
-              filter_project_id?: number
-              match_count?: number
-              match_threshold?: number
-              query_embedding: unknown
-            }
-            Returns: {
-              category: string
-              content: string
-              created_at: string
-              id: string
-              meeting_id: string
-              origin: string
-              project_id: number
-              similarity: number
-              source: string
-              tags: string[]
-              title: string
-            }[]
-          }
-        | {
-            Args: {
-              filter_category?: string
-              filter_project_id?: number
-              match_count?: number
-              match_threshold?: number
-              query_embedding: string
-            }
-            Returns: {
-              category: string
-              content: string
-              created_at: string
-              id: string
-              meeting_id: string
-              origin: string
-              project_id: number
-              similarity: number
-              source: string
-              tags: string[]
-              title: string
-            }[]
-          }
+      search_knowledge_base: {
+        Args: {
+          filter_category?: string
+          filter_project_id?: number
+          match_count?: number
+          match_threshold?: number
+          query_embedding: unknown
+        }
+        Returns: {
+          category: string
+          content: string
+          created_at: string
+          id: string
+          meeting_id: string
+          origin: string
+          project_id: number
+          similarity: number
+          source: string
+          tags: string[]
+          title: string
+        }[]
+      }
       search_meeting_chunks:
         | {
             Args: {
@@ -30605,3 +30644,4 @@ export const Constants = {
     },
   },
 } as const
+<claude-code-hint v="1" type="plugin" value="supabase@claude-plugins-official" />
