@@ -34,7 +34,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { TableToolbar, type ColumnConfig, type FilterConfig, type ViewMode } from "./table-toolbar";
 import { Button } from "@/components/ui/button";
-import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, EyeOff, Inbox, MoreHorizontal, PanelRightClose, PanelRightOpen, Pin, PinOff, Trash2, X } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, EyeOff, Inbox, MoreVertical, PanelRightClose, PanelRightOpen, Pin, PinOff, Trash2, X } from "lucide-react";
 import { MobileCardList } from "./mobile-card-list";
 
 const INTERACTIVE_ROW_TARGET_SELECTOR = [
@@ -1055,7 +1055,7 @@ export function UnifiedTablePage<T>({
             <PageTabs
               tabs={tabs}
               variant="inline"
-              className="-mr-4 mb-0 w-[calc(100vw-1rem)] min-w-0 sm:mr-0 sm:w-full md:flex-1"
+              className="-mr-1 mb-0 w-[calc(100vw-0.25rem)] min-w-0 sm:mr-0 sm:w-full md:flex-1"
             />
           )}
           {!toolbarInlineWithHeader ? (
@@ -1126,7 +1126,7 @@ export function UnifiedTablePage<T>({
                   ? "mx-0 pl-0"
                   : "mx-0 pl-0"
                 : isFullBleedTable
-                  ? "-mx-4 sm:-mx-6 lg:-mx-8 lg:pl-2"
+                  ? "-mx-1 sm:-mx-6 lg:-mx-8 lg:pl-2"
                   : "mx-0",
             )}
             tabIndex={0}
@@ -1716,7 +1716,7 @@ export function UnifiedTablePage<T>({
       >
         {sidePanel ? (
           <>
-            <div className={cn(containerPadding && "pr-4 sm:pr-6 lg:pr-8")}>
+            <div className={cn(containerPadding && "pr-1 sm:pr-6 lg:pr-8")}>
               {aboveTableContent}
             </div>
             <div
@@ -1725,8 +1725,8 @@ export function UnifiedTablePage<T>({
                 "relative grid grid-cols-1",
                 isFullBleedTable &&
                   (sidePanel
-                    ? "-ml-4 sm:-ml-6 lg:-ml-8"
-                    : "-mx-4 sm:-mx-6 lg:-mx-8"),
+                    ? "-ml-1 sm:-ml-6 lg:-ml-8"
+                    : "-mx-1 sm:-mx-6 lg:-mx-8"),
                 !panelMounted && isSidePanelOpen && "lg:grid-cols-[minmax(0,1fr)_35rem]",
                 !panelMounted && isSidePanelOpen && sidePanel.columnClassName,
               )}

@@ -28,3 +28,4 @@ export {
   type UnifiedTableFeatures,
 } from "./unified-table-page";
 export { useUnifiedTableState, type UnifiedTableState, type UnifiedTableStateOptions, type FilterValue } from "./use-unified-table-state";
+export { TablePageActions, type TablePageActionsProps, type TablePageActionItem } from "./table-page-actions";

@@ -5,14 +5,12 @@ import type { ReactElement } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Building2,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
   FileSpreadsheet,
   Globe,
   Mail,
   Phone,
-  Plus,
   RefreshCw,
   Upload,
   X,
@@ -29,23 +27,12 @@ import {
   CellEmail,
   CellLink,
   TableDateValue,
+  TablePageActions,
   type FilterValue,
   type CellColorMap,
 } from "@/components/tables/unified";
 import type { ColumnConfig, FilterConfig, TableColumn } from "@/components/tables/unified";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { apiFetch } from "@/lib/api-client";
 
 interface CompanyRow {
@@ -599,29 +586,21 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
         description:
           "Manage companies, clients, contacts, users, and employees across your organization",
         actions: (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button size="sm" variant="default" className="bg-primary hover:bg-primary/90">
-                <Plus />
-                Add
-                <ChevronDown />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuItem>
-                <Building2 className="mr-2 h-4 w-4" />
-                Add New Company
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <FileSpreadsheet className="mr-2 h-4 w-4" />
-                Import from CSV
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Upload className="mr-2 h-4 w-4" />
-                Bulk Operations
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <TablePageActions
+            addOptions={[
+              { label: "Add New Company", icon: <Building2 /> },
+              { label: "Import from CSV", icon: <FileSpreadsheet /> },
+              { label: "Bulk Operations", icon: <Upload /> },
+            ]}
+            moreOptions={[
+              {
+                label: isSyncing ? "Syncing..." : "Sync from ERP",
+                icon: <RefreshCw className={isSyncing ? "animate-spin" : undefined} />,
+                onClick: handleErpSync,
+                disabled: isSyncing,
+              },
+            ]}
+          />
         ),
       }}
       tabs={tabs}
@@ -649,25 +628,6 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
         columns: companyColumns,
         visibleColumns: tableState.visibleColumns,
         onColumnVisibilityChange: tableState.setVisibleColumns,
-        customActions: (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 shrink-0"
-                  disabled={isSyncing}
-                  onClick={handleErpSync}
-                  aria-label="Sync from ERP"
-                >
-                  <RefreshCw className={isSyncing ? "animate-spin" : undefined} />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Sync companies &amp; vendors from Acumatica</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        ),
       }}
       data={{
         items: companies,

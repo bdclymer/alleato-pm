@@ -12,7 +12,7 @@ import {
   Filter,
   LayoutGrid,
   List,
-  MoreHorizontal,
+  MoreVertical,
   Search,
   SlidersHorizontal,
   Table2,
@@ -679,11 +679,11 @@ export function TableToolbar({
                   className="relative h-11 w-11 shrink-0 p-0"
                   aria-label="Open table settings"
                 >
-                  <MoreHorizontal className="h-5 w-5" />
+                  <MoreVertical className="h-5 w-5" />
                   <TableCountIndicator count={activeFilterCount} className="absolute -right-1 -top-1" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-full max-w-none gap-0 bg-muted/40 p-0">
+              <SheetContent side="right" className="w-full max-w-none gap-0 bg-muted p-0">
                 <SheetHeader className="px-4 pb-5 pt-2 text-center">
                   <SheetTitle className="text-lg">Settings</SheetTitle>
                 </SheetHeader>

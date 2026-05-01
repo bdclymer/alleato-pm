@@ -70,7 +70,7 @@ export function HeaderMobileMenu({
           <Menu />
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="w-[min(300px,100vw)] p-0 sm:w-[350px]">
+      <SheetContent side="left" className="w-[min(340px,100vw)] p-0 sm:w-[380px]">
         <SheetHeader className="px-4 py-4 border-b">
           <SheetTitle className="text-left">Navigation</SheetTitle>
         </SheetHeader>
@@ -111,7 +111,7 @@ export function HeaderMobileMenu({
 
               return (
                 <div key={group.id}>
-                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2 px-4">
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2 px-4">
                     {group.label}
                   </h3>
                   <div className="space-y-0.5">
@@ -139,7 +139,7 @@ export function HeaderMobileMenu({
                             }
                           }}
                           className={cn(
-                            "flex items-center gap-4 px-4 py-2.5 text-sm transition-colors",
+                            "flex items-center gap-4 px-4 py-3.5 text-base transition-colors",
                             isDisabled
                               ? "opacity-40 cursor-not-allowed"
                               : "hover:bg-muted active:bg-muted/80",
@@ -149,7 +149,7 @@ export function HeaderMobileMenu({
                           {Icon && (
                             <Icon
                               className={cn(
-                                "h-4 w-4",
+                                "h-5 w-5",
                                 isActive
                                   ? "text-foreground"
                                   : "text-muted-foreground"
@@ -207,7 +207,7 @@ export function HeaderMobileMenu({
                             }
                           }}
                           className={cn(
-                            "flex items-center gap-4 px-4 py-2.5 text-sm transition-colors",
+                            "flex items-center gap-4 px-4 py-3.5 text-base transition-colors",
                             isDisabled
                               ? "opacity-40 cursor-not-allowed"
                               : "hover:bg-muted active:bg-muted/80",
@@ -217,7 +217,7 @@ export function HeaderMobileMenu({
                           {Icon && (
                             <Icon
                               className={cn(
-                                "h-4 w-4",
+                                "h-5 w-5",
                                 isActive
                                   ? "text-foreground"
                                   : "text-muted-foreground"

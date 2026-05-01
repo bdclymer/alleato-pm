@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import type { ReactNode } from "react";
-import { ChevronRight, MoreHorizontal, Trash2 } from "lucide-react";
+import { ChevronRight, MoreVertical, Trash2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -126,7 +126,7 @@ export function MobileCardList<T>({
                             size="icon"
                             className="h-8 w-8 text-muted-foreground"
                           >
-                            <MoreHorizontal className="h-4 w-4" />
+                            <MoreVertical className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">

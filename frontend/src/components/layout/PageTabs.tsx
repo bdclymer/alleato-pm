@@ -42,7 +42,7 @@ export function PageTabs({
   const wrapperClasses =
     variant === "inline"
       ? "relative flex min-w-0 w-full items-center"
-      : "px-4 sm:px-6 lg:px-8";
+      : "px-1";
   const navClasses =
     variant === "inline"
       ? "-mb-px flex-1 min-w-0 flex overflow-x-auto overscroll-x-contain pb-1 scrollbar-hide"

@@ -33,7 +33,7 @@ export function PageTabsV2({ tabs, className }: PageTabsV2Props) {
   const hasExactHrefMatch = tabs.some((tab) => tab.href === currentPath);
 
   return (
-    <div className={cn("px-4 sm:px-6 lg:px-8", className)}>
+    <div className={cn("px-1", className)}>
       <div className="inline-flex h-9 w-fit items-center justify-center rounded-lg bg-muted/50 p-1">
         {tabs.map((tab) => {
           const isActive =

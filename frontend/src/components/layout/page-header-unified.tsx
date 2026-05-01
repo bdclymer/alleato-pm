@@ -234,7 +234,7 @@ export function PageHeader({
             {titleContent ? (
               titleContent
             ) : (
-              <h1 className="text-2xl sm:text-3xl lg:text-[2rem] font-medium text-foreground/90 break-words">
+              <h1 className="text-3xl sm:text-3xl lg:text-[2rem] font-medium text-foreground/90 break-words">
                 {title}
               </h1>
             )}
@@ -301,7 +301,7 @@ export function PageHeader({
 
         {/* Tabs — rendered below title/actions, flush with the header bottom */}
         {tabs && tabs.length > 0 && (
-          <PageTabsV2 tabs={tabs} className="-mx-4 sm:-mx-6 lg:-mx-8 px-0" />
+          <PageTabsV2 tabs={tabs} />
         )}
       </div>
     </div>
