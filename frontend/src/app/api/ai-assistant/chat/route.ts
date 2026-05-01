@@ -29,6 +29,7 @@ import {
 } from "@/lib/ai/bot-core";
 import { recordAgentLearningUsages } from "@/lib/ai/services/agent-learning-service";
 import { createToolGuardrails } from "@/lib/ai/tools/guardrails";
+import { previewCreateRFI } from "@/lib/ai/tools/action-tools";
 import { createAiAssistantMcpTools } from "@/lib/ai/tools/mcp-tools";
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
@@ -1016,6 +1017,107 @@ function extractRfiTopic(message: string): string {
     .trim();
 
   return cleaned || "requested clarification";
+}
+
+function normalizeProjectSearch(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function extractRfiProjectHint(message: string): string | null {
+  const forMatch = message.match(/\bfor\s+(.+?)\s+about\b/i);
+  const onMatch = message.match(/\bon\s+(.+?)\s+about\b/i);
+  const rawHint = forMatch?.[1] ?? onMatch?.[1] ?? null;
+  const hint = rawHint?.replace(/\s+/g, " ").trim();
+
+  return hint || null;
+}
+
+async function resolveRfiProjectContext(params: {
+  message: string;
+  selectedProjectId?: number;
+  supabase: ReturnType<typeof createServiceClient>;
+}): Promise<{
+  projectId: number | null;
+  projectName: string;
+  resolvedTarget: Awaited<ReturnType<typeof resolveIntelligenceTarget>>;
+  source: string;
+}> {
+  const resolvedTarget = await resolveIntelligenceTarget({
+    query: params.message,
+    selectedProjectId: params.selectedProjectId,
+    supabase: params.supabase,
+  });
+
+  if (resolvedTarget?.projectId) {
+    return {
+      projectId: resolvedTarget.projectId,
+      projectName: resolvedTarget.name,
+      resolvedTarget,
+      source: resolvedTarget.source,
+    };
+  }
+
+  if (typeof params.selectedProjectId === "number") {
+    const { data: selectedProject } = await params.supabase
+      .from("projects")
+      .select("id, name")
+      .eq("id", params.selectedProjectId)
+      .maybeSingle();
+
+    if (selectedProject?.id) {
+      return {
+        projectId: selectedProject.id,
+        projectName: selectedProject.name ?? `Project ${selectedProject.id}`,
+        resolvedTarget,
+        source: "selected_project_fallback",
+      };
+    }
+  }
+
+  const projectHint = extractRfiProjectHint(params.message);
+  if (!projectHint) {
+    return {
+      projectId: null,
+      projectName: "the selected project",
+      resolvedTarget,
+      source: "unresolved",
+    };
+  }
+
+  const normalizedHint = normalizeProjectSearch(projectHint);
+  const { data: projects } = await params.supabase
+    .from("projects")
+    .select("id, name, aliases")
+    .limit(2000);
+
+  const project = (projects ?? []).find((candidate) => {
+    const normalizedName = normalizeProjectSearch(candidate.name ?? "");
+    const aliases = Array.isArray(candidate.aliases) ? candidate.aliases : [];
+
+    return (
+      (normalizedName && normalizedName.includes(normalizedHint)) ||
+      (normalizedName && normalizedHint.includes(normalizedName)) ||
+      aliases.some((alias) => {
+        const normalizedAlias =
+          typeof alias === "string" ? normalizeProjectSearch(alias) : "";
+        return (
+          (normalizedAlias && normalizedAlias.includes(normalizedHint)) ||
+          (normalizedAlias && normalizedHint.includes(normalizedAlias))
+        );
+      })
+    );
+  });
+
+  return {
+    projectId: project?.id ?? null,
+    projectName: project?.name ?? projectHint,
+    resolvedTarget,
+    source: project ? "project_name_fallback" : "unresolved",
+  };
 }
 
 function titleCaseRfiSubject(topic: string): string {
@@ -2495,13 +2597,13 @@ export const POST = withApiGuardrails(
             status: "loading",
           });
 
-          const resolvedTarget = await resolveIntelligenceTarget({
-            query: lastUserContent,
+          const rfiProjectContext = await resolveRfiProjectContext({
+            message: lastUserContent,
             selectedProjectId,
             supabase,
           });
-          const projectId = resolvedTarget?.projectId ?? selectedProjectId ?? null;
-          const projectName = resolvedTarget?.name ?? (projectId ? `Project ${projectId}` : "the selected project");
+          const projectId = rfiProjectContext.projectId;
+          const projectName = rfiProjectContext.projectName;
           const topic = extractRfiTopic(lastUserContent);
           const subject = titleCaseRfiSubject(topic);
           const question = buildRfiPreviewQuestion({
@@ -2511,35 +2613,28 @@ export const POST = withApiGuardrails(
 
           let previewOutput: unknown = null;
           if (projectId) {
-            const createRfiTool = (tools as Record<string, ExecutableTool>).createRFI;
-            if (createRfiTool?.execute) {
-              previewOutput = await withTimeout(
-                createRfiTool.execute({
+            previewOutput = await withTimeout(
+              previewCreateRFI(
+                user.id,
+                {
+                  onTrace: (trace) => {
+                    toolTrace.push(trace);
+                  },
+                  pinnedProjectId: selectedProjectId,
+                },
+                {
                   projectId,
                   subject,
                   question,
                   costImpact: "tbd",
                   scheduleImpact: "tbd",
-                  confirmed: false,
-                }),
-                12_000,
-                "createRFI preview timed out during action intent routing",
-              );
+                },
+              ),
+              12_000,
+              "createRFI preview timed out during action intent routing",
+            );
 
-              if (isTimeoutResult(previewOutput)) {
-                toolTrace.push({
-                  tool: "createRFI",
-                  input: {
-                    projectId,
-                    subject,
-                    question,
-                    confirmed: false,
-                  },
-                  error: previewOutput.error,
-                  timestamp: new Date().toISOString(),
-                });
-              }
-            } else {
+            if (isTimeoutResult(previewOutput)) {
               toolTrace.push({
                 tool: "createRFI",
                 input: {
@@ -2548,7 +2643,7 @@ export const POST = withApiGuardrails(
                   question,
                   confirmed: false,
                 },
-                error: "createRFI tool was not executable during action intent routing",
+                error: previewOutput.error,
                 timestamp: new Date().toISOString(),
               });
             }
@@ -2582,14 +2677,15 @@ export const POST = withApiGuardrails(
               selectedProjectId: selectedProjectId ?? null,
             },
             output: {
-              resolvedTarget: resolvedTarget
+              resolvedTarget: rfiProjectContext.resolvedTarget
                 ? {
-                    id: resolvedTarget.id,
-                    slug: resolvedTarget.slug,
-                    projectId: resolvedTarget.projectId,
-                    source: resolvedTarget.source,
+                    id: rfiProjectContext.resolvedTarget.id,
+                    slug: rfiProjectContext.resolvedTarget.slug,
+                    projectId: rfiProjectContext.resolvedTarget.projectId,
+                    source: rfiProjectContext.resolvedTarget.source,
                   }
                 : null,
+              projectResolutionSource: rfiProjectContext.source,
               usedStreamingModelTools: false,
               previewOnly: true,
             },

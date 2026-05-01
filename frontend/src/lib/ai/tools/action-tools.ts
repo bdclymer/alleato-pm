@@ -17,6 +17,69 @@ export type ActionToolsOptions = {
   pinnedProjectId?: number;
 };
 
+export type CreateRFIPreviewInput = {
+  projectId: number;
+  subject: string;
+  question: string;
+  ballInCourt?: string;
+  dueDate?: string;
+  costImpact?: "yes" | "no" | "tbd";
+  scheduleImpact?: "yes" | "no" | "tbd";
+};
+
+export async function previewCreateRFI(
+  userId: string,
+  options: ActionToolsOptions,
+  input: CreateRFIPreviewInput,
+): Promise<unknown> {
+  const guardrails = createToolGuardrails(userId, {
+    pinnedProjectId: options.pinnedProjectId,
+  });
+  const access = await guardrails.enforceProjectAccess(input.projectId);
+  const traceInput = {
+    ...input,
+    confirmed: false,
+  };
+
+  if (!access.ok) {
+    const output = { success: false, error: access.error };
+    options.onTrace?.({
+      tool: "createRFI",
+      input: traceInput,
+      output,
+      timestamp: new Date().toISOString(),
+    });
+    return output;
+  }
+
+  const output = {
+    action: "preview",
+    message: "Here's the RFI I'll create. Reply **confirm** to proceed.",
+    preview: {
+      table: "rfis",
+      fields: {
+        project_id: input.projectId,
+        subject: input.subject,
+        question: input.question,
+        ball_in_court: input.ballInCourt,
+        due_date: input.dueDate,
+        cost_impact: input.costImpact ?? "tbd",
+        schedule_impact: input.scheduleImpact ?? "tbd",
+        status: "open",
+        is_private: false,
+      },
+    },
+  };
+
+  options.onTrace?.({
+    tool: "createRFI",
+    input: traceInput,
+    output,
+    timestamp: new Date().toISOString(),
+  });
+  return output;
+}
+
 type RuntimeReplayAuditRow = {
   response_payload?: unknown;
 };

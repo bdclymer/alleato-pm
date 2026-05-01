@@ -9,7 +9,21 @@ Assigns documents to projects based on:
 
 from typing import Optional, Dict, Any, List, Tuple
 from supabase import Client
+import os
 import re
+
+
+PUBLIC_EMAIL_DOMAINS = {
+    "aol.com",
+    "gmail.com",
+    "hotmail.com",
+    "icloud.com",
+    "live.com",
+    "me.com",
+    "msn.com",
+    "outlook.com",
+    "yahoo.com",
+}
 
 
 class ProjectAssigner:
@@ -18,6 +32,7 @@ class ProjectAssigner:
     def __init__(self, supabase_client: Client):
         self.client = supabase_client
         self._project_cache: Optional[List[Dict[str, Any]]] = None
+        self._contact_signal_cache: Optional[Dict[int, Dict[str, set[str]]]] = None
 
     def _get_projects(self) -> List[Dict[str, Any]]:
         """Get all active projects with matching signals."""
@@ -64,12 +79,17 @@ class ProjectAssigner:
         if project_id and confidence >= 0.8:
             return project_id, "title_match", confidence
 
-        # Strategy 2: Participant email domains
+        # Strategy 2: Project-directory participant signals
+        contact_project_id, contact_method, contact_conf = self._match_by_project_contacts(participants)
+        if contact_project_id and contact_conf >= 0.7:
+            return contact_project_id, contact_method, contact_conf
+
+        # Strategy 3: Participant email domains recorded on project metadata
         email_project_id, email_conf = self._match_by_email_domains(participants, projects)
         if email_project_id and email_conf >= 0.7:
             return email_project_id, "email_domain", email_conf
 
-        # Strategy 3: Content keywords (if provided)
+        # Strategy 4: Content keywords (if provided)
         if content:
             content_project_id, content_conf = self._match_by_content(content, projects)
             if content_project_id and content_conf >= 0.6:
@@ -153,6 +173,41 @@ class ProjectAssigner:
         confidence = min(0.88, 0.72 + (best_overlap - 1) * 0.08)
         return best_project_id, confidence
 
+    def _match_by_project_contacts(self, participants: List[str]) -> Tuple[Optional[int], str, float]:
+        """Match participants to project directory contacts and project companies."""
+        participant_emails = self._extract_emails(participants)
+        participant_domains = self._extract_domains(participants)
+        if not participant_emails and not participant_domains:
+            return None, "no_participant_email", 0.0
+
+        signals = self._get_project_contact_signals()
+        if not signals:
+            return None, "no_project_contact_signals", 0.0
+
+        direct_scores: Dict[int, int] = {}
+        domain_scores: Dict[int, int] = {}
+
+        for project_id, project_signals in signals.items():
+            direct_overlap = participant_emails.intersection(project_signals["emails"])
+            if direct_overlap:
+                direct_scores[project_id] = len(direct_overlap)
+
+            domain_overlap = participant_domains.intersection(project_signals["domains"])
+            if domain_overlap:
+                domain_scores[project_id] = len(domain_overlap)
+
+        direct_project_id, direct_score, direct_second = self._best_score(direct_scores)
+        if direct_project_id and direct_score > direct_second:
+            confidence = min(0.94, 0.86 + (direct_score - 1) * 0.04)
+            return direct_project_id, "project_directory_email", confidence
+
+        domain_project_id, domain_score, domain_second = self._best_score(domain_scores)
+        if domain_project_id and domain_score > domain_second:
+            confidence = min(0.84, 0.74 + (domain_score - 1) * 0.04)
+            return domain_project_id, "project_company_domain", confidence
+
+        return None, "ambiguous_project_contact", 0.0
+
     def _match_by_content(
         self,
         content: str,
@@ -231,8 +286,117 @@ class ProjectAssigner:
             if not value:
                 continue
             for match in re.findall(r"[a-zA-Z0-9._%+\-]+@([a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})", value):
-                domains.add(match.lower())
+                domain = match.lower()
+                if ProjectAssigner._is_assignable_domain(domain):
+                    domains.add(domain)
         return domains
+
+    @staticmethod
+    def _extract_emails(values: List[str]) -> set[str]:
+        emails: set[str] = set()
+        for value in values:
+            if not value:
+                continue
+            for match in re.findall(r"[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}", value):
+                emails.add(match.lower())
+        return emails
+
+    @staticmethod
+    def _domain_from_url(value: Optional[str]) -> Optional[str]:
+        if not value:
+            return None
+        normalized = value.strip().lower()
+        normalized = re.sub(r"^https?://", "", normalized)
+        normalized = normalized.split("/", 1)[0].split(":", 1)[0]
+        normalized = normalized.removeprefix("www.")
+        return normalized if "." in normalized else None
+
+    @staticmethod
+    def _is_assignable_domain(domain: str) -> bool:
+        company_domains = {
+            d.strip().lower()
+            for d in os.environ.get("COMPANY_EMAIL_DOMAINS", "alleatogroup.com").split(",")
+            if d.strip()
+        }
+        return domain not in PUBLIC_EMAIL_DOMAINS and domain not in company_domains
+
+    @staticmethod
+    def _best_score(scores: Dict[int, int]) -> Tuple[Optional[int], int, int]:
+        if not scores:
+            return None, 0, 0
+        ranked = sorted(scores.items(), key=lambda item: (-item[1], item[0]))
+        best_project_id, best_score = ranked[0]
+        second_score = ranked[1][1] if len(ranked) > 1 else 0
+        return best_project_id, best_score, second_score
+
+    def _get_project_contact_signals(self) -> Dict[int, Dict[str, set[str]]]:
+        if self._contact_signal_cache is not None:
+            return self._contact_signal_cache
+
+        signals: Dict[int, Dict[str, set[str]]] = {}
+
+        memberships = (
+            self.client.table("project_directory_memberships")
+            .select("project_id,person_id,status")
+            .eq("status", "active")
+            .execute()
+            .data
+            or []
+        )
+        people = self.client.table("people").select("id,email,company_id,status").execute().data or []
+        project_companies = (
+            self.client.table("project_companies")
+            .select("project_id,company_id,email_address,status")
+            .eq("status", "ACTIVE")
+            .execute()
+            .data
+            or []
+        )
+        companies = self.client.table("companies").select("id,website").execute().data or []
+
+        people_by_id = {str(person.get("id")): person for person in people if person.get("id")}
+        company_domains = {
+            str(company.get("id")): domain
+            for company in companies
+            if company.get("id")
+            for domain in [self._domain_from_url(company.get("website"))]
+            if domain and self._is_assignable_domain(domain)
+        }
+
+        def ensure_project(project_id: int) -> Dict[str, set[str]]:
+            if project_id not in signals:
+                signals[project_id] = {"emails": set(), "domains": set()}
+            return signals[project_id]
+
+        for membership in memberships:
+            project_id = membership.get("project_id")
+            person = people_by_id.get(str(membership.get("person_id")))
+            if not project_id or not person:
+                continue
+            project_signals = ensure_project(int(project_id))
+            email = str(person.get("email") or "").strip().lower()
+            if email:
+                project_signals["emails"].add(email)
+                project_signals["domains"].update(self._extract_domains([email]))
+            company_domain = company_domains.get(str(person.get("company_id")))
+            if company_domain:
+                project_signals["domains"].add(company_domain)
+
+        for project_company in project_companies:
+            project_id = project_company.get("project_id")
+            if not project_id:
+                continue
+            project_signals = ensure_project(int(project_id))
+            email = str(project_company.get("email_address") or "").strip().lower()
+            if email:
+                project_signals["emails"].add(email)
+                project_signals["domains"].update(self._extract_domains([email]))
+            company_domain = company_domains.get(str(project_company.get("company_id")))
+            if company_domain:
+                project_signals["domains"].add(company_domain)
+
+        self._contact_signal_cache = signals
+        return signals
 
     def _project_domains(self, project: Dict[str, Any]) -> set[str]:
         domains: set[str] = set()

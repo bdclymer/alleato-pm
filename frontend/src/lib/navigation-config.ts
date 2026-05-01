@@ -140,6 +140,7 @@ export const adminTools: NavigationTool[] = [
   { name: "Documentation", path: "/docs", icon: MessageCircle, requiresProject: false },
   { name: "Procore Docs", path: "/procore-docs", icon: BookOpen, requiresProject: false },
   { name: "Document Pipeline", path: "/admin/documents/pipeline", icon: FolderOpen, requiresProject: false, adminOnly: true },
+  { name: "Project Attribution", path: "/admin/project-attribution", icon: Brain, requiresProject: false, adminOnly: true },
   { name: "Knowledge Sources", path: "/knowledge/manage", icon: BookOpen, requiresProject: false, adminOnly: true },
   // AI SDK DevTools — only visible in development (http://localhost:4983)
   ...(process.env.NODE_ENV === "development"
@@ -644,6 +645,14 @@ export const adminSettingsTools: HeaderNavigationTool[] = [
     requiresProject: false,
     icon: FolderOpen,
     description: "Document workflows",
+    adminOnly: true,
+  },
+  {
+    name: "Project Attribution",
+    path: "/admin/project-attribution",
+    requiresProject: false,
+    icon: Brain,
+    description: "Communication project mapping",
     adminOnly: true,
   },
   {

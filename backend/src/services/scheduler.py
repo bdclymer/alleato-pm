@@ -242,7 +242,9 @@ def _run_fireflies_sync(limit: int = 10):
     client = get_supabase_client()
     store = SupabaseRagStore(client)
     pipeline = FirefliesIngestionPipeline(store)
-    return pipeline.sync_recent_transcripts(limit=limit)
+    result = pipeline.sync_recent_transcripts(limit=limit)
+    result["project_backfill"] = _maybe_run_comm_project_backfill(client)
+    return result
 
 
 def _run_digest_sync():
@@ -289,7 +291,28 @@ def _run_graph_sync():
     from .integrations.microsoft_graph.sync import run_graph_sync
 
     client = get_supabase_client()
-    return run_graph_sync(client)
+    result = run_graph_sync(client)
+    result["project_backfill"] = _maybe_run_comm_project_backfill(client)
+    return result
+
+
+def _maybe_run_comm_project_backfill(client) -> dict:
+    """Run bounded communication project assignment after ingestion jobs."""
+    if os.getenv("COMM_PROJECT_BACKFILL_AFTER_SYNC", "true").lower() in ("0", "false", "no"):
+        return {"status": "skipped", "reason": "disabled"}
+
+    from .ingestion.communication_project_backfill import run_incremental_project_backfill
+
+    result = run_incremental_project_backfill(client)
+    if result.get("failed"):
+        logger.warning("[Scheduler] Communication project backfill reported errors: %s", result)
+    else:
+        logger.info(
+            "[Scheduler] Communication project backfill complete: scanned=%d assigned=%d",
+            result.get("scanned", 0),
+            result.get("assigned", 0),
+        )
+    return result
 
 
 def _get_daily_recipients() -> list[str]:
