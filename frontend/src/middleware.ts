@@ -31,6 +31,6 @@ export const config = {
      * - api routes (route handlers own auth and timeout budgets)
      * - auth routes (entire /auth path)
      */
-    '/((?!api/|_next/|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|map|txt|xml)$|auth).*)',
+    '/((?!api/|_next/|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|mjs|map|txt|xml)$|auth).*)',
   ],
 }

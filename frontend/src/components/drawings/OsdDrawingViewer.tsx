@@ -47,7 +47,9 @@ if (typeof window !== "undefined") {
   pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
 }
 
-const TARGET_LONGEST_SIDE_PX = 6000;
+const TARGET_LONGEST_SIDE_PX = 2500;
+const RENDER_FORMAT: "image/jpeg" | "image/png" = "image/jpeg";
+const RENDER_QUALITY = 0.85;
 
 // ─── Annotation types ───────────────────────────────────────────────────────
 
@@ -173,6 +175,14 @@ export function OsdDrawingViewer({
   const viewerRef = useRef<OpenSeadragon.Viewer | null>(null);
   const blobUrlRef = useRef<string | null>(null);
   const renderTokenRef = useRef(0);
+  // Cache rendered pages so re-visiting a page is instant. Keyed by page number; value is a JPEG blob URL.
+  // Reset whenever the underlying PDF document changes.
+  const pageCacheRef = useRef<Map<number, string>>(new Map());
+  const pdfIdRef = useRef<PdfDocumentProxy | null>(null);
+  // Track the current size of each cached page so OSD can adopt the right dimensions on cache hit.
+  const pageSizeCacheRef = useRef<Map<number, { width: number; height: number }>>(new Map());
+  // In-flight prefetch token → guards against late writes after pdf changes/unmount.
+  const prefetchTokenRef = useRef(0);
 
   const [pdf, setPdf] = useState<PdfDocumentProxy | null>(null);
   const [pageNumber, setPageNumber] = useState(1);
@@ -221,9 +231,83 @@ export function OsdDrawingViewer({
   }, [fileUrl]);
 
   // ── Notify parent of page/total changes ──────────────────────────────────
+  // Use refs for optional parent callbacks so consumers don't need to memoize
+  // them. Without this, a consumer that re-creates the callback every render
+  // would force this effect to re-fire every render → infinite loop with any
+  // upstream setState. We capture the latest callback in a ref and only depend
+  // on the actual values (pageNumber, numPages).
+  const onPageNumberChangeRef = useRef(onPageNumberChange);
+  const onScaleChangeRef = useRef(onScaleChange);
   useEffect(() => {
-    onPageNumberChange?.(pageNumber, numPages);
-  }, [pageNumber, numPages, onPageNumberChange]);
+    onPageNumberChangeRef.current = onPageNumberChange;
+    onScaleChangeRef.current = onScaleChange;
+  });
+
+  useEffect(() => {
+    onPageNumberChangeRef.current?.(pageNumber, numPages);
+  }, [pageNumber, numPages]);
+
+  // Reset cache when the PDF document changes.
+  useEffect(() => {
+    if (pdfIdRef.current !== pdf) {
+      // Revoke any existing cached blob URLs before discarding them.
+      pageCacheRef.current.forEach((url) => URL.revokeObjectURL(url));
+      pageCacheRef.current.clear();
+      pageSizeCacheRef.current.clear();
+      pdfIdRef.current = pdf;
+    }
+  }, [pdf]);
+
+  // Render a single page to a JPEG blob URL. Used for both the active page and idle prefetch.
+  const renderPageToBlobUrl = useCallback(
+    async (
+      pdfDoc: PdfDocumentProxy,
+      target: number,
+    ): Promise<{ url: string; width: number; height: number } | null> => {
+      const cached = pageCacheRef.current.get(target);
+      const cachedSize = pageSizeCacheRef.current.get(target);
+      if (cached && cachedSize) {
+        return { url: cached, width: cachedSize.width, height: cachedSize.height };
+      }
+
+      const page = await pdfDoc.getPage(target);
+      const base = page.getViewport({ scale: 1 });
+      const longest = Math.max(base.width, base.height);
+      const scale = Math.min(TARGET_LONGEST_SIDE_PX / longest, 4);
+      const viewport = page.getViewport({ scale });
+
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.ceil(viewport.width);
+      canvas.height = Math.ceil(viewport.height);
+      const ctx = canvas.getContext("2d");
+      if (!ctx) throw new Error("No 2D context");
+
+      await page.render({ canvas, canvasContext: ctx, viewport }).promise;
+
+      const blob: Blob = await new Promise((resolve, reject) =>
+        canvas.toBlob(
+          (b) => (b ? resolve(b) : reject(new Error("Canvas toBlob failed"))),
+          RENDER_FORMAT,
+          RENDER_QUALITY,
+        ),
+      );
+
+      // If a concurrent render already cached this page, drop ours and reuse the cached URL.
+      const raceCached = pageCacheRef.current.get(target);
+      if (raceCached) {
+        const raceSize = pageSizeCacheRef.current.get(target);
+        return raceSize
+          ? { url: raceCached, width: raceSize.width, height: raceSize.height }
+          : null;
+      }
+
+      const url = URL.createObjectURL(blob);
+      pageCacheRef.current.set(target, url);
+      pageSizeCacheRef.current.set(target, { width: canvas.width, height: canvas.height });
+      return { url, width: canvas.width, height: canvas.height };
+    },
+    [],
+  );
 
   // ── Render current page → blob URL → OSD ─────────────────────────────────
   useEffect(() => {
@@ -237,33 +321,13 @@ export function OsdDrawingViewer({
     (async () => {
       const t0 = performance.now();
       try {
-        const page = await pdf.getPage(pageNumber);
-        if (isCancelled()) return;
+        const result = await renderPageToBlobUrl(pdf, pageNumber);
+        if (isCancelled() || !result) return;
+        const { url, width, height } = result;
 
-        const base = page.getViewport({ scale: 1 });
-        const longest = Math.max(base.width, base.height);
-        const scale = Math.min(TARGET_LONGEST_SIDE_PX / longest, 4);
-        const viewport = page.getViewport({ scale });
-
-        const canvas = document.createElement("canvas");
-        canvas.width = Math.ceil(viewport.width);
-        canvas.height = Math.ceil(viewport.height);
-        const ctx = canvas.getContext("2d");
-        if (!ctx) throw new Error("No 2D context");
-
-        await page.render({ canvas, canvasContext: ctx, viewport }).promise;
-        if (isCancelled()) return;
-
-        const blob: Blob = await new Promise((resolve, reject) =>
-          canvas.toBlob(
-            (b) => (b ? resolve(b) : reject(new Error("Canvas toBlob failed"))),
-            "image/png"
-          )
-        );
-        if (isCancelled()) return;
-
-        const url = URL.createObjectURL(blob);
-        const previousUrl = blobUrlRef.current;
+        // blobUrlRef tracks the URL currently displayed by OSD. With the cache,
+        // we no longer eagerly revoke on swap — cleanup happens when the PDF
+        // changes or the component unmounts.
         blobUrlRef.current = url;
 
         if (!viewerRef.current && containerRef.current) {
@@ -297,11 +361,7 @@ export function OsdDrawingViewer({
           viewerRef.current.open({ type: "image", url });
         }
 
-        setImageSize({ width: canvas.width, height: canvas.height });
-
-        if (previousUrl) {
-          setTimeout(() => URL.revokeObjectURL(previousUrl), 1000);
-        }
+        setImageSize({ width, height });
         setRenderMs(Math.round(performance.now() - t0));
       } catch (e: unknown) {
         if (!isCancelled()) setError(e instanceof Error ? e.message : "Failed to render page");
@@ -309,7 +369,50 @@ export function OsdDrawingViewer({
         if (!isCancelled()) setIsRendering(false);
       }
     })();
-  }, [pdf, pageNumber]);
+  }, [pdf, pageNumber, renderPageToBlobUrl]);
+
+  // ── Prefetch adjacent pages during browser idle time ─────────────────────
+  useEffect(() => {
+    if (!pdf || numPages <= 1) return;
+    const myToken = ++prefetchTokenRef.current;
+    const isStale = () => myToken !== prefetchTokenRef.current || pdfIdRef.current !== pdf;
+
+    const targets: number[] = [];
+    if (pageNumber + 1 <= numPages) targets.push(pageNumber + 1);
+    if (pageNumber - 1 >= 1) targets.push(pageNumber - 1);
+    if (targets.length === 0) return;
+
+    type IdleCb = () => void;
+    type IdleWindow = Window & {
+      requestIdleCallback?: (cb: IdleCb, opts?: { timeout: number }) => number;
+      cancelIdleCallback?: (handle: number) => void;
+    };
+    const w = window as IdleWindow;
+    const schedule = w.requestIdleCallback
+      ? (cb: IdleCb) => w.requestIdleCallback!(cb, { timeout: 1500 })
+      : (cb: IdleCb) => window.setTimeout(cb, 250);
+    const cancel = w.cancelIdleCallback ?? window.clearTimeout;
+
+    const handle = schedule(async () => {
+      for (const target of targets) {
+        if (isStale()) return;
+        if (pageCacheRef.current.has(target)) continue;
+        try {
+          await renderPageToBlobUrl(pdf, target);
+        } catch {
+          // Best-effort prefetch; ignore failures.
+        }
+      }
+    });
+
+    return () => {
+      try {
+        cancel(handle);
+      } catch {
+        // ignore
+      }
+    };
+  }, [pdf, pageNumber, numPages, renderPageToBlobUrl]);
 
   // ── Toggle OSD mouse nav based on active tool ────────────────────────────
   useEffect(() => {
@@ -319,19 +422,21 @@ export function OsdDrawingViewer({
   }, [tool, imageSize]);
 
   // ── Emit OSD zoom changes back to parent ─────────────────────────────────
+  // Reads from onScaleChangeRef so consumers don't need to memoize the callback.
   useEffect(() => {
     const viewer = viewerRef.current;
-    if (!viewer || !onScaleChange) return;
+    if (!viewer) return;
     const handler = () => {
       const home = viewer.viewport.getHomeZoom();
       const cur = viewer.viewport.getZoom(true);
-      if (home > 0) onScaleChange(cur / home);
+      const cb = onScaleChangeRef.current;
+      if (home > 0 && cb) cb(cur / home);
     };
     viewer.addHandler("zoom", handler);
     return () => {
       viewer.removeHandler("zoom", handler);
     };
-  }, [onScaleChange, imageSize]);
+  }, [imageSize]);
 
   // ── Apply controlledScale ────────────────────────────────────────────────
   useEffect(() => {
@@ -357,6 +462,8 @@ export function OsdDrawingViewer({
 
   // ── Cleanup on unmount ───────────────────────────────────────────────────
   useEffect(() => {
+    const cache = pageCacheRef.current;
+    const sizeCache = pageSizeCacheRef.current;
     return () => {
       try {
         viewerRef.current?.destroy();
@@ -364,10 +471,10 @@ export function OsdDrawingViewer({
         // ignore
       }
       viewerRef.current = null;
-      if (blobUrlRef.current) {
-        URL.revokeObjectURL(blobUrlRef.current);
-        blobUrlRef.current = null;
-      }
+      blobUrlRef.current = null;
+      cache.forEach((url) => URL.revokeObjectURL(url));
+      cache.clear();
+      sizeCache.clear();
     };
   }, []);
 
