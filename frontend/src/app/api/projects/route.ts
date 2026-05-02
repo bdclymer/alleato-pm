@@ -84,6 +84,7 @@ export const GET = withApiGuardrails("/api/projects#GET", async ({ request }) =>
   const search = searchParams.get("search");
   const state = searchParams.get("state");
   const excludeState = searchParams.get("excludeState");
+  const phase = searchParams.get("phase");
   const archived = searchParams.get("archived");
 
   let query = supabase
@@ -116,6 +117,11 @@ export const GET = withApiGuardrails("/api/projects#GET", async ({ request }) =>
   // Add search filter if provided
   if (search) {
     query = query.or(`name.ilike.%${search}%,"job number".ilike.%${search}%`);
+  }
+
+  // Add phase filter if provided
+  if (phase) {
+    query = query.ilike("phase", phase);
   }
 
   // Add archived filter if provided

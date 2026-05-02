@@ -144,7 +144,7 @@ const tableState = useUnifiedTableState({
     onPerPageChange: (val) => tableState.setPerPage(Number(val)),
   }}
   layout={{
-    fullBleedTable: false,
+    fullBleedTable: true,
   }}
   features={{
     enableSearch: true,
@@ -233,11 +233,11 @@ export const commitmentFilters: FilterConfig[] = [
 ## Tabs Pattern
 
 ```ts
+// NO counts in tab labels — never add count prop
 const tabs = [
   {
     label: "All",
     href: `/${projectId}/commitments`,
-    count: totalItems,
     isActive: !activeFilters.type,
   },
   {
@@ -250,6 +250,18 @@ const tabs = [
     href: `/${projectId}/commitments/recycle-bin`,
   },
 ];
+```
+
+**`activeFilters` must be derived from `searchParams` via `useMemo`, NOT from `tableState.activeFilters`:**
+
+```ts
+const activeFilters = useMemo<Record<string, FilterValue>>(
+  () => ({
+    type: searchParams.get("type") || undefined,
+    status: searchParams.get("status") || undefined,
+  }),
+  [searchParams],
+);
 ```
 
 ---

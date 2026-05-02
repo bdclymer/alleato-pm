@@ -9,8 +9,6 @@ import {
   Bell,
   CalendarDays,
   ChevronDown,
-  ChevronsLeft,
-  ChevronsRight,
   DollarSign,
   List,
   MessageSquare,
@@ -18,6 +16,7 @@ import {
   SlidersHorizontal,
   Users,
 } from "lucide-react"
+import { IconAiStrategist } from "@/components/icon/icon-ai-strategist"
 
 import {
   Sidebar,
@@ -30,6 +29,7 @@ import {
 import { HeaderUserMenu } from "@/components/header/header-user-menu"
 import { createClient } from "@/lib/supabase/client"
 import type { User } from "@supabase/supabase-js"
+import { useAiChatSidebarStore } from "@/lib/stores/ai-chat-sidebar-store"
 
 import {
   sidebarNavGroups,
@@ -182,9 +182,10 @@ function CollapsedGroupIcon({
 
   return (
     <div className="relative" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
-      {/* eslint-disable-next-line design-system/no-design-violations -- sidebar nav icon trigger with custom sidebar tokens */}
-      <button
+      <Button
         type="button"
+        variant="ghost"
+        size="icon"
         className={cn(
           "flex h-9 w-9 items-center justify-center rounded-lg transition-all duration-150",
           isHovered
@@ -196,7 +197,7 @@ function CollapsedGroupIcon({
         aria-label={group.label}
       >
         <Icon className="h-3.5 w-3.5" strokeWidth={1.3} />
-      </button>
+      </Button>
       <SidebarFlyout
         group={group}
         tools={tools}
@@ -310,7 +311,8 @@ function ExpandedNavGroup({
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname()
   const router = useRouter()
-  const { state, toggleSidebar, isMobile } = useSidebar()
+  const { state, isMobile } = useSidebar()
+  const { open: aiChatOpen, toggle: toggleAiChat } = useAiChatSidebarStore()
   const [isHovering, setIsHovering] = React.useState(false)
   const [user, setUser] = React.useState<User | null>(null)
 
@@ -450,8 +452,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       {/* ── Header ── */}
       <SidebarHeader className="px-0 pb-4 pt-5">
         {isCollapsed ? (
-          // Collapsed: logo icon + expand toggle
-          <div className="flex flex-col items-center gap-1.5">
+          // Collapsed: logo icon + AI chat button
+          <div className="flex flex-col items-center gap-4">
             <Link href="/" className="flex items-center justify-center">
               <Image
                 src="/alleato-favicon.png"
@@ -461,19 +463,25 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 className="rounded"
               />
             </Link>
-            {/* eslint-disable-next-line design-system/no-design-violations -- sidebar toggle with custom sidebar tokens */}
-            <button
+            <Button
               type="button"
-              onClick={toggleSidebar}
-              className="mt-1 flex h-7 w-7 items-center justify-center rounded-md text-sidebar-foreground/60 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
-              aria-label="Expand sidebar"
-              title="Pin sidebar open"
+              variant="ghost"
+              size="icon"
+              onClick={toggleAiChat}
+              className={cn(
+                "flex h-7 w-7 items-center justify-center rounded-md transition-colors",
+                aiChatOpen
+                  ? "bg-sidebar-accent text-sidebar-foreground"
+                  : "text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+              )}
+              aria-label="Toggle AI Strategist"
+              title="AI Strategist"
             >
-              <ChevronsRight className="h-4 w-4" strokeWidth={1.4} />
-            </button>
+              <IconAiStrategist size={16} />
+            </Button>
           </div>
         ) : (
-          // Expanded: keep the favicon anchored to the collapsed position, then reveal the brand.
+          // Expanded: favicon + AI chat button
           <div className="flex flex-col gap-4">
             <div className="flex h-7 items-center justify-between gap-3 pl-6 pr-2">
               <Link
@@ -488,16 +496,22 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   className="shrink-0 rounded"
                 />
               </Link>
-              {/* eslint-disable-next-line design-system/no-design-violations -- sidebar toggle with custom sidebar tokens */}
-              <button
+              <Button
                 type="button"
-                onClick={toggleSidebar}
-                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-sidebar-foreground/60 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
-                aria-label="Collapse sidebar"
-                title="Collapse sidebar"
+                variant="ghost"
+                size="icon"
+                onClick={toggleAiChat}
+                className={cn(
+                  "flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition-colors",
+                  aiChatOpen
+                    ? "bg-sidebar-accent text-sidebar-foreground"
+                    : "text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                )}
+                aria-label="Toggle AI Strategist"
+                title="AI Strategist"
               >
-                <ChevronsLeft className="h-4 w-4" strokeWidth={1.6} />
-              </button>
+                <IconAiStrategist size={16} />
+              </Button>
             </div>
             {/* Keep project selector only for mobile sidebar drawer */}
             <div className="md:hidden">

@@ -1,120 +1,31 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
-import { createClient } from "@/lib/supabase/server";
-import { apiErrorResponse } from "@/lib/api-error";
-import { NextResponse } from "next/server";
-import { z } from "zod";
-import { ZodError } from "zod";
-import { requirePermission } from "@/lib/permissions-guard";
 
-interface RouteParams {
-  params: Promise<{
-    projectId: string;
-    contractId: string;
-    paymentId: string;
-  }>;
+function readOnlyPaymentError(where: string): GuardrailError {
+  return new GuardrailError({
+    code: "READ_ONLY_RESOURCE",
+    where,
+    message:
+      "Prime contract payments are synced from Acumatica and cannot be edited in Alleato.",
+    status: 405,
+    severity: "low",
+  });
 }
 
-const updatePaymentSchema = z.object({
-  amount: z.number().positive().optional(),
-  payment_date: z.string().optional(),
-  payment_application_id: z.string().uuid().nullable().optional(),
-  payment_number: z.string().nullable().optional(),
-  method: z
-    .enum(["check", "wire", "ach", "credit_card", "cash", "other"])
-    .nullable()
-    .optional(),
-  reference_number: z.string().nullable().optional(),
-  notes: z.string().nullable().optional(),
-});
-
-/**
- * PATCH /api/projects/[projectId]/contracts/[contractId]/payments/[paymentId]
- * Updates a payment record
- */
 export const PATCH = withApiGuardrails(
   "projects/[projectId]/contracts/[contractId]/payments/[paymentId]#PATCH",
-  async ({ request, params }) => {
-  
-    const { projectId, contractId, paymentId } = await params;
-    const projectIdNum = parseInt(projectId, 10);
-    const guard = await requirePermission(projectIdNum, "contracts", "write");
-    if (guard.denied) return guard.response;
-
-    const supabase = await createClient();
-    const body = await request.json();
-
-    const validatedData = updatePaymentSchema.parse(body);
-
-    const { data: existing } = await supabase
-      .from("prime_contract_payments")
-      .select("id")
-      .eq("id", paymentId)
-      .eq("contract_id", contractId)
-      .eq("project_id", parseInt(projectId, 10))
-      .single();
-
-    if (!existing) {
-      return NextResponse.json({ error: "Payment not found" }, { status: 404 });
-    }
-
-    const { data, error } = await supabase
-      .from("prime_contract_payments")
-      .update(validatedData)
-      .eq("id", paymentId)
-      .select()
-      .single();
-
-    if (error) {
-      return NextResponse.json(
-        { error: "Failed to update payment", details: error.message },
-        { status: 400 },
-      );
-    }
-
-    return NextResponse.json(data);
-    },
+  async () => {
+    throw readOnlyPaymentError(
+      "projects/[projectId]/contracts/[contractId]/payments/[paymentId]#PATCH",
+    );
+  },
 );
 
-/**
- * DELETE /api/projects/[projectId]/contracts/[contractId]/payments/[paymentId]
- * Deletes a payment record
- */
 export const DELETE = withApiGuardrails(
   "projects/[projectId]/contracts/[contractId]/payments/[paymentId]#DELETE",
-  async ({ request, params }) => {
-  
-    const { projectId, contractId, paymentId } = await params;
-    const projectIdNum = parseInt(projectId, 10);
-    const guard = await requirePermission(projectIdNum, "contracts", "admin");
-    if (guard.denied) return guard.response;
-
-    const supabase = await createClient();
-
-    const { data: existing } = await supabase
-      .from("prime_contract_payments")
-      .select("id")
-      .eq("id", paymentId)
-      .eq("contract_id", contractId)
-      .eq("project_id", parseInt(projectId, 10))
-      .single();
-
-    if (!existing) {
-      return NextResponse.json({ error: "Payment not found" }, { status: 404 });
-    }
-
-    const { error } = await supabase
-      .from("prime_contract_payments")
-      .delete()
-      .eq("id", paymentId);
-
-    if (error) {
-      return NextResponse.json(
-        { error: "Failed to delete payment", details: error.message },
-        { status: 400 },
-      );
-    }
-
-    return NextResponse.json({ message: "Payment deleted" });
-    },
+  async () => {
+    throw readOnlyPaymentError(
+      "projects/[projectId]/contracts/[contractId]/payments/[paymentId]#DELETE",
+    );
+  },
 );

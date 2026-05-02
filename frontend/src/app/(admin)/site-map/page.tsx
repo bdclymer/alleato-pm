@@ -2,12 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { ChevronDown, ChevronRight, Layers } from "lucide-react";
+import { ChevronDown, ChevronRight, ExternalLink, Layers } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -56,6 +57,7 @@ const AUDIT_VARIANT: Record<AuditStatus, "neutral" | "info" | "warning" | "succe
 };
 
 const STORAGE_KEY = "sitemap-audit-status";
+const NOTES_STORAGE_KEY = "sitemap-page-notes";
 
 function loadAuditState(): Record<string, AuditStatus> {
   if (typeof window === "undefined") return {};
@@ -73,15 +75,78 @@ function saveAuditState(state: Record<string, AuditStatus>) {
   } catch {}
 }
 
+function loadNotesState(): Record<string, string> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = localStorage.getItem(NOTES_STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as Record<string, string>) : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveNotesState(state: Record<string, string>) {
+  try {
+    localStorage.setItem(NOTES_STORAGE_KEY, JSON.stringify(state));
+  } catch {}
+}
+
 // ── Group-by types ────────────────────────────────────────────────────────────
 
 type GroupBy = "none" | "category" | "parent";
+type SitemapTab = "all" | "table-pages" | "form-pages" | "project-pages";
 
 const GROUP_BY_LABELS: Record<GroupBy, string> = {
   none: "None",
   category: "Category",
   parent: "Parent Route",
 };
+
+const SITEMAP_TAB_LABELS: Record<SitemapTab, string> = {
+  all: "All",
+  "table-pages": "Table Pages",
+  "form-pages": "Form Pages",
+  "project-pages": "Project Pages",
+};
+
+function parseSitemapTab(value: string | null): SitemapTab {
+  if (
+    value === "all" ||
+    value === "table-pages" ||
+    value === "form-pages" ||
+    value === "project-pages"
+  ) {
+    return value;
+  }
+  return "all";
+}
+
+function isProjectRoute(route: SitemapRoute): boolean {
+  return route.url.includes("[projectId]") || route.category.startsWith("Project");
+}
+
+function matchesSitemapTab(route: SitemapRoute, tab: SitemapTab): boolean {
+  if (tab === "table-pages") return route.type === "list";
+  if (tab === "form-pages") return route.type === "form";
+  if (tab === "project-pages") return isProjectRoute(route);
+  return true;
+}
+
+function buildTabHref(
+  pathname: string,
+  searchParams: URLSearchParams,
+  tab: SitemapTab,
+): string {
+  const nextParams = new URLSearchParams(searchParams.toString());
+  if (tab === "all") {
+    nextParams.delete("tab");
+  } else {
+    nextParams.set("tab", tab);
+  }
+  nextParams.set("page", "1");
+  const queryString = nextParams.toString();
+  return queryString ? `${pathname}?${queryString}` : pathname;
+}
 
 function getGroupKey(route: SitemapRoute, groupBy: GroupBy): string {
   if (groupBy === "category") return route.category;
@@ -98,6 +163,7 @@ const sitemapColumns: ColumnConfig[] = [
   { id: "category", label: "Category", defaultVisible: true },
   { id: "type", label: "Type", defaultVisible: true },
   { id: "audit", label: "Audit", defaultVisible: true },
+  { id: "notes", label: "Notes", defaultVisible: true },
   { id: "dynamic", label: "Dynamic", defaultVisible: false },
 ];
 
@@ -106,46 +172,6 @@ const defaultVisibleColumns = sitemapColumns
   .map((c) => c.id);
 
 // ── Filters ─────────────────────────────────────────────────────────────────
-
-const categories = [...new Set(staticRoutes.map((r) => r.category))].sort();
-const types = [...new Set(staticRoutes.map((r) => r.type))].sort();
-const parents = [...new Set(staticRoutes.map((r) => deriveParent(r.url)))].sort();
-
-const sitemapFilters: FilterConfig[] = [
-  {
-    id: "parent",
-    label: "Parent Route",
-    type: "select",
-    options: parents.map((p) => ({ value: p, label: p })),
-  },
-  {
-    id: "category",
-    label: "Category",
-    type: "select",
-    options: categories.map((c) => ({ value: c, label: c })),
-  },
-  {
-    id: "type",
-    label: "Type",
-    type: "select",
-    options: types.map((t) => ({ value: t, label: t.charAt(0).toUpperCase() + t.slice(1) })),
-  },
-  {
-    id: "audit",
-    label: "Audit Status",
-    type: "select",
-    options: AUDIT_OPTIONS.map((o) => ({ value: o.value, label: o.label })),
-  },
-  {
-    id: "dynamic",
-    label: "Dynamic",
-    type: "select",
-    options: [
-      { value: "true", label: "Dynamic (requires params)" },
-      { value: "false", label: "Static" },
-    ],
-  },
-];
 
 // ── Table columns ───────────────────────────────────────────────────────────
 
@@ -163,7 +189,9 @@ const TYPE_VARIANT: Record<string, "info" | "success" | "warning" | "error" | "n
 
 function buildSitemapTableColumns(
   auditState: Record<string, AuditStatus>,
+  notesState: Record<string, string>,
   onAuditChange: (url: string, status: AuditStatus) => void,
+  onNotesChange: (url: string, notes: string) => void,
   groupBy: GroupBy,
   collapsedGroups: Set<string>,
   onToggleGroup: (key: string) => void,
@@ -266,7 +294,7 @@ function buildSitemapTableColumns(
             onValueChange={(val) => onAuditChange(item.url, val as AuditStatus)}
           >
             <SelectTrigger
-              className="h-7 w-36 text-xs"
+              className="h-7 w-36 border-0 bg-transparent px-0 shadow-none text-xs focus:ring-0 focus:ring-offset-0"
               onClick={(e) => e.stopPropagation()}
             >
               <SelectValue />
@@ -290,6 +318,24 @@ function buildSitemapTableColumns(
     },
     {
       ...sitemapColumns[6],
+      render: (item) => {
+        if (item._group !== undefined) return null;
+        return (
+          <Input
+            value={notesState[item.url] ?? ""}
+            placeholder="Add notes"
+            className="h-8 min-w-44 border-0 bg-transparent px-0 text-xs shadow-none placeholder:text-muted-foreground/70 focus-visible:ring-0 focus-visible:ring-offset-0"
+            onClick={(e) => e.stopPropagation()}
+            onChange={(e) => onNotesChange(item.url, e.target.value)}
+          />
+        );
+      },
+      csvValue: (item) => notesState[item.url] ?? "",
+      sortValue: (item) => notesState[item.url] ?? "",
+      sortable: groupBy === "none",
+    },
+    {
+      ...sitemapColumns[7],
       render: (item) =>
         item._group !== undefined ? null : (
           <span className="text-xs text-muted-foreground">
@@ -312,6 +358,7 @@ function applyFilters(
   search: string,
   filters: Record<string, FilterValue>,
   auditState: Record<string, AuditStatus>,
+  notesState: Record<string, string>,
 ): SitemapRoute[] {
   let filtered = routes;
 
@@ -323,7 +370,8 @@ function applyFilters(
         r.url.toLowerCase().includes(q) ||
         r.category.toLowerCase().includes(q) ||
         r.type.toLowerCase().includes(q) ||
-        deriveParent(r.url).toLowerCase().includes(q),
+        deriveParent(r.url).toLowerCase().includes(q) ||
+        (notesState[r.url] ?? "").toLowerCase().includes(q),
     );
   }
 
@@ -427,13 +475,16 @@ export default function SitemapPage() {
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const router = useRouter();
+  const currentTab = parseSitemapTab(searchParams.get("tab"));
 
   const [auditState, setAuditState] = useState<Record<string, AuditStatus>>({});
+  const [notesState, setNotesState] = useState<Record<string, string>>({});
   const [groupBy, setGroupBy] = useState<GroupBy>("none");
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     setAuditState(loadAuditState());
+    setNotesState(loadNotesState());
   }, []);
 
   const handleAuditChange = useCallback((url: string, status: AuditStatus) => {
@@ -449,6 +500,20 @@ export default function SitemapPage() {
       const next = new Set(prev);
       if (next.has(key)) next.delete(key);
       else next.add(key);
+      return next;
+    });
+  }, []);
+
+  const handleNotesChange = useCallback((url: string, notes: string) => {
+    setNotesState((prev) => {
+      const trimmed = notes.trim();
+      const next = { ...prev };
+      if (trimmed.length === 0) {
+        delete next[url];
+      } else {
+        next[url] = notes;
+      }
+      saveNotesState(next);
       return next;
     });
   }, []);
@@ -471,9 +536,24 @@ export default function SitemapPage() {
     },
   });
 
+  useEffect(() => {
+    setCollapsedGroups(new Set());
+    tableState.setActiveFilters(EMPTY_FILTERS);
+    tableState.setPage(1);
+  }, [currentTab, tableState.setActiveFilters, tableState.setPage]);
+
   const tableColumns = useMemo(
-    () => buildSitemapTableColumns(auditState, handleAuditChange, groupBy, collapsedGroups, handleToggleGroup),
-    [auditState, handleAuditChange, groupBy, collapsedGroups, handleToggleGroup],
+    () =>
+      buildSitemapTableColumns(
+        auditState,
+        notesState,
+        handleAuditChange,
+        handleNotesChange,
+        groupBy,
+        collapsedGroups,
+        handleToggleGroup,
+      ),
+    [auditState, notesState, handleAuditChange, handleNotesChange, groupBy, collapsedGroups, handleToggleGroup],
   );
 
   const activeFilters = useMemo(() => {
@@ -489,9 +569,66 @@ export default function SitemapPage() {
   const isFiltered =
     !!tableState.debouncedSearch || Object.keys(activeFilters).length > 0;
 
+  const tabbedRoutes = useMemo(
+    () => staticRoutes.filter((route) => matchesSitemapTab(route, currentTab)),
+    [currentTab],
+  );
+
+  const sitemapFilters = useMemo<FilterConfig[]>(() => {
+    const categories = [...new Set(tabbedRoutes.map((route) => route.category))].sort();
+    const types = [...new Set(tabbedRoutes.map((route) => route.type))].sort();
+    const parents = [...new Set(tabbedRoutes.map((route) => deriveParent(route.url)))].sort();
+
+    return [
+      {
+        id: "parent",
+        label: "Parent Route",
+        type: "select",
+        options: parents.map((parent) => ({ value: parent, label: parent })),
+      },
+      {
+        id: "category",
+        label: "Category",
+        type: "select",
+        options: categories.map((category) => ({ value: category, label: category })),
+      },
+      {
+        id: "type",
+        label: "Type",
+        type: "select",
+        options: types.map((type) => ({
+          value: type,
+          label: type.charAt(0).toUpperCase() + type.slice(1),
+        })),
+      },
+      {
+        id: "audit",
+        label: "Audit Status",
+        type: "select",
+        options: AUDIT_OPTIONS.map((option) => ({ value: option.value, label: option.label })),
+      },
+      {
+        id: "dynamic",
+        label: "Dynamic",
+        type: "select",
+        options: [
+          { value: "true", label: "Dynamic (requires params)" },
+          { value: "false", label: "Static" },
+        ],
+      },
+    ];
+  }, [tabbedRoutes]);
+
   const filteredRoutes = useMemo(
-    () => applyFilters(staticRoutes, tableState.debouncedSearch ?? "", activeFilters, auditState),
-    [tableState.debouncedSearch, activeFilters, auditState],
+    () =>
+      applyFilters(
+        tabbedRoutes,
+        tableState.debouncedSearch ?? "",
+        activeFilters,
+        auditState,
+        notesState,
+      ),
+    [tabbedRoutes, tableState.debouncedSearch, activeFilters, auditState, notesState],
   );
 
   const sortedRoutes = useMemo(
@@ -525,9 +662,25 @@ export default function SitemapPage() {
   };
 
   const auditSummary = useMemo(() => {
-    const passed = staticRoutes.filter((r) => auditState[r.url] === "passed").length;
-    return { passed, total: staticRoutes.length };
-  }, [auditState]);
+    const passed = tabbedRoutes.filter((route) => auditState[route.url] === "passed").length;
+    return { passed, total: tabbedRoutes.length };
+  }, [auditState, tabbedRoutes]);
+
+  const auditDescription =
+    currentTab === "all"
+      ? `${auditSummary.passed} / ${auditSummary.total} pages audited`
+      : `${auditSummary.passed} / ${auditSummary.total} ${SITEMAP_TAB_LABELS[currentTab].toLowerCase()} audited`;
+
+  const tabs = useMemo(
+    () =>
+      (Object.keys(SITEMAP_TAB_LABELS) as SitemapTab[]).map((tab) => ({
+        label: SITEMAP_TAB_LABELS[tab],
+        href: buildTabHref(pathname, new URLSearchParams(searchParams.toString()), tab),
+        count: staticRoutes.filter((route) => matchesSitemapTab(route, tab)).length,
+        isActive: currentTab === tab,
+      })),
+    [currentTab, pathname, searchParams],
+  );
 
   // Group-by control for header
   const groupByControl = (
@@ -560,16 +713,38 @@ export default function SitemapPage() {
     </DropdownMenu>
   );
 
+  const quickLinksControl = (
+    <div className="flex items-center gap-2">
+      <Button variant="outline" size="sm" asChild className="h-8 gap-1.5 text-xs">
+        <Link href="/site-map">
+          Route Table
+        </Link>
+      </Button>
+      <Button variant="outline" size="sm" asChild className="h-8 gap-1.5 text-xs">
+        <Link href="/sitemap.xml" target="_blank" rel="noreferrer">
+          XML Sitemap
+          <ExternalLink className="h-3.5 w-3.5" />
+        </Link>
+      </Button>
+    </div>
+  );
+
   return (
     <UnifiedTablePage<SitemapRoute>
       header={{
         title: "Sitemap",
-        description: `${auditSummary.passed} / ${auditSummary.total} pages audited`,
-        actions: groupByControl,
+        description: auditDescription,
+        actions: (
+          <div className="flex items-center gap-2">
+            {quickLinksControl}
+            {groupByControl}
+          </div>
+        ),
       }}
+      tabs={tabs}
       layout={{ fullBleedTable: false }}
       toolbar={{
-        totalItems: groupBy === "none" ? staticRoutes.length : groupedItems.filter((i) => !i._group).length,
+        totalItems: groupBy === "none" ? tabbedRoutes.length : groupedItems.filter((item) => !item._group).length,
         filteredItems: filteredRoutes.length,
         selectedCount: 0,
         searchValue: tableState.searchInput,

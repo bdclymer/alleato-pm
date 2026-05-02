@@ -23,6 +23,12 @@ import { ConversationSidebar } from "./conversation-sidebar";
 import { ChatArea, type ResponseQuality } from "./chat-area";
 import type { AssistantTraceDiagnostics, ToolTraceItem } from "./trace-panel";
 
+type PersistedDataPart = {
+  type: `data-${string}`;
+  id?: string;
+  data: unknown;
+};
+
 interface ChatHistoryMessage {
   id: string;
   role: string;
@@ -47,6 +53,7 @@ interface ChatHistoryMessage {
     model?: string;
     provider_decision?: Record<string, unknown> | null;
     loop_diagnostic?: Record<string, unknown> | null;
+    data_parts?: PersistedDataPart[];
   } | null;
   created_at: string | null;
 }
@@ -68,18 +75,32 @@ function isStrategistLiveStatus(value: unknown): value is StrategistLiveStatus {
   return typeof record.message === "string" && typeof record.stage === "string";
 }
 
-function stripStatusParts(messages: UIMessage[]): UIMessage[] {
+function stripRuntimeDataParts(messages: UIMessage[]): UIMessage[] {
   return messages.map((message) => ({
     ...message,
-    parts: message.parts.filter((part) => part.type !== "data-status"),
+    parts: message.parts.filter((part) => !part.type.startsWith("data-")),
   }));
+}
+
+function normalizePersistedDataParts(message: ChatHistoryMessage): PersistedDataPart[] {
+  const parts = message.metadata?.data_parts;
+  if (!Array.isArray(parts)) return [];
+
+  return parts.filter((part): part is PersistedDataPart => {
+    if (!part || typeof part !== "object") return false;
+    const record = part as Record<string, unknown>;
+    return typeof record.type === "string" && record.type.startsWith("data-");
+  });
 }
 
 function dbMessageToUIMessage(msg: ChatHistoryMessage): UIMessage {
   return {
     id: msg.id,
     role: msg.role as "user" | "assistant",
-    parts: [{ type: "text" as const, text: msg.content }],
+    parts: [
+      ...normalizePersistedDataParts(msg),
+      ...(msg.content ? [{ type: "text" as const, text: msg.content }] : []),
+    ],
   };
 }
 
@@ -228,7 +249,7 @@ function ChatWithSession({
     transport: new DefaultChatTransport({
       api: "/api/ai-assistant/chat",
       prepareSendMessagesRequest(request) {
-        const cleanedMessages = stripStatusParts(request.messages);
+        const cleanedMessages = stripRuntimeDataParts(request.messages);
         const lastMessage = cleanedMessages.at(-1);
         return {
           body: {

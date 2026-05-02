@@ -78,7 +78,11 @@ const SESSION_TTL_MS = 15 * 60 * 1000;
  * Recursively strips the Acumatica `{"value": ...}` envelope from a raw
  * API response. Handles nested objects, arrays, and null/undefined.
  */
-function unwrap<T>(raw: any): T {
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function unwrap<T>(raw: unknown): T {
   if (raw === null || raw === undefined) return raw as T;
 
   // If it's an array, unwrap each element
@@ -88,7 +92,7 @@ function unwrap<T>(raw: any): T {
 
   // If it looks like a value wrapper: { value: X }
   if (
-    typeof raw === "object" &&
+    isPlainObject(raw) &&
     "value" in raw &&
     Object.keys(raw).length === 1
   ) {
@@ -96,7 +100,7 @@ function unwrap<T>(raw: any): T {
   }
 
   // If it's an object, recursively unwrap all properties
-  if (typeof raw === "object") {
+  if (isPlainObject(raw)) {
     const result: Record<string, unknown> = {};
     for (const [key, val] of Object.entries(raw)) {
       // Skip internal Acumatica metadata fields
@@ -458,6 +462,12 @@ class AcumaticaClient {
     payload: Record<string, unknown>,
   ): Promise<Record<string, unknown>> {
     return this.upsertEntity("Invoice", payload);
+  }
+
+  async upsertBill(
+    payload: Record<string, unknown>,
+  ): Promise<Record<string, unknown>> {
+    return this.upsertEntity("Bill", payload);
   }
 
   async upsertProject(

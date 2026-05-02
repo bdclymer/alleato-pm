@@ -21,12 +21,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Modal as Dialog,
+  ModalContent as DialogContent,
+  ModalFooter as DialogFooter,
+  ModalHeader as DialogHeader,
+  ModalTitle as DialogTitle,
+} from "@/components/ui/unified-modal";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,7 +36,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { formatCurrency } from "@/config/tables";
+import { formatCurrency } from "@/lib/format";
 import { apiFetch } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import type { VerticalMarkup } from "@/hooks/use-vertical-markup";
@@ -461,19 +461,21 @@ export function ChangeEventLineItemsTable({
               </p>
               <div className="mb-4 space-y-1">
                 {(["none", "vendor", "budgetCode"] as GroupBy[]).map((opt) => (
-                  <button
+                  <Button
                     key={opt}
                     type="button"
+                    variant="ghost"
+                    size="sm"
                     className={cn(
-                      "w-full rounded-md px-2 py-1.5 text-left text-sm transition-colors",
+                      "h-auto w-full justify-start rounded-md px-2 py-1.5 text-left text-sm transition-colors hover:bg-muted",
                       groupBy === opt
-                        ? "bg-primary/10 font-medium text-primary"
-                        : "text-foreground hover:bg-muted",
+                        ? "bg-primary/10 font-medium text-primary hover:bg-primary/10"
+                        : "text-foreground",
                     )}
                     onClick={() => setGroupBy(opt)}
                   >
                     {opt === "none" ? "No grouping" : opt === "vendor" ? "By vendor" : "By budget code"}
-                  </button>
+                  </Button>
                 ))}
               </div>
 
@@ -535,13 +537,15 @@ export function ChangeEventLineItemsTable({
                   <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     Cost
                   </p>
-                  <button
+                  <Button
                     type="button"
-                    className="text-[10px] text-primary hover:underline"
+                    variant="ghost"
+                    size="sm"
+                    className="h-auto px-0 py-0 text-[10px] text-primary hover:bg-transparent hover:text-primary"
                     onClick={toggleCostGroup}
                   >
                     {allCostVisible ? "Hide all" : "Show all"}
-                  </button>
+                  </Button>
                 </div>
                 <div className="space-y-1.5">
                   {COST_COLS.map((col) => (
@@ -565,13 +569,15 @@ export function ChangeEventLineItemsTable({
                   <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     Revenue
                   </p>
-                  <button
+                  <Button
                     type="button"
-                    className="text-[10px] text-primary hover:underline"
+                    variant="ghost"
+                    size="sm"
+                    className="h-auto px-0 py-0 text-[10px] text-primary hover:bg-transparent hover:text-primary"
                     onClick={toggleRevGroup}
                   >
                     {allRevVisible ? "Hide all" : "Show all"}
-                  </button>
+                  </Button>
                 </div>
                 <div className="space-y-1.5">
                   {REV_COLS.map((col) => (

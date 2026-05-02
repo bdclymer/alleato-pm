@@ -1,4 +1,9 @@
-import type { TabConfig } from "@/components/templates/data-table-page";
+interface TabConfig {
+  label: string;
+  href: string;
+  count?: number;
+  isActive?: boolean;
+}
 
 export function getDirectoryTabs(currentPath: string): TabConfig[] {
   return [
@@ -31,6 +36,11 @@ export function getDirectoryTabs(currentPath: string): TabConfig[] {
       label: "Distribution Groups",
       href: "/directory/groups",
       isActive: currentPath === "/directory/groups",
+    },
+    {
+      label: "Employees",
+      href: "/directory/employees",
+      isActive: currentPath === "/directory/employees",
     },
   ];
 }

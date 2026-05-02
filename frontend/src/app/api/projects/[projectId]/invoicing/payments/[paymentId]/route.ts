@@ -1,9 +1,10 @@
+import { NextResponse } from "next/server";
+
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
-import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
-type Ctx = { params: Promise<{ projectId: string; paymentId: string }> };
+type Ctx = { params: { projectId: string; paymentId: string } };
 
 async function getAuthedClient() {
   const supabase = await createClient();
@@ -15,11 +16,21 @@ async function getAuthedClient() {
   return { supabase, user, error: null };
 }
 
+function readOnlyPaymentError(where: string): GuardrailError {
+  return new GuardrailError({
+    code: "READ_ONLY_RESOURCE",
+    where,
+    message:
+      "Invoice payments are synced from Acumatica and cannot be edited in Alleato.",
+    status: 405,
+    severity: "low",
+  });
+}
+
 // GET /api/projects/[projectId]/invoicing/payments/[paymentId]
 export const GET = withApiGuardrails(
   "projects/[projectId]/invoicing/payments/[paymentId]#GET",
-  async ({ request, params }) => {
-  
+  async ({ params }: Ctx) => {
     const { supabase, error: authErr } = await getAuthedClient();
     if (authErr) {
       throw new GuardrailError({
@@ -54,6 +65,7 @@ export const GET = withApiGuardrails(
         details: error.message,
       });
     }
+
     if (!data) {
       throw new GuardrailError({
         code: "ROUTE_BINDING_MISSING",
@@ -63,105 +75,23 @@ export const GET = withApiGuardrails(
     }
 
     return NextResponse.json({ data });
-    },
+  },
 );
 
-// PATCH /api/projects/[projectId]/invoicing/payments/[paymentId]
 export const PATCH = withApiGuardrails(
   "projects/[projectId]/invoicing/payments/[paymentId]#PATCH",
-  async ({ request, params }) => {
-  
-    const { supabase, error: authErr } = await getAuthedClient();
-    if (authErr) {
-      throw new GuardrailError({
-        code: "AUTH_EXPIRED",
-        where: "projects/[projectId]/invoicing/payments/[paymentId]#PATCH",
-        message: authErr,
-      });
-    }
-
-    const { projectId, paymentId } = params;
-    const projectIdNum = parseInt(projectId, 10);
-    const paymentIdNum = parseInt(paymentId, 10);
-
-    const body = await request.json();
-
-    const allowed = [
-      "payment_number",
-      "payment_method",
-      "amount",
-      "payment_date",
-      "check_number",
-      "notes",
-    ] as const;
-
-    const updates: Record<string, unknown> = {};
-    for (const key of allowed) {
-      if (key in body) updates[key] = body[key];
-    }
-
-    if (Object.keys(updates).length === 0) {
-      throw new GuardrailError({
-        code: "INVALID_PAYLOAD",
-        where: "projects/[projectId]/invoicing/payments/[paymentId]#PATCH",
-        message: "No updatable fields provided.",
-      });
-    }
-
-    const { data, error } = await supabase
-      .from("invoice_payments")
-      .update(updates)
-      .eq("id", paymentIdNum)
-      .eq("project_id", projectIdNum)
-      .select()
-      .single();
-
-    if (error) {
-      throw new GuardrailError({
-        code: "INTERNAL_ERROR",
-        where: "projects/[projectId]/invoicing/payments/[paymentId]#PATCH",
-        message: "Failed to update payment.",
-        details: error.message,
-      });
-    }
-
-    return NextResponse.json({ data });
-    },
+  async () => {
+    throw readOnlyPaymentError(
+      "projects/[projectId]/invoicing/payments/[paymentId]#PATCH",
+    );
+  },
 );
 
-// DELETE /api/projects/[projectId]/invoicing/payments/[paymentId]
 export const DELETE = withApiGuardrails(
   "projects/[projectId]/invoicing/payments/[paymentId]#DELETE",
-  async ({ request, params }) => {
-  
-    const { supabase, error: authErr } = await getAuthedClient();
-    if (authErr) {
-      throw new GuardrailError({
-        code: "AUTH_EXPIRED",
-        where: "projects/[projectId]/invoicing/payments/[paymentId]#DELETE",
-        message: authErr,
-      });
-    }
-
-    const { projectId, paymentId } = params;
-    const projectIdNum = parseInt(projectId, 10);
-    const paymentIdNum = parseInt(paymentId, 10);
-
-    const { error } = await supabase
-      .from("invoice_payments")
-      .delete()
-      .eq("id", paymentIdNum)
-      .eq("project_id", projectIdNum);
-
-    if (error) {
-      throw new GuardrailError({
-        code: "INTERNAL_ERROR",
-        where: "projects/[projectId]/invoicing/payments/[paymentId]#DELETE",
-        message: "Failed to delete payment.",
-        details: error.message,
-      });
-    }
-
-    return NextResponse.json({ success: true });
-    },
+  async () => {
+    throw readOnlyPaymentError(
+      "projects/[projectId]/invoicing/payments/[paymentId]#DELETE",
+    );
+  },
 );

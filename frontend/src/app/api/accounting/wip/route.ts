@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { withApiGuardrails } from "@/lib/guardrails/api";
+import { requireCurrentUserAppCapability } from "@/lib/app-capabilities";
 import { GuardrailError } from "@/lib/guardrails/errors";
-import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
-import { toNumber, roundMoney, asIsoDate, getMaxDate } from "@/lib/accounting/utils";
+import { toNumber, roundMoney, getMaxDate } from "@/lib/accounting/utils";
 import { calculateWipPosition, isClosedInvoiceStatus } from "@/lib/accounting/wip-calculator";
 
 type BudgetLine = {
@@ -90,16 +90,11 @@ function normalizeRecordType(type: string | null): "income" | "expense" | "other
 }
 
 export const GET = withApiGuardrails("/api/accounting/wip#GET", async () => {
-  const user = await getApiRouteUser();
-  if (!user) {
-    throw new GuardrailError({
-      code: "AUTH_EXPIRED",
-      where: "/api/accounting/wip#GET",
-      message: "Unauthorized accounting WIP request.",
-      status: 401,
-      severity: "medium",
-    });
-  }
+  await requireCurrentUserAppCapability(
+    "view_accounting",
+    "/api/accounting/wip#GET",
+    "Accounting access required.",
+  );
 
   const supabase = createServiceClient();
 

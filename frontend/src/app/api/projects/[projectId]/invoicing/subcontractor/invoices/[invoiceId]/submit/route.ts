@@ -6,7 +6,11 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { sendEmail } from "@/lib/email/send";
 import InvoiceSubmittedToPM from "@/emails/subcontractor/InvoiceSubmittedToPM";
 import { APP_BASE_URL } from "@/lib/email/client";
-import { logger } from "@/lib/logger";
+
+interface NotificationResult {
+  sent: string[];
+  failed: Array<{ email: string; reason: string }>;
+}
 
 // POST /api/projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/submit
 // Transition invoice to under_review. Pre-condition: must be draft or revise_and_resubmit.
@@ -107,16 +111,24 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
       });
     }
 
-    // Fire-and-forget PM notification — do not block the submit response.
-    notifyProjectManagersOfInvoiceSubmission({
+    const notificationResult = await notifyProjectManagersOfInvoiceSubmission({
       projectId: projectIdNum,
       invoiceId: invoiceIdNum,
-    }).catch((err) => {
-      logger.error({ msg: "[invoice-submit] PM notification failed", error: err instanceof Error ? err.message : String(err) });
     });
+
+    if (notificationResult.failed.length > 0) {
+      return NextResponse.json(
+        {
+          error: "Invoice submitted, but PM notification failed",
+          notification: notificationResult,
+        },
+        { status: 502 },
+      );
+    }
 
     return NextResponse.json({
       data: updated,
+      notification: notificationResult,
       message: "Invoice submitted successfully",
     });
     },
@@ -125,7 +137,7 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
 async function notifyProjectManagersOfInvoiceSubmission(args: {
   projectId: number;
   invoiceId: number;
-}) {
+}): Promise<NotificationResult> {
   const { projectId, invoiceId } = args;
   const supabase = createServiceClient();
 
@@ -137,7 +149,12 @@ async function notifyProjectManagersOfInvoiceSubmission(args: {
     )
     .eq("id", invoiceId)
     .maybeSingle();
-  if (!invoice) return;
+  if (!invoice) {
+    return {
+      sent: [],
+      failed: [{ email: "project-managers", reason: "Invoice not found for PM notification" }],
+    };
+  }
 
   const projectPromise = supabase
     .from("projects")
@@ -231,7 +248,12 @@ async function notifyProjectManagersOfInvoiceSubmission(args: {
     })
     .map((m: { person_id: string }) => m.person_id);
 
-  if (pmPersonIds.length === 0) return;
+  if (pmPersonIds.length === 0) {
+    return {
+      sent: [],
+      failed: [{ email: "project-managers", reason: "No active project manager recipients found" }],
+    };
+  }
 
   const { data: people } = await supabase
     .from("people")
@@ -245,15 +267,20 @@ async function notifyProjectManagersOfInvoiceSubmission(args: {
       email: p.email as string,
     }));
 
-  if (recipients.length === 0) return;
+  if (recipients.length === 0) {
+    return {
+      sent: [],
+      failed: [{ email: "project-managers", reason: "Project manager recipients have no email addresses" }],
+    };
+  }
 
   const reviewUrl = `${APP_BASE_URL}/${projectId}/invoicing/subcontractor/${invoiceId}`;
   const invoiceNumber = invoice.invoice_number || `#${invoice.id}`;
   const subject = `Invoice ${invoiceNumber} from ${subcontractorName} — review needed`;
 
-  await Promise.all(
-    recipients.map((r) =>
-      sendEmail({
+  const results = await Promise.all(
+    recipients.map(async (r) => {
+      const result = await sendEmail({
         template: "invoice-submitted-to-pm",
         to: r.email,
         subject,
@@ -268,7 +295,31 @@ async function notifyProjectManagersOfInvoiceSubmission(args: {
         }),
         entity: { type: "subcontractor_invoice", id: invoiceId },
         idempotencyKey: `invoice-submitted/${invoiceId}/${r.email}`,
-      }),
-    ),
+        metadata: {
+          project_id: projectId,
+          invoice_id: invoiceId,
+          invoice_number: invoiceNumber,
+          subcontractor_name: subcontractorName,
+          recipient_email: r.email,
+        },
+      });
+
+      return {
+        email: r.email,
+        result,
+      };
+    }),
   );
+
+  return {
+    sent: results
+      .filter(({ result }) => !result.error)
+      .map(({ email }) => email),
+    failed: results
+      .filter(({ result }) => result.error)
+      .map(({ email, result }) => ({
+        email,
+        reason: result.error?.message ?? "Unknown email send failure",
+      })),
+  };
 }

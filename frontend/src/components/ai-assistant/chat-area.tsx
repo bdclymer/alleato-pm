@@ -119,6 +119,8 @@ import { CrossSourceTimeline } from "./cross-source-timeline";
 import { formatStructuredMeetingList } from "./chat-formatting";
 import { AnimatedOrb } from "./animated-orb";
 import { AudioWaveform } from "./audio-waveform";
+import { BrandonDailyUpdateWidgetCard } from "./brandon-daily-update-widget-card";
+import type { BrandonDailyUpdatePacket } from "@/lib/executive/brandon-daily-update";
 
 // ─── Part extraction helpers ───────────────────────────────────────
 
@@ -248,6 +250,20 @@ function getToolParts(msg: UIMessage): ToolPart[] {
   return msg.parts
     .filter((p) => p.type.startsWith("tool-"))
     .map((p) => p as unknown as ToolPart);
+}
+
+function getBrandonDailyUpdateWidgetParts(
+  msg: UIMessage,
+): Array<{ packet: BrandonDailyUpdatePacket }> {
+  return msg.parts.reduce<Array<{ packet: BrandonDailyUpdatePacket }>>((widgets, part) => {
+    if (part.type !== "data-brandon-daily-update-widget") return widgets;
+    const data = (part as { data?: unknown }).data;
+    if (!data || typeof data !== "object") return widgets;
+    const packet = (data as { packet?: BrandonDailyUpdatePacket }).packet;
+    if (!packet || typeof packet !== "object") return widgets;
+    widgets.push({ packet });
+    return widgets;
+  }, []);
 }
 
 function getLatestStatusPart(msg: UIMessage): StrategistLiveStatus | null {
@@ -1716,6 +1732,9 @@ export function ChatArea({
                 const toolParts = isAssistant
                   ? getToolParts(msg)
                   : [];
+                const brandonWidgetParts = isAssistant
+                  ? getBrandonDailyUpdateWidgetParts(msg)
+                  : [];
                 const persistedTraces = toolTracesByMessageId[msg.id] ?? [];
                 const persistedSources = sourcesByMessageId[msg.id] ?? [];
                 const memoryUsage = memoryUsageByMessageId[msg.id];
@@ -1878,6 +1897,13 @@ export function ChatArea({
                               />
                             </div>
                           ) : null}
+
+                          {brandonWidgetParts.map((widget, index) => (
+                            <BrandonDailyUpdateWidgetCard
+                              key={`${msg.id}-brandon-widget-${index}`}
+                              packet={widget.packet}
+                            />
+                          ))}
 
                           {/* Main text response */}
                           <MessageResponse className="text-sm leading-6">

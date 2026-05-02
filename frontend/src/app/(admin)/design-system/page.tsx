@@ -3,9 +3,9 @@ import type { ReactElement } from "react";
 import path from "path";
 import { readdir } from "fs/promises";
 
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { TablePrimitivesDemo } from "./table-primitives-demo";
 
 type ComponentEntry = {
   name: string;
@@ -78,6 +78,15 @@ export default async function DesignSystemPage(): Promise<ReactElement> {
                 <li>`/Users/meganharrison/Documents/github/alleato-procore/frontend/src/design-system/spacing.ts`</li>
               </ul>
             </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Table Cell Primitives</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <TablePrimitivesDemo />
           </CardContent>
         </Card>
 

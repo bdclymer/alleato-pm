@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useForm, type Control } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ArrowLeft, Edit, Trash2, Download, Check, CheckCheck, Ban, Send, RotateCcw, Plus, Save, Mail, CreditCard } from "lucide-react";
+import { ArrowLeft, Edit, Trash2, Download, Check, CheckCheck, Ban, Send, RotateCcw, Plus, Save, Mail } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -29,12 +29,12 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+  Modal,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  ModalTitle,
+} from "@/components/ui/unified-modal";
 import {
   Form,
 } from "@/components/ui/form";
@@ -49,14 +49,6 @@ import { PageShell } from "@/components/layout";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-
 import { useProjectTitle } from "@/hooks/useProjectTitle";
 import { useSendInvoiceEmail } from "@/hooks/use-invoicing";
 import {
@@ -74,6 +66,8 @@ import { RHFDateField } from "@/components/forms/fields/RHFDateField";
 import { RHFSelectField } from "@/components/forms/fields/RHFSelectField";
 import { RHFTextField } from "@/components/forms/fields/RHFTextField";
 import { RHFTextareaField } from "@/components/forms/fields/RHFTextareaField";
+import { apiFetch } from "@/lib/api-client";
+import { formatPercent } from "@/lib/format";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -108,17 +102,6 @@ const invoiceStatusOptions = [
   { value: "paid", label: "Paid" },
   { value: "void", label: "Void" },
 ];
-
-const paymentMethodOptions = [
-  { value: "ach", label: "ACH" },
-  { value: "check", label: "Check" },
-  { value: "wire", label: "Wire" },
-  { value: "credit_card", label: "Credit Card" },
-  { value: "electronic", label: "Electronic" },
-  { value: "other", label: "Other" },
-];
-
-const toDateOnly = (date: Date): string => date.toISOString().slice(0, 10);
 
 // ---------------------------------------------------------------------------
 // Add line item schema
@@ -170,9 +153,9 @@ function EditableCell({ value, onChange, prefix, suffix, min = 0, max, step = 0.
   };
 
   return (
-    <div className="flex items-center gap-0.5 min-w-[100px]">
+    <div className="flex min-w-28 items-center gap-0.5">
       {prefix && <span className="text-muted-foreground text-xs">{prefix}</span>}
-      <input
+      <Input
         ref={inputRef}
         type="number"
         value={localValue}
@@ -191,7 +174,7 @@ function EditableCell({ value, onChange, prefix, suffix, min = 0, max, step = 0.
             inputRef.current?.blur();
           }
         }}
-        className="w-full rounded border border-border bg-muted px-2 py-1 text-right text-sm tabular-nums focus:outline-none focus:ring-1 focus:ring-ring"
+        className="h-8 w-full bg-muted px-2 py-1 text-right text-sm tabular-nums"
       />
       {suffix && <span className="text-muted-foreground text-xs">{suffix}</span>}
     </div>
@@ -275,11 +258,11 @@ function SovTable({ lineItems, editable, draftMap, onDraftChange }: SovTableProp
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="min-w-[160px]">Description</TableHead>
+            <TableHead className="min-w-40">Description</TableHead>
             <TableHead>Category</TableHead>
-            <TableHead className="text-right min-w-[110px]">Scheduled Value</TableHead>
-            <TableHead className="text-right min-w-[110px]">Prev Work</TableHead>
-            <TableHead className="text-right min-w-[120px]">
+            <TableHead className="min-w-28 text-right">Scheduled Value</TableHead>
+            <TableHead className="min-w-28 text-right">Prev Work</TableHead>
+            <TableHead className="min-w-32 text-right">
               {editable ? (
                 <span className="inline-flex items-center gap-1">
                   Work This Period
@@ -289,7 +272,7 @@ function SovTable({ lineItems, editable, draftMap, onDraftChange }: SovTableProp
                 "Work This Period"
               )}
             </TableHead>
-            <TableHead className="text-right min-w-[120px]">
+            <TableHead className="min-w-32 text-right">
               {editable ? (
                 <span className="inline-flex items-center gap-1">
                   Materials Stored
@@ -299,9 +282,9 @@ function SovTable({ lineItems, editable, draftMap, onDraftChange }: SovTableProp
                 "Materials Stored"
               )}
             </TableHead>
-            <TableHead className="text-right min-w-[100px]">Total Comp. &amp; Stored</TableHead>
-            <TableHead className="text-right min-w-[80px]">% Complete</TableHead>
-            <TableHead className="text-right min-w-[120px]">
+            <TableHead className="min-w-28 text-right">Total Comp. &amp; Stored</TableHead>
+            <TableHead className="min-w-20 text-right">% Complete</TableHead>
+            <TableHead className="min-w-32 text-right">
               {editable ? (
                 <span className="inline-flex items-center gap-1">
                   Retainage %
@@ -311,7 +294,7 @@ function SovTable({ lineItems, editable, draftMap, onDraftChange }: SovTableProp
                 "Retainage %"
               )}
             </TableHead>
-            <TableHead className="text-right min-w-[110px]">
+            <TableHead className="min-w-28 text-right">
               {editable ? (
                 <span className="inline-flex items-center gap-1">
                   Retainage $
@@ -321,7 +304,7 @@ function SovTable({ lineItems, editable, draftMap, onDraftChange }: SovTableProp
                 "Retainage $"
               )}
             </TableHead>
-            <TableHead className="text-right min-w-[120px]">
+            <TableHead className="min-w-32 text-right">
               {editable ? (
                 <span className="inline-flex items-center gap-1">
                   Retainage Released
@@ -331,8 +314,8 @@ function SovTable({ lineItems, editable, draftMap, onDraftChange }: SovTableProp
                 "Retainage Released"
               )}
             </TableHead>
-            <TableHead className="text-right min-w-[110px]">Net This Period</TableHead>
-            <TableHead className="text-right min-w-[110px]">Balance to Finish</TableHead>
+            <TableHead className="min-w-28 text-right">Net This Period</TableHead>
+            <TableHead className="min-w-28 text-right">Balance to Finish</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -392,7 +375,7 @@ function SovTable({ lineItems, editable, draftMap, onDraftChange }: SovTableProp
                   {formatCurrency(totalCompleted)}
                 </TableCell>
                 <TableCell className="text-right tabular-nums text-sm">
-                  {pctComplete.toFixed(1)}%
+                  {formatPercent(pctComplete)}
                 </TableCell>
 
                 {/* Editable: Retainage % */}
@@ -411,7 +394,7 @@ function SovTable({ lineItems, editable, draftMap, onDraftChange }: SovTableProp
                     />
                   ) : (
                     <span className="tabular-nums text-sm">
-                      {(item.retainage_pct ?? 0).toFixed(2)}%
+                      {formatPercent(item.retainage_pct ?? 0, 2)}
                     </span>
                   )}
                 </TableCell>
@@ -478,7 +461,7 @@ interface AddLineItemDialogProps {
 
 function AddLineItemDialog({ open, onOpenChange, projectId, invoiceId, onSuccess }: AddLineItemDialogProps) {
   const [isSaving, setIsSaving] = useState(false);
-  const form = useForm<z.input<typeof addLineItemSchema>, any, AddLineItemValues>({
+  const form = useForm<AddLineItemValues>({
     resolver: zodResolver(addLineItemSchema),
     defaultValues: {
       description: "",
@@ -495,25 +478,17 @@ function AddLineItemDialog({ open, onOpenChange, projectId, invoiceId, onSuccess
   const onSubmit = async (values: AddLineItemValues) => {
     setIsSaving(true);
     try {
-      const response = await fetch(
+      const body = await apiFetch<{ data: OwnerInvoiceLineItem }>(
         `/api/projects/${projectId}/invoicing/owner/${invoiceId}/line-items`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(values),
         },
       );
-
-      if (!response.ok) {
-        const body = await response.json();
-        throw new Error(body.error || "Failed to create line item");
-      }
-
-      const body = await response.json();
       toast.success("Line item added");
       form.reset();
       onOpenChange(false);
-      onSuccess(body.data as OwnerInvoiceLineItem);
+      onSuccess(body.data);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to add line item");
     } finally {
@@ -522,11 +497,11 @@ function AddLineItemDialog({ open, onOpenChange, projectId, invoiceId, onSuccess
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Add Line Item</DialogTitle>
-        </DialogHeader>
+    <Modal open={open} onOpenChange={onOpenChange}>
+      <ModalContent size="lg">
+        <ModalHeader>
+          <ModalTitle>Add Line Item</ModalTitle>
+        </ModalHeader>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2 space-y-1">
@@ -597,17 +572,17 @@ function AddLineItemDialog({ open, onOpenChange, projectId, invoiceId, onSuccess
               />
             </div>
           </div>
-          <DialogFooter>
+          <ModalFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
             <Button type="submit" disabled={isSaving}>
               {isSaving ? "Adding..." : "Add Line Item"}
             </Button>
-          </DialogFooter>
+          </ModalFooter>
         </form>
-      </DialogContent>
-    </Dialog>
+      </ModalContent>
+    </Modal>
   );
 }
 
@@ -657,23 +632,15 @@ function InvoiceEditForm({
         notes: values.notes || null,
       };
 
-      const response = await fetch(
+      const body = await apiFetch<{ data: OwnerInvoice }>(
         `/api/projects/${projectId}/invoicing/owner/${invoiceId}`,
         {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         },
       );
-
-      if (!response.ok) {
-        const body = await response.json();
-        throw new Error(body.message || body.error || "Failed to update invoice");
-      }
-
-      const body = await response.json();
       toast.success("Invoice updated successfully");
-      onSuccess(body.data as OwnerInvoice);
+      onSuccess(body.data);
     } catch (err) {
       toast.error(
         err instanceof Error ? err.message : "Failed to update invoice",
@@ -778,13 +745,6 @@ export default function InvoiceDetailPage() {
   const [emailCc, setEmailCc] = useState("");
   const [emailSubject, setEmailSubject] = useState("");
   const [emailMessage, setEmailMessage] = useState("");
-  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
-  const [paymentAmount, setPaymentAmount] = useState("");
-  const [paymentDate, setPaymentDate] = useState(toDateOnly(new Date()));
-  const [paymentMethod, setPaymentMethod] = useState("ach");
-  const [paymentReference, setPaymentReference] = useState("");
-  const [paymentNotes, setPaymentNotes] = useState("");
-  const [isRecordingPayment, setIsRecordingPayment] = useState(false);
   const sendInvoiceEmail = useSendInvoiceEmail(String(projectId));
 
   // SOV draft state — tracks unsaved edits keyed by line item id
@@ -801,15 +761,9 @@ export default function InvoiceDetailPage() {
     setError(null);
 
     try {
-      const response = await fetch(
+      const data = await apiFetch<{ data: OwnerInvoice }>(
         `/api/projects/${projectId}/invoicing/owner/${invoiceId}`,
       );
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch invoice");
-      }
-
-      const data = await response.json();
       setInvoice(data.data);
       // Reset draft on fresh load
       setSovDraft({});
@@ -846,19 +800,13 @@ export default function InvoiceDetailPage() {
         ...fields,
       }));
 
-      const response = await fetch(
+      await apiFetch(
         `/api/projects/${projectId}/invoicing/owner/${invoiceId}/line-items`,
         {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ updates }),
         },
       );
-
-      if (!response.ok) {
-        const body = await response.json();
-        throw new Error(body.error || "Failed to save SOV changes");
-      }
 
       toast.success("Schedule of Values saved");
       // Refresh invoice to get server-computed values
@@ -904,17 +852,12 @@ export default function InvoiceDetailPage() {
     }
 
     try {
-      const response = await fetch(
+      await apiFetch(
         `/api/projects/${projectId}/invoicing/owner/${invoiceId}/submit`,
         {
           method: "POST",
         },
       );
-
-      if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.message || "Failed to submit invoice");
-      }
 
       toast.success("Invoice submitted successfully");
       fetchInvoice();
@@ -927,15 +870,10 @@ export default function InvoiceDetailPage() {
     if (!invoice) return;
 
     try {
-      const response = await fetch(
+      await apiFetch(
         `/api/projects/${projectId}/invoicing/owner/${invoiceId}/revise`,
         { method: "POST" },
       );
-
-      if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.message || "Failed to request revision");
-      }
 
       toast.success("Invoice returned for revision");
       fetchInvoice();
@@ -948,17 +886,12 @@ export default function InvoiceDetailPage() {
     if (!invoice) return;
 
     try {
-      const response = await fetch(
+      await apiFetch(
         `/api/projects/${projectId}/invoicing/owner/${invoiceId}/approve`,
         {
           method: "POST",
         },
       );
-
-      if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.message || "Failed to approve invoice");
-      }
 
       toast.success("Invoice approved successfully");
       fetchInvoice();
@@ -971,14 +904,10 @@ export default function InvoiceDetailPage() {
     if (!invoice) return;
     try {
       setIsApprovingAsNoted(true);
-      const response = await fetch(
+      await apiFetch(
         `/api/projects/${projectId}/invoicing/owner/${invoiceId}/approve-as-noted`,
         { method: "POST" },
       );
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
-        throw new Error(err.error || err.message || "Failed to approve invoice as noted");
-      }
       toast.success("Invoice approved as noted");
       setApproveAsNotedDialogOpen(false);
       fetchInvoice();
@@ -993,18 +922,13 @@ export default function InvoiceDetailPage() {
     if (!invoice) return;
     try {
       setIsVoiding(true);
-      const response = await fetch(
+      await apiFetch(
         `/api/projects/${projectId}/invoicing/owner/${invoiceId}/void`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ reason: voidReason.trim() || undefined }),
         },
       );
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
-        throw new Error(err.error || err.message || "Failed to void invoice");
-      }
       toast.success("Invoice voided");
       setVoidDialogOpen(false);
       setVoidReason("");
@@ -1021,17 +945,12 @@ export default function InvoiceDetailPage() {
 
     try {
       setIsDeleting(true);
-      const response = await fetch(
+      await apiFetch(
         `/api/projects/${projectId}/invoicing/owner/${invoiceId}`,
         {
           method: "DELETE",
         },
       );
-
-      if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.message || "Failed to delete invoice");
-      }
 
       toast.success("Invoice deleted successfully");
       router.push(`/${projectId}/invoices`);
@@ -1086,65 +1005,6 @@ export default function InvoiceDetailPage() {
       setEmailDialogOpen(false);
     } catch {
       // toast handled by hook
-    }
-  };
-
-  const getPaymentDue = () => {
-    const invoiceTotal = invoice?.net_amount ?? invoice?.total_amount ?? 0;
-    const paidTotal = invoice?.paid_amount ?? invoice?.total_paid ?? 0;
-    return Math.max(invoiceTotal - paidTotal, 0);
-  };
-
-  const openPaymentDialog = () => {
-    setPaymentAmount(getPaymentDue().toFixed(2));
-    setPaymentDate(toDateOnly(new Date()));
-    setPaymentMethod("ach");
-    setPaymentReference("");
-    setPaymentNotes("");
-    setPaymentDialogOpen(true);
-  };
-
-  const handleRecordPayment = async () => {
-    if (!invoice) return;
-
-    const amount = Number.parseFloat(paymentAmount);
-    if (!Number.isFinite(amount) || amount <= 0) {
-      toast.error("Payment amount must be greater than zero.");
-      return;
-    }
-
-    if (!paymentDate) {
-      toast.error("Payment date is required.");
-      return;
-    }
-
-    setIsRecordingPayment(true);
-    try {
-      const response = await fetch(`/api/projects/${projectId}/invoicing/payments`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          owner_invoice_id: invoice.id,
-          payment_method: paymentMethod,
-          amount,
-          payment_date: paymentDate,
-          check_number: paymentReference.trim() || null,
-          notes: paymentNotes.trim() || null,
-        }),
-      });
-
-      if (!response.ok) {
-        const body = await response.json().catch(() => ({}));
-        throw new Error(body.message || body.error || "Failed to record payment");
-      }
-
-      toast.success("Payment recorded successfully");
-      setPaymentDialogOpen(false);
-      await fetchInvoice();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to record payment");
-    } finally {
-      setIsRecordingPayment(false);
     }
   };
 
@@ -1299,12 +1159,6 @@ export default function InvoiceDetailPage() {
               <Mail />
               Email Invoice
             </Button>
-            {["approved", "approved_as_noted"].includes(invoice.status) && getPaymentDue() > 0 && (
-              <Button variant="outline" size="sm" onClick={openPaymentDialog}>
-                <CreditCard />
-                Record Payment
-              </Button>
-            )}
             {invoice.status !== "paid" && invoice.status !== "void" && (
               <Button
                 variant="destructive"
@@ -1472,7 +1326,7 @@ export default function InvoiceDetailPage() {
                   <div className="flex justify-between items-center">
                     <Text tone="muted">% Complete</Text>
                     <Text weight="medium" className="tabular-nums">
-                      {pctComplete.toFixed(1)}%
+                      {formatPercent(pctComplete)}
                     </Text>
                   </div>
                   <div className="flex justify-between items-center">
@@ -1496,11 +1350,11 @@ export default function InvoiceDetailPage() {
       </PageShell>
 
       {/* Email Invoice Dialog */}
-      <Dialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Email Invoice</DialogTitle>
-          </DialogHeader>
+      <Modal open={emailDialogOpen} onOpenChange={setEmailDialogOpen}>
+        <ModalContent size="lg">
+          <ModalHeader>
+            <ModalTitle>Email Invoice</ModalTitle>
+          </ModalHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-1.5">
               <Label htmlFor="email-to">To *</Label>
@@ -1544,7 +1398,7 @@ export default function InvoiceDetailPage() {
               />
             </div>
           </div>
-          <DialogFooter>
+          <ModalFooter>
             <Button
               variant="outline"
               onClick={() => setEmailDialogOpen(false)}
@@ -1559,96 +1413,9 @@ export default function InvoiceDetailPage() {
               <Send />
               {sendInvoiceEmail.isPending ? "Sending..." : "Send"}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Record Payment Dialog */}
-      <Dialog open={paymentDialogOpen} onOpenChange={setPaymentDialogOpen}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Record Payment Received</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label htmlFor="payment-amount">Amount *</Label>
-                <Input
-                  id="payment-amount"
-                  type="number"
-                  min="0.01"
-                  step="0.01"
-                  value={paymentAmount}
-                  onChange={(event) => setPaymentAmount(event.target.value)}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="payment-date">Payment Date *</Label>
-                <Input
-                  id="payment-date"
-                  type="date"
-                  value={paymentDate}
-                  onChange={(event) => setPaymentDate(event.target.value)}
-                />
-              </div>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label htmlFor="payment-method">Method</Label>
-                <Select
-                  value={paymentMethod}
-                  onValueChange={setPaymentMethod}
-                >
-                  <SelectTrigger id="payment-method">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {paymentMethodOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="payment-reference">Reference</Label>
-                <Input
-                  id="payment-reference"
-                  value={paymentReference}
-                  onChange={(event) => setPaymentReference(event.target.value)}
-                  placeholder="Check or transaction #"
-                />
-              </div>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="payment-notes">Notes</Label>
-              <Textarea
-                id="payment-notes"
-                rows={3}
-                value={paymentNotes}
-                onChange={(event) => setPaymentNotes(event.target.value)}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setPaymentDialogOpen(false)}
-              disabled={isRecordingPayment}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={() => void handleRecordPayment()}
-              disabled={isRecordingPayment}
-            >
-              <CreditCard />
-              {isRecordingPayment ? "Recording..." : "Record Payment"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
 
       {/* Delete Confirmation */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
@@ -1741,7 +1508,7 @@ export default function InvoiceDetailPage() {
       >
         <SlideoverContent
           side="right"
-          className="w-[92vw] sm:max-w-lg overflow-y-auto p-0"
+          className="w-full max-w-xl overflow-y-auto p-0"
         >
           <SlideoverHeader className="border-b p-4">
             <SlideoverTitle>Edit Invoice</SlideoverTitle>

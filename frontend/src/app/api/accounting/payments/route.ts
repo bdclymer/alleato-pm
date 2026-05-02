@@ -1,20 +1,15 @@
 import { NextResponse } from "next/server";
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
-import { getApiRouteUser } from "@/lib/supabase/server";
+import { requireCurrentUserAppCapability } from "@/lib/app-capabilities";
 import { createServiceClient } from "@/lib/supabase/service";
 
 export const GET = withApiGuardrails("/api/accounting/payments#GET", async () => {
-  const user = await getApiRouteUser();
-  if (!user) {
-    throw new GuardrailError({
-      code: "AUTH_EXPIRED",
-      where: "/api/accounting/payments#GET",
-      message: "Unauthorized accounting payments request.",
-      status: 401,
-      severity: "medium",
-    });
-  }
+  await requireCurrentUserAppCapability(
+    "view_accounting",
+    "/api/accounting/payments#GET",
+    "Accounting access required.",
+  );
 
   const supabase = createServiceClient();
 

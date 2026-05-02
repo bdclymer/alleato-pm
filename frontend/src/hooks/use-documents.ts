@@ -50,6 +50,11 @@ export interface ProjectDocument {
   deleted_at: string | null;
 }
 
+export interface GlobalProjectDocument extends ProjectDocument {
+  project_name: string | null;
+  project_number: string | null;
+}
+
 export interface CreateDocumentInput {
   title: string;
   description?: string | null;
@@ -91,6 +96,7 @@ export const documentKeys = {
     ["documents", projectId, "list", folder] as const,
   detail: (projectId: number, id: string) =>
     ["documents", projectId, "detail", id] as const,
+  globalList: () => ["documents", "global", "list"] as const,
 };
 
 // =============================================================================
@@ -119,6 +125,14 @@ export function useDocument(projectId: number, documentId: string) {
         { signal },
       ),
     enabled: !!projectId && !!documentId,
+  });
+}
+
+export function useGlobalDocuments() {
+  return useQuery<GlobalProjectDocument[]>({
+    queryKey: documentKeys.globalList(),
+    queryFn: ({ signal }) =>
+      apiFetch<GlobalProjectDocument[]>("/api/project-documents", { signal }),
   });
 }
 

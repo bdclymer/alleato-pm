@@ -6,7 +6,8 @@ import { toast } from "sonner";
 
 import { SectionRuleHeading } from "@/components/layout";
 import { MoneyField } from "@/components/forms/MoneyField";
-import { formatCurrency } from "@/config/tables";
+import { apiFetch } from "@/lib/api-client";
+import { formatCurrency } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -72,6 +73,10 @@ interface SsovPayload {
   };
 }
 
+interface SsovActionResponse {
+  message?: string;
+}
+
 const STATUS_LABEL: Record<SsovStatus, string> = {
   draft: "Draft",
   under_review: "Under Review",
@@ -106,11 +111,9 @@ export function SubcontractorSovTab({
   const fetchSsov = useCallback(async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(
+      const payload = await apiFetch<SsovPayload>(
         `/api/projects/${projectId}/commitments/${commitmentId}/subcontractor-sov`,
       );
-      const payload = (await response.json()) as SsovPayload;
-      if (!response.ok) throw new Error("Failed to load Subcontractor SOV.");
 
       setSourceSov(payload.data.sourceSov || []);
       setItems(payload.data.lineItems || []);
@@ -211,11 +214,10 @@ export function SubcontractorSovTab({
   const saveLineItems = useCallback(async () => {
     setIsSaving(true);
     try {
-      const response = await fetch(
+      await apiFetch(
         `/api/projects/${projectId}/commitments/${commitmentId}/subcontractor-sov`,
         {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             lineItems: items.map((item, index) => ({
               id: item.id.startsWith("temp-") ? undefined : item.id,
@@ -229,10 +231,6 @@ export function SubcontractorSovTab({
           }),
         },
       );
-      if (!response.ok) {
-        const payload = (await response.json()) as { error?: string };
-        throw new Error(payload.error || "Failed to save.");
-      }
       toast.success("Subcontractor SOV saved.");
       await fetchSsov();
     } catch (error) {
@@ -252,16 +250,13 @@ export function SubcontractorSovTab({
       }
       setIsSubmitting(true);
       try {
-        const response = await fetch(
+        const payload = await apiFetch<SsovActionResponse>(
           `/api/projects/${projectId}/commitments/${commitmentId}/subcontractor-sov`,
           {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ action }),
           },
         );
-        const payload = (await response.json()) as { message?: string; error?: string };
-        if (!response.ok) throw new Error(payload.error || "Action failed.");
         toast.success(payload.message || "Subcontractor SOV updated.");
         await fetchSsov();
         if (action === "submit") await onSubmitted?.();
@@ -311,7 +306,7 @@ export function SubcontractorSovTab({
               Invoice contacts: {invoiceContacts.map((c) => c.email).join(", ")}
             </p>
           ) : (
-            <p className="text-xs text-amber-600">
+            <p className="text-xs text-status-warning">
               No invoice contact set. Add one in Advanced Settings before sending an SSOV invitation.
             </p>
           )}
@@ -439,7 +434,7 @@ export function SubcontractorSovTab({
                   <td
                     className={cn(
                       "px-4 py-2 text-right font-semibold tabular-nums",
-                      remaining === 0 ? "text-emerald-700" : "text-amber-600",
+                      remaining === 0 ? "text-status-success" : "text-status-warning",
                     )}
                   >
                     {formatCurrency(remaining)}
@@ -452,8 +447,8 @@ export function SubcontractorSovTab({
             {/* Orphans (SSOV rows with no matching parent — shouldn't happen post-backfill, but render defensively) */}
             {orphans.length > 0 && (
               <>
-                <tr className="border-t bg-amber-50">
-                  <td className="px-4 py-2 text-xs font-semibold text-amber-800" colSpan={colSpanFull}>
+                <tr className="border-t bg-status-warning/10">
+                  <td className="px-4 py-2 text-xs font-semibold text-status-warning" colSpan={colSpanFull}>
                     Unlinked line items (no matching SOV parent)
                   </td>
                 </tr>

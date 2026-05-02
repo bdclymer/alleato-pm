@@ -14,7 +14,7 @@ import { DataTable, type DataTableFooterCell } from "@/components/tables/DataTab
 import { Text } from "@/components/ds/text";
 import { EmptyState } from "@/components/ds";
 import { InvoiceStatusBadge } from "@/components/invoicing/InvoiceStatusBadge";
-import { formatCurrency } from "@/config/tables";
+import { formatCurrency } from "@/lib/format";
 import { apiFetch } from "@/lib/api-client";
 import { formatDate } from "@/lib/format";
 

@@ -1,27 +1,25 @@
 import { NextResponse } from "next/server";
 import { withApiGuardrails } from "@/lib/guardrails/api";
-import { GuardrailError } from "@/lib/guardrails/errors";
-import { generateBrandonDailyUpdate } from "@/lib/executive/brandon-daily-update";
-import { getApiRouteUser } from "@/lib/supabase/server";
+import { requireCurrentUserAppCapability } from "@/lib/app-capabilities";
+import {
+  DEFAULT_EXECUTIVE_WINDOW_DAYS,
+  generateBrandonDailyUpdate,
+} from "@/lib/executive/brandon-daily-update";
 
 export const GET = withApiGuardrails(
   "/api/executive/brandon-daily-update#GET",
   async ({ request }) => {
-    const user = await getApiRouteUser();
-    if (!user) {
-      throw new GuardrailError({
-        code: "AUTH_EXPIRED",
-        where: "/api/executive/brandon-daily-update#GET",
-        message: "Authentication required to generate Brandon's daily update.",
-        status: 401,
-      });
-    }
+    await requireCurrentUserAppCapability(
+      "view_executive_briefing",
+      "/api/executive/brandon-daily-update#GET",
+      "Executive briefing access required.",
+    );
 
     const { searchParams } = new URL(request.url);
-    const daysParam = Number(searchParams.get("days") ?? "2");
+    const daysParam = Number(searchParams.get("days") ?? String(DEFAULT_EXECUTIVE_WINDOW_DAYS));
     const windowDays = Number.isFinite(daysParam)
       ? Math.min(Math.max(Math.trunc(daysParam), 1), 14)
-      : 2;
+      : DEFAULT_EXECUTIVE_WINDOW_DAYS;
 
     const packet = await generateBrandonDailyUpdate({ windowDays });
     return NextResponse.json(packet);

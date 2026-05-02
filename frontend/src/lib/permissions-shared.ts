@@ -32,7 +32,13 @@ export type GranularFlag =
   | "approve_invoices"
   | "create_change_events"
   | "create_budget_modifications"
-  | "manage_project_directory";
+  | "manage_project_directory"
+  | "view_executive_briefing"
+  | "view_accounting";
+
+export type AppCapability =
+  | "view_executive_briefing"
+  | "view_accounting";
 
 export const ALL_MODULES: PermissionModule[] = [
   "directory",
@@ -54,6 +60,13 @@ export const ALL_GRANULAR_FLAGS: GranularFlag[] = [
   "create_change_events",
   "create_budget_modifications",
   "manage_project_directory",
+  "view_executive_briefing",
+  "view_accounting",
+];
+
+export const APP_CAPABILITY_FLAGS: AppCapability[] = [
+  "view_executive_briefing",
+  "view_accounting",
 ];
 
 export const GRANULAR_FLAG_LABELS: Record<GranularFlag, string> = {
@@ -65,6 +78,8 @@ export const GRANULAR_FLAG_LABELS: Record<GranularFlag, string> = {
   create_change_events:                   "Create change events",
   create_budget_modifications:            "Create budget modifications",
   manage_project_directory:               "Manage project directory",
+  view_executive_briefing:                "View executive briefing",
+  view_accounting:                        "View accounting",
 };
 
 export interface UserPermissions {

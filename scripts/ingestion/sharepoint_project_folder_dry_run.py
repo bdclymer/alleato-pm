@@ -21,7 +21,7 @@ import urllib.parse
 import urllib.request
 from collections import Counter
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 from uuid import NAMESPACE_URL, uuid5
@@ -90,6 +90,8 @@ class PreviewItem:
     is_response: bool
     storage_recommendation: str
     skip_reason: Optional[str]
+    project_number: Optional[str]
+    project_name: Optional[str]
     project_documents_row: Dict[str, Any]
     document_metadata_row: Optional[Dict[str, Any]]
 
@@ -196,6 +198,67 @@ def iter_children(drive_id: str, item_id: str, token: str) -> Iterable[Dict[str,
         url = data.get("@odata.nextLink")
 
 
+def iter_delta_items(drive_id: str, item_id: str, token: str) -> Iterable[Dict[str, Any]]:
+    url: Optional[str] = f"{GRAPH_BASE}/drives/{drive_id}/items/{item_id}/delta"
+    while url:
+        data = graph_get(url, token)
+        for item in data.get("value", []):
+            yield item
+        if "@odata.nextLink" in data:
+            url = data.get("@odata.nextLink")
+        else:
+            url = None
+
+
+def extract_root_relative_parts(root: Dict[str, Any], item: Dict[str, Any]) -> List[str]:
+    root_parent_path = str(root.get("parentReference", {}).get("path") or "")
+    root_name = str(root.get("name") or "").strip("/")
+    root_base = f"{root_parent_path}/{root_name}" if root_name else root_parent_path
+    parent_path = str(item.get("parentReference", {}).get("path") or "")
+
+    def strip_drive_prefix(value: str) -> str:
+        marker = "root:"
+        idx = value.find(marker)
+        if idx >= 0:
+            return value[idx + len(marker):]
+        return value
+
+    root_base = strip_drive_prefix(root_base).strip("/")
+    parent_path = strip_drive_prefix(parent_path).strip("/")
+    if root_base and parent_path.startswith(root_base):
+        relative = parent_path[len(root_base):].strip("/")
+    else:
+        relative = parent_path
+    if not relative:
+        return []
+    return [part for part in relative.split("/") if part]
+
+
+def collect_delta_files(
+    root: Dict[str, Any],
+    token: str,
+    max_files: int,
+) -> Tuple[List[Tuple[List[str], Dict[str, Any]]], int]:
+    drive_id = root.get("parentReference", {}).get("driveId")
+    if not drive_id:
+        raise RuntimeError("Graph response did not include a drive id for the shared folder.")
+
+    root_id = root.get("id")
+    files: List[Tuple[List[str], Dict[str, Any]]] = []
+    folder_count = 0
+    for item in iter_delta_items(str(drive_id), str(root_id), token):
+        if item.get("id") == root_id:
+            continue
+        path_parts = extract_root_relative_parts(root, item)
+        if "folder" in item:
+            folder_count += 1
+            continue
+        files.append((path_parts, item))
+        if max_files > 0 and len(files) >= max_files:
+            break
+    return files, folder_count
+
+
 def walk_folder(
     drive_id: str,
     item_id: str,
@@ -248,6 +311,43 @@ def parse_rfi(name: str) -> Tuple[Optional[str], bool]:
     number = match.group(1).lstrip("0") if match else None
     is_response = bool(re.search(r"\bresponse\b", name, flags=re.IGNORECASE))
     return number, is_response
+
+
+def parse_graph_datetime(value: Optional[str]) -> Optional[datetime]:
+    if not value:
+        return None
+    normalized = value.replace("Z", "+00:00")
+    try:
+        return datetime.fromisoformat(normalized)
+    except ValueError:
+        return None
+
+
+def extract_project_number_and_name(path_parts: List[str]) -> Tuple[Optional[str], Optional[str]]:
+    for part in path_parts:
+        match = re.match(r"^\s*(\d{2}-\d{2,})\s*-\s*(.+?)\s*$", part)
+        if match:
+            return match.group(1).strip(), match.group(2).strip()
+    return None, None
+
+
+def load_project_lookup() -> Dict[str, Dict[str, Any]]:
+    from services.supabase_helpers import get_supabase_client
+
+    client = get_supabase_client()
+    result = (
+        client.table("projects")
+        .select("id, project_number, name, archived")
+        .eq("archived", False)
+        .execute()
+    )
+    rows = result.data or []
+    lookup: Dict[str, Dict[str, Any]] = {}
+    for row in rows:
+        project_number = str(row.get("project_number") or "").strip()
+        if project_number:
+            lookup[project_number] = row
+    return lookup
 
 
 def classify(path_parts: List[str], name: str, extension: str) -> Tuple[str, str, str]:
@@ -352,6 +452,7 @@ def build_preview_item(
     max_rag_size_mb: float,
     root: Dict[str, Any],
     args: argparse.Namespace,
+    project_lookup: Optional[Dict[str, Dict[str, Any]]] = None,
 ) -> PreviewItem:
     name = item.get("name", "")
     extension = Path(name).suffix.lower() or "[none]"
@@ -366,10 +467,23 @@ def build_preview_item(
     drive_item_id = item.get("id", "")
     storage_path = storage_path_for(args, drive_item_id, name)
     source_system = "sharepoint"
+    inferred_project_number, inferred_project_name = extract_project_number_and_name(path_parts)
+    project_id = args.project_id
+    resolved_project_name = args.project_name or inferred_project_name
+    resolved_project_number = args.project_number or inferred_project_number
+
+    if project_id is None and project_lookup and inferred_project_number:
+        project_row = project_lookup.get(inferred_project_number)
+        if project_row:
+            project_id = int(project_row["id"])
+            resolved_project_name = str(project_row.get("name") or resolved_project_name or "")
 
     if extension not in RAW_STORAGE_EXTENSIONS:
         project_action = "skip_until_supported"
         skip_reason = f"unsupported extension {extension}"
+    elif project_id is None:
+        project_action = "skip_missing_project_match"
+        skip_reason = f"could not resolve project for path '{source_path}'"
     else:
         project_action = "upsert_project_documents"
         skip_reason = None
@@ -397,7 +511,7 @@ def build_preview_item(
     }
     source_metadata = source_metadata_for(path_parts, item, preview_action, storage_path)
     project_documents_row: Dict[str, Any] = {
-        "project_id": args.project_id,
+        "project_id": project_id,
         "folder": " / ".join(path_parts) or "Root",
         "title": Path(name).stem,
         "description": None,
@@ -440,7 +554,7 @@ def build_preview_item(
             "type": doc_type,
             "source": "microsoft_graph",
             "category": category,
-            "project_id": args.project_id,
+            "project_id": project_id,
             "date": item.get("lastModifiedDateTime"),
             "status": "raw_ingested",
             "phase": "ingest",
@@ -495,6 +609,8 @@ def build_preview_item(
         is_response=is_response,
         storage_recommendation=storage_recommendation(extension, category),
         skip_reason=skip_reason,
+        project_number=resolved_project_number,
+        project_name=resolved_project_name,
         project_documents_row=project_documents_row,
         document_metadata_row=document_metadata_row,
     )
@@ -537,6 +653,9 @@ def summarize(items: List[PreviewItem], folder_count: int, root: Dict[str, Any],
         "project_documents_upserts": sum(
             1 for item in items if item.project_documents_action == "upsert_project_documents"
         ),
+        "project_match_missing": sum(
+            1 for item in items if item.project_documents_action == "skip_missing_project_match"
+        ),
         "rag_queue_count": sum(1 for item in items if item.rag_action != "skip_default_embedding"),
         "media_upserts": sum(1 for item in items if item.media_action != "none"),
         "unsupported_count": sum(1 for item in items if item.skip_reason),
@@ -565,6 +684,7 @@ def write_markdown(report_path: Path, summary: Dict[str, Any], items: List[Previ
         f"- Files: `{summary['file_count']}`",
         f"- Total size: `{summary['total_mb']} MB`",
         f"- Project document upserts: `{summary['project_documents_upserts']}`",
+        f"- Missing project matches: `{summary['project_match_missing']}`",
         f"- RAG/parser queue candidates: `{summary['rag_queue_count']}`",
         f"- Media upserts: `{summary['media_upserts']}`",
         f"- Unsupported/skipped: `{summary['unsupported_count']}`",
@@ -723,6 +843,22 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--project-number", default=None, help="Alleato project number for the preview")
     parser.add_argument("--project-name", default=None, help="Alleato project name for the preview")
     parser.add_argument(
+        "--infer-project-from-path",
+        action="store_true",
+        help="Resolve project by folder name pattern like '26-120 - Name (City, ST)'.",
+    )
+    parser.add_argument(
+        "--modified-since-days",
+        type=int,
+        default=0,
+        help="Only include files modified within the last N days.",
+    )
+    parser.add_argument(
+        "--use-delta",
+        action="store_true",
+        help="Use the shared-folder delta feed instead of recursive child walking.",
+    )
+    parser.add_argument(
         "--output-dir",
         default=str(REPO_ROOT / "tmp" / "sharepoint-import-preview"),
         help="Directory for JSON and Markdown preview reports",
@@ -763,26 +899,42 @@ def main() -> int:
     if not drive_id:
         raise RuntimeError("Graph response did not include a drive id for the shared folder.")
 
-    raw_files: List[Tuple[List[str], Dict[str, Any]]] = []
-    folder_counter = [0]
-    walk_folder(drive_id, root["id"], token, [], args.max_files, raw_files, folder_counter)
+    if args.use_delta:
+        raw_files, folder_count = collect_delta_files(root, token, args.max_files)
+    else:
+        raw_files = []
+        folder_counter = [0]
+        walk_folder(drive_id, root["id"], token, [], args.max_files, raw_files, folder_counter)
+        folder_count = folder_counter[0]
+    project_lookup = load_project_lookup() if args.infer_project_from_path else None
+    modified_cutoff: Optional[datetime] = None
+    if args.modified_since_days > 0:
+        modified_cutoff = datetime.now(timezone.utc) - timedelta(days=args.modified_since_days)
+
+    filtered_files = raw_files
+    if modified_cutoff is not None:
+        filtered_files = []
+        for path_parts, item in raw_files:
+            modified_at = parse_graph_datetime(item.get("lastModifiedDateTime"))
+            if modified_at and modified_at >= modified_cutoff:
+                filtered_files.append((path_parts, item))
 
     items = [
-        build_preview_item(path_parts, item, args.max_rag_size_mb, root, args)
-        for path_parts, item in raw_files
+        build_preview_item(path_parts, item, args.max_rag_size_mb, root, args, project_lookup)
+        for path_parts, item in filtered_files
     ]
     items.sort(key=lambda row: row.source_path.lower())
 
-    summary = summarize(items, folder_counter[0], root, args)
+    summary = summarize(items, folder_count, root, args)
     apply_result: Optional[Dict[str, int]] = None
     metadata_apply_result: Optional[Dict[str, int]] = None
     if args.apply_project_documents:
-        if args.project_id is None:
+        if args.project_id is None and not args.infer_project_from_path:
             raise RuntimeError("--project-id is required with --apply-project-documents")
         apply_result = apply_project_document_rows(items, token, args.copy_to_storage)
         summary["apply_project_documents"] = apply_result
     if args.apply_document_metadata:
-        if args.project_id is None:
+        if args.project_id is None and not args.infer_project_from_path:
             raise RuntimeError("--project-id is required with --apply-document-metadata")
         metadata_apply_result = apply_document_metadata_rows(items)
         summary["apply_document_metadata"] = metadata_apply_result
@@ -811,9 +963,10 @@ def main() -> int:
         "json": str(json_path),
         "markdown": str(md_path),
         "files": len(items),
-        "folders": folder_counter[0],
+        "folders": folder_count,
         "total_mb": summary["total_mb"],
         "project_documents_upserts": summary["project_documents_upserts"],
+        "project_match_missing": summary["project_match_missing"],
         "rag_queue_count": summary["rag_queue_count"],
         "media_upserts": summary["media_upserts"],
         "unsupported_count": summary["unsupported_count"],

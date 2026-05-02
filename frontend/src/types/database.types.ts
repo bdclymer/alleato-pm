@@ -6443,6 +6443,177 @@ export type Database = {
           },
         ]
       }
+      commitment_payments: {
+        Row: {
+          acumatica_ap_bill_id: number | null
+          acumatica_check_id: number | null
+          acumatica_sync_at: string | null
+          amount: number
+          created_at: string
+          external_key: string
+          id: number
+          payment_date: string | null
+          payment_method: string | null
+          payment_number: string | null
+          payment_ref: string | null
+          project_id: number
+          purchase_order_id: string | null
+          raw_payload: Json | null
+          source: string
+          status: string | null
+          subcontract_id: string | null
+          subcontractor_invoice_id: number | null
+          updated_at: string
+          vendor_id: string | null
+          vendor_name: string | null
+        }
+        Insert: {
+          acumatica_ap_bill_id?: number | null
+          acumatica_check_id?: number | null
+          acumatica_sync_at?: string | null
+          amount?: number
+          created_at?: string
+          external_key: string
+          id?: number
+          payment_date?: string | null
+          payment_method?: string | null
+          payment_number?: string | null
+          payment_ref?: string | null
+          project_id: number
+          purchase_order_id?: string | null
+          raw_payload?: Json | null
+          source?: string
+          status?: string | null
+          subcontract_id?: string | null
+          subcontractor_invoice_id?: number | null
+          updated_at?: string
+          vendor_id?: string | null
+          vendor_name?: string | null
+        }
+        Update: {
+          acumatica_ap_bill_id?: number | null
+          acumatica_check_id?: number | null
+          acumatica_sync_at?: string | null
+          amount?: number
+          created_at?: string
+          external_key?: string
+          id?: number
+          payment_date?: string | null
+          payment_method?: string | null
+          payment_number?: string | null
+          payment_ref?: string | null
+          project_id?: number
+          purchase_order_id?: string | null
+          raw_payload?: Json | null
+          source?: string
+          status?: string | null
+          subcontract_id?: string | null
+          subcontractor_invoice_id?: number | null
+          updated_at?: string
+          vendor_id?: string | null
+          vendor_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commitment_payments_acumatica_ap_bill_id_fkey"
+            columns: ["acumatica_ap_bill_id"]
+            isOneToOne: false
+            referencedRelation: "acumatica_ap_bills"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commitment_payments_acumatica_check_id_fkey"
+            columns: ["acumatica_check_id"]
+            isOneToOne: false
+            referencedRelation: "acumatica_checks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commitment_payments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "commitment_payments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commitment_payments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commitment_payments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "commitment_payments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commitment_payments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commitment_payments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commitment_payments_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commitment_payments_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders_with_totals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commitment_payments_subcontract_id_fkey"
+            columns: ["subcontract_id"]
+            isOneToOne: false
+            referencedRelation: "subcontracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commitment_payments_subcontract_id_fkey"
+            columns: ["subcontract_id"]
+            isOneToOne: false
+            referencedRelation: "subcontracts_with_totals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commitment_payments_subcontractor_invoice_id_fkey"
+            columns: ["subcontractor_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "subcontractor_invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       commitment_pcos: {
         Row: {
           approved_at: string | null
@@ -7962,7 +8133,11 @@ export type Database = {
       }
       daily_recaps: {
         Row: {
+          approval_notes: string | null
+          approved_at: string | null
+          approved_by: string | null
           blockers: Json | null
+          briefing_packet: Json | null
           commitments: Json | null
           created_at: string | null
           date_range_end: string
@@ -7976,6 +8151,7 @@ export type Database = {
           project_count: number | null
           recap_date: string
           recap_html: string | null
+          recap_kind: string
           recap_text: string
           recipients: Json | null
           risks: Json | null
@@ -7983,9 +8159,14 @@ export type Database = {
           sent_email: boolean | null
           sent_teams: boolean | null
           wins: Json | null
+          workflow_status: string
         }
         Insert: {
+          approval_notes?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
           blockers?: Json | null
+          briefing_packet?: Json | null
           commitments?: Json | null
           created_at?: string | null
           date_range_end: string
@@ -7999,6 +8180,7 @@ export type Database = {
           project_count?: number | null
           recap_date: string
           recap_html?: string | null
+          recap_kind?: string
           recap_text: string
           recipients?: Json | null
           risks?: Json | null
@@ -8006,9 +8188,14 @@ export type Database = {
           sent_email?: boolean | null
           sent_teams?: boolean | null
           wins?: Json | null
+          workflow_status?: string
         }
         Update: {
+          approval_notes?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
           blockers?: Json | null
+          briefing_packet?: Json | null
           commitments?: Json | null
           created_at?: string | null
           date_range_end?: string
@@ -8022,6 +8209,7 @@ export type Database = {
           project_count?: number | null
           recap_date?: string
           recap_html?: string | null
+          recap_kind?: string
           recap_text?: string
           recipients?: Json | null
           risks?: Json | null
@@ -8029,6 +8217,7 @@ export type Database = {
           sent_email?: boolean | null
           sent_teams?: boolean | null
           wins?: Json | null
+          workflow_status?: string
         }
         Relationships: []
       }
@@ -11292,6 +11481,111 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      executive_briefing_follow_ups: {
+        Row: {
+          created_at: string
+          fingerprint: string
+          first_seen_at: string
+          first_seen_recap_id: string | null
+          id: string
+          last_seen_at: string
+          last_seen_recap_id: string | null
+          owner: string | null
+          payload: Json
+          project_label: string | null
+          recommended_action: string | null
+          resolution_note: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          section: string
+          source_date: string | null
+          source_detail: string | null
+          source_id: string | null
+          source_type: string | null
+          source_url: string | null
+          state: string
+          status: string | null
+          summary: string
+          title: string
+          tone: string | null
+          updated_at: string
+          why_it_matters: string | null
+        }
+        Insert: {
+          created_at?: string
+          fingerprint: string
+          first_seen_at?: string
+          first_seen_recap_id?: string | null
+          id?: string
+          last_seen_at?: string
+          last_seen_recap_id?: string | null
+          owner?: string | null
+          payload?: Json
+          project_label?: string | null
+          recommended_action?: string | null
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          section: string
+          source_date?: string | null
+          source_detail?: string | null
+          source_id?: string | null
+          source_type?: string | null
+          source_url?: string | null
+          state?: string
+          status?: string | null
+          summary: string
+          title: string
+          tone?: string | null
+          updated_at?: string
+          why_it_matters?: string | null
+        }
+        Update: {
+          created_at?: string
+          fingerprint?: string
+          first_seen_at?: string
+          first_seen_recap_id?: string | null
+          id?: string
+          last_seen_at?: string
+          last_seen_recap_id?: string | null
+          owner?: string | null
+          payload?: Json
+          project_label?: string | null
+          recommended_action?: string | null
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          section?: string
+          source_date?: string | null
+          source_detail?: string | null
+          source_id?: string | null
+          source_type?: string | null
+          source_url?: string | null
+          state?: string
+          status?: string | null
+          summary?: string
+          title?: string
+          tone?: string | null
+          updated_at?: string
+          why_it_matters?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "executive_briefing_follow_ups_first_seen_recap_id_fkey"
+            columns: ["first_seen_recap_id"]
+            isOneToOne: false
+            referencedRelation: "daily_recaps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "executive_briefing_follow_ups_last_seen_recap_id_fkey"
+            columns: ["last_seen_recap_id"]
+            isOneToOne: false
+            referencedRelation: "daily_recaps"
             referencedColumns: ["id"]
           },
         ]
@@ -23308,6 +23602,10 @@ export type Database = {
       }
       subcontractor_invoices: {
         Row: {
+          acumatica_ap_bill_id: number | null
+          acumatica_doc_type: string | null
+          acumatica_ref_nbr: string | null
+          acumatica_sync_at: string | null
           approved_at: string | null
           billing_date: string | null
           billing_period_id: string | null
@@ -23326,6 +23624,10 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          acumatica_ap_bill_id?: number | null
+          acumatica_doc_type?: string | null
+          acumatica_ref_nbr?: string | null
+          acumatica_sync_at?: string | null
           approved_at?: string | null
           billing_date?: string | null
           billing_period_id?: string | null
@@ -23344,6 +23646,10 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          acumatica_ap_bill_id?: number | null
+          acumatica_doc_type?: string | null
+          acumatica_ref_nbr?: string | null
+          acumatica_sync_at?: string | null
           approved_at?: string | null
           billing_date?: string | null
           billing_period_id?: string | null
@@ -23362,6 +23668,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "subcontractor_invoices_acumatica_ap_bill_id_fkey"
+            columns: ["acumatica_ap_bill_id"]
+            isOneToOne: false
+            referencedRelation: "acumatica_ap_bills"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "subcontractor_invoices_billing_period_id_fkey"
             columns: ["billing_period_id"]

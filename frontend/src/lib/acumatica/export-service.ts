@@ -12,6 +12,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 
 type DbClient = SupabaseClient<Database>;
+type OutboundAuditLogInsert =
+  Database["public"]["Tables"]["acumatica_outbound_audit_logs"]["Insert"];
 
 // ---------------------------------------------------------------------------
 // App → Acumatica Export (Write Sync)
@@ -58,8 +60,8 @@ async function flushOutboundAuditLogs(
 
   const CHUNK_SIZE = 200;
   for (let i = 0; i < rows.length; i += CHUNK_SIZE) {
-    const chunk = rows.slice(i, i + CHUNK_SIZE);
-    const { error } = await (supabase as any)
+    const chunk: OutboundAuditLogInsert[] = rows.slice(i, i + CHUNK_SIZE);
+    const { error } = await supabase
       .from("acumatica_outbound_audit_logs")
       .insert(chunk);
     if (error) {
@@ -1252,6 +1254,244 @@ export async function exportOwnerInvoicesToAcumatica(
         response_payload: null,
       });
     }
+  }
+
+  await flushOutboundAuditLogs(supabase, auditLogs);
+  return result;
+}
+
+/**
+ * Export one subcontractor invoice from Alleato to Acumatica as an AP Bill.
+ *
+ * The returned Acumatica reference is written back to subcontractor_invoices so
+ * inbound AP checks can be reconciled without relying on vendor/project guesses.
+ */
+export async function exportSubcontractorInvoiceToAcumatica(
+  projectId: number,
+  invoiceId: number,
+  auditContext?: AcumaticaOutboundAuditContext,
+): Promise<ExportSyncResult> {
+  const result: ExportSyncResult = { created: 0, updated: 0, skipped: 0, errors: [] };
+  const supabase = await createClient();
+  const acuClient = createAcumaticaClient();
+  await acuClient.login();
+  const runId = auditContext?.runId ?? crypto.randomUUID();
+  const auditLogs: OutboundAuditLogRow[] = [];
+
+  const { data: invoice, error: invoiceError } = await supabase
+    .from("subcontractor_invoices")
+    .select(
+      "id, project_id, subcontract_id, purchase_order_id, invoice_number, status, billing_date, period_start, period_end, notes, acumatica_ref_nbr, acumatica_doc_type",
+    )
+    .eq("id", invoiceId)
+    .eq("project_id", projectId)
+    .single();
+
+  if (invoiceError || !invoice) {
+    result.errors.push(invoiceError?.message ?? "Subcontractor invoice not found.");
+    return result;
+  }
+
+  const status = (invoice.status ?? "").toLowerCase();
+  if (!["approved", "approved_as_noted", "paid"].includes(status)) {
+    result.skipped++;
+    result.errors.push(`Invoice ${invoice.invoice_number ?? invoice.id} must be approved before export.`);
+    return result;
+  }
+
+  const [{ data: project }, { data: lineItems, error: lineItemsError }] =
+    await Promise.all([
+      supabase
+        .from("projects")
+        .select("id, acumatica_project_id")
+        .eq("id", projectId)
+        .single(),
+      supabase
+        .from("subcontractor_invoice_line_items")
+        .select(
+          "id, description, budget_code, net_amount_this_period, total_completed_stored, materials_stored, work_completed_period",
+        )
+        .eq("invoice_id", invoiceId)
+        .order("sort_order", { ascending: true }),
+    ]);
+
+  if (!project?.acumatica_project_id) {
+    result.errors.push("Project has no acumatica_project_id mapping.");
+    return result;
+  }
+
+  if (lineItemsError) {
+    result.errors.push(`Failed loading invoice line items: ${lineItemsError.message}`);
+    return result;
+  }
+
+  if (!invoice.subcontract_id && !invoice.purchase_order_id) {
+    result.errors.push("Subcontractor invoice is not linked to a commitment.");
+    return result;
+  }
+
+  const commitmentResult = invoice.subcontract_id
+    ? await supabase
+        .from("subcontracts")
+        .select("id, contract_number, title, contract_company_id")
+        .eq("id", invoice.subcontract_id)
+        .single()
+    : await supabase
+        .from("purchase_orders")
+        .select("id, contract_number, title, contract_company_id")
+        .eq("id", invoice.purchase_order_id as string)
+        .single();
+
+  if (commitmentResult.error || !commitmentResult.data) {
+    result.errors.push(
+      commitmentResult.error?.message ?? "Commitment not found for subcontractor invoice.",
+    );
+    return result;
+  }
+
+  const commitment = commitmentResult.data;
+  if (!commitment.contract_company_id) {
+    result.errors.push("Commitment has no contract company for Acumatica vendor mapping.");
+    return result;
+  }
+
+  const { data: vendorCompany, error: vendorError } = await supabase
+    .from("companies")
+    .select("id, name, acumatica_vendor_id")
+    .eq("id", commitment.contract_company_id)
+    .single();
+
+  if (vendorError || !vendorCompany?.acumatica_vendor_id) {
+    result.errors.push(
+      vendorError?.message ??
+        "Commitment company has no acumatica_vendor_id mapping.",
+    );
+    return result;
+  }
+
+  const billLines = (lineItems ?? [])
+    .map((line, index) => {
+      const amount =
+        Number(line.net_amount_this_period ?? 0) ||
+        Number(line.total_completed_stored ?? 0) ||
+        Number(line.work_completed_period ?? 0) ||
+        Number(line.materials_stored ?? 0) ||
+        0;
+
+      return {
+        LineNbr: acuField(index + 1),
+        Description: acuField(line.description ?? `Invoice line ${index + 1}`),
+        Quantity: acuField(1),
+        UnitCost: acuField(amount),
+        ExtendedCost: acuField(amount),
+        ProjectID: acuField(project.acumatica_project_id),
+        ...(line.budget_code ? { CostCodeID: acuField(line.budget_code) } : {}),
+      };
+    })
+    .filter((line) => Number((line.ExtendedCost as { value: number }).value) !== 0);
+
+  const billAmount = billLines.reduce(
+    (sum, line) => sum + Number((line.ExtendedCost as { value: number }).value || 0),
+    0,
+  );
+
+  if (billAmount <= 0) {
+    result.errors.push("Invoice has no payable line amount to export.");
+    return result;
+  }
+
+  const referenceNbr =
+    invoice.acumatica_ref_nbr ??
+    invoice.invoice_number ??
+    `SUBINV-${invoice.id}`;
+  const docType = invoice.acumatica_doc_type ?? "Bill";
+  const description =
+    invoice.notes?.trim() ||
+    `Subcontractor Invoice ${invoice.invoice_number ?? invoice.id}`;
+  const existed = Boolean(invoice.acumatica_ref_nbr);
+  const payload: Record<string, unknown> = {
+    Type: acuField(docType),
+    ReferenceNbr: acuField(referenceNbr),
+    Vendor: acuField(vendorCompany.acumatica_vendor_id),
+    VendorRef: acuField(invoice.invoice_number ?? referenceNbr),
+    Project: acuField(project.acumatica_project_id),
+    Date: acuField(toIsoDate(invoice.billing_date ?? invoice.period_start)),
+    DueDate: acuField(toIsoDate(invoice.period_end ?? invoice.billing_date ?? invoice.period_start)),
+    Description: acuField(description),
+    Amount: acuField(billAmount),
+    Status: acuField(mapOutboundInvoiceStatus(invoice.status)),
+    Details: billLines,
+  };
+
+  try {
+    const response = await acuClient.upsertBill(payload);
+    const returnedRef =
+      typeof response.ReferenceNbr === "string"
+        ? response.ReferenceNbr
+        : referenceNbr;
+    const returnedType =
+      typeof response.Type === "string" ? response.Type : docType;
+    const now = new Date().toISOString();
+
+    const { data: mirroredBill } = await supabase
+      .from("acumatica_ap_bills")
+      .select("id")
+      .eq("reference_nbr", returnedRef)
+      .eq("document_type", returnedType)
+      .maybeSingle();
+
+    await supabase
+      .from("subcontractor_invoices")
+      .update({
+        acumatica_ref_nbr: returnedRef,
+        acumatica_doc_type: returnedType,
+        acumatica_sync_at: now,
+        acumatica_ap_bill_id: mirroredBill?.id ?? null,
+      })
+      .eq("id", invoice.id);
+
+    if (existed) result.updated++;
+    else result.created++;
+
+    auditLogs.push({
+      run_id: runId,
+      triggered_by_user_id: auditContext?.userId ?? null,
+      project_id: projectId,
+      contract_id: invoice.subcontract_id ?? invoice.purchase_order_id,
+      entity_name: "subcontractorInvoices",
+      source_table: "subcontractor_invoices",
+      source_record_id: String(invoice.id),
+      source_reference: invoice.invoice_number ?? null,
+      acumatica_entity: "Bill",
+      acumatica_reference: returnedRef,
+      acumatica_doc_type: returnedType,
+      operation: existed ? "update" : "create",
+      success: true,
+      error_message: null,
+      request_payload: payload,
+      response_payload: response,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    result.errors.push(`Subcontractor invoice ${referenceNbr}: ${message}`);
+    auditLogs.push({
+      run_id: runId,
+      triggered_by_user_id: auditContext?.userId ?? null,
+      project_id: projectId,
+      contract_id: invoice.subcontract_id ?? invoice.purchase_order_id,
+      entity_name: "subcontractorInvoices",
+      source_table: "subcontractor_invoices",
+      source_record_id: String(invoice.id),
+      source_reference: invoice.invoice_number ?? null,
+      acumatica_entity: "Bill",
+      acumatica_reference: referenceNbr,
+      acumatica_doc_type: docType,
+      operation: "error",
+      success: false,
+      error_message: message,
+      request_payload: payload,
+      response_payload: null,
+    });
   }
 
   await flushOutboundAuditLogs(supabase, auditLogs);

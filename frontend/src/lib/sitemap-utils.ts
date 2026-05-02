@@ -101,7 +101,7 @@ export const staticRoutes: SitemapRoute[] = [
   { url: "/auth/forgot-password", title: "Forgot Password", category: "Auth", type: "auth", dynamic: false },
 
   // Utility
-  { url: "/sitemap-view", title: "Sitemap", category: "Utility", type: "utility", dynamic: false },
+  { url: "/site-map", title: "Sitemap", category: "Utility", type: "utility", dynamic: false },
   { url: "/design-system", title: "Design System", category: "Utility", type: "utility", dynamic: false },
   { url: "/design", title: "Component Showcase", category: "Utility", type: "utility", dynamic: false },
   { url: "/api-docs", title: "API Docs", category: "Utility", type: "utility", dynamic: false },

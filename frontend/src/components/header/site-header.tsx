@@ -5,6 +5,8 @@ import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import {
+  ChevronsLeft,
+  ChevronsRight,
   ChevronRight,
   ChevronDown,
   GitCompare,
@@ -15,6 +17,7 @@ import {
 } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
+import { useSidebar } from "@/components/ui/sidebar";
 import { useProjectPermissions } from "@/hooks/use-project-permissions";
 import {
   Popover,
@@ -72,6 +75,28 @@ function ProcoreReferenceToggle() {
       )}
     >
       <GitCompare className="h-4 w-4" />
+    </Button>
+  );
+}
+
+function SidebarToggleButton() {
+  const { state, toggleSidebar } = useSidebar();
+  const isExpanded = state === "expanded";
+
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon-sm"
+      onClick={toggleSidebar}
+      aria-label={isExpanded ? "Collapse sidebar" : "Expand sidebar"}
+      className="h-8 w-8 shrink-0 text-muted-foreground hover:bg-accent hover:text-foreground hidden md:inline-flex"
+    >
+      {isExpanded ? (
+        <ChevronsLeft className="h-4 w-4" strokeWidth={1.6} />
+      ) : (
+        <ChevronsRight className="h-4 w-4" strokeWidth={1.4} />
+      )}
     </Button>
   );
 }
@@ -196,8 +221,11 @@ export function SiteHeader() {
       {...feedbackTargetProps("app.site-header")}
     >
       <div className="flex w-full items-center justify-between px-3 sm:px-5 lg:px-7 min-w-0">
-        {/* ── Left: Mobile logo + Breadcrumbs (desktop) ── */}
+        {/* ── Left: Sidebar toggle + Mobile logo + Breadcrumbs (desktop) ── */}
         <div className="flex items-center gap-2 min-w-0 flex-1">
+          {/* Sidebar toggle — desktop only, left of breadcrumbs */}
+          <SidebarToggleButton />
+
           {/* Mobile: Logo on left */}
           <Link
             href="/"

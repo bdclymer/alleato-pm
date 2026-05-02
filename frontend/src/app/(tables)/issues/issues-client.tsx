@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 import {
   LinearIssueTable,
   groupIssuesByStatus,
@@ -74,7 +75,7 @@ function transformTaskToLinearIssue(row: Record<string, unknown>): LinearIssue {
 type Tab = "all" | "active" | "backlog";
 
 const TABS: { id: Tab; label: string }[] = [
-  { id: "all", label: "All issues" },
+  { id: "all", label: "All tasks" },
   { id: "active", label: "Active" },
   { id: "backlog", label: "Backlog" },
 ];
@@ -110,16 +111,19 @@ export function IssuesClientPage({ data }: IssuesClientPageProps) {
   };
 
   return (
-    <div className="flex flex-col h-full min-h-0">
+    <div className="flex h-full min-h-0 flex-col">
       {/* ── Tab bar ─────────────────────────────────────────────── */}
       <div className="flex items-center justify-between border-b border-border/60 bg-background px-1">
         <div className="flex items-center">
           {TABS.map((t) => (
-            <button
+            <Button
               key={t.id}
+              type="button"
+              variant="ghost"
+              size="sm"
               onClick={() => setTab(t.id)}
               className={cn(
-                "relative px-3 py-2.5 text-sm transition-colors select-none",
+                "relative rounded-none px-3 py-2.5 text-sm transition-colors select-none",
                 tab === t.id
                   ? "text-foreground font-medium"
                   : "text-muted-foreground hover:text-foreground"
@@ -132,32 +136,47 @@ export function IssuesClientPage({ data }: IssuesClientPageProps) {
                 </span>
               )}
               {tab === t.id && (
-                <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-foreground rounded-full" />
+                <span className="absolute right-0 bottom-0 left-0 h-0.5 rounded-full bg-foreground" />
               )}
-            </button>
+            </Button>
           ))}
         </div>
 
         {/* ── Right controls ── */}
         <div className="flex items-center gap-0.5 pr-2">
-          <button className="flex items-center gap-1.5 px-2 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="text-xs text-muted-foreground hover:text-foreground"
+          >
             <Filter className="w-3.5 h-3.5" />
             Filters
-          </button>
-          <button className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors">
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            className="text-muted-foreground hover:text-foreground"
+          >
             <SlidersHorizontal className="w-3.5 h-3.5" />
-          </button>
-          <button className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors">
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            className="text-muted-foreground hover:text-foreground"
+          >
             <LayoutGrid className="w-3.5 h-3.5" />
-          </button>
+          </Button>
         </div>
       </div>
 
-      {/* ── Issues list ─────────────────────────────────────────── */}
+      {/* ── Tasks list ─────────────────────────────────────────── */}
       <div className="flex-1 overflow-auto">
         {groups.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-40 text-sm text-muted-foreground">
-            No issues found
+          <div className="flex h-40 flex-col items-center justify-center text-sm text-muted-foreground">
+            No tasks found
           </div>
         ) : (
           <LinearIssueTable

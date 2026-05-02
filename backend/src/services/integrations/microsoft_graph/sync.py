@@ -19,6 +19,20 @@ from .embed import embed_pending_graph_documents
 logger = logging.getLogger(__name__)
 
 
+def _count_outlook_docs_for_mailbox(supabase: Client, user_email: str) -> int:
+    """Count persisted Outlook email docs for a mailbox via durable source paths."""
+    prefix = f"outlook/{user_email}/"
+    result = (
+        supabase.from_("document_metadata")
+        .select("id", count="exact")
+        .eq("source", "microsoft_graph")
+        .eq("source_system", "outlook_email")
+        .like("source_path", f"{prefix}%")
+        .execute()
+    )
+    return int(result.count or 0)
+
+
 def _get_delta_token(supabase: Client, source: str, resource_id: str) -> Optional[str]:
     """Fetch saved delta token for a source/resource pair."""
     try:
@@ -105,11 +119,33 @@ def run_graph_sync(supabase: Client) -> dict:
 
         for user_email in user_emails:
             try:
+                before_count = _count_outlook_docs_for_mailbox(supabase, user_email)
                 token = _get_delta_token(supabase, "outlook_email", user_email)
                 # Only apply since_date on initial full sync (no existing token)
                 effective_since = since_date if not token else None
                 count, new_token = sync_outlook_emails(supabase, user_email, project_keywords, token, effective_since)
-                _save_sync_state(supabase, "outlook_email", user_email, f"Outlook: {user_email}", new_token, count)
+                after_count = _count_outlook_docs_for_mailbox(supabase, user_email)
+                persisted_delta = max(0, after_count - before_count)
+                sync_status = "success"
+                sync_error: Optional[str] = None
+                if persisted_delta != count:
+                    sync_status = "mismatch"
+                    sync_error = (
+                        f"Persisted Outlook doc delta mismatch for {user_email}: "
+                        f"sync_outlook_emails returned {count}, but durable document_metadata rows increased by {persisted_delta}."
+                    )
+                    logger.error("[GraphSync] %s", sync_error)
+                    summary["errors"].append(sync_error)
+                _save_sync_state(
+                    supabase,
+                    "outlook_email",
+                    user_email,
+                    f"Outlook: {user_email}",
+                    new_token,
+                    count,
+                    sync_status,
+                    sync_error,
+                )
                 summary["outlook"] += count
             except Exception as e:
                 err = f"Outlook sync failed for {user_email}: {e}"

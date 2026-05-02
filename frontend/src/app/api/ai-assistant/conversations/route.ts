@@ -37,7 +37,7 @@ export const GET = withApiGuardrails(
 /**
  * POST /api/ai-assistant/conversations
  * Create a new conversation.
- * Body: { title?: string }
+ * Body: { title?: string, metadata?: Record<string, unknown> }
  */
 export const POST = withApiGuardrails(
   "ai-assistant/conversations#POST",
@@ -59,8 +59,12 @@ export const POST = withApiGuardrails(
       user_id: user.id,
       title: body.title || "New conversation",
       last_message_at: now,
+      metadata:
+        body.metadata && typeof body.metadata === "object" && !Array.isArray(body.metadata)
+          ? body.metadata
+          : {},
     })
-    .select("session_id, title, last_message_at, created_at")
+    .select("session_id, title, last_message_at, created_at, metadata")
     .single();
 
   if (error) {

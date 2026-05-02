@@ -82,6 +82,7 @@ const financialManagementTools = [
 ];
 
 const adminTools = [
+  { name: "All Project Documents", path: "/project-documents", icon: IconFolders, requiresProject: false },
   { name: "Financial Insights", path: "/financial-insights", icon: IconShieldCheck, requiresProject: false },
   { name: "Executive", path: "/executive", icon: IconChartBar, requiresProject: false },
   { name: "Spreadsheet", path: "/spreadsheet-demo", icon: IconTable, requiresProject: false },

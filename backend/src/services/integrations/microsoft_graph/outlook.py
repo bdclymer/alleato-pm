@@ -793,7 +793,7 @@ def sync_outlook_emails(
         storage_path = f"outlook/{user_email}/{msg_id}.txt"
         existing = (
             supabase_client.from_("document_metadata")
-            .select("id, project_id, source_metadata, tags")
+            .select("id, project_id, source_metadata, tags, file_path, storage_bucket")
             .eq("id", doc_id)
             .limit(1)
             .execute()
@@ -801,7 +801,9 @@ def sync_outlook_emails(
         existing_rows = existing.data or []
         existing_doc = existing_rows[0] if existing_rows else None
 
-        if not existing_doc:
+        needs_storage_upload = not existing_doc or not existing_doc.get("file_path")
+
+        if needs_storage_upload:
             try:
                 supabase_client.storage.from_(DOCUMENT_BUCKET).upload(
                     storage_path,
@@ -841,6 +843,7 @@ def sync_outlook_emails(
 
             source_metadata = {
                 "outlook_message_id": msg_id,
+                "mailbox_user_id": user_email,
                 "internet_message_id": msg.get("internetMessageId"),
                 "conversation_id": msg.get("conversationId"),
                 "outlook_web_link": email_web_link,
@@ -861,6 +864,8 @@ def sync_outlook_emails(
                     "source_item_id": msg_id,
                     "source_path": f"outlook/{user_email}/{msg_id}.txt",
                     "source_web_url": email_web_link,
+                    "storage_bucket": existing_doc.get("storage_bucket") or DOCUMENT_BUCKET,
+                    "file_path": existing_doc.get("file_path") or storage_path,
                     "project_id": project_id,
                     "source_metadata": effective_source_metadata,
                 }).eq("id", doc_id).execute()

@@ -86,13 +86,13 @@ export function useEntityContext(): EntityContext | null {
   const pathname = usePathname();
 
   return React.useMemo(() => {
-    // ── Non-project routes (e.g. /issues/[issueId]) ──────────────────────────
+    // ── Non-project task routes (e.g. /issues/[issueId]) ─────────────────────
     const issueId = params.issueId as string | undefined;
     if (issueId && pathname.startsWith("/issues/")) {
       return {
         entityType: "issue" as const,
         entityId: issueId,
-        label: `Issue #${issueId}`,
+        label: `Task #${issueId}`,
       };
     }
 

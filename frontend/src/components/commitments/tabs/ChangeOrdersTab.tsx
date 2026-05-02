@@ -7,8 +7,9 @@ import { CardContent, CardHeader, CardTitle, CardDescription } from '@/component
 import { DataTable } from '@/components/tables/DataTable'
 import { Text } from '@/components/ds/text'
 import { EmptyState } from '@/components/ds/empty-state'
-import { formatCurrency } from '@/config/tables'
+import { formatCurrency } from '@/lib/format'
 import { formatDate } from '@/lib/table-config/formatters'
+import { ApiError, apiFetch } from '@/lib/api-client'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ColumnDef } from '@tanstack/react-table'
 import { ArrowUpDown, ExternalLink, FileText, Plus } from 'lucide-react'
@@ -53,19 +54,9 @@ export const ChangeOrdersTab = memo(function ChangeOrdersTab({ commitmentId, pro
       setError(null)
 
       try {
-        const response = await fetch(`/api/commitments/${commitmentId}/change-orders`)
-
-        if (!response.ok) {
-          if (response.status === 404) {
-            // No change orders found - this is not an error
-            setChangeOrders([])
-            setTotals({ approved: 0, pending: 0, draft: 0, total: 0 })
-            return
-          }
-          throw new Error('Failed to fetch change orders')
-        }
-
-        const data = await response.json()
+        const data = await apiFetch<{ data?: ChangeOrder[]; meta?: { approved_amount?: number; total_amount?: number } } | ChangeOrder[]>(
+          `/api/commitments/${commitmentId}/change-orders`
+        )
         const orders = data.data || data || []
         setChangeOrders(orders)
 
@@ -96,6 +87,11 @@ export const ChangeOrdersTab = memo(function ChangeOrdersTab({ commitmentId, pro
           setTotals(calculated)
         }
       } catch (err) {
+        if (err instanceof ApiError && err.status === 404) {
+          setChangeOrders([])
+          setTotals({ approved: 0, pending: 0, draft: 0, total: 0 })
+          return
+        }
         setError(err instanceof Error ? err.message : 'Failed to load change orders')
         toast.error('Failed to load change orders')
       } finally {

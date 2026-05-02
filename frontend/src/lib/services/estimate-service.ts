@@ -24,9 +24,34 @@ import {
   EstimateAllowance,
   CompanyEstimateRow,
   EstimateTypeStat,
+  EstimateType,
   EstimateTypes,
   calculateLineItemCosts,
 } from "@/lib/schemas/estimates";
+import { buildInitialEstimateTemplateLineItems } from "@/lib/estimates/template";
+
+type CompanyEstimateQueryRow = Pick<
+  EstimateRow,
+  | "estimate_id"
+  | "project_id"
+  | "estimate_type"
+  | "title"
+  | "estimate_number"
+  | "revision"
+  | "status"
+  | "estimate_date"
+  | "location"
+  | "estimator"
+  | "updated_at"
+  | "created_at"
+> & {
+  projects: {
+    name: string | null;
+    project_number: string | null;
+  } | null;
+};
+
+type EstimateMutationInput = Partial<Pick<EstimateRow, "estimate_type">>;
 
 export class EstimateService {
   constructor(private supabase: SupabaseClient) {}
@@ -115,7 +140,7 @@ export class EstimateService {
 
     if (error) throw new Error(`Failed to fetch company estimates: ${error.message}`);
 
-    return (data ?? []).map((row: any) => ({
+    return ((data ?? []) as CompanyEstimateQueryRow[]).map((row) => ({
       estimate_id: row.estimate_id,
       project_id: row.project_id,
       estimate_type: row.estimate_type ?? null,
@@ -160,7 +185,7 @@ export class EstimateService {
       const key = row.estimate_type ?? "__null__";
       if (!statsMap.has(key)) {
         statsMap.set(key, {
-          type: row.estimate_type as any,
+          type: row.estimate_type as EstimateType | null,
           total: 0,
           pending_review: 0,
           draft: 0,
@@ -176,7 +201,9 @@ export class EstimateService {
       else if (row.status === "rejected") stat.rejected += 1;
     }
 
-    return Array.from(statsMap.values()).filter((s) => s.total > 0 || EstimateTypes.includes(s.type as any));
+    return Array.from(statsMap.values()).filter(
+      (s) => s.total > 0 || (s.type !== null && EstimateTypes.includes(s.type))
+    );
   }
 
   // =============================================================================
@@ -260,7 +287,7 @@ export class EstimateService {
       estimate_number: data.estimate_number ?? null,
       revision: data.revision ?? 1,
       status: data.status ?? "draft",
-      estimate_type: (data as any).estimate_type ?? null,
+      estimate_type: data.estimate_type ?? null,
       estimate_date: data.estimate_date
         ? new Date(data.estimate_date).toISOString().split("T")[0]
         : null,
@@ -284,6 +311,12 @@ export class EstimateService {
       .single();
 
     if (error) throw new Error(`Failed to create estimate: ${error.message}`);
+
+    const durationWeeks = data.project_duration_weeks ?? 12;
+    await this.bulkAddLineItems(
+      (estimate as EstimateRow).estimate_id,
+      buildInitialEstimateTemplateLineItems(durationWeeks)
+    );
 
     return estimate as EstimateRow;
   }
@@ -316,8 +349,8 @@ export class EstimateService {
       updatePayload.insurance_rate = data.insurance_rate;
     if (data.fee_rate !== undefined) updatePayload.fee_rate = data.fee_rate;
     if (data.notes !== undefined) updatePayload.notes = data.notes;
-    if ((data as any).estimate_type !== undefined)
-      updatePayload.estimate_type = (data as any).estimate_type;
+    if ((data as EstimateMutationInput).estimate_type !== undefined)
+      updatePayload.estimate_type = (data as EstimateMutationInput).estimate_type;
 
     const { data: updated, error } = await this.supabase
       .from("estimates")

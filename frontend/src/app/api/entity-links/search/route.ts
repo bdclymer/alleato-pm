@@ -40,6 +40,27 @@ interface SearchResult {
   title: string;
 }
 
+interface QueryErrorLike {
+  message: string;
+}
+
+interface QueryResult<T> {
+  data: T[] | null;
+  error: QueryErrorLike | null;
+}
+
+interface DynamicSelectBuilder<T> extends PromiseLike<QueryResult<T>> {
+  eq(column: string, value: unknown): DynamicSelectBuilder<T>;
+  ilike(column: string, value: string): DynamicSelectBuilder<T>;
+  limit(count: number): DynamicSelectBuilder<T>;
+}
+
+interface DynamicTableClient {
+  from(table: string): {
+    select(columns: string): DynamicSelectBuilder<Record<string, unknown>>;
+  };
+}
+
 /** Which column to display as the title and to search on */
 function getTitleColumn(entityType: EntityType): string {
   const map: Record<EntityType, string> = {
@@ -74,12 +95,13 @@ export async function GET(request: Request) {
 
     const { targetType, projectId, q } = parsed.data;
     const supabase = await createClient();
+    const dynamicSupabase = supabase as unknown as DynamicTableClient;
     const sourceTable = ENTITY_SOURCE_TABLE[targetType];
     const titleColumn = getTitleColumn(targetType);
 
     // Build the query — filter by project_id and title match
     // Use ilike for case-insensitive search
-    let query = supabase
+    let query = dynamicSupabase
       .from(sourceTable)
       .select(`id, ${titleColumn}`)
       .limit(20);
@@ -98,8 +120,8 @@ export async function GET(request: Request) {
       );
     }
 
-    const results: SearchResult[] = (data ?? []).map((row) => {
-      const r = row as Record<string, unknown>;
+    const results: SearchResult[] = (data ?? []).map((row: Record<string, unknown>) => {
+      const r = row;
       return {
         id: String(r.id),
         title: (r[titleColumn] as string | null) ?? String(r.id),

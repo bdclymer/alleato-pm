@@ -4,25 +4,25 @@ import { memo, useEffect, useMemo, useState } from "react";
 import { Receipt } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
 
-import { Skeleton } from "@/components/ui/skeleton";
-import { DataTable } from "@/components/tables/DataTable";
+import { DataTable, type DataTableFooterCell } from "@/components/tables/DataTable";
 import { EmptyState } from "@/components/ds/empty-state";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Text } from "@/components/ds/text";
-import { InvoiceStatusBadge } from "@/components/invoicing/InvoiceStatusBadge";
-import { formatCurrency } from "@/config/tables";
-import { formatDate } from "@/lib/format";
+import { apiFetch } from "@/lib/api-client";
+import { formatCurrency, formatDate } from "@/lib/format";
 
-interface PaymentRow {
+interface CommitmentPaymentRow {
   id: number;
-  invoice_number: string | null;
-  billing_date: string | null;
-  period_start: string | null;
-  period_end: string | null;
-  status: string;
-  net_amount: number;
-  total_retainage: number;
-  total_completed: number;
-  original_contract_sum: number;
+  subcontractor_invoice_id: number | null;
+  payment_number: string | null;
+  payment_ref: string | null;
+  payment_method: string | null;
+  payment_date: string | null;
+  vendor_name: string | null;
+  amount: number;
+  status: string | null;
+  acumatica_sync_at: string | null;
+  subcontractor_invoice?: { id: number; invoice_number: string | null } | null;
 }
 
 interface PaymentsIssuedTabProps {
@@ -31,14 +31,16 @@ interface PaymentsIssuedTabProps {
   commitmentType: "subcontract" | "purchase_order";
 }
 
-const PAID_STATUSES = new Set(["paid", "approved", "approved_as_noted"]);
+function formatMethod(method: string | null): string {
+  if (!method) return "--";
+  return method.replace(/_/g, " ");
+}
 
 export const PaymentsIssuedTab = memo(function PaymentsIssuedTab({
   commitmentId,
   projectId,
-  commitmentType,
 }: PaymentsIssuedTabProps) {
-  const [payments, setPayments] = useState<PaymentRow[]>([]);
+  const [payments, setPayments] = useState<CommitmentPaymentRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -49,16 +51,13 @@ export const PaymentsIssuedTab = memo(function PaymentsIssuedTab({
       setIsLoading(true);
       setError(null);
       try {
-        const filterKey =
-          commitmentType === "subcontract" ? "subcontract_id" : "purchase_order_id";
-        const url = `/api/projects/${projectId}/invoicing/subcontractor/invoices?${filterKey}=${encodeURIComponent(commitmentId)}`;
-        const response = await fetch(url, { signal: controller.signal });
-        if (!response.ok) throw new Error("Failed to load payment data");
-        const payload = (await response.json()) as { data?: PaymentRow[] };
-        const rows = (payload.data ?? []).filter((row) =>
-          PAID_STATUSES.has(row.status?.toLowerCase() ?? ""),
+        const payload = await apiFetch<{
+          data?: CommitmentPaymentRow[];
+        }>(
+          `/api/projects/${projectId}/commitments/${commitmentId}/payments`,
+          { signal: controller.signal },
         );
-        setPayments(rows);
+        setPayments(payload.data ?? []);
       } catch (err) {
         if ((err as Error).name === "AbortError") return;
         setError(err instanceof Error ? err.message : "Failed to load payment data");
@@ -69,72 +68,75 @@ export const PaymentsIssuedTab = memo(function PaymentsIssuedTab({
 
     void load();
     return () => controller.abort();
-  }, [commitmentId, commitmentType, projectId]);
+  }, [commitmentId, projectId]);
 
-  const totals = useMemo(() => {
-    const sum = (key: keyof PaymentRow) =>
-      payments.reduce((acc, p) => acc + (Number(p[key]) || 0), 0);
-    return {
-      net_amount: sum("net_amount"),
-      total_retainage: sum("total_retainage"),
-      total_completed: sum("total_completed"),
-    };
-  }, [payments]);
+  const totalPaid = useMemo(
+    () => payments.reduce((sum, payment) => sum + (Number(payment.amount) || 0), 0),
+    [payments],
+  );
 
-  const columns: ColumnDef<PaymentRow>[] = useMemo(
+  const columns: ColumnDef<CommitmentPaymentRow>[] = useMemo(
     () => [
       {
-        accessorKey: "invoice_number",
-        header: () => <span className="text-muted-foreground">Invoice #</span>,
+        accessorKey: "payment_number",
+        header: "Payment #",
         cell: ({ row }) => (
           <span className="font-medium tabular-nums">
-            {row.original.invoice_number ?? `INV-${row.original.id}`}
+            {row.original.payment_number ?? "--"}
           </span>
         ),
       },
       {
-        accessorKey: "billing_date",
-        header: () => <span className="text-muted-foreground">Payment Date</span>,
+        id: "invoice",
+        header: "Invoice",
+        cell: ({ row }) =>
+          row.original.subcontractor_invoice?.invoice_number ??
+          (row.original.subcontractor_invoice_id
+            ? `INV-${row.original.subcontractor_invoice_id}`
+            : "--"),
+      },
+      {
+        accessorKey: "payment_date",
+        header: "Payment Date",
         cell: ({ row }) => (
           <Text size="sm" className="whitespace-nowrap">
-            {formatDate(row.original.billing_date)}
+            {formatDate(row.original.payment_date)}
           </Text>
         ),
       },
       {
-        accessorKey: "status",
-        header: () => <span className="text-muted-foreground">Status</span>,
-        cell: ({ row }) => <InvoiceStatusBadge status={row.original.status} />,
-      },
-      {
-        accessorKey: "total_completed",
-        header: () => <div className="text-right text-muted-foreground">Total Completed</div>,
+        accessorKey: "payment_method",
+        header: "Method",
         cell: ({ row }) => (
-          <div className="text-right tabular-nums">
-            {formatCurrency(row.original.total_completed)}
-          </div>
+          <span className="capitalize text-muted-foreground">
+            {formatMethod(row.original.payment_method)}
+          </span>
         ),
       },
       {
-        accessorKey: "total_retainage",
-        header: () => <div className="text-right text-muted-foreground">Retainage</div>,
-        cell: ({ row }) => (
-          <div className="text-right tabular-nums">
-            {formatCurrency(row.original.total_retainage)}
-          </div>
-        ),
+        accessorKey: "payment_ref",
+        header: "Reference",
+        cell: ({ row }) => row.original.payment_ref ?? "--",
       },
       {
-        accessorKey: "net_amount",
-        header: () => <div className="text-right text-muted-foreground">Payment Amount</div>,
+        accessorKey: "amount",
+        header: () => <div className="text-right">Amount</div>,
         cell: ({ row }) => (
           <div className="text-right tabular-nums font-medium">
-            {formatCurrency(row.original.net_amount)}
+            {formatCurrency(row.original.amount)}
           </div>
         ),
       },
     ],
     [],
+  );
+
+  const footerRow = useMemo<DataTableFooterCell[]>(
+    () => [
+      { value: "Total Issued", colSpan: 5, align: "right" },
+      { value: formatCurrency(totalPaid) },
+    ],
+    [totalPaid],
   );
 
   if (isLoading) {
@@ -155,29 +157,21 @@ export const PaymentsIssuedTab = memo(function PaymentsIssuedTab({
     return (
       <EmptyState
         icon={<Receipt className="h-8 w-8" />}
-        title="No payments recorded"
-        description="Approved and paid invoices against this commitment will appear here."
+        title="No Acumatica payments linked"
+        description="Payments issued in Acumatica will appear here after AP check reconciliation is available."
       />
     );
   }
 
   return (
-    <div className="space-y-3">
-      <DataTable
-        columns={columns}
-        data={payments}
-        showToolbar={false}
-        showPagination={payments.length > 25}
-        rowHover={false}
-        emptyMessage={null}
-        footerRow={[
-          { value: "Totals", colSpan: 3, align: "right" },
-          { value: formatCurrency(totals.total_completed) },
-          { value: formatCurrency(totals.total_retainage) },
-          { value: formatCurrency(totals.net_amount) },
-        ]}
-      />
-    </div>
+    <DataTable
+      columns={columns}
+      data={payments}
+      showToolbar={false}
+      showPagination={payments.length > 25}
+      rowHover={false}
+      footerRow={footerRow}
+    />
   );
 });
 

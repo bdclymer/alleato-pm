@@ -17,6 +17,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   CellText,
   TableDateValue,
   TruncatedCell,
@@ -28,6 +35,7 @@ import {
   type TableColumn,
 } from "@/components/tables/unified";
 import { createClient } from "@/lib/supabase/client";
+import { DocumentMetadataSheet } from "./document-metadata-sheet";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -37,6 +45,7 @@ interface DocumentMetadataItem {
   type: string | null;
   source: string | null;
   source_system: string | null;
+  content: string | null;
   summary: string | null;
   date: string | null;
   created_at: string | null;
@@ -65,6 +74,7 @@ interface DocumentMetadataClientProps {
 type FilterState = Record<string, FilterValue>;
 
 const EMPTY_FILTERS: FilterState = {};
+const NO_PROJECT_VALUE = "__none__";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -89,6 +99,7 @@ const columns: ColumnConfig[] = [
   { id: "division", label: "Division", defaultVisible: false },
   { id: "meeting_type", label: "Meeting Type", defaultVisible: false },
   { id: "host_email", label: "Host", defaultVisible: false },
+  { id: "content", label: "Content", defaultVisible: false },
   { id: "summary", label: "Summary", defaultVisible: false },
   { id: "participants", label: "Participants", defaultVisible: false },
   { id: "created_at", label: "Created", defaultVisible: false },
@@ -150,30 +161,34 @@ function buildTableColumns(
       sortable: true,
       editable: true,
       editValue: (item) => item.project ?? "",
-      // onEdit is NOT set — we call onProjectEdit directly in renderEditor
-      // to avoid stale-closure bug when onChange + onCommit fire synchronously
       renderEditor: ({ item: editorItem, onChange, onCancel }) => (
-        <select
-          className="h-7 w-full rounded border border-border bg-background px-2 text-sm -my-0.5 focus:outline-none focus:ring-1 focus:ring-ring"
-          defaultValue={editorItem.project ?? ""}
-          autoFocus
-          onChange={(e) => {
-            const val = e.target.value;
-            onChange(val);
-            void onProjectEdit(editorItem, val).finally(() => onCancel());
-          }}
-          onBlur={onCancel}
-          onKeyDown={(e) => {
-            if (e.key === "Escape") onCancel();
+        <Select
+          defaultValue={editorItem.project ?? NO_PROJECT_VALUE}
+          onValueChange={(value) => {
+            const nextValue = value === NO_PROJECT_VALUE ? "" : value;
+            onChange(nextValue);
+            void onProjectEdit(editorItem, nextValue).finally(() => onCancel());
           }}
         >
-          <option value="">— None —</option>
-          {projectOptions.map((p) => (
-            <option key={p} value={p}>
-              {p}
-            </option>
-          ))}
-        </select>
+          <SelectTrigger
+            autoFocus
+            className="h-7 w-full -my-0.5 text-sm"
+            onBlur={onCancel}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") onCancel();
+            }}
+          >
+            <SelectValue placeholder="— None —" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={NO_PROJECT_VALUE}>— None —</SelectItem>
+            {projectOptions.map((projectOption) => (
+              <SelectItem key={projectOption} value={projectOption}>
+                {projectOption}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       ),
     },
     {
@@ -219,19 +234,26 @@ function buildTableColumns(
     },
     {
       ...columns[10],
+      render: (item) => <TruncatedCell value={item.content} maxWidth={400} className="text-sm" />,
+      csvValue: (item) => item.content ?? "",
+      sortable: false,
+      width: 420,
+    },
+    {
+      ...columns[11],
       render: (item) => <TruncatedCell value={item.summary} maxWidth={300} className="text-sm" />,
       csvValue: (item) => item.summary ?? "",
       sortable: false,
       width: 320,
     },
     {
-      ...columns[11],
+      ...columns[12],
       render: (item) => <TruncatedCell value={item.participants} maxWidth={240} className="text-sm" />,
       csvValue: (item) => item.participants ?? "",
       sortable: false,
     },
     {
-      ...columns[12],
+      ...columns[13],
       render: (item) => <TableDateValue value={item.created_at} />,
       csvValue: (item) => item.created_at ?? "",
       sortValue: (item) =>
@@ -299,6 +321,7 @@ function applyFilters(
     result = result.filter(
       (item) =>
         (item.title ?? "").toLowerCase().includes(q) ||
+        (item.content ?? "").toLowerCase().includes(q) ||
         (item.summary ?? "").toLowerCase().includes(q) ||
         (item.participants ?? "").toLowerCase().includes(q) ||
         (item.project ?? "").toLowerCase().includes(q) ||
@@ -634,89 +657,136 @@ export function DocumentMetadataClient({
     );
   }, [tableState]);
 
+  // ── Detail sheet ─────────────────────────────────────────────────────────
+
+  const [activeItemId, setActiveItemId] = React.useState<string | null>(null);
+  const [sheetOpen, setSheetOpen] = React.useState(false);
+
+  const activeItem = React.useMemo(
+    () => paginatedItems.find((i) => i.id === activeItemId) ?? null,
+    [paginatedItems, activeItemId],
+  );
+
+  const activeIndex = React.useMemo(
+    () => paginatedItems.findIndex((i) => i.id === activeItemId),
+    [paginatedItems, activeItemId],
+  );
+
+  const handleRowClick = React.useCallback((item: DocumentMetadataItem) => {
+    setActiveItemId(item.id);
+    setSheetOpen(true);
+  }, []);
+
+  const handleSheetNavigate = React.useCallback(
+    (direction: "prev" | "next") => {
+      const next =
+        direction === "prev"
+          ? paginatedItems[activeIndex - 1]
+          : paginatedItems[activeIndex + 1];
+      if (next) setActiveItemId(next.id);
+    },
+    [paginatedItems, activeIndex],
+  );
+
   const tabLabel =
     tabs.find((t) => t.isActive)?.label.toLowerCase() ?? "document";
 
   return (
-    <UnifiedTablePage<DocumentMetadataItem>
-      header={{
-        title: "Document Metadata",
-        description: `${filteredItems.length.toLocaleString()} ${tabLabel} record${filteredItems.length === 1 ? "" : "s"}`,
-      }}
-      tabs={tabs}
-      layout={{ fullBleedTable: true }}
-      features={{ enableInlineEditing: true }}
-      toolbar={{
-        totalItems: tabItems.length,
-        filteredItems: filteredItems.length,
-        selectedCount: tableState.selectedIds.length,
-        searchValue: tableState.searchInput,
-        onSearchChange: tableState.setSearchInput,
-        searchPlaceholder: "Search title, participants, project…",
-        currentView: tableState.currentView,
-        onViewChange: (view) => {
-          tableState.setCurrentView(view);
-          tableState.setSearchParams({ view });
-        },
-        filters: tableFilters,
-        activeFilters: {
-          source_system: activeFilters.source_system,
-          status: activeFilters.status,
-          project: activeFilters.project,
-          category: activeFilters.category,
-        },
-        onFilterChange: handleFilterChange,
-        onClearFilters: handleClearFilters,
-        columns,
-        visibleColumns: tableState.visibleColumns,
-        onColumnVisibilityChange: tableState.setVisibleColumns,
-        onBulkDelete:
-          tableState.selectedIds.length > 0 ? handleBulkDelete : undefined,
-      }}
-      data={{
-        items: paginatedItems,
-        isLoading: false,
-        isFetching: false,
-        error: errorMessage ? new Error(errorMessage) : null,
-      }}
-      table={{
-        columns: tableColumns,
-        getRowId: (item) => item.id,
-        rowActions: (item) => renderRowActions(item, handleDelete),
-      }}
-      sorting={{
-        sortBy: tableState.sortBy,
-        sortDirection: tableState.sortDirection,
-        onSortChange: (col, dir) => {
-          tableState.setSortBy(col);
-          tableState.setSortDirection(dir);
-          tableState.setPage(1);
-        },
-      }}
-      selection={{
-        selectedIds: tableState.selectedIds,
-        onSelectAll: handleSelectAll,
-        onSelectRow: handleSelectRow,
-      }}
-      emptyState={{
-        title: `No ${tabLabel} records found`,
-        description: `No ${tabLabel} records exist yet.`,
-        filteredDescription: "Try adjusting your search or filters.",
-        isFiltered,
-      }}
-      pagination={{
-        page: tableState.page,
-        totalPages,
-        perPage: tableState.perPage,
-        onPageChange: (p) => {
-          tableState.setPage(p);
-          tableState.setSearchParams({ page: String(p) });
-        },
-        onPerPageChange: (pp) => {
+    <>
+      <UnifiedTablePage<DocumentMetadataItem>
+        header={{
+          title: "Document Metadata",
+          description: `${filteredItems.length.toLocaleString()} ${tabLabel} record${filteredItems.length === 1 ? "" : "s"}`,
+        }}
+        tabs={tabs}
+        layout={{ fullBleedTable: true }}
+        features={{ enableInlineEditing: true }}
+        toolbar={{
+          totalItems: tabItems.length,
+          filteredItems: filteredItems.length,
+          selectedCount: tableState.selectedIds.length,
+          searchValue: tableState.searchInput,
+          onSearchChange: tableState.setSearchInput,
+          searchPlaceholder: "Search title, participants, project…",
+          currentView: tableState.currentView,
+          onViewChange: (view) => {
+            tableState.setCurrentView(view);
+            tableState.setSearchParams({ view });
+          },
+          filters: tableFilters,
+          activeFilters: {
+            source_system: activeFilters.source_system,
+            status: activeFilters.status,
+            project: activeFilters.project,
+            category: activeFilters.category,
+          },
+          onFilterChange: handleFilterChange,
+          onClearFilters: handleClearFilters,
+          columns,
+          visibleColumns: tableState.visibleColumns,
+          onColumnVisibilityChange: tableState.setVisibleColumns,
+          onBulkDelete:
+            tableState.selectedIds.length > 0 ? handleBulkDelete : undefined,
+        }}
+        data={{
+          items: paginatedItems,
+          isLoading: false,
+          isFetching: false,
+          error: errorMessage ? new Error(errorMessage) : null,
+        }}
+        table={{
+          columns: tableColumns,
+          getRowId: (item) => item.id,
+          rowActions: (item) => renderRowActions(item, handleDelete),
+          onRowClick: handleRowClick,
+          activeRowId: activeItemId,
+        }}
+        sorting={{
+          sortBy: tableState.sortBy,
+          sortDirection: tableState.sortDirection,
+          onSortChange: (col, dir) => {
+            tableState.setSortBy(col);
+            tableState.setSortDirection(dir);
+            tableState.setPage(1);
+          },
+        }}
+        selection={{
+          selectedIds: tableState.selectedIds,
+          onSelectAll: handleSelectAll,
+          onSelectRow: handleSelectRow,
+        }}
+        emptyState={{
+          title: `No ${tabLabel} records found`,
+          description: `No ${tabLabel} records exist yet.`,
+          filteredDescription: "Try adjusting your search or filters.",
+          isFiltered,
+        }}
+        pagination={{
+          page: tableState.page,
+          totalPages,
+          perPage: tableState.perPage,
+          onPageChange: (p) => {
+            tableState.setPage(p);
+            tableState.setSearchParams({ page: String(p) });
+          },
+          onPerPageChange: (pp) => {
           tableState.setPerPage(Number(pp));
           tableState.setPage(1);
         },
       }}
     />
+
+    <DocumentMetadataSheet
+      item={activeItem}
+      open={sheetOpen}
+      onOpenChange={(open) => {
+        setSheetOpen(open);
+        if (!open) setActiveItemId(null);
+      }}
+      onNavigate={handleSheetNavigate}
+      canNavigatePrev={activeIndex > 0}
+      canNavigateNext={activeIndex < paginatedItems.length - 1}
+    />
+    </>
   );
 }

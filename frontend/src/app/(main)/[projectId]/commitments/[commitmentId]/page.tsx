@@ -5,7 +5,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import {
   ChevronDown,
-  CreditCard,
   DollarSign,
   Download,
   FileText,
@@ -62,9 +61,8 @@ import {
 } from "@/hooks/use-commitments-query";
 import { useProjectTitle } from "@/hooks/useProjectTitle";
 import { apiFetch } from "@/lib/api-client";
+import { formatCurrency, formatDate, formatPercent } from "@/lib/format";
 import { useConfirm } from "@/hooks/use-confirm";
-import { formatCurrency } from "@/lib/utils";
-import { formatDate } from "@/lib/table-config/formatters";
 import type { Commitment } from "@/types/financial";
 
 // ---------------------------------------------------------------------------
@@ -690,7 +688,7 @@ function FinancialKpiStrip({ commitment }: { commitment: CommitmentDetail }) {
             label="Billed to Date"
             value={formatCurrency(commitment.billed_to_date)}
             size="compact"
-            context={`${percentBilled.toFixed(1)}% of revised`}
+            context={`${formatPercent(percentBilled)} of revised`}
           />
         </div>
         <div className="px-5 py-4">
@@ -731,7 +729,7 @@ function FinancialKpiStrip({ commitment }: { commitment: CommitmentDetail }) {
         <div className="px-5 py-4">
           <KpiBlock
             label="% Paid"
-            value={percentPaid !== undefined ? `${percentPaid.toFixed(1)}%` : "—"}
+            value={percentPaid !== undefined ? formatPercent(percentPaid) : "—"}
             size="compact"
           />
         </div>
@@ -936,12 +934,6 @@ export default function CommitmentDetailPage() {
           >
             <DollarSign className="mr-2 h-4 w-4" />
             Create Invoice
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onSelect={() => setActiveTab("payments")}
-          >
-            <CreditCard className="mr-2 h-4 w-4" />
-            Create Payment
           </DropdownMenuItem>
           <DropdownMenuItem onSelect={handleEmail}>
             <Mail className="mr-2 h-4 w-4" />

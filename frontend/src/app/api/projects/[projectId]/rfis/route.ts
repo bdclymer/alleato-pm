@@ -50,7 +50,12 @@ export const GET = withApiGuardrails(
       .order("number", { ascending: false });
 
     if (status) {
-      query = query.eq("status", status);
+      const statuses = status.split(",").map((s) => s.trim()).filter(Boolean);
+      if (statuses.length === 1) {
+        query = query.eq("status", statuses[0]);
+      } else if (statuses.length > 1) {
+        query = query.in("status", statuses);
+      }
     }
 
     if (search) {

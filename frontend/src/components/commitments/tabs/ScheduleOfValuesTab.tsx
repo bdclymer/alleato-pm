@@ -19,7 +19,8 @@ import {
 } from "@/components/ds/inline-table";
 import { SectionRuleHeading } from "@/components/layout";
 import { SectionHeader, EmptyState } from "@/components/ds";
-import { formatCurrency } from "@/config/tables";
+import { apiFetch } from "@/lib/api-client";
+import { formatCurrency } from "@/lib/format";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -59,6 +60,14 @@ interface ScheduleOfValuesTabProps {
   onLineItemsChange?: (items: LineItem[]) => void;
   isLoading?: boolean;
   error?: string | null;
+}
+
+interface SaveLineItemsResponse {
+  message?: string;
+}
+
+interface ImportLineItemsResponse {
+  message?: string;
 }
 
 export function ScheduleOfValuesTab({
@@ -184,11 +193,10 @@ export function ScheduleOfValuesTab({
       const tableName = isSubcontract ? "subcontract_sov_items" : "purchase_order_sov_items";
       const fkColumn = isSubcontract ? "subcontract_id" : "purchase_order_id";
 
-      const response = await fetch(
+      const payload = await apiFetch<SaveLineItemsResponse>(
         `/api/projects/${projectId}/commitments/${commitmentId}/line-items`,
         {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             lineItems: items.map((item) => ({
               id: item.id.startsWith("temp-") ? undefined : item.id,
@@ -206,14 +214,6 @@ export function ScheduleOfValuesTab({
           }),
         },
       );
-
-      const payload = await response.json();
-
-      if (!response.ok) {
-        const message = payload?.error || "Unable to save line items.";
-        toast.error(message);
-        return;
-      }
 
       toast.success(payload?.message || "Line items saved successfully.");
       setHasUnsavedChanges(false);
@@ -249,23 +249,13 @@ export function ScheduleOfValuesTab({
 
     setIsImporting(true);
     try {
-      const response = await fetch(
+      const payload = await apiFetch<ImportLineItemsResponse>(
         `/api/projects/${projectId}/commitments/${commitmentId}/line-items/import`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ source: "budget" }),
         },
       );
-
-      const payload = await response.json();
-
-      if (!response.ok) {
-        const message =
-          payload?.error || "Unable to import schedule of values from budget.";
-        toast.error(message);
-        return;
-      }
 
       toast.success(
         payload?.message || "Budget line items imported successfully.",

@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { PageShell } from "@/components/layout";
 import { Database } from "@/types/database.types";
 import { getPublicTables } from "@/lib/supabase/dev-rpc";
+import { enrichDatabaseTableCatalogRows } from "@/lib/database/database-table-catalog-enrichment";
 import { DatabaseTablesCatalogClient } from "./database-tables-catalog-client";
 
 type DatabaseTableCatalogRow =
@@ -69,5 +70,5 @@ export default async function DatabaseTablesCatalogPage() {
     };
   });
 
-  return <DatabaseTablesCatalogClient initialRows={rows} />;
+  return <DatabaseTablesCatalogClient initialRows={enrichDatabaseTableCatalogRows(rows)} />;
 }

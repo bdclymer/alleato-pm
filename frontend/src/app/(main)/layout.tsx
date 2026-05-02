@@ -9,6 +9,7 @@ import { SiteHeader } from "@/components/header";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { ProcoreReferencePanel } from "@/components/header/procore-reference-panel";
 import { CommentsSidebarPanel } from "@/components/header/comments-sidebar";
+import { AiChatSidebarPanel } from "@/components/ai-assistant/ai-chat-sidebar";
 import { LiveCursors } from "@/components/live-cursors/LiveCursors";
 import { WelcomeOnboarding } from "@/components/onboarding/WelcomeOnboarding";
 import { useProject } from "@/contexts/project-context";
@@ -68,6 +69,9 @@ export default function MainLayout({
       <SidebarInset key="app-shell" className="h-svh overflow-hidden">
         <CreateProjectDevConfigProvider>
           <div className="flex min-h-0 flex-1 overflow-hidden">
+            <React.Suspense fallback={null}>
+              <AiChatSidebarPanel key="ai-chat-sidebar-panel" />
+            </React.Suspense>
             <div className="flex min-w-0 flex-1 flex-col overflow-auto scrollbar-hide">
               {!isDrawingViewer && <SiteHeader key="site-header" />}
               <main

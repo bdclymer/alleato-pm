@@ -1,6 +1,8 @@
-import { createServiceClient } from "@/lib/supabase/service";
-import { getProjectRfis } from "@/lib/supabase/queries";
-import { RfisClient } from "./rfis-client";
+export const dynamic = "force-dynamic";
+
+import * as React from "react";
+import { PageShell } from "@/components/layout";
+import { RfisTable } from "./rfis-table";
 
 export default async function RfisPage({
   params,
@@ -10,15 +12,11 @@ export default async function RfisPage({
   const { projectId } = await params;
   const numericProjectId = parseInt(projectId, 10);
 
-  const supabase = createServiceClient();
-  const { data: rfis, error } = await getProjectRfis(
-    supabase,
-    numericProjectId,
+  return (
+    <PageShell variant="table" title="RFIs" showHeader={false}>
+      <React.Suspense fallback={null}>
+        <RfisTable projectId={numericProjectId} />
+      </React.Suspense>
+    </PageShell>
   );
-
-  if (error) {
-    console.error("RFI page fetch error:", error);
-  }
-
-  return <RfisClient rfis={rfis ?? []} projectId={numericProjectId} />;
 }

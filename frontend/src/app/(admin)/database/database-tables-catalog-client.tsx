@@ -20,7 +20,8 @@ type DatabaseTableCatalogRow =
   Database["public"]["Tables"]["database_tables_catalog"]["Row"];
 
 const PAGE_TITLE = "Database Tables Catalog";
-const PAGE_DESCRIPTION = "Catalog of tables in the public schema";
+const PAGE_DESCRIPTION =
+  "Catalog of public-schema tables with plain-English descriptions, ownership clues, and source keywords like OneDrive, SharePoint, Outlook, and meetings.";
 
 const columns: ColumnConfig[] = [
   { id: "table_name", label: "Table Name", alwaysVisible: true },
@@ -96,14 +97,14 @@ function buildTableColumns(
     {
       ...col("table_name"),
       render: (item) => (
-        <CellText value={item.table_name} className="font-medium block max-w-[18rem] truncate" />
+        <CellText value={item.table_name} className="font-medium block max-w-72 truncate" />
       ),
       sortValue: (item) => item.table_name,
       csvValue: (item) => item.table_name,
     },
     {
       ...col("schema_name"),
-      render: (item) => <CellText value={item.schema_name} className="block max-w-[10rem] truncate" />,
+      render: (item) => <CellText value={item.schema_name} className="block max-w-40 truncate" />,
       sortValue: (item) => item.schema_name,
       csvValue: (item) => item.schema_name,
     },
@@ -116,7 +117,7 @@ function buildTableColumns(
         <CellBadge
           value={item.category}
           emptyLabel="-"
-          className="max-w-[14rem] truncate"
+          className="max-w-56 truncate"
           colorMap={
             item.category
               ? {
@@ -132,7 +133,7 @@ function buildTableColumns(
     {
       ...col("status"),
       render: (item) => (
-        <CellText value={item.status} emptyLabel="-" className="block max-w-[12rem] truncate" />
+        <CellText value={item.status} emptyLabel="-" className="block max-w-48 truncate" />
       ),
       sortValue: (item) => item.status || "",
       csvValue: (item) => item.status || "",
@@ -170,7 +171,7 @@ function buildTableColumns(
         <CellText
           value={item.primary_keys}
           emptyLabel="-"
-          className="block max-w-[18rem] truncate font-mono text-xs"
+          className="block max-w-72 truncate font-mono text-xs"
         />
       ),
       sortValue: (item) => item.primary_keys || "",
@@ -182,7 +183,7 @@ function buildTableColumns(
         <CellText
           value={item.fk_columns}
           emptyLabel="-"
-          className="block max-w-[20rem] truncate font-mono text-xs"
+          className="block max-w-80 truncate font-mono text-xs"
         />
       ),
       sortValue: (item) => item.fk_columns || "",
@@ -197,7 +198,8 @@ function buildTableColumns(
         <CellText
           value={item.table_comment}
           emptyLabel="-"
-          className="block max-w-[30rem] truncate"
+          className="block truncate"
+          style={{ maxWidth: "30rem" }}
         />
       ),
       sortValue: (item) => item.table_comment || "",
@@ -209,7 +211,7 @@ function buildTableColumns(
         <CellText
           value={item.notes}
           emptyLabel="-"
-          className="block max-w-[20rem] truncate"
+          className="block max-w-80 truncate"
         />
       ),
       sortValue: (item) => item.notes || "",
@@ -221,7 +223,7 @@ function buildTableColumns(
         <CellText
           value={item.tools}
           emptyLabel="-"
-          className="block max-w-[20rem] truncate"
+          className="block max-w-80 truncate"
         />
       ),
       sortValue: (item) => item.tools || "",
@@ -233,7 +235,7 @@ function buildTableColumns(
         <CellText
           value={item.schema}
           emptyLabel="-"
-          className="block max-w-[24rem] truncate font-mono text-xs"
+          className="block max-w-96 truncate font-mono text-xs"
         />
       ),
       sortValue: (item) => item.schema || "",
@@ -456,116 +458,148 @@ export function DatabaseTablesCatalogClient({
   const hasActiveFilters = Object.values(tableState.activeFilters).some((value) => value !== undefined);
 
   return (
-    <UnifiedTablePage
-      header={{
-        title: PAGE_TITLE,
-        description: PAGE_DESCRIPTION,
-      }}
-      toolbar={{
-        totalItems: rows.length,
-        filteredItems: filteredRows.length,
-        selectedCount: 0,
-        searchValue: tableState.searchInput,
-        onSearchChange: tableState.setSearchInput,
-        searchPlaceholder: "Search tables...",
-        currentView: tableState.currentView,
-        onViewChange: (view) => {
-          tableState.setCurrentView(view);
-          tableState.setSearchParams({ view });
-        },
-        enabledViews: ["table", "card"],
-        filters: toolbarFilters,
-        activeFilters: tableState.activeFilters,
-        onFilterChange: handleFilterChange,
-        onClearFilters: () =>
-          handleFilterChange({
-            category: undefined,
-            rls_enabled: undefined,
-          }),
-        columns,
-        visibleColumns,
-        onColumnVisibilityChange: (next) =>
-          tableState.setVisibleColumns(next.filter((id) => allowedColumnIds.includes(id))),
-        onExport: handleExport,
-      }}
-      data={{
-        items: filteredRows,
-        isLoading: false,
-        isFetching: false,
-      }}
-      table={{
-        columns: tableColumns,
-        getRowId: (item) => `${item.schema_name}:${item.table_name}`,
-      }}
-      views={{
-        card: (item) => (
-          <Card className="border border-border/70 shadow-none">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-semibold truncate">
-                {item.table_name}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm">
-              <div className="flex items-center justify-between gap-4">
-                <span className="text-muted-foreground">Schema</span>
-                <span className="truncate">{item.schema_name}</span>
-              </div>
-              <div className="flex items-center justify-between gap-4">
-                <span className="text-muted-foreground">Category</span>
-                <CellBadge
-                  value={item.category}
-                  emptyLabel="-"
-                  className="max-w-[14rem] truncate"
-                  colorMap={
-                    item.category
-                      ? {
-                          [item.category.trim().toLowerCase()]: getCategoryPillColor(item.category) ?? "",
-                        }
-                      : undefined
-                  }
-                />
-              </div>
-              <div className="flex items-center justify-between gap-4">
-                <span className="text-muted-foreground">Rows</span>
-                <span>{item.row_count ?? "-"}</span>
-              </div>
-              <div className="flex items-center justify-between gap-4">
-                <span className="text-muted-foreground">RLS</span>
-                <span>{item.rls_enabled === null ? "-" : item.rls_enabled ? "Enabled" : "Disabled"}</span>
-              </div>
-              <div>
-                <p className="text-muted-foreground mb-1">Description</p>
-                <p className="truncate">{item.table_comment || "-"}</p>
-              </div>
-            </CardContent>
-          </Card>
-        ),
-      }}
-      sorting={{
-        sortBy: tableState.sortBy,
-        sortDirection: tableState.sortDirection,
-        onSortChange: (sortBy, direction) => {
-          tableState.setSortBy(sortBy);
-          tableState.setSortDirection(direction);
-          tableState.setSearchParams({ sort: sortBy, sort_dir: direction });
-        },
-      }}
-      emptyState={{
-        title: "No tables found",
-        description: "No public schema tables are available.",
-        filteredDescription: "Try adjusting your search or filters.",
-        isFiltered: isSearchFiltered || hasActiveFilters,
-      }}
-      features={{
-        enableBulkDelete: false,
-        enableRowSelection: false,
-        enableInlineEditing: true,
-      }}
-      layout={{
-        fullBleedTable: false,
-        toolbarInlineWithHeader: true,
-        containerClassName: "pt-0",
-      }}
-    />
+    <div className="space-y-4">
+      <Card className="border border-border/70 shadow-none">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-semibold">
+            Microsoft Document Path
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3 text-sm text-muted-foreground">
+          <p>
+            <code className="font-mono text-xs text-foreground">projects.onedrive</code>
+            {" "}
+            stores the saved project folder link.
+          </p>
+          <p>
+            <code className="font-mono text-xs text-foreground">graph_sync_state</code>
+            {" "}
+            shows whether OneDrive or SharePoint sync actually ran, plus cursors and errors.
+          </p>
+          <p>
+            <code className="font-mono text-xs text-foreground">document_metadata</code>
+            {" "}
+            is where synced OneDrive and SharePoint files land first.
+          </p>
+          <p>
+            <code className="font-mono text-xs text-foreground">project_documents</code>
+            {" "}
+            is the project-facing document surface when a source file is promoted into the visible app workflows.
+          </p>
+        </CardContent>
+      </Card>
+
+      <UnifiedTablePage
+        header={{
+          title: PAGE_TITLE,
+          description: PAGE_DESCRIPTION,
+        }}
+        toolbar={{
+          totalItems: rows.length,
+          filteredItems: filteredRows.length,
+          selectedCount: 0,
+          searchValue: tableState.searchInput,
+          onSearchChange: tableState.setSearchInput,
+          searchPlaceholder: "Search tables, workflows, or sources like OneDrive...",
+          currentView: tableState.currentView,
+          onViewChange: (view) => {
+            tableState.setCurrentView(view);
+            tableState.setSearchParams({ view });
+          },
+          enabledViews: ["table", "card"],
+          filters: toolbarFilters,
+          activeFilters: tableState.activeFilters,
+          onFilterChange: handleFilterChange,
+          onClearFilters: () =>
+            handleFilterChange({
+              category: undefined,
+              rls_enabled: undefined,
+            }),
+          columns,
+          visibleColumns,
+          onColumnVisibilityChange: (next) =>
+            tableState.setVisibleColumns(next.filter((id) => allowedColumnIds.includes(id))),
+          onExport: handleExport,
+        }}
+        data={{
+          items: filteredRows,
+          isLoading: false,
+          isFetching: false,
+        }}
+        table={{
+          columns: tableColumns,
+          getRowId: (item) => `${item.schema_name}:${item.table_name}`,
+        }}
+        views={{
+          card: (item) => (
+            <Card className="border border-border/70 shadow-none">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-semibold truncate">
+                  {item.table_name}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2 text-sm">
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-muted-foreground">Schema</span>
+                  <span className="truncate">{item.schema_name}</span>
+                </div>
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-muted-foreground">Category</span>
+                  <CellBadge
+                    value={item.category}
+                    emptyLabel="-"
+                    className="max-w-56 truncate"
+                    colorMap={
+                      item.category
+                        ? {
+                            [item.category.trim().toLowerCase()]: getCategoryPillColor(item.category) ?? "",
+                          }
+                        : undefined
+                    }
+                  />
+                </div>
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-muted-foreground">Rows</span>
+                  <span>{item.row_count ?? "-"}</span>
+                </div>
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-muted-foreground">RLS</span>
+                  <span>{item.rls_enabled === null ? "-" : item.rls_enabled ? "Enabled" : "Disabled"}</span>
+                </div>
+                <div>
+                  <p className="text-muted-foreground mb-1">Description</p>
+                  <p className="truncate">{item.table_comment || "-"}</p>
+                </div>
+              </CardContent>
+            </Card>
+          ),
+        }}
+        sorting={{
+          sortBy: tableState.sortBy,
+          sortDirection: tableState.sortDirection,
+          onSortChange: (sortBy, direction) => {
+            tableState.setSortBy(sortBy);
+            tableState.setSortDirection(direction);
+            tableState.setSearchParams({ sort: sortBy, sort_dir: direction });
+          },
+        }}
+        emptyState={{
+          title: "No tables found",
+          description: "No public schema tables are available.",
+          filteredDescription: "Try adjusting your search or filters.",
+          isFiltered: isSearchFiltered || hasActiveFilters,
+        }}
+        features={{
+          enableBulkDelete: false,
+          enableRowSelection: false,
+          enableInlineEditing: true,
+        }}
+        layout={{
+          fullBleedTable: false,
+          toolbarInlineWithHeader: true,
+          containerClassName: "pt-0",
+        }}
+      />
+    </div>
   );
 }

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { withApiGuardrails } from "@/lib/guardrails/api";
+import { requireCurrentUserAppCapability } from "@/lib/app-capabilities";
 import { GuardrailError } from "@/lib/guardrails/errors";
-import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { classifyAgingBucket, detectGuardrailAlerts, type FinancialGuardrailAlert } from "@/lib/accounting/aging-calculator";
 
@@ -145,17 +145,11 @@ function dateDaysAgoIso(daysAgo: number): string {
 // ---------------------------------------------------------------------------
 
 export const GET = withApiGuardrails("/api/accounting/dashboard#GET", async () => {
-  // Auth check
-  const user = await getApiRouteUser();
-  if (!user) {
-    throw new GuardrailError({
-      code: "AUTH_EXPIRED",
-      where: "/api/accounting/dashboard#GET",
-      message: "Unauthorized accounting dashboard request.",
-      status: 401,
-      severity: "medium",
-    });
-  }
+  await requireCurrentUserAppCapability(
+    "view_accounting",
+    "/api/accounting/dashboard#GET",
+    "Accounting access required.",
+  );
 
   const supabase = createServiceClient();
   const monthStart = startOfCurrentMonth();

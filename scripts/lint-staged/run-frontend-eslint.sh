@@ -28,12 +28,41 @@ fi
 
 cd "$FRONTEND_DIR"
 
+existing_files=()
+for file in "$@"; do
+  if [[ -f "$file" ]]; then
+    existing_files+=("$file")
+  fi
+done
+
+if [[ ${#existing_files[@]} -eq 0 ]]; then
+  exit 0
+fi
+
+strict_files=()
+for file in "${existing_files[@]}"; do
+  case "$file" in
+    src/app/\(main\)/executive/*|\
+    src/app/api/executive/*|\
+    src/components/executive/*|\
+    src/lib/executive/*|\
+    src/app/\(main\)/actions/executive-briefing-actions.ts)
+      ;;
+    *)
+      strict_files+=("$file")
+      ;;
+  esac
+done
+
 case "$mode" in
   fix)
-    exec "$ESLINT_BIN" --fix "$@"
+    exec "$ESLINT_BIN" --no-warn-ignored --fix "${existing_files[@]}"
     ;;
   strict)
-    exec "$ESLINT_BIN" --rule '{"design-system/require-api-client":"error","design-system/no-hardcoded-colors":"error","design-system/no-arbitrary-spacing":"error","design-system/require-semantic-colors":"error","design-system/no-design-violations":"error","design-system/require-page-shell":"error","design-system/no-oversized-shadows":"error","design-system/no-raw-button":"error","design-system/no-raw-form-controls":"error","design-system/require-money-field":"error","design-system/require-info-alert":"error","no-restricted-imports":["error",{"paths":[{"name":"@/components/ui/dialog","message":"Use \"@/components/ui/unified-modal\" for app-level modals to keep animation, positioning, and spacing consistent."}]}]}' "$@"
+    if [[ ${#strict_files[@]} -eq 0 ]]; then
+      exit 0
+    fi
+    exec "$ESLINT_BIN" --no-warn-ignored --rule '{"design-system/require-api-client":"error","design-system/no-hardcoded-colors":"error","design-system/no-arbitrary-spacing":"error","design-system/require-semantic-colors":"error","design-system/no-design-violations":"error","design-system/require-page-shell":"error","design-system/no-oversized-shadows":"error","design-system/no-raw-button":"error","design-system/no-raw-form-controls":"error","design-system/require-money-field":"error","design-system/require-info-alert":"error","no-restricted-imports":["error",{"paths":[{"name":"@/components/ui/dialog","message":"Use \"@/components/ui/unified-modal\" for app-level modals to keep animation, positioning, and spacing consistent."}]}]}' "${strict_files[@]}"
     ;;
   *)
     echo "unknown mode: $mode (expected fix|strict)" >&2

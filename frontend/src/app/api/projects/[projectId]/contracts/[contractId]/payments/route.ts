@@ -1,28 +1,7 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
-import { apiErrorResponse } from "@/lib/api-error";
 import { NextResponse } from "next/server";
-import { z } from "zod";
-import { ZodError } from "zod";
-import { requirePermission } from "@/lib/permissions-guard";
-
-interface RouteParams {
-  params: Promise<{ projectId: string; contractId: string }>;
-}
-
-const createPaymentSchema = z.object({
-  amount: z.number().positive("Amount must be positive"),
-  payment_date: z.string().min(1, "Payment date is required"),
-  payment_application_id: z.string().uuid().nullable().optional(),
-  payment_number: z.string().nullable().optional(),
-  method: z
-    .enum(["check", "wire", "ach", "credit_card", "cash", "other"])
-    .nullable()
-    .optional(),
-  reference_number: z.string().nullable().optional(),
-  notes: z.string().nullable().optional(),
-});
 
 /**
  * GET /api/projects/[projectId]/contracts/[contractId]/payments
@@ -65,74 +44,18 @@ export const GET = withApiGuardrails(
 
 /**
  * POST /api/projects/[projectId]/contracts/[contractId]/payments
- * Records a new payment received for a prime contract
+ * Prime contract payments are read-only Acumatica inbound records.
  */
 export const POST = withApiGuardrails(
   "projects/[projectId]/contracts/[contractId]/payments#POST",
-  async ({ request, params }) => {
-  
-    const { projectId, contractId } = await params;
-    const projectIdNum = parseInt(projectId, 10);
-    const guard = await requirePermission(projectIdNum, "contracts", "write");
-    if (guard.denied) return guard.response;
-
-    const supabase = await createClient();
-    const body = await request.json();
-
-    const validatedData = createPaymentSchema.parse(body);
-
-    // Verify contract exists for this project
-    const { data: contract } = await supabase
-      .from("prime_contracts")
-      .select("id")
-      .eq("id", contractId)
-      .eq("project_id", parseInt(projectId, 10))
-      .single();
-
-    if (!contract) {
-      return NextResponse.json({ error: "Contract not found" }, { status: 404 });
-    }
-
-    // If linking to a payment application, verify it belongs to this contract
-    if (validatedData.payment_application_id) {
-      const { data: appExists } = await supabase
-        .from("prime_contract_payment_applications")
-        .select("id")
-        .eq("id", validatedData.payment_application_id)
-        .eq("contract_id", contractId)
-        .single();
-
-      if (!appExists) {
-        return NextResponse.json(
-          { error: "Payment application not found for this contract" },
-          { status: 400 },
-        );
-      }
-    }
-
-    const { data, error } = await supabase
-      .from("prime_contract_payments")
-      .insert({
-        contract_id: contractId,
-        project_id: parseInt(projectId, 10),
-        payment_application_id: validatedData.payment_application_id ?? null,
-        payment_number: validatedData.payment_number ?? null,
-        amount: validatedData.amount,
-        payment_date: validatedData.payment_date,
-        method: validatedData.method ?? null,
-        reference_number: validatedData.reference_number ?? null,
-        notes: validatedData.notes ?? null,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      return NextResponse.json(
-        { error: "Failed to record payment", details: error.message },
-        { status: 400 },
-      );
-    }
-
-    return NextResponse.json(data, { status: 201 });
-    },
+  async () => {
+    throw new GuardrailError({
+      code: "READ_ONLY_RESOURCE",
+      where: "projects/[projectId]/contracts/[contractId]/payments#POST",
+      message:
+        "Prime contract payments are synced from Acumatica and cannot be created in Alleato.",
+      status: 405,
+      severity: "low",
+    });
+  },
 );

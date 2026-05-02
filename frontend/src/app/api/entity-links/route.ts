@@ -49,7 +49,7 @@ const postSchema = z.object({
   targetType: z.enum(VALID_ENTITY_TYPES as [EntityType, ...EntityType[]]),
   targetId: z.string().min(1),
   projectId: z.coerce.number().int().positive(),
-  linkType: z.enum(LINK_TYPES as [LinkType, ...LinkType[]]).optional().default("related"),
+  linkType: z.enum([...LINK_TYPES] as [LinkType, ...LinkType[]]).optional().default("related"),
   note: z.string().optional(),
 });
 
@@ -73,6 +73,39 @@ interface GroupedLinks {
   items: LinkedItem[];
 }
 
+interface QueryErrorLike {
+  message: string;
+  code?: string;
+}
+
+interface QueryResult<T> {
+  data: T[] | null;
+  error: QueryErrorLike | null;
+}
+
+interface SingleQueryResult<T> {
+  data: T | null;
+  error: QueryErrorLike | null;
+}
+
+interface DynamicSelectBuilder<T> extends PromiseLike<QueryResult<T>> {
+  eq(column: string, value: unknown): DynamicSelectBuilder<T>;
+  in(column: string, values: Array<string | number>): DynamicSelectBuilder<T>;
+}
+
+interface DynamicInsertBuilder<T> {
+  select(columns: string): {
+    single(): Promise<SingleQueryResult<T>>;
+  };
+}
+
+interface DynamicTableClient {
+  from(table: string): {
+    select(columns: string): DynamicSelectBuilder<Record<string, unknown>>;
+    insert(payload: Record<string, unknown>): DynamicInsertBuilder<Record<string, unknown>>;
+  };
+}
+
 // ── GET ───────────────────────────────────────────────────────────────────────
 
 export async function GET(request: Request) {
@@ -93,13 +126,14 @@ export async function GET(request: Request) {
 
     const { entityType, entityId, projectId } = parsed.data;
     const supabase = await createClient();
+    const dynamicSupabase = supabase as unknown as DynamicTableClient;
 
     const specs = getLinkSpecsForEntity(entityType);
 
     // Fetch from each relevant link table concurrently
     const results = await Promise.allSettled(
       specs.map(async (spec) => {
-        const { data, error } = await supabase
+        const { data, error } = await dynamicSupabase
           .from(spec.table)
           .select("id, link_type, note, created_at, " + spec.targetColumn)
           .eq(spec.sourceColumn, entityId)
@@ -126,15 +160,15 @@ export async function GET(request: Request) {
       if (rows.length === 0) continue;
 
       // Collect target IDs to batch-fetch titles
-      const targetIds = rows.map((r) => (r as Record<string, unknown>)[spec.targetColumn]);
+      const targetIds = rows.map((r: Record<string, unknown>) => r[spec.targetColumn]);
       const sourceTable = ENTITY_SOURCE_TABLE[spec.targetType];
 
       // Fetch titles for all target entities
       const titleColumn = getTitleColumn(spec.targetType);
-      const { data: targets } = await supabase
+      const { data: targets } = await dynamicSupabase
         .from(sourceTable)
         .select(`id, ${titleColumn}`)
-        .in("id", targetIds as string[]);
+        .in("id", targetIds);
 
       const targetMap = new Map<string | number, string>();
       for (const t of targets ?? []) {
@@ -144,8 +178,8 @@ export async function GET(request: Request) {
         targetMap.set(id, title ?? String(id));
       }
 
-      const items: LinkedItem[] = rows.map((r) => {
-        const row = r as Record<string, unknown>;
+      const items: LinkedItem[] = rows.map((r: Record<string, unknown>) => {
+        const row = r;
         const targetId = row[spec.targetColumn] as string | number;
         return {
           linkId: row.id as string,
@@ -210,6 +244,7 @@ export async function POST(request: Request) {
     }
 
     const supabase = await createClient();
+    const dynamicSupabase = supabase as unknown as DynamicTableClient;
 
     // Determine which ID goes to which column
     // spec.sourceColumn always maps to the entity provided as sourceType
@@ -231,7 +266,7 @@ export async function POST(request: Request) {
       insertPayload[spec.sourceColumn] = targetId;
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await dynamicSupabase
       .from(spec.table)
       .insert(insertPayload)
       .select("id")

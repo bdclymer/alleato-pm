@@ -1,6 +1,1 @@
-export { DataTablePage, DataTablePageSkeleton } from "./data-table-page";
-export type {
-  DataTablePageProps,
-  TabConfig,
-  FilterOption,
-} from "./data-table-page";
+// Templates barrel — data-table-page removed; migrate consumers to UnifiedTablePage

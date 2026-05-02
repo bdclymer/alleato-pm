@@ -1017,7 +1017,153 @@ class AcumaticaFinancialSyncService:
             self.supabase.table("acumatica_checks").upsert(list(chunk), on_conflict="external_key").execute()
 
         result.upserted = len(rows)
+        result.projected = self._project_commitment_payments_from_checks()
         return result
+
+    @staticmethod
+    def _extract_check_applications(check: Dict[str, Any]) -> List[Dict[str, Any]]:
+        applications: List[Dict[str, Any]] = []
+        for key in (
+            "Applications",
+            "ApplicationHistory",
+            "DocumentsToApply",
+            "Adjustments",
+            "Details",
+        ):
+            value = check.get(key)
+            if isinstance(value, list):
+                applications.extend(item for item in value if isinstance(item, dict))
+        return applications
+
+    @staticmethod
+    def _application_ref(application: Dict[str, Any]) -> Optional[str]:
+        return _first_text(
+            application,
+            (
+                "ReferenceNbr",
+                "RefNbr",
+                "DocRefNbr",
+                "AdjdRefNbr",
+                "AppliedToDocRef",
+                "BillReferenceNbr",
+                "DocumentRefNbr",
+            ),
+        )
+
+    @staticmethod
+    def _application_doc_type(application: Dict[str, Any]) -> Optional[str]:
+        return _first_text(
+            application,
+            (
+                "Type",
+                "DocType",
+                "AdjdDocType",
+                "AppliedToDocType",
+                "DocumentType",
+            ),
+        )
+
+    @staticmethod
+    def _application_amount(application: Dict[str, Any]) -> Optional[float]:
+        for key in (
+            "AmountPaid",
+            "AppliedAmount",
+            "Amount",
+            "PaymentAmount",
+            "CuryAdjdAmt",
+            "CuryAdjgAmt",
+        ):
+            amount = _num(application.get(key))
+            if amount is not None:
+                return amount
+        return None
+
+    def _project_commitment_payments_from_checks(self) -> int:
+        invoices_response = (
+            self.supabase.table("subcontractor_invoices")
+            .select("id, project_id, subcontract_id, purchase_order_id, acumatica_ref_nbr, acumatica_doc_type, acumatica_ap_bill_id")
+            .not_.is_("acumatica_ref_nbr", "null")
+            .execute()
+        )
+        invoices = invoices_response.data or []
+        if not invoices:
+            return 0
+
+        invoice_by_ref: Dict[str, Dict[str, Any]] = {}
+        for invoice in invoices:
+            ref = invoice.get("acumatica_ref_nbr")
+            if not ref:
+                continue
+            invoice_by_ref[str(ref)] = invoice
+            doc_type = invoice.get("acumatica_doc_type")
+            if doc_type:
+                invoice_by_ref[f"{doc_type}|{ref}"] = invoice
+
+        checks_response = (
+            self.supabase.table("acumatica_checks")
+            .select("id, external_key, reference_nbr, document_type, vendor_id, vendor_name, payment_ref, application_date, status, payment_method, payment_amount, acumatica_sync_at, raw_payload")
+            .range(0, 9999)
+            .execute()
+        )
+
+        rows: List[Dict[str, Any]] = []
+        for check in checks_response.data or []:
+            raw_payload = check.get("raw_payload") or {}
+            if not isinstance(raw_payload, dict):
+                continue
+
+            applications = self._extract_check_applications(raw_payload)
+            matched_applications: List[tuple[Dict[str, Any], Dict[str, Any]]] = []
+            for application in applications:
+                ref = self._application_ref(application)
+                if not ref:
+                    continue
+                doc_type = self._application_doc_type(application)
+                invoice = invoice_by_ref.get(f"{doc_type}|{ref}") if doc_type else None
+                invoice = invoice or invoice_by_ref.get(str(ref))
+                if invoice:
+                    matched_applications.append((application, invoice))
+
+            for application, invoice in matched_applications:
+                ref = self._application_ref(application) or ""
+                doc_type = self._application_doc_type(application) or invoice.get("acumatica_doc_type") or "Bill"
+                amount = self._application_amount(application)
+                if amount is None and len(matched_applications) == 1:
+                    amount = _num(check.get("payment_amount"))
+                if amount is None:
+                    continue
+
+                rows.append(
+                    {
+                        "external_key": f"{check.get('external_key')}|{doc_type}|{ref}",
+                        "project_id": invoice["project_id"],
+                        "subcontract_id": invoice.get("subcontract_id"),
+                        "purchase_order_id": invoice.get("purchase_order_id"),
+                        "subcontractor_invoice_id": invoice["id"],
+                        "acumatica_check_id": check.get("id"),
+                        "acumatica_ap_bill_id": invoice.get("acumatica_ap_bill_id"),
+                        "payment_number": check.get("reference_nbr"),
+                        "payment_ref": check.get("payment_ref"),
+                        "payment_method": check.get("payment_method"),
+                        "payment_date": check.get("application_date"),
+                        "vendor_id": check.get("vendor_id"),
+                        "vendor_name": check.get("vendor_name"),
+                        "amount": amount,
+                        "status": check.get("status"),
+                        "source": "acumatica",
+                        "raw_payload": application,
+                        "acumatica_sync_at": check.get("acumatica_sync_at"),
+                        "updated_at": _now_iso(),
+                    }
+                )
+
+        if not rows:
+            return 0
+
+        for chunk in _chunked(rows):
+            self.supabase.table("commitment_payments").upsert(list(chunk), on_conflict="external_key").execute()
+
+        return len(rows)
 
     def _sync_change_orders(self, last_cursor: Optional[str]) -> EntitySyncResult:
         result = EntitySyncResult(entity="change_orders")

@@ -16,6 +16,7 @@ interface Project {
   id: number;
   name: string;
   "job number": string | null;
+  phase: string | null;
 }
 
 interface Breadcrumb {
@@ -463,15 +464,9 @@ export function useHeaderNav(): UseHeaderNavReturn {
     let isActive = true;
     const fetchMeetingTitle = async () => {
       try {
-        const response = await fetch(
+        const data = await apiFetch<{ data?: { title?: unknown } }>(
           `/api/projects/${segments[0]}/meetings/${meetingId}`
         );
-        if (!response.ok) return;
-
-        const contentType = response.headers.get("content-type") || "";
-        if (!contentType.includes("application/json")) return;
-
-        const data = await response.json();
         const title = data?.data?.title;
         if (isActive) {
           if (typeof title === "string" && title.length > 0) {
@@ -535,15 +530,9 @@ export function useHeaderNav(): UseHeaderNavReturn {
     let isActive = true;
     const fetchDrawingTitle = async () => {
       try {
-        const response = await fetch(
+        const data = await apiFetch<{ title?: unknown; drawing_number?: unknown }>(
           `/api/projects/${projectId}/drawings/${drawingId}`,
         );
-        if (!response.ok) return;
-
-        const contentType = response.headers.get("content-type") || "";
-        if (!contentType.includes("application/json")) return;
-
-        const data = await response.json();
         const resolvedTitle =
           (typeof data?.title === "string" && data.title.trim().length > 0
             ? data.title.trim()
@@ -594,9 +583,9 @@ export function useHeaderNav(): UseHeaderNavReturn {
     let isActive = true;
     const fetchTitle = async () => {
       try {
-        const response = await fetch(`/api/testing/runs/${runId}`);
-        if (!response.ok) return;
-        const data = await response.json();
+        const data = await apiFetch<{ run?: { suite?: { display_name?: unknown } } }>(
+          `/api/testing/runs/${runId}`,
+        );
         const title: string | null =
           typeof data?.run?.suite?.display_name === "string" &&
           data.run.suite.display_name.length > 0
@@ -643,13 +632,7 @@ export function useHeaderNav(): UseHeaderNavReturn {
     let isActive = true;
     const fetchVendorTitle = async () => {
       try {
-        const response = await fetch(`/api/directory/vendors/${vendorId}`);
-        if (!response.ok) return;
-
-        const contentType = response.headers.get("content-type") || "";
-        if (!contentType.includes("application/json")) return;
-
-        const data = await response.json();
+        const data = await apiFetch<{ name?: unknown }>(`/api/directory/vendors/${vendorId}`);
         const title =
           (typeof data?.name === "string" && data.name.length > 0 ? data.name : null);
 
@@ -752,9 +735,7 @@ export function useHeaderNav(): UseHeaderNavReturn {
     let isActive = true;
     const fetchTitle = async () => {
       try {
-        const response = await fetch(`/api/meetings/${meetingId}`);
-        if (!response.ok) return;
-        const data = await response.json();
+        const data = await apiFetch<{ title?: unknown }>(`/api/meetings/${meetingId}`);
         const title = typeof data?.title === "string" && data.title.length > 0 ? data.title : null;
         if (isActive && title) {
           globalMeetingTitleCache.set(meetingId, title);
@@ -797,15 +778,9 @@ export function useHeaderNav(): UseHeaderNavReturn {
     let isActive = true;
     const fetchPrimeContractTitle = async () => {
       try {
-        const response = await fetch(
+        const data = await apiFetch<{ title?: unknown }>(
           `/api/projects/${segments[0]}/contracts/${contractId}`,
         );
-        if (!response.ok) return;
-
-        const contentType = response.headers.get("content-type") || "";
-        if (!contentType.includes("application/json")) return;
-
-        const data = await response.json();
         const title =
           typeof data?.title === "string" && data.title.length > 0
             ? data.title
@@ -856,13 +831,9 @@ export function useHeaderNav(): UseHeaderNavReturn {
     let isActive = true;
     const fetchCommitmentTitle = async () => {
       try {
-        const response = await fetch(`/api/commitments/${commitmentId}`);
-        if (!response.ok) return;
-
-        const contentType = response.headers.get("content-type") || "";
-        if (!contentType.includes("application/json")) return;
-
-        const json = await response.json();
+        const json = await apiFetch<{
+          data?: { contract_number?: unknown; title?: unknown };
+        }>(`/api/commitments/${commitmentId}`);
         const record = json?.data;
         const number = typeof record?.contract_number === "string" && record.contract_number.length > 0 && !/^[0-9a-f-]{36}$/i.test(record.contract_number) ? record.contract_number : null;
         const title = number ?? (typeof record?.title === "string" && record.title.length > 0 ? record.title : null);
@@ -917,15 +888,9 @@ export function useHeaderNav(): UseHeaderNavReturn {
     let isActive = true;
     const fetchPrimePcoTitle = async () => {
       try {
-        const response = await fetch(
+        const data = await apiFetch<{ pco_number?: unknown; title?: unknown }>(
           `/api/projects/${projectId}/prime-contract-pcos/${pcoId}`,
         );
-        if (!response.ok) return;
-
-        const contentType = response.headers.get("content-type") || "";
-        if (!contentType.includes("application/json")) return;
-
-        const data = await response.json();
         const numberPart =
           typeof data?.pco_number === "string" && data.pco_number.length > 0
             ? `PCO #${data.pco_number}`
@@ -982,15 +947,9 @@ export function useHeaderNav(): UseHeaderNavReturn {
     let isActive = true;
     const fetchChangeEventTitle = async () => {
       try {
-        const response = await fetch(
+        const data = await apiFetch<{ title?: unknown; number?: unknown }>(
           `/api/projects/${segments[0]}/change-events/${changeEventId}`,
         );
-        if (!response.ok) return;
-
-        const contentType = response.headers.get("content-type") || "";
-        if (!contentType.includes("application/json")) return;
-
-        const data = await response.json();
         const title =
           typeof data?.title === "string" && data.title.length > 0
             ? data.title
@@ -1043,13 +1002,9 @@ export function useHeaderNav(): UseHeaderNavReturn {
     let isActive = true;
     const fetchTitle = async () => {
       try {
-        const response = await fetch(
+        const data = await apiFetch<{ pcco_number?: unknown; title?: unknown }>(
           `/api/projects/${segments[0]}/prime-contract-change-orders/${primeCoId}`,
         );
-        if (!response.ok) return;
-        const contentType = response.headers.get("content-type") || "";
-        if (!contentType.includes("application/json")) return;
-        const data = await response.json();
         const title =
           (typeof data?.pcco_number === "string" && data.pcco_number.length > 0
             ? data.pcco_number
@@ -1167,14 +1122,10 @@ export function useHeaderNav(): UseHeaderNavReturn {
     let isActive = true;
     const fetchTitle = async () => {
       try {
-        const response = await fetch(
+        const data = await apiFetch<{ application_number?: unknown; title?: unknown }>(
           `/api/projects/${projectId}/contracts/${contractId}/payment-applications/${invoiceId}`,
         );
         // Note: page URL uses "invoices/[id]" but API route uses "payment-applications/[id]"
-        if (!response.ok) return;
-        const contentType = response.headers.get("content-type") || "";
-        if (!contentType.includes("application/json")) return;
-        const data = await response.json();
         const appNumber =
           typeof data?.application_number === "string" &&
           data.application_number.length > 0
@@ -1292,13 +1243,9 @@ export function useHeaderNav(): UseHeaderNavReturn {
     const fetchSubmittalTitle = async () => {
       // Resolve breadcrumb label from submittal number + title to avoid raw UUID crumbs.
       try {
-        const response = await fetch(
+        const data = await apiFetch<{ submittal_number?: unknown; title?: unknown }>(
           `/api/projects/${projectId}/submittals/${submittalId}`,
         );
-        if (!response.ok) return;
-        const contentType = response.headers.get("content-type") || "";
-        if (!contentType.includes("application/json")) return;
-        const data = await response.json();
         const number =
           typeof data?.submittal_number === "string" &&
           data.submittal_number.trim().length > 0
@@ -1367,13 +1314,7 @@ export function useHeaderNav(): UseHeaderNavReturn {
         const endpoint = projectId
           ? `/api/projects/${projectId}/directory/companies/${companyId}`
           : `/api/directory/companies/${companyId}`;
-        const response = await fetch(endpoint);
-        if (!response.ok) return;
-
-        const contentType = response.headers.get("content-type") || "";
-        if (!contentType.includes("application/json")) return;
-
-        const data = await response.json();
+        const data = await apiFetch<{ name?: unknown; company?: { name?: unknown } }>(endpoint);
         const title =
           (typeof data?.name === "string" && data.name.length > 0
             ? data.name
@@ -1428,18 +1369,21 @@ export function useHeaderNav(): UseHeaderNavReturn {
     let isActive = true;
     const fetchInfo = async () => {
       try {
-        const response = await fetch(
+        const data = await apiFetch<{
+          data?: {
+            subcontracts?: { contract_number?: string | null; title?: string | null } | null;
+            purchase_orders?: { contract_number?: string | null; title?: string | null } | null;
+            invoice_number?: unknown;
+            id?: unknown;
+          };
+        }>(
           `/api/projects/${projectId}/invoicing/subcontractor/invoices/${invoiceId}`,
         );
-        if (!response.ok) return;
-        const contentType = response.headers.get("content-type") || "";
-        if (!contentType.includes("application/json")) return;
-        const data = await response.json();
         const invoice = data?.data;
         if (!invoice || !isActive) return;
 
-        const sc = invoice.subcontracts as { contract_number: string | null; title: string | null } | null;
-        const po = invoice.purchase_orders as { contract_number: string | null; title: string | null } | null;
+        const sc = invoice.subcontracts ?? null;
+        const po = invoice.purchase_orders ?? null;
         const contractNumber = sc?.contract_number ?? po?.contract_number ?? null;
         const contractTitle = sc?.title ?? po?.title ?? null;
 
@@ -1475,13 +1419,7 @@ export function useHeaderNav(): UseHeaderNavReturn {
     const fetchCurrentProject = async () => {
       if (projectId) {
         try {
-          const response = await fetch(`/api/projects/${projectId}`);
-          if (!response.ok) return;
-
-          const contentType = response.headers.get("content-type") || "";
-          if (!contentType.includes("application/json")) return;
-
-          const project = (await response.json()) as Project;
+          const project = await apiFetch<Project>(`/api/projects/${projectId}`);
           if (project?.id === projectId) {
             setCurrentProject(project);
           }
@@ -1505,15 +1443,12 @@ export function useHeaderNav(): UseHeaderNavReturn {
       let totalPages = 1;
 
       while (page <= totalPages) {
-        const response = await fetch(
-          `/api/projects?limit=100&page=${page}&archived=false`,
+        const result = await apiFetch<{
+          data?: Project[];
+          meta?: { totalPages?: number };
+        }>(
+          `/api/projects?limit=100&page=${page}&archived=false&phase=Current`,
         );
-        if (!response.ok) return;
-
-        const contentType = response.headers.get("content-type") || "";
-        if (!contentType.includes("application/json")) return;
-
-        const result = await response.json();
         const pageProjects = Array.isArray(result?.data) ? result.data : [];
         allProjects.push(...pageProjects);
 

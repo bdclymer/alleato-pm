@@ -38,13 +38,14 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Modal,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  ModalTitle,
+} from "@/components/ui/unified-modal";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -154,6 +155,22 @@ export function SubcontractorInvoiceDetail({
       await refetch();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Status update failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleSubmitForReview() {
+    setBusy(true);
+    try {
+      await apiFetch(
+        `/api/projects/${projectId}/invoicing/subcontractor/invoices/${invoiceId}/submit`,
+        { method: "POST" },
+      );
+      toast.success("Submitted for review");
+      await refetch();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Submit failed");
     } finally {
       setBusy(false);
     }
@@ -415,9 +432,7 @@ export function SubcontractorInvoiceDetail({
               size="sm"
               variant="outline"
               disabled={busy}
-              onClick={() =>
-                handleStatus("under_review", "Submitted for review")
-              }
+              onClick={handleSubmitForReview}
             >
               Submit for Review
             </Button>
@@ -584,14 +599,14 @@ export function SubcontractorInvoiceDetail({
       </div>
 
       {/* Finish Review Modal */}
-      <Dialog open={reviewModalOpen} onOpenChange={setReviewModalOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Finish Review</DialogTitle>
-          </DialogHeader>
+      <Modal open={reviewModalOpen} onOpenChange={setReviewModalOpen}>
+        <ModalContent size="md">
+          <ModalHeader>
+            <ModalTitle>Finish Review</ModalTitle>
+          </ModalHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Status</label>
+              <Label>Status</Label>
               <Select value={reviewStatus} onValueChange={setReviewStatus}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select..." />
@@ -611,7 +626,7 @@ export function SubcontractorInvoiceDetail({
               </Select>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Overall Comments</label>
+              <Label>Overall Comments</Label>
               <Textarea
                 value={reviewComment}
                 onChange={(e) => setReviewComment(e.target.value)}
@@ -620,7 +635,7 @@ export function SubcontractorInvoiceDetail({
               />
             </div>
           </div>
-          <DialogFooter>
+          <ModalFooter>
             <Button
               variant="outline"
               onClick={() => setReviewModalOpen(false)}
@@ -675,19 +690,19 @@ export function SubcontractorInvoiceDetail({
             >
               Update
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
 
-      <Dialog open={paymentDialogOpen} onOpenChange={setPaymentDialogOpen}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Mark Invoice Paid</DialogTitle>
-          </DialogHeader>
+      <Modal open={paymentDialogOpen} onOpenChange={setPaymentDialogOpen}>
+        <ModalContent size="lg">
+          <ModalHeader>
+            <ModalTitle>Mark Invoice Paid</ModalTitle>
+          </ModalHeader>
           <div className="space-y-4 py-2">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Amount</label>
+                <Label>Amount</Label>
                 <Input
                   type="number"
                   min="0"
@@ -697,7 +712,7 @@ export function SubcontractorInvoiceDetail({
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Payment Date</label>
+                <Label>Payment Date</Label>
                 <Input
                   type="date"
                   value={paymentDate}
@@ -707,7 +722,7 @@ export function SubcontractorInvoiceDetail({
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Payment Method</label>
+                <Label>Payment Method</Label>
                 <Select value={paymentMethod} onValueChange={setPaymentMethod}>
                   <SelectTrigger>
                     <SelectValue />
@@ -723,7 +738,7 @@ export function SubcontractorInvoiceDetail({
                 </Select>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Payment #</label>
+                <Label>Payment #</Label>
                 <Input
                   value={paymentNumber}
                   onChange={(e) => setPaymentNumber(e.target.value)}
@@ -732,7 +747,7 @@ export function SubcontractorInvoiceDetail({
               </div>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Check #</label>
+              <Label>Check #</Label>
               <Input
                 value={paymentCheckNumber}
                 onChange={(e) => setPaymentCheckNumber(e.target.value)}
@@ -740,7 +755,7 @@ export function SubcontractorInvoiceDetail({
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Notes</label>
+              <Label>Notes</Label>
               <Textarea
                 value={paymentNotes}
                 onChange={(e) => setPaymentNotes(e.target.value)}
@@ -749,7 +764,7 @@ export function SubcontractorInvoiceDetail({
               />
             </div>
           </div>
-          <DialogFooter>
+          <ModalFooter>
             <Button
               variant="outline"
               onClick={() => setPaymentDialogOpen(false)}
@@ -768,18 +783,18 @@ export function SubcontractorInvoiceDetail({
             >
               Mark Paid
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
 
-      <Dialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Email Invoice</DialogTitle>
-          </DialogHeader>
+      <Modal open={emailDialogOpen} onOpenChange={setEmailDialogOpen}>
+        <ModalContent size="lg">
+          <ModalHeader>
+            <ModalTitle>Email Invoice</ModalTitle>
+          </ModalHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
-              <label className="text-sm font-medium">To</label>
+              <Label>To</Label>
               <Input
                 placeholder="recipient@example.com, team@example.com"
                 value={emailTo}
@@ -787,7 +802,7 @@ export function SubcontractorInvoiceDetail({
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">CC</label>
+              <Label>CC</Label>
               <Input
                 placeholder="Optional"
                 value={emailCc}
@@ -795,14 +810,14 @@ export function SubcontractorInvoiceDetail({
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Subject</label>
+              <Label>Subject</Label>
               <Input
                 value={emailSubject}
                 onChange={(e) => setEmailSubject(e.target.value)}
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Message</label>
+              <Label>Message</Label>
               <Textarea
                 value={emailMessage}
                 onChange={(e) => setEmailMessage(e.target.value)}
@@ -810,7 +825,7 @@ export function SubcontractorInvoiceDetail({
               />
             </div>
           </div>
-          <DialogFooter>
+          <ModalFooter>
             <Button
               type="button"
               variant="outline"
@@ -826,9 +841,9 @@ export function SubcontractorInvoiceDetail({
             >
               {emailBusy ? "Sending..." : "Send Invoice"}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
 
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
