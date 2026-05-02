@@ -338,19 +338,107 @@ def _upsert_outlook_intake_email(
     *,
     supabase_client,
     project_id: Optional[int],
+    project_email_id: Optional[int],
+    document_metadata_id: Optional[str],
     msg: dict,
     user_email: str,
     body_text: str,
     sender_name: str,
     sender_addr: str,
+    assignment_method: Optional[str],
+    assignment_confidence: Optional[float],
+    source_metadata: dict,
 ) -> Optional[int]:
-    if not SYNC_OUTLOOK_INTAKE or not project_id:
+    if not SYNC_OUTLOOK_INTAKE:
         return None
 
     msg_id = str(msg.get("id") or "")
     if not msg_id:
         return None
 
+    match_status = "matched" if project_id else "unassigned"
+    now_iso = datetime.now(timezone.utc).isoformat()
+    payload = {
+        "project_id": project_id,
+        "project_email_id": project_email_id,
+        "document_metadata_id": document_metadata_id,
+        "subject": (msg.get("subject") or "(no subject)")[:500],
+        "body": body_text[:8000],
+        "body_text": body_text[:8000],
+        "from_name": sender_name,
+        "from_email": sender_addr,
+        "to_list": _graph_recipient_emails(msg, "toRecipients"),
+        "cc_list": _graph_recipient_emails(msg, "ccRecipients"),
+        "status": "Matched" if project_id else "Received",
+        "match_status": match_status,
+        "assignment_method": assignment_method,
+        "assignment_confidence": assignment_confidence,
+        "received_at": msg.get("receivedDateTime") or datetime.now(timezone.utc).isoformat(),
+        "has_attachments": bool(msg.get("hasAttachments")),
+        "graph_message_id": msg_id,
+        "mailbox_user_id": user_email,
+        "web_link": msg.get("webLink"),
+        "internet_message_id": msg.get("internetMessageId"),
+        "conversation_id": msg.get("conversationId"),
+        "source_metadata": source_metadata,
+        "last_synced_at": now_iso,
+        "deleted_at": None,
+        "updated_at": now_iso,
+    }
+
+    existing = (
+        supabase_client.from_("outlook_email_intake")
+        .select("id")
+        .eq("graph_message_id", msg_id)
+        .limit(1)
+        .execute()
+    )
+    rows = existing.data or []
+    if rows:
+        email_id = rows[0]["id"]
+        supabase_client.from_("outlook_email_intake").update(payload).eq("id", email_id).execute()
+        return int(email_id)
+
+    inserted = (
+        supabase_client.from_("outlook_email_intake")
+        .insert({**payload, "created_at": now_iso})
+        .execute()
+    )
+    inserted_rows = inserted.data or []
+    if inserted_rows:
+        return int(inserted_rows[0]["id"])
+
+    inserted_lookup = (
+        supabase_client.from_("outlook_email_intake")
+        .select("id")
+        .eq("graph_message_id", msg_id)
+        .limit(1)
+        .execute()
+    )
+    lookup_rows = inserted_lookup.data or []
+    if not lookup_rows:
+        raise RuntimeError(f"outlook_email_intake insert for Outlook message {msg_id} returned no row")
+    return int(lookup_rows[0]["id"])
+
+
+def _upsert_project_outlook_email(
+    *,
+    supabase_client,
+    project_id: Optional[int],
+    msg: dict,
+    user_email: str,
+    body_text: str,
+    sender_name: str,
+    sender_addr: str,
+) -> Optional[int]:
+    if not project_id:
+        return None
+
+    msg_id = str(msg.get("id") or "")
+    if not msg_id:
+        return None
+
+    now_iso = datetime.now(timezone.utc).isoformat()
     payload = {
         "project_id": project_id,
         "subject": (msg.get("subject") or "(no subject)")[:500],
@@ -361,13 +449,13 @@ def _upsert_outlook_intake_email(
         "to_list": _graph_recipient_emails(msg, "toRecipients"),
         "cc_list": _graph_recipient_emails(msg, "ccRecipients"),
         "status": "Received",
-        "received_at": msg.get("receivedDateTime") or datetime.now(timezone.utc).isoformat(),
+        "received_at": msg.get("receivedDateTime") or now_iso,
         "has_attachments": bool(msg.get("hasAttachments")),
         "graph_message_id": msg_id,
         "mailbox_user_id": user_email,
         "conversation_id": msg.get("conversationId"),
         "deleted_at": None,
-        "updated_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": now_iso,
     }
 
     existing = (
@@ -385,7 +473,7 @@ def _upsert_outlook_intake_email(
 
     inserted = (
         supabase_client.from_("project_emails")
-        .insert({**payload, "created_at": datetime.now(timezone.utc).isoformat()})
+        .insert({**payload, "created_at": now_iso})
         .execute()
     )
     inserted_rows = inserted.data or []
@@ -405,13 +493,88 @@ def _upsert_outlook_intake_email(
     return int(lookup_rows[0]["id"])
 
 
-def _upsert_outlook_intake_attachment(
+def _upsert_project_outlook_attachment(
     *,
     supabase_client,
     graph,
     user_id: str,
     msg_id: str,
     email_id: int,
+    attachment: dict,
+) -> Optional[int]:
+    attachment_type = str(attachment.get("@odata.type") or attachment.get("odata.type") or "")
+    attachment_id = str(attachment.get("id") or "")
+    attachment_name = str(attachment.get("name") or "attachment")
+    content_type = str(attachment.get("contentType") or mimetypes.guess_type(attachment_name)[0] or "application/octet-stream")
+    is_inline = bool(attachment.get("isInline"))
+    size = int(attachment.get("size") or 0)
+
+    if not attachment_id:
+        logger.warning("[Outlook] Intake attachment without id on %s was skipped", msg_id)
+        return None
+    if "fileAttachment" not in attachment_type:
+        logger.info("[Outlook] Intake skipped non-file attachment %s on %s", attachment_id, msg_id)
+        return None
+    if size > MAX_ATTACHMENT_BYTES:
+        raise ValueError(f"Attachment {attachment_name} exceeds OUTLOOK_ATTACHMENT_MAX_BYTES ({size} bytes)")
+    if _is_decorative_inline_attachment(attachment_name, content_type, is_inline):
+        return None
+
+    raw_bytes = _attachment_bytes_for_intake(graph, user_id, msg_id, attachment)
+    if not raw_bytes:
+        return None
+
+    checksum = hashlib.sha256(raw_bytes).hexdigest()
+    payload = {
+        "email_id": email_id,
+        "file_name": attachment_name,
+        "file_url": f"graph://messages/{msg_id}/attachments/{attachment_id}",
+        "file_size": len(raw_bytes),
+        "content_type": content_type,
+        "graph_attachment_id": attachment_id,
+        "checksum_sha256": checksum,
+        "content": "\\x" + raw_bytes.hex(),
+    }
+
+    existing = (
+        supabase_client.from_("email_attachments")
+        .select("id")
+        .eq("email_id", email_id)
+        .eq("graph_attachment_id", attachment_id)
+        .limit(1)
+        .execute()
+    )
+    rows = existing.data or []
+    if rows:
+        attachment_row_id = rows[0]["id"]
+        supabase_client.from_("email_attachments").update(payload).eq("id", attachment_row_id).execute()
+        return int(attachment_row_id)
+    inserted = supabase_client.from_("email_attachments").insert(payload).execute()
+    inserted_rows = inserted.data or []
+    if inserted_rows:
+        return int(inserted_rows[0]["id"])
+    inserted_lookup = (
+        supabase_client.from_("email_attachments")
+        .select("id")
+        .eq("email_id", email_id)
+        .eq("graph_attachment_id", attachment_id)
+        .limit(1)
+        .execute()
+    )
+    lookup_rows = inserted_lookup.data or []
+    if lookup_rows:
+        return int(lookup_rows[0]["id"])
+    return None
+
+
+def _upsert_outlook_intake_attachment(
+    *,
+    supabase_client,
+    graph,
+    user_id: str,
+    msg_id: str,
+    intake_email_id: int,
+    email_attachment_id: Optional[int],
     attachment: dict,
 ) -> bool:
     attachment_type = str(attachment.get("@odata.type") or attachment.get("odata.type") or "")
@@ -438,7 +601,8 @@ def _upsert_outlook_intake_attachment(
 
     checksum = hashlib.sha256(raw_bytes).hexdigest()
     payload = {
-        "email_id": email_id,
+        "intake_email_id": intake_email_id,
+        "email_attachment_id": email_attachment_id,
         "file_name": attachment_name,
         "file_url": f"graph://messages/{msg_id}/attachments/{attachment_id}",
         "file_size": len(raw_bytes),
@@ -446,21 +610,27 @@ def _upsert_outlook_intake_attachment(
         "graph_attachment_id": attachment_id,
         "checksum_sha256": checksum,
         "content": "\\x" + raw_bytes.hex(),
+        "is_inline": is_inline,
+        "source_metadata": {
+            "outlook_attachment_type": attachment_type,
+            "outlook_message_id": msg_id,
+        },
+        "updated_at": datetime.now(timezone.utc).isoformat(),
     }
 
     existing = (
-        supabase_client.from_("email_attachments")
+        supabase_client.from_("outlook_email_intake_attachments")
         .select("id")
-        .eq("email_id", email_id)
+        .eq("intake_email_id", intake_email_id)
         .eq("graph_attachment_id", attachment_id)
         .limit(1)
         .execute()
     )
     rows = existing.data or []
     if rows:
-        supabase_client.from_("email_attachments").update(payload).eq("id", rows[0]["id"]).execute()
+        supabase_client.from_("outlook_email_intake_attachments").update(payload).eq("id", rows[0]["id"]).execute()
     else:
-        supabase_client.from_("email_attachments").insert(payload).execute()
+        supabase_client.from_("outlook_email_intake_attachments").insert(payload).execute()
     return True
 
 
@@ -928,15 +1098,11 @@ def sync_outlook_emails(
         if "@removed" in msg:
             continue
 
-        if not _is_relevant_email(msg, project_keywords):
-            continue
-
         body_text = _format_email_as_text(msg)
-        if len(body_text) < MIN_BODY_CHARS:
+        msg_id = msg.get("id", "")
+        if not msg_id:
             continue
 
-        # Build document_metadata row
-        msg_id = msg.get("id", "")
         subject = msg.get("subject", "(no subject)")
         received = msg.get("receivedDateTime", datetime.now(timezone.utc).isoformat())
         sender = msg.get("from", {}).get("emailAddress", {}) or {}
@@ -950,47 +1116,28 @@ def sync_outlook_emails(
         doc_id = f"outlook_{msg_id}"
 
         participants = _message_participants(msg, sender_name, sender_addr)
+        should_index_for_rag = _is_relevant_email(msg, project_keywords) and len(body_text) >= MIN_BODY_CHARS
 
-        # Upload content to Supabase Storage
-        storage_path = f"outlook/{user_email}/{msg_id}.txt"
-        existing = (
-            supabase_client.from_("document_metadata")
-            .select("id, project_id, source_metadata, tags, file_path, storage_bucket")
-            .eq("id", doc_id)
-            .limit(1)
-            .execute()
-        )
-        existing_rows = existing.data or []
-        existing_doc = existing_rows[0] if existing_rows else None
-
-        needs_storage_upload = not existing_doc or not existing_doc.get("file_path")
-
-        if needs_storage_upload:
-            try:
-                supabase_client.storage.from_(DOCUMENT_BUCKET).upload(
-                    storage_path,
-                    body_text.encode("utf-8"),
-                    {"content-type": "text/plain", "upsert": "true"},
-                )
-            except Exception as e:
-                logger.warning(f"[Outlook] Storage upload failed for {msg_id}: {e}")
-                continue
-
-        # Insert document_metadata — DB trigger fires the full pipeline
         try:
-            if existing_doc:
-                existing_project_id = existing_doc.get("project_id")
-                if existing_project_id:
-                    project_id = existing_project_id
-                    assignment_method = "existing_document"
-                    assignment_confidence = 1.0
-                else:
-                    project_id, assignment_method, assignment_confidence = infer_project_id(
-                        supabase_client,
-                        title=f"Email: {subject}",
-                        content=body_text,
-                        participants=participants,
-                    )
+            existing_doc = None
+            if should_index_for_rag:
+                existing = (
+                    supabase_client.from_("document_metadata")
+                    .select("id, project_id, source_metadata, tags, file_path, storage_bucket")
+                    .eq("id", doc_id)
+                    .limit(1)
+                    .execute()
+                )
+                existing_rows = existing.data or []
+                existing_doc = existing_rows[0] if existing_rows else None
+
+            project_id: Optional[int] = None
+            assignment_method = "unassigned"
+            assignment_confidence = 0.0
+            if existing_doc and existing_doc.get("project_id"):
+                project_id = existing_doc.get("project_id")
+                assignment_method = "existing_document"
+                assignment_confidence = 1.0
             else:
                 project_id, assignment_method, assignment_confidence = infer_project_id(
                     supabase_client,
@@ -1015,55 +1162,17 @@ def sync_outlook_emails(
             }
             effective_source_metadata = source_metadata
 
-            if existing_doc:
-                effective_source_metadata = {
-                    **(existing_doc.get("source_metadata") or {}),
-                    **source_metadata,
-                }
-                supabase_client.from_("document_metadata").update({
-                    "url": email_web_link,
-                    "source_system": "outlook_email",
-                    "source_item_id": msg_id,
-                    "source_path": f"outlook/{user_email}/{msg_id}.txt",
-                    "source_web_url": email_web_link,
-                    "storage_bucket": existing_doc.get("storage_bucket") or DOCUMENT_BUCKET,
-                    "file_path": existing_doc.get("file_path") or storage_path,
-                    "project_id": project_id,
-                    "source_metadata": effective_source_metadata,
-                }).eq("id", doc_id).execute()
-            else:
-                supabase_client.from_("document_metadata").insert({
-                    "id": doc_id,
-                    "title": f"Email: {subject}",
-                    "source": "microsoft_graph",
-                    "category": "email",
-                    "type": "email",
-                    "content": body_text,
-                    "date": received[:10] if received else None,
-                    "participants": ", ".join(participants[:50]),
-                    "status": "raw_ingested",
-                    "tags": ",".join(tags),
-                    "project_id": project_id,
-                    "url": email_web_link,
-                    "source_system": "outlook_email",
-                    "source_item_id": msg_id,
-                    "source_path": f"outlook/{user_email}/{msg_id}.txt",
-                    "source_web_url": email_web_link,
-                    "storage_bucket": DOCUMENT_BUCKET,
-                    "file_path": storage_path,
-                    "source_metadata": source_metadata,
-                }).execute()
-
             attachment_count = 0
             link_count = 0
             intake_attachment_count = 0
             attachment_errors: list[str] = []
             intake_errors: list[str] = []
-            had_attachment_errors = bool(effective_source_metadata.get("attachment_errors"))
+            had_attachment_errors = bool(effective_source_metadata.get("attachment_errors")) if existing_doc else False
             intake_email_id: Optional[int] = None
+            project_email_id: Optional[int] = None
 
             try:
-                intake_email_id = _upsert_outlook_intake_email(
+                project_email_id = _upsert_project_outlook_email(
                     supabase_client=supabase_client,
                     project_id=project_id,
                     msg=msg,
@@ -1073,12 +1182,33 @@ def sync_outlook_emails(
                     sender_addr=sender_addr,
                 )
             except Exception as exc:
+                message = f"project_email_failed: {exc}"
+                intake_errors.append(message[:500])
+                logger.warning("[Outlook] Project email sync failed for %s: %s", msg_id, exc)
+
+            try:
+                intake_email_id = _upsert_outlook_intake_email(
+                    supabase_client=supabase_client,
+                    project_id=project_id,
+                    project_email_id=project_email_id,
+                    document_metadata_id=doc_id if should_index_for_rag else None,
+                    msg=msg,
+                    user_email=user_email,
+                    body_text=body_text,
+                    sender_name=sender_name,
+                    sender_addr=sender_addr,
+                    assignment_method=assignment_method,
+                    assignment_confidence=assignment_confidence,
+                    source_metadata=source_metadata,
+                )
+            except Exception as exc:
                 message = f"email_intake_failed: {exc}"
                 intake_errors.append(message[:500])
                 logger.warning("[Outlook] Intake email sync failed for %s: %s", msg_id, exc)
 
             should_list_attachments = bool(
                 SYNC_LEGACY_OUTLOOK_ATTACHMENTS
+                or project_email_id
                 or (SYNC_OUTLOOK_INTAKE_ATTACHMENTS and intake_email_id)
             )
             if should_list_attachments:
@@ -1091,27 +1221,45 @@ def sync_outlook_emails(
                 attachments = []
 
             for attachment in attachments:
-                try:
-                    if _sync_email_attachment(
-                        supabase_client=supabase_client,
-                        attachment=attachment,
-                        user_email=user_email,
-                        msg_id=msg_id,
-                        email_doc_id=doc_id,
-                        subject=subject,
-                        received=received,
-                        sender_name=sender_name,
-                        sender_addr=sender_addr,
-                        participants=participants,
-                        project_id=project_id,
-                        assignment_method=assignment_method,
-                        email_web_link=email_web_link,
-                    ):
-                        attachment_count += 1
-                except Exception as exc:
-                    message = f"{attachment.get('name') or attachment.get('id')}: {exc}"
-                    attachment_errors.append(message[:500])
-                    logger.warning("[Outlook] Attachment sync failed for %s: %s", msg_id, message)
+                project_attachment_id: Optional[int] = None
+
+                if should_index_for_rag and SYNC_LEGACY_OUTLOOK_ATTACHMENTS:
+                    try:
+                        if _sync_email_attachment(
+                            supabase_client=supabase_client,
+                            attachment=attachment,
+                            user_email=user_email,
+                            msg_id=msg_id,
+                            email_doc_id=doc_id,
+                            subject=subject,
+                            received=received,
+                            sender_name=sender_name,
+                            sender_addr=sender_addr,
+                            participants=participants,
+                            project_id=project_id,
+                            assignment_method=assignment_method,
+                            email_web_link=email_web_link,
+                        ):
+                            attachment_count += 1
+                    except Exception as exc:
+                        message = f"{attachment.get('name') or attachment.get('id')}: {exc}"
+                        attachment_errors.append(message[:500])
+                        logger.warning("[Outlook] Attachment sync failed for %s: %s", msg_id, message)
+
+                if project_email_id:
+                    try:
+                        project_attachment_id = _upsert_project_outlook_attachment(
+                            supabase_client=supabase_client,
+                            graph=graph,
+                            user_id=user_id,
+                            msg_id=msg_id,
+                            email_id=project_email_id,
+                            attachment=attachment,
+                        )
+                    except Exception as exc:
+                        message = f"{attachment.get('name') or attachment.get('id')}: {exc}"
+                        intake_errors.append(message[:500])
+                        logger.warning("[Outlook] Project attachment sync failed for %s: %s", msg_id, message)
 
                 if SYNC_OUTLOOK_INTAKE_ATTACHMENTS and intake_email_id:
                     try:
@@ -1120,7 +1268,8 @@ def sync_outlook_emails(
                             graph=graph,
                             user_id=user_id,
                             msg_id=msg_id,
-                            email_id=intake_email_id,
+                            intake_email_id=intake_email_id,
+                            email_attachment_id=project_attachment_id,
                             attachment=attachment,
                         ):
                             intake_attachment_count += 1
@@ -1129,26 +1278,80 @@ def sync_outlook_emails(
                         intake_errors.append(message[:500])
                         logger.warning("[Outlook] Intake attachment sync failed for %s: %s", msg_id, message)
 
-            for link in extracted_links:
-                try:
-                    if _sync_email_link(
-                        supabase_client=supabase_client,
-                        link=link,
-                        msg_id=msg_id,
-                        email_doc_id=doc_id,
-                        subject=subject,
-                        received=received,
-                        participants=participants,
-                        project_id=project_id,
-                        assignment_method=assignment_method,
-                        sender_addr=sender_addr,
-                        user_email=user_email,
-                    ):
-                        link_count += 1
-                except Exception as exc:
-                    logger.warning("[Outlook] Link sync failed for %s: %s", msg_id, exc)
+            if should_index_for_rag:
+                for link in extracted_links:
+                    try:
+                        if _sync_email_link(
+                            supabase_client=supabase_client,
+                            link=link,
+                            msg_id=msg_id,
+                            email_doc_id=doc_id,
+                            subject=subject,
+                            received=received,
+                            participants=participants,
+                            project_id=project_id,
+                            assignment_method=assignment_method,
+                            sender_addr=sender_addr,
+                            user_email=user_email,
+                        ):
+                            link_count += 1
+                    except Exception as exc:
+                        logger.warning("[Outlook] Link sync failed for %s: %s", msg_id, exc)
 
-            if attachment_count or link_count or attachment_errors or intake_email_id or intake_attachment_count or intake_errors or had_attachment_errors:
+            if should_index_for_rag:
+                storage_path = f"outlook/{user_email}/{msg_id}.txt"
+                needs_storage_upload = not existing_doc or not existing_doc.get("file_path")
+                if needs_storage_upload:
+                    try:
+                        supabase_client.storage.from_(DOCUMENT_BUCKET).upload(
+                            storage_path,
+                            body_text.encode("utf-8"),
+                            {"content-type": "text/plain", "upsert": "true"},
+                        )
+                    except Exception as e:
+                        logger.warning(f"[Outlook] Storage upload failed for {msg_id}: {e}")
+                        storage_path = ""
+
+                if existing_doc:
+                    effective_source_metadata = {
+                        **(existing_doc.get("source_metadata") or {}),
+                        **source_metadata,
+                    }
+                    supabase_client.from_("document_metadata").update({
+                        "url": email_web_link,
+                        "source_system": "outlook_email",
+                        "source_item_id": msg_id,
+                        "source_path": f"outlook/{user_email}/{msg_id}.txt",
+                        "source_web_url": email_web_link,
+                        "storage_bucket": existing_doc.get("storage_bucket") or DOCUMENT_BUCKET,
+                        "file_path": existing_doc.get("file_path") or storage_path,
+                        "project_id": project_id,
+                        "source_metadata": effective_source_metadata,
+                    }).eq("id", doc_id).execute()
+                else:
+                    supabase_client.from_("document_metadata").insert({
+                        "id": doc_id,
+                        "title": f"Email: {subject}",
+                        "source": "microsoft_graph",
+                        "category": "email",
+                        "type": "email",
+                        "content": body_text,
+                        "date": received[:10] if received else None,
+                        "participants": ", ".join(participants[:50]),
+                        "status": "raw_ingested",
+                        "tags": ",".join(tags),
+                        "project_id": project_id,
+                        "url": email_web_link,
+                        "source_system": "outlook_email",
+                        "source_item_id": msg_id,
+                        "source_path": f"outlook/{user_email}/{msg_id}.txt",
+                        "source_web_url": email_web_link,
+                        "storage_bucket": DOCUMENT_BUCKET,
+                        "file_path": storage_path,
+                        "source_metadata": source_metadata,
+                    }).execute()
+
+            if should_index_for_rag and (attachment_count or link_count or attachment_errors or intake_email_id or intake_attachment_count or intake_errors or had_attachment_errors):
                 update_payload = {
                     "source_metadata": {
                         **effective_source_metadata,
@@ -1169,7 +1372,7 @@ def sync_outlook_emails(
                     update_payload["tags"] = ",".join(tags + error_tags)
                 supabase_client.from_("document_metadata").update(update_payload).eq("id", doc_id).execute()
 
-            if not existing_doc:
+            if intake_email_id or project_email_id or (should_index_for_rag and not existing_doc):
                 synced += 1
             if project_id:
                 logger.info(
@@ -1184,6 +1387,7 @@ def sync_outlook_emails(
                 )
         except Exception as e:
             logger.warning(f"[Outlook] Failed to insert metadata for {msg_id}: {e}")
+            continue
 
     logger.info(f"[Outlook] Synced {synced} emails for {user_email}")
     return synced, new_delta_token

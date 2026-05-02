@@ -15343,6 +15343,228 @@ export type Database = {
         }
         Relationships: []
       }
+      outlook_email_intake: {
+        Row: {
+          assignment_confidence: number | null
+          assignment_method: string | null
+          bcc_list: string[] | null
+          body: string | null
+          body_html: string | null
+          body_text: string | null
+          cc_list: string[] | null
+          conversation_id: string | null
+          created_at: string | null
+          deleted_at: string | null
+          document_metadata_id: string | null
+          from_email: string | null
+          from_name: string | null
+          graph_message_id: string
+          has_attachments: boolean | null
+          id: number
+          internet_message_id: string | null
+          last_synced_at: string | null
+          mailbox_user_id: string
+          match_status: string
+          project_email_id: number | null
+          project_id: number | null
+          received_at: string | null
+          source_metadata: Json
+          status: string
+          subject: string
+          to_list: string[] | null
+          updated_at: string | null
+          web_link: string | null
+        }
+        Insert: {
+          assignment_confidence?: number | null
+          assignment_method?: string | null
+          bcc_list?: string[] | null
+          body?: string | null
+          body_html?: string | null
+          body_text?: string | null
+          cc_list?: string[] | null
+          conversation_id?: string | null
+          created_at?: string | null
+          deleted_at?: string | null
+          document_metadata_id?: string | null
+          from_email?: string | null
+          from_name?: string | null
+          graph_message_id: string
+          has_attachments?: boolean | null
+          id?: never
+          internet_message_id?: string | null
+          last_synced_at?: string | null
+          mailbox_user_id: string
+          match_status?: string
+          project_email_id?: number | null
+          project_id?: number | null
+          received_at?: string | null
+          source_metadata?: Json
+          status?: string
+          subject: string
+          to_list?: string[] | null
+          updated_at?: string | null
+          web_link?: string | null
+        }
+        Update: {
+          assignment_confidence?: number | null
+          assignment_method?: string | null
+          bcc_list?: string[] | null
+          body?: string | null
+          body_html?: string | null
+          body_text?: string | null
+          cc_list?: string[] | null
+          conversation_id?: string | null
+          created_at?: string | null
+          deleted_at?: string | null
+          document_metadata_id?: string | null
+          from_email?: string | null
+          from_name?: string | null
+          graph_message_id?: string
+          has_attachments?: boolean | null
+          id?: never
+          internet_message_id?: string | null
+          last_synced_at?: string | null
+          mailbox_user_id?: string
+          match_status?: string
+          project_email_id?: number | null
+          project_id?: number | null
+          received_at?: string | null
+          source_metadata?: Json
+          status?: string
+          subject?: string
+          to_list?: string[] | null
+          updated_at?: string | null
+          web_link?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outlook_email_intake_project_email_id_fkey"
+            columns: ["project_email_id"]
+            isOneToOne: false
+            referencedRelation: "project_emails"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outlook_email_intake_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "outlook_email_intake_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outlook_email_intake_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outlook_email_intake_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "outlook_email_intake_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outlook_email_intake_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outlook_email_intake_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      outlook_email_intake_attachments: {
+        Row: {
+          checksum_sha256: string | null
+          content: string | null
+          content_type: string | null
+          created_at: string | null
+          email_attachment_id: number | null
+          extracted_text: string | null
+          file_name: string
+          file_size: number | null
+          file_url: string
+          graph_attachment_id: string
+          id: number
+          intake_email_id: number
+          is_inline: boolean | null
+          source_metadata: Json
+          updated_at: string | null
+        }
+        Insert: {
+          checksum_sha256?: string | null
+          content?: string | null
+          content_type?: string | null
+          created_at?: string | null
+          email_attachment_id?: number | null
+          extracted_text?: string | null
+          file_name: string
+          file_size?: number | null
+          file_url: string
+          graph_attachment_id: string
+          id?: never
+          intake_email_id: number
+          is_inline?: boolean | null
+          source_metadata?: Json
+          updated_at?: string | null
+        }
+        Update: {
+          checksum_sha256?: string | null
+          content?: string | null
+          content_type?: string | null
+          created_at?: string | null
+          email_attachment_id?: number | null
+          extracted_text?: string | null
+          file_name?: string
+          file_size?: number | null
+          file_url?: string
+          graph_attachment_id?: string
+          id?: never
+          intake_email_id?: number
+          is_inline?: boolean | null
+          source_metadata?: Json
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outlook_email_intake_attachments_email_attachment_id_fkey"
+            columns: ["email_attachment_id"]
+            isOneToOne: false
+            referencedRelation: "email_attachments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outlook_email_intake_attachments_intake_email_id_fkey"
+            columns: ["intake_email_id"]
+            isOneToOne: false
+            referencedRelation: "outlook_email_intake"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       owner_invoice_line_items: {
         Row: {
           acumatica_line_nbr: number | null
@@ -26802,6 +27024,7 @@ export type Database = {
           id: string
           is_active: boolean
           is_admin: boolean | null
+          onboarding_completed_at: string | null
           role: string | null
           updated_at: string
         }
@@ -26812,6 +27035,7 @@ export type Database = {
           id: string
           is_active?: boolean
           is_admin?: boolean | null
+          onboarding_completed_at?: string | null
           role?: string | null
           updated_at?: string
         }
@@ -26822,6 +27046,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           is_admin?: boolean | null
+          onboarding_completed_at?: string | null
           role?: string | null
           updated_at?: string
         }
