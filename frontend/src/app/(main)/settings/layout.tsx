@@ -14,6 +14,7 @@ interface NavItem {
 const settingsTabs: NavItem[] = [
   { label: "Profile", href: "/settings/profile" },
   { label: "Company", href: "/settings/account" },
+  { label: "Integrations", href: "/settings/integrations" },
 ];
 
 export default function SettingsLayout({ children }: { children: React.ReactNode }) {

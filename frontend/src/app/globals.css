@@ -182,6 +182,9 @@
     --brand-hover: 29 71% 45%;
     --brand-light: 29 71% 95%;
 
+    /* Third-party integration brand colors */
+    --integration-telegram: #229ED9;
+
     /* Surface Colors */
     --surface-inverse: 240 6% 12%;
     --surface-elevated: 0 0% 100%;

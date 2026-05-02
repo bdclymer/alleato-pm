@@ -72,27 +72,76 @@ export const bot = new Chat({
 async function resolveUserId(platformUserId: string): Promise<string> {
   const supabase = createServiceClient();
 
-  // Check bot_user_mappings table
   const { data: mapping } = await supabase
     .from("bot_user_mappings")
     .select("supabase_user_id")
     .eq("platform_user_id", platformUserId)
-    .single();
-
-  if (mapping?.supabase_user_id) {
-    return mapping.supabase_user_id;
-  }
-
-  // Fallback: use the first active admin profile from the live auth mirror.
-  const { data: admin } = await supabase
-    .from("user_profiles")
-    .select("id")
-    .eq("role", "admin")
-    .eq("is_active", true)
-    .limit(1)
     .maybeSingle();
 
-  return admin?.id ?? "system";
+  // "system" is a sentinel meaning "not linked" — callers must check for it
+  return mapping?.supabase_user_id ?? "system";
+}
+
+// ---------------------------------------------------------------------------
+// Telegram account linking helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Redeem a link code sent via /start <code>.
+ * Creates a bot_user_mappings row and returns the user's display name on success.
+ */
+async function redeemTelegramLinkCode(
+  code: string,
+  telegramChatId: string,
+  telegramUsername?: string,
+): Promise<{ ok: true; displayName: string } | { ok: false; reason: string }> {
+  const supabase = createServiceClient();
+
+  const { data: row } = await supabase
+    .from("telegram_link_codes")
+    .select("user_id, expires_at, used_at")
+    .eq("code", code)
+    .maybeSingle();
+
+  if (!row) return { ok: false, reason: "Code not found. Generate a new one from Settings > Integrations." };
+  if (row.used_at) return { ok: false, reason: "This code has already been used. Generate a new one." };
+  if (new Date(row.expires_at) < new Date()) return { ok: false, reason: "This code expired. Generate a new one — they last 10 minutes." };
+
+  const platformUserId = `telegram:${telegramChatId}`;
+
+  // Upsert mapping (user may be re-linking)
+  const { error: mappingError } = await supabase
+    .from("bot_user_mappings")
+    .upsert(
+      {
+        platform: "telegram",
+        platform_user_id: platformUserId,
+        supabase_user_id: row.user_id,
+        display_name: telegramUsername ?? null,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "platform_user_id" },
+    );
+
+  if (mappingError) return { ok: false, reason: "Database error. Please try again." };
+
+  // Mark code as used
+  await supabase
+    .from("telegram_link_codes")
+    .update({ used_at: new Date().toISOString() })
+    .eq("code", code);
+
+  // Fetch display name from user profile
+  const { data: profile } = await supabase
+    .from("user_profiles")
+    .select("full_name, first_name")
+    .eq("id", row.user_id)
+    .maybeSingle();
+
+  const displayName =
+    profile?.full_name ?? profile?.first_name ?? telegramUsername ?? "there";
+
+  return { ok: true, displayName };
 }
 
 // ---------------------------------------------------------------------------
@@ -166,13 +215,78 @@ bot.onNewMention(async (thread, message) => {
 
 /**
  * Direct messages — same as mention but for DM threads.
+ * Intercepts /start <code> and /unlink before routing to AI.
  */
 bot.onDirectMessage(async (thread, message) => {
   await thread.subscribe();
+
+  const text = message.text?.trim() ?? "";
+  const telegramChatId = message.author?.userId ?? "unknown";
+  const telegramUsername = message.author?.displayName;
+
+  // /start <code> — account linking
+  if (text.startsWith("/start ") || text.startsWith("/link ")) {
+    const code = text.split(" ")[1]?.trim();
+    if (!code) {
+      await thread.post("Send the full link command with your code, e.g. `/link ABC12345`.");
+      return;
+    }
+    const result = await redeemTelegramLinkCode(code, telegramChatId, telegramUsername);
+    if (result.ok) {
+      await thread.post(
+        `✅ Linked! Hi ${result.displayName} — your Telegram account is now connected to Alleato.\n\nJust send me a message and I'll answer questions about your projects, budgets, and more.`,
+      );
+    } else {
+      await thread.post(`❌ ${result.reason}`);
+    }
+    return;
+  }
+
+  // /start with no code — prompt to link
+  if (text === "/start") {
+    const platformUserId = `telegram:${telegramChatId}`;
+    const supabase = createServiceClient();
+    const { data: mapping } = await supabase
+      .from("bot_user_mappings")
+      .select("supabase_user_id")
+      .eq("platform_user_id", platformUserId)
+      .maybeSingle();
+
+    if (mapping) {
+      await thread.post("You're already linked! Just send me a message.");
+    } else {
+      await thread.post(
+        "👋 To use the Alleato AI assistant here, link your account first:\n\n1. Open Alleato → Settings → Integrations\n2. Click **Connect** next to Telegram\n3. A deep link will open this chat with your code automatically",
+      );
+    }
+    return;
+  }
+
+  // /unlink — remove mapping
+  if (text === "/unlink") {
+    const platformUserId = `telegram:${telegramChatId}`;
+    const supabase = createServiceClient();
+    await supabase
+      .from("bot_user_mappings")
+      .delete()
+      .eq("platform_user_id", platformUserId);
+    await thread.post("Your Telegram account has been unlinked from Alleato.");
+    return;
+  }
+
   await thread.startTyping();
 
   const platformUserId = `${thread.adapter.name}:${message.author?.userId ?? "unknown"}`;
   const userId = await resolveUserId(platformUserId);
+
+  // If no mapping, prompt to link instead of falling back to admin
+  if (userId === "system") {
+    await thread.post(
+      "I don't recognise your account yet.\n\nGo to Settings → Integrations in Alleato and click **Connect** next to Telegram to link your account.",
+    );
+    return;
+  }
+
   const sessionId = `bot-${nanoid(12)}`;
 
   await persistChatMessage({

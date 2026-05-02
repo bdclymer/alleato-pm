@@ -7,6 +7,7 @@ import { PageShell } from "@/components/layout";
 import { SectionRuleHeading } from "@/components/layout/spacing";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { TelegramLinkPanel } from "./telegram-link-panel";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -162,7 +163,7 @@ function IntegrationRow({ integration }: { integration: Integration }) {
           integration.logoColor
         )}
       >
-        <span className="text-xs font-bold text-white">{integration.logoInitials}</span>
+        <span className="text-xs font-bold" style={{ color: "white" }}>{integration.logoInitials}</span>
       </div>
 
       {/* Name + description */}
@@ -246,6 +247,22 @@ export default function IntegrationsSettingsPage() {
             </div>
           </div>
         ))}
+
+        {/* Mobile — Telegram */}
+        <div>
+          <div className="mb-8" />
+          <div className="grid grid-cols-1 gap-0 md:grid-cols-[220px_1fr]">
+            <div className="pb-3 md:pb-0 md:pr-6">
+              <SectionRuleHeading label="Mobile" />
+              <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+                Connect your phone so you can talk to the AI assistant from anywhere.
+              </p>
+            </div>
+            <div className="rounded-lg border border-border overflow-hidden">
+              <TelegramLinkPanel />
+            </div>
+          </div>
+        </div>
       </div>
     </div>
     </PageShell>
