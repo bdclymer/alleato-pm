@@ -1,22 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { useRfis } from "@/hooks/use-rfis";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useRfis, useCreateRfi } from "@/hooks/use-rfis";
 import { usePunchItems, useCreatePunchItem } from "@/hooks/use-punch-items";
 import { useDrawings } from "@/hooks/use-drawings";
 import { usePhotos, useUploadPhotos } from "@/hooks/use-photos";
 import {
-  PunchItemFormDialog,
-  type PunchItemFormValues,
-} from "@/components/domain/punch-items/punch-item-form-dialog";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalTitle,
+  ModalFooter,
+} from "@/components/ui/unified-modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,6 +29,21 @@ import {
 import { cn } from "@/lib/utils";
 import type { DrawingMarkupPin, CreatePinInput } from "@/hooks/use-drawing-pins";
 import { FileText, Wrench, AlertTriangle, CheckSquare, Link2, Image as ImageIcon } from "lucide-react";
+import {
+  RfiFormFields,
+  RFI_FORM_DEFAULTS,
+} from "@/components/rfis/rfi-form-fields";
+import {
+  rfiDraftSchema,
+  rfiOpenSchema,
+  type RfiFormValues,
+} from "@/lib/schemas/rfi-schema";
+import {
+  PunchItemFormFields,
+  buildPunchItemDefaults,
+  punchItemFormSchema,
+  type PunchItemFormValues,
+} from "@/components/domain/punch-items/punch-item-form-fields";
 
 /** Map {x,y,page} position to CreatePinInput fields */
 function posToPin(pos: { x: number; y: number; page: number }): Pick<CreatePinInput, "x_pct" | "y_pct" | "page"> {
@@ -82,11 +94,12 @@ export function LinkPinModal({
   const config = PIN_TYPE_CONFIG[selectedType];
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Add Link to Drawing</DialogTitle>
-        </DialogHeader>
+    <Modal open={open} onOpenChange={onOpenChange}>
+      {/* eslint-disable-next-line design-system/no-arbitrary-spacing */}
+      <ModalContent size="3xl" className="max-h-[85vh] overflow-y-auto">
+        <ModalHeader>
+          <ModalTitle>Add Link to Drawing</ModalTitle>
+        </ModalHeader>
 
         {/* Type selector */}
         <div>
@@ -173,8 +186,8 @@ export function LinkPinModal({
             onCancel={() => onOpenChange(false)}
           />
         )}
-      </DialogContent>
-    </Dialog>
+      </ModalContent>
+    </Modal>
   );
 }
 
@@ -246,10 +259,10 @@ function DrawingLinkContent({
           </CommandGroup>
         </CommandList>
       </Command>
-      <DialogFooter>
+      <ModalFooter>
         <Button variant="outline" onClick={onCancel}>Cancel</Button>
         <Button onClick={handleLink} disabled={!selectedDrawingId}>Link Drawing</Button>
-      </DialogFooter>
+      </ModalFooter>
     </div>
   );
 }
@@ -349,10 +362,10 @@ function PhotoLinkContent({
               )}
             </CommandList>
           </Command>
-          <DialogFooter className="mt-4">
+          <ModalFooter className="mt-4">
             <Button variant="outline" onClick={onCancel}>Cancel</Button>
             <Button onClick={handleLink} disabled={!selectedPhotoId}>Link Photo</Button>
-          </DialogFooter>
+          </ModalFooter>
         </TabsContent>
 
         <TabsContent value="upload" className="mt-3 space-y-3">
@@ -369,7 +382,7 @@ function PhotoLinkContent({
           <p className="text-xs text-muted-foreground">
             Uploads to Photos, then links it directly to this drawing pin.
           </p>
-          <DialogFooter>
+          <ModalFooter>
             <Button variant="outline" onClick={onCancel}>Cancel</Button>
             <Button
               onClick={() => void handleUploadAndLink()}
@@ -377,7 +390,7 @@ function PhotoLinkContent({
             >
               {uploadPhotos.isPending ? "Uploading…" : "Upload & Link"}
             </Button>
-          </DialogFooter>
+          </ModalFooter>
         </TabsContent>
       </Tabs>
     </div>
@@ -399,7 +412,6 @@ function RfiContent({
   onConfirm: (input: CreatePinInput) => void;
   onCancel: () => void;
 }) {
-  const router = useRouter();
   const [mode, setMode] = useState<"link" | "create">("link");
   const [selectedRfiId, setSelectedRfiId] = useState<string | null>(null);
   const [selectedRfiLabel, setSelectedRfiLabel] = useState<string | null>(null);
@@ -407,6 +419,12 @@ function RfiContent({
 
   const projectIdNum = Number(projectId);
   const { data: rfis, isLoading } = useRfis(projectIdNum);
+  const createRfi = useCreateRfi(projectIdNum);
+
+  // Same form contract as `/[projectId]/rfis/new`. Reusing RfiFormFields keeps
+  // the field set, validation rules, and dropdown sources in lockstep with the
+  // canonical RFI create page.
+  const form = useForm<RfiFormValues>({ defaultValues: RFI_FORM_DEFAULTS });
 
   const handleLink = () => {
     if (!position || !selectedRfiId) return;
@@ -416,6 +434,31 @@ function RfiContent({
       entity_id: selectedRfiId,
       entity_label: selectedRfiLabel ?? undefined,
       entity_number: selectedRfiNumber ?? undefined,
+      color,
+    });
+  };
+
+  const submitRfi = async (status: "draft" | "open") => {
+    if (!position) return;
+    const data = form.getValues();
+    const schema = status === "open" ? rfiOpenSchema : rfiDraftSchema;
+    const result = schema.safeParse(data);
+    if (!result.success) {
+      for (const issue of result.error.issues) {
+        const path = issue.path[0] as keyof RfiFormValues;
+        if (path) form.setError(path, { message: issue.message });
+      }
+      return;
+    }
+
+    const rfi = await createRfi.mutateAsync({ ...result.data, status });
+    onConfirm({
+      ...posToPin(position),
+      pin_type: "rfi",
+      entity_id: rfi.id,
+      entity_label: rfi.subject,
+      entity_number: rfi.number ? `RFI-${rfi.number}` : undefined,
+      entity_status: status,
       color,
     });
   };
@@ -463,27 +506,41 @@ function RfiContent({
               )}
             </CommandList>
           </Command>
-          <DialogFooter className="mt-4">
+          <ModalFooter className="mt-4">
             <Button variant="outline" onClick={onCancel}>Cancel</Button>
             <Button onClick={handleLink} disabled={!selectedRfiId}>Link RFI</Button>
-          </DialogFooter>
+          </ModalFooter>
         </TabsContent>
 
-        <TabsContent value="create" className="mt-3 space-y-3">
-          <p className="text-xs text-muted-foreground">
-            New RFIs use the full RFI form so required assignees, dates, distribution, and question details are captured correctly.
-          </p>
-          <DialogFooter>
-            <Button variant="outline" onClick={onCancel}>Cancel</Button>
-            <Button
-              onClick={() => {
-                onCancel();
-                router.push(`/${projectId}/rfis/new`);
-              }}
-            >
-              Open RFI Form
-            </Button>
-          </DialogFooter>
+        <TabsContent value="create" className="mt-3">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              void submitRfi("open");
+            }}
+            className="space-y-6"
+          >
+            <RfiFormFields form={form} projectId={projectIdNum} />
+
+            <ModalFooter className="flex-col sm:flex-row sm:justify-between gap-2">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => void submitRfi("draft")}
+                disabled={createRfi.isPending}
+              >
+                {createRfi.isPending ? "Saving…" : "Save Draft & Link"}
+              </Button>
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" onClick={onCancel}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={createRfi.isPending}>
+                  {createRfi.isPending ? "Creating…" : "Create Open & Link"}
+                </Button>
+              </div>
+            </ModalFooter>
+          </form>
         </TabsContent>
       </Tabs>
     </div>
@@ -506,7 +563,6 @@ function PunchItemContent({
   onCancel: () => void;
 }) {
   const [mode, setMode] = useState<"link" | "create">("link");
-  const [formOpen, setFormOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedLabel, setSelectedLabel] = useState<string | null>(null);
   const [selectedNumber, setSelectedNumber] = useState<string | null>(null);
@@ -515,6 +571,14 @@ function PunchItemContent({
   const { data: itemsRaw, isLoading } = usePunchItems(projectIdNum);
   const items = itemsRaw?.items ?? [];
   const createItem = useCreatePunchItem(projectIdNum);
+
+  // Same form contract as PunchItemFormDialog. Reusing PunchItemFormFields
+  // keeps the field set + validation in lockstep with the canonical create
+  // dialog used by the punch list page.
+  const form = useForm<PunchItemFormValues>({
+    resolver: zodResolver(punchItemFormSchema),
+    defaultValues: buildPunchItemDefaults(),
+  });
 
   const handleLink = () => {
     if (!position || !selectedId) return;
@@ -528,7 +592,7 @@ function PunchItemContent({
     });
   };
 
-  const handleCreate = async (data: PunchItemFormValues) => {
+  const handleCreate = form.handleSubmit(async (data) => {
     if (!position) return;
     const item = await createItem.mutateAsync(data);
     onConfirm({
@@ -537,11 +601,10 @@ function PunchItemContent({
       entity_id: item.id,
       entity_label: item.title,
       entity_number: item.number ? `#${item.number}` : undefined,
-      entity_status: item.status,
+      entity_status: data.status,
       color,
     });
-    setFormOpen(false);
-  };
+  });
 
   return (
     <div className="space-y-4">
@@ -559,7 +622,7 @@ function PunchItemContent({
                 <CommandEmpty>Loading…</CommandEmpty>
               ) : (
                 <CommandGroup>
-                  {(items ?? []).map((item: { id: string; number?: number | string; title: string }) => (
+                  {items.map((item) => (
                     <CommandItem
                       key={item.id}
                       value={`${item.number} ${item.title}`}
@@ -574,40 +637,37 @@ function PunchItemContent({
                       {item.title}
                     </CommandItem>
                   ))}
-                  {!isLoading && (items ?? []).length === 0 && (
+                  {!isLoading && items.length === 0 && (
                     <CommandEmpty>No punch items found</CommandEmpty>
                   )}
                 </CommandGroup>
               )}
             </CommandList>
           </Command>
-          <DialogFooter className="mt-4">
+          <ModalFooter className="mt-4">
             <Button variant="outline" onClick={onCancel}>Cancel</Button>
             <Button onClick={handleLink} disabled={!selectedId}>Link Item</Button>
-          </DialogFooter>
+          </ModalFooter>
         </TabsContent>
 
-        <TabsContent value="create" className="mt-3 space-y-3">
-          <p className="text-xs text-muted-foreground">
-            New punch items use the same form as the Punch List page so assignee, ball in court, priority, location, trade, and due date are captured.
-          </p>
-          <DialogFooter>
-            <Button variant="outline" onClick={onCancel}>Cancel</Button>
-            <Button onClick={() => setFormOpen(true)}>
-              Open Punch Item Form
-            </Button>
-          </DialogFooter>
+        <TabsContent value="create" className="mt-3">
+          <form
+            onSubmit={handleCreate}
+            className="space-y-4"
+          >
+            <PunchItemFormFields form={form} projectId={projectIdNum} />
+
+            <ModalFooter>
+              <Button type="button" variant="outline" onClick={onCancel}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={createItem.isPending}>
+                {createItem.isPending ? "Creating…" : "Create & Link"}
+              </Button>
+            </ModalFooter>
+          </form>
         </TabsContent>
       </Tabs>
-
-      <PunchItemFormDialog
-        open={formOpen}
-        onOpenChange={setFormOpen}
-        onSubmit={(data) => void handleCreate(data)}
-        isLoading={createItem.isPending}
-        mode="create"
-        projectId={projectIdNum}
-      />
     </div>
   );
 }
@@ -665,10 +725,10 @@ function CoordinationIssueContent({
       <p className="text-xs text-muted-foreground">
         Places a pin on the drawing. Future: sync with Coordination Issues module.
       </p>
-      <DialogFooter>
+      <ModalFooter>
         <Button variant="outline" onClick={onCancel}>Cancel</Button>
         <Button onClick={handleCreate} disabled={!title.trim()}>Place Pin</Button>
-      </DialogFooter>
+      </ModalFooter>
     </div>
   );
 }
@@ -711,10 +771,10 @@ function TaskContent({
           className="mt-1"
         />
       </div>
-      <DialogFooter>
+      <ModalFooter>
         <Button variant="outline" onClick={onCancel}>Cancel</Button>
         <Button onClick={handleCreate} disabled={!title.trim()}>Place Pin</Button>
-      </DialogFooter>
+      </ModalFooter>
     </div>
   );
 }
