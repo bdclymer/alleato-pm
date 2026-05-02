@@ -1,0 +1,47 @@
+{
+  "id": "02-overdue-rfis",
+  "prompt": "Which RFIs are overdue right now? Who owes us a response?",
+  "status": "FAIL",
+  "failures": [
+    "STREAM ERROR: fetch failed"
+  ],
+  "tools": [],
+  "ms": 3,
+  "error": "fetch failed",
+  "gtCount": 4,
+  "answer": "",
+  "groundTruthSample": [
+    {
+      "id": "e47412a2-7570-46cd-906a-0499f1354407",
+      "number": 4,
+      "subject": "Exterior Signage — Attachment Point Structural Review",
+      "status": "open",
+      "project_id": "767",
+      "due_date": "2025-03-01T05:00:00.000Z"
+    },
+    {
+      "id": "6cbb80a9-ee5a-4bc6-bb33-6f0f73a82084",
+      "number": 5,
+      "subject": "FM-200 System — Zoning and Activation Sequence",
+      "status": "open",
+      "project_id": "767",
+      "due_date": "2025-03-10T04:00:00.000Z"
+    },
+    {
+      "id": "960efa2b-e522-49a9-be23-322868768376",
+      "number": 7,
+      "subject": "Elevator Pit Waterproofing — Crystalline vs Sheet Membrane",
+      "status": "open",
+      "project_id": "767",
+      "due_date": "2025-03-20T04:00:00.000Z"
+    },
+    {
+      "id": "24a3b405-ca53-4fb8-8a71-001483d2c875",
+      "number": 2,
+      "subject": "Specified fire rating for north wall assembly",
+      "status": "open",
+      "project_id": "67",
+      "due_date": "2026-04-10T04:00:00.000Z"
+    }
+  ]
+}

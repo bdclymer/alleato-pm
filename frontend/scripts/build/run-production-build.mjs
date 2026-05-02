@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import { existsSync, rmSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawn, spawnSync } from "node:child_process";
@@ -7,6 +7,7 @@ const frontendRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), 
 const disableScript = path.join(frontendRoot, "scripts/build/disable-nonprod-routes.mjs");
 const restoreScript = path.join(frontendRoot, "scripts/build/restore-nonprod-routes.mjs");
 const statePath = path.join(frontendRoot, ".next-nonprod-routes/disabled-routes.json");
+const nextDir = path.join(frontendRoot, ".next");
 
 let activeChild = null;
 let cleanedUp = false;
@@ -53,6 +54,11 @@ function runRestoreSync() {
 
 async function main() {
   await runNodeScript(disableScript);
+
+  if (existsSync(nextDir)) {
+    rmSync(nextDir, { recursive: true, force: true });
+    console.log("[build] Removed frontend/.next before production build to prevent stale manifest/cache failures");
+  }
 
   const exitCode = await new Promise((resolve, reject) => {
     activeChild = spawn("pnpm", ["exec", "next", "build"], {

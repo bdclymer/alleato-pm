@@ -1257,7 +1257,7 @@ export function createOperationalTools(
                 for (let i = 1; i < chunks.length; i++) {
                   const prevIdx = (group[group.length - 1].metadata?.chunk_index as number) ?? 0;
                   const currIdx = (chunks[i].metadata?.chunk_index as number) ?? 0;
-                  if (currIdx <= prevIdx + 2) {
+                  if (currIdx <= prevIdx + 2) { // gap ≤ 2: merge near-adjacent chunks
                     group.push(chunks[i]);
                   } else {
                     stitched.push(mergeGroup(group));

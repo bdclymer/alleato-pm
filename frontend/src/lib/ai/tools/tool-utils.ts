@@ -9,9 +9,9 @@ import { type ToolGuardrails } from "./guardrails";
 // pgvector index migration (e.g. halfvec(3072) → re-index all rows).
 
 export const EMBEDDING = {
-  /** halfvec(3072) — document_chunks, document_metadata, knowledge tables */
+  /** halfvec(3072) — document_chunks, document_metadata, ai_memories, knowledge tables */
   LARGE: { model: "text-embedding-3-large", dimensions: 3072 } as const,
-  /** vector(1536) — ai_memories.embedding */
+  /** vector(1536) — conversation_memories.embedding (legacy short-term memory table) */
   SMALL: { model: "text-embedding-3-small", dimensions: 1536 } as const,
 } as const;
 
@@ -118,8 +118,14 @@ export async function rerankWithLLM(
       .slice(0, topK);
   } catch (err) {
     // Reranking failed — fall back to vector-similarity order.
-    // Log so gateway/API issues don't go unnoticed in production.
-    console.error("[rerankWithLLM] fallback to original order:", err instanceof Error ? err.message : err);
+    // Structured log so Vercel log drain / alerting can detect reranker degradation.
+    console.error(JSON.stringify({
+      event: "reranker_fallback",
+      query_length: query.length,
+      candidate_count: candidates.length,
+      error: err instanceof Error ? err.message : String(err),
+      timestamp: new Date().toISOString(),
+    }));
     return candidates.slice(0, topK).map((_, i) => i);
   }
 }

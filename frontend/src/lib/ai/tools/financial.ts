@@ -100,12 +100,15 @@ async function fetchRuntimeBudgetLines(
 
 /** Detect errors caused by the v_budget_lines view being absent or stale in the schema cache. */
 export function isMissingBudgetViewError(error: unknown): boolean {
-  const serialized = JSON.stringify(error ?? {});
-  return (
-    serialized.includes("v_budget_lines") ||
-    serialized.includes("PGRST205") ||
-    serialized.includes("schema cache")
-  );
+  if (error && typeof error === "object") {
+    const e = error as Record<string, unknown>;
+    // PGRST205 = PostgREST "relation does not exist" / schema cache miss
+    if (e["code"] === "PGRST205") return true;
+    const msg = typeof e["message"] === "string" ? e["message"] : "";
+    const hint = typeof e["hint"] === "string" ? e["hint"] : "";
+    if (msg.includes("v_budget_lines") || hint.includes("v_budget_lines")) return true;
+  }
+  return false;
 }
 
 /**

@@ -58,18 +58,44 @@ Mounted as a sub-application. See YokeFlow-specific docs if available.
 
 ## Authentication & CORS
 
-The API currently uses CORS-based access control. Allowed origins:
+The API uses CORS-based access control for origin allowlisting. In addition, all
+state-mutating endpoints require an `ADMIN_API_KEY` header.
+
+**Allowed CORS origins:**
 - `http://localhost:3000` / `http://127.0.0.1:3000`
 - `http://localhost:3001` / `http://127.0.0.1:3001`
 - `http://localhost:8080` / `http://127.0.0.1:8080`
 
-No API key or token auth is currently enforced on endpoints.
+**Admin API key authentication:**
+
+The following endpoints require either:
+- `Authorization: Bearer <ADMIN_API_KEY>`, or
+- `X-Admin-Api-Key: <ADMIN_API_KEY>` header
+
+Protected endpoints:
+- All `/api/admin/*` routes
+- `POST /api/ingest/fireflies`
+- `POST /api/ingest/fireflies/recent`
+- `POST /api/graph/sync`
+- `POST /api/intelligence/teams-compiler/run`
+- `POST /api/digests/daily/generate`
+
+If `ADMIN_API_KEY` is not set in the environment, protected endpoints return `503`.
+
+**Unprotected endpoints** (safe to expose publicly — read-only or triggered by Supabase):
+- `GET /health`
+- `GET /api/projects`, `GET /api/projects/{id}`
+- `GET /api/digests/*`
+- `GET /api/intelligence/teams-compiler/status`
+- `POST /api/chat` (legacy, read-only)
+- `POST /api/pipeline/process` (called by Supabase pg_net trigger — must remain unauthenticated)
 
 ## Environment Variables
 
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `OPENAI_API_KEY` | Yes | OpenAI API key for agent workflows |
+| `ADMIN_API_KEY` | Yes | Shared secret for all mutation endpoints |
 | `USE_UNIFIED_AGENT` | No | Set to `"true"` to use unified agent instead of classification routing |
 
 ## Running the Server

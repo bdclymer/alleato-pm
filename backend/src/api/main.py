@@ -40,6 +40,7 @@ except ImportError:
 from src.services.supabase_helpers import SupabaseRagStore
 from src.services.ingestion.fireflies_pipeline import FirefliesIngestionPipeline
 from src.services.pipeline import run_full_pipeline
+from src.api.admin_endpoints import require_admin_api_key
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -399,6 +400,7 @@ def rag_chat_api(payload: ChatRequest, store: SupabaseRagStore = Depends(get_rag
 def ingest_fireflies_endpoint(
     payload: IngestRequest,
     pipeline: FirefliesIngestionPipeline = Depends(get_ingestion_pipeline),
+    _: None = Depends(require_admin_api_key),
 ) -> Dict[str, Any]:
     """Ingest a Fireflies meeting transcript into the knowledge base.
 
@@ -438,6 +440,7 @@ def ingest_fireflies_endpoint(
 def ingest_recent_fireflies_endpoint(
     payload: FirefliesRecentSyncRequest,
     pipeline: FirefliesIngestionPipeline = Depends(get_ingestion_pipeline),
+    _: None = Depends(require_admin_api_key),
 ) -> Dict[str, Any]:
     """Fetch recent meetings from Fireflies, generate markdown, and ingest.
 
@@ -454,6 +457,7 @@ def ingest_recent_fireflies_endpoint(
 @app.post("/api/graph/sync", tags=["Ingestion"], summary="Trigger Microsoft Graph sync (Outlook / Teams / OneDrive)")
 async def graph_sync_endpoint(
     background_tasks: BackgroundTasks,
+    _: None = Depends(require_admin_api_key),
 ) -> Dict[str, Any]:
     """Manually trigger a Microsoft Graph incremental sync.
 
@@ -530,6 +534,7 @@ async def pipeline_process_endpoint(
 async def run_teams_compiler(
     request: TeamsCompilerRunRequest,
     background_tasks: BackgroundTasks,
+    _: None = Depends(require_admin_api_key),
 ) -> Dict[str, Any]:
     """Compile a bounded batch of Teams DM conversations into structured intelligence."""
     import uuid
@@ -618,6 +623,7 @@ async def trigger_daily_digest(
     background_tasks: BackgroundTasks,
     date: Optional[str] = Query(None, description="YYYY-MM-DD, default today"),
     days: int = Query(1, description="Number of days to include"),
+    _: None = Depends(require_admin_api_key),
 ) -> Dict[str, Any]:
     """Manually trigger daily digest generation."""
     from src.services.daily_digest import run_daily_digest
