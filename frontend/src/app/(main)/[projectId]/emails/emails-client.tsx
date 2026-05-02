@@ -66,7 +66,10 @@ export function EmailsClient({
   const searchParams = useSearchParams();
   const isGlobal = scope === "global" || !projectId;
   const isOutlook = source === "outlook";
-  const activeTab = searchParams.get("tab") === "attachments" ? "attachments" : "emails";
+  const activeTab =
+    isOutlook && searchParams.get("tab") === "attachments"
+      ? "attachments"
+      : "emails";
   const emailsHref = isGlobal
     ? isOutlook
       ? "/outlook-emails"
@@ -97,15 +100,6 @@ export function EmailsClient({
       ? "Application and Resend emails across projects."
       : undefined;
   const noWriteActions = isGlobal || isOutlook;
-  const attachmentTabs = tabs ?? [
-    { label: "Emails", href: emailsHref, isActive: activeTab === "emails" },
-    {
-      label: "Attachments",
-      href: `${emailsHref}?tab=attachments`,
-      isActive: activeTab === "attachments",
-    },
-  ];
-
   const initialStatus = searchParams.get("status") ?? "";
   const initialFilters: FilterState = {
     status: initialStatus || undefined,
@@ -353,13 +347,13 @@ export function EmailsClient({
 
   const isFiltered = Boolean(tableState.searchInput) || Boolean(activeFilters.status);
 
-  if (activeTab === "attachments") {
+  if (isOutlook && activeTab === "attachments") {
     return (
       <EmailAttachmentsClient
         projectId={projectId}
         scope={isGlobal ? "global" : "project"}
         title={title}
-        tabs={attachmentTabs}
+        tabs={tabs}
       />
     );
   }
@@ -371,7 +365,7 @@ export function EmailsClient({
           emails={sortedEmails}
           isLoading={isLoading}
           error={fetchError ?? undefined}
-          tabs={attachmentTabs}
+          tabs={tabs ?? []}
           searchValue={tableState.searchInput}
           onSearchChange={tableState.setSearchInput}
           statusFilter={statusFilter}
