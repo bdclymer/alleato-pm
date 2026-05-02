@@ -1,0 +1,331 @@
+{
+  "version": "2026-05-02",
+  "description": "Comprehensive prompt suite for /ai-assistant. Each case names: the user's question, the intent it should be classified as, the tool families that should fire, specific tool names that the assistant SHOULD call (any-of), substrings the answer MUST contain, substrings it MUST NOT contain, and an optional pinned project_id. The runner POSTs each prompt to /api/ai-assistant/chat, drains the stream, then reads chat_history.metadata.tool_trace to score coverage.",
+  "globalForbiddenPhrases": [
+    "I found results",
+    "I'll search",
+    "Let me search",
+    "I will search",
+    "tool call",
+    "RAG",
+    "retrieval",
+    "as an AI",
+    "I cannot help"
+  ],
+  "cases": [
+    {
+      "id": "project-briefing-westfield",
+      "intent": "project_briefing",
+      "prompt": "What's the latest on Westfield Collective?",
+      "selectedProjectId": 43,
+      "expectedToolFamilies": ["project", "semantic", "communications"],
+      "expectedToolNames": ["getProjectBriefingSnapshot", "semanticSearch"],
+      "mustInclude": ["Westfield"],
+      "mustExclude": ["Vermillion"],
+      "minAnswerLength": 200
+    },
+    {
+      "id": "project-briefing-vermillion",
+      "intent": "project_briefing",
+      "prompt": "Give me a current read on Vermillion Rise Warehouse.",
+      "selectedProjectId": 67,
+      "expectedToolFamilies": ["project", "semantic"],
+      "expectedToolNames": ["getProjectBriefingSnapshot"],
+      "mustInclude": ["Vermillion"],
+      "minAnswerLength": 200
+    },
+    {
+      "id": "portfolio-overview",
+      "intent": "portfolio_briefing",
+      "prompt": "Across all active projects, what should I worry about this week?",
+      "expectedToolFamilies": ["project", "risk"],
+      "expectedToolNames": ["getPortfolioOverview", "getProjectsWithRisks"],
+      "mustInclude": [],
+      "minAnswerLength": 250
+    },
+    {
+      "id": "risk-review-single-project",
+      "intent": "risk_review",
+      "prompt": "What are the biggest risks on Westfield Collective right now?",
+      "selectedProjectId": 43,
+      "expectedToolFamilies": ["risk", "project"],
+      "expectedToolNames": ["getProjectRiskAnalysis"],
+      "mustInclude": ["risk"],
+      "minAnswerLength": 200
+    },
+    {
+      "id": "financial-budget-summary",
+      "intent": "financial_analysis",
+      "prompt": "What does the budget look like on Westfield? Are we tracking under or over?",
+      "selectedProjectId": 43,
+      "expectedToolFamilies": ["financial", "structured"],
+      "expectedToolNames": ["getProjectBudgetSummary", "queryBudgetData", "getBudgetLineItems"],
+      "mustInclude": ["budget"],
+      "minAnswerLength": 150
+    },
+    {
+      "id": "financial-commitments",
+      "intent": "financial_analysis",
+      "prompt": "Show me an overview of commitments on Westfield with their current status.",
+      "selectedProjectId": 43,
+      "expectedToolFamilies": ["financial", "structured"],
+      "expectedToolNames": ["getCommitmentsOverview", "queryCommitments"],
+      "mustInclude": ["commitment"],
+      "minAnswerLength": 150
+    },
+    {
+      "id": "financial-change-orders",
+      "intent": "financial_analysis",
+      "prompt": "Walk me through the open change orders on Westfield and the cost exposure.",
+      "selectedProjectId": 43,
+      "expectedToolFamilies": ["financial", "structured"],
+      "expectedToolNames": ["getChangeOrderDetails", "queryChangeOrders"],
+      "mustInclude": ["change order"],
+      "minAnswerLength": 150
+    },
+    {
+      "id": "financial-direct-costs",
+      "intent": "financial_analysis",
+      "prompt": "Summarize direct costs to date on Westfield.",
+      "selectedProjectId": 43,
+      "expectedToolFamilies": ["financial", "structured"],
+      "expectedToolNames": ["getDirectCostsSummary", "queryDirectCosts"],
+      "mustInclude": ["direct cost"],
+      "minAnswerLength": 100
+    },
+    {
+      "id": "financial-margin",
+      "intent": "financial_analysis",
+      "prompt": "What's the projected margin on Westfield Collective?",
+      "selectedProjectId": 43,
+      "expectedToolFamilies": ["financial"],
+      "expectedToolNames": ["getMarginAnalysis", "getFinancialAnalysis"],
+      "mustInclude": ["margin"],
+      "minAnswerLength": 120
+    },
+    {
+      "id": "financial-forecast",
+      "intent": "financial_analysis",
+      "prompt": "How is our forecast tracking against the original budget on Westfield?",
+      "selectedProjectId": 43,
+      "expectedToolFamilies": ["financial", "forecast"],
+      "expectedToolNames": ["getForecastComparison", "getCostTrends"],
+      "mustInclude": ["forecast"],
+      "minAnswerLength": 120
+    },
+    {
+      "id": "schedule-analysis",
+      "intent": "operations_analysis",
+      "prompt": "Where are we against the schedule on Westfield? Any tasks slipping?",
+      "selectedProjectId": 43,
+      "expectedToolFamilies": ["schedule", "structured"],
+      "expectedToolNames": ["getScheduleAnalysis", "queryScheduleTasks"],
+      "mustInclude": ["schedule"],
+      "minAnswerLength": 120
+    },
+    {
+      "id": "rfis-open",
+      "intent": "operations_analysis",
+      "prompt": "What RFIs are still open on Westfield and who owes a response?",
+      "selectedProjectId": 43,
+      "expectedToolFamilies": ["operations"],
+      "expectedToolNames": ["getRFIStatus"],
+      "mustInclude": ["RFI"],
+      "minAnswerLength": 100
+    },
+    {
+      "id": "submittals-status",
+      "intent": "operations_analysis",
+      "prompt": "Give me the submittal status on Westfield — anything overdue?",
+      "selectedProjectId": 43,
+      "expectedToolFamilies": ["operations"],
+      "expectedToolNames": ["getSubmittalStatus"],
+      "mustInclude": ["submittal"],
+      "minAnswerLength": 100
+    },
+    {
+      "id": "people-roles",
+      "intent": "people_or_capacity",
+      "prompt": "Who is on the Westfield project team and what are their roles?",
+      "selectedProjectId": 43,
+      "expectedToolFamilies": ["people"],
+      "expectedToolNames": ["getPeopleAndRoles"],
+      "mustInclude": [],
+      "minAnswerLength": 100
+    },
+    {
+      "id": "vendor-performance",
+      "intent": "people_or_capacity",
+      "prompt": "How are our top vendors performing across active projects?",
+      "expectedToolFamilies": ["people", "financial"],
+      "expectedToolNames": ["getVendorPerformance"],
+      "mustInclude": ["vendor"],
+      "minAnswerLength": 150
+    },
+    {
+      "id": "source-lookup-meetings",
+      "intent": "source_lookup",
+      "prompt": "What did Brandon say about billing in any recent meeting?",
+      "expectedToolFamilies": ["meetings", "semantic"],
+      "expectedToolNames": ["searchMeetingsByTopic", "semanticSearch"],
+      "mustInclude": [],
+      "minAnswerLength": 100
+    },
+    {
+      "id": "source-lookup-email",
+      "intent": "source_lookup",
+      "prompt": "Search emails for any schedule pressure on Westfield in the last two weeks.",
+      "selectedProjectId": 43,
+      "expectedToolFamilies": ["communications"],
+      "expectedToolNames": ["searchEmails", "semanticSearch"],
+      "mustInclude": [],
+      "minAnswerLength": 80
+    },
+    {
+      "id": "source-lookup-teams",
+      "intent": "source_lookup",
+      "prompt": "Find any Teams chats discussing punch list completion on Westfield.",
+      "selectedProjectId": 43,
+      "expectedToolFamilies": ["communications"],
+      "expectedToolNames": ["searchTeamsMessages", "semanticSearch"],
+      "mustInclude": [],
+      "minAnswerLength": 80
+    },
+    {
+      "id": "meetings-by-date",
+      "intent": "meeting_query",
+      "prompt": "What meetings did we have on the Westfield project in the last 30 days?",
+      "selectedProjectId": 43,
+      "expectedToolFamilies": ["meetings"],
+      "expectedToolNames": ["getMeetingsByDate"],
+      "mustInclude": ["meeting"],
+      "minAnswerLength": 80
+    },
+    {
+      "id": "documents-search",
+      "intent": "document_question",
+      "prompt": "Find the latest contract or change order document on Westfield and summarize the key terms.",
+      "selectedProjectId": 43,
+      "expectedToolFamilies": ["documents", "semantic"],
+      "expectedToolNames": ["searchDocuments", "searchExternalDocuments", "queryDocumentRows"],
+      "mustInclude": [],
+      "minAnswerLength": 120
+    },
+    {
+      "id": "action-items",
+      "intent": "operations_analysis",
+      "prompt": "What action items came out of recent Westfield meetings and who owns them?",
+      "selectedProjectId": 43,
+      "expectedToolFamilies": ["actions", "meetings"],
+      "expectedToolNames": ["getActionItemsAndInsights"],
+      "mustInclude": ["action"],
+      "minAnswerLength": 100
+    },
+    {
+      "id": "cross-project-comparison",
+      "intent": "portfolio_briefing",
+      "prompt": "Compare budget burn-rate across our three largest active projects.",
+      "expectedToolFamilies": ["project", "financial"],
+      "expectedToolNames": ["getCrossProjectComparison", "getPortfolioOverview"],
+      "mustInclude": [],
+      "minAnswerLength": 150
+    },
+    {
+      "id": "historical-trends",
+      "intent": "financial_analysis",
+      "prompt": "Show me cost trends on Westfield over the last six months.",
+      "selectedProjectId": 43,
+      "expectedToolFamilies": ["financial"],
+      "expectedToolNames": ["getHistoricalTrends", "getCostTrends"],
+      "mustInclude": ["trend"],
+      "minAnswerLength": 100
+    },
+    {
+      "id": "company-knowledge",
+      "intent": "knowledge_capture",
+      "prompt": "What does Alleato consider best practice for handling owner-driven scope changes?",
+      "expectedToolFamilies": ["knowledge"],
+      "expectedToolNames": ["getCompanyKnowledge", "semanticSearch"],
+      "mustInclude": [],
+      "minAnswerLength": 100
+    },
+    {
+      "id": "memory-recall",
+      "intent": "general_conversation",
+      "prompt": "What have we already discussed about Westfield in past sessions?",
+      "selectedProjectId": 43,
+      "expectedToolFamilies": ["memory"],
+      "expectedToolNames": ["recallPastConversations", "searchMemories"],
+      "mustInclude": [],
+      "minAnswerLength": 60
+    },
+    {
+      "id": "app-help",
+      "intent": "app_help",
+      "prompt": "How do I create a commitment in this app?",
+      "expectedToolFamilies": ["app_help"],
+      "expectedToolNames": ["searchAppHelp"],
+      "mustInclude": ["commitment"],
+      "mustExclude": ["I will search the project", "Westfield"],
+      "minAnswerLength": 80
+    },
+    {
+      "id": "accounting-ap-aging",
+      "intent": "financial_analysis",
+      "prompt": "What's our AP aging look like right now?",
+      "expectedToolFamilies": ["accounting"],
+      "expectedToolNames": ["getAPAgingReport"],
+      "mustInclude": [],
+      "minAnswerLength": 80
+    },
+    {
+      "id": "accounting-cash-position",
+      "intent": "financial_analysis",
+      "prompt": "What's our current cash position across accounts?",
+      "expectedToolFamilies": ["accounting"],
+      "expectedToolNames": ["getCashPositionReport"],
+      "mustInclude": ["cash"],
+      "minAnswerLength": 80
+    },
+    {
+      "id": "thought-partner-bid",
+      "intent": "brainstorming",
+      "prompt": "Help me think through whether we should bid on a $4M warehouse renovation in a market we haven't worked in. What are the tradeoffs?",
+      "expectedToolFamilies": [],
+      "expectedToolNames": [],
+      "mustInclude": ["tradeoff"],
+      "mustExclude": ["I will search"],
+      "minAnswerLength": 250
+    },
+    {
+      "id": "what-changed",
+      "intent": "project_briefing",
+      "prompt": "What changed on Westfield since the last time I asked?",
+      "selectedProjectId": 43,
+      "expectedToolFamilies": ["semantic", "communications", "memory"],
+      "expectedToolNames": ["semanticSearch", "recallPastConversations"],
+      "mustInclude": [],
+      "minAnswerLength": 120
+    }
+  ],
+  "toolFamilyMap": {
+    "project": ["getProjectBriefingSnapshot", "getPortfolioOverview", "getProjectDetails", "getCrossProjectComparison"],
+    "financial": ["getCommitmentsOverview", "getChangeOrderDetails", "getDirectCostsSummary", "getBudgetLineItems", "getCostTrends", "getMarginAnalysis", "getProjectBudgetSummary", "getFinancialAnalysis", "getHistoricalTrends"],
+    "forecast": ["getForecastComparison"],
+    "structured": ["queryBudgetData", "queryChangeOrders", "queryCommitments", "queryDirectCosts", "queryScheduleTasks", "queryDocumentRows", "searchStructuredFinancialRows"],
+    "schedule": ["getScheduleAnalysis"],
+    "operations": ["getRFIStatus", "getSubmittalStatus"],
+    "risk": ["getProjectRiskAnalysis", "getProjectsWithRisks"],
+    "people": ["getPeopleAndRoles", "getVendorPerformance"],
+    "meetings": ["searchMeetingsByTopic", "getMeetingDetails", "getMeetingsByDate"],
+    "communications": ["searchEmails", "searchTeamsMessages", "searchExternalDocuments"],
+    "documents": ["searchDocuments", "searchExternalDocuments", "queryDocumentRows"],
+    "semantic": ["semanticSearch", "findProject"],
+    "knowledge": ["getCompanyKnowledge", "saveToKnowledgeBase", "saveInsight"],
+    "memory": ["recallPastConversations", "searchMemories", "writeMemory"],
+    "actions": ["getActionItemsAndInsights"],
+    "app_help": ["searchAppHelp"],
+    "accounting": ["getAPAgingReport", "getARAgingReport", "getCashPositionReport", "getVendorSpendReport", "getRecentBills", "getRecentInvoices", "getAcumaticaProjectBudget", "getAcumaticaProjectList"],
+    "web": ["searchWeb", "researchCompany", "searchConstructionMarket"]
+  }
+}
