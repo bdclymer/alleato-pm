@@ -1950,7 +1950,11 @@ export function ChatArea({
                             <SourceCitations sources={persistedSources} />
                           )}
 
-                          {memoryUsage && (
+                          {/* Memory usage badge intentionally hidden from the
+                              chat UI per 2026-05-02 — keep state/fetch logic so
+                              the backend memory pipeline continues working,
+                              just don't render the badge. */}
+                          {false && memoryUsage && (
                             <MemoryUsageBadge
                               usage={memoryUsage}
                               onForget={handleForgetMemory}

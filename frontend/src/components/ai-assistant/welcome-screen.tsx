@@ -14,7 +14,11 @@ export function WelcomeScreen({
   children,
 }: WelcomeScreenProps) {
   const fullName = useCurrentUserName();
-  const firstName = fullName.split(" ")[0];
+  const rawFirstName = fullName.split(" ")[0] ?? "";
+  // Capitalize first letter so lowercase profile names render as "Megan", not "megan".
+  const firstName = rawFirstName
+    ? rawFirstName.charAt(0).toUpperCase() + rawFirstName.slice(1)
+    : rawFirstName;
 
   return (
     <div className="flex flex-1 items-center justify-center overflow-y-auto px-4 pb-40 pt-16 sm:px-6">
