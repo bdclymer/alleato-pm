@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PSR PRP</title>
+<style>
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:960px;margin:0 auto;padding:2rem;color:#1a1a1a;line-height:1.6;background:#fafafa}
+  h1{color:#0f172a;border-bottom:2px solid #e2e8f0;padding-bottom:.5rem;margin-top:2rem}
+  h2{color:#1e293b;border-bottom:1px solid #e2e8f0;padding-bottom:.25rem;margin-top:2rem}
+  h3{color:#334155;margin-top:1.5rem}
+  pre.code{background:#1e293b;color:#e2e8f0;padding:1.25rem;border-radius:8px;overflow-x:auto;font-size:.85rem;line-height:1.5}
+  code{background:#f1f5f9;padding:.1em .3em;border-radius:3px;font-size:.9em;color:#0f172a}
+  pre.code code{background:none;color:inherit;padding:0}
+  table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.9rem}
+  td,th{border:1px solid #e2e8f0;padding:.5rem .75rem;text-align:left}
+  tr:nth-child(even) td{background:#f8fafc}
+  tr:first-child td{font-weight:600;background:#f1f5f9}
+  ul{padding-left:1.5rem;margin:.5rem 0}
+  li{margin:.25rem 0}
+  li.task{list-style:none;margin-left:-1rem}
+  li.done{color:#64748b}
+  strong{color:#0f172a}
+  .toc{background:#f1f5f9;padding:1.5rem;border-radius:8px;margin-bottom:2rem}
+  .toc h2{margin-top:0;border:none}
+  .toc a{color:#2563eb;text-decoration:none;display:block;padding:.2rem 0}
+  .toc a:hover{text-decoration:underline}
+  .badge{display:inline-block;background:#0f172a;color:#fff;padding:.2em .6em;border-radius:4px;font-size:.75rem;font-weight:600;margin-left:.5rem}
+</style>
+</head>
+<body>
+<div class="toc">
+  <h2>Table of Contents</h2>
+  <a href="#goal">Goal &amp; Deliverables</a>
+  <a href="#success-criteria">Success Criteria</a>
+  <a href="#database-schema">Database Schema</a>
+  <a href="#psr-data-model">PSR Data Model</a>
+  <a href="#implementation-blueprint">Implementation Blueprint</a>
+  <a href="#known-gotchas">Known Gotchas &amp; Prevention</a>
+  <a href="#implementation-tasks">Implementation Tasks</a>
+  <a href="#validation">Validation Loop</a>
+</div>
+<h1>PRP: Project Status Report (PSR)</h1>
+
+<p><strong>Version:</strong> 1.0</p>
+<p><strong>Created:</strong> 2026-05-01</p>
+<p><strong>Confidence Score:</strong> 9/10</p>
+
+<p>---</p>
+
+<h2>Goal</h2>
+
+<p><strong>Feature Goal:</strong> Build a live, always-current Project Status Report (PSR) page that aggregates data already in the app — eliminating the monthly manual assembly process that accounting currently does in JobPlanner/Excel. The PSR is generated on demand for any month and can be exported as a PDF matching the format Alleato's accounting team currently produces manually.</p>
+
+<p><strong>Deliverable:</strong></p>
+<p>1. <code>GET /api/projects/[projectId]/psr</code> — aggregation endpoint returning all PSR sections as structured JSON</p>
+<p>2. <code>/(main)/[projectId]/project-status-report/page.tsx</code> — live PSR page with month picker and Export PDF button</p>
+<p>3. <code>psr_comments</code> table — stores PM freetext notes per budget line per month</p>
+<p>4. PDF export route — server-side PDF matching the current 9-page format</p>
+<p>5. Navigation entry in sidebar under Financial Management</p>
+
+<p><strong>Success Definition:</strong> A user can navigate to a project's PSR page, select any month, see all 7 sections populated from live app data in under 3 seconds, write/save comments, and export a PDF matching the format in <code>26-106 GW Washington- April PSR Full report.pdf</code>.</p>
+
+<p>---</p>
+
+<h2>Why</h2>
+
+<ul><li>Accounting assembles this report manually every month by exporting from JobPlanner — all the data is already in the app.</li><li>The current process is ~monthly lag. A live PSR is instantaneous and always up-to-date.</li><li>Project managers need this view for real-time project health: budget-to-actual, open items, billing status.</li><li>The report drives owner conversations and subcontractor management decisions.</li><li>Phase 2 can dramatically improve the format (AI-generated commentary, trend analysis, variance flagging) once the data pipeline is established.</li>
+
+<p>---</p>
+
+<h2>What — List of Deliverables</h2>
+
+<p><strong>Pages</strong></p>
+<li><code>frontend/src/app/(main)/[projectId]/project-status-report/page.tsx</code> — PSR main page (server component)</li><li><code>frontend/src/app/(main)/[projectId]/project-status-report/psr-client.tsx</code> — client display component</li>
+
+<p><strong>Database Schema</strong></p>
+<li>New table: <code>psr_comments</code> — PM freetext notes per budget line per month</li><li>(Optional Phase 2) New table: <code>psr_snapshots</code> — frozen month-end PSR JSON blobs</li><li>Migration: <code>supabase/migrations/YYYYMMDDHHMMSS_psr_tables.sql</code></li>
+
+<p><strong>API Endpoints</strong></p>
+<li><code>GET /api/projects/[projectId]/psr?month=YYYY-MM</code> — aggregate all 7 PSR sections</li><li><code>GET /api/projects/[projectId]/psr/comments</code> — fetch PM comments for a project+month</li><li><code>POST /api/projects/[projectId]/psr/comments</code> — save/update a comment</li><li><code>GET /api/projects/[projectId]/psr/export?month=YYYY-MM</code> — server-side PDF generation</li>
+
+<p><strong>Components</strong></p>
+<li><code>frontend/src/components/domain/psr/PsrSummaryCard.tsx</code> — cover page (project info + open item counts + monthly billing)</li><li><code>frontend/src/components/domain/psr/PsrBudgetTable.tsx</code> — 17-column budget detail table (all budget codes)</li><li><code>frontend/src/components/domain/psr/PsrSubmittalsSection.tsx</code> — submittal log table</li><li><code>frontend/src/components/domain/psr/PsrRfisSection.tsx</code> — RFI log table</li><li><code>frontend/src/components/domain/psr/PsrChangeRequestsSection.tsx</code> — change requests table</li><li><code>frontend/src/components/domain/psr/PsrChangeOrdersSection.tsx</code> — PCCOs table</li><li><code>frontend/src/components/domain/psr/PsrScheduleSection.tsx</code> — schedule summary + task list</li><li><code>frontend/src/components/domain/psr/PsrCommentEditor.tsx</code> — inline comment editor (per section or per budget line)</li>
+
+<p><strong>Types</strong></p>
+<li><code>frontend/src/types/psr.types.ts</code> — all PSR TypeScript interfaces</li>
+
+<p>---</p>
+
+<h2>Success Criteria</h2>
+
+<li class="task"><input type="checkbox" disabled> PSR page loads for project 67 (Vermillion Rise Warehouse) with live data</li><li class="task"><input type="checkbox" disabled> Month picker changes all data — defaults to current month</li><li class="task"><input type="checkbox" disabled> Section 1 (cover page) shows: project name, dates, contract budget, fee, insurance, open item counts, monthly billing table, job-to-date cost</li><li class="task"><input type="checkbox" disabled> Section 2 (budget detail) shows all budget codes with all 17 columns, matching computeBudgetGrandTotals output</li><li class="task"><input type="checkbox" disabled> Section 3 (submittals) shows all submittals with number, title, status, ball-in-court</li><li class="task"><input type="checkbox" disabled> Section 4 (RFIs) shows all open RFIs with number, title, due date</li><li class="task"><input type="checkbox" disabled> Section 5 (change requests) shows CRs with cost, markup, total</li><li class="task"><input type="checkbox" disabled> Section 6 (change orders/PCCOs) shows approved PCCOs with amount</li><li class="task"><input type="checkbox" disabled> Section 7 (schedule) shows task summary + list with start/finish dates</li><li class="task"><input type="checkbox" disabled> PM can type a comment in the comments field and it persists on refresh</li><li class="task"><input type="checkbox" disabled> Export PDF button generates a downloadable PDF matching the 9-page format</li><li class="task"><input type="checkbox" disabled> PSR nav entry appears in sidebar under Financial Management</li><li class="task"><input type="checkbox" disabled> <code>npm run quality</code> passes with zero errors</li><li class="task"><input type="checkbox" disabled> <code>npm run build</code> succeeds</li><li class="task"><input type="checkbox" disabled> Page loads in under 3 seconds on localhost</li>
+
+<p>---</p>
+
+<h2>All Needed Context</h2>
+
+<h3>Context Completeness Check</h3>
+
+<p><em>This PRP provides exact file paths, function signatures, database schemas, and copy-paste patterns. The executing agent does NOT need to search for anything — all references are explicit.</em></p>
+
+<p>---</p>
+
+<h3>Documentation &amp; References</h3>
+
+<pre class="code"><code class="lang-yaml"># MUST READ — Primary patterns to copy exactly
+
+<li>file: frontend/src/app/(main)/[projectId]/home/page.tsx</li>
+<p>  why: "EXACT pattern for project-scoped server component with parallel data fetching"</p>
+<p>  pattern: "export const dynamic = 'force-dynamic'; Promise.all([...multiple Supabase queries...]); pass to client component"</p>
+<p>  gotcha: "Always await params in Next.js 15: const { projectId } = await params"</p>
+
+<li>file: frontend/src/lib/budget/compute-grand-totals.ts</li>
+<p>  why: "CALL this function — do NOT re-implement. Returns all 15 budget financial metrics."</p>
+<p>  pattern: "computeBudgetGrandTotals(supabase, projectIdNum) → { lineItems, grandTotals, source }"</p>
+<p>  gotcha: "projectIdNum MUST be an INTEGER (parseInt). grandTotals has all columns for budget section."</p>
+
+<li>file: frontend/src/lib/guardrails/api.ts</li>
+<p>  why: "EVERY API route must use withApiGuardrails wrapper — handles auth, logging, error envelopes"</p>
+<p>  pattern: "export const GET = withApiGuardrails&lt;{ projectId: string }&gt;('psr/[projectId]#GET', async ({ params }) =&gt; {...})"</p>
+<p>  gotcha: "Always await params: const { projectId } = await params"</p>
+
+<li>file: frontend/src/lib/api-client.ts</li>
+<p>  why: "Use apiFetch for all client-side API calls — NEVER raw fetch()"</p>
+<p>  pattern: "const data = await apiFetch&lt;PsrApiResponse&gt;(<code>/api/projects/${projectId}/psr?month=${month}</code>)"</p>
+
+<li>file: frontend/src/app/api/projects/[projectId]/budget/route.ts</li>
+<p>  why: "Copy the withApiGuardrails + requirePermission + parseInt pattern exactly"</p>
+
+<li>file: frontend/src/app/api/projects/[projectId]/submittals/route.ts</li>
+<p>  why: "Pattern for querying submittals with status filter and joins"</p>
+
+<li>file: frontend/src/app/api/projects/[projectId]/change-events/route.ts</li>
+<p>  why: "Pattern for querying change events with computed financial fields"</p>
+
+<li>file: frontend/src/app/api/projects/[projectId]/rfis/route.ts</li>
+<p>  why: "Simple GET with status filter — simplest route pattern in codebase"</p>
+
+<li>file: frontend/src/app/api/projects/[projectId]/scheduling/tasks/route.ts</li>
+<p>  why: "Pattern for schedule queries, especially ?view=summary for ScheduleSummary"</p>
+<p>  pattern: "?view=summary returns { total_tasks, completed_tasks, overdue_tasks, overall_percent_complete }"</p>
+
+<li>file: frontend/src/app/(main)/executive/page.tsx</li>
+<p>  why: "PageShell variant='content' example with force-dynamic + nodejs runtime"</p>
+<p>  pattern: "export const dynamic = 'force-dynamic'; export const runtime = 'nodejs';"</p>
+
+<li>file: frontend/src/components/layout/page-shell.tsx</li>
+<p>  why: "PageShell usage — use variant='content' for PSR (document/report page)"</p>
+
+<li>file: frontend/src/lib/navigation-config.ts</li>
+<p>  why: "Add PSR nav entry here — follow exact object shape of existing financial tools"</p>
+<p>  pattern: "{ name: 'Project Status Report', path: 'project-status-report', icon: FileText, requiresProject: true }"</p>
+
+<li>file: frontend/src/lib/permissions-guard.ts</li>
+<p>  why: "requirePermission pattern for API route auth checks"</p>
+
+<li>file: frontend/src/types/budget.ts</li>
+<p>  why: "BudgetLineItem and GrandTotals types — PSR budget section uses these directly"</code></pre></p>
+
+<p>---</p>
+
+<h3>Database Schema — All Relevant Tables</h3>
+
+<p>#### <code>projects</code> (INTEGER primary key)</p>
+<pre class="code"><code class="lang-">id: number (PK — INTEGER, NOT UUID)
+<p>name: string | null</p>
+<p>"start date": string | null     ← QUOTED — column name has a space</p>
+<p>"est completion": string | null  ← QUOTED — column name has a space</p>
+<p>budget: number | null</p>
+<p>completion_percentage: number | null</p>
+<p>current_phase: string | null</p>
+<p>health_score: number | null</p>
+<p>health_status: string | null</p>
+<p>project_manager: number | null</p>
+<p>summary: string | null</code></pre></p>
+<p>⚠️ Columns with spaces MUST be quoted in Supabase queries: <code>.select('"start date", "est completion"')</code></p>
+
+<p>#### <code>prime_contracts</code></p>
+<pre class="code"><code class="lang-">id: string (UUID)
+<p>project_id: number (FK → projects.id — INTEGER)</p>
+<p>contract_number: string</p>
+<p>original_contract_value: number</p>
+<p>revised_contract_value: number</p>
+<p>start_date: string | null</p>
+<p>end_date: string | null</p>
+<p>actual_completion_date: string | null</p>
+<p>status: prime_contract_status_v2 enum</code></pre></p>
+
+<p>#### <code>budget_lines</code></p>
+<pre class="code"><code class="lang-">id: string (UUID)
+<p>project_id: number (FK → projects.id — INTEGER)</p>
+<p>cost_code_id: string</p>
+<p>cost_type_id: string</p>
+<p>original_amount: number</code></pre></p>
+<p>→ Do NOT query this directly for totals. Use <code>computeBudgetGrandTotals()</code>.</p>
+
+<p>#### <code>submittals</code></p>
+<pre class="code"><code class="lang-">id: string (UUID)
+<p>project_id: number (FK → projects.id — INTEGER)</p>
+<p>submittal_number: string</p>
+<p>title: string</p>
+<p>status: string | null  — values: "Draft", "Open", "Submitted", "Distributed", "Closed"</p>
+<p>ball_in_court: string | null</p>
+<p>deleted_at: string | null  — exclude where deleted_at IS NOT NULL</code></pre></p>
+
+<p>#### <code>rfis</code></p>
+<pre class="code"><code class="lang-">id: string (UUID)
+<p>project_id: number (FK → projects.id — INTEGER)</p>
+<p>number: number</p>
+<p>subject: string</p>
+<p>status: string — values: "Open", "Closed", "Draft"</p>
+<p>due_date: string | null</p>
+<p>ball_in_court: string | null</code></pre></p>
+
+<p>#### <code>change_events</code></p>
+<pre class="code"><code class="lang-">id: string (UUID)
+<p>project_id: number (FK → projects.id — INTEGER)</p>
+<p>number: string</p>
+<p>title: string</p>
+<p>status: string — values: "Open", "Draft", "Resolved", "Void"</p>
+<p>type: string</p>
+<p>scope: string</p>
+<p>sent_to_prime_pco: boolean | null</p>
+<p>sent_to_commitment_pco: boolean | null</p>
+<p>deleted_at: string | null</code></pre></p>
+
+<p>#### <code>change_orders</code></p>
+<pre class="code"><code class="lang-">id: string (UUID)
+<p>project_id: number (FK → projects.id — INTEGER)</p>
+<p>title: string</p>
+<p>amount: number | null</p>
+<p>status: string | null — "Pending", "Approved", "Rejected"</p>
+<p>type: string | null</p>
+<p>prime_contract_id: string | null</p>
+<p>number: number | null</p>
+<p>description: string | null</code></pre></p>
+
+<p>#### <code>owner_invoices</code></p>
+<pre class="code"><code class="lang-">id: number (INTEGER PK)
+<p>prime_contract_id: string | null  ← NO direct project_id — must join through prime_contracts</p>
+<p>status: string | null</p>
+<p>invoice_number: string | null</p>
+<p>billing_date: string | null</p>
+<p>gross_amount: number | null</p>
+<p>net_amount: number | null</p>
+<p>paid_amount: number | null</code></pre></p>
+<p>⚠️ To filter by project: <code>owner_invoices.prime_contract_id → prime_contracts.project_id</code></p>
+
+<p>#### <code>subcontractor_invoices</code></p>
+<pre class="code"><code class="lang-">id: number (INTEGER PK)
+<p>project_id: number NOT NULL (FK → projects.id — direct)</p>
+<p>status: invoice_status enum</p>
+<p>invoice_number: string | null</p>
+<p>billing_date: string | null</p>
+<p>subcontract_id: string | null</code></pre></p>
+
+<p>#### <code>schedule_tasks</code></p>
+<pre class="code"><code class="lang-">id: string (UUID)
+<p>project_id: number NOT NULL (FK → projects.id — INTEGER)</p>
+<p>name: string</p>
+<p>status: string | null — "Not Started", "In Progress", "Complete"</p>
+<p>percent_complete: number | null</p>
+<p>start_date: string | null</p>
+<p>finish_date: string | null</p>
+<p>duration_days: number | null</p>
+<p>is_milestone: boolean | null</p>
+<p>parent_task_id: string | null (self-referential FK)</p>
+<p>wbs_code: string | null</code></pre></p>
+
+<p>#### New Table: <code>psr_comments</code> (to be created)</p>
+<pre class="code"><code class="lang-sql">CREATE TABLE psr_comments (
+<p>  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),</p>
+<p>  project_id  INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,</p>
+<p>  month       TEXT NOT NULL,  -- format: 'YYYY-MM'</p>
+<p>  section     TEXT NOT NULL,  -- 'budget_line:{budget_line_id}' | 'change_requests' | 'general'</p>
+<p>  body        TEXT NOT NULL,</p>
+<p>  created_by  UUID REFERENCES auth.users(id),</p>
+<p>  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),</p>
+<p>  updated_at  TIMESTAMPTZ NOT NULL DEFAULT now(),</p>
+<p>  UNIQUE(project_id, month, section)</p>
+<p>);</code></pre></p>
+
+<p>---</p>
+
+<h3>PSR Data Model</h3>
+
+<pre class="code"><code class="lang-typescript">// frontend/src/types/psr.types.ts
+
+<p>export interface PsrProjectInfo {</p>
+<p>  name: string;</p>
+<p>  projectNumber: string | null;</p>
+<p>  startDate: string | null;</p>
+<p>  completionDate: string | null;  // from prime_contracts.end_date</p>
+<p>  contractBudget: number;          // prime_contracts.original_contract_value</p>
+<p>  currentBudget: number;           // prime_contracts.revised_contract_value</p>
+<p>  currentProjectedProfit: number;  // currentBudget - estimatedCostAtCompletion</p>
+<p>  originalFee: number;             // budget line 550500 original_amount</p>
+<p>  currentFee: number;              // budget line 550500 revised amount</p>
+<p>  originalInsurance: number;       // budget line 550050 original_amount</p>
+<p>  currentInsurance: number;        // budget line 550050 revised amount</p>
+<p>  currentUnallocatedCosts: number; // budget line 550099 amount</p>
+<p>  currentOwnerContingency: number; // budget line 550100 amount</p>
+<p>  remainingBuyout: number;         // projected budget - committed costs</p>
+<p>  jobToDateCost: number;           // grandTotals.jobToDateCostDetail</p>
+<p>}</p>
+
+<p>export interface PsrMonthlyBilling {</p>
+<p>  month: string;                   // 'YYYY-MM'</p>
+<p>  monthLabel: string;              // 'April', 'May', etc.</p>
+<p>  ownerPayments: number;           // sum of owner_invoices.paid_amount in month</p>
+<p>  ownerBilling: number;            // sum of owner_invoices.gross_amount in month</p>
+<p>  subBilling: number;              // sum of subcontractor_invoices billed in month</p>
+<p>}</p>
+
+<p>export interface PsrOpenItemCounts {</p>
+<p>  openRfis: number;</p>
+<p>  openSubmittals: number;</p>
+<p>  openCEsNotInPCO: number;</p>
+<p>  openPCCOs: number;</p>
+<p>  subCOsNotFunded: number;</p>
+<p>  openPCOs: number;</p>
+<p>}</p>
+
+<p>export interface PsrBudgetLine {</p>
+<p>  budgetCode: string;              // e.g. "013128 - Project Manager - Labor"</p>
+<p>  originalBudget: number;</p>
+<p>  budgetModifications: number;</p>
+<p>  contractChangeOrders: number;</p>
+<p>  revisedBudget: number;</p>
+<p>  actualAmount: number;</p>
+<p>  pendingBudgetChanges: number;</p>
+<p>  projectedBudget: number;</p>
+<p>  directCosts: number;</p>
+<p>  commitments: number;</p>
+<p>  commitmentChangeOrders: number;</p>
+<p>  committedCosts: number;</p>
+<p>  projectedCosts: number;</p>
+<p>  committedInvoicedAmount: number;</p>
+<p>  pendingCostChanges: number;</p>
+<p>  forecastToComplete: number;</p>
+<p>  estimatedCostAtCompletion: number;</p>
+<p>  projectOverUnder: number;</p>
+<p>}</p>
+
+<p>export interface PsrSubmittal {</p>
+<p>  submittalNumber: string;</p>
+<p>  title: string;</p>
+<p>  status: string;</p>
+<p>  ballInCourt: string | null;</p>
+<p>}</p>
+
+<p>export interface PsrRfi {</p>
+<p>  number: number;</p>
+<p>  subject: string;</p>
+<p>  status: string;</p>
+<p>  dueDate: string | null;</p>
+<p>  ballInCourt: string | null;</p>
+<p>}</p>
+
+<p>export interface PsrChangeRequest {</p>
+<p>  number: string;</p>
+<p>  contractNumber: string | null;</p>
+<p>  title: string;</p>
+<p>  scope: string;</p>
+<p>  status: string;</p>
+<p>  cost: number;</p>
+<p>  markup: number;</p>
+<p>  total: number;</p>
+<p>}</p>
+
+<p>export interface PsrChangeOrder {</p>
+<p>  number: number | null;</p>
+<p>  contractNumber: string | null;</p>
+<p>  description: string | null;</p>
+<p>  status: string;</p>
+<p>  amount: number;</p>
+<p>}</p>
+
+<p>export interface PsrScheduleTask {</p>
+<p>  id: string;</p>
+<p>  name: string;</p>
+<p>  duration: number | null;</p>
+<p>  startDate: string | null;</p>
+<p>  finishDate: string | null;</p>
+<p>  status: string | null;</p>
+<p>  percentComplete: number | null;</p>
+<p>  isMilestone: boolean | null;</p>
+<p>  wbsCode: string | null;</p>
+<p>}</p>
+
+<p>export interface PsrComment {</p>
+<p>  section: string;</p>
+<p>  body: string;</p>
+<p>  updatedAt: string;</p>
+<p>}</p>
+
+<p>// Root PSR response type</p>
+<p>export interface PsrApiResponse {</p>
+<p>  month: string;                      // 'YYYY-MM'</p>
+<p>  projectInfo: PsrProjectInfo;</p>
+<p>  monthlyBilling: PsrMonthlyBilling[]; // last 6 months</p>
+<p>  openItems: PsrOpenItemCounts;</p>
+<p>  budgetLines: PsrBudgetLine[];</p>
+<p>  budgetGrandTotals: {</p>
+<p>    originalBudget: number;</p>
+<p>    revisedBudget: number;</p>
+<p>    actualAmount: number;</p>
+<p>    committedCosts: number;</p>
+<p>    forecastToComplete: number;</p>
+<p>    estimatedCostAtCompletion: number;</p>
+<p>    projectOverUnder: number;</p>
+<p>  };</p>
+<p>  submittals: PsrSubmittal[];</p>
+<p>  rfis: PsrRfi[];</p>
+<p>  changeRequests: PsrChangeRequest[];</p>
+<p>  changeOrders: PsrChangeOrder[];</p>
+<p>  scheduleTasks: PsrScheduleTask[];</p>
+<p>  comments: PsrComment[];</p>
+<p>}</code></pre></p>
+
+<p>---</p>
+
+<h3>Current Codebase Tree (relevant paths)</h3>
+
+<pre class="code"><code class="lang-">frontend/src/
+<p>├── app/</p>
+<p>│   ├── (main)/</p>
+<p>│   │   └── [projectId]/</p>
+<p>│   │       ├── home/page.tsx              ← COPY parallel-fetch server component pattern</p>
+<p>│   │       ├── project-status-report/     ← CREATE THIS</p>
+<p>│   │       │   ├── page.tsx</p>
+<p>│   │       │   └── psr-client.tsx</p>
+<p>│   │       ├── budget/</p>
+<p>│   │       ├── submittals/</p>
+<p>│   │       ├── rfis/</p>
+<p>│   │       └── change-events/</p>
+<p>│   └── api/</p>
+<p>│       └── projects/</p>
+<p>│           └── [projectId]/</p>
+<p>│               ├── budget/route.ts        ← COPY withApiGuardrails pattern</p>
+<p>│               ├── submittals/route.ts</p>
+<p>│               ├── rfis/route.ts</p>
+<p>│               ├── change-events/route.ts</p>
+<p>│               ├── scheduling/tasks/route.ts</p>
+<p>│               └── psr/                   ← CREATE THIS</p>
+<p>│                   ├── route.ts           ← GET aggregate</p>
+<p>│                   ├── export/route.ts    ← GET PDF</p>
+<p>│                   └── comments/route.ts  ← GET + POST</p>
+<p>├── components/</p>
+<p>│   └── domain/</p>
+<p>│       └── psr/                           ← CREATE THIS</p>
+<p>│           ├── PsrSummaryCard.tsx</p>
+<p>│           ├── PsrBudgetTable.tsx</p>
+<p>│           ├── PsrSubmittalsSection.tsx</p>
+<p>│           ├── PsrRfisSection.tsx</p>
+<p>│           ├── PsrChangeRequestsSection.tsx</p>
+<p>│           ├── PsrChangeOrdersSection.tsx</p>
+<p>│           ├── PsrScheduleSection.tsx</p>
+<p>│           └── PsrCommentEditor.tsx</p>
+<p>├── types/</p>
+<p>│   ├── psr.types.ts                       ← CREATE THIS</p>
+<p>│   └── database.types.ts                  ← READ for FK types</p>
+<p>├── hooks/</p>
+<p>│   └── use-psr.ts                         ← CREATE THIS (if client-side needed)</p>
+<p>└── lib/</p>
+<p>    ├── budget/compute-grand-totals.ts     ← CALL (don't re-implement)</p>
+<p>    ├── guardrails/api.ts                  ← USE withApiGuardrails</p>
+<p>    ├── api-client.ts                      ← USE apiFetch</p>
+<p>    ├── navigation-config.ts               ← ADD nav entry here</p>
+<p>    └── permissions-guard.ts               ← USE requirePermission</p>
+
+<p>supabase/migrations/</p>
+<p>└── YYYYMMDDHHMMSS_psr_tables.sql          ← CREATE THIS</code></pre></p>
+
+<p>---</p>
+
+<h2>Implementation Blueprint</h2>
+
+<h3>Phase 1: Database Migration</h3>
+
+<p><strong>File:</strong> <code>supabase/migrations/YYYYMMDDHHMMSS_psr_tables.sql</code></p>
+
+<pre class="code"><code class="lang-sql">-- PSR Comments: PM can write notes per section per month
+<p>CREATE TABLE IF NOT EXISTS psr_comments (</p>
+<p>  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),</p>
+<p>  project_id  INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,</p>
+<p>  month       TEXT NOT NULL CHECK (month ~ '^[0-9]{4}-[0-9]{2}$'),</p>
+<p>  section     TEXT NOT NULL,</p>
+<p>  body        TEXT NOT NULL DEFAULT '',</p>
+<p>  created_by  UUID REFERENCES auth.users(id),</p>
+<p>  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),</p>
+<p>  updated_at  TIMESTAMPTZ NOT NULL DEFAULT now(),</p>
+<p>  UNIQUE(project_id, month, section)</p>
+<p>);</p>
+
+<p>CREATE INDEX idx_psr_comments_project_month ON psr_comments(project_id, month);</p>
+
+<p>-- RLS: Allow authenticated users to read/write comments for projects they can access</p>
+<p>ALTER TABLE psr_comments ENABLE ROW LEVEL SECURITY;</p>
+<p>CREATE POLICY "psr_comments_select" ON psr_comments FOR SELECT USING (auth.uid() IS NOT NULL);</p>
+<p>CREATE POLICY "psr_comments_insert" ON psr_comments FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);</p>
+<p>CREATE POLICY "psr_comments_update" ON psr_comments FOR UPDATE USING (auth.uid() IS NOT NULL);</code></pre></p>
+
+<p>After creating the migration, run: <code>npm run db:types</code> to regenerate <code>database.types.ts</code>.</p>
+
+<p>---</p>
+
+<h3>Phase 2: Types</h3>
+
+<p><strong>File:</strong> <code>frontend/src/types/psr.types.ts</code></p>
+
+<p>Create all interfaces from the "PSR Data Model" section above. No external dependencies.</p>
+
+<p>---</p>
+
+<h3>Phase 3: API Route — Main Aggregator</h3>
+
+<p><strong>File:</strong> <code>frontend/src/app/api/projects/[projectId]/psr/route.ts</code></p>
+
+<pre class="code"><code class="lang-typescript">import { NextResponse } from "next/server";
+<p>import { withApiGuardrails } from "@/lib/guardrails/api";</p>
+<p>import { createClient } from "@/lib/supabase/server";</p>
+<p>import { requirePermission } from "@/lib/permissions-guard";</p>
+<p>import { computeBudgetGrandTotals } from "@/lib/budget/compute-grand-totals";</p>
+<p>import type { PsrApiResponse } from "@/types/psr.types";</p>
+
+<p>export const GET = withApiGuardrails&lt;{ projectId: string }&gt;(</p>
+<p>  "projects/[projectId]/psr#GET",</p>
+<p>  async ({ request, params }) =&gt; {</p>
+<p>    const { projectId } = await params;</p>
+<p>    const projectIdNum = parseInt(projectId, 10);</p>
+<p>    if (isNaN(projectIdNum)) {</p>
+<p>      return NextResponse.json({ error: "Invalid projectId" }, { status: 400 });</p>
+<p>    }</p>
+
+<p>    const url = new URL(request.url);</p>
+<p>    // Default to current month if not specified</p>
+<p>    const month = url.searchParams.get("month") ?? </p>
+<p>      new Date().toISOString().slice(0, 7); // 'YYYY-MM'</p>
+
+<p>    const supabase = await createClient();</p>
+
+<p>    const { denied, response } = await requirePermission(projectIdNum, "budget", "read");</p>
+<p>    if (denied) return response!;</p>
+
+<p>    // All queries run in parallel</p>
+<p>    const [</p>
+<p>      projectResult,</p>
+<p>      budgetResult,</p>
+<p>      submittalsResult,</p>
+<p>      rfisResult,</p>
+<p>      changeEventsResult,</p>
+<p>      changeOrdersResult,</p>
+<p>      scheduleResult,</p>
+<p>      ownerInvoicesResult,</p>
+<p>      subInvoicesResult,</p>
+<p>      commentsResult,</p>
+<p>    ] = await Promise.all([</p>
+<p>      // 1. Project info + prime contract</p>
+<p>      supabase</p>
+<p>        .from("projects")</p>
+<p>        .select(<code>id, name, project_number, "start date", "est completion", budget,</p>
+<p>                 prime_contracts(id, contract_number, original_contract_value,</p>
+<p>                   revised_contract_value, start_date, end_date)</code>)</p>
+<p>        .eq("id", projectIdNum)</p>
+<p>        .single(),</p>
+
+<p>      // 2. Budget — use the authoritative grand totals computation</p>
+<p>      computeBudgetGrandTotals(supabase, projectIdNum),</p>
+
+<p>      // 3. Submittals (exclude deleted)</p>
+<p>      supabase</p>
+<p>        .from("submittals")</p>
+<p>        .select("id, submittal_number, title, status, ball_in_court")</p>
+<p>        .eq("project_id", projectIdNum)</p>
+<p>        .is("deleted_at", null)</p>
+<p>        .order("submittal_number", { ascending: true }),</p>
+
+<p>      // 4. RFIs</p>
+<p>      supabase</p>
+<p>        .from("rfis")</p>
+<p>        .select("id, number, subject, status, due_date, ball_in_court")</p>
+<p>        .eq("project_id", projectIdNum)</p>
+<p>        .order("number", { ascending: true }),</p>
+
+<p>      // 5. Change events (exclude deleted)</p>
+<p>      supabase</p>
+<p>        .from("change_events")</p>
+<p>        .select("id, number, title, status, scope, type, sent_to_prime_pco, sent_to_commitment_pco")</p>
+<p>        .eq("project_id", projectIdNum)</p>
+<p>        .is("deleted_at", null)</p>
+<p>        .order("number", { ascending: true }),</p>
+
+<p>      // 6. Change orders (PCCOs)</p>
+<p>      supabase</p>
+<p>        .from("change_orders")</p>
+<p>        .select("id, number, title, description, status, amount, type, prime_contract_id")</p>
+<p>        .eq("project_id", projectIdNum)</p>
+<p>        .order("number", { ascending: true }),</p>
+
+<p>      // 7. Schedule tasks (top-level only for PSR — no deep nesting)</p>
+<p>      supabase</p>
+<p>        .from("schedule_tasks")</p>
+<p>        .select("id, name, status, percent_complete, start_date, finish_date, duration_days, is_milestone, wbs_code, parent_task_id")</p>
+<p>        .eq("project_id", projectIdNum)</p>
+<p>        .order("sort_order", { ascending: true })</p>
+<p>        .limit(200),</p>
+
+<p>      // 8. Owner invoices (last 6 months via prime_contracts join)</p>
+<p>      supabase</p>
+<p>        .from("owner_invoices")</p>
+<p>        .select("id, invoice_number, billing_date, gross_amount, paid_amount, status, prime_contract_id, prime_contracts!inner(project_id)")</p>
+<p>        .eq("prime_contracts.project_id", projectIdNum)</p>
+<p>        .gte("billing_date", getMonthStart(month, -5))</p>
+<p>        .order("billing_date", { ascending: true }),</p>
+
+<p>      // 9. Subcontractor invoices (last 6 months)</p>
+<p>      supabase</p>
+<p>        .from("subcontractor_invoices")</p>
+<p>        .select("id, invoice_number, billing_date, status, subcontract_id")</p>
+<p>        .eq("project_id", projectIdNum)</p>
+<p>        .gte("billing_date", getMonthStart(month, -5))</p>
+<p>        .order("billing_date", { ascending: true }),</p>
+
+<p>      // 10. PSR comments for this month</p>
+<p>      supabase</p>
+<p>        .from("psr_comments")</p>
+<p>        .select("section, body, updated_at")</p>
+<p>        .eq("project_id", projectIdNum)</p>
+<p>        .eq("month", month),</p>
+<p>    ]);</p>
+
+<p>    // Shape and return</p>
+<p>    const psrData = buildPsrResponse({</p>
+<p>      month,</p>
+<p>      projectIdNum,</p>
+<p>      project: projectResult.data,</p>
+<p>      budget: budgetResult,</p>
+<p>      submittals: submittalsResult.data ?? [],</p>
+<p>      rfis: rfisResult.data ?? [],</p>
+<p>      changeEvents: changeEventsResult.data ?? [],</p>
+<p>      changeOrders: changeOrdersResult.data ?? [],</p>
+<p>      scheduleTasks: scheduleResult.data ?? [],</p>
+<p>      ownerInvoices: ownerInvoicesResult.data ?? [],</p>
+<p>      subInvoices: subInvoicesResult.data ?? [],</p>
+<p>      comments: commentsResult.data ?? [],</p>
+<p>    });</p>
+
+<p>    return NextResponse.json(psrData satisfies PsrApiResponse);</p>
+<p>  },</p>
+<p>);</p>
+
+<p>// Helper: get YYYY-MM-DD for first day of (month + offsetMonths)</p>
+<p>function getMonthStart(month: string, offsetMonths: number): string {</p>
+<p>  const [year, m] = month.split("-").map(Number);</p>
+<p>  const d = new Date(year, m - 1 + offsetMonths, 1);</p>
+<p>  return d.toISOString().slice(0, 10);</p>
+<p>}</code></pre></p>
+
+<p>The <code>buildPsrResponse()</code> function shapes all raw query results into <code>PsrApiResponse</code>. Key transforms:</p>
+<li>Budget lines: map <code>budgetResult.lineItems</code> → <code>PsrBudgetLine[]</code> using the 17-column structure</li><li>Monthly billing: group invoices by month, sum gross_amount / paid_amount per month bucket</li><li>Open item counts: filter by status from the already-fetched arrays (no extra DB calls)</li>
+<p>  - <code>openRfis</code>: rfis where status !== 'Closed'</p>
+<p>  - <code>openSubmittals</code>: submittals where status not in ['Closed', 'Distributed']</p>
+<p>  - <code>openCEsNotInPCO</code>: changeEvents where <code>sent_to_prime_pco === false</code> and status !== 'Void'</p>
+<p>  - <code>openPCCOs</code>: changeOrders where type includes 'PCCO' and status === 'Pending'</p>
+<p>  - <code>subCOsNotFunded</code>: changeOrders where type includes 'commitment' and status === 'Pending'</p>
+<p>  - <code>openPCOs</code>: changeEvents where <code>sent_to_prime_pco === false</code> (PCOs not yet converted)</p>
+
+<p>---</p>
+
+<h3>Phase 4: Comments API</h3>
+
+<p><strong>File:</strong> <code>frontend/src/app/api/projects/[projectId]/psr/comments/route.ts</code></p>
+
+<p>GET: returns all comments for project+month query param.</p>
+<p>POST: upserts a single comment (<code>UNIQUE(project_id, month, section)</code> — use <code>.upsert()</code>).</p>
+
+<pre class="code"><code class="lang-typescript">// POST body shape
+<p>{</p>
+<p>  month: string;    // 'YYYY-MM'</p>
+<p>  section: string;  // e.g. 'general', 'budget_line:uuid', 'change_requests'</p>
+<p>  body: string;</p>
+<p>}</code></pre></p>
+
+<p>Use <code>supabase.from("psr_comments").upsert({ ...data }, { onConflict: "project_id,month,section" })</code>.</p>
+
+<p>---</p>
+
+<h3>Phase 5: PDF Export Route</h3>
+
+<p><strong>File:</strong> <code>frontend/src/app/api/projects/[projectId]/psr/export/route.ts</code></p>
+
+<p>Implementation: fetch PSR data from the main <code>/psr</code> endpoint (or call <code>buildPsrResponse</code> directly), then use <code>@react-pdf/renderer</code> to render a <code>&lt;Document&gt;</code> with 7 pages matching the original format.</p>
+
+<pre class="code"><code class="lang-typescript">export const GET = withApiGuardrails&lt;{ projectId: string }&gt;(
+<p>  "projects/[projectId]/psr/export#GET",</p>
+<p>  async ({ request, params }) =&gt; {</p>
+<p>    const { projectId } = await params;</p>
+<p>    const url = new URL(request.url);</p>
+<p>    const month = url.searchParams.get("month") ?? new Date().toISOString().slice(0, 7);</p>
+
+<p>    // Fetch PSR data (reuse logic)</p>
+<p>    const psrData = await fetchPsrData(projectId, month);</p>
+
+<p>    // Render PDF</p>
+<p>    const { renderToBuffer } = await import("@react-pdf/renderer");</p>
+<p>    const { PsrDocument } = await import("./PsrDocument");</p>
+<p>    const buffer = await renderToBuffer(&lt;PsrDocument data={psrData} /&gt;);</p>
+
+<p>    return new Response(buffer, {</p>
+<p>      headers: {</p>
+<p>        "Content-Type": "application/pdf",</p>
+<p>        "Content-Disposition": <code>attachment; filename="PSR-${projectId}-${month}.pdf"</code>,</p>
+<p>      },</p>
+<p>    });</p>
+<p>  },</p>
+<p>);</code></pre></p>
+
+<p>PDF document structure (9 pages matching original):</p>
+<li>Page 1: Cover/summary (project info, monthly billing table, open item counts, comments)</li><li>Pages 2-3: Budget detail table (all budget codes, 17 columns — split across 2 pages)</li><li>Page 4: Submittals log</li><li>Page 5: RFIs log</li><li>Page 6: Change requests</li><li>Page 7: PCCOs</li><li>Pages 8-9: Schedule list + Gantt chart</li>
+
+<p>Install required dependency: <code>npm install @react-pdf/renderer --save</code> (frontend package).</p>
+
+<p>---</p>
+
+<h3>Phase 6: Server Component Page</h3>
+
+<p><strong>File:</strong> <code>frontend/src/app/(main)/[projectId]/project-status-report/page.tsx</code></p>
+
+<pre class="code"><code class="lang-typescript">export const dynamic = "force-dynamic";
+<p>export const runtime = "nodejs";</p>
+
+<p>import { createClient } from "@/lib/supabase/server";</p>
+<p>import { PageShell } from "@/components/layout";</p>
+<p>import { PsrClient } from "./psr-client";</p>
+
+<p>export default async function ProjectStatusReportPage({</p>
+<p>  params,</p>
+<p>  searchParams,</p>
+<p>}: {</p>
+<p>  params: Promise&lt;{ projectId: string }&gt;;</p>
+<p>  searchParams: Promise&lt;{ month?: string }&gt;;</p>
+<p>}) {</p>
+<p>  const { projectId } = await params;</p>
+<p>  const { month = new Date().toISOString().slice(0, 7) } = await searchParams;</p>
+
+<p>  const supabase = await createClient();</p>
+<p>  const projectIdNum = parseInt(projectId, 10);</p>
+
+<p>  // Server-side fetch so the page is SSR — no loading flicker on initial render</p>
+<p>  // The client component handles month changes via client-side apiFetch</p>
+<p>  const psrData = await fetchPsrServerSide(supabase, projectIdNum, month);</p>
+
+<p>  return (</p>
+<p>    &lt;PageShell</p>
+<p>      variant="content"</p>
+<p>      title="Project Status Report"</p>
+<p>      description={<code>Month ending: ${formatMonthLabel(month)}</code>}</p>
+<p>    &gt;</p>
+<p>      &lt;PsrClient</p>
+<p>        projectId={projectId}</p>
+<p>        initialData={psrData}</p>
+<p>        initialMonth={month}</p>
+<p>      /&gt;</p>
+<p>    &lt;/PageShell&gt;</p>
+<p>  );</p>
+<p>}</code></pre></p>
+
+<p><strong>File:</strong> <code>frontend/src/app/(main)/[projectId]/project-status-report/psr-client.tsx</code></p>
+
+<pre class="code"><code class="lang-typescript">"use client";
+
+<p>// Receives initialData as props (no loading state on first render)</p>
+<p>// Month picker triggers client-side refetch via apiFetch</p>
+<p>// Export button calls /api/projects/[projectId]/psr/export</p>
+<p>// Comment editors save to /api/projects/[projectId]/psr/comments</code></pre></p>
+
+<p>---</p>
+
+<h3>Phase 7: Navigation Entry</h3>
+
+<p><strong>File:</strong> <code>frontend/src/lib/navigation-config.ts</code></p>
+
+<p>Add to <code>financialManagementTools</code> array (or create a new "Reporting" group):</p>
+
+<pre class="code"><code class="lang-typescript">{
+<p>  name: "Project Status Report",</p>
+<p>  path: "project-status-report",</p>
+<p>  icon: ClipboardList,   // from lucide-react</p>
+<p>  requiresProject: true,</p>
+<p>  module: "budget",      // reuses budget read permission</p>
+<p>}</code></pre></p>
+
+<p>---</p>
+
+<h2>Known Gotchas &amp; Prevention Rules</h2>
+
+<h3>1. <code>projects</code> columns with spaces (CRITICAL)</h3>
+<p><strong>Issue:</strong> <code>projects."start date"</code> and <code>projects."est completion"</code> have spaces in column names.  </p>
+<p><strong>Fix:</strong> Always quote them in Supabase <code>.select()</code>: <code>'"start date", "est completion"'</code>  </p>
+<p><strong>Validation:</strong> <code>grep '"start date"' frontend/src/app/api/projects/[projectId]/psr/route.ts</code></p>
+
+<h3>2. <code>owner_invoices</code> has no direct <code>project_id</code> (CRITICAL)</h3>
+<p><strong>Issue:</strong> <code>owner_invoices</code> links to projects via <code>prime_contract_id → prime_contracts.project_id</code>, NOT directly.  </p>
+<p><strong>Fix:</strong> Use join: <code>.from("owner_invoices").select("*, prime_contracts!inner(project_id)").eq("prime_contracts.project_id", projectIdNum)</code>  </p>
+<p><strong>Validation:</strong> Check query returns data for project 67.</p>
+
+<h3>3. <code>projects.id</code> is INTEGER — never UUID</h3>
+<p><strong>Issue:</strong> <code>psr_comments.project_id</code> must be <code>INTEGER REFERENCES projects(id)</code>, not UUID.  </p>
+<p><strong>Validation:</strong> <code>grep "project_id" supabase/migrations/<em>psr</em>.sql | grep -v INTEGER</code> → should return nothing.</p>
+
+<h3>4. Always <code>await params</code> in Next.js 15</h3>
+<p><strong>Fix:</strong> <code>const { projectId } = await params;</code> (not <code>const { projectId } = params;</code>)  </p>
+<p><strong>Pattern:</strong> Copy from <code>budget/route.ts</code> which already uses this correctly.</p>
+
+<h3>5. <code>export const dynamic = "force-dynamic"</code> on every server page</h3>
+<p><strong>Issue:</strong> Without this, Next.js tries to prerender at build time — <code>createClient()</code> fails in CI.  </p>
+<p><strong>Fix:</strong> First line of every <code>page.tsx</code> or <code>route.ts</code> that calls <code>createClient()</code>.  </p>
+<p><strong>Validation:</strong> <code>scripts/check-server-prerender-safety.mjs</code> (runs in predeploy gate).</p>
+
+<h3>6. <code>computeBudgetGrandTotals</code> not to be re-implemented</h3>
+<p><strong>Issue:</strong> The budget section's 17 columns require 12 parallel Supabase queries to compute. They are already implemented and battle-tested.  </p>
+<p><strong>Fix:</strong> Call <code>computeBudgetGrandTotals(supabase, projectIdNum)</code> — don't re-query budget tables.</p>
+
+<h3>7. Integer parsing for projectId</h3>
+<p><strong>Fix:</strong> Always <code>parseInt(projectId, 10)</code> and validate <code>isNaN()</code> before any query.</p>
+
+<h3>8. <code>@react-pdf/renderer</code> requires Node.js runtime</h3>
+<p><strong>Fix:</strong> Add <code>export const runtime = "nodejs"</code> to the export route — it won't work on edge.</p>
+
+<h3>9. Budget line display names</h3>
+<p><strong>Issue:</strong> Budget codes like <code>013128</code> need display names like "013128 - Project Manager - Labor". These come from joining <code>budget_lines</code> → <code>project_budget_codes</code> or <code>cost_codes</code> + <code>cost_code_types</code>.  </p>
+<p><strong>Fix:</strong> <code>computeBudgetGrandTotals</code> already handles this — <code>lineItems[n].budgetCode</code> contains the display string.</p>
+
+<p>---</p>
+
+<h2>Implementation Tasks (Ordered by Dependencies)</h2>
+
+<pre class="code"><code class="lang-yaml">Task 1: CREATE supabase/migrations/YYYYMMDDHHMMSS_psr_tables.sql
+<p>  - IMPLEMENT: psr_comments table with RLS policies</p>
+<p>  - Run: cd frontend &amp;&amp; npm run db:types  (regenerate types after migration)</p>
+<p>  - VALIDATE: grep "psr_comments" frontend/src/types/database.types.ts</p>
+
+<p>Task 2: CREATE frontend/src/types/psr.types.ts</p>
+<p>  - IMPLEMENT: All interfaces from "PSR Data Model" section above</p>
+<p>  - DEPENDENCIES: None (pure types)</p>
+<p>  - VALIDATE: npx tsc --noEmit</p>
+
+<p>Task 3: CREATE frontend/src/app/api/projects/[projectId]/psr/route.ts</p>
+<p>  - IMPLEMENT: GET handler using withApiGuardrails + 10-way Promise.all</p>
+<p>  - FOLLOW: budget/route.ts for withApiGuardrails pattern</p>
+<p>  - CALL: computeBudgetGrandTotals — do NOT re-query budget tables</p>
+<p>  - CRITICAL: await params; parseInt projectId; quote "start date" and "est completion"</p>
+<p>  - DEPENDENCIES: Task 2 (types)</p>
+<p>  - VALIDATE: curl http://localhost:3000/api/projects/67/psr?month=2026-04 | jq .</p>
+
+<p>Task 4: CREATE frontend/src/app/api/projects/[projectId]/psr/comments/route.ts</p>
+<p>  - IMPLEMENT: GET (list comments for month) + POST (upsert comment)</p>
+<p>  - FOLLOW: .upsert() with onConflict for idempotent saves</p>
+<p>  - DEPENDENCIES: Task 1 (table), Task 2 (types)</p>
+
+<p>Task 5: CREATE frontend/src/components/domain/psr/PsrSummaryCard.tsx</p>
+<p>  - IMPLEMENT: Project info + open item KPIs + 6-month billing table</p>
+<p>  - USE: KpiBlock from @/components/ds/kpi for open item counts</p>
+<p>  - FOLLOW: existing domain component patterns (no raw &lt;button&gt;, no hand-rolled status)</p>
+
+<p>Task 6: CREATE frontend/src/components/domain/psr/PsrBudgetTable.tsx</p>
+<p>  - IMPLEMENT: 17-column table rendering PsrBudgetLine[]</p>
+<p>  - USE: DataTable from @/components/ds/data-table OR InlineTable for the compact style</p>
+<p>  - NOTE: This is a wide table — implement horizontal scroll on mobile</p>
+
+<p>Task 7: CREATE frontend/src/components/domain/psr/ (remaining section components)</p>
+<p>  - PsrSubmittalsSection.tsx — simple table: number, title, status, ball-in-court</p>
+<p>  - PsrRfisSection.tsx — table: number, subject, status, due date</p>
+<p>  - PsrChangeRequestsSection.tsx — table: CR number, title, cost, markup, total</p>
+<p>  - PsrChangeOrdersSection.tsx — table: number, description, status, amount</p>
+<p>  - PsrScheduleSection.tsx — summary KPIs + task list table</p>
+<p>  - PsrCommentEditor.tsx — textarea + save button, calls comments POST endpoint</p>
+
+<p>Task 8: CREATE frontend/src/app/(main)/[projectId]/project-status-report/page.tsx</p>
+<p>  - IMPLEMENT: Server component with force-dynamic, server-side PSR fetch</p>
+<p>  - USE: PageShell variant="content"</p>
+<p>  - PASS: initialData + initialMonth as props to client component</p>
+
+<p>Task 9: CREATE frontend/src/app/(main)/[projectId]/project-status-report/psr-client.tsx</p>
+<p>  - IMPLEMENT: "use client" — month picker, renders all 7 section components</p>
+<p>  - MONTH CHANGE: apiFetch to /api/projects/[projectId]/psr?month=YYYY-MM</p>
+<p>  - EXPORT BUTTON: download link to /api/projects/[projectId]/psr/export?month=YYYY-MM</p>
+
+<p>Task 10: MODIFY frontend/src/lib/navigation-config.ts</p>
+<p>  - ADD: PSR entry to financialManagementTools array</p>
+<p>  - ICON: ClipboardList from lucide-react</p>
+
+<p>Task 11: CREATE frontend/src/app/api/projects/[projectId]/psr/export/route.ts</p>
+<p>  - INSTALL: npm install @react-pdf/renderer (in frontend/)</p>
+<p>  - IMPLEMENT: PDF generation with 9 pages matching original format</p>
+<p>  - RUNTIME: export const runtime = "nodejs"</p>
+<p>  - VALIDATE: Download PDF from browser and verify content</p>
+
+<p>Task 12: VALIDATE</p>
+<p>  - Run: cd frontend &amp;&amp; npm run quality</p>
+<p>  - Run: npm run build</p>
+<p>  - Run: curl http://localhost:3000/api/projects/67/psr | jq .projectInfo</p>
+<p>  - Open browser to http://localhost:3000/67/project-status-report</p>
+<p>  - Verify all 7 sections render with live data</code></pre></p>
+
+<p>---</p>
+
+<h2>Validation Loop</h2>
+
+<h3>Level 1: Type Safety</h3>
+<pre class="code"><code class="lang-bash">cd frontend &amp;&amp; npx tsc --noEmit
+<h1>Expected: 0 errors</code></pre></h1>
+
+<h3>Level 2: Quality Gate</h3>
+<pre class="code"><code class="lang-bash">cd frontend &amp;&amp; npm run quality
+<h1>Expected: 0 lint errors, 0 type errors</code></pre></h1>
+
+<h3>Level 3: API Smoke Tests</h3>
+<pre class="code"><code class="lang-bash"># Requires dev server running on port 3000
+<p>curl -s "http://localhost:3000/api/projects/67/psr?month=2026-04" | jq '.projectInfo.name'</p>
+<h1>Expected: "Vermillion Rise Warehouse" (or whatever project 67 is named)</h1>
+
+<p>curl -s "http://localhost:3000/api/projects/67/psr?month=2026-04" | jq '.budgetLines | length'</p>
+<h1>Expected: &gt; 0</h1>
+
+<p>curl -s "http://localhost:3000/api/projects/67/psr?month=2026-04" | jq '.openItems'</p>
+<h1>Expected: object with 6 numeric fields</h1>
+
+<p>curl -s "http://localhost:3000/api/projects/67/psr/comments?month=2026-04" | jq .</p>
+<h1>Expected: [] (empty array — no comments yet)</code></pre></h1>
+
+<h3>Level 4: Build Validation</h3>
+<pre class="code"><code class="lang-bash">cd frontend &amp;&amp; npm run build
+<h1>Expected: successful build, no prerender errors</code></pre></h1>
+
+<h3>Level 5: Browser Verification (required before claiming complete)</h3>
+<pre class="code"><code class="lang-">agent-browser open http://localhost:3000/67/project-status-report
+<p>agent-browser screenshot /tmp/psr-page.png</code></pre></p>
+<p>Verify: all 7 sections visible, month picker works, no console errors.</p>
+
+<p>---</p>
+
+<h2>Final Validation Checklist</h2>
+
+<h3>Database</h3>
+<li class="task"><input type="checkbox" disabled> <code>psr_comments</code> table created and migrated</li><li class="task"><input type="checkbox" disabled> <code>npm run db:types</code> run after migration</li><li class="task"><input type="checkbox" disabled> <code>psr_comments</code> appears in <code>database.types.ts</code></li>
+
+<h3>API</h3>
+<li class="task"><input type="checkbox" disabled> <code>GET /api/projects/67/psr</code> returns 200 with valid JSON</li><li class="task"><input type="checkbox" disabled> <code>GET /api/projects/67/psr/comments</code> returns 200</li><li class="task"><input type="checkbox" disabled> <code>POST /api/projects/67/psr/comments</code> saves and returns updated comment</li><li class="task"><input type="checkbox" disabled> <code>GET /api/projects/67/psr/export</code> returns PDF content-type</li>
+
+<h3>UI</h3>
+<li class="task"><input type="checkbox" disabled> PSR page renders at <code>/67/project-status-report</code></li><li class="task"><input type="checkbox" disabled> All 7 sections display live data</li><li class="task"><input type="checkbox" disabled> Month picker changes data without page reload</li><li class="task"><input type="checkbox" disabled> Comments save and persist</li><li class="task"><input type="checkbox" disabled> Export button downloads a PDF</li><li class="task"><input type="checkbox" disabled> Nav entry appears in sidebar</li>
+
+<h3>Quality</h3>
+<li class="task"><input type="checkbox" disabled> <code>npm run quality</code> passes (0 errors)</li><li class="task"><input type="checkbox" disabled> <code>npm run build</code> succeeds</li><li class="task"><input type="checkbox" disabled> No <code>bg-white</code>, <code>gray-*</code>, raw <code>&lt;button&gt;</code> violations</li><li class="task"><input type="checkbox" disabled> <code>force-dynamic</code> on page.tsx and export route</li><li class="task"><input type="checkbox" disabled> All API routes use <code>withApiGuardrails</code></li><li class="task"><input type="checkbox" disabled> No raw <code>fetch()</code> calls — only <code>apiFetch</code></li>
+
+<p>---</p>
+
+<h2>Anti-Patterns to Avoid</h2>
+
+<li>❌ Do NOT re-query budget tables — call <code>computeBudgetGrandTotals()</code> </li><li>❌ Do NOT use <code>[id]</code> as route param — use <code>[projectId]</code></li><li>❌ Do NOT forget <code>await params</code> in Next.js 15 route handlers</li><li>❌ Do NOT query <code>owner_invoices</code> by project_id — it doesn't have one; join through prime_contracts</li><li>❌ Do NOT use <code>bg-white</code> or hardcoded colors — use <code>bg-card</code>, <code>bg-background</code></li><li>❌ Do NOT hand-roll a loading spinner — use <code>EmptyState</code> or skeleton pattern from existing pages</li><li>❌ Do NOT put <code>@react-pdf/renderer</code> in the edge runtime — add <code>export const runtime = "nodejs"</code></li><li>❌ Do NOT skip <code>force-dynamic</code> on the page.tsx — it will fail at build time</li><li>❌ Do NOT query <code>projects."start date"</code> without quoting the column name with spaces</li>
+
+<p>---</p>
+
+<h2>Confidence Score: 9/10</h2>
+
+<p><strong>What makes this 9/10:</strong> All data sources exist, all API patterns are documented with exact file references, DB schema is fully mapped, no major unknowns remain.</p>
+
+<p><strong>What prevents 10/10:</strong></p>
+<li>The monthly billing grouping logic for owner_invoices needs testing — the join through prime_contracts may need query adjustment depending on Supabase's filter-through-join behavior.</li><li>PDF layout quality (page breaks, column widths) will require iteration to match the original format exactly.</li><li>The specific markup rates on change requests may require joining a <code>vertical_markup</code> table (as the change-events route does at line 352) — verify this during implementation.</li></ul>
+
+<p style="color:#94a3b8;font-size:.8rem;margin-top:3rem">Generated 2026-05-01 | Confidence: 9/10</p>
+</body>
+</html>

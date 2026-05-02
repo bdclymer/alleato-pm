@@ -1,4 +1,3 @@
-Using workdir /home/user/alleato-pm
 export type Json =
   | string
   | number
@@ -5217,6 +5216,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "change_event_rfqs_assigned_contact_id_fkey"
+            columns: ["assigned_contact_id"]
+            isOneToOne: false
+            referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "change_event_rfqs_change_event_id_fkey"
             columns: ["change_event_id"]
             isOneToOne: false
@@ -6895,209 +6901,6 @@ export type Database = {
           vision?: string | null
         }
         Relationships: []
-      }
-      company_knowledge: {
-        Row: {
-          ai_searchable: boolean
-          approval_status: string
-          approved_at: string | null
-          approved_by: string | null
-          author_id: string | null
-          category: string
-          content: string
-          created_at: string | null
-          embedding: unknown
-          id: string
-          is_active: boolean | null
-          meeting_id: string | null
-          origin: string
-          project_id: number | null
-          source: string | null
-          source_document_id: string | null
-          tags: string[] | null
-          title: string
-          updated_at: string | null
-          visibility: string
-        }
-        Insert: {
-          ai_searchable?: boolean
-          approval_status?: string
-          approved_at?: string | null
-          approved_by?: string | null
-          author_id?: string | null
-          category: string
-          content: string
-          created_at?: string | null
-          embedding?: unknown
-          id?: string
-          is_active?: boolean | null
-          meeting_id?: string | null
-          origin?: string
-          project_id?: number | null
-          source?: string | null
-          source_document_id?: string | null
-          tags?: string[] | null
-          title: string
-          updated_at?: string | null
-          visibility?: string
-        }
-        Update: {
-          ai_searchable?: boolean
-          approval_status?: string
-          approved_at?: string | null
-          approved_by?: string | null
-          author_id?: string | null
-          category?: string
-          content?: string
-          created_at?: string | null
-          embedding?: unknown
-          id?: string
-          is_active?: boolean | null
-          meeting_id?: string | null
-          origin?: string
-          project_id?: number | null
-          source?: string | null
-          source_document_id?: string | null
-          tags?: string[] | null
-          title?: string
-          updated_at?: string | null
-          visibility?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "company_knowledge_meeting_id_fkey"
-            columns: ["meeting_id"]
-            isOneToOne: false
-            referencedRelation: "document_metadata"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "company_knowledge_meeting_id_fkey"
-            columns: ["meeting_id"]
-            isOneToOne: false
-            referencedRelation: "document_metadata_emails"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "company_knowledge_meeting_id_fkey"
-            columns: ["meeting_id"]
-            isOneToOne: false
-            referencedRelation: "document_metadata_manual_only"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "company_knowledge_meeting_id_fkey"
-            columns: ["meeting_id"]
-            isOneToOne: false
-            referencedRelation: "document_metadata_meetings"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "company_knowledge_meeting_id_fkey"
-            columns: ["meeting_id"]
-            isOneToOne: false
-            referencedRelation: "document_metadata_team_messages"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "company_knowledge_meeting_id_fkey"
-            columns: ["meeting_id"]
-            isOneToOne: false
-            referencedRelation: "document_metadata_typed"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "company_knowledge_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "project_activity_view"
-            referencedColumns: ["project_id"]
-          },
-          {
-            foreignKeyName: "company_knowledge_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "project_health_dashboard"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "company_knowledge_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "project_health_dashboard_no_summary"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "company_knowledge_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "project_issue_summary"
-            referencedColumns: ["project_id"]
-          },
-          {
-            foreignKeyName: "company_knowledge_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "company_knowledge_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects_with_counts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "company_knowledge_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "submittal_project_dashboard"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "company_knowledge_source_document_id_fkey"
-            columns: ["source_document_id"]
-            isOneToOne: false
-            referencedRelation: "document_metadata"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "company_knowledge_source_document_id_fkey"
-            columns: ["source_document_id"]
-            isOneToOne: false
-            referencedRelation: "document_metadata_emails"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "company_knowledge_source_document_id_fkey"
-            columns: ["source_document_id"]
-            isOneToOne: false
-            referencedRelation: "document_metadata_manual_only"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "company_knowledge_source_document_id_fkey"
-            columns: ["source_document_id"]
-            isOneToOne: false
-            referencedRelation: "document_metadata_meetings"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "company_knowledge_source_document_id_fkey"
-            columns: ["source_document_id"]
-            isOneToOne: false
-            referencedRelation: "document_metadata_team_messages"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "company_knowledge_source_document_id_fkey"
-            columns: ["source_document_id"]
-            isOneToOne: false
-            referencedRelation: "document_metadata_typed"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       contract_billing_periods: {
         Row: {
@@ -20467,6 +20270,89 @@ export type Database = {
           },
         ]
       }
+      psr_comments: {
+        Row: {
+          body: string
+          created_at: string
+          created_by: string | null
+          id: string
+          month: string
+          project_id: number
+          section: string
+          updated_at: string
+        }
+        Insert: {
+          body?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          month: string
+          project_id: number
+          section: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          month?: string
+          project_id?: number
+          section?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "psr_comments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "psr_comments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "psr_comments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "psr_comments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "psr_comments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "psr_comments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "psr_comments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       punch_item_comments: {
         Row: {
           content: string
@@ -31435,4 +31321,3 @@ export const Constants = {
     },
   },
 } as const
-<claude-code-hint v="1" type="plugin" value="supabase@claude-plugins-official" />

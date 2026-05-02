@@ -120,6 +120,7 @@ export const financialManagementTools: NavigationTool[] = [
   { name: "Change Events", path: "change-events", icon: Clock, requiresProject: true, module: "change_orders" },
   { name: "Direct Costs", path: "direct-costs", icon: DollarSign, requiresProject: true, module: "budget" },
   { name: "Invoicing", path: "invoices", icon: Receipt, requiresProject: true, module: "contracts" },
+  { name: "Project Status Report", path: "project-status-report", icon: ClipboardList, requiresProject: true, module: "budget" },
 ];
 
 /**
