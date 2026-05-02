@@ -1,34 +1,13 @@
-import { existsSync, readFileSync, renameSync, rmSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { spawnSync } from "node:child_process";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
-const stateDir = path.join(repoRoot, "frontend/.next-nonprod-routes");
-const statePath = path.join(stateDir, "disabled-routes.json");
+const frontendScript = path.join(repoRoot, "frontend/scripts/build/restore-nonprod-routes.mjs");
+const result = spawnSync(process.execPath, [frontendScript], {
+  cwd: repoRoot,
+  env: process.env,
+  stdio: "inherit",
+});
 
-if (!existsSync(statePath)) {
-  console.log("[build] no disabled non-production routes to restore");
-  process.exit(0);
-}
-
-const state = JSON.parse(readFileSync(statePath, "utf8"));
-const restored = [];
-
-for (const entry of [...state.files].reverse()) {
-  const source = path.join(repoRoot, entry.to);
-  const target = path.join(repoRoot, entry.from);
-
-  if (!existsSync(source)) {
-    throw new Error(`[build] Cannot restore missing disabled route file: ${entry.to}`);
-  }
-
-  if (existsSync(target)) {
-    throw new Error(`[build] Refusing to overwrite restored route file: ${entry.from}`);
-  }
-
-  renameSync(source, target);
-  restored.push(entry.from);
-}
-
-rmSync(stateDir, { recursive: true, force: true });
-console.log(`[build] Restored ${restored.length} non-production route files`);
+process.exit(result.status ?? 1);
