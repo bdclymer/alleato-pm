@@ -940,5 +940,3 @@ ${strategistSystemPrompt}
 Today is ${today} (YYYY-MM-DD).
 Interpret relative date phrases (today, yesterday, this week) against this date and verify with tools before answering.`;
 }
-
-

@@ -443,5 +443,5 @@ def _parse_date(raw: Optional[str]) -> Optional[str]:
             pass
     try:
         return datetime.fromisoformat(raw).strftime("%Y-%m-%d")
-    except Exception:
+    except (ValueError, OverflowError):
         return None

@@ -219,12 +219,7 @@ export function createActionTools(
       status: params.status,
     });
     if (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : typeof error === "object" && error && "message" in error
-            ? String(error.message)
-            : String(error);
+      const message = error instanceof Error ? error.message : String((error as { message?: string }).message ?? error);
       throw new Error(`Failed to record AI tool write audit for ${params.toolName}: ${message}`);
     }
   }
