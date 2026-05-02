@@ -2024,7 +2024,9 @@ export function ChatArea({
                 />
               )}
 
-              {!isStreaming && hasMessages && (
+              {/* Cross-source timeline hidden from chat UI per 2026-05-02 —
+                  keep the component + API so it can be reintroduced elsewhere. */}
+              {false && !isStreaming && hasMessages && (
                 <div className="pl-11">
                   <CrossSourceTimeline projectId={selectedProjectIdProp} />
                 </div>

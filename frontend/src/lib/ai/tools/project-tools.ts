@@ -1804,7 +1804,15 @@ export function createProjectTools(
           if (resolvedProjectId) {
             meetingsQuery = meetingsQuery.eq("project_id", resolvedProjectId);
           } else {
-            meetingsQuery = meetingsQuery.in("project_id", scopedProjectIds);
+            // Cross-portfolio queries include both meetings tagged to one of
+            // the user's accessible projects AND meetings with NULL project_id
+            // (Fireflies ingests meetings before the auto-tagger has run, so
+            // ~40% of recent meetings are un-tagged and were previously
+            // invisible). 2026-05-02 fix.
+            const scopedIdsCsv = scopedProjectIds.join(",");
+            meetingsQuery = meetingsQuery.or(
+              `project_id.in.(${scopedIdsCsv}),project_id.is.null`,
+            );
           }
 
           if (effectiveDate) {

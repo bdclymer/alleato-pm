@@ -202,6 +202,23 @@
       "minAnswerLength": 80
     },
     {
+      "id": "recent-meetings-portfolio",
+      "intent": "meeting_query",
+      "prompt": "Were there any issues from the meetings in the last couple days?",
+      "expectedToolFamilies": ["meetings"],
+      "expectedToolNames": ["getMeetingsByDate", "searchMeetingsByTopic"],
+      "mustInclude": ["meeting"],
+      "mustExclude": [
+        "no meetings were logged",
+        "zero meeting records",
+        "no meetings in the last",
+        "did not find any meetings",
+        "I do not see any meetings"
+      ],
+      "minAnswerLength": 200,
+      "notes": "Regression case for 2026-05-02 bug: getMeetingsByDate filtered out NULL project_id meetings, causing the assistant to claim no meetings existed when 40% of recent Fireflies meetings are un-tagged."
+    },
+    {
       "id": "documents-search",
       "intent": "document_question",
       "prompt": "Find the latest contract or change order document on Westfield and summarize the key terms.",
