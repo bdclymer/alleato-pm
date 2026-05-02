@@ -12,6 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { useCurrentUserProfile } from "@/hooks/use-current-user-profile";
 import { getBestAvatarUrl } from "@/lib/gravatar";
 import { SectionRuleHeading } from "@/components/layout/spacing";
+import { TelegramLinkPanel } from "../integrations/telegram-link-panel";
 
 
 function InfoRow({ label, value }: { label: string; value?: string }) {
@@ -100,6 +101,14 @@ export default function ProfilePage() {
             <Separator />
             <InfoRow label="Role" value={profile?.role} />
           </div>
+        </section>
+
+        <section className="space-y-4">
+          <SectionRuleHeading label="Mobile" />
+          <p className="text-sm text-muted-foreground -mt-2">
+            Connect your phone so you can talk to the AI assistant from anywhere.
+          </p>
+          <TelegramLinkPanel />
         </section>
     </PageShell>
   );
