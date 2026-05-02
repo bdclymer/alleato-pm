@@ -6,6 +6,14 @@ import { type ToolTracePayload, asNumber, resolveProject, withTrace as _withTrac
 
 type AnyRow = Record<string, unknown>;
 
+// Module-level constant — avoids re-allocating on every tool invocation.
+const STOPWORDS = new Set([
+  "the", "a", "an", "and", "or", "for", "to", "of", "in", "on", "at",
+  "with", "by", "from", "is", "are", "was", "were", "be", "been", "being",
+  "what", "which", "who", "when", "where", "why", "how",
+  "need", "show", "tell", "details", "detail", "about",
+]);
+
 type CreateStructuredQueryToolsOptions = {
   onTrace?: (trace: ToolTracePayload) => void;
   pinnedProjectId?: number;
@@ -478,42 +486,6 @@ export function createStructuredQueryTools(
 
           const rawTokens =
             query.toLowerCase().match(/[a-z0-9$%./-]+/g) ?? [];
-          const stopwords = new Set([
-            "the",
-            "a",
-            "an",
-            "and",
-            "or",
-            "for",
-            "to",
-            "of",
-            "in",
-            "on",
-            "at",
-            "with",
-            "by",
-            "from",
-            "is",
-            "are",
-            "was",
-            "were",
-            "be",
-            "been",
-            "being",
-            "what",
-            "which",
-            "who",
-            "when",
-            "where",
-            "why",
-            "how",
-            "need",
-            "show",
-            "tell",
-            "details",
-            "detail",
-            "about",
-          ]);
 
           const tokens: string[] = [];
           const seen = new Set<string>();
@@ -522,7 +494,7 @@ export function createStructuredQueryTools(
             if (!token) continue;
             if (token.startsWith("$")) token = token.slice(1);
             if (!token) continue;
-            if (stopwords.has(token)) continue;
+            if (STOPWORDS.has(token)) continue;
             if (token.length < 3 && !/^q[1-4]$/.test(token)) continue;
             if (!seen.has(token)) {
               seen.add(token);
