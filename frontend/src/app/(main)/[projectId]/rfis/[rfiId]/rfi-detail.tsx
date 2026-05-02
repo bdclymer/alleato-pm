@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { ExternalLink, FileText } from "lucide-react";
 import { useForm } from "react-hook-form";
+import { RelatedItemsPanel } from "@/components/domain/related-items/RelatedItemsPanel";
 
 import {
   Checkbox,
@@ -603,6 +604,15 @@ export function RfiDetail({ rfi, projectId, isEditing = false }: RfiDetailProps)
             <SidebarField label="Schedule" value={rfi.schedule_impact} />
             <SidebarField label="Cost" value={rfi.cost_impact} />
           </div>
+        </div>
+
+        {/* Related Items */}
+        <div className="mt-6 border-t border-border/40 pt-6">
+          <RelatedItemsPanel
+            entityType="rfi"
+            entityId={rfi.id}
+            projectId={projectId}
+          />
         </div>
       </div>
     </div>

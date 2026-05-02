@@ -1,6 +1,6 @@
 # Foreign Key Types Reference
 
-**Last updated:** 2026-02-01
+**Last updated:** 2026-05-01
 **Source of truth:** `frontend/src/types/database.types.ts`
 
 If this file is outdated, regenerate types and re-verify:
@@ -30,8 +30,13 @@ These are the tables you will most often create foreign keys TO.
 | `change_events` | `id` | `string` | `UUID` | `change_event_id` |
 | `submittals` | `id` | `string` | `UUID` | `submittal_id` |
 | `documents` | `id` | `string` | `UUID` | `document_id` |
-| `rfis` | `id` | `number` | `INTEGER` | `rfi_id` |
+| `project_documents` | `id` | `number` | `BIGINT` | `project_document_id` |
+| `rfis` | `id` | `string` | `UUID` | `rfi_id` |
 | `daily_logs` | `id` | `string` | `UUID` | `daily_log_id` |
+| `drawings` | `id` | `string` | `UUID` | `drawing_id` |
+| `punch_items` | `id` | `string` | `UUID` | `punch_item_id` |
+| `observations` | `id` | `string` | `UUID` | `observation_id` |
+| `project_photos` | `id` | `number` | `BIGINT` | `project_photo_id` |
 | `auth.users` | `id` | `string` | `UUID` | `created_by`, `updated_by` |
 
 ---
@@ -64,13 +69,9 @@ These tables use `number` (INTEGER) primary keys instead of UUID:
 | `prime_contract_sovs` | Legacy financial data |
 | `prime_potential_change_orders` | Legacy financial data |
 | `owner_invoice_line_items` | Legacy financial data |
-| `rfis` | Legacy |
 | `rfi_assignees` | Legacy |
-| `decisions` | Legacy |
 | `initiatives` | Legacy |
 | `issues` | Legacy |
-| `tasks` | Legacy |
-| `risks` | Legacy |
 
 When creating FKs to these tables, use `INTEGER` not `UUID`.
 
@@ -94,6 +95,27 @@ CREATE TABLE IF NOT EXISTS new_table (
 
 ---
 
+## Deprecated Tables (Do Not Create New FKs To These)
+
+| Table | Status | Active Replacement |
+|-------|--------|--------------------|
+| `photos` | Deprecated — no API routes write to it | `project_photos` |
+
+`photos` still exists in the schema and has a child table (`photo_links`) with an active FK. Do not drop `photos` without first migrating or dropping `photo_links`. Do not create new link tables that FK to `photos`.
+
+---
+
+## Tables with Corrected Types (Previous Errors Fixed 2026-05-01)
+
+| Table | Was Listed As | Actual Type | Impact |
+|-------|---------------|-------------|--------|
+| `rfis` | INTEGER | UUID | FK columns must be `uuid`, not `integer` |
+| `tasks` | "Legacy INTEGER" | UUID | AI-extracted table; id is uuid |
+| `risks` | "Legacy INTEGER" | UUID | AI-extracted table; id is uuid |
+| `decisions` | "Legacy INTEGER" | UUID | AI-extracted table; id is uuid |
+
+---
+
 ## Quick Lookup: "What type should my FK be?"
 
 1. Find the table you're referencing
@@ -102,5 +124,5 @@ CREATE TABLE IF NOT EXISTS new_table (
 
 If the table isn't listed above, check `database.types.ts`:
 
-- If `id: number` -> use `INTEGER`
+- If `id: number` -> use `BIGINT` (or `INTEGER` for `projects`)
 - If `id: string` -> use `UUID`
