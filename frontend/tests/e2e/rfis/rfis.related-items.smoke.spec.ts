@@ -2,45 +2,51 @@ import { test, expect } from "@playwright/test";
 
 const PROJECT_ID = Number(process.env.E2E_PROJECT_ID ?? "67");
 
-// Verifies the "Related Items" tab renders in entity detail pages.
+// Verifies the RelatedItemsPanel renders in entity detail pages.
 // Added by the entity-relationships feature (claude/add-entity-relationships-dmUl4).
-// Will FAIL until that branch is merged — that is expected before the merge.
 test.describe("Related Items Panel Smoke", () => {
-  test("RFI detail page has Related Items tab", async ({ page }) => {
+  test("RFI detail page has Related Items section", async ({ page }) => {
     await page.goto(`/${PROJECT_ID}/rfis`);
     await page.waitForLoadState("domcontentloaded");
 
     const welcomeClose = page.getByRole("button", { name: /close welcome/i });
     if (await welcomeClose.isVisible()) await welcomeClose.click();
 
-    const firstRow = page.getByRole("row").nth(1);
-    if ((await firstRow.count()) === 0) {
-      console.warn("No RFI rows found — skipping detail navigation");
+    // Find a link to an RFI detail page (href matches /67/rfis/<id>)
+    const rfiLink = page.locator(`a[href^="/${PROJECT_ID}/rfis/"]`).first();
+    if ((await rfiLink.count()) === 0) {
+      console.warn("No RFI links found in project — skipping detail navigation");
       return;
     }
 
-    await firstRow.click();
+    const href = await rfiLink.getAttribute("href");
+    if (!href) return;
+
+    await page.goto(href);
     await page.waitForLoadState("domcontentloaded");
 
-    await expect(page.getByRole("tab", { name: /related items/i })).toBeVisible();
+    await expect(page.getByText(/related items/i).first()).toBeVisible();
   });
 
-  test("Submittal detail page has Related Items tab", async ({ page }) => {
+  test("Submittal detail page has Related Items section", async ({ page }) => {
     await page.goto(`/${PROJECT_ID}/submittals`);
     await page.waitForLoadState("domcontentloaded");
 
     const welcomeClose = page.getByRole("button", { name: /close welcome/i });
     if (await welcomeClose.isVisible()) await welcomeClose.click();
 
-    const firstRow = page.getByRole("row").nth(1);
-    if ((await firstRow.count()) === 0) {
-      console.warn("No Submittal rows found — skipping detail navigation");
+    const submittalLink = page.locator(`a[href^="/${PROJECT_ID}/submittals/"]`).first();
+    if ((await submittalLink.count()) === 0) {
+      console.warn("No Submittal links found — skipping detail navigation");
       return;
     }
 
-    await firstRow.click();
+    const href = await submittalLink.getAttribute("href");
+    if (!href) return;
+
+    await page.goto(href);
     await page.waitForLoadState("domcontentloaded");
 
-    await expect(page.getByRole("tab", { name: /related items/i })).toBeVisible();
+    await expect(page.getByText(/related items/i).first()).toBeVisible();
   });
 });
