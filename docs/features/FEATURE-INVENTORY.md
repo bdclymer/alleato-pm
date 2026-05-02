@@ -1,6 +1,6 @@
 # Alleato PM — Development Feature Inventory
 
-> **Last updated:** March 26, 2026
+> **Last updated:** May 2, 2026
 >
 > Custom-built platform features, developer tools, integrations, and AI systems.
 > This does NOT include standard Procore application tools (Budget, RFIs, Submittals, etc.).
@@ -33,6 +33,7 @@
 22. [Developer Utilities](#22-developer-utilities)
 23. [Scheduled Jobs (Cron)](#23-scheduled-jobs-cron)
 24. [Pre-Commit Hooks & Code Quality](#24-pre-commit-hooks--code-quality)
+25. [Teams Conversation Intelligence Compiler](#25-teams-conversation-intelligence-compiler)
 
 ---
 
@@ -494,3 +495,24 @@
 - `design-system/no-hardcoded-colors`
 - `design-system/no-arbitrary-spacing`
 - `design-system/require-semantic-colors`
+
+---
+
+## 25. Teams Conversation Intelligence Compiler
+
+**What it is:** A Python batch service that reads raw Microsoft Teams DM conversations and extracts structured intelligence via LLM — overviews, tasks, risks, decisions, and sentiment. The "digestion layer" between raw message ingestion and anything the AI assistant can actually use.
+
+**Deep-dive doc:** [`docs/features/teams-compiler.md`](./teams-compiler.md)
+
+| Component | File |
+|-----------|------|
+| Pipeline logic | `backend/src/services/intelligence/teams_compiler.py` |
+| LLM client (provider routing, retry) | `backend/src/services/intelligence/client.py` |
+| System prompt + JSON schema | `backend/src/services/intelligence/prompts.py` |
+| Project inference (fallback) | `backend/src/services/integrations/microsoft_graph/project_inference.py` |
+
+**Model:** gpt-5.5 (upgraded May 2026 — backfill complete, only a few docs/day going forward)
+
+**Run it:** `/run-teams-compiler` (or `/run-teams-compiler 50` for a larger batch)
+
+**Tables written:** `document_metadata` (overview + project attribution), `tasks`, `insights`, `project_insights`, `document_attribution_candidates`
