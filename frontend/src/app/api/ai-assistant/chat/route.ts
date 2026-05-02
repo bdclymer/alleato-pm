@@ -11,6 +11,10 @@ import {
 } from "ai";
 import { after } from "next/server";
 
+import {
+  hasAppCapability,
+  loadAppCapabilityAccessForUser,
+} from "@/lib/app-capabilities";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { getLanguageModel } from "@/lib/ai/providers";
@@ -60,6 +64,11 @@ import {
   synthesizeAdvisorResponse,
   synthesizeMissingPacketResponse,
 } from "@/lib/ai/intelligence/advisor-synthesis";
+import {
+  generateBrandonDailyUpdate,
+  type BrandonDailyUpdatePacket,
+} from "@/lib/executive/brandon-daily-update";
+import { buildBrandonDailyUpdateWidget } from "@/lib/executive/brandon-daily-update-widget";
 
 export const maxDuration = 120;
 
@@ -145,6 +154,30 @@ type ExecutiveBriefingRetrievalPacket = {
   sources: ExecutiveBriefingSourceOutput[];
 };
 
+function isBrandonDailyUpdatePacket(value: unknown): value is BrandonDailyUpdatePacket {
+  if (!value || typeof value !== "object") return false;
+  const record = value as Record<string, unknown>;
+  return (
+    typeof record.generatedAt === "string" &&
+    typeof record.windowDays === "number" &&
+    Array.isArray(record.sourceCoverage) &&
+    record.sections !== null &&
+    typeof record.sections === "object"
+  );
+}
+
+function formatExecutiveBriefPacketContext(packet: BrandonDailyUpdatePacket): string {
+  return [
+    "# Executive Brief Packet",
+    "You are responding from the executive brief page.",
+    "Treat the packet below as first-party operating context for Brandon's current brief.",
+    "Lead with the most actionable points. When you suggest follow-up work, prefer owner, due date, business impact, and what evidence supports the recommendation.",
+    "If the user asks for something not covered by the packet, say so clearly and then use tools or broader assistant context to fill the gap.",
+    "",
+    JSON.stringify(packet, null, 2),
+  ].join("\n");
+}
+
 type SourceHealthStatus = "ok" | "warning" | "error" | "unknown";
 
 type SourceHealthCheck = {
@@ -177,6 +210,12 @@ type StrategistStatus = {
 type TimeoutResult = {
   timedOut: true;
   error: string;
+};
+
+type PersistedDataPart = {
+  type: `data-${string}`;
+  id?: string;
+  data: unknown;
 };
 
 function isTimeoutResult<T>(value: T | TimeoutResult): value is TimeoutResult {
@@ -565,6 +604,44 @@ function createDeterministicSourceQualityAnswer(params: {
     "**Next Step**",
     "- Have the PM send one owner-ready validation note today: current RFI count, current change exposure, schedule blockers, and whether any recent Teams/email/OneDrive item changes the risk read.",
   ].join("\n");
+}
+
+function isBrandonDailyUpdateWidgetRequest(message: string): boolean {
+  const normalized = message.toLowerCase();
+  if (!normalized.includes("brandon")) return false;
+
+  return [
+    "daily update",
+    "daily brief",
+    "executive update",
+    "executive brief",
+    "what does brandon need",
+    "what should brandon know",
+  ].some((phrase) => normalized.includes(phrase));
+}
+
+function createBrandonDailyUpdateSummary(packet: BrandonDailyUpdatePacket): string {
+  const needsBrandon = packet.sections.needsBrandon[0];
+  const waitingOnOthers = packet.sections.waitingOnOthers[0];
+  const importantUpdate = packet.sections.importantUpdates[0];
+
+  return [
+    "I pulled Brandon's daily update into a widget below.",
+    "",
+    `Topline: ${packet.sections.needsBrandon.length} items need Brandon, ${packet.sections.waitingOnOthers.length} are waiting on others, and ${packet.sections.importantUpdates.length} are broader business-critical updates.`,
+    "",
+    needsBrandon
+      ? `Most urgent owner item: ${needsBrandon.title} (${needsBrandon.project}, ${needsBrandon.date}).`
+      : null,
+    waitingOnOthers
+      ? `Biggest external dependency: ${waitingOnOthers.title} (${waitingOnOthers.project}, ${waitingOnOthers.date}).`
+      : null,
+    importantUpdate
+      ? `Business watch item: ${importantUpdate.title} (${importantUpdate.project}, ${importantUpdate.date}).`
+      : null,
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 function readSnapshotArray(
@@ -2132,6 +2209,7 @@ async function persistAssistantMessage(params: {
   projectBriefingSnapshot?: ProjectBriefingSnapshot | null;
   executiveBriefingRetrieval?: ExecutiveBriefingRetrievalPacket | null;
   providerDecision: AssistantToolCallingDecision;
+  dataParts?: PersistedDataPart[];
 }) {
   const {
     supabase,
@@ -2149,6 +2227,7 @@ async function persistAssistantMessage(params: {
     projectBriefingSnapshot,
     executiveBriefingRetrieval,
     providerDecision,
+    dataParts,
   } = params;
 
   await supabase.from("chat_history").insert({
@@ -2202,6 +2281,7 @@ async function persistAssistantMessage(params: {
         loop_diagnostic: loopDiagnostic ?? null,
         project_briefing_snapshot: projectBriefingSnapshot ?? null,
         executive_briefing_retrieval: executiveBriefingRetrieval ?? null,
+        data_parts: dataParts ?? [],
       }),
     ),
   });
@@ -2300,12 +2380,20 @@ export const POST = withApiGuardrails(
     }
 
     const body = await request.json();
-    const { id: sessionId, messages, councilMode, selectedProjectId, selectedModel } = body as {
+    const {
+      id: sessionId,
+      messages,
+      councilMode,
+      selectedProjectId,
+      selectedModel,
+      executiveBriefPacket,
+    } = body as {
       id: string;
       messages: UIMessage[];
       councilMode?: boolean;
       selectedProjectId?: number;
       selectedModel?: unknown;
+      executiveBriefPacket?: unknown;
     };
     const activeModel = isAiAssistantModelId(selectedModel)
       ? selectedModel
@@ -2360,10 +2448,14 @@ export const POST = withApiGuardrails(
     const sourceQualityFollowUpResponse = shouldUseSourceQualityFollowUpResponse(lastUserContent);
     const sourceSpecificRagRequest = detectSourceSpecificRagRequest(lastUserContent);
     const assistantIntent = classifyAssistantIntent(lastUserContent);
+    const brandonDailyUpdateWidgetRequest = isBrandonDailyUpdateWidgetRequest(lastUserContent);
     const forceBusinessRetrieval =
       shouldForceBusinessRetrieval(lastUserContent) ||
       actionFollowUpResponse ||
       sourceQualityFollowUpResponse;
+    const executivePagePacket = isBrandonDailyUpdatePacket(executiveBriefPacket)
+      ? executiveBriefPacket
+      : null;
     const priorProjectName = extractPriorProjectName(messages);
     let deterministicRetrieval: SemanticSearchOutput | null = null;
     let projectBriefingSnapshot: ProjectBriefingSnapshot | null = null;
@@ -2391,6 +2483,104 @@ export const POST = withApiGuardrails(
             learningUsage = usage;
           },
         });
+
+        if (executivePagePacket) {
+          systemPrompt = `${formatExecutiveBriefPacketContext(executivePagePacket)}\n\n---\n\n${systemPrompt}`;
+        }
+
+        if (brandonDailyUpdateWidgetRequest) {
+          const appAccess = await loadAppCapabilityAccessForUser(user.id);
+          const canViewExecutiveBriefing =
+            appAccess &&
+            hasAppCapability(appAccess, "view_executive_briefing");
+
+          if (!canViewExecutiveBriefing) {
+            throw new Error(
+              "Executive briefing access is required to generate Brandon's daily update.",
+            );
+          }
+
+          writeStrategistStatus(writer, {
+            stage: "knowledge",
+            message: "Building Brandon's daily executive update",
+            status: "loading",
+          });
+
+          const packet = await generateBrandonDailyUpdate({ windowDays: 2 });
+          const widget = buildBrandonDailyUpdateWidget(packet);
+          const dataPart: PersistedDataPart = {
+            type: "data-brandon-daily-update-widget",
+            id: "brandon-daily-update-widget",
+            data: {
+              packet,
+              widget,
+            },
+          };
+
+          writer.write(dataPart);
+
+          const content = createBrandonDailyUpdateSummary(packet);
+          const textId = "strategist-brandon-daily-update";
+          writer.write({ type: "text-start", id: textId });
+          writer.write({
+            type: "text-delta",
+            id: textId,
+            delta: content,
+          });
+          writer.write({ type: "text-end", id: textId });
+
+          toolTrace.push({
+            tool: "generateBrandonDailyUpdateWidget",
+            input: {
+              windowDays: 2,
+            },
+            output: {
+              needsBrandonCount: packet.sections.needsBrandon.length,
+              waitingOnOthersCount: packet.sections.waitingOnOthers.length,
+              importantUpdatesCount: packet.sections.importantUpdates.length,
+            },
+            timestamp: new Date().toISOString(),
+          });
+
+          const responseQuality = scoreResponseQuality({
+            toolTrace,
+            content,
+          });
+          await persistAssistantMessage({
+            supabase,
+            sessionId,
+            userId: user.id,
+            content,
+            toolTrace,
+            memoryUsage,
+            learningUsage,
+            totalUsage: undefined,
+            responseQuality,
+            councilMode,
+            modelId: activeModel,
+            loopDiagnostic: buildLoopDiagnostic({
+              stepStarts: stepStartDiagnostics,
+              steps: stepDiagnostics,
+            }),
+            projectBriefingSnapshot,
+            executiveBriefingRetrieval,
+            providerDecision,
+            dataParts: [dataPart],
+          });
+
+          await supabase
+            .from("conversations")
+            .update({ last_message_at: new Date().toISOString() })
+            .eq("session_id", sessionId)
+            .eq("user_id", user.id);
+
+          writeStrategistStatus(writer, {
+            stage: "complete",
+            message: "Brandon daily update ready",
+            status: "success",
+          });
+          return;
+        }
 
         if (sourceSpecificRagRequest) {
           writeStrategistStatus(writer, {
@@ -2765,7 +2955,7 @@ export const POST = withApiGuardrails(
               supabase,
             });
 
-            const content = intelligencePacket
+            const packetContent = intelligencePacket
               ? synthesizeAdvisorResponse({
                   target: resolvedTarget,
                   packet: intelligencePacket,
@@ -2794,56 +2984,28 @@ export const POST = withApiGuardrails(
                 packetId: intelligencePacket?.id ?? null,
                 freshnessStatus: intelligencePacket?.freshnessStatus ?? "missing",
                 cardCount: intelligencePacket?.cards.length ?? 0,
+                mode: "additive-context",
               },
               timestamp: new Date().toISOString(),
             });
 
-            const textId = "client-project-intelligence-packet";
-            writer.write({ type: "text-start", id: textId });
-            writer.write({
-              type: "text-delta",
-              id: textId,
-              delta: content,
-            });
-            writer.write({ type: "text-end", id: textId });
+            // ADDITIVE PACKET MODE (2026-05-02 fix): instead of short-circuiting
+            // and returning the rendered packet directly, inject it as system
+            // context so the strategist (streamText below) can layer commentary,
+            // recommendations, and follow-ups on top — and still call tools to
+            // fill gaps. See docs/ai-plan/evals/EVAL-SUITE-FIRST-RUN-FINDINGS-2026-05-02.md.
+            const packetContextHeader = intelligencePacket
+              ? `# Current Project Intelligence Packet\n\nA pre-rendered intelligence packet for **${resolvedTarget.slug ?? resolvedTarget.id}** is available below. Use it as your primary evidence. Layer your own analysis, recommendations, and follow-up questions on top. Call additional tools (semanticSearch, getProjectBriefingSnapshot, financial tools, etc.) when the user's question goes beyond what the packet covers or when more recent data would help.`
+              : `# Project Intelligence Packet (Missing)\n\nNo current intelligence packet exists for **${resolvedTarget.slug ?? resolvedTarget.id}**. Acknowledge this briefly, then proceed by calling the appropriate tools (semanticSearch, getProjectBriefingSnapshot, financial tools, etc.) to gather evidence and answer the user.`;
 
-            const responseQuality = scoreResponseQuality({
-              toolTrace,
-              content,
-            });
-            await persistAssistantMessage({
-              supabase,
-              sessionId,
-              userId: user.id,
-              content,
-              toolTrace,
-              memoryUsage,
-              learningUsage,
-              totalUsage: undefined,
-              responseQuality,
-              councilMode,
-              modelId: activeModel,
-              providerDecision,
-              loopDiagnostic: buildLoopDiagnostic({
-                stepStarts: stepStartDiagnostics,
-                steps: stepDiagnostics,
-              }),
-              projectBriefingSnapshot,
-              executiveBriefingRetrieval,
-            });
-
-            await supabase
-              .from("conversations")
-              .update({ last_message_at: new Date().toISOString() })
-              .eq("session_id", sessionId)
-              .eq("user_id", user.id);
+            systemPrompt = `${packetContextHeader}\n\n${packetContent}\n\n---\n\n${systemPrompt}`;
 
             writeStrategistStatus(writer, {
-              stage: "complete",
-              message: "Project intelligence packet complete",
+              stage: "knowledge",
+              message: "Loaded project intelligence packet — synthesizing strategist response",
               status: "success",
             });
-            return;
+            // Fall through to streamText so the model can reason on top of the packet.
           }
         }
 
