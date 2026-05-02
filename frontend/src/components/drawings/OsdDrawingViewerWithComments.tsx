@@ -76,6 +76,7 @@ function ViewerWithCommentState({
   drawingId: _drawingId,
   controlledTool,
   onCommentClick: parentOnCommentClick,
+  onPageNumberChange: parentOnPageNumberChange,
   showCommentPins = true,
   extraOverlays,
   ...viewerProps
@@ -97,12 +98,17 @@ function ViewerWithCommentState({
     [controlledTool, parentOnCommentClick]
   );
 
+  // Critical: depend on the extracted prop, NOT on the rest-spread `viewerProps`
+  // object — the rest spread is a new object literal every render, so including
+  // it in deps gives this callback a fresh identity on every render. The viewer
+  // then sees onPageNumberChange change every render → its useEffect fires →
+  // calls back here → setState → re-render → infinite loop (React #185).
   const handlePageNumberChange = useCallback(
     (page: number, total: number) => {
       setCurrentPage(page);
-      viewerProps.onPageNumberChange?.(page, total);
+      parentOnPageNumberChange?.(page, total);
     },
-    [viewerProps]
+    [parentOnPageNumberChange]
   );
 
   // Filter threads to those with canvas coordinates.
