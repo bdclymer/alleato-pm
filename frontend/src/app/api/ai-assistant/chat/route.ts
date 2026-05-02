@@ -2829,7 +2829,7 @@ export const POST = withApiGuardrails(
             });
           }
 
-          const content = createSourceLookupAnswer({
+          const sourceLookupContext = createSourceLookupAnswer({
             output: sourceLookupOutput,
             userMessage: lastUserContent,
           });
@@ -2843,62 +2843,28 @@ export const POST = withApiGuardrails(
             output: {
               resultCount: sourceLookupOutput?.results?.length ?? 0,
               usedProjectBriefingTemplate: false,
+              mode: "additive-context",
             },
             timestamp: new Date().toISOString(),
           });
 
+          // ADDITIVE SOURCE-LOOKUP MODE (2026-05-02 fix): instead of writing
+          // the prebuilt source dump as the entire response and returning,
+          // inject it as system context and let the strategist (streamText
+          // below) read those sources, extract commitments / issues / decisions,
+          // and synthesize a real answer. The retrieval still happens — only
+          // the synthesis step changes.
+          // See docs/ai-plan/evals/dogfood/2026-05-02T16-13-17-228Z/report.md
+          // case 05-recent-emails for the dogfood failure that surfaced this.
+          const sourceLookupHeader = `# Source Lookup Results\n\nThe user is asking for what was said / what happened in source channels (meetings, Teams, email, documents). I ran a semantic search and pulled the most relevant source rows below. Read them carefully, extract the actual commitments / issues / decisions / sentiment the user is asking about, and synthesize a useful answer with specific quotes or paraphrased points and source citations. Do NOT just list the source previews verbatim — that's what we used to do and it wasn't useful. If the sources don't actually contain what the user asked about, say so honestly.`;
+          systemPrompt = `${sourceLookupHeader}\n\n${sourceLookupContext}\n\n---\n\n${systemPrompt}`;
+
           writeStrategistStatus(writer, {
             stage: "synthesis",
-            message: "Writing source-grounded answer",
-            status: "loading",
-          });
-
-          const textId = "source-lookup-answer";
-          writer.write({ type: "text-start", id: textId });
-          writer.write({
-            type: "text-delta",
-            id: textId,
-            delta: content,
-          });
-          writer.write({ type: "text-end", id: textId });
-
-          const responseQuality = scoreResponseQuality({
-            toolTrace,
-            content,
-          });
-          await persistAssistantMessage({
-            supabase,
-            sessionId,
-            userId: user.id,
-            content,
-            toolTrace,
-            memoryUsage,
-            learningUsage,
-            totalUsage: undefined,
-            responseQuality,
-            councilMode,
-            modelId: activeModel,
-            loopDiagnostic: buildLoopDiagnostic({
-              stepStarts: stepStartDiagnostics,
-              steps: stepDiagnostics,
-            }),
-            projectBriefingSnapshot,
-            executiveBriefingRetrieval,
-            providerDecision,
-          });
-
-          await supabase
-            .from("conversations")
-            .update({ last_message_at: new Date().toISOString() })
-            .eq("session_id", sessionId)
-            .eq("user_id", user.id);
-
-          writeStrategistStatus(writer, {
-            stage: "complete",
-            message: "Source lookup complete",
+            message: "Loaded source records — synthesizing answer",
             status: "success",
           });
-          return;
+          // Fall through to streamText so the strategist can synthesize on top of the sources.
         }
 
         if (isRfiActionRequest(lastUserContent)) {

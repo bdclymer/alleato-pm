@@ -202,6 +202,21 @@
       "minAnswerLength": 80
     },
     {
+      "id": "recent-emails-synthesis",
+      "intent": "source_lookup",
+      "prompt": "What did we hear about in emails this past week? Any commitments or issues?",
+      "expectedToolFamilies": ["communications", "semantic"],
+      "expectedToolNames": ["semanticSearch", "searchEmails"],
+      "mustInclude": ["email"],
+      "mustExclude": [
+        "Best Matching Source Context",
+        "Retrieved 6 source row(s)",
+        "[Source: email outlook_"
+      ],
+      "minAnswerLength": 400,
+      "notes": "Regression case for 2026-05-02: sourceLookupIntentRouter used to dump raw source previews instead of synthesizing. Forbidden phrases are signatures of the old short-circuit response. After the additive fix, the strategist must read sources and extract commitments/issues, not list them verbatim."
+    },
+    {
       "id": "recent-meetings-portfolio",
       "intent": "meeting_query",
       "prompt": "Were there any issues from the meetings in the last couple days?",
