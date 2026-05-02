@@ -57,6 +57,19 @@ function toolNames(metadata: Record<string, unknown>): string[] {
     .filter((tool): tool is string => typeof tool === "string");
 }
 
+function expectIntentPlanner(
+  metadata: Record<string, unknown>,
+  expectedIntents: string[],
+): void {
+  const plannerTrace = toolTrace(metadata).find((trace) => trace.tool === "intentPlanner");
+  expect(plannerTrace, "assistant must plan intent before routing").toBeTruthy();
+
+  const output = asRecord(plannerTrace?.output);
+  expect(expectedIntents).toContain(output.intent);
+  expect(output.responseMode).toEqual(expect.any(String));
+  expect(output.rationale).toEqual(expect.any(String));
+}
+
 async function createConversation(apiContext: APIRequestContext, title: string): Promise<string> {
   const response = await apiContext.post("/api/ai-assistant/conversations", {
     data: { title },
@@ -135,6 +148,10 @@ test.describe("AI assistant intent and tool routing", () => {
 
     expect(report.content).toContain("Preview Only - No RFI Was Created");
     expect(report.content).toContain("Westfield Collective (#43)");
+    expectIntentPlanner(report.metadata, [
+      "change_management_review",
+      "implementation_planning",
+    ]);
     expect(toolNames(report.metadata)).toContain("createRFI");
     expect(toolNames(report.metadata)).toContain("rfiActionIntentRouter");
     expect(asRecord(report.metadata.provider_decision).providerPath).toEqual(
@@ -165,6 +182,7 @@ test.describe("AI assistant intent and tool routing", () => {
     expect(report.content).toContain("I treated this as a source lookup");
     expect(report.content).toContain("Teams DM Conversation");
     expect(report.content).not.toContain("**Hard Facts**");
+    expectIntentPlanner(report.metadata, ["source_lookup"]);
     expect(toolNames(report.metadata)).toContain("semanticSearch");
     expect(toolNames(report.metadata)).toContain("sourceLookupIntentRouter");
     expect(asRecord(report.metadata.response_quality).sourceQuality).toBe("high");
@@ -180,6 +198,7 @@ test.describe("AI assistant intent and tool routing", () => {
     const names = toolNames(report.metadata);
     expect(report.content).toContain("**Hard Facts**");
     expect(report.content).toContain("Westfield Collective");
+    expectIntentPlanner(report.metadata, ["latest_status", "risk_review"]);
     expect(names).toContain("serverBusinessContextPreflight");
     expect(names).toContain("getProjectBriefingSnapshot");
     expect(names).toContain("semanticSearch");

@@ -54,6 +54,12 @@ function inferIntent(traces: ToolTraceItem[]): string | null {
   for (const trace of traces) {
     const intent = toStringValue(trace.input?.intent);
     if (intent) return intent;
+    if (trace.output && typeof trace.output === "object") {
+      const outputIntent = toStringValue(
+        (trace.output as Record<string, unknown>).intent,
+      );
+      if (outputIntent) return outputIntent;
+    }
   }
   return null;
 }

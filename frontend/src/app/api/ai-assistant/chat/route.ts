@@ -2,6 +2,7 @@ import {
   convertToModelMessages,
   createUIMessageStream,
   createUIMessageStreamResponse,
+  generateObject,
   generateText,
   stepCountIs,
   streamText,
@@ -10,6 +11,7 @@ import {
   type ToolSet,
 } from "ai";
 import { after } from "next/server";
+import { z } from "zod";
 
 import {
   hasAppCapability,
@@ -55,6 +57,7 @@ import {
 import {
   classifyAssistantIntent,
   shouldUsePacketFirstIntent,
+  type AssistantIntent,
 } from "@/lib/ai/intent-router";
 import {
   loadCurrentIntelligencePacket,
@@ -220,6 +223,42 @@ type PersistedDataPart = {
   data: unknown;
 };
 
+const INTENT_VALUES = [
+  "target_briefing",
+  "latest_status",
+  "risk_review",
+  "financial_analysis",
+  "change_management_review",
+  "decision_lookup",
+  "task_followup",
+  "source_lookup",
+  "strategy_brainstorm",
+  "implementation_planning",
+  "app_help",
+  "general_conversation",
+] as const satisfies readonly AssistantIntent[];
+
+const intentPlannerSchema = z.object({
+  intent: z.enum(INTENT_VALUES),
+  confidence: z.enum(["high", "medium", "low"]),
+  responseMode: z.enum([
+    "answer_directly",
+    "retrieve_sources",
+    "build_project_packet",
+    "draft_safe_action",
+    "ask_clarifying_question",
+    "explain_app_workflow",
+  ]),
+  requiredTools: z.array(z.string()).max(8),
+  shouldAskClarifyingQuestion: z.boolean(),
+  rationale: z.string().max(400),
+});
+
+type IntentPlannerDecision = z.infer<typeof intentPlannerSchema> & {
+  planner: "model" | "deterministic_fallback";
+  deterministicIntent: AssistantIntent;
+};
+
 function isTimeoutResult<T>(value: T | TimeoutResult): value is TimeoutResult {
   return typeof value === "object" && value !== null && "timedOut" in value;
 }
@@ -245,6 +284,67 @@ function withTimeout<T>(
       },
     );
   });
+}
+
+async function planAssistantIntent(params: {
+  message: string;
+  selectedProjectId?: number;
+  activeModel: string;
+  deterministicIntent: AssistantIntent;
+  sourceSpecificRagKind?: SourceSpecificRagKind;
+}): Promise<IntentPlannerDecision> {
+  const fallback: IntentPlannerDecision = {
+    planner: "deterministic_fallback",
+    deterministicIntent: params.deterministicIntent,
+    intent: params.deterministicIntent,
+    confidence: "low",
+    responseMode:
+      params.deterministicIntent === "source_lookup"
+        ? "retrieve_sources"
+        : shouldUsePacketFirstIntent(params.deterministicIntent)
+          ? "build_project_packet"
+          : params.deterministicIntent === "app_help"
+            ? "explain_app_workflow"
+            : "answer_directly",
+    requiredTools: [],
+    shouldAskClarifyingQuestion: false,
+    rationale: "Model planner unavailable; using deterministic fallback intent.",
+  };
+
+  if (!params.message.trim()) return fallback;
+
+  const result = await withTimeout(
+    generateObject({
+      model: getLanguageModel(params.activeModel),
+      schema: intentPlannerSchema,
+      system: [
+        "You are the intent planner for a construction project-management AI assistant.",
+        "Classify the user's real goal before any response is drafted.",
+        "Choose the route that will make the assistant feel like a thoughtful advisor, not a tool dispatcher.",
+        "If the user asks for exact evidence, messages, Teams, email, transcript, or document context, choose source_lookup.",
+        "If the user asks for current project state, risks, money, changes, decisions, or follow-ups, choose the matching project-intelligence intent.",
+        "If the user asks how to use the app, choose app_help.",
+        "If they ask to create or draft an operational record, choose the domain intent and responseMode draft_safe_action.",
+        "Do not answer the user. Return only the structured planning object.",
+      ].join("\n"),
+      prompt: [
+        `User message: ${params.message}`,
+        `Selected project id: ${params.selectedProjectId ?? "none"}`,
+        `Deterministic fallback intent: ${params.deterministicIntent}`,
+        `Source-specific RAG kind: ${params.sourceSpecificRagKind ?? "none"}`,
+      ].join("\n"),
+    }),
+    7000,
+    "intent planner timed out",
+  );
+
+  if (isTimeoutResult(result)) return fallback;
+
+  return {
+    ...result.object,
+    planner: "model",
+    deterministicIntent: params.deterministicIntent,
+  };
 }
 
 function writeStrategistStatus(
@@ -2449,7 +2549,26 @@ export const POST = withApiGuardrails(
     const actionFollowUpResponse = shouldUseActionFollowUpResponse(lastUserContent);
     const sourceQualityFollowUpResponse = shouldUseSourceQualityFollowUpResponse(lastUserContent);
     const sourceSpecificRagRequest = detectSourceSpecificRagRequest(lastUserContent);
-    const assistantIntent = classifyAssistantIntent(lastUserContent);
+    const deterministicAssistantIntent = classifyAssistantIntent(lastUserContent);
+    const intentPlannerDecision = await planAssistantIntent({
+      message: lastUserContent,
+      selectedProjectId,
+      activeModel,
+      deterministicIntent: deterministicAssistantIntent,
+      sourceSpecificRagKind: sourceSpecificRagRequest?.kind,
+    });
+    const assistantIntent = intentPlannerDecision.intent;
+    toolTrace.push({
+      tool: "intentPlanner",
+      input: {
+        message: lastUserContent,
+        selectedProjectId: selectedProjectId ?? null,
+        deterministicIntent: deterministicAssistantIntent,
+        sourceSpecificRagKind: sourceSpecificRagRequest?.kind ?? null,
+      },
+      output: intentPlannerDecision,
+      timestamp: new Date().toISOString(),
+    });
     const brandonDailyUpdateWidgetRequest = isBrandonDailyUpdateWidgetRequest(lastUserContent);
     const forceBusinessRetrieval =
       shouldForceBusinessRetrieval(lastUserContent) ||
