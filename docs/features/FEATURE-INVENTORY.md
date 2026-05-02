@@ -34,6 +34,44 @@
 23. [Scheduled Jobs (Cron)](#23-scheduled-jobs-cron)
 24. [Pre-Commit Hooks & Code Quality](#24-pre-commit-hooks--code-quality)
 25. [Teams Conversation Intelligence Compiler](#25-teams-conversation-intelligence-compiler)
+26. [Drawings System](#26-drawings-system)
+27. [Live Cursors (Real-Time Presence)](#27-live-cursors-real-time-presence)
+28. [Real-Time Comments (Liveblocks)](#28-real-time-comments-liveblocks)
+29. [Photos & Media Upload](#29-photos--media-upload)
+30. [Scheduling System (Multi-View)](#30-scheduling-system-multi-view)
+31. [Project Directory](#31-project-directory)
+32. [Company Directory (Global)](#32-company-directory-global)
+33. [Punch List](#33-punch-list)
+34. [Daily Log](#34-daily-log)
+35. [Specifications](#35-specifications)
+36. [Documents (Per-Project)](#36-documents-per-project)
+37. [Emails & Email Attachments (Per-Project)](#37-emails--email-attachments-per-project)
+38. [Transmittals](#38-transmittals)
+39. [Project Home / Command Center](#39-project-home--command-center)
+40. [My Work & Subcontractor Portal](#40-my-work--subcontractor-portal)
+41. [Permissions & Access Control System](#41-permissions--access-control-system)
+42. [Project Intelligence Packet Viewer](#42-project-intelligence-packet-viewer)
+43. [Ask Alleato Widget (Global Overlay)](#43-ask-alleato-widget-global-overlay)
+44. [AI Chat Sidebar (Inline)](#44-ai-chat-sidebar-inline)
+45. [AI Conversation History Panel](#45-ai-conversation-history-panel)
+46. [AI Tool Trace Panel](#46-ai-tool-trace-panel)
+47. [AI Intent Router](#47-ai-intent-router)
+48. [AI Provider Routing](#48-ai-provider-routing)
+49. [AI Agent Learning System](#49-ai-agent-learning-system)
+50. [AI Tool Guardrails / Scope Enforcement](#50-ai-tool-guardrails--scope-enforcement)
+51. [AI Web Search (Tavily)](#51-ai-web-search-tavily)
+52. [AI MCP Tool Bridge](#52-ai-mcp-tool-bridge)
+53. [Tavus AI Video Avatar](#53-tavus-ai-video-avatar)
+54. [Welcome Onboarding Flow](#54-welcome-onboarding-flow)
+55. [Microsoft Graph Integration (Outlook + Teams + OneDrive)](#55-microsoft-graph-integration-outlook--teams--onedrive)
+56. [Acumatica Mirror Sync & Outbound Write](#56-acumatica-mirror-sync--outbound-write)
+57. [Guardrails Framework (API + External Calls)](#57-guardrails-framework-api--external-calls)
+58. [Annotation Inbox (Agentation Dev Tool)](#58-annotation-inbox-agentation-dev-tool)
+59. [Procore Reference Panel (Dev Sidebar)](#59-procore-reference-panel-dev-sidebar)
+60. [What's New / Changelog](#60-whats-new--changelog)
+61. [Help Article System](#61-help-article-system)
+62. [Live Component Gallery & Design Lab](#62-live-component-gallery--design-lab)
+63. [Subcontractor Navigation Mode](#63-subcontractor-navigation-mode)
 
 ---
 
@@ -516,3 +554,543 @@
 **Run it:** `/run-teams-compiler` (or `/run-teams-compiler 50` for a larger batch)
 
 **Tables written:** `document_metadata` (overview + project attribution), `tasks`, `insights`, `project_insights`, `document_attribution_candidates`
+
+---
+
+## 26. Drawings System
+
+**What it is:** A complete construction drawings management system — upload, versioning, area/set organization, recycle bin, revisions report, and a full PDF viewer with annotation tools and pinned links to RFIs, punch items, and photos.
+
+**URLs:** `/{projectId}/drawings`, `/drawings/sets`, `/drawings/areas`, `/drawings/recycle-bin`, `/drawings/revisions-report`, `/drawings/viewer/[drawingId]`
+
+| Component | File |
+|-----------|------|
+| Main list | `frontend/src/app/(main)/[projectId]/drawings/page.tsx` |
+| PDF viewer | `frontend/src/components/drawings/DrawingViewer.tsx` |
+| Viewer with comments | `frontend/src/components/drawings/DrawingViewerWithComments.tsx` |
+| Upload dialog | `frontend/src/components/drawings/DrawingUploadDialog.tsx` |
+| Link pin modal | `frontend/src/components/drawings/LinkPinModal.tsx` |
+| Filename parser | `frontend/src/lib/drawings/drawing-identity.ts` |
+| Email subscriptions | `frontend/src/app/api/projects/[projectId]/drawings/subscribe/route.ts` |
+
+**Annotation tools:** pen, highlighter, rectangle, arrow, text, eraser, comment, link (via `react-pdf`)
+
+**Link pins:** Drawings pins can be linked to RFIs, punch items, photos, and new records via `LinkPinModal`.
+
+**Tables:** `drawings`, `drawing_areas`, `drawing_sets`, `drawing_markup_pins`
+
+---
+
+## 27. Live Cursors (Real-Time Presence)
+
+**What it is:** Multiplayer cursor tracking — shows other users' cursor positions in real-time while viewing the same project entity. Uses Supabase Realtime broadcast channels with 50ms throttle. Opt-in per user via localStorage toggle.
+
+| Component | File |
+|-----------|------|
+| Cursor renderer | `frontend/src/components/live-cursors/LiveCursors.tsx` |
+| Lower-level implementation | `frontend/src/components/realtime-cursors.tsx` |
+| Broadcast hook | `frontend/src/hooks/use-realtime-cursors.ts` |
+| Opt-in toggle | `frontend/src/hooks/use-live-cursors-enabled.ts` |
+| Room ID utility | `frontend/src/lib/liveblocks/rooms.ts` |
+
+**Transport:** Supabase Realtime broadcast (room IDs generated via `rooms.ts` but Liveblocks SDK is not used for cursor transport)
+
+---
+
+## 28. Real-Time Comments (Liveblocks)
+
+**What it is:** Entity-scoped comment threads attachable to any of 20 commentable entity types (RFI, submittal, change order, punch item, drawing, schedule task, budget, etc.) via Liveblocks rooms. Accessible from a slide-in sidebar panel in the page header.
+
+| Component | File |
+|-----------|------|
+| Sidebar panel | `frontend/src/components/header/comments-sidebar.tsx` |
+| Thread UI | `frontend/src/components/comments/entity-comments.tsx` |
+| Room ID definitions | `frontend/src/lib/liveblocks/rooms.ts` |
+
+**Room ID format:** `alleato:{entityType}:{entityId}`
+
+**Storage:** Liveblocks-hosted (not Supabase tables)
+
+---
+
+## 29. Photos & Media Upload
+
+**What it is:** Photo management per project with album organization, privacy controls, map pin geotagging, favorites, grid/list view, and upload from device or URL. 20 MB per file limit.
+
+**URL:** `/{projectId}/photos`
+
+| Component | File |
+|-----------|------|
+| Page | `frontend/src/app/(main)/[projectId]/photos/page.tsx` |
+| Upload API | `frontend/src/app/api/projects/[projectId]/photos/upload/route.ts` |
+| Hook | `frontend/src/hooks/use-photos.ts` |
+
+**Tables:** `photos` (album, is_private, is_starred, has_location fields)
+
+---
+
+## 30. Scheduling System (Multi-View)
+
+**What it is:** Full project scheduling tool with 5 view modes: Grid (table), Board (Kanban by status), Schedule (split table + Gantt), Timeline (enhanced Gantt), and Calendar (monthly). Supports task CRUD, hierarchy (indent/outdent), context menu, and import/export.
+
+**URL:** `/{projectId}/schedule`
+
+| Component | File |
+|-----------|------|
+| Page | `frontend/src/app/(main)/[projectId]/schedule/page.tsx` |
+| Gantt chart | `frontend/src/components/scheduling/gantt-chart.tsx` |
+| View switcher | `frontend/src/components/scheduling/schedule-views.tsx` |
+| Task edit modal | `frontend/src/components/scheduling/task-edit-modal.tsx` |
+| Import/export | `frontend/src/components/scheduling/import-export-modal.tsx` |
+| Context menu | `frontend/src/components/scheduling/task-context-menu.tsx` |
+
+**Tables:** `tasks`
+
+---
+
+## 31. Project Directory
+
+**What it is:** Project-scoped directory listing team members with roles, contact info, and company affiliation. Includes inline role assignment dialog.
+
+**URL:** `/{projectId}/directory`
+
+| Component | File |
+|-----------|------|
+| Page | `frontend/src/app/(main)/[projectId]/directory/page.tsx` |
+| Assign member dialog | `frontend/src/components/domain/directory/AssignMemberDialog.tsx` |
+
+**Tables:** `project_directory`, `people`, `companies`
+
+---
+
+## 32. Company Directory (Global)
+
+**What it is:** Company-level directory with 7 tabs: Companies, Clients, Contacts, Vendors, Prospects, Distribution Groups, and Employees. Separate from per-project directory.
+
+**URLs:** `/directory/companies`, `/directory/clients`, `/directory/contacts`, `/directory/vendors`, `/directory/prospects`, `/directory/groups`, `/directory/employees`
+
+**Key files:** `frontend/src/config/directory-tabs.ts`, `frontend/src/hooks/use-global-project-companies.ts`
+
+**Tables:** `companies`, `people`, `vendors`
+
+---
+
+## 33. Punch List
+
+**What it is:** Punch item tracking with status filtering, assignee management, and a `PunchItemService` server-side service class.
+
+**URL:** `/{projectId}/punch-list`
+
+| Component | File |
+|-----------|------|
+| Page | `frontend/src/app/(main)/[projectId]/punch-list/page.tsx` |
+| API | `frontend/src/app/api/projects/[projectId]/punch-items/route.ts` |
+| Service | `frontend/src/services/PunchItemService.ts` |
+| Form fields | `frontend/src/components/domain/punch-items/punch-item-form-fields.tsx` |
+
+**Tables:** `punch_items`
+
+---
+
+## 34. Daily Log
+
+**What it is:** Daily field log with date-ordered entries for field conditions, labor, equipment, weather, and notes.
+
+**URL:** `/{projectId}/daily-log`
+
+| Component | File |
+|-----------|------|
+| Page | `frontend/src/app/(main)/[projectId]/daily-log/page.tsx` |
+| Client | `frontend/src/app/(main)/[projectId]/daily-log/daily-log-client.tsx` |
+
+**Tables:** `daily_logs`
+
+---
+
+## 35. Specifications
+
+**What it is:** Specifications browser per project with bell notification/subscription, archive, download, and revision tracking.
+
+**URL:** `/{projectId}/specifications`
+
+**Tables:** `specifications` (or `document_metadata` filtered by type)
+
+---
+
+## 36. Documents (Per-Project)
+
+**What it is:** Project document management with upload dialog, version tracking, folder hierarchy, and download.
+
+**URL:** `/{projectId}/documents`
+
+| Component | File |
+|-----------|------|
+| Page | `frontend/src/app/(main)/[projectId]/documents/page.tsx` |
+| Client | `frontend/src/app/(main)/[projectId]/documents/documents-client.tsx` |
+| Upload dialog | `frontend/src/features/documents/document-upload-dialog.tsx` |
+| Table config | `frontend/src/features/documents/project-documents-table-config.tsx` |
+| Hook | `frontend/src/hooks/use-documents.ts` |
+
+**Tables:** `documents` or `document_metadata`
+
+---
+
+## 37. Emails & Email Attachments (Per-Project)
+
+**What it is:** Project email management — view, compose, send, and delete emails. Includes an `EmailAttachmentsClient` tab for viewing extracted attachment content with an inline PDF viewer.
+
+**URLs:** `/{projectId}/emails`, `/{projectId}/email-attachments`
+
+| Component | File |
+|-----------|------|
+| Email page | `frontend/src/app/(main)/[projectId]/emails/page.tsx` |
+| Email client | `frontend/src/app/(main)/[projectId]/emails/emails-client.tsx` |
+| Attachments client | `frontend/src/app/(main)/[projectId]/email-attachments/email-attachments-client.tsx` |
+| API | `frontend/src/app/api/projects/[projectId]/emails/route.ts` |
+| Compose dialog | `frontend/src/features/emails/email-compose-dialog.tsx` |
+| Hook | `frontend/src/hooks/use-emails.ts` |
+
+**Tables:** `project_emails`, `email_attachments`
+
+---
+
+## 38. Transmittals
+
+**What it is:** Formal document transmittal records (cover sheets for sending document packages) with delivery method tracking.
+
+**URL:** `/{projectId}/transmittals`
+
+| Component | File |
+|-----------|------|
+| Client | `frontend/src/app/(main)/[projectId]/transmittals/transmittals-client.tsx` |
+| Table config | `frontend/src/features/transmittals/transmittals-table-config.tsx` |
+| Form dialog | `frontend/src/features/transmittals/transmittal-form-dialog.tsx` |
+| Hook | `frontend/src/hooks/use-transmittals.ts` |
+
+**Tables:** `transmittals`
+
+---
+
+## 39. Project Home / Command Center
+
+**What it is:** Per-project dashboard showing KPIs, team roster, open RFIs, pending submittals, recent meetings, budget summary, and active commitments. Includes live cursors.
+
+**URL:** `/{projectId}/home`
+
+**Key files:**
+- `frontend/src/app/(main)/[projectId]/home/page.tsx`
+- `frontend/src/app/(main)/[projectId]/home/project-command-center.tsx`
+
+---
+
+## 40. My Work & Subcontractor Portal
+
+**What it is:** Two connected features for subcontractor access. "My Work" shows the subcontractor's SOV submission status, assigned open RFIs, submittals, and invoice submission link. The standalone invoice submission form is a schedule-of-values-based flow for submitting pay applications.
+
+**URLs:** `/{projectId}/my-work`, `/{projectId}/invoicing/subcontractor/new`
+
+**Tables:** `commitment_ssov_submissions`, `rfis`, `submittals`
+
+---
+
+## 41. Permissions & Access Control System
+
+**What it is:** Granular role-based permission system with templates (None/Read/Write/Admin per module), per-user overrides, and 8 granular capability flags (approve_change_orders, approve_invoices, etc.). Admin UI for setting permissions per project member with full audit log.
+
+**URLs:** `/{projectId}/admin` (Members + Audit Log tabs), `/{projectId}/user-management`
+
+| Component | File |
+|-----------|------|
+| Types + pure helpers | `frontend/src/lib/permissions-shared.ts` |
+| Server-side helpers | `frontend/src/lib/permissions.ts` |
+| Hook | `frontend/src/hooks/use-project-permissions.ts` |
+| Admin page | `frontend/src/app/(main)/[projectId]/admin/page.tsx` |
+| Members tab | `frontend/src/app/(main)/[projectId]/admin/_components/members-tab.tsx` |
+| Audit log tab | `frontend/src/app/(main)/[projectId]/admin/_components/audit-log-tab.tsx` |
+| Permission gate component | `frontend/src/components/domain/permissions/PermissionGate.tsx` |
+| API | `frontend/src/app/api/projects/[projectId]/permissions/route.ts` |
+| Audit API | `frontend/src/app/api/projects/[projectId]/permissions/audit/route.ts` |
+
+**Tables:** `permission_templates`, `project_member_permissions`, `permission_audit_log`
+
+---
+
+## 42. Project Intelligence Packet Viewer
+
+**What it is:** Per-project page rendering an AI-compiled intelligence packet: KPI summary, confidence ratings, freshness status (fresh/stale/partial/failed), and typed insight cards (risk, decision, blocker, financial_exposure, schedule_risk, etc.) with evidence citations.
+
+**URL:** `/{projectId}/intelligence`
+
+| Component | File |
+|-----------|------|
+| Page | `frontend/src/app/(main)/[projectId]/intelligence/page.tsx` |
+| Packet service | `frontend/src/lib/ai/intelligence/packet-service.ts` |
+| Advisor synthesis | `frontend/src/lib/ai/intelligence/advisor-synthesis.ts` |
+| Types | `frontend/src/lib/ai/intelligence/types.ts` |
+
+**Tables:** `intelligence_targets`, `intelligence_packets`, `intelligence_packet_cards`, `insight_cards`, `insight_card_evidence`
+
+---
+
+## 43. Ask Alleato Widget (Global Overlay)
+
+**What it is:** A global floating panel (keyboard shortcut `⌘I`) with two tabs: "Feedback" (submits admin feedback) and "Alleato AI" (quick-access chat). Rendered in root layout, hidden on auth pages.
+
+| Component | File |
+|-----------|------|
+| Root container | `frontend/src/components/ask-alleato/AskAlleatoRoot.tsx` |
+| Panel | `frontend/src/components/ask-alleato/AskAlleatoPanel.tsx` |
+| Pill trigger | `frontend/src/components/ask-alleato/AskAlleatoPill.tsx` |
+| AI tab | `frontend/src/components/ask-alleato/tabs/AskAITab.tsx` |
+| Feedback tab | `frontend/src/components/ask-alleato/tabs/FeedbackTab.tsx` |
+
+---
+
+## 44. AI Chat Sidebar (Inline)
+
+**What it is:** A collapsible right-side chat panel embedded inside the main app layout — not the full `/ai-assistant` page. Uses the same `/api/ai-assistant/chat` endpoint. Toggled via a BrainCircuit icon in the header.
+
+| Component | File |
+|-----------|------|
+| Sidebar component | `frontend/src/components/ai-assistant/ai-chat-sidebar.tsx` |
+| Zustand store | `frontend/src/lib/stores/ai-chat-sidebar-store.ts` |
+
+---
+
+## 45. AI Conversation History Panel
+
+**What it is:** Left-side conversation history panel in the full `/ai-assistant` page. Lists past conversations, supports rename, delete, and new conversation creation.
+
+| Component | File |
+|-----------|------|
+| Sidebar | `frontend/src/components/ai-assistant/conversation-sidebar.tsx` |
+| Hook | `frontend/src/hooks/use-rag-conversations.ts` |
+
+**Tables:** `rag_conversations`
+
+---
+
+## 46. AI Tool Trace Panel
+
+**What it is:** Collapsible debug panel rendered below AI messages in the chat UI showing the full tool call trace: tool name, input, output, error, and timestamp for each step.
+
+**File:** `frontend/src/components/ai-assistant/trace-panel.tsx`
+
+---
+
+## 47. AI Intent Router
+
+**What it is:** Classifies incoming chat messages into one of 12 intent categories (target_briefing, financial_analysis, risk_review, source_lookup, app_help, general_conversation, etc.) and routes them to the packet-first or tool-first code path.
+
+**File:** `frontend/src/lib/ai/intent-router.ts`
+
+---
+
+## 48. AI Provider Routing
+
+**What it is:** Configurable decision layer that determines which AI provider path to use for tool-calling: `ai_sdk_gateway_openai`, `ai_sdk_direct_openai`, or `raw_openai`. Supports env-variable overrides and a kill-switch to disable streaming tools.
+
+**File:** `frontend/src/lib/ai/provider-routing.ts`
+
+---
+
+## 49. AI Agent Learning System
+
+**What it is:** Stores "learnings" from thumbs-down feedback, admin feedback, and eval failures as vectorized prevention prompts. Injects semantically relevant learnings into the system context at the start of each session. Tracks usage outcomes to measure effectiveness.
+
+**File:** `frontend/src/lib/ai/services/agent-learning-service.ts`
+
+**Tables:** `agent_learnings`, `agent_learning_usages`
+
+---
+
+## 50. AI Tool Guardrails / Scope Enforcement
+
+**What it is:** Security layer for all AI tools. Loads the user's allowed project and company IDs, enforces project access, and applies pinned project context so tools never return data outside the user's permission scope.
+
+**File:** `frontend/src/lib/ai/tools/guardrails.ts`
+
+---
+
+## 51. AI Web Search (Tavily)
+
+**What it is:** Real-time web search capability available to the VP BD agent and Strategist for competitive intelligence, industry trends, and questions requiring current external knowledge.
+
+**File:** `frontend/src/lib/ai/tools/web-search.ts`
+
+**Env:** `TAVILY_API_KEY`
+
+---
+
+## 52. AI MCP Tool Bridge
+
+**What it is:** Dynamically loads tool sets from external MCP servers configured via `AI_ASSISTANT_MCP_SERVERS` env variable. Filters out dangerous mutation tools by pattern matching — read-only tools are allowed; write/delete tools are blocked.
+
+**File:** `frontend/src/lib/ai/tools/mcp-tools.ts`
+
+---
+
+## 53. Tavus AI Video Avatar
+
+**What it is:** Live video conversation with a Tavus AI persona ("Ava"). Creates a Tavus conversation via API and opens the video room in a new tab.
+
+**URL:** `/ai-avatar`
+
+| Component | File |
+|-----------|------|
+| Page | `frontend/src/app/(main)/ai-avatar/page.tsx` |
+| Avatar component | `frontend/src/components/ai-assistant/tavus-avatar-page.tsx` |
+| API | `frontend/src/app/api/ai-assistant/avatar/conversation/route.ts` |
+
+**Env:** `TAVUS_API_KEY`, `TAVUS_PERSONA_ID`, `TAVUS_REPLICA_ID`
+
+---
+
+## 54. Welcome Onboarding Flow
+
+**What it is:** Multi-step modal dialog auto-shown on first visit (localStorage-gated, suppressed for subcontractors). Shows momentum stats and mission statement in two steps: IntroFeedbackStep and MissionStep.
+
+| Component | File |
+|-----------|------|
+| Container | `frontend/src/components/onboarding/WelcomeOnboarding.tsx` |
+| Step 1 | `frontend/src/components/onboarding/steps/IntroFeedbackStep.tsx` |
+| Step 2 | `frontend/src/components/onboarding/steps/MissionStep.tsx` |
+| Copy | `frontend/src/lib/onboarding/copy.ts` |
+
+---
+
+## 55. Microsoft Graph Integration (Outlook + Teams + OneDrive)
+
+**What it is:** Python backend service that syncs emails (with attachment extraction), Teams channel messages and DM chats, and OneDrive/SharePoint files into the RAG pipeline. Uses delta token-based incremental sync and auto-assigns documents to projects via `ProjectAssigner`.
+
+| Component | File |
+|-----------|------|
+| OAuth2 client | `backend/src/services/integrations/microsoft_graph/client.py` |
+| Sync orchestrator | `backend/src/services/integrations/microsoft_graph/sync.py` |
+| Outlook ingestion | `backend/src/services/integrations/microsoft_graph/outlook.py` |
+| Teams ingestion | `backend/src/services/integrations/microsoft_graph/teams.py` |
+| OneDrive ingestion | `backend/src/services/integrations/microsoft_graph/onedrive.py` |
+| Chunking + embedding | `backend/src/services/integrations/microsoft_graph/embed.py` |
+| Project inference | `backend/src/services/integrations/microsoft_graph/project_inference.py` |
+| Project assigner | `backend/src/services/ingestion/project_assignment.py` |
+
+**Env:** `MICROSOFT_CLIENT_ID`, `MICROSOFT_CLIENT_SECRET`, `MICROSOFT_TENANT_ID`, `COMPANY_EMAIL_DOMAINS`
+
+**Tables:** `project_emails`, `email_attachments`, `document_metadata`, `document_chunks`, `graph_sync_state`
+
+**Note:** Teams DM ingestion feeds the Teams Compiler (item #25). Emails feed the Emails per-project view (item #37).
+
+---
+
+## 56. Acumatica Mirror Sync & Outbound Write
+
+**What it is:** Full two-directional Acumatica ERP sync. Inbound: cron-scheduled mirror that pulls vendors, customers, invoices, payments, bills, purchase orders, subcontracts, and project budgets into `acumatica_*` tables (incremental via `LastModifiedDateTime`). Outbound: projects vendors/AR data back into Supabase for use by the rest of the app.
+
+**Note:** The AI tools for Acumatica are documented in item #6. This entry covers the sync engine.
+
+| Component | File |
+|-----------|------|
+| REST client | `frontend/src/lib/acumatica/client.ts` |
+| Mirror sync engine | `frontend/src/lib/acumatica/mirror-sync.ts` |
+| Projection layer | `frontend/src/lib/acumatica/sync-service.ts` |
+| Cron endpoint | `frontend/src/app/api/cron/acumatica-sync/route.ts` |
+| Sync log viewer | `frontend/src/app/(admin)/acumatica-sync-logs/page.tsx` |
+
+**Tables:** `acumatica_*` mirror tables (11+), `acumatica_sync_state`, `acumatica_outbound_audit`
+
+**Critical:** Never use OData `$filter` — causes HTTP 500. Filter in-memory. Only safe OData params: `$select`, `$top`, `$expand`.
+
+---
+
+## 57. Guardrails Framework (API + External Calls)
+
+**What it is:** Shared wrapper system for all API routes and external HTTP calls. `withApiGuardrails` standardizes error envelopes, request ID propagation, and observability. `fetchWithGuardrails` adds timeout, retry, and structured error output to all outbound HTTP calls.
+
+| Component | File |
+|-----------|------|
+| API wrapper | `frontend/src/lib/guardrails/api.ts` |
+| Error class | `frontend/src/lib/guardrails/errors.ts` |
+| Error catalog | `frontend/src/lib/guardrails/error-catalog.ts` |
+| Observability | `frontend/src/lib/guardrails/observability.ts` |
+| Fetch with policy | `frontend/src/lib/guardrails/dependency.ts` |
+| Public API | `frontend/src/lib/fetch-with-guardrails.ts` |
+| Auth guard | `frontend/src/lib/supabase/auth-guard.ts` |
+
+---
+
+## 58. Annotation Inbox (Agentation Dev Tool)
+
+**What it is:** Admin inbox for dev-time visual annotations captured by the `agentation` toolbar widget. Annotations can be dispatched to AI agents (Codex/Claude Code) with verification checklists and comment threads.
+
+**URL:** `/annotation-inbox`
+
+| Component | File |
+|-----------|------|
+| Inbox page | `frontend/src/app/(admin)/annotation-inbox/page.tsx` |
+| Webhook receiver | `frontend/src/app/api/agentation/route.ts` |
+| Toolbar widget | `frontend/src/components/dev/UnifiedFeedbackWidget.tsx` |
+| Theme sync | `frontend/src/components/dev/AgentationThemeSync.tsx` |
+| Dev auto-fill | `frontend/src/components/dev/DevAutoFillForms.tsx` |
+
+**Tables:** `agentation_annotations`, `agentation_annotation_comments`
+
+---
+
+## 59. Procore Reference Panel (Dev Sidebar)
+
+**What it is:** Dev-only slide-in panel accessible from any page showing Procore screenshots, specs, schema, gaps analysis, feedback, debug info, annotations, and comments for the current tool. Used during parity development.
+
+| Component | File |
+|-----------|------|
+| Panel | `frontend/src/components/header/procore-reference-panel.tsx` |
+| Tab components | `frontend/src/components/dev-panel/` (AnnotationsTab, ChatTab, CommentsTab, DebugTab, FeedbackTab, GapsTab, SchemaTab, ScreenshotsTab, SpecTab) |
+| Store | `frontend/src/lib/stores/procore-panel-store.ts` |
+
+---
+
+## 60. What's New / Changelog
+
+**What it is:** Searchable, filterable release notes page with categorized entries (new/improved/fixed/coming-soon) across 7 areas: ai, financial, operations, ui, infrastructure, integrations, security.
+
+**URL:** `/updates`
+
+**File:** `frontend/src/app/(admin)/updates/page.tsx`
+
+---
+
+## 61. Help Article System
+
+**What it is:** Controlled help documentation backed by Markdown files in `docs/help/articles/`. Articles have frontmatter with `title`, `description`, `audience` (internal/client/subcontractor/admin), and `visibility` (draft/published/internal/archived). Searchable by the AI's app-help tool.
+
+| Component | File |
+|-----------|------|
+| Article loader | `frontend/src/lib/help-articles.ts` |
+| Visibility policy | `frontend/src/lib/help-visibility.ts` |
+| Actionable shortcuts | `frontend/src/lib/help-actions.ts` |
+| AI tool | `frontend/src/lib/ai/tools/app-help-tools.ts` |
+| Article files | `docs/help/articles/` |
+
+---
+
+## 62. Live Component Gallery & Design Lab
+
+**What it is:** Three dev/admin pages for component exploration. `/design` is a live interactive component gallery with 20+ sections. `/design-ideas` is a design exploration sandbox with morphing dialogs, animated lists, marquee, motion tabs, and text effects. `/motion` hosts advanced motion component demos.
+
+**URLs:** `/design`, `/design-ideas`, `/motion`
+
+| Component | File |
+|-----------|------|
+| Gallery | `frontend/src/app/(admin)/design/page.tsx` |
+| Design ideas | `frontend/src/app/(admin)/design-ideas/page.tsx` |
+| Motion demos | `frontend/src/app/(admin)/motion/page.tsx` |
+| Motion components | `frontend/src/components/motion/` |
+
+---
+
+## 63. Subcontractor Navigation Mode
+
+**What it is:** A distinct sidebar navigation mode that activates when `user_type = 'subcontractor'`. Replaces the full Financial/Operations sidebar with a simplified group showing only: My Work, My Schedule of Values, Submit Invoice, RFIs, Submittals, and Documents.
+
+**Key files:**
+- `frontend/src/lib/navigation-config.ts` — `subcontractorTools` array, `subcontractorSidebarGroup`
+- `frontend/src/components/app-sidebar.tsx`
