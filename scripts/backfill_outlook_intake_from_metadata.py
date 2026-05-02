@@ -220,6 +220,30 @@ def locate_message(graph: GraphClient, mailboxes: list[str], message_id: str) ->
     return None
 
 
+def candidate_mailboxes(doc: dict[str, Any], configured_mailboxes: list[str]) -> list[str]:
+    source_metadata = doc.get("source_metadata") or {}
+    if not isinstance(source_metadata, dict):
+        source_metadata = {}
+
+    preferred = [
+        source_metadata.get("mailbox_user_id"),
+        source_metadata.get("user_email"),
+        source_metadata.get("mailbox"),
+    ]
+    ordered = [str(mailbox).strip() for mailbox in preferred if str(mailbox or "").strip()]
+    ordered.extend(configured_mailboxes)
+
+    seen: set[str] = set()
+    result: list[str] = []
+    for mailbox in ordered:
+        normalized = mailbox.lower()
+        if normalized in seen:
+            continue
+        seen.add(normalized)
+        result.append(mailbox)
+    return result
+
+
 def graph_recipients(message: dict[str, Any], key: str) -> list[str] | None:
     recipients = []
     for row in message.get(key, []) or []:
@@ -456,6 +480,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument("--no-attachments", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--progress-every", type=int, default=10)
+    parser.add_argument("--commit-each-email", action="store_true")
     return parser.parse_args()
 
 
@@ -491,7 +517,8 @@ def main() -> int:
                   content,
                   date,
                   created_at,
-                  source_item_id
+                  source_item_id,
+                  source_metadata
                 from document_metadata
                 where project_id = %s
                   and source = 'microsoft_graph'
@@ -505,7 +532,7 @@ def main() -> int:
 
             for doc in docs:
                 message_id = graph_message_id(str(doc["id"]), doc.get("source_item_id"))
-                located_message = locate_message(graph, mailboxes, message_id)
+                located_message = locate_message(graph, candidate_mailboxes(doc, mailboxes), message_id)
                 if located_message:
                     located += 1
                     mailbox = located_message.mailbox
@@ -549,6 +576,22 @@ def main() -> int:
                             attachments_written += 1
                 except Exception as exc:
                     attachment_errors.append(f"{message_id}: {exc}")
+
+                if args.progress_every and promoted % args.progress_every == 0:
+                    print(
+                        {
+                            "project_id": args.project_id,
+                            "progress": promoted,
+                            "total": len(docs),
+                            "graph_messages_located": located,
+                            "attachments_written": attachments_written,
+                            "attachment_errors": len(attachment_errors),
+                        },
+                        flush=True,
+                    )
+
+                if args.commit_each_email and not args.dry_run:
+                    conn.commit()
 
         if args.dry_run:
             conn.rollback()
