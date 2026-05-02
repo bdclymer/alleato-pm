@@ -42,6 +42,7 @@ interface Member {
   email: string | null;
   company_name: string | null;
   permission_level: string;
+  permission_template_id: string | null;
   template_name: string | null;
 }
 
@@ -199,7 +200,7 @@ function MemberRow({
               Permission template
             </span>
             <Select
-              value={templates.find((t) => t.name === member.template_name)?.id ?? ""}
+              value={member.permission_template_id ?? ""}
               onValueChange={onAssignTemplate}
             >
               <SelectTrigger className="w-56 h-8 text-sm">

@@ -46,6 +46,7 @@ describe("Directory permissions route", () => {
             company: { name: "Acme" },
           },
           permission_template: {
+            id: "tpl-owner",
             name: "Owner",
             rules_json: { directory: ["admin"] },
           },
@@ -60,6 +61,7 @@ describe("Directory permissions route", () => {
             email: "bob@example.com",
           },
           permission_template: {
+            id: "tpl-viewer",
             name: "Viewer",
             rules_json: { directory: ["read"] },
           },
@@ -108,6 +110,111 @@ describe("Directory permissions route", () => {
       expect(result.person_id).toBe("person-2");
       expect(result.permission_level).toBe("standard");
       expect(result.has_explicit_permission).toBe(true);
+      expect(result.permission_template_id).toBe("tpl-viewer");
+      expect(result.template_name).toBe("Viewer");
+    });
+
+    it("returns permission_template_id so the members UI can match by ID, not by name", async () => {
+      // Regression: previously the dropdown matched templates by template_name,
+      // which silently broke when two templates shared a name or one was renamed.
+      // The API must always expose the template's UUID alongside its name.
+      const memberships = [
+        {
+          id: "m-1",
+          person_id: "person-1",
+          person: {
+            id: "person-1",
+            first_name: "Alice",
+            last_name: "Baker",
+            email: "alice@example.com",
+            company: { name: "Acme" },
+          },
+          permission_template: {
+            id: "tpl-owner",
+            name: "Owner",
+            rules_json: { directory: ["admin"] },
+          },
+        },
+      ];
+
+      const membershipQuery = {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        then: jest.fn((resolve: (value: unknown) => void) =>
+          resolve({ data: memberships, error: null }),
+        ),
+      };
+      const permsQuery = {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        then: jest.fn((resolve: (value: unknown) => void) =>
+          resolve({ data: [], error: null }),
+        ),
+      };
+      const supabase = {
+        from: jest.fn((table: string) =>
+          table === "project_directory_memberships" ? membershipQuery : permsQuery,
+        ),
+      };
+      createServiceClientMock.mockReturnValue(supabase);
+
+      const response = await GET(
+        new NextRequest("http://localhost/api/projects/42/directory/permissions"),
+        { params: Promise.resolve({ projectId: "42" }) },
+      );
+
+      const json = await response.json();
+      expect(json.data[0]).toMatchObject({
+        person_id: "person-1",
+        permission_template_id: "tpl-owner",
+        template_name: "Owner",
+      });
+    });
+
+    it("returns null permission_template_id when the member has no template", async () => {
+      const memberships = [
+        {
+          id: "m-3",
+          person_id: "person-3",
+          person: {
+            id: "person-3",
+            first_name: "Carol",
+            last_name: "Doe",
+            email: "carol@example.com",
+          },
+          permission_template: null,
+        },
+      ];
+
+      const membershipQuery = {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        then: jest.fn((resolve: (value: unknown) => void) =>
+          resolve({ data: memberships, error: null }),
+        ),
+      };
+      const permsQuery = {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        then: jest.fn((resolve: (value: unknown) => void) =>
+          resolve({ data: [], error: null }),
+        ),
+      };
+      const supabase = {
+        from: jest.fn((table: string) =>
+          table === "project_directory_memberships" ? membershipQuery : permsQuery,
+        ),
+      };
+      createServiceClientMock.mockReturnValue(supabase);
+
+      const response = await GET(
+        new NextRequest("http://localhost/api/projects/42/directory/permissions"),
+        { params: Promise.resolve({ projectId: "42" }) },
+      );
+
+      const json = await response.json();
+      expect(json.data[0].permission_template_id).toBeNull();
+      expect(json.data[0].template_name).toBeNull();
     });
   });
 
