@@ -36,6 +36,16 @@ jobs:
           GUARDRAIL_BASE_REF: origin/${{ github.base_ref }}
         run: pnpm --dir frontend run quality:changed
 
+      - name: Run API smoke contracts (PR gate)
+        env:
+          API_SMOKE_BASE_URL: ${{ secrets.API_SMOKE_BASE_URL }}
+        run: |
+          if [[ -z "${API_SMOKE_BASE_URL}" ]]; then
+            echo "API_SMOKE_BASE_URL not set — skipping smoke (set secret to enable)"
+            exit 0
+          fi
+          node scripts/api-smoke-contracts.mjs
+
   predeploy-gate:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest

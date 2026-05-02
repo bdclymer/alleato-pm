@@ -193,6 +193,12 @@ const ENDPOINTS = [
   ["GET", `/api/projects/${PROJECT_ID}/transmittals`, "Transmittals", [200, 401]],
   ["GET", `/api/projects/${PROJECT_ID}/emails`, "Emails", [200, 401]],
 
+  // Entity Links (cross-entity relationships — added by entity-relationships feature)
+  ["GET", `/api/projects/${PROJECT_ID}/entity-links`, "Entity links list", [200, 401]],
+  ["GET", `/api/projects/${PROJECT_ID}/entity-links/${FAKE_UUID}`, "Entity link detail (fake id)", [200, 401, 404]],
+  ["POST", `/api/projects/${PROJECT_ID}/entity-links`, "Entity link create (auth check)", [400, 401]],
+  ["DELETE", `/api/projects/${PROJECT_ID}/entity-links/${FAKE_UUID}`, "Entity link delete (auth check)", [401]],
+
   // Punch Items
   ["GET", `/api/projects/${PROJECT_ID}/punch-items`, "Punch items", [200, 401]],
   ["POST", `/api/projects/${PROJECT_ID}/punch-items`, "Punch items create (auth check)", [400, 401]],

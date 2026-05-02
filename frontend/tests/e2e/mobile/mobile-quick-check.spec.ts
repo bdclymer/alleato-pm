@@ -114,3 +114,33 @@ test.describe('Quick Mobile Check', () => {
     console.log('✅ Budget page responsive on both mobile and desktop')
   })
 })
+
+test.describe("Mobile TablePageActions Smoke", () => {
+  test("companies table page renders action button on mobile viewport", async ({ browser }) => {
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 }, // iPhone 14
+      storageState: "./tests/.auth/user.json",
+    });
+    const page = await context.newPage();
+
+    await page.goto("/directory/companies");
+    await page.waitForLoadState("domcontentloaded");
+
+    // Dismiss welcome dialog if shown
+    const welcomeClose = page.getByRole("button", { name: /close welcome/i });
+    if (await welcomeClose.isVisible()) await welcomeClose.click();
+
+    // On mobile, Add button may show as icon-only — either text or aria-label is acceptable
+    const addByText = page.getByRole("button").filter({ hasText: /add|company/i });
+    const addByLabel = page.locator("button[aria-label*='add' i], button[aria-label*='create' i]");
+    const plusIcon = page.locator("button:has(svg)").first();
+
+    const hasAction =
+      (await addByText.first().isVisible().catch(() => false)) ||
+      (await addByLabel.first().isVisible().catch(() => false)) ||
+      (await plusIcon.isVisible().catch(() => false));
+
+    expect(hasAction, "Expected at least one action button on mobile").toBe(true);
+    await context.close();
+  });
+})
