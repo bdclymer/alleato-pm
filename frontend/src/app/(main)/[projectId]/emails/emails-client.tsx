@@ -2,9 +2,8 @@
 
 import * as React from "react";
 import type { ReactElement } from "react";
-import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Mail, Paperclip, Plus } from "lucide-react";
+import { Mail, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -34,6 +33,7 @@ import {
   renderEmailRowActions,
 } from "@/features/emails/emails-table-config";
 import { EmailComposeDialog } from "@/features/emails/email-compose-dialog";
+import { EmailAttachmentsClient } from "../email-attachments/email-attachments-client";
 
 const EMPTY_FILTERS: Record<string, FilterValue> = {
   status: undefined,
@@ -49,6 +49,15 @@ export function EmailsClient({ projectId }: EmailsClientProps): ReactElement {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const activeTab = searchParams.get("tab") === "attachments" ? "attachments" : "emails";
+  const tabs = [
+    { label: "Emails", href: `/${projectId}/emails`, isActive: activeTab === "emails" },
+    {
+      label: "Attachments",
+      href: `/${projectId}/emails?tab=attachments`,
+      isActive: activeTab === "attachments",
+    },
+  ];
 
   const initialStatus = searchParams.get("status") ?? "";
   const initialFilters: FilterState = {
@@ -280,33 +289,30 @@ export function EmailsClient({ projectId }: EmailsClientProps): ReactElement {
 
   const isFiltered = Boolean(tableState.searchInput) || Boolean(activeFilters.status);
 
+  if (activeTab === "attachments") {
+    return <EmailAttachmentsClient projectId={projectId} title="Emails" tabs={tabs} />;
+  }
+
   return (
     <>
       <UnifiedTablePage
         header={{
           title: "Emails",
           actions: (
-            <>
-              <Button variant="outline" size="sm" asChild>
-                <Link href={`/${projectId}/email-attachments`}>
-                  <Paperclip />
-                  Attachments
-                </Link>
-              </Button>
-              <Button
-                size="sm"
-                onClick={() => {
-                  setEditingEmail(null);
-                  setComposeOpen(true);
-                }}
-                aria-label="Compose new email"
-              >
-                <Plus />
-                Compose
-              </Button>
-            </>
+            <Button
+              size="sm"
+              onClick={() => {
+                setEditingEmail(null);
+                setComposeOpen(true);
+              }}
+              aria-label="Compose new email"
+            >
+              <Plus />
+              Compose
+            </Button>
           ),
         }}
+        tabs={tabs}
         layout={{
           fullBleedTable: false,
         }}

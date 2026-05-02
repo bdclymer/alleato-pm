@@ -4,7 +4,8 @@ import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
 interface RouteParams {
-  params: { projectId: string; attachmentId: string };
+  projectId: string;
+  attachmentId: string;
 }
 
 interface AttachmentDownloadRow {
@@ -75,12 +76,16 @@ async function assertAdminAccess(where: string) {
   return supabase;
 }
 
-export const GET = withApiGuardrails(
+export const GET = withApiGuardrails<RouteParams>(
   "projects/[projectId]/email-attachments/[attachmentId]/download#GET",
-  async ({ params }: RouteParams) => {
+  async ({ request, params }) => {
     const { projectId, attachmentId } = params;
     const projectIdNumber = Number.parseInt(projectId, 10);
     const attachmentIdNumber = Number.parseInt(attachmentId, 10);
+    const disposition =
+      request.nextUrl.searchParams.get("disposition") === "inline"
+        ? "inline"
+        : "attachment";
 
     if (!Number.isInteger(projectIdNumber) || !Number.isInteger(attachmentIdNumber)) {
       throw new GuardrailError({
@@ -138,7 +143,7 @@ export const GET = withApiGuardrails(
       headers: {
         "Content-Type": attachment.content_type || "application/octet-stream",
         "Content-Length": String(fileBuffer.byteLength),
-        "Content-Disposition": `attachment; filename="${attachmentFilename(attachment.file_name)}"`,
+        "Content-Disposition": `${disposition}; filename="${attachmentFilename(attachment.file_name)}"`,
       },
     });
   },
