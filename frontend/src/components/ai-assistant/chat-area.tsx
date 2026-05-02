@@ -109,7 +109,11 @@ import {
 import type { DynamicToolUIPart } from "ai";
 import { toast } from "sonner";
 import { WelcomeScreen } from "./welcome-screen";
-import { TracePanel, type ToolTraceItem } from "./trace-panel";
+import {
+  TracePanel,
+  type AssistantTraceDiagnostics,
+  type ToolTraceItem,
+} from "./trace-panel";
 import { SourceCitations } from "./source-citations";
 import { CrossSourceTimeline } from "./cross-source-timeline";
 import { formatStructuredMeetingList } from "./chat-formatting";
@@ -986,6 +990,7 @@ interface ChatAreaProps {
   sourcesByMessageId?: Record<string, unknown[]>;
   memoryUsageByMessageId?: Record<string, MemoryUsage>;
   responseQualityByMessageId?: Record<string, ResponseQuality>;
+  traceDiagnosticsByMessageId?: Record<string, AssistantTraceDiagnostics>;
   liveStatus?: StrategistLiveStatus | null;
   isLoadingMessages: boolean;
   isStreaming: boolean;
@@ -1009,6 +1014,7 @@ export function ChatArea({
   sourcesByMessageId = {},
   memoryUsageByMessageId = {},
   responseQualityByMessageId = {},
+  traceDiagnosticsByMessageId = {},
   liveStatus,
   isLoadingMessages,
   isStreaming,
@@ -1415,7 +1421,7 @@ export function ChatArea({
       isLoading={isStreaming}
       onSubmit={handleSubmit}
       className={cn(
-        "overflow-hidden rounded-[1.75rem] border-0 bg-background px-4 py-4 shadow-md ring-1 ring-border/70 transition-all focus-within:ring-2 focus-within:ring-primary/15 sm:rounded-[2rem] sm:px-5",
+        "overflow-hidden rounded-[1.75rem] border-0 bg-background px-4 py-4 shadow-sm ring-1 ring-border/70 transition-all focus-within:ring-2 focus-within:ring-primary/15 sm:rounded-[2rem] sm:px-5",
         hasMessages && "rounded-[2rem]",
       )}
     >
@@ -1714,6 +1720,7 @@ export function ChatArea({
                 const persistedSources = sourcesByMessageId[msg.id] ?? [];
                 const memoryUsage = memoryUsageByMessageId[msg.id];
                 const responseQuality = responseQualityByMessageId[msg.id];
+                const traceDiagnostics = traceDiagnosticsByMessageId[msg.id];
                 const isLastMessage = msgIndex === messages.length - 1;
 
                 // Show tool-only assistant messages with live tool call display
@@ -1905,10 +1912,12 @@ export function ChatArea({
                           )}
 
                           {/* Persisted tool traces (historical messages) */}
-                          {toolParts.length === 0 &&
-                            persistedTraces.length > 0 && (
-                              <TracePanel traces={persistedTraces} />
-                            )}
+                          {toolParts.length === 0 && (
+                            <TracePanel
+                              traces={persistedTraces}
+                              diagnostics={traceDiagnostics}
+                            />
+                          )}
 
                           {/* Source citations */}
                           {persistedSources.length > 0 && (

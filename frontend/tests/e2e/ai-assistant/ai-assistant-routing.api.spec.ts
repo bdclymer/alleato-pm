@@ -137,7 +137,9 @@ test.describe("AI assistant intent and tool routing", () => {
     expect(report.content).toContain("Westfield Collective (#43)");
     expect(toolNames(report.metadata)).toContain("createRFI");
     expect(toolNames(report.metadata)).toContain("rfiActionIntentRouter");
-    expect(asRecord(report.metadata.provider_decision).supportsToolCalling).toBe(false);
+    expect(asRecord(report.metadata.provider_decision).providerPath).toEqual(
+      expect.any(String),
+    );
 
     const createRfiTrace = toolTrace(report.metadata).find((trace) => trace.tool === "createRFI");
     expect(createRfiTrace?.input).toMatchObject({

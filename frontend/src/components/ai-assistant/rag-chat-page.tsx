@@ -21,7 +21,7 @@ import {
 } from "@/lib/ai/assistant-models";
 import { ConversationSidebar } from "./conversation-sidebar";
 import { ChatArea, type ResponseQuality } from "./chat-area";
-import type { ToolTraceItem } from "./trace-panel";
+import type { AssistantTraceDiagnostics, ToolTraceItem } from "./trace-panel";
 
 interface ChatHistoryMessage {
   id: string;
@@ -43,6 +43,10 @@ interface ChatHistoryMessage {
       }>;
     };
     response_quality?: ResponseQuality;
+    provider_path?: string;
+    model?: string;
+    provider_decision?: Record<string, unknown> | null;
+    loop_diagnostic?: Record<string, unknown> | null;
   } | null;
   created_at: string | null;
 }
@@ -130,6 +134,33 @@ function extractResponseQuality(
   return byMessageId;
 }
 
+function extractTraceDiagnostics(
+  messages: ChatHistoryMessage[],
+): Record<string, AssistantTraceDiagnostics> {
+  const byMessageId: Record<string, AssistantTraceDiagnostics> = {};
+  messages.forEach((msg) => {
+    const metadata = msg.metadata;
+    if (!metadata) return;
+
+    const diagnostics: AssistantTraceDiagnostics = {
+      providerPath: metadata.provider_path ?? null,
+      model: metadata.model ?? null,
+      providerDecision: metadata.provider_decision ?? null,
+      loopDiagnostic: metadata.loop_diagnostic ?? null,
+    };
+
+    if (
+      diagnostics.providerPath ||
+      diagnostics.model ||
+      diagnostics.providerDecision ||
+      diagnostics.loopDiagnostic
+    ) {
+      byMessageId[msg.id] = diagnostics;
+    }
+  });
+  return byMessageId;
+}
+
 function ChatWithSession({
   sessionId,
   initialMessages,
@@ -137,6 +168,7 @@ function ChatWithSession({
   sourcesByMessageId,
   memoryUsageByMessageId,
   responseQualityByMessageId,
+  traceDiagnosticsByMessageId,
   isLoadingMessages,
   pendingFirstMessage,
   pendingFirstFiles,
@@ -157,6 +189,7 @@ function ChatWithSession({
     MemoryUsage
   >;
   responseQualityByMessageId: Record<string, ResponseQuality>;
+  traceDiagnosticsByMessageId: Record<string, AssistantTraceDiagnostics>;
   isLoadingMessages: boolean;
   pendingFirstMessage: string | null;
   pendingFirstFiles?: FileList;
@@ -258,6 +291,7 @@ function ChatWithSession({
       sourcesByMessageId={sourcesByMessageId}
       memoryUsageByMessageId={memoryUsageByMessageId}
       responseQualityByMessageId={responseQualityByMessageId}
+      traceDiagnosticsByMessageId={traceDiagnosticsByMessageId}
       liveStatus={liveStatus}
       isLoadingMessages={isLoadingMessages}
       isStreaming={isStreaming}
@@ -301,6 +335,9 @@ export function RagChatPage() {
   const [responseQualityByMessageId, setResponseQualityByMessageId] = useState<
     Record<string, ResponseQuality>
   >({});
+  const [traceDiagnosticsByMessageId, setTraceDiagnosticsByMessageId] = useState<
+    Record<string, AssistantTraceDiagnostics>
+  >({});
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [noSessionInput, setNoSessionInput] = useState("");
   const [councilMode, setCouncilMode] = useState(false);
@@ -329,12 +366,14 @@ export function RagChatPage() {
       setSourcesByMessageId(extractSources(historyMessages));
       setMemoryUsageByMessageId(extractMemoryUsage(historyMessages));
       setResponseQualityByMessageId(extractResponseQuality(historyMessages));
+      setTraceDiagnosticsByMessageId(extractTraceDiagnostics(historyMessages));
     } catch {
       setInitialMessages([]);
       setToolTracesByMessageId({});
       setSourcesByMessageId({});
       setMemoryUsageByMessageId({});
       setResponseQualityByMessageId({});
+      setTraceDiagnosticsByMessageId({});
     } finally {
       setIsLoadingMessages(false);
     }
@@ -349,6 +388,7 @@ export function RagChatPage() {
       setSourcesByMessageId({});
       setMemoryUsageByMessageId({});
       setResponseQualityByMessageId({});
+      setTraceDiagnosticsByMessageId({});
       return;
     }
     void loadSessionMessages(sessionId);
@@ -457,6 +497,7 @@ export function RagChatPage() {
             sourcesByMessageId={sourcesByMessageId}
             memoryUsageByMessageId={memoryUsageByMessageId}
             responseQualityByMessageId={responseQualityByMessageId}
+            traceDiagnosticsByMessageId={traceDiagnosticsByMessageId}
             isLoadingMessages={isLoadingMessages}
             pendingFirstMessage={pendingFirstMessage}
             pendingFirstFiles={pendingFirstFiles}
@@ -473,6 +514,7 @@ export function RagChatPage() {
             messages={[]}
             toolTracesByMessageId={{}}
             responseQualityByMessageId={{}}
+            traceDiagnosticsByMessageId={{}}
             liveStatus={null}
             isLoadingMessages={false}
             isStreaming={false}
