@@ -7,6 +7,11 @@ import { apiFetch } from "@/lib/api-client";
 export interface ProjectEmail {
   id: number;
   project_id: number;
+  project?: {
+    id: number;
+    name: string | null;
+    project_number: string | null;
+  } | null;
   subject: string;
   body: string | null;
   body_html: string | null;
@@ -51,22 +56,51 @@ export type CreateEmailInput = {
 };
 
 export type UpdateEmailInput = Partial<CreateEmailInput>;
+export type EmailSource = "app" | "outlook" | "all";
 
 export const emailKeys = {
+  global: (status?: string, source?: EmailSource) =>
+    ["emails", "global", status, source] as const,
   all: (projectId: number) => ["emails", projectId] as const,
-  list: (projectId: number, status?: string) =>
-    ["emails", projectId, "list", status] as const,
+  list: (projectId: number, status?: string, source?: EmailSource) =>
+    ["emails", projectId, "list", status, source] as const,
   detail: (projectId: number, id: string) =>
     ["emails", projectId, "detail", id] as const,
 };
 
-export function useEmails(projectId: number, status?: string) {
+export function useAllEmails(
+  status?: string,
+  enabled = true,
+  source: EmailSource = "app",
+) {
   const params = new URLSearchParams();
   if (status) params.set("status", status);
+  if (source !== "all") params.set("source", source);
   const queryString = params.toString();
 
   return useQuery<ProjectEmail[]>({
-    queryKey: emailKeys.list(projectId, status),
+    queryKey: emailKeys.global(status, source),
+    queryFn: ({ signal }) =>
+      apiFetch<ProjectEmail[]>(
+        `/api/emails${queryString ? `?${queryString}` : ""}`,
+        { signal },
+      ),
+    enabled,
+  });
+}
+
+export function useEmails(
+  projectId: number,
+  status?: string,
+  source: EmailSource = "app",
+) {
+  const params = new URLSearchParams();
+  if (status) params.set("status", status);
+  if (source !== "all") params.set("source", source);
+  const queryString = params.toString();
+
+  return useQuery<ProjectEmail[]>({
+    queryKey: emailKeys.list(projectId, status, source),
     queryFn: ({ signal }) =>
       apiFetch<ProjectEmail[]>(
         `/api/projects/${projectId}/emails${queryString ? `?${queryString}` : ""}`,

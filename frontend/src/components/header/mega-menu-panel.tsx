@@ -27,7 +27,7 @@ interface MegaMenuPanelProps {
 // Featured tools per group (shown as large bold text in column 1)
 const FEATURED_TOOLS: Record<string, string[]> = {
   finance: ["Budget", "Prime Contracts", "Commitments", "Change Orders", "Direct Costs", "Invoicing", "Change Events"],
-  operations: ["Schedule", "Meetings", "Daily Log", "Punch List", "RFIs", "Submittals", "Transmittals", "Emails", "Photos", "Drawings", "Specifications", "Documents"],
+  operations: ["Schedule", "Meetings", "Daily Log", "Punch List", "RFIs", "Submittals", "Transmittals", "Emails", "Outlook Emails", "Photos", "Drawings", "Specifications", "Documents"],
   project: ["Project Directory", "Project Tasks", "Project Settings"],
   company: ["Projects", "Company Directory", "User Management", "360 Reporting"],
 };
@@ -46,7 +46,7 @@ const FEATURED_LABELS: Record<string, string> = {
 function SectionLabel({ label }: { label: string }) {
   return (
     <div className="mb-3">
-      <span className="text-xs text-zinc-500">{label}</span>
+      <span className="text-xs text-muted-foreground">{label}</span>
     </div>
   );
 }
@@ -99,7 +99,7 @@ export function MegaMenuPanel({
   );
 
   return (
-    <div className="w-screen bg-zinc-800">
+    <div className="w-screen bg-popover">
       <div className="mx-auto max-w-4xl px-12 py-8">
         {/* Featured column — content transitions per hovered group */}
         <div

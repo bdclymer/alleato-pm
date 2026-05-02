@@ -75,6 +75,7 @@ export const GET = withApiGuardrails(
     const starred = searchParams.get("starred");
     const relatedTool = searchParams.get("related_tool");
     const relatedId = searchParams.get("related_id");
+    const source = searchParams.get("source") ?? "app";
 
     let query = supabase
       .from("project_emails")
@@ -85,6 +86,17 @@ export const GET = withApiGuardrails(
 
     if (status) {
       query = query.eq("status", status);
+    }
+
+    if (source === "outlook") {
+      query = query.or(
+        "graph_message_id.not.is.null,mailbox_user_id.not.is.null,conversation_id.not.is.null",
+      );
+    } else if (source === "app") {
+      query = query
+        .is("graph_message_id", null)
+        .is("mailbox_user_id", null)
+        .is("conversation_id", null);
     }
 
     if (starred === "true") {

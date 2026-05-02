@@ -3,18 +3,18 @@ import { PageShell } from "@/components/layout";
 import { EmailsClient } from "@/app/(main)/[projectId]/emails/emails-client";
 
 export const metadata: Metadata = {
-  title: "Emails",
+  title: "Outlook Emails",
 };
 
-export default function EmailsPage() {
+export default function OutlookEmailsPage() {
   return (
     <PageShell
       variant="table"
-      title="Emails"
+      title="Outlook Emails"
       showHeader={false}
       contentClassName="pt-0"
     >
-      <EmailsClient scope="global" />
+      <EmailsClient scope="global" source="outlook" />
     </PageShell>
   );
 }

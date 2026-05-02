@@ -81,8 +81,8 @@ function SectionHeader({ label }: { label: string }) {
 function ProjectWarning({ show }: { show: boolean }) {
   if (!show) return null;
   return (
-    <div className="mt-5 pt-3 border-t border-zinc-200">
-      <p className="text-xs text-amber-500 text-center">
+    <div className="mt-5 border-t border-border pt-3">
+      <p className="text-center text-xs text-status-warning">
         Select a project to access project tools
       </p>
     </div>
@@ -123,6 +123,7 @@ const OPERATIONS_TOOLS = [
   "Submittals",
   "Transmittals",
   "Emails",
+  "Outlook Emails",
 ];
 
 const FILES_TOOLS = ["Photos", "Drawings", "Specifications", "Documents"];
@@ -176,7 +177,7 @@ export function ToolsDropdownContent(props: ToolsDropdownProps) {
   };
 
   return (
-    <div className="w-[min(920px,calc(100vw-1.5rem))] p-5 sm:p-7">
+    <div className="w-full max-w-5xl p-5 sm:p-7">
       <div className="flex gap-8 overflow-x-auto sm:gap-12">
         {/* Financial */}
         <div className="shrink-0">

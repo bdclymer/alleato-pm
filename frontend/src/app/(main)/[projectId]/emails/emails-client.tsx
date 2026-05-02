@@ -22,17 +22,26 @@ import {
   useUnifiedTableState,
   type FilterValue,
 } from "@/components/tables/unified";
-import { useEmails, useDeleteEmail, type ProjectEmail } from "@/hooks/use-emails";
+import {
+  useAllEmails,
+  useDeleteEmail,
+  useEmails,
+  type EmailSource,
+  type ProjectEmail,
+} from "@/hooks/use-emails";
 import {
   buildEmailTableColumns,
   emailColumns,
   emailDefaultVisibleColumns,
   emailFilters,
+  globalEmailColumns,
+  globalEmailDefaultVisibleColumns,
   renderEmailCard,
   renderEmailList,
   renderEmailRowActions,
 } from "@/features/emails/emails-table-config";
 import { EmailComposeDialog } from "@/features/emails/email-compose-dialog";
+import { ProjectEmailsWorkspace } from "@/features/emails/project-emails-workspace";
 import { EmailAttachmentsClient } from "../email-attachments/email-attachments-client";
 
 const EMPTY_FILTERS: Record<string, FilterValue> = {
@@ -42,19 +51,57 @@ const EMPTY_FILTERS: Record<string, FilterValue> = {
 type FilterState = Record<string, FilterValue>;
 
 interface EmailsClientProps {
-  projectId: number;
+  projectId?: number;
+  scope?: "project" | "global";
+  source?: EmailSource;
 }
 
-export function EmailsClient({ projectId }: EmailsClientProps): ReactElement {
+export function EmailsClient({
+  projectId,
+  scope = "project",
+  source = "app",
+}: EmailsClientProps): ReactElement {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const isGlobal = scope === "global" || !projectId;
+  const isOutlook = source === "outlook";
   const activeTab = searchParams.get("tab") === "attachments" ? "attachments" : "emails";
-  const tabs = [
-    { label: "Emails", href: `/${projectId}/emails`, isActive: activeTab === "emails" },
+  const emailsHref = isGlobal
+    ? isOutlook
+      ? "/outlook-emails"
+      : "/emails"
+    : isOutlook
+      ? `/${projectId}/outlook-emails`
+      : `/${projectId}/emails`;
+  const tabs = isOutlook
+    ? [
+        {
+          label: "Outlook Emails",
+          href: emailsHref,
+          isActive: activeTab === "emails",
+        },
+        {
+          label: "Attachments",
+          href: `${emailsHref}?tab=attachments`,
+          isActive: activeTab === "attachments",
+        },
+      ]
+    : undefined;
+  const title = isOutlook ? "Outlook Emails" : "Emails";
+  const description = isOutlook
+    ? isGlobal
+      ? "All Microsoft Outlook emails synced across projects."
+      : "Microsoft Outlook emails synced to this project."
+    : isGlobal
+      ? "Application and Resend emails across projects."
+      : undefined;
+  const noWriteActions = isGlobal || isOutlook;
+  const attachmentTabs = tabs ?? [
+    { label: "Emails", href: emailsHref, isActive: activeTab === "emails" },
     {
       label: "Attachments",
-      href: `/${projectId}/emails?tab=attachments`,
+      href: `${emailsHref}?tab=attachments`,
       isActive: activeTab === "attachments",
     },
   ];
@@ -65,7 +112,7 @@ export function EmailsClient({ projectId }: EmailsClientProps): ReactElement {
   };
 
   const tableState = useUnifiedTableState({
-    entityKey: "emails",
+    entityKey: isGlobal ? "emails-global" : "emails",
     searchParams,
     pathname,
     router,
@@ -76,12 +123,22 @@ export function EmailsClient({ projectId }: EmailsClientProps): ReactElement {
       search: "",
       sortBy: "sent_at",
       sortDirection: "desc",
+      visibleColumns: isGlobal
+        ? globalEmailDefaultVisibleColumns
+        : emailDefaultVisibleColumns,
       filters: initialFilters,
     },
   });
 
-  const { data: emails = [], isLoading, error: fetchError } = useEmails(projectId);
-  const deleteEmail = useDeleteEmail(projectId);
+  const projectEmailsQuery = useEmails(projectId ?? 0, undefined, source);
+  const globalEmailsQuery = useAllEmails(undefined, isGlobal, source);
+  const activeQuery = isGlobal ? globalEmailsQuery : projectEmailsQuery;
+  const {
+    data: emails = [],
+    isLoading,
+    error: fetchError,
+  } = activeQuery;
+  const deleteEmail = useDeleteEmail(projectId ?? 0);
 
   const [composeOpen, setComposeOpen] = React.useState(false);
   const [editingEmail, setEditingEmail] = React.useState<ProjectEmail | null>(null);
@@ -104,9 +161,11 @@ export function EmailsClient({ projectId }: EmailsClientProps): ReactElement {
   // Set default visible columns
   React.useEffect(() => {
     if (tableState.visibleColumns.length === 0) {
-      tableState.setVisibleColumns(emailDefaultVisibleColumns);
+      tableState.setVisibleColumns(
+        isGlobal ? globalEmailDefaultVisibleColumns : emailDefaultVisibleColumns,
+      );
     }
-  }, [tableState.visibleColumns.length, tableState.setVisibleColumns]);
+  }, [isGlobal, tableState.visibleColumns.length, tableState.setVisibleColumns]);
 
   // Auto-switch to list view on mobile
   React.useEffect(() => {
@@ -132,12 +191,14 @@ export function EmailsClient({ projectId }: EmailsClientProps): ReactElement {
       email.from_email ?? "",
       email.to_list?.join(" ") ?? "",
       email.body ?? "",
+      email.project?.name ?? "",
+      email.project?.project_number ?? "",
     ];
 
     return fields.some((field) => field.toLowerCase().includes(searchTerm));
   });
 
-  const tableColumns = buildEmailTableColumns();
+  const tableColumns = buildEmailTableColumns({ showProject: isGlobal });
   const sortedEmails = React.useMemo(() => {
     if (!tableState.sortBy) return filteredEmails;
     const sortColumn = tableColumns.find((col) => col.id === tableState.sortBy);
@@ -186,16 +247,19 @@ export function EmailsClient({ projectId }: EmailsClientProps): ReactElement {
   };
 
   const handleRowClick = (item: ProjectEmail) => {
+    if (noWriteActions) return;
     setEditingEmail(item);
     setComposeOpen(true);
   };
 
   const handleEdit = (item: ProjectEmail) => {
+    if (noWriteActions) return;
     setEditingEmail(item);
     setComposeOpen(true);
   };
 
   const handleDeleteIntent = (item: ProjectEmail) => {
+    if (noWriteActions) return;
     setEmailToDelete(item);
     setDeleteDialogOpen(true);
   };
@@ -246,7 +310,7 @@ export function EmailsClient({ projectId }: EmailsClientProps): ReactElement {
       return;
     }
 
-    const cols = buildEmailTableColumns();
+    const cols = buildEmailTableColumns({ showProject: isGlobal });
     const visibleCols = cols.filter((col) =>
       tableState.visibleColumns.includes(col.id),
     );
@@ -266,7 +330,7 @@ export function EmailsClient({ projectId }: EmailsClientProps): ReactElement {
 
     const link = document.createElement("a");
     link.href = url;
-    link.download = `project-emails-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.download = `${isGlobal ? "all" : "project"}-emails-${new Date().toISOString().slice(0, 10)}.csv`;
     link.click();
     URL.revokeObjectURL(url);
   };
@@ -290,15 +354,82 @@ export function EmailsClient({ projectId }: EmailsClientProps): ReactElement {
   const isFiltered = Boolean(tableState.searchInput) || Boolean(activeFilters.status);
 
   if (activeTab === "attachments") {
-    return <EmailAttachmentsClient projectId={projectId} title="Emails" tabs={tabs} />;
+    return (
+      <EmailAttachmentsClient
+        projectId={projectId}
+        scope={isGlobal ? "global" : "project"}
+        title={title}
+        tabs={attachmentTabs}
+      />
+    );
+  }
+
+  if (!noWriteActions) {
+    return (
+      <>
+        <ProjectEmailsWorkspace
+          emails={sortedEmails}
+          isLoading={isLoading}
+          error={fetchError ?? undefined}
+          tabs={attachmentTabs}
+          searchValue={tableState.searchInput}
+          onSearchChange={tableState.setSearchInput}
+          statusFilter={statusFilter}
+          onStatusFilterChange={(status) => handleFilterChange({ status })}
+          onCompose={() => {
+            setEditingEmail(null);
+            setComposeOpen(true);
+          }}
+          onEdit={handleEdit}
+          onDelete={handleDeleteIntent}
+        />
+
+        {projectId ? (
+          <EmailComposeDialog
+            open={composeOpen}
+            onOpenChange={setComposeOpen}
+            projectId={projectId}
+            email={editingEmail}
+          />
+        ) : null}
+
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Email</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete the email{" "}
+                <strong>{emailToDelete?.subject}</strong>?
+                <br />
+                <br />
+                This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={deleteEmail.isPending}>
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDeleteConfirm}
+                disabled={deleteEmail.isPending}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {deleteEmail.isPending ? "Deleting..." : "Delete Email"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </>
+    );
   }
 
   return (
     <>
       <UnifiedTablePage
         header={{
-          title: "Emails",
-          actions: (
+          title,
+          description,
+          actions: noWriteActions ? undefined : (
             <Button
               size="sm"
               onClick={() => {
@@ -332,11 +463,11 @@ export function EmailsClient({ projectId }: EmailsClientProps): ReactElement {
           activeFilters,
           onFilterChange: handleFilterChange,
           onClearFilters: () => handleFilterChange(EMPTY_FILTERS),
-          columns: emailColumns,
+          columns: isGlobal ? globalEmailColumns : emailColumns,
           visibleColumns: tableState.visibleColumns,
           onColumnVisibilityChange: tableState.setVisibleColumns,
           onExport: handleExport,
-          onBulkDelete: tableState.selectedIds.length > 0
+          onBulkDelete: !noWriteActions && tableState.selectedIds.length > 0
             ? () => setBulkDeleteDialogOpen(true)
             : undefined,
         }}
@@ -348,9 +479,11 @@ export function EmailsClient({ projectId }: EmailsClientProps): ReactElement {
         table={{
           columns: tableColumns,
           getRowId: (item) => String(item.id),
-          onRowClick: handleRowClick,
+          onRowClick: noWriteActions ? undefined : handleRowClick,
           rowActions: (item) =>
-            renderEmailRowActions(item, handleEdit, handleDeleteIntent),
+            noWriteActions
+              ? null
+              : renderEmailRowActions(item, handleEdit, handleDeleteIntent),
         }}
         sorting={{
           sortBy: tableState.sortBy,
@@ -366,22 +499,30 @@ export function EmailsClient({ projectId }: EmailsClientProps): ReactElement {
             tableState.setPage(1);
           },
         }}
-        selection={{
-          selectedIds: tableState.selectedIds,
-          onSelectAll: handleSelectAll,
-          onSelectRow: handleSelectRow,
-        }}
+        selection={
+          isGlobal
+            ? undefined
+            : {
+                selectedIds: tableState.selectedIds,
+                onSelectAll: handleSelectAll,
+                onSelectRow: handleSelectRow,
+              }
+        }
         views={{
           card: (item) => renderEmailCard(item, handleRowClick),
           list: (item) => renderEmailList(item, handleRowClick),
         }}
         emptyState={{
           title: "No emails found",
-          description: "You have not sent or received any project emails yet.",
+          description: isOutlook
+            ? "No synced Outlook emails are stored yet."
+            : isGlobal
+              ? "No application or Resend emails are stored yet."
+              : "You have not sent or received any project emails yet.",
           filteredDescription: "Try adjusting your search or filters",
           isFiltered,
           icon: <Mail className="h-10 w-10 text-muted-foreground" />,
-          action: (
+          action: noWriteActions ? undefined : (
             <Button
               size="sm"
               onClick={() => {
@@ -411,12 +552,14 @@ export function EmailsClient({ projectId }: EmailsClientProps): ReactElement {
         }}
       />
 
-      <EmailComposeDialog
-        open={composeOpen}
-        onOpenChange={setComposeOpen}
-        projectId={projectId}
-        email={editingEmail}
-      />
+      {projectId ? (
+        <EmailComposeDialog
+          open={composeOpen}
+          onOpenChange={setComposeOpen}
+          projectId={projectId}
+          email={editingEmail}
+        />
+      ) : null}
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>

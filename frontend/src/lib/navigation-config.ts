@@ -105,6 +105,7 @@ export const projectManagementTools: NavigationTool[] = [
   { name: "Submittals", path: "submittals", icon: Package, requiresProject: true, module: "submittals" },
   { name: "Transmittals", path: "transmittals", icon: Mail, requiresProject: true, module: "documents" },
   { name: "Emails", path: "emails", icon: Mail, requiresProject: true, module: "documents" },
+  { name: "Outlook Emails", path: "outlook-emails", icon: Mail, requiresProject: true, module: "documents" },
   { name: "Photos", path: "photos", icon: Camera, requiresProject: true, module: "documents" },
   { name: "Drawings", path: "drawings", icon: FileImage, requiresProject: true, module: "documents" },
   { name: "Specifications", path: "specifications", icon: BookOpen, requiresProject: true, module: "documents" },
@@ -421,7 +422,15 @@ export const headerNavGroups: HeaderNavGroup[] = [
         path: "emails",
         requiresProject: true,
         icon: Mail,
-        description: "Email correspondence",
+        description: "Application and Resend emails",
+        module: "documents",
+      },
+      {
+        name: "Outlook Emails",
+        path: "outlook-emails",
+        requiresProject: true,
+        icon: Mail,
+        description: "Microsoft Outlook synced emails",
         module: "documents",
       },
       {
@@ -464,7 +473,7 @@ export const headerNavGroups: HeaderNavGroup[] = [
       },
       {
         label: "Correspondence",
-        toolNames: ["RFIs", "Submittals", "Transmittals", "Emails"],
+        toolNames: ["RFIs", "Submittals", "Transmittals", "Emails", "Outlook Emails"],
       },
       {
         label: "Documents",

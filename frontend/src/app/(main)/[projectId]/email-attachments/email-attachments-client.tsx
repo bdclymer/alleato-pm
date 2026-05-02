@@ -1,11 +1,11 @@
 "use client";
 
 import * as React from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Download, FileText, ImageIcon, Mail, Paperclip } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { Document, Page, pdfjs } from "react-pdf";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -26,7 +26,23 @@ import { apiFetch } from "@/lib/api-client";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 
-pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
+const PdfDocument = dynamic(
+  async () => {
+    const mod = await import("react-pdf");
+    mod.pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
+    return mod.Document;
+  },
+  { ssr: false },
+);
+
+const PdfPage = dynamic(
+  async () => {
+    const mod = await import("react-pdf");
+    mod.pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
+    return mod.Page;
+  },
+  { ssr: false },
+);
 
 interface EmailAttachment {
   id: number;
@@ -39,6 +55,11 @@ interface EmailAttachment {
   textLength: number;
   graphAttachmentId: string | null;
   checksumSha256: string | null;
+  project: {
+    id: number;
+    name: string | null;
+    projectNumber: string | null;
+  } | null;
   email: {
     id: number;
     subject: string;
@@ -51,7 +72,8 @@ interface EmailAttachment {
 }
 
 interface EmailAttachmentsClientProps {
-  projectId: number;
+  projectId?: number;
+  scope?: "project" | "global";
   title?: string;
   tabs?: {
     label: string;
@@ -71,6 +93,12 @@ const attachmentColumns = [
   { id: "received", label: "Received", defaultVisible: true },
   { id: "size", label: "Size", defaultVisible: true },
   { id: "text", label: "Text", defaultVisible: true },
+];
+
+const globalAttachmentColumns = [
+  ...attachmentColumns.slice(0, 3),
+  { id: "project", label: "Project", defaultVisible: true },
+  ...attachmentColumns.slice(3),
 ];
 
 function formatBytes(value: number | null): string {
@@ -119,12 +147,15 @@ function senderLabel(attachment: EmailAttachment): string {
   return "Unknown sender";
 }
 
-function downloadUrl(projectId: number, attachmentId: number): string {
-  return `/api/projects/${projectId}/email-attachments/${attachmentId}/download`;
+function attachmentUrl(projectId: number | undefined, attachmentId: number): string {
+  if (projectId) {
+    return `/api/projects/${projectId}/email-attachments/${attachmentId}/download`;
+  }
+  return `/api/email-attachments/${attachmentId}/download`;
 }
 
-function previewUrl(projectId: number, attachmentId: number): string {
-  return `${downloadUrl(projectId, attachmentId)}?disposition=inline`;
+function previewUrl(projectId: number | undefined, attachmentId: number): string {
+  return `${attachmentUrl(projectId, attachmentId)}?disposition=inline`;
 }
 
 function isPreviewableAttachment(attachment: EmailAttachment): boolean {
@@ -153,7 +184,7 @@ function AttachmentPreviewThumbnail({
   projectId,
 }: {
   attachment: EmailAttachment;
-  projectId: number;
+  projectId?: number;
 }) {
   const src = previewUrl(projectId, attachment.id);
 
@@ -170,7 +201,7 @@ function AttachmentPreviewThumbnail({
 
   if (isPdfAttachment(attachment)) {
     return (
-      <Document
+      <PdfDocument
         file={src}
         loading={
           <div className="flex h-full w-full items-center justify-center">
@@ -183,13 +214,13 @@ function AttachmentPreviewThumbnail({
           </div>
         }
       >
-        <Page
+        <PdfPage
           pageNumber={1}
           width={96}
           renderAnnotationLayer={false}
           renderTextLayer={false}
         />
-      </Document>
+      </PdfDocument>
     );
   }
 
@@ -201,7 +232,7 @@ function AttachmentPreviewViewer({
   projectId,
 }: {
   attachment: EmailAttachment;
-  projectId: number;
+  projectId?: number;
 }) {
   const [numPages, setNumPages] = React.useState(1);
   const src = previewUrl(projectId, attachment.id);
@@ -221,7 +252,7 @@ function AttachmentPreviewViewer({
   if (isPdfAttachment(attachment)) {
     return (
       <div className="h-full overflow-auto bg-muted/30 p-6">
-        <Document
+        <PdfDocument
           file={src}
           onLoadSuccess={({ numPages: nextNumPages }) =>
             setNumPages(nextNumPages)
@@ -239,7 +270,7 @@ function AttachmentPreviewViewer({
           className="mx-auto flex w-fit flex-col gap-4"
         >
           {Array.from({ length: numPages }, (_, index) => (
-            <Page
+            <PdfPage
               key={index + 1}
               pageNumber={index + 1}
               width={900}
@@ -248,7 +279,7 @@ function AttachmentPreviewViewer({
               className="overflow-hidden rounded-md bg-background shadow-sm"
             />
           ))}
-        </Document>
+        </PdfDocument>
       </div>
     );
   }
@@ -260,19 +291,33 @@ function AttachmentPreviewViewer({
   );
 }
 
+function projectLabel(attachment: EmailAttachment): string {
+  const projectNumber = attachment.project?.projectNumber?.trim();
+  const projectName = attachment.project?.name?.trim();
+  const projectId = attachment.project?.id;
+
+  if (projectNumber && projectName) return `${projectNumber} - ${projectName}`;
+  if (projectName) return projectName;
+  if (projectNumber) return projectNumber;
+  return projectId ? `Project ${projectId}` : "Unknown project";
+}
+
 export function EmailAttachmentsClient({
   projectId,
+  scope = "project",
   title = "Email Attachments",
   tabs,
 }: EmailAttachmentsClientProps): React.ReactElement {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const isGlobal = scope === "global" || !projectId;
+  const columnsConfig = isGlobal ? globalAttachmentColumns : attachmentColumns;
   const [previewAttachment, setPreviewAttachment] =
     React.useState<EmailAttachment | null>(null);
 
   const tableState = useUnifiedTableState({
-    entityKey: "email-attachments",
+    entityKey: isGlobal ? "email-attachments-global" : "email-attachments",
     searchParams,
     pathname,
     router,
@@ -283,6 +328,7 @@ export function EmailAttachmentsClient({
       search: "",
       sortBy: "received",
       sortDirection: "desc",
+      visibleColumns: columnsConfig.map((column) => column.id),
       filters: {},
     },
   });
@@ -292,25 +338,27 @@ export function EmailAttachmentsClient({
     isLoading,
     error,
   } = useQuery<EmailAttachment[]>({
-    queryKey: ["email-attachments", projectId],
+    queryKey: [isGlobal ? "email-attachments-global" : "email-attachments", projectId],
     queryFn: ({ signal }) =>
       apiFetch<EmailAttachment[]>(
-        `/api/projects/${projectId}/email-attachments`,
+        isGlobal
+          ? "/api/email-attachments"
+          : `/api/projects/${projectId}/email-attachments`,
         { signal },
       ),
-    enabled: Number.isInteger(projectId),
+    enabled: isGlobal || Number.isInteger(projectId),
   });
 
   React.useEffect(() => {
     if (tableState.visibleColumns.length === 0) {
       tableState.setVisibleColumns(
-        attachmentColumns.map((column) => column.id),
+        columnsConfig.map((column) => column.id),
       );
     }
-  }, [tableState.visibleColumns.length, tableState.setVisibleColumns]);
+  }, [columnsConfig, tableState.visibleColumns.length, tableState.setVisibleColumns]);
 
-  const columns = React.useMemo<TableColumn<EmailAttachment>[]>(
-    () => [
+  const columns = React.useMemo<TableColumn<EmailAttachment>[]>(() => {
+    const baseColumns: TableColumn<EmailAttachment>[] = [
       {
         id: "fileName",
         label: "File",
@@ -364,6 +412,28 @@ export function EmailAttachmentsClient({
         sortValue: (item) => item.email?.subject ?? "",
         render: (item) => item.email?.subject || "No subject",
       },
+      ...(isGlobal
+        ? [
+            {
+              id: "project",
+              label: "Project",
+              sortable: true,
+              sortValue: projectLabel,
+              render: (item: EmailAttachment) =>
+                item.project?.id ? (
+                  <Link
+                    href={`/${item.project.id}/emails`}
+                    className="font-medium text-foreground hover:underline"
+                    data-row-interactive="true"
+                  >
+                    {projectLabel(item)}
+                  </Link>
+                ) : (
+                  projectLabel(item)
+                ),
+            } satisfies TableColumn<EmailAttachment>,
+          ]
+        : []),
       {
         id: "sender",
         label: "Sender",
@@ -395,9 +465,10 @@ export function EmailAttachmentsClient({
             ? `${item.textLength.toLocaleString()} chars`
             : "No text",
       },
-    ],
-    [],
-  );
+    ];
+
+    return baseColumns;
+  }, [isGlobal, projectId]);
 
   const searchTerm = tableState.debouncedSearch.trim().toLowerCase();
   const filteredAttachments = React.useMemo(() => {
@@ -408,6 +479,7 @@ export function EmailAttachmentsClient({
         attachment.fileName,
         attachment.contentType ?? "",
         attachment.email?.subject ?? "",
+        projectLabel(attachment),
         senderLabel(attachment),
       ].some((value) => value.toLowerCase().includes(searchTerm)),
     );
@@ -462,20 +534,35 @@ export function EmailAttachmentsClient({
       return;
     }
 
-    const rows = filteredAttachments.map((attachment) =>
-      [
+    const rows = filteredAttachments.map((attachment) => {
+      const baseValues = [
         attachment.fileName,
         attachment.email?.subject ?? "",
         senderLabel(attachment),
         formatDate(receivedAt(attachment)),
         formatBytes(attachment.fileSize),
         attachment.textLength,
-      ]
+      ];
+
+      return (isGlobal
+        ? [
+            attachment.fileName,
+            attachment.email?.subject ?? "",
+            projectLabel(attachment),
+            senderLabel(attachment),
+            formatDate(receivedAt(attachment)),
+            formatBytes(attachment.fileSize),
+            attachment.textLength,
+          ]
+        : baseValues
+      )
         .map((value) => JSON.stringify(value))
-        .join(","),
-    );
+        .join(",");
+    });
     const csv = [
-      "File,Email,Sender,Received,Size,Text Length",
+      isGlobal
+        ? "File,Email,Project,Sender,Received,Size,Text Length"
+        : "File,Email,Sender,Received,Size,Text Length",
       ...rows,
     ].join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
@@ -495,7 +582,7 @@ export function EmailAttachmentsClient({
           title,
           actions: tabs ? undefined : (
             <Button variant="outline" size="sm" asChild>
-              <Link href={`/${projectId}/emails`}>
+              <Link href={projectId ? `/${projectId}/emails` : "/emails"}>
                 <Mail />
                 Emails
               </Link>
@@ -516,7 +603,7 @@ export function EmailAttachmentsClient({
           activeFilters: {},
           onFilterChange: () => undefined,
           onClearFilters: () => undefined,
-          columns: attachmentColumns,
+          columns: columnsConfig,
           visibleColumns: tableState.visibleColumns,
           onColumnVisibilityChange: tableState.setVisibleColumns,
           onExport: handleExport,
@@ -532,7 +619,7 @@ export function EmailAttachmentsClient({
           rowActions: (item) => (
             <Button variant="ghost" size="icon-sm" asChild>
               <a
-                href={downloadUrl(projectId, item.id)}
+                href={attachmentUrl(isGlobal ? undefined : projectId, item.id)}
                 aria-label={`Download ${item.fileName}`}
               >
                 <Download />
@@ -616,7 +703,7 @@ export function EmailAttachmentsClient({
             >
               <AttachmentPreviewViewer
                 attachment={previewAttachment}
-                projectId={projectId}
+                projectId={isGlobal ? undefined : projectId}
               />
             </div>
           ) : null}

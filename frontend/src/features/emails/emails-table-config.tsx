@@ -1,5 +1,6 @@
 import * as React from "react";
 import type { ReactElement } from "react";
+import Link from "next/link";
 import { MoreHorizontal, Paperclip, Pencil, Star, Trash2 } from "lucide-react";
 
 import { StatusBadge } from "@/components/ds";
@@ -27,6 +28,11 @@ export const emailColumns: ColumnConfig[] = [
   { id: "is_starred", label: "Starred", defaultVisible: true },
 ];
 
+export const globalEmailColumns: ColumnConfig[] = [
+  { id: "project", label: "Project", defaultVisible: true },
+  ...emailColumns,
+];
+
 export const emailFilters: FilterConfig[] = [
   {
     id: "status",
@@ -42,6 +48,10 @@ export const emailFilters: FilterConfig[] = [
 ];
 
 export const emailDefaultVisibleColumns = emailColumns
+  .filter((col) => col.defaultVisible !== false)
+  .map((col) => col.id);
+
+export const globalEmailDefaultVisibleColumns = globalEmailColumns
   .filter((col) => col.defaultVisible !== false)
   .map((col) => col.id);
 
@@ -69,8 +79,20 @@ function formatRecipients(list: string[] | null | undefined): string {
   return list.join(", ");
 }
 
-export function buildEmailTableColumns(): TableColumn<ProjectEmail>[] {
-  return [
+function projectLabel(item: ProjectEmail): string {
+  const projectNumber = item.project?.project_number?.trim();
+  const projectName = item.project?.name?.trim();
+
+  if (projectNumber && projectName) return `${projectNumber} - ${projectName}`;
+  if (projectName) return projectName;
+  if (projectNumber) return projectNumber;
+  return `Project ${item.project_id}`;
+}
+
+export function buildEmailTableColumns(options?: {
+  showProject?: boolean;
+}): TableColumn<ProjectEmail>[] {
+  const columns: TableColumn<ProjectEmail>[] = [
     {
       ...emailColumns[0],
       width: 300,
@@ -146,6 +168,28 @@ export function buildEmailTableColumns(): TableColumn<ProjectEmail>[] {
       csvValue: (item) => (item.is_starred ? "Yes" : "No"),
       sortValue: (item) => (item.is_starred ? 1 : 0),
     },
+  ];
+
+  if (!options?.showProject) return columns;
+
+  return [
+    {
+      ...globalEmailColumns[0],
+      width: 220,
+      sortable: true,
+      render: (item) => (
+        <Link
+          href={`/${item.project_id}/emails`}
+          className="font-medium text-foreground hover:underline"
+          data-row-interactive="true"
+        >
+          {projectLabel(item)}
+        </Link>
+      ),
+      csvValue: projectLabel,
+      sortValue: projectLabel,
+    },
+    ...columns,
   ];
 }
 

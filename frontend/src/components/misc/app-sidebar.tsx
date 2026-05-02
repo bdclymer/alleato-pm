@@ -56,6 +56,7 @@ const coreTools = [
 
 const projectManagementTools = [
   { name: "Emails", path: "emails", icon: IconMail, requiresProject: true },
+  { name: "Outlook Emails", path: "outlook-emails", icon: IconMail, requiresProject: true },
   { name: "RFIs", path: "rfis", icon: IconQuestionMark, requiresProject: true },
   { name: "Submittals", path: "submittals", icon: IconSend, requiresProject: true },
   { name: "Transmittals", path: "transmittals", icon: IconFileText, requiresProject: true },

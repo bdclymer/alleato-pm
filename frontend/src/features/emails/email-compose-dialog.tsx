@@ -5,13 +5,13 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Modal,
+  ModalContent,
+  ModalDescription,
+  ModalFooter,
+  ModalHeader,
+  ModalTitle,
+} from "@/components/ui/unified-modal";
 import {
   Form,
   FormControl,
@@ -132,16 +132,16 @@ export function EmailComposeDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>{isEditing ? "Edit Email" : "Compose Email"}</DialogTitle>
-          <DialogDescription>
+    <Modal open={open} onOpenChange={onOpenChange}>
+      <ModalContent size="2xl">
+        <ModalHeader>
+          <ModalTitle>{isEditing ? "Edit Email" : "Compose Email"}</ModalTitle>
+          <ModalDescription>
             {isEditing
               ? "Update the email details below."
               : "Compose a new project email. It will be saved as a draft."}
-          </DialogDescription>
-        </DialogHeader>
+          </ModalDescription>
+        </ModalHeader>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -262,7 +262,7 @@ export function EmailComposeDialog({
               )}
             />
 
-            <DialogFooter>
+            <ModalFooter>
               <Button
                 type="button"
                 variant="outline"
@@ -278,10 +278,10 @@ export function EmailComposeDialog({
                     ? "Update Email"
                     : "Save as Draft"}
               </Button>
-            </DialogFooter>
+            </ModalFooter>
           </form>
         </Form>
-      </DialogContent>
-    </Dialog>
+      </ModalContent>
+    </Modal>
   );
 }
