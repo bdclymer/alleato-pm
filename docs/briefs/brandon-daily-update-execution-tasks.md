@@ -14,8 +14,8 @@ Ship a high-signal `/executive` operating surface for Brandon that is easy to sc
 |---|---|---|---|
 | Done | Executive page redesign | Replace the current long-form brief layout with an operating console structure and clearer section hierarchy. | `frontend/src/app/(main)/executive/**` |
 | In Progress | Task drafting and assignment | Add drafted-task creation from executive items, show already-assigned work, and prevent duplicate task creation. | `frontend/src/app/(main)/executive/**`, `frontend/src/app/(main)/actions/**`, `frontend/src/lib/executive/**` |
-| Pending | Operational improvements model | Add a relational table and CRUD path for prevention/follow-up plans linked to executive items, issues, tasks, and recaps. | `supabase/migrations/**`, `frontend/src/lib/executive/**`, `frontend/src/app/(main)/actions/**` |
-| Pending | Executive-scoped AI chat | Embed the existing assistant UI on `/executive`, ground it in the latest executive brief packet, and add follow-up plan creation. | `frontend/src/components/ai-assistant/**`, `frontend/src/app/api/ai-assistant/chat/route.ts`, `frontend/src/app/(main)/executive/**` |
+| Done | Operational improvements model | Reuse the existing `initiative_cards` table as the durable operational-improvements layer and wire executive-page CRUD around it. | `frontend/src/app/(main)/executive/**`, `frontend/src/app/(main)/actions/**`, `frontend/src/app/api/initiative-cards/**` |
+| In Progress | Executive-scoped AI chat | Embed the existing assistant UI on `/executive`, ground it in the latest executive brief packet, and add follow-up plan creation. | `frontend/src/components/ai-assistant/**`, `frontend/src/app/api/ai-assistant/chat/route.ts`, `frontend/src/app/(main)/executive/**` |
 | Done | Financial recap and alerts | Add a compact financial lane with payments, blockers, alerts, and owner-level cash/retainage signals. | `frontend/src/app/(main)/executive/**`, `frontend/src/lib/executive/**` |
 | In Progress | Verification | Run targeted lint/typecheck checks and focused page verification after the main slices land. | `frontend/**`, `docs/ops/handoffs/**` |
 
@@ -30,9 +30,9 @@ Ship a high-signal `/executive` operating surface for Brandon that is easy to sc
 | Done | A5 | Surface already-assigned matching tasks inline. | Linked open tasks now show inline on executive items and in a dedicated in-flight section. |
 | Done | A6 | Add a financial recap section. | First slice derives a financial lane from the executive packet; richer financial sourcing still remains. |
 | Done | A7 | Add an operational breakdowns section. | First slice derives operations breakdowns from the executive packet and carry-forward follow-ups. |
-| Pending | A8 | Create `operational_improvements` storage and linked workflow. | Separate prevention plans from tasks and issues. |
-| Pending | A9 | Add an executive-scoped chat panel using the existing assistant UI. | Ground chat in the latest executive briefing packet rather than rebuilding a second retrieval path. |
-| Pending | A10 | Add chat tools or actions to create follow-up plans and link them back to executive items. | Save to `operational_improvements` and/or `tasks` as appropriate. |
+| Done | A8 | Create durable operational-improvement storage and linked workflow. | Reused `initiative_cards` instead of adding a new table so executive-page improvements, manual creation, and AI-created cards share one object. |
+| Done | A9 | Add an executive-scoped chat panel using the existing assistant UI. | Embedded `ExecutiveChatPanel` now reuses the shared assistant transport and injects the current executive packet as additive context. |
+| In Progress | A10 | Add chat tools or actions to create follow-up plans and link them back to executive items. | Executive chat now instructs the assistant to use `createInitiativeCard` with executive linkage; next gap is tightening the save UX and verification evidence. |
 | Done | A11 | Make “new vs carry-forward” explicit on the page. | Carry-forward risks now render as a dedicated section separate from live packet items. |
 | In Progress | A12 | Run targeted verification and capture evidence in the handoff. | Focused lint passed; full frontend typecheck still reports unrelated repo debt. |
 
@@ -50,3 +50,4 @@ Ship a high-signal `/executive` operating surface for Brandon that is easy to sc
 - The page shows existing assigned work so duplicate tasking is avoided.
 - The page includes a clear financial lane and an operational-improvements lane.
 - The page includes an embedded assistant that can answer follow-up questions using the current executive brief context.
+- The remaining gap is durable follow-up-plan creation from chat, not page-level executive context access.

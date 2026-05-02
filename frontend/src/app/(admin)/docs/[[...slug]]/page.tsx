@@ -11,7 +11,6 @@ import { PageShell } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getHelpActionsForIds } from "@/lib/help-actions";
-import { canArticleAppearInClientHelpCenter } from "@/lib/help-visibility";
 import {
   getHelpArticleBySlug,
   getHelpArticles,
@@ -60,7 +59,7 @@ export default async function DocPage({ params, searchParams }: DocPageProps) {
 
   if (slug) {
     const article = await getHelpArticleBySlug(slug);
-    if (!article || !canArticleAppearInClientHelpCenter(article.frontmatter)) {
+    if (!article) {
       notFound();
     }
     return <ArticlePage article={article} />;
@@ -68,7 +67,7 @@ export default async function DocPage({ params, searchParams }: DocPageProps) {
 
   const resolvedSearchParams = await searchParams;
   const query = resolvedSearchParams?.q?.trim() ?? "";
-  const articles = await getHelpArticles({ clientHelpCenterOnly: true });
+  const articles = await getHelpArticles();
   const filteredArticles = filterArticles(articles, { query });
 
   return (
@@ -208,30 +207,61 @@ function formatSafetyLevel(level: string): string {
 }
 
 function ArticleList({ articles }: { articles: HelpArticle[] }) {
+  const categories = groupArticlesByCategory(articles);
+
   return (
-    <div className="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2">
-      {articles.map((article) => (
-        <Link
-          key={article.slug}
-          href={article.href}
-          className="group -mx-3 flex min-h-12 items-start gap-3 rounded-md px-3 py-2 text-left transition-colors hover:bg-muted"
-        >
-          <IconBadge size="sm" className="mt-0.5">
-            <FileText className="h-3.5 w-3.5" />
-          </IconBadge>
-          <div className="min-w-0 flex-1">
-            <h3 className="text-sm font-medium text-foreground transition-colors group-hover:text-primary">
-              {article.frontmatter.title}
-            </h3>
-            <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
-              {article.frontmatter.description}
-            </p>
+    <div className="space-y-10">
+      {categories.map((category) => (
+        <section key={category.name} className="space-y-3">
+          <div className="flex items-baseline justify-between border-b border-border pb-2">
+            <h2 className="text-sm font-semibold text-foreground">
+              {category.name}
+            </h2>
+            <span className="text-xs text-muted-foreground">
+              {category.articles.length}
+            </span>
           </div>
-          <ChevronRight className="mt-2 h-3.5 w-3.5 shrink-0 text-muted-foreground/20 transition-all group-hover:translate-x-0.5 group-hover:text-muted-foreground" />
-        </Link>
+
+          <div className="grid grid-cols-1 gap-x-8 gap-y-2 sm:grid-cols-2">
+            {category.articles.map((article) => (
+              <Link
+                key={article.slug}
+                href={article.href}
+                className="group -mx-3 flex min-h-12 items-start gap-3 rounded-md px-3 py-2 text-left transition-colors hover:bg-muted"
+              >
+                <IconBadge size="sm" className="mt-0.5">
+                  <FileText className="h-3.5 w-3.5" />
+                </IconBadge>
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-sm font-medium text-foreground transition-colors group-hover:text-primary">
+                    {article.frontmatter.title}
+                  </h3>
+                  <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+                    {article.frontmatter.description}
+                  </p>
+                </div>
+                <ChevronRight className="mt-2 h-3.5 w-3.5 shrink-0 text-muted-foreground/20 transition-all group-hover:translate-x-0.5 group-hover:text-muted-foreground" />
+              </Link>
+            ))}
+          </div>
+        </section>
       ))}
     </div>
   );
+}
+
+function groupArticlesByCategory(articles: HelpArticle[]) {
+  const groups = new Map<string, HelpArticle[]>();
+
+  for (const article of articles) {
+    const category = article.frontmatter.category;
+    groups.set(category, [...(groups.get(category) ?? []), article]);
+  }
+
+  return Array.from(groups.entries()).map(([name, groupedArticles]) => ({
+    name,
+    articles: groupedArticles,
+  }));
 }
 
 function filterArticles(

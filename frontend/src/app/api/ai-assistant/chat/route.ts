@@ -172,6 +172,8 @@ function formatExecutiveBriefPacketContext(packet: BrandonDailyUpdatePacket): st
     "You are responding from the executive brief page.",
     "Treat the packet below as first-party operating context for Brandon's current brief.",
     "Lead with the most actionable points. When you suggest follow-up work, prefer owner, due date, business impact, and what evidence supports the recommendation.",
+    "If the user asks you to save or create a durable operational follow-up, use the createInitiativeCard tool.",
+    'For executive-page follow-up plans, prefer labels ["Executive", "Operational Improvement"] and, when the brief item has a sourceId, set linkedRecordType to "executive_source" and linkedRecordId to that sourceId.',
     "If the user asks for something not covered by the packet, say so clearly and then use tools or broader assistant context to fill the gap.",
     "",
     JSON.stringify(packet, null, 2),

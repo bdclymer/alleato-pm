@@ -181,6 +181,7 @@ const STARTER_PROMPTS = [
   "What are the three highest-risk items Brandon should act on today?",
   "Turn the most important executive items into a follow-up plan with owners and due dates.",
   "Where is the biggest financial or compliance exposure in this brief?",
+  "Create an operational improvement card for the most serious process failure in this brief.",
 ];
 
 function ExecutiveChatSession({

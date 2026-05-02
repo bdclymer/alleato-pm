@@ -44,6 +44,7 @@ export type CurrentUserProfile = {
   communicationPreference?: string;
   profileCompleteness: number;
   isAdmin?: boolean;
+  onboardingCompletedAt?: string | null;
 };
 
 type ProfileOverrides = Partial<
@@ -160,7 +161,7 @@ export const useCurrentUserProfile = (options?: { enabled?: boolean }) => {
       if (data.user && isMounted) {
         const { data: profileData, error: profileError } = await supabase
           .from("user_profiles")
-          .select("is_admin, full_name, role")
+          .select("is_admin, full_name, role, onboarding_completed_at")
           .eq("id", data.user.id)
           .maybeSingle();
 
@@ -196,6 +197,7 @@ export const useCurrentUserProfile = (options?: { enabled?: boolean }) => {
         setProfile({
           ...baseProfile,
           isAdmin: profileData?.is_admin === true,
+          onboardingCompletedAt: profileData?.onboarding_completed_at ?? null,
         });
       }
 

@@ -8,6 +8,7 @@ import { AppCapabilityAccessDenied } from "@/components/guards/app-capability-ac
 import { EmptyState } from "@/components/ds";
 import { ExecutiveBriefEmailForm } from "@/components/executive/executive-brief-email-form";
 import { ExecutiveChatPanel } from "@/components/executive/executive-chat-panel";
+import { OperationalImprovementDraftForm } from "@/components/executive/operational-improvement-draft-form";
 import { ExecutiveSourceActivity } from "@/components/executive/executive-source-activity";
 import {
   ExecutiveTaskDraftForm,
@@ -44,6 +45,25 @@ type MatchedTask = {
   assigneeEmail: string | null;
   metadataId: string;
   projectName: string | null;
+};
+
+type MatchedInitiativeCard = {
+  id: string;
+  title: string;
+  description: string | null;
+  status: string;
+  priority: string;
+  dueDate: string | null;
+  assignee: string | null;
+  source: string;
+  linkId: string | null;
+  linkType: string | null;
+};
+
+type OperationalSignal = {
+  item: BrandonBriefItem;
+  linkId: string | null;
+  linkType: "executive_source" | "executive_follow_up";
 };
 
 const toneDotStyles: Record<Tone, string> = {
@@ -141,26 +161,66 @@ function getFinancialItems(items: BrandonBriefItem[]) {
   ).slice(0, 5);
 }
 
-function getOperationalItems(items: BrandonBriefItem[]) {
-  return dedupeItems(
-    items.filter((item) =>
-      keywordHit(item, [
-        "insurance",
-        "license",
-        "licensing",
-        "permit",
-        "coi",
-        "background",
-        "employee",
-        "termination",
-        "laptop",
-        "property",
-        "access",
-        "compliance",
-        "renewal",
-      ]),
-    ),
-  ).slice(0, 5);
+function toOperationalPriority(
+  tone: Tone | null | undefined,
+): "urgent" | "high" | "medium" | "low" {
+  if (tone === "risk") return "urgent";
+  if (tone === "watch") return "high";
+  if (tone === "good") return "low";
+  return "medium";
+}
+
+function humanizeCardStatus(value: string) {
+  return value.replace(/_/g, " ");
+}
+
+function buildOperationalSignals(params: {
+  liveItems: BrandonBriefItem[];
+  staleFollowUps: ExecutiveBriefingFollowUp[];
+}) {
+  const rawSignals: OperationalSignal[] = [
+    ...params.liveItems.map((item) => ({
+      item,
+      linkId: item.sourceId ?? null,
+      linkType: "executive_source" as const,
+    })),
+    ...params.staleFollowUps.map((followUp) => ({
+      item: followUpToItem(followUp),
+      linkId: followUp.id,
+      linkType: "executive_follow_up" as const,
+    })),
+  ].filter(({ item }) =>
+    keywordHit(item, [
+      "insurance",
+      "license",
+      "licensing",
+      "permit",
+      "coi",
+      "background",
+      "employee",
+      "termination",
+      "laptop",
+      "property",
+      "access",
+      "compliance",
+      "renewal",
+    ]),
+  );
+
+  const deduped = new Map<string, OperationalSignal>();
+  for (const signal of rawSignals) {
+    const key = [
+      signal.item.title,
+      signal.item.project,
+      signal.linkId ?? signal.item.sourceDetail,
+      signal.linkType,
+    ].join("::");
+    if (!deduped.has(key)) {
+      deduped.set(key, signal);
+    }
+  }
+
+  return Array.from(deduped.values()).slice(0, 6);
 }
 
 function followUpToItem(followUp: ExecutiveBriefingFollowUp): BrandonBriefItem {
@@ -521,14 +581,153 @@ function CarryForwardSection({
   );
 }
 
-async function loadExecutiveTaskContext(items: BrandonBriefItem[]) {
+function OperationalImprovementsSection({
+  signals,
+  employees,
+  matchedCardsByLinkId,
+}: {
+  signals: OperationalSignal[];
+  employees: ExecutiveTaskAssigneeOption[];
+  matchedCardsByLinkId: Map<string, MatchedInitiativeCard[]>;
+}) {
+  return (
+    <section className="space-y-4">
+      <div className="space-y-1">
+        <SectionRuleHeading label="Operational Improvements" className="mb-0 pb-0" />
+        <p className="text-sm leading-6 text-muted-foreground">
+          Durable prevention and process-improvement cards linked back to the executive signals
+          that surfaced the business problem.
+        </p>
+      </div>
+
+      {signals.length > 0 ? (
+        <div className="space-y-4">
+          {signals.map((signal) => {
+            const matchedCards = signal.linkId
+              ? matchedCardsByLinkId.get(signal.linkId) ?? []
+              : [];
+
+            return (
+              <article
+                key={`${signal.linkType}:${signal.linkId ?? signal.item.title}`}
+                className="rounded-2xl border border-border bg-background p-4"
+              >
+                <div className="grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_320px]">
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge variant="outline" className="rounded-full">
+                        {signal.linkType === "executive_follow_up"
+                          ? "Carry-forward issue"
+                          : "Live executive signal"}
+                      </Badge>
+                      <div className="text-base font-semibold text-foreground">
+                        {signal.item.title}
+                      </div>
+                    </div>
+                    <p className="text-sm leading-6 text-muted-foreground">
+                      {signal.item.summary}
+                    </p>
+                    <div className="rounded-xl border border-border bg-muted/15 px-3 py-2 text-sm text-foreground">
+                      <span className="font-medium">Recommended fix:</span>{" "}
+                      {signal.item.recommendedAction ?? signal.item.summary}
+                    </div>
+                    <div className="rounded-xl border border-border bg-muted/10 px-3 py-2 text-sm text-muted-foreground">
+                      <span className="font-medium text-foreground">Prevention step:</span>{" "}
+                      {signal.item.whyItMatters ??
+                        "Document the root cause and assign a process owner so this does not recur."}
+                    </div>
+                    <SourceMeta item={signal.item} />
+                  </div>
+
+                  <div className="space-y-4 border-t border-border pt-4 xl:border-l xl:border-t-0 xl:pl-5 xl:pt-0">
+                    <OperationalImprovementDraftForm
+                      linkId={signal.linkId}
+                      linkType={signal.linkType}
+                      title={signal.item.title}
+                      problemSummary={signal.item.summary}
+                      recommendedFix={signal.item.recommendedAction ?? signal.item.summary}
+                      preventionStep={
+                        signal.item.whyItMatters ??
+                        "Capture the root cause, owner, and prevention step."
+                      }
+                      priority={toOperationalPriority(signal.item.tone)}
+                      employees={employees}
+                      hasMatchingCard={matchedCards.length > 0}
+                    />
+
+                    {matchedCards.length > 0 ? (
+                      <div className="space-y-2">
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                          Existing improvement cards
+                        </div>
+                        <div className="space-y-2">
+                          {matchedCards.map((card) => (
+                            <div
+                              key={card.id}
+                              className="rounded-xl border border-border bg-muted/20 px-3 py-2"
+                            >
+                              <div className="flex flex-wrap items-center justify-between gap-2">
+                                <div className="text-sm font-medium text-foreground">
+                                  {card.title}
+                                </div>
+                                <Badge variant="outline" className="rounded-full">
+                                  {humanizeCardStatus(card.status)}
+                                </Badge>
+                              </div>
+                              <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                                {card.description ?? "No description"}
+                              </p>
+                              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                                <span>{card.assignee ?? "Unassigned"}</span>
+                                <span>Priority {card.priority}</span>
+                                <span>Due {formatTaskDate(card.dueDate)}</span>
+                                <span>Source {card.source}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      ) : (
+        <EmptyState
+          icon={<CheckCircledIcon />}
+          title="No operational improvements queued"
+          description="No current executive signal is pointing to a process-improvement card yet."
+          className="border border-dashed border-border/80 py-10"
+        />
+      )}
+    </section>
+  );
+}
+
+async function loadExecutiveActionContext(params: {
+  items: BrandonBriefItem[];
+  operationalSignals: OperationalSignal[];
+}) {
   const metadataIds = Array.from(
-    new Set(items.map((item) => item.sourceId).filter((value): value is string => Boolean(value))),
+    new Set(
+      params.items
+        .map((item) => item.sourceId)
+        .filter((value): value is string => Boolean(value)),
+    ),
+  );
+  const operationalLinkIds = Array.from(
+    new Set(
+      params.operationalSignals
+        .map((signal) => signal.linkId)
+        .filter((value): value is string => Boolean(value)),
+    ),
   );
 
   const supabase = createServiceClient();
 
-  const [peopleResult, tasksResult] = await Promise.all([
+  const [peopleResult, tasksResult, initiativeCardsResult] = await Promise.all([
     supabase
       .from("people")
       .select("id, first_name, last_name, email")
@@ -542,6 +741,15 @@ async function loadExecutiveTaskContext(items: BrandonBriefItem[]) {
           .in("metadata_id", metadataIds)
           .order("created_at", { ascending: false })
       : Promise.resolve({ data: [], error: null }),
+    operationalLinkIds.length > 0
+      ? supabase
+          .from("initiative_cards")
+          .select(
+            "id, title, description, status, priority, due_date, assignee, source, linked_record_id, linked_record_type, labels",
+          )
+          .in("linked_record_id", operationalLinkIds)
+          .order("updated_at", { ascending: false })
+      : Promise.resolve({ data: [], error: null }),
   ]);
 
   if (peopleResult.error) {
@@ -550,6 +758,12 @@ async function loadExecutiveTaskContext(items: BrandonBriefItem[]) {
 
   if (tasksResult.error) {
     throw new Error(`Failed to load executive linked tasks: ${tasksResult.error.message}`);
+  }
+
+  if (initiativeCardsResult.error) {
+    throw new Error(
+      `Failed to load operational improvement cards: ${initiativeCardsResult.error.message}`,
+    );
   }
 
   const employees: ExecutiveTaskAssigneeOption[] = (peopleResult.data ?? []).map((person) => ({
@@ -578,10 +792,38 @@ async function loadExecutiveTaskContext(items: BrandonBriefItem[]) {
     matchedTasksBySourceId.set(task.metadataId, [...(matchedTasksBySourceId.get(task.metadataId) ?? []), task]);
   }
 
+  const operationalImprovementCards = ((initiativeCardsResult.data ?? []) as Array<
+    Record<string, unknown>
+  >)
+    .map((card) => ({
+      id: card.id as string,
+      title: card.title as string,
+      description: (card.description as string | null) ?? null,
+      status: card.status as string,
+      priority: card.priority as string,
+      dueDate: (card.due_date as string | null) ?? null,
+      assignee: (card.assignee as string | null) ?? null,
+      source: (card.source as string | null) ?? "manual",
+      linkId: (card.linked_record_id as string | null) ?? null,
+      linkType: (card.linked_record_type as string | null) ?? null,
+    }))
+    .filter((card) => card.linkId);
+
+  const matchedImprovementCardsByLinkId = new Map<string, MatchedInitiativeCard[]>();
+  for (const card of operationalImprovementCards) {
+    if (!card.linkId) continue;
+    matchedImprovementCardsByLinkId.set(card.linkId, [
+      ...(matchedImprovementCardsByLinkId.get(card.linkId) ?? []),
+      card,
+    ]);
+  }
+
   return {
     employees,
     openTasks,
     matchedTasksBySourceId,
+    operationalImprovementCards,
+    matchedImprovementCardsByLinkId,
   };
 }
 
@@ -613,13 +855,22 @@ export default async function ExecutiveDailyInsightsPage({
     ...packet.sections.waitingOnOthers,
     ...packet.sections.importantUpdates,
   ];
-  const { employees, openTasks, matchedTasksBySourceId } = await loadExecutiveTaskContext(allItems);
+  const operationalSignals = buildOperationalSignals({
+    liveItems: allItems,
+    staleFollowUps,
+  });
+  const {
+    employees,
+    openTasks,
+    matchedTasksBySourceId,
+    operationalImprovementCards,
+    matchedImprovementCardsByLinkId,
+  } = await loadExecutiveActionContext({
+    items: allItems,
+    operationalSignals,
+  });
   const generatedAt = formatGeneratedAt(packet.generatedAt);
   const financialItems = getFinancialItems(allItems);
-  const operationalItems = getOperationalItems([
-    ...allItems,
-    ...staleFollowUps.map(followUpToItem),
-  ]);
   const resolvedSearchParams = searchParams ? await searchParams : {};
   const emailStatusRaw = Array.isArray(resolvedSearchParams.emailStatus)
     ? resolvedSearchParams.emailStatus[0]
@@ -667,7 +918,7 @@ export default async function ExecutiveDailyInsightsPage({
             </div>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
             <ExecutiveSummaryCard
               label="Needs Brandon"
               value={String(packet.sections.needsBrandon.length)}
@@ -687,6 +938,11 @@ export default async function ExecutiveDailyInsightsPage({
               label="Carry-Forward"
               value={String(staleFollowUps.length)}
               context="Still-open follow-ups that did not make today’s live shortlist."
+            />
+            <ExecutiveSummaryCard
+              label="Improvements"
+              value={String(operationalImprovementCards.length)}
+              context="Durable operational-improvement cards linked to executive signals."
             />
           </div>
         </div>
@@ -771,10 +1027,16 @@ export default async function ExecutiveDailyInsightsPage({
         <ExecutiveListSection
           title="Operational Breakdowns"
           description="Company-level failures and process risks that should become operational follow-through, not just transient updates."
-          items={operationalItems}
+          items={operationalSignals.map((signal) => signal.item)}
           emptyTitle="No operational breakdowns surfaced"
         />
       </section>
+
+      <OperationalImprovementsSection
+        signals={operationalSignals}
+        employees={employees}
+        matchedCardsByLinkId={matchedImprovementCardsByLinkId}
+      />
 
       <section className="grid gap-6 xl:grid-cols-2">
         <ExecutiveListSection

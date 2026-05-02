@@ -4,7 +4,8 @@ import * as React from "react";
 import { useSearchParams } from "next/navigation";
 import { ArrowRight, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Modal, ModalContent, ModalTitle } from "@/components/ui/unified-modal";
+import { apiFetch } from "@/lib/api-client";
 import { useCurrentUserProfile } from "@/hooks/use-current-user-profile";
 import {
   defaultMomentumStats,
@@ -77,12 +78,20 @@ export function WelcomeOnboarding({
       return;
     }
 
+    // Server-side flag is authoritative — if the DB says completed, never show again.
+    if (currentUserProfile?.onboardingCompletedAt) {
+      window.localStorage.setItem(storageKey, currentUserProfile.onboardingCompletedAt);
+      return;
+    }
+
+    // Fall back to localStorage while the profile is loading or as a fast cache.
     const seen = window.localStorage.getItem(storageKey);
     if (!seen) {
       setStep(0);
       setOpen(true);
     }
   }, [
+    currentUserProfile?.onboardingCompletedAt,
     deferAutoOpen,
     forceOpen,
     queryForceOpen,
@@ -106,8 +115,11 @@ export function WelcomeOnboarding({
 
   const close = React.useCallback(
     (_completed: boolean) => {
-      window.localStorage.setItem(storageKey, new Date().toISOString());
+      const now = new Date().toISOString();
+      window.localStorage.setItem(storageKey, now);
       setOpen(false);
+      // Fire-and-forget — mark as completed in the DB so it never shows again on any device.
+      apiFetch("/api/users/me/onboarding", { method: "POST" }).catch(() => {});
     },
     [storageKey],
   );
@@ -128,14 +140,14 @@ export function WelcomeOnboarding({
   };
 
   return (
-    <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && close(false)}>
-      <DialogContent
-        showCloseButton={false}
+    <Modal open={open} onOpenChange={(nextOpen) => !nextOpen && close(false)}>
+      <ModalContent
+        hideCloseButton={true}
         className="flex max-h-[calc(100svh-1.5rem)] flex-col gap-0 overflow-hidden border-0 bg-background p-0 text-foreground sm:max-w-5xl"
         style={{ height: "min(42rem, calc(100svh - 1.5rem))" }}
         aria-describedby={undefined}
       >
-        <DialogTitle className="sr-only">Welcome to Alleato AI</DialogTitle>
+        <ModalTitle className="sr-only">Welcome to Alleato AI</ModalTitle>
         <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
           <BlueprintBackdrop />
 
@@ -185,8 +197,8 @@ export function WelcomeOnboarding({
             </div>
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      </ModalContent>
+    </Modal>
   );
 }
 

@@ -44,6 +44,10 @@ function parseRecipients(raw: string) {
     .filter(Boolean);
 }
 
+function normalizeExecutiveImprovementText(value: string) {
+  return value.replace(/\s+/g, " ").trim();
+}
+
 export async function regenerateExecutiveBriefingAction(formData: FormData) {
   await requireCurrentUserAppCapability(
     "view_executive_briefing",
@@ -190,6 +194,129 @@ export async function createExecutiveTaskDraftAction(formData: FormData) {
 
     if (insertError) {
       throw new Error(`Failed to create executive task draft: ${insertError.message}`);
+    }
+  }
+
+  revalidatePath(EXECUTIVE_PATH);
+}
+
+export async function createOperationalImprovementAction(formData: FormData) {
+  await requireCurrentUserAppCapability(
+    "view_executive_briefing",
+    "executive-briefing-actions#create-operational-improvement",
+    "Executive briefing access required.",
+  );
+
+  const linkId = formString(formData, "linkId");
+  const linkType = formString(formData, "linkType");
+  const title = formString(formData, "title");
+  const problemSummary = formString(formData, "problemSummary");
+  const recommendedFix = formString(formData, "recommendedFix");
+  const preventionStep = formString(formData, "preventionStep");
+  const priority = formString(formData, "priority") || "medium";
+  const dueDate = formString(formData, "dueDate") || null;
+  const assigneePersonId = formString(formData, "assigneePersonId");
+
+  if (!linkId || !linkType) {
+    throw new Error("Missing operational improvement link context.");
+  }
+
+  if (!title || !problemSummary) {
+    throw new Error("Missing operational improvement content.");
+  }
+
+  if (linkType !== "executive_source" && linkType !== "executive_follow_up") {
+    throw new Error("Invalid operational improvement link type.");
+  }
+
+  const supabase = createServiceClient();
+
+  let assignee: string | null = null;
+  let assigneeId: string | null = null;
+
+  if (assigneePersonId) {
+    const { data: person, error: personError } = await supabase
+      .from("people")
+      .select("id, first_name, last_name, email")
+      .eq("id", assigneePersonId)
+      .single();
+
+    if (personError) {
+      throw new Error(`Failed to load assignee: ${personError.message}`);
+    }
+
+    assigneeId = person.id;
+    assignee =
+      [person.first_name, person.last_name].filter(Boolean).join(" ").trim() ||
+      person.email ||
+      null;
+  }
+
+  const normalizedTitle = normalizeExecutiveImprovementText(title);
+  const normalizedDescription = [
+    `Problem: ${normalizeExecutiveImprovementText(problemSummary)}`,
+    recommendedFix
+      ? `Recommended fix: ${normalizeExecutiveImprovementText(recommendedFix)}`
+      : null,
+    preventionStep
+      ? `Prevention step: ${normalizeExecutiveImprovementText(preventionStep)}`
+      : null,
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+
+  const { data: existingCard, error: existingCardError } = await supabase
+    .from("initiative_cards")
+    .select("id")
+    .eq("linked_record_type", linkType)
+    .eq("linked_record_id", linkId)
+    .neq("status", "done")
+    .limit(1)
+    .maybeSingle();
+
+  if (existingCardError) {
+    throw new Error(
+      `Failed to check for existing operational improvement: ${existingCardError.message}`,
+    );
+  }
+
+  if (!existingCard) {
+    const { data: maxRow, error: maxRowError } = await supabase
+      .from("initiative_cards")
+      .select("sort_order")
+      .eq("status", "idea")
+      .order("sort_order", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (maxRowError) {
+      throw new Error(
+        `Failed to calculate operational improvement sort order: ${maxRowError.message}`,
+      );
+    }
+
+    const { error: insertError } = await supabase.from("initiative_cards").insert({
+      title: normalizedTitle,
+      description: normalizedDescription,
+      status: "idea",
+      priority:
+        priority === "urgent" || priority === "high" || priority === "medium" || priority === "low"
+          ? priority
+          : "medium",
+      labels: ["Executive", "Operational Improvement"],
+      sort_order: (maxRow?.sort_order ?? -1) + 1,
+      linked_record_type: linkType,
+      linked_record_id: linkId,
+      source: "manual",
+      assignee,
+      assignee_id: assigneeId,
+      due_date: dueDate,
+    });
+
+    if (insertError) {
+      throw new Error(
+        `Failed to create operational improvement card: ${insertError.message}`,
+      );
     }
   }
 
