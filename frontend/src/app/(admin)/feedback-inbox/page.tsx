@@ -111,6 +111,7 @@ type DisplayStatus = Exclude<StatusFilter, "all"> | "archived";
 // ---------------------------------------------------------------------------
 
 const STATUS_FILTERS: { value: StatusFilter; label: string }[] = [
+  { value: "open", label: "Open" },
   { value: "in_progress", label: "In Progress" },
   { value: "resolved", label: "Resolved" },
   { value: "all", label: "All" },
@@ -570,6 +571,7 @@ function CommentInput({
         </div>
       )}
 
+      {/* eslint-disable-next-line design-system/no-raw-form-controls -- hidden file input requires ref; no DS primitive available */}
       <input
         ref={fileInputRef}
         type="file"
@@ -578,6 +580,7 @@ function CommentInput({
         onChange={handleFileUpload}
       />
       <div className="rounded-lg border border-border bg-background focus-within:ring-1 focus-within:ring-ring">
+        {/* eslint-disable-next-line design-system/no-raw-form-controls -- custom mention-aware textarea with imperative ref; DS Textarea does not support mention overlay */}
         <textarea
           ref={inputRef}
           value={value}
@@ -1559,6 +1562,7 @@ function FeedbackDetail({
         <div className="mt-3 flex flex-wrap items-center gap-2">
           {/* Status dropdown */}
           <div className="relative">
+            {/* eslint-disable-next-line design-system/no-raw-form-controls -- inline status select with custom styling; not a form field */}
             <select
               value={displayStatus}
               onChange={(e) => onUpdateStatus(item.id, e.target.value as DisplayStatus)}
@@ -1672,6 +1676,33 @@ function FeedbackDetail({
         <ToolContextSection item={item} />
       </div>
 
+      {/* Source Metadata */}
+      {item.metadata && Object.keys(item.metadata).length > 0 && (
+        <div className="border-t border-border/60 pt-4">
+          <SectionRuleHeading label="Source Metadata" />
+          <div className="space-y-1.5">
+            {Object.entries(item.metadata as Record<string, unknown>).map(([key, value]) => {
+              const label = key
+                .replace(/([A-Z])/g, " $1")
+                .replace(/^./, (c) => c.toUpperCase())
+                .trim();
+              const displayValue =
+                value === null || value === undefined
+                  ? "—"
+                  : typeof value === "object"
+                  ? JSON.stringify(value)
+                  : String(value);
+              return (
+                <div key={key} className="flex items-start gap-2 text-xs">
+                  <span className="w-28 shrink-0 text-muted-foreground">{label}</span>
+                  <span className="text-foreground break-all">{displayValue}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Comments */}
       <div>
         <CommentsSection feedbackItemId={item.id} commentInputRef={commentInputRef} />
@@ -1696,7 +1727,7 @@ export default function FeedbackInboxPage() {
   const [items, setItems] = useState<FeedbackItem[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<StatusFilter>("in_progress");
+  const [filter, setFilter] = useState<StatusFilter>("open");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [sendingToGitHub, setSendingToGitHub] = useState(false);
