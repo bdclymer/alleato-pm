@@ -2047,7 +2047,7 @@ export function ChatArea({
         </>
       )}
 
-      <div className="absolute inset-x-0 bottom-0 z-20 shrink-0 bg-background/95 px-3 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2 backdrop-blur md:px-4">
+      <div className="absolute inset-x-0 bottom-0 z-20 shrink-0 bg-background/95 px-3 pb-[calc(2rem+env(safe-area-inset-bottom))] pt-2 backdrop-blur md:px-4">
         <div className="mx-auto w-full max-w-3xl">
           {promptInputEl}
         </div>

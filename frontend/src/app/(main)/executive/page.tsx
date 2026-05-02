@@ -6,7 +6,6 @@ import {
 } from "@radix-ui/react-icons";
 import { AppCapabilityAccessDenied } from "@/components/guards/app-capability-access-denied";
 import { EmptyState } from "@/components/ds";
-import { ExecutiveBriefEmailForm } from "@/components/executive/executive-brief-email-form";
 import { ExecutiveChatPanel } from "@/components/executive/executive-chat-panel";
 import { OperationalImprovementDraftForm } from "@/components/executive/operational-improvement-draft-form";
 import { ExecutiveSourceActivity } from "@/components/executive/executive-source-activity";
@@ -31,8 +30,6 @@ import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
-
-type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
 type Tone = NonNullable<BrandonBriefItem["tone"]>;
 
@@ -282,30 +279,6 @@ function ExecutiveSummaryCard({
       <div className="text-2xl font-semibold tracking-tight text-foreground">{value}</div>
       <div className="mt-1 text-sm font-medium text-foreground">{label}</div>
       <div className="mt-1 text-sm leading-6 text-muted-foreground">{context}</div>
-    </div>
-  );
-}
-
-function ExecutiveEmailStatus({
-  status,
-  message,
-}: {
-  status: "sent" | "failed";
-  message: string;
-}) {
-  return (
-    <div
-      className={cn(
-        "rounded-2xl border px-4 py-3 text-sm",
-        status === "sent"
-          ? "border-emerald-200 bg-emerald-50 text-emerald-950"
-          : "border-destructive/25 bg-destructive/5 text-foreground",
-      )}
-    >
-      <div className="font-medium">
-        {status === "sent" ? "Executive brief email sent" : "Executive brief email failed"}
-      </div>
-      <p className="mt-1 text-sm opacity-90">{message}</p>
     </div>
   );
 }
@@ -828,9 +801,7 @@ async function loadExecutiveActionContext(params: {
 }
 
 export default async function ExecutiveDailyInsightsPage({
-  searchParams,
 }: {
-  searchParams?: SearchParams;
 }) {
   const canViewExecutiveBriefing = await canCurrentUserAccessAppCapability(
     "view_executive_briefing",
@@ -871,18 +842,6 @@ export default async function ExecutiveDailyInsightsPage({
   });
   const generatedAt = formatGeneratedAt(packet.generatedAt);
   const financialItems = getFinancialItems(allItems);
-  const resolvedSearchParams = searchParams ? await searchParams : {};
-  const emailStatusRaw = Array.isArray(resolvedSearchParams.emailStatus)
-    ? resolvedSearchParams.emailStatus[0]
-    : resolvedSearchParams.emailStatus;
-  const emailMessageRaw = Array.isArray(resolvedSearchParams.emailMessage)
-    ? resolvedSearchParams.emailMessage[0]
-    : resolvedSearchParams.emailMessage;
-  const emailStatus =
-    emailStatusRaw === "sent" || emailStatusRaw === "failed" ? emailStatusRaw : null;
-  const defaultRecipientEmail =
-    employees.find((employee) => employee.email && /brandon/i.test(employee.label))?.email ?? "";
-  const defaultSubject = `Daily operating brief — ${draft.recapDate}`;
 
   return (
     <PageShell
@@ -891,10 +850,6 @@ export default async function ExecutiveDailyInsightsPage({
       title="Daily operating brief"
       contentClassName="space-y-8"
     >
-      {emailStatus && emailMessageRaw ? (
-        <ExecutiveEmailStatus status={emailStatus} message={emailMessageRaw} />
-      ) : null}
-
       <section className="grid gap-6 xl:grid-cols-[minmax(0,1.65fr)_360px]">
         <div className="space-y-6">
           <div className="space-y-3">
@@ -950,33 +905,15 @@ export default async function ExecutiveDailyInsightsPage({
         <aside className="space-y-4">
           <div className="rounded-2xl border border-border bg-background p-4">
             <div className="space-y-1">
-              <SectionRuleHeading label="Send Brief" className="mb-0 pb-0" />
+              <SectionRuleHeading label="Manual Actions" className="mb-0 pb-0" />
               <p className="text-sm leading-6 text-muted-foreground">
-                Manual testing path for sending the current brief to Brandon or any employee. This
-                uses the shared email pipeline now, and a future scheduled job can call the same
-                send action later.
-              </p>
-            </div>
-            <div className="mt-4">
-              <ExecutiveBriefEmailForm
-                draftId={draft.id}
-                defaultRecipients={defaultRecipientEmail}
-                defaultSubject={defaultSubject}
-              />
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-border bg-background p-4">
-            <div className="space-y-1">
-              <SectionRuleHeading label="Executive Agent" className="mb-0 pb-0" />
-              <p className="text-sm leading-6 text-muted-foreground">
-                Embedded below with the current executive brief as its starting packet. The full
-                assistant remains available for broader cross-project work.
+                Manual sends and other internal triggers live on the dedicated actions page so this
+                owner-facing brief stays focused on information and decisions.
               </p>
             </div>
             <div className="mt-4">
               <Button asChild size="sm" variant="outline">
-                <Link href="/ai-assistant">Open full assistant</Link>
+                <Link href="/actions">Open actions page</Link>
               </Button>
             </div>
           </div>

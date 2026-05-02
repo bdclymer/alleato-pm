@@ -35,6 +35,7 @@ Ship a high-signal `/executive` operating surface for Brandon that is easy to sc
 | In Progress | A10 | Add chat tools or actions to create follow-up plans and link them back to executive items. | Executive chat now instructs the assistant to use `createInitiativeCard` with executive linkage; next gap is tightening the save UX and verification evidence. |
 | Done | A11 | Make “new vs carry-forward” explicit on the page. | Carry-forward risks now render as a dedicated section separate from live packet items. |
 | In Progress | A12 | Run targeted verification and capture evidence in the handoff. | Focused lint passed; full frontend typecheck still reports unrelated repo debt. |
+| Done | A13 | Move manual send and internal triggers off `/executive` and onto a dedicated actions page. | `/actions` is now the manual trigger surface; `/executive` no longer exposes the send form. |
 
 ## Scope Cuts For The First Shipping Pass
 

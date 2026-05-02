@@ -18,6 +18,7 @@ import {
 } from "@/lib/executive/executive-briefing-workflow";
 
 const EXECUTIVE_PATH = "/executive";
+const ADMIN_ACTIONS_PATH = "/actions";
 
 function formString(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -34,7 +35,7 @@ function redirectWithEmailStatus(status: "sent" | "failed", message: string) {
     emailStatus: status,
     emailMessage: message.slice(0, 180),
   });
-  redirect(`${EXECUTIVE_PATH}?${params.toString()}`);
+  redirect(`${ADMIN_ACTIONS_PATH}?${params.toString()}`);
 }
 
 function parseRecipients(raw: string) {

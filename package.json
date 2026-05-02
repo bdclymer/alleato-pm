@@ -46,6 +46,7 @@
     "verify:all-route-guardrails": "GUARDRAIL_SCOPE=all node scripts/check-changed-route-guardrails.mjs",
     "test:route-guardrails": "node --test scripts/__tests__/check-changed-route-guardrails.test.mjs",
     "verify:changed-api-client-enforcement": "cd frontend && npm run lint:changed:debt",
+    "verify:nonprod-routes": "node scripts/build/check-nonprod-routes.mjs",
     "validate:runtime-config": "node scripts/validate-runtime-config.mjs",
     "quality:predeploy": "bash scripts/predeploy-quality-gate.sh",
     "verify:postdeploy": "bash scripts/postdeploy-verify.sh",

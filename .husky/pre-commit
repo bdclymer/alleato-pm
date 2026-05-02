@@ -44,6 +44,12 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
+npm run verify:nonprod-routes
+if [ $? -ne 0 ]; then
+  echo "Non-production route state is invalid. Fix before committing."
+  exit 1
+fi
+
 # ── Phantom-table guard ──────────────────────────────────────────
 # Block commits that introduce .from("table") calls against tables
 # not in the generated database.types.ts. See scripts/audits/.

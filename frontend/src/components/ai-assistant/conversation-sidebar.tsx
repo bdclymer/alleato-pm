@@ -7,20 +7,20 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import {
+  Modal,
+  ModalContent,
+  ModalDescription,
+  ModalFooter,
+  ModalHeader,
+  ModalTitle,
+} from "@/components/ui/unified-modal";
+import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -254,7 +254,7 @@ export function ConversationSidebar({
 
   return (
     <>
-      <div className="fixed left-16 top-5 z-30 flex items-center justify-start gap-2">
+      <div className="fixed left-20 top-14 z-30 flex items-center justify-start gap-2">
         <Sheet open={historyOpen} onOpenChange={setHistoryOpen}>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -352,7 +352,7 @@ export function ConversationSidebar({
         </Sheet>
       </div>
 
-      <Dialog
+      <Modal
         open={!!conversationToRename}
         onOpenChange={(open) => {
           if (!open) {
@@ -361,13 +361,13 @@ export function ConversationSidebar({
           }
         }}
       >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Rename conversation</DialogTitle>
-            <DialogDescription>
+        <ModalContent size="sm">
+          <ModalHeader>
+            <ModalTitle>Rename conversation</ModalTitle>
+            <ModalDescription>
               Give this thread a clearer title so it is easier to find later.
-            </DialogDescription>
-          </DialogHeader>
+            </ModalDescription>
+          </ModalHeader>
           <Input
             value={renameValue}
             onChange={(event) => setRenameValue(event.target.value)}
@@ -380,7 +380,7 @@ export function ConversationSidebar({
             placeholder="Conversation title"
             autoFocus
           />
-          <DialogFooter>
+          <ModalFooter>
             <Button
               variant="outline"
               onClick={() => {
@@ -393,9 +393,9 @@ export function ConversationSidebar({
             <Button onClick={handleRename} disabled={!renameValue.trim()}>
               Save
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
 
       <AlertDialog
         open={!!conversationToDelete}

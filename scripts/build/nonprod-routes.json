@@ -4,7 +4,6 @@
     "frontend/src/app/(admin)/api-docs/page.tsx",
     "frontend/src/app/(admin)/redoc/page.tsx",
     "frontend/src/app/(admin)/spreadsheet-demo/page.tsx",
-    "frontend/src/app/(admin)/template/data-table/page.tsx",
     "frontend/src/app/(admin)/template/form-standard/page.tsx",
     "frontend/src/app/(admin)/template/form-template/page.tsx",
     "frontend/src/app/(admin)/testing/page.tsx",

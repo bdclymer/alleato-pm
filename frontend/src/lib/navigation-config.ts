@@ -137,6 +137,7 @@ export const subcontractorTools: NavigationTool[] = [
 ];
 
 export const adminTools: NavigationTool[] = [
+  { name: "Actions", path: "/actions", icon: Wrench, requiresProject: false, adminOnly: true },
   { name: "Settings", path: "/settings", icon: Settings, requiresProject: false },
   { name: "What's New", path: "/updates", icon: TrendingUp, requiresProject: false },
   { name: "Documentation", path: "/docs", icon: MessageCircle, requiresProject: false },
@@ -593,6 +594,14 @@ export const headerNavGroups: HeaderNavGroup[] = [
 
 // Admin/Settings tools (shown in gear icon dropdown)
 export const adminSettingsTools: HeaderNavigationTool[] = [
+  {
+    name: "Actions",
+    path: "/actions",
+    requiresProject: false,
+    icon: Wrench,
+    description: "Manual internal workflows and triggers",
+    adminOnly: true,
+  },
   {
     name: "Command Center",
     path: "/command-center",

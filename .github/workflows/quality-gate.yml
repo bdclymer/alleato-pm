@@ -28,6 +28,9 @@ jobs:
         with:
           version: "10.13.1"
 
+      - name: Validate non-production route state
+        run: npm run verify:nonprod-routes
+
       - name: Install frontend dependencies
         run: pnpm --dir frontend install --frozen-lockfile
 
@@ -65,6 +68,9 @@ jobs:
         uses: pnpm/action-setup@v4
         with:
           version: "10.13.1"
+
+      - name: Validate non-production route state
+        run: npm run verify:nonprod-routes
 
       - name: Install root dependencies
         run: npm ci

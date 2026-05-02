@@ -146,16 +146,20 @@ for (const relativePath of manifest.files) {
 
   if (!existsSync(absolutePath)) {
     if (existsSync(disabledPath)) {
-      disabled.push({ from: relativePath, to: `${relativePath}.nonprod`, alreadyDisabled: true });
-      continue;
+      throw new Error(
+        `[build] Found stranded disabled route file without an active source file: ${relativePath}.nonprod`,
+      );
     }
 
-    console.warn(`[build] Skipping missing non-production route file: ${relativePath}`);
-    continue;
+    throw new Error(
+      `[build] Non-production route manifest is out of sync. Missing active route file: ${relativePath}`,
+    );
   }
 
   if (existsSync(disabledPath)) {
-    throw new Error(`[build] Refusing to overwrite existing disabled route file: ${relativePath}.nonprod`);
+    throw new Error(
+      `[build] Refusing to overwrite existing disabled route file: ${relativePath}.nonprod`,
+    );
   }
 
   renameSync(absolutePath, disabledPath);
