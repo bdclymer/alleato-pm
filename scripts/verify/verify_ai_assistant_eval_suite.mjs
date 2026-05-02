@@ -188,9 +188,17 @@ async function postPromptAndDrain(testCase, sessionId, messageId) {
   const streamEvents = [];
   let buffer = "";
   let textAccumulator = "";
+  let midStreamError = null;
   try {
     while (true) {
-      const { done, value } = await reader.read();
+      let chunk;
+      try {
+        chunk = await reader.read();
+      } catch (error) {
+        midStreamError = `stream read error: ${error.message ?? String(error)}`;
+        break;
+      }
+      const { done, value } = chunk;
       if (done) break;
       buffer += decoder.decode(value, { stream: true });
       let idx;
@@ -221,7 +229,7 @@ async function postPromptAndDrain(testCase, sessionId, messageId) {
     httpStatus: response.status,
     streamText: textAccumulator,
     streamEvents,
-    streamError: null,
+    streamError: midStreamError,
     durationMs: Date.now() - startedAt,
   };
 }

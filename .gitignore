@@ -112,3 +112,4 @@ scripts/adversarial-harness/workspace/
 scripts/adversarial-harness/node_modules/
 scripts/adversarial-harness/bun.lock
 scripts/adversarial-harness/package-lock.json
+/docs/ai-plan/evals/runs/
