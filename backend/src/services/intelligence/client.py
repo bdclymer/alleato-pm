@@ -12,9 +12,10 @@ from openai import OpenAI
 logger = logging.getLogger(__name__)
 
 AI_GATEWAY_BASE_URL = "https://ai-gateway.vercel.sh/v1"
-COMPILER_MODEL_DEFAULT = "gpt-4.1-mini"
-COMPILER_MODEL_LARGE = "gpt-4.1"
-COMPILER_REQUEST_TIMEOUT_SECONDS = int(os.getenv("TEAMS_COMPILER_REQUEST_TIMEOUT_SECONDS", "30"))
+COMPILER_MODEL = "gpt-5.5"
+COMPILER_MODEL_DEFAULT = COMPILER_MODEL
+COMPILER_MODEL_LARGE = COMPILER_MODEL
+COMPILER_REQUEST_TIMEOUT_SECONDS = int(os.getenv("TEAMS_COMPILER_REQUEST_TIMEOUT_SECONDS", "60"))
 
 
 def _provider_configs() -> List[Dict[str, str]]:
