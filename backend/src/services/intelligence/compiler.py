@@ -249,7 +249,24 @@ def _best_confidence(cards: List[Dict[str, Any]]) -> str:
 
 
 def _table_rows(supabase: Any, table_name: str, select: str = "*") -> List[Dict[str, Any]]:
-    return getattr(supabase.table(table_name).select(select).execute(), "data", None) or []
+    """Fetch all rows for health checks instead of Supabase's first 1,000 rows."""
+    rows: List[Dict[str, Any]] = []
+    page_size = 1000
+    start = 0
+    while True:
+        batch = getattr(
+            supabase.table(table_name)
+            .select(select)
+            .range(start, start + page_size - 1)
+            .execute(),
+            "data",
+            None,
+        ) or []
+        rows.extend(batch)
+        if len(batch) < page_size:
+            break
+        start += page_size
+    return rows
 
 
 def _status_counts(rows: List[Dict[str, Any]]) -> Dict[str, int]:
