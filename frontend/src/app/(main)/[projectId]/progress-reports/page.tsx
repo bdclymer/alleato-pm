@@ -98,9 +98,7 @@ function ProgressReportCard({
       <p className="text-xs text-muted-foreground">
         Week of {formatProgressReportDate(item.week_start)} – {formatProgressReportDate(item.week_end)}
       </p>
-      {item.past_week_highlights && (
-        <p className="line-clamp-3 text-sm text-foreground">{item.past_week_highlights}</p>
-      )}
+
       <div className="mt-auto flex items-center gap-4 pt-1 text-xs text-muted-foreground">
         <span className="inline-flex items-center gap-1">
           <FileText className="h-3.5 w-3.5" />

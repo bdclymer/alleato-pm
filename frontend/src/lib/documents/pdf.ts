@@ -261,29 +261,47 @@ export function buildChangeEventHtml(
 }
 
 /**
- * Renders HTML to a PDF buffer using @sparticuz/chromium + puppeteer-core.
+ * Renders HTML to a PDF buffer using puppeteer-core.
  *
- * This replaces the previous playwright-based implementation which required
- * a full Chromium install that is NOT available in serverless environments
- * (Vercel, AWS Lambda, etc.).  @sparticuz/chromium ships a pre-built
- * headless shell that works in those environments without any extra setup.
+ * In production (Vercel/Lambda) we use @sparticuz/chromium which ships a
+ * pre-built headless binary for Linux serverless environments.
  *
- * Root cause of the original bug:
- *   playwright's `chromium.launch()` resolves the executable from
- *   ~/.cache/ms-playwright, which is never present in a serverless container.
- *
- * Prevention: The `playwright` package must never be imported in server-side
- * PDF routes.  If Playwright is needed for E2E tests it should remain a
- * devDependency used only in `tests/`.
+ * In local development we point puppeteer-core at the system Chrome
+ * installation so the Linux-only @sparticuz binary isn't needed.
  */
 export async function renderPdfFromHtml(html: string): Promise<Buffer> {
-  // Dynamic imports so the heavy binary isn't loaded in non-PDF code paths.
-  const chromium = (await import("@sparticuz/chromium")).default;
   const puppeteer = await import("puppeteer-core");
+  const isProduction = process.env.NODE_ENV === "production" || process.env.VERCEL === "1";
+
+  let executablePath: string;
+  let args: string[];
+
+  if (isProduction) {
+    const chromium = (await import("@sparticuz/chromium")).default;
+    executablePath = await chromium.executablePath();
+    args = chromium.args;
+  } else {
+    // Use local system Chrome on macOS/Windows dev machines.
+    const localPaths = [
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+      "/usr/bin/google-chrome",
+      "/usr/bin/chromium-browser",
+      "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+    ];
+    const fs = await import("fs");
+    const found = localPaths.find((p) => fs.existsSync(p));
+    if (!found) {
+      throw new Error(
+        "PDF generation requires Google Chrome locally. Install Chrome or set NODE_ENV=production to use the serverless binary.",
+      );
+    }
+    executablePath = found;
+    args = ["--no-sandbox", "--disable-setuid-sandbox"];
+  }
 
   const browser = await puppeteer.default.launch({
-    args: chromium.args,
-    executablePath: await chromium.executablePath(),
+    executablePath,
+    args,
     headless: true,
   });
 

@@ -1044,6 +1044,70 @@ export function ProgressReportEditor({
               />
             </dl>
           </DetailPanel>
+
+          {reportQuery.data.report.source_snapshot && (
+            (() => {
+              const snap = reportQuery.data.report.source_snapshot;
+              const hasSources = snap.meetings.length > 0 || snap.emails.length > 0;
+              if (!hasSources) return null;
+              return (
+                <DetailPanel>
+                  <SectionRuleHeading label="AI Sources" className="mb-4 pb-0" />
+                  <p className="mb-4 text-xs text-muted-foreground">
+                    Content generated {formatProgressReportDate(snap.generatedAt, "MMM d, yyyy")} from:
+                  </p>
+                  <div className="space-y-4">
+                    {snap.meetings.length > 0 && (
+                      <div className="space-y-2">
+                        <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                          Meetings ({snap.meetings.length})
+                        </p>
+                        <ul className="space-y-2">
+                          {snap.meetings.map((meeting) => (
+                            <li key={meeting.id}>
+                              <Link
+                                href={`/${projectId}/meetings/${meeting.id}`}
+                                className="group flex items-start gap-1.5 text-sm text-foreground hover:text-primary"
+                              >
+                                <ExternalLink className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground group-hover:text-primary" />
+                                <span className="min-w-0">
+                                  <span className="line-clamp-2 font-medium">{meeting.title}</span>
+                                  {meeting.date && (
+                                    <span className="block text-xs text-muted-foreground">
+                                      {formatProgressReportDate(meeting.date)}
+                                    </span>
+                                  )}
+                                </span>
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {snap.emails.length > 0 && (
+                      <div className="space-y-2">
+                        <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                          Emails ({snap.emails.length})
+                        </p>
+                        <ul className="space-y-2">
+                          {snap.emails.map((email) => (
+                            <li key={email.id} className="text-sm">
+                              <p className="line-clamp-2 font-medium text-foreground">{email.subject}</p>
+                              {email.date && (
+                                <p className="text-xs text-muted-foreground">
+                                  {formatProgressReportDate(email.date)}
+                                </p>
+                              )}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                </DetailPanel>
+              );
+            })()
+          )}
         </aside>
       </div>
     </ContentSectionStack>
