@@ -10,6 +10,7 @@ import {
   type UIMessageStreamWriter,
   type ToolSet,
 } from "ai";
+import { handleChatV2 } from "./handler-v2";
 import { after } from "next/server";
 import { z } from "zod";
 
@@ -2569,6 +2570,18 @@ export const POST = withApiGuardrails(
     if (!sessionId || !messages?.length) {
       return new Response("session id and messages are required", {
         status: 400,
+      });
+    }
+
+    if (process.env.USE_RETRIEVAL_PLANNER === "true") {
+      const supabaseV2 = createServiceClient();
+      return handleChatV2({
+        user,
+        sessionId,
+        messages,
+        selectedProjectId,
+        activeModel,
+        supabase: supabaseV2,
       });
     }
 
