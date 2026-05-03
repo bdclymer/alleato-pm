@@ -36,6 +36,7 @@ import {
   createProgressReportTools,
   type ProgressReportToolsOptions,
 } from "@/lib/ai/tools/progress-report-tools";
+import { createWorkspaceTools } from "@/lib/ai/tools/workspace-tools";
 import {
   createStructuredOutputTools,
   type CreateStructuredOutputToolsOptions,
@@ -729,6 +730,7 @@ export function createStrategistTools(
   const baseTools = createProjectTools(userId, options);
   const actionTools = createActionTools(userId, options);
   const progressReportTools = createProgressReportTools(userId, options);
+  const workspaceTools = createWorkspaceTools(userId, { onTrace: options.onTrace });
   // Web search tools — available to Strategist for external research
   // (competitive questions, market intel, industry trends)
   const webSearchTools = createWebSearchTools(options);
@@ -749,6 +751,7 @@ export function createStrategistTools(
     ...structuredOutputTools,
     ...actionTools,
     ...progressReportTools,
+    ...workspaceTools,
     // The Strategist's specialist consultation tools
     consultCFO: makeConsultTool(
       "cfo",
