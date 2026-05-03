@@ -182,7 +182,7 @@ function normalizeCostCode(value?: string): string | null {
  */
 export async function syncDirectCosts(
   projectId: number,
-  userId: string,
+  userId: string | null,
   supabaseClient?: DbClient,
 ): Promise<DirectCostSyncResult> {
   const result: DirectCostSyncResult = { created: 0, updated: 0, errors: [] };
@@ -438,7 +438,7 @@ export async function syncDirectCosts(
       if (existingId) {
         const { error: updateError } = await supabase
           .from("direct_costs")
-          .update({ ...fields, updated_by_user_id: userId })
+          .update({ ...fields, updated_by_user_id: userId ?? undefined })
           .eq("id", existingId);
         if (updateError) {
           result.errors.push(`${refNbr}: ${updateError.message}`);
@@ -451,8 +451,8 @@ export async function syncDirectCosts(
         const { data: insertedCost, error: insertError } = await supabase.from("direct_costs").insert({
           ...fields,
           project_id: projectId,
-          created_by_user_id: userId,
-          updated_by_user_id: userId,
+          created_by_user_id: userId ?? "system",
+          updated_by_user_id: userId ?? "system",
         }).select("id").single();
         if (insertError || !insertedCost) {
           result.errors.push(`${refNbr}: ${insertError?.message ?? "Insert failed"}`);
@@ -533,7 +533,7 @@ function mapInvoiceStatus(acuStatus: string): string {
  */
 export async function syncARInvoices(
   projectId: number,
-  _userId: string,
+  _userId: string | null,
   supabaseClient?: DbClient,
 ): Promise<SyncResult> {
   const result: SyncResult = { created: 0, updated: 0, errors: [] };
@@ -692,7 +692,7 @@ export async function syncARInvoices(
  */
 export async function syncARPayments(
   projectId: number,
-  _userId: string,
+  _userId: string | null,
   supabaseClient?: DbClient,
 ): Promise<SyncResult> {
   const result: SyncResult = { created: 0, updated: 0, errors: [] };
@@ -848,7 +848,7 @@ function mapSubcontractStatus(acuStatus: string): string {
  */
 export async function syncSubcontracts(
   projectId: number,
-  userId: string,
+  userId: string | null,
 ): Promise<SyncResult> {
   const result: SyncResult = { created: 0, updated: 0, errors: [] };
 
@@ -974,7 +974,7 @@ function mapPOStatus(acuStatus: string): string {
  */
 export async function syncPurchaseOrders(
   projectId: number,
-  userId: string,
+  userId: string | null,
 ): Promise<SyncResult> {
   const result: SyncResult = { created: 0, updated: 0, errors: [] };
 
@@ -1099,7 +1099,7 @@ export async function syncPurchaseOrders(
  */
 export async function syncCommitments(
   projectId: number,
-  userId: string,
+  userId: string | null,
 ): Promise<SyncResult> {
   const [subResult, poResult] = await Promise.all([
     syncSubcontracts(projectId, userId),

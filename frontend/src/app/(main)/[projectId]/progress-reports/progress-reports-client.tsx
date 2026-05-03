@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FileText, Loader2, Mail, Plus } from "lucide-react";
 import { SectionRuleHeading } from "@/components/layout/spacing";
+import { EmptyState } from "@/components/ds/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useCreateProgressReport, useProgressReports } from "@/hooks/use-progress-reports";
@@ -104,9 +105,11 @@ export function ProgressReportsClient({ projectId }: { projectId: number }) {
               ))}
             </div>
           ) : (
-            <div className="rounded-xl border border-dashed border-border p-8 text-sm text-muted-foreground">
-              No progress reports yet. Create this week&apos;s draft to start from meetings, emails, and uploaded photos.
-            </div>
+            <EmptyState
+              icon={<FileText />}
+              title="No progress reports yet"
+              description="Create this week's draft to start from meetings, emails, and uploaded photos."
+            />
           )}
         </section>
   );
