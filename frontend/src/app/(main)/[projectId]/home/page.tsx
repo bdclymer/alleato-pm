@@ -185,6 +185,10 @@ export default async function ProjectHomePage({
     primeCosWithoutChangeRequestCountResult,
     commitmentCosWithoutChangeRequestCountResult,
     submittalsResult,
+    projectDocumentsResult,
+    primeContractPaymentsResult,
+    commitmentPaymentsResult,
+    invoicePaymentsResult,
   ] = await Promise.all([
     // Fetch main project data
     supabase.from("projects").select("*").eq("id", numericProjectId).single(),
@@ -341,6 +345,47 @@ export default async function ProjectHomePage({
       .not("status", "eq", "Closed")
       .order("updated_at", { ascending: false })
       .limit(20),
+
+    // Fetch recent project documents
+    supabase
+      .from("project_documents")
+      .select(
+        "id,title,file_name,status,category,folder,source_system,created_at,updated_at,reviewed_at",
+      )
+      .eq("project_id", numericProjectId)
+      .is("deleted_at", null)
+      .order("updated_at", { ascending: false, nullsFirst: false })
+      .limit(10),
+
+    // Fetch owner payments received
+    supabase
+      .from("prime_contract_payments")
+      .select(
+        "id,payment_number,reference_number,method,amount,payment_date,contract_id,created_at,updated_at",
+      )
+      .eq("project_id", numericProjectId)
+      .order("payment_date", { ascending: false, nullsFirst: false })
+      .limit(10),
+
+    // Fetch commitment payments issued
+    supabase
+      .from("commitment_payments")
+      .select(
+        "id,payment_number,payment_ref,payment_method,amount,payment_date,status,vendor_name,subcontract_id,purchase_order_id,created_at,updated_at",
+      )
+      .eq("project_id", numericProjectId)
+      .order("payment_date", { ascending: false, nullsFirst: false })
+      .limit(10),
+
+    // Fetch invoice-linked payments
+    supabase
+      .from("invoice_payments")
+      .select(
+        "id,payment_number,payment_method,amount,payment_date,owner_invoice_id,subcontractor_invoice_id,created_at,updated_at",
+      )
+      .eq("project_id", numericProjectId)
+      .order("payment_date", { ascending: false, nullsFirst: false })
+      .limit(10),
   ]);
 
   // Fetch invoices — owner invoices (via prime_contracts) + subcontractor invoices
@@ -479,6 +524,10 @@ export default async function ProjectHomePage({
   const contractLineItems = contractLineItemsResult.data || [];
   const budget = budgetResult.data || [];
   const submittals = submittalsResult.data || [];
+  const projectDocuments = projectDocumentsResult.data || [];
+  const primeContractPayments = primeContractPaymentsResult.data || [];
+  const commitmentPayments = commitmentPaymentsResult.data || [];
+  const invoicePayments = invoicePaymentsResult.data || [];
   const changeEvents = changeEventsResult.data || [];
   const schedule = scheduleResult.data || [];
   const teamFromRpc = teamResult.data || [];
@@ -519,6 +568,10 @@ export default async function ProjectHomePage({
         pendingSsovReviews={pendingSsovReviews}
         ownerInvoices={ownerInvoices}
         subcontractorInvoices={subcontractorInvoices}
+        projectDocuments={projectDocuments}
+        primeContractPayments={primeContractPayments}
+        commitmentPayments={commitmentPayments}
+        invoicePayments={invoicePayments}
       />
     </PageShell>
   );

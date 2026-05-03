@@ -3,9 +3,11 @@ import {
   buildProgressReportDraft,
   defaultWeeklyReportRange,
 } from "@/lib/progress-reports/report-builder";
+import type { Json } from "@/types/database.types";
 import type {
   ProgressReportContact,
   ProgressReportDetailResponse,
+  ProgressReportAllListItem,
   ProgressReportListItem,
   ProgressReportRecord,
   ProgressReportSourceSnapshot,
@@ -56,6 +58,40 @@ interface ProjectPhotoRow {
   created_at: string | null;
   location: string | null;
   tags: string[] | null;
+}
+
+interface ProjectRoleRow {
+  id: string;
+  role_name: string;
+  display_order: number | null;
+}
+
+interface ProjectRoleMemberRow {
+  project_role_id: string;
+  person_id: string;
+}
+
+interface ProjectDirectoryMembershipRow {
+  person_id: string;
+  role: string | null;
+}
+
+interface ProjectTeamPersonRow {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  email: string | null;
+  phone_business: string | null;
+  phone_mobile: string | null;
+  job_title: string | null;
+}
+
+interface ProgressReportProjectRow {
+  id: number;
+  name: string | null;
+  project_number: string | null;
+  "job number": string | null;
+  client: string | null;
 }
 
 function parseContacts(value: unknown): ProgressReportContact[] {
@@ -160,6 +196,147 @@ function mapReport(row: ProgressReportRow): ProgressReportRecord {
   };
 }
 
+function contactsToJson(contacts: ProgressReportContact[]): Json {
+  return contacts.map((contact) => ({
+    role: contact.role,
+    name: contact.name,
+    email: contact.email,
+    phone: contact.phone,
+  }));
+}
+
+function fullName(person: ProjectTeamPersonRow): string {
+  return [person.first_name, person.last_name].filter(Boolean).join(" ").trim();
+}
+
+function contactKey(contact: ProgressReportContact): string {
+  return (contact.email || contact.name || contact.phone || contact.role).toLowerCase();
+}
+
+export function mergeProgressReportContacts(
+  primary: ProgressReportContact[],
+  secondary: ProgressReportContact[],
+): ProgressReportContact[] {
+  const contacts: ProgressReportContact[] = [];
+  const seen = new Set<string>();
+
+  for (const contact of [...primary, ...secondary]) {
+    const key = contactKey(contact);
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    contacts.push(contact);
+  }
+
+  return contacts;
+}
+
+export async function listProjectTeamContacts(projectId: number): Promise<ProgressReportContact[]> {
+  const db = createServiceClient();
+
+  const [rolesResult, membershipsResult] = await Promise.all([
+    db
+      .from("project_roles")
+      .select("id, role_name, display_order")
+      .eq("project_id", projectId)
+      .order("display_order", { ascending: true }),
+    db
+      .from("project_directory_memberships")
+      .select("person_id, role")
+      .eq("project_id", projectId)
+      .eq("status", "active"),
+  ]);
+
+  if (rolesResult.error) throw new Error(rolesResult.error.message);
+  if (membershipsResult.error) throw new Error(membershipsResult.error.message);
+
+  const roles = (rolesResult.data ?? []) as ProjectRoleRow[];
+  const memberships = (membershipsResult.data ?? []) as ProjectDirectoryMembershipRow[];
+  const roleIds = roles.map((role) => role.id);
+
+  const roleMembersResult =
+    roleIds.length > 0
+      ? await db
+          .from("project_role_members")
+          .select("project_role_id, person_id")
+          .in("project_role_id", roleIds)
+      : { data: [], error: null };
+
+  if (roleMembersResult.error) throw new Error(roleMembersResult.error.message);
+
+  const roleMembers = (roleMembersResult.data ?? []) as ProjectRoleMemberRow[];
+  const personIds = Array.from(
+    new Set([
+      ...roleMembers.map((member) => member.person_id),
+      ...memberships.map((membership) => membership.person_id),
+    ]),
+  );
+
+  if (personIds.length === 0) return [];
+
+  const { data: people, error: peopleError } = await db
+    .from("people")
+    .select("id, first_name, last_name, email, phone_business, phone_mobile, job_title")
+    .in("id", personIds);
+
+  if (peopleError) throw new Error(peopleError.message);
+
+  const peopleById = new Map(
+    ((people ?? []) as ProjectTeamPersonRow[]).map((person) => [person.id, person]),
+  );
+  const rolesById = new Map(roles.map((role) => [role.id, role]));
+  const contacts: ProgressReportContact[] = [];
+
+  for (const member of roleMembers) {
+    const person = peopleById.get(member.person_id);
+    const role = rolesById.get(member.project_role_id);
+    if (!person) continue;
+    contacts.push({
+      role: role?.role_name ?? person.job_title ?? "Project Team",
+      name: fullName(person) || person.email || "Project Team",
+      email: person.email ?? "",
+      phone: person.phone_mobile ?? person.phone_business ?? "",
+    });
+  }
+
+  for (const membership of memberships) {
+    const person = peopleById.get(membership.person_id);
+    if (!person) continue;
+    contacts.push({
+      role: membership.role ?? person.job_title ?? "Project Team",
+      name: fullName(person) || person.email || "Project Team",
+      email: person.email ?? "",
+      phone: person.phone_mobile ?? person.phone_business ?? "",
+    });
+  }
+
+  return mergeProgressReportContacts(contacts, []);
+}
+
+function sourceSnapshotToJson(snapshot: ProgressReportSourceSnapshot): Json {
+  return {
+    generatedAt: snapshot.generatedAt,
+    strategy: snapshot.strategy,
+    meetings: snapshot.meetings.map((meeting) => ({
+      id: meeting.id,
+      title: meeting.title,
+      date: meeting.date,
+      summary: meeting.summary,
+    })),
+    emails: snapshot.emails.map((email) => ({
+      id: email.id,
+      subject: email.subject,
+      date: email.date,
+      preview: email.preview,
+    })),
+    photos: snapshot.photos.map((photo) => ({
+      id: photo.id,
+      title: photo.title,
+      date: photo.date,
+      file_url: photo.file_url,
+    })),
+  };
+}
+
 export async function listProgressReports(
   projectId: number,
 ): Promise<ProgressReportListItem[]> {
@@ -191,6 +368,64 @@ export async function listProgressReports(
     ...mapReport(report),
     selected_photo_count: counts.get(report.id) ?? 0,
   }));
+}
+
+export async function listAllProgressReports(): Promise<ProgressReportAllListItem[]> {
+  const db = createServiceClient();
+
+  const [{ data: reports, error: reportsError }, { data: photoLinks, error: linksError }] =
+    await Promise.all([
+      db
+        .from("project_progress_reports")
+        .select("*")
+        .order("week_end", { ascending: false })
+        .order("updated_at", { ascending: false })
+        .limit(500),
+      db
+        .from("project_progress_report_photos")
+        .select("progress_report_id"),
+    ]);
+
+  if (reportsError) throw new Error(reportsError.message);
+  if (linksError) throw new Error(linksError.message);
+
+  const reportRows = (reports ?? []) as ProgressReportRow[];
+  const projectIds = Array.from(new Set(reportRows.map((report) => report.project_id)));
+
+  const projectsById = new Map<number, ProgressReportProjectRow>();
+  if (projectIds.length > 0) {
+    const { data: projects, error: projectsError } = await db
+      .from("projects")
+      .select('id, name, project_number, "job number", client')
+      .in("id", projectIds);
+
+    if (projectsError) throw new Error(projectsError.message);
+
+    for (const project of (projects ?? []) as ProgressReportProjectRow[]) {
+      projectsById.set(project.id, project);
+    }
+  }
+
+  const counts = new Map<string, number>();
+  for (const link of photoLinks ?? []) {
+    const reportId = (link as { progress_report_id: string }).progress_report_id;
+    counts.set(reportId, (counts.get(reportId) ?? 0) + 1);
+  }
+
+  return reportRows.map((report) => {
+    const project = projectsById.get(report.project_id);
+    return {
+      ...mapReport(report),
+      selected_photo_count: counts.get(report.id) ?? 0,
+      project: {
+        id: report.project_id,
+        name: project?.name ?? null,
+        project_number: project?.project_number ?? null,
+        job_number: project?.["job number"] ?? null,
+        client: project?.client ?? null,
+      },
+    };
+  });
 }
 
 export async function getProgressReportDetail(
@@ -294,6 +529,7 @@ export async function createProgressReportDraft({
     emailsResult,
     photosResult,
     profileResult,
+    projectContacts,
   ] = await Promise.all([
     db
       .from("projects")
@@ -327,6 +563,7 @@ export async function createProgressReportDraft({
       .select("full_name")
       .eq("id", userId)
       .maybeSingle(),
+    listProjectTeamContacts(projectId),
   ]);
 
   if (projectResult.error || !projectResult.data) {
@@ -369,6 +606,7 @@ export async function createProgressReportDraft({
       email: userEmail,
       fullName: profileResult.data?.full_name ?? null,
     },
+    projectContacts,
   });
 
   const { data: created, error: createError } = await db
@@ -386,9 +624,9 @@ export async function createProgressReportDraft({
       upcoming_week_activities: draft.upcomingWeekActivities,
       open_items: draft.openItems,
       weather_days_lost: draft.weatherDaysLost,
-      contacts: draft.contacts,
+      contacts: contactsToJson(draft.contacts),
       client_recipients: draft.clientRecipients,
-      source_snapshot: draft.sourceSnapshot,
+      source_snapshot: sourceSnapshotToJson(draft.sourceSnapshot),
       created_by: userId,
       updated_by: userId,
     })
@@ -465,7 +703,7 @@ export async function saveProgressReport({
       upcoming_week_activities: updates.upcoming_week_activities,
       open_items: updates.open_items,
       weather_days_lost: updates.weather_days_lost,
-      contacts: updates.contacts,
+      contacts: contactsToJson(updates.contacts),
       client_recipients: updates.client_recipients,
       updated_by: userId,
       updated_at: new Date().toISOString(),

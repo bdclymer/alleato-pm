@@ -95,7 +95,7 @@ export const GET = withApiGuardrails(
     if (documentIds.length > 0) {
       const { data: documents, error: documentError } = await serviceSupabase
         .from("document_metadata")
-        .select("id, title, source, category, type, project_id, project, date, created_at, summary")
+        .select("id, title, source, category, type, project_id, project, date, created_at, summary, overview, content, participants")
         .in("id", documentIds);
 
       if (documentError) {

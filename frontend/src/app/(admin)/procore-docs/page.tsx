@@ -34,7 +34,8 @@ import {
 } from "lucide-react";
 
 import { PageShell } from "@/components/layout";
-import { IconBadge } from "@/components/ds";
+import { SectionRuleHeading } from "@/components/layout/spacing";
+import { EmptyState, IconBadge, SectionHeader } from "@/components/ds";
 
 const MessageResponse = dynamic(
   () => import("@/components/ai-elements/message").then((m) => m.MessageResponse),
@@ -201,7 +202,7 @@ export default function ProcoreDocsPage() {
   const showHero = !selectedCategory && !isSearching;
 
   const messageCount = messages.length;
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- scroll on new messages intentionally
+   
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messageCount]);
@@ -305,20 +306,8 @@ export default function ProcoreDocsPage() {
     <PageShell
       variant="content"
       title="Procore Documentation"
-      titleContent={
-        <div>
-          <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1">
-            <Sparkles className="h-3 w-3 text-primary" />
-            <span className="text-xs font-medium text-primary">AI-powered documentation</span>
-          </div>
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-            Procore Documentation
-          </h1>
-          <p className="mt-1.5 max-w-lg text-sm text-muted-foreground leading-relaxed">
-            Guides and reference for using Procore to manage projects, track costs, and collaborate with your construction teams.
-          </p>
-        </div>
-      }
+      eyebrow={<><Sparkles className="h-3 w-3" /> AI-powered documentation</>}
+      description="Guides and reference for using Procore to manage projects, track costs, and collaborate with your construction teams."
       actions={
         <Button onClick={() => setChatOpen(true)} className="h-9 gap-2">
           <Sparkles />
@@ -331,7 +320,7 @@ export default function ProcoreDocsPage() {
         {/* ─── Action bar: Search + Category combobox ─── */}
         <div className="mb-8 flex flex-wrap items-center gap-2.5">
           {/* Search */}
-          <div className="relative flex-1 min-w-[200px] max-w-sm">
+          <div className="relative flex-1 min-w-52 max-w-sm">
             <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/50" />
             <Input
               placeholder="Search documentation..."
@@ -433,7 +422,7 @@ export default function ProcoreDocsPage() {
                   type="button"
                   variant="ghost"
                   onClick={() => selectCategory(card.category)}
-                  className="group relative h-auto rounded-lg border border-border/50 bg-background p-5 text-left transition-all hover:border-border hover:bg-muted flex flex-col items-start whitespace-normal"
+                  className="group relative h-auto rounded-lg bg-card p-6 text-left transition-all hover:bg-muted/60 flex flex-col items-start whitespace-normal"
                 >
                   <div className="mb-3 flex items-center gap-3">
                     <IconBadge size="md">{card.icon}</IconBadge>
@@ -444,7 +433,7 @@ export default function ProcoreDocsPage() {
                   <p className="w-full text-xs text-muted-foreground leading-relaxed">
                     {card.description}
                   </p>
-                  <ChevronRight className="absolute right-4 top-5 h-4 w-4 text-muted-foreground/30 transition-all group-hover:text-muted-foreground group-hover:translate-x-0.5" />
+                  <ChevronRight className="absolute right-4 top-6 h-4 w-4 text-muted-foreground/30 transition-all group-hover:text-muted-foreground group-hover:translate-x-0.5" />
                 </Button>
               ))}
             </div>
@@ -452,9 +441,7 @@ export default function ProcoreDocsPage() {
             {/* Tools — remaining categories */}
             {categories.length > HERO_CARDS.length && (
               <div className="mt-12">
-                <h2 className="text-lg font-semibold text-foreground mb-6">
-                  Tools
-                </h2>
+                <SectionRuleHeading label="Tools" />
                 <div className="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2">
                   {categories
                     .filter(
@@ -492,17 +479,10 @@ export default function ProcoreDocsPage() {
                 {selectedCategory && !isSearching && (
                   <IconBadge size="sm">{getCategoryIcon(selectedCategory)}</IconBadge>
                 )}
-                <div>
-                  <h2 className="text-lg font-semibold text-foreground tracking-tight">
-                    {isSearching
-                      ? `Results for "${searchTerm}"`
-                      : (selectedCategory ?? "Documentation")}
-                  </h2>
-                  <p className="text-xs text-muted-foreground">
-                    {articles.length}{" "}
-                    {articles.length === 1 ? "article" : "articles"}
-                  </p>
-                </div>
+                <SectionHeader
+                  title={isSearching ? `Results for "${searchTerm}"` : (selectedCategory ?? "Documentation")}
+                  count={articles.length}
+                />
               </div>
               {(selectedCategory || isSearching) && (
                 <Button
@@ -529,19 +509,11 @@ export default function ProcoreDocsPage() {
                 ))}
               </div>
             ) : articles.length === 0 ? (
-              <div className="py-16 text-center">
-                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-                  <FileText className="h-5 w-5 text-muted-foreground" />
-                </div>
-                <p className="text-sm font-medium text-foreground mb-1">
-                  No articles found
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {isSearching
-                    ? "Try a broader phrase or browse by category."
-                    : "Select a category to explore the documentation."}
-                </p>
-              </div>
+              <EmptyState
+                icon={<FileText />}
+                title="No articles found"
+                description={isSearching ? "Try a broader phrase or browse by category." : "Select a category to explore the documentation."}
+              />
             ) : (
               <div className="space-y-6">
                 {Object.entries(groupedArticles).map(
@@ -592,7 +564,7 @@ export default function ProcoreDocsPage() {
           side="right"
           className="flex min-h-0 w-full max-w-xl flex-col p-0 sm:max-w-2xl"
         >
-          <SheetHeader className="border-b px-5 py-4">
+          <SheetHeader className="bg-muted/30 px-5 py-4">
             <div className="flex items-center gap-3">
               <IconBadge size="sm"><Sparkles className="h-4 w-4" /></IconBadge>
               <div>
@@ -693,7 +665,7 @@ export default function ProcoreDocsPage() {
           </ScrollArea>
 
           {/* Chat input */}
-          <div className="border-t px-5 py-4">
+          <div className="bg-muted/20 px-5 py-4">
             <div className="flex items-end gap-2">
               <Textarea
                 ref={chatInputRef}

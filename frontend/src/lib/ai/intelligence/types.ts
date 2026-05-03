@@ -74,9 +74,11 @@ export type InsightCardEvidence = {
   id: string;
   sourceDocumentId: string | null;
   sourceChunkId: string | null;
+  sourceMessageId: string | null;
   sourceType: string;
   sourceTitle: string | null;
   sourceOccurredAt: string | null;
+  participants: string[];
   excerpt: string | null;
   summary: string | null;
   relevanceReason: string;

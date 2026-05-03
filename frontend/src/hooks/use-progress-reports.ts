@@ -4,16 +4,26 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api-client";
 import type {
+  ProgressReportAllListResponse,
   ProgressReportDetailResponse,
   ProgressReportListResponse,
 } from "@/lib/progress-reports/types";
 
 export const progressReportKeys = {
+  globalList: () => ["progress-reports", "global-list"] as const,
   all: (projectId: number) => ["progress-reports", projectId] as const,
   list: (projectId: number) => ["progress-reports", projectId, "list"] as const,
   detail: (projectId: number, reportId: string) =>
     ["progress-reports", projectId, "detail", reportId] as const,
 };
+
+export function useAllProgressReports() {
+  return useQuery({
+    queryKey: progressReportKeys.globalList(),
+    queryFn: ({ signal }) =>
+      apiFetch<ProgressReportAllListResponse>("/api/progress-reports", { signal }),
+  });
+}
 
 export function useProgressReports(projectId: number) {
   return useQuery({

@@ -86,6 +86,18 @@ export interface ProgressReportListItem extends ProgressReportRecord {
   selected_photo_count: number;
 }
 
+export interface ProgressReportProjectSummary {
+  id: number;
+  name: string | null;
+  project_number: string | null;
+  job_number: string | null;
+  client: string | null;
+}
+
+export interface ProgressReportAllListItem extends ProgressReportListItem {
+  project: ProgressReportProjectSummary;
+}
+
 export interface ProgressReportDetailResponse {
   report: ProgressReportRecord;
   selectedPhotos: ProgressReportPhotoSelection[];
@@ -94,4 +106,8 @@ export interface ProgressReportDetailResponse {
 
 export interface ProgressReportListResponse {
   reports: ProgressReportListItem[];
+}
+
+export interface ProgressReportAllListResponse {
+  reports: ProgressReportAllListItem[];
 }

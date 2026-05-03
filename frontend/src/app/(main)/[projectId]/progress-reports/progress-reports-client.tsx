@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { format } from "date-fns";
 import { FileText, Loader2, Mail, Plus } from "lucide-react";
 import { SectionRuleHeading } from "@/components/layout/spacing";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useCreateProgressReport, useProgressReports } from "@/hooks/use-progress-reports";
+import { formatProgressReportDate } from "@/lib/progress-reports/date-format";
 
 function statusVariant(status: string) {
   switch (status) {
@@ -25,7 +25,7 @@ export function ProgressReportCreateAction({ projectId }: { projectId: number })
   const createMutation = useCreateProgressReport(projectId);
 
   async function handleCreateReport() {
-    const result = await createMutation.mutateAsync();
+    const result = await createMutation.mutateAsync({});
     router.push(`/${projectId}/progress-reports/${result.reportId}`);
   }
 
@@ -81,8 +81,8 @@ export function ProgressReportsClient({ projectId }: { projectId: number }) {
                       </div>
                       <div className="text-sm text-muted-foreground">
                         Week of{" "}
-                        {format(new Date(report.week_start), "MMM d, yyyy")} to{" "}
-                        {format(new Date(report.week_end), "MMM d, yyyy")}
+                        {formatProgressReportDate(report.week_start)} to{" "}
+                        {formatProgressReportDate(report.week_end)}
                       </div>
                       <p className="line-clamp-2 text-sm text-foreground">
                         {report.past_week_highlights || "No highlights added yet."}

@@ -1,5 +1,15 @@
 <!-- allow-outside-documentation -->
 
+# Help Center
+
+Source of truth for client-facing help articles in Alleato OS.
+
+- Browse the full categorized list in [INDEX](./articles/INDEX.md).
+- Start with [Getting Started](./articles/getting-started.md) for new-user orientation.
+- All articles live in [`articles/`](./articles/) and follow the schema below.
+
+---
+
 # Help Article Authoring
 
 This folder is the source of truth for controlled app-help content. It is

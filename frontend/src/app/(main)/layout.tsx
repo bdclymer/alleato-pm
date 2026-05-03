@@ -50,6 +50,7 @@ export default function MainLayout({
   const pathname = usePathname();
   const isTeamChatPage = pathname?.startsWith("/team-chat");
   const isDrawingViewer = /\/drawings\/viewer\//.test(pathname ?? "");
+  const isAiAssistant = pathname?.startsWith("/ai-assistant");
   if (isTeamChatPage) {
     return (
       <SidebarProvider defaultOpen={false}>
@@ -73,7 +74,7 @@ export default function MainLayout({
               <AiChatSidebarPanel key="ai-chat-sidebar-panel" />
             </React.Suspense>
             <div className="flex min-w-0 flex-1 flex-col overflow-auto scrollbar-hide">
-              {!isDrawingViewer && <SiteHeader key="site-header" />}
+              {!isDrawingViewer && !isAiAssistant && <SiteHeader key="site-header" />}
               <main
                 key="main-content"
                 className="flex flex-1 flex-col min-w-0 min-h-0"

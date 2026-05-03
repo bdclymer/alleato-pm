@@ -98,9 +98,9 @@ function SidebarFlyout({
               : isActivePath(pathname, tool.path))
             const Icon = tool.icon
             const linkClass = cn(
-              "flex items-center gap-2 rounded-md px-2.5 py-1.5 text-[13px] transition-colors",
+              "flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs transition-colors",
               isActive
-                ? "bg-accent font-medium text-accent-foreground"
+                ? "font-medium text-foreground"
                 : "text-foreground/75 hover:bg-accent/60 hover:text-foreground"
             )
 
@@ -269,9 +269,9 @@ function ExpandedNavGroup({
                 : isActivePath(pathname, tool.path))
               const Icon = tool.icon
               const linkClass = cn(
-                "flex items-center gap-2.5 rounded-md px-2 py-[7px] text-[13px] transition-colors duration-150",
+                "flex items-center gap-2.5 rounded-md px-2 py-2 text-sm transition-colors duration-150 md:gap-2 md:py-1.5 md:text-xs",
                 isActive
-                  ? "bg-sidebar-accent font-medium text-sidebar-foreground"
+                  ? "font-medium text-sidebar-foreground"
                   : "text-sidebar-foreground/65 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
               )
 
@@ -283,7 +283,7 @@ function ExpandedNavGroup({
                   rel="noopener noreferrer"
                   className={linkClass}
                 >
-                  {Icon && <Icon className="h-4 w-4 shrink-0" strokeWidth={1.5} />}
+                  {Icon && <Icon className="h-4 w-4 shrink-0 md:h-3.5 md:w-3.5" strokeWidth={1.5} />}
                   <span className="truncate">{tool.name}</span>
                 </a>
               ) : (
@@ -292,7 +292,7 @@ function ExpandedNavGroup({
                   href={href}
                   className={linkClass}
                 >
-                  {Icon && <Icon className="h-4 w-4 shrink-0" strokeWidth={1.5} />}
+                  {Icon && <Icon className="h-4 w-4 shrink-0 md:h-3.5 md:w-3.5" strokeWidth={1.5} />}
                   <span className="truncate">{tool.name}</span>
                 </Link>
               )
@@ -405,9 +405,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       .filter((group) => group.tools.length > 0)
   }, [filterTools, isSubcontractor, projectId])
 
-  // Collapsible section state — first group open by default
+  // Collapsible section state — "company" open by default (always has items regardless of project)
   const [openGroupIds, setOpenGroupIds] = React.useState<Set<string>>(
-    () => new Set([sidebarNavGroups[0]?.id ?? ""])
+    () => new Set(["company"])
   )
 
   const toggleGroup = React.useCallback((groupId: string) => {
@@ -482,8 +482,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </div>
         ) : (
           // Expanded: favicon + AI chat button
-          <div className="flex flex-col gap-4">
-            <div className="flex h-7 items-center justify-between gap-3 pl-6 pr-2">
+          <div className="flex flex-col gap-3">
+            <div className="flex h-7 items-center pl-6 pr-2">
               <Link
                 href="/"
                 className="flex items-center rounded-md transition-opacity hover:opacity-80"
@@ -496,6 +496,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   className="shrink-0 rounded"
                 />
               </Link>
+            </div>
+            <div className="flex pl-6 pr-2">
               <Button
                 type="button"
                 variant="ghost"

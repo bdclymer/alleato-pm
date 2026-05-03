@@ -227,6 +227,116 @@
       "line": null,
       "description": "PageHeader globally suppresses the description prop (page-header-unified.tsx:101-102). Many pages pass descriptions that never render. This is harmless but indicates pages don't know descriptions are suppressed. UnifiedTablePage may or may not suppress it depending on its implementation.",
       "fix": "Document this behavior. Remove description props from pages if they are globally suppressed, to avoid future confusion."
+    },
+    {
+      "id": "V026",
+      "severity": "medium",
+      "category": "component-consistency",
+      "file": "frontend/src/app/(admin)/procore-docs/page.tsx",
+      "line": 308,
+      "description": "titleContent prop renders a custom <h1> + Sparkles badge + description paragraph, bypassing PageShell's native eyebrow and description props. This diverges the page title style from every other page and locks the badge/description into hand-rolled markup that won't update when PageHeader gets a style change.",
+      "fix": "Pass the Sparkles badge via PageShell's eyebrow prop. Pass the description via the description prop. Remove the custom <h1> from titleContent — PageShell renders its own. Remove the titleContent prop entirely or use it only if truly custom layout is needed.",
+      "status": "fixed"
+    },
+    {
+      "id": "V027",
+      "severity": "medium",
+      "category": "spacing-scale",
+      "file": "frontend/src/app/(admin)/procore-docs/page.tsx",
+      "line": 436,
+      "description": "Hero card Button uses p-5 (20px) — off the 8px grid.",
+      "fix": "Change p-5 → p-4 or p-6.",
+      "status": "fixed"
+    },
+    {
+      "id": "V028",
+      "severity": "low",
+      "category": "spacing-scale",
+      "file": "frontend/src/app/(admin)/procore-docs/page.tsx",
+      "line": 447,
+      "description": "ChevronRight icon uses top-5 absolute position — off the 8px grid.",
+      "fix": "Change top-5 → top-4 or top-6.",
+      "status": "fixed"
+    },
+    {
+      "id": "V029",
+      "severity": "high",
+      "category": "component-consistency",
+      "file": "frontend/src/app/(admin)/procore-docs/page.tsx",
+      "line": 455,
+      "description": "Raw <h2> used as section heading: <h2 className=\"text-lg font-semibold text-foreground mb-6\">Tools</h2>. Violates rule 1.1.",
+      "fix": "import { SectionRuleHeading } from '@/components/layout/spacing'; replace with <SectionRuleHeading label=\"Tools\" />. Remove mb-6 from callsite — spacing is owned by the component.",
+      "status": "fixed"
+    },
+    {
+      "id": "V030",
+      "severity": "high",
+      "category": "component-consistency",
+      "file": "frontend/src/app/(admin)/procore-docs/page.tsx",
+      "line": 496,
+      "description": "Raw <h2> used as dynamic article-list section heading, paired with an article count. Violates rule 1.1. The count pairing also matches the SectionHeader ds component exactly.",
+      "fix": "import { SectionHeader } from '@/components/ds/section-header'; replace the heading+count block with <SectionHeader label={isSearching ? `Results for \"${searchTerm}\"` : selectedCategory} count={articles.length} />.",
+      "status": "fixed"
+    },
+    {
+      "id": "V031",
+      "severity": "high",
+      "category": "component-consistency",
+      "file": "frontend/src/app/(admin)/procore-docs/page.tsx",
+      "line": 532,
+      "description": "Hand-rolled empty state: <div className=\"py-16 text-center\"> with icon div + two <p> tags for 'No articles found'. Violates rule 1.2.",
+      "fix": "import { EmptyState } from '@/components/ds'; replace entire block with: <EmptyState icon={FileText} title=\"No articles found\" description={isSearching ? 'Try a broader phrase or browse by category.' : 'Select a category to explore the documentation.'} />",
+      "status": "fixed"
+    },
+    {
+      "id": "V032",
+      "severity": "medium",
+      "category": "layout",
+      "file": "frontend/src/app/(admin)/procore-docs/page.tsx",
+      "line": 436,
+      "description": "Hero card Button has border border-border/50 with hover:border-border — a decorative hover-reveal border on a navigation card. Violates rule 5.1.",
+      "fix": "Remove border border-border/50 and hover:border-border. Change bg-background → bg-card. Use hover:bg-muted/60 to convey interactivity without a border stroke.",
+      "status": "fixed"
+    },
+    {
+      "id": "V033",
+      "severity": "low",
+      "category": "layout",
+      "file": "frontend/src/app/(admin)/procore-docs/page.tsx",
+      "line": 595,
+      "description": "SheetHeader has border-b — decorative divider inside sheet. Violates rule 5.1.",
+      "fix": "Remove border-b. Use bg-muted/30 on the SheetHeader or rely on padding alone for visual separation.",
+      "status": "fixed"
+    },
+    {
+      "id": "V034",
+      "severity": "low",
+      "category": "layout",
+      "file": "frontend/src/app/(admin)/procore-docs/page.tsx",
+      "line": 696,
+      "description": "Chat input container has border-t — decorative divider. Violates rule 5.1.",
+      "fix": "Remove border-t. The padding + bg-muted/20 background is sufficient to separate the input from messages.",
+      "status": "fixed"
+    },
+    {
+      "id": "V035",
+      "severity": "medium",
+      "category": "spacing-ownership",
+      "file": "frontend/src/app/(admin)/procore-docs/[...slug]/page.tsx",
+      "line": 55,
+      "description": "Multiple direct PageShell children carry individual mb-4/mb-6/mb-8 margins while PageShell's content variant wraps children in space-y-8. The manual margins stack additively with space-y-8's mt-8, creating irregular, unpredictable gaps. Violates rule 2.2.",
+      "fix": "Remove mb-4 from Breadcrumb (line 55), mb-6 from the nav row div (line 88), mb-4 from the meta div (line 107), mb-8 from the description p (line 127). The space-y-8 parent controls all rhythm.",
+      "status": "fixed"
+    },
+    {
+      "id": "V036",
+      "severity": "low",
+      "category": "layout",
+      "file": "frontend/src/app/(admin)/procore-docs/[...slug]/page.tsx",
+      "line": 151,
+      "description": "Tags section has border-t border-border as a decorative divider. Violates rule 5.1.",
+      "fix": "Remove border-t border-border. The spacing already signals a content break.",
+      "status": "fixed"
     }
   ],
   "summary": {

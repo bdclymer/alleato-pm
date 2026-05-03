@@ -1,4 +1,4 @@
-import { classifyAgingBucket } from "../aging-calculator";
+import { classifyAgingBucket, detectGuardrailAlerts } from "../aging-calculator";
 
 /**
  * Regression test for the classifyAgingBucket label mismatch.
@@ -72,5 +72,75 @@ describe("classifyAgingBucket — AR/AP aging label assignment", () => {
     it("returns '90+' for 180 days outstanding", () => {
       expect(classifyAgingBucket(180)).toBe("90+");
     });
+  });
+});
+
+describe("detectGuardrailAlerts — duplicate payment detection", () => {
+  it("flags near-duplicate outgoing checks for the same vendor and amount", () => {
+    const alerts = detectGuardrailAlerts({
+      checks: [
+        {
+          reference_nbr: "002190",
+          vendor_id: "JOBPLANNER",
+          vendor_name: "JOBPLANNER",
+          payment_ref: "ACH-100",
+          payment_amount: 1250,
+          application_date: "2026-05-01",
+          status: "Closed",
+          cash_account: "OPERATING",
+        },
+        {
+          reference_nbr: "002191",
+          vendor_id: "JOBPLANNER",
+          vendor_name: "JOBPLANNER",
+          payment_ref: "ACH-101",
+          payment_amount: 1250,
+          application_date: "2026-05-01",
+          status: "Closed",
+          cash_account: "OPERATING",
+        },
+      ],
+      payments: [],
+    });
+
+    expect(alerts).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          category: "near_duplicate_outgoing_check",
+          title: "Potential near-duplicate outgoing payment",
+          references: ["002190", "002191"],
+        }),
+      ]),
+    );
+  });
+
+  it("does not flag voided outgoing checks", () => {
+    const alerts = detectGuardrailAlerts({
+      checks: [
+        {
+          reference_nbr: "002190",
+          vendor_id: "JOBPLANNER",
+          vendor_name: "JOBPLANNER",
+          payment_ref: "ACH-100",
+          payment_amount: 1250,
+          application_date: "2026-05-01",
+          status: "Voided",
+          cash_account: "OPERATING",
+        },
+        {
+          reference_nbr: "002191",
+          vendor_id: "JOBPLANNER",
+          vendor_name: "JOBPLANNER",
+          payment_ref: "ACH-101",
+          payment_amount: 1250,
+          application_date: "2026-05-01",
+          status: "Voided",
+          cash_account: "OPERATING",
+        },
+      ],
+      payments: [],
+    });
+
+    expect(alerts).toHaveLength(0);
   });
 });

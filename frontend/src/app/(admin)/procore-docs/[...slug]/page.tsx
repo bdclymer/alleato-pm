@@ -52,7 +52,7 @@ export default async function SupportArticlePage({ params }: Props) {
 
   return (
     <PageShell variant="content" title={article.title}>
-      <Breadcrumb className="mb-4">
+      <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
@@ -85,7 +85,7 @@ export default async function SupportArticlePage({ params }: Props) {
       </Breadcrumb>
 
       {/* Back + external link row */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between">
         <Button variant="ghost" size="sm" className="gap-1.5 -ml-2 text-muted-foreground" asChild>
           <Link href="/procore-docs">
             <ArrowLeft />
@@ -104,7 +104,7 @@ export default async function SupportArticlePage({ params }: Props) {
       </div>
 
       {/* Meta */}
-      <div className="flex flex-wrap items-center gap-2 mb-4">
+      <div className="flex flex-wrap items-center gap-2">
         {article.category && (
           <Badge variant="secondary" className="text-xs">
             {article.category}
@@ -124,7 +124,7 @@ export default async function SupportArticlePage({ params }: Props) {
 
       {/* Description */}
       {article.description && (
-        <p className="text-sm text-muted-foreground mb-8 leading-relaxed max-w-[65ch]">
+        <p className="max-w-2xl text-sm text-muted-foreground leading-relaxed">
           {article.description}
         </p>
       )}
@@ -148,7 +148,7 @@ export default async function SupportArticlePage({ params }: Props) {
 
       {/* Tags */}
       {article.tags && article.tags.length > 0 && (
-        <div className="flex flex-wrap gap-2 mt-8 pt-6 border-t border-border">
+        <div className="flex flex-wrap gap-2 mt-8 pt-6">
           {article.tags.map((tag) => (
             <Badge key={tag} variant="outline" className="text-xs font-normal">
               {tag}

@@ -33,6 +33,10 @@ import {
   type ActionToolsOptions,
 } from "@/lib/ai/tools/action-tools";
 import {
+  createProgressReportTools,
+  type ProgressReportToolsOptions,
+} from "@/lib/ai/tools/progress-report-tools";
+import {
   createStructuredOutputTools,
   type CreateStructuredOutputToolsOptions,
 } from "@/lib/ai/tools/structured-output";
@@ -54,6 +58,7 @@ import type {
 type StrategistToolOptions = CreateProjectToolsOptions &
   CreateWebSearchToolsOptions &
   ActionToolsOptions &
+  ProgressReportToolsOptions &
   CreateStructuredOutputToolsOptions;
 
 // ---------------------------------------------------------------------------
@@ -707,6 +712,8 @@ export function createStrategistTools(
   // Include the base project tools so the Strategist can answer
   // general questions without routing to a specialist
   const baseTools = createProjectTools(userId, options);
+  const actionTools = createActionTools(userId, options);
+  const progressReportTools = createProgressReportTools(userId, options);
   // Web search tools — available to Strategist for external research
   // (competitive questions, market intel, industry trends)
   const webSearchTools = createWebSearchTools(options);
@@ -725,6 +732,8 @@ export function createStrategistTools(
     // Web search — available directly to the Strategist for external research
     ...webSearchTools,
     ...structuredOutputTools,
+    ...actionTools,
+    ...progressReportTools,
     // The Strategist's specialist consultation tools
     consultCFO: makeConsultTool(
       "cfo",

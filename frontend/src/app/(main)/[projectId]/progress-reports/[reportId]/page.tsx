@@ -11,7 +11,7 @@ export default async function ProgressReportDetailPage({
     <PageShell
       variant="detailWide"
       title="Progress Report"
-      description="Edit weekly client report content, recipients, photos, and source references."
+      description="Review the weekly client report, then edit only when changes are needed."
     >
       <ProgressReportEditor
         projectId={Number.parseInt(projectId, 10)}

@@ -22,7 +22,7 @@ export function WelcomeScreen({
 
   return (
     <div className="flex flex-1 items-center justify-center overflow-y-auto px-4 pb-40 pt-16 sm:px-6">
-      <div className="w-full max-w-xl">
+      <div className="w-full max-w-2xl">
         <div className="space-y-3 text-center">
           <div className="orb-intro mx-auto flex h-24 w-24 items-center justify-center">
             <AnimatedOrb size={96} />
@@ -32,7 +32,7 @@ export function WelcomeScreen({
           </h1>
         </div>
 
-        {children && <div className="mx-auto mt-8 max-w-3xl">{children}</div>}
+        {children && <div className="mx-auto mt-8 w-full">{children}</div>}
       </div>
     </div>
   );

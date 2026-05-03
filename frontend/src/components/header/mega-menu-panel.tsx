@@ -29,7 +29,7 @@ const FEATURED_TOOLS: Record<string, string[]> = {
   finance: ["Budget", "Prime Contracts", "Commitments", "Change Orders", "Direct Costs", "Invoicing", "Change Events"],
   operations: ["Schedule", "Meetings", "Daily Log", "Punch List", "RFIs", "Submittals", "Transmittals", "Emails", "Outlook Emails", "Photos", "Drawings", "Specifications", "Documents"],
   project: ["Project Directory", "Project Tasks", "Project Settings"],
-  company: ["Projects", "Company Directory", "User Management", "360 Reporting"],
+  company: ["Projects", "Company Directory", "Progress Reports", "User Management", "360 Reporting"],
 };
 
 // Display label for the featured column

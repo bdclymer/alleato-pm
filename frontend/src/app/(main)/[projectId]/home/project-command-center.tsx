@@ -29,6 +29,7 @@ import {
   AvatarFallback,
   Button,
   CompactSectionHeader as SectionHeading,
+  DateAvatar,
   KpiRow,
   Sheet,
   SheetContent,
@@ -55,6 +56,58 @@ type Contract = Database["public"]["Tables"]["prime_contracts"]["Row"];
 type ContractLineItem =
   Database["public"]["Tables"]["contract_line_items"]["Row"];
 type ChangeEvent = Database["public"]["Tables"]["change_events"]["Row"];
+type ProjectDocument = Pick<
+  Database["public"]["Tables"]["project_documents"]["Row"],
+  | "id"
+  | "title"
+  | "file_name"
+  | "status"
+  | "category"
+  | "folder"
+  | "source_system"
+  | "created_at"
+  | "updated_at"
+  | "reviewed_at"
+>;
+type PrimeContractPayment = Pick<
+  Database["public"]["Tables"]["prime_contract_payments"]["Row"],
+  | "id"
+  | "payment_number"
+  | "reference_number"
+  | "method"
+  | "amount"
+  | "payment_date"
+  | "contract_id"
+  | "created_at"
+  | "updated_at"
+>;
+type CommitmentPayment = Pick<
+  Database["public"]["Tables"]["commitment_payments"]["Row"],
+  | "id"
+  | "payment_number"
+  | "payment_ref"
+  | "payment_method"
+  | "amount"
+  | "payment_date"
+  | "status"
+  | "vendor_name"
+  | "subcontract_id"
+  | "purchase_order_id"
+  | "created_at"
+  | "updated_at"
+>;
+type InvoicePayment = Pick<
+  Database["public"]["Tables"]["invoice_payments"]["Row"],
+  | "id"
+  | "payment_number"
+  | "payment_method"
+  | "amount"
+  | "payment_date"
+  | "owner_invoice_id"
+  | "subcontractor_invoice_id"
+  | "created_at"
+  | "updated_at"
+>;
 type ProjectTeamMember =
   Database["public"]["Functions"]["get_project_team"]["Returns"][number];
 type Submittal = Database["public"]["Tables"]["submittals"]["Row"];
@@ -130,6 +183,10 @@ interface ProjectCommandCenterProps {
   sov?: any[];
   ownerInvoices?: OwnerInvoice[];
   subcontractorInvoices?: SubcontractorInvoice[];
+  projectDocuments?: ProjectDocument[];
+  primeContractPayments?: PrimeContractPayment[];
+  commitmentPayments?: CommitmentPayment[];
+  invoicePayments?: InvoicePayment[];
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -165,6 +222,29 @@ function initials(value: string | null | undefined): string {
   const parts = normalized.split(/\s+/).filter(Boolean);
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
   return `${parts[0][0] ?? ""}${parts[parts.length - 1][0] ?? ""}`.toUpperCase();
+}
+
+function getDateMs(value: string | null | undefined): number {
+  if (!value) return 0;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? 0 : date.getTime();
+}
+
+function formatShortDate(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return format(date, "MMM d");
+}
+
+function isClosedStatus(status: string | null | undefined): boolean {
+  return ["approved", "cancelled", "closed", "complete", "completed", "done", "paid", "rejected", "void"].includes(
+    (status ?? "").toLowerCase(),
+  );
+}
+
+function joinParts(parts: Array<string | null | undefined>): string {
+  return parts.filter((part): part is string => Boolean(part && part.trim())).join(" · ");
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -218,6 +298,17 @@ interface OperationalRowItem {
   href: string;
   meta?: string;
   status?: string | null;
+}
+
+interface PendingHomeItem {
+  id: string;
+  title: string;
+  detail: string;
+  href: string;
+  status: string;
+  tone?: HomeTone;
+  sortRank: number;
+  sortTime: number;
 }
 
 function toneTextClass(tone: HomeTone): string {
@@ -356,6 +447,171 @@ function AttentionSidebarSection({ items }: { items: AttentionItem[] }) {
           </Link>
         ))}
       </div>
+    </section>
+  );
+}
+
+function RecentMeetingsSection({
+  meetings,
+  projectId,
+}: {
+  meetings: Meeting[];
+  projectId: string;
+}) {
+  const recentMeetings = [...meetings]
+    .sort(
+      (left, right) =>
+        getDateMs(right.date ?? right.captured_at ?? right.created_at) -
+        getDateMs(left.date ?? left.captured_at ?? left.created_at),
+    )
+    .slice(0, 5);
+
+  return (
+    <section>
+      <SectionHeading
+        action={
+          <ViewAllLink href={`/${projectId}/meetings`} label="View All" />
+        }
+      >
+        Recent meetings
+      </SectionHeading>
+
+      {recentMeetings.length === 0 ? (
+        <p className="py-4 text-sm text-muted-foreground">
+          No meetings have been captured for this project yet.
+        </p>
+      ) : (
+        <div className="divide-y divide-border/70">
+          {recentMeetings.map((meeting) => {
+            const meetingDate =
+              meeting.date ?? meeting.captured_at ?? meeting.created_at;
+            const participantCount = meeting.participants_array?.filter(Boolean)
+              .length;
+            const meta = joinParts([
+              formatShortDate(meetingDate),
+              meeting.duration_minutes
+                ? `${meeting.duration_minutes} min`
+                : null,
+              participantCount
+                ? `${participantCount} attendee${participantCount === 1 ? "" : "s"}`
+                : null,
+            ]);
+
+            return (
+              <Link
+                key={meeting.id}
+                href={`/${projectId}/meetings/${meeting.id}`}
+                className="group grid gap-3 py-3 transition-colors hover:bg-muted/35 sm:grid-cols-[3rem_minmax(0,1fr)] sm:px-2 sm:-mx-2 sm:rounded-md"
+              >
+                <div className="hidden sm:block">
+                  {meetingDate ? (
+                    <DateAvatar date={meetingDate} size="sm" />
+                  ) : (
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                      <Calendar className="h-4 w-4" />
+                    </div>
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <div className="flex min-w-0 items-start justify-between gap-3">
+                    <p className="truncate text-sm font-medium text-foreground group-hover:text-primary">
+                      {meeting.title || meeting.file_name || "Untitled Meeting"}
+                    </p>
+                    {meta && (
+                      <span className="hidden shrink-0 text-xs tabular-nums text-muted-foreground sm:inline">
+                        {meta}
+                      </span>
+                    )}
+                  </div>
+                  {meeting.summary && (
+                    <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">
+                      {meeting.summary}
+                    </p>
+                  )}
+                  {meta && (
+                    <p className="mt-1 text-xs tabular-nums text-muted-foreground sm:hidden">
+                      {meta}
+                    </p>
+                  )}
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function PendingItemsSection({
+  items,
+  totalCount,
+  projectId,
+}: {
+  items: PendingHomeItem[];
+  totalCount: number;
+  projectId: string;
+}) {
+  return (
+    <section>
+      <SectionHeading
+        action={
+          totalCount > 0 ? (
+            <span className="text-xs tabular-nums text-muted-foreground">
+              {totalCount}
+            </span>
+          ) : null
+        }
+      >
+        Pending items
+      </SectionHeading>
+
+      {items.length === 0 ? (
+        <div className="flex items-center gap-2 py-4 text-sm text-muted-foreground">
+          <CheckCircle2 className="h-4 w-4 text-status-success" />
+          <span>No pending items are currently flagged.</span>
+        </div>
+      ) : (
+        <div className="divide-y divide-border/70">
+          {items.slice(0, 7).map((item) => (
+            <Link
+              key={item.id}
+              href={item.href}
+              className="group flex items-start gap-3 py-3 transition-colors hover:bg-muted/35 sm:px-2 sm:-mx-2 sm:rounded-md"
+            >
+              <span
+                className={cn(
+                  "mt-2 h-1.5 w-1.5 shrink-0 rounded-full",
+                  item.tone === "danger"
+                    ? "bg-destructive"
+                    : item.tone === "warning"
+                      ? "bg-primary"
+                      : "bg-muted-foreground/40",
+                )}
+              />
+              <div className="min-w-0 flex-1">
+                <div className="flex min-w-0 items-start justify-between gap-3">
+                  <p className="line-clamp-2 text-sm font-medium leading-5 text-foreground group-hover:text-primary">
+                    {item.title}
+                  </p>
+                  <StatusBadge status={item.status} />
+                </div>
+                <p className="mt-1 truncate text-xs text-muted-foreground">
+                  {item.detail}
+                </p>
+              </div>
+            </Link>
+          ))}
+          {totalCount > 7 && (
+            <Link
+              href={`/${projectId}/tasks`}
+              className="block py-3 text-xs text-muted-foreground transition-colors hover:text-primary"
+            >
+              {totalCount - 7} more pending item{totalCount - 7 === 1 ? "" : "s"}
+            </Link>
+          )}
+        </div>
+      )}
     </section>
   );
 }
@@ -623,17 +879,71 @@ function OperationalSummaryRow({
 
 function ProjectActivitySection({
   projectId,
+  projectDocuments,
+  rfis,
   changeEvents,
   changeOrders,
   ownerInvoices,
   subcontractorInvoices,
+  primeContractPayments,
+  commitmentPayments,
+  invoicePayments,
 }: {
   projectId: string;
+  projectDocuments: ProjectDocument[];
+  rfis: RFI[];
   changeEvents: ChangeEvent[];
   changeOrders: ChangeOrder[];
   ownerInvoices: OwnerInvoice[];
   subcontractorInvoices: SubcontractorInvoice[];
+  primeContractPayments: PrimeContractPayment[];
+  commitmentPayments: CommitmentPayment[];
+  invoicePayments: InvoicePayment[];
 }) {
+  const documentsNeedingReview = projectDocuments.filter(
+    (doc) =>
+      !doc.reviewed_at &&
+      !["archived", "superseded"].includes((doc.status ?? "").toLowerCase()),
+  );
+  const syncedDocuments = projectDocuments.filter((doc) => doc.source_system);
+  const recentDocuments = [...projectDocuments]
+    .sort(
+      (a, b) =>
+        getDateMs(b.updated_at ?? b.created_at) -
+        getDateMs(a.updated_at ?? a.created_at),
+    )
+    .slice(0, 3)
+    .map((document) => ({
+      id: `document-${document.id}`,
+      title: document.title || document.file_name,
+      href: `/${projectId}/documents`,
+      meta: joinParts([
+        document.category,
+        document.folder,
+        formatShortDate(document.updated_at ?? document.created_at),
+      ]),
+      status: document.status,
+    }));
+
+  const openRfis = rfis.filter((rfi) => !isClosedStatus(rfi.status));
+  const overdueRfis = openRfis.filter(
+    (rfi) => rfi.due_date && isPast(new Date(rfi.due_date)),
+  );
+  const recentRfis = [...rfis]
+    .sort(
+      (a, b) =>
+        getDateMs(b.updated_at ?? b.created_at) -
+        getDateMs(a.updated_at ?? a.created_at),
+    )
+    .slice(0, 3)
+    .map((rfi) => ({
+      id: `activity-rfi-${rfi.id}`,
+      title: `RFI #${rfi.number}: ${rfi.subject}`,
+      href: `/${projectId}/rfis/${rfi.id}`,
+      meta: rfi.due_date ? `Due ${formatShortDate(rfi.due_date)}` : undefined,
+      status: rfi.status,
+    }));
+
   const openChangeEvents = changeEvents.filter(
     (ce) =>
       !["closed", "rejected", "approved"].includes(
@@ -719,11 +1029,79 @@ function ProjectActivitySection({
     })),
   ].slice(0, 3);
 
+  const ownerInvoicePaymentTotal = invoicePayments
+    .filter((payment) => payment.owner_invoice_id)
+    .reduce((sum, payment) => sum + (payment.amount ?? 0), 0);
+  const subcontractorInvoicePaymentTotal = invoicePayments
+    .filter((payment) => payment.subcontractor_invoice_id)
+    .reduce((sum, payment) => sum + (payment.amount ?? 0), 0);
+  const primePaymentTotal = primeContractPayments.reduce(
+    (sum, payment) => sum + (payment.amount ?? 0),
+    0,
+  );
+  const commitmentPaymentTotal = commitmentPayments.reduce(
+    (sum, payment) => sum + (payment.amount ?? 0),
+    0,
+  );
+  const paymentRecordsCount =
+    primeContractPayments.length +
+    commitmentPayments.length +
+    invoicePayments.length;
+  const latestPaymentDate = [
+    ...primeContractPayments.map((payment) => payment.payment_date),
+    ...commitmentPayments.map((payment) => payment.payment_date),
+    ...invoicePayments.map((payment) => payment.payment_date),
+  ]
+    .filter((value): value is string => Boolean(value))
+    .sort((a, b) => getDateMs(b) - getDateMs(a))[0];
+  const recentPayments: OperationalRowItem[] = [
+    ...primeContractPayments.map((payment) => ({
+      id: `prime-payment-${payment.id}`,
+      title:
+        payment.payment_number ??
+        payment.reference_number ??
+        `Owner payment ${payment.id}`,
+      href: `/${projectId}/prime-contracts/${payment.contract_id}?tab=payments`,
+      meta: fmtCompact(payment.amount),
+      status: payment.method ?? "Received",
+      sortTime: getDateMs(payment.payment_date ?? payment.updated_at),
+    })),
+    ...commitmentPayments.map((payment) => {
+      const commitmentId = payment.subcontract_id ?? payment.purchase_order_id;
+      return {
+        id: `commitment-payment-${payment.id}`,
+        title:
+          payment.payment_number ??
+          payment.payment_ref ??
+          payment.vendor_name ??
+          `Commitment payment ${payment.id}`,
+        href: commitmentId
+          ? `/${projectId}/commitments/${commitmentId}?tab=payments`
+          : `/${projectId}/commitments`,
+        meta: fmtCompact(payment.amount),
+        status: payment.status ?? payment.payment_method ?? "Issued",
+        sortTime: getDateMs(payment.payment_date ?? payment.updated_at),
+      };
+    }),
+    ...invoicePayments.map((payment) => ({
+      id: `invoice-payment-${payment.id}`,
+      title: payment.payment_number ?? `Invoice payment ${payment.id}`,
+      href: `/${projectId}/invoices`,
+      meta: fmtCompact(payment.amount),
+      status: payment.payment_method ?? "Recorded",
+      sortTime: getDateMs(payment.payment_date ?? payment.updated_at),
+    })),
+  ]
+    .sort((a, b) => b.sortTime - a.sortTime)
+    .slice(0, 3);
+
   return (
     <section className="space-y-4">
       <SectionHeading
         action={
-          <div className="flex items-center gap-4">
+          <div className="hidden flex-wrap items-center justify-end gap-x-4 gap-y-2 md:flex">
+            <ViewAllLink href={`/${projectId}/documents`} label="Documents" />
+            <ViewAllLink href={`/${projectId}/rfis`} label="RFIs" />
             <ViewAllLink
               href={`/${projectId}/change-events`}
               label="Change Events"
@@ -739,6 +1117,44 @@ function ProjectActivitySection({
         Project activity
       </SectionHeading>
       <div className="overflow-hidden rounded-md border border-border bg-background">
+        <OperationalSummaryRow
+          title="Documents"
+          href={`/${projectId}/documents`}
+          summary="Current project files, synced sources, and review status."
+          stats={[
+            { label: "Total", value: String(projectDocuments.length) },
+            {
+              label: "Review",
+              value: String(documentsNeedingReview.length),
+              tone: documentsNeedingReview.length > 0 ? "warning" : undefined,
+            },
+            { label: "Synced", value: String(syncedDocuments.length) },
+          ]}
+          items={recentDocuments}
+          emptyLabel="No documents yet."
+        />
+        <div className="border-t border-border" />
+        <OperationalSummaryRow
+          title="RFIs"
+          href={`/${projectId}/rfis`}
+          summary="Field questions, due dates, and response status."
+          stats={[
+            {
+              label: "Open",
+              value: String(openRfis.length),
+              tone: openRfis.length > 0 ? "warning" : undefined,
+            },
+            {
+              label: "Overdue",
+              value: String(overdueRfis.length),
+              tone: overdueRfis.length > 0 ? "danger" : undefined,
+            },
+            { label: "Total", value: String(rfis.length) },
+          ]}
+          items={recentRfis}
+          emptyLabel="No RFIs yet."
+        />
+        <div className="border-t border-border" />
         <OperationalSummaryRow
           title="Change events"
           href={`/${projectId}/change-events`}
@@ -770,12 +1186,12 @@ function ProjectActivitySection({
         />
         <div className="border-t border-border" />
         <OperationalSummaryRow
-          title="Invoices & payments"
+          title="Invoices"
           href={`/${projectId}/invoices`}
-          summary="Owner billing and subcontractor payment activity."
+          summary="Owner billing and subcontractor invoice activity."
           stats={[
             { label: "Billed", value: fmtCompact(totalBilled) },
-            { label: "Paid", value: fmtCompact(totalPaid) },
+            { label: "Owner paid", value: fmtCompact(totalPaid) },
             {
               label: "Sub pending",
               value: String(subPending.length),
@@ -788,6 +1204,31 @@ function ProjectActivitySection({
           ]}
           items={recentInvoices}
           emptyLabel="No invoices yet."
+        />
+        <div className="border-t border-border" />
+        <OperationalSummaryRow
+          title="Payments"
+          href={`/${projectId}/invoices`}
+          summary="Owner payments received and commitment payments issued."
+          stats={[
+            {
+              label: "Received",
+              value: fmtCompact(primePaymentTotal + ownerInvoicePaymentTotal),
+            },
+            {
+              label: "Issued",
+              value: fmtCompact(
+                commitmentPaymentTotal + subcontractorInvoicePaymentTotal,
+              ),
+            },
+            { label: "Records", value: String(paymentRecordsCount) },
+            {
+              label: "Latest",
+              value: formatShortDate(latestPaymentDate) ?? "—",
+            },
+          ]}
+          items={recentPayments}
+          emptyLabel="No payments recorded yet."
         />
       </div>
     </section>
@@ -1136,6 +1577,8 @@ function ProjectSetupSheet({
 
 export function ProjectCommandCenter({
   project,
+  tasks,
+  meetings,
   changeOrders,
   rfis,
   commitments,
@@ -1151,6 +1594,10 @@ export function ProjectCommandCenter({
   submittals = [],
   ownerInvoices = [],
   subcontractorInvoices = [],
+  projectDocuments = [],
+  primeContractPayments = [],
+  commitmentPayments = [],
+  invoicePayments = [],
 }: ProjectCommandCenterProps) {
   const projectId = String(project.id);
   const [isEditProjectSidebarOpen, setIsEditProjectSidebarOpen] =
@@ -1213,13 +1660,122 @@ export function ProjectCommandCenter({
         (co.status ?? "").toLowerCase(),
       ),
   );
-  const openSubmittals = submittals.filter(
-    (s) => !["closed"].includes((s.status ?? "").toLowerCase()),
-  );
   const pendingSubInvoices = subcontractorInvoices.filter(
     (inv) =>
       !["approved", "paid", "void"].includes((inv.status ?? "").toLowerCase()),
   );
+  const openTasks = tasks.filter((task) => !isClosedStatus(task.status));
+  const openSubmittals = submittals.filter(
+    (s) => !isClosedStatus(s.status),
+  );
+
+  const pendingHomeItems: PendingHomeItem[] = [
+    ...openTasks.map((task) => {
+      const isOverdue = task.due_date ? isPast(new Date(task.due_date)) : false;
+      return {
+        id: `task-${task.id}`,
+        title: task.description,
+        detail: joinParts([
+          task.assignee_name || "Unassigned",
+          task.due_date ? `Due ${formatShortDate(task.due_date)}` : null,
+          task.source_system,
+        ]),
+        href: `/${projectId}/tasks`,
+        status: task.priority || task.status || "Open",
+        tone: isOverdue ? "danger" : task.priority === "high" ? "warning" : "neutral",
+        sortRank: isOverdue ? 0 : task.priority === "high" ? 2 : 5,
+        sortTime: task.due_date
+          ? getDateMs(task.due_date)
+          : getDateMs(task.created_at),
+      } satisfies PendingHomeItem;
+    }),
+    ...pendingSsovReviews.map((item) => ({
+      id: `ssov-${item.commitmentId}`,
+      title: `${item.commitmentNumber ? `${item.commitmentNumber} · ` : ""}${item.commitmentTitle}`,
+      detail: item.submittedAt
+        ? `Submitted ${formatShortDate(item.submittedAt)}`
+        : "Submitted for review",
+      href: `/${projectId}/commitments/${item.commitmentId}?tab=subcontractor-sov`,
+      status: "Under Review",
+      tone: "warning" as const,
+      sortRank: 1,
+      sortTime: getDateMs(item.submittedAt),
+    })),
+    ...rfisOpen.map((rfi) => {
+      const isOverdue = rfi.due_date ? isPast(new Date(rfi.due_date)) : false;
+      return {
+        id: `rfi-${rfi.id}`,
+        title: `RFI #${rfi.number}: ${rfi.subject}`,
+        detail: joinParts([
+          rfi.ball_in_court ? `Ball in court: ${rfi.ball_in_court}` : null,
+          rfi.due_date ? `Due ${formatShortDate(rfi.due_date)}` : null,
+        ]),
+        href: `/${projectId}/rfis/${rfi.id}`,
+        status: isOverdue ? "Overdue" : rfi.status,
+        tone: isOverdue ? "danger" : "neutral",
+        sortRank: isOverdue ? 0 : 4,
+        sortTime: rfi.due_date
+          ? getDateMs(rfi.due_date)
+          : getDateMs(rfi.updated_at),
+      } satisfies PendingHomeItem;
+    }),
+    ...openSubmittals.map((submittal) => {
+      const dueDate =
+        submittal.final_due_date ?? submittal.required_approval_date;
+      const isOverdue = dueDate ? isPast(new Date(dueDate)) : false;
+      return {
+        id: `submittal-${submittal.id}`,
+        title: `${submittal.submittal_number}: ${submittal.title}`,
+        detail: joinParts([
+          submittal.ball_in_court
+            ? `Ball in court: ${submittal.ball_in_court}`
+            : null,
+          dueDate ? `Due ${formatShortDate(dueDate)}` : null,
+        ]),
+        href: `/${projectId}/submittals/${submittal.id}`,
+        status: isOverdue ? "Overdue" : submittal.status || "Open",
+        tone: isOverdue ? "danger" : "neutral",
+        sortRank: isOverdue ? 0 : 4,
+        sortTime: dueDate
+          ? getDateMs(dueDate)
+          : getDateMs(submittal.updated_at ?? submittal.created_at),
+      } satisfies PendingHomeItem;
+    }),
+    ...pendingChangeOrders.map((order: ChangeOrder) => {
+      const isPrime = !order.change_order_number;
+      return {
+        id: `co-${order.id}`,
+        title: order.title ?? "Change order pending review",
+        detail: joinParts([
+          fmtCompact(order.amount ?? order.total_amount),
+          order.created_at ? `Created ${formatShortDate(order.created_at)}` : null,
+        ]),
+        href: isPrime
+          ? `/${projectId}/change-orders/prime/${order.id}`
+          : `/${projectId}/change-orders/commitment/${order.id}`,
+        status: order.status ?? "Pending",
+        tone: "warning" as const,
+        sortRank: 3,
+        sortTime: getDateMs(order.created_at),
+      };
+    }),
+    ...pendingSubInvoices.map((invoice) => ({
+      id: `sub-invoice-${invoice.id}`,
+      title: invoice.invoice_number ?? `Subcontractor invoice #${invoice.id}`,
+      detail: invoice.billing_date
+        ? `Billing date ${formatShortDate(invoice.billing_date)}`
+        : "Awaiting invoice action",
+      href: `/${projectId}/invoices`,
+      status: invoice.status ?? "Pending",
+      tone: "warning" as const,
+      sortRank: 3,
+      sortTime: getDateMs(invoice.billing_date),
+    })),
+  ].sort((left, right) => {
+    if (left.sortRank !== right.sortRank) return left.sortRank - right.sortRank;
+    return left.sortTime - right.sortTime;
+  });
+  const pendingHomeTotal = pendingHomeItems.length;
 
   const attentionItems: AttentionItem[] = [
     ...(variance < 0
@@ -1379,6 +1935,29 @@ export function ProjectCommandCenter({
         <div className="grid grid-cols-1 gap-y-12 xl:grid-cols-[minmax(0,1fr)_420px] xl:gap-x-20 xl:gap-y-0 2xl:gap-x-28">
           <div className="min-w-0 space-y-10">
             <ProjectCommandSurface healthCells={healthCells} />
+            <div className="grid gap-10 lg:grid-cols-2">
+              <RecentMeetingsSection
+                meetings={meetings}
+                projectId={projectId}
+              />
+              <PendingItemsSection
+                items={pendingHomeItems}
+                totalCount={pendingHomeTotal}
+                projectId={projectId}
+              />
+            </div>
+            <ProjectActivitySection
+              projectId={projectId}
+              projectDocuments={projectDocuments}
+              rfis={rfis}
+              changeEvents={changeEvents}
+              changeOrders={changeOrders}
+              ownerInvoices={ownerInvoices}
+              subcontractorInvoices={subcontractorInvoices}
+              primeContractPayments={primeContractPayments}
+              commitmentPayments={commitmentPayments}
+              invoicePayments={invoicePayments}
+            />
           </div>
 
           <aside>

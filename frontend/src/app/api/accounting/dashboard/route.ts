@@ -3,7 +3,8 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { requireCurrentUserAppCapability } from "@/lib/app-capabilities";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { createServiceClient } from "@/lib/supabase/service";
-import { classifyAgingBucket, detectGuardrailAlerts, type FinancialGuardrailAlert } from "@/lib/accounting/aging-calculator";
+import { classifyAgingBucket, type FinancialGuardrailAlert } from "@/lib/accounting/aging-calculator";
+import { loadPaymentGuardrailAlerts } from "@/lib/accounting/payment-guardrails";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -134,12 +135,6 @@ function startOfCurrentMonth(): string {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
 }
 
-function dateDaysAgoIso(daysAgo: number): string {
-  const now = new Date();
-  now.setDate(now.getDate() - daysAgo);
-  return now.toISOString().slice(0, 10);
-}
-
 // ---------------------------------------------------------------------------
 // GET /api/accounting/dashboard
 // ---------------------------------------------------------------------------
@@ -153,7 +148,6 @@ export const GET = withApiGuardrails("/api/accounting/dashboard#GET", async () =
 
   const supabase = createServiceClient();
   const monthStart = startOfCurrentMonth();
-  const guardrailLookbackStart = dateDaysAgoIso(90);
 
   // Run all independent queries in parallel for performance
   const [
@@ -165,8 +159,7 @@ export const GET = withApiGuardrails("/api/accounting/dashboard#GET", async () =
     paymentApplicationsResult,
     recentPaymentsResult,
     recentChecksResult,
-    guardrailChecksResult,
-    guardrailPaymentsResult,
+    guardrailAlerts,
   ] = await Promise.all([
     // 1. AR invoices — outstanding only, for aging + cash position
     supabase
@@ -218,16 +211,7 @@ export const GET = withApiGuardrails("/api/accounting/dashboard#GET", async () =
       .not("application_date", "is", null)
       .order("application_date", { ascending: false })
       .limit(10),
-    supabase
-      .from("acumatica_checks")
-      .select("reference_nbr, vendor_id, vendor_name, payment_ref, payment_amount, application_date, status, cash_account")
-      .gte("application_date", guardrailLookbackStart)
-      .limit(1000),
-    supabase
-      .from("acumatica_payments")
-      .select("reference_nbr, customer_id, customer_name, payment_ref, external_ref, payment_amount, application_date, status")
-      .gte("application_date", guardrailLookbackStart)
-      .limit(1000),
+    loadPaymentGuardrailAlerts(),
   ]);
 
   // Surface any query errors
@@ -240,8 +224,6 @@ export const GET = withApiGuardrails("/api/accounting/dashboard#GET", async () =
     paymentApplicationsResult.error,
     recentPaymentsResult.error,
     recentChecksResult.error,
-    guardrailChecksResult.error,
-    guardrailPaymentsResult.error,
   ].filter(Boolean);
 
   if (errors.length > 0) {
@@ -375,11 +357,6 @@ export const GET = withApiGuardrails("/api/accounting/dashboard#GET", async () =
     date: c.application_date ?? null,
     status: c.status ?? null,
   }));
-
-  const guardrailAlerts = detectGuardrailAlerts({
-    checks: guardrailChecksResult.data ?? [],
-    payments: guardrailPaymentsResult.data ?? [],
-  });
 
   // ---------------------------------------------------------------------------
   // Response

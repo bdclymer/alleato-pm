@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Check, RefreshCw, X } from "lucide-react";
+import { Check, ChevronDown, ChevronRight, RefreshCw, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { SectionRuleHeading } from "@/components/layout";
@@ -39,6 +39,9 @@ type ReviewCandidate = {
     date: string | null;
     created_at: string | null;
     summary: string | null;
+    overview: string | null;
+    content: string | null;
+    participants: string | null;
   } | null;
 };
 
@@ -60,6 +63,7 @@ export function ProjectAttributionReviewClient() {
   const [candidates, setCandidates] = React.useState<ReviewCandidate[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [busyId, setBusyId] = React.useState<string | null>(null);
+  const [expandedId, setExpandedId] = React.useState<string | null>(null);
 
   const loadCandidates = React.useCallback(async () => {
     setLoading(true);
@@ -147,71 +151,146 @@ export function ProjectAttributionReviewClient() {
               </TableRow>
             ) : (
               candidates.map((candidate) => {
-                const document = candidate.document;
+                const doc = candidate.document;
                 const disabled = busyId === candidate.id;
+                const isExpanded = expandedId === candidate.id;
+                const description = doc?.overview ?? doc?.summary ?? doc?.content?.slice(0, 400) ?? null;
+
                 return (
-                  <TableRow key={candidate.id}>
-                    <TableCell className="max-w-sm align-top">
-                      <div className="space-y-1">
+                  <React.Fragment key={candidate.id}>
+                    <TableRow
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => setExpandedId(isExpanded ? null : candidate.id)}
+                    >
+                      <TableCell className="max-w-sm align-top">
+                        <div className="flex items-start gap-2">
+                          {isExpanded ? (
+                            <ChevronDown className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                          ) : (
+                            <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                          )}
+                          <div className="space-y-1">
+                            <div className="font-medium text-foreground">
+                              {doc?.title ?? candidate.source_document_id}
+                            </div>
+                            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                              <span>{doc?.source ?? "Unknown source"}</span>
+                              <span>{doc?.category ?? doc?.type ?? "Uncategorized"}</span>
+                              <span>{formatDate(doc?.date ?? doc?.created_at ?? null)}</span>
+                              {doc?.project && <Badge variant="outline">Current: {doc.project}</Badge>}
+                              {doc?.participants && (
+                                <span>
+                                  {(() => {
+                                    try {
+                                      const p = JSON.parse(doc.participants) as string[];
+                                      return Array.isArray(p) ? p.join(", ") : doc.participants;
+                                    } catch {
+                                      return doc.participants;
+                                    }
+                                  })()}
+                                </span>
+                              )}
+                            </div>
+                            {description && (
+                              <p className="line-clamp-2 text-xs text-muted-foreground">{description}</p>
+                            )}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="align-top">
                         <div className="font-medium text-foreground">
-                          {document?.title ?? candidate.source_document_id}
+                          {candidate.candidate_project_name ?? "Unknown project"}
                         </div>
-                        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                          <span>{document?.source ?? "Unknown source"}</span>
-                          <span>{document?.category ?? document?.type ?? "Uncategorized"}</span>
-                          <span>{formatDate(document?.date ?? document?.created_at ?? null)}</span>
-                          {document?.project && <Badge variant="outline">Current: {document.project}</Badge>}
+                        <div className="text-xs text-muted-foreground">
+                          Project ID {candidate.candidate_project_id ?? "missing"}
                         </div>
-                        {document?.summary && (
-                          <p className="line-clamp-2 text-xs text-muted-foreground">{document.summary}</p>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="align-top">
-                      <div className="font-medium text-foreground">
-                        {candidate.candidate_project_name ?? "Unknown project"}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        Project ID {candidate.candidate_project_id ?? "missing"}
-                      </div>
-                    </TableCell>
-                    <TableCell className="max-w-xs align-top">
-                      <div className="mb-2 flex flex-wrap gap-1">
-                        {(candidate.evidence_terms ?? []).slice(0, 5).map((term) => (
-                          <Badge key={term} variant="secondary">
-                            {term}
-                          </Badge>
-                        ))}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        {candidate.reasoning ?? candidate.attribution_method ?? "No reasoning recorded"}
-                      </div>
-                    </TableCell>
-                    <TableCell className="align-top">
-                      <Badge variant="outline">{formatConfidence(candidate.confidence)}</Badge>
-                    </TableCell>
-                    <TableCell className="align-top">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          disabled={disabled}
-                          aria-label="Reject candidate"
-                          onClick={() => void reviewCandidate(candidate.id, "reject")}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="icon"
-                          disabled={disabled}
-                          aria-label="Approve candidate"
-                          onClick={() => void reviewCandidate(candidate.id, "approve")}
-                        >
-                          <Check className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
+                      </TableCell>
+                      <TableCell className="max-w-xs align-top">
+                        <div className="mb-2 flex flex-wrap gap-1">
+                          {(candidate.evidence_terms ?? []).slice(0, 5).map((term) => (
+                            <Badge key={term} variant="secondary">
+                              {term}
+                            </Badge>
+                          ))}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {candidate.reasoning ?? candidate.attribution_method ?? "No reasoning recorded"}
+                        </div>
+                      </TableCell>
+                      <TableCell className="align-top">
+                        <Badge variant="outline">{formatConfidence(candidate.confidence)}</Badge>
+                      </TableCell>
+                      <TableCell className="align-top">
+                        <div className="flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            disabled={disabled}
+                            aria-label="Reject candidate"
+                            onClick={() => void reviewCandidate(candidate.id, "reject")}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            disabled={disabled}
+                            aria-label="Approve candidate"
+                            onClick={() => void reviewCandidate(candidate.id, "approve")}
+                          >
+                            <Check className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                    {isExpanded && (
+                      <TableRow className="bg-muted/30 hover:bg-muted/30">
+                        <TableCell colSpan={5} className="px-6 py-4">
+                          <div className="space-y-3">
+                            {doc?.content && (
+                              <div>
+                                <div className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                                  Message content
+                                </div>
+                                <pre className="whitespace-pre-wrap rounded-md bg-muted p-3 text-xs text-foreground">
+                                  {doc.content}
+                                </pre>
+                              </div>
+                            )}
+                            {doc?.overview && (
+                              <div>
+                                <div className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                                  AI summary
+                                </div>
+                                <p className="text-sm text-muted-foreground">{doc.overview}</p>
+                              </div>
+                            )}
+                            <div className="flex items-center gap-3 pt-1">
+                              <span className="text-xs text-muted-foreground">
+                                Assign to <strong>{candidate.candidate_project_name}</strong>?
+                              </span>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={disabled}
+                                onClick={() => void reviewCandidate(candidate.id, "reject")}
+                              >
+                                <X className="mr-1.5 h-3.5 w-3.5" />
+                                Reject
+                              </Button>
+                              <Button
+                                size="sm"
+                                disabled={disabled}
+                                onClick={() => void reviewCandidate(candidate.id, "approve")}
+                              >
+                                <Check className="mr-1.5 h-3.5 w-3.5" />
+                                Approve — assign to {candidate.candidate_project_name}
+                              </Button>
+                            </div>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </React.Fragment>
                 );
               })
             )}

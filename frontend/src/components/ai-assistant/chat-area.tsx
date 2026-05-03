@@ -82,6 +82,7 @@ import {
   PromptInputActions,
   PromptInputAction,
 } from "@/components/chat/prompt-input";
+import { SectionRuleHeading } from "@/components/layout/spacing";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -133,6 +134,7 @@ import {
   scoreResponseQuality,
   type ResponseQuality as ScoredResponseQuality,
 } from "@/lib/ai/score-response-quality";
+import { ASSISTANT_ACTION_CAPABILITIES } from "@/lib/ai/action-capabilities";
 
 // ─── Part extraction helpers ───────────────────────────────────────
 
@@ -470,6 +472,18 @@ function getRecordDeepLinks(part: ToolPart): Array<{ label: string; href: string
     links.push({ label: "Open Project", href: `/${projectId}/home` });
   }
 
+  if (typeof output.reportUrl === "string") {
+    links.push({ label: "Open Report", href: output.reportUrl });
+  }
+
+  if (typeof output.previewUrl === "string") {
+    links.push({ label: "Preview PDF", href: output.previewUrl });
+  }
+
+  if (typeof output.downloadUrl === "string") {
+    links.push({ label: "Download PDF", href: output.downloadUrl });
+  }
+
   if (recordId && output.boardUrl && typeof output.boardUrl === "string") {
     links.push({
       label: "Open Board Card",
@@ -538,6 +552,38 @@ function AssistantAvatar({ councilMode }: { councilMode?: boolean }) {
         <AnimatedOrb size={32} />
       )}
     </div>
+  );
+}
+
+function AssistantActionList() {
+  return (
+    <section aria-label="Assistant actions" className="border-y border-border/70 py-5 text-left">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div>
+          <SectionRuleHeading label="Actions wired up" className="mb-0" />
+          <p className="mt-1 text-xs text-muted-foreground">
+            These make changes in Alleato after approval.
+          </p>
+        </div>
+      </div>
+      <div className="grid gap-x-8 gap-y-5 sm:grid-cols-2">
+        {ASSISTANT_ACTION_CAPABILITIES.map((group) => (
+          <div key={group.title} className="min-w-0">
+            <div className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+              {group.title}
+            </div>
+            <ul className="space-y-1.5">
+              {group.actions.map((action) => (
+                <li key={action} className="flex min-w-0 items-start gap-2 text-sm text-foreground">
+                  <CheckIcon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+                  <span className="min-w-0">{action}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -1862,7 +1908,9 @@ export function ChatArea({
     <div className="relative flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background">
       {!hasMessages && !isLoadingMessages ? (
         <div className="flex min-h-0 flex-1 pb-36 md:pb-40">
-          <WelcomeScreen onSelectPrompt={(prompt) => onSubmit(prompt)} />
+          <WelcomeScreen onSelectPrompt={(prompt) => onSubmit(prompt)}>
+            <AssistantActionList />
+          </WelcomeScreen>
         </div>
       ) : (
         <>

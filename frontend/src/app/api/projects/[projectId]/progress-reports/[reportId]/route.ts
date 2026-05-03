@@ -5,6 +5,8 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import {
   getProgressReportDetail,
+  listProjectTeamContacts,
+  mergeProgressReportContacts,
   saveProgressReport,
 } from "@/lib/progress-reports/server";
 
@@ -55,8 +57,18 @@ export const GET = withApiGuardrails(
       return NextResponse.json({ error: "Invalid project ID" }, { status: 400 });
     }
 
-    const detail = await getProgressReportDetail(numericProjectId, reportId);
-    return NextResponse.json(detail);
+    const [detail, projectTeamContacts] = await Promise.all([
+      getProgressReportDetail(numericProjectId, reportId),
+      listProjectTeamContacts(numericProjectId),
+    ]);
+
+    return NextResponse.json({
+      ...detail,
+      report: {
+        ...detail.report,
+        contacts: mergeProgressReportContacts(projectTeamContacts, detail.report.contacts),
+      },
+    });
   },
 );
 
@@ -79,13 +91,22 @@ export const PUT = withApiGuardrails(
     }
 
     const body = updateSchema.parse(await request.json());
-    const detail = await saveProgressReport({
-      projectId: numericProjectId,
-      reportId,
-      userId: user.id,
-      updates: body,
-    });
+    const [detail, projectTeamContacts] = await Promise.all([
+      saveProgressReport({
+        projectId: numericProjectId,
+        reportId,
+        userId: user.id,
+        updates: body,
+      }),
+      listProjectTeamContacts(numericProjectId),
+    ]);
 
-    return NextResponse.json(detail);
+    return NextResponse.json({
+      ...detail,
+      report: {
+        ...detail.report,
+        contacts: mergeProgressReportContacts(projectTeamContacts, detail.report.contacts),
+      },
+    });
   },
 );

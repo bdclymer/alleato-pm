@@ -3,7 +3,11 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { renderPdfFromHtml } from "@/lib/documents/pdf";
 import { buildProgressReportHtml } from "@/lib/progress-reports/pdf";
-import { getProgressReportDetail } from "@/lib/progress-reports/server";
+import {
+  getProgressReportDetail,
+  listProjectTeamContacts,
+  mergeProgressReportContacts,
+} from "@/lib/progress-reports/server";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 
@@ -12,7 +16,7 @@ export const dynamic = "force-dynamic";
 
 export const GET = withApiGuardrails(
   "projects/[projectId]/progress-reports/[reportId]/pdf#GET",
-  async ({ params }) => {
+  async ({ request, params }) => {
     const user = await getApiRouteUser();
     if (!user) {
       throw new GuardrailError({
@@ -29,13 +33,14 @@ export const GET = withApiGuardrails(
     }
 
     const db = createServiceClient();
-    const [detail, projectResult] = await Promise.all([
+    const [detail, projectResult, projectTeamContacts] = await Promise.all([
       getProgressReportDetail(numericProjectId, reportId),
       db
         .from("projects")
         .select("name, project_number, address")
         .eq("id", numericProjectId)
         .single(),
+      listProjectTeamContacts(numericProjectId),
     ]);
 
     if (projectResult.error || !projectResult.data) {
@@ -44,7 +49,10 @@ export const GET = withApiGuardrails(
 
     const html = buildProgressReportHtml({
       project: projectResult.data,
-      report: detail.report,
+      report: {
+        ...detail.report,
+        contacts: mergeProgressReportContacts(projectTeamContacts, detail.report.contacts),
+      },
       selectedPhotos: detail.selectedPhotos,
     });
     const pdfBuffer = await renderPdfFromHtml(html);
@@ -53,12 +61,16 @@ export const GET = withApiGuardrails(
       .replace(/^-+|-+$/g, "")
       .slice(0, 40);
     const filename = `${safeName || "project"}-progress-report-${detail.report.week_end}.pdf`;
+    const disposition =
+      new URL(request.url).searchParams.get("disposition") === "inline"
+        ? "inline"
+        : "attachment";
 
     return new NextResponse(new Uint8Array(pdfBuffer), {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="${filename}"`,
+        "Content-Disposition": `${disposition}; filename="${filename}"`,
         "Cache-Control": "private, no-store",
       },
     });

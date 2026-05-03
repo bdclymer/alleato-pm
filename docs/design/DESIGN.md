@@ -305,6 +305,21 @@ rounded-none  /* Tables, full-bleed elements */
 
 Borders create visual noise. **Every border must earn its place.**
 
+### Hierarchy without borders
+
+Default to borderless hierarchy first. Before adding a bordered wrapper, try these in order:
+
+1. Increase section spacing (`space-y-8`, `gap-8`, `pt-8`) for major breaks.
+2. Use the 4-tier text hierarchy: eyebrow, heading, body, meta.
+3. Use alignment and indentation: icon column, content column, action column.
+4. Use tonal elevation: `bg-card` on `bg-background`, or `bg-muted/50` for a recessed area.
+5. Use internal row dividers: `divide-y divide-border/50` for items within one list.
+6. Use quiet interaction states: `hover:bg-muted/50`, active text color, or a left accent for selected/important rows.
+
+If those techniques solve the scan problem, do not add a border. Borders should clarify boundaries for controls and bounded data modules; they should not be the default way to show that one thing is separate from another.
+
+Accordion, activity, navigation, and side-list layouts should look like structured rows on an open surface: icon, title, muted description, optional action, and subtle row separation. Do not turn each row or section into its own bordered tile.
+
 ### Use borders for:
 - Form inputs (accessibility requirement)
 - Table row dividers (`divide-y divide-border`)

@@ -3,6 +3,8 @@ import type {
   ProgressReportPhotoSelection,
   ProgressReportRecord,
 } from "@/lib/progress-reports/types";
+import { buildBrandedDocumentHtml } from "@/lib/documents/branded-letterhead";
+import { parseProgressReportDate } from "@/lib/progress-reports/date-format";
 
 function esc(value: string | number | null | undefined): string {
   if (value == null) return "";
@@ -15,9 +17,8 @@ function esc(value: string | number | null | undefined): string {
 }
 
 function formatDate(value: string | null | undefined): string {
-  if (!value) return "—";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return "—";
+  const parsed = parseProgressReportDate(value);
+  if (!parsed) return "—";
   return parsed.toLocaleDateString("en-US", {
     month: "long",
     day: "2-digit",
@@ -26,16 +27,25 @@ function formatDate(value: string | null | undefined): string {
 }
 
 function formatWeekRange(start: string, end: string): string {
-  const startDate = new Date(start);
-  const endDate = new Date(end);
+  const startDate = parseProgressReportDate(start);
+  const endDate = parseProgressReportDate(end);
+  if (!startDate || !endDate) return "—";
   return `${startDate.toLocaleDateString("en-US")} - ${endDate.toLocaleDateString("en-US")}`;
 }
 
 function bulletLines(value: string): string[] {
   return value
     .split("\n")
-    .map((line) => line.replace(/^[-*]\s*/, "").trim())
+    .map((line) => line.replace(/^[-*•]\s*/, "").trim())
     .filter(Boolean);
+}
+
+function renderRichInline(value: string): string {
+  return esc(value)
+    .replace(/#{1,6}\s+/g, "")
+    .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*([^*]+)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*\*([^*]+)\*/g, "<strong>$1</strong>");
 }
 
 function renderBulletSection(title: string, value: string) {
@@ -45,7 +55,7 @@ function renderBulletSection(title: string, value: string) {
       <h2>${esc(title)}</h2>
       ${
         lines.length > 0
-          ? `<ul>${lines.map((line) => `<li>${esc(line)}</li>`).join("")}</ul>`
+          ? `<ul>${lines.map((line) => `<li>${renderRichInline(line)}</li>`).join("")}</ul>`
           : `<p class="empty">No content added yet.</p>`
       }
     </section>
@@ -57,8 +67,19 @@ function renderContact(contact: ProgressReportContact) {
     <div class="contact">
       <div class="contact-role">${esc(contact.role || "Contact")}</div>
       <div class="contact-name">${esc(contact.name || "—")}</div>
-      <div>${esc(contact.email || "—")}</div>
-      <div>${esc(contact.phone || "—")}</div>
+      <div class="contact-line">${esc(contact.email || "—")}</div>
+      <div class="contact-line">${esc(contact.phone || "—")}</div>
+    </div>
+  `;
+}
+
+function renderSummaryContact(contact: ProgressReportContact) {
+  return `
+    <div class="summary-contact">
+      <span class="summary-contact-role">${esc(contact.role || "Project Team")}</span>
+      <span class="summary-contact-name">${esc(contact.name || "—")}</span>
+      ${contact.email ? `<span>${esc(contact.email)}</span>` : ""}
+      ${contact.phone ? `<span>${esc(contact.phone)}</span>` : ""}
     </div>
   `;
 }
@@ -95,64 +116,68 @@ export function buildProgressReportHtml({
   selectedPhotos: ProgressReportPhotoSelection[];
 }): string {
   const title = project.name ? `${project.name} Progress Report` : report.title;
-  const addressLine = [project.project_number, project.address].filter(Boolean).join(" · ");
+  const addressLine = project.address;
+  const weekRange = formatWeekRange(report.week_start, report.week_end);
   const contacts = report.contacts.length > 0 ? report.contacts : [];
 
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>${esc(title)}</title>
-  <style>
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: Arial, Helvetica, sans-serif;
-      color: #111827;
-      background: #ffffff;
-      font-size: 12px;
-      line-height: 1.45;
-    }
-    .page {
-      padding: 28px 30px 36px;
-    }
-    .header {
-      margin-bottom: 20px;
-    }
-    .report-title {
-      font-size: 28px;
-      font-weight: 700;
-      margin-bottom: 6px;
-      letter-spacing: 0.02em;
-    }
-    .report-meta {
-      color: #475569;
-      font-size: 12px;
-      margin-bottom: 4px;
-    }
+  const bodyHtml = `
+    <style>
     .dates-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 10px 18px;
       margin: 18px 0 22px;
-      padding: 14px 16px;
-      border: 1px solid #dbe3ef;
-      background: #f8fafc;
+      padding: 16px 18px;
+      border: 1px solid #d7d2cc;
+      background: #f4f2ef;
     }
     .dates-grid div { min-width: 0; }
+    .dates-grid .team-summary {
+      grid-column: 1 / -1;
+      margin-top: 4px;
+      padding-top: 14px;
+      border-top: 1px solid #d7d2cc;
+    }
     .label {
       display: block;
       margin-bottom: 2px;
       font-size: 11px;
       font-weight: 700;
-      color: #334155;
+      color: #55514c;
       text-transform: uppercase;
       letter-spacing: 0.06em;
     }
     .value {
       font-size: 14px;
-      color: #0f172a;
+      color: #2d2c2a;
+    }
+    .summary-contacts {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px 14px;
+      margin-top: 8px;
+    }
+    .summary-contact {
+      min-width: 0;
+      color: #5f5b56;
+      font-size: 10px;
+      line-height: 1.35;
+    }
+    .summary-contact span {
+      display: block;
+      overflow-wrap: anywhere;
+    }
+    .summary-contact-role {
+      color: #55514c;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .summary-contact-name {
+      color: #242424;
+      font-size: 11px;
+      font-weight: 700;
     }
     .section {
       margin-bottom: 20px;
@@ -161,8 +186,9 @@ export function buildProgressReportHtml({
     .section h2 {
       margin: 0 0 10px;
       padding-bottom: 6px;
-      border-bottom: 1px solid #dbe3ef;
+      border-bottom: 1px solid #d7d2cc;
       font-size: 16px;
+      color: #2d2c2a;
     }
     .section ul {
       margin: 0;
@@ -171,8 +197,12 @@ export function buildProgressReportHtml({
     .section li {
       margin-bottom: 6px;
     }
+    .section strong {
+      font-weight: 700;
+      color: #242424;
+    }
     .empty {
-      color: #64748b;
+      color: #68645f;
       margin: 0;
     }
     .weather {
@@ -186,13 +216,13 @@ export function buildProgressReportHtml({
     }
     .photo-card {
       margin: 0;
-      border: 1px solid #dbe3ef;
+      border: 1px solid #d7d2cc;
       background: #ffffff;
     }
     .photo-frame {
       height: 220px;
       overflow: hidden;
-      background: #f1f5f9;
+      background: #efedea;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -210,47 +240,45 @@ export function buildProgressReportHtml({
       margin-bottom: 2px;
     }
     .photo-meta {
-      color: #64748b;
+      color: #68645f;
       font-size: 11px;
       margin-bottom: 6px;
     }
     .photo-caption {
-      color: #334155;
+      color: #3f3c38;
       font-size: 12px;
     }
     .contacts {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 12px;
       margin-top: 10px;
     }
     .contact {
       min-width: 0;
       padding: 10px 12px;
-      border: 1px solid #dbe3ef;
-      background: #f8fafc;
+      border: 1px solid #d7d2cc;
+      background: #f4f2ef;
+      overflow-wrap: anywhere;
     }
     .contact-role {
       text-transform: uppercase;
       letter-spacing: 0.06em;
       font-size: 10px;
       font-weight: 700;
-      color: #475569;
+      color: #5f5b56;
       margin-bottom: 4px;
     }
     .contact-name {
       font-weight: 700;
       margin-bottom: 4px;
     }
-  </style>
-</head>
-<body>
-  <div class="page">
-    <header class="header">
-      <div class="report-title">${esc(title)}</div>
-      <div class="report-meta">${esc(addressLine)}</div>
-      <div class="report-meta">Week of ${esc(formatWeekRange(report.week_start, report.week_end))}</div>
-    </header>
+    .contact-line {
+      font-size: 11px;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+    </style>
 
     <section class="dates-grid">
       <div>
@@ -261,6 +289,14 @@ export function buildProgressReportHtml({
         <span class="label">Scheduled Substantial Completion</span>
         <span class="value">${esc(formatDate(report.scheduled_completion_date))}</span>
       </div>
+      ${
+        contacts.length > 0
+          ? `<div class="team-summary">
+              <span class="label">Project Team Contacts</span>
+              <div class="summary-contacts">${contacts.slice(0, 6).map(renderSummaryContact).join("")}</div>
+            </div>`
+          : ""
+      }
     </section>
 
     ${renderBulletSection("1. Past Week’s Highlights", report.past_week_highlights)}
@@ -289,9 +325,14 @@ export function buildProgressReportHtml({
           : `<p class="empty">Add project contacts before sending this report.</p>`
       }
     </section>
-  </div>
-</body>
-</html>`;
+  `;
+
+  return buildBrandedDocumentHtml({
+    title,
+    subtitle: addressLine || undefined,
+    detail: `Week of ${weekRange}`,
+    bodyHtml,
+  });
 }
 
 export function buildProgressReportEmailHtml({

@@ -1,4 +1,4 @@
-# Brandon Daily Update Execution Tasks
+# CEO Daily Update Execution Tasks
 
 Last updated: 2026-05-02
 Linear issue: `AAI-304`

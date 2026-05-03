@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { format } from "date-fns";
-import { Download, Loader2, Mail, Plus, Save, Trash2 } from "lucide-react";
+import { Download, Loader2, Mail, Pencil, Plus, Save, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { SectionRuleHeading } from "@/components/layout/spacing";
+import { Markdown } from "@/components/misc/markdown";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,7 @@ import {
   useProgressReport,
   useUpdateProgressReport,
 } from "@/hooks/use-progress-reports";
+import { formatProgressReportDate } from "@/lib/progress-reports/date-format";
 import type {
   ProgressReportContact,
   ProgressReportPhotoRecord,
@@ -52,6 +53,73 @@ function statusVariant(status: ProgressReportStatus) {
   }
 }
 
+function normalizeReportMarkdown(value: string): string {
+  return value
+    .split("\n")
+    .map((line) =>
+      line
+        .trimEnd()
+        .replace(/^[-*]\s+#{1,6}\s+/, "- ")
+        .replace(/#{1,6}\s+/g, "")
+        .replace(/\*{1,2}([^*\n]+?)\*{1,2}/g, "**$1**"),
+    )
+    .join("\n");
+}
+
+function ReportMarkdownSection({
+  title,
+  value,
+  empty,
+}: {
+  title: string;
+  value: string;
+  empty: string;
+}) {
+  const content = normalizeReportMarkdown(value).trim();
+
+  return (
+    <section className="space-y-3">
+      <SectionRuleHeading label={title} className="mb-2" />
+      {content ? (
+        <Markdown
+          className="text-sm leading-6 text-foreground [&_h1]:mb-2 [&_h1]:text-base [&_h1]:font-semibold [&_h2]:mb-2 [&_h2]:text-base [&_h2]:font-semibold [&_h3]:mb-2 [&_h3]:text-sm [&_h3]:font-semibold [&_p]:mb-3 [&_p]:leading-6 last:[&_p]:mb-0 [&_ul]:mb-3 [&_ul]:list-disc [&_ul]:space-y-1.5 [&_ul]:pl-5 [&_ol]:mb-3 [&_ol]:list-decimal [&_ol]:space-y-1.5 [&_ol]:pl-5 [&_li]:pl-1 [&_strong]:font-semibold [&_strong]:text-foreground"
+        >
+          {content}
+        </Markdown>
+      ) : (
+        <p className="text-sm text-muted-foreground">{empty}</p>
+      )}
+    </section>
+  );
+}
+
+function ContactList({ contacts }: { contacts: ProgressReportContact[] }) {
+  if (contacts.length === 0) {
+    return <p className="text-sm text-muted-foreground">No contacts added yet.</p>;
+  }
+
+  return (
+    <div className="grid gap-4 md:grid-cols-2">
+      {contacts.map((contact, index) => (
+        <div key={`${contact.email}-${index}`} className="min-w-0 border-t border-border pt-3">
+          <div className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+            {contact.role || "Project Team"}
+          </div>
+          <div className="mt-1 text-sm font-semibold text-foreground">
+            {contact.name || "Unnamed contact"}
+          </div>
+          {contact.email ? (
+            <div className="mt-1 break-words text-sm text-muted-foreground">{contact.email}</div>
+          ) : null}
+          {contact.phone ? (
+            <div className="text-sm text-muted-foreground">{contact.phone}</div>
+          ) : null}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function ProgressReportEditor({
   projectId,
   reportId,
@@ -65,6 +133,7 @@ export function ProgressReportEditor({
   const [emailRecipientsInput, setEmailRecipientsInput] = useState("");
   const [emailNote, setEmailNote] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
     if (!reportQuery.data) return;
@@ -187,6 +256,11 @@ export function ProgressReportEditor({
         sort_order: index,
       })),
     });
+
+    if (!nextStatus) {
+      toast.success("Progress report saved");
+      setIsEditing(false);
+    }
   }
 
   async function handleSendEmail() {
@@ -225,7 +299,7 @@ export function ProgressReportEditor({
     }
   }
 
-  if (reportQuery.isLoading || !draft) {
+  if (reportQuery.isLoading || !draft || !reportQuery.data) {
     return (
       <div className="space-y-6 py-8">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -236,8 +310,129 @@ export function ProgressReportEditor({
     );
   }
 
-  const report = reportQuery.data?.report;
+  const report = reportQuery.data.report;
   const detail = reportQuery.data;
+  const selectedPhotos = detail.selectedPhotos.filter((photo) =>
+    selectedPhotoIds.has(photo.project_photo_id),
+  );
+
+  if (!isEditing) {
+    return (
+      <div className="space-y-10">
+        <section className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <SectionRuleHeading label={draft.title} className="mb-2" />
+            <p className="text-sm text-muted-foreground">
+              Week of {formatProgressReportDate(draft.week_start)} to{" "}
+              {formatProgressReportDate(draft.week_end)}
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant={statusVariant(draft.status)}>{draft.status}</Badge>
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-2"
+              onClick={() => setIsEditing(true)}
+            >
+              <Pencil className="h-4 w-4" />
+              Edit
+            </Button>
+            <a href={`/api/projects/${projectId}/progress-reports/${reportId}/pdf`} className="inline-flex">
+              <Button variant="outline" size="sm" className="gap-2">
+                <Download className="h-4 w-4" />
+                Download PDF
+              </Button>
+            </a>
+          </div>
+        </section>
+
+        <section className="grid gap-4 border-y border-border py-5 md:grid-cols-2">
+          <div>
+            <div className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+              Construction Start Date
+            </div>
+            <div className="mt-1 text-sm font-medium text-foreground">
+              {formatProgressReportDate(draft.construction_start_date)}
+            </div>
+          </div>
+          <div>
+            <div className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+              Scheduled Completion
+            </div>
+            <div className="mt-1 text-sm font-medium text-foreground">
+              {formatProgressReportDate(draft.scheduled_completion_date)}
+            </div>
+          </div>
+          <div className="md:col-span-2">
+            <div className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+              Project Team Contacts
+            </div>
+            <ContactList contacts={draft.contacts.slice(0, 6)} />
+          </div>
+        </section>
+
+        <div className="mx-auto max-w-3xl space-y-10">
+          <ReportMarkdownSection
+            title="1. Past Week's Highlights"
+            value={draft.past_week_highlights}
+            empty="No past week highlights added yet."
+          />
+          <ReportMarkdownSection
+            title="2. Upcoming Week's Activities"
+            value={draft.upcoming_week_activities}
+            empty="No upcoming activities added yet."
+          />
+          <ReportMarkdownSection
+            title="3. Open Items"
+            value={draft.open_items}
+            empty="No open items added yet."
+          />
+
+          <section className="space-y-3">
+            <SectionRuleHeading label="4. Days Lost Due to Weather This Week" className="mb-2" />
+            <p className="text-sm font-medium text-foreground">
+              {draft.weather_days_lost} day{draft.weather_days_lost === 1 ? "" : "s"}
+            </p>
+          </section>
+
+          <section className="space-y-3">
+            <SectionRuleHeading label="5. Progress Mark-up / Photos" className="mb-2" />
+            {selectedPhotos.length > 0 ? (
+              <div className="grid gap-4 md:grid-cols-2">
+                {selectedPhotos.map((selection) => (
+                  <figure key={selection.id} className="space-y-2">
+                    <div className="aspect-[4/3] overflow-hidden rounded-md bg-muted">
+                      <img
+                        src={selection.photo.file_url}
+                        alt={selection.photo.title}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                    <figcaption className="text-sm">
+                      <div className="font-medium text-foreground">
+                        {selection.caption || selection.photo.title}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {formatProgressReportDate(selection.photo.date_taken ?? selection.photo.created_at)}
+                      </div>
+                    </figcaption>
+                  </figure>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">No progress photos selected yet.</p>
+            )}
+          </section>
+
+          <section className="space-y-3">
+            <SectionRuleHeading label="Project Contacts" className="mb-2" />
+            <ContactList contacts={draft.contacts} />
+          </section>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-10">
@@ -245,12 +440,43 @@ export function ProgressReportEditor({
           <div>
             <SectionRuleHeading label={draft.title} className="mb-2" />
             <p className="text-sm text-muted-foreground">
-              Week of {format(new Date(draft.week_start), "MMM d, yyyy")} to{" "}
-              {format(new Date(draft.week_end), "MMM d, yyyy")}
+              Week of {formatProgressReportDate(draft.week_start)} to{" "}
+              {formatProgressReportDate(draft.week_end)}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant={statusVariant(draft.status)}>{draft.status}</Badge>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="gap-2"
+              onClick={() => {
+                const { report: currentReport, selectedPhotos: currentSelectedPhotos } = detail;
+                setDraft({
+                  title: currentReport.title,
+                  status: currentReport.status,
+                  week_start: currentReport.week_start,
+                  week_end: currentReport.week_end,
+                  construction_start_date: currentReport.construction_start_date,
+                  scheduled_completion_date: currentReport.scheduled_completion_date,
+                  past_week_highlights: currentReport.past_week_highlights,
+                  upcoming_week_activities: currentReport.upcoming_week_activities,
+                  open_items: currentReport.open_items,
+                  weather_days_lost: currentReport.weather_days_lost,
+                  contacts: currentReport.contacts.length > 0 ? currentReport.contacts : [],
+                  client_recipients: currentReport.client_recipients,
+                  selectedPhotos: currentSelectedPhotos.map((photo) => ({
+                    project_photo_id: photo.project_photo_id,
+                    caption: photo.caption,
+                  })),
+                });
+                setEmailRecipientsInput(currentReport.client_recipients.join(", "));
+                setIsEditing(false);
+              }}
+            >
+              <X className="h-4 w-4" />
+              Cancel
+            </Button>
             <a href={`/api/projects/${projectId}/progress-reports/${reportId}/pdf`} className="inline-flex">
               <Button variant="outline" size="sm" className="gap-2">
                 <Download className="h-4 w-4" />
@@ -522,7 +748,7 @@ export function ProgressReportEditor({
                       <div>
                         <div className="text-sm font-medium text-foreground">{photo.title}</div>
                         <div className="text-xs text-muted-foreground">
-                          {format(new Date(photo.date_taken ?? photo.created_at ?? new Date().toISOString()), "MMM d, yyyy")}
+                          {formatProgressReportDate(photo.date_taken ?? photo.created_at)}
                         </div>
                       </div>
                       <Badge variant={selected ? "default" : "outline"}>
@@ -558,7 +784,7 @@ export function ProgressReportEditor({
                   <li key={meeting.id}>
                     <div className="font-medium text-foreground">{meeting.title}</div>
                     <div className="text-xs text-muted-foreground">
-                      {meeting.date ? format(new Date(meeting.date), "MMM d, yyyy") : "No date"}
+                      {formatProgressReportDate(meeting.date, "MMM d, yyyy", "No date")}
                     </div>
                     {meeting.summary ? (
                       <div className="mt-1 text-muted-foreground">{meeting.summary}</div>
@@ -579,7 +805,7 @@ export function ProgressReportEditor({
                   <li key={email.id}>
                     <div className="font-medium text-foreground">{email.subject}</div>
                     <div className="text-xs text-muted-foreground">
-                      {email.date ? format(new Date(email.date), "MMM d, yyyy") : "No date"}
+                      {formatProgressReportDate(email.date, "MMM d, yyyy", "No date")}
                     </div>
                     {email.preview ? (
                       <div className="mt-1 text-muted-foreground">{email.preview}</div>
@@ -598,7 +824,7 @@ export function ProgressReportEditor({
               <div>
                 Generated:{" "}
                 {report?.source_snapshot.generatedAt
-                  ? format(new Date(report.source_snapshot.generatedAt), "MMM d, yyyy h:mm a")
+                  ? formatProgressReportDate(report.source_snapshot.generatedAt, "MMM d, yyyy h:mm a")
                   : "Unknown"}
               </div>
               <div>Strategy: {report?.source_snapshot.strategy ?? "Unknown"}</div>

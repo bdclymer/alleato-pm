@@ -12,6 +12,8 @@ This document is your mandatory reference for every UI component, layout, and vi
 
 **The rule**: Cards are ONE tool in the toolkit. Sections should be differentiated through multiple visual techniques. On any given screen, no more than **2–3 sections** should share the same visual treatment.
 
+**The operating principle**: Border is never the first answer to hierarchy. Use text weight, muted supporting copy, spacing, icon columns, indentation, row rhythm, tonal elevation, and hover/active states before adding a box. A border should confirm a real boundary, not manufacture one.
+
 ---
 
 ## HIERARCHY TOOLKIT: 6 Ways to Separate Sections Without Identical Cards
@@ -82,6 +84,8 @@ Three levels, no more, no less:
 ```
 
 **Rule**: If you're using a border to separate things, ask yourself — would more whitespace accomplish the same thing? 90% of the time: yes.
+
+For accordions, side lists, activity streams, and settings rows, the preferred pattern is an open list: consistent icon column, title + description stack, optional trailing action, `py-3`/`py-4` row rhythm, and `divide-y` only inside the list. Do not put a bordered tile around every item.
 
 ### 4. FULL-BLEED & BENTO GRID (break the column prison)
 ```css

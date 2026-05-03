@@ -153,12 +153,14 @@ export function buildProgressReportDraft({
   emails,
   photos,
   currentUser,
+  projectContacts = [],
 }: {
   project: DraftProjectInput;
   meetings: DraftMeetingInput[];
   emails: DraftEmailInput[];
   photos: DraftPhotoInput[];
   currentUser: DraftCurrentUser;
+  projectContacts?: ProgressReportContact[];
 }): ProgressReportDraftResult {
   const meetingHighlightLines = uniqueItems(
     meetings.flatMap((meeting) => [
@@ -239,7 +241,7 @@ export function buildProgressReportDraft({
     upcomingWeekActivities,
     openItems,
     weatherDaysLost: 0,
-    contacts: buildDefaultContacts(currentUser),
+    contacts: projectContacts.length > 0 ? projectContacts : buildDefaultContacts(currentUser),
     clientRecipients: [],
     sourceSnapshot,
     selectedPhotos: photos.slice(0, 6).map((photo, index) => ({

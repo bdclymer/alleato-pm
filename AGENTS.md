@@ -336,6 +336,7 @@ When asked to design/build a page, default to **Linear/Supabase-style minimal UI
 - No nested cards (`Card` inside `Card` is forbidden)
 - No decorative wrapper cards around whole sections
 - No bordered or boxed page-level wrappers around the main content area
+- Borders are not hierarchy. Start with whitespace, typography scale, muted text, icons, indentation, row dividers, and tonal elevation before adding any border.
 - Do not frame page content with `border`, `rounded-*`, or `bg-*` shells unless the element is a true localized component (table shell, input, modal, KPI tile, attachment module, etc.)
 - No full-page borders around experimental tools, onboarding pages, avatar pages, or AI pages
 - General app pages must use the normal app shell and `PageShell`; do not place non-chat pages under the full-bleed chat route group
@@ -373,6 +374,7 @@ When asked to design/build a page, default to **Linear/Supabase-style minimal UI
 - Default page sections should be open on the canvas, not enclosed in bordered boxes
 - If a section is primarily text, chat, lists, or general page content, prefer whitespace, alignment, and dividers over borders
 - Borders are for controls and bounded subcomponents, not for wrapping the page itself
+- For accordion, activity, navigation, and side-list patterns, use icon weight, text hierarchy, row spacing, hover tint, and `divide-y` rows instead of wrapping every row or group in a bordered card
 - For chat history, navigation, and side lists: use plain list rows, not tiles, pills, or boxed cards
 - Prefer the quietest control that works: icon actions over labeled toolbars when the action is obvious
 

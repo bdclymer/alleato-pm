@@ -31,6 +31,8 @@ interface ApCheck {
   cash_account: string | null;
   currency_id: string | null;
   payment_amount: number | null;
+  applied_to_documents: number | null;
+  projects: Array<{ name: string; number: string | null }> | null;
   last_modified_at: string | null;
   acumatica_sync_at: string | null;
 }
@@ -153,6 +155,44 @@ const COLUMNS: TableColumn<ApCheck>[] = [
     csvValue: (item) => item.vendor_name ?? "",
   },
   {
+    id: "projects",
+    label: "Project(s)",
+    defaultVisible: true,
+    sortable: true,
+    sortValue: (item) => (item.projects ?? []).map((p) => p.name).join(", "),
+    render: (item) => {
+      const projs = item.projects;
+      if (!projs || projs.length === 0) return <span className="text-muted-foreground text-xs">—</span>;
+      return (
+        <div className="flex flex-wrap gap-1">
+          {projs.map((p) => (
+            <span
+              key={p.name}
+              className="inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium bg-muted text-foreground"
+              title={p.number ?? undefined}
+            >
+              {p.name}
+            </span>
+          ))}
+        </div>
+      );
+    },
+    csvValue: (item) => (item.projects ?? []).map((p) => p.name).join("; "),
+  },
+  {
+    id: "applied_to_documents",
+    label: "Bills Paid",
+    defaultVisible: true,
+    sortable: true,
+    sortValue: (item) => item.applied_to_documents ?? 0,
+    render: (item) => (
+      <span className="text-sm tabular-nums text-center block text-muted-foreground">
+        {item.applied_to_documents ?? "—"}
+      </span>
+    ),
+    csvValue: (item) => String(item.applied_to_documents ?? ""),
+  },
+  {
     id: "payment_amount",
     label: "Amount",
     defaultVisible: true,
@@ -233,12 +273,24 @@ const FILTERS = [
   },
   { id: "date_from", label: "Date From", type: "date" as const },
   { id: "date_to", label: "Date To", type: "date" as const },
+  { id: "project", label: "Project", type: "text" as const },
+  {
+    id: "has_project",
+    label: "Has Project",
+    type: "select" as const,
+    options: [
+      { label: "With project", value: "yes" },
+      { label: "No project assigned", value: "no" },
+    ],
+  },
 ];
 
 const EMPTY_FILTERS: Record<string, FilterValue> = {
   status: undefined,
   date_from: undefined,
   date_to: undefined,
+  project: undefined,
+  has_project: undefined,
 };
 
 // ---------------------------------------------------------------------------
@@ -323,6 +375,23 @@ export default function ApChecksPage() {
       result = result.filter((c) => (c.application_date ?? "") <= af.date_to!);
     }
 
+    if (typeof af.project === "string" && af.project) {
+      const pq = af.project.toLowerCase();
+      result = result.filter((c) =>
+        (c.projects ?? []).some(
+          (p) => p.name.toLowerCase().includes(pq) || (p.number ?? "").toLowerCase().includes(pq),
+        ),
+      );
+    }
+
+    if (typeof af.has_project === "string" && af.has_project) {
+      if (af.has_project === "yes") {
+        result = result.filter((c) => c.projects && c.projects.length > 0);
+      } else if (af.has_project === "no") {
+        result = result.filter((c) => !c.projects || c.projects.length === 0);
+      }
+    }
+
     const q = tableState.debouncedSearch.toLowerCase().trim();
     if (q) {
       result = result.filter(
@@ -331,7 +400,8 @@ export default function ApChecksPage() {
           (c.vendor_name ?? "").toLowerCase().includes(q) ||
           (c.vendor_id ?? "").toLowerCase().includes(q) ||
           (c.description ?? "").toLowerCase().includes(q) ||
-          (c.document_type ?? "").toLowerCase().includes(q),
+          (c.document_type ?? "").toLowerCase().includes(q) ||
+          (c.projects ?? []).some((p) => p.name.toLowerCase().includes(q)),
       );
     }
 
@@ -366,7 +436,10 @@ export default function ApChecksPage() {
   }, [sorted]);
 
   const isFiltered =
-    Boolean(tableState.searchInput) || Boolean(activeFilters.status);
+    Boolean(tableState.searchInput) ||
+    Boolean(activeFilters.status) ||
+    Boolean(activeFilters.project) ||
+    Boolean(activeFilters.has_project);
 
   const handleSelectAll = (checked: boolean) => {
     tableState.setSelectedIds(checked ? sorted.map((c) => c.id) : []);

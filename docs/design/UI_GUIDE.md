@@ -57,6 +57,20 @@ Use for: Timestamps, attendee counts, "last updated" text, footnotes, placeholde
 
 ## 2. THE CARD TRAP — WHAT TO USE INSTEAD
 
+### RULE: Border is not hierarchy
+
+Do not reach for `border rounded-lg p-4` just because a group needs structure. Hierarchy should usually come from spacing, typography, icon alignment, muted descriptions, row dividers, hover tint, and tonal elevation. A border is allowed only when the element is a real bounded object: input, table shell, modal, popover, attachment module, KPI tile, or mobile record card.
+
+For accordion/list patterns like activity rows, settings rows, navigation lists, and side panels, use:
+
+- a stable icon/action column
+- title + muted description text
+- `divide-y divide-border/50` between rows
+- `py-3` or `py-4` row rhythm
+- `hover:bg-muted/50` for interactivity
+
+Do not wrap every row or every section in its own bordered card.
+
 ### ❌ NEVER DO THIS (The Card Trap):
 ```tsx
 // WRONG — identical cards with borders for every section
@@ -142,9 +156,27 @@ Use for: Timestamps, attendee counts, "last updated" text, footnotes, placeholde
 #### Technique 5: Separator Lines Within Groups (not between sections)
 ```tsx
 {/* Use divide-y for items WITHIN a group */}
-<div className="divide-y divide-border">
-  <div className="py-4">Item 1</div>
-  <div className="py-4">Item 2</div>
+<div className="divide-y divide-border/50">
+  <div className="grid grid-cols-[2rem_1fr_auto] items-center gap-3 py-4">
+    <Eye className="size-4 text-primary" />
+    <div>
+      <p className="text-sm font-medium text-foreground">Views</p>
+      <p className="text-xs text-muted-foreground">Review saved and recently used views</p>
+    </div>
+    <Button variant="ghost" size="icon" aria-label="Open views">
+      <Plus className="size-4" />
+    </Button>
+  </div>
+  <div className="grid grid-cols-[2rem_1fr_auto] items-center gap-3 py-4">
+    <Bell className="size-4 text-primary" />
+    <div>
+      <p className="text-sm font-medium text-foreground">Alerts</p>
+      <p className="text-xs text-muted-foreground">See information about project activity</p>
+    </div>
+    <Button variant="ghost" size="icon" aria-label="Open alerts">
+      <Plus className="size-4" />
+    </Button>
+  </div>
 </div>
 
 {/* Use space/margin between SECTIONS — not borders */}

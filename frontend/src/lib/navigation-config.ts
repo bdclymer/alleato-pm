@@ -99,6 +99,7 @@ export const coreTools: NavigationTool[] = [
 
 export const projectManagementTools: NavigationTool[] = [
   { name: "Schedule", path: "schedule", icon: Calendar, requiresProject: true, module: "schedule" },
+  { name: "Progress Reports", path: "progress-reports", icon: FileText, requiresProject: true, module: "documents" },
   { name: "Meetings", path: "meetings", icon: Users, requiresProject: true },
   { name: "Daily Log", path: "daily-log", icon: Clock, requiresProject: true },
   { name: "Punch List", path: "punch-list", icon: CheckCircle, requiresProject: true },
@@ -254,6 +255,8 @@ export const sidebarNavGroups: SidebarNavGroup[] = [
     tools: [
       { name: "Project Intelligence", path: "intelligence", icon: Brain, requiresProject: true },
       { name: "Company Directory", path: "directory/companies", icon: Building2, requiresProject: false, module: "directory" },
+      { name: "Progress Reports", path: "progress-reports", icon: FileText, requiresProject: false },
+      { name: "Outlook Emails", path: "/outlook-emails", icon: Mail, requiresProject: false },
       {
         name: "Meetings",
         path: "meetings",
@@ -269,23 +272,30 @@ export const sidebarNavGroups: SidebarNavGroup[] = [
         onlyWithoutProject: true,
       },
       { name: "Meetings", path: "meetings", icon: Calendar, requiresProject: true },
-      { name: "Knowledge Base", path: "/knowledge", icon: Brain, requiresProject: false },
-      { name: "AI Strategist", path: "/ai-assistant", icon: Brain, requiresProject: false },
       { name: "Documents", path: "documents", icon: FolderOpen, requiresProject: true, module: "documents" },
+      { name: "Knowledge Base", path: "/knowledge", icon: Brain, requiresProject: false },
+      { name: "Knowledge Sources", path: "/knowledge/manage", icon: BookOpen, requiresProject: false, adminOnly: true },
+      { name: "AI Strategist", path: "/ai-assistant", icon: Brain, requiresProject: false },
     ],
   },
   {
     id: "admin",
     label: "Admin",
     icon: Settings,
-    tools: adminTools.filter(
-      (tool) =>
-        tool.path !== "/admin/documents/pipeline" &&
-        tool.path !== "/procore-docs" &&
-        tool.path !== "http://localhost:4983" &&
-        tool.path !== "/updates" &&
-        tool.path !== "/docs"
-    ),
+    tools: [
+      ...adminTools.filter(
+        (tool) =>
+          tool.path !== "/admin/documents/pipeline" &&
+          tool.path !== "/procore-docs" &&
+          tool.path !== "http://localhost:4983" &&
+          tool.path !== "/updates" &&
+          tool.path !== "/docs" &&
+          tool.path !== "/knowledge/manage"
+      ),
+      { name: "Executive Dashboard", path: "/executive", icon: LayoutDashboard, requiresProject: false, adminOnly: true },
+      { name: "Financial Insights", path: "/financial-insights", icon: TrendingUp, requiresProject: false, adminOnly: true },
+      { name: "Intelligence Planning", path: "/intelligence-planning", icon: Brain, requiresProject: false, adminOnly: true },
+    ],
   },
 ];
 
@@ -568,6 +578,13 @@ export const headerNavGroups: HeaderNavGroup[] = [
         requiresProject: false,
         icon: Users,
         description: "Company-wide meetings and segments",
+      },
+      {
+        name: "Progress Reports",
+        path: "progress-reports",
+        requiresProject: false,
+        icon: FileText,
+        description: "Weekly client reports across all projects",
       },
       {
         name: "Tasks",

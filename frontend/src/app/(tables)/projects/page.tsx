@@ -10,6 +10,11 @@ import { PortfolioViewType, StatusFilter, Project } from "@/types/portfolio";
 import { portfolioViews, financialViews } from "@/config/portfolio";
 import { useRouter } from "next/navigation";
 import { apiFetch } from "@/lib/api-client";
+import { PageShell } from "@/components/layout";
+import {
+  DEFAULT_PROJECT_PHASE_FILTER,
+  filterPortfolioProjects,
+} from "@/lib/portfolio/projects-page-filters";
 
 export default function ProjectsPage() {
   const router = useRouter();
@@ -19,7 +24,7 @@ export default function ProjectsPage() {
     React.useState<StatusFilter>("active");
   const [viewType, setViewType] = React.useState<PortfolioViewType>("list");
   const [phaseFilter, setPhaseFilter] = React.useState<string | null>(
-    "current",
+    DEFAULT_PROJECT_PHASE_FILTER,
   );
   const [categoryFilter, setCategoryFilter] = React.useState<string | null>(
     null,
@@ -154,22 +159,10 @@ export default function ProjectsPage() {
 
   // Filter projects based on phase, category, and client (search and status are handled server-side)
   const filteredProjects = React.useMemo(() => {
-    return projects.filter((project) => {
-      // Phase filter (case insensitive)
-      if (
-        phaseFilter &&
-        phaseFilter !== "all" &&
-        project.phase?.toLowerCase() !== phaseFilter.toLowerCase()
-      )
-        return false;
-
-      // Category filter
-      if (categoryFilter && project.category !== categoryFilter) return false;
-
-      // Client filter
-      if (clientFilter && project.client !== clientFilter) return false;
-
-      return true;
+    return filterPortfolioProjects(projects, {
+      phaseFilter,
+      categoryFilter,
+      clientFilter,
     });
   }, [projects, phaseFilter, categoryFilter, clientFilter]);
 
@@ -226,7 +219,7 @@ export default function ProjectsPage() {
   const handleClearFilters = () => {
     setSearchQuery("");
     setStatusFilter("active");
-    setPhaseFilter("current");
+    setPhaseFilter(DEFAULT_PROJECT_PHASE_FILTER);
     setCategoryFilter(null);
     setClientFilter(null);
   };
@@ -318,7 +311,14 @@ export default function ProjectsPage() {
   };
 
   return (
-    <div className="mx-4 sm:mx-6 lg:mx-8 flex flex-col h-[calc(100vh-50px)] min-h-0 bg-neutral-50 rounded-lg overflow-hidden">
+    <PageShell
+      variant="table"
+      title="Projects"
+      showHeader={false}
+      className="h-full"
+      contentClassName="h-full pt-0 pb-0"
+    >
+      <div className="flex flex-col h-[calc(100vh-50px)] min-h-0 bg-neutral-50 rounded-lg overflow-hidden">
       {/* Portfolio Header with tabs */}
       <PortfolioHeader
         views={portfolioViews}
@@ -371,6 +371,7 @@ export default function ProjectsPage() {
           )}
         </div>
       </div>
-    </div>
+      </div>
+    </PageShell>
   );
 }

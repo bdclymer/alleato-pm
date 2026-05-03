@@ -333,9 +333,9 @@ export function SiteHeader() {
           size="icon"
           onClick={() => setMobileNavOpen(true)}
           aria-label="Open menu"
-          className="md:hidden h-11 w-11 text-foreground"
+          className="md:hidden h-12 w-12 shrink-0 text-foreground"
         >
-          <Menu className="h-5 w-5" />
+          <Menu className="size-6" strokeWidth={1.8} />
         </Button>
       </div>
 
@@ -440,14 +440,14 @@ function MobileNavOverlay({
           size="icon"
           onClick={onClose}
           aria-label="Close menu"
-          className="h-11 w-11 text-foreground"
+          className="h-12 w-12 shrink-0 text-foreground"
         >
-          <X className="h-5 w-5" />
+          <X className="size-6" strokeWidth={1.8} />
         </Button>
       </div>
 
       {/* Project selector */}
-      <div className="px-4 pb-3 border-b border-border/50">
+      <div className="flex justify-center px-4 pb-3 pt-1 [&_.project-selector-trigger]:!border-0 [&_.project-selector-trigger]:justify-center">
         <ProjectSelector
           projectId={projectId}
           currentProject={currentProject}
@@ -494,7 +494,7 @@ function MobileNavOverlay({
                       onClose();
                     }}
                     className={cn(
-                      "w-full max-w-[22rem] truncate px-2 text-center text-xl tracking-tight transition-colors",
+                      "w-full max-w-[22rem] truncate px-2 text-center text-lg tracking-tight transition-colors",
                       isDisabled
                         ? "pointer-events-none opacity-30"
                         : isActive
