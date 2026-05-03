@@ -99,25 +99,21 @@ export function createWorkspaceTools(
           limit: limit ?? 10,
         });
 
-        if (artifacts.length === 0) {
-          return {
-            artifacts: [] as unknown[],
-            message: "No workspace artifacts found for the given filters.",
-          };
-        }
+        const mapped = artifacts.map((a) => ({
+          id: a.id,
+          type: a.artifact_type,
+          title: a.title,
+          status: a.status,
+          version: a.version,
+          projectId: a.project_id,
+          tags: a.tags,
+          lastEdited: a.updated_at,
+        }));
 
         return {
-          artifacts: artifacts.map((a) => ({
-            id: a.id,
-            type: a.artifact_type,
-            title: a.title,
-            status: a.status,
-            version: a.version,
-            projectId: a.project_id,
-            tags: a.tags,
-            lastEdited: a.updated_at,
-          })),
-          count: artifacts.length,
+          artifacts: mapped,
+          count: mapped.length,
+          ...(mapped.length === 0 && { message: "No workspace artifacts found for the given filters." }),
         };
       },
     ),
@@ -265,8 +261,8 @@ export function createWorkspaceTools(
             sessionId,
           });
 
-          if ("error" in result) {
-            return { error: result.error };
+          if ("error" in result || !result.id) {
+            return { error: "error" in result ? result.error : "Unknown update error" };
           }
 
           return {
