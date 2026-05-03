@@ -99,13 +99,19 @@ def _apply_task_quality_gates(tasks: List[TaskItem]) -> List[TaskItem]:
         has_due_date = bool(task.due_date)
         is_low_signal = _is_generic_low_signal_task(task)
 
-        # Drop noisy extraction artifacts that are generic and unowned/undated.
-        if is_low_signal and not has_owner and not has_due_date:
+        # Every meeting task must have a known owner — if the LLM couldn't
+        # resolve one from the participant list, the task isn't actionable.
+        if not has_owner:
             dropped += 1
             continue
 
-        # Avoid false urgency when extraction has no ownership or deadline signal.
-        if not has_owner and not has_due_date and task.priority in {"high", "urgent"}:
+        # Drop noisy extraction artifacts that are generic and undated.
+        if is_low_signal and not has_due_date:
+            dropped += 1
+            continue
+
+        # Avoid false urgency when extraction has no deadline signal.
+        if not has_due_date and task.priority in {"high", "urgent"}:
             task.priority = "medium"
 
         filtered.append(task)
