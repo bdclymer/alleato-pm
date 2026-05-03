@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Download, Edit, Loader2, Mail, Plus, Save, Sparkles, Trash2, X } from "lucide-react";
+import Link from "next/link";
+import { Download, Edit, ExternalLink, Loader2, Mail, Plus, Save, Sparkles, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import {
   ContentSectionStack,
@@ -799,62 +800,118 @@ export function ProgressReportEditor({
             )}
           </section>
 
-          <section className="grid gap-6 xl:grid-cols-3">
-            <div className="rounded-xl bg-muted/30 px-4 py-4">
-              <SectionRuleHeading label="Meeting sources" className="mb-3" />
-              <ul className="space-y-3 text-sm">
+          <section className="space-y-2">
+            <SectionRuleHeading label="Sources used to generate this draft" className="mb-3" />
+            <p className="text-sm text-muted-foreground">
+              These records were used to populate the report. Click any link to verify the source.
+            </p>
+            <div className="grid gap-6 xl:grid-cols-3">
+              <div className="rounded-xl bg-muted/30 px-4 py-4">
+                <div className="mb-3 flex items-center justify-between">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Meetings</span>
+                  <Link
+                    href={`/${projectId}/meetings`}
+                    className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                    target="_blank"
+                  >
+                    View all
+                    <ExternalLink className="h-3 w-3" />
+                  </Link>
+                </div>
                 {report?.source_snapshot.meetings.length ? (
-                  report.source_snapshot.meetings.map((meeting) => (
-                    <li key={meeting.id}>
-                      <div className="font-medium text-foreground">{meeting.title}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {formatProgressReportDate(meeting.date, "MMM d, yyyy", "No date")}
-                      </div>
-                      {meeting.summary ? (
-                        <div className="mt-1 text-muted-foreground">{meeting.summary}</div>
-                      ) : null}
-                    </li>
-                  ))
+                  <ul className="space-y-3 text-sm">
+                    {report.source_snapshot.meetings.map((meeting) => (
+                      <li key={meeting.id}>
+                        <Link
+                          href={`/${projectId}/meetings/${meeting.id}`}
+                          className="font-medium text-foreground hover:text-primary hover:underline"
+                          target="_blank"
+                        >
+                          {meeting.title}
+                        </Link>
+                        <div className="text-xs text-muted-foreground">
+                          {formatProgressReportDate(meeting.date, "MMM d, yyyy", "No date")}
+                        </div>
+                        {meeting.summary ? (
+                          <div className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{meeting.summary}</div>
+                        ) : null}
+                      </li>
+                    ))}
+                  </ul>
                 ) : (
-                  <li className="text-muted-foreground">No meeting sources were captured for this draft.</li>
+                  <p className="text-sm text-muted-foreground">No meeting sources were captured for this draft.</p>
                 )}
-              </ul>
-            </div>
+              </div>
 
-            <div className="rounded-xl bg-muted/30 px-4 py-4">
-              <SectionRuleHeading label="Email sources" className="mb-3" />
-              <ul className="space-y-3 text-sm">
+              <div className="rounded-xl bg-muted/30 px-4 py-4">
+                <div className="mb-3 flex items-center justify-between">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Emails</span>
+                  <Link
+                    href={`/${projectId}/emails`}
+                    className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                    target="_blank"
+                  >
+                    View all
+                    <ExternalLink className="h-3 w-3" />
+                  </Link>
+                </div>
                 {report?.source_snapshot.emails.length ? (
-                  report.source_snapshot.emails.map((email) => (
-                    <li key={email.id}>
-                      <div className="font-medium text-foreground">{email.subject}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {formatProgressReportDate(email.date, "MMM d, yyyy", "No date")}
-                      </div>
-                      {email.preview ? (
-                        <div className="mt-1 text-muted-foreground">{email.preview}</div>
-                      ) : null}
-                    </li>
-                  ))
+                  <ul className="space-y-3 text-sm">
+                    {report.source_snapshot.emails.map((email) => (
+                      <li key={email.id}>
+                        <div className="font-medium text-foreground">{email.subject}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {formatProgressReportDate(email.date, "MMM d, yyyy", "No date")}
+                        </div>
+                        {email.preview ? (
+                          <div className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{email.preview}</div>
+                        ) : null}
+                      </li>
+                    ))}
+                  </ul>
                 ) : (
-                  <li className="text-muted-foreground">No email sources were captured for this draft.</li>
+                  <p className="text-sm text-muted-foreground">No email sources were captured for this draft.</p>
                 )}
-              </ul>
-            </div>
+              </div>
 
-            <div className="rounded-xl bg-muted/30 px-4 py-4">
-              <SectionRuleHeading label="Draft provenance" className="mb-3" />
-              <div className="space-y-3 text-sm text-muted-foreground">
-                <div>
-                  Generated:{" "}
-                  {report?.source_snapshot.generatedAt
-                    ? formatProgressReportDate(report.source_snapshot.generatedAt, "MMM d, yyyy h:mm a")
-                    : "Unknown"}
+              <div className="rounded-xl bg-muted/30 px-4 py-4">
+                <div className="mb-3 flex items-center justify-between">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Photos</span>
+                  <span className="text-xs text-muted-foreground">
+                    {report?.source_snapshot.photos.length ?? 0} in snapshot
+                  </span>
                 </div>
-                <div>Strategy: {report?.source_snapshot.strategy ?? "Unknown"}</div>
-                <div>
-                  Photos in snapshot: {report?.source_snapshot.photos.length ?? 0}
-                </div>
+                {report?.source_snapshot.photos.length ? (
+                  <div className="grid grid-cols-3 gap-2">
+                    {report.source_snapshot.photos.map((photo) => (
+                      <a
+                        key={photo.id}
+                        href={photo.file_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title={photo.title}
+                        className="group relative aspect-square overflow-hidden rounded-lg bg-muted"
+                      >
+                        { }
+                        <img
+                          src={photo.file_url}
+                          alt={photo.title}
+                          className="h-full w-full object-cover transition-opacity group-hover:opacity-75"
+                        />
+                        <div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/50 to-transparent opacity-0 transition-opacity group-hover:opacity-100">
+                          <p className="truncate px-1.5 pb-1 text-[10px] text-primary-foreground">{photo.title}</p>
+                        </div>
+                      </a>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No photos were captured for this draft.</p>
+                )}
+                {report?.source_snapshot.generatedAt && (
+                  <p className="mt-3 text-xs text-muted-foreground">
+                    Draft generated {formatProgressReportDate(report.source_snapshot.generatedAt, "MMM d, yyyy h:mm a")}
+                  </p>
+                )}
               </div>
             </div>
           </section>
