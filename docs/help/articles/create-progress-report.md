@@ -1,11 +1,11 @@
 ---
 title: How to Create a Progress Report
-description: Step-by-step guide for creating a weekly progress report from a project page or the global Progress Reports view.
+description: Three ways to generate weekly progress reports — manually, through the AI chat, or on a scheduled cron trigger — with AI-drafted content from meetings, emails, OneDrive, and Teams.
 audience: client
 visibility: published
 module: progress-reports
 category: How-To Guides
-tags: [progress-reports, create, weekly, ai, pdf]
+tags: [progress-reports, create, weekly, ai, pdf, scheduled, automation]
 featured: false
 client_visible: true
 ai_visible: true
@@ -20,111 +20,122 @@ related_actions: []
 
 # How to Create a Progress Report
 
-Progress Reports are weekly client-ready summaries generated from your project's meetings, emails, and uploaded photos. You can create one from inside a specific project or from the global Progress Reports page.
-
-## Option A: From the Project Page
-
-This is the most common path. Use it when you're already working inside a project.
-
-1. Open the project from the sidebar or project list.
-2. Select **Progress Reports** from the project navigation.
-3. Click **Create This Week's Draft**.
-
-The system automatically sets the reporting week and opens the report editor.
-
-## Option B: From the Global Progress Reports Page
-
-Use this to view or create reports across all projects in one place.
-
-1. In the left sidebar, click **Progress Reports** (under the global navigation, not inside a project).
-2. Locate the project whose report you want to create.
-3. Click **Create This Week's Draft** for that project.
+Progress Reports are weekly, client-ready summaries drafted automatically from your project's activity — meeting transcripts, emails, OneDrive documents, and Teams messages. Every process has been built to support as much control or automation as you want. The default saves reports as a **draft** that a project manager or admin must approve before sending to the client.
 
 ---
 
-## Filling Out the Report
+## Three Ways to Create a Report
 
-Once the editor opens, you will see the following sections.
+### Option 1 — Manually from the project
 
-### 1. Report Details
+The most common path. Use this when you want to create a report on demand.
 
-At the top of the form:
+**From inside a project:**
+1. Open the project from the sidebar.
+2. Select **Progress Reports** from the project navigation.
+3. Click **+ Create This Week's Draft** in the top right.
 
-| Field | What to enter |
+**From the global Progress Reports page:**
+1. Click **Progress Reports** in the left sidebar (cross-project view).
+2. The table shows reports across all projects — use this to review or create reports without being inside a specific project.
+
+---
+
+### Option 2 — Through the AI Chat
+
+You can ask the AI assistant to create a progress report in plain language from anywhere in the platform.
+
+Examples:
+- *"Create this week's progress report for Vermillion Rise Warehouse"*
+- *"Generate a progress report for this project"*
+
+The AI will create the draft, populate all sections from available project data, and return a link to the new report for your review.
+
+---
+
+### Option 3 — Scheduled / Cron Trigger
+
+For teams that want fully automated weekly reports, a scheduled action can be configured to generate a report at a specific day and time each week — for example, every Friday at 4:00 PM.
+
+The report is created in **draft mode** automatically. No manual action is needed. The PM or admin receives a notification to review and approve before it goes to the client.
+
+This is the recommended setup for active projects with consistent weekly reporting cadences.
+
+---
+
+## What the AI Drafts Automatically
+
+When a report is created (by any method), the AI uses RAG (Retrieval-Augmented Generation) to pull from recent company documents and project data:
+
+| Source | What it contributes |
 |---|---|
-| **Report title** | Defaults to the week — edit if needed |
-| **Week start / Week end** | The reporting period (auto-set to current week) |
-| **Status** | `Draft`, `Ready`, or `Sent` |
-| **Construction start** | Project start date (carried forward from project settings) |
-| **Scheduled completion** | Target substantial completion date |
-| **Weather days lost** | Number of days lost to weather this week |
+| **Meeting transcripts** | Decisions made, action items, discussion summaries |
+| **Emails** | Key communications, approvals, outstanding items |
+| **OneDrive** | Uploaded documents, plans, submittals |
+| **Teams messages** | Real-time coordination, site updates |
+| **Project photos** | Automatically pulled in if uploaded to the project |
+| **Project data** | Project manager, superintendent, construction start, scheduled completion |
 
-### 2. AI Generate (Recommended)
-
-Click **AI Generate** to let the AI draft all three narrative sections automatically.
-
-The AI pulls from:
-- Meeting notes and summaries recorded this week
-- Emails and communications linked to the project
-- Open RFIs, change events, and schedule data
-
-**After generating:** review each section and edit as needed — the draft is a starting point, not a final product.
-
-### 3. Narrative Sections
-
-Edit these three fields directly in the text areas:
-
+The AI populates three narrative sections:
 - **Past week's highlights** — what was accomplished
 - **Upcoming week's activities** — planned work for next week
-- **Open items** — outstanding issues, pending decisions, blockers
+- **Open items** — outstanding issues, blockers, pending decisions
 
-### 4. Photos
-
-The Photos section shows all project photos, organized by week.
-
-- Click a photo to toggle it **In report** or remove it.
-- Click **Add all from this week** to include every photo taken during the reporting period.
-- Selected photos display a caption field — edit to describe the photo for the client.
-
-Only selected photos appear in the exported PDF.
-
-### 5. Project Contacts
-
-These names and contact details appear in the report footer.
-
-Click **Add contact** to add a team member. Fill in their role, name, email, and phone.
-
-### 6. Client Delivery
-
-Enter email addresses in the **Recipients** field (comma-separated).
-
-Optionally add a personal note that will accompany the PDF email.
-
-When you're ready to send:
-- Click **Save** first to preserve edits.
-- Then click **Email PDF** to send the branded PDF directly to recipients.
-
-The report status will automatically update to `Sent`.
+All fields remain fully editable after generation.
 
 ---
 
-## Saving and Exporting
+## Inside the Report Editor
+
+Once a draft is created, the editor gives you full control over every section.
+
+### Report Details
+
+| Field | Description |
+|---|---|
+| Report title | Auto-named for the week — edit as needed |
+| Week start / end | The reporting period |
+| Status | `Draft` → `Ready` → `Sent` |
+| Construction start | Pulled from project settings |
+| Scheduled completion | Target substantial completion date |
+| Weather days lost | Days lost to weather this week |
+
+### AI Generate
+
+Click **AI Generate** at any time to re-draft the three narrative sections from the latest project data. Useful if new meetings or emails have come in since the report was created.
+
+### Photos
+
+Project photos uploaded during the reporting week are automatically surfaced. Click any photo to include or exclude it. Click **Add all from this week** to include everything at once. Add captions directly on each selected photo.
+
+### Client Delivery
+
+Enter recipient email addresses and an optional personal note, then click **Email PDF** to send the branded PDF directly to the client. The report status updates to **Sent** automatically.
+
+### Project Contacts
+
+Names and contact details added here appear in the report footer on the PDF.
+
+---
+
+## Approval Flow
+
+The default workflow requires a PM or admin to approve before the report reaches the client:
+
+1. **Draft** — AI-generated, under review by the PM
+2. **Ready** — Reviewed and approved internally
+3. **Sent** — Emailed to the client; PDF delivered
+
+To send: open the report → click **Edit** → set status to **Ready** → add recipients → click **Email PDF**.
+
+---
+
+## Exporting
 
 | Action | How |
 |---|---|
-| Save as draft | Click **Save** — stays in `Draft` status |
-| Mark as ready | Change status to `Ready`, then click **Save** |
-| Download PDF | Click **Download PDF** from the view screen (after saving) |
+| Download PDF | Click **Download PDF** from the report view |
 | Email to client | Click **Email PDF** from the edit screen |
-
----
-
-## Editing an Existing Report
-
-1. Open **Progress Reports** from the project or global view.
-2. Click the report in the list.
-3. Click **Edit** in the top-right corner.
-4. Make changes and click **Save**.
 
 ---
 
