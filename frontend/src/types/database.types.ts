@@ -1,5 +1,3 @@
-Using workdir /Users/meganharrison/Documents/alleato-pm
-Initialising login role...
 export type Json =
   | string
   | number
@@ -13,31 +11,6 @@ export type Database = {
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "13.0.4"
-  }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
   }
   public: {
     Tables: {
@@ -2163,6 +2136,7 @@ export type Database = {
       }
       ai_insights: {
         Row: {
+          approval_status: string
           assigned_to: string | null
           assignee: string | null
           business_impact: string | null
@@ -2197,6 +2171,7 @@ export type Database = {
           urgency_indicators: string[] | null
         }
         Insert: {
+          approval_status?: string
           assigned_to?: string | null
           assignee?: string | null
           business_impact?: string | null
@@ -2231,6 +2206,7 @@ export type Database = {
           urgency_indicators?: string[] | null
         }
         Update: {
+          approval_status?: string
           assigned_to?: string | null
           assignee?: string | null
           business_impact?: string | null
@@ -13490,6 +13466,7 @@ export type Database = {
       }
       insights: {
         Row: {
+          approval_status: string
           created_at: string
           description: string
           details: Json | null
@@ -13504,6 +13481,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          approval_status?: string
           created_at?: string
           description: string
           details?: Json | null
@@ -13518,6 +13496,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          approval_status?: string
           created_at?: string
           description?: string
           details?: Json | null
@@ -22573,6 +22552,249 @@ export type Database = {
         }
         Relationships: []
       }
+      recurring_issue_evidence: {
+        Row: {
+          confidence: string
+          created_at: string
+          document_id: string | null
+          email_id: string | null
+          excerpt: string | null
+          id: string
+          meeting_id: string | null
+          people_involved: string[] | null
+          project_id: number | null
+          recurring_issue_id: string
+          source_date: string | null
+          source_title: string | null
+          source_type: string
+          tagged_by: string | null
+        }
+        Insert: {
+          confidence?: string
+          created_at?: string
+          document_id?: string | null
+          email_id?: string | null
+          excerpt?: string | null
+          id?: string
+          meeting_id?: string | null
+          people_involved?: string[] | null
+          project_id?: number | null
+          recurring_issue_id: string
+          source_date?: string | null
+          source_title?: string | null
+          source_type: string
+          tagged_by?: string | null
+        }
+        Update: {
+          confidence?: string
+          created_at?: string
+          document_id?: string | null
+          email_id?: string | null
+          excerpt?: string | null
+          id?: string
+          meeting_id?: string | null
+          people_involved?: string[] | null
+          project_id?: number | null
+          recurring_issue_id?: string
+          source_date?: string | null
+          source_title?: string | null
+          source_type?: string
+          tagged_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurring_issue_evidence_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "recurring_issue_evidence_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recurring_issue_evidence_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recurring_issue_evidence_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "recurring_issue_evidence_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recurring_issue_evidence_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recurring_issue_evidence_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recurring_issue_evidence_recurring_issue_id_fkey"
+            columns: ["recurring_issue_id"]
+            isOneToOne: false
+            referencedRelation: "recurring_issues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recurring_issue_projects: {
+        Row: {
+          added_at: string
+          project_id: number
+          recurring_issue_id: string
+        }
+        Insert: {
+          added_at?: string
+          project_id: number
+          recurring_issue_id: string
+        }
+        Update: {
+          added_at?: string
+          project_id?: number
+          recurring_issue_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurring_issue_projects_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "recurring_issue_projects_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recurring_issue_projects_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recurring_issue_projects_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "recurring_issue_projects_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recurring_issue_projects_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recurring_issue_projects_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recurring_issue_projects_recurring_issue_id_fkey"
+            columns: ["recurring_issue_id"]
+            isOneToOne: false
+            referencedRelation: "recurring_issues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recurring_issues: {
+        Row: {
+          business_impact: string[] | null
+          created_at: string
+          created_by: string | null
+          evidence_count: number
+          first_seen_date: string
+          frequency_score: number | null
+          functional_owner: string | null
+          id: string
+          issue_category: string
+          issue_summary: string
+          issue_title: string
+          last_seen_date: string
+          playbook_url: string | null
+          recommended_countermeasure: string | null
+          severity: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          business_impact?: string[] | null
+          created_at?: string
+          created_by?: string | null
+          evidence_count?: number
+          first_seen_date?: string
+          frequency_score?: number | null
+          functional_owner?: string | null
+          id?: string
+          issue_category: string
+          issue_summary: string
+          issue_title: string
+          last_seen_date?: string
+          playbook_url?: string | null
+          recommended_countermeasure?: string | null
+          severity?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          business_impact?: string[] | null
+          created_at?: string
+          created_by?: string | null
+          evidence_count?: number
+          first_seen_date?: string
+          frequency_score?: number | null
+          functional_owner?: string | null
+          id?: string
+          issue_category?: string
+          issue_summary?: string
+          issue_title?: string
+          last_seen_date?: string
+          playbook_url?: string | null
+          recommended_countermeasure?: string | null
+          severity?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       requests: {
         Row: {
           id: string
@@ -28604,6 +28826,113 @@ export type Database = {
           },
         ]
       }
+      workspace_artifacts: {
+        Row: {
+          artifact_type: string
+          content: Json
+          context_snapshot: Json
+          created_at: string
+          embedding: unknown
+          id: string
+          project_id: number | null
+          promoted_at: string | null
+          promoted_to: string | null
+          session_id: string | null
+          status: string
+          tags: string[]
+          title: string
+          updated_at: string
+          user_id: string
+          version: number
+        }
+        Insert: {
+          artifact_type: string
+          content?: Json
+          context_snapshot?: Json
+          created_at?: string
+          embedding?: unknown
+          id?: string
+          project_id?: number | null
+          promoted_at?: string | null
+          promoted_to?: string | null
+          session_id?: string | null
+          status?: string
+          tags?: string[]
+          title: string
+          updated_at?: string
+          user_id: string
+          version?: number
+        }
+        Update: {
+          artifact_type?: string
+          content?: Json
+          context_snapshot?: Json
+          created_at?: string
+          embedding?: unknown
+          id?: string
+          project_id?: number | null
+          promoted_at?: string | null
+          promoted_to?: string | null
+          session_id?: string | null
+          status?: string
+          tags?: string[]
+          title?: string
+          updated_at?: string
+          user_id?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_artifacts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "workspace_artifacts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workspace_artifacts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workspace_artifacts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "workspace_artifacts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workspace_artifacts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workspace_artifacts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       actionable_insights: {
@@ -33032,6 +33361,30 @@ export type Database = {
           topics: string[]
         }[]
       }
+      search_workspace_artifacts: {
+        Args: {
+          match_count?: number
+          match_threshold?: number
+          p_project_id?: number
+          p_status?: string
+          p_user_id: string
+          query_embedding: unknown
+        }
+        Returns: {
+          artifact_type: string
+          content: Json
+          context_snapshot: Json
+          id: string
+          promoted_to: string
+          session_id: string
+          similarity: number
+          status: string
+          tags: string[]
+          title: string
+          updated_at: string
+          version: number
+        }[]
+      }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
       suggest_project_assignments: {
@@ -33357,9 +33710,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       billing_period_status: ["open", "closed", "approved"],
@@ -33426,4 +33776,3 @@ export const Constants = {
     },
   },
 } as const
-<claude-code-hint v="1" type="plugin" value="supabase@claude-plugins-official" />
