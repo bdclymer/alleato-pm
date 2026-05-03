@@ -74,8 +74,10 @@ const nextConfig: NextConfig = {
     "@mermaid-js/parser",
     "mermaid",
     "@streamdown/mermaid",
-    // Headless browser — too large to bundle
+    // Headless browser — binary path breaks when webpack bundles these
     "puppeteer",
+    "puppeteer-core",
+    "@sparticuz/chromium",
     // Heavy doc/API packages only used in specific admin routes
     "redoc",
     "swagger-ui-dist",
