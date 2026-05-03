@@ -7,6 +7,7 @@ import {
   ArrowLeftRight,
   BarChart3,
   BookOpen,
+  BrainCircuit,
   Building2,
   Component,
   Database,
@@ -168,6 +169,12 @@ const sections: AdminSection[] = [
         href: "/rag-eval",
         description: "RAG pipeline evaluation",
         icon: BarChart3,
+      },
+      {
+        label: "AI Compiler Health",
+        href: "/intelligence-compiler",
+        description: "Queue, packet, evidence, and compiler health",
+        icon: BrainCircuit,
       },
       {
         label: "Docs",

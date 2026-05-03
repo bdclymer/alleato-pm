@@ -1,7 +1,10 @@
+from datetime import datetime
+
 from src.services.intelligence.compiler import (
     classify_basic_signal,
     compile_current_packet,
     confidence_label,
+    get_intelligence_compiler_status,
     process_packet_refresh_job,
     process_source_document,
     process_source_document_to_packet,
@@ -390,3 +393,119 @@ def test_run_intelligence_compiler_batch_drains_packet_jobs():
     assert supabase.tables["packet_refresh_jobs"][0]["status"] == "succeeded"
     assert len(supabase.tables["intelligence_packets"]) == 1
     assert supabase.tables["intelligence_packets"][0]["freshness_status"] == "partial"
+
+
+def test_get_intelligence_compiler_status_reports_healthy_state():
+    supabase = _FakeSupabase()
+    supabase.tables["source_intelligence_jobs"] = [
+        {"id": "source-job-1", "status": "succeeded", "finished_at": "2026-05-02T10:00:00+00:00"}
+    ]
+    supabase.tables["packet_refresh_jobs"] = [
+        {
+            "id": "packet-job-1",
+            "status": "succeeded",
+            "output_packet_id": "packet-1",
+            "finished_at": "2026-05-02T10:00:00+00:00",
+        }
+    ]
+    supabase.tables["source_signal_candidates"] = [
+        {
+            "id": "candidate-1",
+            "source_document_id": "doc-1",
+            "status": "promoted",
+            "confidence": "high",
+            "promoted_insight_card_id": "card-1",
+        }
+    ]
+    supabase.tables["insight_cards"] = [
+        {
+            "id": "card-1",
+            "primary_target_id": "target-1",
+            "current_status": "open",
+            "attribution_status": "auto_assigned",
+        }
+    ]
+    supabase.tables["insight_card_evidence"] = [
+        {
+            "id": "evidence-1",
+            "insight_card_id": "card-1",
+            "source_document_id": "doc-1",
+        }
+    ]
+    supabase.tables["intelligence_packets"] = [
+        {"id": "packet-1", "target_id": "target-1", "packet_type": "current"}
+    ]
+    supabase.tables["intelligence_packet_cards"] = [
+        {"packet_id": "packet-1", "insight_card_id": "card-1"}
+    ]
+
+    status = get_intelligence_compiler_status(
+        supabase,
+        now=datetime.fromisoformat("2026-05-02T10:05:00+00:00"),
+    )
+
+    assert status["healthy"] is True
+    assert status["status"] == "healthy"
+    assert status["unhealthyChecks"] == {}
+    assert status["counts"]["currentPackets"] == 1
+
+
+def test_get_intelligence_compiler_status_reports_unhealthy_state():
+    supabase = _FakeSupabase()
+    supabase.tables["source_intelligence_jobs"] = [
+        {"id": "source-job-1", "status": "queued", "queued_at": "2026-05-02T09:00:00+00:00"},
+        {"id": "source-job-2", "status": "failed", "finished_at": "2026-05-02T09:50:00+00:00"},
+    ]
+    supabase.tables["packet_refresh_jobs"] = [
+        {"id": "packet-job-1", "status": "running", "started_at": "2026-05-02T09:00:00+00:00"},
+        {
+            "id": "packet-job-2",
+            "status": "succeeded",
+            "output_packet_id": None,
+            "finished_at": "2026-05-02T09:55:00+00:00",
+        },
+    ]
+    supabase.tables["source_signal_candidates"] = [
+        {
+            "id": "candidate-1",
+            "source_document_id": "doc-1",
+            "status": "candidate",
+            "confidence": "high",
+            "created_at": "2026-05-02T09:00:00+00:00",
+        },
+        {
+            "id": "candidate-2",
+            "source_document_id": "doc-2",
+            "status": "promoted",
+            "confidence": "high",
+            "promoted_insight_card_id": "missing-card",
+        },
+    ]
+    supabase.tables["insight_cards"] = [
+        {
+            "id": "card-1",
+            "primary_target_id": "target-1",
+            "current_status": "open",
+            "attribution_status": "auto_assigned",
+        }
+    ]
+    supabase.tables["insight_card_evidence"] = []
+    supabase.tables["intelligence_packets"] = [
+        {"id": "packet-1", "target_id": "target-1", "packet_type": "current"}
+    ]
+    supabase.tables["intelligence_packet_cards"] = []
+
+    status = get_intelligence_compiler_status(
+        supabase,
+        now=datetime.fromisoformat("2026-05-02T10:00:00+00:00"),
+    )
+
+    assert status["healthy"] is False
+    assert status["status"] == "unhealthy"
+    assert status["checks"]["sourceStaleQueued"] == 1
+    assert status["checks"]["packetStaleRunning"] == 1
+    assert status["checks"]["sourceRecentFailed"] == 1
+    assert status["checks"]["highConfidenceUnpromoted"] == 1
+    assert status["checks"]["promotedWithoutCard"] == 1
+    assert status["checks"]["activeCardsMissingCurrentPacket"] == 1
+    assert status["checks"]["succeededPacketJobsWithoutOutput"] == 1

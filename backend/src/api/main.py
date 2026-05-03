@@ -49,6 +49,13 @@ logger = logging.getLogger(__name__)
 _openai_client = OpenAI() if (OpenAI and os.getenv("OPENAI_API_KEY")) else None
 _PIPELINE_MAX_CONCURRENCY = max(1, int(os.getenv("PIPELINE_MAX_CONCURRENCY", "3")))
 _pipeline_semaphore = threading.BoundedSemaphore(_PIPELINE_MAX_CONCURRENCY)
+_INTELLIGENCE_COMPILER_MAX_CONCURRENCY = max(
+    1,
+    int(os.getenv("INTELLIGENCE_COMPILER_MAX_CONCURRENCY", "1")),
+)
+_intelligence_compiler_semaphore = threading.BoundedSemaphore(
+    _INTELLIGENCE_COMPILER_MAX_CONCURRENCY,
+)
 
 
 def _run_pipeline_limited(metadata_id: str) -> None:
@@ -62,6 +69,45 @@ def _run_pipeline_limited(metadata_id: str) -> None:
         logger.info("[Pipeline] acquired slot metadata_id=%s", metadata_id)
         run_full_pipeline(metadata_id)
         logger.info("[Pipeline] released slot metadata_id=%s", metadata_id)
+
+
+def _run_intelligence_compiler_limited(
+    job_id: str,
+    source_limit: int,
+    packet_limit: int,
+    max_processing_time_ms: Optional[int],
+) -> None:
+    """Run queued compiler work with bounded concurrency for admin-triggered batches."""
+    from src.services.intelligence.compiler import run_intelligence_compiler_batch
+    from src.services.supabase_helpers import get_supabase_client
+
+    logger.info(
+        "[IntelligenceCompilerAPI] waiting for slot (%s max) job_id=%s source_limit=%s packet_limit=%s",
+        _INTELLIGENCE_COMPILER_MAX_CONCURRENCY,
+        job_id,
+        source_limit,
+        packet_limit,
+    )
+    with _intelligence_compiler_semaphore:
+        logger.info("[IntelligenceCompilerAPI] acquired slot job_id=%s", job_id)
+        try:
+            client = get_supabase_client()
+            result = run_intelligence_compiler_batch(
+                client,
+                source_limit=source_limit,
+                packet_limit=packet_limit,
+                max_processing_time_ms=max_processing_time_ms,
+            )
+            logger.info("[IntelligenceCompilerAPI] completed job_id=%s result=%s", job_id, result)
+        except Exception as exc:
+            logger.error(
+                "[IntelligenceCompilerAPI] background run failed job_id=%s: %s",
+                job_id,
+                exc,
+                exc_info=True,
+            )
+        finally:
+            logger.info("[IntelligenceCompilerAPI] released slot job_id=%s", job_id)
 
 app = FastAPI(
     title="Alleato Procore Backend API",
@@ -509,6 +555,8 @@ class IntelligenceCompilerRunRequest(BaseModel):
     source_limit: int = 10
     packet_limit: int = 10
     dry_run: bool = False
+    background: bool = False
+    max_processing_time_ms: Optional[int] = None
 
 
 @app.post("/api/pipeline/process", tags=["Ingestion"], summary="Run full RAG pipeline for a document")
@@ -586,6 +634,7 @@ async def get_teams_compiler_status() -> Dict[str, Any]:
 @app.post("/api/intelligence/compiler/run", tags=["Intelligence"], summary="Run AI intelligence compiler queue")
 async def run_intelligence_compiler(
     request: IntelligenceCompilerRunRequest,
+    background_tasks: BackgroundTasks,
     _: None = Depends(require_admin_api_key),
 ) -> Dict[str, Any]:
     """Drain queued source intelligence and packet refresh jobs."""
@@ -596,6 +645,10 @@ async def run_intelligence_compiler(
         raise HTTPException(status_code=422, detail="source_limit must be between 0 and 100")
     if request.packet_limit < 0 or request.packet_limit > 100:
         raise HTTPException(status_code=422, detail="packet_limit must be between 0 and 100")
+    if request.max_processing_time_ms is not None and (
+        request.max_processing_time_ms < 1000 or request.max_processing_time_ms > 600000
+    ):
+        raise HTTPException(status_code=422, detail="max_processing_time_ms must be between 1000 and 600000")
     if request.dry_run:
         return {
             "job_id": job_id,
@@ -603,6 +656,27 @@ async def run_intelligence_compiler(
             "results": {
                 "source_limit": request.source_limit,
                 "packet_limit": request.packet_limit,
+                "background": request.background,
+                "max_processing_time_ms": request.max_processing_time_ms,
+            },
+        }
+
+    if request.background:
+        background_tasks.add_task(
+            _run_intelligence_compiler_limited,
+            job_id,
+            request.source_limit,
+            request.packet_limit,
+            request.max_processing_time_ms,
+        )
+        return {
+            "job_id": job_id,
+            "status": "queued",
+            "results": {
+                "source_limit": request.source_limit,
+                "packet_limit": request.packet_limit,
+                "background": True,
+                "max_processing_time_ms": request.max_processing_time_ms,
             },
         }
 
@@ -615,6 +689,7 @@ async def run_intelligence_compiler(
             client,
             source_limit=request.source_limit,
             packet_limit=request.packet_limit,
+            max_processing_time_ms=request.max_processing_time_ms,
         )
         return {"job_id": job_id, "status": "completed", "results": results}
     except Exception as exc:
@@ -622,6 +697,25 @@ async def run_intelligence_compiler(
         raise HTTPException(
             status_code=500,
             detail=f"Intelligence compiler run failed for job {job_id}: {exc}",
+        ) from exc
+
+
+@app.get("/api/intelligence/compiler/status", tags=["Intelligence"], summary="AI intelligence compiler status")
+async def get_intelligence_compiler_health(
+    _: None = Depends(require_admin_api_key),
+) -> Dict[str, Any]:
+    """Return queue, promotion, evidence, and packet health for the intelligence compiler."""
+    try:
+        from src.services.intelligence.compiler import get_intelligence_compiler_status
+        from src.services.supabase_helpers import get_supabase_client
+
+        client = get_supabase_client()
+        return get_intelligence_compiler_status(client)
+    except Exception as exc:
+        logger.error("[IntelligenceCompilerAPI] status failed: %s", exc, exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Intelligence compiler status query failed: {exc}",
         ) from exc
 
 

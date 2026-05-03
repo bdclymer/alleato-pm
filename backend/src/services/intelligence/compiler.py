@@ -26,6 +26,33 @@ def _utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def _parse_timestamp(value: Any) -> Optional[datetime]:
+    if not value:
+        return None
+    if isinstance(value, datetime):
+        return value if value.tzinfo else value.replace(tzinfo=timezone.utc)
+    try:
+        text = str(value).replace("Z", "+00:00")
+        parsed = datetime.fromisoformat(text)
+        return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
+    except ValueError:
+        return None
+
+
+def _older_than(value: Any, now: datetime, minutes: int) -> bool:
+    parsed = _parse_timestamp(value)
+    if not parsed:
+        return False
+    return (now - parsed).total_seconds() > minutes * 60
+
+
+def _within_hours(value: Any, now: datetime, hours: int) -> bool:
+    parsed = _parse_timestamp(value)
+    if not parsed:
+        return False
+    return 0 <= (now - parsed).total_seconds() <= hours * 3600
+
+
 def _infer_project_id(*args: Any, **kwargs: Any) -> Any:
     """Lazy import project inference so app startup tests can stub ingestion modules."""
     try:
@@ -219,6 +246,219 @@ def _best_confidence(cards: List[Dict[str, Any]]) -> str:
     for card in cards:
         best = _max_confidence(best, card.get("confidence"))
     return best
+
+
+def _table_rows(supabase: Any, table_name: str, select: str = "*") -> List[Dict[str, Any]]:
+    return getattr(supabase.table(table_name).select(select).execute(), "data", None) or []
+
+
+def _status_counts(rows: List[Dict[str, Any]]) -> Dict[str, int]:
+    counts: Dict[str, int] = {}
+    for row in rows:
+        status = str(row.get("status") or "unknown")
+        counts[status] = counts.get(status, 0) + 1
+    return counts
+
+
+def get_intelligence_compiler_status(
+    supabase: Any,
+    *,
+    max_queued_minutes: int = 30,
+    max_running_minutes: int = 30,
+    recent_failure_hours: int = 24,
+    max_unpromoted_minutes: int = 30,
+    now: Optional[datetime] = None,
+) -> Dict[str, Any]:
+    """Return health counts for the packet-first intelligence compiler."""
+    now = now or datetime.now(timezone.utc)
+    source_jobs = _table_rows(
+        supabase,
+        "source_intelligence_jobs",
+        "id,status,queued_at,started_at,updated_at,finished_at,last_error",
+    )
+    packet_jobs = _table_rows(
+        supabase,
+        "packet_refresh_jobs",
+        "id,status,queued_at,started_at,updated_at,finished_at,output_packet_id,last_error",
+    )
+    signal_candidates = _table_rows(
+        supabase,
+        "source_signal_candidates",
+        "id,source_document_id,status,confidence,created_at,promoted_insight_card_id",
+    )
+    cards = _table_rows(
+        supabase,
+        "insight_cards",
+        "id,primary_target_id,current_status,attribution_status",
+    )
+    evidence_rows = _table_rows(
+        supabase,
+        "insight_card_evidence",
+        "id,insight_card_id,source_document_id",
+    )
+    packets = _table_rows(
+        supabase,
+        "intelligence_packets",
+        "id,target_id,packet_type",
+    )
+    packet_cards = _table_rows(
+        supabase,
+        "intelligence_packet_cards",
+        "packet_id,insight_card_id",
+    )
+
+    source_stale_queued = sum(
+        1
+        for job in source_jobs
+        if job.get("status") == "queued"
+        and _older_than(job.get("queued_at"), now, max_queued_minutes)
+    )
+    packet_stale_queued = sum(
+        1
+        for job in packet_jobs
+        if job.get("status") == "queued"
+        and _older_than(job.get("queued_at"), now, max_queued_minutes)
+    )
+    source_stale_running = sum(
+        1
+        for job in source_jobs
+        if job.get("status") == "running"
+        and _older_than(
+            job.get("started_at") or job.get("updated_at") or job.get("queued_at"),
+            now,
+            max_running_minutes,
+        )
+    )
+    packet_stale_running = sum(
+        1
+        for job in packet_jobs
+        if job.get("status") == "running"
+        and _older_than(
+            job.get("started_at") or job.get("updated_at") or job.get("queued_at"),
+            now,
+            max_running_minutes,
+        )
+    )
+    source_recent_failed = sum(
+        1
+        for job in source_jobs
+        if job.get("status") == "failed"
+        and _within_hours(
+            job.get("finished_at") or job.get("updated_at") or job.get("queued_at"),
+            now,
+            recent_failure_hours,
+        )
+    )
+    packet_recent_failed = sum(
+        1
+        for job in packet_jobs
+        if job.get("status") == "failed"
+        and _within_hours(
+            job.get("finished_at") or job.get("updated_at") or job.get("queued_at"),
+            now,
+            recent_failure_hours,
+        )
+    )
+    high_confidence_unpromoted = sum(
+        1
+        for candidate in signal_candidates
+        if candidate.get("confidence") == "high"
+        and candidate.get("status") == "candidate"
+        and _older_than(candidate.get("created_at"), now, max_unpromoted_minutes)
+    )
+
+    card_ids = {card.get("id") for card in cards if card.get("id")}
+    evidence_pairs = {
+        (row.get("insight_card_id"), row.get("source_document_id"))
+        for row in evidence_rows
+    }
+    promoted_without_card = sum(
+        1
+        for candidate in signal_candidates
+        if candidate.get("status") == "promoted"
+        and (
+            not candidate.get("promoted_insight_card_id")
+            or candidate.get("promoted_insight_card_id") not in card_ids
+        )
+    )
+    promoted_without_evidence = sum(
+        1
+        for candidate in signal_candidates
+        if candidate.get("status") == "promoted"
+        and candidate.get("promoted_insight_card_id")
+        and (
+            candidate.get("promoted_insight_card_id"),
+            candidate.get("source_document_id"),
+        )
+        not in evidence_pairs
+    )
+
+    current_packet_ids_by_target: Dict[str, set] = {}
+    for packet in packets:
+        if packet.get("packet_type") != "current" or not packet.get("target_id"):
+            continue
+        packet_ids = current_packet_ids_by_target.setdefault(packet["target_id"], set())
+        packet_ids.add(packet.get("id"))
+    packet_card_pairs = {
+        (row.get("packet_id"), row.get("insight_card_id"))
+        for row in packet_cards
+    }
+    active_cards_missing_current_packet = 0
+    for card in cards:
+        if card.get("current_status") not in ACTIVE_CARD_STATUSES:
+            continue
+        if card.get("attribution_status") == "rejected":
+            continue
+        current_packet_ids = current_packet_ids_by_target.get(card.get("primary_target_id"), set())
+        if not any((packet_id, card.get("id")) in packet_card_pairs for packet_id in current_packet_ids):
+            active_cards_missing_current_packet += 1
+
+    succeeded_packet_jobs_without_output = sum(
+        1
+        for job in packet_jobs
+        if job.get("status") == "succeeded"
+        and not job.get("output_packet_id")
+        and _within_hours(
+            job.get("finished_at") or job.get("updated_at") or job.get("queued_at"),
+            now,
+            recent_failure_hours,
+        )
+    )
+
+    checks = {
+        "sourceStaleQueued": source_stale_queued,
+        "packetStaleQueued": packet_stale_queued,
+        "sourceStaleRunning": source_stale_running,
+        "packetStaleRunning": packet_stale_running,
+        "sourceRecentFailed": source_recent_failed,
+        "packetRecentFailed": packet_recent_failed,
+        "highConfidenceUnpromoted": high_confidence_unpromoted,
+        "promotedWithoutCard": promoted_without_card,
+        "promotedWithoutEvidence": promoted_without_evidence,
+        "activeCardsMissingCurrentPacket": active_cards_missing_current_packet,
+        "succeededPacketJobsWithoutOutput": succeeded_packet_jobs_without_output,
+    }
+    unhealthy_checks = {key: value for key, value in checks.items() if value > 0}
+    return {
+        "status": "healthy" if not unhealthy_checks else "unhealthy",
+        "healthy": not unhealthy_checks,
+        "thresholds": {
+            "maxQueuedMinutes": max_queued_minutes,
+            "maxRunningMinutes": max_running_minutes,
+            "recentFailureHours": recent_failure_hours,
+            "maxUnpromotedMinutes": max_unpromoted_minutes,
+        },
+        "counts": {
+            "sourceJobsByStatus": _status_counts(source_jobs),
+            "packetJobsByStatus": _status_counts(packet_jobs),
+            "sourceSignalCandidatesByStatus": _status_counts(signal_candidates),
+            "insightCards": len(cards),
+            "currentPackets": sum(1 for packet in packets if packet.get("packet_type") == "current"),
+        },
+        "checks": checks,
+        "unhealthyChecks": unhealthy_checks,
+        "generatedAt": now.isoformat(),
+    }
 
 
 def ensure_client_project_target(
