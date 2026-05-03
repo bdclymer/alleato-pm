@@ -244,7 +244,7 @@ export function buildProgressReportDraft({
     contacts: projectContacts.length > 0 ? projectContacts : buildDefaultContacts(currentUser),
     clientRecipients: [],
     sourceSnapshot,
-    selectedPhotos: photos.slice(0, 6).map((photo, index) => ({
+    selectedPhotos: photos.slice(0, 4).map((photo, index) => ({
       project_photo_id: photo.id,
       sort_order: index,
       caption: photo.title,

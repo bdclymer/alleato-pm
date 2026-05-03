@@ -666,10 +666,15 @@ export function ProgressReportEditor({
                     onChange={(event) => setEmailNote(event.target.value)}
                   />
                 </div>
+                {draft.status === "draft" && (
+                  <InfoAlert variant="warning">
+                    Set the report status to <strong>Ready</strong> before emailing. Draft reports cannot be sent to clients.
+                  </InfoAlert>
+                )}
                 <Button
                   className="w-full gap-2"
                   onClick={() => void handleSendEmail()}
-                  disabled={isSending}
+                  disabled={isSending || draft.status === "draft"}
                 >
                   {isSending ? (
                     <Loader2 className="h-4 w-4 animate-spin" />

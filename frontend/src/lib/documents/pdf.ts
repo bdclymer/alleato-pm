@@ -260,14 +260,39 @@ export function buildChangeEventHtml(
 </html>`;
 }
 
+/**
+ * Renders HTML to a PDF buffer using @sparticuz/chromium + puppeteer-core.
+ *
+ * This replaces the previous playwright-based implementation which required
+ * a full Chromium install that is NOT available in serverless environments
+ * (Vercel, AWS Lambda, etc.).  @sparticuz/chromium ships a pre-built
+ * headless shell that works in those environments without any extra setup.
+ *
+ * Root cause of the original bug:
+ *   playwright's `chromium.launch()` resolves the executable from
+ *   ~/.cache/ms-playwright, which is never present in a serverless container.
+ *
+ * Prevention: The `playwright` package must never be imported in server-side
+ * PDF routes.  If Playwright is needed for E2E tests it should remain a
+ * devDependency used only in `tests/`.
+ */
 export async function renderPdfFromHtml(html: string): Promise<Buffer> {
-  const { chromium } = await import("playwright");
-  const browser = await chromium.launch({ headless: true });
+  // Dynamic imports so the heavy binary isn't loaded in non-PDF code paths.
+  const chromium = (await import("@sparticuz/chromium")).default;
+  const puppeteer = await import("puppeteer-core");
+
+  const browser = await puppeteer.default.launch({
+    args: chromium.args,
+    executablePath: await chromium.executablePath(),
+    headless: true,
+  });
 
   try {
     const page = await browser.newPage();
-    await page.setViewportSize({ width: 1280, height: 900 });
-    await page.setContent(html, { waitUntil: "networkidle" });
+    await page.setViewport({ width: 1280, height: 900 });
+    await page.setContent(html, { waitUntil: "networkidle0" });
+
+    // Wait for any lazy-loading images to settle before printing.
     await page.evaluate(async () => {
       const pendingImages = Array.from(document.images).filter(
         (image) => !image.complete,
