@@ -17,6 +17,10 @@
 
 import { createServiceClient } from "@/lib/supabase/service";
 import { embed } from "@/lib/ai/services/ai-memory-service";
+import type { Database, Json } from "@/types/database.types";
+
+type WorkspaceArtifactInsert =
+  Database["public"]["Tables"]["workspace_artifacts"]["Insert"];
 
 // ---------------------------------------------------------------------------
 // Types
@@ -131,21 +135,18 @@ export async function createArtifact(
     );
   }
 
-  const row: Record<string, unknown> = {
+  const row: WorkspaceArtifactInsert = {
     user_id: params.userId,
     artifact_type: params.artifactType,
     title: params.title,
-    content: params.content,
+    content: params.content as Json,
     project_id: params.projectId ?? null,
-    context_snapshot: params.contextSnapshot ?? {},
+    context_snapshot: (params.contextSnapshot ?? {}) as Json,
     session_id: params.sessionId ?? null,
     tags: params.tags ?? [],
     status: params.status ?? "draft",
+    ...(embeddingJson !== null ? { embedding: embeddingJson } : {}),
   };
-
-  if (embeddingJson !== null) {
-    row.embedding = embeddingJson;
-  }
 
   const { data, error } = await supabase
     .from("workspace_artifacts")
@@ -343,8 +344,8 @@ export async function searchArtifacts(params: SearchArtifactsParams): Promise<Wo
   const { data, error } = await supabase.rpc("search_workspace_artifacts", {
     query_embedding: JSON.stringify(embeddingVec),
     p_user_id: params.userId,
-    p_project_id: params.projectId ?? null,
-    p_status: params.status ?? null,
+    p_project_id: params.projectId ?? undefined,
+    p_status: params.status ?? undefined,
     match_count: params.matchCount ?? 10,
     match_threshold: params.matchThreshold ?? 0.45,
   });

@@ -29,6 +29,10 @@ import {
   getRelevantAgentLearnings,
   type AgentLearningUsageSummary,
 } from "@/lib/ai/services/agent-learning-service";
+import {
+  listArtifacts,
+  buildWorkspaceContextBlock,
+} from "@/lib/ai/services/workspace-artifact-service";
 import { createServiceClient } from "@/lib/supabase/service";
 
 // ---------------------------------------------------------------------------
@@ -113,11 +117,19 @@ export async function assembleSystemPrompt(options: {
   // Inject user memories
   if (messageText) {
     try {
-      const [{ preferences, relevant, team, errors: memoryErrors }, recentSummaries] =
+      const [{ preferences, relevant, team, errors: memoryErrors }, recentSummaries, activeArtifacts] =
         await Promise.all([
           getMemoriesForSession({ userId, firstMessage: messageText }),
           isFirstTurn && sessionId
             ? getRecentConversationSummaries(userId, sessionId, 3)
+            : Promise.resolve([]),
+          isFirstTurn
+            ? listArtifacts({
+                userId,
+                projectId: selectedProjectId ?? null,
+                status: "draft",
+                limit: 5,
+              }).catch(() => [])
             : Promise.resolve([]),
         ]);
       if (memoryErrors.length > 0) {
@@ -163,7 +175,8 @@ export async function assembleSystemPrompt(options: {
       });
       const recentBlock = buildRecentConversationsBlock(recentSummaries);
 
-      const contextParts = [recentBlock, memoryBlock, learningBlock].filter(Boolean);
+      const workspaceBlock = buildWorkspaceContextBlock(activeArtifacts);
+      const contextParts = [recentBlock, memoryBlock, learningBlock, workspaceBlock].filter(Boolean);
       if (contextParts.length > 0) {
         systemPrompt = contextParts.join("\n\n") + "\n\n---\n\n" + systemPrompt;
       }
