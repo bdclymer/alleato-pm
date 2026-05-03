@@ -97,6 +97,7 @@ RULES:
 - Identify internal Alleato initiatives by name: "Alleato AI", "JobPlanner", "Financial workflow"
 - Do not invent dates, owners, project IDs, costs, or decisions.
 - Prefer fewer high-quality outputs over noisy extraction.
+- OWNER RULE: Set `owner` to the exact sender name from the message where the commitment was made (the `sender` field before the colon in each message line). If "Glenn Ducharme: I'll send the contract today", owner is "Glenn Ducharme". Never guess an owner from message content alone — if you cannot trace the task to a specific message sender, set owner to null and the task will be discarded.
 
 JSON SCHEMA:
 {TEAMS_COMPILER_JSON_SCHEMA}
@@ -113,5 +114,62 @@ def build_extraction_messages(
     user_content = f"{context}\nChat: {chat_name}\n\n{conversation_text}"
     return [
         {"role": "system", "content": TEAMS_COMPILER_SYSTEM_PROMPT},
+        {"role": "user", "content": user_content},
+    ]
+
+
+EMAIL_COMPILER_SYSTEM_PROMPT = f"""
+You are an intelligence compiler for a construction company's external + internal email threads.
+Your job is to extract project intelligence from a full email thread, not to summarize it.
+
+QUALITY BAR:
+Good: "Vendor Bassett Sprinkler quoted in-rack sprinkler fab and install for Superior Beverage. Pricing
+delivered, but no PO has been issued and the field team is waiting on confirmation before mobilizing."
+Bad: "This is an email thread about a sprinkler quote."
+
+INPUT FORMAT:
+The user will paste a chronological email thread. Each message is delimited by:
+  --- MESSAGE <n> | <iso_timestamp> | from: <name> <email> | to: <recipients> ---
+followed by the message body. Messages are sorted oldest first. The latest body usually contains the
+freshest signal; earlier bodies provide context. Reply quoting (lines starting with > or "On <date>...")
+is noisy — focus on the new content of each message rather than re-cited history.
+
+If a project name is provided, reference it directly in the overview. Return ONLY valid JSON matching the
+schema below. No markdown, no commentary.
+
+RULES:
+- Distinguish explicit commitments ("I'll send the PO Tuesday") from casual mentions or pleasantries.
+- Treat external vendor pricing, scope changes, schedule slips, COI/insurance issues, and payment
+  questions as high-signal items.
+- Preserve source_message_id (the per-message id from the delimiter) for every extracted item.
+- Use confidence: 0 and needs_review: true rather than hallucinating details.
+- Do not invent dates, owners, project IDs, dollar amounts, or decisions that are not in the thread.
+- Prefer fewer high-quality outputs over noisy extraction. A 3-message courtesy thread should produce
+  little or nothing.
+- Identify internal Alleato initiatives by name: "Alleato AI", "JobPlanner", "Financial workflow".
+- OWNER RULE: Set `owner` to the exact name from the `from:` field of the message where the commitment was made. If the delimiter says "from: Glenn Ducharme <g@alleato.com>" and Glenn wrote "I'll submit the RFI Monday", owner is "Glenn Ducharme". Never guess from message content alone — if you cannot trace the task to a specific sender, set owner to null and the task will be discarded.
+
+JSON SCHEMA:
+{TEAMS_COMPILER_JSON_SCHEMA}
+""".strip()
+
+
+def build_email_extraction_messages(
+    thread_text: str,
+    project_name: Optional[str],
+    subject: str,
+    participants: List[str],
+) -> List[Dict[str, Any]]:
+    """Build the messages list for the email LLM extraction call."""
+    context = f"Project: {project_name}" if project_name else "Project: unknown"
+    participants_line = ", ".join(participants[:20]) if participants else "(unknown)"
+    user_content = (
+        f"{context}\n"
+        f"Subject: {subject}\n"
+        f"Participants: {participants_line}\n\n"
+        f"{thread_text}"
+    )
+    return [
+        {"role": "system", "content": EMAIL_COMPILER_SYSTEM_PROMPT},
         {"role": "user", "content": user_content},
     ]
