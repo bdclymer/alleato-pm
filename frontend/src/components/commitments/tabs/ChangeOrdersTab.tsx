@@ -57,11 +57,12 @@ export const ChangeOrdersTab = memo(function ChangeOrdersTab({ commitmentId, pro
         const data = await apiFetch<{ data?: ChangeOrder[]; meta?: { approved_amount?: number; total_amount?: number } } | ChangeOrder[]>(
           `/api/commitments/${commitmentId}/change-orders`
         )
-        const orders = data.data || data || []
+        const isArray = Array.isArray(data)
+        const orders = isArray ? data : (data.data ?? [])
         setChangeOrders(orders)
 
         // Calculate totals by status from the API meta or locally
-        if (data.meta) {
+        if (!isArray && data.meta) {
           setTotals({
             approved: data.meta.approved_amount || 0,
             pending: orders.filter((co: ChangeOrder) => co.status === 'pending').reduce((sum: number, co: ChangeOrder) => sum + co.amount, 0),

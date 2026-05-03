@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { useForm, type Control } from "react-hook-form";
+import { useForm, type Control, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { ArrowLeft, Edit, Trash2, Download, Check, CheckCheck, Ban, Send, RotateCcw, Plus, Save, Mail } from "lucide-react";
@@ -462,7 +462,7 @@ interface AddLineItemDialogProps {
 function AddLineItemDialog({ open, onOpenChange, projectId, invoiceId, onSuccess }: AddLineItemDialogProps) {
   const [isSaving, setIsSaving] = useState(false);
   const form = useForm<AddLineItemValues>({
-    resolver: zodResolver(addLineItemSchema),
+    resolver: zodResolver(addLineItemSchema) as Resolver<AddLineItemValues>,
     defaultValues: {
       description: "",
       category: "",
@@ -723,7 +723,7 @@ function InvoiceEditForm({
  */
 export default function InvoiceDetailPage() {
   const router = useRouter();
-  const params = useParams();
+  const params = useParams() ?? {};
   const projectId = parseInt(params.projectId as string);
   const invoiceId = parseInt(params.invoiceId as string);
   useProjectTitle("Invoice Details");

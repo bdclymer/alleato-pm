@@ -27,6 +27,18 @@ function sectionLabel(key: keyof BrandonDailyUpdatePacket["sections"]) {
 }
 
 function ItemBlock({ item }: { item: BrandonBriefItem }) {
+  const stored = Array.isArray(item.citations) ? item.citations : [];
+  const citations = stored.length > 0
+    ? stored
+    : [{
+        source: item.source,
+        sourceDetail: item.sourceDetail,
+        sourceUrl: item.sourceUrl,
+        sourceId: item.sourceId,
+        evidence: item.evidence,
+        date: item.date,
+      }];
+
   return (
     <div
       style={{
@@ -57,10 +69,46 @@ function ItemBlock({ item }: { item: BrandonBriefItem }) {
         </p>
       ) : null}
       {item.whyItMatters ? (
-        <p style={{ margin: 0, color: "#475569" }}>
+        <p style={{ margin: "0 0 8px", color: "#475569" }}>
           <strong>Why it matters:</strong> {item.whyItMatters}
         </p>
       ) : null}
+      <div
+        style={{
+          marginTop: 10,
+          paddingTop: 10,
+          borderTop: "1px solid #e5e7eb",
+          fontSize: 12,
+          color: "#475569",
+        }}
+      >
+        <strong style={{ color: "#334155" }}>
+          {citations.length > 1 ? `Sources (${citations.length})` : "Source"}:
+        </strong>
+        <ul style={{ margin: "6px 0 0", paddingLeft: 18 }}>
+          {citations.map((citation, idx) => (
+            <li
+              key={`${citation.sourceId ?? citation.sourceUrl ?? citation.sourceDetail}-${idx}`}
+              style={{ margin: "0 0 4px" }}
+            >
+              <span style={{ fontWeight: 600 }}>{citation.source}</span>
+              {citation.sourceDetail ? <> — {citation.sourceDetail}</> : null}
+              {citation.date ? <> ({citation.date})</> : null}
+              {citation.sourceUrl ? (
+                <>
+                  {" "}
+                  <a
+                    href={citation.sourceUrl}
+                    style={{ color: "#1d4ed8", textDecoration: "underline" }}
+                  >
+                    View source ↗
+                  </a>
+                </>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }

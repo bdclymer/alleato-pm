@@ -11,18 +11,30 @@ type BriefSource = "Email" | "Teams" | "Meeting" | "Document";
 
 export const DEFAULT_EXECUTIVE_WINDOW_DAYS = 3;
 
-export type BrandonBriefItem = {
-  title: string;
-  summary: string;
-  bullets: string[];
-  recommendedAction?: string;
-  whyItMatters?: string;
+export type BriefCitation = {
   source: BriefSource;
   sourceDetail: string;
   sourceUrl?: string;
   sourceId?: string;
   evidence?: string;
   date: string;
+};
+
+export type BrandonBriefItem = {
+  title: string;
+  summary: string;
+  bullets: string[];
+  recommendedAction?: string;
+  whyItMatters?: string;
+  // Primary citation (mirrors citations[0] for backward compat with stored follow-ups + existing UI/email).
+  source: BriefSource;
+  sourceDetail: string;
+  sourceUrl?: string;
+  sourceId?: string;
+  evidence?: string;
+  date: string;
+  // Full citation list. Always at least one entry; multiple when an item is corroborated across sources.
+  citations: BriefCitation[];
   project: string;
   owner?: string;
   status?: string;
@@ -118,7 +130,6 @@ type RecentCommunicationRow = Pick<
   | "action_items"
   | "source_web_url"
   | "url"
-  | "status"
   | "category"
   | "type"
 >;
@@ -163,7 +174,10 @@ type SynthesizedBriefItem = {
   bullets?: string[];
   recommendedAction?: string;
   whyItMatters?: string;
-  sourceIndex: number;
+  // Preferred: one or more candidate indexes whose citations should be attached to this item.
+  sourceIndexes?: number[];
+  // Backward-compat: older outputs may still emit a single sourceIndex.
+  sourceIndex?: number;
   status?: string;
   tone?: BriefTone;
 };
@@ -505,18 +519,31 @@ function evidenceText(hit: RankedHit): string {
   return compactText(hit.text, 900);
 }
 
-function buildItem(hit: RankedHit): BrandonBriefItem {
+function citationFromHit(hit: RankedHit): BriefCitation {
   const evidence = evidenceText(hit);
   return {
-    title: hit.spec.title,
-    summary: evidence || "Matched recent RAG source, but no usable snippet was available.",
-    bullets: [],
     source: hit.sourceGroup.label,
     sourceDetail: sourceDetail(hit),
     sourceUrl: sourceUrl(hit.metadata),
     sourceId: hit.row.document_id ?? hit.metadata?.id,
     evidence,
     date: formatDate(hit.date),
+  };
+}
+
+function buildItem(hit: RankedHit): BrandonBriefItem {
+  const citation = citationFromHit(hit);
+  return {
+    title: hit.spec.title,
+    summary: citation.evidence || "Matched recent RAG source, but no usable snippet was available.",
+    bullets: [],
+    source: citation.source,
+    sourceDetail: citation.sourceDetail,
+    sourceUrl: citation.sourceUrl,
+    sourceId: citation.sourceId,
+    evidence: citation.evidence,
+    date: citation.date,
+    citations: [citation],
     project: projectLabel(hit),
     owner: hit.spec.owner,
     status: hit.spec.status,
@@ -537,16 +564,25 @@ function makeFallbackItem(row: DocumentMetaRow): BrandonBriefItem {
       : normalizedSource.includes("outlook") || normalizedSource.includes("email")
         ? "Email"
         : "Document";
-  return {
-    title: row.title ?? "Recent metadata fallback",
-    summary: text || "Recent metadata matched the Brandon daily update keywords.",
-    bullets: [],
+  const citation: BriefCitation = {
     source: sourceLabel,
     sourceDetail: compactText(row.title ?? source, 90),
     sourceUrl: sourceLink,
     sourceId: row.id,
     evidence: text,
     date: formatSourceDate(row.date ?? row.created_at ?? row.captured_at),
+  };
+  return {
+    title: row.title ?? "Recent metadata fallback",
+    summary: text || "Recent metadata matched the Brandon daily update keywords.",
+    bullets: [],
+    source: citation.source,
+    sourceDetail: citation.sourceDetail,
+    sourceUrl: citation.sourceUrl,
+    sourceId: citation.sourceId,
+    evidence: citation.evidence,
+    date: citation.date,
+    citations: [citation],
     project: row.project_id ? `${row.project_id}${row.project ? ` ${row.project}` : ""}` : (row.project ?? "Company"),
     status: "Fallback review",
     tone: "neutral",
@@ -639,11 +675,30 @@ function buildCommunicationSignalItem(
   row: RecentCommunicationRow,
   spec: CommunicationSignalSpec,
   evidenceCount: number,
+  additionalRows: RecentCommunicationRow[] = [],
 ): BrandonBriefItem {
   const evidence = getRecentCommunicationText(row);
   const summary =
     compactText(evidence, 360) ||
     "Recent communication evidence matched an executive signal pattern.";
+
+  const primaryCitation: BriefCitation = {
+    source: spec.source,
+    sourceDetail: compactText(row.title ?? "Recent communication thread", 90),
+    sourceUrl: sourceUrlFromRecentRow(row),
+    sourceId: row.id,
+    evidence,
+    date: formatSourceDate(row.date ?? row.created_at ?? row.captured_at),
+  };
+
+  const extraCitations: BriefCitation[] = additionalRows.slice(0, 4).map((extra) => ({
+    source: spec.source,
+    sourceDetail: compactText(extra.title ?? "Related communication thread", 90),
+    sourceUrl: sourceUrlFromRecentRow(extra),
+    sourceId: extra.id,
+    evidence: getRecentCommunicationText(extra),
+    date: formatSourceDate(extra.date ?? extra.created_at ?? extra.captured_at),
+  }));
 
   return {
     title: spec.title,
@@ -651,16 +706,17 @@ function buildCommunicationSignalItem(
     bullets: [
       evidenceCount > 1 ? `${evidenceCount} recent related communication records matched this issue.` : "",
       row.title ? compactText(row.title, 140) : "",
-      row.status ? `Ingestion status: ${row.status}` : "",
+      "",
     ].filter(Boolean),
     recommendedAction: spec.recommendedAction,
     whyItMatters: spec.whyItMatters,
-    source: spec.source,
-    sourceDetail: compactText(row.title ?? "Recent communication thread", 90),
-    sourceUrl: sourceUrlFromRecentRow(row),
-    sourceId: row.id,
-    evidence,
-    date: formatSourceDate(row.date ?? row.created_at ?? row.captured_at),
+    source: primaryCitation.source,
+    sourceDetail: primaryCitation.sourceDetail,
+    sourceUrl: primaryCitation.sourceUrl,
+    sourceId: primaryCitation.sourceId,
+    evidence: primaryCitation.evidence,
+    date: primaryCitation.date,
+    citations: [primaryCitation, ...extraCitations],
     project: row.project_id ? `${row.project_id}${row.project ? ` ${row.project}` : ""}` : (row.project ?? "Company"),
     owner: spec.owner,
     status: spec.status,
@@ -728,8 +784,14 @@ async function loadRecentCommunicationSignalItems(
       });
 
     if (matches.length === 0) continue;
+    const [primary, ...rest] = matches;
     sections[spec.section].push(
-      buildCommunicationSignalItem(matches[0].row, spec, matches.length),
+      buildCommunicationSignalItem(
+        primary.row,
+        spec,
+        matches.length,
+        rest.map((entry) => entry.row),
+      ),
     );
   }
 
@@ -933,27 +995,59 @@ function normalizeSynthesizedItem(
   candidates: BrandonBriefItem[],
   usedSourceIndexes: Set<number>,
 ): BrandonBriefItem | null {
-  const source = candidates[item.sourceIndex];
-  if (usedSourceIndexes.has(item.sourceIndex)) return null;
-  if (!source || !item.title || !item.summary) return null;
-  usedSourceIndexes.add(item.sourceIndex);
+  const rawIndexes =
+    item.sourceIndexes && item.sourceIndexes.length > 0
+      ? item.sourceIndexes
+      : typeof item.sourceIndex === "number"
+        ? [item.sourceIndex]
+        : [];
+  const validIndexes = rawIndexes
+    .filter((idx) => Number.isInteger(idx) && candidates[idx] !== undefined && !usedSourceIndexes.has(idx))
+    .slice(0, 5);
+  if (validIndexes.length === 0) return null;
+  if (!item.title || !item.summary) return null;
+
+  for (const idx of validIndexes) {
+    usedSourceIndexes.add(idx);
+  }
+
+  const primary = candidates[validIndexes[0]];
+  const mergedCitations: BriefCitation[] = [];
+  const seenCitationKeys = new Set<string>();
+  for (const idx of validIndexes) {
+    for (const citation of candidates[idx].citations) {
+      const key = `${citation.source}|${citation.sourceId ?? citation.sourceUrl ?? citation.sourceDetail}`;
+      if (seenCitationKeys.has(key)) continue;
+      seenCitationKeys.add(key);
+      mergedCitations.push(citation);
+    }
+  }
+
+  const primaryCitation = mergedCitations[0] ?? primary.citations[0];
 
   return {
-    ...source,
+    ...primary,
     title: compactText(item.title, 120),
-    summary: expandRelativeWeekdays(compactText(item.summary, 420), source.date),
+    summary: expandRelativeWeekdays(compactText(item.summary, 420), primary.date),
     bullets: (item.bullets ?? [])
-      .map((bullet) => expandRelativeWeekdays(compactText(bullet, 180), source.date))
+      .map((bullet) => expandRelativeWeekdays(compactText(bullet, 180), primary.date))
       .filter(Boolean)
       .slice(0, 4),
     recommendedAction: item.recommendedAction
-      ? expandRelativeWeekdays(compactText(item.recommendedAction, 220), source.date)
-      : source.recommendedAction,
+      ? expandRelativeWeekdays(compactText(item.recommendedAction, 220), primary.date)
+      : primary.recommendedAction,
     whyItMatters: item.whyItMatters
-      ? expandRelativeWeekdays(compactText(item.whyItMatters, 220), source.date)
-      : source.whyItMatters,
-    status: item.status ?? source.status,
-    tone: item.tone ?? source.tone,
+      ? expandRelativeWeekdays(compactText(item.whyItMatters, 220), primary.date)
+      : primary.whyItMatters,
+    status: item.status ?? primary.status,
+    tone: item.tone ?? primary.tone,
+    source: primaryCitation.source,
+    sourceDetail: primaryCitation.sourceDetail,
+    sourceUrl: primaryCitation.sourceUrl,
+    sourceId: primaryCitation.sourceId,
+    evidence: primaryCitation.evidence,
+    date: primaryCitation.date,
+    citations: mergedCitations,
   };
 }
 
@@ -984,6 +1078,7 @@ async function synthesizeSections(
     status: item.status,
     owner: item.owner,
     evidence: item.evidence ?? item.summary,
+    existingCitationCount: item.citations.length,
   }));
 
   try {
@@ -1000,11 +1095,12 @@ async function synthesizeSections(
             "Turn raw RAG excerpts into clear business insights. Do not copy truncated excerpts. " +
             "Use concrete names, dates, dollars, quantities, blockers, and commitments when present. " +
             "When using relative dates such as next Wednesday, include the exact calendar date in the same sentence. " +
-            "If a source is too vague to be useful, exclude it. Do not repeat the same sourceIndex in multiple sections. " +
+            "If a source is too vague to be useful, exclude it. " +
+            "CRITICAL — cross-source synthesis: when multiple candidates describe the same underlying issue (same project + same vendor/contract/topic, even from different sources like an email + a meeting + a Teams thread), MERGE them into a single item and list ALL relevant candidate indexes in sourceIndexes. Each candidate index may appear in only one item across the whole output, but each item may cite multiple indexes. Prefer corroborated multi-source items over single-source items. " +
             "Use needsBrandon only when the evidence shows a decision, confirmation, commitment, money/risk issue, or escalation that belongs at owner level. " +
             "Use waitingOnOthers for project-team, client, vendor, estimating, finance, or design inputs that are pending. " +
             "Return ONLY valid JSON with keys needsBrandon, waitingOnOthers, importantUpdates. " +
-            "Each item must include: title, summary, bullets, recommendedAction, whyItMatters, sourceIndex, status, tone. " +
+            "Each item must include: title, summary, bullets, recommendedAction, whyItMatters, sourceIndexes (array of integers, ordered most-relevant first), status, tone. " +
             "Titles should be specific, not bucket names. Bullets should be short facts, not paragraphs. " +
             "Tone must be one of risk, watch, good, neutral.",
         },

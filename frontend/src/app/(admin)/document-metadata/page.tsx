@@ -16,7 +16,7 @@ export default async function DocumentMetadataPage() {
     .limit(50000);
 
   return (
-    <PageShell variant="table" showHeader={false}>
+    <PageShell variant="table" title="Document Metadata" showHeader={false}>
       <DocumentMetadataClient
         items={data ?? []}
         errorMessage={error?.message ?? null}

@@ -20,7 +20,7 @@
     "lint": "eslint . --cache --cache-strategy content",
     "lint:errors": "eslint . --quiet --cache --cache-strategy content",
     "set-admin": "node scripts/set-admin.mjs",
-    "typecheck": "node --max-old-space-size=4096 node_modules/typescript/bin/tsc --noEmit",
+    "typecheck": "node --max-old-space-size=7168 node_modules/typescript/bin/tsc --noEmit",
     "audit:db": "tsx scripts/audit/audit-db-inserts.ts",
     "audit:db:mappers": "tsx scripts/audit/audit-db-mappers.ts",
     "audit:db:fk-types": "node --require tsx/cjs scripts/audit/audit-db-fk-and-validation.ts",

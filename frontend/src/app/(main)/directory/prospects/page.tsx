@@ -340,9 +340,9 @@ function ProspectPreviewPane({
 }
 
 export default function DirectoryProspectsPage(): ReactElement {
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "";
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = (useSearchParams() ?? new URLSearchParams()) as NonNullable<ReturnType<typeof useSearchParams>>;
 
   const initialFilters: ProspectFilterState = {
     status: searchParams.get("status") || undefined,

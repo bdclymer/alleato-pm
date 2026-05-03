@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 
 export default function NewChangeEventPage() {
   const router = useRouter();
-  const params = useParams();
+  const params = useParams() ?? {};
   const projectId = parseInt(params.projectId as string, 10);
 
   const [isSaving, setIsSaving] = useState(false);

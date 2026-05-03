@@ -51,7 +51,7 @@ type MeetingScheduleValues = z.infer<typeof meetingScheduleSchema>;
 
 export default function ScheduleMeetingPage() {
   const router = useRouter();
-  const params = useParams();
+  const params = useParams() ?? {};
   const projectId = params.projectId as string;
   const createMeeting = useCreateMeeting(projectId);
 

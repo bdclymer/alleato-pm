@@ -1908,9 +1908,7 @@ export function ChatArea({
     <div className="relative flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background">
       {!hasMessages && !isLoadingMessages ? (
         <div className="flex min-h-0 flex-1 pb-36 md:pb-40">
-          <WelcomeScreen onSelectPrompt={(prompt) => onSubmit(prompt)}>
-            <AssistantActionList />
-          </WelcomeScreen>
+          <WelcomeScreen onSelectPrompt={(prompt) => onSubmit(prompt)} />
         </div>
       ) : (
         <>

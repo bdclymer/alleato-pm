@@ -192,10 +192,10 @@ function renderSpecList(spec: SpecificationWithRevision, onView: (id: number) =>
 }
 
 export default function ProjectSpecificationsPage() {
-  const params = useParams<{ projectId: string }>();
+  const params = useParams<{ projectId: string }>() ?? { projectId: "" };
   const pathname = usePathname();
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = (useSearchParams() ?? new URLSearchParams()) as NonNullable<ReturnType<typeof useSearchParams>>;
   const projectId = params.projectId;
 
   const activeTab = (searchParams.get("spec_tab") as SpecificationsTab) || "specifications";

@@ -35,9 +35,9 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     null,
   );
   const [isLoading, setIsLoading] = useState(true);
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "";
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams() ?? new URLSearchParams();
 
   // Extract project ID from URL path (e.g., /123/home -> 123) or query params (e.g., ?project=123)
   const projectIdFromUrl = React.useMemo(() => {

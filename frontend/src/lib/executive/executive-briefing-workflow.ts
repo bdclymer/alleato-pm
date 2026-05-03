@@ -150,6 +150,23 @@ function projectCount(packet: BrandonDailyUpdatePacket) {
   ).size;
 }
 
+function backfillCitations(item: BrandonBriefItem): BrandonBriefItem {
+  if (Array.isArray(item.citations) && item.citations.length > 0) return item;
+  return {
+    ...item,
+    citations: [
+      {
+        source: item.source,
+        sourceDetail: item.sourceDetail,
+        sourceUrl: item.sourceUrl,
+        sourceId: item.sourceId,
+        evidence: item.evidence,
+        date: item.date,
+      },
+    ],
+  };
+}
+
 function parseStoredPacket(value: Json | null): BrandonDailyUpdatePacket | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     return null;
@@ -165,7 +182,15 @@ function parseStoredPacket(value: Json | null): BrandonDailyUpdatePacket | null 
     return null;
   }
 
-  return candidate as unknown as BrandonDailyUpdatePacket;
+  const packet = candidate as unknown as BrandonDailyUpdatePacket;
+  return {
+    ...packet,
+    sections: {
+      needsBrandon: (packet.sections?.needsBrandon ?? []).map(backfillCitations),
+      waitingOnOthers: (packet.sections?.waitingOnOthers ?? []).map(backfillCitations),
+      importantUpdates: (packet.sections?.importantUpdates ?? []).map(backfillCitations),
+    },
+  };
 }
 
 function daysOpen(firstSeenAt: string) {

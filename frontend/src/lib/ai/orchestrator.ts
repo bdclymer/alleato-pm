@@ -583,9 +583,24 @@ export async function consultAgent(
       stopWhen: stepCountIs(5),
     });
 
-    const result = await agent.generate({
+    const SUB_AGENT_TIMEOUT_MS = Number(
+      process.env.SUB_AGENT_TIMEOUT_MS ?? 15_000,
+    );
+    const generatePromise = agent.generate({
       messages: [{ role: "user", content: userMessage }],
     });
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(
+        () =>
+          reject(
+            new Error(
+              `Sub-agent ${agentId} exceeded ${SUB_AGENT_TIMEOUT_MS}ms timeout`,
+            ),
+          ),
+        SUB_AGENT_TIMEOUT_MS,
+      );
+    });
+    const result = await Promise.race([generatePromise, timeoutPromise]);
 
     // Extract which tools were called from the steps
     for (const step of result.steps) {

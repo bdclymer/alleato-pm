@@ -17,7 +17,7 @@ const INITIAL_DATA: Partial<ContractFormData> = {
 
 export default function NewContractPage() {
   const router = useRouter();
-  const params = useParams();
+  const params = useParams() ?? {};
   const projectId = params.projectId as string;
   const { handleSubmit, isSubmitting } = useCreatePrimeContract(projectId);
 

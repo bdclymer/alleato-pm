@@ -63,7 +63,7 @@ export function EmailsClient({
 }: EmailsClientProps): ReactElement {
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const searchParams = (useSearchParams() ?? new URLSearchParams()) as NonNullable<ReturnType<typeof useSearchParams>>;
   const isGlobal = scope === "global" || !projectId;
   const isOutlook = source === "outlook";
   const activeTab =

@@ -140,7 +140,7 @@ export class EstimateService {
 
     if (error) throw new Error(`Failed to fetch company estimates: ${error.message}`);
 
-    return ((data ?? []) as CompanyEstimateQueryRow[]).map((row) => ({
+    return ((data ?? []) as unknown as CompanyEstimateQueryRow[]).map((row) => ({
       estimate_id: row.estimate_id,
       project_id: row.project_id,
       estimate_type: row.estimate_type ?? null,

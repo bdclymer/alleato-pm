@@ -36,10 +36,10 @@ export function PaymentGuardrailAlerts({
             <div
               key={alert.id}
               className={cn(
-                "rounded-md border px-3 py-2 text-xs",
+                "rounded-lg px-3 py-2.5 text-xs",
                 alert.severity === "high"
-                  ? "border-destructive/40 bg-destructive/5"
-                  : "border-warning/40 bg-warning/5",
+                  ? "bg-destructive/8 border-l-[3px] border-destructive"
+                  : "bg-warning/8 border-l-[3px] border-warning",
               )}
             >
               <div className="flex flex-wrap items-start justify-between gap-2">

@@ -17,7 +17,7 @@ const settingsTabs: NavItem[] = [
 ];
 
 export default function SettingsLayout({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "";
 
   const tabs = settingsTabs.map((tab) => ({
     ...tab,

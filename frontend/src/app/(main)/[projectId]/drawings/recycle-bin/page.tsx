@@ -42,7 +42,7 @@ const tabs = (projectId: string) => [
 ];
 
 export default function DrawingRecycleBinPage() {
-  const params = useParams<{ projectId: string }>();
+  const params = useParams<{ projectId: string }>() ?? { projectId: "" };
   const projectId = params.projectId ?? "";
 
   const { data: deletedDrawings = [], isLoading } = useDeletedDrawings(projectId);

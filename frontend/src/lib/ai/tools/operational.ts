@@ -1501,6 +1501,7 @@ export function createOperationalTools(
             }
 
             // Fetch knowledge articles
+            // @ts-expect-error company_knowledge table not yet in generated types
             let query = supabase
               .from("company_knowledge")
               .select("*")
@@ -1995,6 +1996,7 @@ export function createOperationalTools(
               EMBEDDING.LARGE,
             );
 
+            // @ts-expect-error company_knowledge table not yet in generated types
             const { data, error } = await supabase
               .from("company_knowledge")
               .insert({

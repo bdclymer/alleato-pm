@@ -57,6 +57,7 @@ const submittalTitleCache = new Map<string, string>();
 const subcontractorInvoiceTitleCache = new Map<string, { commitmentLabel: string; invoiceLabel: string }>();
 const drawingTitleCache = new Map<string, string>();
 const testRunTitleCache = new Map<string, string>();
+const progressReportTitleCache = new Map<string, string>();
 
 const TABLE_ROUTE_ALIASES: Record<string, string> = {
   tasks: "tasks",
@@ -91,10 +92,11 @@ export function useHeaderNav(): UseHeaderNavReturn {
   const [subcontractorInvoiceInfo, setSubcontractorInvoiceInfo] = useState<{ commitmentLabel: string; invoiceLabel: string } | null>(null);
   const [drawingTitle, setDrawingTitle] = useState<string | null>(null);
   const [testRunTitle, setTestRunTitle] = useState<string | null>(null);
+  const [progressReportTitle, setProgressReportTitle] = useState<string | null>(null);
 
   // Extract project ID from URL path or query parameters
   const projectId = useMemo(() => {
-    const pathId = extractProjectId(pathname);
+    const pathId = extractProjectId(pathname ?? "");
     if (pathId) return pathId;
 
     // Fallback to query parameters for legacy URLs
@@ -289,6 +291,11 @@ export function useHeaderNav(): UseHeaderNavReturn {
         "revisions-report",
         "new",
       ].includes(segments[2]);
+    const isProgressReportDetailRoute =
+      segments.length >= 3 &&
+      /^\d+$/.test(segments[0]) &&
+      segments[1] === "progress-reports" &&
+      /^[0-9a-f-]{36}$/i.test(segments[2]);
     const isTestRunDetailRoute =
       segments.length >= 3 &&
       segments[0] === "testing" &&
@@ -387,6 +394,8 @@ export function useHeaderNav(): UseHeaderNavReturn {
         label = drawingTitle || "Drawing";
       } else if (isTestRunDetailRoute && index === 2) {
         label = testRunTitle || "Run";
+      } else if (isProgressReportDetailRoute && index === 2) {
+        label = progressReportTitle || "Progress Report";
       } else if (index === 0 && segment === "directory") {
         // Global directory routes (/directory/vendors, /directory/clients, etc.)
         // — not project-scoped, so label as Company Directory
@@ -436,7 +445,7 @@ export function useHeaderNav(): UseHeaderNavReturn {
     });
 
     return crumbs;
-  }, [pathname, companyTitle, vendorTitle, contactTitle, currentProject, meetingTitle, globalMeetingTitle, primeContractTitle, commitmentTitle, primePcoTitle, changeEventTitle, primeCoTitle, commitmentCoTitle, invoiceTitle, rfiTitle, submittalTitle, subcontractorInvoiceInfo, drawingTitle, testRunTitle]);
+  }, [pathname, companyTitle, vendorTitle, contactTitle, currentProject, meetingTitle, globalMeetingTitle, primeContractTitle, commitmentTitle, primePcoTitle, changeEventTitle, primeCoTitle, commitmentCoTitle, invoiceTitle, rfiTitle, submittalTitle, subcontractorInvoiceInfo, drawingTitle, testRunTitle, progressReportTitle]);
   useEffect(() => {
     const segments = pathname?.split("/").filter(Boolean) ?? [];
     const isMeetingDetailRoute =
@@ -597,6 +606,48 @@ export function useHeaderNav(): UseHeaderNavReturn {
         }
       } catch {
         // Best-effort; raw "Run" fallback is fine
+      }
+    };
+
+    fetchTitle();
+    return () => { isActive = false; };
+  }, [pathname]);
+
+  useEffect(() => {
+    const segments = pathname?.split("/").filter(Boolean) ?? [];
+    const isProgressReportDetail =
+      segments.length >= 3 &&
+      /^\d+$/.test(segments[0]) &&
+      segments[1] === "progress-reports" &&
+      /^[0-9a-f-]{36}$/i.test(segments[2]);
+
+    if (!isProgressReportDetail) {
+      setProgressReportTitle(null);
+      return;
+    }
+
+    const reportId = segments[2];
+    const cached = progressReportTitleCache.get(reportId);
+    if (cached) {
+      setProgressReportTitle(cached);
+      return;
+    }
+
+    let isActive = true;
+    const fetchTitle = async () => {
+      try {
+        const data = await apiFetch<{ report?: { title?: unknown } }>(
+          `/api/projects/${segments[0]}/progress-reports/${reportId}`,
+        );
+        const title = typeof data?.report?.title === "string" && data.report.title.length > 0
+          ? data.report.title
+          : null;
+        if (isActive && title) {
+          progressReportTitleCache.set(reportId, title);
+          setProgressReportTitle(title);
+        }
+      } catch {
+        // Best-effort; "Progress Report" fallback is fine
       }
     };
 

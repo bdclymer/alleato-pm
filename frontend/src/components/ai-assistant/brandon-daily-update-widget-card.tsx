@@ -89,17 +89,38 @@ function Section({
                   {item.recommendedAction}
                 </div>
               ) : null}
-              {item.sourceUrl ? (
-                <div className="mt-3">
-                  <a
-                    href={item.sourceUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1 text-xs font-medium text-foreground underline-offset-4 hover:underline"
-                  >
-                    Open source
-                    <ExternalLink className="h-3 w-3" />
-                  </a>
+              {(Array.isArray(item.citations) && item.citations.length > 0) || item.sourceUrl ? (
+                <div className="mt-3 space-y-1">
+                  {(Array.isArray(item.citations) && item.citations.length > 0
+                    ? item.citations
+                    : [{
+                        source: item.source,
+                        sourceDetail: item.sourceDetail,
+                        sourceUrl: item.sourceUrl,
+                        sourceId: item.sourceId,
+                        evidence: item.evidence,
+                        date: item.date,
+                      }]
+                  ).map((citation, idx) => (
+                    <div
+                      key={`${citation.sourceId ?? citation.sourceUrl ?? citation.sourceDetail}-${idx}`}
+                      className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground"
+                    >
+                      <span className="font-medium text-foreground">{citation.source}</span>
+                      {citation.sourceDetail ? <span>· {citation.sourceDetail}</span> : null}
+                      {citation.sourceUrl ? (
+                        <a
+                          href={citation.sourceUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1 font-medium text-foreground underline-offset-4 hover:underline"
+                        >
+                          View source
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      ) : null}
+                    </div>
+                  ))}
                 </div>
               ) : null}
             </article>

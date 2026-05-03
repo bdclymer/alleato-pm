@@ -22,7 +22,7 @@ type FormValues = z.infer<typeof schema>;
 
 export default function NewDailyLogPage() {
   const router = useRouter();
-  const params = useParams();
+  const params = useParams() ?? {};
   const projectId = Number(params.projectId);
 
   const {

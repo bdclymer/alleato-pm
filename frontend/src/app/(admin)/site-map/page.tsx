@@ -472,8 +472,9 @@ function buildGroupedItems(
 // ── Page component ──────────────────────────────────────────────────────────
 
 export default function SitemapPage() {
-  const searchParams = useSearchParams();
-  const pathname = usePathname();
+  const rawSearchParams = useSearchParams();
+  const searchParams = rawSearchParams ?? new URLSearchParams();
+  const pathname = usePathname() ?? "";
   const router = useRouter();
   const currentTab = parseSitemapTab(searchParams.get("tab"));
 
@@ -520,7 +521,7 @@ export default function SitemapPage() {
 
   const tableState = useUnifiedTableState({
     entityKey: "sitemap",
-    searchParams,
+    searchParams: rawSearchParams,
     pathname,
     router,
     defaults: {

@@ -30,7 +30,7 @@ const tabs = (projectId: string) => [
 
 
 export default function DrawingsRevisionsReportPage() {
-  const params = useParams<{ projectId: string }>();
+  const params = useParams<{ projectId: string }>() ?? { projectId: "" };
   const projectId = params.projectId ?? "";
   const [search, setSearch] = useState("");
 

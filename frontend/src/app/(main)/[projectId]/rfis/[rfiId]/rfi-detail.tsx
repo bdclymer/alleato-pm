@@ -535,7 +535,7 @@ export function RfiDetail({ rfi, projectId, isEditing = false }: RfiDetailProps)
       </div>
 
       {/* Right: metadata sidebar */}
-      <div className="rounded-lg bg-light p-6">
+      <div className="rounded-md bg-muted/50 p-6 shadow-panel">
         {/* Details */}
         <SectionLabel>Details</SectionLabel>
         <div className="mt-3 divide-y divide-border/40">

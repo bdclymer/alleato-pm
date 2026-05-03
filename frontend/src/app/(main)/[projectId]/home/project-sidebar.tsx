@@ -54,7 +54,7 @@ export function ProjectSidebar({
   ...props
 }: ProjectSidebarProps) {
   const router = useRouter();
-  const params = useParams();
+  const params = useParams() ?? {};
   const projectId = params.projectId as string;
   const hasPrimeContract = projectSteps.some(
     (step) => step.id === "prime-contract" && step.completed,

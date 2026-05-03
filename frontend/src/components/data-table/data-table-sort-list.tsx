@@ -196,7 +196,6 @@ export function DataTableSortList<TData>({
         >
           <div className="flex flex-col gap-1">
             <SectionRuleHeading
-              id={labelId}
               label={sorting.length > 0 ? "Sort by" : "No sorting applied"}
               className="mb-0"
             />

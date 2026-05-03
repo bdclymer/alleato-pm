@@ -60,7 +60,7 @@ async function flushOutboundAuditLogs(
 
   const CHUNK_SIZE = 200;
   for (let i = 0; i < rows.length; i += CHUNK_SIZE) {
-    const chunk: OutboundAuditLogInsert[] = rows.slice(i, i + CHUNK_SIZE);
+    const chunk: OutboundAuditLogInsert[] = rows.slice(i, i + CHUNK_SIZE) as unknown as OutboundAuditLogInsert[];
     const { error } = await supabase
       .from("acumatica_outbound_audit_logs")
       .insert(chunk);

@@ -386,8 +386,9 @@ export function DocumentMetadataClient({
   items: initialItems,
   errorMessage,
 }: DocumentMetadataClientProps) {
-  const searchParams = useSearchParams();
-  const pathname = usePathname();
+  const rawSearchParams = useSearchParams();
+  const searchParams = rawSearchParams ?? new URLSearchParams();
+  const pathname = usePathname() ?? "";
   const router = useRouter();
 
   const [items, setItems] = React.useState(initialItems);
@@ -501,7 +502,7 @@ export function DocumentMetadataClient({
 
   const tableState = useUnifiedTableState({
     entityKey: "document-metadata",
-    searchParams,
+    searchParams: rawSearchParams,
     pathname,
     router,
     defaults: {

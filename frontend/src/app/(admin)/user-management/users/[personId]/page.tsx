@@ -22,7 +22,7 @@ import type { GranularFlag } from "@/lib/permissions-shared";
 export default function PermissionUserDetailPage() {
   const router = useRouter();
   const qc = useQueryClient();
-  const { personId } = useParams<{ personId: string }>();
+  const { personId } = useParams<{ personId: string }>() ?? { personId: "" };
 
   const usersQuery = useQuery({
     queryKey: ["permission-users"],

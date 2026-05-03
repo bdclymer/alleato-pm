@@ -740,3 +740,26 @@ export async function saveProgressReport({
 
   return getProgressReportDetail(projectId, reportId);
 }
+
+export async function deleteProgressReport(
+  projectId: number,
+  reportId: string,
+): Promise<void> {
+  const db = createServiceClient();
+
+  const { error: deletePhotosError } = await db
+    .from("project_progress_report_photos")
+    .delete()
+    .eq("progress_report_id", reportId)
+    .eq("project_id", projectId);
+
+  if (deletePhotosError) throw new Error(deletePhotosError.message);
+
+  const { error } = await db
+    .from("project_progress_reports")
+    .delete()
+    .eq("id", reportId)
+    .eq("project_id", projectId);
+
+  if (error) throw new Error(error.message);
+}

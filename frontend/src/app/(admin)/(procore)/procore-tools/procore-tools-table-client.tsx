@@ -270,7 +270,8 @@ export function ProcoreToolsTableClient({
   tools,
 }: ProcoreToolsTableClientProps): ReactElement {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const rawSearchParams = useSearchParams();
+  const searchParams = rawSearchParams ?? new URLSearchParams();
   const router = useRouter();
 
   const initialFilters: Record<string, FilterValue> = {
@@ -280,7 +281,7 @@ export function ProcoreToolsTableClient({
 
   const tableState = useUnifiedTableState({
     entityKey: "procore-tools",
-    searchParams,
+    searchParams: rawSearchParams,
     pathname,
     router,
     defaults: {

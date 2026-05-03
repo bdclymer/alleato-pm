@@ -71,6 +71,23 @@ export function useCreateProgressReport(projectId: number) {
   });
 }
 
+export function useDeleteProgressReport() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ projectId, reportId }: { projectId: number; reportId: string }) =>
+      apiFetch(`/api/projects/${projectId}/progress-reports/${reportId}`, {
+        method: "DELETE",
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: progressReportKeys.globalList() });
+    },
+    onError: (error: Error) => {
+      toast.error("Could not delete progress report", { description: error.message });
+    },
+  });
+}
+
 export function useUpdateProgressReport(projectId: number, reportId: string) {
   const queryClient = useQueryClient();
 

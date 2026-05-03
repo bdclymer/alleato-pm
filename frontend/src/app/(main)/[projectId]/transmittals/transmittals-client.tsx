@@ -53,10 +53,10 @@ function toTableRow(item: TransmittalSummary): TransmittalTableRow {
 }
 
 export default function TransmittalsClient(): ReactElement {
-  const params = useParams<{ projectId: string }>();
+  const params = useParams<{ projectId: string }>() ?? { projectId: "" };
   const pathname = usePathname();
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = (useSearchParams() ?? new URLSearchParams()) as NonNullable<ReturnType<typeof useSearchParams>>;
 
   const projectId = parseInt(params.projectId ?? "", 10);
   const activeTab = searchParams.get("tab") || "items";

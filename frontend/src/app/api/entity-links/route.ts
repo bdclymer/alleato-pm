@@ -168,7 +168,7 @@ export async function GET(request: Request) {
       const { data: targets } = await dynamicSupabase
         .from(sourceTable)
         .select(`id, ${titleColumn}`)
-        .in("id", targetIds);
+        .in("id", targetIds as (string | number)[]);
 
       const targetMap = new Map<string | number, string>();
       for (const t of targets ?? []) {

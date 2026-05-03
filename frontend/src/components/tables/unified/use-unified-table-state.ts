@@ -8,8 +8,8 @@ export type FilterValue = string | number | boolean | string[] | null | undefine
 
 export interface UnifiedTableStateOptions {
   entityKey: string;
-  searchParams: ReadonlyURLSearchParams;
-  pathname: string;
+  searchParams: ReadonlyURLSearchParams | null;
+  pathname: string | null;
   router: { replace: (url: string) => void };
   defaults: {
     view: ViewMode;
@@ -50,11 +50,13 @@ export interface UnifiedTableState {
 
 export function useUnifiedTableState({
   entityKey,
-  searchParams,
-  pathname,
+  searchParams: searchParamsRaw,
+  pathname: pathnameRaw,
   router,
   defaults,
 }: UnifiedTableStateOptions): UnifiedTableState {
+  const searchParams = searchParamsRaw ?? new URLSearchParams();
+  const pathname = pathnameRaw ?? "";
   const allowedViews = React.useMemo<ViewMode[]>(
     () =>
       defaults.allowedViews && defaults.allowedViews.length > 0

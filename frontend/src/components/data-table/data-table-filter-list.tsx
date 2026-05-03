@@ -256,7 +256,6 @@ export function DataTableFilterList<TData>({
         >
           <div className="flex flex-col gap-1">
             <SectionRuleHeading
-              id={labelId}
               label={filters.length > 0 ? "Filters" : "No filters applied"}
               className="mb-0"
             />

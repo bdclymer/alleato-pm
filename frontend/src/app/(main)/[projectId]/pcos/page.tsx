@@ -202,10 +202,10 @@ type FilterState = Record<string, FilterValue>;
 // =============================================================================
 
 export default function PCOListPage() {
-  const params = useParams<{ projectId: string }>();
+  const params = useParams<{ projectId: string }>() ?? { projectId: "" };
   const pathname = usePathname();
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = (useSearchParams() ?? new URLSearchParams()) as NonNullable<ReturnType<typeof useSearchParams>>;
   const projectId = params.projectId ?? "";
 
   const initialFilters: FilterState = {

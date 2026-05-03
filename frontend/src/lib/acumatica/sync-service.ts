@@ -451,8 +451,8 @@ export async function syncDirectCosts(
         const { data: insertedCost, error: insertError } = await supabase.from("direct_costs").insert({
           ...fields,
           project_id: projectId,
-          created_by_user_id: userId ?? "system",
-          updated_by_user_id: userId ?? "system",
+          created_by_user_id: userId ?? "",
+          updated_by_user_id: userId ?? "",
         }).select("id").single();
         if (insertError || !insertedCost) {
           result.errors.push(`${refNbr}: ${insertError?.message ?? "Insert failed"}`);
