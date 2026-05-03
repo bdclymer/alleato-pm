@@ -57,15 +57,15 @@ export interface WorkspaceArtifact {
 // Helpers
 // ---------------------------------------------------------------------------
 
-/** Returns "Xm ago", "Xh ago", or "Xd ago" */
+/** Returns "just now", "Xm ago", "Xh ago", or "Xd ago" */
 export function timeSince(isoString: string): string {
-  const diffMs = Date.now() - new Date(isoString).getTime();
+  const diffMs = Math.max(0, Date.now() - new Date(isoString).getTime());
   const diffMin = Math.floor(diffMs / 60_000);
+  if (diffMin < 1) return "just now";
   if (diffMin < 60) return `${diffMin}m ago`;
   const diffHr = Math.floor(diffMin / 60);
   if (diffHr < 24) return `${diffHr}h ago`;
-  const diffDay = Math.floor(diffHr / 24);
-  return `${diffDay}d ago`;
+  return `${Math.floor(diffHr / 24)}d ago`;
 }
 
 /** Extracts a short preview string from artifact content */
@@ -186,10 +186,14 @@ export async function updateArtifact(
     .single();
 
   if (fetchError || !current) {
-    return { error: fetchError?.message ?? "Artifact not found" };
+    return { error: `Artifact fetch failed: ${fetchError?.message ?? "not found"}` };
   }
 
-  const newVersion = (current.version as number) + 1;
+  if (typeof current.version !== "number") {
+    return { error: "Artifact record has unexpected shape — version is not a number" };
+  }
+
+  const newVersion = current.version + 1;
   const updates: Record<string, unknown> = { version: newVersion };
 
   if (params.title !== undefined) updates.title = params.title;
@@ -245,7 +249,11 @@ export async function getArtifact(
     .eq("user_id", userId)
     .single();
 
-  if (error || !data) return null;
+  if (error) {
+    console.error("[workspace-artifact-service] getArtifact failed:", error.message);
+    return null;  // still return null (callers check for null), but log the error
+  }
+  if (!data) return null;
   return data as unknown as WorkspaceArtifact;
 }
 
@@ -424,16 +432,17 @@ export function buildWorkspaceContextBlock(artifacts: WorkspaceArtifact[]): stri
     "",
   ];
 
-  for (const artifact of active) {
-    const preview = extractPreview(artifact.content);
-    lines.push(
-      `- **${artifact.title}** (${artifact.artifact_type}, ${artifact.status}, v${artifact.version}, last edited ${timeSince(artifact.updated_at)})`,
-    );
-    lines.push(`  ID: \`${artifact.id}\``);
-    if (preview) {
-      lines.push(`  Preview: ${preview}`);
-    }
-    lines.push("");
+  const MAX_CHARS = 2_400;
+  let remaining = MAX_CHARS;
+  for (const a of active) {
+    if (remaining <= 0) break;
+    const preview = extractPreview(a.content);
+    const entry =
+      `- **${a.title}** (${a.artifact_type}, ${a.status}, v${a.version}, last edited ${timeSince(a.updated_at)})\n` +
+      `  ID: \`${a.id}\`\n` +
+      (preview ? `  Preview: ${preview}\n` : "");
+    lines.push(entry);
+    remaining -= entry.length;
   }
 
   lines.push(
