@@ -1,3 +1,5 @@
+Using workdir /Users/meganharrison/Documents/alleato-pm
+Initialising login role...
 export type Json =
   | string
   | number
@@ -11,6 +13,31 @@ export type Database = {
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "13.0.4"
+  }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
   public: {
     Tables: {
@@ -2317,6 +2344,13 @@ export type Database = {
             foreignKeyName: "ai_memories_meeting_id_fkey"
             columns: ["meeting_id"]
             isOneToOne: false
+            referencedRelation: "document_metadata_brandon_to_friday"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_memories_meeting_id_fkey"
+            columns: ["meeting_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_emails"
             referencedColumns: ["id"]
           },
@@ -2346,6 +2380,13 @@ export type Database = {
             columns: ["meeting_id"]
             isOneToOne: false
             referencedRelation: "document_metadata_typed"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_memories_meeting_id_fkey"
+            columns: ["meeting_id"]
+            isOneToOne: false
+            referencedRelation: "vw_friday_participants"
             referencedColumns: ["id"]
           },
           {
@@ -9021,6 +9062,13 @@ export type Database = {
             foreignKeyName: "document_attribution_candidates_source_document_id_fkey"
             columns: ["source_document_id"]
             isOneToOne: false
+            referencedRelation: "document_metadata_brandon_to_friday"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_attribution_candidates_source_document_id_fkey"
+            columns: ["source_document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_emails"
             referencedColumns: ["id"]
           },
@@ -9050,6 +9098,13 @@ export type Database = {
             columns: ["source_document_id"]
             isOneToOne: false
             referencedRelation: "document_metadata_typed"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_attribution_candidates_source_document_id_fkey"
+            columns: ["source_document_id"]
+            isOneToOne: false
+            referencedRelation: "vw_friday_participants"
             referencedColumns: ["id"]
           },
         ]
@@ -9196,6 +9251,13 @@ export type Database = {
             foreignKeyName: "document_group_access_document_id_fkey"
             columns: ["document_id"]
             isOneToOne: false
+            referencedRelation: "document_metadata_brandon_to_friday"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_group_access_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_emails"
             referencedColumns: ["id"]
           },
@@ -9225,6 +9287,13 @@ export type Database = {
             columns: ["document_id"]
             isOneToOne: false
             referencedRelation: "document_metadata_typed"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_group_access_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "vw_friday_participants"
             referencedColumns: ["id"]
           },
           {
@@ -9336,6 +9405,13 @@ export type Database = {
             foreignKeyName: "document_insights_document_id_fkey"
             columns: ["document_id"]
             isOneToOne: false
+            referencedRelation: "document_metadata_brandon_to_friday"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_insights_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_emails"
             referencedColumns: ["id"]
           },
@@ -9365,6 +9441,13 @@ export type Database = {
             columns: ["document_id"]
             isOneToOne: false
             referencedRelation: "document_metadata_typed"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_insights_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "vw_friday_participants"
             referencedColumns: ["id"]
           },
         ]
@@ -9666,6 +9749,13 @@ export type Database = {
             foreignKeyName: "document_rows_dataset_id_fkey"
             columns: ["dataset_id"]
             isOneToOne: false
+            referencedRelation: "document_metadata_brandon_to_friday"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_rows_dataset_id_fkey"
+            columns: ["dataset_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_emails"
             referencedColumns: ["id"]
           },
@@ -9695,6 +9785,13 @@ export type Database = {
             columns: ["dataset_id"]
             isOneToOne: false
             referencedRelation: "document_metadata_typed"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_rows_dataset_id_fkey"
+            columns: ["dataset_id"]
+            isOneToOne: false
+            referencedRelation: "vw_friday_participants"
             referencedColumns: ["id"]
           },
         ]
@@ -9727,6 +9824,13 @@ export type Database = {
             foreignKeyName: "document_user_access_document_id_fkey"
             columns: ["document_id"]
             isOneToOne: false
+            referencedRelation: "document_metadata_brandon_to_friday"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_user_access_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_emails"
             referencedColumns: ["id"]
           },
@@ -9756,6 +9860,13 @@ export type Database = {
             columns: ["document_id"]
             isOneToOne: false
             referencedRelation: "document_metadata_typed"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_user_access_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "vw_friday_participants"
             referencedColumns: ["id"]
           },
         ]
@@ -9833,6 +9944,13 @@ export type Database = {
             foreignKeyName: "documents_file_id_fkey"
             columns: ["file_id"]
             isOneToOne: false
+            referencedRelation: "document_metadata_brandon_to_friday"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_file_id_fkey"
+            columns: ["file_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_emails"
             referencedColumns: ["id"]
           },
@@ -9862,6 +9980,13 @@ export type Database = {
             columns: ["file_id"]
             isOneToOne: false
             referencedRelation: "document_metadata_typed"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_file_id_fkey"
+            columns: ["file_id"]
+            isOneToOne: false
+            referencedRelation: "vw_friday_participants"
             referencedColumns: ["id"]
           },
           {
@@ -10948,6 +11073,8 @@ export type Database = {
       }
       email_attachments: {
         Row: {
+          attachment_category: string | null
+          attachment_type: string | null
           checksum_sha256: string | null
           content: string | null
           content_type: string | null
@@ -10962,6 +11089,8 @@ export type Database = {
           project_sync_id: string | null
         }
         Insert: {
+          attachment_category?: string | null
+          attachment_type?: string | null
           checksum_sha256?: string | null
           content?: string | null
           content_type?: string | null
@@ -10976,6 +11105,8 @@ export type Database = {
           project_sync_id?: string | null
         }
         Update: {
+          attachment_category?: string | null
+          attachment_type?: string | null
           checksum_sha256?: string | null
           content?: string | null
           content_type?: string | null
@@ -11881,6 +12012,13 @@ export type Database = {
             foreignKeyName: "fireflies_ingestion_jobs_metadata_id_fkey"
             columns: ["metadata_id"]
             isOneToOne: false
+            referencedRelation: "document_metadata_brandon_to_friday"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fireflies_ingestion_jobs_metadata_id_fkey"
+            columns: ["metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_emails"
             referencedColumns: ["id"]
           },
@@ -11910,6 +12048,13 @@ export type Database = {
             columns: ["metadata_id"]
             isOneToOne: false
             referencedRelation: "document_metadata_typed"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fireflies_ingestion_jobs_metadata_id_fkey"
+            columns: ["metadata_id"]
+            isOneToOne: false
+            referencedRelation: "vw_friday_participants"
             referencedColumns: ["id"]
           },
         ]
@@ -12885,6 +13030,13 @@ export type Database = {
             foreignKeyName: "ingestion_jobs_document_id_fkey"
             columns: ["document_id"]
             isOneToOne: false
+            referencedRelation: "document_metadata_brandon_to_friday"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ingestion_jobs_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_emails"
             referencedColumns: ["id"]
           },
@@ -12914,6 +13066,13 @@ export type Database = {
             columns: ["document_id"]
             isOneToOne: false
             referencedRelation: "document_metadata_typed"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ingestion_jobs_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "vw_friday_participants"
             referencedColumns: ["id"]
           },
         ]
@@ -13138,6 +13297,13 @@ export type Database = {
             foreignKeyName: "insight_card_evidence_source_document_id_fkey"
             columns: ["source_document_id"]
             isOneToOne: false
+            referencedRelation: "document_metadata_brandon_to_friday"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "insight_card_evidence_source_document_id_fkey"
+            columns: ["source_document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_emails"
             referencedColumns: ["id"]
           },
@@ -13167,6 +13333,13 @@ export type Database = {
             columns: ["source_document_id"]
             isOneToOne: false
             referencedRelation: "document_metadata_typed"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "insight_card_evidence_source_document_id_fkey"
+            columns: ["source_document_id"]
+            isOneToOne: false
+            referencedRelation: "vw_friday_participants"
             referencedColumns: ["id"]
           },
         ]
@@ -13370,6 +13543,13 @@ export type Database = {
             foreignKeyName: "insights_metadata_id_fkey"
             columns: ["metadata_id"]
             isOneToOne: false
+            referencedRelation: "document_metadata_brandon_to_friday"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "insights_metadata_id_fkey"
+            columns: ["metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_emails"
             referencedColumns: ["id"]
           },
@@ -13399,6 +13579,13 @@ export type Database = {
             columns: ["metadata_id"]
             isOneToOne: false
             referencedRelation: "document_metadata_typed"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "insights_metadata_id_fkey"
+            columns: ["metadata_id"]
+            isOneToOne: false
+            referencedRelation: "vw_friday_participants"
             referencedColumns: ["id"]
           },
           {
@@ -14279,6 +14466,13 @@ export type Database = {
             foreignKeyName: "meeting_preps_meeting_id_fkey"
             columns: ["meeting_id"]
             isOneToOne: true
+            referencedRelation: "document_metadata_brandon_to_friday"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_preps_meeting_id_fkey"
+            columns: ["meeting_id"]
+            isOneToOne: true
             referencedRelation: "document_metadata_emails"
             referencedColumns: ["id"]
           },
@@ -14308,6 +14502,13 @@ export type Database = {
             columns: ["meeting_id"]
             isOneToOne: true
             referencedRelation: "document_metadata_typed"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_preps_meeting_id_fkey"
+            columns: ["meeting_id"]
+            isOneToOne: true
+            referencedRelation: "vw_friday_participants"
             referencedColumns: ["id"]
           },
           {
@@ -14440,6 +14641,13 @@ export type Database = {
             foreignKeyName: "meeting_segments_metadata_id_fkey"
             columns: ["metadata_id"]
             isOneToOne: false
+            referencedRelation: "document_metadata_brandon_to_friday"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_segments_metadata_id_fkey"
+            columns: ["metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_emails"
             referencedColumns: ["id"]
           },
@@ -14469,6 +14677,13 @@ export type Database = {
             columns: ["metadata_id"]
             isOneToOne: false
             referencedRelation: "document_metadata_typed"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_segments_metadata_id_fkey"
+            columns: ["metadata_id"]
+            isOneToOne: false
+            referencedRelation: "vw_friday_participants"
             referencedColumns: ["id"]
           },
         ]
@@ -15856,6 +16071,13 @@ export type Database = {
             foreignKeyName: "packet_refresh_jobs_trigger_source_document_id_fkey"
             columns: ["trigger_source_document_id"]
             isOneToOne: false
+            referencedRelation: "document_metadata_brandon_to_friday"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "packet_refresh_jobs_trigger_source_document_id_fkey"
+            columns: ["trigger_source_document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_emails"
             referencedColumns: ["id"]
           },
@@ -15885,6 +16107,13 @@ export type Database = {
             columns: ["trigger_source_document_id"]
             isOneToOne: false
             referencedRelation: "document_metadata_typed"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "packet_refresh_jobs_trigger_source_document_id_fkey"
+            columns: ["trigger_source_document_id"]
+            isOneToOne: false
+            referencedRelation: "vw_friday_participants"
             referencedColumns: ["id"]
           },
         ]
@@ -22698,6 +22927,13 @@ export type Database = {
             foreignKeyName: "rfis_response_document_metadata_id_fkey"
             columns: ["response_document_metadata_id"]
             isOneToOne: false
+            referencedRelation: "document_metadata_brandon_to_friday"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rfis_response_document_metadata_id_fkey"
+            columns: ["response_document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_emails"
             referencedColumns: ["id"]
           },
@@ -22727,6 +22963,13 @@ export type Database = {
             columns: ["response_document_metadata_id"]
             isOneToOne: false
             referencedRelation: "document_metadata_typed"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rfis_response_document_metadata_id_fkey"
+            columns: ["response_document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "vw_friday_participants"
             referencedColumns: ["id"]
           },
           {
@@ -22747,6 +22990,13 @@ export type Database = {
             foreignKeyName: "rfis_source_document_metadata_id_fkey"
             columns: ["source_document_metadata_id"]
             isOneToOne: false
+            referencedRelation: "document_metadata_brandon_to_friday"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rfis_source_document_metadata_id_fkey"
+            columns: ["source_document_metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_emails"
             referencedColumns: ["id"]
           },
@@ -22776,6 +23026,13 @@ export type Database = {
             columns: ["source_document_metadata_id"]
             isOneToOne: false
             referencedRelation: "document_metadata_typed"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rfis_source_document_metadata_id_fkey"
+            columns: ["source_document_metadata_id"]
+            isOneToOne: false
+            referencedRelation: "vw_friday_participants"
             referencedColumns: ["id"]
           },
           {
@@ -23316,6 +23573,13 @@ export type Database = {
             foreignKeyName: "source_intelligence_jobs_source_document_id_fkey"
             columns: ["source_document_id"]
             isOneToOne: false
+            referencedRelation: "document_metadata_brandon_to_friday"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "source_intelligence_jobs_source_document_id_fkey"
+            columns: ["source_document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_emails"
             referencedColumns: ["id"]
           },
@@ -23345,6 +23609,13 @@ export type Database = {
             columns: ["source_document_id"]
             isOneToOne: false
             referencedRelation: "document_metadata_typed"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "source_intelligence_jobs_source_document_id_fkey"
+            columns: ["source_document_id"]
+            isOneToOne: false
+            referencedRelation: "vw_friday_participants"
             referencedColumns: ["id"]
           },
           {
@@ -23506,6 +23777,13 @@ export type Database = {
             foreignKeyName: "source_signal_candidates_source_document_id_fkey"
             columns: ["source_document_id"]
             isOneToOne: false
+            referencedRelation: "document_metadata_brandon_to_friday"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "source_signal_candidates_source_document_id_fkey"
+            columns: ["source_document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_emails"
             referencedColumns: ["id"]
           },
@@ -23535,6 +23813,13 @@ export type Database = {
             columns: ["source_document_id"]
             isOneToOne: false
             referencedRelation: "document_metadata_typed"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "source_signal_candidates_source_document_id_fkey"
+            columns: ["source_document_id"]
+            isOneToOne: false
+            referencedRelation: "vw_friday_participants"
             referencedColumns: ["id"]
           },
           {
@@ -26675,6 +26960,13 @@ export type Database = {
             foreignKeyName: "tasks_metadata_id_fkey"
             columns: ["metadata_id"]
             isOneToOne: false
+            referencedRelation: "document_metadata_brandon_to_friday"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_metadata_id_fkey"
+            columns: ["metadata_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_emails"
             referencedColumns: ["id"]
           },
@@ -26704,6 +26996,13 @@ export type Database = {
             columns: ["metadata_id"]
             isOneToOne: false
             referencedRelation: "document_metadata_typed"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_metadata_id_fkey"
+            columns: ["metadata_id"]
+            isOneToOne: false
+            referencedRelation: "vw_friday_participants"
             referencedColumns: ["id"]
           },
           {
@@ -26836,6 +27135,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      teams_link_codes: {
+        Row: {
+          code: string
+          created_at: string
+          expires_at: string
+          id: number
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          expires_at?: string
+          id?: never
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          expires_at?: string
+          id?: never
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       telegram_link_codes: {
         Row: {
@@ -28324,6 +28650,13 @@ export type Database = {
             foreignKeyName: "document_insights_document_id_fkey"
             columns: ["document_id"]
             isOneToOne: false
+            referencedRelation: "document_metadata_brandon_to_friday"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_insights_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
             referencedRelation: "document_metadata_emails"
             referencedColumns: ["id"]
           },
@@ -28353,6 +28686,13 @@ export type Database = {
             columns: ["document_id"]
             isOneToOne: false
             referencedRelation: "document_metadata_typed"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_insights_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "vw_friday_participants"
             referencedColumns: ["id"]
           },
         ]
@@ -28780,6 +29120,275 @@ export type Database = {
             columns: ["vendor_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      document_metadata_brandon_to_friday: {
+        Row: {
+          access_level: string | null
+          action_items: string | null
+          analytics: Json | null
+          audio: string | null
+          bullet_points: string | null
+          calendar_type: string | null
+          captured_at: string | null
+          category: string | null
+          channels: Json | null
+          content: string | null
+          content_hash: string | null
+          created_at: string | null
+          date: string | null
+          decisions: Json | null
+          description: string | null
+          division: string | null
+          duration_minutes: number | null
+          extended_sections: Json | null
+          file_id: number | null
+          file_name: string | null
+          file_path: string | null
+          fireflies_id: string | null
+          fireflies_link: string | null
+          host_email: string | null
+          id: string | null
+          is_silent_meeting: boolean | null
+          key_topics: Json | null
+          keywords: string[] | null
+          meeting_attendance: Json | null
+          meeting_attendees: Json | null
+          meeting_link: string | null
+          meeting_type: string | null
+          notes: string | null
+          organizer_email: string | null
+          outline: string | null
+          overview: string | null
+          participants: string | null
+          participants_array: string[] | null
+          phase: string | null
+          privacy: string | null
+          project: string | null
+          project_id: number | null
+          raw_text: string | null
+          sentiment: Json | null
+          source: string | null
+          source_drive_id: string | null
+          source_etag: string | null
+          source_item_id: string | null
+          source_last_modified_at: string | null
+          source_metadata: Json | null
+          source_path: string | null
+          source_site_id: string | null
+          source_size: number | null
+          source_system: string | null
+          source_web_url: string | null
+          speakers: Json | null
+          status: string | null
+          storage_bucket: string | null
+          summary: string | null
+          summary_bullets: Json | null
+          summary_embedding: unknown
+          tags: string | null
+          title: string | null
+          topics_discussed: string[] | null
+          trade: string | null
+          transcript_chapters: string | null
+          type: string | null
+          url: string | null
+          video: string | null
+          workflow_target: string | null
+        }
+        Insert: {
+          access_level?: string | null
+          action_items?: string | null
+          analytics?: Json | null
+          audio?: string | null
+          bullet_points?: string | null
+          calendar_type?: string | null
+          captured_at?: string | null
+          category?: string | null
+          channels?: Json | null
+          content?: string | null
+          content_hash?: string | null
+          created_at?: string | null
+          date?: string | null
+          decisions?: Json | null
+          description?: string | null
+          division?: string | null
+          duration_minutes?: number | null
+          extended_sections?: Json | null
+          file_id?: number | null
+          file_name?: string | null
+          file_path?: string | null
+          fireflies_id?: string | null
+          fireflies_link?: string | null
+          host_email?: string | null
+          id?: string | null
+          is_silent_meeting?: boolean | null
+          key_topics?: Json | null
+          keywords?: string[] | null
+          meeting_attendance?: Json | null
+          meeting_attendees?: Json | null
+          meeting_link?: string | null
+          meeting_type?: string | null
+          notes?: string | null
+          organizer_email?: string | null
+          outline?: string | null
+          overview?: string | null
+          participants?: string | null
+          participants_array?: string[] | null
+          phase?: string | null
+          privacy?: string | null
+          project?: string | null
+          project_id?: number | null
+          raw_text?: string | null
+          sentiment?: Json | null
+          source?: string | null
+          source_drive_id?: string | null
+          source_etag?: string | null
+          source_item_id?: string | null
+          source_last_modified_at?: string | null
+          source_metadata?: Json | null
+          source_path?: string | null
+          source_site_id?: string | null
+          source_size?: number | null
+          source_system?: string | null
+          source_web_url?: string | null
+          speakers?: Json | null
+          status?: string | null
+          storage_bucket?: string | null
+          summary?: string | null
+          summary_bullets?: Json | null
+          summary_embedding?: unknown
+          tags?: string | null
+          title?: string | null
+          topics_discussed?: string[] | null
+          trade?: string | null
+          transcript_chapters?: string | null
+          type?: string | null
+          url?: string | null
+          video?: string | null
+          workflow_target?: string | null
+        }
+        Update: {
+          access_level?: string | null
+          action_items?: string | null
+          analytics?: Json | null
+          audio?: string | null
+          bullet_points?: string | null
+          calendar_type?: string | null
+          captured_at?: string | null
+          category?: string | null
+          channels?: Json | null
+          content?: string | null
+          content_hash?: string | null
+          created_at?: string | null
+          date?: string | null
+          decisions?: Json | null
+          description?: string | null
+          division?: string | null
+          duration_minutes?: number | null
+          extended_sections?: Json | null
+          file_id?: number | null
+          file_name?: string | null
+          file_path?: string | null
+          fireflies_id?: string | null
+          fireflies_link?: string | null
+          host_email?: string | null
+          id?: string | null
+          is_silent_meeting?: boolean | null
+          key_topics?: Json | null
+          keywords?: string[] | null
+          meeting_attendance?: Json | null
+          meeting_attendees?: Json | null
+          meeting_link?: string | null
+          meeting_type?: string | null
+          notes?: string | null
+          organizer_email?: string | null
+          outline?: string | null
+          overview?: string | null
+          participants?: string | null
+          participants_array?: string[] | null
+          phase?: string | null
+          privacy?: string | null
+          project?: string | null
+          project_id?: number | null
+          raw_text?: string | null
+          sentiment?: Json | null
+          source?: string | null
+          source_drive_id?: string | null
+          source_etag?: string | null
+          source_item_id?: string | null
+          source_last_modified_at?: string | null
+          source_metadata?: Json | null
+          source_path?: string | null
+          source_site_id?: string | null
+          source_size?: number | null
+          source_system?: string | null
+          source_web_url?: string | null
+          speakers?: Json | null
+          status?: string | null
+          storage_bucket?: string | null
+          summary?: string | null
+          summary_bullets?: Json | null
+          summary_embedding?: unknown
+          tags?: string | null
+          title?: string | null
+          topics_discussed?: string[] | null
+          trade?: string | null
+          transcript_chapters?: string | null
+          type?: string | null
+          url?: string | null
+          video?: string | null
+          workflow_target?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_metadata_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "document_metadata_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_metadata_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_metadata_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "document_metadata_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_metadata_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_metadata_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
         ]
@@ -29970,6 +30579,22 @@ export type Database = {
           },
         ]
       }
+      emails_brandon_to_friday: {
+        Row: {
+          bcc_list: string[] | null
+          body_preview: string | null
+          cc_list: string[] | null
+          created_at: string | null
+          email_date: string | null
+          from_email: string | null
+          project_id: number | null
+          source_id: string | null
+          source_table: string | null
+          subject: string | null
+          to_list: string[] | null
+        }
+        Relationships: []
+      }
       figure_statistics: {
         Row: {
           metric: string | null
@@ -30760,6 +31385,83 @@ export type Database = {
           },
         ]
       }
+      vw_friday_participants: {
+        Row: {
+          content: string | null
+          created_at: string | null
+          id: string | null
+          participants: string | null
+          project_id: number | null
+          title: string | null
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string | null
+          id?: string | null
+          participants?: string | null
+          project_id?: number | null
+          title?: string | null
+        }
+        Update: {
+          content?: string | null
+          created_at?: string | null
+          id?: string | null
+          participants?: string | null
+          project_id?: number | null
+          title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_metadata_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "document_metadata_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_metadata_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_metadata_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "document_metadata_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_metadata_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_metadata_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       archive_task: {
@@ -31152,6 +31854,7 @@ export type Database = {
           total_count: number
         }[]
       }
+      get_email_compiler_status: { Args: never; Returns: Json }
       get_figures_by_config: {
         Args: {
           p_asrs_type: string
@@ -32654,6 +33357,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       billing_period_status: ["open", "closed", "approved"],
@@ -32720,3 +33426,4 @@ export const Constants = {
     },
   },
 } as const
+<claude-code-hint v="1" type="plugin" value="supabase@claude-plugins-official" />

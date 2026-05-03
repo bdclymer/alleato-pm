@@ -78,10 +78,21 @@ const nextConfig: NextConfig = {
     "puppeteer",
     "puppeteer-core",
     "@sparticuz/chromium",
+    // Microsoft Teams Bot Framework — native Node.js modules, heavy dep graph
+    "@chat-adapter/teams",
+    "botbuilder",
+    "botframework-connector",
+    "@azure/identity",
+    "chat",
+    "@chat-adapter/state-memory",
     // Heavy doc/API packages only used in specific admin routes
     "redoc",
     "swagger-ui-dist",
     "xlsx",
+    // OpenTelemetry + Phoenix tracing — native Node.js modules, never in client bundles
+    "@opentelemetry/sdk-node",
+    "@opentelemetry/exporter-trace-otlp-http",
+    "@arizeai/openinference-instrumentation-openai",
   ],
   webpack: (config) => {
     // Limit webpack worker parallelism to prevent OOM on Vercel's 8 GB build machines.
