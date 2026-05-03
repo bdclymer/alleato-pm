@@ -115,13 +115,20 @@ import {
   type AssistantTraceDiagnostics,
   type ToolTraceItem,
 } from "./trace-panel";
-import { SourceCitations } from "./source-citations";
 import { CrossSourceTimeline } from "./cross-source-timeline";
 import { formatStructuredMeetingList } from "./chat-formatting";
 import { AnimatedOrb } from "./animated-orb";
 import { AudioWaveform } from "./audio-waveform";
 import { BrandonDailyUpdateWidgetCard } from "./brandon-daily-update-widget-card";
 import type { BrandonDailyUpdatePacket } from "@/lib/executive/brandon-daily-update";
+import {
+  AssistantSourceEvidenceWidget,
+  AssistantWidgetRenderer,
+} from "./assistant-widget-renderer";
+import {
+  isAssistantWidgetPayload,
+  type AssistantWidgetPayload,
+} from "@/lib/ai/assistant-widgets";
 import {
   scoreResponseQuality,
   type ResponseQuality as ScoredResponseQuality,
@@ -264,6 +271,18 @@ function getBrandonDailyUpdateWidgetParts(
     const packet = (data as { packet?: BrandonDailyUpdatePacket }).packet;
     if (!packet || typeof packet !== "object") return widgets;
     widgets.push({ packet });
+    return widgets;
+  }, []);
+}
+
+function getAssistantWidgetParts(msg: UIMessage): AssistantWidgetPayload[] {
+  return msg.parts.reduce<AssistantWidgetPayload[]>((widgets, part) => {
+    if (part.type !== "data-assistant-widget") return widgets;
+    const data = (part as { data?: unknown }).data;
+    if (!data || typeof data !== "object") return widgets;
+    const widget = (data as { widget?: unknown }).widget;
+    if (!isAssistantWidgetPayload(widget)) return widgets;
+    widgets.push(widget);
     return widgets;
   }, []);
 }
@@ -1866,6 +1885,9 @@ export function ChatArea({
                 const brandonWidgetParts = isAssistant
                   ? getBrandonDailyUpdateWidgetParts(msg)
                   : [];
+                const assistantWidgetParts = isAssistant
+                  ? getAssistantWidgetParts(msg)
+                  : [];
                 const persistedTraces = toolTracesByMessageId[msg.id] ?? [];
                 const persistedSources = sourcesByMessageId[msg.id] ?? [];
                 const memoryUsage = memoryUsageByMessageId[msg.id];
@@ -1935,7 +1957,12 @@ export function ChatArea({
                 }
 
                 // Skip empty assistant messages
-                if (isAssistant && !text.trim()) {
+                if (
+                  isAssistant &&
+                  !text.trim() &&
+                  assistantWidgetParts.length === 0 &&
+                  brandonWidgetParts.length === 0
+                ) {
                   return null;
                 }
 
@@ -2034,6 +2061,16 @@ export function ChatArea({
                             </div>
                           ) : null}
 
+                          {assistantWidgetParts.map((widget) => (
+                            <AssistantWidgetRenderer
+                              key={`${msg.id}-${widget.id}`}
+                              widget={widget}
+                              selectedProjectId={selectedProjectIdProp}
+                              onSubmit={onSubmit}
+                              onEditDraft={onInputChange}
+                            />
+                          ))}
+
                           {brandonWidgetParts.map((widget, index) => (
                             <BrandonDailyUpdateWidgetCard
                               key={`${msg.id}-brandon-widget-${index}`}
@@ -2100,7 +2137,7 @@ export function ChatArea({
 
                           {/* Source citations */}
                           {persistedSources.length > 0 && (
-                            <SourceCitations sources={persistedSources} />
+                            <AssistantSourceEvidenceWidget sources={persistedSources} />
                           )}
 
                           {/* Memory usage badge intentionally hidden from the

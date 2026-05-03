@@ -73,6 +73,7 @@ import {
   type BrandonDailyUpdatePacket,
 } from "@/lib/executive/brandon-daily-update";
 import { buildBrandonDailyUpdateWidget } from "@/lib/executive/brandon-daily-update-widget";
+import { buildAssistantWidgetsFromPrompt } from "@/lib/ai/assistant-widgets";
 
 export const maxDuration = 120;
 
@@ -360,6 +361,23 @@ function writeStrategistStatus(
       timestamp: new Date().toISOString(),
     },
   } as Parameters<typeof writer.write>[0]);
+}
+
+function writeAssistantWidgetParts(
+  writer: UIMessageStreamWriter<UIMessage>,
+  widgets: ReturnType<typeof buildAssistantWidgetsFromPrompt>,
+): PersistedDataPart[] {
+  const dataParts = widgets.map((widget): PersistedDataPart => ({
+    type: "data-assistant-widget",
+    id: `assistant-widget-${widget.id}`,
+    data: { widget },
+  }));
+
+  for (const part of dataParts) {
+    writer.write(part);
+  }
+
+  return dataParts;
 }
 
 function sleep(ms: number): Promise<void> {
@@ -2657,6 +2675,33 @@ export const POST = withApiGuardrails(
           systemPrompt = `${formatExecutiveBriefPacketContext(executivePagePacket)}\n\n---\n\n${systemPrompt}`;
         }
 
+        const assistantWidgetDataParts = writeAssistantWidgetParts(
+          writer,
+          buildAssistantWidgetsFromPrompt({
+            prompt: lastUserContent,
+            selectedProjectId,
+          }),
+        );
+        if (assistantWidgetDataParts.length > 0) {
+          toolTrace.push({
+            tool: "assistantWidgetPlanner",
+            input: {
+              selectedProjectId: selectedProjectId ?? null,
+              message: lastUserContent.slice(0, 240),
+            },
+            output: {
+              widgets: assistantWidgetDataParts.map((part) => {
+                const widget = (part.data as { widget?: { type?: string; id?: string } }).widget;
+                return {
+                  id: widget?.id ?? part.id,
+                  type: widget?.type ?? part.type,
+                };
+              }),
+            },
+            timestamp: new Date().toISOString(),
+          });
+        }
+
         if (brandonDailyUpdateWidgetRequest) {
           const appAccess = await loadAppCapabilityAccessForUser(user.id);
           const canViewExecutiveBriefing =
@@ -2728,7 +2773,7 @@ export const POST = withApiGuardrails(
             projectBriefingSnapshot,
             executiveBriefingRetrieval,
             providerDecision,
-            dataParts: [dataPart],
+            dataParts: [...assistantWidgetDataParts, dataPart],
           });
 
           await supabase
@@ -2798,6 +2843,7 @@ export const POST = withApiGuardrails(
             projectBriefingSnapshot,
             executiveBriefingRetrieval,
             providerDecision,
+            dataParts: assistantWidgetDataParts,
           });
 
           await supabase
@@ -3069,6 +3115,7 @@ export const POST = withApiGuardrails(
             projectBriefingSnapshot,
             executiveBriefingRetrieval,
             providerDecision,
+            dataParts: assistantWidgetDataParts,
           });
 
           await supabase
@@ -3563,6 +3610,7 @@ export const POST = withApiGuardrails(
             projectBriefingSnapshot,
             executiveBriefingRetrieval,
             providerDecision,
+            dataParts: assistantWidgetDataParts,
           });
 
           await supabase
@@ -3867,6 +3915,7 @@ export const POST = withApiGuardrails(
           }),
           projectBriefingSnapshot,
           executiveBriefingRetrieval,
+          dataParts: assistantWidgetDataParts,
         });
 
         // Update conversation timestamp — scope to user to prevent cross-user update
