@@ -178,6 +178,20 @@ export function buildExecutorDeps({ supabase, userId }: BuildExecutorDepsInput):
     return generateBrandonDailyUpdate({ windowDays: 2 });
   };
 
+  // 8. resolveProjectFromQuery
+  //    When the planner emits project-scoped retrieval but no selectedProjectId
+  //    was provided (e.g. user typed "What's the status of Vermillion Rise?"
+  //    without selecting it from the dropdown), resolve the project from the
+  //    message text using the existing intelligence target resolver.
+  const resolveProjectFromQuery = async (
+    query: string,
+  ): Promise<{ projectId: number } | null> => {
+    if (!query.trim()) return null;
+    const target = await resolveIntelligenceTarget({ query, supabase });
+    if (!target?.projectId) return null;
+    return { projectId: target.projectId };
+  };
+
   return {
     loadIntelligencePacket,
     loadProjectSnapshot,
@@ -186,5 +200,6 @@ export function buildExecutorDeps({ supabase, userId }: BuildExecutorDepsInput):
     loadReusableBriefing,
     runSourceSpecificRag,
     buildBrandonDaily,
+    resolveProjectFromQuery,
   };
 }
