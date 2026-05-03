@@ -255,7 +255,7 @@ export const sidebarNavGroups: SidebarNavGroup[] = [
     tools: [
       { name: "Project Intelligence", path: "intelligence", icon: Brain, requiresProject: true },
       { name: "Company Directory", path: "directory/companies", icon: Building2, requiresProject: false, module: "directory" },
-      { name: "Progress Reports", path: "progress-reports", icon: FileText, requiresProject: false },
+      { name: "Progress Reports", path: "progress-reports", icon: FileText, requiresProject: true, module: "documents" as PermissionModule },
       { name: "Outlook Emails", path: "/outlook-emails", icon: Mail, requiresProject: false },
       {
         name: "Meetings",
@@ -479,6 +479,13 @@ export const headerNavGroups: HeaderNavGroup[] = [
         description: "Project files and documents",
         module: "documents",
       },
+      {
+        name: "Progress Reports",
+        path: "progress-reports",
+        requiresProject: true,
+        icon: FileText,
+        description: "Weekly client reports for this project",
+      },
     ],
     subGroups: [
       {
@@ -491,7 +498,7 @@ export const headerNavGroups: HeaderNavGroup[] = [
       },
       {
         label: "Documents",
-        toolNames: ["Photos", "Drawings", "Specifications", "Documents"],
+        toolNames: ["Photos", "Drawings", "Specifications", "Documents", "Progress Reports"],
       },
     ],
   },
@@ -578,13 +585,6 @@ export const headerNavGroups: HeaderNavGroup[] = [
         requiresProject: false,
         icon: Users,
         description: "Company-wide meetings and segments",
-      },
-      {
-        name: "Progress Reports",
-        path: "progress-reports",
-        requiresProject: false,
-        icon: FileText,
-        description: "Weekly client reports across all projects",
       },
       {
         name: "Tasks",
