@@ -6,6 +6,9 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { RfiDetail } from "./rfi-detail";
 import { RfiHeaderActions } from "./rfi-header-actions";
 
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 export default async function RfiDetailPage({
   params,
   searchParams,
@@ -27,6 +30,19 @@ export default async function RfiDetailPage({
 
   if (error) {
     console.error("RFI detail fetch error:", error);
+  }
+
+  // Resolve created_by UUID to a display name
+  if (rfi?.created_by && UUID_RE.test(rfi.created_by)) {
+    const { data: profile } = await supabase
+      .from("user_profiles")
+      .select("full_name, email")
+      .eq("id", rfi.created_by)
+      .maybeSingle();
+    if (profile) {
+      rfi.created_by =
+        profile.full_name?.trim() || profile.email || rfi.created_by;
+    }
   }
 
   return (

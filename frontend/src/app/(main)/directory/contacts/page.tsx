@@ -24,7 +24,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useConfirm } from "@/hooks/use-confirm";
 import { getDirectoryTabs } from "@/config/directory-tabs";
 import type { Database } from "@/types/database.types";
-import { ContactFormDialog } from "@/components/domain/contacts/ContactFormDialog";
+import { ContactFormSheet } from "@/components/domain/contacts/ContactFormSheet";
 import {
   UnifiedTablePage,
   useUnifiedTableState,
@@ -119,13 +119,13 @@ function buildContactTableColumns(
               value={inlineDraft.first_name}
               onChange={(event) => onInlineDraftChange("first_name", event.target.value)}
               placeholder="First name"
-              className="h-8 min-w-[120px]"
+              className="h-8 min-w-32"
             />
             <Input
               value={inlineDraft.last_name}
               onChange={(event) => onInlineDraftChange("last_name", event.target.value)}
               placeholder="Last name"
-              className="h-8 min-w-[120px]"
+              className="h-8 min-w-32"
             />
           </div>
         ) : (
@@ -943,7 +943,7 @@ export default function DirectoryContactsPage(): ReactElement {
         }}
       />
 
-      <ContactFormDialog open={dialogOpen} onOpenChange={setDialogOpen} onSuccess={fetchContacts} />
+      <ContactFormSheet open={dialogOpen} onOpenChange={setDialogOpen} onSuccess={fetchContacts} />
       {ConfirmDialog}
     </>
   );

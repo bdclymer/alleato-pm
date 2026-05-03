@@ -121,6 +121,32 @@ export async function apiFetch<T = unknown>(
 }
 
 /**
+ * Fetch wrapper with a client-side timeout.
+ * Throws an Error with a descriptive message if the request exceeds `timeoutMs`.
+ * Use for form submissions where a hung request would leave the UI stuck.
+ */
+export async function apiFetchWithTimeout<T = unknown>(
+  url: string,
+  init?: RequestInit,
+  timeoutMs = 20_000,
+): Promise<T> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await performApiFetch<T>(url, { ...init, signal: controller.signal }, (u, i) =>
+      fetch(u, i),
+    );
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new Error(`Request timed out after ${timeoutMs / 1000}s`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+/**
  * Fetch wrapper with transient route retry for dev-time module compilation races.
  * Use for idempotent GET/HEAD requests when first-hit Next.js route compilation
  * may intermittently return a temporary 500.

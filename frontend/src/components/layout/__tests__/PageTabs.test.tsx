@@ -70,7 +70,7 @@ describe("PageTabs", () => {
     expect(push).toHaveBeenCalledWith("/projects?status=active");
   });
 
-  it("renders count badges with pill styling", () => {
+  it("does not render count badges even when counts are provided", () => {
     render(
       <PageTabs
         tabs={[
@@ -80,10 +80,7 @@ describe("PageTabs", () => {
       />,
     );
 
-    expect(screen.getByText("12")).toHaveClass(
-      "rounded-full",
-      "inline-flex",
-      "h-5",
-    );
+    expect(screen.queryByText("12")).not.toBeInTheDocument();
+    expect(screen.queryByText("3")).not.toBeInTheDocument();
   });
 });

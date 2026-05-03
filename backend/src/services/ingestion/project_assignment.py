@@ -335,6 +335,14 @@ class ProjectAssigner:
 
         signals: Dict[int, Dict[str, set[str]]] = {}
 
+        contact_references = (
+            self.client.table("project_contact_references")
+            .select("project_id,person_id,company_id,status")
+            .eq("status", "active")
+            .execute()
+            .data
+            or []
+        )
         memberships = (
             self.client.table("project_directory_memberships")
             .select("project_id,person_id,status")
@@ -367,6 +375,22 @@ class ProjectAssigner:
             if project_id not in signals:
                 signals[project_id] = {"emails": set(), "domains": set()}
             return signals[project_id]
+
+        for reference in contact_references:
+            project_id = reference.get("project_id")
+            person = people_by_id.get(str(reference.get("person_id")))
+            if not project_id or not person:
+                continue
+            project_signals = ensure_project(int(project_id))
+            email = str(person.get("email") or "").strip().lower()
+            if email:
+                project_signals["emails"].add(email)
+                project_signals["domains"].update(self._extract_domains([email]))
+            company_domain = company_domains.get(
+                str(reference.get("company_id") or person.get("company_id"))
+            )
+            if company_domain:
+                project_signals["domains"].add(company_domain)
 
         for membership in memberships:
             project_id = membership.get("project_id")

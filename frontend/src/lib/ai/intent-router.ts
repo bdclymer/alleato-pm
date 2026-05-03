@@ -13,7 +13,7 @@ export type AssistantIntent =
   | "general_conversation";
 
 const SOURCE_LOOKUP_PATTERNS = [
-  /\b(source|evidence|citation|transcript|email|teams|meeting|document)\b/i,
+  /\b(source|evidence|citation|transcript|email|teams|message|messages|meeting|document)\b/i,
   /\bshow me\b.*\b(where|source|message|email|meeting)\b/i,
 ];
 

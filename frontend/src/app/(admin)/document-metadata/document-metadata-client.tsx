@@ -76,6 +76,54 @@ type FilterState = Record<string, FilterValue>;
 const EMPTY_FILTERS: FilterState = {};
 const NO_PROJECT_VALUE = "__none__";
 
+// ── Project select editor ─────────────────────────────────────────────────────
+
+function ProjectSelectEditor({
+  item,
+  projectOptions,
+  onChange,
+  onCancel,
+  onProjectEdit,
+}: {
+  item: DocumentMetadataItem;
+  projectOptions: string[];
+  onChange: (value: string) => void;
+  onCancel: () => void;
+  onProjectEdit: (item: DocumentMetadataItem, value: string) => Promise<void>;
+}) {
+  // Track open state via ref (sync) so onBlur doesn't fire onCancel while the
+  // dropdown portal is open — Radix renders SelectContent outside the trigger's
+  // DOM subtree, causing an immediate blur/cancel on open.
+  const isOpenRef = React.useRef(false);
+
+  return (
+    <Select
+      defaultValue={item.project ?? NO_PROJECT_VALUE}
+      onOpenChange={(open) => { isOpenRef.current = open; }}
+      onValueChange={(value) => {
+        const nextValue = value === NO_PROJECT_VALUE ? "" : value;
+        onChange(nextValue);
+        void onProjectEdit(item, nextValue).finally(() => onCancel());
+      }}
+    >
+      <SelectTrigger
+        autoFocus
+        className="h-7 w-full -my-0.5 text-sm"
+        onBlur={() => { if (!isOpenRef.current) onCancel(); }}
+        onKeyDown={(e) => { if (e.key === "Escape") onCancel(); }}
+      >
+        <SelectValue placeholder="— None —" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value={NO_PROJECT_VALUE}>— None —</SelectItem>
+        {projectOptions.map((p) => (
+          <SelectItem key={p} value={p}>{p}</SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function formatDuration(minutes: number | null) {
@@ -162,33 +210,13 @@ function buildTableColumns(
       editable: true,
       editValue: (item) => item.project ?? "",
       renderEditor: ({ item: editorItem, onChange, onCancel }) => (
-        <Select
-          defaultValue={editorItem.project ?? NO_PROJECT_VALUE}
-          onValueChange={(value) => {
-            const nextValue = value === NO_PROJECT_VALUE ? "" : value;
-            onChange(nextValue);
-            void onProjectEdit(editorItem, nextValue).finally(() => onCancel());
-          }}
-        >
-          <SelectTrigger
-            autoFocus
-            className="h-7 w-full -my-0.5 text-sm"
-            onBlur={onCancel}
-            onKeyDown={(e) => {
-              if (e.key === "Escape") onCancel();
-            }}
-          >
-            <SelectValue placeholder="— None —" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={NO_PROJECT_VALUE}>— None —</SelectItem>
-            {projectOptions.map((projectOption) => (
-              <SelectItem key={projectOption} value={projectOption}>
-                {projectOption}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <ProjectSelectEditor
+          item={editorItem}
+          projectOptions={projectOptions}
+          onChange={onChange}
+          onCancel={onCancel}
+          onProjectEdit={onProjectEdit}
+        />
       ),
     },
     {

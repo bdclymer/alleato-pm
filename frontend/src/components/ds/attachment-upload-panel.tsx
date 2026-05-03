@@ -1,9 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { CheckCircle2, FileText, Trash2, UploadCloud, X } from "lucide-react";
+import { Download, FileText, Trash2, UploadCloud, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 
 export interface AttachmentUploadItem {
@@ -12,6 +13,17 @@ export interface AttachmentUploadItem {
   sizeBytes?: number | null;
   uploadedAtLabel?: string | null;
   downloadUrl?: string;
+}
+
+interface AttachmentListItemProps {
+  name: string;
+  meta?: string | null;
+  downloadUrl?: string;
+  onDownload?: () => void;
+  onRemove?: () => void;
+  isBusy?: boolean;
+  icon?: React.ComponentType<{ className?: string }>;
+  className?: string;
 }
 
 type QueueStatus = "queued" | "uploading" | "completed" | "failed";
@@ -58,6 +70,78 @@ function statusProgress(status: QueueStatus): number {
 }
 
 /** Reusable DS attachment upload panel with dropzone, queue, and file list. */
+export function AttachmentListItem({
+  name,
+  meta,
+  downloadUrl,
+  onDownload,
+  onRemove,
+  isBusy = false,
+  icon: Icon = FileText,
+  className,
+}: AttachmentListItemProps) {
+  const title = downloadUrl ? (
+    <a
+      href={downloadUrl}
+      target="_blank"
+      rel="noreferrer"
+      className="block truncate text-sm font-medium text-foreground transition-colors hover:text-primary"
+    >
+      {name}
+    </a>
+  ) : (
+    <p className="truncate text-sm font-medium text-foreground">{name}</p>
+  );
+
+  return (
+    <div
+      className={cn(
+        "rounded-md border border-border/70 bg-background px-3 py-2.5 transition-opacity",
+        isBusy && "opacity-50",
+        className,
+      )}
+    >
+      <div className="flex items-center gap-3">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border/60 bg-muted/30">
+          <Icon className="h-4 w-4 text-muted-foreground" />
+        </div>
+        <div className="min-w-0 flex-1">
+          {title}
+          {meta ? <p className="mt-0.5 text-xs text-muted-foreground">{meta}</p> : null}
+        </div>
+        {(downloadUrl || onDownload || onRemove) && (
+          <div className="flex shrink-0 items-center gap-0.5">
+            {downloadUrl || onDownload ? (
+              <Button
+                type="button"
+                size="icon-xs"
+                variant="ghost"
+                className="text-muted-foreground hover:text-foreground"
+                onClick={onDownload}
+                aria-label="Download attachment"
+              >
+                <Download className="h-3.5 w-3.5" />
+              </Button>
+            ) : null}
+            {onRemove ? (
+              <Button
+                type="button"
+                size="icon-xs"
+                variant="ghost"
+                className="text-muted-foreground hover:text-destructive"
+                onClick={onRemove}
+                aria-label="Remove attachment"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            ) : null}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function AttachmentUploadPanel({
   files,
   onUploadFile,
@@ -210,7 +294,7 @@ export function AttachmentUploadPanel({
           }
         }}
       >
-        <input
+        <Input
           ref={inputRef}
           type="file"
           className="hidden"
@@ -297,49 +381,16 @@ export function AttachmentUploadPanel({
           </div>
         ) : (
           files.map((file) => (
-            <div key={file.id} className="rounded-lg border border-border bg-background px-3 py-2.5">
-              <div className="flex items-start gap-3">
-                <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded bg-muted">
-                  <FileText className="h-4 w-4 text-primary" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      {file.downloadUrl ? (
-                        <a
-                          href={file.downloadUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="block truncate text-sm font-medium text-foreground hover:underline"
-                        >
-                          {file.name}
-                        </a>
-                      ) : (
-                        <p className="truncate text-sm font-medium text-foreground">{file.name}</p>
-                      )}
-                      <p className="text-xs text-muted-foreground">
-                        {formatFileSize(file.sizeBytes)}
-                        {file.uploadedAtLabel ? ` · Uploaded: ${file.uploadedAtLabel}` : ""}
-                      </p>
-                    </div>
-                    {onRemoveFile ? (
-                      <Button
-                        type="button"
-                        size="icon-xs"
-                        variant="ghost"
-                        className="text-muted-foreground hover:text-destructive"
-                        onClick={() => void onRemoveFile(file.id)}
-                        aria-label="Remove attachment"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    ) : (
-                      <CheckCircle2 className="mt-0.5 h-4 w-4 text-status-success" />
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
+            <AttachmentListItem
+              key={file.id}
+              name={file.name}
+              meta={[
+                formatFileSize(file.sizeBytes),
+                file.uploadedAtLabel ? `Uploaded ${file.uploadedAtLabel}` : null,
+              ].filter(Boolean).join(" · ")}
+              downloadUrl={file.downloadUrl}
+              onRemove={onRemoveFile ? () => void onRemoveFile(file.id) : undefined}
+            />
           ))
         )}
       </div>

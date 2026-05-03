@@ -36,6 +36,16 @@ function isoDate(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
 
+function recentDateRange(days: number, now = new Date()): { startDate: string; endDate: string } {
+  const end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const start = new Date(end);
+  start.setUTCDate(start.getUTCDate() - days);
+  return {
+    startDate: isoDate(start),
+    endDate: isoDate(end),
+  };
+}
+
 function previousWeekdayIsoDate(targetDay: number, now = new Date()): string {
   const date = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
   const diff = (date.getUTCDay() - targetDay + 7) % 7;
@@ -195,17 +205,57 @@ export function detectSourceSpecificRagRequest(message: string): SourceSpecificR
       normalized.includes("recent"));
   if (asksForRecentTeams) {
     const explicitRange = parseExplicitDateRange(message);
-    const end = new Date();
-    const start = new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate()));
-    start.setUTCDate(start.getUTCDate() - 7);
+    const recentRange = recentDateRange(7);
     return {
       kind: "recent_teams_discussions",
       label: "Teams messages",
-      startDate: explicitRange?.startDate ?? isoDate(start),
-      endDate: explicitRange?.endDate ?? isoDate(end),
+      startDate: explicitRange?.startDate ?? recentRange.startDate,
+      endDate: explicitRange?.endDate ?? recentRange.endDate,
       limit: 12,
     };
   }
 
   return null;
+}
+
+export function detectSourceLookupRecentTeamsRequest(
+  message: string,
+  now = new Date(),
+): SourceSpecificRagRequest | null {
+  const normalized = message.toLowerCase();
+  const mentionsTeamsOrMessages =
+    /\bteams?\b/.test(normalized) ||
+    /\bteam chat\b/.test(normalized) ||
+    /\bmessages?\b/.test(normalized);
+  const asksAboutPeopleOrEmployees =
+    /\bemployees?\b/.test(normalized) ||
+    /\bpeople\b/.test(normalized) ||
+    /\bteam\b/.test(normalized) ||
+    /\bcompany\b/.test(normalized);
+  const asksForCommunicationDiagnosis = [
+    "biggest source",
+    "source of confusion",
+    "lack of communication",
+    "miscommunication",
+    "frustration",
+    "frustrated",
+    "communication issue",
+    "communication issues",
+    "where do you think",
+    "based on all",
+  ].some((phrase) => normalized.includes(phrase));
+
+  if (!mentionsTeamsOrMessages || !asksAboutPeopleOrEmployees || !asksForCommunicationDiagnosis) {
+    return null;
+  }
+
+  const explicitRange = parseExplicitDateRange(message);
+  const recentRange = recentDateRange(30, now);
+  return {
+    kind: "recent_teams_discussions",
+    label: "Recent Teams messages",
+    startDate: explicitRange?.startDate ?? recentRange.startDate,
+    endDate: explicitRange?.endDate ?? recentRange.endDate,
+    limit: 20,
+  };
 }

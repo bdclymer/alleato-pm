@@ -5,7 +5,6 @@ import { Check, ChevronsUpDown, HelpCircle, UserPlus, X } from "lucide-react";
 import { Controller, useFormContext, useWatch } from "react-hook-form";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Tooltip,
   TooltipContent,
@@ -21,16 +20,7 @@ import {
   CommandList,
   CommandSeparator,
 } from "@/components/ui/command";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Popover,
   PopoverContent,
@@ -38,8 +28,8 @@ import {
 } from "@/components/ui/popover";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
+import { ContactFormSheet } from "@/components/domain/contacts/ContactFormSheet";
 import type { CreateSubcontractInput } from "@/lib/schemas/create-subcontract-schema";
-import type { Database } from "@/types/database.types";
 import { SectionRuleHeading } from "@/components/layout/spacing";
 
 interface InvoiceContactsSectionProps {
@@ -90,59 +80,20 @@ export function InvoiceContactsSection({
         });
       });
   }, [selectedContactIds, invoiceContactOptions, extraLabels]);
-  const [showAddDialog, setShowAddDialog] = React.useState(false);
-  const [isSaving, setIsSaving] = React.useState(false);
-  const [newContact, setNewContact] = React.useState({
-    first_name: "",
-    last_name: "",
-    email: "",
-    job_title: "",
-  });
+  const [showContactSheet, setShowContactSheet] = React.useState(false);
 
-  const handleAddContact = async () => {
+  const handleContactCreated = async (created: { id: string }) => {
     const vendorCompanyLinkId = vendorCompanyId || vendorId;
-    if (!vendorCompanyLinkId || !newContact.first_name) return;
-    setIsSaving(true);
-    try {
+    if (vendorCompanyLinkId) {
       const supabase = createClient();
-      const personInsert: Database["public"]["Tables"]["people"]["Insert"] = {
-        first_name: newContact.first_name,
-        last_name: newContact.last_name || "",
-        email: newContact.email || null,
-        job_title: newContact.job_title || null,
-        person_type: "contact",
-        status: "active",
-        company_id: vendorCompanyId ?? null,
-      };
-      const { data, error } = await supabase
-        .from("people")
-        .insert(personInsert)
-        .select("id")
-        .single();
-
-      if (error) throw new Error(error.message);
-
-      if (data?.id) {
-        const { error: linkError } = await supabase
-          .from("vendor_contacts")
-          .insert({ company_id: vendorCompanyLinkId, person_id: data.id });
-        if (linkError) throw new Error(linkError.message);
-      }
-
-      await refetchContacts?.();
-
-      if (data?.id) {
-        const current = getValues("invoiceContactIds") || [];
-        setValue("invoiceContactIds", [...current, data.id]);
-      }
-
-      setShowAddDialog(false);
-      setNewContact({ first_name: "", last_name: "", email: "", job_title: "" });
-    } catch (err) {
-      console.error("Failed to add contact:", err);
-    } finally {
-      setIsSaving(false);
+      const { error: linkError } = await supabase
+        .from("vendor_contacts")
+        .insert({ company_id: vendorCompanyLinkId, person_id: created.id });
+      if (linkError) console.error("Failed to link contact to vendor:", linkError.message);
     }
+    await refetchContacts?.();
+    const current = getValues("invoiceContactIds") || [];
+    setValue("invoiceContactIds", [...current, created.id]);
   };
 
   return (
@@ -269,7 +220,7 @@ export function InvoiceContactsSection({
                                     className="min-h-11"
                                     onSelect={() => {
                                       setOpen(false);
-                                      setShowAddDialog(true);
+                                      setShowContactSheet(true);
                                     }}
                                   >
                                     <UserPlus className="mr-2 h-4 w-4" />
@@ -285,79 +236,12 @@ export function InvoiceContactsSection({
                     <FormMessage />
                   </FormItem>
 
-                  <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Add Contact to Vendor</DialogTitle>
-                      </DialogHeader>
-                      <div className="space-y-4 py-2">
-                        <div className="grid grid-cols-2 gap-3">
-                          <div className="space-y-1.5">
-                            <Label htmlFor="contact-first-name">
-                              First name <span className="text-destructive">*</span>
-                            </Label>
-                            <Input
-                              id="contact-first-name"
-                              value={newContact.first_name}
-                              onChange={(e) =>
-                                setNewContact((p) => ({ ...p, first_name: e.target.value }))
-                              }
-                              placeholder="Jane"
-                            />
-                          </div>
-                          <div className="space-y-1.5">
-                            <Label htmlFor="contact-last-name">Last name</Label>
-                            <Input
-                              id="contact-last-name"
-                              value={newContact.last_name}
-                              onChange={(e) =>
-                                setNewContact((p) => ({ ...p, last_name: e.target.value }))
-                              }
-                              placeholder="Smith"
-                            />
-                          </div>
-                        </div>
-                        <div className="space-y-1.5">
-                          <Label htmlFor="contact-email">Email</Label>
-                          <Input
-                            id="contact-email"
-                            type="email"
-                            value={newContact.email}
-                            onChange={(e) =>
-                              setNewContact((p) => ({ ...p, email: e.target.value }))
-                            }
-                            placeholder="jane@example.com"
-                          />
-                        </div>
-                        <div className="space-y-1.5">
-                          <Label htmlFor="contact-job-title">Job title</Label>
-                          <Input
-                            id="contact-job-title"
-                            value={newContact.job_title}
-                            onChange={(e) =>
-                              setNewContact((p) => ({ ...p, job_title: e.target.value }))
-                            }
-                            placeholder="Project Manager"
-                          />
-                        </div>
-                      </div>
-                      <DialogFooter>
-                        <Button
-                          variant="outline"
-                          onClick={() => setShowAddDialog(false)}
-                          disabled={isSaving}
-                        >
-                          Cancel
-                        </Button>
-                        <Button
-                          onClick={handleAddContact}
-                          disabled={!newContact.first_name || isSaving}
-                        >
-                          {isSaving ? "Adding..." : "Add contact"}
-                        </Button>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
+                  <ContactFormSheet
+                    open={showContactSheet}
+                    onOpenChange={setShowContactSheet}
+                    defaultCompanyId={vendorCompanyId ?? undefined}
+                    onContactCreated={handleContactCreated}
+                  />
                 </>
               );
             }}

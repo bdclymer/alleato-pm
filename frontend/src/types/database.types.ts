@@ -8894,10 +8894,15 @@ export type Database = {
           attribution_method: string
           candidate_project_id: number | null
           candidate_project_name: string | null
+          candidate_target_id: string | null
+          compiler_version: string | null
           confidence: number
+          confidence_label: string | null
           created_at: string
+          evidence: Json
           evidence_terms: string[]
           id: string
+          matched_fields: string[]
           reasoning: string | null
           reviewed_at: string | null
           reviewed_by: string | null
@@ -8910,10 +8915,15 @@ export type Database = {
           attribution_method: string
           candidate_project_id?: number | null
           candidate_project_name?: string | null
+          candidate_target_id?: string | null
+          compiler_version?: string | null
           confidence: number
+          confidence_label?: string | null
           created_at?: string
+          evidence?: Json
           evidence_terms?: string[]
           id?: string
+          matched_fields?: string[]
           reasoning?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
@@ -8926,10 +8936,15 @@ export type Database = {
           attribution_method?: string
           candidate_project_id?: number | null
           candidate_project_name?: string | null
+          candidate_target_id?: string | null
+          compiler_version?: string | null
           confidence?: number
+          confidence_label?: string | null
           created_at?: string
+          evidence?: Json
           evidence_terms?: string[]
           id?: string
+          matched_fields?: string[]
           reasoning?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
@@ -8986,6 +9001,13 @@ export type Database = {
             columns: ["candidate_project_id"]
             isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_attribution_candidates_candidate_target_id_fkey"
+            columns: ["candidate_target_id"]
+            isOneToOne: false
+            referencedRelation: "intelligence_targets"
             referencedColumns: ["id"]
           },
           {
@@ -15746,6 +15768,127 @@ export type Database = {
           },
         ]
       }
+      packet_refresh_jobs: {
+        Row: {
+          attempt_count: number
+          compiler_version: string
+          created_at: string
+          finished_at: string | null
+          id: string
+          last_error: string | null
+          output_packet_id: string | null
+          priority: number
+          queued_at: string
+          reason: string
+          started_at: string | null
+          status: string
+          target_id: string
+          trigger_insight_card_id: string | null
+          trigger_source_document_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          attempt_count?: number
+          compiler_version: string
+          created_at?: string
+          finished_at?: string | null
+          id?: string
+          last_error?: string | null
+          output_packet_id?: string | null
+          priority?: number
+          queued_at?: string
+          reason: string
+          started_at?: string | null
+          status?: string
+          target_id: string
+          trigger_insight_card_id?: string | null
+          trigger_source_document_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          attempt_count?: number
+          compiler_version?: string
+          created_at?: string
+          finished_at?: string | null
+          id?: string
+          last_error?: string | null
+          output_packet_id?: string | null
+          priority?: number
+          queued_at?: string
+          reason?: string
+          started_at?: string | null
+          status?: string
+          target_id?: string
+          trigger_insight_card_id?: string | null
+          trigger_source_document_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "packet_refresh_jobs_output_packet_id_fkey"
+            columns: ["output_packet_id"]
+            isOneToOne: false
+            referencedRelation: "intelligence_packets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "packet_refresh_jobs_target_id_fkey"
+            columns: ["target_id"]
+            isOneToOne: false
+            referencedRelation: "intelligence_targets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "packet_refresh_jobs_trigger_insight_card_id_fkey"
+            columns: ["trigger_insight_card_id"]
+            isOneToOne: false
+            referencedRelation: "insight_cards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "packet_refresh_jobs_trigger_source_document_id_fkey"
+            columns: ["trigger_source_document_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "packet_refresh_jobs_trigger_source_document_id_fkey"
+            columns: ["trigger_source_document_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_emails"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "packet_refresh_jobs_trigger_source_document_id_fkey"
+            columns: ["trigger_source_document_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_manual_only"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "packet_refresh_jobs_trigger_source_document_id_fkey"
+            columns: ["trigger_source_document_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_meetings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "packet_refresh_jobs_trigger_source_document_id_fkey"
+            columns: ["trigger_source_document_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_team_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "packet_refresh_jobs_trigger_source_document_id_fkey"
+            columns: ["trigger_source_document_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_typed"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       parts: {
         Row: {
           createdAt: string
@@ -19058,6 +19201,115 @@ export type Database = {
           },
         ]
       }
+      project_contact_references: {
+        Row: {
+          company_id: string | null
+          confidence: number | null
+          created_at: string
+          created_by: string | null
+          id: string
+          person_id: string
+          project_id: number
+          reference_type: string
+          source_document_metadata_id: string | null
+          source_system: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          company_id?: string | null
+          confidence?: number | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          person_id: string
+          project_id: number
+          reference_type: string
+          source_document_metadata_id?: string | null
+          source_system?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string | null
+          confidence?: number | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          person_id?: string
+          project_id?: number
+          reference_type?: string
+          source_document_metadata_id?: string | null
+          source_system?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_contact_references_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_contact_references_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_contact_references_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "project_contact_references_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_contact_references_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_contact_references_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "project_contact_references_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_contact_references_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_contact_references_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_directory_memberships: {
         Row: {
           created_at: string | null
@@ -19892,6 +20144,225 @@ export type Database = {
             columns: ["punch_item_id"]
             isOneToOne: false
             referencedRelation: "punch_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_progress_report_photos: {
+        Row: {
+          caption: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          progress_report_id: string
+          project_id: number
+          project_photo_id: number
+          sort_order: number
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          progress_report_id: string
+          project_id: number
+          project_photo_id: number
+          sort_order?: number
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          progress_report_id?: string
+          project_id?: number
+          project_photo_id?: number
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_progress_report_photos_progress_report_id_fkey"
+            columns: ["progress_report_id"]
+            isOneToOne: false
+            referencedRelation: "project_progress_reports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_progress_report_photos_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "project_progress_report_photos_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_progress_report_photos_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_progress_report_photos_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "project_progress_report_photos_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_progress_report_photos_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_progress_report_photos_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_progress_report_photos_project_photo_id_fkey"
+            columns: ["project_photo_id"]
+            isOneToOne: false
+            referencedRelation: "project_photos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_progress_reports: {
+        Row: {
+          client_recipients: string[]
+          construction_start_date: string | null
+          contacts: Json
+          created_at: string
+          created_by: string | null
+          id: string
+          open_items: string
+          past_week_highlights: string
+          project_id: number
+          report_type: string
+          scheduled_completion_date: string | null
+          sent_at: string | null
+          source_snapshot: Json
+          status: string
+          title: string
+          upcoming_week_activities: string
+          updated_at: string
+          updated_by: string | null
+          weather_days_lost: number
+          week_end: string
+          week_start: string
+        }
+        Insert: {
+          client_recipients?: string[]
+          construction_start_date?: string | null
+          contacts?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          open_items?: string
+          past_week_highlights?: string
+          project_id: number
+          report_type?: string
+          scheduled_completion_date?: string | null
+          sent_at?: string | null
+          source_snapshot?: Json
+          status?: string
+          title?: string
+          upcoming_week_activities?: string
+          updated_at?: string
+          updated_by?: string | null
+          weather_days_lost?: number
+          week_end: string
+          week_start: string
+        }
+        Update: {
+          client_recipients?: string[]
+          construction_start_date?: string | null
+          contacts?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          open_items?: string
+          past_week_highlights?: string
+          project_id?: number
+          report_type?: string
+          scheduled_completion_date?: string | null
+          sent_at?: string | null
+          source_snapshot?: Json
+          status?: string
+          title?: string
+          upcoming_week_activities?: string
+          updated_at?: string
+          updated_by?: string | null
+          weather_days_lost?: number
+          week_end?: string
+          week_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_progress_reports_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "project_progress_reports_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_progress_reports_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_progress_reports_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "project_progress_reports_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_progress_reports_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_progress_reports_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
         ]
@@ -22719,6 +23190,365 @@ export type Database = {
             columns: ["project_sync_id"]
             isOneToOne: false
             referencedRelation: "projects_sync"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      source_intelligence_jobs: {
+        Row: {
+          attempt_count: number
+          compiler_version: string
+          created_at: string
+          finished_at: string | null
+          id: string
+          input_snapshot: Json
+          job_type: string
+          last_error: string | null
+          output_summary: Json
+          priority: number
+          project_id: number | null
+          queued_at: string
+          source_document_id: string
+          source_hash: string | null
+          started_at: string | null
+          status: string
+          target_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          attempt_count?: number
+          compiler_version: string
+          created_at?: string
+          finished_at?: string | null
+          id?: string
+          input_snapshot?: Json
+          job_type: string
+          last_error?: string | null
+          output_summary?: Json
+          priority?: number
+          project_id?: number | null
+          queued_at?: string
+          source_document_id: string
+          source_hash?: string | null
+          started_at?: string | null
+          status?: string
+          target_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          attempt_count?: number
+          compiler_version?: string
+          created_at?: string
+          finished_at?: string | null
+          id?: string
+          input_snapshot?: Json
+          job_type?: string
+          last_error?: string | null
+          output_summary?: Json
+          priority?: number
+          project_id?: number | null
+          queued_at?: string
+          source_document_id?: string
+          source_hash?: string | null
+          started_at?: string | null
+          status?: string
+          target_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "source_intelligence_jobs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "source_intelligence_jobs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "source_intelligence_jobs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "source_intelligence_jobs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "source_intelligence_jobs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "source_intelligence_jobs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "source_intelligence_jobs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "source_intelligence_jobs_source_document_id_fkey"
+            columns: ["source_document_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "source_intelligence_jobs_source_document_id_fkey"
+            columns: ["source_document_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_emails"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "source_intelligence_jobs_source_document_id_fkey"
+            columns: ["source_document_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_manual_only"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "source_intelligence_jobs_source_document_id_fkey"
+            columns: ["source_document_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_meetings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "source_intelligence_jobs_source_document_id_fkey"
+            columns: ["source_document_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_team_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "source_intelligence_jobs_source_document_id_fkey"
+            columns: ["source_document_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_typed"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "source_intelligence_jobs_target_id_fkey"
+            columns: ["target_id"]
+            isOneToOne: false
+            referencedRelation: "intelligence_targets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      source_signal_candidates: {
+        Row: {
+          compiler_version: string
+          confidence: string
+          confidence_score: number
+          created_at: string
+          current_status: string
+          excerpt: string | null
+          extraction_json: Json
+          id: string
+          next_action: string | null
+          normalized_signal_key: string
+          project_id: number | null
+          promoted_insight_card_id: string | null
+          signal_type: string
+          source_chunk_id: string | null
+          source_document_id: string
+          source_occurred_at: string | null
+          stale_after: string | null
+          status: string
+          suggested_owner_label: string | null
+          suggested_owner_person_id: string | null
+          summary: string
+          target_id: string | null
+          title: string
+          updated_at: string
+          why_it_matters: string | null
+        }
+        Insert: {
+          compiler_version: string
+          confidence: string
+          confidence_score: number
+          created_at?: string
+          current_status?: string
+          excerpt?: string | null
+          extraction_json?: Json
+          id?: string
+          next_action?: string | null
+          normalized_signal_key: string
+          project_id?: number | null
+          promoted_insight_card_id?: string | null
+          signal_type: string
+          source_chunk_id?: string | null
+          source_document_id: string
+          source_occurred_at?: string | null
+          stale_after?: string | null
+          status?: string
+          suggested_owner_label?: string | null
+          suggested_owner_person_id?: string | null
+          summary: string
+          target_id?: string | null
+          title: string
+          updated_at?: string
+          why_it_matters?: string | null
+        }
+        Update: {
+          compiler_version?: string
+          confidence?: string
+          confidence_score?: number
+          created_at?: string
+          current_status?: string
+          excerpt?: string | null
+          extraction_json?: Json
+          id?: string
+          next_action?: string | null
+          normalized_signal_key?: string
+          project_id?: number | null
+          promoted_insight_card_id?: string | null
+          signal_type?: string
+          source_chunk_id?: string | null
+          source_document_id?: string
+          source_occurred_at?: string | null
+          stale_after?: string | null
+          status?: string
+          suggested_owner_label?: string | null
+          suggested_owner_person_id?: string | null
+          summary?: string
+          target_id?: string | null
+          title?: string
+          updated_at?: string
+          why_it_matters?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "source_signal_candidates_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "source_signal_candidates_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "source_signal_candidates_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "source_signal_candidates_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "source_signal_candidates_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "source_signal_candidates_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "source_signal_candidates_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "source_signal_candidates_promoted_insight_card_id_fkey"
+            columns: ["promoted_insight_card_id"]
+            isOneToOne: false
+            referencedRelation: "insight_cards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "source_signal_candidates_source_document_id_fkey"
+            columns: ["source_document_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "source_signal_candidates_source_document_id_fkey"
+            columns: ["source_document_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_emails"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "source_signal_candidates_source_document_id_fkey"
+            columns: ["source_document_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_manual_only"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "source_signal_candidates_source_document_id_fkey"
+            columns: ["source_document_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_meetings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "source_signal_candidates_source_document_id_fkey"
+            columns: ["source_document_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_team_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "source_signal_candidates_source_document_id_fkey"
+            columns: ["source_document_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_typed"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "source_signal_candidates_suggested_owner_person_id_fkey"
+            columns: ["suggested_owner_person_id"]
+            isOneToOne: false
+            referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "source_signal_candidates_target_id_fkey"
+            columns: ["target_id"]
+            isOneToOne: false
+            referencedRelation: "intelligence_targets"
             referencedColumns: ["id"]
           },
         ]
@@ -30061,6 +30891,10 @@ export type Database = {
         }
       }
       current_can_view_private_commitments: {
+        Args: { p_project_id: number }
+        Returns: boolean
+      }
+      current_has_project_access: {
         Args: { p_project_id: number }
         Returns: boolean
       }

@@ -15,6 +15,13 @@ except ModuleNotFoundError:  # Allows backend-local scripts with sys.path.insert
     from services.integrations.microsoft_graph.project_inference import infer_project_id
 
 from .client import COMPILER_MODEL_DEFAULT, COMPILER_MODEL_LARGE, extract_with_retry
+from .compiler import (
+    compile_current_packet,
+    ensure_client_project_target,
+    process_packet_refresh_job,
+    promote_signal_candidate,
+    write_source_signal_candidate,
+)
 from .prompts import build_extraction_messages
 
 logger = logging.getLogger(__name__)
@@ -23,6 +30,7 @@ MIN_COMPILER_CHARS = 200
 AUTO_ASSIGN_CONFIDENCE = 0.85
 TITLE_OVERRIDE_CONFIDENCE = 0.9
 MAX_LLM_CONVERSATION_CHARS = 6000
+PACKET_COMPILER_VERSION = "teams_conversation_compiler_v0_1"
 
 _MESSAGE_RE = re.compile(
     r"^\[message:(?P<id>[^\]]+)\]\s+\[(?P<ts>[^\]]+)\]\s+(?P<sender>[^:]+):\s*(?P<text>.*)$"
@@ -81,6 +89,59 @@ def _valid_due_date(value: Any) -> Optional[str]:
         return date.fromisoformat(str(value)).isoformat()
     except ValueError:
         return None
+
+
+def _signal_key(*parts: Any) -> str:
+    raw = ":".join(_clean_text(part).lower() for part in parts if _clean_text(part))
+    return re.sub(r"[^a-z0-9]+", "-", raw).strip("-")[:180] or "teams-signal"
+
+
+def _message_excerpt(messages: List[Dict[str, str]], source_message_ids: List[str], fallback: str) -> str:
+    if not source_message_ids:
+        return fallback[:900]
+    wanted = set(source_message_ids)
+    lines = [
+        f"{message['sender']}: {message['text']}"
+        for message in messages
+        if message.get("message_id") in wanted
+    ]
+    return ("\n".join(lines) or fallback)[:900]
+
+
+def _insight_signal_type(insight_type: Any) -> str:
+    value = str(insight_type or "").lower()
+    mapping = {
+        "schedule_risk": "schedule_risk",
+        "financial_risk": "financial_exposure",
+        "change_order_risk": "change_management",
+        "procurement_risk": "risk",
+        "field_coordination": "project_update",
+        "client_relationship": "risk",
+        "decision_needed": "open_question",
+        "task": "task",
+        "process_breakdown": "process_issue",
+        "root_cause": "process_issue",
+        "sentiment": "process_issue",
+    }
+    return mapping.get(value, "project_update")
+
+
+def _risk_signal_type(risk_category: Any) -> str:
+    value = str(risk_category or "").lower()
+    if value == "schedule":
+        return "schedule_risk"
+    if value in {"cost", "cash_flow"}:
+        return "financial_exposure"
+    return "risk"
+
+
+def _status_for_decision(value: Any) -> str:
+    status = str(value or "").lower()
+    if status == "decided":
+        return "resolved"
+    if status in {"blocked", "needs_approval"}:
+        return "blocked"
+    return "open"
 
 
 def parse_conversation_messages(content: str) -> List[Dict[str, str]]:
@@ -527,6 +588,208 @@ def write_tasks(
     return len(rows)
 
 
+def _packet_signal_payloads(
+    extracted: Dict[str, Any],
+    messages: List[Dict[str, str]],
+    doc_id: str,
+    source_occurred_at: Optional[str],
+) -> List[Dict[str, Any]]:
+    payloads: List[Dict[str, Any]] = []
+
+    for insight in _as_list(extracted.get("insights")):
+        if insight.get("target_type") and insight.get("target_type") != "client_project":
+            continue
+        confidence = _to_float(insight.get("confidence"), 0.0)
+        if confidence < 0.7:
+            continue
+        source_message_ids = [str(item) for item in _as_list(insight.get("source_message_ids")) if item]
+        summary = _clean_text(insight.get("summary"))
+        if not summary:
+            continue
+        signal_type = _insight_signal_type(insight.get("insight_type"))
+        payloads.append(
+            {
+                "signal_type": signal_type,
+                "title": summary[:180],
+                "summary": _clean_text(insight.get("strategic_read")) or summary,
+                "why_it_matters": _clean_text(insight.get("why_it_matters")),
+                "next_action": _clean_text(insight.get("recommended_action")),
+                "confidence_score": confidence,
+                "source_occurred_at": source_occurred_at,
+                "excerpt": _message_excerpt(messages, source_message_ids, summary),
+                "normalized_signal_key": _signal_key(doc_id, signal_type, source_message_ids, summary),
+                "extraction_json": {**insight, "teams_packet_source": "insights"},
+            }
+        )
+
+    for risk in _as_list(extracted.get("risks")):
+        confidence = _to_float(risk.get("confidence"), 0.0)
+        if confidence < 0.7:
+            continue
+        title = _clean_text(risk.get("risk_title"))
+        summary = _clean_text(risk.get("likely_impact") or risk.get("evidence"))
+        if not title or not summary:
+            continue
+        signal_type = _risk_signal_type(risk.get("risk_category"))
+        payloads.append(
+            {
+                "signal_type": signal_type,
+                "title": title[:180],
+                "summary": summary,
+                "why_it_matters": _clean_text(risk.get("evidence")),
+                "next_action": _clean_text(risk.get("recommended_action")),
+                "confidence_score": confidence,
+                "source_occurred_at": source_occurred_at,
+                "excerpt": _clean_text(risk.get("evidence"))[:900],
+                "normalized_signal_key": _signal_key(doc_id, signal_type, title),
+                "extraction_json": {**risk, "teams_packet_source": "risks"},
+            }
+        )
+
+    for decision in _as_list(extracted.get("decisions")):
+        confidence = _to_float(decision.get("confidence"), 0.0)
+        if confidence < 0.7:
+            continue
+        summary = _clean_text(decision.get("decision_text"))
+        if not summary:
+            continue
+        source_message_ids = [str(decision.get("source_message_id"))] if decision.get("source_message_id") else []
+        payloads.append(
+            {
+                "signal_type": "decision",
+                "title": summary[:180],
+                "summary": _clean_text(decision.get("impact")) or summary,
+                "why_it_matters": _clean_text(decision.get("impact")),
+                "current_status": _status_for_decision(decision.get("decision_status")),
+                "confidence_score": confidence,
+                "source_occurred_at": source_occurred_at,
+                "excerpt": _message_excerpt(messages, source_message_ids, summary),
+                "normalized_signal_key": _signal_key(doc_id, "decision", source_message_ids, summary),
+                "extraction_json": {**decision, "teams_packet_source": "decisions"},
+            }
+        )
+
+    for task in _as_list(extracted.get("tasks")):
+        confidence = _to_float(task.get("confidence"), 0.0)
+        summary = _clean_text(task.get("task_text") or task.get("description"))
+        owner = _clean_text(task.get("owner"))
+        if confidence < 0.7 or task.get("needs_review") or not summary:
+            continue
+        source_message_ids = [str(task.get("source_message_id"))] if task.get("source_message_id") else []
+        payloads.append(
+            {
+                "signal_type": "task",
+                "title": summary[:180],
+                "summary": summary,
+                "why_it_matters": "This is an explicit action item extracted from a Teams conversation.",
+                "next_action": summary,
+                "suggested_owner_label": owner or None,
+                "confidence_score": confidence,
+                "source_occurred_at": source_occurred_at,
+                "excerpt": _message_excerpt(messages, source_message_ids, summary),
+                "normalized_signal_key": _signal_key(doc_id, "task", source_message_ids, summary),
+                "extraction_json": {**task, "teams_packet_source": "tasks"},
+            }
+        )
+
+    sentiment = extracted.get("sentiment") if isinstance(extracted.get("sentiment"), dict) else None
+    if sentiment:
+        confidence = _to_float(sentiment.get("confidence"), 0.0)
+        label = str(sentiment.get("sentiment") or "").lower()
+        summary = _clean_text(sentiment.get("business_implication") or sentiment.get("sentiment_reason"))
+        if confidence >= 0.8 and label in {"concerned", "frustrated", "urgent", "conflict"} and summary:
+            payloads.append(
+                {
+                    "signal_type": "process_issue",
+                    "title": f"Teams sentiment: {label}"[:180],
+                    "summary": summary,
+                    "why_it_matters": _clean_text(sentiment.get("sentiment_reason")),
+                    "confidence_score": confidence,
+                    "source_occurred_at": source_occurred_at,
+                    "excerpt": _clean_text(sentiment.get("sentiment_reason") or summary)[:900],
+                    "normalized_signal_key": _signal_key(doc_id, "sentiment", label, summary),
+                    "extraction_json": {**sentiment, "teams_packet_source": "sentiment"},
+                }
+            )
+
+    return payloads
+
+
+def write_packet_first_signals(
+    supabase,
+    doc_id: str,
+    extracted: Dict[str, Any],
+    messages: List[Dict[str, str]],
+    project_id: Optional[int],
+    source_occurred_at: Optional[str],
+) -> Dict[str, Any]:
+    """Write Teams LLM extraction into packet-first intelligence tables."""
+    result = {
+        "signals_written": 0,
+        "signals_promoted": 0,
+        "packet_id": None,
+        "target_id": None,
+        "skipped_reason": None,
+    }
+    if not project_id:
+        result["skipped_reason"] = "no high-confidence client project attribution"
+        return result
+
+    target = ensure_client_project_target(
+        supabase,
+        int(project_id),
+        compiler_version=PACKET_COMPILER_VERSION,
+    )
+    target_id = target.get("id")
+    result["target_id"] = target_id
+    if not target_id:
+        result["skipped_reason"] = "missing intelligence target"
+        return result
+
+    supabase.table("source_signal_candidates").delete().eq(
+        "source_document_id", doc_id
+    ).eq("compiler_version", PACKET_COMPILER_VERSION).execute()
+
+    promoted_refresh_job_ids: List[str] = []
+    for payload in _packet_signal_payloads(extracted, messages, doc_id, source_occurred_at):
+        candidate = write_source_signal_candidate(
+            supabase,
+            source_document_id=doc_id,
+            target_id=target_id,
+            project_id=int(project_id),
+            compiler_version=PACKET_COMPILER_VERSION,
+            **payload,
+        )
+        result["signals_written"] += 1
+        if candidate.get("status") == "candidate":
+            promotion = promote_signal_candidate(
+                supabase,
+                candidate["id"],
+                compiler_version=PACKET_COMPILER_VERSION,
+            )
+            if promotion.get("status") == "promoted":
+                result["signals_promoted"] += 1
+                if promotion.get("packet_refresh_job_id"):
+                    promoted_refresh_job_ids.append(promotion["packet_refresh_job_id"])
+
+    if promoted_refresh_job_ids:
+        packet = process_packet_refresh_job(
+            supabase,
+            promoted_refresh_job_ids[-1],
+            compiler_version=PACKET_COMPILER_VERSION,
+        )
+        result["packet_id"] = packet.get("packet_id")
+    elif result["signals_written"]:
+        packet = compile_current_packet(
+            supabase,
+            target_id,
+            compiler_version=PACKET_COMPILER_VERSION,
+        )
+        result["packet_id"] = packet.get("packet_id")
+
+    return result
+
+
 def _mark_status(
     supabase,
     doc_id: str,
@@ -569,6 +832,9 @@ def compile_conversation(
         "structured_insights_written": 0,
         "tasks_written": 0,
         "attribution_candidates_written": 0,
+        "packet_signals_written": 0,
+        "packet_signals_promoted": 0,
+        "packet_id": None,
         "error": None,
     }
     stage = "fetch"
@@ -676,6 +942,14 @@ def compile_conversation(
             _as_list(extracted.get("tasks")),
             assigned_project_id,
         )
+        packet_result = write_packet_first_signals(
+            supabase,
+            doc_id,
+            extracted,
+            messages,
+            assigned_project_id,
+            normalized.get("date"),
+        )
 
         _mark_status(supabase, doc_id, "compiled", doc.get("source_metadata"))
         result.update(
@@ -687,6 +961,9 @@ def compile_conversation(
                 "structured_insights_written": structured_insights_written,
                 "tasks_written": tasks_written,
                 "attribution_candidates_written": candidates_written,
+                "packet_signals_written": packet_result.get("signals_written", 0),
+                "packet_signals_promoted": packet_result.get("signals_promoted", 0),
+                "packet_id": packet_result.get("packet_id"),
                 "error": None,
             }
         )
@@ -733,6 +1010,8 @@ def run_compiler_batch(
         "structured_insights_written": 0,
         "tasks_written": 0,
         "attribution_candidates_written": 0,
+        "packet_signals_written": 0,
+        "packet_signals_promoted": 0,
         "failed_doc_ids": [],
         "processing_time_ms": 0,
         "timed_out": False,
@@ -798,6 +1077,8 @@ def run_compiler_batch(
             stats["structured_insights_written"] += int(result.get("structured_insights_written") or 0)
             stats["tasks_written"] += int(result.get("tasks_written") or 0)
             stats["attribution_candidates_written"] += int(result.get("attribution_candidates_written") or 0)
+            stats["packet_signals_written"] += int(result.get("packet_signals_written") or 0)
+            stats["packet_signals_promoted"] += int(result.get("packet_signals_promoted") or 0)
         elif result.get("status") == "skipped":
             stats["skipped"] += 1
         else:

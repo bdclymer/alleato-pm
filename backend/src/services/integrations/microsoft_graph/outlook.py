@@ -19,6 +19,7 @@ from datetime import datetime, timezone
 from typing import Optional
 from urllib.parse import urlparse
 
+from ...intelligence.compiler import process_source_document_to_packet
 from .client import get_graph_client
 from .onedrive import SUPPORTED_EXTENSIONS, _extract_text
 from .project_inference import infer_project_id
@@ -76,6 +77,24 @@ DOCUMENT_LINK_HOST_KEYWORDS = {
     "coreandmain.com",
     "deemfirst.com",
 }
+
+
+def _run_source_intelligence_compiler(supabase_client, doc_id: str) -> None:
+    try:
+        result = process_source_document_to_packet(supabase_client, doc_id)
+        logger.info(
+            "[Outlook] Intelligence compiler completed for %s: status=%s packet=%s",
+            doc_id,
+            result.get("status"),
+            (result.get("packet") or {}).get("packet_id"),
+        )
+    except Exception as exc:
+        logger.warning(
+            "[Outlook] Intelligence compiler failed for %s: %s",
+            doc_id,
+            exc,
+            exc_info=True,
+        )
 
 
 def _strip_email_html(raw_html: str) -> str:
@@ -1371,6 +1390,9 @@ def sync_outlook_emails(
                 if error_tags:
                     update_payload["tags"] = ",".join(tags + error_tags)
                 supabase_client.from_("document_metadata").update(update_payload).eq("id", doc_id).execute()
+
+            if should_index_for_rag:
+                _run_source_intelligence_compiler(supabase_client, doc_id)
 
             if intake_email_id or project_email_id or (should_index_for_rag and not existing_doc):
                 synced += 1

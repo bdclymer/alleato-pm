@@ -16,6 +16,24 @@ let projectId: number;
 
 const makeNumber = (suffix: string) => `SC-SMOKE-${Date.now()}-${suffix}`;
 
+async function dismissAiOnboardingModal(page: import('@playwright/test').Page) {
+  await page.waitForTimeout(1000);
+  await page.keyboard.press('Escape').catch(() => {});
+  const skipButton = page.getByRole('button', { name: /skip for now|explore on my own/i }).first();
+  if (await skipButton.isVisible().catch(() => false)) {
+    await skipButton.click();
+  }
+}
+
+async function selectFirstContractCompany(page: import('@playwright/test').Page) {
+  const companyPicker = page.locator('#contractCompanyId');
+  await expect(companyPicker).toBeEnabled({ timeout: 30000 });
+  await companyPicker.click();
+  const firstOption = page.locator('[cmdk-item]').first();
+  await expect(firstOption).toBeVisible({ timeout: 15000 });
+  await firstOption.click();
+}
+
 test.describe.serial('Commitments Smoke', () => {
   test.beforeAll(async () => {
     const userId = await getUserIdByEmail(testUserEmail);
@@ -79,13 +97,17 @@ test.describe.serial('Commitments Smoke', () => {
 
     await page.goto(`/${projectId}/commitments/new?type=subcontract`, { waitUntil: 'domcontentloaded' });
     await expect(page.locator('#contractNumber')).toBeVisible({ timeout: 15000 });
+    await dismissAiOnboardingModal(page);
 
     await page.locator('#contractNumber').clear();
     await page.locator('#contractNumber').fill(number);
     await page.locator('#title').clear();
     await page.locator('#title').fill(title);
+    await selectFirstContractCompany(page);
 
     await page.getByRole('button', { name: /create|save|submit/i }).click();
+    await page.waitForURL(`**/${projectId}/commitments`, { timeout: 15000 });
+    await expect(page.getByRole('heading', { name: /commitments/i })).toBeVisible();
 
     await pollFor(
       () => listSubcontractsForProject(projectId),
@@ -95,5 +117,7 @@ test.describe.serial('Commitments Smoke', () => {
       },
       20000,
     );
+
+    await expect(page.getByRole('link', { name: title }).first()).toBeVisible({ timeout: 15000 });
   });
 });

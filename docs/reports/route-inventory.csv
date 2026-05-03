@@ -331,7 +331,6 @@ route,kind,dynamic,refCount,file,refSample
 /fm-global/form,page,false,2,frontend/src/app/(other)/fm-global/form/page.tsx,frontend/src/app/(other)/fm-global/form/actions.ts; frontend/src/app/(other)/fm-global/page.tsx
 /infinite-projects,page,false,0,frontend/src/app/(tables)/infinite-projects/page.tsx,
 /insights,page,false,2,frontend/src/app/(tables)/insights/page.tsx,frontend/src/app/(main)/[projectId]/home/project-accordions.tsx; frontend/src/app/(other)/tables-directory/page.tsx
-/issues,page,false,2,frontend/src/app/(tables)/issues/page.tsx,frontend/src/app/(other)/tables-directory/page.tsx; frontend/src/app/(tables)/issues/issues-client.tsx
 /meeting-segments,page,false,1,frontend/src/app/(tables)/meeting-segments/page.tsx,frontend/src/app/(other)/tables-directory/page.tsx
 /meetings,page,false,30,frontend/src/app/(tables)/meetings/page.tsx,frontend/src/app/(main)/[projectId]/home/meetings-section.tsx; frontend/src/app/(main)/[projectId]/home/project-home-client.tsx; frontend/src/app/(main)/[projectId]/meetings/[meetingId]/page.tsx; frontend/src/app/(main)/[projectId]/meetings/[meetingId]/prep/page.tsx; frontend/src/app/(main)/[projectId]/meetings/meetings-actions.tsx
 /meetings/[meetingId],page,true,0,frontend/src/app/(tables)/meetings/[meetingId]/page.tsx,

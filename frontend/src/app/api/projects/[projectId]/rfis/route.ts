@@ -67,12 +67,28 @@ export const GET = withApiGuardrails(
     const from = (page - 1) * limit;
     query = query.range(from, from + limit - 1);
 
-    const { data, error, count } = await query;
+    const [{ data, error, count }, { data: statusCounts }] = await Promise.all([
+      query,
+      supabase
+        .from("rfis")
+        .select("status")
+        .eq("project_id", numericProjectId),
+    ]);
 
     if (error) {
       logger.error({ msg: "RFI list error:", error: error instanceof Error ? error.message : String(error) });
       return apiErrorResponse(error);
     }
+
+    const openStatuses = new Set(["draft", "open", "answered"]);
+    const closedStatuses = new Set(["closed", "closed-draft"]);
+    let openCount = 0;
+    let closedCount = 0;
+    for (const row of statusCounts ?? []) {
+      if (openStatuses.has(row.status)) openCount++;
+      else if (closedStatuses.has(row.status)) closedCount++;
+    }
+    const allCount = statusCounts?.length ?? 0;
 
     return NextResponse.json({
       data: data || [],
@@ -81,6 +97,11 @@ export const GET = withApiGuardrails(
         limit,
         total: count || 0,
         totalPages: count ? Math.ceil(count / limit) : 0,
+        tab_counts: {
+          all: allCount,
+          open: openCount,
+          closed: closedCount,
+        },
       },
     });
     },

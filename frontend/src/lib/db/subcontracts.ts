@@ -8,16 +8,8 @@
 import type { Database } from "@/types/database.types";
 
 // Use the generated types - these are the source of truth
-type SubcontractRowBase = Database["public"]["Tables"]["subcontracts"]["Row"];
-type SubcontractInsertBase = Database["public"]["Tables"]["subcontracts"]["Insert"];
-
-const VALID_ACCOUNTING_METHODS = ["amount_based", "unit_quantity"] as const;
-type DbAccountingMethod = (typeof VALID_ACCOUNTING_METHODS)[number];
-
-// accounting_method exists in the DB but is not yet reflected in the generated types
-// (run `npm run db:types` after the next types regeneration to remove this extension)
-type SubcontractRow = SubcontractRowBase & { accounting_method?: DbAccountingMethod | null };
-type SubcontractInsert = SubcontractInsertBase & { accounting_method?: DbAccountingMethod | null };
+type SubcontractRow = Database["public"]["Tables"]["subcontracts"]["Row"];
+type SubcontractInsert = Database["public"]["Tables"]["subcontracts"]["Insert"];
 
 const DB_SUBCONTRACT_STATUSES = [
   "Draft",
@@ -220,13 +212,6 @@ export function mapFormToInsert(
     // Other fields
     invoice_contact_ids: formData.invoiceContactIds || [],
     created_by: userId,
-
-    // Accounting method — validate against allowlist; default to amount_based
-    accounting_method: VALID_ACCOUNTING_METHODS.includes(
-      formData.accountingMethod as DbAccountingMethod,
-    )
-      ? (formData.accountingMethod as DbAccountingMethod)
-      : "amount_based",
   };
 }
 
@@ -257,7 +242,8 @@ export function mapRowToDisplay(row: SubcontractRow) {
     nonAdminUserIds: row.non_admin_user_ids,
     allowNonAdminViewSovItems: row.allow_non_admin_view_sov_items,
     invoiceContactIds: row.invoice_contact_ids,
-    accountingMethod: row.accounting_method,
+    // Subcontracts do not persist accounting_method on the linked schema.
+    accountingMethod: "amount_based" as const,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     createdBy: row.created_by,

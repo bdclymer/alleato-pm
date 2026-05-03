@@ -1,19 +1,25 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { mapTaskRow, type JoinedTaskRow } from "@/features/tasks/task-utils";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { validateResponseContract, withApiGuardrails } from "@/lib/guardrails/api";
 
 const TaskResponseSchema = z.object({
   project_name: z.string().nullable(),
   meeting_title: z.string().nullable(),
+  source_title: z.string().nullable(),
+  source_type: z.string().nullable(),
+  source_url: z.string().nullable(),
+  source_web_url: z.string().nullable(),
+  fireflies_link: z.string().nullable(),
+  meeting_link: z.string().nullable(),
 });
 
 export const GET = withApiGuardrails("/api/tasks#GET", async () => {
   const supabase = await createClient();
 
-  // Tasks table contains mixed sources (tests/manual/system backfills).
-  // This endpoint intentionally serves Fireflies-derived project tasks only.
+  // Exclude interview/test transcripts so the tasks table stays focused on real source records.
   const { data: interviewMeetings, error: interviewError } = await supabase
     .from("document_metadata")
     .select("id")
@@ -34,9 +40,19 @@ export const GET = withApiGuardrails("/api/tasks#GET", async () => {
     .select(`
       *,
       projects (id, name),
-      document_metadata:tasks_metadata_id_fkey (title)
+      document_metadata:tasks_metadata_id_fkey (
+        id,
+        title,
+        type,
+        source,
+        source_system,
+        url,
+        source_web_url,
+        fireflies_link,
+        meeting_link,
+        project_id
+      )
     `)
-    .eq("source_system", "fireflies")
     .not("metadata_id", "is", null)
     .order("created_at", { ascending: false });
 
@@ -57,16 +73,7 @@ export const GET = withApiGuardrails("/api/tasks#GET", async () => {
     });
   }
 
-  const tasks = (data ?? []).map((task) => {
-    const { projects, document_metadata, ...rest } = task as Record<string, unknown>;
-    const projectMetadata = projects as Record<string, unknown> | undefined;
-    const meetingMetadata = document_metadata as Record<string, unknown> | undefined;
-    return {
-      ...rest,
-      project_name: projectMetadata?.name ?? null,
-      meeting_title: (meetingMetadata?.title as string | null) ?? null,
-    };
-  });
+  const tasks = ((data ?? []) as JoinedTaskRow[]).map(mapTaskRow);
 
   validateResponseContract(
     z.array(TaskResponseSchema.passthrough()),

@@ -2,18 +2,10 @@ export const dynamic = "force-dynamic";
 
 import { notFound } from "next/navigation";
 
-import { PageContainer, ProjectPageHeader } from "@/components/layout";
-import { ProjectTasksDataTable } from "@/components/tables/project-tasks-data-table";
+import { PageShell } from "@/components/layout";
+import { TasksTableClient } from "@/features/tasks/tasks-table-client";
+import { mapTaskRow, type JoinedTaskRow } from "@/features/tasks/task-utils";
 import { createServiceClient } from "@/lib/supabase/service";
-import type { Database } from "@/types/database.types";
-
-type TaskRow = Database["public"]["Tables"]["tasks"]["Row"];
-
-function sortByCreatedAtDesc(a: TaskRow, b: TaskRow): number {
-  const aCreatedAt = a.created_at ? new Date(a.created_at).getTime() : 0;
-  const bCreatedAt = b.created_at ? new Date(b.created_at).getTime() : 0;
-  return bCreatedAt - aCreatedAt;
-}
 
 export default async function ProjectTasksPage({
   params,
@@ -42,15 +34,60 @@ export default async function ProjectTasksPage({
       .single(),
     supabase
       .from("tasks")
-      .select("*")
+      .select(`
+        *,
+        projects (id, name),
+        document_metadata:tasks_metadata_id_fkey (
+          id,
+          title,
+          type,
+          source,
+          source_system,
+          url,
+          source_web_url,
+          fireflies_link,
+          meeting_link,
+          project_id
+        )
+      `)
       .contains("project_ids", [numericProjectId]),
     supabase
       .from("tasks")
-      .select("*")
+      .select(`
+        *,
+        projects (id, name),
+        document_metadata:tasks_metadata_id_fkey (
+          id,
+          title,
+          type,
+          source,
+          source_system,
+          url,
+          source_web_url,
+          fireflies_link,
+          meeting_link,
+          project_id
+        )
+      `)
       .eq("project_id", numericProjectId),
     supabase
       .from("tasks")
-      .select("*, document_metadata!tasks_metadata_id_fkey!inner(project_id)")
+      .select(`
+        *,
+        projects (id, name),
+        document_metadata:tasks_metadata_id_fkey!inner (
+          id,
+          title,
+          type,
+          source,
+          source_system,
+          url,
+          source_web_url,
+          fireflies_link,
+          meeting_link,
+          project_id
+        )
+      `)
       .eq("document_metadata.project_id", numericProjectId)
       .or("project_ids.is.null,project_ids.eq.{}"),
   ]);
@@ -62,37 +99,40 @@ export default async function ProjectTasksPage({
   const tasksByProjectIds = tasksByProjectIdsResult.data ?? [];
   const tasksByProjectId = tasksByProjectIdResult.data ?? [];
 
-  const linkedTasksRaw = tasksViaDocsResult.data ?? [];
-  const linkedTasks: TaskRow[] = linkedTasksRaw.map((row) => {
-    const { document_metadata: _documentMetadata, ...task } = row as TaskRow & {
-      document_metadata: unknown;
-    };
-    return task;
-  });
+  const linkedTasks = tasksViaDocsResult.data ?? [];
 
   // Deduplicate across all three sources — a task can match multiple queries
   // (e.g. project_id = 760 AND project_ids contains 760)
   const seenIds = new Set<string>();
-  const allTasks: TaskRow[] = [];
-  for (const task of [...tasksByProjectIds, ...tasksByProjectId, ...linkedTasks]) {
+  const allTasks: JoinedTaskRow[] = [];
+  for (const task of [...tasksByProjectIds, ...tasksByProjectId, ...linkedTasks] as JoinedTaskRow[]) {
     if (!seenIds.has(task.id)) {
       seenIds.add(task.id);
       allTasks.push(task);
     }
   }
-  const tasks = allTasks.sort(sortByCreatedAtDesc);
+  const tasks = allTasks
+    .sort((left, right) => {
+      const leftCreatedAt = left.created_at ? new Date(left.created_at).getTime() : 0;
+      const rightCreatedAt = right.created_at ? new Date(right.created_at).getTime() : 0;
+      return rightCreatedAt - leftCreatedAt;
+    })
+    .map(mapTaskRow);
 
   return (
-    <>
-      <ProjectPageHeader
+    <PageShell
+      variant="table"
+      title="Tasks"
+      showHeader={false}
+      contentClassName="pt-0 pb-0"
+    >
+      <TasksTableClient
         title="Tasks"
         description={`Tasks associated with ${projectResult.data.name}`}
+        initialData={tasks}
+        projectId={projectId}
+        allowDelete
       />
-      <PageContainer className="space-y-8">
-        <section className="space-y-4">
-          <ProjectTasksDataTable tasks={tasks} />
-        </section>
-      </PageContainer>
-    </>
+    </PageShell>
   );
 }

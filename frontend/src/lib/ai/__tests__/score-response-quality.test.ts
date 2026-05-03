@@ -118,6 +118,41 @@ describe("scoreResponseQuality", () => {
       expect(result.confidence).toBe("high");
       expect(result.reasons).toContain("compiled intelligence packet with multiple evidence cards");
     });
+
+    it("treats source-specific meeting retrieval rows as high source quality without inline source tags", () => {
+      const result = scoreResponseQuality({
+        toolTrace: [
+          {
+            tool: "sourceSpecificRagRetrieval",
+            output: {
+              rowCount: 5,
+              rows: [
+                { id: "meeting-1", title: "Company quarterly meeting" },
+                { id: "meeting-2", title: "Ace Hardware Champaign IL" },
+              ],
+            },
+            timestamp: "",
+          },
+        ],
+        content:
+          "The last week of meetings shows growth pressure, unresolved client decisions, and compliance follow-up risk.",
+      });
+
+      expect(result.sourceQuality).toBe("high");
+      expect(result.reasons).toContain(
+        "retrieval trace included 5 source-bearing record(s) without inline citations",
+      );
+    });
+
+    it("keeps generic non-retrieval tools from inflating source quality", () => {
+      const result = scoreResponseQuality({
+        toolTrace: traceWith(3),
+        content: "This has tool activity, but no source-bearing retrieval.",
+      });
+
+      expect(result.confidence).toBe("medium");
+      expect(result.sourceQuality).toBe("low");
+    });
   });
 
   describe("failed tool calls", () => {

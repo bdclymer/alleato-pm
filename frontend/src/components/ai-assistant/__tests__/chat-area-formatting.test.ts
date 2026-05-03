@@ -40,4 +40,18 @@ describe("formatStructuredMeetingList", () => {
     expect(formatted).not.toContain("   # Uniqlo+Alleato Group Date");
     expect(formatted).not.toContain("   ## Ulta Dallas Sprinkler Analysis Date");
   });
+
+  it("repairs inline assistant markdown so headings and bullets render", () => {
+    const text =
+      "I can help in four ways that actually move work. ### 1. Tell you what's going on I can pull real status around it: - latest meetings - emails and Teams chatter - budget / forecast / margin ### 2. Answer money questions I can dig into: - budgets - cost overruns - vendor spend";
+
+    const formatted = formatStructuredMeetingList(text);
+
+    expect(formatted).toContain(
+      "I can help in four ways that actually move work.\n\n### 1. Tell you what's going on\n\nI can pull real status around it:",
+    );
+    expect(formatted).toContain("- latest meetings\n- emails and Teams chatter\n- budget / forecast / margin");
+    expect(formatted).toContain("### 2. Answer money questions\n\nI can dig into:");
+    expect(formatted).toContain("- budgets\n- cost overruns\n- vendor spend");
+  });
 });

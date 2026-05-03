@@ -127,7 +127,6 @@ Dynamic segments (e.g., `[projectId]`, `[companyId]`) are replaced with `123`, a
 | `/fm-global/form` | [Open](http://localhost:3000/fm-global/form) | `frontend/src/app/(other)/fm-global/form/page.tsx` |
 | `/infinite-projects` | [Open](http://localhost:3000/infinite-projects) | `frontend/src/app/(tables)/infinite-projects/page.tsx` |
 | `/insights` | [Open](http://localhost:3000/insights) | `frontend/src/app/(tables)/insights/page.tsx` |
-| `/issues` | [Open](http://localhost:3000/issues) | `frontend/src/app/(tables)/issues/page.tsx` |
 | `/meeting-segments` | [Open](http://localhost:3000/meeting-segments) | `frontend/src/app/(tables)/meeting-segments/page.tsx` |
 | `/meetings` | [Open](http://localhost:3000/meetings) | `frontend/src/app/(tables)/meetings/page.tsx` |
 | `/meetings/[meetingId]` | [Open](http://localhost:3000/meetings/123) | `frontend/src/app/(tables)/meetings/[meetingId]/page.tsx` |

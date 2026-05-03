@@ -25,6 +25,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { Markdown } from "@/components/misc/markdown";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -163,7 +164,7 @@ export function DocumentMetadataSheet({
       <SheetContent
         side="right"
         className="p-0 flex flex-col bg-card"
-        style={{ width: "560px", maxWidth: "100vw" }}
+        showCloseButton={false}
       >
         {/* Header */}
         <SheetHeader className="px-5 pt-5 pb-4 shrink-0">
@@ -263,9 +264,9 @@ export function DocumentMetadataSheet({
             {/* Content — full text, no truncation */}
             {item.content && (
               <Section label="Content">
-                <p className="whitespace-pre-wrap leading-relaxed text-foreground">
+                <Markdown className="text-sm text-foreground [&_h1]:text-base [&_h1]:font-semibold [&_h1]:mt-3 [&_h1]:mb-1 [&_h2]:text-sm [&_h2]:font-semibold [&_h2]:mt-2 [&_h2]:mb-1 [&_h3]:text-sm [&_h3]:font-medium [&_h3]:mt-2 [&_h3]:mb-0.5 [&_p]:leading-relaxed [&_p]:mb-2 last:[&_p]:mb-0 [&_ul]:list-disc [&_ul]:pl-4 [&_ul]:mb-2 [&_ol]:list-decimal [&_ol]:pl-4 [&_ol]:mb-2 [&_li]:mb-0.5 [&_strong]:font-semibold">
                   {item.content}
-                </p>
+                </Markdown>
               </Section>
             )}
 
@@ -274,9 +275,9 @@ export function DocumentMetadataSheet({
               <>
                 {item.content && <Separator />}
                 <Section label="Summary">
-                  <p className="whitespace-pre-wrap leading-relaxed">
+                  <Markdown className="text-sm [&_h1]:text-base [&_h1]:font-semibold [&_h1]:mt-3 [&_h1]:mb-1 [&_h2]:text-sm [&_h2]:font-semibold [&_h2]:mt-2 [&_h2]:mb-1 [&_p]:leading-relaxed [&_p]:mb-2 last:[&_p]:mb-0 [&_ul]:list-disc [&_ul]:pl-4 [&_ul]:mb-2 [&_ol]:list-decimal [&_ol]:pl-4 [&_li]:mb-0.5 [&_strong]:font-semibold">
                     {item.summary}
-                  </p>
+                  </Markdown>
                 </Section>
               </>
             )}

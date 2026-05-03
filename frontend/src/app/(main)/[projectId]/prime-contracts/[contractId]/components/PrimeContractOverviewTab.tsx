@@ -35,6 +35,7 @@ import {
 import { EmptyState } from "@/components/ds";
 import { BudgetCodeSelector } from "@/components/budget/budget-code-selector";
 import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -295,88 +296,101 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
               >
                 {getTextValue(contract.description).text}
               </LabelValueRow>
+              <LabelValueRow label="Attachments" labelClassName="w-36" className="mt-6">
+                {attachmentsLoading ? (
+                  <div className="flex flex-wrap gap-3">
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <div key={i} className="flex items-center gap-2">
+                        <Skeleton className="h-4 w-4" />
+                        <Skeleton className="h-4 w-28" />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                    <FileUploadField
+                      label={<span className="sr-only">Upload attachment</span>}
+                      variant="link"
+                      showMetaText={false}
+                      multiple
+                      maxFiles={25}
+                      disabled={isUploadingAttachment}
+                      onFilesSelected={handleAttachmentFilesSelected}
+                    />
+                    {attachments.map((att) => (
+                      <div key={att.id} className="group inline-flex items-center gap-1.5">
+                        <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                        {att.downloadUrl || att.url ? (
+                          <a
+                            href={att.downloadUrl || att.url || "#"}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-foreground hover:underline"
+                          >
+                            {att.fileName}
+                          </a>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">{att.fileName}</span>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-5 w-5 shrink-0 p-0 text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive"
+                          onClick={() => handleDeleteAttachment(att.id)}
+                          aria-label={`Delete ${att.fileName}`}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </LabelValueRow>
             </DetailPanel>
 
             <DetailPanel>
-              <SectionRuleHeading label="Inclusions + Exclusions" className="mb-6 pb-0" />
-              <dl className="space-y-6 text-sm">
-                <LabelValueRow label="Inclusions" labelClassName="w-36">
-                  {inclusionsList.length === 0 ? (
-                    <span className="text-muted-foreground/50">—</span>
-                  ) : (
-                    <div className="space-y-1 leading-relaxed">
-                      {inclusionsList.map((line, index) => (
-                        <p key={`inclusion-${index}`}>
-                          {line}
-                        </p>
-                      ))}
+              <Collapsible defaultOpen>
+                <div className="mb-6 flex items-center justify-between">
+                  <SectionRuleHeading label="Inclusions + Exclusions" className="pb-0" />
+                  <CollapsibleTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs text-muted-foreground">
+                      <ChevronDown className="h-3.5 w-3.5 transition-transform [[data-state=closed]_&]:rotate-[-90deg]" />
+                    </Button>
+                  </CollapsibleTrigger>
+                </div>
+                <CollapsibleContent>
+                  <div className="space-y-6 text-sm">
+                    <div className="flex flex-col gap-1.5">
+                      <dt className="text-xs text-muted-foreground">Inclusions</dt>
+                      <dd className="font-normal leading-relaxed text-foreground">
+                        {inclusionsList.length === 0 ? (
+                          <span className="text-muted-foreground/50">—</span>
+                        ) : (
+                          <div className="space-y-1">
+                            {inclusionsList.map((line, index) => (
+                              <p key={`inclusion-${index}`}>{line}</p>
+                            ))}
+                          </div>
+                        )}
+                      </dd>
                     </div>
-                  )}
-                </LabelValueRow>
-                <LabelValueRow label="Exclusions" labelClassName="w-36">
-                  {exclusionsList.length === 0 ? (
-                    <span className="text-muted-foreground/50">—</span>
-                  ) : (
-                    <div className="space-y-1 leading-relaxed">
-                      {exclusionsList.map((line, index) => (
-                        <p key={`exclusion-${index}`}>
-                          {line}
-                        </p>
-                      ))}
+                    <div className="flex flex-col gap-1.5">
+                      <dt className="text-xs text-muted-foreground">Exclusions</dt>
+                      <dd className="font-normal leading-relaxed text-foreground">
+                        {exclusionsList.length === 0 ? (
+                          <span className="text-muted-foreground/50">—</span>
+                        ) : (
+                          <div className="space-y-1">
+                            {exclusionsList.map((line, index) => (
+                              <p key={`exclusion-${index}`}>{line}</p>
+                            ))}
+                          </div>
+                        )}
+                      </dd>
                     </div>
-                  )}
-                </LabelValueRow>
-                <LabelValueRow label="Attachments" labelClassName="w-36">
-                  {attachmentsLoading ? (
-                    <div className="flex flex-wrap gap-3">
-                      {Array.from({ length: 3 }).map((_, i) => (
-                        <div key={i} className="flex items-center gap-2">
-                          <Skeleton className="h-4 w-4" />
-                          <Skeleton className="h-4 w-28" />
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-                      <FileUploadField
-                        label={<span className="sr-only">Upload attachment</span>}
-                        variant="link"
-                        showMetaText={false}
-                        multiple
-                        maxFiles={25}
-                        disabled={isUploadingAttachment}
-                        onFilesSelected={handleAttachmentFilesSelected}
-                      />
-                      {attachments.map((att) => (
-                        <div key={att.id} className="group inline-flex items-center gap-1.5">
-                          <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                          {att.downloadUrl || att.url ? (
-                            <a
-                              href={att.downloadUrl || att.url || "#"}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-sm text-foreground hover:underline"
-                            >
-                              {att.fileName}
-                            </a>
-                          ) : (
-                            <span className="text-sm text-muted-foreground">{att.fileName}</span>
-                          )}
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-5 w-5 shrink-0 p-0 text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive"
-                            onClick={() => handleDeleteAttachment(att.id)}
-                            aria-label={`Delete ${att.fileName}`}
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </LabelValueRow>
-              </dl>
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
             </DetailPanel>
           </div>
 
@@ -742,13 +756,13 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
             </DndContext>
           )}
 
-          <div className="flex justify-start pt-2">
+          <div className="flex justify-start pt-1">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="default" size="sm" className="gap-1.5">
-                  <Plus />
+                <Button variant="link" size="sm" className="gap-1 px-0 text-sm font-medium text-primary">
+                  <Plus className="h-3.5 w-3.5" />
                   Add
-                  <ChevronDown className="text-muted-foreground" />
+                  <ChevronDown className="h-3.5 w-3.5" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start">
@@ -765,12 +779,12 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
           </div>
 
           {!lineItemsLoading && displayedSovItems.length > 0 ? (
-            <div className="flex justify-end pt-5">
+            <div className="flex justify-end pt-2">
               <div className="text-right">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                   Total Contract Value
                 </p>
-                <p className="mt-1 text-4xl font-semibold tabular-nums tracking-tight text-foreground">
+                <p className="mt-0.5 text-2xl font-semibold tabular-nums tracking-tight text-foreground">
                   {formatCurrency(displayedSovTotal)}
                 </p>
               </div>

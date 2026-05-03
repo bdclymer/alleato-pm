@@ -16,7 +16,7 @@ import {
   reconcileSovBudgetCodes,
   synthesizeMissingBudgetCodes,
 } from "./sovBudgetCodeReconciliation";
-import { apiFetch } from "@/lib/api-client";
+import { apiFetchWithTransientRouteRetry } from "@/lib/api-client";
 
 interface UseSubcontractFormStateOptions {
   projectId: number;
@@ -93,7 +93,7 @@ export function useSubcontractFormState({
 
     const generate = async () => {
       try {
-        const payload = await apiFetch<
+        const payload = await apiFetchWithTransientRouteRetry<
           | { data?: Array<{ contract_number?: string | null }> }
           | Array<{ contract_number?: string | null }>
         >(`/api/projects/${projectId}/subcontracts`);
@@ -129,7 +129,7 @@ export function useSubcontractFormState({
     const fetchCompanies = async () => {
       try {
         setIsLoadingVendors(true);
-        const data = await apiFetch<Array<{ id: string; name: string }>>(
+        const data = await apiFetchWithTransientRouteRetry<Array<{ id: string; name: string }>>(
           `/api/companies`,
         );
         setVendorOptions(
@@ -214,7 +214,7 @@ export function useSubcontractFormState({
       if (!projectId) return;
       try {
         setLoadingBudgetCodes(true);
-        const data = await apiFetch<{ budgetCodes: BudgetCode[] }>(
+        const data = await apiFetchWithTransientRouteRetry<{ budgetCodes: BudgetCode[] }>(
           `/api/projects/${projectId}/budget-codes`,
         );
         setBudgetCodes(data.budgetCodes || []);

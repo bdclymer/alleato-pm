@@ -7,13 +7,13 @@ import { toast } from "sonner";
 import { StatusBadge, EmptyState } from "@/components/ds";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Modal as Dialog,
+  ModalContent as DialogContent,
+  ModalDescription as DialogDescription,
+  ModalFooter as DialogFooter,
+  ModalHeader as DialogHeader,
+  ModalTitle as DialogTitle,
+} from "@/components/ui/unified-modal";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -267,7 +267,6 @@ export function ChangeEventRfqsTab({
               step="0.01"
               value={responseUnitPrice}
               onChange={(event) => setResponseUnitPrice(event.target.value)}
-              placeholder="0.00"
             />
             {selectedLineItem?.quantity != null ? (
               <p className="text-xs text-muted-foreground">

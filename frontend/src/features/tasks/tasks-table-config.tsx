@@ -9,32 +9,12 @@ import {
   type FilterConfig,
   type ColumnConfig,
 } from "@/components/tables/unified";
-
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
-export interface TasksRow {
-  id: string | null;
-  metadata_id: string | null;
-  segment_id: string | null;
-  source_chunk_id: string | null;
-  description: string | null;
-  assignee_name: string | null;
-  assignee_email: string | null;
-  meeting_title: string | null;
-  project_id: string | null;
-  project_name: string | null;
-  client_id: string | null;
-  due_date: string | null;
-  priority: string | null;
-  status: string | null;
-  source_system: string | null;
-  embedding: string | null;
-  created_at: string | null;
-  updated_at: string | null;
-  project_ids: string | null;
-}
+import {
+  type TasksRow,
+  getTaskSourceLabel,
+  getTaskSourceTarget,
+  getTaskSourceTitle,
+} from "@/features/tasks/task-utils";
 
 // ---------------------------------------------------------------------------
 // Column / Filter / Defaults
@@ -44,7 +24,8 @@ export const tasksColumns: ColumnConfig[] = [
   { id: "description", label: "Task Name", alwaysVisible: true },
   { id: "assignee_name", label: "Assigned User", defaultVisible: true },
   { id: "project_name", label: "Project Name", defaultVisible: true },
-  { id: "meeting_title", label: "Meeting Title", defaultVisible: true },
+  { id: "source_system", label: "Source", defaultVisible: true },
+  { id: "source_record", label: "Created From", defaultVisible: true },
   { id: "assignee_email", label: "Assignee Email", defaultVisible: false },
   { id: "created_at", label: "Created Date", defaultVisible: true },
   { id: "due_date", label: "Due Date", defaultVisible: true },
@@ -66,6 +47,26 @@ export const tasksFilters: FilterConfig[] = [
   },
 ];
 
+export function buildTasksFilters(items: TasksRow[]): FilterConfig[] {
+  const sourceOptions = Array.from(
+    new Set(items.map((item) => getTaskSourceLabel(item)).filter(Boolean)),
+  )
+    .sort((left, right) => left.localeCompare(right))
+    .map((value) => ({ value, label: value }));
+
+  return sourceOptions.length > 0
+    ? [
+        ...tasksFilters,
+        {
+          id: "source_system",
+          label: "Source",
+          type: "select" as const,
+          options: sourceOptions,
+        },
+      ]
+    : tasksFilters;
+}
+
 export const tasksDefaultVisibleColumns: string[] = tasksColumns
   .filter((c) => c.defaultVisible !== false)
   .map((c) => c.id);
@@ -74,7 +75,7 @@ export const tasksDefaultVisibleColumns: string[] = tasksColumns
 // Table columns (render / sort)
 // ---------------------------------------------------------------------------
 
-export function buildTasksTableColumns(): TableColumn<TasksRow>[] {
+export function buildTasksTableColumns(projectId?: string | null): TableColumn<TasksRow>[] {
   return tasksColumns.map((column) => {
     switch (column.id) {
       case "description":
@@ -113,23 +114,49 @@ export function buildTasksTableColumns(): TableColumn<TasksRow>[] {
           sortValue: (item) => item.project_name ?? "",
           sortable: true,
         };
-      case "meeting_title":
+      case "source_system":
         return {
           ...column,
           render: (item) => {
-            if (!item.metadata_id) return <span className="text-sm text-muted-foreground">—</span>;
+            return (
+              <TableTagBadge
+                label={getTaskSourceLabel(item)}
+                variant="outline"
+              />
+            );
+          },
+          sortValue: (item) => getTaskSourceLabel(item),
+          sortable: true,
+        };
+      case "source_record":
+        return {
+          ...column,
+          render: (item) => {
+            const target = getTaskSourceTarget(item, projectId);
+            const label = getTaskSourceTitle(item);
+
+            if (!target) {
+              return (
+                <span className="block max-w-72 truncate text-sm text-muted-foreground">
+                  {label}
+                </span>
+              );
+            }
+
             return (
               <a
-                href={`/meetings/${item.metadata_id}`}
-                className="block max-w-72 text-sm text-foreground underline-offset-2 hover:text-primary hover:underline truncate"
+                href={target.href}
+                className="block max-w-72 truncate text-sm text-foreground underline-offset-2 hover:text-primary hover:underline"
                 onClick={(event) => event.stopPropagation()}
-                title={item.meeting_title || "Open source meeting"}
+                rel={target.external ? "noreferrer" : undefined}
+                target={target.external ? "_blank" : undefined}
+                title={label}
               >
-                {item.meeting_title || "Open source meeting"}
+                {label}
               </a>
             );
           },
-          sortValue: (item) => item.meeting_title ?? "",
+          sortValue: (item) => getTaskSourceTitle(item),
           sortable: true,
         };
       case "assignee_email":
@@ -272,26 +299,29 @@ export function renderTasksList(
 
 export function renderTasksRowActions(
   item: TasksRow,
-  onView: (item: TasksRow) => void,
+  onOpenSource: (item: TasksRow) => void,
   onDelete?: (item: TasksRow) => void,
+  projectId?: string | null,
 ) {
   return (
     <TableRowActionsMenu
       items={[
         {
-          key: "view",
-          label: "View",
+          key: "open-source",
+          label: "Open source",
           icon: Eye,
-          onSelect: () => onView(item),
+          onSelect: () => onOpenSource(item),
         },
-        ...(item.metadata_id
+        ...(getTaskSourceTarget(item, projectId)
           ? [
               {
-                key: "open-source",
-                label: "Open source meeting",
+                key: "open-source-new-tab",
+                label: "Open source in new tab",
                 icon: ArrowUpRight,
                 onSelect: () => {
-                  window.open(`/meetings/${item.metadata_id}`, "_blank", "noopener,noreferrer");
+                  const target = getTaskSourceTarget(item, projectId);
+                  if (!target) return;
+                  window.open(target.href, "_blank", "noopener,noreferrer");
                 },
               },
             ]

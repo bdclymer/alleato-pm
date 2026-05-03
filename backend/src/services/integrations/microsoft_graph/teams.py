@@ -8,6 +8,7 @@ import re
 from datetime import datetime, timezone
 from typing import Optional
 
+from ...intelligence.compiler import process_source_document_to_packet
 from .client import get_graph_client
 from .project_inference import infer_project_id
 
@@ -78,6 +79,24 @@ def _user_identity_signals(user: dict) -> list[str]:
 def _conversation_doc_id(prefix: str, conversation_id: str, date_key: str) -> str:
     digest = hashlib.sha256(conversation_id.encode("utf-8")).hexdigest()[:16]
     return f"{prefix}_{digest}_{date_key}"
+
+
+def _run_source_intelligence_compiler(supabase_client, doc_id: str) -> None:
+    try:
+        result = process_source_document_to_packet(supabase_client, doc_id)
+        logger.info(
+            "[Teams] Intelligence compiler completed for %s: status=%s packet=%s",
+            doc_id,
+            result.get("status"),
+            (result.get("packet") or {}).get("packet_id"),
+        )
+    except Exception as exc:
+        logger.warning(
+            "[Teams] Intelligence compiler failed for %s: %s",
+            doc_id,
+            exc,
+            exc_info=True,
+        )
 
 
 def _format_thread_as_text(thread_messages: list[dict], channel_name: str, team_name: str) -> str:
@@ -217,6 +236,7 @@ def _process_teams_message(supabase_client, graph, msg, team_id, team_name, chan
         "tags": ",".join(["teams", team_name.lower(), channel_name.lower(), f"project_auto:{assignment_method}" if project_id else "unassigned"]),
         "project_id": project_id,
     }).execute()
+    _run_source_intelligence_compiler(supabase_client, doc_id)
     if project_id:
         logger.info(
             "[Teams] Auto-assigned project_id=%s for %s via %s (%.2f)",
@@ -433,6 +453,8 @@ def _process_chat_message(
         supabase_client.from_("document_metadata").update(row).eq("id", doc_id).execute()
     else:
         supabase_client.from_("document_metadata").insert(row).execute()
+    if is_embedding_ready:
+        _run_source_intelligence_compiler(supabase_client, doc_id)
 
 
 def sync_teams_chat(

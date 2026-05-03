@@ -5,6 +5,9 @@ import { CheckCircle2, AlertCircle, Copy, ExternalLink, Loader2, Unlink } from "
 import { Button } from "@/components/ui/button";
 import { apiFetch } from "@/lib/api-client";
 
+const BOT_USERNAME = "alleatoAIbot";
+const BOT_URL = `https://t.me/${BOT_USERNAME}`;
+
 interface LinkStatus {
   linked: boolean;
   mapping: {
@@ -41,7 +44,7 @@ export function TelegramLinkPanel() {
         setGenerated(null);
       }
     } catch {
-      // silent — just keep showing whatever state we have
+      // silent
     }
   }, []);
 
@@ -99,110 +102,145 @@ export function TelegramLinkPanel() {
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2 py-4 px-5 text-sm text-muted-foreground">
+      <div className="flex items-center gap-2 py-3 text-sm text-muted-foreground">
         <Loader2 className="h-4 w-4 animate-spin" />
-        <span>Checking Telegram status…</span>
+        <span>Checking status…</span>
       </div>
     );
   }
 
-  return (
-    <div className="flex items-start gap-4 py-4 px-5">
-      {/* Logo */}
-      <div className="h-10 w-10 shrink-0 rounded-md flex items-center justify-center" style={{ backgroundColor: "var(--integration-telegram)" }}>
-        <span className="text-xs font-bold" style={{ color: "white" }}>TG</span>
-      </div>
-
-      {/* Content */}
-      <div className="flex-1 min-w-0">
-        <div className="text-sm font-medium">Telegram</div>
-        <p className="text-xs text-muted-foreground mt-0.5 leading-snug">
-          Ask the AI assistant from your phone — no need to open the app.
-        </p>
-
-        {/* Status */}
-        <div className="mt-1.5">
-          {status?.linked ? (
-            <div className="flex items-center gap-1.5 text-xs text-green-600">
-              <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
-              <span>
-                Connected
-                {status.mapping?.display_name ? ` as @${status.mapping.display_name}` : ""}
-                {status.mapping?.created_at
-                  ? ` · linked ${new Date(status.mapping.created_at).toLocaleDateString()}`
-                  : ""}
-              </span>
-            </div>
-          ) : (
-            <span className="text-xs text-muted-foreground">Not connected</span>
-          )}
+  // ── Connected state ──────────────────────────────────────────────────────
+  if (status?.linked) {
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <CheckCircle2 className="h-4 w-4 shrink-0 text-green-600" />
+          <span className="text-sm text-foreground">
+            Connected
+            {status.mapping?.display_name ? ` as @${status.mapping.display_name}` : ""}
+          </span>
         </div>
-
-        {/* Linking flow */}
-        {!status?.linked && generated && (
-          <div className="mt-3 space-y-2.5">
-            <p className="text-xs text-muted-foreground">
-              Tap the button to open Telegram — it will send your code automatically. Or copy the code and send{" "}
-              <code className="font-mono bg-muted px-1 rounded">/start {generated.code}</code> to the bot manually.
-            </p>
-            <div className="flex flex-wrap items-center gap-2">
-              <Button
-                size="sm"
-                className="text-xs h-7 gap-1.5"
-                onClick={() => window.open(generated.deepLink, "_blank")}
-              >
-                <ExternalLink className="h-3.5 w-3.5" />
-                Open in Telegram
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-xs h-7 gap-1.5"
-                onClick={() => handleCopy(generated.code)}
-              >
-                <Copy className="h-3.5 w-3.5" />
-                {copied ? "Copied!" : `Copy code · ${generated.code}`}
-              </Button>
-            </div>
-            {expiresIn && (
-              <p className="text-xs text-muted-foreground">{expiresIn} · Waiting for you to send the code…</p>
-            )}
-          </div>
-        )}
-
-        {error && (
-          <div className="mt-2 flex items-center gap-1.5 text-xs text-red-600">
-            <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-            <span>{error}</span>
-          </div>
-        )}
-      </div>
-
-      {/* Actions */}
-      <div className="shrink-0 flex items-center gap-2">
-        {status?.linked ? (
+        <p className="text-xs text-muted-foreground">
+          Open <strong>@{BOT_USERNAME}</strong> on Telegram and send it a message — it knows who you are.
+        </p>
+        <div className="flex items-center gap-2">
           <Button
             variant="outline"
             size="sm"
-            className="text-xs h-7 gap-1.5 text-red-600 border-red-200 hover:bg-red-50"
+            className="text-xs h-7 gap-1.5"
+            onClick={() => window.open(BOT_URL, "_blank")}
+          >
+            <ExternalLink className="h-3.5 w-3.5" />
+            Open @{BOT_USERNAME}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-xs h-7 gap-1.5 text-muted-foreground"
             onClick={handleUnlink}
             disabled={unlinking}
           >
             {unlinking ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Unlink className="h-3.5 w-3.5" />}
             Unlink
           </Button>
-        ) : (
-          <Button
-            size="sm"
-            className="text-xs h-7"
-            onClick={handleGenerate}
-            disabled={generating}
-          >
-            {generating ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : null}
-            {generated ? "Regenerate" : "Connect"}
-          </Button>
-        )}
+        </div>
       </div>
+    );
+  }
+
+  // ── Not connected — code not yet generated ────────────────────────────────
+  if (!generated) {
+    return (
+      <div className="space-y-4">
+        {/* How it works */}
+        <ol className="space-y-2">
+          {[
+            { n: "1", text: <>Find <strong>@{BOT_USERNAME}</strong> on Telegram — or tap the button below to open it directly.</> },
+            { n: "2", text: <>Click <strong>Generate code</strong>, then send the code to the bot.</> },
+            { n: "3", text: <>The bot links your account and you can start chatting.</> },
+          ].map(({ n, text }) => (
+            <li key={n} className="flex items-start gap-2.5">
+              <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-semibold text-muted-foreground">
+                {n}
+              </span>
+              <span className="text-xs text-muted-foreground leading-relaxed">{text}</span>
+            </li>
+          ))}
+        </ol>
+
+        {error && (
+          <div className="flex items-center gap-1.5 text-xs text-destructive">
+            <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        <div className="flex flex-wrap items-center gap-2">
+          <Button size="sm" className="text-xs h-8 gap-1.5" onClick={handleGenerate} disabled={generating}>
+            {generating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+            Generate code
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-xs h-8 gap-1.5"
+            onClick={() => window.open(BOT_URL, "_blank")}
+          >
+            <ExternalLink className="h-3.5 w-3.5" />
+            Open @{BOT_USERNAME}
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Code generated — waiting for user to send it ──────────────────────────
+  return (
+    <div className="space-y-3">
+      <p className="text-xs text-muted-foreground">
+        Send this code to <strong>@{BOT_USERNAME}</strong> on Telegram. Tap{" "}
+        <strong>Open in Telegram</strong> to do it automatically, or copy the code and paste it manually.
+      </p>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          size="sm"
+          className="text-xs h-8 gap-1.5"
+          onClick={() => window.open(generated.deepLink, "_blank")}
+        >
+          <ExternalLink className="h-3.5 w-3.5" />
+          Open in Telegram
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          className="text-xs h-8 gap-1.5"
+          onClick={() => handleCopy(generated.code)}
+        >
+          <Copy className="h-3.5 w-3.5" />
+          {copied ? "Copied!" : `Copy code · ${generated.code}`}
+        </Button>
+      </div>
+
+      {expiresIn && (
+        <p className="text-xs text-muted-foreground">{expiresIn} · Waiting for confirmation…</p>
+      )}
+
+      {error && (
+        <div className="flex items-center gap-1.5 text-xs text-destructive">
+          <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
+
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-auto p-0 text-xs text-muted-foreground underline-offset-2 hover:underline hover:bg-transparent"
+        onClick={handleGenerate}
+      >
+        Regenerate code
+      </Button>
     </div>
   );
 }

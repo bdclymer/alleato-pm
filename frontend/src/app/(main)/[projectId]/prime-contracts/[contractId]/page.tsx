@@ -176,7 +176,7 @@ export default function ProjectContractDetailPage() {
 
   // ── Line items & budget codes (shared by overview tab + edit mode) ──────
   const [lineItems, setLineItems] = useState<ContractLineItem[]>([]);
-  const [lineItemsLoading, setLineItemsLoading] = useState(false);
+  const [lineItemsLoading, setLineItemsLoading] = useState(true);
   const [budgetCodes, setBudgetCodes] = useState<BudgetCode[]>([]);
   const [budgetCodesLoading, setBudgetCodesLoading] = useState(false);
 
@@ -272,14 +272,18 @@ export default function ProjectContractDetailPage() {
   }, [searchParams]);
 
   useEffect(() => {
-    if (!contract) return;
+    if (!contractId || !projectId) return;
     const fetchLineItems = async () => {
       try {
         setLineItemsLoading(true);
         const response = await fetchWithTransientRouteRetry(
           `/api/projects/${projectId}/contracts/${contractId}/line-items`,
         );
-        if (response.ok) setLineItems((await response.json()) || []);
+        if (response.ok) {
+          setLineItems((await response.json()) || []);
+        } else {
+          toast.error(`Failed to load schedule of values (${response.status})`);
+        }
       } catch (err) {
         toast.error(
           err instanceof Error ? err.message : "Failed to load schedule of values",
@@ -289,7 +293,7 @@ export default function ProjectContractDetailPage() {
       }
     };
     fetchLineItems();
-  }, [contract, contractId, projectId]);
+  }, [contractId, projectId]);
 
   useEffect(() => {
     if (!projectId) return;

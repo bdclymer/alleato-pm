@@ -66,16 +66,12 @@ export function PageTabs({
             "min-w-max space-x-2",
           )}
         >
-          {tabs.map((tab, index) => {
+          {tabs.map((tab) => {
             const isActive =
               tab.isActive ??
               (hasExactHrefMatch
                 ? tab.href === currentPath
                 : pathname === tab.href);
-            const displayCount =
-              tab.count !== undefined && tab.count > 99 ? "99+" : tab.count;
-            const countText = displayCount !== undefined ? String(displayCount) : "";
-            const isSingleDigitCount = /^\d$/.test(countText);
 
             return (
               <React.Fragment key={tab.href}>
@@ -97,21 +93,6 @@ export function PageTabs({
                   aria-current={isActive ? "page" : undefined}
                 >
                   <span>{tab.label}</span>
-                  {tab.count !== undefined && (
-                    <span
-                      className={cn(
-                        "inline-flex h-5 items-center justify-center rounded-full text-[10px] font-semibold leading-none",
-                        isSingleDigitCount ? "w-5" : "min-w-5 px-1.5",
-                        displayCount === "99+" && "text-[9px]",
-                        isActive
-                          ? "bg-primary/10 text-primary"
-                          : "bg-muted text-foreground",
-                      )}
-                      data-testid={tab.countTestId}
-                    >
-                      {displayCount}
-                    </span>
-                  )}
                   <span
                     aria-hidden="true"
                     className={cn(

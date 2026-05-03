@@ -1,0 +1,609 @@
+"use client";
+
+import * as React from "react";
+import { toast } from "sonner";
+
+import { useCompanies } from "@/hooks/use-companies";
+import { useProjectUsers } from "@/hooks/use-project-users";
+import { getAutoFillData, isDevelopment } from "@/lib/dev-autofill";
+import { apiFetch, apiFetchWithTransientRouteRetry } from "@/lib/api-client";
+import { createClient } from "@/lib/supabase/client";
+
+import type { BudgetCode, ContractFormData, SOVLineItem } from "./types";
+
+interface PrimeContractFormStateArgs {
+  initialData?: Partial<ContractFormData>;
+  projectId: string;
+  onSubmit: (data: ContractFormData, attachmentFiles?: File[]) => Promise<void>;
+}
+
+export function usePrimeContractFormState({
+  initialData,
+  projectId,
+  onSubmit,
+}: PrimeContractFormStateArgs) {
+  const [formData, setFormData] = React.useState<Partial<ContractFormData>>({
+    accountingMethod: "amount",
+    sovItems: [],
+    ...initialData,
+  });
+  const [validationErrors, setValidationErrors] = React.useState<
+    Partial<Record<"number" | "title", string>>
+  >({});
+  const [pendingAttachmentFiles, setPendingAttachmentFiles] = React.useState<File[]>([]);
+  const [budgetCodes, setBudgetCodes] = React.useState<BudgetCode[]>([]);
+  const [loadingBudgetCodes, setLoadingBudgetCodes] = React.useState(true);
+  const [openBudgetCodePopover, setOpenBudgetCodePopover] = React.useState<string | null>(null);
+  const [budgetCodeSearchQuery, setBudgetCodeSearchQuery] = React.useState("");
+  const [showCreateBudgetCodeModal, setShowCreateBudgetCodeModal] = React.useState(false);
+  const [newBudgetCodeData, setNewBudgetCodeData] = React.useState({
+    costCodeId: "",
+    costType: "",
+  });
+  const [availableCostCodes, setAvailableCostCodes] = React.useState<
+    Array<{
+      id: string;
+      title: string | null;
+      status: string | null;
+      division_title: string | null;
+    }>
+  >([]);
+  const [loadingCostCodes, setLoadingCostCodes] = React.useState(false);
+  const [expandedDivisions, setExpandedDivisions] = React.useState<Set<string>>(new Set());
+  const [groupedCostCodes, setGroupedCostCodes] = React.useState<
+    Record<string, Array<{
+      id: string;
+      title: string | null;
+      status: string | null;
+      division_title: string | null;
+    }>>
+  >({});
+  const [showImportFromBudget, setShowImportFromBudget] = React.useState(false);
+  const [sovActionMenuKey, setSovActionMenuKey] = React.useState(0);
+  const [showAddCompany, setShowAddCompany] = React.useState(false);
+  const [newCompanyName, setNewCompanyName] = React.useState("");
+  const [isCreating, setIsCreating] = React.useState(false);
+
+  const {
+    options: companyOptions,
+    isLoading: companiesLoading,
+    error: companiesError,
+    createCompany,
+  } = useCompanies();
+
+  const { users: projectUsers } = useProjectUsers(projectId);
+  const userOptions = projectUsers.map((u) => ({
+    value: u.id,
+    label: [u.first_name, u.last_name].filter(Boolean).join(" ") || u.email || "Unnamed",
+  }));
+
+  React.useEffect(() => {
+    if (companiesError) {
+      console.error("[ContractForm] Failed to load companies:", companiesError);
+      toast.error("Could not load company options", { description: companiesError.message });
+    }
+  }, [companiesError]);
+
+  React.useEffect(() => {
+    if (!formData.ownerCompanyId || formData.contractCompanyId === formData.ownerCompanyId) {
+      return;
+    }
+
+    setFormData((prev) => {
+      if (!prev.ownerCompanyId || prev.contractCompanyId === prev.ownerCompanyId) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        contractCompanyId: prev.ownerCompanyId,
+      };
+    });
+  }, [formData.contractCompanyId, formData.ownerCompanyId]);
+
+  React.useEffect(() => {
+    const fetchBudgetCodes = async () => {
+      if (!projectId) return;
+
+      try {
+        setLoadingBudgetCodes(true);
+        const { budgetCodes } = await apiFetchWithTransientRouteRetry<{
+          budgetCodes: BudgetCode[];
+        }>(`/api/projects/${projectId}/budget-codes`);
+
+        setBudgetCodes(budgetCodes || []);
+      } catch (error) {
+        console.error("[ContractForm] Failed to load budget codes:", error);
+        toast.error(error instanceof Error ? error.message : "Failed to load budget codes");
+        setBudgetCodes([]);
+      } finally {
+        setLoadingBudgetCodes(false);
+      }
+    };
+
+    void fetchBudgetCodes();
+  }, [projectId]);
+
+  React.useEffect(() => {
+    const fetchCostCodes = async () => {
+      if (!showCreateBudgetCodeModal) return;
+
+      try {
+        setLoadingCostCodes(true);
+        const supabaseClient = createClient();
+        // NOTE: cost_codes.id is the human-readable code number (e.g. "03-010"),
+        // NOT a UUID. Always render it as the code, never as a fallback.
+        const { data, error } = await supabaseClient
+          .from("cost_codes")
+          .select("id, title, status, division_title")
+          .eq("status", "Active")
+          .order("id", { ascending: true });
+
+        if (error) {
+          return;
+        }
+
+        const codes = data || [];
+        setAvailableCostCodes(codes);
+
+        const grouped = codes.reduce(
+          (acc: Record<string, typeof codes>, code: (typeof codes)[number]) => {
+            const divisionKey = code.division_title || "Other";
+            if (!acc[divisionKey]) {
+              acc[divisionKey] = [];
+            }
+            acc[divisionKey].push(code);
+            return acc;
+          },
+          {} as Record<string, typeof codes>,
+        );
+
+        setGroupedCostCodes(grouped);
+      } catch (error) {
+        console.error("Failed to fetch form data:", error);
+      } finally {
+        setLoadingCostCodes(false);
+      }
+    };
+
+    void fetchCostCodes();
+  }, [showCreateBudgetCodeModal]);
+
+  const handleSubmit = React.useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+
+      const errors: Partial<Record<"number" | "title", string>> = {};
+      if (!formData.number?.trim()) {
+        errors.number = "Contract # is required.";
+      }
+      if (!formData.title?.trim()) {
+        errors.title = "Title is required.";
+      }
+
+      if (Object.keys(errors).length > 0) {
+        setValidationErrors(errors);
+        return;
+      }
+
+      await onSubmit(formData as ContractFormData, pendingAttachmentFiles);
+    },
+    [formData, onSubmit, pendingAttachmentFiles],
+  );
+
+  const updateFormData = React.useCallback((updates: Partial<ContractFormData>) => {
+    setFormData((prev) => ({ ...prev, ...updates }));
+  }, []);
+
+  const clearValidationError = React.useCallback((field: "number" | "title") => {
+    setValidationErrors((prev) => {
+      if (!prev[field]) {
+        return prev;
+      }
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  }, []);
+
+  const handleCreateCompany = React.useCallback(async () => {
+    if (!newCompanyName.trim()) return;
+
+    setIsCreating(true);
+    try {
+      const newCompany = await createCompany({
+        name: newCompanyName.trim(),
+      });
+
+      if (newCompany) {
+        updateFormData({
+          ownerCompanyId: newCompany.id,
+          contractCompanyId: newCompany.id,
+        });
+        toast.success("Company created");
+        setNewCompanyName("");
+        setShowAddCompany(false);
+      }
+    } catch (error) {
+      console.error("Error creating company:", error);
+      toast.error("Failed to create company");
+    } finally {
+      setIsCreating(false);
+    }
+  }, [createCompany, newCompanyName, updateFormData]);
+
+  const getCostTypeLabel = React.useCallback((type: string) => {
+    const types: Record<string, string> = {
+      R: "Contract Revenue",
+      E: "Equipment",
+      X: "Expense",
+      L: "Labor",
+      M: "Material",
+      S: "Subcontract",
+    };
+    return types[type] || type;
+  }, []);
+
+  const toggleDivision = React.useCallback((division: string) => {
+    setExpandedDivisions((prev) => {
+      const next = new Set(prev);
+      if (next.has(division)) {
+        next.delete(division);
+      } else {
+        next.add(division);
+      }
+      return next;
+    });
+  }, []);
+
+  const handleCreateBudgetCode = React.useCallback(async () => {
+    try {
+      setIsCreating(true);
+
+      const selectedCostCode = availableCostCodes.find(
+        (cc) => cc.id === newBudgetCodeData.costCodeId,
+      );
+      if (!selectedCostCode) {
+        toast.error("Please select a cost code");
+        return;
+      }
+
+      const { budgetCode } = await apiFetch<{ budgetCode: BudgetCode }>(
+        `/api/projects/${projectId}/budget-codes`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            cost_code_id: newBudgetCodeData.costCodeId,
+            cost_type_id: newBudgetCodeData.costType,
+            description: selectedCostCode.title || null,
+          }),
+        },
+      );
+
+      setBudgetCodes((prev) => [...prev, budgetCode]);
+
+      setFormData((prev) => {
+        const items = prev.sovItems || [];
+        const firstEmptyRow = items.find((row) => !row.budgetCodeId);
+
+        if (firstEmptyRow) {
+          return {
+            ...prev,
+            sovItems: items.map((row) =>
+              row.id === firstEmptyRow.id
+                ? {
+                    ...row,
+                    budgetCodeId: budgetCode.id,
+                    budgetCodeLabel: budgetCode.fullLabel,
+                  }
+                : row,
+            ),
+          };
+        }
+
+        const newLine: SOVLineItem = {
+          id: `sov-${Date.now()}`,
+          budgetCodeId: budgetCode.id,
+          budgetCodeLabel: budgetCode.fullLabel,
+          description: "",
+          amount: 0,
+          quantity: prev.accountingMethod === "unit_quantity" ? 1 : undefined,
+          unitCost: prev.accountingMethod === "unit_quantity" ? 0 : undefined,
+          unitOfMeasure: prev.accountingMethod === "unit_quantity" ? "" : undefined,
+          billedToDate: 0,
+          amountRemaining: 0,
+        };
+        return {
+          ...prev,
+          sovItems: [...items, newLine],
+        };
+      });
+
+      setShowCreateBudgetCodeModal(false);
+      setNewBudgetCodeData({ costCodeId: "", costType: "" });
+      toast.success("Budget code created and added to form");
+    } catch (error) {
+      toast.error(
+        `Failed to create budget code: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
+    } finally {
+      setIsCreating(false);
+    }
+  }, [availableCostCodes, newBudgetCodeData, projectId]);
+
+  const handleBudgetCodeSelect = React.useCallback((rowId: string, code: BudgetCode) => {
+    setFormData((prev) => ({
+      ...prev,
+      sovItems: (prev.sovItems || []).map((row) =>
+        row.id === rowId
+          ? { ...row, budgetCodeId: code.id, budgetCodeLabel: code.fullLabel }
+          : row,
+      ),
+    }));
+    setOpenBudgetCodePopover(null);
+  }, []);
+
+  const addSOVLine = React.useCallback(() => {
+    setFormData((prev) => {
+      const isUnitQuantity = prev.accountingMethod === "unit_quantity";
+      const newLine: SOVLineItem = {
+        id: `sov-${Date.now()}`,
+        budgetCodeId: "",
+        budgetCodeLabel: "",
+        description: "",
+        amount: 0,
+        quantity: isUnitQuantity ? 1 : undefined,
+        unitCost: isUnitQuantity ? 0 : undefined,
+        unitOfMeasure: isUnitQuantity ? "" : undefined,
+        billedToDate: 0,
+        amountRemaining: 0,
+      };
+      return { ...prev, sovItems: [...(prev.sovItems || []), newLine] };
+    });
+  }, []);
+
+  const addSOVGroup = React.useCallback(() => {
+    setFormData((prev) => {
+      const newGroup: SOVLineItem = {
+        id: `sov-group-${Date.now()}`,
+        isGroup: true,
+        description: "New Group",
+        amount: 0,
+        billedToDate: 0,
+        amountRemaining: 0,
+      };
+      return { ...prev, sovItems: [...(prev.sovItems || []), newGroup] };
+    });
+  }, []);
+
+  const updateSOVLine = React.useCallback((id: string, updates: Partial<SOVLineItem>) => {
+    setFormData((prev) => {
+      const items = prev.sovItems || [];
+      const isUnitQuantity = prev.accountingMethod === "unit_quantity";
+      return {
+        ...prev,
+        sovItems: items.map((item) =>
+          item.id === id
+            ? {
+                ...item,
+                ...updates,
+                amount:
+                  isUnitQuantity && (updates.quantity || updates.unitCost)
+                    ? (updates.quantity ?? item.quantity ?? 0) *
+                      (updates.unitCost ?? item.unitCost ?? 0)
+                    : updates.amount ?? item.amount,
+              }
+            : item,
+        ),
+      };
+    });
+  }, []);
+
+  const removeSOVLine = React.useCallback((id: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      sovItems: (prev.sovItems || []).filter((item) => item.id !== id),
+    }));
+  }, []);
+
+  const toggleSovAccountingMethod = React.useCallback(() => {
+    setFormData((prev) => {
+      const nextMethod = prev.accountingMethod === "unit_quantity"
+        ? "amount"
+        : "unit_quantity";
+
+      const nextItems = (prev.sovItems || []).map((item) => {
+        if (item.isGroup) return item;
+
+        if (nextMethod === "unit_quantity") {
+          const quantity = item.quantity ?? 1;
+          const unitCost = item.unitCost ?? item.amount ?? 0;
+          return {
+            ...item,
+            quantity,
+            unitCost,
+            unitOfMeasure: item.unitOfMeasure ?? "",
+            amount: quantity * unitCost,
+          };
+        }
+
+        const amount = item.amount ?? ((item.quantity ?? 0) * (item.unitCost ?? 0));
+        return { ...item, amount };
+      });
+
+      return {
+        ...prev,
+        accountingMethod: nextMethod,
+        sovItems: nextItems,
+      };
+    });
+  }, []);
+
+  const handleImportFromBudgetSuccess = React.useCallback((items: unknown[]) => {
+    const importedItems = Array.isArray(items) ? items : [];
+    if (importedItems.length === 0) return;
+
+    let unmappedCount = 0;
+    const mapped: SOVLineItem[] = importedItems.map((raw, index) => {
+      const item = raw as {
+        costCode?: string;
+        costCodeDescription?: string;
+        description?: string;
+        originalBudgetAmount?: number;
+        costType?: string;
+      };
+
+      const fallbackLabel = item.costCode
+        ? item.costCodeDescription
+          ? `${item.costCode} - ${item.costCodeDescription}`
+          : item.costCode
+        : "";
+
+      const matchingCode =
+        budgetCodes.find(
+          (bc) =>
+            bc.code === item.costCode &&
+            (item.costType ? bc.costType === item.costType : true),
+        ) ?? budgetCodes.find((bc) => bc.code === item.costCode);
+
+      if (!matchingCode) unmappedCount++;
+
+      return {
+        id: `sov-import-${Date.now()}-${index}`,
+        budgetCodeId: matchingCode?.id ?? "",
+        budgetCodeLabel: matchingCode?.fullLabel ?? fallbackLabel,
+        description: item.costCodeDescription || item.description || item.costCode || "",
+        amount: item.originalBudgetAmount || 0,
+        billedToDate: 0,
+        amountRemaining: item.originalBudgetAmount || 0,
+      };
+    });
+
+    setFormData((prev) => ({
+      ...prev,
+      sovItems: [...(prev.sovItems || []), ...mapped],
+    }));
+
+    if (unmappedCount > 0) {
+      toast.warning(
+        `${unmappedCount} item${unmappedCount !== 1 ? "s" : ""} could not be matched to a budget code — please select manually before saving.`,
+      );
+    } else {
+      toast.success(`Imported ${mapped.length} SOV line item${mapped.length === 1 ? "" : "s"}`);
+    }
+  }, [budgetCodes]);
+
+  const handleAttachmentListChange = React.useCallback(
+    (nextFiles: NonNullable<ContractFormData["attachments"]>) => {
+      const remaining = new Set(
+        nextFiles.map((file) => `${file.name}:${file.size}:${file.type || ""}`),
+      );
+
+      updateFormData({ attachments: nextFiles });
+      setPendingAttachmentFiles((prev) =>
+        prev.filter((file) =>
+          remaining.has(`${file.name}:${file.size}:${file.type || ""}`),
+        ),
+      );
+    },
+    [updateFormData],
+  );
+
+  const handleFilesSelected = React.useCallback((files: File[]) => {
+    if (files.length === 0) return;
+
+    setFormData((prev) => ({
+      ...prev,
+      attachments: [
+        ...(prev.attachments || []),
+        ...files.map((file) => ({
+          name: file.name,
+          size: file.size,
+          type: file.type,
+        })),
+      ],
+    }));
+    setPendingAttachmentFiles((prev) => [...prev, ...files]);
+  }, []);
+
+  const handleAutoFill = React.useCallback(() => {
+    if (!isDevelopment) return;
+    const autoFillData = getAutoFillData("primeContract");
+    updateFormData(autoFillData);
+  }, [updateFormData]);
+
+  const filteredBudgetCodes = React.useMemo(
+    () =>
+      budgetCodes.filter((code) =>
+        code.fullLabel.toLowerCase().includes(budgetCodeSearchQuery.toLowerCase()),
+      ),
+    [budgetCodeSearchQuery, budgetCodes],
+  );
+
+  const isUnitQuantityMode = formData.accountingMethod === "unit_quantity";
+  const sovColumnCount = isUnitQuantityMode ? 8 : 6;
+
+  const sovTotals = React.useMemo(() => {
+    const items = (formData.sovItems || []).filter((item) => !item.isGroup);
+    return {
+      amount: items.reduce((sum, item) => sum + (item.amount || 0), 0),
+      billedToDate: items.reduce((sum, item) => sum + (item.billedToDate || 0), 0),
+      amountRemaining: items.reduce(
+        (sum, item) => sum + ((item.amount || 0) - (item.billedToDate || 0)),
+        0,
+      ),
+    };
+  }, [formData.sovItems]);
+
+  return {
+    formData,
+    validationErrors,
+    budgetCodes,
+    loadingBudgetCodes,
+    openBudgetCodePopover,
+    budgetCodeSearchQuery,
+    showCreateBudgetCodeModal,
+    newBudgetCodeData,
+    availableCostCodes,
+    loadingCostCodes,
+    expandedDivisions,
+    groupedCostCodes,
+    showImportFromBudget,
+    sovActionMenuKey,
+    companyOptions,
+    companiesLoading,
+    userOptions,
+    showAddCompany,
+    newCompanyName,
+    isCreating,
+    filteredBudgetCodes,
+    isUnitQuantityMode,
+    sovColumnCount,
+    sovTotals,
+    handleSubmit,
+    updateFormData,
+    clearValidationError,
+    handleCreateCompany,
+    getCostTypeLabel,
+    toggleDivision,
+    handleCreateBudgetCode,
+    handleBudgetCodeSelect,
+    addSOVLine,
+    addSOVGroup,
+    updateSOVLine,
+    removeSOVLine,
+    toggleSovAccountingMethod,
+    handleImportFromBudgetSuccess,
+    handleAttachmentListChange,
+    handleFilesSelected,
+    handleAutoFill,
+    setOpenBudgetCodePopover,
+    setBudgetCodeSearchQuery,
+    setShowCreateBudgetCodeModal,
+    setNewBudgetCodeData,
+    setShowImportFromBudget,
+    setSovActionMenuKey,
+    setShowAddCompany,
+    setNewCompanyName,
+  };
+}

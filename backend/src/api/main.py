@@ -505,6 +505,12 @@ class TeamsCompilerRunRequest(BaseModel):
     dry_run: bool = False
 
 
+class IntelligenceCompilerRunRequest(BaseModel):
+    source_limit: int = 10
+    packet_limit: int = 10
+    dry_run: bool = False
+
+
 @app.post("/api/pipeline/process", tags=["Ingestion"], summary="Run full RAG pipeline for a document")
 async def pipeline_process_endpoint(
     payload: PipelineProcessRequest,
@@ -574,6 +580,48 @@ async def get_teams_compiler_status() -> Dict[str, Any]:
         raise HTTPException(
             status_code=500,
             detail=f"Teams compiler status query failed: {exc}",
+        ) from exc
+
+
+@app.post("/api/intelligence/compiler/run", tags=["Intelligence"], summary="Run AI intelligence compiler queue")
+async def run_intelligence_compiler(
+    request: IntelligenceCompilerRunRequest,
+    _: None = Depends(require_admin_api_key),
+) -> Dict[str, Any]:
+    """Drain queued source intelligence and packet refresh jobs."""
+    import uuid
+
+    job_id = str(uuid.uuid4())
+    if request.source_limit < 0 or request.source_limit > 100:
+        raise HTTPException(status_code=422, detail="source_limit must be between 0 and 100")
+    if request.packet_limit < 0 or request.packet_limit > 100:
+        raise HTTPException(status_code=422, detail="packet_limit must be between 0 and 100")
+    if request.dry_run:
+        return {
+            "job_id": job_id,
+            "status": "dry_run",
+            "results": {
+                "source_limit": request.source_limit,
+                "packet_limit": request.packet_limit,
+            },
+        }
+
+    try:
+        from src.services.intelligence.compiler import run_intelligence_compiler_batch
+        from src.services.supabase_helpers import get_supabase_client
+
+        client = get_supabase_client()
+        results = run_intelligence_compiler_batch(
+            client,
+            source_limit=request.source_limit,
+            packet_limit=request.packet_limit,
+        )
+        return {"job_id": job_id, "status": "completed", "results": results}
+    except Exception as exc:
+        logger.error("[IntelligenceCompilerAPI] run failed job_id=%s: %s", job_id, exc, exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Intelligence compiler run failed for job {job_id}: {exc}",
         ) from exc
 
 

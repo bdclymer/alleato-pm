@@ -104,10 +104,7 @@ export default function ProfilePage() {
         </section>
 
         <section className="space-y-4">
-          <SectionRuleHeading label="Mobile" />
-          <p className="text-sm text-muted-foreground -mt-2">
-            Connect your phone so you can talk to the AI assistant from anywhere.
-          </p>
+          <SectionRuleHeading label="Telegram" />
           <TelegramLinkPanel />
         </section>
     </PageShell>

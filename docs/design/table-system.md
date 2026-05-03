@@ -1,16 +1,41 @@
 # Table System
 
-Consolidated reference for all table pages. Every data list page uses `UnifiedTablePage`.
+Consolidated reference for all table pages.
 
 ---
 
-## Why UnifiedTablePage
+## Why We Migrated Away From UnifiedTablePage
 
-Before this system, 20+ table pages were built inconsistently — different toolbar patterns, inconsistent filter UI, repeated mistakes. UnifiedTablePage standardizes:
-- Consistent toolbar (search, views, filters, columns, export, bulk delete)
-- CRUD by default
-- Config-driven — new table = config + hook, no custom JSX for standard behavior
-- Same keyboard shortcuts everywhere — users learn once
+`UnifiedTablePage` was a monolith — one 1,200-line component that tried to do everything. The problems:
+
+- Features were buried in deeply nested props, hard to override or extend
+- Column filter config lived separately from column definitions, causing constant drift
+- No URL-state persistence — filters/sort reset on navigation
+- No column drag-and-drop reorder, pinning, or resize
+- Density and column visibility weren't persisted across sessions
+- Row count was on a separate line from the toolbar
+
+We replaced it with a two-piece architecture: **`useDataTable`** (URL state) + **`AleatoDataTable`** (rendering). The gold standard implementation is the RFI table.
+
+---
+
+## New Architecture
+
+```
+Page (RSC)
+└── *Table client component
+    ├── useSearchParams()          ← reads URL state
+    ├── useQuery()                 ← React Query data fetching
+    ├── useDataTable()             ← TanStack table instance + URL sync
+    └── AleatoDataTable            ← all rendering, toolbar, features
+        ├── PageShell variant="table"
+        ├── PageTabs variant="inline"  ← if tabs needed
+        ├── Toolbar (search, filter, density, columns, export)
+        ├── Filter panel (popover, all filterable columns)
+        ├── Table (resizable, reorderable, pinnable columns)
+        ├── Bulk action bar (appears on selection)
+        └── Pagination
+```
 
 ---
 
@@ -18,179 +43,277 @@ Before this system, 20+ table pages were built inconsistently — different tool
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│ Page Title                              [+ Add Entity]  │  ← Header (primary action ONLY)
+│ Page Title                              [+ Create]      │  ← PageShell header
 ├─────────────────────────────────────────────────────────┤
-│ [Tab 1] [Tab 2] [Tab 3]                                 │  ← Optional tabs
+│ [All] [Open] [Closed]                                   │  ← PageTabs variant="inline"
 ├─────────────────────────────────────────────────────────┤
-│ 🔍  [≡][▦][▤]  [Filter]  [⋮⋮]  [↓]  [🗑]      47 items │  ← Toolbar (everything else)
+│ 24 items  ···  🔍  [⚙][≡][↓]                           │  ← Toolbar (count left, icons right)
 ├─────────────────────────────────────────────────────────┤
-│                                                         │
-│  Table / Card / List view                               │
-│                                                         │
+│  ☐  #   Subject         Status    Due Date   Assignees  │
+│  ─────────────────────────────────────────────────────  │
+│  ☐  1   Lorem ipsum     Open      Jan 15     J. Smith   │
+│  ☐  2   Dolor sit       Closed    Jan 22     A. Jones   │
 ├─────────────────────────────────────────────────────────┤
-│                    [<] Page 1 of 5 [>]                  │
+│  Rows per page [25 ▾]          ‹  1  2  3  …  12  ›    │
 └─────────────────────────────────────────────────────────┘
 ```
 
-**Critical rule:** Add button stays in **header** (page-level action). All table controls stay in **toolbar** (data-level). Filters in popover, not inline.
-
 ---
 
-## Toolbar Elements
+## Gold Standard: RFI Table
 
-| Element | Behavior |
-|---------|----------|
-| **Search** | Icon by default, expands to input on click, collapses on blur if empty |
-| **Views** | 3 icon toggle (table/card/list), no labels |
-| **Filter** | Icon opens popover with all filters, badge shows active count |
-| **Columns** | Icon opens dropdown to show/hide columns |
-| **Export** | Icon triggers CSV/Excel export |
-| **Delete** | Disabled until rows selected, turns red when active |
-| **Count** | Right-aligned — "X items" or "X of Y" when filtered |
+**Files:**
+- `frontend/src/app/(main)/[projectId]/rfis/page.tsx` — thin RSC shell
+- `frontend/src/app/(main)/[projectId]/rfis/rfis-table.tsx` — client component
+- `frontend/src/features/rfis/rfis-columns.tsx` — column definitions
 
----
-
-## UnifiedTablePage API
+### page.tsx (RSC shell)
 
 ```tsx
-import { UnifiedTablePage } from "@/components/tables/unified";
+export const dynamic = "force-dynamic";
+import * as React from "react";
+import { RfisTable } from "./rfis-table";
 
-<UnifiedTablePage
-  header={{
-    title: "Entity Name",
-    actions: <Button size="sm">+ Create</Button>,  // PRIMARY ACTION ONLY
-  }}
-  tabs={[
-    { value: "all", label: "All" },
-    { value: "active", label: "Active" },
-  ]}
-  toolbar={{
-    onSearch: (query) => setSearch(query),
-    onExport: () => exportCSV(),
-    features: {
-      enableExport: true,
-      enableBulkDelete: true,
-      enableColumnVisibility: true,
-    },
-  }}
-  data={{
-    items,
-    isLoading,
-    isFetching,
-  }}
-  table={{
+export default async function RfisPage({ params }) {
+  const { projectId } = await params;
+  return (
+    <React.Suspense fallback={null}>
+      <RfisTable projectId={parseInt(projectId, 10)} />
+    </React.Suspense>
+  );
+}
+```
+
+### rfis-table.tsx (client component)
+
+```tsx
+"use client";
+
+export function RfisTable({ projectId }: { projectId: number }) {
+  const router = useRouter();
+  const searchParamsRaw = useSearchParams();
+  const searchParams = searchParamsRaw ?? new URLSearchParams();
+
+  // Read URL state
+  const page = Number(searchParams.get("page") ?? "1");
+  const perPage = Number(searchParams.get("perPage") ?? "25");
+  const sort = searchParams.get("sort");
+  const search = searchParams.get("search");
+
+  // Fetch data
+  const { data, isLoading } = useQuery({
+    queryKey: ["rfis", projectId, { page, perPage, sort, search }],
+    queryFn: () => fetchRfis(projectId, { page, perPage, sort, search }),
+    placeholderData: (prev) => prev,
+  });
+
+  // Build table instance
+  const { table } = useDataTable({
+    data: data?.data ?? [],
     columns,
-    getRowId: (row) => row.id,
-    onRowClick: (row) => router.push(`/${projectId}/entity/${row.id}`),
-  }}
-  sorting={{
-    sortBy: sortField,
-    sortDirection: sortDir,
-    onSort: (field, dir) => { setSortField(field); setSortDir(dir); },
-  }}
-  emptyState={{
-    title: "No items yet",
-    description: "Create your first item to get started",
-    filteredDescription: "No items match your filters",
-    isFiltered: search.length > 0,
-  }}
+    pageCount: data?.meta.totalPages ?? 1,
+    enableColumnResizing: true,
+    columnResizeMode: "onChange",
+    initialState: {
+      pagination: { pageIndex: 0, pageSize: 25 },
+      columnVisibility: { /* hide low-priority columns by default */ },
+    },
+  });
+
+  return (
+    <PageShell variant="table" title="RFIs" description="..." actions={<Button>Create RFI</Button>}>
+      <AleatoDataTable
+        table={table}
+        isLoading={isLoading}
+        storageKey={`rfis-${projectId}`}
+        tabs={tabs}               // optional — rendered as PageTabs variant="inline"
+        searchValue={search ?? ""}
+        onSearchChange={handleSearchChange}
+        searchPlaceholder="Search RFIs…"
+        onBulkDelete={handleBulkDelete}
+      />
+    </PageShell>
+  );
+}
+```
+
+### Column definitions
+
+Every column must declare:
+- `size` / `minSize` — required for resize to work correctly
+- `enableColumnFilter: true` + `meta.variant` — required to appear in the filter panel
+- `meta.label` — shown in column visibility menu and filter panel
+
+```tsx
+{
+  accessorKey: "status",
+  size: 110,
+  minSize: 80,
+  header: "Status",
+  cell: ({ row }) => <CellStatus value={row.getValue("status")} />,
+  enableColumnFilter: true,
+  meta: {
+    label: "Status",
+    variant: "select",
+    options: STATUS_OPTIONS.map(s => ({ label: s.label, value: s.value })),
+  },
+},
+```
+
+**Filter variants:**
+
+| `meta.variant` | Renders as | Use for |
+|----------------|-----------|---------|
+| `"text"` | Text input | Free-text fields (name, subject, notes) |
+| `"select"` | Faceted filter (checkboxes) | Fixed option sets (status, type) |
+| `"multiSelect"` | Same as select | Same |
+| `"date"` | Date picker | Single date fields |
+| `"dateRange"` | Date range picker | Created/updated/due date fields |
+
+**Cell primitives** — always import from `@/components/tables/unified/table-primitives`:
+
+| Import | Use for |
+|--------|---------|
+| `CellText` | Plain text (handles null with `—`) |
+| `CellStatus` | Status strings → design system colors |
+| `CellDate` | ISO date → formatted display |
+
+**Never hand-roll** status colors, date formatting, or null display. Use the primitives.
+
+---
+
+## AleatoDataTable Props
+
+```tsx
+<AleatoDataTable
+  table={table}              // TanStack table instance from useDataTable()
+  isLoading={boolean}        // shows skeleton rows
+  storageKey={string}        // unique per page — persists density + column order to localStorage
+
+  // Tabs (optional)
+  tabs={TabItem[]}           // renders PageTabs variant="inline" above toolbar
+
+  // Search
+  searchValue={string}
+  onSearchChange={(val) => void}
+  searchPlaceholder={string}
+
+  // Bulk delete (optional — enables bulk action bar on row selection)
+  onBulkDelete={(ids: string[]) => Promise<void>}
 />
 ```
 
----
-
-## Reference Implementations
-
-| File | What it demonstrates |
-|------|---------------------|
-| `commitments/page.tsx` | Tabs, footer totals, row selection |
-| `change-events/page.tsx` | Tabs, bulk delete, export |
-| `invoicing/page.tsx` | KpiRow as topContent |
-| `rfis/rfis-client.tsx` | Standard implementation |
-| `submittals/page.tsx` | Standard with filters |
-| `direct-costs/cost-code-hierarchy-view.tsx` | Hierarchical/grouped rows |
-| `daily-log/daily-log-client.tsx` | Simple table, no filters |
-
----
-
-## Cell Types
-
-All table cells must use one of these standard types. Never build one-off cell renderers for standard data.
-
-| Cell type | What it shows | How to implement |
-|-----------|--------------|-----------------|
-| Text | Plain string | `row.name` |
-| Meta | Secondary smaller text below | `<div><p>{primary}</p><p className="text-xs text-muted-foreground">{secondary}</p></div>` |
-| Avatar + name | Photo/initial + name | `<AvatarStack avatars={[...]} />` |
-| Status | Colored pill | `<StatusBadge status={row.status} />` |
-| Status dot | Compact dot + label | `<StatusDot status={row.status} />` |
-| Date | Formatted date | `format(new Date(row.date), "MMM d, yyyy")` |
-| Money | Currency value | `formatCurrency(row.amount)` with `font-mono tabular-nums` |
-| Icon only | Action or category icon | `<Icon className="h-4 w-4 text-muted-foreground" />` |
-| Progress | Progress bar | `<Progress value={row.pct} />` |
-| Empty/null | Dash for missing data | `row.value ?? "—"` |
+**Features are ALL ON by default.** There is no per-feature flag — every `AleatoDataTable` gets:
+- Column resize (drag right edge, double-click to reset)
+- Column reorder (drag grip handle)
+- Column pinning (right-click header → pin left / right / unpin)
+- Column visibility (toolbar icon → dropdown with reset)
+- Density control (toolbar icon → compact / default / relaxed, persisted to localStorage)
+- Filter panel (toolbar icon → popover, all filterable columns)
+- Sort (click any column header)
+- Bulk selection + bulk delete (when `onBulkDelete` provided)
+- Export (toolbar icon)
+- Keyboard navigation (ArrowUp / ArrowDown)
+- Expandable search (toolbar icon → expands inline)
+- Row count on same line as toolbar
 
 ---
 
-## Row States
+## Tabs
 
+Use `PageTabs` with `variant="inline"` — this is what `AleatoDataTable` renders internally when you pass `tabs`. If you build a page without `AleatoDataTable` and need tabs, pass them the same way:
+
+```tsx
+// ✅ Correct
+<PageTabs tabs={tabs} variant="inline" />
+
+// ❌ Wrong — default variant uses larger padding and more bottom margin
+<PageTabs tabs={tabs} />
 ```
-Focused (keyboard J/K):  2px left border (--primary color) + bg-accent/5
-Hovered:                 bg-muted (subtle 2–3% shift)
-Selected (checkbox):     bg-accent/10, checkmark visible
-Default:                 bg-card, text-foreground / text-muted-foreground
+
+Tab structure:
+```tsx
+const tabs = [
+  { label: "All",    href: buildTabHref("all"),    count: allCount,    isActive: activeTab === "all" },
+  { label: "Open",   href: buildTabHref("open"),   count: openCount,   isActive: activeTab === "open" },
+  { label: "Closed", href: buildTabHref("closed"), count: closedCount, isActive: activeTab === "closed" },
+];
 ```
 
 ---
 
-## Density Options
+## PageShell Variants (width reference)
 
-| Density | Row height | Cell padding | When to use |
-|---------|-----------|--------------|-------------|
-| standard | 53px | `px-3 py-3` | Default — most pages |
-| compact | 40px | `px-3 py-2` | High-density tables, log views |
-| comfortable | 64px | `px-3 py-4` | Detail-heavy rows with multi-line content |
+| Variant | Content Width | Use for |
+|---------|--------------|---------|
+| `"table"` | Full-width | All data table pages |
+| `"dashboard"` | `max-w-[1800px]` | Home / overview with KPI cards |
+| `"detail"` | `max-w-6xl` | Record detail pages with tabs |
+| `"detailWide"` | `max-w-screen-2xl` | Detail pages needing more canvas |
+| `"form"` | `max-w-5xl` | Create / edit forms |
+| `"content"` | `max-w-4xl` | Settings, docs, read-heavy pages |
 
 ---
 
-## Table Accessibility Checklist
+## Row Actions Pattern
 
-Before shipping any table page:
+Every table row needs a three-dots menu (never a standalone icon button for edit/delete):
 
-**Structure**
-- [ ] Page header contains title and one primary action
-- [ ] Filters and view controls are in the toolbar, not the header
+```tsx
+function RowActions({ row, projectId }) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-8 w-8">
+          <MoreHorizontal />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={() => router.push(`/${projectId}/entity/${row.id}`)}>
+          <Eye className="mr-2 h-4 w-4" /> View
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => router.push(`/${projectId}/entity/${row.id}?mode=edit`)}>
+          <SquarePen className="mr-2 h-4 w-4" /> Edit
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={handleDelete}>
+          <Trash2 className="mr-2 h-4 w-4" /> Delete
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+```
 
-**Behavior**
-- [ ] Sorting: columns sort on header click, direction visible
-- [ ] Column visibility can be configured via toolbar
-- [ ] Row selection supports bulk actions
-- [ ] Pagination and total count always visible
+---
 
-**Cell types**
-- [ ] Null/empty cells show "—" consistently
-- [ ] Long text truncates with tooltip, not word-wrap (unless intentional)
-- [ ] Currency values are right-aligned and use `tabular-nums`
+## Migration Status
 
-**States**
-- [ ] Loading skeleton mirrors the table layout (same columns)
-- [ ] Empty state for "no data" is different from "no results for filter"
-- [ ] Error state is actionable (retry button or contact link)
+Pages migrated to `AleatoDataTable`:
+- [x] RFIs ← **gold standard**
 
-**Keyboard / Accessibility**
-- [ ] Table header cells are keyboard navigable
-- [ ] Sort controls have `aria-sort` labels
-- [ ] Selection checkboxes are labeled
-- [ ] Row actions menu is keyboard accessible
-- [ ] J/K keys move row focus in the list
+Pages still on `UnifiedTablePage` (to be migrated):
+- [ ] Commitments
+- [ ] Change Events
+- [ ] Invoicing
+- [ ] Submittals
+- [ ] Direct Costs
+- [ ] Prime Contracts
+- [ ] Drawings
+- [ ] Estimates
+- [ ] Budget
+- [ ] Tasks
+- [ ] (and remaining pages)
 
 ---
 
 ## Deprecated — Never Use
 
 ```
-DataTablePage       → use UnifiedTablePage
-GenericDataTable    → use UnifiedTablePage
-TableLayout         → use PageShell variant="table"
-AppShell            → deprecated
+UnifiedTablePage     → migrate to useDataTable + AleatoDataTable
+DataTablePage        → deprecated
+GenericDataTable     → deprecated
+TableLayout          → use PageShell variant="table"
 ```
+
+`UnifiedTablePage` will be deleted once all pages are migrated.

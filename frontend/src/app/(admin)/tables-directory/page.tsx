@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { apiFetch } from "@/lib/api-client";
+import { ErrorState } from "@/components/ds";
+import { PageShell } from "@/components/layout";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -98,7 +100,6 @@ const getTableHref = (tableName: string): string => {
     ai_decisions: "/decisions",
     ai_insights: "/insights",
     opportunities: "/opportunities",
-    issues: "/issues",
   };
 
   return hrefMap[tableName] || `/${tableName}`;
@@ -126,41 +127,34 @@ export default function TablesDirectoryPage() {
 
   if (loading) {
     return (
-      <div className="px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-semibold text-neutral-800 mb-2">
-            Data Tables Directory
-          </h1>
-          <p className="text-sm text-neutral-600">Loading tables...</p>
-        </div>
-      </div>
+      <PageShell
+        variant="table"
+        title="Data Tables Directory"
+        description="Browse and access all data tables in the system."
+      >
+        <p className="text-sm text-muted-foreground">Loading tables...</p>
+      </PageShell>
     );
   }
 
   if (error) {
     return (
-      <div className="px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-semibold text-neutral-800 mb-2">
-            Data Tables Directory
-          </h1>
-          <p className="text-sm text-destructive">Error: {error}</p>
-        </div>
-      </div>
+      <PageShell
+        variant="table"
+        title="Data Tables Directory"
+        description="Browse and access all data tables in the system."
+      >
+        <ErrorState error={error} />
+      </PageShell>
     );
   }
 
   return (
-    <div className="px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-semibold text-neutral-800 mb-2">
-          Data Tables Directory
-        </h1>
-        <p className="text-sm text-neutral-600">
-          Browse and access all data tables in the system. Click on any row to view the table.
-        </p>
-      </div>
-
+    <PageShell
+      variant="table"
+      title="Data Tables Directory"
+      description="Browse and access all data tables in the system. Click on any row to view the table."
+    >
       <div className="bg-card rounded-lg overflow-hidden">
         <Table>
           <TableHeader>
@@ -222,6 +216,6 @@ export default function TablesDirectoryPage() {
           ))}
         </div>
       </div>
-    </div>
+    </PageShell>
   );
 }

@@ -245,6 +245,7 @@ function ChatWithSession({
   } = useChat({
     id: sessionId,
     messages: initialMessages,
+    experimental_throttle: 50,
     sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithApprovalResponses,
     transport: new DefaultChatTransport({
       api: "/api/ai-assistant/chat",
@@ -294,7 +295,7 @@ function ChatWithSession({
     }
   }, [initialMessages, setMessages]);
 
-  const isStreaming = status === "streaming";
+  const isStreaming = status === "submitted" || status === "streaming";
 
   const handleSubmit = useCallback(
     (message: string, files?: FileList) => {
@@ -336,7 +337,7 @@ export function RagChatPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const searchParams = useSearchParams();
-  const activeSessionId = searchParams.get("session");
+  const activeSessionId = searchParams?.get("session") ?? null;
 
   const [pendingSessionId, setPendingSessionId] = useState<string | null>(null);
   const [pendingFirstMessage, setPendingFirstMessage] = useState<string | null>(

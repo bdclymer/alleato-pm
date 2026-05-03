@@ -1,19 +1,19 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
+import { AttachmentListItem } from "@/components/ds";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import {
   AlertCircle,
   CheckCircle2,
-  Download,
   File,
   FileText,
   Image,
   Paperclip,
-  Trash2,
   Upload,
   X,
 } from "lucide-react";
@@ -214,7 +214,7 @@ export function AttachmentManager({
             <Upload />
             Choose Files
           </Button>
-          <input
+          <Input
             ref={fileInputRef}
             type="file"
             multiple
@@ -322,49 +322,20 @@ export function AttachmentManager({
           attachments.map((attachment) => {
             const Icon = getFileIcon(attachment.file_name);
             return (
-              <div
+              <AttachmentListItem
                 key={attachment.id}
-                className="flex items-start justify-between gap-3 rounded-lg border border-border bg-background p-3"
-              >
-                <div className="flex min-w-0 items-start gap-3">
-                  <div className="rounded-md border border-border bg-muted/40 p-2">
-                    <Icon className="h-4 w-4 text-muted-foreground" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-foreground">
-                      {attachment.file_name || "Unnamed file"}
-                    </p>
-                    {attachment.uploaded_at && (
-                      <p className="text-xs text-muted-foreground">
-                        Uploaded {new Date(attachment.uploaded_at).toLocaleDateString()}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-1">
-                  {attachment.url && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7"
-                      onClick={() => window.open(attachment.url || "", "_blank")}
-                    >
-                      <Download />
-                    </Button>
-                  )}
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 text-status-error hover:text-status-error"
-                    onClick={() => onDelete(attachment.id)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
-              </div>
+                name={attachment.file_name || "Unnamed file"}
+                meta={
+                  attachment.uploaded_at
+                    ? `Uploaded ${new Date(attachment.uploaded_at).toLocaleDateString()}`
+                    : null
+                }
+                onDownload={
+                  attachment.url ? () => window.open(attachment.url || "", "_blank") : undefined
+                }
+                onRemove={() => onDelete(attachment.id)}
+                icon={Icon}
+              />
             );
           })
         )}

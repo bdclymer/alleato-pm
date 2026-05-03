@@ -148,6 +148,32 @@ def init_scheduler() -> None:
         else:
             logger.info("[Scheduler] Microsoft Graph sync disabled (no credentials configured)")
 
+    if os.getenv("INTELLIGENCE_COMPILER_ENABLED", "true").lower() not in ("0", "false", "no"):
+        compiler_interval_minutes = max(1, int(os.getenv("INTELLIGENCE_COMPILER_INTERVAL_MINUTES", "10")))
+        source_limit = max(0, int(os.getenv("INTELLIGENCE_COMPILER_SOURCE_LIMIT", "10")))
+        packet_limit = max(0, int(os.getenv("INTELLIGENCE_COMPILER_PACKET_LIMIT", "10")))
+        max_processing_time_ms = max(1000, int(os.getenv("INTELLIGENCE_COMPILER_MAX_MS", "120000")))
+        scheduler.add_job(
+            run_intelligence_compiler_job,
+            IntervalTrigger(minutes=compiler_interval_minutes),
+            id="intelligence_compiler",
+            name="AI Intelligence Compiler Queue",
+            replace_existing=True,
+            max_instances=1,
+            kwargs={
+                "source_limit": source_limit,
+                "packet_limit": packet_limit,
+                "max_processing_time_ms": max_processing_time_ms,
+            },
+        )
+        logger.info(
+            "[Scheduler] Intelligence compiler every %d min (source_limit=%d packet_limit=%d max_ms=%d)",
+            compiler_interval_minutes,
+            source_limit,
+            packet_limit,
+            max_processing_time_ms,
+        )
+
     scheduler.start()
     logger.info(
         "[Scheduler] Started — daily digest at %02d:%02d",
@@ -285,6 +311,35 @@ async def run_graph_sync_job() -> None:
         logger.warning("[Scheduler] Microsoft Graph sync failed (will retry): %s", e, exc_info=True)
 
 
+async def run_intelligence_compiler_job(
+    source_limit: int = 10,
+    packet_limit: int = 10,
+    max_processing_time_ms: int = 120000,
+) -> None:
+    """Scheduled job: drain queued source intelligence and packet refresh jobs."""
+    import asyncio
+
+    logger.info(
+        "[Scheduler] Running intelligence compiler job (source_limit=%d packet_limit=%d)",
+        source_limit,
+        packet_limit,
+    )
+    try:
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(
+            None,
+            _run_intelligence_compiler,
+            source_limit,
+            packet_limit,
+            max_processing_time_ms,
+        )
+        logger.info("[Scheduler] Intelligence compiler complete: %s", result)
+        if result.get("source_jobs_failed") or result.get("packet_jobs_failed"):
+            logger.warning("[Scheduler] Intelligence compiler reported failures: %s", result)
+    except Exception as e:
+        logger.warning("[Scheduler] Intelligence compiler failed (will retry): %s", e, exc_info=True)
+
+
 def _run_graph_sync():
     """Synchronous wrapper for Microsoft Graph sync."""
     from .supabase_helpers import get_supabase_client
@@ -294,6 +349,24 @@ def _run_graph_sync():
     result = run_graph_sync(client)
     result["project_backfill"] = _maybe_run_comm_project_backfill(client)
     return result
+
+
+def _run_intelligence_compiler(
+    source_limit: int = 10,
+    packet_limit: int = 10,
+    max_processing_time_ms: int = 120000,
+) -> dict:
+    """Synchronous wrapper for queued AI intelligence compiler work."""
+    from .supabase_helpers import get_supabase_client
+    from .intelligence.compiler import run_intelligence_compiler_batch
+
+    client = get_supabase_client()
+    return run_intelligence_compiler_batch(
+        client,
+        source_limit=source_limit,
+        packet_limit=packet_limit,
+        max_processing_time_ms=max_processing_time_ms,
+    )
 
 
 def _maybe_run_comm_project_backfill(client) -> dict:

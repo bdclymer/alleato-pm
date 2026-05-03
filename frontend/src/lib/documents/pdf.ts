@@ -267,8 +267,21 @@ export async function renderPdfFromHtml(html: string): Promise<Buffer> {
   try {
     const page = await browser.newPage();
     await page.setViewportSize({ width: 1280, height: 900 });
-    // "load" is sufficient for inline-only HTML — avoids the 500ms networkidle0 wait
-    await page.setContent(html, { waitUntil: "load" });
+    await page.setContent(html, { waitUntil: "networkidle" });
+    await page.evaluate(async () => {
+      const pendingImages = Array.from(document.images).filter(
+        (image) => !image.complete,
+      );
+      await Promise.all(
+        pendingImages.map(
+          (image) =>
+            new Promise<void>((resolve) => {
+              image.addEventListener("load", () => resolve(), { once: true });
+              image.addEventListener("error", () => resolve(), { once: true });
+            }),
+        ),
+      );
+    });
 
     const pdf = await page.pdf({
       format: "Letter",

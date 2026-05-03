@@ -48,6 +48,7 @@ const coreTools = [
   { name: "Home", path: "home", icon: IconHome, requiresProject: true },
   { name: "Client Dashboard", path: "client-dashboard", icon: IconChartBar, requiresProject: true, clientOnly: true },
   { name: "360 Reporting", path: "reporting", icon: IconChartBar, requiresProject: true },
+  { name: "Progress Reports", path: "progress-reports", icon: IconFileText, requiresProject: true },
   { name: "Documents", path: "documents", icon: IconFolders, requiresProject: true },
   { name: "Directory", path: "directory", icon: IconUsers, requiresProject: true },
   { name: "Settings", path: "settings", icon: IconSettings, requiresProject: false },

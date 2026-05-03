@@ -46,6 +46,7 @@ import {
 } from "@/lib/ai/score-response-quality";
 import {
   detectSourceSpecificRagRequest,
+  detectSourceLookupRecentTeamsRequest,
   type SourceSpecificRagKind,
   type SourceSpecificRagRequest,
 } from "@/lib/ai/detect-rag-request";
@@ -359,6 +360,49 @@ function writeStrategistStatus(
       timestamp: new Date().toISOString(),
     },
   } as Parameters<typeof writer.write>[0]);
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function chunkTextForUiStream(text: string, targetSize = 90): string[] {
+  const chunks: string[] = [];
+  let remaining = text;
+
+  while (remaining.length > targetSize) {
+    const breakAt = Math.max(
+      remaining.lastIndexOf("\n", targetSize),
+      remaining.lastIndexOf(". ", targetSize),
+      remaining.lastIndexOf(" - ", targetSize),
+      remaining.lastIndexOf(" ", targetSize),
+    );
+    const index = breakAt > 24 ? breakAt + 1 : targetSize;
+    chunks.push(remaining.slice(0, index));
+    remaining = remaining.slice(index);
+  }
+
+  if (remaining) chunks.push(remaining);
+  return chunks;
+}
+
+async function writeTextResponse(
+  writer: UIMessageStreamWriter<UIMessage>,
+  id: string,
+  content: string,
+) {
+  writer.write({ type: "text-start", id });
+
+  for (const chunk of chunkTextForUiStream(content)) {
+    writer.write({
+      type: "text-delta",
+      id,
+      delta: chunk,
+    });
+    await sleep(8);
+  }
+
+  writer.write({ type: "text-end", id });
 }
 
 function serializeDiagnosticValue(value: unknown): string | undefined {
@@ -2549,6 +2593,9 @@ export const POST = withApiGuardrails(
     const actionFollowUpResponse = shouldUseActionFollowUpResponse(lastUserContent);
     const sourceQualityFollowUpResponse = shouldUseSourceQualityFollowUpResponse(lastUserContent);
     const sourceSpecificRagRequest = detectSourceSpecificRagRequest(lastUserContent);
+    const sourceLookupRecentTeamsRequest = sourceSpecificRagRequest
+      ? null
+      : detectSourceLookupRecentTeamsRequest(lastUserContent);
     const deterministicAssistantIntent = classifyAssistantIntent(lastUserContent);
     const intentPlannerDecision = await planAssistantIntent({
       message: lastUserContent,
@@ -2565,6 +2612,7 @@ export const POST = withApiGuardrails(
         selectedProjectId: selectedProjectId ?? null,
         deterministicIntent: deterministicAssistantIntent,
         sourceSpecificRagKind: sourceSpecificRagRequest?.kind ?? null,
+        sourceLookupRecentTeamsKind: sourceLookupRecentTeamsRequest?.kind ?? null,
       },
       output: intentPlannerDecision,
       timestamp: new Date().toISOString(),
@@ -2642,13 +2690,7 @@ export const POST = withApiGuardrails(
 
           const content = createBrandonDailyUpdateSummary(packet);
           const textId = "strategist-brandon-daily-update";
-          writer.write({ type: "text-start", id: textId });
-          writer.write({
-            type: "text-delta",
-            id: textId,
-            delta: content,
-          });
-          writer.write({ type: "text-end", id: textId });
+          await writeTextResponse(writer, textId, content);
 
           toolTrace.push({
             tool: "generateBrandonDailyUpdateWidget",
@@ -2727,13 +2769,7 @@ export const POST = withApiGuardrails(
           });
 
           const textId = "strategist-source-specific-rag";
-          writer.write({ type: "text-start", id: textId });
-          writer.write({
-            type: "text-delta",
-            id: textId,
-            delta: sourceSpecificAnswer.content,
-          });
-          writer.write({ type: "text-end", id: textId });
+          await writeTextResponse(writer, textId, sourceSpecificAnswer.content);
 
           const responseQuality = scoreResponseQuality({
             toolTrace,
@@ -2787,6 +2823,25 @@ export const POST = withApiGuardrails(
 
           const semanticSearchTool = (tools as Record<string, ExecutableTool>).semanticSearch;
           let sourceLookupOutput: SemanticSearchOutput | null = null;
+          let recentTeamsContext: string | null = null;
+
+          if (sourceLookupRecentTeamsRequest) {
+            const scope = await createToolGuardrails(user.id, {
+              pinnedProjectId: selectedProjectId,
+            }).getScope();
+            const recentTeamsAnswer = await buildSourceSpecificRagAnswer({
+              supabase,
+              request: sourceLookupRecentTeamsRequest,
+              scope,
+            });
+            toolTrace.push(recentTeamsAnswer.trace);
+            recentTeamsContext = [
+              "# Recent Teams Window",
+              "Use this recent Teams window as primary evidence for current communication-diagnosis questions. Older semantic matches are secondary pattern context only; do not lead with them unless this window is empty.",
+              "",
+              recentTeamsAnswer.content,
+            ].join("\n");
+          }
 
           if (semanticSearchTool?.execute) {
             const searchOutput = await withTimeout(
@@ -2842,6 +2897,13 @@ export const POST = withApiGuardrails(
             },
             output: {
               resultCount: sourceLookupOutput?.results?.length ?? 0,
+              recentTeamsWindow: sourceLookupRecentTeamsRequest
+                ? {
+                    startDate: sourceLookupRecentTeamsRequest.startDate ?? null,
+                    endDate: sourceLookupRecentTeamsRequest.endDate ?? null,
+                    limit: sourceLookupRecentTeamsRequest.limit,
+                  }
+                : null,
               usedProjectBriefingTemplate: false,
               mode: "additive-context",
             },
@@ -2856,8 +2918,14 @@ export const POST = withApiGuardrails(
           // the synthesis step changes.
           // See docs/ai-plan/evals/dogfood/2026-05-02T16-13-17-228Z/report.md
           // case 05-recent-emails for the dogfood failure that surfaced this.
-          const sourceLookupHeader = `# Source Lookup Results\n\nThe user is asking for what was said / what happened in source channels (meetings, Teams, email, documents). I ran a semantic search and pulled the most relevant source rows below. Read them carefully, extract the actual commitments / issues / decisions / sentiment the user is asking about, and synthesize a useful answer with specific quotes or paraphrased points and source citations. Do NOT just list the source previews verbatim — that's what we used to do and it wasn't useful. If the sources don't actually contain what the user asked about, say so honestly.`;
-          systemPrompt = `${sourceLookupHeader}\n\n${sourceLookupContext}\n\n---\n\n${systemPrompt}`;
+          const sourceLookupHeader = `# Source Lookup Results\n\nThe user is asking for what was said / what happened in source channels (meetings, Teams, email, documents). I ran source retrieval before synthesis. If a Recent Teams Window is present, treat it as the current primary evidence and use older semantic matches only as secondary pattern context. Read the sources carefully, extract the actual commitments / issues / decisions / sentiment the user is asking about, and synthesize a useful answer with specific quotes or paraphrased points and source citations. Do NOT just list the source previews verbatim — that's what we used to do and it wasn't useful. If the sources don't actually contain what the user asked about, say so honestly.`;
+          systemPrompt = [
+            sourceLookupHeader,
+            recentTeamsContext,
+            sourceLookupContext,
+            "---",
+            systemPrompt,
+          ].filter((part): part is string => Boolean(part?.trim())).join("\n\n");
 
           writeStrategistStatus(writer, {
             stage: "synthesis",
@@ -2976,13 +3044,7 @@ export const POST = withApiGuardrails(
           });
 
           const textId = "rfi-action-preview";
-          writer.write({ type: "text-start", id: textId });
-          writer.write({
-            type: "text-delta",
-            id: textId,
-            delta: content,
-          });
-          writer.write({ type: "text-end", id: textId });
+          await writeTextResponse(writer, textId, content);
 
           const responseQuality = scoreResponseQuality({
             toolTrace,
@@ -3476,13 +3538,7 @@ export const POST = withApiGuardrails(
           }
 
           const textId = "strategist-project-briefing";
-          writer.write({ type: "text-start", id: textId });
-          writer.write({
-            type: "text-delta",
-            id: textId,
-            delta: content,
-          });
-          writer.write({ type: "text-end", id: textId });
+          await writeTextResponse(writer, textId, content);
 
           const responseQuality = scoreResponseQuality({
             toolTrace,
@@ -3691,13 +3747,7 @@ export const POST = withApiGuardrails(
             }));
 
           const fallbackTextId = "strategist-failure-response";
-          writer.write({ type: "text-start", id: fallbackTextId });
-          writer.write({
-            type: "text-delta",
-            id: fallbackTextId,
-            delta: content,
-          });
-          writer.write({ type: "text-end", id: fallbackTextId });
+          await writeTextResponse(writer, fallbackTextId, content);
         }
 
         // Meta-commentary retry: if the model returned a filler response
@@ -3732,13 +3782,11 @@ export const POST = withApiGuardrails(
                 const retryContent = retryResultOrTimeout.text.trim();
                 if (retryContent) {
                   // Write to stream FIRST — only mutate content after writes succeed
-                  writer.write({ type: "text-start", id: "meta-commentary-correction" });
-                  writer.write({
-                    type: "text-delta",
-                    id: "meta-commentary-correction",
-                    delta: "\n\n" + retryContent,
-                  });
-                  writer.write({ type: "text-end", id: "meta-commentary-correction" });
+                  await writeTextResponse(
+                    writer,
+                    "meta-commentary-correction",
+                    `\n\n${retryContent}`,
+                  );
                   // Now safe to mutate — client has the content
                   content = retryContent;
                   toolTrace.push({
@@ -3789,13 +3837,11 @@ export const POST = withApiGuardrails(
             },
             timestamp: new Date().toISOString(),
           });
-          writer.write({ type: "text-start", id: "project-briefing-contract" });
-          writer.write({
-            type: "text-delta",
-            id: "project-briefing-contract",
-            delta: content.slice(contentBeforeContract.trim().length).trimStart(),
-          });
-          writer.write({ type: "text-end", id: "project-briefing-contract" });
+          await writeTextResponse(
+            writer,
+            "project-briefing-contract",
+            content.slice(contentBeforeContract.trim().length).trimStart(),
+          );
         }
 
         const responseQuality = scoreResponseQuality({

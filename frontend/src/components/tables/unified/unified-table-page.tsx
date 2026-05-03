@@ -1268,7 +1268,7 @@ export function UnifiedTablePage<T>({
                                   className={cn(
                                     "h-auto gap-1.5 p-0 has-[>svg]:px-0 font-medium uppercase tracking-wide",
                                     "text-xs",
-                                    "text-muted-foreground",
+                                    "text-muted-foreground hover:bg-transparent hover:text-foreground focus-visible:ring-0 data-[state=open]:bg-transparent data-[state=open]:text-foreground",
                                     headerAlignment === "left" ? "justify-start" : "justify-center",
                                   )}
                                   onContextMenu={(event) => {

@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { usePathname } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -96,6 +97,41 @@ export function PageShell({
   fillHeight = false,
 }: PageShellProps) {
   const config = variantConfig[variant];
+  const rootRef = React.useRef<HTMLDivElement | null>(null);
+  const pathname = usePathname();
+
+  React.useEffect(() => {
+    if (variant !== "form") {
+      return;
+    }
+
+    const resetScrollPosition = () => {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+
+      let ancestor = rootRef.current?.parentElement ?? null;
+      while (ancestor) {
+        const styles = window.getComputedStyle(ancestor);
+        if (
+          (styles.overflowY === "auto" || styles.overflowY === "scroll") &&
+          ancestor.scrollHeight > ancestor.clientHeight
+        ) {
+          ancestor.scrollTo({ top: 0, left: 0, behavior: "auto" });
+          break;
+        }
+        ancestor = ancestor.parentElement;
+      }
+    };
+
+    resetScrollPosition();
+
+    const rafId = window.requestAnimationFrame(resetScrollPosition);
+    const timeoutId = window.setTimeout(resetScrollPosition, 120);
+
+    return () => {
+      window.cancelAnimationFrame(rafId);
+      window.clearTimeout(timeoutId);
+    };
+  }, [pathname, title, variant]);
 
   const backButton =
     onBack ? (
@@ -123,12 +159,16 @@ export function PageShell({
     />
   ) : null;
 
-  // Table variant: tight layout
+  // Shared horizontal gutter — must match PageContainer's px values exactly.
+  const gutterCls = "px-4 sm:px-6 lg:px-8";
+
+  // Table variant: tight layout — no extra top padding so header aligns with
+  // pages that render ProjectPageHeader outside of PageContainer.
   if (variant === "table") {
     return (
-      <PageContainer maxWidth={config.containerMaxWidth} className={cn(className)}>
+      <PageContainer maxWidth={config.containerMaxWidth} padding={false} className={cn(gutterCls, "pb-4", className)}>
         {header}
-        <div className={cn("min-w-0 pt-6 pb-12", contentClassName)}>{children}</div>
+        <div className={cn("min-w-0 pt-2 pb-12", contentClassName)}>{children}</div>
       </PageContainer>
     );
   }
@@ -137,7 +177,7 @@ export function PageShell({
   if (config.contentMaxWidth) {
     return (
       <PageContainer maxWidth={config.containerMaxWidth} className={cn(fillHeight && "flex flex-col min-h-0", className)}>
-        <div className={cn("mx-auto w-full min-w-0", config.contentMaxWidth, config.headerPadding, fillHeight && "flex flex-col flex-1 min-h-0")}>
+        <div ref={rootRef} className={cn("mx-auto w-full min-w-0", config.contentMaxWidth, config.headerPadding, fillHeight && "flex flex-col flex-1 min-h-0")}>
           {header}
           <div className={cn(config.spacing, "min-w-0 pt-6 pb-12", fillHeight && "flex flex-col flex-1 min-h-0", contentClassName)}>{children}</div>
         </div>
@@ -149,7 +189,7 @@ export function PageShell({
   return (
     <PageContainer maxWidth={config.containerMaxWidth} className={cn(fillHeight && "flex flex-col min-h-0", className)}>
       {header}
-      <div className={cn(config.spacing, "min-w-0 pt-6 pb-12", fillHeight && "flex flex-col flex-1 min-h-0", contentClassName)}>{children}</div>
+      <div ref={rootRef} className={cn(config.spacing, "min-w-0 pt-6 pb-12", fillHeight && "flex flex-col flex-1 min-h-0", contentClassName)}>{children}</div>
     </PageContainer>
   );
 }

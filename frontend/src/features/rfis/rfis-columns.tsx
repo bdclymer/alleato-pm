@@ -1,8 +1,8 @@
 "use client";
 
-import * as React from "react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { Eye, MoreHorizontal, Trash2 } from "lucide-react";
+import { Eye, MoreHorizontal, SquarePen, Trash2 } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -18,6 +18,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { RFI_STATUS_OPTIONS } from "@/lib/schemas/rfi-schema";
@@ -57,6 +58,11 @@ function RfiRowActions({ rfi, projectId }: { rfi: RFI; projectId: number }) {
           <Eye className="mr-2 h-4 w-4" />
           View
         </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => router.push(`/${projectId}/rfis/${rfi.id}?mode=edit`)}>
+          <SquarePen className="mr-2 h-4 w-4" />
+          Edit
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
         <DropdownMenuItem
           className="text-destructive focus:text-destructive"
           onClick={handleDelete}
@@ -113,7 +119,13 @@ export function getRfiColumns({ projectId }: GetRfiColumnsOptions): ColumnDef<RF
       minSize: 120,
       header: "Subject",
       cell: ({ row }) => (
-        <CellText value={(row.getValue("subject") as string) ?? "Untitled RFI"} />
+        <Link
+          href={`/${projectId}/rfis/${row.original.id}`}
+          className="hover:underline"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <CellText value={(row.getValue("subject") as string) ?? "Untitled RFI"} />
+        </Link>
       ),
       enableColumnFilter: true,
       meta: { label: "Subject", variant: "text" },

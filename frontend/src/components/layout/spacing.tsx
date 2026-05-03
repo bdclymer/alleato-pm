@@ -44,7 +44,7 @@ export interface DetailPanelProps {
 
 export function DetailPanel({ children, className }: DetailPanelProps) {
   return (
-    <div className={cn("rounded-md bg-muted/30 p-6", className)}>
+    <div className={cn("rounded-md bg-muted/50 p-6 shadow-panel", className)}>
       {children}
     </div>
   );

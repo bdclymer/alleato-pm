@@ -30,15 +30,15 @@ import { RfqsTab } from "@/components/commitments/tabs/RfqsTab";
 import { ScheduleOfValuesTab } from "@/components/commitments/tabs/ScheduleOfValuesTab";
 import { SubcontractorSovTab } from "@/components/commitments/tabs/SubcontractorSovTab";
 import { DocumentDeliveryDialog } from "@/components/documents/DocumentDeliveryDialog";
-import { KpiBlock } from "@/components/ds/kpi";
 import { StatusBadge } from "@/components/ds/status-badge";
 import { ErrorState } from "@/components/ds";
-import { ToggleField } from "@/components/forms";
 import {
   ContentSectionStack,
+  DetailPanel,
   LabelValueRow,
   PageShell,
   SectionRuleHeading,
+  SummaryValueRow,
 } from "@/components/layout";
 import { PageTabs } from "@/components/layout/PageTabs";
 import { Button } from "@/components/ui/button";
@@ -54,7 +54,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import { TableHead, TableHeader } from "@/components/ui/table";
 import {
   commitmentKeys,
   useCommitmentDetail,
@@ -323,11 +322,26 @@ function capitalizeWords(value: string | undefined | null): string {
   return value.replace(/\b[a-z]/g, (char) => char.toUpperCase());
 }
 
+function parseTextLines(value: string | null | undefined): string[] {
+  if (!value) return [];
+  return value
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/?(p|div|li)[^>]*>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .split(/[\n•]+/)
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0);
+}
+
 // ---------------------------------------------------------------------------
-// Contract Summary Report
+// Financial summary
 // ---------------------------------------------------------------------------
 
-function ContractSummaryReportHorizontal({ commitment }: { commitment: CommitmentDetail }) {
+function FinancialSummaryPanel({ commitment }: { commitment: CommitmentDetail }) {
   const approvedCOs = commitment.change_order_totals?.approved ?? commitment.approved_change_orders ?? 0;
   const pendingCOs = commitment.pending_change_orders ?? 0;
   const draftCOs = commitment.draft_change_orders ?? 0;
@@ -341,49 +355,23 @@ function ContractSummaryReportHorizontal({ commitment }: { commitment: Commitmen
     : revisedContract - paymentsIssued;
   const percentPaid = revisedContract > 0 ? (paymentsIssued / revisedContract) * 100 : 0;
 
-  const cols: Array<{ label: string; value: string; bold?: boolean }> = [
-    { label: "Original Contract", value: formatCurrency(commitment.original_amount) },
-    { label: "Approved COs", value: formatCurrency(approvedCOs) },
-    { label: "Revised Contract", value: formatCurrency(revisedContract), bold: true },
-    { label: "Pending COs", value: formatCurrency(pendingCOs) },
-    { label: "Pending Revised", value: formatCurrency(pendingRevised), bold: true },
-    { label: "Draft COs", value: formatCurrency(draftCOs) },
-    { label: "Invoiced to Date", value: formatCurrency(invoiced) },
-    { label: "Payments Issued", value: formatCurrency(paymentsIssued) },
-    { label: "Retainage Released", value: formatCurrency(retainageReleased) },
-    { label: "% Paid", value: `${percentPaid.toFixed(1)}%` },
-    { label: "Remaining Balance", value: formatCurrency(remainingBalance), bold: true },
-  ];
-
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-max text-sm">
-        <TableHeader>
-          <tr className="border-b border-border">
-            {cols.map((col) => (
-              <TableHead
-                key={col.label}
-                className="whitespace-nowrap px-4 py-2.5 text-right first:text-left"
-              >
-                {col.label}
-              </TableHead>
-            ))}
-          </tr>
-        </TableHeader>
-        <tbody>
-          <tr>
-            {cols.map((col) => (
-              <td
-                key={col.label}
-                className={`whitespace-nowrap px-4 py-3 text-right tabular-nums first:text-left ${col.bold ? "font-semibold text-foreground" : "text-foreground"}`}
-              >
-                {col.value}
-              </td>
-            ))}
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <DetailPanel>
+      <SectionRuleHeading label="Financial Summary" className="mb-6 pb-0" />
+      <dl className="space-y-3 text-sm">
+        <SummaryValueRow label="Original Amount" value={formatCurrency(commitment.original_amount)} />
+        <SummaryValueRow label="Revised Amount" value={formatCurrency(revisedContract)} />
+        <SummaryValueRow label="Pending Amount" value={formatCurrency(pendingRevised)} />
+        <SummaryValueRow label="Pending COs" value={formatCurrency(pendingCOs)} />
+        <SummaryValueRow label="Approved COs" value={formatCurrency(approvedCOs)} />
+        <SummaryValueRow label="Draft COs" value={formatCurrency(draftCOs)} />
+        <SummaryValueRow label="Invoiced" value={formatCurrency(invoiced)} />
+        <SummaryValueRow label="Payments Issued" value={formatCurrency(paymentsIssued)} />
+        <SummaryValueRow label="Retainage Released" value={formatCurrency(retainageReleased)} />
+        <SummaryValueRow label="Balance" value={formatCurrency(remainingBalance)} />
+        <SummaryValueRow label="Percent Paid" value={formatPercent(percentPaid, 2)} bold border />
+      </dl>
+    </DetailPanel>
   );
 }
 
@@ -400,50 +388,42 @@ interface GeneralTabProps {
 
 function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: GeneralTabProps) {
   const isPO = commitment.type === "purchase_order";
-  const [isInclusionsOpen, setIsInclusionsOpen] = useState(false);
-  const [isExclusionsOpen, setIsExclusionsOpen] = useState(false);
   const displayStatus = commitment.status
     ? commitment.status.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
     : "Draft";
   const renderDateOrDash = (value?: string | null) =>
     value ? formatDate(value) : <span className="text-muted-foreground/60">—</span>;
-  const inclusionText = commitment.inclusions?.trim() || "";
-  const exclusionText = commitment.exclusions?.trim() || "";
+  const inclusionLines = parseTextLines(commitment.inclusions);
+  const exclusionLines = parseTextLines(commitment.exclusions);
 
   return (
-    <ContentSectionStack className="space-y-12 pb-20">
-      <section className="space-y-10">
-        <div className="grid gap-x-16 gap-y-10 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.85fr)]">
-          <div className="space-y-10">
-            <div className="grid gap-x-16 gap-y-10 lg:grid-cols-2">
-              <div>
-                <SectionRuleHeading label="Details" />
+    <ContentSectionStack className="space-y-8 pb-20">
+      <section>
+        <div className="grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(320px,400px)]">
+          <div className="space-y-6">
+            <DetailPanel>
+              <SectionRuleHeading label="General Information" className="mb-6 pb-0" />
+              <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,300px),1fr))] gap-x-10 gap-y-4">
                 <dl className="space-y-4 text-sm">
-                  <LabelValueRow label={isPO ? "PO #" : "Subcontract #"} missing={!safeNumber(commitment.number)}>
-                    {safeNumber(commitment.number) || "Not set"}
+                  <LabelValueRow label={isPO ? "PO #" : "Subcontract #"} labelClassName="w-36" missing={!safeNumber(commitment.number)}>
+                    {safeNumber(commitment.number) || "—"}
                   </LabelValueRow>
-                  <LabelValueRow label="Title" missing={!commitment.title}>
-                    {capitalizeWords(commitment.title) || "Not set"}
+                  <LabelValueRow label="Title" labelClassName="w-36" missing={!commitment.title}>
+                    {capitalizeWords(commitment.title) || "—"}
                   </LabelValueRow>
-                  <LabelValueRow
-                    label="Description"
-                    missing={!commitment.description}
-                    valueClassName="leading-relaxed font-normal text-foreground"
-                  >
-                    {capitalizeWords(commitment.description) || "Not set"}
-                  </LabelValueRow>
-                  <LabelValueRow label="Status">
+                  <LabelValueRow label="Status" labelClassName="w-36">
                     <StatusBadge status={displayStatus} />
                   </LabelValueRow>
                   <LabelValueRow
                     label="Contract Company"
+                    labelClassName="w-36"
                     missing={!commitment.contract_company?.name}
                   >
                     {commitment.contract_company?.name ? (
                       commitment.contract_company_id ? (
                         <Link
-                          href={`/directory/vendors/${encodeURIComponent(commitment.contract_company_id)}`}
-                          className="text-primary hover:underline"
+                          href={`/directory/companies/${encodeURIComponent(commitment.contract_company_id)}`}
+                          className="text-link hover:text-link-hover hover:underline"
                         >
                           {commitment.contract_company.name}
                         </Link>
@@ -451,160 +431,146 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
                         commitment.contract_company.name
                       )
                     ) : (
-                      "Not set"
+                      "—"
                     )}
                   </LabelValueRow>
                   {commitment.invoice_contacts !== undefined && (
                     <LabelValueRow
                       label="Invoice Contact"
+                      labelClassName="w-36"
                       missing={commitment.invoice_contacts.length === 0}
                     >
                       {commitment.invoice_contacts.length > 0
-                        ? commitment.invoice_contacts.map((c) => c.name).join(", ")
-                        : "None"}
+                        ? commitment.invoice_contacts.map((contact, index) => (
+                            <span key={contact.id}>
+                              {index > 0 ? ", " : null}
+                              <Link
+                                href={`/directory/contacts/${encodeURIComponent(contact.id)}`}
+                                className="text-link hover:text-link-hover hover:underline"
+                              >
+                                {contact.name}
+                              </Link>
+                            </span>
+                          ))
+                        : "—"}
                     </LabelValueRow>
                   )}
-                </dl>
-              </div>
-
-              <div>
-                <SectionRuleHeading label="Contract Settings" />
-                <dl className="space-y-4 text-sm">
-                  <LabelValueRow label="Default Retainage">
+                  <LabelValueRow label="Default Retainage" labelClassName="w-36">
                     {commitment.retention_percentage ?? 0}%
                   </LabelValueRow>
-                  <LabelValueRow label="Accounting Method">
+                </dl>
+                <dl className="space-y-4 text-sm">
+                  {!isPO && (
+                    <LabelValueRow label="Start Date" labelClassName="w-40">
+                      {renderDateOrDash(commitment.start_date)}
+                    </LabelValueRow>
+                  )}
+                  <LabelValueRow label={isPO ? "Delivery Date" : "Est. Completion"} labelClassName="w-40">
+                    {renderDateOrDash(commitment.substantial_completion_date)}
+                  </LabelValueRow>
+                  <LabelValueRow label="Contract Date" labelClassName="w-40">
+                    {renderDateOrDash(commitment.executed_date)}
+                  </LabelValueRow>
+                  <LabelValueRow label="Signed Date" labelClassName="w-40">
+                    {renderDateOrDash(commitment.signed_received_date)}
+                  </LabelValueRow>
+                  <LabelValueRow label="Actual Completion" labelClassName="w-40">
+                    {renderDateOrDash(commitment.actual_completion_date)}
+                  </LabelValueRow>
+                  <LabelValueRow label="Issued On" labelClassName="w-40">
+                    {renderDateOrDash(commitment.issued_on_date)}
+                  </LabelValueRow>
+                  <LabelValueRow label="Accounting Method" labelClassName="w-40">
                     {commitment.accounting_method === "unit"
                       ? "Unit/Quantity"
                       : commitment.accounting_method === "percent"
                         ? "Percent"
                         : "Amount Based"}
                   </LabelValueRow>
-                  <LabelValueRow label="Created By" missing={!commitment.created_by_name && !commitment.created_by}>
+                  <LabelValueRow label="Created By" labelClassName="w-40" missing={!commitment.created_by_name && !commitment.created_by}>
                     {commitment.created_by_name || "—"}
                   </LabelValueRow>
-                  <LabelValueRow label="Executed">
+                  <LabelValueRow label="Executed" labelClassName="w-40">
                     {commitment.executed ? "Yes" : "No"}
                   </LabelValueRow>
                 </dl>
               </div>
-            </div>
 
-            <div>
-              <SectionRuleHeading label="Inclusions and Exclusions" />
-              <dl className="space-y-4 text-sm">
-                <LabelValueRow
-                  label="Inclusions"
-                  missing={!inclusionText}
-                  valueClassName="font-normal text-foreground"
-                >
-                  {inclusionText ? (
-                    <Collapsible open={isInclusionsOpen} onOpenChange={setIsInclusionsOpen} className="w-full">
-                      <CollapsibleTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="link"
-                          size="xs"
-                          className="h-auto p-0 text-xs font-medium"
-                        >
-                          {isInclusionsOpen ? "Hide inclusions" : "Show inclusions"}
-                          <ChevronDown
-                            className={`h-3.5 w-3.5 transition-transform ${isInclusionsOpen ? "rotate-180" : ""}`}
-                          />
-                        </Button>
-                      </CollapsibleTrigger>
-                      <CollapsibleContent className="pt-2 whitespace-pre-wrap leading-relaxed">
-                        {inclusionText}
-                      </CollapsibleContent>
-                    </Collapsible>
-                  ) : (
-                    "Not set"
-                  )}
-                </LabelValueRow>
-                <LabelValueRow
-                  label="Exclusions"
-                  missing={!exclusionText}
-                  valueClassName="font-normal text-foreground"
-                >
-                  {exclusionText ? (
-                    <Collapsible open={isExclusionsOpen} onOpenChange={setIsExclusionsOpen} className="w-full">
-                      <CollapsibleTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="link"
-                          size="xs"
-                          className="h-auto p-0 text-xs font-medium"
-                        >
-                          {isExclusionsOpen ? "Hide exclusions" : "Show exclusions"}
-                          <ChevronDown
-                            className={`h-3.5 w-3.5 transition-transform ${isExclusionsOpen ? "rotate-180" : ""}`}
-                          />
-                        </Button>
-                      </CollapsibleTrigger>
-                      <CollapsibleContent className="pt-2 whitespace-pre-wrap leading-relaxed">
-                        {exclusionText}
-                      </CollapsibleContent>
-                    </Collapsible>
-                  ) : (
-                    "Not set"
-                  )}
-                </LabelValueRow>
-              </dl>
-            </div>
+              <LabelValueRow
+                label="Description"
+                labelClassName="w-36"
+                className="mt-6"
+                missing={!commitment.description}
+                valueClassName="leading-relaxed font-normal text-foreground text-sm"
+              >
+                {capitalizeWords(commitment.description) || "—"}
+              </LabelValueRow>
+
+              <LabelValueRow label="Private Commitment" labelClassName="w-36" className="mt-6">
+                {commitment.private ? "Yes" : "No"}
+              </LabelValueRow>
+              <LabelValueRow label="Non-Admin SOV" labelClassName="w-36" className="mt-4">
+                {commitment.allow_non_admin_view_sov_items ? "Visible" : "Hidden"}
+              </LabelValueRow>
+              <LabelValueRow label="Attachments" labelClassName="w-36" className="mt-6">
+                <AttachmentsTab commitmentId={commitmentId} />
+              </LabelValueRow>
+            </DetailPanel>
+
+            <DetailPanel>
+              <Collapsible defaultOpen>
+                <div className="mb-6 flex items-center justify-between">
+                  <SectionRuleHeading label="Inclusions + Exclusions" className="pb-0" />
+                  <CollapsibleTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs text-muted-foreground">
+                      <ChevronDown className="h-3.5 w-3.5 transition-transform [[data-state=closed]_&]:rotate-[-90deg]" />
+                    </Button>
+                  </CollapsibleTrigger>
+                </div>
+                <CollapsibleContent>
+                  <div className="space-y-6 text-sm">
+                    <div className="flex flex-col gap-1.5">
+                      <dt className="text-xs text-muted-foreground">Inclusions</dt>
+                      <dd className="font-normal leading-relaxed text-foreground">
+                        {inclusionLines.length === 0 ? (
+                          <span className="text-muted-foreground/50">—</span>
+                        ) : (
+                          <div className="space-y-1">
+                            {inclusionLines.map((line, index) => (
+                              <p key={`inclusion-${index}`}>{line}</p>
+                            ))}
+                          </div>
+                        )}
+                      </dd>
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <dt className="text-xs text-muted-foreground">Exclusions</dt>
+                      <dd className="font-normal leading-relaxed text-foreground">
+                        {exclusionLines.length === 0 ? (
+                          <span className="text-muted-foreground/50">—</span>
+                        ) : (
+                          <div className="space-y-1">
+                            {exclusionLines.map((line, index) => (
+                              <p key={`exclusion-${index}`}>{line}</p>
+                            ))}
+                          </div>
+                        )}
+                      </dd>
+                    </div>
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+            </DetailPanel>
           </div>
 
-          <div className="space-y-10">
-            <div>
-              <SectionRuleHeading label="Key Dates" />
-              <dl className="space-y-3 text-sm">
-                {!isPO && (
-                  <LabelValueRow label="Start Date" labelClassName="w-52">
-                    {renderDateOrDash(commitment.start_date)}
-                  </LabelValueRow>
-                )}
-                <LabelValueRow label={isPO ? "Delivery Date" : "Estimated Completion"} labelClassName="w-52">
-                  {renderDateOrDash(commitment.substantial_completion_date)}
-                </LabelValueRow>
-                <LabelValueRow label="Contract Date" labelClassName="w-52">
-                  {renderDateOrDash(commitment.executed_date)}
-                </LabelValueRow>
-                <LabelValueRow label="Signed Contract Received" labelClassName="w-52">
-                  {renderDateOrDash(commitment.signed_received_date)}
-                </LabelValueRow>
-                <LabelValueRow label="Actual Completion" labelClassName="w-52">
-                  {renderDateOrDash(commitment.actual_completion_date)}
-                </LabelValueRow>
-                <LabelValueRow label="Issued On" labelClassName="w-52">
-                  {renderDateOrDash(commitment.issued_on_date)}
-                </LabelValueRow>
-              </dl>
-            </div>
-
-            <div>
-              <SectionRuleHeading label="Access and Visibility" />
-              <div className="space-y-4">
-                <ToggleField
-                  label="Private Commitment"
-                  hint="Private commitments are restricted to permitted project members."
-                  labelClassName="font-normal text-muted-foreground"
-                  checked={commitment.private}
-                  disabled
-                />
-                <ToggleField
-                  label="Allow Non-Admin SOV Visibility"
-                  hint="Shows whether standard users can view schedule of values amounts."
-                  labelClassName="font-normal text-muted-foreground"
-                  checked={commitment.allow_non_admin_view_sov_items}
-                  disabled
-                />
-              </div>
-            </div>
-          </div>
+          <aside>
+            <FinancialSummaryPanel commitment={commitment} />
+          </aside>
         </div>
       </section>
 
       {/* Schedule of Values */}
-      <div>
+      <section>
         <SectionRuleHeading label="Schedule of Values" />
         <ScheduleOfValuesTab
           lineItems={commitment.line_items || []}
@@ -615,133 +581,8 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
           showHeader={false}
           onImportComplete={onImportComplete}
         />
-      </div>
-
-      {/* Contract Summary Report */}
-      <div>
-        <SectionRuleHeading label="Contract Summary" />
-        <ContractSummaryReportHorizontal commitment={commitment} />
-      </div>
-
-      {/* Attachments */}
-      <div>
-        <SectionRuleHeading label="Attachments" />
-        <AttachmentsTab commitmentId={commitmentId} />
-      </div>
+      </section>
     </ContentSectionStack>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Financial KPI strip
-// ---------------------------------------------------------------------------
-
-function FinancialKpiStrip({ commitment }: { commitment: CommitmentDetail }) {
-  const approvedCOs = commitment.change_order_totals?.approved ?? commitment.approved_change_orders ?? 0;
-  const percentBilled = commitment.revised_contract_amount > 0
-    ? (commitment.billed_to_date / commitment.revised_contract_amount) * 100
-    : 0;
-
-  const pendingCOs = commitment.pending_change_orders ?? 0;
-  const draftCOs = commitment.draft_change_orders ?? 0;
-  const paymentsIssued = commitment.payments_issued;
-  const remainingBalance = commitment.remaining_balance !== undefined
-    ? commitment.remaining_balance
-    : commitment.revised_contract_amount - (paymentsIssued ?? 0);
-  const percentPaid =
-    paymentsIssued !== undefined && commitment.revised_contract_amount > 0
-      ? (paymentsIssued / commitment.revised_contract_amount) * 100
-      : undefined;
-  const pendingRevisedContractAmount =
-    commitment.revised_contract_amount + pendingCOs;
-
-  return (
-    <div className="overflow-hidden rounded-lg bg-card">
-      <div className="grid grid-cols-2 divide-x divide-y divide-border lg:grid-cols-5 lg:divide-y-0">
-        <div className="px-5 py-4">
-          <KpiBlock
-            label="Original Contract"
-            value={formatCurrency(commitment.original_amount)}
-            size="compact"
-          />
-        </div>
-        <div className="px-5 py-4">
-          <KpiBlock
-            label="Approved COs"
-            value={formatCurrency(approvedCOs)}
-            size="compact"
-            delta={approvedCOs !== 0 ? {
-              value: formatCurrency(Math.abs(approvedCOs)),
-              positive: approvedCOs >= 0,
-            } : undefined}
-          />
-        </div>
-        <div className="px-5 py-4">
-          <KpiBlock
-            label="Revised Contract"
-            value={formatCurrency(commitment.revised_contract_amount)}
-            size="compact"
-          />
-        </div>
-        <div className="px-5 py-4">
-          <KpiBlock
-            label="Billed to Date"
-            value={formatCurrency(commitment.billed_to_date)}
-            size="compact"
-            context={`${formatPercent(percentBilled)} of revised`}
-          />
-        </div>
-        <div className="px-5 py-4">
-          <KpiBlock
-            label="Balance to Finish"
-            value={formatCurrency(commitment.balance_to_finish)}
-            size="compact"
-          />
-        </div>
-        <div className="px-5 py-4">
-          <KpiBlock
-            label="Pending COs"
-            value={formatCurrency(pendingCOs)}
-            size="compact"
-          />
-        </div>
-        <div className="px-5 py-4">
-          <KpiBlock
-            label="Draft COs"
-            value={formatCurrency(draftCOs)}
-            size="compact"
-          />
-        </div>
-        <div className="px-5 py-4">
-          <KpiBlock
-            label="Payments Issued"
-            value={paymentsIssued !== undefined ? formatCurrency(paymentsIssued) : "—"}
-            size="compact"
-          />
-        </div>
-        <div className="px-5 py-4">
-          <KpiBlock
-            label="Remaining Balance"
-            value={formatCurrency(remainingBalance)}
-            size="compact"
-          />
-        </div>
-        <div className="px-5 py-4">
-          <KpiBlock
-            label="% Paid"
-            value={percentPaid !== undefined ? formatPercent(percentPaid) : "—"}
-            size="compact"
-          />
-        </div>
-        <div className="px-5 py-4 lg:col-span-1">
-          <KpiBlock
-            label="Pending Revised Contract"
-            value={formatCurrency(pendingRevisedContractAmount)}
-            size="compact"
-          />
-        </div>
-      </div>
-    </div>
   );
 }
 
@@ -976,7 +817,7 @@ export default function CommitmentDetailPage() {
   );
 
   const description = [
-    displayNumber && `#${displayNumber}`,
+    capitalizeWords(commitment.title),
     contractType,
     commitment.contract_company?.name,
   ]
@@ -986,7 +827,7 @@ export default function CommitmentDetailPage() {
   return (
     <PageShell
       variant="detailWide"
-      title={capitalizeWords(commitment.title) || displayNumber || "Commitment"}
+      title={displayNumber ? `#${displayNumber}` : capitalizeWords(commitment.title) || "Commitment"}
       description={description}
       actions={headerActions}
       onBack={() => router.back()}

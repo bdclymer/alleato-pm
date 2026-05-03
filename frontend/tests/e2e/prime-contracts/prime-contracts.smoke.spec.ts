@@ -1,38 +1,48 @@
 import { test, expect } from '@playwright/test';
 
-const projectId = 24105;
+const PROJECT_ID = 67;
 
-test.describe('Contract creation smoke', () => {
-  test('creates a prime contract via the UI', async ({ page }) => {
-    const contractNumber = `PC-${Date.now()}`;
-    const title = `Automated Prime Contract ${new Date().toISOString()}`;
+test.describe('Prime contract creation smoke', () => {
+  test('creates a prime contract via the UI and verifies it appears in the list', async ({ page }) => {
+    const contractNumber = `PC-SMOKE-${Date.now()}`;
+    const title = `Smoke Test Contract ${new Date().toISOString()}`;
 
-    await page.goto(`/${projectId}/contracts/new`);
+    await page.goto(`/${PROJECT_ID}/prime-contracts/new`);
     await page.waitForLoadState('networkidle');
 
-    await page.getByPlaceholder('PC-001').fill(contractNumber);
-    await page.getByPlaceholder('Main Building Construction').fill(title);
+    // Fill required fields
+    await page.getByLabel('Contract #').fill(contractNumber);
+    await page.getByLabel('Contract Title').fill(title);
 
-    const ownerCombobox = page.locator('label:has-text("Contract Owner") + div button[role="combobox"]').first();
-    await ownerCombobox.click();
-    await page.keyboard.press('ArrowDown');
-    await page.keyboard.press('Enter');
-
-    await page.getByPlaceholder('0.00').first().fill('2500000');
-
-    const [response] = await Promise.all([
-      page.waitForResponse((res) => res.url().includes('/api/contracts') && res.request().method() === 'POST'),
-      page.getByRole('button', { name: /create contract/i }).click(),
+    // Intercept the POST so we can grab the created ID for cleanup
+    const [contractResponse] = await Promise.all([
+      page.waitForResponse(
+        (res) =>
+          res.url().includes(`/api/projects/${PROJECT_ID}/contracts`) &&
+          res.request().method() === 'POST',
+      ),
+      page.getByRole('button', { name: /Create Prime Contract/i }).click(),
     ]);
-    expect(response.ok()).toBeTruthy();
 
-    await page.waitForTimeout(2000);
-    await page.goto(`/${projectId}/contracts`);
-    await expect(page.locator('table').first()).toContainText(contractNumber);
+    expect(contractResponse.ok()).toBeTruthy();
+    const created = await contractResponse.json();
+    const contractId = created.id;
 
-    await page.screenshot({
-      path: 'frontend/tests/screenshots/contract-smoke.png',
-      fullPage: true,
-    });
+    // Verify redirect to detail page
+    await page.waitForURL(`**/${PROJECT_ID}/prime-contracts/${contractId}**`, { timeout: 10_000 });
+    await expect(page).toHaveURL(new RegExp(`/${PROJECT_ID}/prime-contracts/${contractId}`));
+
+    // Verify success toast
+    await expect(page.getByText('Prime contract created')).toBeVisible({ timeout: 5000 });
+
+    // Verify contract appears in the list
+    await page.goto(`/${PROJECT_ID}/prime-contracts`);
+    await page.waitForLoadState('networkidle');
+    await expect(page.locator('table')).toContainText(contractNumber);
+
+    // Cleanup — delete via API so the test is idempotent
+    await page.request.delete(
+      `/api/projects/${PROJECT_ID}/contracts/${contractId}`,
+    );
   });
 });

@@ -10,7 +10,10 @@
  * @see CLAUDE.md Rules 14 & 15 — Bug Fix Completion Gate + Regression Test Gate
  */
 
-import { detectSourceSpecificRagRequest } from "../detect-rag-request";
+import {
+  detectSourceLookupRecentTeamsRequest,
+  detectSourceSpecificRagRequest,
+} from "../detect-rag-request";
 
 describe("detectSourceSpecificRagRequest — meeting-intent queries (#282 regression)", () => {
   it('returns recent_meetings kind for "review recent meetings"', () => {
@@ -118,6 +121,42 @@ describe("detectSourceSpecificRagRequest — existing patterns not regressed", (
 
   it('returns null for general project queries that should use other paths', () => {
     const result = detectSourceSpecificRagRequest("what is the project status");
+    expect(result).toBeNull();
+  });
+});
+
+describe("detectSourceLookupRecentTeamsRequest — communication diagnosis recency guard", () => {
+  const maySecond = new Date("2026-05-02T12:00:00.000Z");
+
+  it("routes employee Teams/message frustration questions to a recent 30-day Teams window", () => {
+    const result = detectSourceLookupRecentTeamsRequest(
+      "Based on all the employees' messages and teams, where do you think is the biggest source of confusion or lack of communication or frustration?",
+      maySecond,
+    );
+
+    expect(result).not.toBeNull();
+    expect(result?.kind).toBe("recent_teams_discussions");
+    expect(result?.startDate).toBe("2026-04-02");
+    expect(result?.endDate).toBe("2026-05-02");
+    expect(result?.limit).toBe(20);
+  });
+
+  it("preserves explicit date ranges instead of forcing the default recency window", () => {
+    const result = detectSourceLookupRecentTeamsRequest(
+      "Based on all employees' Teams messages from April 20 through May 1, 2026, what is the biggest source of frustration?",
+      maySecond,
+    );
+
+    expect(result?.startDate).toBe("2026-04-20");
+    expect(result?.endDate).toBe("2026-05-01");
+  });
+
+  it("does not hijack ordinary source-evidence questions", () => {
+    const result = detectSourceLookupRecentTeamsRequest(
+      "What source evidence supports that?",
+      maySecond,
+    );
+
     expect(result).toBeNull();
   });
 });

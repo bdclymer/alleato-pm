@@ -3,7 +3,7 @@
 import * as React from "react";
 import type { ReactElement, ReactNode } from "react";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
-import { ChevronDown, FileSignature, FileText, MoreHorizontal, Plus, RefreshCw, RotateCcw, ShoppingCart, Trash2 } from "lucide-react";
+import { ChevronDown, FileSignature, FileText, MoreHorizontal, Plus, RefreshCw, RotateCcw, ShoppingCart, Trash2, Trash } from "lucide-react";
 import { toast } from "sonner";
 
 import { PermissionGate } from "@/components/domain/permissions/PermissionGate";
@@ -297,7 +297,7 @@ export default function ProjectCommitmentsPage(): ReactElement {
   };
 
   const tableState = useUnifiedTableState({
-    entityKey: "commitments",
+    entityKey: "commitments-v2",
     searchParams,
     pathname,
     router,
@@ -349,6 +349,22 @@ export default function ProjectCommitmentsPage(): ReactElement {
 
   const isRecycleBinTab = activeFilters.tab === "recycle-bin";
   const isChangeOrdersTab = activeFilters.tab === "change-orders";
+
+  // Hide TYPE column when a type tab is active — it's redundant to show
+  // "Subcontract" in every row when the tab already filters to subcontracts.
+  const effectiveVisibleColumns = React.useMemo(() => {
+    const isTypeTab = activeFilters.type === "subcontract" || activeFilters.type === "purchase_order";
+    if (!isTypeTab) return tableState.visibleColumns;
+    return tableState.visibleColumns.filter((c) => c !== "type");
+  }, [tableState.visibleColumns, activeFilters.type]);
+
+  // Tab navigation sets type/tab in the URL — don't count those as user-applied
+  // filters in the badge. Only count filters the user set via the filter panel.
+  const toolbarActiveFilters = React.useMemo(() => {
+    const isTypeTab = activeFilters.type === "subcontract" || activeFilters.type === "purchase_order";
+    const { tab: _tab, type, ...rest } = activeFilters;
+    return isTypeTab ? rest : { ...rest, type };
+  }, [activeFilters]);
 
   const {
     data: response,
@@ -669,11 +685,6 @@ export default function ProjectCommitmentsPage(): ReactElement {
       href: `/${projectId}/commitments?type=purchase_order`,
       isActive: activeFilters.type === "purchase_order" && !activeFilters.tab,
     },
-    {
-      label: "Recycle Bin",
-      href: `/${projectId}/commitments?tab=recycle-bin`,
-      isActive: isRecycleBinTab,
-    },
   ];
 
   return (
@@ -724,11 +735,11 @@ export default function ProjectCommitmentsPage(): ReactElement {
             tableState.setSearchParams({ view });
           },
           filters: commitmentFilters,
-          activeFilters,
+          activeFilters: toolbarActiveFilters,
           onFilterChange: handleFilterChange,
           onClearFilters: () => handleFilterChange(EMPTY_FILTERS),
           columns: commitmentColumns,
-          visibleColumns: tableState.visibleColumns,
+          visibleColumns: effectiveVisibleColumns,
           onColumnVisibilityChange: tableState.setVisibleColumns,
           onExport: handleExport,
           onBulkDelete: !isRecycleBinTab && tableState.selectedIds.length > 0
@@ -750,6 +761,28 @@ export default function ProjectCommitmentsPage(): ReactElement {
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>Sync commitments from Acumatica</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant={isRecycleBinTab ? "secondary" : "ghost"}
+                    size="icon"
+                    className="h-8 w-8 shrink-0"
+                    onClick={() =>
+                      router.push(
+                        isRecycleBinTab
+                          ? `/${projectId}/commitments`
+                          : `/${projectId}/commitments?tab=recycle-bin`,
+                      )
+                    }
+                    aria-label="Recycle bin"
+                  >
+                    <Trash className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {isRecycleBinTab ? "Exit recycle bin" : "Recycle bin"}
+                </TooltipContent>
               </Tooltip>
             </TooltipProvider>
           ),

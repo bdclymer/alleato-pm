@@ -2,14 +2,15 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 import { getApiRouteUser } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 
 // DELETE — remove the current user's Telegram account link
 export const DELETE = withApiGuardrails(
   "/api/settings/telegram/unlink#DELETE",
-  async ({ request }) => {
-    const { user, supabase } = await getApiRouteUser(request);
+  async () => {
+    const user = await getApiRouteUser();
     if (!user) {
       throw new GuardrailError({
         code: "UNAUTHORIZED",
@@ -20,6 +21,7 @@ export const DELETE = withApiGuardrails(
       });
     }
 
+    const supabase = createServiceClient();
     const { error } = await supabase
       .from("bot_user_mappings")
       .delete()

@@ -1,5 +1,7 @@
 # Permissions System: Thorough Analysis
 
+Related implementation plan: `docs/permissions/directory-rls-attribution-plan.md` covers the RLS hardening path, the attribution-only contact model, and the proposed `No Access` boundary for project directory contacts that should support email/file mapping without app access.
+
 ## How Procore's Permission System Works (The Mental Model)
 
 Think of Procore's permissions as a **3-layer sandwich**:

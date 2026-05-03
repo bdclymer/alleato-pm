@@ -1,0 +1,91 @@
+import { NextResponse } from "next/server";
+import { z } from "zod";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { getApiRouteUser } from "@/lib/supabase/server";
+import {
+  getProgressReportDetail,
+  saveProgressReport,
+} from "@/lib/progress-reports/server";
+
+const contactSchema = z.object({
+  role: z.string(),
+  name: z.string(),
+  email: z.string(),
+  phone: z.string(),
+});
+
+const selectedPhotoSchema = z.object({
+  project_photo_id: z.number().int().positive(),
+  sort_order: z.number().int().nonnegative(),
+  caption: z.string().nullable(),
+});
+
+const updateSchema = z.object({
+  title: z.string().min(1),
+  status: z.enum(["draft", "ready", "sent"]),
+  week_start: z.string(),
+  week_end: z.string(),
+  construction_start_date: z.string().nullable(),
+  scheduled_completion_date: z.string().nullable(),
+  past_week_highlights: z.string(),
+  upcoming_week_activities: z.string(),
+  open_items: z.string(),
+  weather_days_lost: z.number().int().min(0),
+  contacts: z.array(contactSchema),
+  client_recipients: z.array(z.string()),
+  selected_photos: z.array(selectedPhotoSchema),
+});
+
+export const GET = withApiGuardrails(
+  "projects/[projectId]/progress-reports/[reportId]#GET",
+  async ({ params }) => {
+    const user = await getApiRouteUser();
+    if (!user) {
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "projects/[projectId]/progress-reports/[reportId]#GET",
+        message: "Authentication required.",
+      });
+    }
+
+    const { projectId, reportId } = await params;
+    const numericProjectId = Number.parseInt(projectId, 10);
+    if (!Number.isFinite(numericProjectId)) {
+      return NextResponse.json({ error: "Invalid project ID" }, { status: 400 });
+    }
+
+    const detail = await getProgressReportDetail(numericProjectId, reportId);
+    return NextResponse.json(detail);
+  },
+);
+
+export const PUT = withApiGuardrails(
+  "projects/[projectId]/progress-reports/[reportId]#PUT",
+  async ({ request, params }) => {
+    const user = await getApiRouteUser();
+    if (!user) {
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "projects/[projectId]/progress-reports/[reportId]#PUT",
+        message: "Authentication required.",
+      });
+    }
+
+    const { projectId, reportId } = await params;
+    const numericProjectId = Number.parseInt(projectId, 10);
+    if (!Number.isFinite(numericProjectId)) {
+      return NextResponse.json({ error: "Invalid project ID" }, { status: 400 });
+    }
+
+    const body = updateSchema.parse(await request.json());
+    const detail = await saveProgressReport({
+      projectId: numericProjectId,
+      reportId,
+      userId: user.id,
+      updates: body,
+    });
+
+    return NextResponse.json(detail);
+  },
+);

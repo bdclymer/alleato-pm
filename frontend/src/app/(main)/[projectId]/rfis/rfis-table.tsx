@@ -8,14 +8,17 @@ import { toast } from "sonner";
 
 import { useDataTable } from "@/hooks/use-data-table";
 import { AleatoDataTable } from "@/components/data-table/alleato-data-table";
+import { PageShell } from "@/components/layout";
 import { Button } from "@/components/ui/button";
-import { apiFetch } from "@/lib/api-client";
+import { apiFetch, summarizeBulkResults } from "@/lib/api-client";
 import { getRfiColumns } from "@/features/rfis/rfis-columns";
 import type { RFI } from "@/types/database-extensions";
 
 interface RfisTableProps {
   projectId: number;
 }
+
+type ActiveTab = "all" | "open" | "closed";
 
 interface RfiListResponse {
   data: RFI[];
@@ -24,8 +27,19 @@ interface RfiListResponse {
     limit: number;
     total: number;
     totalPages: number;
+    tab_counts: {
+      all: number;
+      open: number;
+      closed: number;
+    };
   };
 }
+
+const TAB_STATUS_MAP: Record<ActiveTab, string | null> = {
+  all: null,
+  open: "draft,open,answered",
+  closed: "closed,closed-draft",
+};
 
 async function fetchRfis(
   projectId: number,
@@ -50,16 +64,23 @@ async function fetchRfis(
 
 export function RfisTable({ projectId }: RfisTableProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParamsRaw = useSearchParams();
+  const searchParams = searchParamsRaw ?? new URLSearchParams();
   const queryClient = useQueryClient();
+  const activeTabParam = searchParams.get("tab");
+  const activeTab: ActiveTab =
+    activeTabParam === "open" || activeTabParam === "closed" ? activeTabParam : "all";
 
   const page = Number(searchParams.get("page") ?? "1");
   const perPage = Number(searchParams.get("perPage") ?? "25");
   const sort = searchParams.get("sort");
-  const status = searchParams.get("status");
   const search = searchParams.get("search");
+  const status = TAB_STATUS_MAP[activeTab];
 
-  const queryParams = { page, perPage, sort, status, search };
+  const queryParams = React.useMemo(
+    () => ({ page, perPage, sort, status, search }),
+    [page, perPage, sort, status, search],
+  );
 
   const { data, isLoading } = useQuery({
     queryKey: ["rfis", projectId, queryParams],
@@ -69,6 +90,7 @@ export function RfisTable({ projectId }: RfisTableProps) {
 
   const rfis = data?.data ?? [];
   const pageCount = data?.meta.totalPages ?? 1;
+  const tabCounts = data?.meta.tab_counts;
 
   const columns = React.useMemo(() => getRfiColumns({ projectId }), [projectId]);
 
@@ -105,22 +127,23 @@ export function RfisTable({ projectId }: RfisTableProps) {
 
   const handleBulkDelete = React.useCallback(
     async (ids: string[]) => {
-      try {
-        await Promise.all(
-          ids.map((id) =>
-            apiFetch(`/api/projects/${projectId}/rfis/${id}`, { method: "DELETE" }),
-          ),
-        );
-        toast.success(`${ids.length} RFI${ids.length !== 1 ? "s" : ""} deleted`);
+      const results = await Promise.allSettled(
+        ids.map((id) =>
+          apiFetch(`/api/projects/${projectId}/rfis/${id}`, { method: "DELETE" }),
+        ),
+      );
+      const { succeeded, failed, firstError } = summarizeBulkResults(results);
+      if (succeeded > 0) {
+        toast.success(`${succeeded} RFI${succeeded !== 1 ? "s" : ""} deleted`);
         void queryClient.invalidateQueries({ queryKey: ["rfis", projectId] });
-      } catch {
-        toast.error("Failed to delete selected RFIs");
+      }
+      if (failed > 0) {
+        toast.error(`${failed} RFI${failed !== 1 ? "s" : ""} failed: ${firstError}`);
       }
     },
     [projectId, queryClient],
   );
 
-  // Prefetch next page
   React.useEffect(() => {
     if (data && page < pageCount) {
       void queryClient.prefetchQuery({
@@ -130,11 +153,45 @@ export function RfisTable({ projectId }: RfisTableProps) {
     }
   }, [data, page, pageCount, projectId, queryParams, queryClient]);
 
+  const buildTabHref = React.useCallback(
+    (tab: ActiveTab) => {
+      const next = new URLSearchParams(searchParams.toString());
+      next.set("tab", tab);
+      next.delete("status");
+      next.set("page", "1");
+      const query = next.toString();
+      return `/${projectId}/rfis${query ? `?${query}` : ""}`;
+    },
+    [projectId, searchParams],
+  );
+
+  const tabs = [
+    {
+      label: "All",
+      href: buildTabHref("all"),
+      count: tabCounts?.all,
+      isActive: activeTab === "all",
+      testId: "rfis-tab-all",
+    },
+    {
+      label: "Open",
+      href: buildTabHref("open"),
+      count: tabCounts?.open,
+      isActive: activeTab === "open",
+      testId: "rfis-tab-open",
+    },
+    {
+      label: "Closed",
+      href: buildTabHref("closed"),
+      count: tabCounts?.closed,
+      isActive: activeTab === "closed",
+      testId: "rfis-tab-closed",
+    },
+  ];
+
   return (
-    <AleatoDataTable
-      table={table}
-      isLoading={isLoading}
-      storageKey={`rfis-${projectId}`}
+    <PageShell
+      variant="table"
       title="RFIs"
       description="Requests for Information"
       actions={
@@ -143,14 +200,23 @@ export function RfisTable({ projectId }: RfisTableProps) {
           onClick={() => router.push(`/${projectId}/rfis/new`)}
           data-testid="rfis-create-button"
         >
-          <Plus />
+          <Plus className="h-4 w-4" />
           Create RFI
         </Button>
       }
-      searchValue={search ?? ""}
-      onSearchChange={handleSearchChange}
-      searchPlaceholder="Search RFIs…"
-      onBulkDelete={handleBulkDelete}
-    />
+    >
+      <AleatoDataTable
+        table={table}
+        isLoading={isLoading}
+        storageKey={`rfis-${projectId}`}
+        tabs={tabs}
+        searchValue={search ?? ""}
+        onSearchChange={handleSearchChange}
+        searchPlaceholder={
+          activeTab === "all" ? "Search RFIs…" : `Search ${activeTab} RFIs…`
+        }
+        onBulkDelete={handleBulkDelete}
+      />
+    </PageShell>
   );
 }

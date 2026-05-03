@@ -18,6 +18,8 @@ const requiredRouteFragments = [
   "detectSourceSpecificRagRequest",
   "parseExplicitDateRange",
   "sourceSpecificRagRequest",
+  "sourceLookupRecentTeamsRequest",
+  "detectSourceLookupRecentTeamsRequest",
   "buildSourceSpecificRagAnswer",
   "sourceSpecificRagRetrieval",
   "strategist-source-specific-rag",
@@ -28,6 +30,8 @@ const requiredRouteFragments = [
   "chat/thread",
   "thread titles",
   "recent_teams_discussions",
+  "Recent Teams Window",
+  "sourceLookupRecentTeamsKind",
   "gte(\"date\", `${request.startDate}T00:00:00.000Z`)",
   "lte(\"date\", `${request.endDate}T23:59:59.999Z`)",
   ".eq(\"category\", \"teams_message\")",
@@ -51,10 +55,11 @@ if (!aprilRangePattern) {
 
 const sourceSpecificBeforeModelTools =
   route.indexOf("if (sourceSpecificRagRequest)") > -1 &&
-  route.indexOf("if (sourceSpecificRagRequest)") < route.indexOf("const mcpToolBundle");
+  route.indexOf("if (sourceSpecificRagRequest)") < route.indexOf("if (assistantIntent === \"source_lookup\")") &&
+  route.indexOf("if (sourceSpecificRagRequest)") < route.indexOf("const result = streamText");
 
 if (!sourceSpecificBeforeModelTools) {
-  failures.push("source-specific RAG must run before model/MCP tool discovery");
+  failures.push("source-specific RAG must run before source lookup fallback and streamText synthesis");
 }
 
 if (failures.length > 0) {

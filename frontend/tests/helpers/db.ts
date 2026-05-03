@@ -85,6 +85,83 @@ export async function addProjectMember(
   }
 }
 
+export interface SubcontractInput {
+  project_id: number;
+  contract_number: string;
+  title?: string | null;
+  status: string;
+  executed?: boolean;
+  contract_company_id?: string | null;
+}
+
+export async function createSubcontract(input: SubcontractInput) {
+  const { data, error } = await supabase
+    .from("subcontracts")
+    .insert({
+      executed: false,
+      ...input,
+    })
+    .select("*")
+    .single();
+
+  if (error || !data) {
+    throw new Error(`Failed to create subcontract: ${error?.message}`);
+  }
+
+  return data;
+}
+
+export async function getSubcontract(id: string) {
+  const { data, error } = await supabase
+    .from("subcontracts")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error || !data) {
+    throw new Error(`Failed to fetch subcontract: ${error?.message}`);
+  }
+
+  return data;
+}
+
+export async function listSubcontractsForProject(projectId: number) {
+  const { data, error } = await supabase
+    .from("subcontracts")
+    .select("*")
+    .eq("project_id", projectId)
+    .is("deleted_at", null)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw new Error(`Failed to list subcontracts: ${error.message}`);
+  }
+
+  return data ?? [];
+}
+
+export async function deleteSubcontractsByProject(projectId: number) {
+  const { error } = await supabase
+    .from("subcontracts")
+    .delete()
+    .eq("project_id", projectId);
+
+  if (error) {
+    throw new Error(`Failed to delete subcontracts: ${error.message}`);
+  }
+}
+
+export async function deletePurchaseOrdersByProject(projectId: number) {
+  const { error } = await supabase
+    .from("purchase_orders")
+    .delete()
+    .eq("project_id", projectId);
+
+  if (error) {
+    throw new Error(`Failed to delete purchase orders: ${error.message}`);
+  }
+}
+
 export interface ChangeOrderInput {
   project_id: number;
   co_number: string;

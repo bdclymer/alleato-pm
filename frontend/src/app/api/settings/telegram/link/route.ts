@@ -10,8 +10,8 @@ import { nanoid } from "nanoid";
 // GET — check whether the current user has a linked Telegram account
 export const GET = withApiGuardrails(
   "/api/settings/telegram/link#GET",
-  async ({ request }) => {
-    const { user, supabase } = await getApiRouteUser(request);
+  async () => {
+    const user = await getApiRouteUser();
     if (!user) {
       throw new GuardrailError({
         code: "UNAUTHORIZED",
@@ -22,6 +22,7 @@ export const GET = withApiGuardrails(
       });
     }
 
+    const supabase = createServiceClient();
     const { data: mapping } = await supabase
       .from("bot_user_mappings")
       .select("platform_user_id, display_name, created_at")
@@ -36,8 +37,8 @@ export const GET = withApiGuardrails(
 // POST — generate a short-lived link code for the current user
 export const POST = withApiGuardrails(
   "/api/settings/telegram/link#POST",
-  async ({ request }) => {
-    const { user } = await getApiRouteUser(request);
+  async () => {
+    const user = await getApiRouteUser();
     if (!user) {
       throw new GuardrailError({
         code: "UNAUTHORIZED",
@@ -57,7 +58,6 @@ export const POST = withApiGuardrails(
       .eq("user_id", user.id)
       .is("used_at", null);
 
-    // Generate a new 8-char alphanumeric code
     const code = nanoid(8);
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
 
@@ -77,7 +77,7 @@ export const POST = withApiGuardrails(
       });
     }
 
-    const botUsername = process.env.TELEGRAM_BOT_USERNAME ?? "AlleatorBot";
+    const botUsername = process.env.TELEGRAM_BOT_USERNAME ?? "alleatoAIbot";
     const deepLink = `https://t.me/${botUsername}?start=${code}`;
 
     return NextResponse.json({ code, deepLink, expiresAt });

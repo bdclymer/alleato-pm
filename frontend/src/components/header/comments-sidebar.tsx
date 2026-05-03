@@ -78,25 +78,15 @@ function getPageEntityContext(pathname: string): EntityContext {
 
 /**
  * Map the current URL path to an entity context for Supabase collaboration.
- * Detail pages (e.g. /43/rfis/123) → entity-level room.
- * List pages (e.g. /43/budget) → project-tool-level room.
+ * Detail pages (e.g. /43/rfis/123) -> entity-level room.
+ * List pages (e.g. /43/budget) -> project-tool-level room.
  */
 export function useEntityContext(): EntityContext | null {
   const params = useParams();
   const pathname = usePathname();
 
   return React.useMemo(() => {
-    // ── Non-project task routes (e.g. /issues/[issueId]) ─────────────────────
-    const issueId = params.issueId as string | undefined;
-    if (issueId && pathname.startsWith("/issues/")) {
-      return {
-        entityType: "issue" as const,
-        entityId: issueId,
-        label: `Task #${issueId}`,
-      };
-    }
-
-    // ── Project-scoped routes ────────────────────────────────────────────────
+    // Project-scoped routes
     const projectId = params.projectId as string | undefined;
     if (!projectId) return getPageEntityContext(pathname);
     const numericProjectId = Number.parseInt(projectId, 10);

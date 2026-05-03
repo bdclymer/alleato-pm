@@ -25,7 +25,7 @@ export { KpiBlock, KpiRow } from "./kpi";
 export type { KpiBlockProps } from "./kpi";
 
 export { SectionHeader } from "./section-header";
-export { AttachmentUploadPanel } from "./attachment-upload-panel";
+export { AttachmentListItem, AttachmentUploadPanel } from "./attachment-upload-panel";
 export type { AttachmentUploadItem, AttachmentUploadPanelProps } from "./attachment-upload-panel";
 export { AvatarStack } from "./avatar-stack";
 export { DateAvatar } from "./date-avatar";
@@ -162,17 +162,17 @@ export { Progress } from "@/components/ui/progress";
 
 // Overlays
 export {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogOverlay,
-  DialogPortal,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+  Modal as Dialog,
+  ModalClose as DialogClose,
+  ModalContent as DialogContent,
+  ModalDescription as DialogDescription,
+  ModalFooter as DialogFooter,
+  ModalHeader as DialogHeader,
+  ModalOverlay as DialogOverlay,
+  ModalPortal as DialogPortal,
+  ModalTitle as DialogTitle,
+  ModalTrigger as DialogTrigger,
+} from "@/components/ui/unified-modal";
 export {
   Sheet,
   SheetClose,

@@ -19,6 +19,26 @@ let projectId: number;
 
 const makeNumber = (suffix: string) => `SC-${Date.now()}-${suffix}`;
 
+async function dismissAiOnboardingModal(page: import("@playwright/test").Page) {
+  await page.waitForTimeout(1000);
+  await page.keyboard.press("Escape").catch(() => {});
+  const skipButton = page
+    .getByRole("button", { name: /skip for now|explore on my own/i })
+    .first();
+  if (await skipButton.isVisible().catch(() => false)) {
+    await skipButton.click();
+  }
+}
+
+async function selectFirstContractCompany(page: import("@playwright/test").Page) {
+  const companyPicker = page.locator("#contractCompanyId");
+  await expect(companyPicker).toBeEnabled({ timeout: 30000 });
+  await companyPicker.click();
+  const firstOption = page.locator("[cmdk-item]").first();
+  await expect(firstOption).toBeVisible({ timeout: 15000 });
+  await firstOption.click();
+}
+
 test.describe("Commitments – Subcontract CRUD", () => {
   test.beforeAll(async () => {
     const userId = await getUserIdByEmail(testUserEmail);
@@ -99,6 +119,7 @@ test.describe("Commitments – Subcontract CRUD", () => {
       `/${projectId}/commitments/new?type=subcontract`,
     );
     await page.waitForLoadState("domcontentloaded");
+    await dismissAiOnboardingModal(page);
 
     // Fill required fields
     const numberInput = page.locator("#contractNumber");
@@ -109,6 +130,7 @@ test.describe("Commitments – Subcontract CRUD", () => {
     const titleInput = page.locator("#title");
     await titleInput.clear();
     await titleInput.fill(title);
+    await selectFirstContractCompany(page);
 
     // Submit the form
     const submitButton = page.getByRole("button", {
@@ -116,18 +138,8 @@ test.describe("Commitments – Subcontract CRUD", () => {
     });
     await submitButton.click();
 
-    // Wait for navigation back to commitments list or success toast
-    // The form might stay on the page if companies aren't loaded
-    const navigated = await page
-      .waitForURL(`**/${projectId}/commitments`, { timeout: 15000 })
-      .then(() => true)
-      .catch(() => false);
-
-    if (!navigated) {
-      // Check for success toast or if record was created anyway
-      const toast = page.getByText(/created|success/i);
-      await toast.isVisible({ timeout: 5000 }).catch(() => false);
-    }
+    await page.waitForURL(`**/${projectId}/commitments`, { timeout: 15000 });
+    await expect(page.getByRole("heading", { name: /commitments/i })).toBeVisible();
 
     // Verify in database — form may prepend a prefix to the contract number
     await pollFor(
@@ -141,6 +153,10 @@ test.describe("Commitments – Subcontract CRUD", () => {
       },
       20000,
     );
+
+    await expect(page.getByRole("link", { name: title }).first()).toBeVisible({
+      timeout: 15000,
+    });
   });
 
   // ── CREATE: Validation prevents empty submission ───────────────

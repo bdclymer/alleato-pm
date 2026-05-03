@@ -268,7 +268,7 @@ export const sidebarNavGroups: SidebarNavGroup[] = [
       },
       { name: "Meetings", path: "meetings", icon: Calendar, requiresProject: true },
       { name: "Knowledge Base", path: "/knowledge", icon: Brain, requiresProject: false },
-      { name: "AI Strategist", path: "/ai-assistant", icon: Bot, requiresProject: false },
+      { name: "AI Strategist", path: "/ai-assistant", icon: Brain, requiresProject: false },
       { name: "Documents", path: "documents", icon: FolderOpen, requiresProject: true, module: "documents" },
     ],
   },

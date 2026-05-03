@@ -32,20 +32,20 @@ export const commitmentColumns: ColumnConfig[] = [
   { id: "contract_company", label: "Contract Company", defaultVisible: true },
   { id: "title", label: "Title", defaultVisible: true },
   { id: "type", label: "Type", defaultVisible: true },
-  { id: "erp_status", label: "ERP Status", defaultVisible: true },
   { id: "status", label: "Status", defaultVisible: true },
-  { id: "executed", label: "Executed", defaultVisible: true },
-  { id: "ssov_status", label: "SSOV Status", defaultVisible: true },
   { id: "original_amount", label: "Original Contract Amount", defaultVisible: true },
-  { id: "approved_change_orders", label: "Approved Change Orders", defaultVisible: true },
   { id: "revised_contract_amount", label: "Revised Contract Amount", defaultVisible: true },
-  { id: "pending_change_orders", label: "Pending Change Orders", defaultVisible: true },
-  { id: "draft_change_orders", label: "Draft Change Orders", defaultVisible: true },
+  { id: "approved_change_orders", label: "Approved Change Orders", defaultVisible: true },
   { id: "invoiced_amount", label: "Invoiced", defaultVisible: true },
-  { id: "payments_issued", label: "Payments Issued", defaultVisible: true },
-  { id: "percent_paid", label: "% Paid", defaultVisible: true },
   { id: "remaining_balance", label: "Remaining Balance Outstanding", defaultVisible: true },
-  { id: "is_private", label: "Private", defaultVisible: true },
+  { id: "executed", label: "Executed", defaultVisible: true },
+  { id: "erp_status", label: "ERP Status", defaultVisible: false },
+  { id: "ssov_status", label: "SOV Status", defaultVisible: false },
+  { id: "pending_change_orders", label: "Pending Change Orders", defaultVisible: false },
+  { id: "draft_change_orders", label: "Draft Change Orders", defaultVisible: false },
+  { id: "payments_issued", label: "Payments Issued", defaultVisible: false },
+  { id: "percent_paid", label: "% Paid", defaultVisible: false },
+  { id: "is_private", label: "Private", defaultVisible: false },
   { id: "balance_to_finish", label: "Balance to Finish", defaultVisible: false },
   { id: "created_at", label: "Created", defaultVisible: false },
 ];
@@ -169,7 +169,7 @@ export function buildCommitmentTableColumns(
     number: {
       render: (item) => (
         <div className="flex items-center gap-1.5">
-          <span className="font-medium max-w-[120px] truncate" title={item.number}>{item.number}</span>
+          <span className="font-medium max-w-32 truncate" title={item.number}>{item.number}</span>
           {onToggleExpand && (
             <Button
               type="button"

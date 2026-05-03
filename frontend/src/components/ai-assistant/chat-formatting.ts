@@ -12,10 +12,48 @@ function normalizeRetrievedSnippetLine(line: string): string {
   return `${indentationMatch[0]}${trimmed.replace(/^#{1,6}\s+/, "")}`;
 }
 
-export function formatStructuredMeetingList(text: string): string {
-  if (!text.includes("\n") || !text.includes("1.")) return text;
+function normalizeInlineMarkdownBlocks(text: string): string {
+  return text
+    .replace(/\s+(#{2,4}\s+\d+\.)/g, "\n\n$1")
+    .replace(
+      /^(#{2,4}\s+\d+\.\s+[^#\n]{8,90}?)\s+(I can|I'll|I’ll|I will|Use this|Ask me|Examples?:)/gm,
+      "$1\n\n$2",
+    )
+    .replace(/:\s+-\s+/g, ":\n- ");
+}
 
-  const lines = text.split("\n");
+function normalizeInlineBulletLists(text: string): string {
+  return text
+    .split("\n")
+    .map((line) => {
+      if (!line.trimStart().startsWith("- ") || !line.includes(" - ")) {
+        return line;
+      }
+
+      const indent = line.match(/^\s*/)?.[0] ?? "";
+      const items = line
+        .trim()
+        .replace(/^-\s+/, "")
+        .split(/\s+-\s+/)
+        .map((item) => item.trim())
+        .filter(Boolean);
+
+      if (items.length < 2) return line;
+      return items.map((item) => `${indent}- ${item}`).join("\n");
+    })
+    .join("\n");
+}
+
+export function formatStructuredMeetingList(text: string): string {
+  const normalizedText = normalizeInlineBulletLists(
+    normalizeInlineMarkdownBlocks(text),
+  );
+
+  if (!normalizedText.includes("\n") || !normalizedText.includes("1.")) {
+    return normalizedText;
+  }
+
+  const lines = normalizedText.split("\n");
   const linePattern =
     /^(\d+)\.\s*(?:\*\*([^*]+)\*\*|([^—–:\-]+))\s*[—–:\-]\s*(.+)$/;
 
@@ -24,7 +62,7 @@ export function formatStructuredMeetingList(text: string): string {
     .filter((item) => item.match);
 
   // Only transform when this really looks like a meeting/results list.
-  if (matches.length < 2) return text;
+  if (matches.length < 2) return normalizedText;
 
   return lines
     .map((line) => {

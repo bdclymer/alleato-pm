@@ -2,10 +2,10 @@
 
 import { useState, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Controller, useForm, type Path } from "react-hook-form";
 import { Settings } from "lucide-react";
 import { EmptyState } from "@/components/ds";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { PageShell } from "@/components/layout";
 import { Button } from "@/components/ui/button";
@@ -81,17 +81,15 @@ function CreateProjectForm() {
   } | null>(null);
 
   const form = useForm<CreateProjectFormValues>({
-    resolver: zodResolver(createProjectSchema) as any,
+    resolver: zodResolver(createProjectSchema) as ReturnType<typeof zodResolver>,
     defaultValues: {
       ...defaultValues,
       test_project: isOnboardingTestProject || defaultValues.test_project,
     },
   });
 
-  const { DevAutoFillButton } = useDevAutoFill("project", form.setValue as any);
+  const { DevAutoFillButton } = useDevAutoFill("project", form.setValue as Parameters<typeof useDevAutoFill>[1]);
   const { isDevAdmin, activeTemplateConfig } = useCreateProjectDevConfig();
-  const values = form.watch();
-  const errors = form.formState.errors;
 
   const effectiveFormSections = useMemo(() => {
     if (!isDevAdmin) return formSections;
@@ -113,19 +111,11 @@ function CreateProjectForm() {
                 ? fieldOverride.control
                 : field.control;
 
-            return {
-              ...field,
-              control,
-              colSpan: fieldOverride.colSpan ?? field.colSpan,
-            };
+            return { ...field, control, colSpan: fieldOverride.colSpan ?? field.colSpan };
           });
 
         if (fields.length === 0) return null;
-
-        return {
-          ...section,
-          fields,
-        };
+        return { ...section, fields };
       })
       .filter((section): section is FormSection => section !== null);
   }, [activeTemplateConfig, isDevAdmin]);
@@ -144,16 +134,12 @@ function CreateProjectForm() {
         state: values.state || null,
         archived: !values.active,
         "start date": values.start_date?.trim() ? values.start_date : null,
-        "est completion": values.completion_date?.trim()
-          ? values.completion_date
-          : null,
+        "est completion": values.completion_date?.trim() ? values.completion_date : null,
         "est revenue": values.total_value ?? null,
-        // Add new columns directly to payload
         work_scope: values.work_scope || null,
         project_sector: values.project_sector || null,
         delivery_method: values.delivery_method || null,
         onedrive: values.onedrive || null,
-        // Keep other metadata in summary_metadata
         summary_metadata: {
           square_footage: values.square_footage ?? null,
           project_code: values.project_code || null,
@@ -173,19 +159,13 @@ function CreateProjectForm() {
         body: JSON.stringify(payload),
       });
 
-      // Store project info and show success modal
-      setCreatedProject({
-        id: String(project.id),
-        name: values.name,
-      });
+      setCreatedProject({ id: String(project.id), name: values.name });
       setShowSuccessModal(true);
-
       form.reset(defaultValues);
       setFileResetKey((key) => key + 1);
     } catch (error) {
       toast.error("Failed to create project", {
-        description:
-          error instanceof Error ? error.message : "Please try again.",
+        description: error instanceof Error ? error.message : "Please try again.",
       });
     } finally {
       setIsSubmitting(false);
@@ -193,224 +173,179 @@ function CreateProjectForm() {
   };
 
   const renderField = (field: FieldDefinition) => {
-    const currentValue = values[field.name];
-    const error = errors[field.name]?.message as string | undefined;
+    const fieldName = field.name as Path<CreateProjectFormValues>;
     const fullWidth = field.colSpan === "full";
 
-    if (field.control === "textarea") {
-      return (
-        <TextareaField
-          key={field.name}
-          label={field.label}
-          required={field.required}
-          hint={field.description}
-          error={error}
-          placeholder={field.placeholder}
-          value={typeof currentValue === "string" ? currentValue : ""}
-          onChange={(event) =>
-            form.setValue(field.name, event.target.value as never, {
-              shouldValidate: true,
-            })
-          }
-          rows={5}
-          fullWidth={fullWidth}
-        />
-      );
-    }
-
-    if (field.control === "select") {
-      const options = field.allowEmptyOption
-        ? [{ value: CLEAR_SELECT_VALUE, label: "Clear selection" }, ...(field.options ?? [])]
-        : (field.options ?? []);
-
-      return (
-        <SelectField
-          key={field.name}
-          label={field.label}
-          required={field.required}
-          hint={field.description}
-          error={error}
-          placeholder={field.placeholder ?? `Select ${field.label.toLowerCase()}`}
-          options={options}
-          value={typeof currentValue === "string" ? currentValue : undefined}
-          onValueChange={(value) =>
-            form.setValue(
-              field.name,
-              (field.allowEmptyOption && value === CLEAR_SELECT_VALUE
-                ? undefined
-                : value) as never,
-              { shouldValidate: true },
-            )
-          }
-          fullWidth={fullWidth}
-        />
-      );
-    }
-
-    if (field.control === "formatted-number") {
-      return (
-        <NumberField
-          key={field.name}
-          label={field.label}
-          required={field.required}
-          hint={field.description}
-          error={error}
-          placeholder={field.placeholder}
-          value={typeof currentValue === "number" ? currentValue : undefined}
-          onChange={(value) =>
-            form.setValue(field.name, value as never, { shouldValidate: true })
-          }
-          fullWidth={fullWidth}
-        />
-      );
-    }
-
-    if (field.control === "currency") {
-      return (
-        <MoneyField
-          key={field.name}
-          label={field.label}
-          required={field.required}
-          hint={field.description}
-          error={error}
-          placeholder={field.placeholder}
-          value={typeof currentValue === "number" ? currentValue : undefined}
-          onChange={(value) =>
-            form.setValue(field.name, value as never, { shouldValidate: true })
-          }
-          fullWidth={fullWidth}
-        />
-      );
-    }
-
-    if (field.control === "number") {
-      return (
-        <NumberField
-          key={field.name}
-          label={field.label}
-          required={field.required}
-          hint={field.description}
-          error={error}
-          placeholder={field.placeholder}
-          value={typeof currentValue === "number" ? currentValue : undefined}
-          onChange={(value) =>
-            form.setValue(field.name, value as never, { shouldValidate: true })
-          }
-          step={field.step ?? "1"}
-          fullWidth={fullWidth}
-        />
-      );
-    }
-
-    if (field.control === "date") {
-      return (
-        <DateField
-          key={field.name}
-          label={field.label}
-          required={field.required}
-          hint={field.description}
-          error={error}
-          value={
-            typeof currentValue === "string" && currentValue
-              ? new Date(`${currentValue}T00:00:00`)
-              : undefined
-          }
-          onChange={(value) =>
-            form.setValue(
-              field.name,
-              (value ? value.toISOString().split("T")[0] : "") as never,
-              { shouldValidate: true },
-            )
-          }
-          fullWidth={fullWidth}
-        />
-      );
-    }
-
-    if (field.control === "checkbox") {
-      return (
-        <div key={field.name} className={fullWidth ? "sm:col-span-2" : undefined}>
-          <CheckboxField
-            label={field.label}
-            checked={Boolean(currentValue)}
-            onCheckedChange={(checked) =>
-              form.setValue(field.name, checked as never, { shouldValidate: true })
-            }
-            error={error}
-          />
-        </div>
-      );
-    }
-
-    if (field.control === "file") {
-      const file =
-        typeof File !== "undefined" && currentValue instanceof File ? currentValue : null;
-      const tooltipContent = PROJECT_MEDIA_TOOLTIP[field.name];
-      const fieldLabel = tooltipContent ? (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span>{field.label}</span>
-            </TooltipTrigger>
-            <TooltipContent side="top" className="max-w-sm text-left">
-              {tooltipContent}
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      ) : (
-        field.label
-      );
-      const shouldHideMediaHint = field.name === "project_logo" || field.name === "project_photo";
-
-      return (
-        <FileUploadField
-          key={`${field.name}-${fileResetKey}`}
-          label={fieldLabel}
-          hint={shouldHideMediaHint ? undefined : field.description}
-          error={error}
-          accept={field.accept}
-          maxFiles={1}
-          variant="minimal"
-          showMetaText={!shouldHideMediaHint}
-          fullWidth={fullWidth}
-          value={
-            file
-              ? [{ name: file.name, size: file.size, type: file.type }]
-              : []
-          }
-          onChange={(files) => {
-            if (files.length === 0) {
-              form.setValue(field.name, undefined as never, {
-                shouldValidate: true,
-              });
-              setFileResetKey((key) => key + 1);
-            }
-          }}
-          onFilesSelected={(files) =>
-            form.setValue(field.name, (files[0] ?? undefined) as never, {
-              shouldValidate: true,
-            })
-          }
-        />
-      );
-    }
-
     return (
-      <TextField
+      <Controller
         key={field.name}
-        label={field.label}
-        required={field.required}
-        hint={field.description}
-        error={error}
-        placeholder={field.placeholder}
-        inputMode={field.inputMode}
-        value={typeof currentValue === "string" ? currentValue : ""}
-        onChange={(event) =>
-          form.setValue(field.name, event.target.value as never, {
-            shouldValidate: true,
-          })
-        }
-        fullWidth={fullWidth}
+        control={form.control}
+        name={fieldName}
+        render={({ field: rhf, fieldState }) => {
+          const error = fieldState.error?.message;
+          const value = rhf.value;
+
+          switch (field.control) {
+            case "textarea":
+              return (
+                <TextareaField
+                  label={field.label}
+                  required={field.required}
+                  hint={field.description}
+                  error={error}
+                  placeholder={field.placeholder}
+                  value={typeof value === "string" ? value : ""}
+                  onChange={(e) => rhf.onChange(e.target.value)}
+                  onBlur={rhf.onBlur}
+                  rows={5}
+                  fullWidth={fullWidth}
+                />
+              );
+
+            case "select": {
+              const options = field.allowEmptyOption
+                ? [{ value: CLEAR_SELECT_VALUE, label: "Clear selection" }, ...(field.options ?? [])]
+                : (field.options ?? []);
+              return (
+                <SelectField
+                  label={field.label}
+                  required={field.required}
+                  hint={field.description}
+                  error={error}
+                  placeholder={field.placeholder ?? `Select ${field.label.toLowerCase()}`}
+                  options={options}
+                  value={typeof value === "string" ? value : undefined}
+                  onValueChange={(v) => {
+                    rhf.onChange(
+                      field.allowEmptyOption && v === CLEAR_SELECT_VALUE ? undefined : v,
+                    );
+                  }}
+                  fullWidth={fullWidth}
+                />
+              );
+            }
+
+            case "formatted-number":
+            case "number":
+              return (
+                <NumberField
+                  label={field.label}
+                  required={field.required}
+                  hint={field.description}
+                  error={error}
+                  placeholder={field.placeholder}
+                  value={typeof value === "number" ? value : undefined}
+                  onChange={rhf.onChange}
+                  onBlur={rhf.onBlur}
+                  step={field.step ?? "1"}
+                  fullWidth={fullWidth}
+                />
+              );
+
+            case "currency":
+              return (
+                <MoneyField
+                  label={field.label}
+                  required={field.required}
+                  hint={field.description}
+                  error={error}
+                  placeholder={field.placeholder}
+                  value={typeof value === "number" ? value : undefined}
+                  onChange={rhf.onChange}
+                  onBlur={rhf.onBlur}
+                  fullWidth={fullWidth}
+                />
+              );
+
+            case "date":
+              return (
+                <DateField
+                  label={field.label}
+                  required={field.required}
+                  hint={field.description}
+                  error={error}
+                  value={
+                    typeof value === "string" && value
+                      ? new Date(`${value}T00:00:00`)
+                      : undefined
+                  }
+                  onChange={(v) => rhf.onChange(v ? v.toISOString().split("T")[0] : "")}
+                  fullWidth={fullWidth}
+                />
+              );
+
+            case "checkbox":
+              return (
+                <div className={fullWidth ? "sm:col-span-2" : undefined}>
+                  <CheckboxField
+                    label={field.label}
+                    checked={Boolean(value)}
+                    onCheckedChange={rhf.onChange}
+                    error={error}
+                  />
+                </div>
+              );
+
+            case "file": {
+              const file = typeof File !== "undefined" && value instanceof File ? value : null;
+              const tooltipContent = PROJECT_MEDIA_TOOLTIP[field.name];
+              const shouldHideMediaHint =
+                field.name === "project_logo" || field.name === "project_photo";
+              const fieldLabel = tooltipContent ? (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span>{field.label}</span>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-sm text-left">
+                      {tooltipContent}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              ) : (
+                field.label
+              );
+
+              return (
+                <FileUploadField
+                  key={`${field.name}-${fileResetKey}`}
+                  label={fieldLabel}
+                  hint={shouldHideMediaHint ? undefined : field.description}
+                  error={error}
+                  accept={field.accept}
+                  maxFiles={1}
+                  variant="minimal"
+                  showMetaText={!shouldHideMediaHint}
+                  fullWidth={fullWidth}
+                  value={file ? [{ name: file.name, size: file.size, type: file.type }] : []}
+                  onChange={(files) => {
+                    if (files.length === 0) {
+                      rhf.onChange(undefined);
+                      setFileResetKey((k) => k + 1);
+                    }
+                  }}
+                  onFilesSelected={(files) => rhf.onChange(files[0] ?? undefined)}
+                />
+              );
+            }
+
+            default:
+              return (
+                <TextField
+                  label={field.label}
+                  required={field.required}
+                  hint={field.description}
+                  error={error}
+                  placeholder={field.placeholder}
+                  inputMode={field.inputMode}
+                  value={typeof value === "string" ? value : ""}
+                  onChange={(e) => rhf.onChange(e.target.value)}
+                  onBlur={rhf.onBlur}
+                  fullWidth={fullWidth}
+                />
+              );
+          }
+        }}
       />
     );
   };
@@ -433,7 +368,12 @@ function CreateProjectForm() {
         description={hideSectionDescription ? undefined : section.description}
         showDivider={false}
       >
-        <FormGrid columns={sectionColumns} className={section.id === "project-status" ? "gap-y-2" : undefined}>{section.fields.map(renderField)}</FormGrid>
+        <FormGrid
+          columns={sectionColumns}
+          className={section.id === "project-status" ? "gap-y-2" : undefined}
+        >
+          {section.fields.map(renderField)}
+        </FormGrid>
       </StandardFormSection>
     );
 
@@ -452,9 +392,7 @@ function CreateProjectForm() {
     <>
       <ProjectCreatedModal
         isOpen={showSuccessModal}
-        onClose={() => {
-          setShowSuccessModal(false);
-        }}
+        onClose={() => setShowSuccessModal(false)}
         onViewDashboard={() => {
           setShowSuccessModal(false);
           if (createdProject?.id) router.push(`/${createdProject.id}/home`);

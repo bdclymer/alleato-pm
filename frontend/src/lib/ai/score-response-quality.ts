@@ -36,6 +36,65 @@ export const META_COMMENTARY_PHRASES = [
   "let me pull up",
 ];
 
+const SOURCE_BEARING_TOOLS = new Set([
+  "clientProjectIntelligencePacket",
+  "sourceSpecificRagRetrieval",
+  "semanticSearch",
+  "searchMeetingsByTopic",
+  "searchTeamsMessages",
+  "searchEmails",
+  "searchExternalDocuments",
+  "getProjectBriefingSnapshot",
+  "cachedProjectBriefingSnapshot",
+  "cachedExecutiveRetrievalPacket",
+]);
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+}
+
+function numericCount(value: unknown): number {
+  return typeof value === "number" && Number.isFinite(value) && value > 0 ? value : 0;
+}
+
+function arrayCount(value: unknown): number {
+  return Array.isArray(value) ? value.length : 0;
+}
+
+function countSourceBearingRecords(entry: Record<string, unknown>): number {
+  if (entry.error) return 0;
+  const toolName = typeof entry.tool === "string" ? entry.tool : "";
+  if (!SOURCE_BEARING_TOOLS.has(toolName)) return 0;
+
+  const output = asRecord(entry.output);
+  if (!output) return 0;
+
+  const directCount = Math.max(
+    numericCount(output.cardCount),
+    numericCount(output.rowCount),
+    numericCount(output.totalResults),
+    numericCount(output.resultCount),
+    arrayCount(output.rows),
+    arrayCount(output.results),
+  );
+
+  if (directCount > 0) return directCount;
+
+  const sources = Array.isArray(output.sources) ? output.sources : [];
+  return sources.reduce((count, source) => {
+    const sourceRecord = asRecord(source);
+    const sourceOutput = asRecord(sourceRecord?.output);
+    return count + Math.max(
+      numericCount(sourceRecord?.resultCount),
+      numericCount(sourceOutput?.totalResults),
+      arrayCount(sourceOutput?.results),
+      arrayCount(sourceOutput?.rows),
+    );
+  }, 0);
+}
+
 export function scoreResponseQuality(params: {
   toolTrace: Array<Record<string, unknown>>;
   content: string;
@@ -45,6 +104,10 @@ export function scoreResponseQuality(params: {
   const successfulToolCalls = trace.filter((t) => !t.error).length;
   const failedToolCalls = trace.filter((t) => t.error).length;
   const sourceRefsInText = (params.content.match(/\[Source:/g) ?? []).length;
+  const sourceBearingRecordCount = trace.reduce(
+    (count, entry) => count + countSourceBearingRecords(entry),
+    0,
+  );
   const hasCompiledPacket = trace.some((entry) => {
     if (entry.tool !== "clientProjectIntelligencePacket" || entry.error) return false;
     const output = entry.output as { cardCount?: unknown } | undefined;
@@ -77,6 +140,10 @@ export function scoreResponseQuality(params: {
   } else if (sourceRefsInText === 1) {
     score += 8;
     reasons.push("single source citation");
+  } else if (sourceBearingRecordCount > 0) {
+    reasons.push(
+      `retrieval trace included ${sourceBearingRecordCount} source-bearing record(s) without inline citations`,
+    );
   } else {
     reasons.push("no source citations in final response");
   }
@@ -96,7 +163,11 @@ export function scoreResponseQuality(params: {
   const confidence: ResponseQuality["confidence"] =
     score >= 80 ? "high" : score >= 60 ? "medium" : "low";
   const sourceQuality: ResponseQuality["sourceQuality"] =
-    sourceRefsInText >= 2 ? "high" : sourceRefsInText === 1 ? "medium" : "low";
+    sourceRefsInText >= 2 || sourceBearingRecordCount >= 2
+      ? "high"
+      : sourceRefsInText === 1 || sourceBearingRecordCount === 1
+        ? "medium"
+        : "low";
 
   return { confidence, sourceQuality, score, reasons, hasMetaCommentary };
 }

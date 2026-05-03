@@ -17,6 +17,7 @@ from .document_parser import run_document_parser
 from .financial_parser import run_financial_parser
 from .embedder import run_embedder
 from .extractor import run_extractor
+from ..intelligence.compiler import process_source_document_to_packet
 from ..supabase_helpers import get_supabase_client
 
 logger = logging.getLogger(__name__)
@@ -153,6 +154,16 @@ def run_full_pipeline(metadata_id: str) -> Dict[str, Any]:
             logger.info("[Pipeline] Stage 3/3: Extractor → %s", metadata_id)
             results["extractor"] = run_extractor(metadata_id)
             logger.info("[Pipeline] Extractor done: %s", results["extractor"])
+
+            logger.info("[Pipeline] Stage 4/4: Intelligence Compiler → %s", metadata_id)
+            results["intelligence_compiler"] = process_source_document_to_packet(
+                client,
+                metadata_id,
+            )
+            logger.info(
+                "[Pipeline] Intelligence compiler done: %s",
+                results["intelligence_compiler"],
+            )
 
             results["status"] = "done"
             return results

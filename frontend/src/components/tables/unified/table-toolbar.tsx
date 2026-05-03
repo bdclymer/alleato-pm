@@ -40,7 +40,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Modal as Dialog,
+  ModalContent as DialogContent,
+  ModalHeader as DialogHeader,
+  ModalTitle as DialogTitle,
+} from "@/components/ui/unified-modal";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -132,7 +137,7 @@ export interface TableToolbarProps {
   className?: string;
 }
 
-function ExpandableSearch({
+export function ExpandableSearch({
   value,
   onChange,
   placeholder = "Search...",
@@ -208,7 +213,7 @@ function ExpandableSearch({
   );
 }
 
-function ViewSwitcher({
+export function ViewSwitcher({
   currentView,
   onViewChange,
   enabledViews = ["table", "card", "list"],
@@ -267,7 +272,7 @@ function FilterFields({
         return (
           <div
             key={filter.id}
-            className="flex items-center justify-between gap-3 rounded-md px-2 py-1.5 hover:bg-muted/50"
+            className="flex items-center justify-between gap-3 px-2 py-1.5"
           >
             <span className="text-sm text-foreground">{filter.label}</span>
             <Select
@@ -307,7 +312,7 @@ function FilterFields({
         return (
           <div
             key={filter.id}
-            className="flex items-center justify-between gap-3 rounded-md px-2 py-1.5 hover:bg-muted/50"
+            className="flex items-center justify-between gap-3 px-2 py-1.5"
           >
             <span className="text-sm text-foreground">{filter.label}</span>
             <Popover>
@@ -362,7 +367,7 @@ function FilterFields({
       {inputFilters.map((filter) => (
         <div
           key={filter.id}
-          className="flex items-center justify-between gap-3 rounded-md px-2 py-1.5 hover:bg-muted/50"
+          className="flex items-center justify-between gap-3 px-2 py-1.5"
         >
           <label htmlFor={`filter-${filter.id}`} className="text-sm text-foreground">
             {filter.label}
@@ -392,7 +397,7 @@ function FilterFields({
   );
 }
 
-function FilterMenu({
+export function FilterMenu({
   filters,
   activeFilters,
   onFilterChange,
@@ -519,7 +524,7 @@ function getFirstActiveFilterLabel(
   return active.label;
 }
 
-function ColumnToggle({
+export function ColumnToggle({
   columns,
   visibleColumns,
   onColumnVisibilityChange,

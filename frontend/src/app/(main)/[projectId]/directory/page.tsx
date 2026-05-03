@@ -1297,7 +1297,7 @@ function MembersDataTable({
       },
       {
         id: "role",
-        header: "Role / Job Title",
+        header: "Job Title",
         cell: ({ row }) => (
           <span className="text-sm text-muted-foreground">{row.original.job_title ?? "—"}</span>
         ),

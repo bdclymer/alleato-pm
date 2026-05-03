@@ -47,6 +47,12 @@ if rg -n "backend/src/workers|CLOUDFLARE_WORKER_BASE_URL|WORKER_AUTH_TOKEN|firef
   exit 1
 fi
 
+echo "2l) Supabase type contract gate"
+npm run db:types:check
+
+echo "2m) Manual DB type override gate"
+npm run guardrails:db-type-overrides
+
 echo "3) Frontend lint + typecheck + build"
 cd frontend
 npm run quality:build-routes
@@ -71,6 +77,13 @@ if [ -n "${DATABASE_URL:-}" ] || [ -n "${SUPABASE_DB_URL:-}" ]; then
   npm run rag:verify:memory
 else
   echo "Skipping: DATABASE_URL / SUPABASE_DB_URL not set. AI memory contract runs via cron job."
+fi
+
+echo "7) AI intelligence compiler health"
+if [ -n "${DATABASE_URL:-}" ] || [ -n "${SUPABASE_DB_URL:-}" ]; then
+  npm run rag:verify:intelligence-compiler
+else
+  echo "Skipping: DATABASE_URL / SUPABASE_DB_URL not set. Intelligence compiler health runs via cron job."
 fi
 
 echo "Pre-deploy quality gate passed."

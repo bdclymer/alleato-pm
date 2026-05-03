@@ -98,6 +98,7 @@ import {
   SparkleIcon,
   LinkIcon,
   EraserIcon,
+  ClipboardPasteIcon,
   MicIcon,
   MicOffIcon,
   PaperclipIcon,
@@ -121,6 +122,10 @@ import { AnimatedOrb } from "./animated-orb";
 import { AudioWaveform } from "./audio-waveform";
 import { BrandonDailyUpdateWidgetCard } from "./brandon-daily-update-widget-card";
 import type { BrandonDailyUpdatePacket } from "@/lib/executive/brandon-daily-update";
+import {
+  scoreResponseQuality,
+  type ResponseQuality as ScoredResponseQuality,
+} from "@/lib/ai/score-response-quality";
 
 // ─── Part extraction helpers ───────────────────────────────────────
 
@@ -232,12 +237,9 @@ type SpeechRecognitionLike = {
 
 type SpeechRecognitionConstructor = new () => SpeechRecognitionLike;
 
-export interface ResponseQuality {
-  confidence: "high" | "medium" | "low";
-  sourceQuality: "high" | "medium" | "low";
-  score: number;
-  reasons: string[];
-}
+export type ResponseQuality = Omit<ScoredResponseQuality, "hasMetaCommentary"> & {
+  hasMetaCommentary?: boolean;
+};
 
 export interface StrategistLiveStatus {
   stage: string;
@@ -998,6 +1000,67 @@ function generateSuggestions(
   return [...new Set(suggestions)].slice(0, 4);
 }
 
+const qualityRank: Record<ResponseQuality["sourceQuality"], number> = {
+  low: 0,
+  medium: 1,
+  high: 2,
+};
+
+function bestSourceQuality(
+  ...values: Array<ResponseQuality["sourceQuality"] | undefined>
+): ResponseQuality["sourceQuality"] {
+  return values.reduce<ResponseQuality["sourceQuality"]>((best, value) => {
+    if (!value) return best;
+    return qualityRank[value] > qualityRank[best] ? value : best;
+  }, "low");
+}
+
+function sourceQualityFromPersistedSources(
+  sources: unknown[],
+): ResponseQuality["sourceQuality"] | undefined {
+  if (sources.length >= 2) return "high";
+  if (sources.length === 1) return "medium";
+  return undefined;
+}
+
+function deriveDisplayResponseQuality(params: {
+  stored: ResponseQuality | undefined;
+  traces: ToolTraceItem[];
+  sources: unknown[];
+  content: string;
+}): ResponseQuality | undefined {
+  if (!params.stored) return undefined;
+
+  const rescored =
+    params.traces.length > 0
+      ? scoreResponseQuality({
+          toolTrace: params.traces.map((trace) => ({ ...trace })),
+          content: params.content,
+        })
+      : null;
+
+  const sourceQuality = bestSourceQuality(
+    params.stored.sourceQuality,
+    rescored?.sourceQuality,
+    sourceQualityFromPersistedSources(params.sources),
+  );
+
+  if (!rescored && sourceQuality === params.stored.sourceQuality) {
+    return params.stored;
+  }
+
+  return {
+    ...params.stored,
+    sourceQuality,
+    reasons: Array.from(
+      new Set([
+        ...(params.stored.reasons ?? []),
+        ...(rescored?.reasons ?? []),
+      ]),
+    ),
+  };
+}
+
 // ─── Main ChatArea component ────────────────────────────────────────
 
 interface ChatAreaProps {
@@ -1291,10 +1354,66 @@ export function ChatArea({
       });
   }, [input, isRecording, mediaStream]);
 
-  const handleCopy = useCallback((content: string) => {
-    navigator.clipboard.writeText(content);
-    toast.success("Copied to clipboard");
+  const handleCopy = useCallback(async (content: string) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      toast.success("Copied to clipboard");
+      return;
+    } catch (error) {
+      console.warn("Clipboard write failed, falling back to selection copy", error);
+    }
+
+    try {
+      const textarea = document.createElement("textarea");
+      textarea.value = content;
+      textarea.setAttribute("readonly", "");
+      textarea.style.position = "fixed";
+      textarea.style.left = "-9999px";
+      textarea.style.top = "0";
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+      const copied = document.execCommand("copy");
+      document.body.removeChild(textarea);
+
+      if (copied) {
+        toast.success("Copied to clipboard");
+        return;
+      }
+    } catch (fallbackError) {
+      console.warn("Fallback clipboard copy failed", fallbackError);
+    }
+
+    toast.error("Copy failed", {
+      description:
+        "The browser denied clipboard access. Select the response text manually and copy it.",
+    });
   }, []);
+
+  const handlePasteFromClipboard = useCallback(async () => {
+    if (typeof navigator === "undefined" || !navigator.clipboard?.readText) {
+      toast.error("Clipboard paste is not available in this browser.");
+      return;
+    }
+
+    try {
+      const clipboardText = await navigator.clipboard.readText();
+      if (!clipboardText.trim()) {
+        toast.message("Clipboard is empty");
+        return;
+      }
+
+      const separator = input.trim() ? (input.endsWith("\n") ? "" : "\n") : "";
+      onInputChange(`${input}${separator}${clipboardText}`);
+      toast.success("Pasted from clipboard");
+    } catch (error) {
+      console.warn("Clipboard read failed", error);
+      toast.error("Paste failed", {
+        description:
+          "The browser denied clipboard access. Use the normal paste shortcut instead.",
+      });
+    }
+  }, [input, onInputChange]);
 
   const handleSpeakResponse = useCallback(
     async (messageId: string, content: string) => {
@@ -1505,6 +1624,18 @@ export function ChatArea({
               aria-label="Attach files"
             >
               <PaperclipIcon className="h-4 w-4" />
+            </Button>
+          </PromptInputAction>
+          <PromptInputAction tooltip="Paste from clipboard">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              className={composerIconButtonClass}
+              onClick={handlePasteFromClipboard}
+              aria-label="Paste from clipboard"
+            >
+              <ClipboardPasteIcon className="h-4 w-4" />
             </Button>
           </PromptInputAction>
           <PromptInputAction tooltip={isRecording ? "Stop voice input" : "Voice input"}>
@@ -1738,7 +1869,12 @@ export function ChatArea({
                 const persistedTraces = toolTracesByMessageId[msg.id] ?? [];
                 const persistedSources = sourcesByMessageId[msg.id] ?? [];
                 const memoryUsage = memoryUsageByMessageId[msg.id];
-                const responseQuality = responseQualityByMessageId[msg.id];
+                const responseQuality = deriveDisplayResponseQuality({
+                  stored: responseQualityByMessageId[msg.id],
+                  traces: persistedTraces,
+                  sources: persistedSources,
+                  content: text,
+                });
                 const traceDiagnostics = traceDiagnosticsByMessageId[msg.id];
                 const isLastMessage = msgIndex === messages.length - 1;
 
@@ -1905,8 +2041,25 @@ export function ChatArea({
                             />
                           ))}
 
+                          <div className="mb-2 flex items-center justify-end gap-1">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 gap-1.5 px-2 text-xs text-muted-foreground hover:text-foreground"
+                              onClick={() => handleCopy(formattedAssistantText)}
+                            >
+                              <CopyIcon className="h-3.5 w-3.5" />
+                              Copy
+                            </Button>
+                          </div>
+
                           {/* Main text response */}
-                          <MessageResponse className="text-sm leading-6">
+                          <MessageResponse
+                            className="text-sm leading-6"
+                            isAnimating={isStreaming && isLastMessage}
+                            caret={isStreaming && isLastMessage ? "block" : undefined}
+                          >
                             {formattedAssistantText}
                           </MessageResponse>
 

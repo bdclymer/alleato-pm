@@ -1,12 +1,15 @@
 "use client";
 
 import { useState, useEffect, useCallback, memo } from "react";
-import { Download, FileText, Loader2, Upload, X } from "lucide-react";
+import { Loader2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { useDropzone } from "react-dropzone";
 
+import { AttachmentListItem } from "@/components/ds";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ds/text";
+import { ApiError, apiFetch } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import { formatDate } from "@/lib/format";
 
@@ -30,17 +33,16 @@ export const AttachmentsTab = memo(function AttachmentsTab({ commitmentId }: Att
 
   const fetchAttachments = useCallback(async () => {
     try {
-      const response = await fetch(`/api/commitments/${commitmentId}/attachments`);
-      if (response.ok) {
-        const data = await response.json();
-        setAttachments(data.data ?? data ?? []);
-      } else if (response.status === 404) {
+      const data = await apiFetch<Attachment[] | { data?: Attachment[] }>(
+        `/api/commitments/${commitmentId}/attachments`,
+      );
+      setAttachments(Array.isArray(data) ? data : data.data ?? []);
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 404) {
         setAttachments([]);
-      } else {
-        throw new Error("Failed to load attachments");
+        return;
       }
-    } catch {
-      toast.error("Failed to load attachments");
+      toast.error(error instanceof Error ? error.message : "Failed to load attachments");
     } finally {
       setIsLoading(false);
     }
@@ -57,16 +59,15 @@ export const AttachmentsTab = memo(function AttachmentsTab({ commitmentId }: Att
       for (const file of files) {
         const formData = new FormData();
         formData.append("file", file);
-        const response = await fetch(`/api/commitments/${commitmentId}/attachments`, {
+        await apiFetch(`/api/commitments/${commitmentId}/attachments`, {
           method: "POST",
           body: formData,
         });
-        if (!response.ok) throw new Error("Failed to upload files");
       }
       toast.success(`${files.length} file(s) uploaded successfully`);
       await fetchAttachments();
-    } catch {
-      toast.error("Failed to upload files");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to upload files");
     } finally {
       setIsUploading(false);
     }
@@ -77,15 +78,13 @@ export const AttachmentsTab = memo(function AttachmentsTab({ commitmentId }: Att
 
     setDeletingIds((prev) => new Set(prev).add(attachmentId));
     try {
-      const response = await fetch(
-        `/api/commitments/${commitmentId}/attachments/${attachmentId}`,
-        { method: "DELETE" },
-      );
-      if (!response.ok) throw new Error("Failed to delete attachment");
+      await apiFetch(`/api/commitments/${commitmentId}/attachments/${attachmentId}`, {
+        method: "DELETE",
+      });
       toast.success("Attachment deleted");
       setAttachments((prev) => prev.filter((a) => a.id !== attachmentId));
-    } catch {
-      toast.error("Failed to delete attachment");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to delete attachment");
     } finally {
       setDeletingIds((prev) => {
         const next = new Set(prev);
@@ -133,7 +132,7 @@ export const AttachmentsTab = memo(function AttachmentsTab({ commitmentId }: Att
           isUploading && "cursor-not-allowed opacity-50",
         )}
       >
-        <input {...getInputProps()} />
+        <Input {...getInputProps()} className="hidden" />
         {isUploading ? (
           <div className="flex flex-col items-center gap-2">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -164,49 +163,17 @@ export const AttachmentsTab = memo(function AttachmentsTab({ commitmentId }: Att
           {attachments.map((attachment) => {
             const isDeleting = deletingIds.has(attachment.id);
             return (
-              <div
+              <AttachmentListItem
                 key={attachment.id}
-                className={cn(
-                  "flex items-center gap-3 rounded-lg border border-border p-3 transition-opacity",
-                  isDeleting && "opacity-50",
-                )}
-              >
-                <FileText className="h-7 w-7 shrink-0 text-muted-foreground" />
-                <div className="min-w-0 flex-1">
-                  <Text size="sm" weight="medium" className="truncate">
-                    {attachment.fileName}
-                  </Text>
-                  {attachment.uploadedAt && (
-                    <Text size="xs" variant="muted">
-                      Uploaded {formatDate(attachment.uploadedAt)}
-                    </Text>
-                  )}
-                </div>
-                <div className="flex shrink-0 items-center gap-1.5">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => attachment.url && window.open(attachment.url, "_blank")}
-                    disabled={isDeleting}
-                    aria-label="Download"
-                  >
-                    <Download className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDelete(attachment.id)}
-                    disabled={isDeleting}
-                    aria-label="Delete"
-                  >
-                    {isDeleting ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <X className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
-              </div>
+                name={attachment.fileName}
+                meta={attachment.uploadedAt ? `Uploaded ${formatDate(attachment.uploadedAt)}` : null}
+                onDownload={
+                  attachment.url ? () => window.open(attachment.url, "_blank") : undefined
+                }
+                onRemove={() => handleDelete(attachment.id)}
+                isBusy={isDeleting}
+                className={cn(isDeleting && "opacity-50")}
+              />
             );
           })}
         </div>

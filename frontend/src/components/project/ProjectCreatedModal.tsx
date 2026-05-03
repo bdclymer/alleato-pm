@@ -4,7 +4,11 @@ import { motion, useReducedMotion, type Transition } from 'framer-motion'
 import { ArrowRight, Users, DollarSign, FileText, Image, Calendar, Building2 } from 'lucide-react'
 import NextImage from 'next/image'
 import Link from 'next/link'
-import { Dialog, DialogContent } from '@/components/ui/dialog'
+import {
+  Modal as Dialog,
+  ModalContent as DialogContent,
+  ModalTitle as DialogTitle,
+} from '@/components/ui/unified-modal'
 import { Button } from '@/components/ui/button'
 
 interface ProjectCreatedModalProps {
@@ -92,7 +96,7 @@ export function ProjectCreatedModal({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       {/* eslint-disable-next-line design-system/no-design-violations -- DialogContent is a card-like component with intentional border */}
-      <DialogContent className="max-w-[480px] p-0 overflow-hidden bg-card rounded-xl shadow-sm border-border">
+      <DialogContent size="md" className="p-0 overflow-hidden bg-card rounded-xl shadow-sm border-border">
         <motion.div
           initial={prefersReducedMotion ? false : { opacity: 0, scale: 0.97, y: 8 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -124,7 +128,7 @@ export function ProjectCreatedModal({
                   width={260}
                   height={130}
                   priority
-                  className="w-[220px] h-auto"
+                  className="w-56 h-auto"
                   style={{ mixBlendMode: 'multiply' }}
                 />
               </motion.div>
@@ -139,14 +143,16 @@ export function ProjectCreatedModal({
               {projectName}
             </motion.p>
 
-            <motion.h2
-              initial={prefersReducedMotion ? false : { opacity: 0, y: 5 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15, duration: 0.3 }}
-              className="text-2xl font-semibold text-foreground tracking-tight mb-1"
-            >
-              Project Created
-            </motion.h2>
+            <DialogTitle asChild>
+              <motion.h2
+                initial={prefersReducedMotion ? false : { opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15, duration: 0.3 }}
+                className="text-2xl font-semibold text-foreground tracking-tight mb-1"
+              >
+                Project Created
+              </motion.h2>
+            </DialogTitle>
 
             <motion.p
               initial={prefersReducedMotion ? false : { opacity: 0 }}

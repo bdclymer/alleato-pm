@@ -14,9 +14,9 @@ import {
   MessageSquare,
   Phone,
   SlidersHorizontal,
+  Sparkles,
   Users,
 } from "lucide-react"
-import { IconAiStrategist } from "@/components/icon/icon-ai-strategist"
 
 import {
   Sidebar,
@@ -477,7 +477,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               aria-label="Toggle AI Strategist"
               title="AI Strategist"
             >
-              <IconAiStrategist size={16} />
+              <Sparkles className="h-4 w-4" />
             </Button>
           </div>
         ) : (
@@ -510,7 +510,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 aria-label="Toggle AI Strategist"
                 title="AI Strategist"
               >
-                <IconAiStrategist size={16} />
+                <Sparkles className="h-4 w-4" />
               </Button>
             </div>
             {/* Keep project selector only for mobile sidebar drawer */}

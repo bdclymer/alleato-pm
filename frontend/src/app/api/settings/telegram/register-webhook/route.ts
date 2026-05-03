@@ -11,6 +11,7 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 import { getApiRouteUser } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { fetchWithGuardrails } from "@/lib/fetch-with-guardrails";
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
@@ -18,7 +19,8 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 export const POST = withApiGuardrails(
   "/api/settings/telegram/register-webhook#POST",
   async ({ request }) => {
-    const { user, supabase } = await getApiRouteUser(request);
+    const user = await getApiRouteUser();
+    const supabase = createServiceClient();
     if (!user) {
       throw new GuardrailError({
         code: "UNAUTHORIZED",
@@ -96,8 +98,8 @@ export const POST = withApiGuardrails(
 // GET — check current webhook status
 export const GET = withApiGuardrails(
   "/api/settings/telegram/register-webhook#GET",
-  async ({ request }) => {
-    const { user } = await getApiRouteUser(request);
+  async () => {
+    const user = await getApiRouteUser();
     if (!user) {
       throw new GuardrailError({
         code: "UNAUTHORIZED",

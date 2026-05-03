@@ -18,6 +18,15 @@ describe("intent router", () => {
     expect(shouldUsePacketFirstIntent(intent)).toBe(false);
   });
 
+  it("routes employee message diagnosis prompts to source lookup even without the Teams keyword", () => {
+    const intent = classifyAssistantIntent(
+      "Based on all the employees' messages, where is the biggest source of confusion?",
+    );
+
+    expect(intent).toBe("source_lookup");
+    expect(shouldUsePacketFirstIntent(intent)).toBe(false);
+  });
+
   it("keeps app-help prompts out of project intelligence", () => {
     const intent = classifyAssistantIntent("How do I create a change order in the app?");
 

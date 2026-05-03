@@ -32,7 +32,7 @@ const UUID_PATTERN =
 export const GET = withApiGuardrails(
   "projects/[projectId]/rfis/[rfiId]#GET",
   async ({ request, params }) => {
-  
+
     const { rfiId } = await params;
     const supabase = await createClient();
 
@@ -48,6 +48,22 @@ export const GET = withApiGuardrails(
       }
       logger.error({ msg: "RFI get error:", error: error instanceof Error ? error.message : String(error) });
       return apiErrorResponse(error);
+    }
+
+    // If created_by is a UUID, resolve it to an email/name for display.
+    if (data.created_by && UUID_PATTERN.test(data.created_by)) {
+      const serviceSupabase = createServiceClient();
+      const { data: profile } = await serviceSupabase
+        .from("user_profiles")
+        .select("full_name, email")
+        .eq("id", data.created_by)
+        .maybeSingle();
+      if (profile) {
+        data.created_by =
+          profile.full_name?.trim() ||
+          profile.email ||
+          data.created_by;
+      }
     }
 
     return NextResponse.json(data);
@@ -122,6 +138,22 @@ export const PATCH = withApiGuardrails(
       updateData.rfi_stage = validatedData.rfi_stage;
     if (validatedData.drawing_number !== undefined)
       updateData.drawing_number = validatedData.drawing_number;
+
+    // When assignees change, sync ball_in_court (unless a status change will handle it)
+    if (validatedData.assignees !== undefined && body.status === undefined) {
+      const { data: currentRfi } = await supabase
+        .from("rfis")
+        .select("status")
+        .eq("id", rfiId)
+        .single();
+      const isOpen = !["closed", "closed-draft"].includes(currentRfi?.status ?? "");
+      if (isOpen) {
+        updateData.ball_in_court =
+          validatedData.assignees.length > 0
+            ? validatedData.assignees.join(", ")
+            : null;
+      }
+    }
 
     // Handle status changes from body (not in base schema)
     if (body.status !== undefined) {
