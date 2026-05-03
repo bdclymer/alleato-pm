@@ -144,7 +144,9 @@ async function handleMessage(
   // --- Show typing indicator ---
   await thread.startTyping().catch(() => undefined);
 
-  const sessionId = `teams:${thread.id}`;
+  // Session is scoped to the user, not the thread — multiple people in the same
+  // Teams channel each get their own isolated memory context.
+  const sessionId = `teams:${supabaseUserId}`;
 
   // Persist user message
   await persistChatMessage({
