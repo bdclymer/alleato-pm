@@ -25,6 +25,8 @@ import {
 import {
   buildTasksFilters,
   buildTasksTableColumns,
+  renderTasksCard,
+  renderTasksList,
   renderTasksRowActions,
   tasksColumns,
   tasksDefaultVisibleColumns,
@@ -72,6 +74,10 @@ export function TasksTableClient({
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = React.useState(false);
   const [isBulkDeleting, setIsBulkDeleting] = React.useState(false);
 
+  const rawTab = searchParams.get("tab");
+  const activeTab: "all" | "open" | "closed" =
+    rawTab === "open" ? "open" : rawTab === "closed" ? "closed" : "all";
+
   const tableState = useUnifiedTableState({
     entityKey: projectId ? `project-tasks-${projectId}` : "tasks",
     searchParams,
@@ -79,7 +85,6 @@ export function TasksTableClient({
     router,
     defaults: {
       view: "table",
-      allowedViews: ["table"],
       page: 1,
       perPage: 25,
       search: "",
@@ -132,10 +137,26 @@ export function TasksTableClient({
     return filtered.length > 0 ? filtered : tasksDefaultVisibleColumns;
   }, [allowedColumnIds, tableState.visibleColumns]);
 
+  const openCount = React.useMemo(
+    () => data.filter((item) => !["complete", "closed", "done", "cancelled"].includes((item.status ?? "").toLowerCase())).length,
+    [data],
+  );
+  const closedCount = React.useMemo(
+    () => data.filter((item) => ["complete", "closed", "done", "cancelled"].includes((item.status ?? "").toLowerCase())).length,
+    [data],
+  );
+
   const filteredData = React.useMemo(() => {
     const searchTerm = tableState.debouncedSearch.trim().toLowerCase();
 
     return data.filter((item) => {
+      // Tab filter
+      if (activeTab === "open") {
+        if (["complete", "closed", "done", "cancelled"].includes((item.status ?? "").toLowerCase())) return false;
+      } else if (activeTab === "closed") {
+        if (!["complete", "closed", "done", "cancelled"].includes((item.status ?? "").toLowerCase())) return false;
+      }
+
       if (
         tableState.activeFilters.status &&
         typeof tableState.activeFilters.status === "string" &&
@@ -166,7 +187,7 @@ export function TasksTableClient({
         getTaskSourceTitle(item).toLowerCase().includes(searchTerm)
       );
     });
-  }, [data, tableState.activeFilters.source_system, tableState.activeFilters.status, tableState.debouncedSearch]);
+  }, [activeTab, data, tableState.activeFilters.source_system, tableState.activeFilters.status, tableState.debouncedSearch]);
 
   const selectableTaskIds = React.useMemo(
     () =>
@@ -321,6 +342,11 @@ export function TasksTableClient({
           title,
           description,
         }}
+        tabs={[
+          { label: "All", href: `${pathname}?tab=all`, count: data.length, isActive: activeTab === "all" },
+          { label: "Open", href: `${pathname}?tab=open`, count: openCount, isActive: activeTab === "open" },
+          { label: "Closed", href: `${pathname}?tab=closed`, count: closedCount, isActive: activeTab === "closed" },
+        ]}
         toolbar={{
           totalItems: data.length,
           filteredItems: filteredData.length,
@@ -328,9 +354,11 @@ export function TasksTableClient({
           searchValue: tableState.searchInput,
           onSearchChange: tableState.setSearchInput,
           searchPlaceholder: "Search tasks...",
-          currentView: "table",
-          onViewChange: () => undefined,
-          enabledViews: ["table"],
+          currentView: tableState.currentView,
+          onViewChange: (view) => {
+            tableState.setCurrentView(view);
+            tableState.setSearchParams({ view });
+          },
           filters,
           activeFilters: tableState.activeFilters,
           onFilterChange: handleFilterChange,
@@ -358,6 +386,10 @@ export function TasksTableClient({
               allowDelete ? handleDeleteTask : undefined,
               projectId,
             ),
+        }}
+        views={{
+          card: (item) => renderTasksCard(item, handleOpenSource),
+          list: (item) => renderTasksList(item, handleOpenSource),
         }}
         selection={{
           selectedIds: tableState.selectedIds,

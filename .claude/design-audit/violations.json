@@ -337,10 +337,60 @@
       "description": "Tags section has border-t border-border as a decorative divider. Violates rule 5.1.",
       "fix": "Remove border-t border-border. The spacing already signals a content break.",
       "status": "fixed"
+    },
+    {
+      "id": "V037",
+      "severity": "high",
+      "category": "component-consistency",
+      "file": "frontend/src/app/(admin)/feedback-inbox/page.tsx",
+      "line": 2020,
+      "description": "Hand-rolled empty state for the feedback list: raw div+CheckCircle2+p+p pattern instead of <EmptyState>. Violates rule 1.2.",
+      "fix": "import { EmptyState } from '@/components/ds'; replace with <EmptyState icon={<CheckCircle2 />} title=\"No feedback items\" description={...} />",
+      "status": "fixed"
+    },
+    {
+      "id": "V038",
+      "severity": "medium",
+      "category": "component-consistency",
+      "file": "frontend/src/app/(admin)/feedback-inbox/page.tsx",
+      "line": 737,
+      "description": "Three hand-rolled inline empty states using raw <p> tags: 'No comments yet' (line 737), 'No GitHub comments yet' (line 845), 'No tool matched' (line 1427). Each should use <EmptyState>. Violates rule 1.2.",
+      "fix": "Replace each <p> with <EmptyState icon={...} title=\"...\" description=\"...\" />.",
+      "status": "fixed"
+    },
+    {
+      "id": "V039",
+      "severity": "medium",
+      "category": "typography",
+      "file": "frontend/src/app/(admin)/feedback-inbox/page.tsx",
+      "line": 288,
+      "description": "Pervasive use of arbitrary font sizes: text-[11px], text-[10px], text-[13px], text-[9px]. Violates rule 4.1.",
+      "fix": "text-[11px] → text-xs, text-[13px] → text-sm, text-[10px] → text-xs, text-[9px] → text-xs.",
+      "status": "fixed"
+    },
+    {
+      "id": "V040",
+      "severity": "medium",
+      "category": "spacing-scale",
+      "file": "frontend/src/app/(admin)/feedback-inbox/page.tsx",
+      "line": 522,
+      "description": "Off-grid spacing: p-2.5, py-2.5, px-2.5, gap-2.5 (~15 occurrences). 10px violates the 8px grid. Violates rule 6.",
+      "fix": "gap-2.5 → gap-2, py-2.5 → py-2, px-2.5 → px-3.",
+      "status": "fixed"
+    },
+    {
+      "id": "V041",
+      "severity": "medium",
+      "category": "layout",
+      "file": "frontend/src/app/(admin)/feedback-inbox/page.tsx",
+      "line": 1367,
+      "description": "Tool context block uses border border-border + bg-muted/30 — decorative border redundant when tonal bg provides containment. Violates rule 5.1.",
+      "fix": "Remove border border-border. Keep bg-muted/40 rounded-md p-3.",
+      "status": "fixed"
     }
   ],
   "summary": {
-    "total_violations": 25,
+    "total_violations": 30,
     "by_severity": {
       "critical": 4,
       "high": 12,

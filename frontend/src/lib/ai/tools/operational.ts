@@ -1500,58 +1500,13 @@ export function createOperationalTools(
               };
             }
 
-            // Fetch knowledge articles
-            // @ts-expect-error company_knowledge table not yet in generated types
-            let query = supabase
-              .from("company_knowledge")
-              .select("*")
-              .eq("is_active", true)
-              .eq("approval_status", "approved")
-              .neq("visibility", "admin_only")
-              .eq("ai_searchable", true)
-              .order("updated_at", { ascending: false })
-              .limit(20);
-
-            if (category !== "all") {
-              query = query.eq("category", category);
-            }
-
-            if (searchQuery) {
-              query = query.or(
-                `title.ilike.%${searchQuery}%,content.ilike.%${searchQuery}%`,
-              );
-            }
-
-            const { data: articles } = await query;
-
-            const articleList = ((articles ?? []) as unknown as AnyRow[]).map(
-              (a) => ({
-                sourceLabel: "Company Knowledge Base",
-                knowledgeType: "company_knowledge",
-                sourceRoute: "/knowledge",
-                id: a.id,
-                category: a.category,
-                title: a.title,
-                content: (a.content as string)?.substring(0, 800),
-                tags: a.tags,
-                source: a.source,
-                visibility: a.visibility,
-                approvalStatus: a.approval_status,
-                aiSearchable: a.ai_searchable,
-                updatedAt: a.updated_at,
-              }),
-            );
-
-            const hasProfile = profile !== null;
-            const isEmpty = !hasProfile && articleList.length === 0;
-
+            // company_knowledge table has been dropped
             return {
-              profile: category === "all" ? profile : undefined,
-              articles: articleList,
-              articleCount: articleList.length,
-              message: isEmpty
-                ? "No company knowledge found. The admin should add company profile data and knowledge articles."
-                : `Found company profile${hasProfile ? " ✓" : " (empty)"} and ${articleList.length} knowledge article(s).`,
+              profile,
+              articles: [],
+              message: profile
+                ? "Company profile loaded. Knowledge base articles are not available."
+                : "Company knowledge base is not available.",
             };
           } catch (err) {
             const msg = err instanceof Error ? err.message : "Unknown error";
@@ -1983,58 +1938,11 @@ export function createOperationalTools(
       execute: withTrace(
         "saveToKnowledgeBase",
         options,
-        async ({ title, content, category, tags, source }) => {
-          try {
-            const scope = await guardrails.getScope();
-            const isAdminSave = scope.isAdmin;
-            // Generate embedding so the entry is searchable via semantic search.
-            // company_knowledge.embedding is halfvec(3072) — use text-embedding-3-large at 3072 dims.
-            const openaiClient = getOpenAI();
-            const embedding = await generateEmbedding(
-              openaiClient,
-              `${title}\n\n${content}`.substring(0, 8000),
-              EMBEDDING.LARGE,
-            );
-
-            // @ts-expect-error company_knowledge table not yet in generated types
-            const { data, error } = await supabase
-              .from("company_knowledge")
-              .insert({
-                title,
-                content,
-                category,
-                tags: tags ?? [],
-                source: source ?? "AI Assistant",
-                author_id: userId,
-                is_active: true,
-                approval_status: isAdminSave ? "approved" : "draft",
-                visibility: "internal",
-                ai_searchable: isAdminSave,
-                approved_at: isAdminSave ? new Date().toISOString() : null,
-                approved_by: isAdminSave ? userId : null,
-                embedding,
-              })
-              .select("id, title, category, tags, approval_status, visibility, ai_searchable")
-              .single();
-
-            if (error) return { error: `Failed to save knowledge: ${error.message}` };
-
-            return {
-              success: true,
-              savedEntry: {
-                ...data,
-                sourceLabel: "Company Knowledge Base",
-                knowledgeType: "company_knowledge",
-                sourceRoute: "/knowledge",
-              },
-              message: isAdminSave
-                ? `Knowledge saved: "${title}" (${category}). This is approved and searchable in the AI assistant.`
-                : `Knowledge saved as a draft: "${title}" (${category}). An admin needs to approve it before it becomes searchable in the AI assistant.`,
-            };
-          } catch (err) {
-            const msg = err instanceof Error ? err.message : "Unknown error";
-            return { error: `Failed to save knowledge: ${msg}` };
-          }
+        async ({ title, category }) => {
+          // company_knowledge table has been dropped
+          return {
+            error: `Knowledge base is not available. The "${title}" entry (${category}) could not be saved.`,
+          };
         },
       ),
     }),

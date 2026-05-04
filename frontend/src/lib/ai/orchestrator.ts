@@ -41,6 +41,7 @@ import {
   createStructuredOutputTools,
   type CreateStructuredOutputToolsOptions,
 } from "@/lib/ai/tools/structured-output";
+import { createDocumentIntelligenceTools } from "@/lib/ai/tools/document-intelligence";
 import { strategistSystemPrompt } from "@/lib/ai/agents/strategist";
 import { soul } from "@/lib/ai/soul";
 import { identity } from "@/lib/ai/identity";
@@ -731,10 +732,9 @@ export function createStrategistTools(
   const actionTools = createActionTools(userId, options);
   const progressReportTools = createProgressReportTools(userId, options);
   const workspaceTools = createWorkspaceTools(userId, { onTrace: options.onTrace });
-  // Web search tools — available to Strategist for external research
-  // (competitive questions, market intel, industry trends)
   const webSearchTools = createWebSearchTools(options);
   const structuredOutputTools = createStructuredOutputTools(options);
+  const documentIntelligenceTools = createDocumentIntelligenceTools(userId, options);
   // Do not expose risk-dedicated tools directly to the Strategist.
   // This forces portfolio/project risk questions through consultCFO,
   // where the specialist prompt requires risk-specific workflows.
@@ -746,12 +746,12 @@ export function createStrategistTools(
   } = baseTools;
 
   return {
-    // Web search — available directly to the Strategist for external research
     ...webSearchTools,
     ...structuredOutputTools,
     ...actionTools,
     ...progressReportTools,
     ...workspaceTools,
+    ...documentIntelligenceTools,
     // The Strategist's specialist consultation tools
     consultCFO: makeConsultTool(
       "cfo",

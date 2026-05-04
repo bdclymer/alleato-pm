@@ -2462,6 +2462,116 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_review_feedback: {
+        Row: {
+          ai_confidence: number | null
+          ai_finding: string
+          ai_status: string
+          corrected_reason: string | null
+          corrected_status: string | null
+          created_at: string | null
+          created_by: string | null
+          document_id: string | null
+          feedback_category: string | null
+          human_feedback: string | null
+          id: string
+          project_id: number | null
+          requirement_type: string | null
+          review_type: string
+          source_of_truth_ref: string | null
+          spec_section: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          ai_confidence?: number | null
+          ai_finding: string
+          ai_status: string
+          corrected_reason?: string | null
+          corrected_status?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          document_id?: string | null
+          feedback_category?: string | null
+          human_feedback?: string | null
+          id?: string
+          project_id?: number | null
+          requirement_type?: string | null
+          review_type: string
+          source_of_truth_ref?: string | null
+          spec_section?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          ai_confidence?: number | null
+          ai_finding?: string
+          ai_status?: string
+          corrected_reason?: string | null
+          corrected_status?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          document_id?: string | null
+          feedback_category?: string | null
+          human_feedback?: string | null
+          id?: string
+          project_id?: number | null
+          requirement_type?: string | null
+          review_type?: string
+          source_of_truth_ref?: string | null
+          spec_section?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_review_feedback_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "ai_review_feedback_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_review_feedback_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_review_feedback_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "ai_review_feedback_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_review_feedback_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_review_feedback_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_tool_write_audits: {
         Row: {
           created_at: string
@@ -27111,6 +27221,7 @@ export type Database = {
       }
       tasks: {
         Row: {
+          assigned_by: string | null
           assignee_email: string | null
           assignee_name: string | null
           client_id: number | null
@@ -27128,9 +27239,11 @@ export type Database = {
           source_chunk_id: string | null
           source_system: string
           status: string
+          title: string | null
           updated_at: string
         }
         Insert: {
+          assigned_by?: string | null
           assignee_email?: string | null
           assignee_name?: string | null
           client_id?: number | null
@@ -27148,9 +27261,11 @@ export type Database = {
           source_chunk_id?: string | null
           source_system?: string
           status?: string
+          title?: string | null
           updated_at?: string
         }
         Update: {
+          assigned_by?: string | null
           assignee_email?: string | null
           assignee_name?: string | null
           client_id?: number | null
@@ -27168,6 +27283,7 @@ export type Database = {
           source_chunk_id?: string | null
           source_system?: string
           status?: string
+          title?: string | null
           updated_at?: string
         }
         Relationships: [

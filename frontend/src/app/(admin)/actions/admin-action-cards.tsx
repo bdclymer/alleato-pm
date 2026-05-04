@@ -24,6 +24,7 @@ import {
   Brain,
   Flag,
   FileText,
+  ClipboardList,
 } from "lucide-react";
 
 // ── Status badge ──────────────────────────────────────────────────────────────
@@ -344,7 +345,65 @@ function RegenerateBriefCard() {
   );
 }
 
-// ── 5. Intelligence compiler ──────────────────────────────────────────────────
+// ── 5. Extract Brandon tasks ──────────────────────────────────────────────────
+
+function ExtractBrandonTasksCard() {
+  const [status, setStatus] = React.useState<ActionStatus>("idle");
+  const [message, setMessage] = React.useState("");
+  const [days, setDays] = React.useState(3);
+
+  const run = async () => {
+    setStatus("running");
+    setMessage(`Scanning last ${days} day(s) for Brandon-assigned tasks…`);
+    try {
+      const data = await apiFetch<{ inserted?: number; skipped?: number; docsProcessed?: number }>(
+        `/api/admin/cron/extract-brandon-tasks?days=${days}`,
+        { method: "POST" }
+      );
+      setStatus("success");
+      setMessage(
+        `Scanned ${data.docsProcessed ?? 0} docs — inserted ${data.inserted ?? 0} tasks, skipped ${data.skipped ?? 0} duplicates.`
+      );
+    } catch (e) {
+      setStatus("error");
+      setMessage(e instanceof Error ? e.message : "Extraction failed.");
+    }
+  };
+
+  return (
+    <ActionCard
+      title="Extract Brandon Tasks"
+      badge="AI"
+      icon={ClipboardList}
+      description="Scan recent meetings, emails, and Teams messages for tasks Brandon has assigned to team members."
+    >
+      <div className="flex items-center gap-2">
+        <Select value={String(days)} onValueChange={(v) => setDays(Number(v))}>
+          <SelectTrigger size="sm" className="flex-1">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="1">1 day</SelectItem>
+            <SelectItem value="3">3 days (default)</SelectItem>
+            <SelectItem value="7">7 days</SelectItem>
+            <SelectItem value="14">14 days</SelectItem>
+          </SelectContent>
+        </Select>
+        <Button size="sm" onClick={run} disabled={status === "running"}>
+          {status === "running" ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <ClipboardList className="h-3.5 w-3.5" />
+          )}
+          Extract
+        </Button>
+      </div>
+      <StatusBadge status={status} message={message} />
+    </ActionCard>
+  );
+}
+
+// ── 6. Intelligence compiler ──────────────────────────────────────────────────
 
 function IntelligenceCompilerCard() {
   const [status, setStatus] = React.useState<ActionStatus>("idle");
@@ -489,6 +548,7 @@ export function AdminActionCards() {
   return (
     <>
       <RegenerateBriefCard />
+      <ExtractBrandonTasksCard />
       <AccountingSyncCard />
       <IntelligenceCompilerCard />
       <DailyFlagsCard />

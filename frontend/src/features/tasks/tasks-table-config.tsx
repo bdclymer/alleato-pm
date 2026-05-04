@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import {
   TableDateValue,
   TableRowActionsMenu,
-  TableStatusDot,
   TableTagBadge,
   type TableColumn,
   type FilterConfig,
@@ -83,9 +82,8 @@ export function buildTasksTableColumns(projectId?: string | null): TableColumn<T
           ...column,
           render: (item) => (
             <div className="flex max-w-xl min-w-0 items-center gap-2" title={item.description ?? ""}>
-              <TableStatusDot status={item.status} />
               <span className="text-sm font-medium text-foreground truncate">
-                {item.description || "Untitled Task"}
+                {item.title || item.description || "Untitled Task"}
               </span>
             </div>
           ),
@@ -244,8 +242,7 @@ export function renderTasksCard(
       className="h-auto w-full flex-col items-start justify-start rounded-lg border border-border bg-background p-4 text-left font-normal hover:bg-muted/50"
     >
       <div className="flex items-center gap-2">
-        <TableStatusDot status={item.status} />
-        <p className="max-w-64 truncate text-sm font-medium">{item.description || "Untitled Task"}</p>
+        <p className="max-w-64 truncate text-sm font-medium">{item.title || item.description || "Untitled Task"}</p>
       </div>
       {item.project_name && (
         <p className="max-w-60 truncate text-xs text-muted-foreground/70">{item.project_name}</p>
@@ -275,8 +272,7 @@ export function renderTasksList(
     >
       <div className="space-y-1">
         <div className="flex items-center gap-2">
-          <TableStatusDot status={item.status} />
-          <span className="max-w-64 truncate text-sm font-medium">{item.description || "Untitled Task"}</span>
+          <span className="max-w-64 truncate text-sm font-medium">{item.title || item.description || "Untitled Task"}</span>
         </div>
         {item.project_name && (
           <span className="max-w-56 truncate text-xs text-muted-foreground/70">{item.project_name}</span>

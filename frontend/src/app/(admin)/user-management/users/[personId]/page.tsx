@@ -13,7 +13,7 @@ import {
   toAccessSummary,
   type GranularOverrideEffect,
 } from "../../_lib/user-access-data";
-import { UserAccessPanel } from "../../_components/user-access-panel";
+import { UserAccessPanel, UserAvatar } from "../../_components/user-access-panel";
 import { PageShell } from "@/components/layout";
 import { Button, EmptyState, ErrorState } from "@/components/ds";
 import { apiFetch } from "@/lib/api-client";
@@ -138,7 +138,17 @@ export default function PermissionUserDetailPage() {
     <PageShell
       variant="detail"
       title={pageTitle}
-      description={user?.email ?? "Manage company access, project roles, and exceptions."}
+      titleContent={
+        user ? (
+          <div className="flex min-w-0 items-center gap-3">
+            <UserAvatar user={user} size="lg" />
+            <div className="min-w-0">
+              <h1 className="truncate text-2xl font-semibold text-foreground">{user.fullName}</h1>
+              <p className="truncate text-sm text-muted-foreground">{user.email || "No email on file"}</p>
+            </div>
+          </div>
+        ) : undefined
+      }
       onBack={() => router.push("/user-management")}
       actions={
         <Button type="button" variant="ghost" size="sm" onClick={() => router.push("/user-management")}>

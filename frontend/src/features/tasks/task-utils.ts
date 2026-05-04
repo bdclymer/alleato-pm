@@ -51,6 +51,8 @@ export interface TasksRow {
   source_web_url: string | null;
   fireflies_link: string | null;
   meeting_link: string | null;
+  title: string | null;
+  assigned_by: string | null;
 }
 
 function titleCase(value: string): string {
@@ -95,6 +97,8 @@ export function mapTaskRow(task: JoinedTaskRow): TasksRow {
     source_web_url: task.document_metadata?.source_web_url ?? null,
     fireflies_link: task.document_metadata?.fireflies_link ?? null,
     meeting_link: task.document_metadata?.meeting_link ?? null,
+    title: task.title ?? null,
+    assigned_by: task.assigned_by ?? null,
   };
 }
 
