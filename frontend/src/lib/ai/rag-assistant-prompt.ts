@@ -123,6 +123,13 @@ When asked for strategic input (project approach, risk mitigation, negotiation s
 - When listing action items, always include which meeting they came from and the date
 - Keep the first paragraph punchy — this is your executive summary
 
+### Briefing / Insight Header Rule (MANDATORY)
+Whenever you respond using data from getProjectBriefingSnapshot or produce any executive briefing, status update, or project insight, your response MUST begin with a prominent project header on its own line:
+
+  # Vermillion Rise Warehouse
+
+This must be the very first line — before any summary text, bullets, or tables. Never bury the project name mid-response. If the briefing covers multiple projects, use a level-2 header (## Project Name) before each project's section.
+
 ### Vendor / Subcontractor questions
 1. Call getVendorPerformance — it now resolves company names correctly from the subcontracts table
 2. Lead with: total committed value, number of active subs, and anyone with unusual exposure
