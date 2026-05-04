@@ -66,11 +66,11 @@ function getFileGroup(item: FileItem): FileGroup {
 }
 
 const FILE_GROUP_META: Record<FileGroup, { label: string; icon: React.ElementType; color: string }> = {
-  pdf:          { label: "PDF",           icon: FileText,        color: "text-red-500" },
-  word:         { label: "Word",          icon: FileType,        color: "text-blue-500" },
-  spreadsheet:  { label: "Spreadsheets",  icon: FileSpreadsheet, color: "text-green-600" },
-  presentation: { label: "Slides",        icon: Presentation,    color: "text-orange-500" },
-  image:        { label: "Images",        icon: FileImage,       color: "text-purple-500" },
+  pdf:          { label: "PDF",           icon: FileText,        color: "text-muted-foreground" },
+  word:         { label: "Word",          icon: FileType,        color: "text-muted-foreground" },
+  spreadsheet:  { label: "Spreadsheets",  icon: FileSpreadsheet, color: "text-muted-foreground" },
+  presentation: { label: "Slides",        icon: Presentation,    color: "text-muted-foreground" },
+  image:        { label: "Images",        icon: FileImage,       color: "text-muted-foreground" },
   text:         { label: "Text",          icon: FileText,        color: "text-muted-foreground" },
   other:        { label: "Other",         icon: File,            color: "text-muted-foreground" },
 };

@@ -255,7 +255,6 @@ export const sidebarNavGroups: SidebarNavGroup[] = [
     icon: Building2,
     tools: [
       { name: "AI Strategist", path: "/ai-assistant", icon: Brain, requiresProject: false },
-      { name: "Project Intelligence", path: "intelligence", icon: Brain, requiresProject: true },
       { name: "Company Directory", path: "directory/companies", icon: Building2, requiresProject: false, module: "directory" },
       { name: "Progress Reports", path: "progress-reports", icon: FileText, requiresProject: true, module: "documents" as PermissionModule },
       { name: "Outlook Emails", path: "/outlook-emails", icon: Mail, requiresProject: false },
@@ -443,13 +442,40 @@ export const headerNavGroups: HeaderNavGroup[] = [
         module: "documents",
       },
       {
-        name: "Outlook Emails",
-        path: "outlook-emails",
+        name: "Project Directory",
+        path: "directory",
         requiresProject: true,
-        icon: Mail,
-        description: "Microsoft Outlook synced emails",
-        module: "documents",
+        icon: Users,
+        description: "Project people and companies",
+        module: "directory",
       },
+      {
+        name: "Project Tasks",
+        path: "tasks",
+        requiresProject: true,
+        icon: CheckCircle,
+        description: "Project task board",
+      },
+    ],
+    subGroups: [
+      {
+        label: "Scheduling",
+        toolNames: ["Schedule", "Meetings", "Daily Log", "Punch List"],
+      },
+      {
+        label: "Correspondence",
+        toolNames: ["RFIs", "Submittals", "Transmittals", "Emails"],
+      },
+      {
+        label: "Project",
+        toolNames: ["Project Directory", "Project Tasks"],
+      },
+    ],
+  },
+  {
+    id: "documents",
+    label: "Documents",
+    tools: [
       {
         name: "Photos",
         path: "photos",
@@ -490,64 +516,6 @@ export const headerNavGroups: HeaderNavGroup[] = [
         description: "Weekly client reports for this project",
       },
     ],
-    subGroups: [
-      {
-        label: "Scheduling",
-        toolNames: ["Schedule", "Meetings", "Daily Log", "Punch List"],
-      },
-      {
-        label: "Correspondence",
-        toolNames: ["RFIs", "Submittals", "Transmittals", "Emails", "Outlook Emails"],
-      },
-      {
-        label: "Documents",
-        toolNames: ["Photos", "Drawings", "Specifications", "Documents", "Progress Reports"],
-      },
-    ],
-  },
-  {
-    id: "project",
-    label: "Project",
-    tools: [
-      {
-        name: "Project Directory",
-        path: "directory",
-        requiresProject: true,
-        icon: Users,
-        description: "Project people and companies",
-        module: "directory",
-      },
-      {
-        name: "Project Tasks",
-        path: "tasks",
-        requiresProject: true,
-        icon: CheckCircle,
-        description: "Project task board",
-      },
-      {
-        name: "Project Intelligence",
-        path: "intelligence",
-        requiresProject: true,
-        icon: Brain,
-        description: "Compiled project intelligence, risks, and evidence",
-      },
-      {
-        name: "Manage Users",
-        path: "user-management",
-        requiresProject: true,
-        icon: Lock,
-        description: "Project users, roles, and access",
-        module: "directory",
-        requiredPermission: "admin",
-      },
-      {
-        name: "Project Settings",
-        path: "settings",
-        requiresProject: true,
-        icon: Settings,
-        description: "Project configuration",
-      },
-    ],
   },
   {
     id: "company",
@@ -576,13 +544,6 @@ export const headerNavGroups: HeaderNavGroup[] = [
         module: "directory",
       },
       {
-        name: "User Management",
-        path: "user-management",
-        requiresProject: false,
-        icon: Lock,
-        description: "Users, roles, and access",
-      },
-      {
         name: "Settings",
         path: "settings/account",
         requiresProject: false,
@@ -609,6 +570,13 @@ export const headerNavGroups: HeaderNavGroup[] = [
         requiresProject: false,
         icon: Brain,
         description: "Team knowledge, insights, and lessons learned",
+      },
+      {
+        name: "Documents",
+        path: "files",
+        requiresProject: false,
+        icon: FolderOpen,
+        description: "Company files and documents",
       },
     ],
   },

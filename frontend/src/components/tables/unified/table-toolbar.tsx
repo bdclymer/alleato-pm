@@ -228,12 +228,13 @@ export function ViewSwitcher({
     { mode: "list", icon: <List className="h-3.5 w-3.5" />, label: "List" },
   ];
 
+  const filteredViews = views.filter((view) => enabledViews.includes(view.mode));
+  if (filteredViews.length <= 1) return <></>;
+
   return (
     <Tabs value={currentView} onValueChange={(value) => onViewChange(value as ViewMode)}>
       <TabsList className="h-10 bg-primary/10 border-0 sm:h-8">
-        {views
-          .filter((view) => enabledViews.includes(view.mode))
-          .map((view) => (
+        {filteredViews.map((view) => (
             <TabsTrigger
               key={view.mode}
               value={view.mode}

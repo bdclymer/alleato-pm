@@ -58,13 +58,18 @@ function getChatInstance(): Chat {
   });
 
   // Handle channel @mentions
-  chat.onMention(async (thread, message) => {
+  chat.onNewMention(async (thread, message) => {
     await handleMessage(thread, message, "mention");
   });
 
   // Handle direct messages (1:1 with the bot)
   chat.onDirectMessage(async (thread, message) => {
     await handleMessage(thread, message, "dm");
+  });
+
+  // Handle follow-up replies in subscribed threads
+  chat.onSubscribedMessage(async (thread, message) => {
+    await handleMessage(thread, message, "mention");
   });
 
   _chat = chat;

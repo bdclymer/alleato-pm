@@ -405,10 +405,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       .filter((group) => group.tools.length > 0)
   }, [filterTools, isSubcontractor, projectId])
 
-  // Collapsible section state — "company" open by default (always has items regardless of project)
-  const [openGroupIds, setOpenGroupIds] = React.useState<Set<string>>(
-    () => new Set(["company"])
-  )
+  // Collapsible section state — when no project selected, open both company and admin
+  const [openGroupIds, setOpenGroupIds] = React.useState<Set<string>>(() => {
+    const initialProjectId = extractProjectId(pathname ?? "")
+    return initialProjectId
+      ? new Set(["company"])
+      : new Set(["company", "admin"])
+  })
 
   const toggleGroup = React.useCallback((groupId: string) => {
     setOpenGroupIds((prev) => {
@@ -429,6 +432,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       })
     }
   }, [filteredGroups, groupHasActiveChild])
+
+  // When no project is selected, ensure both company and admin are open
+  React.useEffect(() => {
+    if (!projectId) {
+      setOpenGroupIds((prev) => {
+        if (prev.has("company") && prev.has("admin")) return prev
+        return new Set([...prev, "company", "admin"])
+      })
+    }
+  }, [projectId])
 
   const teamChatCollapsedShortcuts = React.useMemo(
     () => [
