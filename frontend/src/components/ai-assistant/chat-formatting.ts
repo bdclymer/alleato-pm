@@ -44,6 +44,21 @@ function normalizeInlineBulletLists(text: string): string {
     .join("\n");
 }
 
+export function stripMarkdownForSpeech(text: string): string {
+  return text
+    .replace(/```[\s\S]*?```/g, "")
+    .replace(/`([^`]+)`/g, "$1")
+    .replace(/^#{1,6}\s+/gm, "")
+    .replace(/\*{1,3}([^*\n]+)\*{1,3}/g, "$1")
+    .replace(/_{1,2}([^_\n]+)_{1,2}/g, "$1")
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    .replace(/^[\-*]\s+/gm, "")
+    .replace(/^\d+\.\s+/gm, "")
+    .replace(/^[-_*]{3,}$/gm, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 export function formatStructuredMeetingList(text: string): string {
   const normalizedText = normalizeInlineBulletLists(
     normalizeInlineMarkdownBlocks(text),

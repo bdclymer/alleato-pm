@@ -117,7 +117,7 @@ import {
   type ToolTraceItem,
 } from "./trace-panel";
 import { CrossSourceTimeline } from "./cross-source-timeline";
-import { formatStructuredMeetingList } from "./chat-formatting";
+import { formatStructuredMeetingList, stripMarkdownForSpeech } from "./chat-formatting";
 import { AnimatedOrb } from "./animated-orb";
 import { AudioWaveform } from "./audio-waveform";
 import { BrandonDailyUpdateWidgetCard } from "./brandon-daily-update-widget-card";
@@ -1493,10 +1493,17 @@ export function ChatArea({
       stopSpeech();
       setLoadingSpeechMessageId(messageId);
 
+      const stripped = stripMarkdownForSpeech(trimmed);
+      if (!stripped) {
+        setLoadingSpeechMessageId(null);
+        return;
+      }
+      const speechText = stripped.length > 4000 ? stripped.slice(0, 4000) : stripped;
+
       try {
         const audioBlob = await apiFetchBlob("/api/ai-assistant/speech", {
           method: "POST",
-          body: JSON.stringify({ text: trimmed }),
+          body: JSON.stringify({ text: speechText }),
         });
         const audioUrl = URL.createObjectURL(audioBlob);
         const audio = new Audio(audioUrl);
@@ -1505,17 +1512,21 @@ export function ChatArea({
         audio.onended = stopSpeech;
         audio.onerror = () => {
           stopSpeech();
-          toast.error("AI voice playback failed.");
+          toast.error("Voice playback failed. Check your browser audio settings.");
         };
         await audio.play();
         setSpeakingMessageId(messageId);
       } catch (error) {
         stopSpeech();
-        toast.error(
-          error instanceof Error
-            ? error.message
-            : "AI voice playback failed.",
-        );
+        if (error instanceof DOMException && error.name === "NotAllowedError") {
+          toast.error("Browser blocked audio playback. Click the page first, then try again.");
+        } else {
+          toast.error(
+            error instanceof Error && error.message
+              ? error.message
+              : "Voice playback failed.",
+          );
+        }
       } finally {
         setLoadingSpeechMessageId(null);
       }
@@ -1611,7 +1622,7 @@ export function ChatArea({
     [messages, isStreaming],
   );
   const composerIconButtonClass =
-    "h-10 w-10 rounded-full bg-muted/60 text-foreground shadow-none hover:bg-muted hover:text-foreground sm:h-11 sm:w-11";
+    "h-7 w-7 rounded-full bg-muted/60 text-muted-foreground shadow-none hover:bg-muted hover:text-foreground sm:h-8 sm:w-8";
 
   // Shared prompt input element
   const promptInputEl = (
@@ -1621,8 +1632,8 @@ export function ChatArea({
       isLoading={isStreaming}
       onSubmit={handleSubmit}
       className={cn(
-        "overflow-hidden rounded-[1.75rem] border-0 bg-background px-4 py-4 shadow-sm ring-1 ring-border/70 transition-all focus-within:ring-2 focus-within:ring-primary/15 sm:rounded-[2rem] sm:px-5",
-        hasMessages && "rounded-[2rem]",
+        "overflow-hidden rounded-2xl border-0 bg-background shadow-sm ring-1 ring-border/70 transition-all focus-within:ring-2 focus-within:ring-primary/15",
+        hasMessages ? "px-3 py-2 sm:px-4" : "px-4 py-4 sm:px-5",
       )}
     >
       <Input
@@ -1675,7 +1686,10 @@ export function ChatArea({
             ? "Ask the council for a recommendation..."
             : "Type a message... (Shift+Enter for new line)"
         }
-        className="min-h-12 px-2 pb-3 pt-1 text-base leading-6 placeholder:text-muted-foreground/70 sm:text-lg"
+        className={cn(
+          "px-2 text-base leading-6 placeholder:text-muted-foreground/70 sm:text-lg",
+          hasMessages ? "min-h-8 pb-2 pt-0.5" : "min-h-12 pb-3 pt-1",
+        )}
       />
       <PromptInputActions className="flex items-center justify-between gap-2 px-0 pb-0">
         <div className="flex min-w-0 items-center gap-1 overflow-x-auto pr-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -1688,7 +1702,7 @@ export function ChatArea({
               onClick={() => fileInputRef.current?.click()}
               aria-label="Attach files"
             >
-              <PaperclipIcon className="h-4 w-4" />
+              <PaperclipIcon className="h-3.5 w-3.5" />
             </Button>
           </PromptInputAction>
           <PromptInputAction tooltip="Paste from clipboard">
@@ -1700,7 +1714,7 @@ export function ChatArea({
               onClick={handlePasteFromClipboard}
               aria-label="Paste from clipboard"
             >
-              <ClipboardPasteIcon className="h-4 w-4" />
+              <ClipboardPasteIcon className="h-3.5 w-3.5" />
             </Button>
           </PromptInputAction>
           <PromptInputAction tooltip={isRecording ? "Stop voice input" : "Voice input"}>
@@ -1716,9 +1730,9 @@ export function ChatArea({
               aria-label={isRecording ? "Stop voice input" : "Start voice input"}
             >
               {isRecording ? (
-                <MicOffIcon className="h-4 w-4" />
+                <MicOffIcon className="h-3.5 w-3.5" />
               ) : (
-                <MicIcon className="h-4 w-4" />
+                <MicIcon className="h-3.5 w-3.5" />
               )}
             </Button>
           </PromptInputAction>
@@ -1748,7 +1762,7 @@ export function ChatArea({
                       )}
                       aria-label="Select project context"
                     >
-                      <FolderIcon className="h-4 w-4" />
+                      <FolderIcon className="h-3.5 w-3.5" />
                     </Button>
                   </PopoverTrigger>
                 </TooltipTrigger>
@@ -1821,7 +1835,7 @@ export function ChatArea({
               )}
               aria-label={councilMode ? "Turn off council mode" : "Turn on council mode"}
             >
-              <UsersRoundIcon className="h-4 w-4" />
+              <UsersRoundIcon className="h-3.5 w-3.5" />
             </Button>
           </PromptInputAction>
           <TooltipProvider delayDuration={150}>
@@ -1836,7 +1850,7 @@ export function ChatArea({
                       className={composerIconButtonClass}
                       aria-label="Select AI model"
                     >
-                      <BrainIcon className="h-4 w-4" />
+                      <BrainIcon className="h-3.5 w-3.5" />
                     </Button>
                   </PopoverTrigger>
                 </TooltipTrigger>
@@ -1883,19 +1897,16 @@ export function ChatArea({
               size="icon"
               variant={input.trim() ? "default" : "ghost"}
               className={cn(
-                "relative h-10 w-10 rounded-full sm:h-11 sm:w-11",
-                isStreaming && "bg-transparent hover:bg-transparent",
+                "relative h-7 w-7 rounded-full sm:h-8 sm:w-8",
+                isStreaming && "bg-muted hover:bg-muted/80",
               )}
               disabled={!input.trim() && !uploadedFiles?.length && !isStreaming}
               onClick={isStreaming ? onStop : handleSubmit}
             >
               {isStreaming ? (
-                <>
-                  <AnimatedOrb size={36} variant="red" />
-                  <SquareIcon className="absolute h-3.5 w-3.5 text-red-700" fill="currentColor" />
-                </>
+                <SquareIcon className="h-3 w-3 fill-current text-foreground/60" />
               ) : (
-                <SendIcon />
+                <SendIcon className="h-3.5 w-3.5" />
               )}
             </Button>
           </PromptInputAction>
@@ -2289,7 +2300,7 @@ export function ChatArea({
         </>
       )}
 
-      <div className="absolute inset-x-0 bottom-0 z-20 shrink-0 bg-background/95 px-3 pb-[calc(2rem+env(safe-area-inset-bottom))] pt-2 backdrop-blur md:px-4">
+      <div className="absolute inset-x-0 bottom-0 z-20 shrink-0 px-3 pb-[calc(2rem+env(safe-area-inset-bottom))] pt-2 md:px-4">
         <div className="mx-auto w-full max-w-3xl">
           {promptInputEl}
         </div>
