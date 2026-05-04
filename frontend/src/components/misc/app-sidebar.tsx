@@ -86,6 +86,7 @@ const adminTools = [
   { name: "All Project Documents", path: "/project-documents", icon: IconFolders, requiresProject: false },
   { name: "Financial Insights", path: "/financial-insights", icon: IconShieldCheck, requiresProject: false },
   { name: "Executive", path: "/executive", icon: IconChartBar, requiresProject: false },
+  { name: "Database Tables", path: "/database", icon: IconTable, requiresProject: false },
   { name: "Spreadsheet", path: "/spreadsheet-demo", icon: IconTable, requiresProject: false },
   { name: "Crawled Pages", path: "/crawled-pages", icon: IconWorldWww, requiresProject: false },
   { name: "AI Strategist", path: "/ai-assistant", icon: IconMessageChatbot, requiresProject: false },

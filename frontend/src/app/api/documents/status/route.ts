@@ -14,7 +14,8 @@ export const GET = withApiGuardrails(
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "documents/status#GET", message: "Authentication required." });
     }
 
-    // Fetch document metadata with ingestion job status
+    // Fetch document metadata with ingestion job status (left join — documents
+    // without ingestion jobs still appear, pipeline_stage shows as "unknown")
     const { data: documents, error } = await supabase
       .from("document_metadata")
       .select(
@@ -32,7 +33,7 @@ export const GET = withApiGuardrails(
         storage_bucket,
         url,
         project_id,
-        fireflies_ingestion_jobs!inner (
+        fireflies_ingestion_jobs (
           stage,
           attempt_count,
           last_attempt_at,
@@ -43,8 +44,9 @@ export const GET = withApiGuardrails(
       .order("created_at", { ascending: false });
 
     if (error) {
+      console.error("[documents/status] Supabase query failed:", error);
       return NextResponse.json(
-        { error: "Failed to fetch documents" },
+        { error: `Failed to fetch documents: ${error.message}` },
         { status: 500 },
       );
     }

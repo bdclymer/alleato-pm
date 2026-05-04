@@ -19,7 +19,6 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
 } from "@/components/ui/sheet";
 import {
   AlertDialog,
@@ -37,13 +36,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   PlusIcon,
   MoreHorizontalIcon,
   PencilIcon,
   Trash2Icon,
-  MessageSquareIcon,
 } from "lucide-react";
 import type { RagConversation } from "@/hooks/use-rag-conversations";
 
@@ -51,6 +48,8 @@ interface ConversationSidebarProps {
   conversations: RagConversation[];
   activeSessionId: string | null;
   isLoading: boolean;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   onSelectConversation: (sessionId: string) => void;
   onNewChat: () => void;
   onRename: (sessionId: string, title: string) => void;
@@ -221,12 +220,13 @@ export function ConversationSidebar({
   conversations,
   activeSessionId,
   isLoading,
+  open,
+  onOpenChange,
   onSelectConversation,
   onNewChat,
   onRename,
   onDelete,
 }: ConversationSidebarProps) {
-  const [historyOpen, setHistoryOpen] = useState(false);
   const [conversationToRename, setConversationToRename] =
     useState<RagConversation | null>(null);
   const [conversationToDelete, setConversationToDelete] =
@@ -254,103 +254,84 @@ export function ConversationSidebar({
 
   return (
     <>
-      <div className="fixed left-20 top-14 z-30 flex items-center justify-start gap-2">
-        <Sheet open={historyOpen} onOpenChange={setHistoryOpen}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <SheetTrigger asChild>
+      <Sheet open={open} onOpenChange={onOpenChange}>
+        <SheetContent
+          side="left"
+          className="h-dvh max-h-dvh w-80 overflow-hidden rounded-none p-0 [&>button]:hidden sm:w-96"
+        >
+          <div className="flex h-full flex-col overflow-hidden bg-sidebar text-sidebar-foreground">
+            <SheetHeader className="px-5 py-4 text-left">
+              <div className="flex items-center justify-between gap-2">
+                <SheetTitle className="text-sm font-semibold text-sidebar-foreground">
+                  Chat history
+                </SheetTitle>
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="h-12 w-12 rounded-full bg-muted/50 text-foreground shadow-none hover:bg-muted"
+                  className="h-8 w-8 rounded-md text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                  onClick={() => {
+                    onOpenChange(false);
+                    onNewChat();
+                  }}
                 >
-                  <MessageSquareIcon className="h-4 w-4" />
-                  <span className="sr-only">Chat history</span>
+                  <PlusIcon />
+                  <span className="sr-only">New chat</span>
                 </Button>
-              </SheetTrigger>
-            </TooltipTrigger>
-            <TooltipContent sideOffset={6}>Chat history</TooltipContent>
-          </Tooltip>
+              </div>
+            </SheetHeader>
 
-          <SheetContent
-            side="left"
-            className="h-svh max-h-svh w-72 rounded-none p-0 [&>button]:hidden sm:w-80"
-          >
-            <div className="flex h-full min-h-svh flex-col bg-sidebar text-sidebar-foreground">
-              <SheetHeader className="px-4 py-4 text-left">
-                <div className="flex items-center justify-between gap-2">
-                  <SheetTitle className="text-sm font-semibold text-sidebar-foreground">
-                    Chat history
-                  </SheetTitle>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 rounded-md text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground"
-                    onClick={() => {
-                      setHistoryOpen(false);
-                      onNewChat();
-                    }}
-                  >
-                    <PlusIcon />
-                    <span className="sr-only">New chat</span>
-                  </Button>
-                </div>
-              </SheetHeader>
-
-              <ScrollArea className="flex-1">
-                <div className="px-2 py-3">
-                  {isLoading ? (
-                    <div className="space-y-2 px-2">
-                      {Array.from({ length: 8 }).map((_, index) => (
-                        <div
-                          key={index}
-                          className="h-7 animate-pulse rounded-md bg-sidebar-accent/40"
-                        />
-                      ))}
-                    </div>
-                  ) : groupedConversations.length > 0 ? (
-                    groupedConversations.map((group, index) => (
-                      <div key={group.label} className="pb-4">
-                        {index > 0 ? (
-                          <Separator className="mb-3 bg-sidebar-border/70" />
-                        ) : null}
-                        <div className="px-2 pb-2">
-                          <p className="text-[11px] font-semibold uppercase tracking-wider text-sidebar-foreground/45">
-                            {group.label}
-                          </p>
-                        </div>
-                        <div className="space-y-0.5">
-                          {group.conversations.map((conversation) => (
-                            <ConversationRow
-                              key={conversation.session_id}
-                              conversation={conversation}
-                              isActive={conversation.session_id === activeSessionId}
-                              onSelect={() => {
-                                setHistoryOpen(false);
-                                onSelectConversation(conversation.session_id);
-                              }}
-                              onRename={openRenameDialog}
-                              onDelete={setConversationToDelete}
-                            />
-                          ))}
-                        </div>
+            <ScrollArea className="flex-1">
+              <div className="px-3 py-3">
+                {isLoading ? (
+                  <div className="space-y-2 px-2">
+                    {Array.from({ length: 8 }).map((_, index) => (
+                      <div
+                        key={index}
+                        className="h-7 animate-pulse rounded-md bg-sidebar-accent/40"
+                      />
+                    ))}
+                  </div>
+                ) : groupedConversations.length > 0 ? (
+                  groupedConversations.map((group, index) => (
+                    <div key={group.label} className="pb-4">
+                      {index > 0 ? (
+                        <Separator className="mb-3 bg-sidebar-border/70" />
+                      ) : null}
+                      <div className="px-2 pb-2">
+                        <p className="text-[11px] font-semibold uppercase tracking-wider text-sidebar-foreground/45">
+                          {group.label}
+                        </p>
                       </div>
-                    ))
-                  ) : (
-                    <div className="px-4 py-6">
-                      <p className="text-sm text-sidebar-foreground/65">
-                        No conversations yet.
-                      </p>
+                      <div className="space-y-0.5">
+                        {group.conversations.map((conversation) => (
+                          <ConversationRow
+                            key={conversation.session_id}
+                            conversation={conversation}
+                            isActive={conversation.session_id === activeSessionId}
+                            onSelect={() => {
+                              onOpenChange(false);
+                              onSelectConversation(conversation.session_id);
+                            }}
+                            onRename={openRenameDialog}
+                            onDelete={setConversationToDelete}
+                          />
+                        ))}
+                      </div>
                     </div>
-                  )}
-                </div>
-              </ScrollArea>
-            </div>
+                  ))
+                ) : (
+                  <div className="px-4 py-6">
+                    <p className="text-sm text-sidebar-foreground/65">
+                      No conversations yet.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </ScrollArea>
+          </div>
           </SheetContent>
         </Sheet>
-      </div>
 
       <Modal
         open={!!conversationToRename}

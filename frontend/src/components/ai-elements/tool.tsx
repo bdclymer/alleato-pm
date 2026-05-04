@@ -27,7 +27,7 @@ export type ToolProps = ComponentProps<typeof Collapsible>;
 
 export const Tool = ({ className, ...props }: ToolProps) => (
   <Collapsible
-    className={cn("group not-prose mb-4 w-full rounded-md border", className)}
+    className={cn("group not-prose mb-4 w-full rounded-md", className)}
     {...props}
   />
 );
@@ -62,7 +62,7 @@ const statusIcons: Record<ToolPart["state"], ReactNode> = {
   "input-available": <ClockIcon className="size-4 animate-pulse" />,
   "input-streaming": <CircleIcon className="size-4" />,
   "output-available": <CheckCircleIcon className="size-4 text-green-600" />,
-  "output-denied": <XCircleIcon className="size-4 text-orange-600" />,
+  "output-denied": <XCircleIcon className="size-4 text-status-warning" />,
   "output-error": <XCircleIcon className="size-4 text-red-600" />,
 };
 

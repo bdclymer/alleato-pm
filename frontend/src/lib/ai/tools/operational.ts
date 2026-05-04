@@ -2120,6 +2120,7 @@ export function createOperationalTools(
                 stakeholders_affected: stakeholders ?? [],
                 financial_impact: financialImpact ?? null,
                 status: "active",
+                approval_status: "draft",
               })
               .select("id, title, insight_type, severity, project_name")
               .single();
@@ -2129,7 +2130,7 @@ export function createOperationalTools(
             return {
               success: true,
               savedInsight: data,
-              message: `Insight saved: "${title}" (${insightType}, ${severity}). ${resolvedProjectName ? `Linked to project: ${resolvedProjectName}.` : ""} This is now visible in project dashboards and AI analysis.`,
+              message: `Insight saved as draft: "${title}" (${insightType}, ${severity}). ${resolvedProjectName ? `Linked to project: ${resolvedProjectName}.` : ""} A team member must approve it before it appears in AI analysis and search results.`,
             };
           } catch (err) {
             const msg = err instanceof Error ? err.message : "Unknown error";
@@ -2631,7 +2632,7 @@ async function searchDocumentChunksByCategory({
             ? filterProjectId
             : scope.pinnedProjectId ?? null,
         match_count: matchCount,
-        match_threshold: 0.25,
+        match_threshold: 0.45,
       },
     );
 

@@ -62,11 +62,22 @@ interface DocumentMetadataItem {
   organizer_email: string | null;
   url: string | null;
   fireflies_link: string | null;
+  tags: string | null;
+  file_name: string | null;
+  file_path: string | null;
+  source_web_url: string | null;
+  keywords: string[] | null;
+}
+
+interface AllProject {
+  id: number;
+  name: string;
 }
 
 interface DocumentMetadataClientProps {
   items: DocumentMetadataItem[];
   errorMessage: string | null;
+  allProjects: AllProject[];
 }
 
 // ── Filter state ──────────────────────────────────────────────────────────────
@@ -80,20 +91,17 @@ const NO_PROJECT_VALUE = "__none__";
 
 function ProjectSelectEditor({
   item,
-  projectOptions,
+  allProjects,
   onChange,
   onCancel,
   onProjectEdit,
 }: {
   item: DocumentMetadataItem;
-  projectOptions: string[];
+  allProjects: AllProject[];
   onChange: (value: string) => void;
   onCancel: () => void;
-  onProjectEdit: (item: DocumentMetadataItem, value: string) => Promise<void>;
+  onProjectEdit: (item: DocumentMetadataItem, projectName: string, projectId: number | null) => Promise<void>;
 }) {
-  // Track open state via ref (sync) so onBlur doesn't fire onCancel while the
-  // dropdown portal is open — Radix renders SelectContent outside the trigger's
-  // DOM subtree, causing an immediate blur/cancel on open.
   const isOpenRef = React.useRef(false);
 
   return (
@@ -101,9 +109,10 @@ function ProjectSelectEditor({
       defaultValue={item.project ?? NO_PROJECT_VALUE}
       onOpenChange={(open) => { isOpenRef.current = open; }}
       onValueChange={(value) => {
-        const nextValue = value === NO_PROJECT_VALUE ? "" : value;
-        onChange(nextValue);
-        void onProjectEdit(item, nextValue).finally(() => onCancel());
+        const selected = allProjects.find((p) => p.name === value) ?? null;
+        const name = value === NO_PROJECT_VALUE ? "" : value;
+        onChange(name);
+        void onProjectEdit(item, name, selected?.id ?? null).finally(() => onCancel());
       }}
     >
       <SelectTrigger
@@ -116,8 +125,8 @@ function ProjectSelectEditor({
       </SelectTrigger>
       <SelectContent>
         <SelectItem value={NO_PROJECT_VALUE}>— None —</SelectItem>
-        {projectOptions.map((p) => (
-          <SelectItem key={p} value={p}>{p}</SelectItem>
+        {allProjects.map((p) => (
+          <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>
         ))}
       </SelectContent>
     </Select>
@@ -143,6 +152,10 @@ const columns: ColumnConfig[] = [
   { id: "status", label: "Status", defaultVisible: true },
   { id: "project", label: "Project", defaultVisible: true },
   { id: "duration_minutes", label: "Duration", defaultVisible: true },
+  { id: "tags", label: "Tags", defaultVisible: true },
+  { id: "file_name", label: "File Name", defaultVisible: false },
+  { id: "source_web_url", label: "URL", defaultVisible: false },
+  { id: "keywords", label: "Keywords", defaultVisible: false },
   { id: "category", label: "Category", defaultVisible: false },
   { id: "division", label: "Division", defaultVisible: false },
   { id: "meeting_type", label: "Meeting Type", defaultVisible: false },
@@ -160,8 +173,8 @@ const defaultVisibleColumns = columns
 // ── Table columns ─────────────────────────────────────────────────────────────
 
 function buildTableColumns(
-  projectOptions: string[],
-  onProjectEdit: (item: DocumentMetadataItem, value: string) => Promise<void>,
+  allProjects: AllProject[],
+  onProjectEdit: (item: DocumentMetadataItem, projectName: string, projectId: number | null) => Promise<void>,
 ): TableColumn<DocumentMetadataItem>[] {
   return [
     {
@@ -212,7 +225,7 @@ function buildTableColumns(
       renderEditor: ({ item: editorItem, onChange, onCancel }) => (
         <ProjectSelectEditor
           item={editorItem}
-          projectOptions={projectOptions}
+          allProjects={allProjects}
           onChange={onChange}
           onCancel={onCancel}
           onProjectEdit={onProjectEdit}
@@ -232,27 +245,62 @@ function buildTableColumns(
     },
     {
       ...columns[6],
+      render: (item) => <CellText value={item.tags} muted />,
+      csvValue: (item) => item.tags ?? "",
+      sortValue: (item) => item.tags ?? "",
+      sortable: true,
+    },
+    {
+      ...columns[7],
+      render: (item) => <CellText value={item.file_name} muted />,
+      csvValue: (item) => item.file_name ?? "",
+      sortValue: (item) => item.file_name ?? "",
+      sortable: true,
+    },
+    {
+      ...columns[8],
+      render: (item) => {
+        const href = item.source_web_url;
+        return href ? (
+          <a href={href} target="_blank" rel="noreferrer" className="truncate text-xs text-primary hover:underline max-w-48 block">
+            {href}
+          </a>
+        ) : <CellText value={null} muted />;
+      },
+      csvValue: (item) => item.source_web_url ?? "",
+      sortValue: (item) => item.source_web_url ?? "",
+      sortable: false,
+      width: 220,
+    },
+    {
+      ...columns[9],
+      render: (item) => <CellText value={item.keywords?.join(", ") ?? null} muted />,
+      csvValue: (item) => item.keywords?.join(", ") ?? "",
+      sortable: false,
+    },
+    {
+      ...columns[10],
       render: (item) => <CellText value={item.category} muted />,
       csvValue: (item) => item.category ?? "",
       sortValue: (item) => item.category ?? "",
       sortable: true,
     },
     {
-      ...columns[7],
+      ...columns[11],
       render: (item) => <CellText value={item.division} muted />,
       csvValue: (item) => item.division ?? "",
       sortValue: (item) => item.division ?? "",
       sortable: true,
     },
     {
-      ...columns[8],
+      ...columns[12],
       render: (item) => <CellText value={item.meeting_type} muted />,
       csvValue: (item) => item.meeting_type ?? "",
       sortValue: (item) => item.meeting_type ?? "",
       sortable: true,
     },
     {
-      ...columns[9],
+      ...columns[13],
       render: (item) => (
         <CellText value={item.host_email ?? item.organizer_email} muted />
       ),
@@ -261,27 +309,27 @@ function buildTableColumns(
       sortable: true,
     },
     {
-      ...columns[10],
+      ...columns[14],
       render: (item) => <TruncatedCell value={item.content} maxWidth={400} className="text-sm" />,
       csvValue: (item) => item.content ?? "",
       sortable: false,
       width: 420,
     },
     {
-      ...columns[11],
+      ...columns[15],
       render: (item) => <TruncatedCell value={item.summary} maxWidth={300} className="text-sm" />,
       csvValue: (item) => item.summary ?? "",
       sortable: false,
       width: 320,
     },
     {
-      ...columns[12],
+      ...columns[16],
       render: (item) => <TruncatedCell value={item.participants} maxWidth={240} className="text-sm" />,
       csvValue: (item) => item.participants ?? "",
       sortable: false,
     },
     {
-      ...columns[13],
+      ...columns[17],
       render: (item) => <TableDateValue value={item.created_at} />,
       csvValue: (item) => item.created_at ?? "",
       sortValue: (item) =>
@@ -339,6 +387,17 @@ function applyFilters(
     const typeFilter = filters.type as string;
     if (typeFilter === "teams") {
       result = result.filter((item) => item.type?.startsWith("teams"));
+    } else if (typeFilter === "document") {
+      result = result.filter((item) => item.type === "document");
+    } else if (typeFilter === "ai") {
+      result = result.filter((item) => {
+        if (!item.type?.startsWith("teams")) return false;
+        const haystack = [item.participants, item.title, item.content]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        return haystack.includes("friday") && haystack.includes("brandon");
+      });
     } else {
       result = result.filter((item) => item.type === typeFilter);
     }
@@ -385,6 +444,7 @@ function applyFilters(
 export function DocumentMetadataClient({
   items: initialItems,
   errorMessage,
+  allProjects,
 }: DocumentMetadataClientProps) {
   const rawSearchParams = useSearchParams();
   const searchParams = rawSearchParams ?? new URLSearchParams();
@@ -423,6 +483,16 @@ export function DocumentMetadataClient({
       isActive: activeFilters.type === "email",
     },
     {
+      label: "Documents",
+      href: `${pathname}?type=document`,
+      isActive: activeFilters.type === "document",
+    },
+    {
+      label: "AI",
+      href: `${pathname}?type=ai`,
+      isActive: activeFilters.type === "ai",
+    },
+    {
       label: "All",
       href: pathname,
       isActive: !activeFilters.type,
@@ -434,6 +504,17 @@ export function DocumentMetadataClient({
     const typeFilter = activeFilters.type as string | undefined;
     if (!typeFilter) return items;
     if (typeFilter === "teams") return items.filter((i) => i.type?.startsWith("teams"));
+    if (typeFilter === "document") return items.filter((i) => i.type === "document");
+    if (typeFilter === "ai") {
+      return items.filter((i) => {
+        if (!i.type?.startsWith("teams")) return false;
+        const haystack = [i.participants, i.title, i.content]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        return haystack.includes("friday") && haystack.includes("brandon");
+      });
+    }
     return items.filter((i) => i.type === typeFilter);
   }, [items, activeFilters.type]);
 
@@ -488,7 +569,7 @@ export function DocumentMetadataClient({
         id: "project",
         label: "Project",
         type: "select",
-        options: projects.map((p) => ({ value: p, label: p })),
+        options: allProjects.map((p) => ({ value: p.name, label: p.name })),
       },
       {
         id: "category",
@@ -497,7 +578,7 @@ export function DocumentMetadataClient({
         options: categories.map((c) => ({ value: c, label: c })),
       },
     ],
-    [sourceSystems, statuses, projects, categories],
+    [sourceSystems, statuses, allProjects, categories],
   );
 
   const tableState = useUnifiedTableState({
@@ -519,11 +600,11 @@ export function DocumentMetadataClient({
   });
 
   const handleProjectEdit = React.useCallback(
-    async (item: DocumentMetadataItem, value: string) => {
+    async (item: DocumentMetadataItem, projectName: string, projectId: number | null) => {
       const supabase = createClient();
       const { error } = await supabase
         .from("document_metadata")
-        .update({ project: value || null })
+        .update({ project: projectName || null, project_id: projectId })
         .eq("id", item.id);
 
       if (error) {
@@ -532,15 +613,17 @@ export function DocumentMetadataClient({
       }
 
       setItems((prev) =>
-        prev.map((i) => (i.id === item.id ? { ...i, project: value || null } : i)),
+        prev.map((i) =>
+          i.id === item.id ? { ...i, project: projectName || null, project_id: projectId } : i,
+        ),
       );
     },
     [],
   );
 
   const tableColumns = useMemo(
-    () => buildTableColumns(projects, handleProjectEdit),
-    [projects, handleProjectEdit],
+    () => buildTableColumns(allProjects, handleProjectEdit),
+    [allProjects, handleProjectEdit],
   );
 
   const isFiltered =

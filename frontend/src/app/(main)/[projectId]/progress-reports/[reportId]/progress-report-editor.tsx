@@ -689,7 +689,7 @@ export function ProgressReportEditor({
               <div className="space-y-4 rounded-xl bg-muted/40 px-5 py-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <SectionRuleHeading label="Project contacts" className="mb-2" />
+                    <SectionRuleHeading label="Project Team" className="mb-2" />
                     <p className="text-sm text-muted-foreground">
                       These show in the report footer.
                     </p>
@@ -1009,12 +1009,6 @@ export function ProgressReportEditor({
               </section>
             )}
 
-            {draft.contacts.length > 0 && (
-              <section className="space-y-3">
-                <SectionRuleHeading label="Project Contacts" className="mb-2" />
-                <ContactList contacts={draft.contacts} />
-              </section>
-            )}
           </DetailPanel>
         </div>
 
@@ -1043,6 +1037,52 @@ export function ProgressReportEditor({
                 value={String(draft.weather_days_lost)}
               />
             </dl>
+          </DetailPanel>
+
+          <DetailPanel>
+            <div className="mb-4 flex items-center justify-between gap-2">
+              <SectionRuleHeading label="Project Team" className="pb-0" />
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 w-7 p-0"
+                onClick={() => setIsEditing(true)}
+              >
+                <Edit className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+            {draft.contacts.length > 0 ? (
+              <div className="space-y-4">
+                {draft.contacts.map((contact, index) => (
+                  <div key={`${contact.email}-${index}`} className="space-y-0.5">
+                    {contact.role ? (
+                      <div className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                        {contact.role}
+                      </div>
+                    ) : null}
+                    <div className="text-sm font-medium text-foreground">
+                      {contact.name || "Unnamed"}
+                    </div>
+                    {contact.email ? (
+                      <div className="text-xs text-muted-foreground">{contact.email}</div>
+                    ) : null}
+                    {contact.phone ? (
+                      <div className="text-xs text-muted-foreground">{contact.phone}</div>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <Button
+                size="sm"
+                variant="outline"
+                className="w-full gap-1.5"
+                onClick={() => setIsEditing(true)}
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Add team members
+              </Button>
+            )}
           </DetailPanel>
 
           {reportQuery.data.report.source_snapshot && (

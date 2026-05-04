@@ -141,6 +141,7 @@ export const subcontractorTools: NavigationTool[] = [
 export const adminTools: NavigationTool[] = [
   { name: "Actions", path: "/actions", icon: Wrench, requiresProject: false, adminOnly: true },
   { name: "Settings", path: "/settings", icon: Settings, requiresProject: false },
+  { name: "Database Tables", path: "/database", icon: Table, requiresProject: false, adminOnly: true },
   { name: "What's New", path: "/updates", icon: TrendingUp, requiresProject: false },
   { name: "Documentation", path: "/docs", icon: MessageCircle, requiresProject: false },
   { name: "Procore Docs", path: "/procore-docs", icon: BookOpen, requiresProject: false },
@@ -253,6 +254,7 @@ export const sidebarNavGroups: SidebarNavGroup[] = [
     label: "Company",
     icon: Building2,
     tools: [
+      { name: "AI Strategist", path: "/ai-assistant", icon: Brain, requiresProject: false },
       { name: "Project Intelligence", path: "intelligence", icon: Brain, requiresProject: true },
       { name: "Company Directory", path: "directory/companies", icon: Building2, requiresProject: false, module: "directory" },
       { name: "Progress Reports", path: "progress-reports", icon: FileText, requiresProject: true, module: "documents" as PermissionModule },
@@ -273,10 +275,10 @@ export const sidebarNavGroups: SidebarNavGroup[] = [
       },
       { name: "Meetings", path: "meetings", icon: Calendar, requiresProject: true },
       { name: "Documents", path: "documents", icon: FolderOpen, requiresProject: true, module: "documents" },
+      { name: "Files", path: "/files", icon: FolderOpen, requiresProject: false },
       { name: "Knowledge Base", path: "/knowledge", icon: Brain, requiresProject: false },
       { name: "Docs", path: "/docs", icon: BookOpen, requiresProject: false },
       { name: "Knowledge Sources", path: "/knowledge/manage", icon: BookOpen, requiresProject: false, adminOnly: true },
-      { name: "AI Strategist", path: "/ai-assistant", icon: Brain, requiresProject: false },
     ],
   },
   {
@@ -552,6 +554,13 @@ export const headerNavGroups: HeaderNavGroup[] = [
     label: "Company",
     tools: [
       {
+        name: "AI Strategist",
+        path: "ai-assistant",
+        requiresProject: false,
+        icon: Bot,
+        description: "AI-powered project guidance",
+      },
+      {
         name: "Projects",
         path: "",
         requiresProject: false,
@@ -600,13 +609,6 @@ export const headerNavGroups: HeaderNavGroup[] = [
         requiresProject: false,
         icon: Brain,
         description: "Team knowledge, insights, and lessons learned",
-      },
-      {
-        name: "AI Strategist",
-        path: "ai-assistant",
-        requiresProject: false,
-        icon: Bot,
-        description: "AI-powered project guidance",
       },
     ],
   },

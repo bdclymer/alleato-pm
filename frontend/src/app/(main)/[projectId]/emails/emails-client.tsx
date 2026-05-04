@@ -99,7 +99,9 @@ export function EmailsClient({
     : isGlobal
       ? "Application and Resend emails across projects."
       : undefined;
+  // Outlook emails can be bulk-deleted from our system even though they can't be edited
   const noWriteActions = isGlobal || isOutlook;
+  const allowBulkDelete = !isGlobal;
   const initialStatus = searchParams.get("status") ?? "";
   const initialFilters: FilterState = {
     status: initialStatus || undefined,
@@ -461,7 +463,7 @@ export function EmailsClient({
           visibleColumns: tableState.visibleColumns,
           onColumnVisibilityChange: tableState.setVisibleColumns,
           onExport: handleExport,
-          onBulkDelete: !noWriteActions && tableState.selectedIds.length > 0
+          onBulkDelete: allowBulkDelete && tableState.selectedIds.length > 0
             ? () => setBulkDeleteDialogOpen(true)
             : undefined,
         }}
@@ -493,15 +495,11 @@ export function EmailsClient({
             tableState.setPage(1);
           },
         }}
-        selection={
-          isGlobal
-            ? undefined
-            : {
-                selectedIds: tableState.selectedIds,
-                onSelectAll: handleSelectAll,
-                onSelectRow: handleSelectRow,
-              }
-        }
+        selection={{
+          selectedIds: tableState.selectedIds,
+          onSelectAll: handleSelectAll,
+          onSelectRow: handleSelectRow,
+        }}
         views={{
           card: (item) => renderEmailCard(item, handleRowClick),
           list: (item) => renderEmailList(item, handleRowClick),

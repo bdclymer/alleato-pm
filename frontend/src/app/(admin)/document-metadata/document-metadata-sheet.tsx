@@ -14,7 +14,7 @@ import {
   X,
 } from "lucide-react";
 
-import { StatusBadge } from "@/components/ds";
+import { StatusBadge, InfoAlert } from "@/components/ds";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -52,6 +52,11 @@ interface DocumentMetadataItem {
   organizer_email: string | null;
   url: string | null;
   fireflies_link: string | null;
+  tags: string | null;
+  file_name: string | null;
+  file_path: string | null;
+  source_web_url: string | null;
+  keywords: string[] | null;
 }
 
 interface DocumentMetadataSheetProps {
@@ -91,6 +96,15 @@ function formatDuration(minutes: number | null) {
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
   return m > 0 ? `${h}h ${m}m` : `${h}h`;
+}
+
+function isBinaryContent(content: string): boolean {
+  // Detect raw PDF binary data — common patterns: %PDF header, /i255 tokens, or dense /N /N sequences
+  if (content.startsWith("%PDF")) return true;
+  const sample = content.slice(0, 200);
+  const binaryTokens = (sample.match(/\/i?\d+/g) ?? []).length;
+  // If more than 15 binary-style tokens in first 200 chars, treat as binary
+  return binaryTokens > 15;
 }
 
 function typeLabel(type: string | null) {
@@ -160,11 +174,12 @@ export function DocumentMetadataSheet({
     : [];
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
+    <Sheet open={open} onOpenChange={onOpenChange} modal={false}>
       <SheetContent
         side="right"
         className="p-0 flex flex-col bg-card"
         showCloseButton={false}
+        showOverlay={false}
       >
         {/* Header */}
         <SheetHeader className="px-5 pt-5 pb-4 shrink-0">
@@ -261,31 +276,119 @@ export function DocumentMetadataSheet({
         <ScrollArea className="flex-1">
           <div className="px-5 py-4 space-y-5">
 
-            {/* Content — full text, no truncation */}
-            {item.content && (
-              <Section label="Content">
-                <Markdown className="text-sm text-foreground [&_h1]:text-base [&_h1]:font-semibold [&_h1]:mt-3 [&_h1]:mb-1 [&_h2]:text-sm [&_h2]:font-semibold [&_h2]:mt-2 [&_h2]:mb-1 [&_h3]:text-sm [&_h3]:font-medium [&_h3]:mt-2 [&_h3]:mb-0.5 [&_p]:leading-relaxed [&_p]:mb-2 last:[&_p]:mb-0 [&_ul]:list-disc [&_ul]:pl-4 [&_ul]:mb-2 [&_ol]:list-decimal [&_ol]:pl-4 [&_ol]:mb-2 [&_li]:mb-0.5 [&_strong]:font-semibold">
-                  {item.content}
-                </Markdown>
-              </Section>
+            {/* Document / file preview */}
+            {(item.source_web_url ?? item.url ?? item.fireflies_link) && (
+              <>
+                <Section label="Preview">
+                  {(() => {
+                    const src = item.source_web_url ?? item.url ?? item.fireflies_link ?? "";
+                    const isSharePoint =
+                      src.includes("sharepoint.com") || src.includes("onedrive.live.com");
+                    const isGoogleDocs = src.includes("docs.google.com");
+                    const isPublicPdf =
+                      src.toLowerCase().endsWith(".pdf") && !isSharePoint;
+
+                    if (isSharePoint) {
+                      return (
+                        <InfoAlert variant="info">
+                          <span>Stored in SharePoint — open in Microsoft 365 to view.</span>
+                          <a
+                            href={src}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+                          >
+                            <ExternalLink className="h-3.5 w-3.5" />
+                            Open in SharePoint
+                          </a>
+                        </InfoAlert>
+                      );
+                    }
+                    if (isGoogleDocs) {
+                      const embedSrc = src.replace(/\/edit.*$/, "/preview");
+                      return (
+                        <div className="overflow-hidden rounded-lg border border-border">
+                          <iframe
+                            src={embedSrc}
+                            className="h-96 w-full"
+                            title={item.title ?? "Document preview"}
+                            allow="autoplay"
+                          />
+                        </div>
+                      );
+                    }
+                    if (isPublicPdf) {
+                      return (
+                        <div className="overflow-hidden rounded-lg border border-border">
+                          <iframe
+                            src={src}
+                            className="h-96 w-full"
+                            title={item.title ?? "Document preview"}
+                          />
+                        </div>
+                      );
+                    }
+                    return (
+                      <a
+                        href={src}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" />
+                        Open file
+                      </a>
+                    );
+                  })()}
+                </Section>
+                <Separator />
+              </>
             )}
 
             {/* Summary */}
             {item.summary && (
               <>
-                {item.content && <Separator />}
                 <Section label="Summary">
                   <Markdown className="text-sm [&_h1]:text-base [&_h1]:font-semibold [&_h1]:mt-3 [&_h1]:mb-1 [&_h2]:text-sm [&_h2]:font-semibold [&_h2]:mt-2 [&_h2]:mb-1 [&_p]:leading-relaxed [&_p]:mb-2 last:[&_p]:mb-0 [&_ul]:list-disc [&_ul]:pl-4 [&_ul]:mb-2 [&_ol]:list-decimal [&_ol]:pl-4 [&_li]:mb-0.5 [&_strong]:font-semibold">
                     {item.summary}
                   </Markdown>
                 </Section>
+                <Separator />
+              </>
+            )}
+
+            {/* Content — full text, skip binary/unreadable data */}
+            {item.content && !isBinaryContent(item.content) && (
+              <>
+                <Section label="Content">
+                  <Markdown className="text-sm text-foreground [&_h1]:text-base [&_h1]:font-semibold [&_h1]:mt-3 [&_h1]:mb-1 [&_h2]:text-sm [&_h2]:font-semibold [&_h2]:mt-2 [&_h2]:mb-1 [&_h3]:text-sm [&_h3]:font-medium [&_h3]:mt-2 [&_h3]:mb-0.5 [&_p]:leading-relaxed [&_p]:mb-2 last:[&_p]:mb-0 [&_ul]:list-disc [&_ul]:pl-4 [&_ul]:mb-2 [&_ol]:list-decimal [&_ol]:pl-4 [&_ol]:mb-2 [&_li]:mb-0.5 [&_strong]:font-semibold">
+                    {item.content}
+                  </Markdown>
+                </Section>
+                <Separator />
+              </>
+            )}
+
+            {/* Tags & keywords */}
+            {(item.tags ?? (item.keywords?.length ?? 0) > 0) && (
+              <>
+                <Section label="Tags">
+                  <div className="flex flex-wrap gap-1.5">
+                    {item.tags?.split(/[,;]+/).map((t) => t.trim()).filter(Boolean).map((t) => (
+                      <span key={t} className="rounded-full bg-muted px-2.5 py-0.5 text-xs">{t}</span>
+                    ))}
+                    {item.keywords?.map((k) => (
+                      <span key={k} className="rounded-full bg-primary/10 text-primary px-2.5 py-0.5 text-xs">{k}</span>
+                    ))}
+                  </div>
+                </Section>
+                <Separator />
               </>
             )}
 
             {/* Participants */}
             {participantList.length > 0 && (
               <>
-                <Separator />
                 <Section label="Participants">
                   <div className="flex flex-wrap gap-1.5">
                     {participantList.map((p) => (
@@ -299,11 +402,30 @@ export function DocumentMetadataSheet({
                     ))}
                   </div>
                 </Section>
+                <Separator />
+              </>
+            )}
+
+            {/* File info */}
+            {(item.file_name ?? item.file_path ?? item.source_web_url ?? item.url) && (
+              <>
+                <Section label="File">
+                  <div className="space-y-1">
+                    {item.file_name && <p className="text-sm">{item.file_name}</p>}
+                    {item.file_path && <p className="text-xs text-muted-foreground break-all">{item.file_path}</p>}
+                    {(item.source_web_url ?? item.url) && (
+                      <a href={(item.source_web_url ?? item.url)!} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline break-all">
+                        <ExternalLink className="h-3 w-3 shrink-0" />
+                        {item.source_web_url ?? item.url}
+                      </a>
+                    )}
+                  </div>
+                </Section>
+                <Separator />
               </>
             )}
 
             {/* Details grid */}
-            <Separator />
             <div className="grid grid-cols-2 gap-4">
               {host && (
                 <Section label="Host">

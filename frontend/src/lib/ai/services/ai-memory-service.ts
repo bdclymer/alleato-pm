@@ -143,6 +143,22 @@ export async function writeMemory(
       expiresAt = d;
     }
 
+    // Guard: verify project_id exists before inserting to prevent FK violations.
+    // If the AI passed a project ID that doesn't exist, save the memory without
+    // a project link rather than failing the entire write.
+    let safeProjectId: number | null = params.projectId ?? null;
+    if (safeProjectId !== null) {
+      const { data: projectRow } = await supabase
+        .from("projects")
+        .select("id")
+        .eq("id", safeProjectId)
+        .maybeSingle();
+      if (!projectRow) {
+        console.warn(`[ai-memory-service] project_id ${safeProjectId} not found — saving memory without project link`);
+        safeProjectId = null;
+      }
+    }
+
     const { data, error } = await supabase
       .from("ai_memories")
       .insert({
@@ -150,7 +166,7 @@ export async function writeMemory(
         type: params.type,
         content: params.content,
         embedding: embeddingJson,
-        project_id: params.projectId ?? null,
+        project_id: safeProjectId,
         meeting_id: params.meetingId ?? null,
         confidence: params.confidence ?? 0.9,
         importance: params.importance ?? 0.5,
@@ -161,7 +177,7 @@ export async function writeMemory(
       .select("id")
       .single();
 
-    if (error) return { error: error.message };
+    if (error) return { error: `Memory save failed: ${error.message}` };
     const memoryId = data.id;
 
     // --- Commitment bridge ---
