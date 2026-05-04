@@ -335,6 +335,11 @@ async function planAssistantIntent(params: {
         `Deterministic fallback intent: ${params.deterministicIntent}`,
         `Source-specific RAG kind: ${params.sourceSpecificRagKind ?? "none"}`,
       ].join("\n"),
+      experimental_telemetry: {
+        isEnabled: process.env.PHOENIX_TRACING === "true",
+        functionId: "intent-planner",
+        metadata: { modelId: params.activeModel },
+      },
     }),
     7000,
     "intent planner timed out",
@@ -1175,6 +1180,11 @@ async function generateSourceGroundedSynthesis(params: {
       maxOutputTokens: 1_000,
       timeout: {
         totalMs: 45_000,
+      },
+      experimental_telemetry: {
+        isEnabled: process.env.PHOENIX_TRACING === "true",
+        functionId: "executive-briefing-synthesis",
+        metadata: { modelId: "openai/gpt-4.1" },
       },
     });
 
@@ -2340,6 +2350,11 @@ async function generateRecoveryResponse(params: {
           ].join("\n\n"),
         },
       ],
+      experimental_telemetry: {
+        isEnabled: process.env.PHOENIX_TRACING === "true",
+        functionId: "recovery-response",
+        metadata: { modelId: "openai/gpt-4.1" },
+      },
     });
 
     return result.text.trim() || fallback;
@@ -2894,11 +2909,11 @@ export const POST = withApiGuardrails(
               semanticSearchTool.execute({
                 query: lastUserContent,
                 projectId: selectedProjectId,
-                matchCount: 8,
-                threshold: 0.2,
-                skipRerank: true,
+                matchCount: 12,
+                threshold: 0.5,
+                skipRerank: false,
               }),
-              12_000,
+              18_000,
               "semanticSearch timed out during source lookup retrieval",
             );
 
@@ -2908,9 +2923,9 @@ export const POST = withApiGuardrails(
                 input: {
                   query: lastUserContent,
                   projectId: selectedProjectId ?? null,
-                  matchCount: 8,
-                  threshold: 0.2,
-                  skipRerank: true,
+                  matchCount: 12,
+                  threshold: 0.5,
+                  skipRerank: false,
                 },
                 error: searchOutput.error,
                 timestamp: new Date().toISOString(),
@@ -3151,10 +3166,21 @@ export const POST = withApiGuardrails(
               supabase,
             });
 
-            const packetContent = intelligencePacket
+            // Freshness gate: discard packets older than 7 days so the model
+            // is not anchored to months-old pre-rendered summaries. A stale
+            // packet is worse than no packet — it injects confident-sounding
+            // outdated context that the model trusts over tool results.
+            const PACKET_MAX_AGE_DAYS = 7;
+            const packetAgeMs = intelligencePacket?.generatedAt
+              ? Date.now() - new Date(intelligencePacket.generatedAt).getTime()
+              : Infinity;
+            const packetIsStale = packetAgeMs > PACKET_MAX_AGE_DAYS * 24 * 60 * 60 * 1000;
+            const usablePacket = packetIsStale ? null : intelligencePacket;
+
+            const packetContent = usablePacket
               ? synthesizeAdvisorResponse({
                   target: resolvedTarget,
-                  packet: intelligencePacket,
+                  packet: usablePacket,
                   intent: assistantIntent,
                   query: lastUserContent,
                 })
@@ -3177,9 +3203,10 @@ export const POST = withApiGuardrails(
                   projectId: resolvedTarget.projectId,
                   source: resolvedTarget.source,
                 },
-                packetId: intelligencePacket?.id ?? null,
-                freshnessStatus: intelligencePacket?.freshnessStatus ?? "missing",
-                cardCount: intelligencePacket?.cards.length ?? 0,
+                packetId: usablePacket?.id ?? null,
+                freshnessStatus: usablePacket?.freshnessStatus ?? (packetIsStale ? "stale_discarded" : "missing"),
+                packetAgeDays: packetAgeMs === Infinity ? null : Math.round(packetAgeMs / (24 * 60 * 60 * 1000)),
+                cardCount: usablePacket?.cards.length ?? 0,
                 mode: "additive-context",
               },
               timestamp: new Date().toISOString(),
@@ -3190,7 +3217,7 @@ export const POST = withApiGuardrails(
             // context so the strategist (streamText below) can layer commentary,
             // recommendations, and follow-ups on top — and still call tools to
             // fill gaps. See docs/ai-plan/evals/EVAL-SUITE-FIRST-RUN-FINDINGS-2026-05-02.md.
-            const packetContextHeader = intelligencePacket
+            const packetContextHeader = usablePacket
               ? `# Current Project Intelligence Packet\n\nA pre-rendered intelligence packet for **${resolvedTarget.slug ?? resolvedTarget.id}** is available below. Use it as your primary evidence. Layer your own analysis, recommendations, and follow-up questions on top. Call additional tools (semanticSearch, getProjectBriefingSnapshot, financial tools, etc.) when the user's question goes beyond what the packet covers or when more recent data would help.`
               : `# Project Intelligence Packet (Missing)\n\nNo current intelligence packet exists for **${resolvedTarget.slug ?? resolvedTarget.id}**. Acknowledge this briefly, then proceed by calling the appropriate tools (semanticSearch, getProjectBriefingSnapshot, financial tools, etc.) to gather evidence and answer the user.`;
 
@@ -3367,11 +3394,11 @@ export const POST = withApiGuardrails(
                   ? `${priorProjectName} - ${lastUserContent}`
                   : lastUserContent,
                 projectId,
-                matchCount: 8,
-                threshold: 0.2,
-                skipRerank: true,
+                matchCount: 12,
+                threshold: 0.5,
+                skipRerank: false,
               }),
-              12_000,
+              18_000,
               "semanticSearch pre-retrieval timed out during strategist retrieval",
             );
 
@@ -3660,9 +3687,17 @@ export const POST = withApiGuardrails(
             timeout: {
               totalMs: 90_000,
               stepMs: 45_000,
-              chunkMs: 20_000,
+              chunkMs: 45_000,
             },
             stopWhen: stepCountIs(10),
+            experimental_telemetry: {
+              isEnabled: process.env.PHOENIX_TRACING === "true",
+              functionId: "ai-assistant-chat",
+              metadata: {
+                intent: assistantIntent ?? "unknown",
+                modelId: activeModel,
+              },
+            },
             onError: ({ error }) => {
               streamErrorMessage =
                 error instanceof Error ? error.message : String(error);
@@ -3765,6 +3800,11 @@ export const POST = withApiGuardrails(
                 system: systemPrompt,
                 messages: modelMessages,
                 maxOutputTokens: 1500,
+                experimental_telemetry: {
+                  isEnabled: process.env.PHOENIX_TRACING === "true",
+                  functionId: "no-tool-retry",
+                  metadata: { primaryModel: activeModel, retryModel: "openai/gpt-4.1" },
+                },
               });
               noToolRetryContent = retryResult.text.trim() || null;
               toolTrace.push({
@@ -3815,6 +3855,11 @@ export const POST = withApiGuardrails(
                   system: systemPrompt,
                   messages: modelMessages,
                   maxOutputTokens: 1500,
+                  experimental_telemetry: {
+                    isEnabled: process.env.PHOENIX_TRACING === "true",
+                    functionId: "meta-commentary-retry",
+                    metadata: { primaryModel: activeModel, retryModel: "openai/gpt-4.1" },
+                  },
                 }),
                 15_000,
                 "metaCommentaryRetry timed out after 15 s",
