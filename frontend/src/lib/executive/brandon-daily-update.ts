@@ -497,7 +497,7 @@ function projectLabel(hit: RankedHit): string {
   const project = hit.metadata?.project ?? null;
   if (projectId && project) return `${projectId} ${project}`;
   if (projectId) return String(projectId);
-  return project ?? "Company";
+  return project ?? "Company-wide";
 }
 
 function sourceUrl(row: DocumentMetaRow | undefined): string | undefined {
@@ -583,7 +583,7 @@ function makeFallbackItem(row: DocumentMetaRow): BrandonBriefItem {
     evidence: citation.evidence,
     date: citation.date,
     citations: [citation],
-    project: row.project_id ? `${row.project_id}${row.project ? ` ${row.project}` : ""}` : (row.project ?? "Company"),
+    project: row.project_id ? `${row.project_id}${row.project ? ` ${row.project}` : ""}` : (row.project ?? "Company-wide"),
     status: "Fallback review",
     tone: "neutral",
     retrieval: "Fallback: recent document_metadata keyword match",
@@ -717,7 +717,7 @@ function buildCommunicationSignalItem(
     evidence: primaryCitation.evidence,
     date: primaryCitation.date,
     citations: [primaryCitation, ...extraCitations],
-    project: row.project_id ? `${row.project_id}${row.project ? ` ${row.project}` : ""}` : (row.project ?? "Company"),
+    project: row.project_id ? `${row.project_id}${row.project ? ` ${row.project}` : ""}` : (row.project ?? "Company-wide"),
     owner: spec.owner,
     status: spec.status,
     tone: spec.tone,

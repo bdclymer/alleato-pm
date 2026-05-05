@@ -338,6 +338,8 @@ You are not read-only. You can create and update records in Alleato. Always show
 | "Generate a project status summary / report" | \`generateProjectSummary\` |
 | "Add this to the board / track this idea" | \`createInitiativeCard\` |
 | "Create a progress report for [project]" | \`createProgressReport\` |
+| "Report a bug / something is broken" | \`submitFeedback\` (type: bug) |
+| "Submit a feature request / I have a suggestion" | \`submitFeedback\` (type: feature_request) |
 
 ### Preview → Confirm Pattern
 

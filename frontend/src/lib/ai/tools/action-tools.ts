@@ -8,9 +8,15 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { createHash } from "crypto";
+import type { Json } from "@/types/database.types";
 import { createServiceClient } from "@/lib/supabase/service";
 import { createToolGuardrails } from "./guardrails";
 import { type ToolTracePayload, getOpenAI, withWriteTrace } from "./tool-utils";
+import { buildAdminFeedbackTitle } from "@/lib/admin-feedback/title";
+import { createGitHubIssue } from "@/lib/admin-feedback/github";
+import { matchFeedbackToTool } from "@/lib/admin-feedback/tool-matcher";
+import { resolveToolContext, contextToAgentPayload } from "@/lib/admin-feedback/context-resolver";
+import { ingestAdminFeedbackLearning } from "@/lib/ai/services/agent-learning-service";
 
 export type ActionToolsOptions = {
   onTrace?: (trace: ToolTracePayload) => void;
@@ -1819,6 +1825,208 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
           response: responseOut,
         });
         return responseOut;
+      }),
+    }),
+
+    // -------------------------------------------------------------------------
+    // TIER 1 — Feedback / bug / feature request submission
+    // -------------------------------------------------------------------------
+
+    submitFeedback: tool({
+      description:
+        "Submit a bug report or feature request on behalf of the user — identical to " +
+        "submitting the feedback form in the app. Use when the user says 'report a bug', " +
+        "'something is broken', 'submit a feature request', 'I have a suggestion', " +
+        "'can you log this issue', or describes a problem or improvement idea they want tracked. " +
+        "Always show a preview and ask for confirmation before submitting.",
+      inputSchema: z.object({
+        type: z
+          .enum(["bug", "feature_request"])
+          .describe("'bug' for broken behaviour, 'feature_request' for new functionality or improvements"),
+        title: z
+          .string()
+          .optional()
+          .describe("Short title — auto-generated from description if omitted"),
+        description: z
+          .string()
+          .describe("Full description of the bug or feature request — be as specific as possible"),
+        severity: z
+          .enum(["low", "medium", "high"])
+          .default("medium")
+          .describe("Impact level: 'low' = minor inconvenience, 'medium' = workflow blocked, 'high' = data loss or major blocker"),
+        projectId: z
+          .number()
+          .optional()
+          .describe("Project ID if the issue is specific to one project"),
+        pagePath: z
+          .string()
+          .optional()
+          .describe("The page or section where the issue occurs, e.g. '/budget' or 'Commitments'"),
+        confirmed: z.boolean().default(false),
+        idempotencyKey: z.string().optional(),
+      }),
+      needsApproval: needsConfirmedWriteApproval,
+      execute: withWriteTrace("submitFeedback", options, async (input) => {
+        const { type, title, description, severity, projectId, pagePath, confirmed } = input;
+
+        const requestType = type === "feature_request" ? "change_request" : "bug";
+        const resolvedPath = pagePath ?? "/ai-assistant";
+        const resolvedTitle = buildAdminFeedbackTitle({
+          providedTitle: title,
+          requestType,
+          comment: description,
+        });
+
+        if (!confirmed) {
+          return {
+            action: "preview",
+            message: "Here's the feedback I'll submit on your behalf. Reply **confirm** to proceed.",
+            preview: {
+              type: type === "feature_request" ? "Feature Request" : "Bug Report",
+              title: resolvedTitle,
+              description,
+              severity,
+              pagePath: resolvedPath,
+              projectId: projectId ?? null,
+            },
+          };
+        }
+
+        const idempotencyKey = resolveIdempotencyKey("submitFeedback", input);
+        const replay = await getReplayResponse("submitFeedback", idempotencyKey);
+        if (replay) return replay;
+
+        const supabaseLocal = createServiceClient();
+        const feedbackId = crypto.randomUUID();
+
+        const { error: insertError } = await supabaseLocal
+          .from("admin_feedback_items")
+          .insert({
+            id: feedbackId,
+            created_by: userId,
+            title: resolvedTitle,
+            comment: description,
+            page_url: resolvedPath,
+            page_path: resolvedPath,
+            page_title: null,
+            request_type: requestType,
+            severity,
+            status: "open",
+            target_selector: "ai-assistant-chat",
+            target_id: null,
+            target_tag: null,
+            target_text: null,
+            dom_path: null,
+            target_rect: null,
+            screenshot_path: null,
+            screenshot_url: null,
+            project_id: projectId ?? null,
+            metadata: { source: "ai_assistant", submitted_by_ai: true },
+          });
+
+        if (insertError) {
+          const failure = { success: false, error: insertError.message };
+          await recordWriteAudit({
+            toolName: "submitFeedback",
+            idempotencyKey,
+            projectId: projectId ?? null,
+            input,
+            status: "error",
+            response: failure,
+          });
+          return failure;
+        }
+
+        // Run side effects: tool matching, GitHub issue, learning ingestion
+        let githubIssueNumber: number | null = null;
+        let githubIssueUrl: string | null = null;
+
+        try {
+          const matchedTool = await matchFeedbackToTool(
+            resolvedTitle,
+            description,
+            resolvedPath,
+            resolvedPath,
+          );
+
+          let toolContext = null;
+          if (matchedTool) {
+            const resolved = await resolveToolContext(matchedTool);
+            toolContext = resolved;
+            const agentPayload = resolved ? contextToAgentPayload(resolved) : null;
+            await supabaseLocal
+              .from("admin_feedback_items")
+              .update({
+                tool_id: matchedTool.id,
+                agent_context: agentPayload as Json,
+              })
+              .eq("id", feedbackId);
+          }
+
+          const githubIssue = await createGitHubIssue({
+            title: resolvedTitle,
+            comment: description,
+            pageUrl: resolvedPath,
+            pagePath: resolvedPath,
+            pageTitle: null,
+            requestType,
+            severity,
+            targetId: null,
+            targetSelector: "ai-assistant-chat",
+            targetTag: null,
+            targetText: null,
+            domPath: null,
+            screenshotUrl: null,
+            projectId: projectId ?? null,
+            metadata: { source: "ai_assistant", submitted_by_ai: true },
+            toolContext,
+          });
+
+          if (githubIssue) {
+            githubIssueNumber = githubIssue.number;
+            githubIssueUrl = githubIssue.url;
+            await supabaseLocal
+              .from("admin_feedback_items")
+              .update({
+                github_issue_number: githubIssue.number,
+                github_issue_url: githubIssue.url,
+                github_issue_state: githubIssue.state,
+                status: "submitted",
+              })
+              .eq("id", feedbackId);
+          }
+
+          await ingestAdminFeedbackLearning({
+            feedbackItemId: feedbackId,
+            title: resolvedTitle,
+            comment: description,
+            pagePath: resolvedPath,
+            projectId: projectId ?? null,
+            status: "candidate",
+          });
+        } catch {
+          // Side effects are non-fatal — the feedback record is already saved
+        }
+
+        const response = {
+          success: true,
+          message: githubIssueUrl
+            ? `${type === "feature_request" ? "Feature request" : "Bug report"} **"${resolvedTitle}"** submitted and GitHub issue [#${githubIssueNumber}](${githubIssueUrl}) created.`
+            : `${type === "feature_request" ? "Feature request" : "Bug report"} **"${resolvedTitle}"** submitted successfully.`,
+          feedbackId,
+          githubIssueNumber,
+          githubIssueUrl,
+          tip: "You can track this in the Admin Feedback inbox.",
+        };
+        await recordWriteAudit({
+          toolName: "submitFeedback",
+          idempotencyKey,
+          projectId: projectId ?? null,
+          input,
+          status: "success",
+          response,
+        });
+        return response;
       }),
     }),
 

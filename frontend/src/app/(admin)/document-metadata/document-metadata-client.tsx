@@ -104,13 +104,21 @@ function ProjectSelectEditor({
 }) {
   const isOpenRef = React.useRef(false);
 
+  const currentProjectId = item.project_id?.toString() ?? NO_PROJECT_VALUE;
+
   return (
     <Select
-      defaultValue={item.project ?? NO_PROJECT_VALUE}
+      defaultValue={currentProjectId}
       onOpenChange={(open) => { isOpenRef.current = open; }}
       onValueChange={(value) => {
-        const selected = allProjects.find((p) => p.name === value) ?? null;
-        const name = value === NO_PROJECT_VALUE ? "" : value;
+        if (value === NO_PROJECT_VALUE) {
+          onChange("");
+          void onProjectEdit(item, "", null).finally(() => onCancel());
+          return;
+        }
+        const projectId = Number(value);
+        const selected = allProjects.find((p) => p.id === projectId) ?? null;
+        const name = selected?.name ?? "";
         onChange(name);
         void onProjectEdit(item, name, selected?.id ?? null).finally(() => onCancel());
       }}
@@ -126,7 +134,7 @@ function ProjectSelectEditor({
       <SelectContent>
         <SelectItem value={NO_PROJECT_VALUE}>— None —</SelectItem>
         {allProjects.map((p) => (
-          <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>
+          <SelectItem key={p.id} value={p.id.toString()}>{p.name}</SelectItem>
         ))}
       </SelectContent>
     </Select>
@@ -374,6 +382,66 @@ function renderRowActions(
   );
 }
 
+// ── Card renderer ────────────────────────────────────────────────────────────
+
+function renderDocumentCard(item: DocumentMetadataItem, onClick: (item: DocumentMetadataItem) => void) {
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      className="w-full text-left cursor-pointer rounded-lg bg-card p-4 transition-colors hover:bg-muted/50 space-y-2 h-auto block"
+      onClick={() => onClick(item)}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <p className="text-sm font-medium leading-snug line-clamp-2 flex-1">
+          {item.title ?? "Untitled"}
+        </p>
+        {item.status && <StatusBadge status={item.status} />}
+      </div>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+        {item.source_system && <span>{item.source_system}</span>}
+        {item.date && (
+          <span>{new Date(item.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>
+        )}
+        {item.project && <span>{item.project}</span>}
+        {item.duration_minutes != null && (
+          <span>
+            {item.duration_minutes < 60
+              ? `${item.duration_minutes}m`
+              : `${Math.floor(item.duration_minutes / 60)}h${item.duration_minutes % 60 > 0 ? ` ${item.duration_minutes % 60}m` : ""}`}
+          </span>
+        )}
+      </div>
+      {item.summary && (
+        <p className="text-xs text-muted-foreground line-clamp-2">{item.summary}</p>
+      )}
+    </Button>
+  );
+}
+
+// ── List renderer ────────────────────────────────────────────────────────────
+
+function renderDocumentList(item: DocumentMetadataItem, onClick: (item: DocumentMetadataItem) => void) {
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      className="w-full text-left flex items-center justify-between rounded-md px-4 py-2.5 transition-colors hover:bg-muted/50 gap-4 h-auto"
+      onClick={() => onClick(item)}
+    >
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium truncate">{item.title ?? "Untitled"}</p>
+        <p className="text-xs text-muted-foreground truncate">
+          {[item.source_system, item.project, item.date ? new Date(item.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : null]
+            .filter(Boolean)
+            .join(" · ")}
+        </p>
+      </div>
+      {item.status && <StatusBadge status={item.status} />}
+    </Button>
+  );
+}
+
 // ── Filter helpers ────────────────────────────────────────────────────────────
 
 function applyFilters(
@@ -588,7 +656,7 @@ export function DocumentMetadataClient({
     router,
     defaults: {
       view: "table",
-      allowedViews: ["table", "card"],
+      allowedViews: ["table", "card", "list"],
       page: 1,
       perPage: 50,
       search: "",
@@ -644,9 +712,10 @@ export function DocumentMetadataClient({
     const direction = tableState.sortDirection;
     const col = tableColumns.find((c) => c.id === sortBy);
     if (!col?.sortValue) return filteredItems;
+    const sortFn = col.sortValue;
     return [...filteredItems].sort((a, b) => {
-      const va = col.sortValue!(a);
-      const vb = col.sortValue!(b);
+      const va = sortFn(a);
+      const vb = sortFn(b);
       if (va == null) return direction === "asc" ? -1 : 1;
       if (vb == null) return direction === "asc" ? 1 : -1;
       if (typeof va === "number" && typeof vb === "number")
@@ -813,6 +882,10 @@ export function DocumentMetadataClient({
         tabs={tabs}
         layout={{ fullBleedTable: true }}
         features={{ enableInlineEditing: true }}
+        views={{
+          card: (item) => renderDocumentCard(item, handleRowClick),
+          list: (item) => renderDocumentList(item, handleRowClick),
+        }}
         toolbar={{
           totalItems: tabItems.length,
           filteredItems: filteredItems.length,
