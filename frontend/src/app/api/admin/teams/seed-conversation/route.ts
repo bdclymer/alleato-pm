@@ -131,7 +131,7 @@ export async function POST(request: Request): Promise<Response> {
   // 1. Resolve Supabase user ID from email
   const { data: profile } = await db
     .from("user_profiles")
-    .select("id, display_name")
+    .select("id, full_name")
     .eq("email", email)
     .maybeSingle();
 
@@ -143,7 +143,7 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   const supabaseUserId = profile.id;
-  const displayName = profile.display_name ?? email.split("@")[0];
+  const displayName = profile.full_name ?? email.split("@")[0];
   const firstName = displayName.split(" ")[0];
 
   // 2. Resolve AAD Object ID
