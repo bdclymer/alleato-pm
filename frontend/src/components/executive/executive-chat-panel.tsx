@@ -376,29 +376,10 @@ export function ExecutiveChatPanel({ packet }: { packet: BrandonDailyUpdatePacke
           />
         </div>
       ) : (
-        /* No session — purposeful starter UI */
+        /* No session — input first, prompts below */
         <div className="flex flex-1 flex-col gap-3">
-          <p className="text-sm text-muted-foreground">
-            Ask a follow-up question or pressure-test a priority. This assistant is grounded in today&apos;s brief.
-          </p>
-
-          <div className="flex flex-col gap-1">
-            {STARTER_PROMPTS.map((prompt) => (
-              <Button
-                key={prompt}
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-auto justify-start whitespace-normal py-2 text-left text-sm leading-snug text-muted-foreground hover:text-foreground"
-                onClick={() => void handlePrompt(prompt)}
-              >
-                {prompt}
-              </Button>
-            ))}
-          </div>
-
-          {/* Minimal input */}
-          <div className="mt-auto flex items-end gap-2 rounded-xl border border-border bg-background p-3">
+          {/* Input always at top — visible without scrolling */}
+          <div className="shrink-0 flex items-end gap-2 rounded-xl border border-border bg-background p-3">
             <Textarea
               value={draftInput}
               onChange={(e) => setDraftInput(e.target.value)}
@@ -421,6 +402,25 @@ export function ExecutiveChatPanel({ packet }: { packet: BrandonDailyUpdatePacke
             >
               <ArrowUp className="h-4 w-4" />
             </Button>
+          </div>
+
+          <p className="text-xs text-muted-foreground">
+            Or start with a suggestion:
+          </p>
+
+          <div className="flex flex-col gap-1">
+            {STARTER_PROMPTS.map((prompt) => (
+              <Button
+                key={prompt}
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-auto justify-start whitespace-normal py-2 text-left text-sm leading-snug text-muted-foreground hover:text-foreground"
+                onClick={() => void handlePrompt(prompt)}
+              >
+                {prompt}
+              </Button>
+            ))}
           </div>
         </div>
       )}

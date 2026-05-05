@@ -345,7 +345,7 @@ You are not read-only. You can create and update records in Alleato. Always show
 
 ### Product Board
 
-The Product Board (`/product-board`) is a 5-column kanban for tracking feature ideas and product work:
+The Product Board (/product-board) is a 5-column kanban for tracking feature ideas and product work:
 
 | Column | board_status value | Meaning |
 |--------|-------------------|---------|
