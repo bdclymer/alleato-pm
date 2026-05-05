@@ -1,6 +1,7 @@
-import { Chat } from "chat";
+import { Chat, ThreadImpl, type SerializedThread } from "chat";
+import type { Json } from "@/types/database.types";
 import { createTeamsAdapter } from "@chat-adapter/teams";
-import { MemoryStateAdapter } from "@chat-adapter/state-memory";
+import { createPostgresState } from "@chat-adapter/state-pg";
 import { after } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import {
@@ -9,6 +10,10 @@ import {
   runPostResponseTasks,
 } from "@/lib/ai/bot-core";
 import type { Thread, Message } from "chat";
+
+// ---------------------------------------------------------------------------
+// Lazy singleton
+// ---------------------------------------------------------------------------
 
 let _chat: Chat | null = null;
 
@@ -19,6 +24,8 @@ export function getTeamsChat(): Chat {
   if (!appId) throw new Error("TEAMS_APP_ID is not set");
   const appPassword = process.env.TEAMS_APP_PASSWORD;
   if (!appPassword) throw new Error("TEAMS_APP_PASSWORD is not set");
+  const stateUrl = process.env.BOT_STATE_DATABASE_URL;
+  if (!stateUrl) throw new Error("BOT_STATE_DATABASE_URL is not set");
 
   const teamsAdapter = createTeamsAdapter({
     appId,
@@ -27,7 +34,7 @@ export function getTeamsChat(): Chat {
     appType: process.env.TEAMS_APP_TENANT_ID ? "SingleTenant" : "MultiTenant",
   });
 
-  const state = new MemoryStateAdapter();
+  const state = createPostgresState({ url: stateUrl, keyPrefix: "alleato-bot" });
 
   const chat = new Chat({
     adapters: { teams: teamsAdapter },
@@ -47,19 +54,107 @@ export function getTeamsChat(): Chat {
     await handleMessage(thread, message, "mention");
   });
 
+  // Register as singleton so ThreadImpl.fromJSON can use lazy adapter resolution
+  chat.registerSingleton();
+
   _chat = chat;
   return chat;
+}
+
+// ---------------------------------------------------------------------------
+// Proactive messaging — post to a user's DM or last channel thread
+// ---------------------------------------------------------------------------
+
+export async function sendProactiveMessage(
+  supabaseUserId: string,
+  text: string,
+  preferDm = true,
+): Promise<void> {
+  // Ensure singleton is registered for lazy ThreadImpl resolution
+  getTeamsChat();
+
+  const supabase = createServiceClient();
+
+  const { data: ref } = await supabase
+    .from("teams_conversation_refs")
+    .select("thread_json")
+    .eq("supabase_user_id", supabaseUserId)
+    .eq("is_dm", preferDm)
+    .maybeSingle();
+
+  const threadJson = ref?.thread_json ?? (
+    // Fall back to whichever ref exists (DM vs channel)
+    (await supabase
+      .from("teams_conversation_refs")
+      .select("thread_json")
+      .eq("supabase_user_id", supabaseUserId)
+      .maybeSingle()
+    ).data?.thread_json
+  );
+
+  if (!threadJson) {
+    throw new Error(`No Teams conversation ref found for user ${supabaseUserId}`);
+  }
+
+  // Lazy resolution: uses Chat.getSingleton() to find the adapter
+  const thread = ThreadImpl.fromJSON(threadJson as unknown as SerializedThread);
+  await thread.post(text);
+}
+
+// ---------------------------------------------------------------------------
+// Core message handler
+// ---------------------------------------------------------------------------
+
+const TEAMS_MAX_CHARS = 25_000;
+
+function chunkText(text: string): string[] {
+  if (text.length <= TEAMS_MAX_CHARS) return [text];
+  const chunks: string[] = [];
+  let remaining = text;
+  while (remaining.length > 0) {
+    // Break at last newline within the limit to avoid mid-sentence splits
+    const slice = remaining.slice(0, TEAMS_MAX_CHARS);
+    const breakAt = slice.lastIndexOf("\n");
+    const end = breakAt > TEAMS_MAX_CHARS * 0.5 ? breakAt : TEAMS_MAX_CHARS;
+    chunks.push(remaining.slice(0, end).trim());
+    remaining = remaining.slice(end).trim();
+  }
+  return chunks;
+}
+
+async function storeConversationRef(
+  supabaseUserId: string,
+  thread: Thread,
+  isDm: boolean,
+): Promise<void> {
+  try {
+    const supabase = createServiceClient();
+    await supabase.from("teams_conversation_refs").upsert(
+      {
+        supabase_user_id: supabaseUserId,
+        thread_json: thread.toJSON() as unknown as Json,
+        is_dm: isDm,
+        last_seen_at: new Date().toISOString(),
+      },
+      { onConflict: "supabase_user_id,is_dm" },
+    );
+  } catch (err) {
+    console.error("[teams-bot] failed to store conversation ref", {
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
 }
 
 async function handleMessage(
   thread: Thread,
   message: Message,
-  _source: "mention" | "dm",
+  source: "mention" | "dm",
 ): Promise<void> {
   try {
     const teamsUserId = message.author.userId;
     const displayName = message.author.fullName;
     const messageText = message.text.trim();
+    const isDm = source === "dm";
 
     const supabase = createServiceClient();
 
@@ -88,16 +183,14 @@ async function handleMessage(
 
         if (userRecord) {
           supabaseUserId = userRecord.id;
-          const { error: insertMappingError } = await supabase.from("bot_user_mappings").insert({
+          const { error: insertErr } = await supabase.from("bot_user_mappings").insert({
             platform: "teams",
             platform_user_id: teamsUserId,
             supabase_user_id: supabaseUserId,
             display_name: displayName || null,
           });
-          if (insertMappingError) {
-            console.error("[teams-bot] failed to auto-create bot_user_mappings", {
-              error: insertMappingError.message, teamsUserId,
-            });
+          if (insertErr) {
+            console.error("[teams-bot] auto-link insert failed", { error: insertErr.message });
           }
         }
       }
@@ -118,6 +211,14 @@ async function handleMessage(
       );
       return;
     }
+
+    // Capture as const — supabaseUserId is non-null past the guard above
+    const userId = supabaseUserId;
+
+    // Store conversation ref for proactive messaging (fire-and-forget)
+    after(async () => {
+      await storeConversationRef(userId, thread, isDm);
+    });
 
     await thread.startTyping().catch(() => undefined);
 
@@ -151,10 +252,14 @@ async function handleMessage(
       },
     });
 
-    await thread.post(result.text);
+    // Send response, chunking if needed
+    const chunks = chunkText(result.text);
+    for (const chunk of chunks) {
+      await thread.post(chunk);
+    }
 
     after(async () => {
-      if (supabaseUserId) await runPostResponseTasks(sessionId, supabaseUserId);
+      await runPostResponseTasks(sessionId, userId);
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
@@ -162,9 +267,15 @@ async function handleMessage(
       error: msg,
       threadId: thread.id,
     });
-    await thread.post("❌ Something went wrong. Please try again in a moment.").catch(() => undefined);
+    await thread
+      .post("❌ Something went wrong. Please try again in a moment.")
+      .catch(() => undefined);
   }
 }
+
+// ---------------------------------------------------------------------------
+// /link <code> command
+// ---------------------------------------------------------------------------
 
 async function handleLinkCommand(
   thread: Thread,
@@ -205,6 +316,7 @@ async function handleLinkCommand(
     .from("teams_link_codes")
     .update({ used_at: new Date().toISOString() })
     .eq("code", code);
+
   if (markUsedError) {
     console.error("[teams-bot] failed to mark link code used", { code, error: markUsedError.message });
     await thread.post("❌ Something went wrong linking your account. Please try again.");
@@ -222,7 +334,10 @@ async function handleLinkCommand(
   );
 
   if (upsertError) {
-    console.error("[teams-bot] failed to create bot_user_mappings", { error: upsertError.message, teamsUserId });
+    console.error("[teams-bot] failed to create bot_user_mappings", {
+      error: upsertError.message,
+      teamsUserId,
+    });
     await thread.post("❌ Something went wrong linking your account. Please try again or contact support.");
     return;
   }

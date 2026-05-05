@@ -27474,6 +27474,41 @@ export type Database = {
           },
         ]
       }
+      teams_conversation_refs: {
+        Row: {
+          created_at: string
+          id: number
+          is_dm: boolean
+          last_seen_at: string
+          supabase_user_id: string
+          thread_json: Json
+        }
+        Insert: {
+          created_at?: string
+          id?: never
+          is_dm?: boolean
+          last_seen_at?: string
+          supabase_user_id: string
+          thread_json: Json
+        }
+        Update: {
+          created_at?: string
+          id?: never
+          is_dm?: boolean
+          last_seen_at?: string
+          supabase_user_id?: string
+          thread_json?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "teams_conversation_refs_supabase_user_id_fkey"
+            columns: ["supabase_user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       teams_link_codes: {
         Row: {
           code: string
