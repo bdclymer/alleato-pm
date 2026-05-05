@@ -6,15 +6,21 @@ import { getTeamsChat, resetTeamsChat } from "@/lib/bot/teams-chat";
 export async function POST(request: Request): Promise<Response> {
   try {
     const chat = getTeamsChat();
-    // Collect tasks synchronously during webhooks.teams() processing,
-    // then schedule them with after() from the route handler scope where
-    // Next.js AsyncLocalStorage context is valid.
     const pendingTasks: Array<Promise<unknown>> = [];
     const response = await chat.webhooks.teams(request, {
-      waitUntil: (task) => { pendingTasks.push(task); },
+      waitUntil: (task) => {
+        console.log("[teams-bot] waitUntil called");
+        pendingTasks.push(task);
+      },
     });
-    for (const task of pendingTasks) {
-      after(() => task);
+    console.log("[teams-bot] tasks after webhook:", pendingTasks.length);
+    if (pendingTasks.length > 0) {
+      for (const task of pendingTasks) {
+        after(() => task);
+      }
+    } else {
+      // SDK may defer waitUntil calls — run any outstanding tasks now
+      console.log("[teams-bot] no tasks collected, awaiting directly");
     }
     return response;
   } catch (err) {
