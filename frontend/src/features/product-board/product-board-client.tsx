@@ -6,7 +6,7 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-  closestCenter,
+  rectIntersection,
   type DragEndEvent,
   type DragStartEvent,
 } from "@dnd-kit/core";
@@ -40,9 +40,22 @@ export function ProductBoardClient({ readonly }: ProductBoardClientProps) {
   function handleDragEnd({ active, over }: DragEndEvent) {
     setActiveId(null);
     if (!over) return;
-    const newStatus = over.id as BoardStatus;
+
     const item = items.find((i) => i.id === active.id);
-    if (!item || item.board_status === newStatus) return;
+    if (!item) return;
+
+    // over.id is either a column status string or a card id — resolve both
+    let newStatus: BoardStatus;
+    if ((BOARD_STATUSES as readonly string[]).includes(over.id as string)) {
+      newStatus = over.id as BoardStatus;
+    } else {
+      // dropped onto a card — use that card's column
+      const overItem = items.find((i) => i.id === over.id);
+      if (!overItem) return;
+      newStatus = overItem.board_status;
+    }
+
+    if (item.board_status === newStatus) return;
     updateStatus(item.id, newStatus);
   }
 
@@ -76,7 +89,7 @@ export function ProductBoardClient({ readonly }: ProductBoardClientProps) {
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={closestCenter}
+      collisionDetection={rectIntersection}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
