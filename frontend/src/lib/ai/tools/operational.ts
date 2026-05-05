@@ -2546,7 +2546,12 @@ async function searchDocumentChunksByCategory({
 
     if (error) {
       const message = (error as { message: string }).message;
-      if (message.includes("structure of query does not match function result type")) {
+      const isTimeout = message.includes("canceling statement due to statement timeout") ||
+        message.includes("statement timeout");
+      if (
+        message.includes("structure of query does not match function result type") ||
+        isTimeout
+      ) {
         return searchDocumentChunksByCategoryFallback({
           supabase,
           query,
@@ -2555,7 +2560,9 @@ async function searchDocumentChunksByCategory({
           sourceLabel,
           scope,
           filterProjectId,
-          rpcError: message,
+          rpcError: isTimeout
+            ? `vector search timed out — returning keyword-matched results instead`
+            : message,
         });
       }
 
