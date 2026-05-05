@@ -3,6 +3,7 @@ import type { Json } from "@/types/database.types";
 import { createTeamsAdapter } from "@chat-adapter/teams";
 import { createPostgresState } from "@chat-adapter/state-pg";
 import { after } from "next/server";
+import pg from "pg";
 import { createServiceClient } from "@/lib/supabase/service";
 import {
   generateBotResponse,
@@ -34,12 +35,14 @@ export function getTeamsChat(): Chat {
     appType: process.env.TEAMS_APP_TENANT_ID ? "SingleTenant" : "MultiTenant",
   });
 
-  // Append sslmode=require if not already present — pg won't enable SSL
-  // automatically and Supabase pooler requires it.
-  const stateUrlWithSsl = stateUrl.includes("sslmode")
-    ? stateUrl
-    : `${stateUrl}?sslmode=require`;
-  const state = createPostgresState({ url: stateUrlWithSsl, keyPrefix: "alleato-bot" });
+  // Build the pg pool manually so we can set ssl.rejectUnauthorized=false.
+  // The Supabase pooler uses a certificate chain that pg rejects by default,
+  // causing "self-signed certificate in certificate chain" errors at runtime.
+  const pgPool = new pg.Pool({
+    connectionString: stateUrl,
+    ssl: { rejectUnauthorized: false },
+  });
+  const state = createPostgresState({ client: pgPool, keyPrefix: "alleato-bot" });
 
   const chat = new Chat({
     adapters: { teams: teamsAdapter },
