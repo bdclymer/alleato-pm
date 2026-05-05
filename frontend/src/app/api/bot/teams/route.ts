@@ -1,6 +1,5 @@
 export const dynamic = "force-dynamic";
 
-import { after } from "next/server";
 import { getTeamsChat, resetTeamsChat } from "@/lib/bot/teams-chat";
 
 export async function POST(request: Request): Promise<Response> {
@@ -14,14 +13,12 @@ export async function POST(request: Request): Promise<Response> {
       },
     });
     console.log("[teams-bot] tasks after webhook:", pendingTasks.length);
-    if (pendingTasks.length > 0) {
-      for (const task of pendingTasks) {
-        after(() => task);
-      }
-    } else {
-      // SDK may defer waitUntil calls — run any outstanding tasks now
-      console.log("[teams-bot] no tasks collected, awaiting directly");
-    }
+    // Await tasks directly so they complete within the request lifecycle.
+    // Teams bot responses are sent as outbound proactive messages (not as
+    // the HTTP reply), so blocking here doesn't delay the 200 ACK to Teams
+    // for simple responses. For long AI queries Teams may timeout the webhook
+    // but the bot will still send the reply proactively.
+    await Promise.allSettled(pendingTasks);
     return response;
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
