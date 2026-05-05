@@ -34,7 +34,12 @@ export function getTeamsChat(): Chat {
     appType: process.env.TEAMS_APP_TENANT_ID ? "SingleTenant" : "MultiTenant",
   });
 
-  const state = createPostgresState({ url: stateUrl, keyPrefix: "alleato-bot" });
+  // Append sslmode=require if not already present — pg won't enable SSL
+  // automatically and Supabase pooler requires it.
+  const stateUrlWithSsl = stateUrl.includes("sslmode")
+    ? stateUrl
+    : `${stateUrl}?sslmode=require`;
+  const state = createPostgresState({ url: stateUrlWithSsl, keyPrefix: "alleato-bot" });
 
   const chat = new Chat({
     adapters: { teams: teamsAdapter },
@@ -150,11 +155,24 @@ async function handleMessage(
   message: Message,
   source: "mention" | "dm",
 ): Promise<void> {
+  console.log("[teams-bot] handleMessage called", {
+    source,
+    threadId: thread.id,
+    userId: message.author.userId,
+    textPreview: message.text.trim().slice(0, 80),
+  });
   try {
     const teamsUserId = message.author.userId;
     const displayName = message.author.fullName;
     const messageText = message.text.trim();
     const isDm = source === "dm";
+
+    // Ping test — bypasses all DB/AI to confirm basic Teams messaging works
+    if (messageText.toLowerCase() === "ping") {
+      console.log("[teams-bot] ping received, sending pong");
+      await thread.post("pong 🏓");
+      return;
+    }
 
     const supabase = createServiceClient();
 
