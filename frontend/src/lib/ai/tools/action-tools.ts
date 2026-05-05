@@ -17,6 +17,7 @@ import { createGitHubIssue } from "@/lib/admin-feedback/github";
 import { matchFeedbackToTool } from "@/lib/admin-feedback/tool-matcher";
 import { resolveToolContext, contextToAgentPayload } from "@/lib/admin-feedback/context-resolver";
 import { ingestAdminFeedbackLearning } from "@/lib/ai/services/agent-learning-service";
+import { sendProactiveMessage } from "@/lib/bot/teams-chat";
 
 export type ActionToolsOptions = {
   onTrace?: (trace: ToolTracePayload) => void;
@@ -2022,6 +2023,137 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
           toolName: "submitFeedback",
           idempotencyKey,
           projectId: projectId ?? null,
+          input,
+          status: "success",
+          response,
+        });
+        return response;
+      }),
+    }),
+
+    // -------------------------------------------------------------------------
+    // TIER 1 — Send Teams message
+    // -------------------------------------------------------------------------
+
+    sendTeamsMessage: tool({
+      description:
+        "Send a direct Teams message to a person via the Archon bot. Use when the user says " +
+        "'send [person] a Teams message', 'message [person] on Teams', 'follow up with [person] about [topic]', " +
+        "'ping [person]', or describes wanting to communicate with a team member via Teams. " +
+        "Look up the person by name first, then preview the message before sending. " +
+        "The recipient must have linked their Alleato account to Teams (messaged the Archon bot before).",
+      inputSchema: z.object({
+        recipientName: z.string().describe("Full name or first name of the person to message"),
+        recipientEmail: z.string().optional().describe("Email address if known — helps with exact lookup"),
+        message: z.string().describe("The message text to send — write it as if you are sending it directly"),
+        confirmed: z.boolean().default(false).describe("Set to true only after user confirms the preview"),
+        idempotencyKey: z.string().optional(),
+      }),
+      needsApproval: needsConfirmedWriteApproval,
+      execute: withWriteTrace("sendTeamsMessage", options, async (input) => {
+        const { recipientName, recipientEmail, message, confirmed } = input;
+
+        // Resolve person → user_profiles ID
+        const query = supabase
+          .from("people")
+          .select("id, first_name, last_name, email")
+          .limit(5);
+
+        if (recipientEmail) {
+          query.ilike("email", recipientEmail);
+        } else {
+          // Try first+last split
+          const parts = recipientName.trim().split(/\s+/);
+          if (parts.length >= 2) {
+            query.ilike("first_name", `%${parts[0]}%`).ilike("last_name", `%${parts[parts.length - 1]}%`);
+          } else {
+            query.or(`first_name.ilike.%${parts[0]}%,last_name.ilike.%${parts[0]}%`);
+          }
+        }
+
+        const { data: people, error: peopleError } = await query;
+
+        if (peopleError) {
+          return { success: false, error: `Failed to look up recipient: ${peopleError.message}` };
+        }
+
+        if (!people || people.length === 0) {
+          return {
+            success: false,
+            error: `No person found matching "${recipientName}". Check the name and try again.`,
+          };
+        }
+
+        // Match to a Supabase user via email
+        const emails = people.map((p) => p.email).filter(Boolean) as string[];
+        const { data: userProfiles } = await supabase
+          .from("user_profiles")
+          .select("id, email")
+          .in("email", emails)
+          .limit(5);
+
+        const userProfileMap = new Map((userProfiles ?? []).map((u) => [u.email, u.id]));
+        const matchedPerson = people.find((p) => p.email && userProfileMap.has(p.email));
+        const supabaseUserId = matchedPerson?.email ? userProfileMap.get(matchedPerson.email) ?? null : null;
+
+        if (!supabaseUserId) {
+          return {
+            success: false,
+            error:
+              `Found ${people[0].first_name} ${people[0].last_name} in the directory but they don't have an Alleato login. ` +
+              "They need an account and must have messaged the Archon bot in Teams to receive messages.",
+          };
+        }
+
+        // Check Teams conversation ref exists
+        const { data: ref } = await supabase
+          .from("teams_conversation_refs")
+          .select("supabase_user_id")
+          .eq("supabase_user_id", supabaseUserId)
+          .maybeSingle();
+
+        if (!ref) {
+          const name = [matchedPerson?.first_name, matchedPerson?.last_name].filter(Boolean).join(" ");
+          return {
+            success: false,
+            error:
+              `${name} hasn't linked their Teams account yet — they need to message the Archon bot in Teams at least once before they can receive proactive messages.`,
+          };
+        }
+
+        const recipientFullName = [matchedPerson?.first_name, matchedPerson?.last_name]
+          .filter(Boolean)
+          .join(" ");
+
+        if (!confirmed) {
+          return {
+            action: "preview",
+            message: `I'll send this Teams message to **${recipientFullName}**. Reply **confirm** to send.`,
+            preview: {
+              recipient: recipientFullName,
+              recipientEmail: matchedPerson?.email,
+              platform: "Microsoft Teams",
+              message,
+            },
+          };
+        }
+
+        const idempotencyKey = resolveIdempotencyKey("sendTeamsMessage", input);
+        const replay = await getReplayResponse("sendTeamsMessage", idempotencyKey);
+        if (replay) return replay;
+
+        await sendProactiveMessage(supabaseUserId, message);
+
+        const response = {
+          success: true,
+          message: `Teams message sent to **${recipientFullName}**.`,
+          recipient: recipientFullName,
+          recipientEmail: matchedPerson?.email,
+        };
+        await recordWriteAudit({
+          toolName: "sendTeamsMessage",
+          idempotencyKey,
+          projectId: null,
           input,
           status: "success",
           response,

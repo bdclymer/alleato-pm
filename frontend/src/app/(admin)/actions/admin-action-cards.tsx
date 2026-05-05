@@ -25,6 +25,7 @@ import {
   Flag,
   FileText,
   ClipboardList,
+  MessageSquare,
 } from "lucide-react";
 
 // ── Status badge ──────────────────────────────────────────────────────────────
@@ -542,11 +543,52 @@ function ProgressReportDraftsCard() {
   );
 }
 
+// ── Send executive brief to Teams ────────────────────────────────────────────
+
+function SendBriefToTeamsCard() {
+  const [status, setStatus] = React.useState<ActionStatus>("idle");
+  const [message, setMessage] = React.useState("");
+
+  const run = async () => {
+    setStatus("running");
+    setMessage("Generating brief and sending to Teams…");
+    try {
+      const data = await apiFetch<{ recipientName?: string; itemCount?: number }>(
+        "/api/executive/daily-brief/send-teams",
+        { method: "POST" },
+      );
+      setStatus("success");
+      setMessage(
+        `Sent to ${data.recipientName ?? "recipient"} — ${data.itemCount ?? 0} item${(data.itemCount ?? 0) === 1 ? "" : "s"} in the brief.`,
+      );
+    } catch (e) {
+      setStatus("error");
+      setMessage(e instanceof Error ? e.message : "Failed to send.");
+    }
+  };
+
+  return (
+    <ActionCard
+      title="Send Brief to Teams"
+      badge="Teams"
+      icon={MessageSquare}
+      description="Deliver today's executive operating brief as a conversational Teams message via the Archon bot. Uses the cached brief if already generated today."
+    >
+      <Button size="sm" onClick={run} disabled={status === "running"} className="w-full">
+        {status === "running" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <MessageSquare className="h-3.5 w-3.5" />}
+        Send Now
+      </Button>
+      <StatusBadge status={status} message={message} />
+    </ActionCard>
+  );
+}
+
 // ── Main export ───────────────────────────────────────────────────────────────
 
 export function AdminActionCards() {
   return (
     <>
+      <SendBriefToTeamsCard />
       <RegenerateBriefCard />
       <ExtractBrandonTasksCard />
       <AccountingSyncCard />
