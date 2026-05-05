@@ -16,6 +16,7 @@ import {
   MorphingDialogDescription,
   MorphingDialogClose,
 } from "@/components/motion/morphing-dialog";
+import { toast } from "sonner";
 import { apiFetch } from "@/lib/api-client";
 import { createClient } from "@/lib/supabase/client";
 import { BOARD_STATUSES, BOARD_STATUS_LABELS, type BoardStatus } from "@/lib/admin-feedback/constants";
@@ -102,7 +103,7 @@ export function BoardItemDialog({ item }: BoardItemDialogProps) {
 
   // Editable state
   const [title, setTitle] = useState(item.title);
-  const [description, setDescription] = useState(item.comment);
+  const [description, setDescription] = useState(item.comment ?? "");
   const [status, setStatus] = useState<BoardStatus>(item.board_status);
   const [severity, setSeverity] = useState(item.severity ?? "medium");
   const [assigneeId, setAssigneeId] = useState<string | null>(item.assignee_id);
@@ -138,7 +139,8 @@ export function BoardItemDialog({ item }: BoardItemDialogProps) {
   const savedDueDate = useRef(dueDate);
 
   const save = useCallback(
-    (patch: Parameters<typeof updateItem.mutate>[0]) => updateItem.mutate(patch),
+    (patch: Parameters<typeof updateItem.mutate>[0]) =>
+      updateItem.mutate(patch, { onError: (e) => toast.error(`Save failed: ${e.message}`) }),
     [updateItem]
   );
 
@@ -209,8 +211,8 @@ export function BoardItemDialog({ item }: BoardItemDialogProps) {
       const url = await uploadBoardImage(file);
       setCoverUrl(url);
       save({ screenshot_url: url });
-    } catch {
-      // silent — browser will show native error; file was rejected by server
+    } catch (e) {
+      toast.error(`Cover upload failed: ${e instanceof Error ? e.message : "Unknown error"}`);
     } finally {
       setCoverUploading(false);
       if (coverFileRef.current) coverFileRef.current.value = "";
@@ -224,8 +226,8 @@ export function BoardItemDialog({ item }: BoardItemDialogProps) {
     try {
       const url = await uploadBoardImage(file);
       setCommentImageUrl(url);
-    } catch {
-      // silent
+    } catch (e) {
+      toast.error(`Image upload failed: ${e instanceof Error ? e.message : "Unknown error"}`);
     } finally {
       setCommentImageUploading(false);
       if (commentFileRef.current) commentFileRef.current.value = "";
@@ -240,11 +242,11 @@ export function BoardItemDialog({ item }: BoardItemDialogProps) {
       const url = await uploadBoardImage(file);
       const insertion = `\n![image](${url})\n`;
       let next = "";
-      setDescription((prev) => { next = prev + insertion; return next; });
+      setDescription((prev) => { next = (prev ?? "") + insertion; return next; });
       save({ comment: next });
       savedDescription.current = next;
-    } catch {
-      // silent
+    } catch (e) {
+      toast.error(`Image upload failed: ${e instanceof Error ? e.message : "Unknown error"}`);
     } finally {
       setDescImageUploading(false);
       if (descFileRef.current) descFileRef.current.value = "";
@@ -262,11 +264,11 @@ export function BoardItemDialog({ item }: BoardItemDialogProps) {
       const url = await uploadBoardImage(file);
       const insertion = `\n![image](${url})\n`;
       let next = "";
-      setDescription((prev) => { next = prev + insertion; return next; });
+      setDescription((prev) => { next = (prev ?? "") + insertion; return next; });
       save({ comment: next });
       savedDescription.current = next;
-    } catch {
-      // silent
+    } catch (e) {
+      toast.error(`Image upload failed: ${e instanceof Error ? e.message : "Unknown error"}`);
     } finally {
       setDescImageUploading(false);
     }
@@ -274,7 +276,10 @@ export function BoardItemDialog({ item }: BoardItemDialogProps) {
 
   function handlePostComment() {
     if (!commentText.trim() && !commentImageUrl) return;
-    addComment.mutate({ body: commentText.trim() || " ", screenshot_url: commentImageUrl });
+    addComment.mutate(
+      { body: commentText.trim() || " ", screenshot_url: commentImageUrl },
+      { onError: (e) => toast.error(`Comment failed: ${e.message}`) }
+    );
     setCommentText("");
     setCommentImageUrl(null);
   }
