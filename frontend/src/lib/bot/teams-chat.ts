@@ -175,11 +175,17 @@ async function handleLinkCommand(
 ): Promise<void> {
   const supabase = createServiceClient();
 
-  const { data: linkCode } = await supabase
+  const { data: linkCode, error: lookupError } = await supabase
     .from("teams_link_codes")
     .select("user_id, expires_at, used_at")
     .eq("code", code)
     .maybeSingle();
+
+  if (lookupError) {
+    console.error("[teams-bot] failed to look up link code", { code, error: lookupError.message });
+    await thread.post("❌ Something went wrong verifying your code. Please try again.");
+    return;
+  }
 
   if (!linkCode) {
     await thread.post("❌ That code is invalid. Please generate a new one in **Settings → Integrations → Microsoft Teams**.");
