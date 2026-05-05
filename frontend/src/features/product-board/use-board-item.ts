@@ -46,10 +46,10 @@ export function useBoardItemComments(itemId: string) {
 export function useAddComment(itemId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (body: string) =>
+    mutationFn: ({ body, screenshot_url }: { body: string; screenshot_url?: string | null }) =>
       apiFetch(`/api/admin/feedback/board/${itemId}/comments`, {
         method: "POST",
-        body: JSON.stringify({ body }),
+        body: JSON.stringify({ body, screenshot_url: screenshot_url ?? null }),
       }),
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: ["board-item-comments", itemId] }),

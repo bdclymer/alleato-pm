@@ -4,7 +4,7 @@ import { useState, useRef, useCallback, useEffect, useId } from "react";
 import { formatDistanceToNow, isPast, differenceInDays } from "date-fns";
 import {
   AlertTriangle, Zap, Minus, Link2, Plus, Send, X, Check,
-  ArrowUpRight, ThumbsUp, Trash2, Tag, Calendar, UserCircle, ImageIcon,
+  ArrowUpRight, ThumbsUp, Trash2, Tag, Calendar, UserCircle, ImageIcon, Paperclip, Loader2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
@@ -16,6 +16,7 @@ import {
   MorphingDialogDescription,
   MorphingDialogClose,
 } from "@/components/motion/morphing-dialog";
+import { apiFetch } from "@/lib/api-client";
 import { createClient } from "@/lib/supabase/client";
 import { BOARD_STATUSES, BOARD_STATUS_LABELS, type BoardStatus } from "@/lib/admin-feedback/constants";
 import {
@@ -68,6 +69,16 @@ function SidebarHeading({ children }: { children: React.ReactNode }) {
   return <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{children}</p>;
 }
 
+async function uploadBoardImage(file: File): Promise<string> {
+  const form = new FormData();
+  form.append("file", file);
+  const { url } = await apiFetch<{ url: string }>("/api/admin/feedback/board/upload", {
+    method: "POST",
+    body: form,
+  });
+  return url;
+}
+
 // ── Main dialog ───────────────────────────────────────────────────────────────
 
 interface BoardItemDialogProps {
@@ -99,7 +110,14 @@ export function BoardItemDialog({ item }: BoardItemDialogProps) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [showAssigneePicker, setShowAssigneePicker] = useState(false);
   const [coverUrl, setCoverUrl] = useState<string>(item.screenshot_url ?? "");
-  const [showCoverInput, setShowCoverInput] = useState(false);
+  const [coverUploading, setCoverUploading] = useState(false);
+  const [commentImageUrl, setCommentImageUrl] = useState<string | null>(null);
+  const [commentImageUploading, setCommentImageUploading] = useState(false);
+  const [descImageUploading, setDescImageUploading] = useState(false);
+
+  const coverFileRef = useRef<HTMLInputElement>(null);
+  const commentFileRef = useRef<HTMLInputElement>(null);
+  const descFileRef = useRef<HTMLInputElement>(null);
 
   const meta = (item.metadata as BoardItemMeta | null) ?? {};
   const [links, setLinks] = useState<BoardItemLink[]>(meta.links ?? []);
@@ -183,9 +201,82 @@ export function BoardItemDialog({ item }: BoardItemDialogProps) {
     save({ metadata: { links: next } });
   }
 
+  async function handleCoverUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCoverUploading(true);
+    try {
+      const url = await uploadBoardImage(file);
+      setCoverUrl(url);
+      save({ screenshot_url: url });
+    } catch {
+      // silent — browser will show native error; file was rejected by server
+    } finally {
+      setCoverUploading(false);
+      if (coverFileRef.current) coverFileRef.current.value = "";
+    }
+  }
+
+  async function handleCommentImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCommentImageUploading(true);
+    try {
+      const url = await uploadBoardImage(file);
+      setCommentImageUrl(url);
+    } catch {
+      // silent
+    } finally {
+      setCommentImageUploading(false);
+      if (commentFileRef.current) commentFileRef.current.value = "";
+    }
+  }
+
+  async function handleDescImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setDescImageUploading(true);
+    try {
+      const url = await uploadBoardImage(file);
+      const insertion = `\n![image](${url})\n`;
+      let next = "";
+      setDescription((prev) => { next = prev + insertion; return next; });
+      save({ comment: next });
+      savedDescription.current = next;
+    } catch {
+      // silent
+    } finally {
+      setDescImageUploading(false);
+      if (descFileRef.current) descFileRef.current.value = "";
+    }
+  }
+
+  async function handleDescPaste(e: React.ClipboardEvent<HTMLTextAreaElement>) {
+    const file = Array.from(e.clipboardData.items)
+      .find((item) => item.kind === "file" && item.type.startsWith("image/"))
+      ?.getAsFile();
+    if (!file) return;
+    e.preventDefault();
+    setDescImageUploading(true);
+    try {
+      const url = await uploadBoardImage(file);
+      const insertion = `\n![image](${url})\n`;
+      let next = "";
+      setDescription((prev) => { next = prev + insertion; return next; });
+      save({ comment: next });
+      savedDescription.current = next;
+    } catch {
+      // silent
+    } finally {
+      setDescImageUploading(false);
+    }
+  }
+
   function handlePostComment() {
-    if (!commentText.trim()) return;
-    addComment.mutate(commentText.trim()); setCommentText("");
+    if (!commentText.trim() && !commentImageUrl) return;
+    addComment.mutate({ body: commentText.trim() || " ", screenshot_url: commentImageUrl });
+    setCommentText("");
+    setCommentImageUrl(null);
   }
 
   const dueDateDate = dueDate ? new Date(dueDate) : null;
@@ -257,10 +348,22 @@ export function BoardItemDialog({ item }: BoardItemDialogProps) {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               onBlur={handleDescriptionBlur}
+              onPaste={handleDescPaste}
               rows={4}
               className="resize-none border-0 bg-transparent px-0 text-sm text-muted-foreground shadow-none outline-none focus-visible:ring-0 placeholder:text-muted-foreground/40"
               placeholder="Add a description — context, goals, acceptance criteria, design links…"
             />
+            <Input ref={descFileRef} type="file" accept="image/*" className="hidden" onChange={handleDescImageUpload} />
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={descImageUploading}
+              onClick={() => descFileRef.current?.click()}
+              className="mt-0.5 h-6 gap-1.5 px-1 text-xs text-muted-foreground/60 hover:text-muted-foreground"
+            >
+              {descImageUploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <ImageIcon className="h-3 w-3" />}
+              {descImageUploading ? "Uploading…" : "Attach image"}
+            </Button>
           </MorphingDialogDescription>
 
           {/* Activity */}
@@ -310,8 +413,39 @@ export function BoardItemDialog({ item }: BoardItemDialogProps) {
                 rows={2}
                 className="resize-none text-sm"
               />
-              <div className="flex justify-end">
-                <Button size="sm" disabled={!commentText.trim() || addComment.isPending} onClick={handlePostComment} className="gap-1.5">
+              {/* Pending image preview */}
+              {commentImageUrl && (
+                <div className="relative inline-block">
+                  <img src={commentImageUrl} alt="Attached" className="max-h-32 rounded-lg object-cover ring-1 ring-border" />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setCommentImageUrl(null)}
+                    className="absolute -right-2 -top-2 h-5 w-5 rounded-full bg-background shadow-xs ring-1 ring-border hover:bg-destructive hover:text-destructive-foreground"
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              )}
+              <Input ref={commentFileRef} type="file" accept="image/*" className="hidden" onChange={handleCommentImageUpload} />
+              <div className="flex items-center gap-1.5">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  disabled={commentImageUploading}
+                  onClick={() => commentFileRef.current?.click()}
+                  className="h-7 w-7 text-muted-foreground"
+                  title="Attach image"
+                >
+                  {commentImageUploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Paperclip className="h-3.5 w-3.5" />}
+                </Button>
+                <div className="flex-1" />
+                <Button
+                  size="sm"
+                  disabled={(!commentText.trim() && !commentImageUrl) || addComment.isPending}
+                  onClick={handlePostComment}
+                  className="gap-1.5"
+                >
                   <Send className="h-3.5 w-3.5" />
                   Post
                 </Button>
@@ -327,34 +461,28 @@ export function BoardItemDialog({ item }: BoardItemDialogProps) {
           {/* Cover image */}
           <div className="mb-5">
             <SidebarHeading>Cover</SidebarHeading>
-            <Button variant="ghost" size="sm" onClick={() => setShowCoverInput((v) => !v)}
+            <Input ref={coverFileRef} type="file" accept="image/*" className="hidden" onChange={handleCoverUpload} />
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={coverUploading}
+              onClick={() => coverFileRef.current?.click()}
               className="h-8 w-full justify-start gap-2 text-xs text-muted-foreground"
             >
-              <ImageIcon className="h-3.5 w-3.5" />
-              {coverUrl ? "Change cover" : "Add cover image"}
+              {coverUploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ImageIcon className="h-3.5 w-3.5" />}
+              {coverUploading ? "Uploading…" : coverUrl ? "Change cover" : "Upload cover image"}
             </Button>
-            <AnimatePresence>
-              {showCoverInput && (
-                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="mt-1.5 space-y-1.5 overflow-hidden">
-                  <Input
-                    autoFocus
-                    placeholder="Paste image URL…"
-                    value={coverUrl}
-                    onChange={(e) => setCoverUrl(e.target.value)}
-                    className="h-7 text-xs"
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") { save({ screenshot_url: coverUrl || null }); setShowCoverInput(false); }
-                      if (e.key === "Escape") { setCoverUrl(item.screenshot_url ?? ""); setShowCoverInput(false); }
-                    }}
-                  />
-                  <div className="flex gap-1">
-                    <Button size="sm" className="h-6 flex-1 text-xs" onClick={() => { save({ screenshot_url: coverUrl || null }); setShowCoverInput(false); }}>Set</Button>
-                    {coverUrl && <Button size="sm" variant="ghost" className="h-6 text-xs text-destructive" onClick={() => { setCoverUrl(""); save({ screenshot_url: null }); setShowCoverInput(false); }}>Remove</Button>}
-                    <Button size="sm" variant="ghost" className="h-6 text-xs" onClick={() => { setCoverUrl(item.screenshot_url ?? ""); setShowCoverInput(false); }}>Cancel</Button>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            {coverUrl && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => { setCoverUrl(""); save({ screenshot_url: null }); }}
+                className="h-7 w-full justify-start gap-1 px-2 text-xs text-destructive hover:text-destructive"
+              >
+                <X className="h-3 w-3" />
+                Remove cover
+              </Button>
+            )}
           </div>
 
           {/* Assignee */}
