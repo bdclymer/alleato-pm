@@ -56,11 +56,9 @@ export function ExecutiveSignalCard({
     <MorphingDialog transition={{ type: "spring", bounce: 0.05, duration: 0.28 }}>
       {/* ── Compact row trigger ── */}
       <MorphingDialogTrigger
-        className="w-full text-left"
-        style={{ borderRadius: "8px" }}
+        className="w-full rounded-lg px-2 py-3 text-left transition-colors hover:bg-muted/40"
       >
-        {/* eslint-disable-next-line design-system/require-info-alert */}
-        <div className="flex items-center gap-3 rounded-lg px-2 py-3 transition-colors hover:bg-muted/40 group">
+        <div className="flex items-center gap-3">
           <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", toneDotClass[tone])} />
           <span className="min-w-0 flex-1 truncate text-sm text-foreground group-hover:text-foreground">
             {item.title}
@@ -78,7 +76,7 @@ export function ExecutiveSignalCard({
       <MorphingDialogContainer>
         <MorphingDialogContent
           style={{ borderRadius: "16px" }}
-          className="pointer-events-auto relative flex w-full max-w-lg flex-col overflow-hidden bg-card shadow-xl"
+          className="pointer-events-auto relative flex w-full max-w-lg flex-col overflow-hidden bg-card shadow-sm"
         >
           <div className="space-y-4 p-6">
             {/* Tone + badges */}

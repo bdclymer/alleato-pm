@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react'
 
-import { AvatarStack } from '@/components/avatar-stack'
+import { AvatarStack } from '@/components/misc/avatar-stack'
 import { useRealtimePresenceRoom } from '@/hooks/use-realtime-presence-room'
 
 export const RealtimeAvatarStack = ({ roomName }: { roomName: string }) => {

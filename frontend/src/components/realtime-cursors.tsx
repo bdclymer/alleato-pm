@@ -1,6 +1,6 @@
 'use client'
 
-import { Cursor } from '@/components/cursor'
+import { Cursor } from '@/components/misc/cursor'
 import { useRealtimeCursors } from '@/hooks/use-realtime-cursors'
 
 const THROTTLE_MS = 50
