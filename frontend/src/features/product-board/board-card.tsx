@@ -83,10 +83,10 @@ export function BoardCard({ item, readonly }: BoardCardProps) {
           </MorphingDialogTrigger>
         </motion.div>
 
-        <MorphingDialogContainer>
+        <MorphingDialogContainer overlayClassName="bg-foreground/10 backdrop-blur-sm dark:bg-black/50">
           <MorphingDialogContent
             style={{ borderRadius: "20px" }}
-            className="relative w-full max-w-3xl bg-background overflow-hidden"
+            className="relative w-full max-w-5xl bg-background overflow-hidden mx-4"
           >
             {/* inline style for vh-based height — not in 8px grid token set */}
             <div style={{ maxHeight: "88vh", overflow: "hidden" }}>
