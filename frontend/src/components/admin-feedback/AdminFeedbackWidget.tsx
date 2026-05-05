@@ -142,7 +142,7 @@ function mapFeedbackTypeToRequestType(
   }
 
   if (feedbackType === "Wishlist") {
-    return "change_request";
+    return "feature_request";
   }
 
   return "question";

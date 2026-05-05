@@ -24,6 +24,6 @@ export function mapAskAlleatoTagToRequestType(
   tag: AskAlleatoFeedbackTag,
 ): AdminFeedbackRequestType {
   if (tag === "Bug") return "bug";
-  if (tag === "Idea") return "change_request";
+  if (tag === "Idea") return "feature_request";
   return "question";
 }
