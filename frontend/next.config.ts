@@ -64,9 +64,11 @@ const nextConfig: NextConfig = {
     turbo: {
       // Turbopack equivalent of the webpack pdfjs-dist alias below.
       // react-pdf's non-minified 5.x ESM entry redeclares webpack's internal export
-      // variable; the minified build avoids this. Turbopack uses exact module names.
+      // variable; the minified build avoids this.
+      // NOTE: Turbopack does not support absolute filesystem paths in resolveAlias —
+      // use a bare module specifier instead (pnpm hoists pdfjs-dist to the top level).
       resolveAlias: {
-        "pdfjs-dist": pdfjsBrowserEntry,
+        "pdfjs-dist": "pdfjs-dist/build/pdf.min.mjs",
       },
     },
   },

@@ -12,7 +12,6 @@ import { RootClientWidgets } from "./root-client-widgets";
 import { ChunkLoadErrorRecovery } from "@/components/providers/chunk-error-recovery";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import "./globals.css";
-import "swagger-ui-dist/swagger-ui.css";
 
 const inter = Inter({
   subsets: ["latin"],
