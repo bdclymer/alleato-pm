@@ -2,7 +2,7 @@ import { Chat, ThreadImpl, type SerializedThread } from "chat";
 import type { Json } from "@/types/database.types";
 import { createTeamsAdapter } from "@chat-adapter/teams";
 import { createPostgresState } from "@chat-adapter/state-pg";
-import { after } from "next/server";
+import { createMemoryState } from "@chat-adapter/state-memory";
 import pg from "pg";
 import { createServiceClient } from "@/lib/supabase/service";
 import {
@@ -29,8 +29,6 @@ export function getTeamsChat(): Chat {
   if (!appId) throw new Error("TEAMS_APP_ID is not set");
   const appPassword = process.env.TEAMS_APP_PASSWORD;
   if (!appPassword) throw new Error("TEAMS_APP_PASSWORD is not set");
-  const stateUrl = process.env.BOT_STATE_DATABASE_URL;
-  if (!stateUrl) throw new Error("BOT_STATE_DATABASE_URL is not set");
 
   const teamsAdapter = createTeamsAdapter({
     appId,
@@ -39,14 +37,16 @@ export function getTeamsChat(): Chat {
     appType: process.env.TEAMS_APP_TENANT_ID ? "SingleTenant" : "MultiTenant",
   });
 
-  // Build the pg pool manually so we can set ssl.rejectUnauthorized=false.
-  // The Supabase pooler uses a certificate chain that pg rejects by default,
-  // causing "self-signed certificate in certificate chain" errors at runtime.
-  const pgPool = new pg.Pool({
-    connectionString: stateUrl,
-    ssl: { rejectUnauthorized: false },
-  });
-  const state = createPostgresState({ client: pgPool, keyPrefix: "alleato-bot" });
+  // Use Postgres state if BOT_STATE_DATABASE_URL is configured, otherwise fall
+  // back to in-memory state. Memory state works for DM bots (no subscription
+  // features needed) and avoids Supabase pooler connection issues in Vercel.
+  const stateUrl = process.env.BOT_STATE_DATABASE_URL;
+  const state = stateUrl
+    ? createPostgresState({
+        client: new pg.Pool({ connectionString: stateUrl, ssl: { rejectUnauthorized: false } }),
+        keyPrefix: "alleato-bot",
+      })
+    : createMemoryState();
 
   const chat = new Chat({
     adapters: { teams: teamsAdapter },
