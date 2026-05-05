@@ -1,5 +1,6 @@
 import { nanoid } from "nanoid";
 
+import { sendProactiveTeamsDM } from "@/lib/bot/teams-proactive";
 import { createServiceClient } from "@/lib/supabase/service";
 
 type UserTarget = string | string[];
@@ -120,6 +121,15 @@ async function notifyUsers(
 
   if (error) {
     throw new Error(`Failed to create notifications (${kind}): ${error.message}`);
+  }
+
+  // 2. Teams DM fan-out (fire-and-forget — never blocks the main notification path)
+  for (const uid of users) {
+    sendProactiveTeamsDM(uid, `**${descriptor.title}**\n${descriptor.body}`)
+      .catch((err: unknown) => {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error("[notificationService] teams DM failed", { userId: uid, kind, error: msg });
+      });
   }
 }
 
