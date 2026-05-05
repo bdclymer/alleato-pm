@@ -3,6 +3,7 @@ import type { Json } from "@/types/database.types";
 import { createTeamsAdapter } from "@chat-adapter/teams";
 import { createPostgresState } from "@chat-adapter/state-pg";
 import { createMemoryState } from "@chat-adapter/state-memory";
+import { after } from "next/server";
 import pg from "pg";
 import { createServiceClient } from "@/lib/supabase/service";
 import {
