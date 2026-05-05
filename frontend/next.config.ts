@@ -29,7 +29,7 @@ const nextConfig: NextConfig = {
   experimental: {
     webpackMemoryOptimizations: true,
     serverSourceMaps: false,
-    // Prevent webpack from barrel-importing entire icon/component libraries.
+    // Prevent webpack/turbopack from barrel-importing entire icon/component libraries.
     // Without this, lucide-react (511 icons), @tabler/icons-react (3000+ icons),
     // and react-icons cause the webpack worker to OOM on Vercel's 8 GB build machines.
     optimizePackageImports: [
@@ -61,6 +61,14 @@ const nextConfig: NextConfig = {
       "@codemirror/theme-one-dark",
       "@liveblocks/client",
     ],
+    turbo: {
+      // Turbopack equivalent of the webpack pdfjs-dist alias below.
+      // react-pdf's non-minified 5.x ESM entry redeclares webpack's internal export
+      // variable; the minified build avoids this. Turbopack uses exact module names.
+      resolveAlias: {
+        "pdfjs-dist": pdfjsBrowserEntry,
+      },
+    },
   },
   serverExternalPackages: [
     // AI/ML packages — large module graphs, server-only, never in client bundles.
@@ -95,13 +103,10 @@ const nextConfig: NextConfig = {
     "@arizeai/openinference-instrumentation-openai",
   ],
   webpack: (config) => {
-    // Limit webpack worker parallelism to prevent OOM on Vercel's 8 GB build machines.
-    // Default is (cpuCount - 1) workers; at 2 cores that's already 1, but explicit cap
-    // prevents memory spikes when multiple heavy modules compile simultaneously.
-    config.parallelism = 1;
-
     // react-pdf imports bare `pdfjs-dist`, whose non-minified 5.x ESM entry redeclares
     // webpack's internal export variable and crashes the drawing viewer in dev.
+    // Production builds use Turbopack (--turbopack flag); this alias applies to local
+    // dev and any non-Turbopack builds. Turbopack equivalent: experimental.turbo.resolveAlias.
     config.resolve.alias = {
       ...config.resolve.alias,
       "pdfjs-dist$": pdfjsBrowserEntry,
