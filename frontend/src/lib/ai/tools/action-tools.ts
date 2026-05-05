@@ -1870,7 +1870,7 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
       execute: withWriteTrace("submitFeedback", options, async (input) => {
         const { type, title, description, severity, projectId, pagePath, confirmed } = input;
 
-        const requestType = type === "feature_request" ? "change_request" : "bug";
+        const requestType = type === "feature_request" ? "feature_request" : "bug";
         const resolvedPath = pagePath ?? "/ai-assistant";
         const resolvedTitle = buildAdminFeedbackTitle({
           providedTitle: title,
@@ -1911,6 +1911,7 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
             page_path: resolvedPath,
             page_title: null,
             request_type: requestType,
+            board_status: type === "feature_request" ? "submitted" : "submitted",
             severity,
             status: "open",
             target_selector: "ai-assistant-chat",
@@ -2017,12 +2018,124 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
           feedbackId,
           githubIssueNumber,
           githubIssueUrl,
-          tip: "You can track this in the Admin Feedback inbox.",
+          tip: type === "feature_request"
+            ? "You can track this on the Product Board at /product-board."
+            : "You can track this in the Admin Feedback inbox.",
         };
         await recordWriteAudit({
           toolName: "submitFeedback",
           idempotencyKey,
           projectId: projectId ?? null,
+          input,
+          status: "success",
+          response,
+        });
+        return response;
+      }),
+    }),
+
+    // -------------------------------------------------------------------------
+    // TIER 1 — Add item to Product Board
+    // -------------------------------------------------------------------------
+
+    addBoardItem: tool({
+      description:
+        "Add a feature idea, initiative, or product improvement directly to the Product Board " +
+        "kanban. Use when the user says 'add this to the board', 'put this on the product board', " +
+        "'log this as a feature idea', 'add to planned', 'add to in progress', or wants to track " +
+        "a product idea with a specific status column. " +
+        "Always show a preview and ask for confirmation before writing.",
+      inputSchema: z.object({
+        title: z.string().describe("Short, clear title for the board card"),
+        description: z.string().describe("Full description — context, goals, acceptance criteria"),
+        board_status: z
+          .enum(["submitted", "in_review", "planned", "in_progress", "shipped"])
+          .default("submitted")
+          .describe(
+            "Which column to place the card in: " +
+            "'submitted' = new idea, 'in_review' = being evaluated, " +
+            "'planned' = confirmed for roadmap, 'in_progress' = actively being built, " +
+            "'shipped' = done"
+          ),
+        severity: z
+          .enum(["low", "medium", "high"])
+          .default("medium")
+          .describe("Priority: low / medium / high"),
+        confirmed: z.boolean().default(false),
+        idempotencyKey: z.string().optional(),
+      }),
+      needsApproval: needsConfirmedWriteApproval,
+      execute: withWriteTrace("addBoardItem", options, async (input) => {
+        const { title, description, board_status, severity, confirmed } = input;
+
+        if (!confirmed) {
+          return {
+            action: "preview",
+            message: "Here's the board card I'll create. Reply **confirm** to add it.",
+            preview: {
+              title,
+              description,
+              column: board_status,
+              priority: severity,
+              board: "/product-board",
+            },
+          };
+        }
+
+        const idempotencyKey = resolveIdempotencyKey("addBoardItem", input);
+        const replay = await getReplayResponse("addBoardItem", idempotencyKey);
+        if (replay) return replay;
+
+        const supabaseLocal = createServiceClient();
+        const itemId = crypto.randomUUID();
+
+        const { error } = await supabaseLocal.from("admin_feedback_items").insert({
+          id: itemId,
+          created_by: userId,
+          title,
+          comment: description,
+          page_url: "/ai-assistant",
+          page_path: "/ai-assistant",
+          page_title: "AI Assistant",
+          request_type: "feature_request",
+          board_status,
+          severity,
+          status: "open",
+          target_selector: "ai-assistant-chat",
+          target_id: null,
+          target_tag: null,
+          target_text: null,
+          dom_path: null,
+          target_rect: null,
+          screenshot_path: null,
+          screenshot_url: null,
+          project_id: null,
+          metadata: { source: "ai_assistant", submitted_by_ai: true },
+        });
+
+        if (error) {
+          const failure = { success: false, error: error.message };
+          await recordWriteAudit({
+            toolName: "addBoardItem",
+            idempotencyKey,
+            projectId: null,
+            input,
+            status: "error",
+            response: failure,
+          });
+          return failure;
+        }
+
+        const response = {
+          success: true,
+          message: `**"${title}"** added to the **${board_status.replace(/_/g, " ")}** column on the [Product Board](/product-board).`,
+          itemId,
+          board_status,
+        };
+        await recordWriteAudit({
+          toolName: "addBoardItem",
+          idempotencyKey,
+          projectId: null,
           input,
           status: "success",
           response,
