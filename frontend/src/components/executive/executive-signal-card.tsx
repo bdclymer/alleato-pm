@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowTopRightIcon } from "@radix-ui/react-icons";
+import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -58,16 +59,17 @@ export function ExecutiveSignalCard({
       <MorphingDialogTrigger
         className="w-full rounded-lg px-2 py-3 text-left transition-colors hover:bg-muted/40"
       >
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 group">
           <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", toneDotClass[tone])} />
-          <span className="min-w-0 flex-1 truncate text-sm text-foreground group-hover:text-foreground">
+          <span className="min-w-0 flex-1 truncate text-sm text-foreground">
             {item.title}
           </span>
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2 text-muted-foreground">
             <Badge variant="secondary" className="rounded-full text-xs hidden sm:inline-flex">
               {item.project}
             </Badge>
-            <span className="text-xs text-muted-foreground">{item.date}</span>
+            <span className="text-xs">{item.date}</span>
+            <ChevronRight className="h-3.5 w-3.5 opacity-40 transition-opacity group-hover:opacity-100" />
           </div>
         </div>
       </MorphingDialogTrigger>

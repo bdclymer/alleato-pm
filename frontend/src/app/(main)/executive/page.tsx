@@ -125,6 +125,18 @@ function getFinancialItems(items: BrandonBriefItem[]) {
   ).slice(0, 5);
 }
 
+function itemKey(item: BrandonBriefItem) {
+  return `${item.title}::${item.sourceId ?? item.sourceDetail}`;
+}
+
+function excludeAlreadyShown(
+  items: BrandonBriefItem[],
+  shown: BrandonBriefItem[],
+): BrandonBriefItem[] {
+  const shownKeys = new Set(shown.map(itemKey));
+  return items.filter((item) => !shownKeys.has(itemKey(item)));
+}
+
 function buildOperationalSignals(params: {
   liveItems: BrandonBriefItem[];
   staleFollowUps: ExecutiveBriefingFollowUp[];
@@ -484,7 +496,14 @@ export default async function ExecutiveDailyInsightsPage() {
     operationalSignals,
   });
   const generatedAt = formatGeneratedAt(packet.generatedAt);
-  const financialItems = getFinancialItems(allItems);
+  const shownInNeedsBrandon = packet.sections.needsBrandon;
+  const shownInWaiting = packet.sections.waitingOnOthers;
+  const shownAboveFinancial = [...shownInNeedsBrandon, ...shownInWaiting];
+  const financialItems = excludeAlreadyShown(getFinancialItems(allItems), shownAboveFinancial);
+  const importantUpdates = excludeAlreadyShown(
+    packet.sections.importantUpdates,
+    [...shownAboveFinancial, ...financialItems],
+  );
   const financialAlertCount = financialItems.length + paymentGuardrailAlerts.length;
 
   return (
@@ -528,7 +547,7 @@ export default async function ExecutiveDailyInsightsPage() {
           <ExecutiveListSection
             title="Project Signals"
             description="Important updates worth knowing, even if no immediate decision is needed."
-            items={packet.sections.importantUpdates}
+            items={importantUpdates}
             emptyTitle="No project signals surfaced"
             employees={employees}
             matchedTasksBySourceId={matchedTasksBySourceId}

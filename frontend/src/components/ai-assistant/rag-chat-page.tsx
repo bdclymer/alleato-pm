@@ -375,6 +375,10 @@ export function RagChatPage() {
   >({});
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [noSessionInput, setNoSessionInput] = useState("");
+  // Optimistic user message shown while a new conversation is being created
+  const [optimisticUserMessage, setOptimisticUserMessage] = useState<string | null>(null);
+  // Tracks the last effective session id so we only clear the optimistic message once per session transition
+  const prevEffectiveSessionIdRef = useRef<string | null>(null);
   const [councilMode, setCouncilMode] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
@@ -431,6 +435,14 @@ export function RagChatPage() {
   }, [activeSessionId, loadSessionMessages]);
 
   const effectiveSessionId = activeSessionId || pendingSessionId;
+
+  // Clear optimistic message once ChatWithSession takes over so it doesn't double-render
+  useEffect(() => {
+    if (effectiveSessionId && effectiveSessionId !== prevEffectiveSessionIdRef.current) {
+      prevEffectiveSessionIdRef.current = effectiveSessionId;
+      setOptimisticUserMessage(null);
+    }
+  }, [effectiveSessionId]);
   const handleFinishMessage = useCallback((sessionId: string) => {
     queryClient.invalidateQueries({ queryKey: ["rag-conversations"] });
     setPendingSessionId(null);
@@ -497,6 +509,8 @@ export function RagChatPage() {
   // Handle first message in a new conversation
   const handleFirstMessage = useCallback(
     async (message: string, files?: FileList) => {
+      // Show the user message immediately — don't wait for the API call
+      setOptimisticUserMessage(message);
       const title = message.substring(0, 50);
       try {
         const result = await createConversation.mutateAsync(title);
@@ -506,7 +520,8 @@ export function RagChatPage() {
         setPendingFirstFiles(files);
         router.push(`/ai-assistant?session=${sessionId}`, { scroll: false });
       } catch {
-        // Creation failed — don't proceed
+        // Creation failed — clear the optimistic message
+        setOptimisticUserMessage(null);
       }
     },
     [createConversation, router],
@@ -566,13 +581,23 @@ export function RagChatPage() {
           />
         ) : (
           <ChatArea
-            messages={[]}
+            messages={
+              optimisticUserMessage
+                ? [
+                    {
+                      id: "optimistic-user",
+                      role: "user" as const,
+                      parts: [{ type: "text" as const, text: optimisticUserMessage }],
+                    },
+                  ]
+                : []
+            }
             toolTracesByMessageId={{}}
             responseQualityByMessageId={{}}
             traceDiagnosticsByMessageId={{}}
             liveStatus={null}
             isLoadingMessages={false}
-            isStreaming={false}
+            isStreaming={createConversation.isPending}
             input={noSessionInput}
             councilMode={councilMode}
             onCouncilModeChange={setCouncilMode}

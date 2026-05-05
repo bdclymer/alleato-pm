@@ -10,12 +10,12 @@
     "termsOfUseUrl": "https://projects.alleatogroup.com/terms"
   },
   "name": {
-    "short": "Alleato",
-    "full": "Alleato AI Assistant"
+    "short": "Archon",
+    "full": "Archon AI Assistant"
   },
   "description": {
-    "short": "Ask Alleato about your projects",
-    "full": "Alleato is your AI-powered construction project intelligence assistant. Ask about budgets, change orders, commitments, RFIs, submittals, and more — directly in Teams."
+    "short": "Ask Archon about your projects",
+    "full": "Archon is your AI-powered construction project intelligence assistant. Ask about budgets, change orders, commitments, RFIs, submittals, and more — directly in Teams."
   },
   "icons": {
     "color": "color.png",
