@@ -7,7 +7,6 @@ import {
 import { useChat, type UIMessage } from "@ai-sdk/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { SparkleIcon } from "lucide-react";
-import { SectionRuleHeading } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { ChatArea, type ResponseQuality } from "@/components/ai-assistant/chat-area";
 import type { AssistantTraceDiagnostics, ToolTraceItem } from "@/components/ai-assistant/trace-panel";
@@ -431,40 +430,35 @@ export function ExecutiveChatPanel({
   }, [loadSessionMessages, sessionId]);
 
   return (
-    <section className="space-y-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="space-y-1">
-          <div className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-            <SparkleIcon className="h-3.5 w-3.5" />
-            Executive chat
-          </div>
-          <SectionRuleHeading
-            label="Ask for deeper analysis without losing the current brief context."
-            className="mb-0 pb-0"
-          />
-          <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
-            This assistant is grounded in the latest executive packet on this page. Use it to ask
-            follow-up questions, pressure-test priorities, or draft follow-through.
-          </p>
+    <div className="flex h-full flex-col gap-3">
+      {/* Header */}
+      <div className="flex items-center gap-2 border-b border-border pb-3">
+        <SparkleIcon className="h-3.5 w-3.5 text-muted-foreground" />
+        <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+          AI Analysis
+        </span>
+      </div>
+
+      {/* Starter prompts — only shown before a session starts */}
+      {!sessionId && (
+        <div className="flex flex-col gap-1.5">
+          {STARTER_PROMPTS.map((prompt) => (
+            <Button
+              key={prompt}
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-auto justify-start whitespace-normal py-2 text-left text-xs leading-snug text-muted-foreground hover:text-foreground"
+              onClick={() => void handlePrompt(prompt)}
+            >
+              {prompt}
+            </Button>
+          ))}
         </div>
-      </div>
+      )}
 
-      <div className="flex flex-wrap gap-2">
-        {STARTER_PROMPTS.map((prompt) => (
-          <Button
-            key={prompt}
-            type="button"
-            variant="outline"
-            size="sm"
-            className="rounded-full"
-            onClick={() => void handlePrompt(prompt)}
-          >
-            {prompt}
-          </Button>
-        ))}
-      </div>
-
-      <div className="min-h-96 overflow-hidden rounded-2xl border border-border bg-background">
+      {/* Chat area — fills remaining height */}
+      <div className="min-h-0 flex-1 overflow-hidden rounded-xl border border-border bg-background">
         {sessionId ? (
           <ExecutiveChatSession
             key={sessionId}
@@ -496,13 +490,11 @@ export function ExecutiveChatPanel({
             selectedModel={selectedModel}
             onModelChange={setSelectedModel}
             onInputChange={setDraftInput}
-            onSubmit={(message) => {
-              void handlePrompt(message);
-            }}
+            onSubmit={(message) => { void handlePrompt(message); }}
             onStop={() => {}}
           />
         )}
       </div>
-    </section>
+    </div>
   );
 }

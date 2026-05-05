@@ -506,12 +506,16 @@ export default async function ExecutiveDailyInsightsPage() {
       description={`Prepared ${generatedAt} · ${packet.windowDays}-day window`}
       contentClassName="pb-16"
     >
-      <div className="grid grid-cols-1 gap-12 xl:grid-cols-[1fr_300px]">
+      <div className="grid grid-cols-1 gap-12 xl:grid-cols-[1fr_400px]">
         {/* ── Main column ── */}
         <div className="space-y-8">
+          <PaymentGuardrailAlerts
+            alerts={paymentGuardrailAlerts}
+            emptyMessage=""
+          />
+
           <ExecutiveListSection
             title="Needs Brandon Today"
-            description="Decisions and confirmations requiring owner-level input."
             items={packet.sections.needsBrandon}
             emptyTitle="No direct owner decisions queued"
             employees={employees}
@@ -520,7 +524,6 @@ export default async function ExecutiveDailyInsightsPage() {
 
           <ExecutiveListSection
             title="Unblock Your People"
-            description="Things the team is waiting on from vendors, clients, or internal approvals."
             items={packet.sections.waitingOnOthers}
             emptyTitle="No unblocks surfaced"
             employees={employees}
@@ -529,7 +532,6 @@ export default async function ExecutiveDailyInsightsPage() {
 
           <ExecutiveListSection
             title="Financial"
-            description="Cash movement, billing friction, retainage, payments, and approval risk."
             items={financialItems}
             emptyTitle="No financial alerts"
             employees={employees}
@@ -538,7 +540,6 @@ export default async function ExecutiveDailyInsightsPage() {
 
           <ExecutiveListSection
             title="Project Signals"
-            description="Important updates worth knowing, even if no immediate decision is needed."
             items={importantUpdates}
             emptyTitle="No project signals surfaced"
             employees={employees}
@@ -547,22 +548,15 @@ export default async function ExecutiveDailyInsightsPage() {
 
           <CarryForwardSection followUps={topStaleFollowUps} />
 
-          <section className="space-y-5">
-            <SectionDivider
-              title="Source Health"
-            />
+          <section className="space-y-4">
+            <SectionDivider title="Source Health" />
             <ExecutiveSourceActivity sources={packet.sourceCoverage} />
           </section>
-
-          <ExecutiveChatPanel packet={packet} />
         </div>
 
-        {/* ── Right column ── */}
-        <aside className="space-y-8">
-          <PaymentGuardrailAlerts
-            alerts={paymentGuardrailAlerts}
-            emptyMessage=""
-          />
+        {/* ── Right column: sticky AI chat panel ── */}
+        <aside className="sticky top-6 flex h-[calc(100vh-96px)] flex-col">
+          <ExecutiveChatPanel packet={packet} />
         </aside>
       </div>
     </PageShell>
