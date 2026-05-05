@@ -13,7 +13,26 @@ export const ADMIN_FEEDBACK_REQUEST_TYPES = [
   "change_request",
   "copy",
   "question",
+  "feature_request",
 ] as const;
+
+export const BOARD_STATUSES = [
+  "submitted",
+  "in_review",
+  "planned",
+  "in_progress",
+  "shipped",
+] as const;
+
+export type BoardStatus = (typeof BOARD_STATUSES)[number];
+
+export const BOARD_STATUS_LABELS: Record<BoardStatus, string> = {
+  submitted: "Submitted",
+  in_review: "In Review",
+  planned: "Planned",
+  in_progress: "In Progress",
+  shipped: "Shipped",
+};
 
 export const ADMIN_FEEDBACK_SEVERITIES = ["low", "medium", "high"] as const;
 

@@ -21,6 +21,7 @@ import {
   FolderOpen,
   Hammer,
   Home,
+  Kanban,
   LayoutDashboard,
   Lock,
   Mail,
@@ -615,6 +616,14 @@ export const adminSettingsTools: HeaderNavigationTool[] = [
     icon: MessageCircle,
     description: "User feedback and requests",
     adminOnly: true,
+  },
+  {
+    name: "Product Board",
+    path: "/product-board",
+    requiresProject: false,
+    icon: Kanban,
+    description: "Feature request kanban board",
+    adminOnly: false,
   },
   {
     name: "Annotation Inbox",
