@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api-client";
 import type { BoardStatus } from "@/lib/admin-feedback/constants";
 
@@ -19,10 +19,20 @@ export interface BoardItemLink {
   label: string;
 }
 
+export interface BoardLabel {
+  id: string;
+  color: string; // tailwind bg class e.g. "bg-red-500"
+  text: string;
+}
+
 export interface BoardItemMeta {
   links?: BoardItemLink[];
   upvotes?: number;
+  labels?: BoardLabel[];
+  due_date?: string | null;
 }
+
+// ── Comments ────────────────────────────────────────────────────────────────
 
 export function useBoardItemComments(itemId: string) {
   return useQuery<{ comments: BoardComment[] }>({
@@ -46,6 +56,8 @@ export function useAddComment(itemId: string) {
   });
 }
 
+// ── Update ───────────────────────────────────────────────────────────────────
+
 export function useUpdateBoardItem(itemId: string) {
   const queryClient = useQueryClient();
   return useMutation({
@@ -60,6 +72,35 @@ export function useUpdateBoardItem(itemId: string) {
         method: "PATCH",
         body: JSON.stringify(updates),
       }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["product-board"] });
+    },
+  });
+}
+
+// ── Create ───────────────────────────────────────────────────────────────────
+
+export function useCreateBoardItem() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (item: { title: string; board_status: BoardStatus; severity?: string }) =>
+      apiFetch("/api/admin/feedback/board/create", {
+        method: "POST",
+        body: JSON.stringify(item),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["product-board"] });
+    },
+  });
+}
+
+// ── Delete ───────────────────────────────────────────────────────────────────
+
+export function useDeleteBoardItem() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (itemId: string) =>
+      apiFetch(`/api/admin/feedback/board/${itemId}`, { method: "DELETE" }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["product-board"] });
     },

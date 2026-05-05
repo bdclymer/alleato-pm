@@ -97,7 +97,7 @@ export function AddBoardItemButton() {
               className="fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-background p-6"
             >
               <div className="mb-5 flex items-center justify-between">
-                <SectionRuleHeading>New feature idea</SectionRuleHeading>
+                <SectionRuleHeading label="New feature idea" />
                 <Button variant="ghost" size="icon" className="h-7 w-7" onClick={reset}>
                   <X className="h-4 w-4" />
                 </Button>

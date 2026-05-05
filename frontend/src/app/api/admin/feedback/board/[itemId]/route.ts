@@ -4,6 +4,20 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { createServiceClient } from "@/lib/supabase/service";
 import { BOARD_STATUSES } from "@/lib/admin-feedback/constants";
 
+export const DELETE = withApiGuardrails<{ itemId: string }>(
+  "admin/feedback/board/[itemId]#DELETE",
+  async ({ params }) => {
+    const supabase = createServiceClient();
+    const { error } = await supabase
+      .from("admin_feedback_items")
+      .delete()
+      .eq("id", params.itemId)
+      .eq("request_type", "feature_request");
+    if (error) throw error;
+    return NextResponse.json({ success: true });
+  }
+);
+
 const patchSchema = z.object({
   board_status: z.enum(BOARD_STATUSES).optional(),
   title: z.string().trim().min(1).max(200).optional(),
