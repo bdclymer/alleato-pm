@@ -55,6 +55,7 @@ function getChatInstance(): Chat {
   const chat = new Chat({
     adapters: { teams: teamsAdapter },
     state,
+    userName: "Alleato AI",
   });
 
   // Handle channel @mentions
@@ -188,7 +189,7 @@ async function handleMessage(
 
   // Fire-and-forget memory tasks
   after(async () => {
-    await runPostResponseTasks(sessionId, supabaseUserId!);
+    if (supabaseUserId) await runPostResponseTasks(sessionId, supabaseUserId);
   });
 }
 
@@ -232,7 +233,7 @@ async function handleLinkCommand(
     .eq("code", code);
 
   // Create or update mapping
-  await supabase.from("bot_user_mappings").upsert(
+  const { error: upsertError } = await supabase.from("bot_user_mappings").upsert(
     {
       platform: "teams",
       platform_user_id: teamsUserId,
@@ -241,6 +242,12 @@ async function handleLinkCommand(
     },
     { onConflict: "platform,platform_user_id" },
   );
+
+  if (upsertError) {
+    console.error("[teams-bot] failed to create bot_user_mappings", { error: upsertError.message, teamsUserId });
+    await thread.post("❌ Something went wrong linking your account. Please try again or contact support.");
+    return;
+  }
 
   await thread.post("✅ Your Alleato account is now linked! You can ask me anything about your projects.");
 }
