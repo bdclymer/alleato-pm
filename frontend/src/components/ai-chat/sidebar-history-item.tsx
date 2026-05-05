@@ -19,12 +19,12 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
-} from "./ui/dropdown-menu";
+} from '@/components/ui/dropdown-menu';
 import {
   SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "./ui/sidebar";
+} from '@/components/ui/sidebar';
 
 const PureChatItem = ({
   chat,

@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/sidebar";
 import { guestRegex } from "@/lib/constants";
 import { LoaderIcon } from "./icons";
+import { Button } from "@/components/ui/button";
 import { toast } from "./toast";
 
 export function SidebarUserNav({ user }: { user: User }) {
@@ -37,12 +38,12 @@ export function SidebarUserNav({ user }: { user: User }) {
             {status === "loading" ? (
               <SidebarMenuButton className="h-10 justify-between bg-background data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
                 <div className="flex flex-row gap-2">
-                  <div className="size-6 animate-pulse rounded-full bg-zinc-500/30" />
-                  <span className="animate-pulse rounded-md bg-zinc-500/30 text-transparent">
+                  <div className="size-6 animate-pulse rounded-full bg-muted-foreground/30" />
+                  <span className="animate-pulse rounded-md bg-muted-foreground/30 text-transparent">
                     Loading auth status
                   </span>
                 </div>
-                <div className="animate-spin text-zinc-500">
+                <div className="animate-spin text-muted-foreground">
                   <LoaderIcon />
                 </div>
               </SidebarMenuButton>
@@ -81,8 +82,9 @@ export function SidebarUserNav({ user }: { user: User }) {
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild data-testid="user-nav-item-auth">
-              <button
-                className="w-full cursor-pointer"
+              <Button
+                variant="ghost"
+                className="w-full cursor-pointer justify-start"
                 onClick={() => {
                   if (status === "loading") {
                     toast({
@@ -102,10 +104,9 @@ export function SidebarUserNav({ user }: { user: User }) {
                     });
                   }
                 }}
-                type="button"
               >
                 {isGuest ? "Login to your account" : "Sign out"}
-              </button>
+              </Button>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

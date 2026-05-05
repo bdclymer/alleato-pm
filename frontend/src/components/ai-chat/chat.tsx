@@ -7,7 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import useSWR, { useSWRConfig } from "swr";
 import { unstable_serialize } from "swr/infinite";
-import { ChatHeader } from "@/components/chat-header";
+import { ChatHeader } from "@/components/ai-chat/chat-header";
 import {
   AlertDialog,
   AlertDialogAction,

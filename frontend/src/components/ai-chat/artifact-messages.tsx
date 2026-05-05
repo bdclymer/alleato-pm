@@ -76,7 +76,7 @@ function PureArtifactMessages({
       </AnimatePresence>
 
       <motion.div
-        className="min-h-[24px] min-w-[24px] shrink-0"
+        className="size-6 shrink-0"
         onViewportEnter={onViewportEnter}
         onViewportLeave={onViewportLeave}
         ref={messagesEndRef}

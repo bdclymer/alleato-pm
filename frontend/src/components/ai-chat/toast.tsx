@@ -42,16 +42,16 @@ function Toast(props: ToastProps) {
   }, []);
 
   return (
-    <div className="flex toast-mobile:w-[356px] w-full justify-center">
-      <div
+    <output className="flex toast-mobile:w-80 w-full justify-center">
+      <article
         className={cn(
-          "flex toast-mobile:w-fit w-full flex-row gap-4 rounded-lg bg-zinc-100 p-4",
+          "flex toast-mobile:w-fit w-full flex-row gap-4 rounded-lg bg-muted p-4",
           multiLine ? "items-start" : "items-center"
         )}
         data-testid="toast"
         key={id}
       >
-        <div
+        <span
           className={cn(
             "data-[type=error]:text-red-600 data-[type=success]:text-green-600",
             { "pt-1": multiLine }
@@ -59,12 +59,12 @@ function Toast(props: ToastProps) {
           data-type={type}
         >
           {iconsByType[type]}
-        </div>
-        <div className="text-sm text-zinc-950" ref={descriptionRef}>
+        </span>
+        <p className="text-sm text-foreground" ref={descriptionRef}>
           {description}
-        </div>
-      </div>
-    </div>
+        </p>
+      </article>
+    </output>
   );
 }
 

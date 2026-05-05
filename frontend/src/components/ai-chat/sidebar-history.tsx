@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/sidebar";
 import type { Chat } from "@/lib/db/schema";
 import { fetcher } from "@/lib/utils";
+import { apiFetch } from "@/lib/api-client";
 import { LoaderIcon } from "./icons";
 import { ChatItem } from "./sidebar-history-item";
 
@@ -130,7 +131,7 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
 
     setShowDeleteDialog(false);
 
-    const deletePromise = fetch(`/api/chat?id=${chatToDelete}`, {
+    const deletePromise = apiFetch(`/api/chat?id=${chatToDelete}`, {
       method: "DELETE",
     });
 
@@ -163,7 +164,7 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
     return (
       <SidebarGroup>
         <SidebarGroupContent>
-          <div className="flex w-full flex-row items-center justify-center gap-2 px-2 text-sm text-zinc-500">
+          <div className="flex w-full flex-row items-center justify-center gap-2 px-2 text-sm text-muted-foreground">
             Login to save and revisit previous chats!
           </div>
         </SidebarGroupContent>
@@ -204,7 +205,7 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
     return (
       <SidebarGroup>
         <SidebarGroupContent>
-          <div className="flex w-full flex-row items-center justify-center gap-2 px-2 text-sm text-zinc-500">
+          <div className="flex w-full flex-row items-center justify-center gap-2 px-2 text-sm text-muted-foreground">
             Your conversations will appear here once you start chatting!
           </div>
         </SidebarGroupContent>
@@ -340,11 +341,11 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
           />
 
           {hasReachedEnd ? (
-            <div className="mt-8 flex w-full flex-row items-center justify-center gap-2 px-2 text-sm text-zinc-500">
+            <div className="mt-8 flex w-full flex-row items-center justify-center gap-2 px-2 text-sm text-muted-foreground">
               You have reached the end of your chat history.
             </div>
           ) : (
-            <div className="mt-8 flex flex-row items-center gap-2 p-2 text-zinc-500 dark:text-zinc-400">
+            <div className="mt-8 flex flex-row items-center gap-2 p-2 text-muted-foreground dark:text-muted-foreground">
               <div className="animate-spin">
                 <LoaderIcon />
               </div>

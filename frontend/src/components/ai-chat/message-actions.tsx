@@ -6,7 +6,7 @@ import { useCopyToClipboard } from "usehooks-ts";
 import { apiFetch } from "@/lib/api-client";
 import type { Vote } from "@/lib/db/schema";
 import type { ChatMessage } from "@/lib/types";
-import { Action, Actions } from "./elements/actions";
+import { Action, Actions } from '@/components/elements/actions';
 import { CopyIcon, PencilEditIcon, ThumbDownIcon, ThumbUpIcon } from "./icons";
 
 export function PureMessageActions({

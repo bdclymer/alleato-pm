@@ -10,7 +10,7 @@ import { apiFetch } from "@/lib/api-client";
 import type { Document } from "@/lib/db/schema";
 import { getDocumentTimestampByIndex } from "@/lib/utils";
 import { LoaderIcon } from "./icons";
-import { Button } from "./ui/button";
+import { Button } from '@/components/ui/button';
 
 type VersionFooterProps = {
   handleVersionChange: (type: "next" | "prev" | "toggle" | "latest") => void;

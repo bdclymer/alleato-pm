@@ -360,7 +360,7 @@ export function Weather({
             >
               {isDay ? <SunIcon size={32} /> : <MoonIcon size={32} />}
             </div>
-            <div className="font-light text-3xl text-white">
+            <div className="font-light text-3xl text-primary-foreground">
               {n(weatherAtLocation.current.temperature_2m)}
               <span className="text-lg text-white/80">
                 {weatherAtLocation.current_units.temperature_2m}
@@ -409,7 +409,7 @@ export function Weather({
                     <CloudIcon size={16} />
                   </div>
 
-                  <div className="font-medium text-white text-xs">
+                  <div className="font-medium text-primary-foreground text-xs">
                     {n(displayTemperatures[index])}°
                   </div>
                 </div>

@@ -8,7 +8,7 @@ import type { UISuggestion } from "@/lib/editor/suggestions";
 import { cn } from "@/lib/utils";
 import type { ArtifactKind } from "./artifact";
 import { CrossIcon, MessageIcon } from "./icons";
-import { Button } from "./ui/button";
+import { Button } from '@/components/ui/button';
 
 export const Suggestion = ({
   suggestion,
@@ -39,15 +39,16 @@ export const Suggestion = ({
               <div className="size-4 rounded-full bg-muted-foreground/25" />
               <div className="font-medium">Assistant</div>
             </div>
-            <button
-              className="cursor-pointer text-muted-foreground text-xs"
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-5 text-muted-foreground"
               onClick={() => {
                 setIsExpanded(false);
               }}
-              type="button"
             >
               <CrossIcon size={12} />
-            </button>
+            </Button>
           </div>
           <div>{suggestion.description}</div>
           <Button

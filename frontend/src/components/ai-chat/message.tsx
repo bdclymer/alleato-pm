@@ -7,16 +7,17 @@ import { cn, sanitizeText } from "@/lib/utils";
 import { useDataStream } from "./data-stream-provider";
 import { DocumentToolResult } from "./document";
 import { DocumentPreview } from "./document-preview";
-import { MessageContent } from "./elements/message";
-import { Response } from "./elements/response";
+import { MessageContent } from '@/components/elements/message';
+import { Response } from '@/components/elements/response';
 import {
   Tool,
   ToolContent,
   ToolHeader,
   ToolInput,
   ToolOutput,
-} from "./elements/tool";
+} from '@/components/elements/tool';
 import { SparklesIcon } from "./icons";
+import { Button } from "@/components/ui/button";
 import { MessageActions } from "./message-actions";
 import { MessageEditor } from "./message-editor";
 import { MessageReasoning } from "./message-reasoning";
@@ -223,9 +224,9 @@ const PurePreviewMessage = ({
                       )}
                       {state === "approval-requested" && approvalId && (
                         <div className="flex items-center justify-end gap-2 border-t px-4 py-4">
-                          {/* eslint-disable-next-line design-system/no-design-violations -- tool approval action */}
-                          <button
-                            className="rounded-md px-4 py-1.5 text-muted-foreground text-sm transition-colors hover:bg-muted hover:text-foreground"
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => {
                               addToolApprovalResponse({
                                 id: approvalId,
@@ -233,23 +234,21 @@ const PurePreviewMessage = ({
                                 reason: "User denied weather lookup",
                               });
                             }}
-                            type="button"
                           >
                             Deny
-                          </button>
-                          {/* eslint-disable-next-line design-system/no-design-violations -- tool approval action */}
-                          <button
-                            className="rounded-md bg-primary px-4 py-1.5 text-primary-foreground text-sm transition-colors hover:bg-primary/90"
+                          </Button>
+                          <Button
+                            variant="default"
+                            size="sm"
                             onClick={() => {
                               addToolApprovalResponse({
                                 id: approvalId,
                                 approved: true,
                               });
                             }}
-                            type="button"
                           >
                             Allow
-                          </button>
+                          </Button>
                         </div>
                       )}
                     </ToolContent>

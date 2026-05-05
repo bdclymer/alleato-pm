@@ -41,11 +41,12 @@ import {
   PromptInputTextarea,
   PromptInputToolbar,
   PromptInputTools,
-} from "./elements/prompt-input";
+} from '@/components/elements/prompt-input';
 import { ArrowUpIcon, PaperclipIcon, StopIcon } from "./icons";
 import { PreviewAttachment } from "./preview-attachment";
 import { SuggestedActions } from "./suggested-actions";
-import { Button } from "./ui/button";
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import type { VisibilityType } from "./visibility-selector";
 
 function setCookie(name: string, value: string) {
@@ -311,8 +312,8 @@ function PureMultimodalInput({
           />
         )}
 
-      <input
-        className="pointer-events-none fixed -top-4 -left-4 size-0.5 opacity-0"
+      <Input
+        className="pointer-events-none fixed -top-4 -left-4 size-0.5 opacity-0 border-0 p-0"
         multiple
         onChange={handleFileChange}
         ref={fileInputRef}
@@ -492,7 +493,7 @@ function PureModelSelectorCompact({
   return (
     <ModelSelector onOpenChange={setOpen} open={open}>
       <ModelSelectorTrigger asChild>
-        <Button className="h-8 w-[200px] justify-between px-2" variant="ghost">
+        <Button className="h-8 w-48 justify-between px-2" variant="ghost">
           {provider && <ModelSelectorLogo provider={provider} />}
           <ModelSelectorName>{selectedModel.name}</ModelSelectorName>
         </Button>

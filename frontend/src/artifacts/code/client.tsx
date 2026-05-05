@@ -1,11 +1,11 @@
 import { toast } from "sonner";
-import { CodeEditor } from "@/components/code-editor";
+import { CodeEditor } from "@/components/ai-chat/code-editor";
 import {
   Console,
   type ConsoleOutput,
   type ConsoleOutputContent,
-} from "@/components/console";
-import { Artifact } from "@/components/create-artifact";
+} from "@/components/ai-chat/console";
+import { Artifact } from "@/components/ai-chat/create-artifact";
 import {
   CopyIcon,
   LogsIcon,
@@ -13,7 +13,7 @@ import {
   PlayIcon,
   RedoIcon,
   UndoIcon,
-} from "@/components/icons";
+} from "@/components/ai-chat/icons";
 import { generateUUID } from "@/lib/utils";
 
 const OUTPUT_HANDLERS = {

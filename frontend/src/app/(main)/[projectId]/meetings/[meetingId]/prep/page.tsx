@@ -15,7 +15,7 @@ import Link from "next/link";
 import { PageShell } from "@/components/layout";
 import { EmptyState } from "@/components/ds";
 import { Button } from "@/components/ui/button";
-import { Editor } from "@/components/text-editor";
+import { Editor } from "@/components/ai-chat/text-editor";
 import { useMeeting } from "@/hooks/use-meetings";
 import {
   useMeetingPrep,

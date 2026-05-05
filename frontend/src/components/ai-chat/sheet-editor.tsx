@@ -7,6 +7,7 @@ import { DataGrid, type RenderEditCellProps } from "react-data-grid";
 import { cn } from "@/lib/utils";
 
 import "react-data-grid/lib/styles.css";
+import { Input } from "@/components/ui/input";
 
 type SheetEditorProps = {
   content: string;
@@ -31,9 +32,9 @@ function renderSheetTextEditor({
   const value = row[columnKey];
 
   return (
-    <input
+    <Input
       autoFocus
-      className="h-full w-full border-0 px-2 text-sm outline-none"
+      className="h-full w-full border-0 px-2 text-sm outline-none rounded-none"
       value={typeof value === "string" ? value : value?.toString() ?? ""}
       onBlur={() => onClose(true)}
       onChange={(event) =>
@@ -99,7 +100,7 @@ const PureSpreadsheetEditor = ({ content, saveContent }: SheetEditorProps) => {
 
   const initialRows = useMemo(() => {
     return parseData.map((row, rowIndex) => {
-      const rowData: any = {
+      const rowData: Record<string, unknown> = {
         id: rowIndex,
         rowNumber: rowIndex + 1,
       };
@@ -118,11 +119,11 @@ const PureSpreadsheetEditor = ({ content, saveContent }: SheetEditorProps) => {
     setLocalRows(initialRows);
   }, [initialRows]);
 
-  const generateCsv = (data: any[][]) => {
+  const generateCsv = (data: string[][]) => {
     return unparse(data);
   };
 
-  const handleRowsChange = (newRows: any[]) => {
+  const handleRowsChange = (newRows: Record<string, unknown>[]) => {
     setLocalRows(newRows);
 
     const updatedData = newRows.map((row) => {
@@ -142,7 +143,7 @@ const PureSpreadsheetEditor = ({ content, saveContent }: SheetEditorProps) => {
         sortable: true,
       }}
       enableVirtualization
-      onCellClick={(args: any) => {
+      onCellClick={(args: { column: { key: string }; selectCell: (edit: boolean) => void }) => {
         if (args.column.key !== "rowNumber") {
           args.selectCell(true);
         }

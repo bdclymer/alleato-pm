@@ -6,6 +6,7 @@ import type { ChatMessage } from "@/lib/types";
 import { useDataStream } from "./data-stream-provider";
 import { Greeting } from "./greeting";
 import { PreviewMessage, ThinkingMessage } from "./message";
+import { Button } from "@/components/ui/button";
 
 type MessagesProps = {
   addToolApprovalResponse: UseChatHelpers<ChatMessage>["addToolApprovalResponse"];
@@ -83,25 +84,25 @@ function PureMessages({
             ) && <ThinkingMessage />}
 
           <div
-            className="min-h-[24px] min-w-[24px] shrink-0"
+            className="size-6 shrink-0"
             ref={messagesEndRef}
           />
         </div>
       </div>
 
-      {/* eslint-disable-next-line design-system/no-design-violations -- floating scroll-to-bottom FAB */}
-      <button
+      <Button
         aria-label="Scroll to bottom"
-        className={`absolute bottom-4 left-1/2 z-10 -translate-x-1/2 rounded-full border bg-background p-2 shadow-sm transition-all hover:bg-muted ${
+        variant="outline"
+        size="icon"
+        className={`absolute bottom-4 left-1/2 z-10 -translate-x-1/2 rounded-full shadow-sm transition-all ${
           isAtBottom
             ? "pointer-events-none scale-0 opacity-0"
             : "pointer-events-auto scale-100 opacity-100"
         }`}
         onClick={() => scrollToBottom("smooth")}
-        type="button"
       >
         <ArrowDownIcon className="size-4" />
-      </button>
+      </Button>
     </div>
   );
 }

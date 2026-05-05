@@ -3,7 +3,7 @@ import hightlight from 'highlight.js';
 import { PropsWithChildren, useEffect, useRef } from 'react';
 
 const CodeHighlight = ({ children }: PropsWithChildren) => {
-    const highlightElement = useRef<any>(null);
+    const highlightElement = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
         if (highlightElement?.current) {

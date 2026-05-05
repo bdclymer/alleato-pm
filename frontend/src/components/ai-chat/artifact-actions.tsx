@@ -3,8 +3,8 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { artifactDefinitions, type UIArtifact } from "./artifact";
 import type { ArtifactActionContext } from "./create-artifact";
-import { Button } from "./ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 type ArtifactActionsProps = {
   artifact: UIArtifact;
@@ -12,8 +12,8 @@ type ArtifactActionsProps = {
   currentVersionIndex: number;
   isCurrentVersion: boolean;
   mode: "edit" | "diff";
-  metadata: any;
-  setMetadata: Dispatch<SetStateAction<any>>;
+  metadata: Record<string, unknown>;
+  setMetadata: Dispatch<SetStateAction<Record<string, unknown>>>;
 };
 
 function PureArtifactActions({

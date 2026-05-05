@@ -1,4 +1,5 @@
 import type { UseChatHelpers } from "@ai-sdk/react";
+import { apiFetch } from "@/lib/api-client";
 import { formatDistance } from "date-fns";
 import equal from "fast-deep-equal";
 import { AnimatePresence, motion } from "framer-motion";
@@ -25,7 +26,7 @@ import { ArtifactCloseButton } from "./artifact-close-button";
 import { ArtifactMessages } from "./artifact-messages";
 import { MultimodalInput } from "./multimodal-input";
 import { Toolbar } from "./toolbar";
-import { useSidebar } from "./ui/sidebar";
+import { useSidebar } from '@/components/ui/sidebar';
 import { VersionFooter } from "./version-footer";
 import type { VisibilityType } from "./visibility-selector";
 
@@ -149,7 +150,7 @@ function PureArtifact({
           }
 
           if (currentDocument.content !== updatedContent) {
-            await fetch(`/api/document?id=${artifact.documentId}`, {
+            await apiFetch(`/api/document?id=${artifact.documentId}`, {
               method: "POST",
               body: JSON.stringify({
                 title: artifact.title,
@@ -300,7 +301,7 @@ function PureArtifact({
                   damping: 30,
                 },
               }}
-              className="relative h-dvh w-[400px] shrink-0 bg-muted dark:bg-background"
+              className="relative h-dvh w-96 shrink-0 bg-muted dark:bg-background"
               exit={{
                 opacity: 0,
                 x: 0,
@@ -313,7 +314,7 @@ function PureArtifact({
                 {!isCurrentVersion && (
                   <motion.div
                     animate={{ opacity: 1 }}
-                    className="absolute top-0 left-0 z-50 h-dvh w-[400px] bg-zinc-900/50"
+                    className="absolute top-0 left-0 z-50 h-dvh w-96 bg-zinc-900/50"
                     exit={{ opacity: 0 }}
                     initial={{ opacity: 0 }}
                   />
@@ -390,7 +391,7 @@ function PureArtifact({
                     },
                   }
             }
-            className="fixed flex h-dvh flex-col overflow-y-scroll border-zinc-200 bg-background md:border-l dark:border-zinc-700 dark:bg-muted"
+            className="fixed flex h-dvh flex-col overflow-y-scroll border-border bg-background md:border-l dark:bg-muted"
             exit={{
               opacity: 0,
               scale: 0.5,
