@@ -3,7 +3,7 @@
 -- Only meaningful for feature_request items.
 ALTER TABLE admin_feedback_items
   ADD COLUMN IF NOT EXISTS board_status TEXT NOT NULL DEFAULT 'submitted'
-    CHECK (board_status IN ('submitted', 'in_review', 'planned', 'in_progress', 'shipped'));
+    CHECK (board_status IN ('submitted', 'planned', 'in_progress', 'shipped'));
 
 -- Expand request_type constraint to allow feature_request
 ALTER TABLE admin_feedback_items

@@ -18,7 +18,6 @@ export const ADMIN_FEEDBACK_REQUEST_TYPES = [
 
 export const BOARD_STATUSES = [
   "submitted",
-  "in_review",
   "planned",
   "in_progress",
   "shipped",
@@ -28,7 +27,6 @@ export type BoardStatus = (typeof BOARD_STATUSES)[number];
 
 export const BOARD_STATUS_LABELS: Record<BoardStatus, string> = {
   submitted: "Submitted",
-  in_review: "In Review",
   planned: "Planned",
   in_progress: "In Progress",
   shipped: "Shipped",
