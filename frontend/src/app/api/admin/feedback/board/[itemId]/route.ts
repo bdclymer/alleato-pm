@@ -23,6 +23,9 @@ const patchSchema = z.object({
   title: z.string().trim().min(1).max(200).optional(),
   comment: z.string().trim().max(5000).optional(),
   severity: z.enum(["low", "medium", "high"]).optional(),
+  position: z.number().optional(),
+  assignee_id: z.string().uuid().nullable().optional(),
+  screenshot_url: z.string().url().nullable().optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
@@ -34,7 +37,7 @@ export const PATCH = withApiGuardrails<{ itemId: string }>(
 
     const supabase = createServiceClient();
 
-    // Merge metadata if provided (don't overwrite whole object)
+    // Merge metadata if provided — never overwrite the whole object
     if (updates.metadata) {
       const { data: existing } = await supabase
         .from("admin_feedback_items")

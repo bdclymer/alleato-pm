@@ -13,8 +13,10 @@ import {
   MorphingDialogContainer,
 } from "@/components/motion/morphing-dialog";
 import { BoardItemDialog } from "./board-item-dialog";
-import type { BoardItem } from "./use-product-board";
+import type { BoardItem, BoardAssignee } from "./use-product-board";
 import type { BoardItemMeta, BoardLabel } from "./use-board-item";
+
+type BoardItemWithMeta = BoardItem;
 
 const severityConfig = {
   high: { icon: <AlertTriangle className="h-3 w-3" />, className: "text-destructive" },
@@ -27,14 +29,12 @@ function DueDateChip({ dateStr }: { dateStr: string }) {
   const overdue = isPast(date);
   const soon = !overdue && differenceInDays(date, new Date()) <= 2;
   return (
-    <span
-      className={cn(
-        "flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] font-medium",
-        overdue && "bg-destructive/10 text-destructive",
-        soon && !overdue && "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
-        !overdue && !soon && "bg-muted text-muted-foreground"
-      )}
-    >
+    <span className={cn(
+      "flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] font-medium",
+      overdue && "bg-destructive/10 text-destructive",
+      soon && !overdue && "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
+      !overdue && !soon && "bg-muted text-muted-foreground"
+    )}>
       <Clock className="h-2.5 w-2.5" />
       {formatDistanceToNow(date, { addSuffix: true })}
     </span>
@@ -46,17 +46,25 @@ function LabelDots({ labels }: { labels: BoardLabel[] }) {
   return (
     <div className="flex gap-1">
       {labels.slice(0, 5).map((l) => (
-        <span
-          key={l.id}
-          title={l.text}
-          className={cn("h-2 w-8 rounded-sm", l.color)}
-        />
+        <span key={l.id} title={l.name || l.color} className={cn("h-2 rounded-sm flex-1", l.color)} />
       ))}
     </div>
   );
 }
 
-type BoardItemWithMeta = BoardItem & { metadata?: unknown };
+function AssigneeAvatar({ assignee }: { assignee: BoardAssignee }) {
+  const initials = assignee.full_name
+    ? assignee.full_name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
+    : assignee.email[0].toUpperCase();
+  return (
+    <div
+      className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-[9px] font-semibold text-foreground"
+      title={assignee.full_name ?? assignee.email}
+    >
+      {initials}
+    </div>
+  );
+}
 
 interface BoardCardProps {
   item: BoardItemWithMeta;
@@ -86,14 +94,27 @@ export function BoardCard({ item, readonly }: BoardCardProps) {
             {...(!readonly ? listeners : {})}
             style={{ borderRadius: "10px" }}
             className={cn(
-              "w-full text-left bg-background p-3 select-none block",
+              "w-full text-left bg-background select-none block overflow-hidden",
               "shadow-xs transition-shadow duration-200 hover:shadow-sm",
               !readonly && "cursor-pointer"
             )}
           >
-            {/* Label color strips */}
+            {/* Cover image */}
+            {item.screenshot_url && (
+              <div className="h-32 w-full overflow-hidden">
+                <img
+                  src={item.screenshot_url}
+                  alt="Card cover"
+                  className="h-full w-full object-cover"
+                  draggable={false}
+                />
+              </div>
+            )}
+
+            <div className="p-3">
+            {/* Label strips */}
             {labels.length > 0 && (
-              <div className="mb-2">
+              <div className="mb-2 flex gap-1">
                 <LabelDots labels={labels} />
               </div>
             )}
@@ -102,14 +123,14 @@ export function BoardCard({ item, readonly }: BoardCardProps) {
               {item.title}
             </p>
 
-            {/* Source / category */}
+            {/* Source */}
             {item.page_title && item.page_title !== "Product Board" && (
-              <p className="mt-1.5 text-[11px] text-muted-foreground/60 truncate">
+              <p className="mt-1 text-[11px] text-muted-foreground/60 truncate">
                 {item.page_title}
               </p>
             )}
 
-            {/* Footer metadata */}
+            {/* Footer */}
             <div className="mt-2.5 flex flex-wrap items-center justify-between gap-1.5">
               <div className="flex flex-wrap items-center gap-1.5">
                 {dueDate && <DueDateChip dateStr={dueDate} />}
@@ -126,12 +147,15 @@ export function BoardCard({ item, readonly }: BoardCardProps) {
                     {links.length}
                   </span>
                 )}
-                {item.comment && (
-                  <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                {item.comment_count > 0 && (
+                  <span className="flex items-center gap-0.5 text-[11px] text-muted-foreground">
                     <MessageSquare className="h-3 w-3" />
+                    {item.comment_count}
                   </span>
                 )}
+                {item.assignee && <AssigneeAvatar assignee={item.assignee as BoardAssignee} />}
               </div>
+            </div>
             </div>
           </MorphingDialogTrigger>
         </motion.div>
@@ -151,12 +175,10 @@ export function BoardCard({ item, readonly }: BoardCardProps) {
   );
 }
 
-export function BoardCardOverlay({ item: _item }: { item: BoardItem }) {
+export function BoardCardOverlay({ item }: { item: BoardItem }) {
   return (
     <div className="rounded-xl bg-background p-3 shadow-sm ring-1 ring-primary/30 rotate-1 scale-[1.02] opacity-95">
-      <p className="text-sm font-medium leading-snug text-foreground line-clamp-2">
-        {(_item as BoardItemWithMeta).title}
-      </p>
+      <p className="text-sm font-medium leading-snug text-foreground line-clamp-2">{item.title}</p>
     </div>
   );
 }

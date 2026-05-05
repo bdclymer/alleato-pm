@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useRef, useCallback, useId } from "react";
+import { useState, useRef, useCallback, useEffect, useId } from "react";
 import { formatDistanceToNow, isPast, differenceInDays } from "date-fns";
 import {
   AlertTriangle, Zap, Minus, Link2, Plus, Send, X, Check,
-  ArrowUpRight, ThumbsUp, Trash2, Tag, Calendar,
+  ArrowUpRight, ThumbsUp, Trash2, Tag, Calendar, UserCircle, ImageIcon,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
@@ -16,14 +16,13 @@ import {
   MorphingDialogDescription,
   MorphingDialogClose,
 } from "@/components/motion/morphing-dialog";
+import { createClient } from "@/lib/supabase/client";
 import { BOARD_STATUSES, BOARD_STATUS_LABELS, type BoardStatus } from "@/lib/admin-feedback/constants";
 import {
-  useBoardItemComments, useAddComment, useUpdateBoardItem, useDeleteBoardItem,
+  useBoardItemComments, useAddComment, useUpdateBoardItem, useDeleteBoardItem, useBoardUsers,
   type BoardItemMeta, type BoardItemLink, type BoardLabel,
 } from "./use-board-item";
 import type { BoardItem } from "./use-product-board";
-
-type BoardItemWithMeta = BoardItem & { metadata?: unknown };
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -35,73 +34,86 @@ const SEVERITY_OPTIONS = [
 
 const STATUS_COLORS: Record<BoardStatus, string> = {
   submitted: "bg-muted text-muted-foreground",
-
   planned: "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300",
   in_progress: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
   shipped: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300",
 };
 
 const LABEL_COLORS = [
-  { color: "bg-red-500", label: "Red" },
-  { color: "bg-orange-400", label: "Orange" },
-  { color: "bg-yellow-400", label: "Yellow" },
-  { color: "bg-emerald-500", label: "Green" },
-  { color: "bg-blue-500", label: "Blue" },
-  { color: "bg-violet-500", label: "Purple" },
-  { color: "bg-pink-400", label: "Pink" },
-  { color: "bg-sky-400", label: "Sky" },
+  { color: "bg-red-500", defaultName: "Red" },
+  { color: "bg-orange-400", defaultName: "Orange" },
+  { color: "bg-yellow-400", defaultName: "Yellow" },
+  { color: "bg-emerald-500", defaultName: "Green" },
+  { color: "bg-blue-500", defaultName: "Blue" },
+  { color: "bg-violet-500", defaultName: "Purple" },
+  { color: "bg-pink-400", defaultName: "Pink" },
+  { color: "bg-sky-400", defaultName: "Sky" },
 ];
 
 // ── Small helpers ─────────────────────────────────────────────────────────────
 
-function Avatar({ name, email }: { name: string | null; email: string }) {
+function Avatar({ name, email, size = "md" }: { name: string | null; email: string; size?: "sm" | "md" }) {
   const initials = name ? name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase() : email[0].toUpperCase();
   return (
-    <div className="flex h-7 w-7 flex-none items-center justify-center rounded-full bg-muted text-[11px] font-semibold text-foreground">
+    <div className={cn(
+      "flex flex-none items-center justify-center rounded-full bg-muted font-semibold text-foreground",
+      size === "md" ? "h-7 w-7 text-[11px]" : "h-5 w-5 text-[9px]"
+    )}>
       {initials}
     </div>
   );
 }
 
 function SidebarHeading({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-      {children}
-    </p>
-  );
+  return <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{children}</p>;
 }
 
 // ── Main dialog ───────────────────────────────────────────────────────────────
 
 interface BoardItemDialogProps {
-  item: BoardItemWithMeta;
+  item: BoardItem;
 }
 
 export function BoardItemDialog({ item }: BoardItemDialogProps) {
   const { data: commentsData } = useBoardItemComments(item.id);
+  const { data: usersData } = useBoardUsers();
   const addComment = useAddComment(item.id);
   const updateItem = useUpdateBoardItem(item.id);
   const deleteItem = useDeleteBoardItem();
   const uid = useId();
+  const dateInputId = `${uid}-date`;
 
-  // Local editable state
+  // Current user ID for upvote persistence
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  useEffect(() => {
+    createClient().auth.getUser().then(({ data }) => setCurrentUserId(data.user?.id ?? null));
+  }, []);
+
+  // Editable state
   const [title, setTitle] = useState(item.title);
   const [description, setDescription] = useState(item.comment);
   const [status, setStatus] = useState<BoardStatus>(item.board_status);
   const [severity, setSeverity] = useState(item.severity ?? "medium");
+  const [assigneeId, setAssigneeId] = useState<string | null>(item.assignee_id);
   const [commentText, setCommentText] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [showAssigneePicker, setShowAssigneePicker] = useState(false);
+  const [coverUrl, setCoverUrl] = useState<string>(item.screenshot_url ?? "");
+  const [showCoverInput, setShowCoverInput] = useState(false);
 
   const meta = (item.metadata as BoardItemMeta | null) ?? {};
   const [links, setLinks] = useState<BoardItemLink[]>(meta.links ?? []);
   const [labels, setLabels] = useState<BoardLabel[]>(meta.labels ?? []);
   const [dueDate, setDueDate] = useState<string>(meta.due_date ?? "");
   const [upvotes, setUpvotes] = useState(meta.upvotes ?? 0);
-  const [hasUpvoted, setHasUpvoted] = useState(false);
+  const [upvotedBy, setUpvotedBy] = useState<string[]>(meta.upvoted_by ?? []);
   const [showLinkForm, setShowLinkForm] = useState(false);
   const [showLabelPicker, setShowLabelPicker] = useState(false);
+  const [editingLabelName, setEditingLabelName] = useState<string | null>(null);
   const [newLinkUrl, setNewLinkUrl] = useState("");
   const [newLinkLabel, setNewLinkLabel] = useState("");
+
+  const hasUpvoted = currentUserId ? upvotedBy.includes(currentUserId) : false;
 
   const savedTitle = useRef(title);
   const savedDescription = useRef(description);
@@ -114,67 +126,74 @@ export function BoardItemDialog({ item }: BoardItemDialogProps) {
 
   function handleTitleBlur() {
     if (title !== savedTitle.current && title.trim()) {
-      save({ title });
-      savedTitle.current = title;
+      save({ title }); savedTitle.current = title;
     }
   }
   function handleDescriptionBlur() {
     if (description !== savedDescription.current) {
-      save({ comment: description });
-      savedDescription.current = description;
+      save({ comment: description }); savedDescription.current = description;
     }
   }
   function handleDueDateBlur() {
     if (dueDate !== savedDueDate.current) {
-      save({ metadata: { due_date: dueDate || null } });
-      savedDueDate.current = dueDate;
+      save({ metadata: { due_date: dueDate || null } }); savedDueDate.current = dueDate;
     }
   }
   function handleStatusChange(s: BoardStatus) { setStatus(s); save({ board_status: s }); }
   function handleSeverityChange(s: "low" | "medium" | "high") { setSeverity(s); save({ severity: s }); }
+  function handleAssigneeChange(id: string | null) {
+    setAssigneeId(id);
+    setShowAssigneePicker(false);
+    save({ assignee_id: id });
+  }
 
   function toggleLabel(color: string) {
-    const exists = labels.find((l) => l.color === color);
-    const next = exists
+    const existing = labels.find((l) => l.color === color);
+    const defaultName = LABEL_COLORS.find((c) => c.color === color)?.defaultName ?? color;
+    const next = existing
       ? labels.filter((l) => l.color !== color)
-      : [...labels, { id: crypto.randomUUID(), color, text: color }];
+      : [...labels, { id: crypto.randomUUID(), color, name: defaultName }];
+    setLabels(next);
+    save({ metadata: { labels: next } });
+  }
+
+  function updateLabelName(color: string, name: string) {
+    const next = labels.map((l) => l.color === color ? { ...l, name } : l);
     setLabels(next);
     save({ metadata: { labels: next } });
   }
 
   function handleUpvote() {
-    if (hasUpvoted) return;
-    const next = upvotes + 1;
-    setUpvotes(next);
-    setHasUpvoted(true);
-    save({ metadata: { upvotes: next } });
+    if (hasUpvoted || !currentUserId) return;
+    const nextUpvotedBy = [...upvotedBy, currentUserId];
+    const nextCount = upvotes + 1;
+    setUpvotes(nextCount); setUpvotedBy(nextUpvotedBy);
+    save({ metadata: { upvotes: nextCount, upvoted_by: nextUpvotedBy } });
   }
 
   function handleAddLink() {
     if (!newLinkUrl.trim()) return;
     const link: BoardItemLink = { id: crypto.randomUUID(), url: newLinkUrl.trim(), label: newLinkLabel.trim() || newLinkUrl.trim() };
-    const next = [...links, link];
-    setLinks(next);
+    const next = [...links, link]; setLinks(next);
     save({ metadata: { links: next } });
     setNewLinkUrl(""); setNewLinkLabel(""); setShowLinkForm(false);
   }
   function handleRemoveLink(id: string) {
-    const next = links.filter((l) => l.id !== id);
-    setLinks(next);
+    const next = links.filter((l) => l.id !== id); setLinks(next);
     save({ metadata: { links: next } });
   }
 
   function handlePostComment() {
     if (!commentText.trim()) return;
-    addComment.mutate(commentText.trim());
-    setCommentText("");
+    addComment.mutate(commentText.trim()); setCommentText("");
   }
 
   const dueDateDate = dueDate ? new Date(dueDate) : null;
   const dueDateOverdue = dueDateDate ? isPast(dueDateDate) : false;
   const dueDateSoon = dueDateDate && !dueDateOverdue ? differenceInDays(dueDateDate, new Date()) <= 2 : false;
-
   const comments = commentsData?.comments ?? [];
+  const users = usersData?.users ?? [];
+  const assignee = item.assignee ?? users.find((u) => u.id === assigneeId);
 
   return (
     <div className="flex flex-col" style={{ maxHeight: "88vh" }}>
@@ -192,13 +211,29 @@ export function BoardItemDialog({ item }: BoardItemDialogProps) {
 
       <div className="flex min-h-0 flex-1 overflow-hidden">
         {/* ── Left: title, description, comments ── */}
-        <div className="flex flex-1 flex-col overflow-y-auto px-6 py-5 scrollbar-hide">
+        <div className="flex flex-1 flex-col overflow-y-auto scrollbar-hide">
 
-          {/* Label color strips */}
+          {/* Cover image */}
+          {coverUrl && (
+            <div className="relative h-48 w-full flex-none overflow-hidden">
+              <img src={coverUrl} alt="" className="h-full w-full object-cover" />
+              <Button
+                variant="ghost" size="sm"
+                onClick={() => { setCoverUrl(""); save({ screenshot_url: null }); }}
+                className="absolute right-2 top-2 h-7 gap-1 bg-background/80 text-xs backdrop-blur-sm hover:bg-background"
+              >
+                <X className="h-3.5 w-3.5" />
+                Remove cover
+              </Button>
+            </div>
+          )}
+
+          <div className="px-6 py-5">
+          {/* Label strips */}
           {labels.length > 0 && (
-            <div className="mb-3 flex flex-wrap gap-1.5">
+            <div className="mb-3 flex gap-1.5">
               {labels.map((l) => (
-                <span key={l.id} className={cn("h-2.5 w-12 rounded-sm", l.color)} />
+                <span key={l.id} title={l.name} className={cn("h-2.5 w-12 rounded-sm flex-shrink-0", l.color)} />
               ))}
             </div>
           )}
@@ -228,7 +263,7 @@ export function BoardItemDialog({ item }: BoardItemDialogProps) {
             />
           </MorphingDialogDescription>
 
-          {/* Comments */}
+          {/* Activity */}
           <div className="mt-6 border-t border-border/50 pt-5">
             <p className="mb-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Activity · {comments.length}
@@ -249,13 +284,19 @@ export function BoardItemDialog({ item }: BoardItemDialogProps) {
                         </span>
                       </div>
                       <p className="mt-0.5 text-sm leading-relaxed text-foreground/80">{c.body}</p>
+                      {/* Screenshot attachment — bug fix: was never rendered */}
+                      {c.screenshot_url && (
+                        <img
+                          src={c.screenshot_url}
+                          alt="Attached screenshot"
+                          className="mt-2 max-h-64 rounded-lg object-cover ring-1 ring-border"
+                        />
+                      )}
                     </div>
                   </motion.div>
                 ))}
               </AnimatePresence>
-              {comments.length === 0 && (
-                <p className="text-sm text-muted-foreground/40">No activity yet.</p>
-              )}
+              {comments.length === 0 && <p className="text-sm text-muted-foreground/40">No activity yet.</p>}
             </div>
 
             {/* Comment input */}
@@ -277,10 +318,87 @@ export function BoardItemDialog({ item }: BoardItemDialogProps) {
               </div>
             </div>
           </div>
-        </div>
+          </div>{/* end px-6 py-5 */}
+        </div>{/* end left pane */}
 
         {/* ── Right sidebar ── */}
         <div className="w-52 flex-none overflow-y-auto border-l border-border/50 px-4 py-5 scrollbar-hide">
+
+          {/* Cover image */}
+          <div className="mb-5">
+            <SidebarHeading>Cover</SidebarHeading>
+            <Button variant="ghost" size="sm" onClick={() => setShowCoverInput((v) => !v)}
+              className="h-8 w-full justify-start gap-2 text-xs text-muted-foreground"
+            >
+              <ImageIcon className="h-3.5 w-3.5" />
+              {coverUrl ? "Change cover" : "Add cover image"}
+            </Button>
+            <AnimatePresence>
+              {showCoverInput && (
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="mt-1.5 space-y-1.5 overflow-hidden">
+                  <Input
+                    autoFocus
+                    placeholder="Paste image URL…"
+                    value={coverUrl}
+                    onChange={(e) => setCoverUrl(e.target.value)}
+                    className="h-7 text-xs"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") { save({ screenshot_url: coverUrl || null }); setShowCoverInput(false); }
+                      if (e.key === "Escape") { setCoverUrl(item.screenshot_url ?? ""); setShowCoverInput(false); }
+                    }}
+                  />
+                  <div className="flex gap-1">
+                    <Button size="sm" className="h-6 flex-1 text-xs" onClick={() => { save({ screenshot_url: coverUrl || null }); setShowCoverInput(false); }}>Set</Button>
+                    {coverUrl && <Button size="sm" variant="ghost" className="h-6 text-xs text-destructive" onClick={() => { setCoverUrl(""); save({ screenshot_url: null }); setShowCoverInput(false); }}>Remove</Button>}
+                    <Button size="sm" variant="ghost" className="h-6 text-xs" onClick={() => { setCoverUrl(item.screenshot_url ?? ""); setShowCoverInput(false); }}>Cancel</Button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Assignee */}
+          <div className="mb-5">
+            <SidebarHeading>Assignee</SidebarHeading>
+            <Button
+              variant="ghost" size="sm"
+              onClick={() => setShowAssigneePicker((v) => !v)}
+              className="h-8 w-full justify-start gap-2 text-xs text-muted-foreground"
+            >
+              {assignee ? (
+                <>
+                  <Avatar name={assignee.full_name ?? null} email={assignee.email} size="sm" />
+                  <span className="truncate text-foreground">{assignee.full_name ?? assignee.email}</span>
+                </>
+              ) : (
+                <>
+                  <UserCircle className="h-4 w-4" />
+                  Unassigned
+                </>
+              )}
+            </Button>
+            <AnimatePresence>
+              {showAssigneePicker && (
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="mt-1 overflow-hidden rounded-lg border border-border bg-background shadow-sm">
+                  <Button variant="ghost" size="sm" onClick={() => handleAssigneeChange(null)}
+                    className="h-8 w-full justify-start gap-2 text-xs text-muted-foreground"
+                  >
+                    <UserCircle className="h-3.5 w-3.5" />
+                    Unassigned
+                  </Button>
+                  {users.map((u) => (
+                    <Button key={u.id} variant="ghost" size="sm" onClick={() => handleAssigneeChange(u.id)}
+                      className={cn("h-8 w-full justify-start gap-2 text-xs", assigneeId === u.id && "bg-muted")}
+                    >
+                      <Avatar name={u.full_name ?? null} email={u.email} size="sm" />
+                      <span className="truncate">{u.full_name ?? u.email}</span>
+                      {assigneeId === u.id && <Check className="ml-auto h-3 w-3" />}
+                    </Button>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
 
           {/* Labels */}
           <div className="mb-5">
@@ -289,24 +407,44 @@ export function BoardItemDialog({ item }: BoardItemDialogProps) {
               className="h-8 w-full justify-start gap-2 text-xs text-muted-foreground"
             >
               <Tag className="h-3.5 w-3.5" />
-              {showLabelPicker ? "Done" : "Edit labels"}
+              {showLabelPicker ? "Done" : labels.length > 0 ? `${labels.length} label${labels.length > 1 ? "s" : ""}` : "Add labels"}
             </Button>
             <AnimatePresence>
               {showLabelPicker && (
-                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="mt-2 grid grid-cols-4 gap-1.5 overflow-hidden">
-                  {LABEL_COLORS.map(({ color, label: lbl }) => {
-                    const active = labels.some((l) => l.color === color);
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="mt-2 space-y-1.5 overflow-hidden">
+                  {LABEL_COLORS.map(({ color, defaultName }) => {
+                    const active = labels.find((l) => l.color === color);
                     return (
-                      <Button
-                        key={color}
-                        title={lbl}
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => toggleLabel(color)}
-                        className={cn("relative h-6 w-full rounded p-0 transition-transform hover:scale-110", color, active && "ring-2 ring-foreground ring-offset-1")}
-                      >
-                        {active && <Check className="absolute inset-0 m-auto h-3 w-3 text-foreground drop-shadow" />}
-                      </Button>
+                      <div key={color} className="flex items-center gap-2">
+                        <Button variant="ghost" size="icon" onClick={() => toggleLabel(color)}
+                          className={cn("relative h-6 w-6 flex-none rounded p-0", color, active && "ring-2 ring-foreground ring-offset-1")}
+                        >
+                          {active && <Check className="h-3 w-3 text-foreground drop-shadow" />}
+                        </Button>
+                        {active ? (
+                          editingLabelName === color ? (
+                            <Input
+                              autoFocus
+                              value={active.name}
+                              onChange={(e) => updateLabelName(color, e.target.value)}
+                              onBlur={() => setEditingLabelName(null)}
+                              onKeyDown={(e) => { if (e.key === "Enter" || e.key === "Escape") setEditingLabelName(null); }}
+                              className="h-6 flex-1 text-xs"
+                            />
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setEditingLabelName(color)}
+                              className="h-6 flex-1 justify-start truncate px-1 text-xs text-foreground hover:underline"
+                            >
+                              {active.name || defaultName}
+                            </Button>
+                          )
+                        ) : (
+                          <span className="flex-1 text-xs text-muted-foreground">{defaultName}</span>
+                        )}
+                      </div>
                     );
                   })}
                 </motion.div>
@@ -314,22 +452,36 @@ export function BoardItemDialog({ item }: BoardItemDialogProps) {
             </AnimatePresence>
           </div>
 
-          {/* Due date */}
+          {/* Due date — bug fix: input now has the correct id */}
           <div className="mb-5">
             <SidebarHeading>Due date</SidebarHeading>
             <div className="space-y-1.5">
               <Input
+                id={dateInputId}
                 type="date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
                 onBlur={handleDueDateBlur}
-                onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); if (e.key === "Escape") { setDueDate(savedDueDate.current); e.currentTarget.blur(); } }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") e.currentTarget.blur();
+                  if (e.key === "Escape") { setDueDate(savedDueDate.current); e.currentTarget.blur(); }
+                }}
                 className="h-8 text-xs"
               />
               {dueDateDate && (
-                <p className={cn("text-[11px]", dueDateOverdue ? "text-destructive" : dueDateSoon ? "text-yellow-600" : "text-muted-foreground")}>
+                <p className={cn("text-[11px]",
+                  dueDateOverdue ? "text-destructive" : dueDateSoon ? "text-yellow-600" : "text-muted-foreground"
+                )}>
                   {dueDateOverdue ? "Overdue" : dueDateSoon ? "Due soon" : "Upcoming"} · {formatDistanceToNow(dueDateDate, { addSuffix: true })}
                 </p>
+              )}
+              {!dueDate && (
+                <Button variant="ghost" size="sm" onClick={() => document.getElementById(dateInputId)?.focus()}
+                  className="h-7 gap-1 px-1 text-xs text-muted-foreground"
+                >
+                  <Calendar className="h-3.5 w-3.5" />
+                  Set date
+                </Button>
               )}
             </div>
           </div>
@@ -350,10 +502,10 @@ export function BoardItemDialog({ item }: BoardItemDialogProps) {
             </div>
           </div>
 
-          {/* Upvotes */}
+          {/* Upvotes — bug fix: persisted via upvoted_by array */}
           <div className="mb-5">
             <SidebarHeading>Support</SidebarHeading>
-            <Button variant="ghost" size="sm" onClick={handleUpvote} disabled={hasUpvoted}
+            <Button variant="ghost" size="sm" onClick={handleUpvote} disabled={hasUpvoted || !currentUserId}
               className={cn("h-8 w-full justify-start gap-2 text-xs font-medium", hasUpvoted ? "bg-muted text-primary" : "text-muted-foreground")}
             >
               <ThumbsUp className="h-3.5 w-3.5" />
@@ -373,7 +525,7 @@ export function BoardItemDialog({ item }: BoardItemDialogProps) {
                   </a>
                   <ArrowUpRight className="h-3 w-3 flex-none text-muted-foreground/0 group-hover:text-muted-foreground" />
                   <Button variant="ghost" size="icon" onClick={() => handleRemoveLink(link.id)}
-                    className="h-4 w-4 flex-none opacity-0 transition-opacity group-hover:opacity-100 hover:text-destructive" aria-label="Remove link"
+                    className="h-4 w-4 flex-none opacity-0 transition-opacity group-hover:opacity-100 hover:text-destructive"
                   >
                     <X className="h-3 w-3" />
                   </Button>
@@ -396,8 +548,7 @@ export function BoardItemDialog({ item }: BoardItemDialogProps) {
             </AnimatePresence>
             {!showLinkForm && (
               <Button variant="ghost" size="sm" onClick={() => setShowLinkForm(true)} className="mt-1 h-7 gap-1 px-1 text-xs text-muted-foreground">
-                <Plus className="h-3 w-3" />
-                Add link
+                <Plus className="h-3 w-3" />Add link
               </Button>
             )}
           </div>
@@ -406,7 +557,9 @@ export function BoardItemDialog({ item }: BoardItemDialogProps) {
           <div className="mb-5 border-t border-border/50 pt-4">
             <SidebarHeading>Details</SidebarHeading>
             <div className="space-y-1 text-xs text-muted-foreground">
-              {item.page_title && <p><span className="font-medium text-foreground/70">From</span> {item.page_title}</p>}
+              {item.page_title && item.page_title !== "Product Board" && (
+                <p><span className="font-medium text-foreground/70">From</span> {item.page_title}</p>
+              )}
               <p><span className="font-medium text-foreground/70">Added</span> {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}</p>
             </div>
           </div>
@@ -418,33 +571,18 @@ export function BoardItemDialog({ item }: BoardItemDialogProps) {
               <Button variant="ghost" size="sm" onClick={() => setConfirmDelete(true)}
                 className="h-8 w-full justify-start gap-2 text-xs text-muted-foreground hover:text-destructive"
               >
-                <Trash2 className="h-3.5 w-3.5" />
-                Delete card
+                <Trash2 className="h-3.5 w-3.5" />Delete card
               </Button>
             ) : (
               <div className="space-y-1.5">
                 <p className="text-[11px] text-muted-foreground">Are you sure? This cannot be undone.</p>
                 <div className="flex gap-1">
-                  <Button size="sm" variant="destructive" className="h-7 flex-1 text-xs" onClick={() => deleteItem.mutate(item.id)}>
-                    Delete
-                  </Button>
-                  <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setConfirmDelete(false)}>
-                    Cancel
-                  </Button>
+                  <Button size="sm" variant="destructive" className="h-7 flex-1 text-xs" onClick={() => deleteItem.mutate(item.id)}>Delete</Button>
+                  <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setConfirmDelete(false)}>Cancel</Button>
                 </div>
               </div>
             )}
           </div>
-
-          {/* Calendar icon placeholder for due date visual */}
-          {!dueDate && (
-            <Button variant="ghost" size="sm" onClick={() => document.getElementById(`${uid}-date`)?.focus?.()}
-              className="mt-3 h-8 w-full justify-start gap-2 text-xs text-muted-foreground"
-            >
-              <Calendar className="h-3.5 w-3.5" />
-              Set due date
-            </Button>
-          )}
         </div>
       </div>
     </div>

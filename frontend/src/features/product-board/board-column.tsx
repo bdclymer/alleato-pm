@@ -104,12 +104,14 @@ function InlineCardCreator({ status, onDone }: { status: BoardStatus; onDone?: (
 interface BoardColumnProps {
   status: BoardStatus;
   label: string;
-  items: BoardItem[];
+  items: BoardItem[];        // filtered items (for display)
+  allItems?: BoardItem[];    // unfiltered items (for SortableContext ids so dnd works while filtering)
   readonly?: boolean;
 }
 
-export function BoardColumn({ status, label, items, readonly }: BoardColumnProps) {
+export function BoardColumn({ status, label, items, allItems, readonly }: BoardColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id: status });
+  const sortableIds = (allItems ?? items).map((i) => i.id);
 
   return (
     <div className="flex min-w-0 flex-col gap-0">
@@ -125,12 +127,12 @@ export function BoardColumn({ status, label, items, readonly }: BoardColumnProps
       <div
         ref={setNodeRef}
         className={cn(
-          "flex min-h-16 flex-col gap-2 rounded-2xl p-2 transition-colors duration-150",
+          "flex min-h-24 flex-col gap-2 rounded-2xl p-2 transition-colors duration-150",
           COLUMN_BG[status],
           isOver && "ring-2 ring-primary/40 ring-offset-1"
         )}
       >
-        <SortableContext items={items.map((i) => i.id)} strategy={verticalListSortingStrategy}>
+        <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
           {items.map((item) => (
             <BoardCard key={item.id} item={item} readonly={readonly} />
           ))}

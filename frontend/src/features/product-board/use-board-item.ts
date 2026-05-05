@@ -22,17 +22,18 @@ export interface BoardItemLink {
 export interface BoardLabel {
   id: string;
   color: string; // tailwind bg class e.g. "bg-red-500"
-  text: string;
+  name: string;  // user-supplied name e.g. "Design", "Backend"
 }
 
 export interface BoardItemMeta {
   links?: BoardItemLink[];
   upvotes?: number;
+  upvoted_by?: string[]; // user IDs — persists across sessions
   labels?: BoardLabel[];
   due_date?: string | null;
 }
 
-// ── Comments ────────────────────────────────────────────────────────────────
+// ── Comments ─────────────────────────────────────────────────────────────────
 
 export function useBoardItemComments(itemId: string) {
   return useQuery<{ comments: BoardComment[] }>({
@@ -50,13 +51,12 @@ export function useAddComment(itemId: string) {
         method: "POST",
         body: JSON.stringify({ body }),
       }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["board-item-comments", itemId] });
-    },
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["board-item-comments", itemId] }),
   });
 }
 
-// ── Update ───────────────────────────────────────────────────────────────────
+// ── Update ────────────────────────────────────────────────────────────────────
 
 export function useUpdateBoardItem(itemId: string) {
   const queryClient = useQueryClient();
@@ -66,43 +66,64 @@ export function useUpdateBoardItem(itemId: string) {
       title?: string;
       comment?: string;
       severity?: "low" | "medium" | "high";
+      position?: number;
+      assignee_id?: string | null;
+      screenshot_url?: string | null;
       metadata?: Partial<BoardItemMeta>;
     }) =>
       apiFetch(`/api/admin/feedback/board/${itemId}`, {
         method: "PATCH",
         body: JSON.stringify(updates),
       }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["product-board"] });
-    },
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["product-board"] }),
   });
 }
 
-// ── Create ───────────────────────────────────────────────────────────────────
+// ── Create ────────────────────────────────────────────────────────────────────
 
 export function useCreateBoardItem() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (item: { title: string; board_status: BoardStatus; severity?: string }) =>
+    mutationFn: (item: {
+      title: string;
+      board_status: BoardStatus;
+      severity?: string;
+      assignee_id?: string | null;
+    }) =>
       apiFetch("/api/admin/feedback/board/create", {
         method: "POST",
         body: JSON.stringify(item),
       }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["product-board"] });
-    },
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["product-board"] }),
   });
 }
 
-// ── Delete ───────────────────────────────────────────────────────────────────
+// ── Delete ────────────────────────────────────────────────────────────────────
 
 export function useDeleteBoardItem() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (itemId: string) =>
       apiFetch(`/api/admin/feedback/board/${itemId}`, { method: "DELETE" }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["product-board"] });
-    },
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["product-board"] }),
+  });
+}
+
+// ── Users (for assignee selector) ─────────────────────────────────────────────
+
+export interface BoardUser {
+  id: string;
+  full_name: string | null;
+  email: string;
+}
+
+export function useBoardUsers() {
+  return useQuery<{ users: BoardUser[] }>({
+    queryKey: ["board-users"],
+    queryFn: () => apiFetch("/api/users"),
+    staleTime: 5 * 60 * 1000,
   });
 }
