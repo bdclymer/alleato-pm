@@ -36,6 +36,13 @@ function runNodeScript(scriptPath) {
 }
 
 function runRestoreSync() {
+  // On Vercel the container is ephemeral — skip restore so that Vercel's own
+  // post-build file tracing (NFT) can still lstat the .nonprod files it recorded
+  // during the build. Restoring them before NFT runs causes ENOENT failures.
+  if (process.env.VERCEL) {
+    return;
+  }
+
   if (cleanedUp || !existsSync(statePath)) {
     return;
   }
