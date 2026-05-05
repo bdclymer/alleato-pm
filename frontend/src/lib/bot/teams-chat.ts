@@ -1,6 +1,6 @@
 import { Chat } from "chat";
 import { createTeamsAdapter } from "@chat-adapter/teams";
-import { createPostgresState } from "@chat-adapter/state-pg";
+import { MemoryStateAdapter } from "@chat-adapter/state-memory";
 import { after } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import {
@@ -19,8 +19,6 @@ export function getTeamsChat(): Chat {
   if (!appId) throw new Error("TEAMS_APP_ID is not set");
   const appPassword = process.env.TEAMS_APP_PASSWORD;
   if (!appPassword) throw new Error("TEAMS_APP_PASSWORD is not set");
-  const databaseUrl = process.env.DATABASE_URL;
-  if (!databaseUrl) throw new Error("DATABASE_URL is not set");
 
   const teamsAdapter = createTeamsAdapter({
     appId,
@@ -29,7 +27,7 @@ export function getTeamsChat(): Chat {
     appType: process.env.TEAMS_APP_TENANT_ID ? "SingleTenant" : "MultiTenant",
   });
 
-  const state = createPostgresState({ url: databaseUrl, keyPrefix: "alleato-bot" });
+  const state = new MemoryStateAdapter();
 
   const chat = new Chat({
     adapters: { teams: teamsAdapter },
