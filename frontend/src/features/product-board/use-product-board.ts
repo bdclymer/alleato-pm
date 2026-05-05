@@ -26,6 +26,7 @@ export interface BoardItem {
   metadata?: unknown;
   assignee_id: string | null;
   assignee?: BoardAssignee | null;
+  submitter?: BoardAssignee | null;
   comment_count: number;
   screenshot_url: string | null;
 }

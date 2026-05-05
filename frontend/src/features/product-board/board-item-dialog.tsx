@@ -5,6 +5,7 @@ import { formatDistanceToNow, isPast, differenceInDays } from "date-fns";
 import {
   AlertTriangle, Zap, Minus, Link2, Plus, Send, X, Check,
   ArrowUpRight, ThumbsUp, Trash2, Tag, Calendar, UserCircle, ImageIcon, Paperclip, Loader2,
+  Square, SquareCheckBig,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
@@ -22,7 +23,7 @@ import { createClient } from "@/lib/supabase/client";
 import { BOARD_STATUSES, BOARD_STATUS_LABELS, type BoardStatus } from "@/lib/admin-feedback/constants";
 import {
   useBoardItemComments, useAddComment, useUpdateBoardItem, useDeleteBoardItem, useBoardUsers,
-  type BoardItemMeta, type BoardItemLink, type BoardLabel,
+  type BoardItemMeta, type BoardItemLink, type BoardLabel, type ChecklistItem,
 } from "./use-board-item";
 import type { BoardItem } from "./use-product-board";
 
@@ -68,6 +69,112 @@ function Avatar({ name, email, size = "md" }: { name: string | null; email: stri
 
 function SidebarHeading({ children }: { children: React.ReactNode }) {
   return <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{children}</p>;
+}
+
+interface ChecklistSectionProps {
+  title: string;
+  placeholder: string;
+  items: ChecklistItem[];
+  onChange: (items: ChecklistItem[]) => void;
+}
+
+function ChecklistSection({ title, placeholder, items, onChange }: ChecklistSectionProps) {
+  const [newText, setNewText] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const doneCount = items.filter((i) => i.done).length;
+
+  function addItem() {
+    const text = newText.trim();
+    if (!text) return;
+    onChange([...items, { id: crypto.randomUUID(), text, done: false }]);
+    setNewText("");
+    inputRef.current?.focus();
+  }
+
+  function toggleItem(id: string) {
+    onChange(items.map((i) => i.id === id ? { ...i, done: !i.done } : i));
+  }
+
+  function removeItem(id: string) {
+    onChange(items.filter((i) => i.id !== id));
+  }
+
+  function updateText(id: string, text: string) {
+    onChange(items.map((i) => i.id === id ? { ...i, text } : i));
+  }
+
+  return (
+    <div className="mt-6">
+      <div className="mb-3 flex items-center justify-between">
+        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{title}</p>
+        {items.length > 0 && (
+          <span className="text-[11px] text-muted-foreground">{doneCount}/{items.length}</span>
+        )}
+      </div>
+      {/* Progress bar */}
+      {items.length > 0 && (
+        <div className="mb-3 h-1 w-full overflow-hidden rounded-full bg-muted">
+          <div
+            className="h-full rounded-full bg-primary transition-all duration-300"
+            style={{ width: `${Math.round((doneCount / items.length) * 100)}%` }}
+          />
+        </div>
+      )}
+      <div className="space-y-1">
+        {items.map((item) => (
+          <div key={item.id} className="group flex items-start gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => toggleItem(item.id)}
+              className="mt-0.5 h-5 w-5 flex-none p-0 text-muted-foreground hover:text-primary hover:bg-transparent"
+            >
+              {item.done
+                ? <SquareCheckBig className="h-4 w-4 text-primary" />
+                : <Square className="h-4 w-4" />}
+            </Button>
+            <Input
+              className={cn(
+                "h-auto flex-1 border-0 bg-transparent p-0 text-sm shadow-none focus-visible:ring-0",
+                item.done ? "text-muted-foreground line-through" : "text-foreground"
+              )}
+              value={item.text}
+              onChange={(e) => updateText(item.id, e.target.value)}
+              onBlur={(e) => { if (!e.target.value.trim()) removeItem(item.id); }}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); inputRef.current?.focus(); } }}
+            />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => removeItem(item.id)}
+              className="mt-0.5 h-5 w-5 flex-none p-0 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-transparent hover:text-destructive"
+            >
+              <X className="h-3.5 w-3.5 text-muted-foreground" />
+            </Button>
+          </div>
+        ))}
+      </div>
+      <div className="mt-2 flex items-center gap-1.5">
+        <div className="h-5 w-5 flex-none" />{/* alignment spacer matching button width */}
+        <Input
+          ref={inputRef}
+          className="h-auto flex-1 border-0 bg-transparent p-0 text-sm shadow-none focus-visible:ring-0 placeholder:text-muted-foreground/40"
+          placeholder={placeholder}
+          value={newText}
+          onChange={(e) => setNewText(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") { e.preventDefault(); addItem(); }
+          }}
+        />
+        {newText.trim() && (
+          <Button variant="ghost" size="sm" onClick={addItem} className="h-6 px-2 text-xs text-primary">
+            Add
+          </Button>
+        )}
+      </div>
+    </div>
+  );
 }
 
 async function uploadBoardImage(file: File): Promise<string> {
@@ -126,6 +233,8 @@ export function BoardItemDialog({ item }: BoardItemDialogProps) {
   const [dueDate, setDueDate] = useState<string>(meta.due_date ?? "");
   const [upvotes, setUpvotes] = useState(meta.upvotes ?? 0);
   const [upvotedBy, setUpvotedBy] = useState<string[]>(meta.upvoted_by ?? []);
+  const [subtasks, setSubtasks] = useState<ChecklistItem[]>(meta.subtasks ?? []);
+  const [prerequisites, setPrerequisites] = useState<ChecklistItem[]>(meta.prerequisites ?? []);
   const [showLinkForm, setShowLinkForm] = useState(false);
   const [showLabelPicker, setShowLabelPicker] = useState(false);
   const [editingLabelName, setEditingLabelName] = useState<string | null>(null);
@@ -181,6 +290,16 @@ export function BoardItemDialog({ item }: BoardItemDialogProps) {
     const next = labels.map((l) => l.color === color ? { ...l, name } : l);
     setLabels(next);
     save({ metadata: { labels: next } });
+  }
+
+  function handleSubtasksChange(next: ChecklistItem[]) {
+    setSubtasks(next);
+    save({ metadata: { subtasks: next } });
+  }
+
+  function handlePrerequisitesChange(next: ChecklistItem[]) {
+    setPrerequisites(next);
+    save({ metadata: { prerequisites: next } });
   }
 
   function handleUpvote() {
@@ -371,6 +490,22 @@ export function BoardItemDialog({ item }: BoardItemDialogProps) {
             </Button>
           </MorphingDialogDescription>
 
+          {/* Subtasks */}
+          <ChecklistSection
+            title="Subtasks"
+            placeholder="Add a subtask…"
+            items={subtasks}
+            onChange={handleSubtasksChange}
+          />
+
+          {/* Prerequisites */}
+          <ChecklistSection
+            title="Prerequisites"
+            placeholder="Add something needed to execute this…"
+            items={prerequisites}
+            onChange={handlePrerequisitesChange}
+          />
+
           {/* Activity */}
           <div className="mt-6 border-t border-border/50 pt-5">
             <p className="mb-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -536,11 +671,22 @@ export function BoardItemDialog({ item }: BoardItemDialogProps) {
           {/* Labels */}
           <div className="mb-5">
             <SidebarHeading>Labels</SidebarHeading>
+            {/* Assigned labels — shown when picker is closed */}
+            {!showLabelPicker && labels.length > 0 && (
+              <div className="mb-1.5 flex flex-col gap-1">
+                {labels.map((l) => (
+                  <div key={l.id} className="flex items-center gap-2">
+                    <span className={cn("h-3 w-3 flex-none rounded-sm", l.color)} />
+                    <span className="truncate text-xs text-foreground">{l.name}</span>
+                  </div>
+                ))}
+              </div>
+            )}
             <Button variant="ghost" size="sm" onClick={() => setShowLabelPicker((v) => !v)}
-              className="h-8 w-full justify-start gap-2 text-xs text-muted-foreground"
+              className="h-7 w-full justify-start gap-2 text-xs text-muted-foreground"
             >
               <Tag className="h-3.5 w-3.5" />
-              {showLabelPicker ? "Done" : labels.length > 0 ? `${labels.length} label${labels.length > 1 ? "s" : ""}` : "Add labels"}
+              {showLabelPicker ? "Done" : labels.length > 0 ? "Edit labels" : "Add labels"}
             </Button>
             <AnimatePresence>
               {showLabelPicker && (
@@ -683,6 +829,21 @@ export function BoardItemDialog({ item }: BoardItemDialogProps) {
               <Button variant="ghost" size="sm" onClick={() => setShowLinkForm(true)} className="mt-1 h-7 gap-1 px-1 text-xs text-muted-foreground">
                 <Plus className="h-3 w-3" />Add link
               </Button>
+            )}
+          </div>
+
+          {/* Submitted by */}
+          <div className="mb-5 border-t border-border/50 pt-4">
+            <SidebarHeading>Submitted by</SidebarHeading>
+            {item.submitter ? (
+              <div className="flex items-center gap-2">
+                <Avatar name={item.submitter.full_name ?? null} email={item.submitter.email} size="sm" />
+                <span className="truncate text-xs text-foreground">
+                  {item.submitter.full_name ?? item.submitter.email}
+                </span>
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">Unknown</p>
             )}
           </div>
 

@@ -13,6 +13,7 @@ export const GET = withApiGuardrails("admin/feedback/board", async () => {
       `id, title, comment, request_type, board_status, severity, position,
        created_at, page_title, page_path, created_by, metadata, assignee_id, screenshot_url,
        assignee:user_profiles!assignee_id (id, full_name, email),
+       submitter:user_profiles!created_by (id, full_name, email),
        comment_count:admin_feedback_comments(count)`
     )
     .eq("request_type", "feature_request")

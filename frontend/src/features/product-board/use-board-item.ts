@@ -25,12 +25,20 @@ export interface BoardLabel {
   name: string;  // user-supplied name e.g. "Design", "Backend"
 }
 
+export interface ChecklistItem {
+  id: string;
+  text: string;
+  done: boolean;
+}
+
 export interface BoardItemMeta {
   links?: BoardItemLink[];
   upvotes?: number;
   upvoted_by?: string[]; // user IDs — persists across sessions
   labels?: BoardLabel[];
   due_date?: string | null;
+  subtasks?: ChecklistItem[];
+  prerequisites?: ChecklistItem[];
 }
 
 // ── Comments ─────────────────────────────────────────────────────────────────
