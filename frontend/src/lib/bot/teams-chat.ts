@@ -58,99 +58,113 @@ async function handleMessage(
   message: Message,
   _source: "mention" | "dm",
 ): Promise<void> {
-  const teamsUserId = message.author.userId;
-  const displayName = message.author.fullName;
-  const messageText = message.text.trim();
+  try {
+    const teamsUserId = message.author.userId;
+    const displayName = message.author.fullName;
+    const messageText = message.text.trim();
 
-  const supabase = createServiceClient();
+    const supabase = createServiceClient();
 
-  let supabaseUserId: string | null = null;
+    let supabaseUserId: string | null = null;
 
-  const { data: mapping } = await supabase
-    .from("bot_user_mappings")
-    .select("supabase_user_id")
-    .eq("platform", "teams")
-    .eq("platform_user_id", teamsUserId)
-    .maybeSingle();
+    const { data: mapping } = await supabase
+      .from("bot_user_mappings")
+      .select("supabase_user_id")
+      .eq("platform", "teams")
+      .eq("platform_user_id", teamsUserId)
+      .maybeSingle();
 
-  if (mapping) {
-    supabaseUserId = mapping.supabase_user_id;
-  } else {
-    const email = message.author.userName?.includes("@")
-      ? message.author.userName
-      : null;
+    if (mapping) {
+      supabaseUserId = mapping.supabase_user_id;
+    } else {
+      const email = message.author.userName?.includes("@")
+        ? message.author.userName
+        : null;
 
-    if (email) {
-      const { data: userRecord } = await supabase
-        .from("user_profiles")
-        .select("id")
-        .eq("email", email)
-        .maybeSingle();
+      if (email) {
+        const { data: userRecord } = await supabase
+          .from("user_profiles")
+          .select("id")
+          .eq("email", email)
+          .maybeSingle();
 
-      if (userRecord) {
-        supabaseUserId = userRecord.id;
-        await supabase.from("bot_user_mappings").insert({
-          platform: "teams",
-          platform_user_id: teamsUserId,
-          supabase_user_id: supabaseUserId,
-          display_name: displayName || null,
-        });
+        if (userRecord) {
+          supabaseUserId = userRecord.id;
+          const { error: insertMappingError } = await supabase.from("bot_user_mappings").insert({
+            platform: "teams",
+            platform_user_id: teamsUserId,
+            supabase_user_id: supabaseUserId,
+            display_name: displayName || null,
+          });
+          if (insertMappingError) {
+            console.error("[teams-bot] failed to auto-create bot_user_mappings", {
+              error: insertMappingError.message, teamsUserId,
+            });
+          }
+        }
       }
     }
+
+    const linkMatch = messageText.match(/^link\s+([A-Za-z0-9_-]{6,12})$/i);
+    if (linkMatch) {
+      await handleLinkCommand(thread, teamsUserId, displayName, linkMatch[1]);
+      return;
+    }
+
+    if (!supabaseUserId) {
+      await thread.post(
+        "👋 I don't recognize your account yet. To link your Alleato account:\n\n" +
+          "1. Open **Settings → Integrations → Microsoft Teams** in Alleato\n" +
+          "2. Copy your link code\n" +
+          "3. Send me: `link <your-code>`",
+      );
+      return;
+    }
+
+    await thread.startTyping().catch(() => undefined);
+
+    const sessionId = `teams:${supabaseUserId}`;
+
+    await persistChatMessage({
+      sessionId,
+      userId: supabaseUserId,
+      role: "user",
+      content: messageText,
+      metadata: { platform: "teams", teamsUserId, threadId: thread.id },
+    });
+
+    const result = await generateBotResponse({
+      userId: supabaseUserId,
+      messageText,
+      sessionId,
+    });
+
+    await persistChatMessage({
+      sessionId,
+      userId: supabaseUserId,
+      role: "assistant",
+      content: result.text,
+      metadata: {
+        platform: "teams",
+        model: "strategist",
+        toolCallCount: result.toolTrace.length,
+        usage: result.usage,
+      },
+    });
+
+    await thread.post(result.text);
+
+    after(async () => {
+      if (supabaseUserId) await runPostResponseTasks(sessionId, supabaseUserId);
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[teams-bot] unhandled error in handleMessage", {
+      error: msg,
+      threadId: thread.id,
+    });
+    await thread.post("❌ Something went wrong. Please try again in a moment.").catch(() => undefined);
   }
-
-  const linkMatch = messageText.match(/^link\s+([A-Za-z0-9_-]{6,12})$/i);
-  if (linkMatch) {
-    await handleLinkCommand(thread, teamsUserId, displayName, linkMatch[1]);
-    return;
-  }
-
-  if (!supabaseUserId) {
-    await thread.post(
-      "👋 I don't recognize your account yet. To link your Alleato account:\n\n" +
-        "1. Open **Settings → Integrations → Microsoft Teams** in Alleato\n" +
-        "2. Copy your link code\n" +
-        "3. Send me: `link <your-code>`",
-    );
-    return;
-  }
-
-  await thread.startTyping().catch(() => undefined);
-
-  const sessionId = `teams:${supabaseUserId}`;
-
-  await persistChatMessage({
-    sessionId,
-    userId: supabaseUserId,
-    role: "user",
-    content: messageText,
-    metadata: { platform: "teams", teamsUserId, threadId: thread.id },
-  });
-
-  const result = await generateBotResponse({
-    userId: supabaseUserId,
-    messageText,
-    sessionId,
-  });
-
-  await persistChatMessage({
-    sessionId,
-    userId: supabaseUserId,
-    role: "assistant",
-    content: result.text,
-    metadata: {
-      platform: "teams",
-      model: "strategist",
-      toolCallCount: result.toolTrace.length,
-      usage: result.usage,
-    },
-  });
-
-  await thread.post(result.text);
-
-  after(async () => {
-    if (supabaseUserId) await runPostResponseTasks(sessionId, supabaseUserId);
-  });
 }
 
 async function handleLinkCommand(
@@ -182,10 +196,15 @@ async function handleLinkCommand(
     return;
   }
 
-  await supabase
+  const { error: markUsedError } = await supabase
     .from("teams_link_codes")
     .update({ used_at: new Date().toISOString() })
     .eq("code", code);
+  if (markUsedError) {
+    console.error("[teams-bot] failed to mark link code used", { code, error: markUsedError.message });
+    await thread.post("❌ Something went wrong linking your account. Please try again.");
+    return;
+  }
 
   const { error: upsertError } = await supabase.from("bot_user_mappings").upsert(
     {
