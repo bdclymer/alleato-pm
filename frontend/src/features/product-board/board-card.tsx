@@ -3,7 +3,7 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { formatDistanceToNow } from "date-fns";
-import { GripVertical, Zap, AlertTriangle, Minus } from "lucide-react";
+import { Zap, AlertTriangle, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { BoardItem } from "./use-product-board";
 
@@ -43,11 +43,7 @@ export function BoardCard({ item, isDragging, readonly }: BoardCardProps) {
           : "shadow-xs hover:shadow-sm"
       )}
     >
-      {!readonly && (
-        <GripVertical className="absolute right-2.5 top-3 h-4 w-4 text-muted-foreground/30 group-hover:text-muted-foreground/60 transition-colors" />
-      )}
-
-      <p className="pr-7 text-sm font-medium leading-snug text-foreground line-clamp-2">
+      <p className="text-sm font-medium leading-snug text-foreground line-clamp-2">
         {item.title}
       </p>
 
