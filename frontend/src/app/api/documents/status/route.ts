@@ -33,7 +33,7 @@ export const GET = withApiGuardrails(
         storage_bucket,
         url,
         project_id,
-        fireflies_ingestion_jobs (
+        fireflies_ingestion_jobs!fireflies_ingestion_jobs_metadata_id_fkey (
           stage,
           attempt_count,
           last_attempt_at,

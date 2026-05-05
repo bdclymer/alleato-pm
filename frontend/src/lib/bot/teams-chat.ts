@@ -18,6 +18,10 @@ import type { Thread, Message } from "chat";
 
 let _chat: Chat | null = null;
 
+export function resetTeamsChat(): void {
+  _chat = null;
+}
+
 export function getTeamsChat(): Chat {
   if (_chat) return _chat;
 

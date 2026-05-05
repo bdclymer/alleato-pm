@@ -101,7 +101,7 @@ export function BoardCard({ item, readonly }: BoardCardProps) {
           >
             {/* Cover image */}
             {item.screenshot_url && (
-              <div className="h-32 w-full overflow-hidden">
+              <div className="h-48 w-full overflow-hidden">
                 <img
                   src={item.screenshot_url}
                   alt="Card cover"
