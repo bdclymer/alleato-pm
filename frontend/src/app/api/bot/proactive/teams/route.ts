@@ -18,7 +18,12 @@ export async function POST(request: Request): Promise<Response> {
   const authHeader = request.headers.get("authorization");
   const serviceKey = process.env.NOTIFICATION_SERVICE_KEY;
 
-  if (!serviceKey || authHeader !== `Bearer ${serviceKey}`) {
+  if (!serviceKey) {
+    logger.error({ msg: "[bot/proactive/teams] NOTIFICATION_SERVICE_KEY is not set" });
+    return NextResponse.json({ error: "Service misconfigured" }, { status: 500 });
+  }
+
+  if (authHeader !== `Bearer ${serviceKey}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

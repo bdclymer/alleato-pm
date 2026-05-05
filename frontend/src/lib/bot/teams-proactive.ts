@@ -31,8 +31,13 @@ export async function sendProactiveTeamsDM(
   }
 
   const chat = getTeamsChat();
-  const dmThread = await chat.openDM(mapping.platform_user_id);
-  await dmThread.post(message);
+  try {
+    const dmThread = await chat.openDM(mapping.platform_user_id);
+    await dmThread.post(message);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    throw new Error(`Teams adapter failed to send DM to ${mapping.platform_user_id}: ${msg}`);
+  }
 
   return { sent: true };
 }
