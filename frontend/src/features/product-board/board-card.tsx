@@ -3,7 +3,7 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { formatDistanceToNow, isPast, differenceInDays } from "date-fns";
-import { Zap, AlertTriangle, Minus, MessageSquare, Clock } from "lucide-react";
+import { Zap, AlertTriangle, Minus, MessageSquare, Clock, Link2 } from "lucide-react";
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
 import {
@@ -70,6 +70,7 @@ export function BoardCard({ item, readonly }: BoardCardProps) {
   const style = { transform: CSS.Transform.toString(transform), transition };
   const meta = (item.metadata as BoardItemMeta | null) ?? {};
   const labels = meta.labels ?? [];
+  const links = meta.links ?? [];
   const dueDate = meta.due_date;
   const severity = item.severity ? severityConfig[item.severity as keyof typeof severityConfig] : null;
 
@@ -101,6 +102,13 @@ export function BoardCard({ item, readonly }: BoardCardProps) {
               {item.title}
             </p>
 
+            {/* Source / category */}
+            {item.page_title && item.page_title !== "Product Board" && (
+              <p className="mt-1.5 text-[11px] text-muted-foreground/60 truncate">
+                {item.page_title}
+              </p>
+            )}
+
             {/* Footer metadata */}
             <div className="mt-2.5 flex flex-wrap items-center justify-between gap-1.5">
               <div className="flex flex-wrap items-center gap-1.5">
@@ -111,11 +119,19 @@ export function BoardCard({ item, readonly }: BoardCardProps) {
                   </span>
                 )}
               </div>
-              {item.comment && (
-                <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                  <MessageSquare className="h-3 w-3" />
-                </span>
-              )}
+              <div className="flex items-center gap-2">
+                {links.length > 0 && (
+                  <span className="flex items-center gap-0.5 text-[11px] text-muted-foreground">
+                    <Link2 className="h-3 w-3" />
+                    {links.length}
+                  </span>
+                )}
+                {item.comment && (
+                  <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                    <MessageSquare className="h-3 w-3" />
+                  </span>
+                )}
+              </div>
             </div>
           </MorphingDialogTrigger>
         </motion.div>

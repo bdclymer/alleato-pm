@@ -14,7 +14,6 @@ import type { BoardStatus } from "@/lib/admin-feedback/constants";
 
 const COLUMN_BG: Record<BoardStatus, string> = {
   submitted: "bg-muted/50",
-  in_review: "bg-blue-50/60 dark:bg-blue-950/20",
   planned: "bg-violet-50/60 dark:bg-violet-950/20",
   in_progress: "bg-amber-50/60 dark:bg-amber-950/20",
   shipped: "bg-emerald-50/60 dark:bg-emerald-950/20",
@@ -22,7 +21,6 @@ const COLUMN_BG: Record<BoardStatus, string> = {
 
 const COUNT_PILL: Record<BoardStatus, string> = {
   submitted: "bg-muted text-muted-foreground",
-  in_review: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300",
   planned: "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300",
   in_progress: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
   shipped: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300",
@@ -114,7 +112,7 @@ export function BoardColumn({ status, label, items, readonly }: BoardColumnProps
   const { setNodeRef, isOver } = useDroppable({ id: status });
 
   return (
-    <div className="flex w-72 flex-none flex-col gap-0">
+    <div className="flex min-w-0 flex-col gap-0">
       {/* Column header */}
       <div className="flex items-center justify-between px-1 pb-2">
         <span className="text-sm font-semibold text-foreground">{label}</span>

@@ -61,7 +61,7 @@ export function ProductBoardClient({ readonly }: ProductBoardClientProps) {
 
   if (isLoading) {
     return (
-      <div className="flex gap-4 overflow-x-auto pb-6">
+      <div className="grid grid-cols-4 gap-4 pb-6">
         {BOARD_STATUSES.map((status) => (
           <div
             key={status}
@@ -93,7 +93,7 @@ export function ProductBoardClient({ readonly }: ProductBoardClientProps) {
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="flex gap-4 overflow-x-auto pb-6">
+      <div className="grid grid-cols-4 gap-4 pb-6">
         {BOARD_STATUSES.map((status) => (
           <BoardColumn
             key={status}
