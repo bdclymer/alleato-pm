@@ -13,6 +13,7 @@ import { useCurrentUserProfile } from "@/hooks/use-current-user-profile";
 import { getBestAvatarUrl } from "@/lib/gravatar";
 import { SectionRuleHeading } from "@/components/layout/spacing";
 import { TelegramLinkPanel } from "../integrations/telegram-link-panel";
+import { TeamsLinkPanel } from "../integrations/teams-link-panel";
 
 
 function InfoRow({ label, value }: { label: string; value?: string }) {
@@ -106,6 +107,11 @@ export default function ProfilePage() {
         <section className="space-y-4">
           <SectionRuleHeading label="Telegram" />
           <TelegramLinkPanel />
+        </section>
+
+        <section className="space-y-4">
+          <SectionRuleHeading label="Microsoft Teams" />
+          <TeamsLinkPanel />
         </section>
     </PageShell>
   );
