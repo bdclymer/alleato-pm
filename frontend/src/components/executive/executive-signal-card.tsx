@@ -57,9 +57,9 @@ export function ExecutiveSignalCard({
     <MorphingDialog transition={{ type: "spring", bounce: 0.05, duration: 0.28 }}>
       {/* ── Compact row trigger ── */}
       <MorphingDialogTrigger
-        className="w-full rounded-lg px-2 py-3 text-left transition-colors hover:bg-muted/40"
+        className="group w-full rounded-md border-t border-border/50 px-2 py-2.5 text-left transition-colors first:border-t-0 hover:bg-muted/50"
       >
-        <div className="flex items-center gap-3 group">
+        <div className="flex items-center gap-3">
           <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", toneDotClass[tone])} />
           <span className="min-w-0 flex-1 truncate text-sm text-foreground">
             {item.title}
@@ -69,7 +69,8 @@ export function ExecutiveSignalCard({
               {item.project}
             </Badge>
             <span className="text-xs">{item.date}</span>
-            <ChevronRight className="h-3.5 w-3.5 opacity-40 transition-opacity group-hover:opacity-100" />
+            <span className="text-xs font-medium text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100">View</span>
+            <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
           </div>
         </div>
       </MorphingDialogTrigger>

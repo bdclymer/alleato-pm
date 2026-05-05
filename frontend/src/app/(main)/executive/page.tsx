@@ -214,30 +214,23 @@ function followUpToItem(followUp: ExecutiveBriefingFollowUp): BrandonBriefItem {
 
 function SectionDivider({
   title,
-  description,
   count,
 }: {
   title: string;
-  description: string;
+  description?: string;
   count?: number;
 }) {
   return (
-    <div className="border-t border-border pt-10">
-      <SectionRuleHeading
-        label={title}
-        className="mb-1"
-        actions={
-          count !== undefined ? (
-            <span className="text-xs font-medium tabular-nums text-muted-foreground">
-              {count} {count === 1 ? "item" : "items"}
-            </span>
-          ) : undefined
-        }
-      />
-      <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
-        {description}
-      </p>
-    </div>
+    <SectionRuleHeading
+      label={title}
+      actions={
+        count !== undefined ? (
+          <span className="text-xs tabular-nums text-muted-foreground">
+            {count}
+          </span>
+        ) : undefined
+      }
+    />
   );
 }
 
@@ -245,14 +238,13 @@ function SectionDivider({
 
 function ExecutiveListSection({
   title,
-  description,
   items,
   emptyTitle,
   employees,
   matchedTasksBySourceId,
 }: {
   title: string;
-  description: string;
+  description?: string;
   items: BrandonBriefItem[];
   emptyTitle: string;
   employees: ExecutiveTaskAssigneeOption[];
@@ -260,7 +252,7 @@ function ExecutiveListSection({
 }) {
   return (
     <section className="space-y-2">
-      <SectionDivider title={title} description={description} count={items.length} />
+      <SectionDivider title={title} count={items.length} />
       {items.length > 0 ? (
         <div>
           {items.map((item) => (
@@ -289,7 +281,6 @@ function CarryForwardSection({ followUps }: { followUps: ExecutiveBriefingFollow
     <section className="space-y-5">
       <SectionDivider
         title="Carry-Forward Risks"
-        description="Important follow-ups that are still open but did not make today's live packet."
         count={followUps.length}
       />
 
@@ -505,6 +496,7 @@ export default async function ExecutiveDailyInsightsPage() {
     [...shownAboveFinancial, ...financialItems],
   );
   const financialAlertCount = financialItems.length + paymentGuardrailAlerts.length;
+  const topStaleFollowUps = staleFollowUps.slice(0, 5);
 
   return (
     <PageShell
@@ -516,7 +508,7 @@ export default async function ExecutiveDailyInsightsPage() {
     >
       <div className="grid grid-cols-1 gap-12 xl:grid-cols-[1fr_300px]">
         {/* ── Main column ── */}
-        <div className="space-y-14">
+        <div className="space-y-8">
           <ExecutiveListSection
             title="Needs Brandon Today"
             description="Decisions and confirmations requiring owner-level input."
@@ -553,12 +545,11 @@ export default async function ExecutiveDailyInsightsPage() {
             matchedTasksBySourceId={matchedTasksBySourceId}
           />
 
-          <CarryForwardSection followUps={staleFollowUps} />
+          <CarryForwardSection followUps={topStaleFollowUps} />
 
           <section className="space-y-5">
             <SectionDivider
               title="Source Health"
-              description="Recent coverage across the channels feeding this briefing."
             />
             <ExecutiveSourceActivity sources={packet.sourceCoverage} />
           </section>
