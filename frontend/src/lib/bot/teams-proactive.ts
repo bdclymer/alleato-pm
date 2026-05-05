@@ -1,0 +1,38 @@
+// frontend/src/lib/bot/teams-proactive.ts
+import { getTeamsChat } from "@/lib/bot/teams-chat";
+import { createServiceClient } from "@/lib/supabase/service";
+
+/**
+ * Send a proactive DM to a user on Microsoft Teams.
+ *
+ * Requires that the user has previously messaged the bot (so the Teams adapter
+ * has cached their serviceUrl and tenantId in Postgres state). Returns false if
+ * the user has no Teams account linked.
+ */
+export async function sendProactiveTeamsDM(
+  supabaseUserId: string,
+  message: string,
+): Promise<{ sent: boolean; reason?: string }> {
+  const supabase = createServiceClient();
+
+  const { data: mapping, error: lookupError } = await supabase
+    .from("bot_user_mappings")
+    .select("platform_user_id")
+    .eq("platform", "teams")
+    .eq("supabase_user_id", supabaseUserId)
+    .maybeSingle();
+
+  if (lookupError) {
+    throw new Error(`Failed to look up Teams mapping: ${lookupError.message}`);
+  }
+
+  if (!mapping) {
+    return { sent: false, reason: "no_teams_mapping" };
+  }
+
+  const chat = getTeamsChat();
+  const dmThread = await chat.openDM(mapping.platform_user_id);
+  await dmThread.post(message);
+
+  return { sent: true };
+}
