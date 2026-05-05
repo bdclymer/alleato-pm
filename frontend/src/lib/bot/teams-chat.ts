@@ -112,7 +112,7 @@ async function handleMessage(
     if (!supabaseUserId) {
       await thread.post(
         "👋 I don't recognize your account yet. To link your Alleato account:\n\n" +
-          "1. Open **Settings → Integrations → Microsoft Teams** in Alleato\n" +
+          "1. Open **Settings → Profile → Microsoft Teams** in Alleato\n" +
           "2. Copy your link code\n" +
           "3. Send me: `link <your-code>`",
       );
@@ -121,7 +121,8 @@ async function handleMessage(
 
     await thread.startTyping().catch(() => undefined);
 
-    const sessionId = `teams:${supabaseUserId}`;
+    // Scope session to user+thread so channel convos and DMs stay isolated
+    const sessionId = `teams:${supabaseUserId}:${thread.id}`;
 
     await persistChatMessage({
       sessionId,
@@ -186,7 +187,7 @@ async function handleLinkCommand(
   }
 
   if (!linkCode) {
-    await thread.post("❌ That code is invalid. Please generate a new one in **Settings → Integrations → Microsoft Teams**.");
+    await thread.post("❌ That code is invalid. Please generate a new one in **Settings → Profile → Microsoft Teams**.");
     return;
   }
 
