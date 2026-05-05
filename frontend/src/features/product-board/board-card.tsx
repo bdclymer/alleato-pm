@@ -3,7 +3,7 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { formatDistanceToNow, isPast, differenceInDays } from "date-fns";
-import { Zap, AlertTriangle, Minus, MessageSquare, Clock, Link2 } from "lucide-react";
+import { Zap, AlertTriangle, Minus, MessageSquare, Clock, ExternalLink } from "lucide-react";
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
 import {
@@ -15,6 +15,8 @@ import {
 import { BoardItemDialog } from "./board-item-dialog";
 import type { BoardItem, BoardAssignee } from "./use-product-board";
 import type { BoardItemMeta, BoardLabel } from "./use-board-item";
+import type { CardViewSettings } from "./card-view-settings";
+import { DEFAULT_CARD_VIEW_SETTINGS } from "./card-view-settings";
 
 type BoardItemWithMeta = BoardItem;
 
@@ -41,12 +43,16 @@ function DueDateChip({ dateStr }: { dateStr: string }) {
   );
 }
 
-function LabelDots({ labels }: { labels: BoardLabel[] }) {
+function LabelStrips({ labels }: { labels: BoardLabel[] }) {
   if (!labels.length) return null;
   return (
-    <div className="flex gap-1">
+    <div className="flex gap-1 mb-2">
       {labels.slice(0, 5).map((l) => (
-        <span key={l.id} title={l.name || l.color} className={cn("h-2 rounded-sm flex-1", l.color)} />
+        <span
+          key={l.id}
+          title={l.name || l.color}
+          className={cn("h-1.5 flex-1 rounded-full", l.color)}
+        />
       ))}
     </div>
   );
@@ -69,9 +75,10 @@ function AssigneeAvatar({ assignee }: { assignee: BoardAssignee }) {
 interface BoardCardProps {
   item: BoardItemWithMeta;
   readonly?: boolean;
+  settings?: CardViewSettings;
 }
 
-export function BoardCard({ item, readonly }: BoardCardProps) {
+export function BoardCard({ item, readonly, settings = DEFAULT_CARD_VIEW_SETTINGS }: BoardCardProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: item.id, disabled: readonly });
 
@@ -81,6 +88,13 @@ export function BoardCard({ item, readonly }: BoardCardProps) {
   const links = meta.links ?? [];
   const dueDate = meta.due_date;
   const severity = item.severity ? severityConfig[item.severity as keyof typeof severityConfig] : null;
+  const primaryLink = links[0];
+
+  const hasFooter =
+    (settings.showDueDate && dueDate) ||
+    (settings.showSeverity && severity) ||
+    (settings.showCommentCount && item.comment_count > 0) ||
+    (settings.showAssignee && item.assignee);
 
   return (
     <div ref={setNodeRef} style={style} className={cn("transition-opacity duration-150", isDragging && "opacity-40")}>
@@ -100,7 +114,7 @@ export function BoardCard({ item, readonly }: BoardCardProps) {
             )}
           >
             {/* Cover image */}
-            {item.screenshot_url && (
+            {settings.showCover && item.screenshot_url && (
               <div className="h-48 w-full overflow-hidden">
                 <img
                   src={item.screenshot_url}
@@ -112,50 +126,67 @@ export function BoardCard({ item, readonly }: BoardCardProps) {
             )}
 
             <div className="p-3">
-            {/* Label strips */}
-            {labels.length > 0 && (
-              <div className="mb-2 flex gap-1">
-                <LabelDots labels={labels} />
-              </div>
-            )}
+              {/* Label strips */}
+              {settings.showLabels && labels.length > 0 && (
+                <LabelStrips labels={labels} />
+              )}
 
-            <p className="text-sm font-medium leading-snug text-foreground line-clamp-3">
-              {item.title}
-            </p>
-
-            {/* Source */}
-            {item.page_title && item.page_title !== "Product Board" && (
-              <p className="mt-1 text-[11px] text-muted-foreground/60 truncate">
-                {item.page_title}
+              <p className="text-sm font-medium leading-snug text-foreground line-clamp-3">
+                {item.title}
               </p>
-            )}
 
-            {/* Footer */}
-            <div className="mt-2.5 flex flex-wrap items-center justify-between gap-1.5">
-              <div className="flex flex-wrap items-center gap-1.5">
-                {dueDate && <DueDateChip dateStr={dueDate} />}
-                {severity && (
-                  <span className={cn("flex items-center", severity.className)}>
-                    {severity.icon}
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center gap-2">
-                {links.length > 0 && (
-                  <span className="flex items-center gap-0.5 text-[11px] text-muted-foreground">
-                    <Link2 className="h-3 w-3" />
-                    {links.length}
-                  </span>
-                )}
-                {item.comment_count > 0 && (
-                  <span className="flex items-center gap-0.5 text-[11px] text-muted-foreground">
-                    <MessageSquare className="h-3 w-3" />
-                    {item.comment_count}
-                  </span>
-                )}
-                {item.assignee && <AssigneeAvatar assignee={item.assignee as BoardAssignee} />}
-              </div>
-            </div>
+              {/* Description preview */}
+              {settings.showDescription && item.comment && (
+                <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground line-clamp-2">
+                  {item.comment}
+                </p>
+              )}
+
+              {/* Live link chip */}
+              {settings.showLinkPreview && primaryLink && (
+                <a
+                  href={primaryLink.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="mt-2 inline-flex items-center gap-1 rounded-md bg-primary/8 px-2 py-1 text-[11px] font-medium text-primary hover:bg-primary/15 transition-colors max-w-full"
+                >
+                  <ExternalLink className="h-2.5 w-2.5 shrink-0" />
+                  <span className="truncate">{primaryLink.label}</span>
+                </a>
+              )}
+
+              {/* Source */}
+              {item.page_title && item.page_title !== "Product Board" && (
+                <p className="mt-1 text-[11px] text-muted-foreground/60 truncate">
+                  {item.page_title}
+                </p>
+              )}
+
+              {/* Footer */}
+              {hasFooter && (
+                <div className="mt-2.5 flex flex-wrap items-center justify-between gap-1.5">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {settings.showDueDate && dueDate && <DueDateChip dateStr={dueDate} />}
+                    {settings.showSeverity && severity && (
+                      <span className={cn("flex items-center", severity.className)}>
+                        {severity.icon}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {settings.showCommentCount && item.comment_count > 0 && (
+                      <span className="flex items-center gap-0.5 text-[11px] text-muted-foreground">
+                        <MessageSquare className="h-3 w-3" />
+                        {item.comment_count}
+                      </span>
+                    )}
+                    {settings.showAssignee && item.assignee && (
+                      <AssigneeAvatar assignee={item.assignee as BoardAssignee} />
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </MorphingDialogTrigger>
         </motion.div>

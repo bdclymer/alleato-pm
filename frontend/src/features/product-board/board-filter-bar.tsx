@@ -1,12 +1,15 @@
 "use client";
 
 import { useMemo } from "react";
-import { Search, X } from "lucide-react";
+import { Search, X, SlidersHorizontal } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import type { BoardItem, BoardAssignee } from "./use-product-board";
 import type { BoardLabel, BoardItemMeta } from "./use-board-item";
+import type { CardViewSettings } from "./card-view-settings";
 
 export interface BoardFilters {
   search?: string;
@@ -19,6 +22,17 @@ const PRIORITY_OPTIONS = [
   { value: "high", label: "High" },
   { value: "medium", label: "Med" },
   { value: "low", label: "Low" },
+];
+
+const VIEW_TOGGLES: { key: keyof CardViewSettings; label: string }[] = [
+  { key: "showCover",        label: "Cover image" },
+  { key: "showLinkPreview",  label: "Live link" },
+  { key: "showDescription",  label: "Description preview" },
+  { key: "showLabels",       label: "Labels" },
+  { key: "showAssignee",     label: "Assignee" },
+  { key: "showDueDate",      label: "Due date" },
+  { key: "showSeverity",     label: "Priority" },
+  { key: "showCommentCount", label: "Comment count" },
 ];
 
 function AssigneeAvatar({ user, size = "sm" }: { user: BoardAssignee; size?: "sm" | "xs" }) {
@@ -42,10 +56,11 @@ interface BoardFilterBarProps {
   items: BoardItem[];
   filters: BoardFilters;
   onChange: (f: BoardFilters) => void;
+  cardSettings: CardViewSettings;
+  onCardSettingsChange: (patch: Partial<CardViewSettings>) => void;
 }
 
-export function BoardFilterBar({ items, filters, onChange }: BoardFilterBarProps) {
-  // Collect unique assignees and label colors from board items
+export function BoardFilterBar({ items, filters, onChange, cardSettings, onCardSettingsChange }: BoardFilterBarProps) {
   const assignees = useMemo<BoardAssignee[]>(() => {
     const map = new Map<string, BoardAssignee>();
     items.forEach((item) => {
@@ -73,6 +88,8 @@ export function BoardFilterBar({ items, filters, onChange }: BoardFilterBarProps
     onChange({ ...filters, ...patch });
   }
   function clear() { onChange({}); }
+
+  const activeViewCount = VIEW_TOGGLES.filter(({ key }) => cardSettings[key]).length;
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -152,13 +169,48 @@ export function BoardFilterBar({ items, filters, onChange }: BoardFilterBarProps
         ))}
       </div>
 
-      {/* Clear */}
+      {/* Clear filters */}
       {hasFilters && (
         <Button variant="ghost" size="sm" onClick={clear} className="h-7 gap-1.5 text-xs text-muted-foreground">
           <X className="h-3.5 w-3.5" />
           Clear
         </Button>
       )}
+
+      {/* View settings */}
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            className={cn(
+              "ml-auto h-7 gap-1.5 text-xs",
+              activeViewCount < VIEW_TOGGLES.length
+                ? "text-primary"
+                : "text-muted-foreground"
+            )}
+          >
+            <SlidersHorizontal className="h-3.5 w-3.5" />
+            View
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent align="end" className="w-56 p-3">
+          <p className="mb-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+            Card fields
+          </p>
+          <div className="space-y-2.5">
+            {VIEW_TOGGLES.map(({ key, label }) => (
+              <div key={key} className="flex items-center justify-between gap-3">
+                <span className="text-sm text-foreground">{label}</span>
+                <Switch
+                  checked={cardSettings[key]}
+                  onCheckedChange={(checked) => onCardSettingsChange({ [key]: checked })}
+                />
+              </div>
+            ))}
+          </div>
+        </PopoverContent>
+      </Popover>
     </div>
   );
 }

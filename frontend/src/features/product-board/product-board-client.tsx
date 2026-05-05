@@ -20,6 +20,7 @@ import { useProductBoard, type BoardItem } from "./use-product-board";
 import { BoardColumn } from "./board-column";
 import { BoardCard, BoardCardOverlay } from "./board-card";
 import { BoardFilterBar, type BoardFilters } from "./board-filter-bar";
+import { loadCardViewSettings, saveCardViewSettings, type CardViewSettings } from "./card-view-settings";
 
 interface ProductBoardClientProps {
   readonly?: boolean;
@@ -44,6 +45,15 @@ function filterItems(items: BoardItem[], filters: BoardFilters): BoardItem[] {
 export function ProductBoardClient({ readonly }: ProductBoardClientProps) {
   const { items, isLoading, error, activeId, setActiveId, updateStatus, reorder } = useProductBoard();
   const [filters, setFilters] = useState<BoardFilters>({});
+  const [cardSettings, setCardSettings] = useState<CardViewSettings>(loadCardViewSettings);
+
+  function updateCardSettings(patch: Partial<CardViewSettings>) {
+    setCardSettings((prev) => {
+      const next = { ...prev, ...patch };
+      saveCardViewSettings(next);
+      return next;
+    });
+  }
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } })
@@ -130,7 +140,7 @@ export function ProductBoardClient({ readonly }: ProductBoardClientProps) {
 
   return (
     <div className="flex flex-col gap-4">
-      <BoardFilterBar items={items} filters={filters} onChange={setFilters} />
+      <BoardFilterBar items={items} filters={filters} onChange={setFilters} cardSettings={cardSettings} onCardSettingsChange={updateCardSettings} />
 
       <DndContext
         sensors={sensors}
@@ -151,6 +161,7 @@ export function ProductBoardClient({ readonly }: ProductBoardClientProps) {
                 .filter((i) => i.board_status === status)
                 .sort((a, b) => a.position - b.position)}
               readonly={readonly}
+              cardSettings={cardSettings}
             />
           ))}
         </div>

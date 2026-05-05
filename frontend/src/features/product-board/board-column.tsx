@@ -11,6 +11,8 @@ import { BoardCard } from "./board-card";
 import { useCreateBoardItem } from "./use-board-item";
 import type { BoardItem } from "./use-product-board";
 import type { BoardStatus } from "@/lib/admin-feedback/constants";
+import type { CardViewSettings } from "./card-view-settings";
+import { DEFAULT_CARD_VIEW_SETTINGS } from "./card-view-settings";
 
 const COLUMN_BG: Record<BoardStatus, string> = {
   submitted: "bg-muted/50",
@@ -107,9 +109,10 @@ interface BoardColumnProps {
   items: BoardItem[];        // filtered items (for display)
   allItems?: BoardItem[];    // unfiltered items (for SortableContext ids so dnd works while filtering)
   readonly?: boolean;
+  cardSettings?: CardViewSettings;
 }
 
-export function BoardColumn({ status, label, items, allItems, readonly }: BoardColumnProps) {
+export function BoardColumn({ status, label, items, allItems, readonly, cardSettings = DEFAULT_CARD_VIEW_SETTINGS }: BoardColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id: status });
   const sortableIds = (allItems ?? items).map((i) => i.id);
 
@@ -134,7 +137,7 @@ export function BoardColumn({ status, label, items, allItems, readonly }: BoardC
       >
         <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
           {items.map((item) => (
-            <BoardCard key={item.id} item={item} readonly={readonly} />
+            <BoardCard key={item.id} item={item} readonly={readonly} settings={cardSettings} />
           ))}
         </SortableContext>
 
