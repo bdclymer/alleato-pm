@@ -543,6 +543,87 @@ function ProgressReportDraftsCard() {
   );
 }
 
+// ── Seed Teams conversation (admin-connect a user) ───────────────────────────
+
+function SeedTeamsConversationCard() {
+  const [status, setStatus] = React.useState<ActionStatus>("idle");
+  const [message, setMessage] = React.useState("");
+  const [email, setEmail] = React.useState("");
+  const [aadObjectId, setAadObjectId] = React.useState("");
+  const [needsAadId, setNeedsAadId] = React.useState(false);
+
+  const run = async () => {
+    if (!email.trim()) return;
+    setStatus("running");
+    setNeedsAadId(false);
+    setMessage("Creating Teams conversation…");
+
+    try {
+      const body: Record<string, string> = { email: email.trim() };
+      if (aadObjectId.trim()) body.aadObjectId = aadObjectId.trim();
+
+      const data = await apiFetch<{ displayName?: string; needsAadObjectId?: boolean; error?: string }>(
+        "/api/admin/teams/seed-conversation",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        },
+      );
+
+      setStatus("success");
+      setMessage(`Connected! Archon can now message ${data.displayName ?? email} proactively.`);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Failed.";
+      if (msg.includes("aadObjectId") || msg.includes("AAD")) {
+        setNeedsAadId(true);
+      }
+      setStatus("error");
+      setMessage(msg);
+    }
+  };
+
+  return (
+    <ActionCard
+      title="Connect Teams Account"
+      badge="Teams"
+      icon={MessageSquare}
+      description="Manually link a user's Teams account so the Archon bot can send them proactive messages — no action required from the user. Tries Graph API automatically; falls back to manual AAD Object ID."
+    >
+      <div className="space-y-2">
+        <Input
+          placeholder="Email (e.g. brandon@company.com)"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="h-8 text-sm"
+        />
+        {(needsAadId || aadObjectId) && (
+          <Input
+            placeholder="AAD Object ID (from Azure portal → Users)"
+            value={aadObjectId}
+            onChange={(e) => setAadObjectId(e.target.value)}
+            className="h-8 font-mono text-xs"
+          />
+        )}
+        <Button
+          size="sm"
+          onClick={run}
+          disabled={status === "running" || !email.trim()}
+          className="w-full"
+        >
+          {status === "running" ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <MessageSquare className="h-3.5 w-3.5" />
+          )}
+          Connect
+        </Button>
+      </div>
+      <StatusBadge status={status} message={message} />
+    </ActionCard>
+  );
+}
+
 // ── Send executive brief to Teams ────────────────────────────────────────────
 
 function SendBriefToTeamsCard() {
@@ -588,6 +669,7 @@ function SendBriefToTeamsCard() {
 export function AdminActionCards() {
   return (
     <>
+      <SeedTeamsConversationCard />
       <SendBriefToTeamsCard />
       <RegenerateBriefCard />
       <ExtractBrandonTasksCard />
