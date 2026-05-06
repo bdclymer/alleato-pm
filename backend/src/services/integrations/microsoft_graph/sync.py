@@ -11,7 +11,7 @@ from typing import Optional
 from supabase import Client
 
 from .outlook import sync_outlook_emails
-from .teams import sync_teams_channel, get_all_teams_and_channels, get_user_chats, sync_teams_chat
+from .teams import sync_teams_channel, get_all_teams_and_channels, get_user_chats, sync_teams_chat, ChatReadPermissionError
 from .onedrive import sync_onedrive_folder, sync_sharepoint_folder
 from .client import get_graph_client
 from .embed import embed_pending_graph_documents
@@ -219,6 +219,11 @@ def run_graph_sync(supabase: Client) -> dict:
                         logger.error(f"[GraphSync] {err}", exc_info=True)
                         summary["errors"].append(err)
                         _save_sync_state(supabase, "teams_chat", resource_id, resource_name, "", 0, "error", str(e))
+            except ChatReadPermissionError as e:
+                err = f"Teams DM sync skipped — Chat.Read.All admin consent required in Azure AD: {e}"
+                logger.error(f"[GraphSync] {err}")
+                summary["errors"].append(err)
+                break  # All users share the same tenant; no point retrying others
             except Exception as e:
                 err = f"Teams DM chat listing failed for {user_email}: {e}"
                 logger.error(f"[GraphSync] {err}")
@@ -291,6 +296,24 @@ def run_graph_sync(supabase: Client) -> dict:
             logger.error("[GraphSync] Embedding step failed: %s", e)
             summary["errors"].append(f"Embedding failed: {e}")
             summary["embed"] = {"error": str(e)}
+
+    # ── Compile Teams DM conversations into structured intelligence ───────────
+    # Runs after embed so newly embedded conversations are picked up immediately.
+    # Batch capped at 25 per sync run; compiler has its own internal time limit.
+    try:
+        from src.services.intelligence.teams_compiler import run_compiler_batch
+        compiler_result = run_compiler_batch(supabase, batch_size=25)
+        summary["teams_compiler"] = compiler_result
+        logger.info(
+            "[GraphSync] Teams compiler complete — processed: %d, succeeded: %d, failed: %d",
+            compiler_result.get("total_processed", 0),
+            compiler_result.get("succeeded", 0),
+            compiler_result.get("failed", 0),
+        )
+    except Exception as e:
+        logger.error("[GraphSync] Teams compiler step failed: %s", e)
+        summary["errors"].append(f"Teams compiler failed: {e}")
+        summary["teams_compiler"] = {"error": str(e)}
 
     # Report status accurately — "complete" only if no errors
     status = "complete" if not summary["errors"] else "complete_with_errors"
