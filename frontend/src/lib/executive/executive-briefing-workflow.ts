@@ -11,9 +11,12 @@ import {
 
 type DailyRecapRow = Database["public"]["Tables"]["daily_recaps"]["Row"];
 type DailyRecapInsert = Database["public"]["Tables"]["daily_recaps"]["Insert"];
-type FollowUpRow = Database["public"]["Tables"]["executive_briefing_follow_ups"]["Row"];
-type FollowUpInsert = Database["public"]["Tables"]["executive_briefing_follow_ups"]["Insert"];
-type FollowUpSection = Database["public"]["Tables"]["executive_briefing_follow_ups"]["Row"]["section"];
+type FollowUpRow =
+  Database["public"]["Tables"]["executive_briefing_follow_ups"]["Row"];
+type FollowUpInsert =
+  Database["public"]["Tables"]["executive_briefing_follow_ups"]["Insert"];
+type FollowUpSection =
+  Database["public"]["Tables"]["executive_briefing_follow_ups"]["Row"]["section"];
 
 export type ExecutiveBriefingDraft = {
   id: string;
@@ -32,6 +35,7 @@ export type ExecutiveBriefingFollowUp = FollowUpRow & {
 
 export type ExecutiveBriefingDashboard = {
   draft: ExecutiveBriefingDraft;
+  followUps: ExecutiveBriefingFollowUp[];
   openFollowUps: ExecutiveBriefingFollowUp[];
   staleFollowUps: ExecutiveBriefingFollowUp[];
   liveFingerprints: Set<string>;
@@ -169,7 +173,9 @@ function backfillCitations(item: BrandonBriefItem): BrandonBriefItem {
   };
 }
 
-function parseStoredPacket(value: Json | null): BrandonDailyUpdatePacket | null {
+function parseStoredPacket(
+  value: Json | null,
+): BrandonDailyUpdatePacket | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     return null;
   }
@@ -188,9 +194,15 @@ function parseStoredPacket(value: Json | null): BrandonDailyUpdatePacket | null 
   return {
     ...packet,
     sections: {
-      needsBrandon: (packet.sections?.needsBrandon ?? []).map(backfillCitations),
-      waitingOnOthers: (packet.sections?.waitingOnOthers ?? []).map(backfillCitations),
-      importantUpdates: (packet.sections?.importantUpdates ?? []).map(backfillCitations),
+      needsBrandon: (packet.sections?.needsBrandon ?? []).map(
+        backfillCitations,
+      ),
+      waitingOnOthers: (packet.sections?.waitingOnOthers ?? []).map(
+        backfillCitations,
+      ),
+      importantUpdates: (packet.sections?.importantUpdates ?? []).map(
+        backfillCitations,
+      ),
     },
   };
 }
@@ -221,7 +233,9 @@ async function loadExistingDraft(recapDate: string) {
     .maybeSingle();
 
   if (error) {
-    throw new Error(`Failed to load executive briefing draft: ${error.message}`);
+    throw new Error(
+      `Failed to load executive briefing draft: ${error.message}`,
+    );
   }
 
   return data;
@@ -269,7 +283,7 @@ async function upsertFollowUps(
       owner: item.owner ?? null,
       status: item.status ?? null,
       tone: item.tone ?? null,
-      state: "open",
+      state: existing?.state ?? "open",
       source_type: item.source,
       source_detail: item.sourceDetail,
       source_id: item.sourceId ?? null,
@@ -280,9 +294,9 @@ async function upsertFollowUps(
       last_seen_recap_id: recapId,
       first_seen_at: existing?.first_seen_at ?? new Date().toISOString(),
       last_seen_at: new Date().toISOString(),
-      resolved_at: null,
-      resolved_by: null,
-      resolution_note: null,
+      resolved_at: existing?.resolved_at ?? null,
+      resolved_by: existing?.resolved_by ?? null,
+      resolution_note: existing?.resolution_note ?? null,
       payload: item as unknown as Json,
     };
   });
@@ -320,7 +334,8 @@ export async function regenerateExecutiveBriefingDraft(options?: {
     recap_text: recapText,
     recap_html: null,
     meeting_count:
-      packet.sourceCoverage.find((source) => source.label === "Meeting")?.count ?? 0,
+      packet.sourceCoverage.find((source) => source.label === "Meeting")
+        ?.count ?? 0,
     project_count: projectCount(packet),
     briefing_packet: packet as unknown as Json,
     workflow_status: "draft",
@@ -351,7 +366,9 @@ export async function regenerateExecutiveBriefingDraft(options?: {
     .single();
 
   if (error) {
-    throw new Error(`Failed to save executive briefing draft: ${error.message}`);
+    throw new Error(
+      `Failed to save executive briefing draft: ${error.message}`,
+    );
   }
 
   await upsertFollowUps(data.id, packet);
@@ -370,12 +387,11 @@ export async function regenerateExecutiveBriefingDraft(options?: {
   };
 }
 
-async function loadOpenFollowUps() {
+async function loadFollowUps() {
   const supabase = createServiceClient();
   const { data, error } = await supabase
     .from("executive_briefing_follow_ups")
     .select("*")
-    .eq("state", "open")
     .order("last_seen_at", { ascending: false });
 
   if (error) {
@@ -406,12 +422,17 @@ export async function getExecutiveBriefingDashboard(options?: {
         }
       : (await regenerateExecutiveBriefingDraft({ windowDays })).draft;
 
-  const openFollowUps = await loadOpenFollowUps();
+  const followUps = await loadFollowUps();
+  const openFollowUps = followUps.filter(
+    (followUp) => followUp.state === "open",
+  );
   const liveFingerprints = new Set(
-    getSectionEntries(draft.packet).map(({ item, section }) => createFingerprint(item, section)),
+    getSectionEntries(draft.packet).map(({ item, section }) =>
+      createFingerprint(item, section),
+    ),
   );
   const fingerprintMap = new Map(
-    openFollowUps.map((followUp) => [followUp.fingerprint, followUp]),
+    followUps.map((followUp) => [followUp.fingerprint, followUp]),
   );
   const staleFollowUps = openFollowUps.filter(
     (followUp) => !liveFingerprints.has(followUp.fingerprint),
@@ -419,6 +440,7 @@ export async function getExecutiveBriefingDashboard(options?: {
 
   return {
     draft,
+    followUps,
     openFollowUps,
     staleFollowUps,
     liveFingerprints,
@@ -442,7 +464,9 @@ export async function approveExecutiveBriefingDraft(
     .eq("recap_kind", CEO_EXECUTIVE_BRIEFING_RECAP_KIND);
 
   if (error) {
-    throw new Error(`Failed to approve executive briefing draft: ${error.message}`);
+    throw new Error(
+      `Failed to approve executive briefing draft: ${error.message}`,
+    );
   }
 }
 
@@ -458,11 +482,13 @@ export async function setExecutiveFollowUpState(params: {
           state: "resolved" as const,
           resolved_at: new Date().toISOString(),
           resolved_by: params.userId,
+          resolution_note: "Marked resolved from the executive briefing.",
         }
       : {
           state: "open" as const,
           resolved_at: null,
           resolved_by: null,
+          resolution_note: null,
         };
 
   const { error } = await supabase
@@ -471,7 +497,9 @@ export async function setExecutiveFollowUpState(params: {
     .eq("id", params.followUpId);
 
   if (error) {
-    throw new Error(`Failed to update executive follow-up state: ${error.message}`);
+    throw new Error(
+      `Failed to update executive follow-up state: ${error.message}`,
+    );
   }
 }
 

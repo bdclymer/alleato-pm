@@ -6,11 +6,25 @@ import {
 } from "ai";
 import { useChat, type UIMessage } from "@ai-sdk/react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowUp, SparklesIcon } from "lucide-react";
+import {
+  BrainCircuit,
+  CalendarCheck2,
+  ListChecks,
+  SendHorizontal,
+  SparklesIcon,
+  TriangleAlert,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { ChatArea, type ResponseQuality } from "@/components/ai-assistant/chat-area";
-import type { AssistantTraceDiagnostics, ToolTraceItem } from "@/components/ai-assistant/trace-panel";
+import { cn } from "@/lib/utils";
+import {
+  ChatArea,
+  type ResponseQuality,
+} from "@/components/ai-assistant/chat-area";
+import type {
+  AssistantTraceDiagnostics,
+  ToolTraceItem,
+} from "@/components/ai-assistant/trace-panel";
 import { apiFetch } from "@/lib/api-client";
 import {
   DEFAULT_AI_ASSISTANT_MODEL,
@@ -49,7 +63,9 @@ type ChatHistoryMessage = {
   created_at: string | null;
 };
 
-type MemoryUsage = NonNullable<NonNullable<ChatHistoryMessage["metadata"]>["memory_usage"]>;
+type MemoryUsage = NonNullable<
+  NonNullable<ChatHistoryMessage["metadata"]>["memory_usage"]
+>;
 
 type StrategistLiveStatus = {
   stage: string;
@@ -71,7 +87,9 @@ function stripRuntimeDataParts(messages: UIMessage[]): UIMessage[] {
   }));
 }
 
-function normalizePersistedDataParts(message: ChatHistoryMessage): PersistedDataPart[] {
+function normalizePersistedDataParts(
+  message: ChatHistoryMessage,
+): PersistedDataPart[] {
   const parts = message.metadata?.data_parts;
   if (!Array.isArray(parts)) return [];
   return parts.filter((part): part is PersistedDataPart => {
@@ -87,12 +105,16 @@ function dbMessageToUIMessage(message: ChatHistoryMessage): UIMessage {
     role: message.role as "user" | "assistant",
     parts: [
       ...normalizePersistedDataParts(message),
-      ...(message.content ? [{ type: "text" as const, text: message.content }] : []),
+      ...(message.content
+        ? [{ type: "text" as const, text: message.content }]
+        : []),
     ],
   };
 }
 
-function extractToolTraces(messages: ChatHistoryMessage[]): Record<string, ToolTraceItem[]> {
+function extractToolTraces(
+  messages: ChatHistoryMessage[],
+): Record<string, ToolTraceItem[]> {
   const tracesByMessageId: Record<string, ToolTraceItem[]> = {};
   messages.forEach((message) => {
     const traces = message.metadata?.tool_trace;
@@ -103,7 +125,9 @@ function extractToolTraces(messages: ChatHistoryMessage[]): Record<string, ToolT
   return tracesByMessageId;
 }
 
-function extractSources(messages: ChatHistoryMessage[]): Record<string, unknown[]> {
+function extractSources(
+  messages: ChatHistoryMessage[],
+): Record<string, unknown[]> {
   const byMessageId: Record<string, unknown[]> = {};
   messages.forEach((message) => {
     if (Array.isArray(message.sources) && message.sources.length > 0) {
@@ -113,7 +137,9 @@ function extractSources(messages: ChatHistoryMessage[]): Record<string, unknown[
   return byMessageId;
 }
 
-function extractMemoryUsage(messages: ChatHistoryMessage[]): Record<string, MemoryUsage> {
+function extractMemoryUsage(
+  messages: ChatHistoryMessage[],
+): Record<string, MemoryUsage> {
   const byMessageId: Record<string, MemoryUsage> = {};
   messages.forEach((message) => {
     const usage = message.metadata?.memory_usage;
@@ -124,7 +150,9 @@ function extractMemoryUsage(messages: ChatHistoryMessage[]): Record<string, Memo
   return byMessageId;
 }
 
-function extractResponseQuality(messages: ChatHistoryMessage[]): Record<string, ResponseQuality> {
+function extractResponseQuality(
+  messages: ChatHistoryMessage[],
+): Record<string, ResponseQuality> {
   const byMessageId: Record<string, ResponseQuality> = {};
   messages.forEach((message) => {
     const quality = message.metadata?.response_quality;
@@ -133,7 +161,9 @@ function extractResponseQuality(messages: ChatHistoryMessage[]): Record<string, 
   return byMessageId;
 }
 
-function extractTraceDiagnostics(messages: ChatHistoryMessage[]): Record<string, AssistantTraceDiagnostics> {
+function extractTraceDiagnostics(
+  messages: ChatHistoryMessage[],
+): Record<string, AssistantTraceDiagnostics> {
   const byMessageId: Record<string, AssistantTraceDiagnostics> = {};
   messages.forEach((message) => {
     const metadata = message.metadata;
@@ -144,7 +174,12 @@ function extractTraceDiagnostics(messages: ChatHistoryMessage[]): Record<string,
       providerDecision: metadata.provider_decision ?? null,
       loopDiagnostic: metadata.loop_diagnostic ?? null,
     };
-    if (diagnostics.providerPath || diagnostics.model || diagnostics.providerDecision || diagnostics.loopDiagnostic) {
+    if (
+      diagnostics.providerPath ||
+      diagnostics.model ||
+      diagnostics.providerDecision ||
+      diagnostics.loopDiagnostic
+    ) {
       byMessageId[message.id] = diagnostics;
     }
   });
@@ -152,11 +187,53 @@ function extractTraceDiagnostics(messages: ChatHistoryMessage[]): Record<string,
 }
 
 const STARTER_PROMPTS = [
-  "What are the three highest-risk items Brandon should act on today?",
-  "Which of these items has the most financial exposure?",
-  "Turn the most urgent items into a follow-up plan with owners and dates.",
-  "What would you escalate to the owner right now and why?",
+  {
+    label: "Highest risk",
+    prompt:
+      "What are the three highest-risk items Brandon should act on today?",
+    icon: TriangleAlert,
+  },
+  {
+    label: "Meeting follow-ups",
+    prompt: "What follow-ups came out of today's meetings?",
+    icon: CalendarCheck2,
+  },
+  {
+    label: "Follow-up plan",
+    prompt:
+      "Turn the most urgent items into a follow-up plan with owners and dates.",
+    icon: ListChecks,
+  },
+  {
+    label: "Owner escalation",
+    prompt: "What would you escalate to the owner right now and why?",
+    icon: SparklesIcon,
+  },
 ];
+
+function getPacketItemCount(packet: BrandonDailyUpdatePacket) {
+  return (
+    packet.sections.needsBrandon.length +
+    packet.sections.waitingOnOthers.length +
+    packet.sections.importantUpdates.length
+  );
+}
+
+function getLoadedSourceCount(packet: BrandonDailyUpdatePacket) {
+  return packet.sourceCoverage.reduce(
+    (total, source) => total + source.count,
+    0,
+  );
+}
+
+function formatChatGeneratedAt(value: string) {
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(new Date(value));
+}
 
 function ExecutiveChatSession({
   sessionId,
@@ -190,7 +267,9 @@ function ExecutiveChatSession({
   onFinishMessage: (sessionId: string) => void;
 }) {
   const [input, setInput] = useState("");
-  const [liveStatus, setLiveStatus] = useState<StrategistLiveStatus | null>(null);
+  const [liveStatus, setLiveStatus] = useState<StrategistLiveStatus | null>(
+    null,
+  );
   const hasSentFirstMessage = useRef(false);
   const lastQueuedPromptId = useRef<string | null>(null);
   const sessionIdRef = useRef(sessionId);
@@ -199,7 +278,14 @@ function ExecutiveChatSession({
   sessionIdRef.current = sessionId;
   selectedModelRef.current = selectedModel;
 
-  const { messages, setMessages, sendMessage, status, stop, addToolApprovalResponse } = useChat({
+  const {
+    messages,
+    setMessages,
+    sendMessage,
+    status,
+    stop,
+    addToolApprovalResponse,
+  } = useChat({
     id: sessionId,
     messages: initialMessages,
     sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithApprovalResponses,
@@ -228,11 +314,18 @@ function ExecutiveChatSession({
       onFinishMessage(sessionIdRef.current);
     },
     onError(error) {
-      setLiveStatus({ stage: "fallback", message: error.message, status: "error", timestamp: new Date().toISOString() });
+      setLiveStatus({
+        stage: "fallback",
+        message: error.message,
+        status: "error",
+        timestamp: new Date().toISOString(),
+      });
     },
   });
 
-  useEffect(() => { setMessages(initialMessages); }, [initialMessages, setMessages]);
+  useEffect(() => {
+    setMessages(initialMessages);
+  }, [initialMessages, setMessages]);
 
   useEffect(() => {
     if (pendingFirstMessage && !hasSentFirstMessage.current) {
@@ -272,24 +365,50 @@ function ExecutiveChatSession({
   );
 }
 
-export function ExecutiveChatPanel({ packet }: { packet: BrandonDailyUpdatePacket }) {
+export function ExecutiveChatPanel({
+  packet,
+  presentation = "panel",
+}: {
+  packet: BrandonDailyUpdatePacket;
+  presentation?: "panel" | "sheet";
+}) {
   const [draftInput, setDraftInput] = useState("");
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [initialMessages, setInitialMessages] = useState<UIMessage[]>([]);
-  const [toolTracesByMessageId, setToolTracesByMessageId] = useState<Record<string, ToolTraceItem[]>>({});
-  const [sourcesByMessageId, setSourcesByMessageId] = useState<Record<string, unknown[]>>({});
-  const [memoryUsageByMessageId, setMemoryUsageByMessageId] = useState<Record<string, MemoryUsage>>({});
-  const [responseQualityByMessageId, setResponseQualityByMessageId] = useState<Record<string, ResponseQuality>>({});
-  const [traceDiagnosticsByMessageId, setTraceDiagnosticsByMessageId] = useState<Record<string, AssistantTraceDiagnostics>>({});
+  const [toolTracesByMessageId, setToolTracesByMessageId] = useState<
+    Record<string, ToolTraceItem[]>
+  >({});
+  const [sourcesByMessageId, setSourcesByMessageId] = useState<
+    Record<string, unknown[]>
+  >({});
+  const [memoryUsageByMessageId, setMemoryUsageByMessageId] = useState<
+    Record<string, MemoryUsage>
+  >({});
+  const [responseQualityByMessageId, setResponseQualityByMessageId] = useState<
+    Record<string, ResponseQuality>
+  >({});
+  const [traceDiagnosticsByMessageId, setTraceDiagnosticsByMessageId] =
+    useState<Record<string, AssistantTraceDiagnostics>>({});
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
-  const [pendingFirstMessage, setPendingFirstMessage] = useState<string | null>(null);
-  const [queuedPrompt, setQueuedPrompt] = useState<{ id: string; text: string } | null>(null);
-  const [selectedModel, setSelectedModel] = useState<AiAssistantModelId>(DEFAULT_AI_ASSISTANT_MODEL);
+  const [pendingFirstMessage, setPendingFirstMessage] = useState<string | null>(
+    null,
+  );
+  const [queuedPrompt, setQueuedPrompt] = useState<{
+    id: string;
+    text: string;
+  } | null>(null);
+  const [selectedModel, setSelectedModel] = useState<AiAssistantModelId>(
+    DEFAULT_AI_ASSISTANT_MODEL,
+  );
+  const itemCount = getPacketItemCount(packet);
+  const sourceCount = getLoadedSourceCount(packet);
 
   const loadSessionMessages = useCallback(async (targetSessionId: string) => {
     setIsLoadingMessages(true);
     try {
-      const data = await apiFetch<{ messages?: ChatHistoryMessage[] }>(`/api/ai-assistant/messages/${targetSessionId}`);
+      const data = await apiFetch<{ messages?: ChatHistoryMessage[] }>(
+        `/api/ai-assistant/messages/${targetSessionId}`,
+      );
       const historyMessages = (data.messages ?? []) as ChatHistoryMessage[];
       setInitialMessages(historyMessages.map((m) => dbMessageToUIMessage(m)));
       setToolTracesByMessageId(extractToolTraces(historyMessages));
@@ -310,34 +429,47 @@ export function ExecutiveChatPanel({ packet }: { packet: BrandonDailyUpdatePacke
   }, []);
 
   const createConversation = useCallback(async () => {
-    const data = await apiFetch<{ conversation: { session_id: string } }>("/api/ai-assistant/conversations", {
-      method: "POST",
-      body: JSON.stringify({
-        title: `Executive brief — ${new Date(packet.generatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}`,
-        metadata: { origin: "executive-brief", packetGeneratedAt: packet.generatedAt, packetWindowDays: packet.windowDays },
-      }),
-    });
+    const data = await apiFetch<{ conversation: { session_id: string } }>(
+      "/api/ai-assistant/conversations",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          title: `Executive brief — ${new Date(packet.generatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}`,
+          metadata: {
+            origin: "executive-brief",
+            packetGeneratedAt: packet.generatedAt,
+            packetWindowDays: packet.windowDays,
+          },
+        }),
+      },
+    );
     return data.conversation.session_id;
   }, [packet.generatedAt, packet.windowDays]);
 
-  const handlePrompt = useCallback(async (message: string) => {
-    const trimmed = message.trim();
-    if (!trimmed) return;
-    if (sessionId) {
-      setQueuedPrompt({ id: `${Date.now()}:${trimmed}`, text: trimmed });
-      return;
-    }
-    const newSessionId = await createConversation();
-    setSessionId(newSessionId);
-    setPendingFirstMessage(trimmed);
-    setDraftInput("");
-  }, [createConversation, sessionId]);
+  const handlePrompt = useCallback(
+    async (message: string) => {
+      const trimmed = message.trim();
+      if (!trimmed) return;
+      if (sessionId) {
+        setQueuedPrompt({ id: `${Date.now()}:${trimmed}`, text: trimmed });
+        return;
+      }
+      const newSessionId = await createConversation();
+      setSessionId(newSessionId);
+      setPendingFirstMessage(trimmed);
+      setDraftInput("");
+    },
+    [createConversation, sessionId],
+  );
 
-  const handleFinishMessage = useCallback((targetSessionId: string) => {
-    setPendingFirstMessage(null);
-    setQueuedPrompt(null);
-    void loadSessionMessages(targetSessionId);
-  }, [loadSessionMessages]);
+  const handleFinishMessage = useCallback(
+    (targetSessionId: string) => {
+      setPendingFirstMessage(null);
+      setQueuedPrompt(null);
+      void loadSessionMessages(targetSessionId);
+    },
+    [loadSessionMessages],
+  );
 
   useEffect(() => {
     if (!sessionId) return;
@@ -345,18 +477,37 @@ export function ExecutiveChatPanel({ packet }: { packet: BrandonDailyUpdatePacke
   }, [loadSessionMessages, sessionId]);
 
   return (
-    <div className="flex h-full flex-col">
-      {/* Header */}
-      <div className="flex items-center gap-2 pb-4">
-        <SparklesIcon className="h-4 w-4 text-primary" />
-        <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-          AI Analysis
-        </span>
+    <section
+      className={cn(
+        "flex h-full min-h-0 flex-col overflow-hidden bg-background",
+        presentation === "panel" && "rounded-lg border border-border",
+      )}
+    >
+      <div className="border-b border-border px-4 py-3">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex min-w-0 items-start gap-3">
+            <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+              <BrainCircuit className="h-4 w-4" />
+            </div>
+            <div className="min-w-0">
+              <div className="text-sm font-semibold text-foreground">
+                AI Chief of Staff
+              </div>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                {itemCount} active item{itemCount === 1 ? "" : "s"} ·{" "}
+                {packet.windowDays}-day brief · {sourceCount} source row
+                {sourceCount === 1 ? "" : "s"}
+              </p>
+            </div>
+          </div>
+          <div className="shrink-0 text-right text-[11px] leading-4 text-muted-foreground">
+            {formatChatGeneratedAt(packet.generatedAt)}
+          </div>
+        </div>
       </div>
 
       {sessionId ? (
-        /* Active session — full chat UI */
-        <div className="min-h-0 flex-1 overflow-hidden rounded-xl border border-border bg-background">
+        <div className="min-h-0 flex-1 overflow-hidden">
           <ExecutiveChatSession
             key={sessionId}
             sessionId={sessionId}
@@ -376,54 +527,75 @@ export function ExecutiveChatPanel({ packet }: { packet: BrandonDailyUpdatePacke
           />
         </div>
       ) : (
-        /* No session — input first, prompts below */
-        <div className="flex flex-1 flex-col gap-3">
-          {/* Input always at top — visible without scrolling */}
-          <div className="shrink-0 flex items-end gap-2 rounded-xl border border-border bg-background p-3">
-            <Textarea
-              value={draftInput}
-              onChange={(e) => setDraftInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  void handlePrompt(draftInput);
-                }
-              }}
-              placeholder="Ask anything about today's brief…"
-              rows={2}
-              className="min-h-0 flex-1 resize-none border-0 bg-transparent p-0 text-sm shadow-none focus-visible:ring-0"
-            />
-            <Button
-              type="button"
-              size="icon"
-              className="h-8 w-8 shrink-0 rounded-lg"
-              disabled={!draftInput.trim()}
-              onClick={() => void handlePrompt(draftInput)}
-            >
-              <ArrowUp className="h-4 w-4" />
-            </Button>
+        <div className="flex min-h-0 flex-1 flex-col">
+          <div className="border-b border-border p-3">
+            <div className="rounded-lg border border-input bg-background px-3 py-2 transition-colors focus-within:border-primary/60 focus-within:ring-2 focus-within:ring-primary/10">
+              <Textarea
+                value={draftInput}
+                onChange={(e) => setDraftInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    void handlePrompt(draftInput);
+                  }
+                }}
+                placeholder="Ask about this brief"
+                rows={3}
+                className="min-h-20 resize-none border-0 bg-transparent p-0 text-sm shadow-none focus-visible:ring-0"
+              />
+              <div className="flex items-center justify-between pt-2">
+                <span className="text-[11px] text-muted-foreground">
+                  {selectedModel.replace("openai/", "")}
+                </span>
+                <Button
+                  type="button"
+                  size="sm"
+                  className="h-8 gap-2 rounded-md px-3"
+                  disabled={!draftInput.trim()}
+                  onClick={() => void handlePrompt(draftInput)}
+                >
+                  <SendHorizontal className="h-3.5 w-3.5" />
+                  Ask
+                </Button>
+              </div>
+            </div>
           </div>
 
-          <p className="text-xs text-muted-foreground">
-            Or start with a suggestion:
-          </p>
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            <div className="px-4 py-3">
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Starting points
+              </p>
+            </div>
 
-          <div className="flex flex-col gap-1">
-            {STARTER_PROMPTS.map((prompt) => (
-              <Button
-                key={prompt}
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-auto justify-start whitespace-normal py-2 text-left text-sm leading-snug text-muted-foreground hover:text-foreground"
-                onClick={() => void handlePrompt(prompt)}
-              >
-                {prompt}
-              </Button>
-            ))}
+            <div className="divide-y divide-border border-t border-border">
+              {STARTER_PROMPTS.map(({ label, prompt, icon: Icon }) => (
+                <Button
+                  key={prompt}
+                  type="button"
+                  variant="ghost"
+                  className="h-auto w-full justify-start rounded-none px-4 py-3 text-left hover:bg-muted/50"
+                  onClick={() => void handlePrompt(prompt)}
+                >
+                  <span className="flex min-w-0 items-start gap-3">
+                    <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+                      <Icon className="h-3.5 w-3.5" />
+                    </span>
+                    <span className="min-w-0 space-y-1">
+                      <span className="block text-sm font-medium text-foreground">
+                        {label}
+                      </span>
+                      <span className="block whitespace-normal text-xs leading-5 text-muted-foreground">
+                        {prompt}
+                      </span>
+                    </span>
+                  </span>
+                </Button>
+              ))}
+            </div>
           </div>
         </div>
       )}
-    </div>
+    </section>
   );
 }

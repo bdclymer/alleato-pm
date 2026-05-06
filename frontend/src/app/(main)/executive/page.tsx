@@ -1,9 +1,14 @@
 import { CheckCircledIcon } from "@radix-ui/react-icons";
+import Link from "next/link";
+import { CalendarDays } from "lucide-react";
 import { AppCapabilityAccessDenied } from "@/components/guards/app-capability-access-denied";
 import { PaymentGuardrailAlerts } from "@/components/accounting/payment-guardrail-alerts";
 import { EmptyState } from "@/components/ds";
-import { ExecutiveChatPanel } from "@/components/executive/executive-chat-panel";
-import { ExecutiveSignalCard } from "@/components/executive/executive-signal-card";
+import { ExecutiveChatSheet } from "@/components/executive/executive-chat-sheet";
+import {
+  ExecutiveSignalCard,
+  type ExecutiveRelatedTask,
+} from "@/components/executive/executive-signal-card";
 import { ExecutiveSourceActivity } from "@/components/executive/executive-source-activity";
 import type { ExecutiveTaskAssigneeOption } from "@/components/executive/executive-task-draft-form";
 import { PageShell, SectionRuleHeading } from "@/components/layout";
@@ -13,6 +18,7 @@ import { loadPaymentGuardrailAlerts } from "@/lib/accounting/payment-guardrails"
 import { createServiceClient } from "@/lib/supabase/service";
 import {
   getExecutiveBriefingDashboard,
+  getFollowUpFingerprint,
   type ExecutiveBriefingFollowUp,
 } from "@/lib/executive/executive-briefing-workflow";
 import {
@@ -25,15 +31,16 @@ export const runtime = "nodejs";
 
 type Tone = NonNullable<BrandonBriefItem["tone"]>;
 
-type MatchedTask = {
+type MatchedTask = ExecutiveRelatedTask;
+
+type TodayMeeting = {
   id: string;
-  description: string;
-  status: string;
-  dueDate: string | null;
-  assigneeName: string | null;
-  assigneeEmail: string | null;
-  metadataId: string;
-  projectName: string | null;
+  title: string;
+  date: string | null;
+  project: string | null;
+  projectId: number | null;
+  summary: string | null;
+  durationMinutes: number | null;
 };
 
 type MatchedInitiativeCard = {
@@ -71,6 +78,41 @@ function formatGeneratedAt(value: string) {
   }).format(new Date(value));
 }
 
+function parseDate(value: string | null | undefined): Date | null {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function getEasternDateKey(value: Date) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(value);
+  const year = parts.find((part) => part.type === "year")?.value ?? "0000";
+  const month = parts.find((part) => part.type === "month")?.value ?? "00";
+  const day = parts.find((part) => part.type === "day")?.value ?? "00";
+  return `${year}-${month}-${day}`;
+}
+
+function formatMeetingTime(value: string | null) {
+  if (!value || /^\d{4}-\d{2}-\d{2}$/.test(value)) return "Today";
+  const date = parseDate(value);
+  if (!date) return "Today";
+  return new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(date);
+}
+
+function meetingHref(meeting: TodayMeeting) {
+  return meeting.projectId
+    ? `/${meeting.projectId}/meetings/${meeting.id}`
+    : `/meetings/${meeting.id}`;
+}
+
 function normalizeWhitespace(value: string) {
   return value.replace(/\s+/g, " ").trim();
 }
@@ -93,40 +135,6 @@ function keywordHit(item: BrandonBriefItem, keywords: string[]) {
   );
 
   return keywords.some((keyword) => haystack.includes(keyword));
-}
-
-function dedupeItems(items: BrandonBriefItem[]) {
-  const seen = new Set<string>();
-  return items.filter((item) => {
-    const key = [
-      item.title,
-      item.project,
-      item.sourceId ?? item.sourceDetail,
-    ].join("::");
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
-}
-
-function getFinancialItems(items: BrandonBriefItem[]) {
-  return dedupeItems(
-    items.filter((item) =>
-      keywordHit(item, [
-        "payment",
-        "invoice",
-        "retainage",
-        "wire",
-        "cash",
-        "billing",
-        "receivable",
-        "payable",
-        "lien",
-        "collections",
-        "approval",
-      ]),
-    ),
-  ).slice(0, 5);
 }
 
 function itemKey(item: BrandonBriefItem) {
@@ -277,32 +285,39 @@ function ExecutiveListSection({
   emptyTitle,
   employees,
   matchedTasksBySourceId,
+  followUpsByItemKey,
 }: {
+  sectionKey: "needsBrandon" | "waitingOnOthers" | "importantUpdates";
   title: string;
   description?: string;
   items: BrandonBriefItem[];
   emptyTitle: string;
   employees: ExecutiveTaskAssigneeOption[];
   matchedTasksBySourceId: Map<string, MatchedTask[]>;
+  followUpsByItemKey: Map<string, ExecutiveBriefingFollowUp>;
 }) {
   return (
-    <section className="space-y-2">
+    <section className="space-y-4">
       <SectionDivider title={title} count={items.length} />
       {items.length > 0 ? (
-        <div>
-          {items.map((item) => (
-            <ExecutiveSignalCard
-              key={`${item.title}-${item.sourceId ?? item.sourceDetail}`}
-              item={item}
-              employees={employees}
-              hasMatchingTask={
-                (item.sourceId
-                  ? (matchedTasksBySourceId.get(item.sourceId) ?? [])
-                  : []
-                ).length > 0
-              }
-            />
-          ))}
+        <div className="space-y-4">
+          {items.map((item) =>
+            (() => {
+              const relatedTasks = item.sourceId
+                ? (matchedTasksBySourceId.get(item.sourceId) ?? [])
+                : [];
+              return (
+                <ExecutiveSignalCard
+                  key={`${item.title}-${item.sourceId ?? item.sourceDetail}`}
+                  item={item}
+                  employees={employees}
+                  hasMatchingTask={relatedTasks.length > 0}
+                  relatedTasks={relatedTasks}
+                  followUpId={followUpsByItemKey.get(itemKey(item))?.id}
+                />
+              );
+            })(),
+          )}
         </div>
       ) : (
         <EmptyState
@@ -366,6 +381,51 @@ function CarryForwardSection({
           title="No carry-forward risks"
           description="All current executive follow-ups are represented in the live brief."
           className="py-10"
+        />
+      )}
+    </section>
+  );
+}
+
+function TodayMeetingsSection({ meetings }: { meetings: TodayMeeting[] }) {
+  return (
+    <section className="space-y-4">
+      <SectionDivider title="Today's Meetings" count={meetings.length} />
+
+      {meetings.length > 0 ? (
+        <div className="divide-y divide-border">
+          {meetings.map((meeting) => (
+            <Link
+              key={meeting.id}
+              href={meetingHref(meeting)}
+              className="block py-3 transition-colors hover:text-primary"
+            >
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+                  <CalendarDays className="h-4 w-4" />
+                </div>
+                <div className="min-w-0 space-y-1">
+                  <div className="text-xs font-medium leading-5 text-foreground">
+                    {meeting.title}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+                    <span>{formatMeetingTime(meeting.date)}</span>
+                    {meeting.project ? <span>{meeting.project}</span> : null}
+                    {meeting.durationMinutes ? (
+                      <span>{meeting.durationMinutes} min</span>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      ) : (
+        <EmptyState
+          icon={<CalendarDays />}
+          title="No meetings found for today"
+          description="No meeting records matched today's Eastern-time date."
+          className="py-8"
         />
       )}
     </section>
@@ -524,6 +584,54 @@ async function loadExecutiveActionContext(params: {
   };
 }
 
+async function loadTodayMeetings(): Promise<TodayMeeting[]> {
+  const supabase = createServiceClient();
+  const todayKey = getEasternDateKey(new Date());
+  const recentAnchor = new Date();
+  recentAnchor.setDate(recentAnchor.getDate() - 1);
+
+  const { data, error } = await supabase
+    .from("document_metadata")
+    .select(
+      "id,title,date,created_at,captured_at,project,project_id,summary,overview,duration_minutes,type,category",
+    )
+    .or("type.eq.meeting,category.eq.meeting,type.eq.meeting_transcript")
+    .or(
+      `date.gte.${recentAnchor.toISOString()},created_at.gte.${recentAnchor.toISOString()},captured_at.gte.${recentAnchor.toISOString()}`,
+    )
+    .order("date", { ascending: true, nullsFirst: false })
+    .limit(30);
+
+  if (error) {
+    throw new Error(`Failed to load today's meetings: ${error.message}`);
+  }
+
+  return ((data ?? []) as Array<Record<string, unknown>>)
+    .map((row) => {
+      const date =
+        (row.date as string | null) ??
+        (row.captured_at as string | null) ??
+        (row.created_at as string | null) ??
+        null;
+      return {
+        id: row.id as string,
+        title: (row.title as string | null) ?? "Untitled meeting",
+        date,
+        project: (row.project as string | null) ?? null,
+        projectId: (row.project_id as number | null) ?? null,
+        summary:
+          ((row.summary as string | null) ?? (row.overview as string | null)) ||
+          null,
+        durationMinutes: (row.duration_minutes as number | null) ?? null,
+      };
+    })
+    .filter((meeting) => {
+      const parsed = parseDate(meeting.date);
+      return parsed ? getEasternDateKey(parsed) === todayKey : false;
+    })
+    .slice(0, 8);
+}
+
 // ── Page ───────────────────────────────────────────────────────────────────────
 
 export default async function ExecutiveDailyInsightsPage() {
@@ -540,19 +648,50 @@ export default async function ExecutiveDailyInsightsPage() {
     );
   }
 
-  const [dashboard, paymentGuardrailAlerts] = await Promise.all([
+  const [dashboard, paymentGuardrailAlerts, todayMeetings] = await Promise.all([
     getExecutiveBriefingDashboard({
       windowDays: DEFAULT_EXECUTIVE_WINDOW_DAYS,
     }),
     loadPaymentGuardrailAlerts(),
+    loadTodayMeetings(),
   ]);
-  const { draft, staleFollowUps } = dashboard;
+  const { draft, staleFollowUps, fingerprintMap } = dashboard;
   const packet = draft.packet;
-  const allItems = [
-    ...packet.sections.needsBrandon,
-    ...packet.sections.waitingOnOthers,
-    ...packet.sections.importantUpdates,
+  const sectionEntries = [
+    ...packet.sections.needsBrandon.map((item) => ({
+      section: "needsBrandon" as const,
+      item,
+    })),
+    ...packet.sections.waitingOnOthers.map((item) => ({
+      section: "waitingOnOthers" as const,
+      item,
+    })),
+    ...packet.sections.importantUpdates.map((item) => ({
+      section: "importantUpdates" as const,
+      item,
+    })),
   ];
+  const openSectionEntries = sectionEntries.filter(({ item, section }) => {
+    const followUp = fingerprintMap.get(getFollowUpFingerprint(item, section));
+    return followUp?.state !== "resolved";
+  });
+  const followUpsByItemKey = new Map<string, ExecutiveBriefingFollowUp>();
+  for (const { item, section } of openSectionEntries) {
+    const followUp = fingerprintMap.get(getFollowUpFingerprint(item, section));
+    if (followUp) followUpsByItemKey.set(itemKey(item), followUp);
+  }
+  const allItems = openSectionEntries.map(({ item }) => item);
+  const visibleSections = {
+    needsBrandon: openSectionEntries
+      .filter((entry) => entry.section === "needsBrandon")
+      .map((entry) => entry.item),
+    waitingOnOthers: openSectionEntries
+      .filter((entry) => entry.section === "waitingOnOthers")
+      .map((entry) => entry.item),
+    importantUpdates: openSectionEntries
+      .filter((entry) => entry.section === "importantUpdates")
+      .map((entry) => entry.item),
+  };
   const operationalSignals = buildOperationalSignals({
     liveItems: allItems,
     staleFollowUps,
@@ -567,19 +706,13 @@ export default async function ExecutiveDailyInsightsPage() {
     operationalSignals,
   });
   const generatedAt = formatGeneratedAt(packet.generatedAt);
-  const shownInNeedsBrandon = packet.sections.needsBrandon;
-  const shownInWaiting = packet.sections.waitingOnOthers;
-  const shownAboveFinancial = [...shownInNeedsBrandon, ...shownInWaiting];
-  const financialItems = excludeAlreadyShown(
-    getFinancialItems(allItems),
-    shownAboveFinancial,
-  );
+  const shownInNeedsBrandon = visibleSections.needsBrandon;
+  const shownInWaiting = visibleSections.waitingOnOthers;
+  const shownAboveProjectSignals = [...shownInNeedsBrandon, ...shownInWaiting];
   const importantUpdates = excludeAlreadyShown(
-    packet.sections.importantUpdates,
-    [...shownAboveFinancial, ...financialItems],
+    visibleSections.importantUpdates,
+    shownAboveProjectSignals,
   );
-  const financialAlertCount =
-    financialItems.length + paymentGuardrailAlerts.length;
   const topStaleFollowUps = staleFollowUps.slice(0, 5);
 
   return (
@@ -588,59 +721,54 @@ export default async function ExecutiveDailyInsightsPage() {
       eyebrow="Executive briefing"
       title="Daily operating brief"
       description={`Prepared ${generatedAt} · ${packet.windowDays}-day window`}
+      actions={<ExecutiveChatSheet packet={packet} />}
       contentClassName="pb-16"
     >
-      <div className="grid grid-cols-1 gap-12 xl:grid-cols-[1fr_400px]">
+      <div className="grid grid-cols-1 gap-12 xl:grid-cols-[minmax(0,1fr)_340px]">
         {/* ── Main column ── */}
         <div className="space-y-8">
-          <PaymentGuardrailAlerts
-            alerts={paymentGuardrailAlerts}
-            emptyMessage=""
-          />
-
           <ExecutiveListSection
+            sectionKey="needsBrandon"
             title="Needs Brandon Today"
-            items={packet.sections.needsBrandon}
+            items={visibleSections.needsBrandon}
             emptyTitle="No direct owner decisions queued"
             employees={employees}
             matchedTasksBySourceId={matchedTasksBySourceId}
+            followUpsByItemKey={followUpsByItemKey}
           />
 
           <ExecutiveListSection
+            sectionKey="waitingOnOthers"
             title="Unblock Your People"
-            items={packet.sections.waitingOnOthers}
+            items={visibleSections.waitingOnOthers}
             emptyTitle="No unblocks surfaced"
             employees={employees}
             matchedTasksBySourceId={matchedTasksBySourceId}
+            followUpsByItemKey={followUpsByItemKey}
           />
 
           <ExecutiveListSection
-            title="Financial"
-            items={financialItems}
-            emptyTitle="No financial alerts"
-            employees={employees}
-            matchedTasksBySourceId={matchedTasksBySourceId}
-          />
-
-          <ExecutiveListSection
+            sectionKey="importantUpdates"
             title="Project Signals"
             items={importantUpdates}
             emptyTitle="No project signals surfaced"
             employees={employees}
             matchedTasksBySourceId={matchedTasksBySourceId}
+            followUpsByItemKey={followUpsByItemKey}
           />
 
           <CarryForwardSection followUps={topStaleFollowUps} />
 
-          <section className="space-y-4">
-            <SectionDivider title="Source Health" />
-            <ExecutiveSourceActivity sources={packet.sourceCoverage} />
-          </section>
+          <PaymentGuardrailAlerts
+            alerts={paymentGuardrailAlerts}
+            emptyMessage=""
+          />
         </div>
 
-        {/* ── Right column: sticky AI chat panel ── */}
-        <aside className="sticky top-6 flex h-[calc(100vh-96px)] flex-col">
-          <ExecutiveChatPanel packet={packet} />
+        {/* ── Right column: operating context ── */}
+        <aside className="space-y-8 xl:sticky xl:top-6 xl:self-start">
+          <TodayMeetingsSection meetings={todayMeetings} />
+          <ExecutiveSourceActivity sources={packet.sourceCoverage} />
         </aside>
       </div>
     </PageShell>

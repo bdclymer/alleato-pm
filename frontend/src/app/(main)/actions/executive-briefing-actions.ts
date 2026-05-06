@@ -19,6 +19,14 @@ import {
 
 const EXECUTIVE_PATH = "/executive";
 const ADMIN_ACTIONS_PATH = "/actions";
+const TASK_STATUS_VALUES = new Set([
+  "open",
+  "in_progress",
+  "blocked",
+  "done",
+  "cancelled",
+]);
+const TASK_PRIORITY_VALUES = new Set(["high", "medium", "low"]);
 
 function formString(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -126,6 +134,11 @@ export async function createExecutiveTaskDraftAction(formData: FormData) {
   const title = formString(formData, "title");
   const description = formString(formData, "description");
   const assigneePersonId = formString(formData, "assigneePersonId");
+  const dueDate = formString(formData, "dueDate") || null;
+  const rawPriority = formString(formData, "priority") || "high";
+  const rawStatus = formString(formData, "status") || "open";
+  const priority = TASK_PRIORITY_VALUES.has(rawPriority) ? rawPriority : "high";
+  const status = TASK_STATUS_VALUES.has(rawStatus) ? rawStatus : "open";
 
   if (!sourceId) {
     throw new Error("Missing executive source id.");
@@ -144,7 +157,9 @@ export async function createExecutiveTaskDraftAction(formData: FormData) {
     .single();
 
   if (metadataError) {
-    throw new Error(`Failed to load executive source metadata: ${metadataError.message}`);
+    throw new Error(
+      `Failed to load executive source metadata: ${metadataError.message}`,
+    );
   }
 
   let assigneeName: string | null = null;
@@ -161,44 +176,55 @@ export async function createExecutiveTaskDraftAction(formData: FormData) {
       throw new Error(`Failed to load assignee: ${personError.message}`);
     }
 
-    assigneeName = [person.first_name, person.last_name].filter(Boolean).join(" ").trim() || null;
+    assigneeName =
+      [person.first_name, person.last_name].filter(Boolean).join(" ").trim() ||
+      null;
     assigneeEmail = person.email ?? null;
   }
 
-  const normalizedDescription = `[Executive] ${title}: ${description}`.replace(/\s+/g, " ").trim();
+  const normalizedTitle = normalizeExecutiveImprovementText(title);
+  const normalizedDescription = normalizeExecutiveImprovementText(description);
 
   const { data: existingTask, error: existingTaskError } = await supabase
     .from("tasks")
     .select("id")
     .eq("metadata_id", metadata.id)
+    .eq("title", normalizedTitle)
     .eq("description", normalizedDescription)
     .limit(1)
     .maybeSingle();
 
   if (existingTaskError) {
-    throw new Error(`Failed to check for duplicate executive task: ${existingTaskError.message}`);
+    throw new Error(
+      `Failed to check for duplicate executive task: ${existingTaskError.message}`,
+    );
   }
 
   if (!existingTask) {
     const projectId = metadata.project_id ?? null;
     const { error: insertError } = await supabase.from("tasks").insert({
       metadata_id: metadata.id,
+      title: normalizedTitle,
       description: normalizedDescription,
       assignee_name: assigneeName,
       assignee_email: assigneeEmail,
+      due_date: dueDate,
       project_id: projectId,
       project_ids: projectId ? [projectId] : null,
       source_system: "executive_briefing",
-      status: "not_started",
-      priority: "high",
+      status,
+      priority,
     });
 
     if (insertError) {
-      throw new Error(`Failed to create executive task draft: ${insertError.message}`);
+      throw new Error(
+        `Failed to create executive task draft: ${insertError.message}`,
+      );
     }
   }
 
   revalidatePath(EXECUTIVE_PATH);
+  return { created: !existingTask, taskId: existingTask?.id ?? null };
 }
 
 export async function createOperationalImprovementAction(formData: FormData) {
@@ -296,23 +322,28 @@ export async function createOperationalImprovementAction(formData: FormData) {
       );
     }
 
-    const { error: insertError } = await supabase.from("initiative_cards").insert({
-      title: normalizedTitle,
-      description: normalizedDescription,
-      status: "idea",
-      priority:
-        priority === "urgent" || priority === "high" || priority === "medium" || priority === "low"
-          ? priority
-          : "medium",
-      labels: ["Executive", "Operational Improvement"],
-      sort_order: (maxRow?.sort_order ?? -1) + 1,
-      linked_record_type: linkType,
-      linked_record_id: linkId,
-      source: "manual",
-      assignee,
-      assignee_id: assigneeId,
-      due_date: dueDate,
-    });
+    const { error: insertError } = await supabase
+      .from("initiative_cards")
+      .insert({
+        title: normalizedTitle,
+        description: normalizedDescription,
+        status: "idea",
+        priority:
+          priority === "urgent" ||
+          priority === "high" ||
+          priority === "medium" ||
+          priority === "low"
+            ? priority
+            : "medium",
+        labels: ["Executive", "Operational Improvement"],
+        sort_order: (maxRow?.sort_order ?? -1) + 1,
+        linked_record_type: linkType,
+        linked_record_id: linkId,
+        source: "manual",
+        assignee,
+        assignee_id: assigneeId,
+        due_date: dueDate,
+      });
 
     if (insertError) {
       throw new Error(
@@ -342,7 +373,10 @@ export async function sendExecutiveBriefingEmailAction(formData: FormData) {
   }
 
   if (recipients.length === 0) {
-    redirectWithEmailStatus("failed", "Add at least one recipient email address.");
+    redirectWithEmailStatus(
+      "failed",
+      "Add at least one recipient email address.",
+    );
   }
 
   const dashboard = await getExecutiveBriefingDashboard({

@@ -10,7 +10,7 @@ The Brandon Daily Update is an executive operating brief generated from recent c
 
 The current source of truth is the persisted executive briefing draft in `daily_recaps` where `recap_kind = executive_briefing`. The older backend daily digest is a legacy meeting recap stored as `recap_kind = meeting_digest`; it should not be treated as the CEO operating brief.
 
-The main surface is a review and approval page. Teams delivery exists as an explicit send endpoint, but scheduled automatic delivery should still use approved drafts only.
+The main surface is a review and approval page. Teams delivery exists as both an explicit send endpoint and a weekday cron endpoint, and both paths send approved drafts only.
 
 ## Primary Entry Points
 
@@ -20,6 +20,8 @@ The main surface is a review and approval page. Teams delivery exists as an expl
 - Server actions: `frontend/src/app/(main)/actions/executive-briefing-actions.ts`
 - API route: `frontend/src/app/api/executive/brandon-daily-update/route.ts`
 - Teams send route: `frontend/src/app/api/executive/daily-brief/send-teams/route.ts`
+- Approved-only Teams cron route: `frontend/src/app/api/cron/executive-daily-brief/route.ts`
+- Teams delivery helper: `frontend/src/lib/executive/executive-briefing-teams-delivery.ts`
 - Source activity component: `frontend/src/components/executive/executive-source-activity.tsx`
 - Database migration: `supabase/migrations/20260502013000_executive_briefing_workflow.sql`
 - Follow-up migration adjustment: `supabase/migrations/20260502014500_executive_briefing_workflow_followup.sql`
@@ -63,6 +65,7 @@ High-level flow:
         -> synthesize sections with LLM
         -> record source-health warnings
         -> normalize relative dates
+        -> suppress unsupported rows instead of filling fake defaults
       -> save packet to daily_recaps.briefing_packet
       -> upsert executive_briefing_follow_ups
     -> load open follow-ups
@@ -442,9 +445,23 @@ Behavior:
 - authorizes with `CRON_SECRET` bearer auth or an active Supabase session
 - resolves the target Teams-linked user from the request body or latest Teams conversation reference
 - calls `getExecutiveBriefingDashboard({ windowDays: DEFAULT_EXECUTIVE_WINDOW_DAYS })`
+- skips delivery unless `workflow_status = approved`
 - formats the persisted draft packet into a conversational Teams message
 - sends through `sendProactiveMessage()`
 - marks the `daily_recaps` executive briefing row as `sent_teams = true`
+
+The weekday cron route is:
+
+```text
+GET|POST /api/cron/executive-daily-brief
+```
+
+Behavior:
+
+- authorizes with `CRON_SECRET` bearer auth
+- uses the same approved-only delivery helper as the manual Teams route
+- returns `status: "skipped"` without sending when the current draft is still `draft`
+- is scheduled in `frontend/vercel.json` as `0 11 * * 1-5`
 
 ## Failure And Trust Rules
 
@@ -459,6 +476,8 @@ Trust requirements for surfaced items:
 - synthesized item is specific enough to be useful
 - relative dates include calendar dates
 - stale broad knowledge does not outrank recent communication and meeting evidence
+- fake defaults are not allowed: no invented project label, source title, recipient name, evidence text, or source date
+- unsupported rows are suppressed and recorded as `Source health warning` notes instead of being padded with fallback copy
 - source-health warnings are visible in `retrievalNotes` when email, Teams, fallback document, or source-coverage queries fail
 
 The page currently shows an automation rule panel:
@@ -474,7 +493,7 @@ Missing source attribution, stale timestamps, or blank evidence should suppress 
 - Date normalization handles next weekdays and next-week phrases, but not all relative date phrases.
 - Source coverage can show zero email or Teams items if the current filtered hits do not pass confidence and recency thresholds.
 - The follow-up fingerprint includes title and recommended action, so large wording changes can create a new follow-up instead of updating an existing one.
-- The page is approved manually, and Teams delivery exists, but scheduled automatic delivery is not yet wired to approved-only drafts.
+- Weekday Teams delivery is wired to approved-only drafts, but the exact delivery time should be revisited if Vercel cron UTC timing needs seasonal Eastern-time adjustment.
 
 ## How To Tune The Brief
 
@@ -533,6 +552,6 @@ Recommended path before sending this automatically:
 3. Store approved packets in `daily_recaps`.
 4. Use only approved drafts for delivery.
 5. Use the existing Teams send route for approved/manual delivery.
-6. Add a scheduled job that sends only if `workflow_status = approved`.
+6. Use `/api/cron/executive-daily-brief` for scheduled delivery; it sends only if `workflow_status = approved`.
 
 The current design should keep generation separate from delivery so a weak draft cannot silently reach Brandon.
