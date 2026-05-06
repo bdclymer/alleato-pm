@@ -2416,17 +2416,32 @@ export function createOperationalTools(
             query = query.eq("mailbox_user_id", mailboxFilter);
           }
 
-          const { data, error } = await query;
+          const [emailResult, syncStateResult] = await Promise.all([
+            query,
+            supabase
+              .from("graph_sync_state")
+              .select("last_sync_at")
+              .order("last_sync_at", { ascending: false })
+              .limit(1)
+              .maybeSingle(),
+          ]);
 
-          if (error) {
-            return { error: `Failed to fetch emails: ${error.message}` };
+          if (emailResult.error) {
+            return { error: `Failed to fetch emails: ${emailResult.error.message}` };
           }
+
+          const data = emailResult.data;
+          const lastSyncedAt = syncStateResult.data?.last_sync_at ?? null;
+          const dataCutoffNote = lastSyncedAt
+            ? `Data is current as of ${new Date(lastSyncedAt).toLocaleString("en-US", { timeZone: "America/Chicago", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} CT (syncs run hourly). Emails received after that time won't appear here yet.`
+            : "Sync time unknown — emails received since the last sync may not appear.";
 
           if (!data || data.length === 0) {
             const rangeLabel = daysBack === 0 ? "today" : `the last ${daysBack} day${daysBack === 1 ? "" : "s"}`;
             return {
               emails: [],
               summary: `No emails received ${rangeLabel}${mailboxFilter ? ` for ${mailboxFilter}` : ""}.`,
+              dataCutoffNote,
             };
           }
 
@@ -2447,6 +2462,7 @@ export function createOperationalTools(
             emails,
             count: emails.length,
             summary: `Found ${emails.length} email${emails.length === 1 ? "" : "s"} received ${rangeLabel}${mailboxFilter ? ` for ${mailboxFilter}` : ""}.`,
+            dataCutoffNote,
           };
         },
       ),

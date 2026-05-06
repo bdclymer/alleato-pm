@@ -135,6 +135,7 @@ import {
   type ResponseQuality as ScoredResponseQuality,
 } from "@/lib/ai/score-response-quality";
 import { ASSISTANT_ACTION_CAPABILITIES } from "@/lib/ai/action-capabilities";
+import { TaskFeedbackButtons } from "@/components/ai/TaskFeedbackButtons";
 
 // ─── Part extraction helpers ───────────────────────────────────────
 
@@ -595,18 +596,41 @@ function ToolCallItem({
   onEdit,
   onRun,
   onApprovalResponse,
+  sessionId,
+  selectedProjectId,
 }: {
   part: ToolPart;
   onApprove: (part: ToolPart) => void;
   onEdit: (part: ToolPart) => void;
   onRun: (part: ToolPart) => void;
   onApprovalResponse?: ToolApprovalResponseHandler;
+  sessionId?: string | null;
+  selectedProjectId?: number | null;
 }) {
   const preview = getToolPreview(part);
   const previewFields = asObject(preview?.fields);
   const previewEntries = Object.entries(previewFields);
   const links = getRecordDeepLinks(part);
   const approvalId = part.approval?.id;
+
+  const toolName = getToolNameFromType(part.type);
+  const isCreateTask = toolName === "createTask";
+  const previewTable = toStringValue(preview?.table);
+  const isTaskPreview = isCreateTask && previewTable === "schedule_tasks";
+
+  const output = asObject(part.output);
+  const isConfirmedTask =
+    isCreateTask &&
+    output.success === true &&
+    part.state === "output-available";
+  const confirmedRecord = asObject(output.record);
+  const confirmedTaskId = toStringValue(confirmedRecord.id);
+
+  const taskProjectId =
+    toNumber(previewFields.project_id) ??
+    toNumber(confirmedRecord.project_id) ??
+    selectedProjectId ??
+    null;
 
   return (
     <ToolDisplay className="mb-1.5">
@@ -710,10 +734,43 @@ function ToolCallItem({
                 Run
               </Button>
             </div>
+            {isTaskPreview && taskProjectId != null && (
+              <div className="mt-2 flex items-center justify-end">
+                <TaskFeedbackButtons
+                  projectId={taskProjectId}
+                  taskSnapshot={{
+                    name: toStringValue(previewFields.name) ?? "",
+                    assignee: toStringValue(previewFields.assignee) ?? null,
+                    dueDate: toStringValue(previewFields.finish_date) ?? null,
+                    priority: toStringValue(previewFields.priority) ?? "normal",
+                    notes: null,
+                    projectId: taskProjectId,
+                  }}
+                  sessionId={sessionId ?? null}
+                />
+              </div>
+            )}
           </div>
         )}
         {(part.state === "output-available" || part.state === "output-error") && (
           <ToolOutput output={part.output} errorText={part.errorText} />
+        )}
+        {isConfirmedTask && taskProjectId != null && (
+          <div className="mt-2 flex items-center justify-end">
+            <TaskFeedbackButtons
+              projectId={taskProjectId}
+              taskId={confirmedTaskId ?? undefined}
+              taskSnapshot={{
+                name: toStringValue(confirmedRecord.name) ?? "",
+                assignee: null,
+                dueDate: null,
+                priority: "normal",
+                notes: null,
+                projectId: taskProjectId,
+              }}
+              sessionId={sessionId ?? null}
+            />
+          </div>
         )}
         {links.length > 0 && (
           <div className="flex flex-wrap gap-2 pt-1">

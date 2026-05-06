@@ -54,14 +54,17 @@ module.exports = {
       // Admin pages that are legitimately non-standard
       'test-modals',
       'test-form',
-      // Redirect-only pages: return null after router.replace() — nothing to wrap
+      // Redirect-only pages: these return null after calling router.replace() in useEffect.
+      // They cannot use PageShell because they render nothing — the redirect is the page.
       'edit/page.tsx',
-      // Thin delegation pages: the component they render already owns its own PageShell
+      // Thin delegation pages: the page exists only to extract URL params and pass them to
+      // a feature component that already owns its own PageShell. Adding a second PageShell
+      // here would create nested shells.
       'invoicing/subcontractor/page.tsx',
       'invoicing/subcontractor/[invoiceId]/page.tsx',
       'commitments/[commitmentId]/invoices/[invoiceId]/page.tsx',
       'submittals/new/page.tsx',
-      // Budget page: Suspense wrapper — BudgetPageContent owns its own header
+      // Budget page: complex legacy Suspense wrapper — BudgetPageContent owns its own header.
       '[projectId]/budget/page.tsx',
     ];
     if (skipPatterns.some(p => filename.includes(p))) return {};

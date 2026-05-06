@@ -8,8 +8,9 @@ import {
   useSearchParams,
   type ReadonlyURLSearchParams,
 } from "next/navigation";
-import { ExternalLink, Inbox, Mail, Paperclip } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { ExternalLink, Inbox, Mail, MoreVertical, Paperclip, RefreshCw, X } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 import {
   UnifiedTablePage,
@@ -18,7 +19,28 @@ import {
 } from "@/components/tables/unified";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Modal as Dialog,
+  ModalContent as DialogContent,
+  ModalFooter as DialogFooter,
+  ModalHeader as DialogHeader,
+  ModalTitle as DialogTitle,
+} from "@/components/ui/unified-modal";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { apiFetch } from "@/lib/api-client";
+import { useProjects } from "@/hooks/use-projects";
 
 interface OutlookIntakeAttachment {
   id: number;
@@ -32,6 +54,7 @@ interface OutlookIntakeEmail {
   id: number;
   graphMessageId: string;
   mailboxUserId: string;
+  documentMetadataId: string | null;
   subject: string;
   fromName: string | null;
   fromEmail: string | null;
@@ -83,12 +106,119 @@ function statusTone(status: string): "default" | "secondary" | "destructive" | "
   return "outline";
 }
 
+interface ReassignDialogProps {
+  email: OutlookIntakeEmail | null;
+  onClose: () => void;
+  onSaved: () => void;
+}
+
+function ReassignProjectDialog({ email, onClose, onSaved }: ReassignDialogProps): React.ReactElement {
+  const { projects, isLoading: projectsLoading } = useProjects({ enabled: !!email });
+  const [selectedProjectId, setSelectedProjectId] = React.useState<string>("");
+  const [isSaving, setIsSaving] = React.useState(false);
+
+  React.useEffect(() => {
+    if (email) {
+      setSelectedProjectId(email.project ? String(email.project.id) : "");
+    }
+  }, [email]);
+
+  const handleSave = async () => {
+    if (!email) return;
+    setIsSaving(true);
+    try {
+      await apiFetch(`/api/outlook-intake/${email.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          project_id: selectedProjectId ? parseInt(selectedProjectId, 10) : null,
+        }),
+      });
+      toast.success("Project assignment updated");
+      onSaved();
+      onClose();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to update assignment");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const selectedProject = projects.find((p) => String(p.id) === selectedProjectId);
+
+  return (
+    <Dialog open={!!email} onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Reassign Project</DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-4 py-2">
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-muted-foreground">Email</p>
+            <p className="truncate text-sm">{email?.subject}</p>
+          </div>
+
+          <div className="space-y-1.5">
+            <p className="text-sm font-medium">Project</p>
+            <Select
+              value={selectedProjectId}
+              onValueChange={setSelectedProjectId}
+              disabled={projectsLoading}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={projectsLoading ? "Loading projects…" : "Select a project"} />
+              </SelectTrigger>
+              <SelectContent>
+                {projects.map((project) => (
+                  <SelectItem key={project.id} value={String(project.id)}>
+                    {project.project_number ? `${project.project_number} — ` : ""}
+                    {project.name ?? `Project ${project.id}`}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {selectedProject && (
+              <p className="text-xs text-muted-foreground">
+                {selectedProject.client ? `Client: ${selectedProject.client}` : null}
+              </p>
+            )}
+          </div>
+
+          {selectedProjectId && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-auto p-0 text-xs text-muted-foreground hover:text-destructive"
+              onClick={() => setSelectedProjectId("")}
+            >
+              <X className="mr-1 size-3" />
+              Clear assignment
+            </Button>
+          )}
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} disabled={isSaving}>
+            Cancel
+          </Button>
+          <Button onClick={handleSave} disabled={isSaving || projectsLoading}>
+            {isSaving ? "Saving…" : "Save"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export function OutlookIntakeClient(): React.ReactElement {
   const router = useRouter();
   const pathname = usePathname() ?? "/outlook-intake";
   const rawSearchParams = useSearchParams();
   const searchParams =
     rawSearchParams ?? (new URLSearchParams() as unknown as ReadonlyURLSearchParams);
+  const queryClient = useQueryClient();
+  const [reassigningEmail, setReassigningEmail] = React.useState<OutlookIntakeEmail | null>(null);
   const initialMatchStatus = searchParams.get("match_status") ?? "";
 
   const tableState = useUnifiedTableState({
@@ -255,7 +385,8 @@ export function OutlookIntakeClient(): React.ReactElement {
   };
 
   return (
-    <UnifiedTablePage
+    <>
+      <UnifiedTablePage
       header={{
         title: "Outlook Intake",
         description: "All synced Outlook emails and attachments before and after project matching.",
@@ -321,14 +452,29 @@ export function OutlookIntakeClient(): React.ReactElement {
       table={{
         columns,
         getRowId: (email) => String(email.id),
-        rowActions: (email) =>
-          email.webLink ? (
-            <Button size="icon" variant="ghost" asChild aria-label="Open in Outlook">
-              <a href={email.webLink} target="_blank" rel="noreferrer">
-                <ExternalLink className="size-4" />
-              </a>
-            </Button>
-          ) : null,
+        rowActions: (email) => (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="icon" variant="ghost" aria-label="Row actions">
+                <MoreVertical className="size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setReassigningEmail(email)}>
+                <RefreshCw className="mr-2 size-4" />
+                Reassign project
+              </DropdownMenuItem>
+              {email.webLink ? (
+                <DropdownMenuItem asChild>
+                  <a href={email.webLink} target="_blank" rel="noreferrer">
+                    <ExternalLink className="mr-2 size-4" />
+                    Open in Outlook
+                  </a>
+                </DropdownMenuItem>
+              ) : null}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ),
       }}
       sorting={{
         sortBy: tableState.sortBy,
@@ -383,5 +529,12 @@ export function OutlookIntakeClient(): React.ReactElement {
         fullBleedTable: false,
       }}
     />
+
+      <ReassignProjectDialog
+        email={reassigningEmail}
+        onClose={() => setReassigningEmail(null)}
+        onSaved={() => queryClient.invalidateQueries({ queryKey: ["outlook-intake"] })}
+      />
+    </>
   );
 }
