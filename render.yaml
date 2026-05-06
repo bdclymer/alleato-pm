@@ -49,6 +49,37 @@ services:
       - key: GRAPH_SYNC_ONEDRIVE
         value: "true"
 
+  # Extracts action items from meetings, emails, and Teams messages daily at 7 AM UTC.
+  # Replaces the former Vercel cron route (/api/admin/cron/extract-brandon-tasks).
+  - type: cron
+    name: alleato-task-extraction
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    schedule: "0 7 * * *"
+    startCommand: >-
+      python3 -c "
+      import json, sys;
+      sys.path.insert(0, '/app');
+      from src.services.task_extraction import run_task_extraction;
+      result = run_task_extraction(window_days=2);
+      print(json.dumps(result, indent=2));
+      sys.exit(1 if result.get('errors', 0) > 0 and result.get('inserted', 0) == 0 else 0)
+      "
+    envVars:
+      - key: PYTHONPATH
+        value: /app:/app/src:/app/src/services
+      - key: PYTHONUNBUFFERED
+        value: 1
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: AI_GATEWAY_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+
   # Runs RAG meeting vectorization health check daily at noon UTC.
   # Replaces the former GitHub Actions workflow — no Actions minutes consumed.
   # Posts to SLACK_WEBHOOK_URL on failure.

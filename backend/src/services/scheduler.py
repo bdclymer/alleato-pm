@@ -6,6 +6,7 @@ Currently registered jobs:
   - Daily digest: 6 PM daily, aggregates meetings into executive briefing
   - Acumatica financial sync: daily incremental ERP import into Supabase
   - Microsoft Graph sync: periodic incremental sync of Outlook/Teams/OneDrive
+  - Task extraction: daily, extracts action items from meetings/emails/Teams messages
 
 Future jobs (Phase 2+):
   - Project health scoring
@@ -172,6 +173,24 @@ def init_scheduler() -> None:
             source_limit,
             packet_limit,
             max_processing_time_ms,
+        )
+
+    # Task extraction — daily at 7 AM UTC (configurable via TASK_EXTRACTION_CRON)
+    task_extraction_cron = os.getenv("TASK_EXTRACTION_CRON", "0 7 * * *")
+    task_extraction_window = max(1, int(os.getenv("TASK_EXTRACTION_WINDOW_DAYS", "2")))
+    if os.getenv("TASK_EXTRACTION_ENABLED", "true").lower() not in ("0", "false", "no"):
+        scheduler.add_job(
+            run_task_extraction_job,
+            CronTrigger.from_crontab(task_extraction_cron),
+            id="task_extraction",
+            name="Task Extraction (meetings / emails / Teams)",
+            replace_existing=True,
+            max_instances=1,
+            kwargs={"window_days": task_extraction_window},
+        )
+        logger.info(
+            "[Scheduler] Task extraction cron: %s (window=%d days)",
+            task_extraction_cron, task_extraction_window,
         )
 
     scheduler.start()
@@ -367,6 +386,34 @@ def _run_intelligence_compiler(
         packet_limit=packet_limit,
         max_processing_time_ms=max_processing_time_ms,
     )
+
+
+async def run_task_extraction_job(window_days: int = 2) -> None:
+    """Scheduled job: extract action items from recent meetings, emails, and Teams messages."""
+    import asyncio
+
+    logger.info("[Scheduler] Running task extraction job (window=%d days)", window_days)
+    try:
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(None, _run_task_extraction, window_days)
+        logger.info(
+            "[Scheduler] Task extraction complete: docs_found=%d processed=%d inserted=%d skipped=%d errors=%d",
+            result.get("docs_found", 0),
+            result.get("docs_processed", 0),
+            result.get("inserted", 0),
+            result.get("skipped", 0),
+            result.get("errors", 0),
+        )
+        if result.get("errors", 0) > 0:
+            logger.warning("[Scheduler] Task extraction had %d insert errors", result["errors"])
+    except Exception as e:
+        logger.warning("[Scheduler] Task extraction failed (will retry): %s", e, exc_info=True)
+
+
+def _run_task_extraction(window_days: int = 2) -> dict:
+    """Synchronous wrapper for task extraction."""
+    from .task_extraction import run_task_extraction
+    return run_task_extraction(window_days=window_days)
 
 
 def _maybe_run_comm_project_backfill(client) -> dict:
