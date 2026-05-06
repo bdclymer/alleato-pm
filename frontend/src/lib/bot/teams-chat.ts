@@ -158,17 +158,59 @@ async function storeConversationRef(
   }
 }
 
+// Per-checkpoint debug log — durable signal that bypasses Vercel post-response
+// log capture. Each checkpoint becomes a row in bot_debug_log we can query
+// directly to see exactly which step succeeded for any given message. Wraps
+// errors so a debug write failure can never break the bot.
+async function logCheckpoint(
+  checkpoint: string,
+  ctx: {
+    teamsUserId?: string;
+    supabaseUserId?: string | null;
+    threadId?: string;
+    messagePreview?: string;
+    extra?: Record<string, unknown>;
+  },
+): Promise<void> {
+  try {
+    const supabase = createServiceClient();
+    await (supabase.from("bot_debug_log") as any).insert({
+      platform: "teams",
+      checkpoint,
+      platform_user_id: ctx.teamsUserId ?? null,
+      supabase_user_id: ctx.supabaseUserId ?? null,
+      thread_id: ctx.threadId ?? null,
+      message_preview: ctx.messagePreview ?? null,
+      extra: ctx.extra ?? {},
+    });
+  } catch {
+    // Debug log must never break the handler
+  }
+}
+
 async function handleMessage(
   thread: Thread,
   message: Message,
   source: "mention" | "dm",
 ): Promise<void> {
+  const teamsUserIdEarly = message.author.userId;
+  const messageTextEarly = message.text.trim();
+  const previewEarly = messageTextEarly.slice(0, 200);
+
   console.log("[teams-bot] handleMessage called", {
     source,
     threadId: thread.id,
-    userId: message.author.userId,
-    textPreview: message.text.trim().slice(0, 80),
+    userId: teamsUserIdEarly,
+    textPreview: messageTextEarly.slice(0, 80),
   });
+
+  await logCheckpoint("enter", {
+    teamsUserId: teamsUserIdEarly,
+    threadId: thread.id,
+    messagePreview: previewEarly,
+    extra: { source },
+  });
+
   try {
     const teamsUserId = message.author.userId;
     const displayName = message.author.fullName;
@@ -178,7 +220,9 @@ async function handleMessage(
     // Ping test — bypasses all DB/AI to confirm basic Teams messaging works
     if (messageText.toLowerCase() === "ping") {
       console.log("[teams-bot] ping received, sending pong");
+      await logCheckpoint("ping", { teamsUserId, threadId: thread.id });
       await thread.post("pong 🏓");
+      await logCheckpoint("ping_posted", { teamsUserId, threadId: thread.id });
       return;
     }
 
@@ -222,11 +266,19 @@ async function handleMessage(
       }
     }
 
+    await logCheckpoint("mapping_resolved", {
+      teamsUserId,
+      supabaseUserId,
+      threadId: thread.id,
+      extra: { mapped: !!mapping, hasUserId: !!supabaseUserId },
+    });
+
     // Catch any "link ..." attempt up front so a malformed code (e.g. "link foo"
     // — too short) doesn't fall through to the AI handler. Falling through is
     // a silent UX failure: user types "link" expecting linking, gets a chatbot
     // reply instead of a clear error.
     if (/^link(\s|$)/i.test(messageText)) {
+      await logCheckpoint("link_branch", { teamsUserId, threadId: thread.id });
       const linkMatch = messageText.match(/^link\s+([A-Za-z0-9_-]{6,12})$/i);
       if (linkMatch) {
         await handleLinkCommand(thread, teamsUserId, displayName, linkMatch[1]);
@@ -239,6 +291,7 @@ async function handleMessage(
     }
 
     if (!supabaseUserId) {
+      await logCheckpoint("not_linked_prompt", { teamsUserId, threadId: thread.id });
       await thread.post(
         "👋 I don't recognize your account yet. To link your Alleato account:\n\n" +
           "1. Open **Settings → Profile → Microsoft Teams** in Alleato\n" +
@@ -261,6 +314,13 @@ async function handleMessage(
     // Scope session to user+thread so channel convos and DMs stay isolated
     const sessionId = `teams:${supabaseUserId}:${thread.id}`;
 
+    await logCheckpoint("before_persist_user", {
+      teamsUserId,
+      supabaseUserId,
+      threadId: thread.id,
+      extra: { sessionId },
+    });
+
     await persistChatMessage({
       sessionId,
       userId: supabaseUserId,
@@ -269,10 +329,26 @@ async function handleMessage(
       metadata: { platform: "teams", teamsUserId, threadId: thread.id },
     });
 
+    await logCheckpoint("after_persist_user", {
+      teamsUserId,
+      supabaseUserId,
+      threadId: thread.id,
+    });
+
     const result = await generateBotResponse({
       userId: supabaseUserId,
       messageText,
       sessionId,
+    });
+
+    await logCheckpoint("after_generate", {
+      teamsUserId,
+      supabaseUserId,
+      threadId: thread.id,
+      extra: {
+        responseLength: result.text.length,
+        toolCallCount: result.toolTrace.length,
+      },
     });
 
     await persistChatMessage({
@@ -288,20 +364,41 @@ async function handleMessage(
       },
     });
 
+    await logCheckpoint("after_persist_assistant", {
+      teamsUserId,
+      supabaseUserId,
+      threadId: thread.id,
+    });
+
     // Send response, chunking if needed
     const chunks = chunkText(result.text);
     for (const chunk of chunks) {
       await thread.post(chunk);
     }
 
+    await logCheckpoint("after_post", {
+      teamsUserId,
+      supabaseUserId,
+      threadId: thread.id,
+      extra: { chunkCount: chunks.length },
+    });
+
     after(async () => {
       await runPostResponseTasks(sessionId, userId);
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
+    const stack = err instanceof Error ? err.stack : undefined;
+    const name = err instanceof Error ? err.name : undefined;
     console.error("[teams-bot] unhandled error in handleMessage", {
       error: msg,
       threadId: thread.id,
+    });
+    await logCheckpoint("error", {
+      teamsUserId: teamsUserIdEarly,
+      threadId: thread.id,
+      messagePreview: previewEarly,
+      extra: { error: msg, stack, name },
     });
     await thread
       .post("❌ Something went wrong. Please try again in a moment.")
