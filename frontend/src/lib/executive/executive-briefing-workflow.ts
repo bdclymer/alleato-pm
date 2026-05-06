@@ -3,6 +3,7 @@ import type { Database, Json } from "@/types/database.types";
 import { createServiceClient } from "@/lib/supabase/service";
 import {
   DEFAULT_EXECUTIVE_WINDOW_DAYS,
+  DEFAULT_EXECUTIVE_BRIEFING_SYNTHESIS_MODEL,
   generateBrandonDailyUpdate,
   type BrandonBriefItem,
   type BrandonDailyUpdatePacket,
@@ -37,7 +38,8 @@ export type ExecutiveBriefingDashboard = {
   fingerprintMap: Map<string, ExecutiveBriefingFollowUp>;
 };
 
-const RECAP_KIND = "executive_briefing";
+export const CEO_EXECUTIVE_BRIEFING_RECAP_KIND = "executive_briefing";
+export const LEGACY_MEETING_DIGEST_RECAP_KIND = "meeting_digest";
 
 function getNow() {
   return new Date();
@@ -212,7 +214,7 @@ async function loadExistingDraft(recapDate: string) {
   const { data, error } = await supabase
     .from("daily_recaps")
     .select("*")
-    .eq("recap_kind", RECAP_KIND)
+    .eq("recap_kind", CEO_EXECUTIVE_BRIEFING_RECAP_KIND)
     .eq("recap_date", recapDate)
     .order("created_at", { ascending: false })
     .limit(1)
@@ -311,7 +313,7 @@ export async function regenerateExecutiveBriefingDraft(options?: {
 
   const row: DailyRecapInsert = {
     id: existingDraft?.id,
-    recap_kind: RECAP_KIND,
+    recap_kind: CEO_EXECUTIVE_BRIEFING_RECAP_KIND,
     recap_date: dateRange.recapDate,
     date_range_start: dateRange.dateRangeStart,
     date_range_end: dateRange.dateRangeEnd,
@@ -325,7 +327,10 @@ export async function regenerateExecutiveBriefingDraft(options?: {
     approved_at: null,
     approved_by: null,
     approval_notes: null,
-    model_used: "gpt-4.1-mini",
+    model_used: (
+      process.env.EXECUTIVE_BRIEFING_SYNTHESIS_MODEL?.trim() ||
+      DEFAULT_EXECUTIVE_BRIEFING_SYNTHESIS_MODEL
+    ).replace(/^openai\//, ""),
     generation_time_seconds: null,
     meetings_analyzed: null,
     blockers: null,
@@ -434,7 +439,7 @@ export async function approveExecutiveBriefingDraft(
       approved_by: approvedBy,
     })
     .eq("id", draftId)
-    .eq("recap_kind", RECAP_KIND);
+    .eq("recap_kind", CEO_EXECUTIVE_BRIEFING_RECAP_KIND);
 
   if (error) {
     throw new Error(`Failed to approve executive briefing draft: ${error.message}`);

@@ -98,7 +98,11 @@ function keywordHit(item: BrandonBriefItem, keywords: string[]) {
 function dedupeItems(items: BrandonBriefItem[]) {
   const seen = new Set<string>();
   return items.filter((item) => {
-    const key = [item.title, item.project, item.sourceId ?? item.sourceDetail].join("::");
+    const key = [
+      item.title,
+      item.project,
+      item.sourceId ?? item.sourceDetail,
+    ].join("::");
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
@@ -188,23 +192,54 @@ function buildOperationalSignals(params: {
 
 function followUpToItem(followUp: ExecutiveBriefingFollowUp): BrandonBriefItem {
   const payload = followUp.payload as Partial<BrandonBriefItem> | null;
+  const source = (payload?.source as BrandonBriefItem["source"]) ?? "Document";
+  const sourceDetail =
+    followUp.source_detail ?? "Carry-forward executive follow-up";
+  const sourceUrl = followUp.source_url ?? payload?.sourceUrl;
+  const sourceId = followUp.source_id ?? payload?.sourceId;
+  const evidence =
+    typeof payload?.evidence === "string" ? payload.evidence : undefined;
+  const date = followUp.source_date ?? followUp.last_seen_at;
+  const citations =
+    Array.isArray(payload?.citations) && payload.citations.length > 0
+      ? payload.citations
+      : [
+          {
+            source,
+            sourceDetail,
+            sourceUrl,
+            sourceId,
+            evidence,
+            date,
+          },
+        ];
+
   return {
     title: followUp.title,
     summary: followUp.summary,
-    bullets: Array.isArray(payload?.bullets) ? (payload.bullets as unknown[]).filter((value): value is string => typeof value === "string") : [],
-    recommendedAction: followUp.recommended_action ?? payload?.recommendedAction,
+    bullets: Array.isArray(payload?.bullets)
+      ? (payload.bullets as unknown[]).filter(
+          (value): value is string => typeof value === "string",
+        )
+      : [],
+    recommendedAction:
+      followUp.recommended_action ?? payload?.recommendedAction,
     whyItMatters: followUp.why_it_matters ?? payload?.whyItMatters,
-    source: (payload?.source as BrandonBriefItem["source"]) ?? "Document",
-    sourceDetail: followUp.source_detail ?? "Carry-forward executive follow-up",
-    sourceUrl: followUp.source_url ?? payload?.sourceUrl,
-    sourceId: followUp.source_id ?? payload?.sourceId,
-    evidence: typeof payload?.evidence === "string" ? payload.evidence : undefined,
-    date: followUp.source_date ?? followUp.last_seen_at,
+    source,
+    sourceDetail,
+    sourceUrl,
+    sourceId,
+    evidence,
+    date,
+    citations,
     project: followUp.project_label ?? "Internal operations",
     owner: followUp.owner ?? payload?.owner,
-    status: followUp.status ?? `Open ${followUp.daysOpen} day${followUp.daysOpen === 1 ? "" : "s"}`,
+    status:
+      followUp.status ??
+      `Open ${followUp.daysOpen} day${followUp.daysOpen === 1 ? "" : "s"}`,
     tone: (followUp.tone as Tone | null) ?? payload?.tone ?? "watch",
-    retrieval: typeof payload?.retrieval === "string" ? payload.retrieval : undefined,
+    retrieval:
+      typeof payload?.retrieval === "string" ? payload.retrieval : undefined,
   };
 }
 
@@ -260,7 +295,12 @@ function ExecutiveListSection({
               key={`${item.title}-${item.sourceId ?? item.sourceDetail}`}
               item={item}
               employees={employees}
-              hasMatchingTask={(item.sourceId ? matchedTasksBySourceId.get(item.sourceId) ?? [] : []).length > 0}
+              hasMatchingTask={
+                (item.sourceId
+                  ? (matchedTasksBySourceId.get(item.sourceId) ?? [])
+                  : []
+                ).length > 0
+              }
             />
           ))}
         </div>
@@ -276,35 +316,46 @@ function ExecutiveListSection({
   );
 }
 
-function CarryForwardSection({ followUps }: { followUps: ExecutiveBriefingFollowUp[] }) {
+function CarryForwardSection({
+  followUps,
+}: {
+  followUps: ExecutiveBriefingFollowUp[];
+}) {
   return (
     <section className="space-y-5">
-      <SectionDivider
-        title="Carry-Forward Risks"
-        count={followUps.length}
-      />
+      <SectionDivider title="Carry-Forward Risks" count={followUps.length} />
 
       {followUps.length > 0 ? (
         <div className="space-y-0">
           {followUps.map((followUp) => (
-            <div key={followUp.id} className="space-y-2 border-t border-border/50 pt-5 first:border-t-0 first:pt-0 pb-5">
+            <div
+              key={followUp.id}
+              className="space-y-2 border-t border-border/50 pt-5 first:border-t-0 first:pt-0 pb-5"
+            >
               <div className="flex flex-wrap items-center gap-2">
-                <span className="h-2 w-2 rounded-full shrink-0 bg-amber-500" />
+                <span className="h-2 w-2 rounded-full shrink-0 bg-status-warning" />
                 <Badge variant="outline" className="rounded-full text-xs">
                   {followUpSectionLabels[followUp.section] ?? followUp.section}
                 </Badge>
                 <span className="text-xs text-muted-foreground ml-1">
-                  Open {followUp.daysOpen} day{followUp.daysOpen === 1 ? "" : "s"}
+                  Open {followUp.daysOpen} day
+                  {followUp.daysOpen === 1 ? "" : "s"}
                 </span>
               </div>
-              <div className="text-sm font-semibold text-foreground">{followUp.title}</div>
-              <p className="text-sm leading-6 text-muted-foreground">{followUp.summary}</p>
+              <div className="text-sm font-semibold text-foreground">
+                {followUp.title}
+              </div>
+              <p className="text-sm leading-6 text-muted-foreground">
+                {followUp.summary}
+              </p>
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                 <span className="font-medium text-foreground">
                   {followUp.project_label ?? "Internal operations"}
                 </span>
                 <span>{followUp.owner ?? "No owner"}</span>
-                <span>Last seen {formatGeneratedAt(followUp.last_seen_at)}</span>
+                <span>
+                  Last seen {formatGeneratedAt(followUp.last_seen_at)}
+                </span>
               </div>
             </div>
           ))}
@@ -354,7 +405,9 @@ async function loadExecutiveActionContext(params: {
     metadataIds.length > 0
       ? supabase
           .from("tasks")
-          .select("id, description, status, due_date, assignee_name, assignee_email, metadata_id, projects(name)")
+          .select(
+            "id, description, status, due_date, assignee_name, assignee_email, metadata_id, projects(name)",
+          )
           .in("metadata_id", metadataIds)
           .order("created_at", { ascending: false })
       : Promise.resolve({ data: [], error: null }),
@@ -370,11 +423,15 @@ async function loadExecutiveActionContext(params: {
   ]);
 
   if (peopleResult.error) {
-    throw new Error(`Failed to load executive assignees: ${peopleResult.error.message}`);
+    throw new Error(
+      `Failed to load executive assignees: ${peopleResult.error.message}`,
+    );
   }
 
   if (tasksResult.error) {
-    throw new Error(`Failed to load executive linked tasks: ${tasksResult.error.message}`);
+    throw new Error(
+      `Failed to load executive linked tasks: ${tasksResult.error.message}`,
+    );
   }
 
   if (initiativeCardsResult.error) {
@@ -383,9 +440,14 @@ async function loadExecutiveActionContext(params: {
     );
   }
 
-  const employees: ExecutiveTaskAssigneeOption[] = (peopleResult.data ?? []).map((person) => ({
+  const employees: ExecutiveTaskAssigneeOption[] = (
+    peopleResult.data ?? []
+  ).map((person) => ({
     id: person.id,
-    label: [person.first_name, person.last_name].filter(Boolean).join(" ").trim() || person.email || "Unnamed user",
+    label:
+      [person.first_name, person.last_name].filter(Boolean).join(" ").trim() ||
+      person.email ||
+      "Unnamed user",
     email: person.email ?? null,
   }));
 
@@ -399,19 +461,34 @@ async function loadExecutiveActionContext(params: {
       assigneeEmail: (task.assignee_email as string | null) ?? null,
       metadataId: task.metadata_id as string,
       projectName:
-        ((task.projects as { name?: string | null } | null)?.name as string | null | undefined) ??
-        null,
+        ((task.projects as { name?: string | null } | null)?.name as
+          | string
+          | null
+          | undefined) ?? null,
     }))
-    .filter((task) => !["complete", "completed", "done", "resolved", "closed", "cancelled"].includes(task.status.toLowerCase()));
+    .filter(
+      (task) =>
+        ![
+          "complete",
+          "completed",
+          "done",
+          "resolved",
+          "closed",
+          "cancelled",
+        ].includes(task.status.toLowerCase()),
+    );
 
   const matchedTasksBySourceId = new Map<string, MatchedTask[]>();
   for (const task of openTasks) {
-    matchedTasksBySourceId.set(task.metadataId, [...(matchedTasksBySourceId.get(task.metadataId) ?? []), task]);
+    matchedTasksBySourceId.set(task.metadataId, [
+      ...(matchedTasksBySourceId.get(task.metadataId) ?? []),
+      task,
+    ]);
   }
 
-  const operationalImprovementCards = ((initiativeCardsResult.data ?? []) as Array<
-    Record<string, unknown>
-  >)
+  const operationalImprovementCards = (
+    (initiativeCardsResult.data ?? []) as Array<Record<string, unknown>>
+  )
     .map((card) => ({
       id: card.id as string,
       title: card.title as string,
@@ -426,7 +503,10 @@ async function loadExecutiveActionContext(params: {
     }))
     .filter((card) => card.linkId);
 
-  const matchedImprovementCardsByLinkId = new Map<string, MatchedInitiativeCard[]>();
+  const matchedImprovementCardsByLinkId = new Map<
+    string,
+    MatchedInitiativeCard[]
+  >();
   for (const card of operationalImprovementCards) {
     if (!card.linkId) continue;
     matchedImprovementCardsByLinkId.set(card.linkId, [
@@ -490,12 +570,16 @@ export default async function ExecutiveDailyInsightsPage() {
   const shownInNeedsBrandon = packet.sections.needsBrandon;
   const shownInWaiting = packet.sections.waitingOnOthers;
   const shownAboveFinancial = [...shownInNeedsBrandon, ...shownInWaiting];
-  const financialItems = excludeAlreadyShown(getFinancialItems(allItems), shownAboveFinancial);
+  const financialItems = excludeAlreadyShown(
+    getFinancialItems(allItems),
+    shownAboveFinancial,
+  );
   const importantUpdates = excludeAlreadyShown(
     packet.sections.importantUpdates,
     [...shownAboveFinancial, ...financialItems],
   );
-  const financialAlertCount = financialItems.length + paymentGuardrailAlerts.length;
+  const financialAlertCount =
+    financialItems.length + paymentGuardrailAlerts.length;
   const topStaleFollowUps = staleFollowUps.slice(0, 5);
 
   return (

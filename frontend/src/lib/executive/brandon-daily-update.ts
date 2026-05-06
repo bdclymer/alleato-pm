@@ -10,6 +10,7 @@ type BriefTone = "neutral" | "good" | "watch" | "risk";
 type BriefSource = "Email" | "Teams" | "Meeting" | "Document";
 
 export const DEFAULT_EXECUTIVE_WINDOW_DAYS = 3;
+export const DEFAULT_EXECUTIVE_BRIEFING_SYNTHESIS_MODEL = "gpt-5.5";
 
 export type BriefCitation = {
   source: BriefSource;
@@ -47,6 +48,8 @@ export type BrandonBriefSourceCoverage = {
   detail: string;
   count: number;
   latest: string;
+  status?: "loaded" | "empty" | "warning";
+  warning?: string;
 };
 
 export type BrandonDailyUpdatePacket = {
@@ -61,6 +64,26 @@ export type BrandonDailyUpdatePacket = {
   sourceCoverage: BrandonBriefSourceCoverage[];
   retrievalNotes: string[];
 };
+
+type RecentCommunicationSignalResult = {
+  sections: BrandonDailyUpdatePacket["sections"];
+  warnings: string[];
+};
+
+type FallbackMetadataResult = {
+  rows: DocumentMetaRow[];
+  warnings: string[];
+};
+
+type SupportedSectionsResult = {
+  sections: BrandonDailyUpdatePacket["sections"];
+  warnings: string[];
+};
+
+function executiveBriefingSynthesisModel() {
+  const configured = process.env.EXECUTIVE_BRIEFING_SYNTHESIS_MODEL?.trim();
+  return (configured || DEFAULT_EXECUTIVE_BRIEFING_SYNTHESIS_MODEL).replace(/^openai\//, "");
+}
 
 type SourceGroup = {
   label: BriefSource;
@@ -488,7 +511,7 @@ function isWithinWindow(value: Date | null, cutoffDateKey: string): boolean {
 }
 
 function sourceDetail(hit: RankedHit): string {
-  const title = hit.row.doc_title ?? hit.metadata?.title ?? hit.spec.title;
+  const title = hit.row.doc_title ?? hit.metadata?.title ?? "";
   return compactText(title, 90);
 }
 
@@ -497,7 +520,7 @@ function projectLabel(hit: RankedHit): string {
   const project = hit.metadata?.project ?? null;
   if (projectId && project) return `${projectId} ${project}`;
   if (projectId) return String(projectId);
-  return project ?? "Company-wide";
+  return project ?? "No project linked";
 }
 
 function sourceUrl(row: DocumentMetaRow | undefined): string | undefined {
@@ -535,7 +558,7 @@ function buildItem(hit: RankedHit): BrandonBriefItem {
   const citation = citationFromHit(hit);
   return {
     title: hit.spec.title,
-    summary: citation.evidence || "Matched recent RAG source, but no usable snippet was available.",
+    summary: citation.evidence ?? "",
     bullets: [],
     source: citation.source,
     sourceDetail: citation.sourceDetail,
@@ -552,8 +575,11 @@ function buildItem(hit: RankedHit): BrandonBriefItem {
   };
 }
 
-function makeFallbackItem(row: DocumentMetaRow): BrandonBriefItem {
+function makeFallbackItem(row: DocumentMetaRow): BrandonBriefItem | null {
   const text = compactText(row.summary ?? row.overview ?? row.action_items, 520);
+  if (!text) return null;
+  if (!row.title) return null;
+
   const source = row.source_system ?? row.source ?? row.type ?? row.category ?? "document_metadata";
   const sourceLink = sourceUrl(row);
   const normalizedSource = `${source} ${sourceLink ?? ""}`.toLowerCase();
@@ -566,15 +592,17 @@ function makeFallbackItem(row: DocumentMetaRow): BrandonBriefItem {
         : "Document";
   const citation: BriefCitation = {
     source: sourceLabel,
-    sourceDetail: compactText(row.title ?? source, 90),
+    sourceDetail: compactText(row.title, 90),
     sourceUrl: sourceLink,
     sourceId: row.id,
     evidence: text,
     date: formatSourceDate(row.date ?? row.created_at ?? row.captured_at),
   };
+  if (citation.date === "Unknown date") return null;
+
   return {
-    title: row.title ?? "Recent metadata fallback",
-    summary: text || "Recent metadata matched the Brandon daily update keywords.",
+    title: row.title,
+    summary: text,
     bullets: [],
     source: citation.source,
     sourceDetail: citation.sourceDetail,
@@ -583,10 +611,10 @@ function makeFallbackItem(row: DocumentMetaRow): BrandonBriefItem {
     evidence: citation.evidence,
     date: citation.date,
     citations: [citation],
-    project: row.project_id ? `${row.project_id}${row.project ? ` ${row.project}` : ""}` : (row.project ?? "Company-wide"),
-    status: "Fallback review",
+    project: row.project_id ? `${row.project_id}${row.project ? ` ${row.project}` : ""}` : (row.project ?? "No project linked"),
+    status: "Recent source review",
     tone: "neutral",
-    retrieval: "Fallback: recent document_metadata keyword match",
+    retrieval: "Recent document_metadata keyword match",
   };
 }
 
@@ -727,7 +755,7 @@ function buildCommunicationSignalItem(
 
 async function loadRecentCommunicationSignalItems(
   cutoffIso: string,
-): Promise<BrandonDailyUpdatePacket["sections"]> {
+): Promise<RecentCommunicationSignalResult> {
   const supabase = createServiceClient();
   const cutoffDateKey = getEasternDateKey(parseDate(cutoffIso) ?? new Date(cutoffIso));
   const sections: BrandonDailyUpdatePacket["sections"] = {
@@ -735,6 +763,7 @@ async function loadRecentCommunicationSignalItems(
     waitingOnOthers: [],
     importantUpdates: [],
   };
+  const warnings: string[] = [];
 
   const selectClause =
     "id,title,project,project_id,date,created_at,captured_at,summary,overview,action_items,source_web_url,url,status,category,type";
@@ -759,8 +788,16 @@ async function loadRecentCommunicationSignalItems(
       .limit(250),
   ]);
 
-  if (emailError || teamsError) {
-    return sections;
+  if (emailError) {
+    warnings.push(`Email signal retrieval failed: ${emailError.message}`);
+  }
+
+  if (teamsError) {
+    warnings.push(`Teams signal retrieval failed: ${teamsError.message}`);
+  }
+
+  if (emailError && teamsError) {
+    return { sections, warnings };
   }
 
   const rows = ([...(emailRows ?? []), ...(teamsRows ?? [])] as RecentCommunicationRow[]).filter((row) =>
@@ -795,7 +832,7 @@ async function loadRecentCommunicationSignalItems(
     );
   }
 
-  return sections;
+  return { sections, warnings };
 }
 
 async function runChunkSearch(
@@ -837,7 +874,7 @@ async function loadMetadata(documentIds: string[]): Promise<Map<string, Document
   return new Map(((data ?? []) as DocumentMetaRow[]).map((row) => [row.id, row]));
 }
 
-async function loadFallbackMetadata(cutoff: Date, limit = 8): Promise<DocumentMetaRow[]> {
+async function loadFallbackMetadata(cutoff: Date, limit = 8): Promise<FallbackMetadataResult> {
   const supabase = createServiceClient();
   const cutoffIso = cutoff.toISOString();
   const { data, error } = await supabase
@@ -851,10 +888,16 @@ async function loadFallbackMetadata(cutoff: Date, limit = 8): Promise<DocumentMe
     .limit(limit);
 
   if (error) {
-    return [];
+    return {
+      rows: [],
+      warnings: [`Document fallback retrieval failed: ${error.message}`],
+    };
   }
 
-  return (data ?? []) as DocumentMetaRow[];
+  return {
+    rows: (data ?? []) as DocumentMetaRow[],
+    warnings: [],
+  };
 }
 
 async function loadRecentSourceCoverage(
@@ -887,6 +930,8 @@ async function loadRecentSourceCoverage(
           detail: group.detail,
           count: 0,
           latest: "Unknown date",
+          status: "warning" as const,
+          warning: `${group.label} source coverage failed: ${error.message}`,
         };
       }
 
@@ -905,6 +950,7 @@ async function loadRecentSourceCoverage(
         detail: group.detail,
         count: recentRows.length,
         latest: formatSourceDate(latestValue),
+        status: recentRows.length > 0 ? "loaded" as const : "empty" as const,
       };
     }),
   );
@@ -1053,13 +1099,20 @@ function normalizeSynthesizedItem(
 
 async function synthesizeSections(
   sections: BrandonDailyUpdatePacket["sections"],
-): Promise<BrandonDailyUpdatePacket["sections"]> {
+): Promise<{
+  sections: BrandonDailyUpdatePacket["sections"];
+  modelUsed: string;
+  warnings: string[];
+}> {
   const candidates = [
     ...sections.needsBrandon,
     ...sections.waitingOnOthers,
     ...sections.importantUpdates,
   ];
-  if (candidates.length === 0) return sections;
+  const synthesisModel = executiveBriefingSynthesisModel();
+  if (candidates.length === 0) {
+    return { sections, modelUsed: synthesisModel, warnings: [] };
+  }
 
   const openai = getOpenAI();
   const candidatePayload = candidates.map((item, index) => ({
@@ -1083,7 +1136,7 @@ async function synthesizeSections(
 
   try {
     const completion = await openai.chat.completions.create({
-      model: getOpenAIModelId("gpt-4.1-mini"),
+      model: getOpenAIModelId(synthesisModel),
       temperature: 0.1,
       max_tokens: 2400,
       messages: [
@@ -1119,18 +1172,27 @@ async function synthesizeSections(
     const parsed = JSON.parse(stripJsonFence(raw)) as SynthesizedBriefSections;
     const usedSourceIndexes = new Set<number>();
     return {
-      needsBrandon: (parsed.needsBrandon ?? [])
-        .map((item) => normalizeSynthesizedItem(item, candidates, usedSourceIndexes))
-        .filter((item): item is BrandonBriefItem => item !== null),
-      waitingOnOthers: (parsed.waitingOnOthers ?? [])
-        .map((item) => normalizeSynthesizedItem(item, candidates, usedSourceIndexes))
-        .filter((item): item is BrandonBriefItem => item !== null),
-      importantUpdates: (parsed.importantUpdates ?? [])
-        .map((item) => normalizeSynthesizedItem(item, candidates, usedSourceIndexes))
-        .filter((item): item is BrandonBriefItem => item !== null),
+      sections: {
+        needsBrandon: (parsed.needsBrandon ?? [])
+          .map((item) => normalizeSynthesizedItem(item, candidates, usedSourceIndexes))
+          .filter((item): item is BrandonBriefItem => item !== null),
+        waitingOnOthers: (parsed.waitingOnOthers ?? [])
+          .map((item) => normalizeSynthesizedItem(item, candidates, usedSourceIndexes))
+          .filter((item): item is BrandonBriefItem => item !== null),
+        importantUpdates: (parsed.importantUpdates ?? [])
+          .map((item) => normalizeSynthesizedItem(item, candidates, usedSourceIndexes))
+          .filter((item): item is BrandonBriefItem => item !== null),
+      },
+      modelUsed: synthesisModel,
+      warnings: [],
     };
-  } catch {
-    return sections;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return {
+      sections,
+      modelUsed: synthesisModel,
+      warnings: [`Executive briefing synthesis failed with ${synthesisModel}; using pre-synthesis source assignments. ${message}`],
+    };
   }
 }
 
@@ -1194,13 +1256,22 @@ export async function generateBrandonDailyUpdate(
     .filter((hit) => hit.similarity >= 0.25);
 
   const dedupedHits = dedupeHits(rankedHits);
-  const fallbackRows = await loadFallbackMetadata(cutoff);
-  const fallbackItems = fallbackRows.map(makeFallbackItem);
+  const fallbackResult = await loadFallbackMetadata(cutoff);
+  const fallbackItems = fallbackResult.rows.map(makeFallbackItem);
   const seededSections = assignHitsToSections(dedupedHits, fallbackItems);
-  const synthesizedSections = await synthesizeSections(seededSections);
-  const communicationSeedItems = await loadRecentCommunicationSignalItems(cutoffIso);
-  const sections = mergeSeedItems(synthesizedSections, communicationSeedItems);
+  const synthesizedResult = await synthesizeSections(seededSections);
+  const communicationSignalResult = await loadRecentCommunicationSignalItems(cutoffIso);
+  const sections = mergeSeedItems(synthesizedResult.sections, communicationSignalResult.sections);
   const sourceCoverage = await loadRecentSourceCoverage(cutoffIso);
+  const sourceCoverageWarnings = sourceCoverage
+    .map((source) => source.warning)
+    .filter((warning): warning is string => Boolean(warning));
+  const sourceHealthWarnings = [
+    ...fallbackResult.warnings,
+    ...synthesizedResult.warnings,
+    ...communicationSignalResult.warnings,
+    ...sourceCoverageWarnings,
+  ];
 
   return {
     generatedAt: new Date().toISOString(),
@@ -1215,10 +1286,13 @@ export async function generateBrandonDailyUpdate(
     sections,
     sourceCoverage,
     retrievalNotes: [
+      `Executive briefing source of truth: recap_kind=executive_briefing. Backend recap_kind=meeting_digest is the legacy meeting digest and must not be treated as the CEO operating brief.`,
+      `Executive synthesis model: ${synthesizedResult.modelUsed}. Override with EXECUTIVE_BRIEFING_SYNTHESIS_MODEL only when the CEO brief intentionally needs a different model.`,
       "The briefing window now follows calendar days in Eastern time so day-stamped email and Teams activity is not dropped mid-morning.",
       "Recent communication evidence leads the brief so stale memory does not dominate.",
       "Low-confidence items are excluded unless they have recent source evidence.",
       "Every surfaced item keeps its source title, date, and link when the ingestion data provides one.",
+      ...sourceHealthWarnings.map((warning) => `Source health warning: ${warning}`),
     ],
   };
 }
