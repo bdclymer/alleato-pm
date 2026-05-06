@@ -18,7 +18,29 @@ export async function POST(request: Request): Promise<Response> {
     // the HTTP reply), so blocking here doesn't delay the 200 ACK to Teams
     // for simple responses. For long AI queries Teams may timeout the webhook
     // but the bot will still send the reply proactively.
-    await Promise.allSettled(pendingTasks);
+    //
+    // Inspect rejected results: console.logs from inside the SDK callback
+    // run AFTER the HTTP response is committed, and Vercel routinely drops
+    // post-response logs. Surfacing rejected reasons here — before `return
+    // response` — moves the error log into the pre-response window where
+    // Vercel definitely captures it.
+    const results = await Promise.allSettled(pendingTasks);
+    let rejectedCount = 0;
+    for (const r of results) {
+      if (r.status === "rejected") {
+        rejectedCount++;
+        const err = r.reason;
+        console.error("[teams-bot] handler task rejected", {
+          reason: err instanceof Error ? err.message : String(err),
+          stack: err instanceof Error ? err.stack : undefined,
+          name: err instanceof Error ? err.name : undefined,
+        });
+      }
+    }
+    console.log("[teams-bot] tasks completed", {
+      total: results.length,
+      rejected: rejectedCount,
+    });
     return response;
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
