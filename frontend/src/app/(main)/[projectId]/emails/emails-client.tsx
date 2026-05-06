@@ -51,6 +51,7 @@ const EMPTY_FILTERS: Record<string, FilterValue> = {
 type FilterState = Record<string, FilterValue>;
 
 interface EmailsClientProps {
+  embedded?: boolean;
   projectId?: number;
   scope?: "project" | "global";
   source?: EmailSource;
@@ -60,6 +61,7 @@ export function EmailsClient({
   projectId,
   scope = "project",
   source = "app",
+  embedded = false,
 }: EmailsClientProps): ReactElement {
   const router = useRouter();
   const pathname = usePathname();
@@ -422,7 +424,7 @@ export function EmailsClient({
   return (
     <>
       <UnifiedTablePage
-        header={{
+        header={embedded ? { title: "" } : {
           title,
           description,
           actions: noWriteActions ? undefined : (
@@ -439,9 +441,10 @@ export function EmailsClient({
             </Button>
           ),
         }}
-        tabs={tabs}
+        tabs={embedded ? undefined : tabs}
         layout={{
           fullBleedTable: false,
+          containerPadding: !embedded,
         }}
         toolbar={{
           totalItems,

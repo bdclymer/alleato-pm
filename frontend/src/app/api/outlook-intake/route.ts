@@ -24,6 +24,7 @@ interface OutlookIntakeRow {
   project_id: number | null;
   document_metadata_id: string | null;
   document_metadata: { status: string } | null;
+  conversation_id: string | null;
   subject: string;
   from_name: string | null;
   from_email: string | null;
@@ -95,6 +96,7 @@ export const GET = withApiGuardrails("outlook-intake#GET", async ({ request }) =
         document_metadata (
           status
         ),
+        conversation_id,
         subject,
         from_name,
         from_email,
@@ -147,6 +149,7 @@ export const GET = withApiGuardrails("outlook-intake#GET", async ({ request }) =
     mailboxUserId: row.mailbox_user_id,
     documentMetadataId: row.document_metadata_id,
     documentStatus: row.document_metadata?.status ?? null,
+    conversationId: row.conversation_id,
     subject: row.subject,
     fromName: row.from_name,
     fromEmail: row.from_email,

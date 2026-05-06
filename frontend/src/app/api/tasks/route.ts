@@ -1,4 +1,5 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { mapTaskRow, type JoinedTaskRow } from "@/features/tasks/task-utils";
@@ -16,7 +17,50 @@ const TaskResponseSchema = z.object({
   meeting_link: z.string().nullable(),
 });
 
-export const GET = withApiGuardrails("/api/tasks#GET", async () => {
+export const GET = withApiGuardrails("/api/tasks#GET", async ({ request }) => {
+  const scope = request.nextUrl.searchParams.get("scope") ?? "mine"; // "mine" | "all"
+
+  // Resolve user from JWT cookie directly — no Auth network call, no rate-limit exposure.
+  const user = await getApiRouteUser();
+  if (!user) {
+    throw new GuardrailError({
+      code: "UNAUTHORIZED",
+      where: "/api/tasks#GET",
+      message: "Not authenticated.",
+      details: { reason: "No valid session cookie" },
+    });
+  }
+
+  // Admins-only guard for the "all" scope.
+  // Use service client so the admin check is immune to RLS edge cases.
+  if (scope === "all") {
+    const serviceClient = createServiceClient();
+    const { data: profileData, error: profileError } = await serviceClient
+      .from("user_profiles")
+      .select("is_admin")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (profileError) {
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: "/api/tasks#GET",
+        message: "Failed to verify admin status.",
+        details: { reason: profileError.message },
+        cause: profileError,
+      });
+    }
+
+    if (profileData?.is_admin !== true) {
+      throw new GuardrailError({
+        code: "FORBIDDEN",
+        where: "/api/tasks#GET",
+        message: "Only admins can view all tasks.",
+        details: { userId: user.id },
+      });
+    }
+  }
+
   const supabase = await createClient();
 
   // Exclude interview/test transcripts so the tasks table stays focused on real source records.
@@ -56,6 +100,11 @@ export const GET = withApiGuardrails("/api/tasks#GET", async () => {
     .not("metadata_id", "is", null)
     .order("created_at", { ascending: false });
 
+  // Scope: mine → filter to this user's assigned tasks (case-insensitive email match).
+  if (scope === "mine" && user.email) {
+    query = query.ilike("assignee_email", user.email);
+  }
+
   const interviewIds = (interviewMeetings ?? []).map((m) => m.id).filter(Boolean);
   if (interviewIds.length > 0) {
     query = query.not("metadata_id", "in", `(${interviewIds.join(",")})`);
@@ -81,5 +130,5 @@ export const GET = withApiGuardrails("/api/tasks#GET", async () => {
     "/api/tasks#GET",
   );
 
-  return NextResponse.json({ data: tasks });
+  return NextResponse.json({ data: tasks, scope });
 });

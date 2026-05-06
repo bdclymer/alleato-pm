@@ -8,7 +8,7 @@ import {
   useSearchParams,
   type ReadonlyURLSearchParams,
 } from "next/navigation";
-import { Ban, Check, ChevronDown, ExternalLink, Inbox, Loader2, Mail, MoreVertical, Paperclip, X } from "lucide-react";
+import { Ban, Check, ChevronDown, ChevronRight, ExternalLink, Inbox, Loader2, Mail, MessageSquare, MoreVertical, Paperclip, X } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -38,6 +38,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Input } from "@/components/ui/input";
 import { apiFetch } from "@/lib/api-client";
 import { useProjects } from "@/hooks/use-projects";
 
@@ -55,6 +56,7 @@ interface OutlookIntakeEmail {
   mailboxUserId: string;
   documentMetadataId: string | null;
   documentStatus: string | null;
+  conversationId: string | null;
   subject: string;
   fromName: string | null;
   fromEmail: string | null;
@@ -226,6 +228,198 @@ function InlineProjectSelect({ emailId, project, onSaved }: InlineProjectSelectP
   );
 }
 
+// ── Thread / conversation view ────────────────────────────────────────────────
+
+interface ThreadGroup {
+  conversationId: string;
+  subject: string;
+  emailCount: number;
+  participants: string[];
+  latestDate: string | null;
+  emails: OutlookIntakeEmail[];
+}
+
+function groupByConversation(emails: OutlookIntakeEmail[]): ThreadGroup[] {
+  const map = new Map<string, OutlookIntakeEmail[]>();
+  const noThread: OutlookIntakeEmail[] = [];
+
+  for (const email of emails) {
+    const key = email.conversationId ?? null;
+    if (!key) { noThread.push(email); continue; }
+    const group = map.get(key) ?? [];
+    group.push(email);
+    map.set(key, group);
+  }
+
+  const threads: ThreadGroup[] = [];
+
+  map.forEach((msgs, cid) => {
+    // Sort within thread oldest→newest
+    const sorted = [...msgs].sort((a, b) =>
+      (a.receivedAt ?? "").localeCompare(b.receivedAt ?? ""),
+    );
+    const latest = sorted[sorted.length - 1];
+    const seen = new Set<string>();
+    const participants: string[] = [];
+    for (const m of sorted) {
+      const name = m.fromName ?? m.fromEmail ?? "";
+      if (name && !seen.has(name)) { seen.add(name); participants.push(name); }
+    }
+    threads.push({
+      conversationId: cid,
+      subject: latest.subject,
+      emailCount: sorted.length,
+      participants,
+      latestDate: latest.receivedAt,
+      emails: sorted.reverse(), // newest first when expanded
+    });
+  });
+
+  // Solo emails (no conversation_id) each become their own thread
+  for (const email of noThread) {
+    threads.push({
+      conversationId: email.id.toString(),
+      subject: email.subject,
+      emailCount: 1,
+      participants: [email.fromName ?? email.fromEmail ?? ""],
+      latestDate: email.receivedAt,
+      emails: [email],
+    });
+  }
+
+  // Sort threads by latest date desc
+  return threads.sort((a, b) =>
+    (b.latestDate ?? "").localeCompare(a.latestDate ?? ""),
+  );
+}
+
+interface ThreadViewProps {
+  emails: OutlookIntakeEmail[];
+  searchTerm: string;
+  onProjectSaved: () => void;
+}
+
+function ThreadView({ emails, searchTerm, onProjectSaved }: ThreadViewProps): React.ReactElement {
+  const [expanded, setExpanded] = React.useState<Set<string>>(new Set());
+
+  const threads = React.useMemo(() => {
+    const all = groupByConversation(emails);
+    if (!searchTerm) return all;
+    return all.filter((t) =>
+      t.subject.toLowerCase().includes(searchTerm) ||
+      t.participants.some((p) => p.toLowerCase().includes(searchTerm)),
+    );
+  }, [emails, searchTerm]);
+
+  function toggle(id: string) {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }
+
+  if (threads.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+        <MessageSquare className="mb-3 size-8 opacity-40" />
+        <p className="text-sm">No threads found</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="divide-y divide-border">
+      {threads.map((thread) => {
+        const isExpanded = expanded.has(thread.conversationId);
+        return (
+          <div key={thread.conversationId}>
+            {/* Thread summary row */}
+            <Button
+              variant="ghost"
+              onClick={() => toggle(thread.conversationId)}
+              className="flex h-auto w-full items-center gap-3 rounded-none px-4 py-3 text-left transition-colors"
+            >
+              <ChevronRight
+                className={`size-4 shrink-0 text-muted-foreground transition-transform ${isExpanded ? "rotate-90" : ""}`}
+              />
+              <div className="min-w-0 flex-1 text-left">
+                <div className="flex items-center gap-2">
+                  <span className="truncate font-medium text-foreground">{thread.subject}</span>
+                  {thread.emailCount > 1 && (
+                    <span className="shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-xs font-medium text-muted-foreground">
+                      {thread.emailCount}
+                    </span>
+                  )}
+                </div>
+                <span className="truncate text-sm text-muted-foreground">
+                  {thread.participants.slice(0, 3).join(", ")}
+                  {thread.participants.length > 3 ? ` +${thread.participants.length - 3} more` : ""}
+                </span>
+              </div>
+              <span className="shrink-0 text-sm text-muted-foreground">
+                {thread.latestDate
+                  ? new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" }).format(
+                      new Date(thread.latestDate),
+                    )
+                  : ""}
+              </span>
+            </Button>
+
+            {/* Expanded individual emails */}
+            {isExpanded && (
+              <div className="border-l-2 border-primary/20 ml-7 divide-y divide-border/50">
+                {thread.emails.map((email) => {
+                  const { label, variant } = pipelineStatus(email);
+                  return (
+                    <div key={email.id} className="flex items-start gap-4 px-4 py-3">
+                      <div className="min-w-0 flex-1 space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-foreground">
+                            {email.fromName ?? email.fromEmail ?? "Unknown"}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {email.receivedAt
+                              ? new Intl.DateTimeFormat("en-US", {
+                                  month: "short",
+                                  day: "numeric",
+                                  hour: "numeric",
+                                  minute: "2-digit",
+                                }).format(new Date(email.receivedAt))
+                              : ""}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <StatusBadge status={email.matchStatus} />
+                          <StatusBadge status={label} variant={variant} />
+                        </div>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-1">
+                        <InlineProjectSelect
+                          emailId={email.id}
+                          project={email.project}
+                          onSaved={onProjectSaved}
+                        />
+                        {email.webLink && (
+                          <Button size="icon" variant="ghost" asChild className="size-7">
+                            <a href={email.webLink} target="_blank" rel="noreferrer" aria-label="Open in Outlook">
+                              <ExternalLink className="size-3.5" />
+                            </a>
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export function OutlookIntakeClient({ unassigned, embedded }: { unassigned?: boolean; embedded?: boolean } = {}): React.ReactElement {
   const router = useRouter();
   const pathname = usePathname() ?? "/outlook-intake";
@@ -233,6 +427,7 @@ export function OutlookIntakeClient({ unassigned, embedded }: { unassigned?: boo
   const searchParams =
     rawSearchParams ?? (new URLSearchParams() as unknown as ReadonlyURLSearchParams);
   const queryClient = useQueryClient();
+  const [threadView, setThreadView] = React.useState(false);
   const initialMatchStatus = searchParams.get("match_status") ?? "";
 
   const tableState = useUnifiedTableState({
@@ -407,6 +602,50 @@ export function OutlookIntakeClient({ unassigned, embedded }: { unassigned?: boo
     tableState.setPage(1);
   };
 
+  const threadToggle = (
+    <Button
+      size="sm"
+      variant={threadView ? "default" : "outline"}
+      onClick={() => setThreadView((v) => !v)}
+      aria-pressed={threadView}
+    >
+      <MessageSquare className="mr-1.5 size-3.5" />
+      Threads
+    </Button>
+  );
+
+  // ── Thread view ──────────────────────────────────────────────────────────────
+  if (threadView) {
+    return (
+      <div className={embedded ? "" : "px-4 sm:px-6 lg:px-8"}>
+        <div className="flex items-center gap-2 py-3">
+          <Input
+            type="search"
+            placeholder="Search threads..."
+            value={tableState.searchInput}
+            onChange={(e) => tableState.setSearchInput(e.target.value)}
+            className="h-8 flex-1"
+          />
+          {threadToggle}
+        </div>
+        {isLoading ? (
+          <div className="space-y-2 py-4">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="h-14 w-full animate-pulse rounded bg-muted" />
+            ))}
+          </div>
+        ) : (
+          <ThreadView
+            emails={filtered}
+            searchTerm={tableState.debouncedSearch.trim().toLowerCase()}
+            onProjectSaved={() => queryClient.invalidateQueries({ queryKey: ["outlook-intake"] })}
+          />
+        )}
+      </div>
+    );
+  }
+
+  // ── Standard table view ───────────────────────────────────────────────────────
   return (
       <UnifiedTablePage
       header={embedded ? { title: "", variant: "compact" } : {
@@ -423,11 +662,22 @@ export function OutlookIntakeClient({ unassigned, embedded }: { unassigned?: boo
       }}
       toolbar={{
         totalItems: data.length,
-        filteredItems: filtered.length,
+        filteredItems: threadView ? groupByConversation(filtered).length : filtered.length,
         selectedCount: 0,
         searchValue: tableState.searchInput,
         onSearchChange: tableState.setSearchInput,
         searchPlaceholder: "Search Outlook intake...",
+        customActions: (
+          <Button
+            size="sm"
+            variant={threadView ? "default" : "outline"}
+            onClick={() => setThreadView((v) => !v)}
+            aria-pressed={threadView}
+          >
+            <MessageSquare className="mr-1.5 size-3.5" />
+            Threads
+          </Button>
+        ),
         currentView: tableState.currentView,
         onViewChange: (view) => {
           tableState.setCurrentView(view);
