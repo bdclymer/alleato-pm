@@ -15,6 +15,7 @@ import {
   Sparkles,
   X,
 } from "lucide-react";
+import { useAiChatSidebarStore } from "@/lib/stores/ai-chat-sidebar-store";
 import type { User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { useSidebar } from "@/components/ui/sidebar";
@@ -75,6 +76,27 @@ function ProcoreReferenceToggle() {
       )}
     >
       <GitCompare className="h-4 w-4" />
+    </Button>
+  );
+}
+
+function AiChatButton() {
+  const { open, toggle } = useAiChatSidebarStore();
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon-sm"
+      onClick={toggle}
+      aria-label="Toggle AI Strategist"
+      className={cn(
+        "h-8 w-8",
+        open
+          ? "bg-primary/10 text-primary hover:bg-primary/20"
+          : "text-muted-foreground hover:bg-accent hover:text-foreground",
+      )}
+    >
+      <Sparkles className="h-4 w-4" />
     </Button>
   );
 }
@@ -293,6 +315,7 @@ export function SiteHeader() {
           <React.Suspense fallback={null}>
             <LiveAvatarStack />
           </React.Suspense>
+          <AiChatButton />
           <Link
             href="/feedback-inbox"
             className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"

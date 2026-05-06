@@ -107,8 +107,6 @@ export const projectManagementTools: NavigationTool[] = [
   { name: "RFIs", path: "rfis", icon: MessageCircle, requiresProject: true, module: "rfis" },
   { name: "Submittals", path: "submittals", icon: Package, requiresProject: true, module: "submittals" },
   { name: "Transmittals", path: "transmittals", icon: Mail, requiresProject: true, module: "documents" },
-  { name: "Emails", path: "emails", icon: Mail, requiresProject: true, module: "documents" },
-  { name: "Outlook Emails", path: "outlook-emails", icon: Mail, requiresProject: true, module: "documents" },
   { name: "Photos", path: "photos", icon: Camera, requiresProject: true, module: "documents" },
   { name: "Drawings", path: "drawings", icon: FileImage, requiresProject: true, module: "documents" },
   { name: "Specifications", path: "specifications", icon: BookOpen, requiresProject: true, module: "documents" },
@@ -259,7 +257,6 @@ export const sidebarNavGroups: SidebarNavGroup[] = [
       { name: "AI Strategist", path: "/ai-assistant", icon: Brain, requiresProject: false },
       { name: "Company Directory", path: "directory/companies", icon: Building2, requiresProject: false, module: "directory" },
       { name: "Progress Reports", path: "progress-reports", icon: FileText, requiresProject: true, module: "documents" as PermissionModule },
-      { name: "Outlook Emails", path: "/outlook-emails", icon: Mail, requiresProject: false },
       {
         name: "Meetings",
         path: "meetings",
@@ -299,6 +296,7 @@ export const sidebarNavGroups: SidebarNavGroup[] = [
       { name: "Executive Dashboard", path: "/executive", icon: LayoutDashboard, requiresProject: false, adminOnly: true },
       { name: "Financial Insights", path: "/financial-insights", icon: TrendingUp, requiresProject: false, adminOnly: true },
       { name: "Intelligence Planning", path: "/intelligence-planning", icon: Brain, requiresProject: false, adminOnly: true },
+      { name: "Emails", path: "/emails", icon: Mail, requiresProject: false, adminOnly: true },
     ],
   },
 ];

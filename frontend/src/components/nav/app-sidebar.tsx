@@ -14,7 +14,6 @@ import {
   MessageSquare,
   Phone,
   SlidersHorizontal,
-  Sparkles,
   Users,
 } from "lucide-react"
 
@@ -29,7 +28,6 @@ import {
 import { HeaderUserMenu } from "@/components/header/header-user-menu"
 import { createClient } from "@/lib/supabase/client"
 import type { User } from "@supabase/supabase-js"
-import { useAiChatSidebarStore } from "@/lib/stores/ai-chat-sidebar-store"
 
 import {
   sidebarNavGroups,
@@ -312,7 +310,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname() ?? ""
   const router = useRouter()
   const { state, isMobile } = useSidebar()
-  const { open: aiChatOpen, toggle: toggleAiChat } = useAiChatSidebarStore()
+
   const [isHovering, setIsHovering] = React.useState(false)
   const [user, setUser] = React.useState<User | null>(null)
 
@@ -465,7 +463,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       {/* ── Header ── */}
       <SidebarHeader className="px-0 pb-4 pt-5">
         {isCollapsed ? (
-          // Collapsed: logo icon + AI chat button
+          // Collapsed: logo icon only
           <div className="flex flex-col items-center gap-4">
             <Link href="/" className="flex items-center justify-center">
               <Image
@@ -476,25 +474,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 className="rounded"
               />
             </Link>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              onClick={toggleAiChat}
-              className={cn(
-                "flex h-7 w-7 items-center justify-center rounded-md transition-colors",
-                aiChatOpen
-                  ? "bg-sidebar-accent text-sidebar-foreground"
-                  : "text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground"
-              )}
-              aria-label="Toggle AI Strategist"
-              title="AI Strategist"
-            >
-              <Sparkles className="h-4 w-4" />
-            </Button>
           </div>
         ) : (
-          // Expanded: favicon + AI chat button
+          // Expanded: favicon only
           <div className="flex flex-col gap-3">
             <div className="flex h-7 items-center pl-6 pr-2">
               <Link
@@ -509,24 +491,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   className="shrink-0 rounded"
                 />
               </Link>
-            </div>
-            <div className="flex pl-6 pr-2">
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={toggleAiChat}
-                className={cn(
-                  "flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition-colors",
-                  aiChatOpen
-                    ? "bg-sidebar-accent text-sidebar-foreground"
-                    : "text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground"
-                )}
-                aria-label="Toggle AI Strategist"
-                title="AI Strategist"
-              >
-                <Sparkles className="h-4 w-4" />
-              </Button>
             </div>
             {/* Keep project selector only for mobile sidebar drawer */}
             <div className="md:hidden">
