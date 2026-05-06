@@ -704,29 +704,32 @@ function buildCommunicationSignalItem(
   spec: CommunicationSignalSpec,
   evidenceCount: number,
   additionalRows: RecentCommunicationRow[] = [],
-): BrandonBriefItem {
+): BrandonBriefItem | null {
   const evidence = getRecentCommunicationText(row);
-  const summary =
-    compactText(evidence, 360) ||
-    "Recent communication evidence matched an executive signal pattern.";
+  const summary = compactText(evidence, 360);
+  if (!summary || !row.title) return null;
 
   const primaryCitation: BriefCitation = {
     source: spec.source,
-    sourceDetail: compactText(row.title ?? "Recent communication thread", 90),
+    sourceDetail: compactText(row.title, 90),
     sourceUrl: sourceUrlFromRecentRow(row),
     sourceId: row.id,
     evidence,
     date: formatSourceDate(row.date ?? row.created_at ?? row.captured_at),
   };
+  if (primaryCitation.date === "Unknown date") return null;
 
-  const extraCitations: BriefCitation[] = additionalRows.slice(0, 4).map((extra) => ({
-    source: spec.source,
-    sourceDetail: compactText(extra.title ?? "Related communication thread", 90),
-    sourceUrl: sourceUrlFromRecentRow(extra),
-    sourceId: extra.id,
-    evidence: getRecentCommunicationText(extra),
-    date: formatSourceDate(extra.date ?? extra.created_at ?? extra.captured_at),
-  }));
+  const extraCitations: BriefCitation[] = additionalRows
+    .slice(0, 4)
+    .map((extra) => ({
+      source: spec.source,
+      sourceDetail: compactText(extra.title ?? "", 90),
+      sourceUrl: sourceUrlFromRecentRow(extra),
+      sourceId: extra.id,
+      evidence: getRecentCommunicationText(extra),
+      date: formatSourceDate(extra.date ?? extra.created_at ?? extra.captured_at),
+    }))
+    .filter((citation) => citation.sourceDetail && citation.evidence && citation.date !== "Unknown date");
 
   return {
     title: spec.title,
@@ -745,7 +748,9 @@ function buildCommunicationSignalItem(
     evidence: primaryCitation.evidence,
     date: primaryCitation.date,
     citations: [primaryCitation, ...extraCitations],
-    project: row.project_id ? `${row.project_id}${row.project ? ` ${row.project}` : ""}` : (row.project ?? "Company-wide"),
+    project: row.project_id
+      ? `${row.project_id}${row.project ? ` ${row.project}` : ""}`
+      : (row.project ?? "No project linked"),
     owner: spec.owner,
     status: spec.status,
     tone: spec.tone,
@@ -822,14 +827,19 @@ async function loadRecentCommunicationSignalItems(
 
     if (matches.length === 0) continue;
     const [primary, ...rest] = matches;
-    sections[spec.section].push(
-      buildCommunicationSignalItem(
-        primary.row,
-        spec,
-        matches.length,
-        rest.map((entry) => entry.row),
-      ),
+    const item = buildCommunicationSignalItem(
+      primary.row,
+      spec,
+      matches.length,
+      rest.map((entry) => entry.row),
     );
+    if (item) {
+      sections[spec.section].push(item);
+    } else {
+      warnings.push(
+        `Recent communication signal ${spec.id} was suppressed because the matched row lacked source text, title, or a valid date.`,
+      );
+    }
   }
 
   return { sections, warnings };
@@ -1029,6 +1039,58 @@ function mergeSeedItems(
       ...seedSections.importantUpdates,
       ...sections.importantUpdates,
     ]).slice(0, limits.importantUpdates),
+  };
+}
+
+function briefItemSupportIssues(item: BrandonBriefItem): string[] {
+  const issues: string[] = [];
+
+  if (!item.title.trim()) issues.push("missing title");
+  if (!item.summary.trim()) issues.push("missing summary");
+  if (!item.project.trim()) issues.push("missing project label");
+  if (!item.sourceDetail.trim()) issues.push("missing source detail");
+  if (!item.date.trim() || item.date === "Unknown date") issues.push("missing valid source date");
+  if (!item.sourceId && !item.sourceUrl) issues.push("missing source id or source url");
+  if (!Array.isArray(item.citations) || item.citations.length === 0) {
+    issues.push("missing citations");
+  }
+
+  item.citations.forEach((citation, index) => {
+    const prefix = `citation ${index + 1}`;
+    if (!citation.sourceDetail.trim()) issues.push(`${prefix} missing source detail`);
+    if (!citation.evidence?.trim()) issues.push(`${prefix} missing evidence`);
+    if (!citation.date.trim() || citation.date === "Unknown date") issues.push(`${prefix} missing valid source date`);
+    if (!citation.sourceId && !citation.sourceUrl) issues.push(`${prefix} missing source id or source url`);
+  });
+
+  return issues;
+}
+
+function filterSupportedSections(
+  sections: BrandonDailyUpdatePacket["sections"],
+): SupportedSectionsResult {
+  const warnings: string[] = [];
+
+  const filterItems = (
+    section: keyof BrandonDailyUpdatePacket["sections"],
+    items: BrandonBriefItem[],
+  ) =>
+    items.filter((item) => {
+      const issues = briefItemSupportIssues(item);
+      if (issues.length === 0) return true;
+      warnings.push(
+        `Suppressed unsupported ${section} item "${item.title || "(untitled)"}": ${issues.join(", ")}.`,
+      );
+      return false;
+    });
+
+  return {
+    sections: {
+      needsBrandon: filterItems("needsBrandon", sections.needsBrandon),
+      waitingOnOthers: filterItems("waitingOnOthers", sections.waitingOnOthers),
+      importantUpdates: filterItems("importantUpdates", sections.importantUpdates),
+    },
+    warnings,
   };
 }
 
@@ -1257,11 +1319,16 @@ export async function generateBrandonDailyUpdate(
 
   const dedupedHits = dedupeHits(rankedHits);
   const fallbackResult = await loadFallbackMetadata(cutoff);
-  const fallbackItems = fallbackResult.rows.map(makeFallbackItem);
+  const fallbackItems = fallbackResult.rows
+    .map(makeFallbackItem)
+    .filter((item): item is BrandonBriefItem => item !== null);
   const seededSections = assignHitsToSections(dedupedHits, fallbackItems);
   const synthesizedResult = await synthesizeSections(seededSections);
   const communicationSignalResult = await loadRecentCommunicationSignalItems(cutoffIso);
-  const sections = mergeSeedItems(synthesizedResult.sections, communicationSignalResult.sections);
+  const supportedResult = filterSupportedSections(
+    mergeSeedItems(synthesizedResult.sections, communicationSignalResult.sections),
+  );
+  const sections = supportedResult.sections;
   const sourceCoverage = await loadRecentSourceCoverage(cutoffIso);
   const sourceCoverageWarnings = sourceCoverage
     .map((source) => source.warning)
@@ -1270,6 +1337,7 @@ export async function generateBrandonDailyUpdate(
     ...fallbackResult.warnings,
     ...synthesizedResult.warnings,
     ...communicationSignalResult.warnings,
+    ...supportedResult.warnings,
     ...sourceCoverageWarnings,
   ];
 
