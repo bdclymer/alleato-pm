@@ -1,6 +1,7 @@
 import { createHash } from "crypto";
 import OpenAI from "openai";
 import { createClient } from "@supabase/supabase-js";
+import { toSessionUuid } from "@/lib/ai/session-id";
 
 type AgentLearningSource = "thumbs_down" | "admin_feedback" | "eval_failure";
 type AgentLearningStatus = "candidate" | "active" | "archived";
@@ -274,7 +275,7 @@ async function fetchLatestAssistantSignal(sessionId: string) {
   const { data } = await supabase
     .from("chat_history")
     .select("id, content, metadata, created_at")
-    .eq("session_id", sessionId)
+    .eq("session_id", toSessionUuid(sessionId))
     .eq("role", "assistant")
     .order("created_at", { ascending: false })
     .limit(1)
@@ -437,7 +438,7 @@ export async function recordAgentLearningUsages(params: {
       supabase.from(AGENT_LEARNING_USAGES_TABLE).upsert(
         {
           learning_id: learning.id,
-          session_id: params.sessionId,
+          session_id: toSessionUuid(params.sessionId),
           user_id: params.userId,
           outcome: "unknown",
           response_quality_score: params.responseQualityScore ?? null,
@@ -461,7 +462,7 @@ export async function updateLearningUsageOutcomeForSession(
   await supabase
     .from(AGENT_LEARNING_USAGES_TABLE)
     .update({ outcome })
-    .eq("session_id", sessionId)
+    .eq("session_id", toSessionUuid(sessionId))
     .eq("outcome", "unknown");
 }
 

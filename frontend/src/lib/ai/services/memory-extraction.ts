@@ -14,6 +14,7 @@ import { z } from "zod";
 import { createServiceClient } from "@/lib/supabase/service";
 import { writeMemory, type MemoryType } from "./ai-memory-service";
 import { getLanguageModel } from "../providers";
+import { toSessionUuid } from "@/lib/ai/session-id";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -123,11 +124,13 @@ export async function extractAndStoreMemories(
 ): Promise<void> {
   const supabase = createServiceClient();
 
+  const sessionUuid = toSessionUuid(sessionId);
+
   // Fetch conversation messages
   const { data: messages, error } = await supabase
     .from("chat_history")
     .select("role, content")
-    .eq("session_id", sessionId)
+    .eq("session_id", sessionUuid)
     .order("created_at", { ascending: true })
     .limit(MAX_MESSAGES);
 

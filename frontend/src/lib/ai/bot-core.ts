@@ -34,6 +34,7 @@ import {
   buildWorkspaceContextBlock,
 } from "@/lib/ai/services/workspace-artifact-service";
 import { createServiceClient } from "@/lib/supabase/service";
+import { toSessionUuid } from "@/lib/ai/session-id";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -404,13 +405,27 @@ export async function persistChatMessage(params: {
   metadata?: Record<string, unknown>;
 }): Promise<void> {
   const supabase = createServiceClient();
-  await (supabase.from("chat_history") as any).insert({
-    session_id: params.sessionId,
+  const sessionUuid = toSessionUuid(params.sessionId);
+  const { error } = await (supabase.from("chat_history") as any).insert({
+    session_id: sessionUuid,
     user_id: params.userId,
     role: params.role,
     content: params.content,
     ...(params.metadata ? { metadata: params.metadata } : {}),
   });
+  if (error) {
+    console.error("[persistChatMessage] insert failed", {
+      error: error.message,
+      code: (error as { code?: string }).code,
+      hint: (error as { hint?: string }).hint,
+      sessionId: params.sessionId,
+      sessionUuid,
+      userId: params.userId,
+      role: params.role,
+      platform: params.metadata?.platform,
+    });
+    throw new Error(`persistChatMessage failed: ${error.message}`);
+  }
 }
 
 // ---------------------------------------------------------------------------
