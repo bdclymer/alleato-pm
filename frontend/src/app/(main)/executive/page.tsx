@@ -2,19 +2,17 @@ import { CheckCircledIcon } from "@radix-ui/react-icons";
 import Link from "next/link";
 import { CalendarDays } from "lucide-react";
 import { AppCapabilityAccessDenied } from "@/components/guards/app-capability-access-denied";
-import { PaymentGuardrailAlerts } from "@/components/accounting/payment-guardrail-alerts";
-import { EmptyState } from "@/components/ds";
+import { EmptyState, InfoAlert } from "@/components/ds";
 import { ExecutiveChatSheet } from "@/components/executive/executive-chat-sheet";
 import {
   ExecutiveSignalCard,
   type ExecutiveRelatedTask,
 } from "@/components/executive/executive-signal-card";
 import { ExecutiveSourceActivity } from "@/components/executive/executive-source-activity";
+import type { ExecutiveProjectOption } from "@/components/executive/executive-project-link-form";
 import type { ExecutiveTaskAssigneeOption } from "@/components/executive/executive-task-draft-form";
 import { PageShell, SectionRuleHeading } from "@/components/layout";
-import { Badge } from "@/components/ui/badge";
 import { canCurrentUserAccessAppCapability } from "@/lib/app-capabilities";
-import { loadPaymentGuardrailAlerts } from "@/lib/accounting/payment-guardrails";
 import { createServiceClient } from "@/lib/supabase/service";
 import {
   getExecutiveBriefingDashboard,
@@ -43,29 +41,15 @@ type TodayMeeting = {
   durationMinutes: number | null;
 };
 
-type MatchedInitiativeCard = {
-  id: string;
-  title: string;
-  description: string | null;
-  status: string;
-  priority: string;
-  dueDate: string | null;
-  assignee: string | null;
-  source: string;
-  linkId: string | null;
-  linkType: string | null;
-};
-
-type OperationalSignal = {
+type ExecutiveActionQueueEntry = {
+  section:
+    | "needsBrandon"
+    | "waitingOnOthers"
+    | "importantUpdates"
+    | "carryForward";
   item: BrandonBriefItem;
-  linkId: string | null;
-  linkType: "executive_source" | "executive_follow_up";
-};
-
-const followUpSectionLabels: Record<string, string> = {
-  needsBrandon: "Needs Brandon",
-  waitingOnOthers: "Waiting on others",
-  importantUpdates: "Business signal",
+  followUpId?: string;
+  daysOpen?: number;
 };
 
 function formatGeneratedAt(value: string) {
@@ -117,85 +101,106 @@ function normalizeWhitespace(value: string) {
   return value.replace(/\s+/g, " ").trim();
 }
 
-function keywordHit(item: BrandonBriefItem, keywords: string[]) {
-  const haystack = normalizeWhitespace(
-    [
-      item.title,
-      item.summary,
-      item.recommendedAction,
-      item.whyItMatters,
-      ...item.bullets,
-      item.project,
-      item.owner,
-      item.status,
-    ]
-      .filter(Boolean)
-      .join(" ")
-      .toLowerCase(),
-  );
-
-  return keywords.some((keyword) => haystack.includes(keyword));
+function actionQueueLabel(entry: ExecutiveActionQueueEntry) {
+  if (entry.section === "needsBrandon") return "Needs decision";
+  if (entry.section === "waitingOnOthers") return "Waiting on others";
+  if (entry.section === "carryForward") {
+    return entry.daysOpen
+      ? `Carry-forward ${entry.daysOpen}d`
+      : "Carry-forward";
+  }
+  return "FYI";
 }
 
-function itemKey(item: BrandonBriefItem) {
-  return `${item.title}::${item.sourceId ?? item.sourceDetail}`;
+function actionQueueRank(section: ExecutiveActionQueueEntry["section"]) {
+  if (section === "needsBrandon") return 0;
+  if (section === "waitingOnOthers") return 1;
+  if (section === "importantUpdates") return 2;
+  return 3;
 }
 
-function excludeAlreadyShown(
-  items: BrandonBriefItem[],
-  shown: BrandonBriefItem[],
-): BrandonBriefItem[] {
-  const shownKeys = new Set(shown.map(itemKey));
-  return items.filter((item) => !shownKeys.has(itemKey(item)));
+function normalizeProjectLabel(value: string) {
+  return normalizeWhitespace(value || "No project linked");
 }
 
-function buildOperationalSignals(params: {
-  liveItems: BrandonBriefItem[];
+function projectHrefFromLabel(value: string) {
+  const projectId = projectIdFromLabel(value);
+  return projectId ? `/${projectId}/home` : null;
+}
+
+function projectIdFromLabel(value: string) {
+  const match = normalizeProjectLabel(value).match(/^(\d{2,5})\b/);
+  return match ? Number(match[1]) : null;
+}
+
+function isUnlinkedProject(value: string) {
+  return /no project linked/i.test(normalizeProjectLabel(value));
+}
+
+function queueDedupeKey(entry: ExecutiveActionQueueEntry) {
+  const item = entry.item;
+  return [
+    item.sourceId ?? normalizeWhitespace(item.sourceDetail).toLowerCase(),
+    normalizeProjectLabel(item.project).toLowerCase(),
+    normalizeWhitespace(item.title).toLowerCase(),
+  ].join("::");
+}
+
+function buildActionQueue(params: {
+  sectionEntries: Array<{
+    section: "needsBrandon" | "waitingOnOthers" | "importantUpdates";
+    item: BrandonBriefItem;
+  }>;
   staleFollowUps: ExecutiveBriefingFollowUp[];
+  fingerprintMap: Map<string, ExecutiveBriefingFollowUp>;
 }) {
-  const rawSignals: OperationalSignal[] = [
-    ...params.liveItems.map((item) => ({
-      item,
-      linkId: item.sourceId ?? null,
-      linkType: "executive_source" as const,
-    })),
-    ...params.staleFollowUps.map((followUp) => ({
-      item: followUpToItem(followUp),
-      linkId: followUp.id,
-      linkType: "executive_follow_up" as const,
-    })),
-  ].filter(({ item }) =>
-    keywordHit(item, [
-      "insurance",
-      "license",
-      "licensing",
-      "permit",
-      "coi",
-      "background",
-      "employee",
-      "termination",
-      "laptop",
-      "property",
-      "access",
-      "compliance",
-      "renewal",
-    ]),
-  );
-
-  const deduped = new Map<string, OperationalSignal>();
-  for (const signal of rawSignals) {
-    const key = [
-      signal.item.title,
-      signal.item.project,
-      signal.linkId ?? signal.item.sourceDetail,
-      signal.linkType,
-    ].join("::");
-    if (!deduped.has(key)) {
-      deduped.set(key, signal);
+  const entries: ExecutiveActionQueueEntry[] = [];
+  const seen = new Map<string, ExecutiveActionQueueEntry>();
+  const liveSourceIds = new Set<string>();
+  for (const entry of params.sectionEntries) {
+    if (entry.item.sourceId) liveSourceIds.add(entry.item.sourceId);
+    const followUp = params.fingerprintMap.get(
+      getFollowUpFingerprint(entry.item, entry.section),
+    );
+    const queueEntry: ExecutiveActionQueueEntry = {
+      section: entry.section,
+      item: entry.item,
+      followUpId: followUp?.id,
+      daysOpen: followUp?.daysOpen,
+    };
+    const key = queueDedupeKey(queueEntry);
+    const existing = seen.get(key);
+    if (
+      !existing ||
+      actionQueueRank(queueEntry.section) < actionQueueRank(existing.section)
+    ) {
+      seen.set(key, queueEntry);
     }
   }
 
-  return Array.from(deduped.values()).slice(0, 6);
+  for (const followUp of params.staleFollowUps.slice(0, 6)) {
+    if (followUp.source_id && liveSourceIds.has(followUp.source_id)) continue;
+    const queueEntry: ExecutiveActionQueueEntry = {
+      section: "carryForward",
+      item: followUpToItem(followUp),
+      followUpId: followUp.id,
+      daysOpen: followUp.daysOpen,
+    };
+    const key = queueDedupeKey(queueEntry);
+    if (!seen.has(key)) seen.set(key, queueEntry);
+  }
+
+  entries.push(...seen.values());
+  return entries.sort((a, b) => {
+    const rankDelta = actionQueueRank(a.section) - actionQueueRank(b.section);
+    if (rankDelta !== 0) return rankDelta;
+    if (isUnlinkedProject(a.item.project) !== isUnlinkedProject(b.item.project)) {
+      return isUnlinkedProject(a.item.project) ? -1 : 1;
+    }
+    return normalizeProjectLabel(a.item.project).localeCompare(
+      normalizeProjectLabel(b.item.project),
+    );
+  });
 }
 
 function followUpToItem(followUp: ExecutiveBriefingFollowUp): BrandonBriefItem {
@@ -280,107 +285,62 @@ function SectionDivider({
 // ── Section Wrapper ────────────────────────────────────────────────────────────
 
 function ExecutiveListSection({
-  title,
-  items,
-  emptyTitle,
+  entries,
   employees,
   matchedTasksBySourceId,
-  followUpsByItemKey,
+  projects,
 }: {
-  sectionKey: "needsBrandon" | "waitingOnOthers" | "importantUpdates";
-  title: string;
-  description?: string;
-  items: BrandonBriefItem[];
-  emptyTitle: string;
+  entries: ExecutiveActionQueueEntry[];
   employees: ExecutiveTaskAssigneeOption[];
   matchedTasksBySourceId: Map<string, MatchedTask[]>;
-  followUpsByItemKey: Map<string, ExecutiveBriefingFollowUp>;
+  projects: ExecutiveProjectOption[];
 }) {
+  const unlinkedCount = entries.filter((entry) =>
+    isUnlinkedProject(entry.item.project),
+  ).length;
+
   return (
     <section className="space-y-4">
-      <SectionDivider title={title} count={items.length} />
-      {items.length > 0 ? (
-        <div className="space-y-4">
-          {items.map((item) =>
-            (() => {
-              const relatedTasks = item.sourceId
-                ? (matchedTasksBySourceId.get(item.sourceId) ?? [])
-                : [];
-              return (
-                <ExecutiveSignalCard
-                  key={`${item.title}-${item.sourceId ?? item.sourceDetail}`}
-                  item={item}
-                  employees={employees}
-                  hasMatchingTask={relatedTasks.length > 0}
-                  relatedTasks={relatedTasks}
-                  followUpId={followUpsByItemKey.get(itemKey(item))?.id}
-                />
-              );
-            })(),
-          )}
-        </div>
-      ) : (
-        <EmptyState
-          icon={<CheckCircledIcon />}
-          title={emptyTitle}
-          description="Nothing high-confidence surfaced here in the current packet."
-          className="py-8"
-        />
+      <SectionDivider title="Action Queue" count={entries.length} />
+      {unlinkedCount > 0 && (
+        <InfoAlert variant="error" className="text-xs leading-5">
+          {unlinkedCount} item{unlinkedCount === 1 ? "" : "s"} need project
+          linkage before they can become reliable project work.
+        </InfoAlert>
       )}
-    </section>
-  );
-}
-
-function CarryForwardSection({
-  followUps,
-}: {
-  followUps: ExecutiveBriefingFollowUp[];
-}) {
-  return (
-    <section className="space-y-5">
-      <SectionDivider title="Carry-Forward Risks" count={followUps.length} />
-
-      {followUps.length > 0 ? (
-        <div className="space-y-0">
-          {followUps.map((followUp) => (
-            <div
-              key={followUp.id}
-              className="space-y-2 border-t border-border/50 pt-5 first:border-t-0 first:pt-0 pb-5"
-            >
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="h-2 w-2 rounded-full shrink-0 bg-status-warning" />
-                <Badge variant="outline" className="rounded-full text-xs">
-                  {followUpSectionLabels[followUp.section] ?? followUp.section}
-                </Badge>
-                <span className="text-xs text-muted-foreground ml-1">
-                  Open {followUp.daysOpen} day
-                  {followUp.daysOpen === 1 ? "" : "s"}
-                </span>
-              </div>
-              <div className="text-sm font-semibold text-foreground">
-                {followUp.title}
-              </div>
-              <p className="text-sm leading-6 text-muted-foreground">
-                {followUp.summary}
-              </p>
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                <span className="font-medium text-foreground">
-                  {followUp.project_label ?? "Internal operations"}
-                </span>
-                <span>{followUp.owner ?? "No owner"}</span>
-                <span>
-                  Last seen {formatGeneratedAt(followUp.last_seen_at)}
-                </span>
-              </div>
-            </div>
-          ))}
+      {entries.length > 0 ? (
+        <div className="space-y-3">
+          {entries.map((entry) => {
+            const item = entry.item;
+            const relatedTasks = item.sourceId
+              ? (matchedTasksBySourceId.get(item.sourceId) ?? [])
+              : [];
+            return (
+              <ExecutiveSignalCard
+                key={`${entry.section}-${item.title}-${item.sourceId ?? item.sourceDetail}`}
+                item={item}
+                employees={employees}
+                hasMatchingTask={relatedTasks.length > 0}
+                relatedTasks={relatedTasks}
+                followUpId={entry.followUpId}
+                actionLabel={
+                  entry.section === "importantUpdates"
+                    ? undefined
+                    : actionQueueLabel(entry)
+                }
+                projectHref={projectHrefFromLabel(item.project)}
+                currentProjectId={projectIdFromLabel(item.project)}
+                projects={projects}
+              />
+            );
+          })}
         </div>
       ) : (
         <EmptyState
           icon={<CheckCircledIcon />}
-          title="No carry-forward risks"
-          description="All current executive follow-ups are represented in the live brief."
-          className="py-10"
+          title="No active executive actions"
+          description="Nothing high-confidence surfaced in the current packet."
+          className="py-8"
         />
       )}
     </section>
@@ -436,7 +396,6 @@ function TodayMeetingsSection({ meetings }: { meetings: TodayMeeting[] }) {
 
 async function loadExecutiveActionContext(params: {
   items: BrandonBriefItem[];
-  operationalSignals: OperationalSignal[];
 }) {
   const metadataIds = Array.from(
     new Set(
@@ -445,17 +404,10 @@ async function loadExecutiveActionContext(params: {
         .filter((value): value is string => Boolean(value)),
     ),
   );
-  const operationalLinkIds = Array.from(
-    new Set(
-      params.operationalSignals
-        .map((signal) => signal.linkId)
-        .filter((value): value is string => Boolean(value)),
-    ),
-  );
 
   const supabase = createServiceClient();
 
-  const [peopleResult, tasksResult, initiativeCardsResult] = await Promise.all([
+  const [peopleResult, tasksResult, projectsResult] = await Promise.all([
     supabase
       .from("people")
       .select("id, first_name, last_name, email")
@@ -471,15 +423,12 @@ async function loadExecutiveActionContext(params: {
           .in("metadata_id", metadataIds)
           .order("created_at", { ascending: false })
       : Promise.resolve({ data: [], error: null }),
-    operationalLinkIds.length > 0
-      ? supabase
-          .from("initiative_cards")
-          .select(
-            "id, title, description, status, priority, due_date, assignee, source, linked_record_id, linked_record_type, labels",
-          )
-          .in("linked_record_id", operationalLinkIds)
-          .order("updated_at", { ascending: false })
-      : Promise.resolve({ data: [], error: null }),
+    supabase
+      .from("projects")
+      .select("id, name, project_number")
+      .eq("archived", false)
+      .order("name", { ascending: true })
+      .limit(500),
   ]);
 
   if (peopleResult.error) {
@@ -494,9 +443,9 @@ async function loadExecutiveActionContext(params: {
     );
   }
 
-  if (initiativeCardsResult.error) {
+  if (projectsResult.error) {
     throw new Error(
-      `Failed to load operational improvement cards: ${initiativeCardsResult.error.message}`,
+      `Failed to load executive project options: ${projectsResult.error.message}`,
     );
   }
 
@@ -546,41 +495,14 @@ async function loadExecutiveActionContext(params: {
     ]);
   }
 
-  const operationalImprovementCards = (
-    (initiativeCardsResult.data ?? []) as Array<Record<string, unknown>>
-  )
-    .map((card) => ({
-      id: card.id as string,
-      title: card.title as string,
-      description: (card.description as string | null) ?? null,
-      status: card.status as string,
-      priority: card.priority as string,
-      dueDate: (card.due_date as string | null) ?? null,
-      assignee: (card.assignee as string | null) ?? null,
-      source: (card.source as string | null) ?? "manual",
-      linkId: (card.linked_record_id as string | null) ?? null,
-      linkType: (card.linked_record_type as string | null) ?? null,
-    }))
-    .filter((card) => card.linkId);
-
-  const matchedImprovementCardsByLinkId = new Map<
-    string,
-    MatchedInitiativeCard[]
-  >();
-  for (const card of operationalImprovementCards) {
-    if (!card.linkId) continue;
-    matchedImprovementCardsByLinkId.set(card.linkId, [
-      ...(matchedImprovementCardsByLinkId.get(card.linkId) ?? []),
-      card,
-    ]);
-  }
-
   return {
     employees,
-    openTasks,
     matchedTasksBySourceId,
-    operationalImprovementCards,
-    matchedImprovementCardsByLinkId,
+    projects: (projectsResult.data ?? []).map((project) => ({
+      id: project.id,
+      name: project.name,
+      projectNumber: project.project_number,
+    })),
   };
 }
 
@@ -648,11 +570,10 @@ export default async function ExecutiveDailyInsightsPage() {
     );
   }
 
-  const [dashboard, paymentGuardrailAlerts, todayMeetings] = await Promise.all([
+  const [dashboard, todayMeetings] = await Promise.all([
     getExecutiveBriefingDashboard({
       windowDays: DEFAULT_EXECUTIVE_WINDOW_DAYS,
     }),
-    loadPaymentGuardrailAlerts(),
     loadTodayMeetings(),
   ]);
   const { draft, staleFollowUps, fingerprintMap } = dashboard;
@@ -675,45 +596,16 @@ export default async function ExecutiveDailyInsightsPage() {
     const followUp = fingerprintMap.get(getFollowUpFingerprint(item, section));
     return followUp?.state !== "resolved";
   });
-  const followUpsByItemKey = new Map<string, ExecutiveBriefingFollowUp>();
-  for (const { item, section } of openSectionEntries) {
-    const followUp = fingerprintMap.get(getFollowUpFingerprint(item, section));
-    if (followUp) followUpsByItemKey.set(itemKey(item), followUp);
-  }
-  const allItems = openSectionEntries.map(({ item }) => item);
-  const visibleSections = {
-    needsBrandon: openSectionEntries
-      .filter((entry) => entry.section === "needsBrandon")
-      .map((entry) => entry.item),
-    waitingOnOthers: openSectionEntries
-      .filter((entry) => entry.section === "waitingOnOthers")
-      .map((entry) => entry.item),
-    importantUpdates: openSectionEntries
-      .filter((entry) => entry.section === "importantUpdates")
-      .map((entry) => entry.item),
-  };
-  const operationalSignals = buildOperationalSignals({
-    liveItems: allItems,
+  const actionQueueEntries = buildActionQueue({
+    sectionEntries: openSectionEntries,
     staleFollowUps,
+    fingerprintMap,
   });
-  const {
-    employees,
-    openTasks,
-    matchedTasksBySourceId,
-    operationalImprovementCards,
-  } = await loadExecutiveActionContext({
-    items: allItems,
-    operationalSignals,
-  });
+  const { employees, matchedTasksBySourceId, projects } =
+    await loadExecutiveActionContext({
+      items: actionQueueEntries.map((entry) => entry.item),
+    });
   const generatedAt = formatGeneratedAt(packet.generatedAt);
-  const shownInNeedsBrandon = visibleSections.needsBrandon;
-  const shownInWaiting = visibleSections.waitingOnOthers;
-  const shownAboveProjectSignals = [...shownInNeedsBrandon, ...shownInWaiting];
-  const importantUpdates = excludeAlreadyShown(
-    visibleSections.importantUpdates,
-    shownAboveProjectSignals,
-  );
-  const topStaleFollowUps = staleFollowUps.slice(0, 5);
 
   return (
     <PageShell
@@ -728,40 +620,10 @@ export default async function ExecutiveDailyInsightsPage() {
         {/* ── Main column ── */}
         <div className="space-y-8">
           <ExecutiveListSection
-            sectionKey="needsBrandon"
-            title="Needs Brandon Today"
-            items={visibleSections.needsBrandon}
-            emptyTitle="No direct owner decisions queued"
+            entries={actionQueueEntries}
             employees={employees}
             matchedTasksBySourceId={matchedTasksBySourceId}
-            followUpsByItemKey={followUpsByItemKey}
-          />
-
-          <ExecutiveListSection
-            sectionKey="waitingOnOthers"
-            title="Unblock Your People"
-            items={visibleSections.waitingOnOthers}
-            emptyTitle="No unblocks surfaced"
-            employees={employees}
-            matchedTasksBySourceId={matchedTasksBySourceId}
-            followUpsByItemKey={followUpsByItemKey}
-          />
-
-          <ExecutiveListSection
-            sectionKey="importantUpdates"
-            title="Project Signals"
-            items={importantUpdates}
-            emptyTitle="No project signals surfaced"
-            employees={employees}
-            matchedTasksBySourceId={matchedTasksBySourceId}
-            followUpsByItemKey={followUpsByItemKey}
-          />
-
-          <CarryForwardSection followUps={topStaleFollowUps} />
-
-          <PaymentGuardrailAlerts
-            alerts={paymentGuardrailAlerts}
-            emptyMessage=""
+            projects={projects}
           />
         </div>
 

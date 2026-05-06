@@ -3,11 +3,16 @@
 import * as React from "react";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import type { Json } from "@/types/database.types";
 import { requireCurrentUserAppCapability } from "@/lib/app-capabilities";
 import { resolveAppBaseUrl } from "@/lib/email/client";
 import { sendEmail } from "@/lib/email/send";
 import { ExecutiveBriefingEmail } from "@/lib/executive/executive-briefing-email";
 import { DEFAULT_EXECUTIVE_WINDOW_DAYS } from "@/lib/executive/brandon-daily-update";
+import type {
+  BrandonBriefItem,
+  BrandonDailyUpdatePacket,
+} from "@/lib/executive/brandon-daily-update";
 import { createServiceClient } from "@/lib/supabase/service";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import {
@@ -55,6 +60,101 @@ function parseRecipients(raw: string) {
 
 function normalizeExecutiveImprovementText(value: string) {
   return value.replace(/\s+/g, " ").trim();
+}
+
+function executiveProjectLabel(project: {
+  id: number;
+  name: string | null;
+  project_number: string | null;
+}) {
+  const label = project.name?.trim() || project.project_number?.trim();
+  return label ? `${project.id} ${label}` : String(project.id);
+}
+
+function executiveRecapText(packet: BrandonDailyUpdatePacket) {
+  const sections = [
+    ["Critical Actions", packet.sections.needsBrandon],
+    ["Unblock Your People", packet.sections.waitingOnOthers],
+    ["Business Signal", packet.sections.importantUpdates],
+  ] as const;
+
+  const lines = [
+    "DAILY OPERATING BRIEF",
+    `Generated ${packet.generatedAt}`,
+    `Source window: last ${packet.windowDays} calendar day${packet.windowDays === 1 ? "" : "s"}`,
+    "",
+  ];
+
+  for (const [label, items] of sections) {
+    lines.push(`${label.toUpperCase()}:`);
+    if (items.length === 0) {
+      lines.push("- No items.");
+      lines.push("");
+      continue;
+    }
+
+    for (const item of items) {
+      lines.push(`- ${item.title} (${item.project})`);
+      lines.push(`  ${item.summary}`);
+      if (item.recommendedAction) {
+        lines.push(`  Action: ${item.recommendedAction}`);
+      }
+    }
+    lines.push("");
+  }
+
+  return lines.join("\n").trim();
+}
+
+function patchBriefingItemProject(
+  item: BrandonBriefItem,
+  sourceId: string,
+  projectLabel: string,
+) {
+  const matchesPrimary = item.sourceId === sourceId;
+  const matchesCitation = item.citations.some(
+    (citation) => citation.sourceId === sourceId,
+  );
+
+  return matchesPrimary || matchesCitation
+    ? {
+        ...item,
+        project: projectLabel,
+      }
+    : item;
+}
+
+function patchBriefingPacketProject(
+  packet: BrandonDailyUpdatePacket,
+  sourceId: string,
+  projectLabel: string,
+) {
+  return {
+    ...packet,
+    sections: {
+      needsBrandon: packet.sections.needsBrandon.map((item) =>
+        patchBriefingItemProject(item, sourceId, projectLabel),
+      ),
+      waitingOnOthers: packet.sections.waitingOnOthers.map((item) =>
+        patchBriefingItemProject(item, sourceId, projectLabel),
+      ),
+      importantUpdates: packet.sections.importantUpdates.map((item) =>
+        patchBriefingItemProject(item, sourceId, projectLabel),
+      ),
+    },
+  } satisfies BrandonDailyUpdatePacket;
+}
+
+function briefingProjectCount(packet: BrandonDailyUpdatePacket) {
+  return new Set(
+    [
+      ...packet.sections.needsBrandon,
+      ...packet.sections.waitingOnOthers,
+      ...packet.sections.importantUpdates,
+    ]
+      .map((item) => item.project)
+      .filter(Boolean),
+  ).size;
 }
 
 export async function regenerateExecutiveBriefingAction(formData: FormData) {
@@ -122,6 +222,143 @@ export async function reopenExecutiveFollowUpAction(formData: FormData) {
     userId: user?.id ?? null,
   });
   revalidatePath(EXECUTIVE_PATH);
+}
+
+export async function linkExecutiveSourceProjectAction(formData: FormData) {
+  await requireCurrentUserAppCapability(
+    "view_executive_briefing",
+    "executive-briefing-actions#link-source-project",
+    "Executive briefing access required.",
+  );
+
+  const sourceId = formString(formData, "sourceId");
+  const projectId = Number(formString(formData, "projectId"));
+
+  if (!sourceId) {
+    throw new Error("Missing executive source id.");
+  }
+
+  if (!Number.isInteger(projectId) || projectId <= 0) {
+    throw new Error("Select a valid project before linking this source.");
+  }
+
+  const supabase = createServiceClient();
+
+  const { data: project, error: projectError } = await supabase
+    .from("projects")
+    .select("id, name, project_number")
+    .eq("id", projectId)
+    .single();
+
+  if (projectError) {
+    throw new Error(`Failed to load selected project: ${projectError.message}`);
+  }
+
+  const projectLabel = executiveProjectLabel(project);
+
+  const { data: source, error: sourceError } = await supabase
+    .from("document_metadata")
+    .update({
+      project_id: project.id,
+      project: project.name ?? project.project_number ?? projectLabel,
+    })
+    .eq("id", sourceId)
+    .select("id")
+    .single();
+
+  if (sourceError) {
+    throw new Error(
+      `Failed to link executive source to project: ${sourceError.message}`,
+    );
+  }
+
+  const { error: taskUpdateError } = await supabase
+    .from("tasks")
+    .update({
+      project_id: project.id,
+      project_ids: [project.id],
+    })
+    .eq("metadata_id", source.id);
+
+  if (taskUpdateError) {
+    throw new Error(
+      `Source project was linked, but related task project linkage failed: ${taskUpdateError.message}`,
+    );
+  }
+
+  const { data: draft, error: draftError } = await supabase
+    .from("daily_recaps")
+    .select("id, briefing_packet")
+    .eq("recap_kind", "executive_briefing")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (draftError) {
+    throw new Error(
+      `Source project was linked, but the executive briefing packet could not be loaded: ${draftError.message}`,
+    );
+  }
+
+  const packet = draft?.briefing_packet as BrandonDailyUpdatePacket | null;
+  if (draft && packet?.sections) {
+    const patchedPacket = patchBriefingPacketProject(
+      packet,
+      source.id,
+      projectLabel,
+    );
+    const { error: draftUpdateError } = await supabase
+      .from("daily_recaps")
+      .update({
+        briefing_packet: patchedPacket as unknown as Json,
+        recap_text: executiveRecapText(patchedPacket),
+        project_count: briefingProjectCount(patchedPacket),
+      })
+      .eq("id", draft.id);
+
+    if (draftUpdateError) {
+      throw new Error(
+        `Source project was linked, but the executive briefing packet could not be updated: ${draftUpdateError.message}`,
+      );
+    }
+  }
+
+  const { data: followUps, error: followUpsError } = await supabase
+    .from("executive_briefing_follow_ups")
+    .select("id, payload")
+    .eq("source_id", source.id);
+
+  if (followUpsError) {
+    throw new Error(
+      `Source project was linked, but follow-up project labels could not be loaded: ${followUpsError.message}`,
+    );
+  }
+
+  for (const followUp of followUps ?? []) {
+    const payload =
+      followUp.payload &&
+      typeof followUp.payload === "object" &&
+      !Array.isArray(followUp.payload)
+        ? ({ ...(followUp.payload as Record<string, unknown>), project: projectLabel } as Json)
+        : followUp.payload;
+
+    const { error: followUpUpdateError } = await supabase
+      .from("executive_briefing_follow_ups")
+      .update({
+        project_label: projectLabel,
+        payload,
+      })
+      .eq("id", followUp.id);
+
+    if (followUpUpdateError) {
+      throw new Error(
+        `Source project was linked, but follow-up project labels could not be updated: ${followUpUpdateError.message}`,
+      );
+    }
+  }
+
+  revalidatePath(EXECUTIVE_PATH);
+  return { linked: true, projectLabel };
 }
 
 export async function createExecutiveTaskDraftAction(formData: FormData) {

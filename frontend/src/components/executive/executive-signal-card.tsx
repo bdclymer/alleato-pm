@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
-import { ChevronDown } from "lucide-react";
+import { AlertTriangle, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Collapsible,
@@ -12,6 +12,10 @@ import {
 } from "@/components/ui/collapsible";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  ExecutiveProjectLinkForm,
+  type ExecutiveProjectOption,
+} from "@/components/executive/executive-project-link-form";
 import {
   ExecutiveTaskDraftForm,
   type ExecutiveTaskAssigneeOption,
@@ -117,12 +121,20 @@ export function ExecutiveSignalCard({
   hasMatchingTask,
   relatedTasks,
   followUpId,
+  actionLabel,
+  projectHref,
+  currentProjectId,
+  projects,
 }: {
   item: BrandonBriefItem;
   employees: ExecutiveTaskAssigneeOption[];
   hasMatchingTask: boolean;
   relatedTasks: ExecutiveRelatedTask[];
   followUpId?: string;
+  actionLabel?: string;
+  projectHref?: string | null;
+  currentProjectId?: number | null;
+  projects: ExecutiveProjectOption[];
 }) {
   const [open, setOpen] = useState(false);
   const [rawEvidenceOpen, setRawEvidenceOpen] = useState(false);
@@ -139,6 +151,8 @@ export function ExecutiveSignalCard({
       ? packetEvidenceFacts
       : item.bullets.filter(Boolean).slice(0, 6);
   const citationCount = item.citations.length;
+  const projectLabel = item.project.trim() || "No project linked";
+  const isUnlinkedProject = /no project linked/i.test(projectLabel);
   const resolveFollowUp = () => {
     if (!followUpId) return;
     const formData = new FormData();
@@ -168,6 +182,14 @@ export function ExecutiveSignalCard({
             <span className={cn("font-semibold", toneClass[tone])}>
               {toneLabel[tone]}
             </span>
+            {actionLabel && (
+              <Badge
+                variant="secondary"
+                className="h-5 rounded-md px-1.5 text-[11px] font-normal"
+              >
+                {actionLabel}
+              </Badge>
+            )}
             {item.status && (
               <Badge
                 variant="outline"
@@ -176,7 +198,15 @@ export function ExecutiveSignalCard({
                 {item.status}
               </Badge>
             )}
-            <span>{item.project}</span>
+            <span
+              className={cn(
+                "inline-flex items-center gap-1 font-medium",
+                isUnlinkedProject ? "text-destructive" : "text-foreground",
+              )}
+            >
+              {isUnlinkedProject && <AlertTriangle className="h-3 w-3" />}
+              {projectLabel}
+            </span>
           </div>
 
           <div className="text-base font-semibold leading-snug text-foreground">
@@ -193,6 +223,12 @@ export function ExecutiveSignalCard({
             <span>
               {citationCount} source{citationCount === 1 ? "" : "s"}
             </span>
+            {relatedTasks.length > 0 && (
+              <span>
+                {relatedTasks.length} related task
+                {relatedTasks.length === 1 ? "" : "s"}
+              </span>
+            )}
           </div>
         </div>
 
@@ -207,9 +243,68 @@ export function ExecutiveSignalCard({
         </div>
       </CollapsibleTrigger>
 
+      {item.sourceId && (
+        <div className="flex items-center gap-3 px-5 pb-4 pl-11 text-xs text-muted-foreground">
+          <span>
+            {isUnlinkedProject
+              ? "Assign this source to a project."
+              : "Wrong project?"}
+          </span>
+          <ExecutiveProjectLinkForm
+            sourceId={item.sourceId}
+            projects={projects}
+            currentProjectId={currentProjectId}
+            label={isUnlinkedProject ? "Link project" : "Change project"}
+          />
+        </div>
+      )}
+
       <CollapsibleContent>
         <div className="px-5 pb-5">
           <div className="border-t border-border/70 pt-4">
+            <DetailBlock label="Project">
+              {isUnlinkedProject ? (
+                <div className="space-y-3">
+                  <span className="font-medium text-destructive">
+                    {projectLabel}
+                  </span>
+                  <ExecutiveProjectLinkForm
+                    sourceId={item.sourceId}
+                    projects={projects}
+                    currentProjectId={currentProjectId}
+                    label="Link project"
+                  />
+                </div>
+              ) : projectHref ? (
+                <div className="flex flex-wrap items-center gap-3">
+                  <a
+                    href={projectHref}
+                    className="font-medium text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground"
+                  >
+                    {projectLabel}
+                  </a>
+                  <ExecutiveProjectLinkForm
+                    sourceId={item.sourceId}
+                    projects={projects}
+                    currentProjectId={currentProjectId}
+                    label="Change project"
+                  />
+                </div>
+              ) : (
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="font-medium text-foreground">
+                    {projectLabel}
+                  </span>
+                  <ExecutiveProjectLinkForm
+                    sourceId={item.sourceId}
+                    projects={projects}
+                    currentProjectId={currentProjectId}
+                    label="Change project"
+                  />
+                </div>
+              )}
+            </DetailBlock>
+
             <DetailBlock label="Why it matters">
               {item.whyItMatters ?? item.summary}
             </DetailBlock>
