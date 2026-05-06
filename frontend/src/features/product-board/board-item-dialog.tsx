@@ -4,14 +4,18 @@ import { useState, useRef, useCallback, useEffect, useId } from "react";
 import { formatDistanceToNow, isPast, differenceInDays } from "date-fns";
 import {
   AlertTriangle, Zap, Minus, Link2, Plus, Send, X, Check,
-  ArrowUpRight, ThumbsUp, Trash2, Tag, Calendar, UserCircle, ImageIcon, Paperclip, Loader2,
-  Square, SquareCheckBig,
+  ArrowUpRight, ThumbsUp, Trash2, UserCircle, ImageIcon, Paperclip, Loader2,
+  Square, SquareCheckBig, MoreVertical,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import remarkBreaks from "remark-breaks";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   MorphingDialogTitle,
   MorphingDialogDescription,
@@ -67,8 +71,19 @@ function Avatar({ name, email, size = "md" }: { name: string | null; email: stri
   );
 }
 
+// Soft heading used only where the control alone doesn't communicate context
 function SidebarHeading({ children }: { children: React.ReactNode }) {
-  return <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{children}</p>;
+  return <p className="mb-1.5 text-[11px] text-muted-foreground/60">{children}</p>;
+}
+
+// Section heading for main content area (subtasks, prerequisites, activity)
+function SectionLabel({ children, aside }: { children: React.ReactNode; aside?: React.ReactNode }) {
+  return (
+    <div className="mb-2 flex items-center justify-between">
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-foreground/35">{children}</p>
+      {aside}
+    </div>
+  );
 }
 
 interface ChecklistSectionProps {
@@ -106,29 +121,32 @@ function ChecklistSection({ title, placeholder, items, onChange }: ChecklistSect
 
   return (
     <div className="mt-6">
-      <div className="mb-3 flex items-center justify-between">
-        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{title}</p>
-        {items.length > 0 && (
-          <span className="text-[11px] text-muted-foreground">{doneCount}/{items.length}</span>
-        )}
-      </div>
+      <SectionLabel
+        aside={items.length > 0 ? (
+          <span className="text-[11px] text-muted-foreground/50">{doneCount}/{items.length}</span>
+        ) : undefined}
+      >
+        {title}
+      </SectionLabel>
+
       {/* Progress bar */}
       {items.length > 0 && (
-        <div className="mb-3 h-1 w-full overflow-hidden rounded-full bg-muted">
+        <div className="mb-2 h-0.5 w-full overflow-hidden rounded-full bg-muted">
           <div
-            className="h-full rounded-full bg-primary transition-all duration-300"
+            className="h-full rounded-full bg-primary/50 transition-all duration-300"
             style={{ width: `${Math.round((doneCount / items.length) * 100)}%` }}
           />
         </div>
       )}
-      <div className="space-y-1">
+
+      <div className="space-y-0.5">
         {items.map((item) => (
-          <div key={item.id} className="group flex items-start gap-2">
+          <div key={item.id} className="group flex items-center gap-2">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => toggleItem(item.id)}
-              className="mt-0.5 h-5 w-5 flex-none p-0 text-muted-foreground hover:text-primary hover:bg-transparent"
+              className="h-5 w-5 flex-none p-0 text-muted-foreground hover:text-primary hover:bg-transparent"
             >
               {item.done
                 ? <SquareCheckBig className="h-4 w-4 text-primary" />
@@ -136,8 +154,8 @@ function ChecklistSection({ title, placeholder, items, onChange }: ChecklistSect
             </Button>
             <Input
               className={cn(
-                "h-auto flex-1 border-0 bg-transparent p-0 text-sm shadow-none focus-visible:ring-0",
-                item.done ? "text-muted-foreground line-through" : "text-foreground"
+                "h-7 flex-1 border-0 bg-transparent p-0 text-sm font-medium shadow-none focus-visible:ring-0",
+                item.done ? "text-muted-foreground line-through font-normal" : "text-foreground"
               )}
               value={item.text}
               onChange={(e) => updateText(item.id, e.target.value)}
@@ -148,24 +166,23 @@ function ChecklistSection({ title, placeholder, items, onChange }: ChecklistSect
               variant="ghost"
               size="icon"
               onClick={() => removeItem(item.id)}
-              className="mt-0.5 h-5 w-5 flex-none p-0 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-transparent hover:text-destructive"
+              className="h-5 w-5 flex-none p-0 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-transparent hover:text-destructive"
             >
               <X className="h-3.5 w-3.5 text-muted-foreground" />
             </Button>
           </div>
         ))}
       </div>
-      <div className="mt-2 flex items-center gap-1.5">
-        <div className="h-5 w-5 flex-none" />{/* alignment spacer matching button width */}
+
+      <div className="mt-1 flex items-center gap-1.5">
+        <div className="h-5 w-5 flex-none" />
         <Input
           ref={inputRef}
-          className="h-auto flex-1 border-0 bg-transparent p-0 text-sm shadow-none focus-visible:ring-0 placeholder:text-muted-foreground/40"
+          className="h-7 flex-1 border-0 bg-transparent p-0 text-sm shadow-none focus-visible:ring-0 placeholder:text-muted-foreground/30"
           placeholder={placeholder}
           value={newText}
           onChange={(e) => setNewText(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") { e.preventDefault(); addItem(); }
-          }}
+          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addItem(); } }}
         />
         {newText.trim() && (
           <Button variant="ghost" size="sm" onClick={addItem} className="h-6 px-2 text-xs text-primary">
@@ -202,7 +219,6 @@ export function BoardItemDialog({ item }: BoardItemDialogProps) {
   const uid = useId();
   const dateInputId = `${uid}-date`;
 
-  // Current user ID for upvote persistence
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   useEffect(() => {
     createClient().auth.getUser().then(({ data }) => setCurrentUserId(data.user?.id ?? null));
@@ -211,6 +227,7 @@ export function BoardItemDialog({ item }: BoardItemDialogProps) {
   // Editable state
   const [title, setTitle] = useState(item.title);
   const [description, setDescription] = useState(item.comment ?? "");
+  const [descEditing, setDescEditing] = useState(false);
   const [status, setStatus] = useState<BoardStatus>(item.board_status);
   const [severity, setSeverity] = useState(item.severity ?? "medium");
   const [assigneeId, setAssigneeId] = useState<string | null>(item.assignee_id);
@@ -425,7 +442,7 @@ export function BoardItemDialog({ item }: BoardItemDialogProps) {
       </div>
 
       <div className="flex min-h-0 flex-1 overflow-hidden">
-        {/* ── Left: title, description, comments ── */}
+        {/* ── Left: title, description, links, tasks, comments ── */}
         <div className="flex flex-1 flex-col overflow-y-auto scrollbar-hide">
 
           {/* Cover image */}
@@ -444,168 +461,241 @@ export function BoardItemDialog({ item }: BoardItemDialogProps) {
           )}
 
           <div className="px-6 py-5">
-          {/* Label strips */}
-          {labels.length > 0 && (
-            <div className="mb-3 flex gap-1.5">
-              {labels.map((l) => (
-                <span key={l.id} title={l.name} className={cn("h-2.5 w-12 rounded-sm flex-shrink-0", l.color)} />
-              ))}
-            </div>
-          )}
-
-          {/* Title */}
-          <MorphingDialogTitle>
-            <Textarea
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              onBlur={handleTitleBlur}
-              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); e.currentTarget.blur(); } }}
-              rows={2}
-              className="w-full resize-none border-0 bg-transparent px-0 text-xl font-semibold leading-snug text-foreground shadow-none outline-none focus-visible:ring-0 placeholder:text-muted-foreground/40"
-              placeholder="Card title"
-            />
-          </MorphingDialogTitle>
-
-          {/* Description */}
-          <MorphingDialogDescription className="mt-1">
-            <Textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              onBlur={handleDescriptionBlur}
-              onPaste={handleDescPaste}
-              rows={4}
-              className="resize-none border-0 bg-transparent px-0 text-sm text-muted-foreground shadow-none outline-none focus-visible:ring-0 placeholder:text-muted-foreground/40"
-              placeholder="Add a description — context, goals, acceptance criteria, design links…"
-            />
-            <Input ref={descFileRef} type="file" accept="image/*" className="hidden" onChange={handleDescImageUpload} />
-            <Button
-              variant="ghost"
-              size="sm"
-              disabled={descImageUploading}
-              onClick={() => descFileRef.current?.click()}
-              className="mt-0.5 h-6 gap-1.5 px-1 text-xs text-muted-foreground/60 hover:text-muted-foreground"
-            >
-              {descImageUploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <ImageIcon className="h-3 w-3" />}
-              {descImageUploading ? "Uploading…" : "Attach image"}
-            </Button>
-          </MorphingDialogDescription>
-
-          {/* Subtasks */}
-          <ChecklistSection
-            title="Subtasks"
-            placeholder="Add a subtask…"
-            items={subtasks}
-            onChange={handleSubtasksChange}
-          />
-
-          {/* Prerequisites */}
-          <ChecklistSection
-            title="Prerequisites"
-            placeholder="Add something needed to execute this…"
-            items={prerequisites}
-            onChange={handlePrerequisitesChange}
-          />
-
-          {/* Activity */}
-          <div className="mt-6 border-t border-border/50 pt-5">
-            <p className="mb-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Activity · {comments.length}
-            </p>
-
-            <div className="space-y-4">
-              <AnimatePresence initial={false}>
-                {comments.map((c) => (
-                  <motion.div key={c.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex gap-3">
-                    <Avatar name={c.user_profiles?.full_name ?? null} email={c.user_profiles?.email ?? "?"} />
-                    <div className="flex-1">
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-xs font-medium text-foreground">
-                          {c.user_profiles?.full_name ?? c.user_profiles?.email ?? "User"}
-                        </span>
-                        <span className="text-[11px] text-muted-foreground">
-                          {formatDistanceToNow(new Date(c.created_at), { addSuffix: true })}
-                        </span>
-                      </div>
-                      <p className="mt-0.5 text-sm leading-relaxed text-foreground/80">{c.body}</p>
-                      {/* Screenshot attachment — bug fix: was never rendered */}
-                      {c.screenshot_url && (
-                        <img
-                          src={c.screenshot_url}
-                          alt="Attached screenshot"
-                          className="mt-2 max-h-64 rounded-lg object-cover ring-1 ring-border"
-                        />
-                      )}
-                    </div>
-                  </motion.div>
+            {/* Label strips */}
+            {labels.length > 0 && (
+              <div className="mb-3 flex gap-1.5">
+                {labels.map((l) => (
+                  <span key={l.id} title={l.name} className={cn("h-2.5 w-12 rounded-sm flex-shrink-0", l.color)} />
                 ))}
-              </AnimatePresence>
-              {comments.length === 0 && <p className="text-sm text-muted-foreground/40">No activity yet.</p>}
-            </div>
+              </div>
+            )}
 
-            {/* Comment input */}
-            <div className="mt-5 space-y-2">
+            {/* Title */}
+            <MorphingDialogTitle>
               <Textarea
-                id={`${uid}-comment`}
-                value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handlePostComment(); }}
-                placeholder="Write a comment… (⌘↵ to send)"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                onBlur={handleTitleBlur}
+                onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); e.currentTarget.blur(); } }}
                 rows={2}
-                className="resize-none text-sm"
+                className="w-full resize-none border-0 bg-transparent px-0 text-xl font-semibold leading-snug text-foreground shadow-none outline-none focus-visible:ring-0 placeholder:text-muted-foreground/40"
+                placeholder="Card title"
               />
-              {/* Pending image preview */}
-              {commentImageUrl && (
-                <div className="relative inline-block">
-                  <img src={commentImageUrl} alt="Attached" className="max-h-32 rounded-lg object-cover ring-1 ring-border" />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setCommentImageUrl(null)}
-                    className="absolute -right-2 -top-2 h-5 w-5 rounded-full bg-background shadow-xs ring-1 ring-border hover:bg-destructive hover:text-destructive-foreground"
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
+            </MorphingDialogTitle>
+
+            {/* Description — markdown preview / textarea edit */}
+            <MorphingDialogDescription className="mt-2">
+              {descEditing ? (
+                <>
+                  <Textarea
+                    autoFocus
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    onBlur={() => { setDescEditing(false); handleDescriptionBlur(); }}
+                    onPaste={handleDescPaste}
+                    rows={6}
+                    className="resize-none border-0 bg-transparent px-0 font-mono text-sm text-foreground shadow-none outline-none focus-visible:ring-0 placeholder:text-muted-foreground/40"
+                    placeholder="Add a description — supports **markdown**, _italic_, `code`, and lists…"
+                  />
+                  <div className="mt-1 flex items-center gap-2">
+                    <Input ref={descFileRef} type="file" accept="image/*" className="hidden" onChange={handleDescImageUpload} />
+                    <Button
+                      variant="ghost" size="sm" disabled={descImageUploading}
+                      onClick={() => descFileRef.current?.click()}
+                      className="h-6 gap-1.5 px-1 text-xs text-muted-foreground/60 hover:text-muted-foreground"
+                    >
+                      {descImageUploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <ImageIcon className="h-3 w-3" />}
+                      {descImageUploading ? "Uploading…" : "Attach image"}
+                    </Button>
+                    <span className="text-[11px] text-muted-foreground/40">Markdown supported</span>
+                  </div>
+                </>
+              ) : (
+                <div
+                  onClick={() => setDescEditing(true)}
+                  className="-mx-1 cursor-text rounded px-1 py-1 transition-colors hover:bg-muted/40"
+                >
+                  {description ? (
+                    <div className="space-y-1">
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm, remarkBreaks]}
+                        components={{
+                          p: ({ children }) => <p className="text-sm leading-relaxed text-muted-foreground">{children}</p>,
+                          h1: ({ children }) => <h1 className="mt-3 mb-1 text-base font-semibold text-foreground">{children}</h1>,
+                           
+                          h2: ({ children }) => <div className="mt-2 mb-1 text-sm font-semibold text-foreground">{children}</div>,
+                           
+                          h3: ({ children }) => <div className="mt-2 mb-0.5 text-sm font-medium text-foreground">{children}</div>,
+                          ul: ({ children }) => <ul className="my-1 ml-4 list-disc space-y-0.5 text-sm text-muted-foreground">{children}</ul>,
+                          ol: ({ children }) => <ol className="my-1 ml-4 list-decimal space-y-0.5 text-sm text-muted-foreground">{children}</ol>,
+                          li: ({ children }) => <li className="leading-relaxed">{children}</li>,
+                          code: ({ children }) => <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs text-foreground">{children}</code>,
+                          pre: ({ children }) => <pre className="my-2 overflow-x-auto rounded-lg bg-muted p-3 text-xs">{children}</pre>,
+                          a: ({ href, children }) => <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{children}</a>,
+                          strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
+                          blockquote: ({ children }) => <blockquote className="my-1 border-l-2 border-border pl-3 italic text-muted-foreground">{children}</blockquote>,
+                        }}
+                      >
+                        {description}
+                      </ReactMarkdown>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground/40">Add a description — context, goals, acceptance criteria…</p>
+                  )}
                 </div>
               )}
-              <Input ref={commentFileRef} type="file" accept="image/*" className="hidden" onChange={handleCommentImageUpload} />
-              <div className="flex items-center gap-1.5">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  disabled={commentImageUploading}
-                  onClick={() => commentFileRef.current?.click()}
-                  className="h-7 w-7 text-muted-foreground"
-                  title="Attach image"
+            </MorphingDialogDescription>
+
+            {/* Links — inline below description */}
+            <div className="mt-3">
+              {links.length > 0 && (
+                <div className="mb-1 space-y-1">
+                  {links.map((link) => (
+                    <div key={link.id} className="group flex items-center gap-1.5">
+                      <Link2 className="h-3 w-3 flex-none text-muted-foreground/50" />
+                      <a href={link.url} target="_blank" rel="noopener noreferrer"
+                        className="flex-1 truncate text-xs text-primary hover:underline"
+                      >
+                        {link.label}
+                      </a>
+                      <ArrowUpRight className="h-3 w-3 flex-none text-transparent group-hover:text-muted-foreground" />
+                      <Button variant="ghost" size="icon" onClick={() => handleRemoveLink(link.id)}
+                        className="h-4 w-4 flex-none opacity-0 transition-opacity group-hover:opacity-100 hover:text-destructive"
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <AnimatePresence>
+                {showLinkForm && (
+                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="mt-1 space-y-1.5 overflow-hidden">
+                    <Input placeholder="https://…" value={newLinkUrl} onChange={(e) => setNewLinkUrl(e.target.value)} className="h-7 text-xs" autoFocus />
+                    <Input placeholder="Label (optional)" value={newLinkLabel} onChange={(e) => setNewLinkLabel(e.target.value)} className="h-7 text-xs"
+                      onKeyDown={(e) => { if (e.key === "Enter") handleAddLink(); if (e.key === "Escape") setShowLinkForm(false); }}
+                    />
+                    <div className="flex gap-1">
+                      <Button size="sm" className="h-6 flex-1 text-xs" onClick={handleAddLink}>Add</Button>
+                      <Button size="sm" variant="ghost" className="h-6 text-xs" onClick={() => setShowLinkForm(false)}>Cancel</Button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              {!showLinkForm && (
+                <Button variant="ghost" size="sm" onClick={() => setShowLinkForm(true)}
+                  className="h-6 gap-1 px-1 text-xs text-muted-foreground/50 hover:text-muted-foreground"
                 >
-                  {commentImageUploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Paperclip className="h-3.5 w-3.5" />}
+                  <Plus className="h-3 w-3" />Add link
                 </Button>
-                <div className="flex-1" />
-                <Button
-                  size="sm"
-                  disabled={(!commentText.trim() && !commentImageUrl) || addComment.isPending}
-                  onClick={handlePostComment}
-                  className="gap-1.5"
-                >
-                  <Send className="h-3.5 w-3.5" />
-                  Post
-                </Button>
+              )}
+            </div>
+
+            {/* Subtasks */}
+            <ChecklistSection
+              title="Subtasks"
+              placeholder="Add a subtask…"
+              items={subtasks}
+              onChange={handleSubtasksChange}
+            />
+
+            {/* Prerequisites */}
+            <ChecklistSection
+              title="Prerequisites"
+              placeholder="Add something needed to execute this…"
+              items={prerequisites}
+              onChange={handlePrerequisitesChange}
+            />
+
+            {/* Activity */}
+            <div className="mt-6 border-t border-border/50 pt-5">
+              <SectionLabel>Activity · {comments.length}</SectionLabel>
+
+              <div className="space-y-4">
+                <AnimatePresence initial={false}>
+                  {comments.map((c) => (
+                    <motion.div key={c.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex gap-3">
+                      <Avatar name={c.user_profiles?.full_name ?? null} email={c.user_profiles?.email ?? "?"} />
+                      <div className="flex-1">
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-xs font-medium text-foreground">
+                            {c.user_profiles?.full_name ?? c.user_profiles?.email ?? "User"}
+                          </span>
+                          <span className="text-[11px] text-muted-foreground">
+                            {formatDistanceToNow(new Date(c.created_at), { addSuffix: true })}
+                          </span>
+                        </div>
+                        <p className="mt-0.5 text-sm leading-relaxed text-foreground/80">{c.body}</p>
+                        {c.screenshot_url && (
+                          <img
+                            src={c.screenshot_url}
+                            alt="Attached screenshot"
+                            className="mt-2 max-h-64 rounded-lg object-cover ring-1 ring-border"
+                          />
+                        )}
+                      </div>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+                {comments.length === 0 && <p className="text-sm text-muted-foreground/40">No activity yet.</p>}
+              </div>
+
+              {/* Comment input */}
+              <div className="mt-5 space-y-2">
+                <Textarea
+                  id={`${uid}-comment`}
+                  value={commentText}
+                  onChange={(e) => setCommentText(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handlePostComment(); }}
+                  placeholder="Write a comment… (⌘↵ to send)"
+                  rows={2}
+                  className="resize-none text-sm"
+                />
+                {commentImageUrl && (
+                  <div className="relative inline-block">
+                    <img src={commentImageUrl} alt="Attached" className="max-h-32 rounded-lg object-cover ring-1 ring-border" />
+                    <Button
+                      variant="ghost" size="icon"
+                      onClick={() => setCommentImageUrl(null)}
+                      className="absolute -right-2 -top-2 h-5 w-5 rounded-full bg-background shadow-xs ring-1 ring-border hover:bg-destructive hover:text-destructive-foreground"
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                )}
+                <Input ref={commentFileRef} type="file" accept="image/*" className="hidden" onChange={handleCommentImageUpload} />
+                <div className="flex items-center gap-1.5">
+                  <Button
+                    variant="ghost" size="icon" disabled={commentImageUploading}
+                    onClick={() => commentFileRef.current?.click()}
+                    className="h-7 w-7 text-muted-foreground" title="Attach image"
+                  >
+                    {commentImageUploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Paperclip className="h-3.5 w-3.5" />}
+                  </Button>
+                  <div className="flex-1" />
+                  <Button
+                    size="sm"
+                    disabled={(!commentText.trim() && !commentImageUrl) || addComment.isPending}
+                    onClick={handlePostComment}
+                    className="gap-1.5"
+                  >
+                    <Send className="h-3.5 w-3.5" />
+                    Post
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
-          </div>{/* end px-6 py-5 */}
-        </div>{/* end left pane */}
+        </div>
 
         {/* ── Right sidebar ── */}
-        <div className="w-52 flex-none overflow-y-auto border-l border-border/50 px-4 py-5 scrollbar-hide">
+        <div className="w-64 flex-none overflow-y-auto border-l border-border/50 px-5 py-5 scrollbar-hide">
 
-          {/* Cover image */}
+          {/* Cover — button is self-labeling */}
           <div className="mb-5">
-            <SidebarHeading>Cover</SidebarHeading>
             <Input ref={coverFileRef} type="file" accept="image/*" className="hidden" onChange={handleCoverUpload} />
             <Button
-              variant="ghost"
-              size="sm"
-              disabled={coverUploading}
+              variant="ghost" size="sm" disabled={coverUploading}
               onClick={() => coverFileRef.current?.click()}
               className="h-8 w-full justify-start gap-2 text-xs text-muted-foreground"
             >
@@ -614,8 +704,7 @@ export function BoardItemDialog({ item }: BoardItemDialogProps) {
             </Button>
             {coverUrl && (
               <Button
-                variant="ghost"
-                size="sm"
+                variant="ghost" size="sm"
                 onClick={() => { setCoverUrl(""); save({ screenshot_url: null }); }}
                 className="h-7 w-full justify-start gap-1 px-2 text-xs text-destructive hover:text-destructive"
               >
@@ -625,9 +714,8 @@ export function BoardItemDialog({ item }: BoardItemDialogProps) {
             )}
           </div>
 
-          {/* Assignee */}
+          {/* Assignee — avatar + name speaks for itself */}
           <div className="mb-5">
-            <SidebarHeading>Assignee</SidebarHeading>
             <Button
               variant="ghost" size="sm"
               onClick={() => setShowAssigneePicker((v) => !v)}
@@ -670,8 +758,17 @@ export function BoardItemDialog({ item }: BoardItemDialogProps) {
 
           {/* Labels */}
           <div className="mb-5">
-            <SidebarHeading>Labels</SidebarHeading>
-            {/* Assigned labels — shown when picker is closed */}
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-[11px] text-muted-foreground/60">Labels</p>
+              <Button
+                variant="ghost" size="icon"
+                onClick={() => setShowLabelPicker((v) => !v)}
+                className={cn("h-5 w-5", showLabelPicker ? "text-foreground" : "text-muted-foreground")}
+                title="Edit labels"
+              >
+                <MoreVertical className="h-3 w-3" />
+              </Button>
+            </div>
             {!showLabelPicker && labels.length > 0 && (
               <div className="mb-1.5 flex flex-col gap-1">
                 {labels.map((l) => (
@@ -682,15 +779,9 @@ export function BoardItemDialog({ item }: BoardItemDialogProps) {
                 ))}
               </div>
             )}
-            <Button variant="ghost" size="sm" onClick={() => setShowLabelPicker((v) => !v)}
-              className="h-7 w-full justify-start gap-2 text-xs text-muted-foreground"
-            >
-              <Tag className="h-3.5 w-3.5" />
-              {showLabelPicker ? "Done" : labels.length > 0 ? "Edit labels" : "Add labels"}
-            </Button>
             <AnimatePresence>
               {showLabelPicker && (
-                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="mt-2 space-y-1.5 overflow-hidden">
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="mt-1 space-y-1.5 overflow-hidden">
                   {LABEL_COLORS.map(({ color, defaultName }) => {
                     const active = labels.find((l) => l.color === color);
                     return (
@@ -711,10 +802,7 @@ export function BoardItemDialog({ item }: BoardItemDialogProps) {
                               className="h-6 flex-1 text-xs"
                             />
                           ) : (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setEditingLabelName(color)}
+                            <Button variant="ghost" size="sm" onClick={() => setEditingLabelName(color)}
                               className="h-6 flex-1 justify-start truncate px-1 text-xs text-foreground hover:underline"
                             >
                               {active.name || defaultName}
@@ -731,59 +819,52 @@ export function BoardItemDialog({ item }: BoardItemDialogProps) {
             </AnimatePresence>
           </div>
 
-          {/* Due date — bug fix: input now has the correct id */}
+          {/* Due date */}
           <div className="mb-5">
             <SidebarHeading>Due date</SidebarHeading>
-            <div className="space-y-1.5">
-              <Input
-                id={dateInputId}
-                type="date"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-                onBlur={handleDueDateBlur}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") e.currentTarget.blur();
-                  if (e.key === "Escape") { setDueDate(savedDueDate.current); e.currentTarget.blur(); }
-                }}
-                className="h-8 text-xs"
-              />
-              {dueDateDate && (
-                <p className={cn("text-[11px]",
-                  dueDateOverdue ? "text-destructive" : dueDateSoon ? "text-yellow-600" : "text-muted-foreground"
-                )}>
-                  {dueDateOverdue ? "Overdue" : dueDateSoon ? "Due soon" : "Upcoming"} · {formatDistanceToNow(dueDateDate, { addSuffix: true })}
-                </p>
-              )}
-              {!dueDate && (
-                <Button variant="ghost" size="sm" onClick={() => document.getElementById(dateInputId)?.focus()}
-                  className="h-7 gap-1 px-1 text-xs text-muted-foreground"
-                >
-                  <Calendar className="h-3.5 w-3.5" />
-                  Set date
-                </Button>
-              )}
-            </div>
+            <Input
+              id={dateInputId}
+              type="date"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+              onBlur={handleDueDateBlur}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") e.currentTarget.blur();
+                if (e.key === "Escape") { setDueDate(savedDueDate.current); e.currentTarget.blur(); }
+              }}
+              className="h-8 text-xs"
+            />
+            {dueDateDate && (
+              <p className={cn("mt-1 text-[11px]",
+                dueDateOverdue ? "text-destructive" : dueDateSoon ? "text-yellow-600" : "text-muted-foreground"
+              )}>
+                {dueDateOverdue ? "Overdue" : dueDateSoon ? "Due soon" : "Upcoming"} · {formatDistanceToNow(dueDateDate, { addSuffix: true })}
+              </p>
+            )}
           </div>
 
-          {/* Priority */}
+          {/* Priority — Select is more compact than 3 stacked buttons */}
           <div className="mb-5">
             <SidebarHeading>Priority</SidebarHeading>
-            <div className="flex flex-col gap-0.5">
-              {SEVERITY_OPTIONS.map((opt) => (
-                <Button key={opt.value} variant="ghost" size="sm" onClick={() => handleSeverityChange(opt.value)}
-                  className={cn("h-8 justify-start gap-2 text-xs font-medium", severity === opt.value ? "bg-muted " + opt.activeClass : "text-muted-foreground")}
-                >
-                  <span className={severity === opt.value ? opt.activeClass : ""}>{opt.icon}</span>
-                  {opt.label}
-                  {severity === opt.value && <Check className="ml-auto h-3 w-3" />}
-                </Button>
-              ))}
-            </div>
+            <Select value={severity} onValueChange={(v) => handleSeverityChange(v as "low" | "medium" | "high")}>
+              <SelectTrigger className="h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {SEVERITY_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    <span className={cn("flex items-center gap-1.5", opt.activeClass)}>
+                      {opt.icon}
+                      {opt.label}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
-          {/* Upvotes — bug fix: persisted via upvoted_by array */}
+          {/* Upvote — icon communicates purpose without a heading */}
           <div className="mb-5">
-            <SidebarHeading>Support</SidebarHeading>
             <Button variant="ghost" size="sm" onClick={handleUpvote} disabled={hasUpvoted || !currentUserId}
               className={cn("h-8 w-full justify-start gap-2 text-xs font-medium", hasUpvoted ? "bg-muted text-primary" : "text-muted-foreground")}
             >
@@ -792,75 +873,24 @@ export function BoardItemDialog({ item }: BoardItemDialogProps) {
             </Button>
           </div>
 
-          {/* Links */}
-          <div className="mb-5">
-            <SidebarHeading>Links</SidebarHeading>
-            <div className="space-y-1.5">
-              {links.map((link) => (
-                <div key={link.id} className="group flex items-center gap-1.5">
-                  <Link2 className="h-3 w-3 flex-none text-muted-foreground" />
-                  <a href={link.url} target="_blank" rel="noopener noreferrer" className="flex-1 truncate text-xs text-primary hover:underline">
-                    {link.label}
-                  </a>
-                  <ArrowUpRight className="h-3 w-3 flex-none text-muted-foreground/0 group-hover:text-muted-foreground" />
-                  <Button variant="ghost" size="icon" onClick={() => handleRemoveLink(link.id)}
-                    className="h-4 w-4 flex-none opacity-0 transition-opacity group-hover:opacity-100 hover:text-destructive"
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-            <AnimatePresence>
-              {showLinkForm && (
-                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="mt-2 space-y-1.5 overflow-hidden">
-                  <Input placeholder="https://…" value={newLinkUrl} onChange={(e) => setNewLinkUrl(e.target.value)} className="h-7 text-xs" autoFocus />
-                  <Input placeholder="Label (optional)" value={newLinkLabel} onChange={(e) => setNewLinkLabel(e.target.value)} className="h-7 text-xs"
-                    onKeyDown={(e) => { if (e.key === "Enter") handleAddLink(); if (e.key === "Escape") setShowLinkForm(false); }}
-                  />
-                  <div className="flex gap-1">
-                    <Button size="sm" className="h-6 flex-1 text-xs" onClick={handleAddLink}>Add</Button>
-                    <Button size="sm" variant="ghost" className="h-6 text-xs" onClick={() => setShowLinkForm(false)}>Cancel</Button>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-            {!showLinkForm && (
-              <Button variant="ghost" size="sm" onClick={() => setShowLinkForm(true)} className="mt-1 h-7 gap-1 px-1 text-xs text-muted-foreground">
-                <Plus className="h-3 w-3" />Add link
-              </Button>
-            )}
-          </div>
-
-          {/* Submitted by */}
-          <div className="mb-5 border-t border-border/50 pt-4">
-            <SidebarHeading>Submitted by</SidebarHeading>
-            {item.submitter ? (
+          {/* Submitter + metadata — no headings, just quiet text */}
+          <div className="mb-6 mt-6 space-y-1.5 text-xs text-muted-foreground">
+            {item.submitter && (
               <div className="flex items-center gap-2">
                 <Avatar name={item.submitter.full_name ?? null} email={item.submitter.email} size="sm" />
-                <span className="truncate text-xs text-foreground">
+                <span className="truncate text-foreground/70">
                   {item.submitter.full_name ?? item.submitter.email}
                 </span>
               </div>
-            ) : (
-              <p className="text-xs text-muted-foreground">Unknown</p>
             )}
+            {item.page_title && item.page_title !== "Product Board" && (
+              <p className="pl-0.5">From {item.page_title}</p>
+            )}
+            <p className="pl-0.5">{formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}</p>
           </div>
 
-          {/* Details */}
-          <div className="mb-5 border-t border-border/50 pt-4">
-            <SidebarHeading>Details</SidebarHeading>
-            <div className="space-y-1 text-xs text-muted-foreground">
-              {item.page_title && item.page_title !== "Product Board" && (
-                <p><span className="font-medium text-foreground/70">From</span> {item.page_title}</p>
-              )}
-              <p><span className="font-medium text-foreground/70">Added</span> {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}</p>
-            </div>
-          </div>
-
-          {/* Delete */}
+          {/* Delete — trash icon + label communicates danger without a heading */}
           <div className="border-t border-border/50 pt-4">
-            <SidebarHeading>Danger</SidebarHeading>
             {!confirmDelete ? (
               <Button variant="ghost" size="sm" onClick={() => setConfirmDelete(true)}
                 className="h-8 w-full justify-start gap-2 text-xs text-muted-foreground hover:text-destructive"

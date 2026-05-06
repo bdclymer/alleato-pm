@@ -194,7 +194,7 @@ export function BoardCard({ item, readonly, settings = DEFAULT_CARD_VIEW_SETTING
         <MorphingDialogContainer overlayClassName="bg-foreground/10 backdrop-blur-sm dark:bg-black/50">
           <MorphingDialogContent
             style={{ borderRadius: "20px" }}
-            className="relative w-full max-w-5xl bg-background overflow-hidden mx-4"
+            className="relative w-full max-w-6xl bg-background overflow-hidden mx-4"
           >
             <div style={{ maxHeight: "88vh", overflow: "hidden" }}>
               <BoardItemDialog item={item} />

@@ -14,13 +14,17 @@ import {
 import { arrayMove } from "@dnd-kit/sortable";
 import { EmptyState } from "@/components/ds";
 import { ErrorState } from "@/components/ds/error-state";
-import { Lightbulb } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Lightbulb, LayoutGrid, Table2 } from "lucide-react";
+import { ExpandableSearch } from "@/components/tables/unified/table-toolbar";
+import { cn } from "@/lib/utils";
 import { BOARD_STATUSES, BOARD_STATUS_LABELS, type BoardStatus } from "@/lib/admin-feedback/constants";
 import { useProductBoard, type BoardItem } from "./use-product-board";
 import { BoardColumn } from "./board-column";
 import { BoardCard, BoardCardOverlay } from "./board-card";
 import { BoardFilterBar, type BoardFilters } from "./board-filter-bar";
 import { loadCardViewSettings, saveCardViewSettings, type CardViewSettings } from "./card-view-settings";
+import { BoardUnifiedTable } from "./board-unified-table";
 
 interface ProductBoardClientProps {
   readonly?: boolean;
@@ -42,10 +46,13 @@ function filterItems(items: BoardItem[], filters: BoardFilters): BoardItem[] {
   });
 }
 
+type ViewMode = "board" | "table";
+
 export function ProductBoardClient({ readonly }: ProductBoardClientProps) {
   const { items, isLoading, error, activeId, setActiveId, updateStatus, reorder } = useProductBoard();
   const [filters, setFilters] = useState<BoardFilters>({});
   const [cardSettings, setCardSettings] = useState<CardViewSettings>(loadCardViewSettings);
+  const [viewMode, setViewMode] = useState<ViewMode>("board");
 
   function updateCardSettings(patch: Partial<CardViewSettings>) {
     setCardSettings((prev) => {
@@ -116,12 +123,82 @@ export function ProductBoardClient({ readonly }: ProductBoardClientProps) {
     }
   }
 
+  const viewToggle = (
+    <div className="flex items-center rounded-lg bg-muted p-0.5">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => setViewMode("board")}
+        className={cn(
+          "h-7 gap-1.5 px-2.5 text-xs",
+          viewMode === "board"
+            ? "bg-background text-foreground shadow-xs"
+            : "text-muted-foreground hover:text-foreground",
+        )}
+      >
+        <LayoutGrid className="h-3.5 w-3.5" />
+        Board
+      </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => setViewMode("table")}
+        className={cn(
+          "h-7 gap-1.5 px-2.5 text-xs",
+          viewMode === "table"
+            ? "bg-background text-foreground shadow-xs"
+            : "text-muted-foreground hover:text-foreground",
+        )}
+      >
+        <Table2 className="h-3.5 w-3.5" />
+        Table
+      </Button>
+    </div>
+  );
+
+  const toolbar = (
+    <div className="flex items-center gap-1">
+      {viewToggle}
+      <div className="flex-1" />
+      <ExpandableSearch
+        value={filters.search ?? ""}
+        onChange={(v) => setFilters((f) => ({ ...f, search: v || undefined }))}
+        placeholder="Search cards…"
+      />
+      <BoardFilterBar
+        items={items}
+        filters={filters}
+        onChange={setFilters}
+        cardSettings={cardSettings}
+        onCardSettingsChange={updateCardSettings}
+      />
+    </div>
+  );
+
+  // Table view — UnifiedTablePage handles its own loading/error/empty states
+  if (viewMode === "table") {
+    return (
+      <div className="flex flex-col gap-4">
+        {toolbar}
+        <BoardUnifiedTable
+          items={items}
+          isLoading={isLoading}
+          error={error instanceof Error ? error : error ? new Error("Failed to load board") : null}
+        />
+      </div>
+    );
+  }
+
+  // Board view early returns
   if (isLoading) {
     return (
-      <div className="grid grid-cols-4 gap-4 pb-6">
-        {BOARD_STATUSES.map((status) => (
-          <div key={status} className="animate-pulse rounded-2xl bg-muted/60 h-64" />
-        ))}
+      <div className="flex flex-col gap-4">
+        {toolbar}
+        <div className="grid grid-cols-4 gap-4 pb-6">
+          {BOARD_STATUSES.map((status) => (
+            <div key={status} className="animate-pulse rounded-2xl bg-muted/60 h-64" />
+          ))}
+        </div>
       </div>
     );
   }
@@ -130,17 +207,20 @@ export function ProductBoardClient({ readonly }: ProductBoardClientProps) {
 
   if (items.length === 0) {
     return (
-      <EmptyState
-        icon={<Lightbulb />}
-        title="No feature requests yet"
-        description="Submit ideas via the feedback button — they'll appear here automatically."
-      />
+      <div className="flex flex-col gap-4">
+        {toolbar}
+        <EmptyState
+          icon={<Lightbulb />}
+          title="No feature requests yet"
+          description="Submit ideas via the feedback button — they'll appear here automatically."
+        />
+      </div>
     );
   }
 
   return (
     <div className="flex flex-col gap-4">
-      <BoardFilterBar items={items} filters={filters} onChange={setFilters} cardSettings={cardSettings} onCardSettingsChange={updateCardSettings} />
+      {toolbar}
 
       <DndContext
         sensors={sensors}

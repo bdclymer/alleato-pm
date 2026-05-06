@@ -221,6 +221,7 @@ export function BoardTableView({ items }: BoardTableViewProps) {
           <EmptyState
             icon={<MessageSquare className="h-5 w-5" />}
             title="No cards match the current filters"
+            description="Try adjusting or clearing your filters."
           />
         )}
       </div>

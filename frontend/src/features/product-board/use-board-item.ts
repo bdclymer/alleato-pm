@@ -39,6 +39,7 @@ export interface BoardItemMeta {
   due_date?: string | null;
   subtasks?: ChecklistItem[];
   prerequisites?: ChecklistItem[];
+  docs_url?: string | null;
 }
 
 // ── Comments ─────────────────────────────────────────────────────────────────
