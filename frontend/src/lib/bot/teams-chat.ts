@@ -197,6 +197,21 @@ async function handleMessage(
   const messageTextEarly = message.text.trim();
   const previewEarly = messageTextEarly.slice(0, 200);
 
+  // Capture every field the SDK exposes on author so we can identify a stable
+  // join key (AAD object ID, email, etc.) for users whose channel-specific
+  // userId rotates across Teams clients. Stored in bot_debug_log.extra.
+  const authorAny = message.author as unknown as Record<string, unknown>;
+  const authorSnapshot = {
+    userId: message.author.userId,
+    userName: message.author.userName,
+    fullName: message.author.fullName,
+    aadObjectId: authorAny.aadObjectId ?? authorAny.aad_object_id ?? null,
+    email: authorAny.email ?? authorAny.upn ?? null,
+    tenantId: authorAny.tenantId ?? null,
+    role: authorAny.role ?? null,
+    allKeys: Object.keys(authorAny),
+  };
+
   console.log("[teams-bot] handleMessage called", {
     source,
     threadId: thread.id,
@@ -208,7 +223,7 @@ async function handleMessage(
     teamsUserId: teamsUserIdEarly,
     threadId: thread.id,
     messagePreview: previewEarly,
-    extra: { source },
+    extra: { source, authorSnapshot },
   });
 
   try {
@@ -229,7 +244,9 @@ async function handleMessage(
     const supabase = createServiceClient();
 
     let supabaseUserId: string | null = null;
+    let resolvedVia: "platform_user_id" | "aad_object_id" | "email_auto_link" | null = null;
 
+    // 1. Primary lookup: platform_user_id (channel-specific Teams ID)
     const { data: mapping } = await supabase
       .from("bot_user_mappings")
       .select("supabase_user_id")
@@ -239,10 +256,56 @@ async function handleMessage(
 
     if (mapping) {
       supabaseUserId = mapping.supabase_user_id;
-    } else {
+      resolvedVia = "platform_user_id";
+    }
+
+    // 2. Self-healing fallback: AAD object ID (stable across clients).
+    //    If primary missed but the SDK gave us aadObjectId, find the user
+    //    by joining against ANY of their existing platform_user_id rows
+    //    that we previously stored. If found, AUTO-INSERT the new
+    //    platform_user_id as an additional row so this lookup succeeds
+    //    cheaply next time and the user never sees the "I don't recognize"
+    //    prompt again on this client.
+    if (!supabaseUserId) {
+      const aadId = typeof authorSnapshot.aadObjectId === "string"
+        ? authorSnapshot.aadObjectId
+        : null;
+      if (aadId) {
+        // Look for any existing teams mapping whose platform_user_id ends
+        // with the AAD GUID — that's how Brandon's original row was stored
+        // (`29:<aad-guid>`). This gives us a free join key for legacy rows.
+        const { data: byAad } = await supabase
+          .from("bot_user_mappings")
+          .select("supabase_user_id")
+          .eq("platform", "teams")
+          .like("platform_user_id", `%${aadId}%`)
+          .maybeSingle();
+        if (byAad) {
+          supabaseUserId = byAad.supabase_user_id;
+          resolvedVia = "aad_object_id";
+          // Add a row with the current platform_user_id so this fast-path
+          // works next time without the LIKE scan.
+          await supabase.from("bot_user_mappings").insert({
+            platform: "teams",
+            platform_user_id: teamsUserId,
+            supabase_user_id: supabaseUserId,
+            display_name: displayName || null,
+          });
+          await logCheckpoint("self_healed_via_aad", {
+            teamsUserId,
+            supabaseUserId,
+            threadId: thread.id,
+            extra: { aadId },
+          });
+        }
+      }
+    }
+
+    // 3. Original fallback: auto-link by email if userName looks like one
+    if (!supabaseUserId) {
       const email = message.author.userName?.includes("@")
         ? message.author.userName
-        : null;
+        : (typeof authorSnapshot.email === "string" ? authorSnapshot.email : null);
 
       if (email) {
         const { data: userRecord } = await supabase
@@ -253,6 +316,7 @@ async function handleMessage(
 
         if (userRecord) {
           supabaseUserId = userRecord.id;
+          resolvedVia = "email_auto_link";
           const { error: insertErr } = await supabase.from("bot_user_mappings").insert({
             platform: "teams",
             platform_user_id: teamsUserId,
@@ -270,7 +334,7 @@ async function handleMessage(
       teamsUserId,
       supabaseUserId,
       threadId: thread.id,
-      extra: { mapped: !!mapping, hasUserId: !!supabaseUserId },
+      extra: { mapped: !!mapping, hasUserId: !!supabaseUserId, resolvedVia },
     });
 
     // Catch any "link ..." attempt up front so a malformed code (e.g. "link foo"
