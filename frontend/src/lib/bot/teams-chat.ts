@@ -222,9 +222,19 @@ async function handleMessage(
       }
     }
 
-    const linkMatch = messageText.match(/^link\s+([A-Za-z0-9_-]{6,12})$/i);
-    if (linkMatch) {
-      await handleLinkCommand(thread, teamsUserId, displayName, linkMatch[1]);
+    // Catch any "link ..." attempt up front so a malformed code (e.g. "link foo"
+    // — too short) doesn't fall through to the AI handler. Falling through is
+    // a silent UX failure: user types "link" expecting linking, gets a chatbot
+    // reply instead of a clear error.
+    if (/^link(\s|$)/i.test(messageText)) {
+      const linkMatch = messageText.match(/^link\s+([A-Za-z0-9_-]{6,12})$/i);
+      if (linkMatch) {
+        await handleLinkCommand(thread, teamsUserId, displayName, linkMatch[1]);
+      } else {
+        await thread.post(
+          "❌ Invalid or expired code. Generate a new one in **Settings → Profile → Microsoft Teams**.",
+        );
+      }
       return;
     }
 
