@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Loader2, ThumbsDown, ThumbsUp } from "lucide-react";
+import { toast } from "sonner";
 import { useTaskFeedback } from "@/hooks/use-task-feedback";
 import type { TaskSnapshot } from "@/lib/ai/services/task-training-service";
 import { Button } from "@/components/ui/button";
@@ -46,13 +47,22 @@ export function TaskFeedbackButtons({
     );
   }
 
-  const handleGood = () => {
-    void submitFeedback("good");
+  const handleGood = async () => {
+    if (signal) return;
+    try {
+      await submitFeedback("good");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to record feedback");
+    }
   };
 
-  const handleBadConfirm = () => {
+  const handleBadConfirm = async () => {
     setBadReasonOpen(false);
-    void submitFeedback("bad", badReason.trim() || undefined);
+    try {
+      await submitFeedback("bad", badReason.trim() || undefined);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to record feedback");
+    }
     setBadReason("");
   };
 

@@ -706,6 +706,8 @@ export function createActionTools(
             status: "not_started",
             percent_complete: 0,
             finish_date: dueDate ?? null,
+            assignee: assignee ?? null,
+            priority,
             updated_at: new Date().toISOString(),
           })
           .select("id, name, status")

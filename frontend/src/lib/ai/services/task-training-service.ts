@@ -1,6 +1,7 @@
 import { createServiceClient } from "@/lib/supabase/service";
 import { upsertAgentLearning } from "@/lib/ai/services/agent-learning-service";
 import type { Database } from "@/types/database.types";
+import { logger } from "@/lib/logger";
 
 type AiTaskFeedbackRow = Database["public"]["Tables"]["ai_task_feedback"]["Row"];
 
@@ -98,11 +99,13 @@ export async function recordTaskFeedback(
   }
 
   if (params.signal === "bad") {
-    await extractBadTaskLearning({
+    extractBadTaskLearning({
       feedbackId: data.id,
       taskSnapshot: params.taskSnapshot,
       reason: params.reason,
       projectId: params.projectId,
+    }).catch((err: unknown) => {
+      logger.error({ msg: "[TaskFeedback] Learning extraction failed (non-fatal)", error: err });
     });
   }
 

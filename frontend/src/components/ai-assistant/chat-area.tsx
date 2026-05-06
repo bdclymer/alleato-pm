@@ -734,7 +734,7 @@ function ToolCallItem({
                 Run
               </Button>
             </div>
-            {isTaskPreview && taskProjectId != null && (
+            {isTaskPreview && taskProjectId != null && part.state !== "output-available" && (
               <div className="mt-2 flex items-center justify-end">
                 <TaskFeedbackButtons
                   projectId={taskProjectId}
