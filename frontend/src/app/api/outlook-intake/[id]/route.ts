@@ -4,9 +4,18 @@ import { withApiGuardrails, parseJsonBody } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 
-const PatchSchema = z.object({
-  project_id: z.number().int().positive().nullable(),
-});
+const PatchSchema = z.union([
+  // Project assignment
+  z.object({
+    project_id: z.number().int().positive().nullable(),
+    match_status: z.undefined(),
+  }),
+  // Explicit status override (e.g. "ignored" / "filtered")
+  z.object({
+    project_id: z.undefined(),
+    match_status: z.enum(["ignored", "unassigned"]),
+  }),
+]);
 
 async function assertAdminAccess(where: string) {
   const supabase = await createClient();
@@ -62,28 +71,30 @@ export const PATCH = withApiGuardrails(
       });
     }
 
-    const body = await parseJsonBody(request);
-    const parsed = PatchSchema.safeParse(body);
+    const parsed = await parseJsonBody(request, PatchSchema, "outlook-intake/[id]#PATCH");
 
-    if (!parsed.success) {
-      throw new GuardrailError({
-        code: "VALIDATION_ERROR",
-        where: "outlook-intake/[id]#PATCH",
-        message: parsed.error.issues.map((i) => i.message).join(", "),
-        status: 400,
-      });
-    }
+    let update: Record<string, unknown>;
 
-    const { project_id } = parsed.data;
-
-    const { data, error } = await supabase
-      .from("outlook_email_intake")
-      .update({
+    if ("match_status" in parsed && parsed.match_status !== undefined) {
+      // Explicit status override — preserve project_id, just change status
+      update = {
+        match_status: parsed.match_status,
+        assignment_method: "manual",
+      };
+    } else {
+      // Project assignment
+      const { project_id } = parsed as { project_id: number | null };
+      update = {
         project_id,
         match_status: project_id ? "matched" : "unassigned",
         assignment_method: "manual",
         assignment_confidence: project_id ? 1.0 : null,
-      })
+      };
+    }
+
+    const { data, error } = await supabase
+      .from("outlook_email_intake")
+      .update(update)
       .eq("id", intakeId)
       .is("deleted_at", null)
       .select("id, project_id, match_status, assignment_method, assignment_confidence")
