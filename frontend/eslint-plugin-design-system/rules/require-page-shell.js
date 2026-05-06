@@ -54,6 +54,15 @@ module.exports = {
       // Admin pages that are legitimately non-standard
       'test-modals',
       'test-form',
+      // Redirect-only pages: return null after router.replace() — nothing to wrap
+      'edit/page.tsx',
+      // Thin delegation pages: the component they render already owns its own PageShell
+      'invoicing/subcontractor/page.tsx',
+      'invoicing/subcontractor/[invoiceId]/page.tsx',
+      'commitments/[commitmentId]/invoices/[invoiceId]/page.tsx',
+      'submittals/new/page.tsx',
+      // Budget page: Suspense wrapper — BudgetPageContent owns its own header
+      '[projectId]/budget/page.tsx',
     ];
     if (skipPatterns.some(p => filename.includes(p))) return {};
 

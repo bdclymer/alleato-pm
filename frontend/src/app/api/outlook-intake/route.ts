@@ -22,6 +22,7 @@ interface OutlookIntakeRow {
   graph_message_id: string;
   mailbox_user_id: string;
   project_id: number | null;
+  document_metadata_id: string | null;
   subject: string;
   from_name: string | null;
   from_email: string | null;
@@ -88,6 +89,7 @@ export const GET = withApiGuardrails("outlook-intake#GET", async ({ request }) =
         graph_message_id,
         mailbox_user_id,
         project_id,
+        document_metadata_id,
         subject,
         from_name,
         from_email,
@@ -134,6 +136,7 @@ export const GET = withApiGuardrails("outlook-intake#GET", async ({ request }) =
     id: row.id,
     graphMessageId: row.graph_message_id,
     mailboxUserId: row.mailbox_user_id,
+    documentMetadataId: row.document_metadata_id,
     subject: row.subject,
     fromName: row.from_name,
     fromEmail: row.from_email,
