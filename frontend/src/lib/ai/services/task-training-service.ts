@@ -147,7 +147,7 @@ export async function buildTaskFewShotBlock(projectId: number): Promise<string> 
 
   const lines = examples.map((ex, i) => {
     let line = `Example ${i + 1}: "${ex.name}"`;
-    if (ex.priority !== "normal") line += ` (priority: ${ex.priority})`;
+    line += ` (priority: ${ex.priority})`;
     if (ex.assignee) line += ` — assigned to ${ex.assignee}`;
     if (ex.dueDate) line += `, due ${ex.dueDate}`;
     return line;
