@@ -149,6 +149,7 @@ export const adminTools: NavigationTool[] = [
   { name: "Document Pipeline", path: "/admin/documents/pipeline", icon: FolderOpen, requiresProject: false, adminOnly: true },
   { name: "AI Compiler Health", path: "/intelligence-compiler", icon: BrainCircuit, requiresProject: false, adminOnly: true },
   { name: "Project Attribution", path: "/project-attribution", icon: Brain, requiresProject: false, adminOnly: true },
+  { name: "Task Training", path: "/task-training", icon: Brain, requiresProject: false, adminOnly: true },
   { name: "Knowledge Sources", path: "/knowledge/manage", icon: BookOpen, requiresProject: false, adminOnly: true },
   // AI SDK DevTools — only visible in development (http://localhost:4983)
   ...(process.env.NODE_ENV === "development"
