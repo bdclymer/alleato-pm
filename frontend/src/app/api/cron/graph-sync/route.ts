@@ -61,7 +61,7 @@ export const POST = withApiGuardrails("/api/cron/graph-sync#POST", async ({ requ
   const result = await fetchWithGuardrails(`${backendUrl}/api/graph/sync`, {
     method: "POST",
     headers: {
-      "x-api-key": adminKey,
+      "x-admin-api-key": adminKey,
       "content-type": "application/json",
     },
     requestId: `cron-graph-sync-${Date.now()}`,

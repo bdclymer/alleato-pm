@@ -1906,6 +1906,8 @@ export type Database = {
       admin_feedback_items: {
         Row: {
           agent_context: Json | null
+          assignee_id: string | null
+          board_status: string
           comment: string
           created_at: string
           created_by: string
@@ -1914,10 +1916,12 @@ export type Database = {
           github_issue_state: string | null
           github_issue_url: string | null
           id: string
+          linear_issue_id: string | null
           metadata: Json
           page_path: string
           page_title: string | null
           page_url: string
+          position: number
           project_id: number | null
           request_type: string
           screenshot_path: string | null
@@ -1935,6 +1939,8 @@ export type Database = {
         }
         Insert: {
           agent_context?: Json | null
+          assignee_id?: string | null
+          board_status?: string
           comment: string
           created_at?: string
           created_by: string
@@ -1943,10 +1949,12 @@ export type Database = {
           github_issue_state?: string | null
           github_issue_url?: string | null
           id?: string
+          linear_issue_id?: string | null
           metadata?: Json
           page_path: string
           page_title?: string | null
           page_url: string
+          position?: number
           project_id?: number | null
           request_type?: string
           screenshot_path?: string | null
@@ -1964,6 +1972,8 @@ export type Database = {
         }
         Update: {
           agent_context?: Json | null
+          assignee_id?: string | null
+          board_status?: string
           comment?: string
           created_at?: string
           created_by?: string
@@ -1972,10 +1982,12 @@ export type Database = {
           github_issue_state?: string | null
           github_issue_url?: string | null
           id?: string
+          linear_issue_id?: string | null
           metadata?: Json
           page_path?: string
           page_title?: string | null
           page_url?: string
+          position?: number
           project_id?: number | null
           request_type?: string
           screenshot_path?: string | null
@@ -1992,6 +2004,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "admin_feedback_items_assignee_id_fkey"
+            columns: ["assignee_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "admin_feedback_items_created_by_fkey"
             columns: ["created_by"]
@@ -2568,6 +2587,105 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_task_feedback: {
+        Row: {
+          created_at: string
+          id: string
+          learning_id: string | null
+          project_id: number | null
+          promoted: boolean
+          reason: string | null
+          session_id: string | null
+          signal: string
+          task_id: string | null
+          task_snapshot: Json
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          learning_id?: string | null
+          project_id?: number | null
+          promoted?: boolean
+          reason?: string | null
+          session_id?: string | null
+          signal: string
+          task_id?: string | null
+          task_snapshot: Json
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          learning_id?: string | null
+          project_id?: number | null
+          promoted?: boolean
+          reason?: string | null
+          session_id?: string | null
+          signal?: string
+          task_id?: string | null
+          task_snapshot?: Json
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_task_feedback_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "ai_task_feedback_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_task_feedback_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_task_feedback_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "ai_task_feedback_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_task_feedback_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_task_feedback_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_task_feedback_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "schedule_tasks"
             referencedColumns: ["id"]
           },
         ]
@@ -3560,6 +3678,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      bot_debug_log: {
+        Row: {
+          checkpoint: string
+          created_at: string
+          extra: Json | null
+          id: string
+          message_preview: string | null
+          platform: string
+          platform_user_id: string | null
+          supabase_user_id: string | null
+          thread_id: string | null
+        }
+        Insert: {
+          checkpoint: string
+          created_at?: string
+          extra?: Json | null
+          id?: string
+          message_preview?: string | null
+          platform: string
+          platform_user_id?: string | null
+          supabase_user_id?: string | null
+          thread_id?: string | null
+        }
+        Update: {
+          checkpoint?: string
+          created_at?: string
+          extra?: Json | null
+          id?: string
+          message_preview?: string | null
+          platform?: string
+          platform_user_id?: string | null
+          supabase_user_id?: string | null
+          thread_id?: string | null
+        }
+        Relationships: []
       }
       bot_user_mappings: {
         Row: {
@@ -27219,6 +27373,41 @@ export type Database = {
         }
         Relationships: []
       }
+      task_comments: {
+        Row: {
+          author_id: string
+          body: string
+          created_at: string
+          id: string
+          task_id: string
+          updated_at: string
+        }
+        Insert: {
+          author_id: string
+          body: string
+          created_at?: string
+          id?: string
+          task_id: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          created_at?: string
+          id?: string
+          task_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_comments_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tasks: {
         Row: {
           assigned_by: string | null
@@ -33927,3 +34116,4 @@ export const Constants = {
     },
   },
 } as const
+<claude-code-hint v="1" type="plugin" value="supabase@claude-plugins-official" />
