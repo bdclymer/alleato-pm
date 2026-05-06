@@ -23,7 +23,6 @@ interface OutlookIntakeRow {
   mailbox_user_id: string;
   project_id: number | null;
   document_metadata_id: string | null;
-  document_metadata: { status: string } | null;
   conversation_id: string | null;
   subject: string;
   from_name: string | null;
@@ -39,6 +38,8 @@ interface OutlookIntakeRow {
   projects: IntakeProjectRow | null;
   outlook_email_intake_attachments: IntakeAttachmentRow[] | null;
 }
+
+const DOCUMENT_STATUS_LOOKUP_BATCH_SIZE = 25;
 
 async function assertAdminAccess(where: string) {
   const supabase = await createClient();
@@ -93,9 +94,6 @@ export const GET = withApiGuardrails("outlook-intake#GET", async ({ request }) =
         mailbox_user_id,
         project_id,
         document_metadata_id,
-        document_metadata (
-          status
-        ),
         conversation_id,
         subject,
         from_name,
@@ -143,12 +141,51 @@ export const GET = withApiGuardrails("outlook-intake#GET", async ({ request }) =
     });
   }
 
-  const rows = ((data ?? []) as unknown as OutlookIntakeRow[]).map((row) => ({
+  const intakeRows = (data ?? []) as unknown as OutlookIntakeRow[];
+  const documentMetadataIds = [
+    ...new Set(
+      intakeRows
+        .map((row) => row.document_metadata_id)
+        .filter((id): id is string => Boolean(id)),
+    ),
+  ];
+  const documentStatusById = new Map<string, string | null>();
+
+  for (
+    let index = 0;
+    index < documentMetadataIds.length;
+    index += DOCUMENT_STATUS_LOOKUP_BATCH_SIZE
+  ) {
+    const documentMetadataIdBatch = documentMetadataIds.slice(
+      index,
+      index + DOCUMENT_STATUS_LOOKUP_BATCH_SIZE,
+    );
+    const { data: documentRows, error: documentError } = await supabase
+      .from("document_metadata")
+      .select("id, status")
+      .in("id", documentMetadataIdBatch);
+
+    if (documentError) {
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: "outlook-intake#GET",
+        message: documentError.message,
+      });
+    }
+
+    for (const documentRow of documentRows ?? []) {
+      documentStatusById.set(documentRow.id, documentRow.status ?? null);
+    }
+  }
+
+  const rows = intakeRows.map((row) => ({
     id: row.id,
     graphMessageId: row.graph_message_id,
     mailboxUserId: row.mailbox_user_id,
     documentMetadataId: row.document_metadata_id,
-    documentStatus: row.document_metadata?.status ?? null,
+    documentStatus: row.document_metadata_id
+      ? (documentStatusById.get(row.document_metadata_id) ?? "missing_metadata")
+      : null,
     conversationId: row.conversation_id,
     subject: row.subject,
     fromName: row.from_name,

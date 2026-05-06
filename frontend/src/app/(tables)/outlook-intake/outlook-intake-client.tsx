@@ -105,6 +105,8 @@ function pipelineStatus(email: OutlookIntakeEmail): PipelineInfo {
       return { label: "Too short", variant: "neutral" };
     case "metadata_only":
       return { label: "Metadata only", variant: "neutral" };
+    case "missing_metadata":
+      return { label: "Metadata missing", variant: "error" };
     case "error":
       return { label: "Error", variant: "error" };
     default:
