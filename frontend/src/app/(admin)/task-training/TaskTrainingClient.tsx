@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { ThumbsUp, ThumbsDown, CheckCircle2, XCircle } from "lucide-react";
+import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { SectionHeader } from "@/components/ds/section-header";
@@ -57,9 +58,9 @@ export function TaskTrainingClient({ goodFeedback, badFeedback }: TaskTrainingCl
         method: "PATCH",
         body: JSON.stringify({ id, promoted: !current }),
       });
-    } catch {
-      // Revert optimistic update on failure
+    } catch (err) {
       setPromotedState((prev) => ({ ...prev, [id]: current }));
+      toast.error(err instanceof Error ? err.message : "Failed to update promotion status");
     } finally {
       setPromoting((prev) => ({ ...prev, [id]: false }));
     }
