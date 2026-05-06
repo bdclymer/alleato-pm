@@ -500,6 +500,24 @@ def ingest_recent_fireflies_endpoint(
     )
 
 
+@app.post("/api/graph/embed", tags=["Ingestion"], summary="Embed all pending Microsoft Graph documents (no sync)")
+async def graph_embed_endpoint(
+    _: None = Depends(require_admin_api_key),
+    limit: int = 1000,
+) -> Dict[str, Any]:
+    """Vectorize pending document_metadata rows (status raw_ingested/segmented/compiled).
+    Does not fetch new data from Graph — use /api/graph/sync for that.
+    Safe to call frequently. Idempotent."""
+    from src.services.supabase_helpers import get_supabase_client
+    from src.services.integrations.microsoft_graph.embed import embed_pending_graph_documents
+    import asyncio
+    client = get_supabase_client()
+    result = await asyncio.get_event_loop().run_in_executor(
+        None, lambda: embed_pending_graph_documents(client, limit=limit)
+    )
+    return result
+
+
 @app.post("/api/graph/sync", tags=["Ingestion"], summary="Trigger Microsoft Graph sync (Outlook / Teams / OneDrive)")
 async def graph_sync_endpoint(
     background_tasks: BackgroundTasks,

@@ -5,8 +5,10 @@
   "crons": [
     { "path": "/api/cron/decay-memories", "schedule": "0 4 * * 0" },
     { "path": "/api/cron/daily-flags", "schedule": "0 6 * * *" },
-    { "path": "/api/cron/acumatica-sync", "schedule": "0 12 * * *" },
+    { "path": "/api/cron/acumatica-sync", "schedule": "0 8,12,18 * * *" },
     { "path": "/api/cron/progress-reports", "schedule": "0 8 * * 1" },
-    { "path": "/api/admin/cron/extract-brandon-tasks", "schedule": "0 7 * * *" }
+    { "path": "/api/admin/cron/extract-brandon-tasks", "schedule": "0 7 * * *" },
+    { "path": "/api/cron/graph-sync", "schedule": "0 * * * *" },
+    { "path": "/api/cron/graph-embed", "schedule": "*/30 * * * *" }
   ]
 }
