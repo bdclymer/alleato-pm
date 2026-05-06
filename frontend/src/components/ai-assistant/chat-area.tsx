@@ -762,9 +762,9 @@ function ToolCallItem({
               taskId={confirmedTaskId ?? undefined}
               taskSnapshot={{
                 name: toStringValue(confirmedRecord.name) ?? "",
-                assignee: null,
-                dueDate: null,
-                priority: "normal",
+                assignee: toStringValue(confirmedRecord.assignee) ?? null,
+                dueDate: toStringValue(confirmedRecord.finish_date) ?? null,
+                priority: toStringValue(confirmedRecord.priority) ?? "normal",
                 notes: null,
                 projectId: taskProjectId,
               }}
