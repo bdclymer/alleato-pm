@@ -61,6 +61,11 @@ import {
   type AssistantIntent,
 } from "@/lib/ai/intent-router";
 import {
+  identityLooksLikeBrandon,
+  isPersonalDailyBriefRequest,
+  type SignedInBriefIdentity,
+} from "@/lib/ai/personal-daily-brief";
+import {
   loadCurrentIntelligencePacket,
   resolveIntelligenceTarget,
 } from "@/lib/ai/intelligence/packet-service";
@@ -787,6 +792,66 @@ function isBrandonDailyUpdateWidgetRequest(message: string): boolean {
     "what does brandon need",
     "what should brandon know",
   ].some((phrase) => normalized.includes(phrase));
+}
+
+async function loadSignedInBriefIdentity(params: {
+  supabase: ReturnType<typeof createServiceClient>;
+  userId: string;
+  userEmail?: string | null;
+}): Promise<SignedInBriefIdentity> {
+  const normalizedUserEmail = params.userEmail?.trim().toLowerCase() || null;
+  const [profileResult, authLinkResult, personByAuthResult] = await Promise.all([
+    params.supabase
+      .from("user_profiles")
+      .select("full_name,email")
+      .eq("id", params.userId)
+      .maybeSingle(),
+    params.supabase
+      .from("users_auth")
+      .select("person_id")
+      .eq("auth_user_id", params.userId)
+      .maybeSingle(),
+    params.supabase
+      .from("people")
+      .select("first_name,last_name,email")
+      .eq("auth_user_id", params.userId)
+      .maybeSingle(),
+  ]);
+
+  let person = personByAuthResult.data;
+  const personId = authLinkResult.data?.person_id;
+  if (!person && personId) {
+    const { data } = await params.supabase
+      .from("people")
+      .select("first_name,last_name,email")
+      .eq("id", personId)
+      .maybeSingle();
+    person = data;
+  }
+
+  if (!person && normalizedUserEmail) {
+    const { data } = await params.supabase
+      .from("people")
+      .select("first_name,last_name,email")
+      .ilike("email", normalizedUserEmail)
+      .maybeSingle();
+    person = data;
+  }
+
+  const personName = person
+    ? [person.first_name, person.last_name].filter(Boolean).join(" ").trim() || null
+    : null;
+  const identity = {
+    profileName: profileResult.data?.full_name ?? null,
+    profileEmail: profileResult.data?.email ?? normalizedUserEmail,
+    personName,
+    personEmail: person?.email ?? null,
+  };
+
+  return {
+    ...identity,
+    isBrandon: identityLooksLikeBrandon(identity),
+  };
 }
 
 function createBrandonDailyUpdateSummary(packet: BrandonDailyUpdatePacket): string {
@@ -2650,7 +2715,34 @@ export const POST = withApiGuardrails(
       output: intentPlannerDecision,
       timestamp: new Date().toISOString(),
     });
-    const brandonDailyUpdateWidgetRequest = isBrandonDailyUpdateWidgetRequest(lastUserContent);
+    const personalDailyBriefRequest = isPersonalDailyBriefRequest(lastUserContent);
+    const signedInBriefIdentity = personalDailyBriefRequest
+      ? await loadSignedInBriefIdentity({
+          supabase,
+          userId: user.id,
+          userEmail: user.email,
+        })
+      : null;
+    const brandonDailyUpdateWidgetRequest =
+      isBrandonDailyUpdateWidgetRequest(lastUserContent) ||
+      signedInBriefIdentity?.isBrandon === true;
+    if (personalDailyBriefRequest) {
+      toolTrace.push({
+        tool: "personalDailyBriefRouter",
+        input: {
+          message: lastUserContent,
+          userId: user.id,
+        },
+        output: {
+          routedToBrandonDailyUpdate: signedInBriefIdentity?.isBrandon === true,
+          profileName: signedInBriefIdentity?.profileName ?? null,
+          profileEmail: signedInBriefIdentity?.profileEmail ?? null,
+          personName: signedInBriefIdentity?.personName ?? null,
+          personEmail: signedInBriefIdentity?.personEmail ?? null,
+        },
+        timestamp: new Date().toISOString(),
+      });
+    }
     const forceBusinessRetrieval =
       shouldForceBusinessRetrieval(lastUserContent) ||
       actionFollowUpResponse ||
