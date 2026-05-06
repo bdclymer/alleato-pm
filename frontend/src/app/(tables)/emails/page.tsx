@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { PageShell } from "@/components/layout";
-import { EmailsClient } from "@/app/(main)/[projectId]/emails/emails-client";
+import { EmailSyncClient } from "./email-sync-client";
 
 export const metadata: Metadata = {
   title: "Emails",
@@ -8,13 +9,10 @@ export const metadata: Metadata = {
 
 export default function EmailsPage() {
   return (
-    <PageShell
-      variant="table"
-      title="Emails"
-      showHeader={false}
-      contentClassName="pt-0"
-    >
-      <EmailsClient scope="global" />
+    <PageShell variant="table" title="Emails" showHeader={false} contentClassName="pt-0">
+      <Suspense>
+        <EmailSyncClient />
+      </Suspense>
     </PageShell>
   );
 }
