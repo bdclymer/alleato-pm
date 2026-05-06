@@ -316,11 +316,18 @@ def _chat_display_name(chat: dict) -> tuple[str, list[str]]:
     return display, member_signals or member_names
 
 
+class ChatReadPermissionError(Exception):
+    """Raised when Chat.Read.All admin consent is missing (HTTP 403 from /users/{user}/chats)."""
+
+
 def get_user_chats(user_email: str) -> list[dict]:
     """
     List all oneOnOne and group chats for a user.
     Returns list of dicts with keys: id, chatType, display_name, member_names.
-    Requires Chat.Read.All. Member names require ChatMember.Read.All (optional).
+    Requires Chat.Read.All (application permission + admin consent in Azure AD).
+    Member names require ChatMember.Read.All (optional — graceful fallback).
+
+    Raises ChatReadPermissionError if Chat.Read.All admin consent is missing.
     """
     graph = get_graph_client()
     chats = []
@@ -345,9 +352,22 @@ def get_user_chats(user_email: str) -> list[dict]:
             logger.info(f"[Teams DM] Found {len(chats)} chats for {user_email}")
             return chats
         except Exception as e:
-            if "members" in params.get("$expand", "") and any(code in str(e) for code in ("400", "403", "Forbidden", "Bad Request")):
+            e_str = str(e)
+            is_403 = any(code in e_str for code in ("403", "Forbidden"))
+
+            # Member expansion 403/400 → retry without expansion (ChatMember.Read.All missing)
+            if "members" in params.get("$expand", "") and (is_403 or "400" in e_str or "Bad Request" in e_str):
                 logger.warning(f"[Teams DM] Member expansion not supported — retrying without it")
                 continue
+
+            # Base chats endpoint 403 → Chat.Read.All admin consent not granted
+            if is_403:
+                raise ChatReadPermissionError(
+                    f"Chat.Read.All admin consent missing for tenant — "
+                    f"grant consent in Azure AD > App registrations > API permissions. "
+                    f"User: {user_email}. Original error: {e_str}"
+                ) from e
+
             logger.error(f"[Teams DM] Failed to list chats for {user_email}: {e}")
             raise
 
