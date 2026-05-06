@@ -284,7 +284,7 @@ def run_graph_sync(supabase: Client) -> dict:
     # ── Embed any newly ingested documents ───────────────────────────────────
     if total > 0 or True:  # Always run to catch any previously unembedded docs
         try:
-            embed_result = embed_pending_graph_documents(supabase, limit=200)
+            embed_result = embed_pending_graph_documents(supabase, limit=1000)
             summary["embed"] = embed_result
             logger.info("[GraphSync] Embedding complete: %s", embed_result)
         except Exception as e:

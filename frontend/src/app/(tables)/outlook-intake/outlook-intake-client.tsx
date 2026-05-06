@@ -111,6 +111,7 @@ export function OutlookIntakeClient(): React.ReactElement {
   });
 
   const matchStatus = tableState.activeFilters.match_status as string | undefined;
+  const vectorizedFilter = tableState.activeFilters.vectorized as string | undefined;
   const params = new URLSearchParams();
   if (matchStatus) params.set("match_status", matchStatus);
   const queryString = params.toString();
@@ -126,6 +127,8 @@ export function OutlookIntakeClient(): React.ReactElement {
 
   const searchTerm = tableState.debouncedSearch.trim().toLowerCase();
   const filtered = data.filter((email) => {
+    if (vectorizedFilter === "yes" && !email.documentMetadataId) return false;
+    if (vectorizedFilter === "no" && email.documentMetadataId) return false;
     if (!searchTerm) return true;
     const fields = [
       email.subject,
@@ -241,9 +244,13 @@ export function OutlookIntakeClient(): React.ReactElement {
   const pageStart = (tableState.page - 1) * tableState.perPage;
   const paged = sorted.slice(pageStart, pageStart + tableState.perPage);
 
-  const updateMatchFilter = (next: string | undefined) => {
-    tableState.setActiveFilters({ match_status: next });
-    tableState.setSearchParams({ match_status: next ?? null, page: "1" });
+  const updateFilters = (next: Record<string, string | undefined>) => {
+    tableState.setActiveFilters(next);
+    tableState.setSearchParams({
+      match_status: next.match_status ?? null,
+      vectorized: next.vectorized ?? null,
+      page: "1",
+    });
     tableState.setPage(1);
   };
 
@@ -285,10 +292,23 @@ export function OutlookIntakeClient(): React.ReactElement {
               { label: "Error", value: "error" },
             ],
           },
+          {
+            id: "vectorized",
+            label: "Vectorized",
+            type: "select",
+            options: [
+              { label: "Yes", value: "yes" },
+              { label: "No", value: "no" },
+            ],
+          },
         ],
         activeFilters: tableState.activeFilters,
-        onFilterChange: (filters) => updateMatchFilter(filters.match_status as string | undefined),
-        onClearFilters: () => updateMatchFilter(undefined),
+        onFilterChange: (filters) =>
+          updateFilters({
+            match_status: filters.match_status as string | undefined,
+            vectorized: filters.vectorized as string | undefined,
+          }),
+        onClearFilters: () => updateFilters({}),
         columns: columnsConfig,
         visibleColumns: tableState.visibleColumns,
         onColumnVisibilityChange: tableState.setVisibleColumns,
