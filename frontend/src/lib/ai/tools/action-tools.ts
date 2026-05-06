@@ -18,6 +18,7 @@ import { matchFeedbackToTool } from "@/lib/admin-feedback/tool-matcher";
 import { resolveToolContext, contextToAgentPayload } from "@/lib/admin-feedback/context-resolver";
 import { ingestAdminFeedbackLearning } from "@/lib/ai/services/agent-learning-service";
 import { sendProactiveMessage } from "@/lib/bot/teams-chat";
+import { buildTaskFewShotBlock } from "@/lib/ai/services/task-training-service";
 
 export type ActionToolsOptions = {
   onTrace?: (trace: ToolTracePayload) => void;
@@ -669,9 +670,16 @@ export function createActionTools(
         if (!access.ok) return { success: false, error: access.error };
 
         if (!confirmed) {
+          let fewShotBlock = "";
+          try {
+            fewShotBlock = await buildTaskFewShotBlock(projectId);
+          } catch {
+            // non-critical
+          }
+
           return {
             action: "preview",
-            message: "Here's the task I'll create. Reply **confirm** to proceed.",
+            message: `Here's the task I'll create. Reply **confirm** to proceed.${fewShotBlock}`,
             preview: {
               table: "schedule_tasks",
               fields: {
