@@ -89,8 +89,10 @@ function getSavedPanelPct(): number {
       const pct = parseFloat(saved);
       if (pct >= PANEL_MIN_PCT && pct <= PANEL_MAX_PCT) return pct;
     }
-  } catch {
-    // ignore
+  } catch (error) {
+    console.warn("[tasks] Failed to read saved task panel width.", {
+      error: error instanceof Error ? error.message : String(error),
+    });
   }
   return PANEL_DEFAULT_PCT;
 }

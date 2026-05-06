@@ -16,12 +16,13 @@ export const dynamic = "force-dynamic";
  */
 
 import { NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
 import { createClient } from "@/lib/supabase/server";
 import { sendApprovedExecutiveBriefingToTeams } from "@/lib/executive/executive-briefing-teams-delivery";
 
 // ── Handler ───────────────────────────────────────────────────────────────────
 
-export async function POST(request: Request): Promise<Response> {
+export const POST = withApiGuardrails("executive/daily-brief/send-teams#POST", async ({ request }): Promise<Response> => {
   // Auth: CRON_SECRET bearer OR active session
   const authHeader = request.headers.get("authorization");
   const cronSecret = process.env.CRON_SECRET;
@@ -38,21 +39,28 @@ export async function POST(request: Request): Promise<Response> {
         data: { user },
       } = await supabase.auth.getUser();
       isAuthorized = Boolean(user);
-    } catch {
-      // not logged in
+    } catch (error) {
+      console.warn("[executive-briefing] Session auth check failed.", {
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 
   if (!isAuthorized) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json(
+      { success: false, error_code: "AUTH_EXPIRED", error_message: "Unauthorized" },
+      { status: 401 },
+    );
   }
 
   let body: { userId?: string } = {};
   try {
     const text = await request.text();
     if (text) body = JSON.parse(text) as { userId?: string };
-  } catch {
-    // empty or non-JSON body — use defaults
+  } catch (error) {
+    console.warn("[executive-briefing] Ignoring invalid optional Teams send body.", {
+      error: error instanceof Error ? error.message : String(error),
+    });
   }
 
   const result = await sendApprovedExecutiveBriefingToTeams({
@@ -65,4 +73,4 @@ export async function POST(request: Request): Promise<Response> {
   return NextResponse.json(result, {
     status: result.status === "blocked" ? 400 : 409,
   });
-}
+});

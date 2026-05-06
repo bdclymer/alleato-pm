@@ -11,8 +11,9 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 import { sendProactiveMessage } from "@/lib/bot/teams-chat";
+import { withApiGuardrails } from "@/lib/guardrails/api";
 
-export async function POST(request: Request): Promise<Response> {
+export const POST = withApiGuardrails("bot/teams/notify#POST", async ({ request }): Promise<Response> => {
   const authHeader = request.headers.get("authorization");
   const cronSecret = process.env.CRON_SECRET;
   if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
@@ -39,4 +40,4 @@ export async function POST(request: Request): Promise<Response> {
     console.error("[teams-notify] failed to send proactive message", { userId, error: msg });
     return NextResponse.json({ ok: false, error: msg }, { status: 500 });
   }
-}
+});

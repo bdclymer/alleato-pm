@@ -10,7 +10,8 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
+import { apiErrorResponse } from "@/lib/api-error";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import type { LinkTableName } from "@/lib/entity-links/table-map";
 
 const VALID_TABLES: LinkTableName[] = [
@@ -34,6 +35,14 @@ export async function DELETE(
   { params }: { params: Promise<{ linkId: string }> },
 ) {
   try {
+    const user = await getApiRouteUser();
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error_code: "AUTH_EXPIRED", error_message: "Unauthorized" },
+        { status: 401 },
+      );
+    }
+
     const { linkId } = await params;
     const { searchParams } = new URL(request.url);
     const table = searchParams.get("table");
@@ -77,9 +86,6 @@ export async function DELETE(
     return new NextResponse(null, { status: 204 });
   } catch (err) {
     console.error("[entity-links DELETE] unhandled error:", err);
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Internal server error" },
-      { status: 500 },
-    );
+    return apiErrorResponse(err);
   }
 }

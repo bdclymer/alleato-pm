@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 import { sendProactiveTeamsDM } from "@/lib/bot/teams-proactive";
+import { withApiGuardrails } from "@/lib/guardrails/api";
 import { logger } from "@/lib/logger";
 
 /**
@@ -14,7 +15,7 @@ import { logger } from "@/lib/logger";
  * Body: { userId: string, message: string }
  * Response: { sent: boolean, reason?: string }
  */
-export async function POST(request: Request): Promise<Response> {
+export const POST = withApiGuardrails("bot/proactive/teams#POST", async ({ request }): Promise<Response> => {
   const authHeader = request.headers.get("authorization");
   const serviceKey = process.env.NOTIFICATION_SERVICE_KEY;
 
@@ -51,4 +52,4 @@ export async function POST(request: Request): Promise<Response> {
     logger.error({ msg: "[bot/proactive/teams] failed", error: msg, userId });
     return NextResponse.json({ error: msg }, { status: 500 });
   }
-}
+});

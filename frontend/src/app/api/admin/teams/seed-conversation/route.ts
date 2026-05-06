@@ -26,6 +26,7 @@ export const dynamic = "force-dynamic";
  */
 
 import { NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
 import { createServiceClient } from "@/lib/supabase/service";
 import { createClient } from "@/lib/supabase/server";
 import type { Json } from "@/types/database.types";
@@ -97,7 +98,7 @@ function encodeThreadId(conversationId: string, serviceUrl: string): string {
 
 // ── Handler ───────────────────────────────────────────────────────────────────
 
-export async function POST(request: Request): Promise<Response> {
+export const POST = withApiGuardrails("admin/teams/seed-conversation#POST", async ({ request }): Promise<Response> => {
   // Auth: require active session
   const supabase = await createClient();
   const {
@@ -281,4 +282,4 @@ export async function POST(request: Request): Promise<Response> {
     serviceUrl,
     graphLookupUsed: !providedAadObjectId,
   });
-}
+});

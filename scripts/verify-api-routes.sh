@@ -119,7 +119,7 @@ section "4. Auth Checks on Mutations"
 AUTH_ISSUES=0
 while read -r file; do
   # Skip routes that intentionally have no user auth (use platform-level/HMAC auth instead)
-  if echo "$file" | grep -qE 'auth/signup/route\.ts|bot/\[platform\]/route\.ts|liveblocks/webhook/route\.ts'; then
+  if echo "$file" | grep -qE 'auth/signup/route\.ts|auth/forgot-password/route\.ts|bot/\[platform\]/route\.ts|bot/teams/route\.ts|liveblocks/webhook/route\.ts'; then
     continue
   fi
   for method in POST PUT PATCH DELETE; do
