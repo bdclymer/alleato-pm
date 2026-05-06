@@ -54,6 +54,7 @@ interface OutlookIntakeEmail {
   graphMessageId: string;
   mailboxUserId: string;
   documentMetadataId: string | null;
+  documentStatus: string | null;
   subject: string;
   fromName: string | null;
   fromEmail: string | null;
@@ -78,10 +79,36 @@ const columnsConfig = [
   { id: "from", label: "From", defaultVisible: true },
   { id: "project", label: "Project", defaultVisible: true },
   { id: "match", label: "Status", defaultVisible: true },
+  { id: "pipeline", label: "Pipeline", defaultVisible: true },
   { id: "received", label: "Date", defaultVisible: true },
   { id: "attachments", label: "Attachments", defaultVisible: true },
   { id: "mailbox", label: "Mailbox", defaultVisible: false },
 ];
+
+type PipelineInfo = { label: string; variant: "success" | "warning" | "error" | "info" | "neutral" };
+
+/** Map document_metadata.status → label + badge variant */
+function pipelineStatus(email: OutlookIntakeEmail): PipelineInfo {
+  if (!email.documentMetadataId) {
+    return { label: "Not indexed", variant: "neutral" };
+  }
+  switch (email.documentStatus) {
+    case "embedded":
+    case "compiled":
+    case "segmented":
+      return { label: "Vectorized", variant: "success" };
+    case "raw_ingested":
+      return { label: "Pending", variant: "warning" };
+    case "skipped_low_content":
+      return { label: "Too short", variant: "neutral" };
+    case "metadata_only":
+      return { label: "Metadata only", variant: "neutral" };
+    case "error":
+      return { label: "Error", variant: "error" };
+    default:
+      return { label: "Indexed", variant: "info" };
+  }
+}
 
 function formatDate(value: string | null): string {
   if (!value) return "Unknown";
@@ -302,6 +329,17 @@ export function OutlookIntakeClient({ unassigned, embedded }: { unassigned?: boo
         render: (email) => <StatusBadge status={email.matchStatus} />,
         sortable: true,
         sortValue: (email) => email.matchStatus,
+      },
+      {
+        id: "pipeline",
+        label: "Pipeline",
+        width: 130,
+        render: (email) => {
+          const { label, variant } = pipelineStatus(email);
+          return <StatusBadge status={label} variant={variant} />;
+        },
+        sortable: true,
+        sortValue: (email) => pipelineStatus(email).label,
       },
       {
         id: "received",

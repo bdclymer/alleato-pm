@@ -23,6 +23,7 @@ interface OutlookIntakeRow {
   mailbox_user_id: string;
   project_id: number | null;
   document_metadata_id: string | null;
+  document_metadata: { status: string } | null;
   subject: string;
   from_name: string | null;
   from_email: string | null;
@@ -80,6 +81,7 @@ export const GET = withApiGuardrails("outlook-intake#GET", async ({ request }) =
   const supabase = await assertAdminAccess("outlook-intake#GET");
   const { searchParams } = new URL(request.url);
   const matchStatus = searchParams.get("match_status");
+  const unassigned = searchParams.get("unassigned") === "true";
 
   let query = supabase
     .from("outlook_email_intake")
@@ -90,6 +92,9 @@ export const GET = withApiGuardrails("outlook-intake#GET", async ({ request }) =
         mailbox_user_id,
         project_id,
         document_metadata_id,
+        document_metadata (
+          status
+        ),
         subject,
         from_name,
         from_email,
@@ -122,6 +127,10 @@ export const GET = withApiGuardrails("outlook-intake#GET", async ({ request }) =
     query = query.eq("match_status", matchStatus);
   }
 
+  if (unassigned) {
+    query = query.is("project_id", null);
+  }
+
   const { data, error } = await query;
 
   if (error) {
@@ -137,6 +146,7 @@ export const GET = withApiGuardrails("outlook-intake#GET", async ({ request }) =
     graphMessageId: row.graph_message_id,
     mailboxUserId: row.mailbox_user_id,
     documentMetadataId: row.document_metadata_id,
+    documentStatus: row.document_metadata?.status ?? null,
     subject: row.subject,
     fromName: row.from_name,
     fromEmail: row.from_email,
