@@ -30,6 +30,7 @@ import {
 
 import { PageActions } from "./page-actions";
 import { formatCurrency } from "@/lib/format";
+import { apiFetch } from "@/lib/api-client";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -225,15 +226,10 @@ export function ChangeOrdersClient({
   };
   const handleDeletePrime = async (co: PrimeContractCO) => {
     try {
-      const res = await fetch(
+      await apiFetch(
         `/api/projects/${projectId}/prime-contract-change-orders/${co.id}`,
         { method: "DELETE" },
       );
-      if (!res.ok) {
-        const err = await res.json();
-        toast.error(err.error || "Failed to delete");
-        return;
-      }
       toast.success("Change order deleted");
       router.refresh();
     } catch (err) {
@@ -253,15 +249,10 @@ export function ChangeOrdersClient({
       return;
     }
     try {
-      const res = await fetch(
+      await apiFetch(
         `/api/commitments/${co.contract_id}/change-orders/${co.id}`,
         { method: "DELETE" },
       );
-      if (!res.ok) {
-        const err = await res.json();
-        toast.error(err.error || "Failed to delete");
-        return;
-      }
       toast.success("Change order deleted");
       router.refresh();
     } catch (err) {

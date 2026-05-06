@@ -9,6 +9,13 @@ import { SectionRuleHeading } from "@/components/layout/spacing";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { apiFetch } from "@/lib/api-client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -45,7 +52,7 @@ function StatusDot({ status }: { status: TestStatus }) {
         "h-2 w-2 shrink-0 rounded-full",
         status === "pass" && "bg-success",
         status === "fail" && "bg-destructive",
-        status === "fixed" && "bg-teal-500",
+        status === "fixed" && "bg-status-info",
         (status === "skip" || status === "not_tested") && "bg-muted-foreground/40",
       )}
       aria-hidden
@@ -220,18 +227,22 @@ function CaseDetail({
           <h2 className="text-lg font-semibold leading-snug">{tc.test_name}</h2>
 
           {/* Status dropdown */}
-          <select
+          <Select
             value={result.status}
             disabled={updatingStatus}
-            onChange={(e) => void handleStatusChange(e.target.value as TestStatus)}
-            className="shrink-0 rounded-md border border-border bg-background px-2 py-1 text-xs text-foreground shadow-xs focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50"
+            onValueChange={(v) => void handleStatusChange(v as TestStatus)}
           >
-            {STATUS_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger className="shrink-0 w-36 h-7 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {STATUS_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value} className="text-xs">
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -468,7 +479,7 @@ export default function RunPage() {
     setSeverity(null);
     setVideoUrl("");
     setLocalScreenshots([]);
-  }, [current?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [current?.id]);  
 
   const counts = useMemo(() => {
     const c = { pass: 0, fail: 0, skip: 0, notTested: 0, fixed: 0 };
@@ -649,14 +660,15 @@ export default function RunPage() {
         <div className="w-96 shrink-0 flex flex-col border-r border-border/60 bg-muted/10">
           {/* Run header */}
           <div className="px-4 py-4 space-y-3">
-            <button
+            <Button
               type="button"
+              variant="ghost"
               onClick={() => router.push("/testing/runs")}
-              className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+              className="flex items-center gap-1.5 h-auto text-xs text-muted-foreground hover:text-foreground transition-colors p-0"
             >
               <ArrowLeft className="h-3 w-3" />
               All runs
-            </button>
+            </Button>
             <div>
               <p className="text-sm font-semibold leading-tight">{suiteName}</p>
               <p className="text-xs text-muted-foreground mt-0.5">
@@ -671,7 +683,7 @@ export default function RunPage() {
               </span>
               {counts.fixed > 0 && (
                 <span>
-                  <span className="font-semibold text-teal-500">{counts.fixed}</span>
+                  <span className="font-semibold text-status-info">{counts.fixed}</span>
                   <span className="text-muted-foreground"> fixed</span>
                 </span>
               )}
@@ -690,12 +702,13 @@ export default function RunPage() {
           {/* Filter tabs */}
           <div className="flex border-b border-border/40 shrink-0">
             {tabs.map((t) => (
-              <button
+              <Button
                 key={t.key}
                 type="button"
+                variant="ghost"
                 onClick={() => setTab(t.key)}
                 className={cn(
-                  "flex-1 py-2.5 text-xs font-medium text-center transition-colors",
+                  "flex-1 py-2.5 h-auto text-xs font-medium text-center transition-colors rounded-none",
                   tab === t.key
                     ? "text-foreground border-b-2 border-primary -mb-px"
                     : "text-muted-foreground hover:text-foreground",
@@ -708,13 +721,13 @@ export default function RunPage() {
                     tab === t.key && t.key === "failed"
                       ? "bg-destructive/10 text-destructive"
                       : tab === t.key && t.key === "fixed"
-                        ? "bg-teal-500/10 text-teal-600"
+                        ? "bg-status-success/10 text-status-success"
                         : "text-muted-foreground",
                   )}
                 >
                   {t.count}
                 </span>
-              </button>
+              </Button>
             ))}
           </div>
 
@@ -726,12 +739,13 @@ export default function RunPage() {
               </p>
             ) : (
               filtered.map((r) => (
-                <button
+                <Button
                   key={r.id}
                   type="button"
+                  variant="ghost"
                   onClick={() => setSelectedId(r.id)}
                   className={cn(
-                    "w-full text-left px-4 py-3 border-b border-border/30 transition-colors hover:bg-muted/40",
+                    "w-full justify-start text-left h-auto px-4 py-3 border-b border-border/30 transition-colors rounded-none",
                     selectedId === r.id && "bg-muted/60",
                   )}
                 >
@@ -742,7 +756,7 @@ export default function RunPage() {
                     </span>
                     <span className="text-xs font-medium truncate">{r.test_cases.test_name}</span>
                   </div>
-                  <div className="mt-0.5 pl-[22px] flex items-center gap-2">
+                  <div className="mt-0.5 pl-6 flex items-center gap-2">
                     {r.severity && (
                       <SeverityBadge severity={r.severity} />
                     )}
@@ -764,7 +778,7 @@ export default function RunPage() {
                       <p className="text-[11px] text-muted-foreground truncate">{r.notes}</p>
                     )}
                   </div>
-                </button>
+                </Button>
               ))
             )}
           </div>
@@ -905,19 +919,20 @@ export default function RunPage() {
             <p className="text-xs text-muted-foreground">Severity</p>
             <div className="flex flex-wrap gap-2">
               {(["critical", "major", "minor", "cosmetic"] as Severity[]).map((s) => (
-                <button
+                <Button
                   key={s}
                   type="button"
+                  variant="ghost"
                   onClick={() => setSeverity(s === severity ? null : s)}
                   className={cn(
-                    "rounded-full px-3 py-1 text-xs font-medium capitalize transition-colors",
+                    "rounded-full px-3 py-1 h-auto text-xs font-medium capitalize transition-colors",
                     severity === s
                       ? SEVERITY_STYLES[s]
                       : "bg-muted/60 text-muted-foreground hover:bg-muted",
                   )}
                 >
                   {s}
-                </button>
+                </Button>
               ))}
             </div>
           </div>
@@ -940,15 +955,16 @@ export default function RunPage() {
               Screenshots{" "}
               <span className="font-normal text-muted-foreground/60">(paste from clipboard or choose file)</span>
             </p>
-            <button
+            <Button
               type="button"
+              variant="ghost"
               disabled={uploadingScreenshot}
               onClick={() => fileInputRef.current?.click()}
-              className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-md border-2 border-dashed border-border/60 px-4 py-4 text-xs text-muted-foreground transition-colors hover:border-border hover:bg-muted/30 disabled:opacity-50"
+              className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-md border-2 border-dashed border-border/60 px-4 py-4 h-auto text-xs text-muted-foreground transition-colors hover:border-border hover:bg-muted/30 disabled:opacity-50"
             >
               <Upload className="h-4 w-4" />
               {uploadingScreenshot ? "Uploading…" : "Click to upload or Ctrl+V to paste"}
-            </button>
+            </Button>
             <input
               ref={fileInputRef}
               type="file"
@@ -965,7 +981,7 @@ export default function RunPage() {
               <div className="flex flex-wrap gap-2 pt-1">
                 {localScreenshots.map((s, i) => (
                   <div key={i} className="overflow-hidden rounded border border-border">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    { }
                     <img src={s.url} alt={s.label} className="h-20 w-32 object-cover" />
                     <p className="truncate px-1.5 py-0.5 text-[10px] text-muted-foreground">{s.label}</p>
                   </div>

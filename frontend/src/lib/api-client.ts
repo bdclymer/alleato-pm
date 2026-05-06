@@ -266,6 +266,29 @@ export async function apiFetchBlob(
 }
 
 /**
+ * Raw fetch wrapper for endpoints that return non-standard HTTP status codes
+ * (e.g. 207 Multi-Status for bulk operations). Returns the raw Response so the
+ * caller can inspect status codes that apiFetch would otherwise throw on.
+ *
+ * Only use this when the endpoint intentionally returns a non-2xx/non-204 status
+ * as part of its normal protocol. For everything else, use apiFetch.
+ */
+export async function apiFetchRaw(
+  url: string,
+  init?: RequestInit,
+): Promise<Response> {
+  const headers = new Headers(init?.headers);
+  if (!(init?.body instanceof FormData) && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
+  return fetch(url, {
+    ...init,
+    credentials: init?.credentials ?? "same-origin",
+    headers,
+  });
+}
+
+/**
  * Helper for bulk operations with Promise.allSettled.
  * Extracts the actual error message from the first rejection.
  *

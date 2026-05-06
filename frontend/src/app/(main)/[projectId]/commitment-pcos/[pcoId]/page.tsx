@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+import { apiFetch } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -64,15 +65,10 @@ export default function CommitmentPcoDetailPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await fetch(
+      const data = await apiFetch(
         `/api/projects/${projectId}/commitment-pcos/${pcoId}`,
       );
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error || "Failed to load PCO");
-      }
-      const data = await res.json();
-      setPco(data);
+      setPco(data as typeof pco);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load PCO");
     } finally {
@@ -98,14 +94,10 @@ export default function CommitmentPcoDetailPage() {
 
   const handleDelete = useCallback(async () => {
     try {
-      const res = await fetch(
+      await apiFetch(
         `/api/projects/${projectId}/commitment-pcos/${pcoId}`,
         { method: "DELETE" },
       );
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error || "Failed to delete PCO");
-      }
       toast.success("PCO deleted");
       setShowDeleteDialog(false);
       router.push(`/${projectId}/commitment-pcos`);
@@ -116,14 +108,10 @@ export default function CommitmentPcoDetailPage() {
 
   const handlePromote = useCallback(async () => {
     try {
-      const res = await fetch(
+      await apiFetch(
         `/api/projects/${projectId}/commitment-pcos/${pcoId}/promote`,
         { method: "POST" },
       );
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error || "Failed to promote PCO");
-      }
       toast.success("PCO promoted to Change Order");
       setShowPromoteDialog(false);
       fetchPco();

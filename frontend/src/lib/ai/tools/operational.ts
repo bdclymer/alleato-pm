@@ -2359,16 +2359,110 @@ export function createOperationalTools(
     }),
 
     // -----------------------------------------------------------------
-    // 16. searchEmails — Outlook emails via Microsoft Graph
+    // 16. getRecentEmails — Date-based email retrieval from Outlook intake
+    // -----------------------------------------------------------------
+
+    getRecentEmails: tool({
+      description:
+        "Get a list of Outlook emails received within a specific date range. " +
+        "Use this when the user asks a time-based question about emails: " +
+        "'what emails did I receive today?', 'show me emails from this week', " +
+        "'any emails received yesterday?', 'how many emails came in today?'. " +
+        "This is a structured date query — NOT a semantic/topic search. " +
+        "Queries all synced mailboxes. Returns subject, sender, recipients, date received, and a short preview. " +
+        "Always summarize results as a list with sender and date.",
+      inputSchema: z.object({
+        daysBack: z
+          .number()
+          .optional()
+          .default(1)
+          .describe(
+            "How many days back to look. 0 = today only, 1 = yesterday through now, 7 = last 7 days. Default 1.",
+          ),
+        mailboxFilter: z
+          .string()
+          .optional()
+          .describe(
+            "Optional: filter to a specific mailbox email address (e.g. 'brandon@alleatogroup.com'). Omit to see all synced mailboxes.",
+          ),
+        limit: z
+          .number()
+          .optional()
+          .default(50)
+          .describe("Max emails to return. Default 50."),
+      }),
+      execute: withTrace(
+        "getRecentEmails",
+        options,
+        async ({ daysBack = 1, mailboxFilter, limit = 50 }) => {
+          const access = await requireAdminForCommunications("Email");
+          if (!access.ok) return { error: access.error };
+
+          const since = new Date();
+          since.setDate(since.getDate() - daysBack);
+          since.setHours(0, 0, 0, 0);
+
+          let query = supabase
+            .from("outlook_email_intake")
+            .select(
+              "id, subject, from_name, from_email, to_list, cc_list, received_at, mailbox_user_id, body_text, has_attachments, project_id, web_link",
+            )
+            .is("deleted_at", null)
+            .gte("received_at", since.toISOString())
+            .order("received_at", { ascending: false })
+            .limit(limit);
+
+          if (mailboxFilter) {
+            query = query.eq("mailbox_user_id", mailboxFilter);
+          }
+
+          const { data, error } = await query;
+
+          if (error) {
+            return { error: `Failed to fetch emails: ${error.message}` };
+          }
+
+          if (!data || data.length === 0) {
+            const rangeLabel = daysBack === 0 ? "today" : `the last ${daysBack} day${daysBack === 1 ? "" : "s"}`;
+            return {
+              emails: [],
+              summary: `No emails received ${rangeLabel}${mailboxFilter ? ` for ${mailboxFilter}` : ""}.`,
+            };
+          }
+
+          const emails = data.map((e) => ({
+            subject: e.subject,
+            from: e.from_name ? `${e.from_name} <${e.from_email}>` : (e.from_email ?? "Unknown"),
+            to: Array.isArray(e.to_list) ? e.to_list.join(", ") : e.to_list,
+            receivedAt: e.received_at,
+            mailbox: e.mailbox_user_id,
+            preview: e.body_text ? e.body_text.slice(0, 200).replace(/\s+/g, " ").trim() : null,
+            hasAttachments: e.has_attachments,
+            projectId: e.project_id,
+            webLink: e.web_link,
+          }));
+
+          const rangeLabel = daysBack === 0 ? "today" : `the last ${daysBack} day${daysBack === 1 ? "" : "s"}`;
+          return {
+            emails,
+            count: emails.length,
+            summary: `Found ${emails.length} email${emails.length === 1 ? "" : "s"} received ${rangeLabel}${mailboxFilter ? ` for ${mailboxFilter}` : ""}.`,
+          };
+        },
+      ),
+    }),
+
+    // -----------------------------------------------------------------
+    // 17. searchEmails — Semantic topic search across Outlook email content
     // -----------------------------------------------------------------
 
     searchEmails: tool({
       description:
-        "Search Outlook email threads synced from Microsoft 365. " +
-        "Use this when the user asks about emails, email conversations, " +
-        "messages sent or received about a topic, or when they want to " +
-        "know what was communicated via email (e.g. 'any emails about the permit delay?', " +
-        "'what did we send to the GC about change orders?'). " +
+        "Semantic search across Outlook email content synced from Microsoft 365. " +
+        "Use this when the user asks about a TOPIC in emails — not a date range. " +
+        "Examples: 'any emails about the permit delay?', 'what did we send to the GC about change orders?', " +
+        "'find emails mentioning the subcontractor dispute'. " +
+        "For date-based questions ('what emails today?', 'show me this week's emails'), use getRecentEmails instead. " +
         "Returns email subject, sender/recipients, date, and relevant content. " +
         "Always cite results as 'email from [participants] on [date]'.",
       inputSchema: z.object({

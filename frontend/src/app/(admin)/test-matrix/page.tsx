@@ -7,12 +7,12 @@ import { PageShell } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalTitle,
+  ModalFooter,
+} from "@/components/ui/unified-modal";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -171,7 +171,7 @@ export default function TestingPage() {
     const cur = filteredResults[cursor];
     setNotesDraft(cur?.notes ?? "");
     setShowNotes(false);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, [cursor, activeRunId]);
 
   // ── Filtered view ──
@@ -329,26 +329,29 @@ export default function TestingPage() {
             </div>
             <div className="space-y-1 max-h-36 overflow-y-auto">
               {runs.map((run) => (
-                <button
+                <Button
                   key={run.id}
+                  variant="ghost"
                   onClick={() => setActiveRunId(run.id)}
                   className={cn(
-                    "w-full text-left px-2 py-1.5 rounded text-xs transition-colors",
+                    "w-full justify-start px-2 py-1.5 h-auto text-xs",
                     activeRunId === run.id
                       ? "bg-primary text-primary-foreground"
-                      : "hover:bg-muted text-muted-foreground"
+                      : "text-muted-foreground"
                   )}
                 >
-                  <div className="font-medium truncate">
-                    {new Date(run.run_date).toLocaleDateString()} · {run.environment}
+                  <div className="text-left w-full">
+                    <div className="font-medium truncate">
+                      {new Date(run.run_date).toLocaleDateString()} · {run.environment}
+                    </div>
+                    <div className="flex gap-2 mt-0.5 opacity-80">
+                      <span className="text-status-success">✓{run.pass}</span>
+                      <span className="text-destructive">✗{run.fail}</span>
+                      <span className="text-muted-foreground">–{run.skip}</span>
+                      <span>○{run.not_tested}</span>
+                    </div>
                   </div>
-                  <div className="flex gap-2 mt-0.5 opacity-80">
-                    <span className="text-green-400">✓{run.pass}</span>
-                    <span className="text-red-400">✗{run.fail}</span>
-                    <span className="text-zinc-400">–{run.skip}</span>
-                    <span>○{run.not_tested}</span>
-                  </div>
-                </button>
+                </Button>
               ))}
               {runs.length === 0 && (
                 <p className="text-xs text-muted-foreground px-2 py-2">No runs yet. Create one →</p>
@@ -359,18 +362,19 @@ export default function TestingPage() {
           {/* Filter tabs */}
           <div className="flex border-b border-border">
             {(["all", "not_tested", "fail", "pass", "skip"] as const).map((f) => (
-              <button
+              <Button
                 key={f}
+                variant="ghost"
                 onClick={() => { setFilterStatus(f); setCursor(0); }}
                 className={cn(
-                  "flex-1 py-1.5 text-[10px] font-medium transition-colors",
+                  "flex-1 py-1.5 h-auto text-[10px] font-medium transition-colors rounded-none",
                   filterStatus === f
                     ? "border-b-2 border-primary text-foreground"
                     : "text-muted-foreground hover:text-foreground"
                 )}
               >
                 {f === "not_tested" ? "TODO" : f === "all" ? "All" : f.charAt(0).toUpperCase() + f.slice(1)}
-              </button>
+              </Button>
             ))}
           </div>
 
@@ -385,14 +389,15 @@ export default function TestingPage() {
                   const globalIdx = filteredResults.indexOf(r);
                   const Icon = STATUS_CONFIG[r.status].icon;
                   return (
-                    <button
+                    <Button
                       key={r.id}
+                      variant="ghost"
                       onClick={() => setCursor(globalIdx)}
                       className={cn(
-                        "w-full text-left flex items-start gap-2 px-3 py-1.5 transition-colors",
+                        "w-full justify-start text-left items-start gap-2 px-3 py-1.5 h-auto transition-colors rounded-none",
                         globalIdx === cursor
                           ? "bg-primary/10 text-foreground"
-                          : "hover:bg-muted text-muted-foreground"
+                          : "text-muted-foreground"
                       )}
                     >
                       <Icon className={cn("h-3 w-3 mt-0.5 shrink-0", STATUS_CONFIG[r.status].color)} />
@@ -400,7 +405,7 @@ export default function TestingPage() {
                         <span className="text-[10px] opacity-60 mr-1">{r.test_cases?.test_number}</span>
                         {r.test_cases?.test_name}
                       </span>
-                    </button>
+                    </Button>
                   );
                 })}
               </div>
@@ -435,7 +440,7 @@ export default function TestingPage() {
           ) : !current ? (
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center space-y-2">
-                <CheckCircle2 className="h-10 w-10 text-green-500 mx-auto" />
+                <CheckCircle2 className="h-10 w-10 text-status-success mx-auto" />
                 <p className="font-medium">All done!</p>
                 <p className="text-sm text-muted-foreground">
                   {stats.pass} passed · {stats.fail} failed · {stats.skip} skipped
@@ -457,10 +462,10 @@ export default function TestingPage() {
                 <div className="flex items-center gap-4 text-sm">
                   <span className="text-muted-foreground">{cursor + 1} / {filteredResults.length}</span>
                   <span className="flex gap-3">
-                    <span className="text-green-600 font-medium">✓ {stats.pass}</span>
-                    <span className="text-red-500 font-medium">✗ {stats.fail}</span>
-                    <span className="text-zinc-400">– {stats.skip}</span>
-                    <span className="text-zinc-300">○ {stats.not_tested}</span>
+                    <span className="text-status-success font-medium">✓ {stats.pass}</span>
+                    <span className="text-destructive font-medium">✗ {stats.fail}</span>
+                    <span className="text-muted-foreground">– {stats.skip}</span>
+                    <span className="text-muted-foreground/60">○ {stats.not_tested}</span>
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -523,12 +528,14 @@ export default function TestingPage() {
 
                 {/* Notes */}
                 <div>
-                  <button
-                    className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1 hover:text-foreground transition-colors"
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1 hover:text-foreground transition-colors h-auto p-0"
                     onClick={() => setShowNotes((v) => !v)}
                   >
                     Notes {notesDraft ? "●" : ""} <span className="text-[10px] opacity-60">(C)</span>
-                  </button>
+                  </Button>
                   {showNotes && (
                     <Textarea
                       value={notesDraft}
@@ -568,11 +575,11 @@ export default function TestingPage() {
                     <Button
                       onClick={() => markResult("pass")}
                       disabled={!!savingId}
-                      className="gap-2 bg-green-600 hover:bg-green-700 text-white"
+                      className="gap-2 bg-status-success hover:bg-status-success/90 text-primary-foreground"
                     >
                       <CheckCircle2 className="h-4 w-4" />
                       Pass
-                      <kbd className="ml-1 text-[10px] opacity-70 bg-white/20 rounded px-1">P</kbd>
+                      <kbd className="ml-1 text-[10px] opacity-70 bg-foreground/20 rounded px-1">P</kbd>
                     </Button>
                     <Button
                       onClick={() => markResult("fail")}
@@ -582,7 +589,7 @@ export default function TestingPage() {
                     >
                       <XCircle className="h-4 w-4" />
                       Fail
-                      <kbd className="ml-1 text-[10px] opacity-70 bg-white/20 rounded px-1">F</kbd>
+                      <kbd className="ml-1 text-[10px] opacity-70 bg-foreground/20 rounded px-1">F</kbd>
                     </Button>
                     <Button
                       onClick={() => markResult("skip")}
@@ -627,11 +634,11 @@ export default function TestingPage() {
       </div>
 
       {/* ── New Run Dialog ── */}
-      <Dialog open={newRunOpen} onOpenChange={setNewRunOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Start New Test Run — Photos</DialogTitle>
-          </DialogHeader>
+      <Modal open={newRunOpen} onOpenChange={setNewRunOpen}>
+        <ModalContent className="sm:max-w-md">
+          <ModalHeader>
+            <ModalTitle>Start New Test Run — Photos</ModalTitle>
+          </ModalHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-1.5">
               <Label>Tester</Label>
@@ -667,12 +674,12 @@ export default function TestingPage() {
               />
             </div>
           </div>
-          <DialogFooter>
+          <ModalFooter>
             <Button variant="outline" onClick={() => setNewRunOpen(false)}>Cancel</Button>
             <Button onClick={createRun}>Start Run</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </PageShell>
   );
 }

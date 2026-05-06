@@ -9,6 +9,7 @@ import {
   CreatePurchaseOrderForm,
   CreateSubcontractForm,
 } from "@/components/domain/contracts";
+import { apiFetch } from "@/lib/api-client";
 import { PageShell } from "@/components/layout";
 import { Skeleton } from "@/components/ui/skeleton";
 import { commitmentKeys, useCommitmentDetail } from "@/hooks/use-commitments-query";
@@ -47,14 +48,11 @@ export default function EditCommitmentPage() {
     const fetchAttachments = async () => {
       try {
         setAttachmentsLoading(true);
-        const response = await fetch(`/api/commitments/${commitmentId}/attachments`);
-        if (!response.ok) {
-          if (isMounted) setAttachments([]);
-          return;
-        }
-        const payload = (await response.json()) as { data?: CommitmentAttachment[] };
+        const payload = await apiFetch<{ data?: CommitmentAttachment[] }>(
+          `/api/commitments/${commitmentId}/attachments`,
+        ).catch(() => null);
         if (isMounted) {
-          setAttachments(payload.data || []);
+          setAttachments(payload?.data || []);
         }
       } catch {
         if (isMounted) setAttachments([]);
@@ -202,20 +200,13 @@ export default function EditCommitmentPage() {
     for (const file of files) {
       const formData = new FormData();
       formData.append("file", file);
-      const uploadResponse = await fetch(
+      await apiFetch(
         `/api/commitments/${targetCommitmentId}/attachments`,
         {
           method: "POST",
           body: formData,
         },
       );
-
-      if (!uploadResponse.ok) {
-        const uploadError = (await uploadResponse.json().catch(() => ({}))) as {
-          error?: string;
-        };
-        throw new Error(uploadError.error || "Failed to upload attachment");
-      }
     }
   };
 
@@ -223,7 +214,7 @@ export default function EditCommitmentPage() {
     data: CreateSubcontractInput,
     attachmentFiles: File[] = [],
   ) => {
-    const res = await fetch(`/api/commitments/${commitmentId}`, {
+    await apiFetch(`/api/commitments/${commitmentId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -249,11 +240,6 @@ export default function EditCommitmentPage() {
       }),
     });
 
-    if (!res.ok) {
-      const err = (await res.json()) as { error?: string };
-      throw new Error(err.error || "Failed to save");
-    }
-
     if (attachmentFiles.length > 0) {
       await uploadCommitmentAttachments(commitmentId, attachmentFiles);
     }
@@ -265,7 +251,7 @@ export default function EditCommitmentPage() {
   };
 
   const handleSubmitPurchaseOrder = async (data: CreatePurchaseOrderInput) => {
-    const res = await fetch(`/api/commitments/${commitmentId}`, {
+    await apiFetch(`/api/commitments/${commitmentId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -291,11 +277,6 @@ export default function EditCommitmentPage() {
         issued_on_date: data.dates?.issuedOnDate || null,
       }),
     });
-
-    if (!res.ok) {
-      const err = (await res.json()) as { error?: string };
-      throw new Error(err.error || "Failed to save");
-    }
 
     await queryClient.invalidateQueries({ queryKey: commitmentKeys.detail(commitmentId) });
     await queryClient.invalidateQueries({ queryKey: commitmentKeys.lists() });

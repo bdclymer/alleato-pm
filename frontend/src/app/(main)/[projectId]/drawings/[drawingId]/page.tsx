@@ -192,7 +192,7 @@ function RevisionRow({ revision, projectId, drawingId, onDownload }: RevisionRow
       return;
     }
     try {
-      const res = await fetch(
+      await apiFetch(
         `/api/projects/${projectId}/drawings/${drawingId}/revisions/${revision.id}`,
         {
           method: "PATCH",
@@ -200,7 +200,6 @@ function RevisionRow({ revision, projectId, drawingId, onDownload }: RevisionRow
           body: JSON.stringify({ revision_number: newRevNum }),
         },
       );
-      if (!res.ok) throw new Error("Failed to update");
       await queryClient.invalidateQueries({
         queryKey: ["drawing-revisions", projectId, drawingId],
       });
@@ -390,11 +389,9 @@ export default function DrawingDetailPage() {
   const handleDownloadCurrent = useCallback(async () => {
     if (!drawing) return;
     try {
-      const response = await fetch(
+      const data = await apiFetch<{ downloadUrl?: string; fileName?: string }>(
         `/api/projects/${projectId}/drawings/${drawingId}/download`,
       );
-      if (!response.ok) throw new Error("Failed to download drawing");
-      const data = await response.json();
       if (data.downloadUrl) {
         const a = document.createElement("a");
         a.href = data.downloadUrl;
@@ -412,11 +409,9 @@ export default function DrawingDetailPage() {
   const handleDownloadRevision = useCallback(
     async (revision: DrawingRevision) => {
       try {
-        const response = await fetch(
+        const data = await apiFetch<{ downloadUrl?: string; fileName?: string }>(
           `/api/projects/${projectId}/drawings/${drawingId}/download`,
         );
-        if (!response.ok) throw new Error("Failed to download revision");
-        const data = await response.json();
         if (data.downloadUrl) {
           const a = document.createElement("a");
           a.href = data.downloadUrl;
@@ -446,12 +441,10 @@ export default function DrawingDetailPage() {
   const handlePrint = useCallback(async () => {
     if (!currentRevision?.file_url) return;
     try {
-      const res = await fetch(
+      const data = await apiFetch<{ downloadUrl?: string }>(
         `/api/projects/${projectId}/drawings/${drawingId}/download`,
-      );
-      if (!res.ok) return;
-      const data = await res.json();
-      if (data.downloadUrl) {
+      ).catch(() => null);
+      if (data?.downloadUrl) {
         const printWindow = window.open(data.downloadUrl, "_blank");
         if (printWindow) {
           printWindow.addEventListener("load", () => {
@@ -470,7 +463,7 @@ export default function DrawingDetailPage() {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
+      <div className="flex items-center justify-center min-h-96">
         <div className="text-center">
           <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
           <h1 className="text-xl font-semibold text-foreground mb-2">

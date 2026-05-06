@@ -37,7 +37,7 @@ import { Loader2 } from "lucide-react";
 // =============================================================================
 // LAYOUT COMPONENTS - Always use these
 // =============================================================================
-import { PageHeader, PageContainer, FormContainer } from "@/components/layout";
+import { PageHeader, PageContainer, FormContainer, PageShell } from "@/components/layout";
 
 // =============================================================================
 // UI COMPONENTS - Standard, no custom styling
@@ -150,12 +150,8 @@ export default function StandardFormPage() {
   // RENDER
   // ===========================================================================
   return (
-    <>
-
-      {/* =====================================================================
-          CONTENT - PageContainer wraps everything
-          ===================================================================== */}
-      <PageContainer maxWidth="lg">
+    <PageShell variant="form" title="Create New Item">
+    <PageContainer maxWidth="lg">
         {/* ===================================================================
             FORM - FormContainer centers and constrains width
             =================================================================== */}
@@ -377,6 +373,6 @@ export default function StandardFormPage() {
           </Form>
         </FormContainer>
       </PageContainer>
-    </>
+    </PageShell>
   );
 }

@@ -138,26 +138,30 @@ export default function NewCommitmentPcoPage() {
       setIsLoading(true);
       try {
         // Fetch commitment summary
-        const commitRes = await fetch(
-          `/api/commitments/${commitmentId}`,
-        );
-        if (commitRes.ok) {
-          const data = await commitRes.json();
+        const commitData = await apiFetch<{
+          id: string;
+          contract_number: string;
+          title: string;
+          commitment_type?: string;
+          type?: string;
+          vendor_name?: string | null;
+          vendor?: { name?: string } | null;
+        }>(`/api/commitments/${commitmentId}`).catch(() => null);
+        if (commitData) {
           setCommitment({
-            id: data.id,
-            contract_number: data.contract_number,
-            title: data.title,
-            commitment_type: data.commitment_type ?? data.type,
-            vendor_name: data.vendor_name ?? data.vendor?.name ?? null,
+            id: commitData.id,
+            contract_number: commitData.contract_number,
+            title: commitData.title,
+            commitment_type: commitData.commitment_type ?? commitData.type,
+            vendor_name: commitData.vendor_name ?? commitData.vendor?.name ?? null,
           });
         }
 
         // Fetch existing PCOs to auto-generate next number
-        const pcosRes = await fetch(
+        const pcosData = await apiFetch<{ data?: unknown[] }>(
           `/api/projects/${projectId}/commitments/${commitmentId}/pcos`,
-        );
-        if (pcosRes.ok) {
-          const pcosData = await pcosRes.json();
+        ).catch(() => null);
+        if (pcosData) {
           const pcos = pcosData.data ?? [];
           const nextNum = String(pcos.length + 1).padStart(3, "0");
           setNextNumber(nextNum);

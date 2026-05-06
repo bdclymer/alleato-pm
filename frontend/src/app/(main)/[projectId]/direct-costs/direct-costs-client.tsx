@@ -7,6 +7,7 @@ import { MoreHorizontal, Plus, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { UnifiedTablePage, useUnifiedTableState, type FilterValue } from "@/components/tables/unified";
 import { Badge } from "@/components/ui/badge";
+import { apiFetchRaw } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -402,8 +403,8 @@ export function DirectCostsClient({
     if (tableState.selectedIds.length === 0) return;
 
     // Note: bulk endpoint returns HTTP 207 (Multi-Status) for partial success.
-    // apiFetch would treat 207 as an error, so we use raw fetch here.
-    const response = await fetch(`/api/projects/${projectId}/direct-costs/bulk`, {
+    // apiFetchRaw is used here so the caller can inspect the 207 status directly.
+    const response = await apiFetchRaw(`/api/projects/${projectId}/direct-costs/bulk`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -440,7 +441,7 @@ export function DirectCostsClient({
   const runBulkDelete = async (): Promise<void> => {
     if (tableState.selectedIds.length === 0) return;
 
-    const response = await fetch(`/api/projects/${projectId}/direct-costs/bulk`, {
+    const response = await apiFetchRaw(`/api/projects/${projectId}/direct-costs/bulk`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -624,7 +625,7 @@ export function DirectCostsClient({
         id: "description",
         label: "Description",
         defaultVisible: false,
-        render: (item: DirectCostRow) => <span className="max-w-[200px] truncate block">{item.description ?? "-"}</span>,
+        render: (item: DirectCostRow) => <span className="max-w-48 truncate block">{item.description ?? "-"}</span>,
         sortValue: (item: DirectCostRow) => item.description ?? "",
       },
       {

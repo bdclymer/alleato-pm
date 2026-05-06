@@ -55,13 +55,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Modal,
+  ModalContent,
+  ModalDescription,
+  ModalFooter,
+  ModalHeader,
+  ModalTitle,
+} from "@/components/ui/unified-modal";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -94,6 +94,7 @@ import {
 } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { formatDate } from "@/lib/format";
+import { apiFetch } from "@/lib/api-client";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -320,7 +321,7 @@ function ChangeHistoryTimeline({ co }: { co: PrimeCO }) {
       {entries.map((entry) => (
         <div
           key={entry.label}
-          className="flex items-start gap-3 rounded-md border border-border bg-card p-3 text-sm"
+          className="flex items-start gap-3 rounded-md border border-border p-3 text-sm"
         >
           <span
             className={`mt-0.5 inline-flex shrink-0 rounded px-2 py-0.5 text-xs font-medium ${variantClasses[entry.variant]}`}
@@ -711,15 +712,12 @@ export default function PrimeContractCODetailPage() {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const [coRes, contractsRes] = await Promise.all([
-          fetch(apiBase),
-          fetch(`/api/projects/${projectId}/contracts`),
+        const [data, contractsData] = await Promise.all([
+          apiFetch(apiBase) as Promise<typeof co>,
+          apiFetch(`/api/projects/${projectId}/contracts`).catch(() => null),
         ]);
-        if (!coRes.ok) throw new Error("Failed to fetch change order");
-        const data = await coRes.json();
         setCo(data);
-        if (contractsRes.ok) {
-          const contractsData = await contractsRes.json();
+        if (contractsData) {
           setPrimeContracts(
             (contractsData as PrimeContractOption[]).map((c) => ({
               id: c.id,
@@ -1584,9 +1582,10 @@ export default function PrimeContractCODetailPage() {
                           </LabelValueRow>
                           <LabelValueRow label="Contract">
                             {co.contract ? (
-                              <button
+                              <Button
                                 type="button"
-                                className="inline-flex items-center gap-1 text-primary hover:underline"
+                                variant="link"
+                                className="inline-flex h-auto items-center gap-1 p-0 text-primary"
                                 onClick={() =>
                                   router.push(
                                     `/${projectId}/prime-contracts/${co.contract!.id}`,
@@ -1596,7 +1595,7 @@ export default function PrimeContractCODetailPage() {
                                 <Link2 className="h-3 w-3" />
                                 {co.contract.contract_number} —{" "}
                                 {co.contract.title || "Prime"}
-                              </button>
+                              </Button>
                             ) : (
                               "—"
                             )}
@@ -2312,20 +2311,20 @@ export default function PrimeContractCODetailPage() {
       />
 
       {/* Rejection dialog */}
-      <Dialog
+      <Modal
         open={showRejectDialog}
         onOpenChange={(open) => {
           setShowRejectDialog(open);
           if (!open) setRejectionReason("");
         }}
       >
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Reject Change Order</DialogTitle>
-            <DialogDescription>
+        <ModalContent className="sm:max-w-md">
+          <ModalHeader>
+            <ModalTitle>Reject Change Order</ModalTitle>
+            <ModalDescription>
               Please provide a reason for rejecting this change order.
-            </DialogDescription>
-          </DialogHeader>
+            </ModalDescription>
+          </ModalHeader>
           <div className="space-y-4">
             <Textarea
               placeholder="Rejection reason..."
@@ -2334,7 +2333,7 @@ export default function PrimeContractCODetailPage() {
               rows={3}
             />
           </div>
-          <DialogFooter>
+          <ModalFooter>
             <Button
               variant="outline"
               size="sm"
@@ -2350,9 +2349,9 @@ export default function PrimeContractCODetailPage() {
             >
               Reject
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </>
   );
 }
