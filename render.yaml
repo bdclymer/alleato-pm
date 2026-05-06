@@ -1,6 +1,54 @@
 # Render deployment configuration for Alleato-Procore
 # This file should be in the repository root for Render to auto-detect
 services:
+
+  # Runs Microsoft Graph sync (Outlook, Teams, OneDrive) every 30 minutes.
+  # Uses the same Docker image as the web service — runs the sync directly
+  # without any HTTP call, so it works even when the web service is spun down.
+  - type: cron
+    name: alleato-graph-sync
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    schedule: "*/30 * * * *"
+    startCommand: >-
+      python3 -c "
+      import json, os, sys;
+      sys.path.insert(0, '/app');
+      from src.services.supabase_helpers import get_supabase_client;
+      from src.services.integrations.microsoft_graph.sync import run_graph_sync;
+      client = get_supabase_client();
+      result = run_graph_sync(client);
+      print(json.dumps(result, indent=2));
+      errors = result.get('errors', []);
+      sys.exit(1 if errors and result.get('total_synced', 0) == 0 else 0)
+      "
+    envVars:
+      - key: PYTHONPATH
+        value: /app:/app/src:/app/src/services
+      - key: PYTHONUNBUFFERED
+        value: 1
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: MICROSOFT_CLIENT_ID
+        sync: false
+      - key: MICROSOFT_CLIENT_SECRET
+        sync: false
+      - key: MICROSOFT_TENANT_ID
+        sync: false
+      - key: MICROSOFT_SYNC_USERS
+        sync: false
+      - key: GRAPH_SYNC_ENABLED
+        value: "true"
+      - key: GRAPH_SYNC_OUTLOOK
+        value: "true"
+      - key: GRAPH_SYNC_TEAMS
+        value: "true"
+      - key: GRAPH_SYNC_ONEDRIVE
+        value: "true"
+
   - type: web
     name: alleato-backend
     runtime: docker
