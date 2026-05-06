@@ -49,6 +49,32 @@ services:
       - key: GRAPH_SYNC_ONEDRIVE
         value: "true"
 
+  # Runs RAG meeting vectorization health check daily at noon UTC.
+  # Replaces the former GitHub Actions workflow — no Actions minutes consumed.
+  # Posts to SLACK_WEBHOOK_URL on failure.
+  - type: cron
+    name: alleato-rag-health
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    schedule: "15 12 * * *"
+    startCommand: python3 -m src.services.health.rag_meeting_health
+    envVars:
+      - key: PYTHONPATH
+        value: /app:/app/src:/app/src/services
+      - key: PYTHONUNBUFFERED
+        value: 1
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: AI_GATEWAY_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: SLACK_WEBHOOK_URL
+        sync: false
+
   - type: web
     name: alleato-backend
     runtime: docker
