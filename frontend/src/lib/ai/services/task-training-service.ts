@@ -87,7 +87,7 @@ export async function recordTaskFeedback(
       task_id: params.taskId ?? null,
       signal: params.signal,
       reason: params.reason ?? null,
-      task_snapshot: params.taskSnapshot as Database["public"]["Tables"]["ai_task_feedback"]["Insert"]["task_snapshot"],
+      task_snapshot: params.taskSnapshot as unknown as Database["public"]["Tables"]["ai_task_feedback"]["Insert"]["task_snapshot"],
       session_id: params.sessionId ?? null,
     })
     .select("id")
@@ -127,7 +127,7 @@ export async function getPositiveFewShotExamples(
     if (error || !data) return [];
 
     return data.map((row) => {
-      const snap = row.task_snapshot as TaskSnapshot;
+      const snap = row.task_snapshot as unknown as TaskSnapshot;
       return {
         name: snap.name,
         assignee: snap.assignee ?? null,

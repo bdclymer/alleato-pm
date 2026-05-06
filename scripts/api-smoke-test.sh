@@ -175,6 +175,8 @@ ENDPOINTS=(
   "GET /api/ai-assistant/conversations AI conversations"
   "GET /api/ai-assistant/memories AI memories"
   "GET /api/ai-assistant/timeline AI timeline"
+  # POST /api/ai-assistant/task-feedback — POST-only; requires JSON body {projectId,signal,taskSnapshot}
+  # PATCH /api/ai-assistant/task-feedback — admin-only; requires JSON body {id,promoted}
 
   # ─── Admin ───
   "GET /api/admin/feedback Admin feedback"
