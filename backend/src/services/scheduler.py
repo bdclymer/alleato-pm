@@ -3,6 +3,7 @@ Scheduled analysis engine — runs periodic jobs via APScheduler.
 
 Currently registered jobs:
   - Fireflies sync: every 15 min, fetches new transcripts and ingests via pipeline
+  - Fireflies pipeline backlog: periodic drain of stale raw_ingested/provider-error jobs
   - Daily digest: 6 PM daily, aggregates meetings into executive briefing
   - Acumatica financial sync: daily incremental ERP import into Supabase
   - Microsoft Graph sync: periodic incremental sync of Outlook/Teams/OneDrive
@@ -19,6 +20,7 @@ from __future__ import annotations
 
 import logging
 import os
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -28,6 +30,16 @@ from apscheduler.triggers.interval import IntervalTrigger
 logger = logging.getLogger(__name__)
 
 scheduler: Optional[AsyncIOScheduler] = None
+
+FIREFLIES_RETRYABLE_ERROR_MARKERS = (
+    "quota",
+    "provider",
+    "embedding failed",
+    "rate limit",
+    "429",
+    "ai gateway",
+    "openai",
+)
 
 
 class ConfigurationError(RuntimeError):
@@ -87,6 +99,32 @@ def init_scheduler() -> None:
         logger.info(
             "[Scheduler] Fireflies sync every %d min (limit=%d)",
             sync_interval_minutes, sync_limit,
+        )
+
+    if os.getenv("FIREFLIES_PIPELINE_BACKLOG_ENABLED", "true").lower() not in ("0", "false", "no"):
+        backlog_interval_minutes = max(
+            5,
+            int(os.getenv("FIREFLIES_PIPELINE_BACKLOG_INTERVAL_MINUTES", "10")),
+        )
+        backlog_limit = max(1, int(os.getenv("FIREFLIES_PIPELINE_BACKLOG_LIMIT", "10")))
+        backlog_stale_minutes = max(
+            1,
+            int(os.getenv("FIREFLIES_PIPELINE_BACKLOG_STALE_MINUTES", "120")),
+        )
+        scheduler.add_job(
+            run_fireflies_pipeline_backlog_job,
+            IntervalTrigger(minutes=backlog_interval_minutes),
+            id="fireflies_pipeline_backlog",
+            name="Fireflies Pipeline Backlog Drain",
+            replace_existing=True,
+            max_instances=1,
+            kwargs={"limit": backlog_limit, "stale_minutes": backlog_stale_minutes},
+        )
+        logger.info(
+            "[Scheduler] Fireflies pipeline backlog every %d min (limit=%d stale_minutes=%d)",
+            backlog_interval_minutes,
+            backlog_limit,
+            backlog_stale_minutes,
         )
 
     # Daily digest at 6 PM (configurable via env)
@@ -252,6 +290,45 @@ async def run_fireflies_sync_job(limit: int = 10) -> None:
         logger.warning("[Scheduler] Fireflies sync failed (will retry): %s", e, exc_info=True)
 
 
+async def run_fireflies_pipeline_backlog_job(
+    limit: int = 10,
+    stale_minutes: int = 120,
+) -> None:
+    """Scheduled job: drain stale Fireflies pipeline rows left after ingestion."""
+    import asyncio
+
+    logger.info(
+        "[Scheduler] Running Fireflies pipeline backlog drain (limit=%d stale_minutes=%d)",
+        limit,
+        stale_minutes,
+    )
+    try:
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(
+            None,
+            _run_fireflies_pipeline_backlog,
+            limit,
+            stale_minutes,
+        )
+        logger.info(
+            "[Scheduler] Fireflies pipeline backlog complete: matched=%d processed=%d failed=%d",
+            result.get("matched", 0),
+            result.get("processed", 0),
+            result.get("failed", 0),
+        )
+        if result.get("failed", 0):
+            logger.warning(
+                "[Scheduler] Fireflies pipeline backlog failures: %s",
+                result.get("results", [])[:5],
+            )
+    except Exception as e:
+        logger.warning(
+            "[Scheduler] Fireflies pipeline backlog failed (will retry): %s",
+            e,
+            exc_info=True,
+        )
+
+
 async def run_daily_digest_job() -> None:
     """
     Scheduled job: generate daily digest and send email.
@@ -312,6 +389,169 @@ def _run_fireflies_sync(limit: int = 10):
     pipeline = FirefliesIngestionPipeline(store)
     result = pipeline.sync_recent_transcripts(limit=limit)
     result["project_backfill"] = _maybe_run_comm_project_backfill(client)
+    return result
+
+
+def _is_retryable_fireflies_error(error_message: Optional[str]) -> bool:
+    if not error_message:
+        return False
+    normalized = error_message.lower()
+    return any(marker in normalized for marker in FIREFLIES_RETRYABLE_ERROR_MARKERS)
+
+
+def _parse_scheduler_datetime(value: Optional[str]) -> Optional[datetime]:
+    if not value:
+        return None
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
+
+
+def _find_fireflies_pipeline_backlog_jobs(
+    supabase,
+    *,
+    limit: int,
+    stale_minutes: int,
+) -> list[dict]:
+    cutoff = datetime.now(timezone.utc) - timedelta(minutes=stale_minutes)
+    raw_response = (
+        supabase.table("fireflies_ingestion_jobs")
+        .select("fireflies_id, metadata_id, stage, error_message, created_at, updated_at")
+        .eq("stage", "raw_ingested")
+        .neq("metadata_id", "")
+        .order("updated_at", desc=False)
+        .limit(limit * 10)
+        .execute()
+    )
+    error_response = (
+        supabase.table("fireflies_ingestion_jobs")
+        .select("fireflies_id, metadata_id, stage, error_message, created_at, updated_at")
+        .eq("stage", "error")
+        .neq("metadata_id", "")
+        .order("updated_at", desc=False)
+        .limit(limit * 10)
+        .execute()
+    )
+    rows = [*(raw_response.data or []), *(error_response.data or [])]
+    jobs: list[dict] = []
+    for row in rows:
+        if not row.get("metadata_id"):
+            continue
+        changed_at = _parse_scheduler_datetime(row.get("updated_at")) or _parse_scheduler_datetime(
+            row.get("created_at")
+        )
+        if changed_at and changed_at > cutoff:
+            continue
+        stage = row.get("stage")
+        error_message = row.get("error_message")
+        if stage == "raw_ingested" and not error_message:
+            jobs.append(row)
+        elif stage == "error" and _is_retryable_fireflies_error(error_message):
+            jobs.append(row)
+        if len(jobs) >= limit:
+            break
+    return jobs
+
+
+def _run_fireflies_full_pipeline(metadata_id: str) -> dict:
+    from .pipeline import run_full_pipeline
+
+    return run_full_pipeline(metadata_id=metadata_id)
+
+
+def _record_fireflies_backlog_run(client, result: dict) -> None:
+    try:
+        from .health.source_sync_health import record_sync_run
+
+        failed = result.get("failed", 0)
+        record_sync_run(
+            client,
+            source="fireflies",
+            resource_id="fireflies_ingestion_jobs",
+            resource_name="Fireflies pipeline backlog",
+            stage="vectorization",
+            status="failed" if failed else "succeeded",
+            items_seen=result.get("matched", 0),
+            items_synced=result.get("processed", 0),
+            items_failed=failed,
+            error_code="FIREFLIES_BACKLOG_FAILURE" if failed else None,
+            error_message=f"{failed} Fireflies backlog jobs failed" if failed else None,
+            metadata={
+                "limit": result.get("limit"),
+                "stale_minutes": result.get("stale_minutes"),
+                "results": result.get("results", [])[:20],
+            },
+        )
+    except Exception:
+        logger.warning(
+            "[Scheduler] Failed to record Fireflies backlog source_sync_run",
+            exc_info=True,
+        )
+
+
+def _run_fireflies_pipeline_backlog(limit: int = 10, stale_minutes: int = 120) -> dict:
+    """Drain stale Fireflies jobs through the normal full pipeline."""
+    from .supabase_helpers import get_supabase_client
+
+    client = get_supabase_client()
+    jobs = _find_fireflies_pipeline_backlog_jobs(
+        client,
+        limit=limit,
+        stale_minutes=stale_minutes,
+    )
+    result = {
+        "status": "ok",
+        "limit": limit,
+        "stale_minutes": stale_minutes,
+        "matched": len(jobs),
+        "processed": 0,
+        "failed": 0,
+        "results": [],
+    }
+    if not jobs:
+        _record_fireflies_backlog_run(client, result)
+        return result
+
+    for job in jobs:
+        metadata_id = job.get("metadata_id")
+        fireflies_id = job.get("fireflies_id")
+        try:
+            pipeline_result = _run_fireflies_full_pipeline(metadata_id)
+            result["processed"] += 1
+            result["results"].append(
+                {
+                    "fireflies_id": fireflies_id,
+                    "metadata_id": metadata_id,
+                    "status": "processed",
+                    "pipeline_status": pipeline_result.get("status"),
+                    "previous_stage": job.get("stage"),
+                }
+            )
+        except Exception as exc:
+            result["failed"] += 1
+            logger.error(
+                "[Scheduler] Fireflies backlog job failed metadata_id=%s fireflies_id=%s: %s",
+                metadata_id,
+                fireflies_id,
+                exc,
+                exc_info=True,
+            )
+            result["results"].append(
+                {
+                    "fireflies_id": fireflies_id,
+                    "metadata_id": metadata_id,
+                    "status": "failed",
+                    "previous_stage": job.get("stage"),
+                    "error": str(exc)[:500],
+                }
+            )
+
+    result["status"] = "failed" if result["failed"] else "ok"
+    _record_fireflies_backlog_run(client, result)
     return result
 
 
