@@ -47,7 +47,13 @@ export default async function ProjectTasksPage({
           source_web_url,
           fireflies_link,
           meeting_link,
-          project_id
+          project_id,
+          content,
+          raw_text,
+          summary,
+          action_items,
+          bullet_points,
+          notes
         )
       `)
       .contains("project_ids", [numericProjectId]),
@@ -66,7 +72,13 @@ export default async function ProjectTasksPage({
           source_web_url,
           fireflies_link,
           meeting_link,
-          project_id
+          project_id,
+          content,
+          raw_text,
+          summary,
+          action_items,
+          bullet_points,
+          notes
         )
       `)
       .eq("project_id", numericProjectId),
@@ -85,7 +97,13 @@ export default async function ProjectTasksPage({
           source_web_url,
           fireflies_link,
           meeting_link,
-          project_id
+          project_id,
+          content,
+          raw_text,
+          summary,
+          action_items,
+          bullet_points,
+          notes
         )
       `)
       .eq("document_metadata.project_id", numericProjectId)

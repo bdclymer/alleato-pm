@@ -7,27 +7,40 @@ import {
   useRef,
   useState,
 } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import {
   ArrowLeft,
   ArrowUpRight,
+  CalendarDays,
   CheckCircle2,
   ClipboardList,
+  FolderOpen,
   Loader2,
+  MoreVertical,
   Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
 import { PageShell } from "@/components/layout";
+import { TaskFeedbackButtons } from "@/components/ai/TaskFeedbackButtons";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { apiFetch } from "@/lib/api-client";
 import { useConfirm } from "@/hooks/use-confirm";
 import { useCurrentUserProfile } from "@/hooks/use-current-user-profile";
 import {
   type TasksRow,
+  getTaskCategory,
   getTaskSourceLabel,
   getTaskSourceTitle,
   getTaskSourceTarget,
@@ -37,9 +50,21 @@ import {
 // Constants
 // ---------------------------------------------------------------------------
 
-type Scope = "mine" | "all";
+type Scope = "mine" | "all" | "brandon";
 type StatusFilter = "open" | "done" | "all";
 type DisplayStatus = "open" | "in_progress" | "done";
+type TaskPatch = {
+  status?: string;
+  due_date?: string | null;
+  project_id?: number | null;
+};
+
+type ProjectOption = {
+  id: number;
+  name: string | null;
+  project_number?: string | null;
+  "job number"?: string | null;
+};
 
 const STATUS_FILTERS: { value: StatusFilter; label: string }[] = [
   { value: "open", label: "Open" },
@@ -97,15 +122,31 @@ function getSavedPanelPct(): number {
   return PANEL_DEFAULT_PCT;
 }
 
-function getInitials(name: string | null, email: string | null): string {
-  if (name) return name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
-  if (email) return email[0].toUpperCase();
-  return "?";
-}
-
 function isOverdue(dueDateStr: string | null): boolean {
   if (!dueDateStr) return false;
   return new Date(dueDateStr).getTime() < Date.now();
+}
+
+function formatPriorityLabel(priority: string | null): string {
+  if (!priority) return "Not set";
+  return `${priority.charAt(0).toUpperCase()}${priority.slice(1).toLowerCase()}`;
+}
+
+function formatAuditLabel(value: string | null): string {
+  if (!value) return "Untracked";
+  return value
+    .replace(/[_-]+/g, " ")
+    .split(" ")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function projectOptionLabel(project: ProjectOption): string {
+  const projectNumber = project.project_number ?? project["job number"] ?? null;
+  return projectNumber
+    ? `${projectNumber} - ${project.name ?? "Unnamed project"}`
+    : project.name ?? `Project ${project.id}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -119,9 +160,9 @@ const STATUS_DOT: Record<DisplayStatus, string> = {
 };
 
 const STATUS_SELECT_CLASSES: Record<DisplayStatus, string> = {
-  done: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-400",
-  open: "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-400",
-  in_progress: "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-400",
+  done: "text-emerald-700 dark:text-emerald-400",
+  open: "text-amber-700 dark:text-amber-400",
+  in_progress: "text-blue-700 dark:text-blue-400",
 };
 
 const PRIORITY_META: Record<string, { dot: string; badge: string; label: string }> = {
@@ -232,13 +273,13 @@ function TaskListItem({
       data-task-item
       onClick={onClick}
       className={cn(
-        "relative h-auto w-full rounded-none border-b border-border/30 py-3 pl-4 pr-3 text-left transition-colors",
+        "relative h-auto w-full min-w-0 justify-start overflow-hidden whitespace-normal rounded-none border-b border-border/30 py-3 pl-4 pr-3 text-left transition-colors",
         isSelected
           ? "bg-primary/[0.04] shadow-[inset_3px_0_0_hsl(var(--primary))]"
           : "hover:bg-muted/40",
       )}
     >
-      <div className="flex items-start gap-3">
+      <div className="flex w-full min-w-0 items-start gap-3">
         {/* Status dot */}
         <div
           className={cn(
@@ -249,12 +290,12 @@ function TaskListItem({
         />
 
         {/* Main content */}
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1 overflow-hidden">
           {/* Title row */}
-          <div className="flex items-start justify-between gap-2">
+          <div className="flex min-w-0 items-start justify-between gap-2">
             <p
               className={cn(
-                "line-clamp-2 text-sm leading-snug",
+                "min-w-0 break-words line-clamp-2 text-sm leading-snug",
                 isSelected ? "font-medium text-foreground" : "text-foreground/90",
                 isDone && "text-muted-foreground line-through decoration-muted-foreground/40",
               )}
@@ -271,8 +312,8 @@ function TaskListItem({
           </div>
 
           {/* Meta row */}
-          <div className="mt-1 flex items-center justify-between gap-2">
-            <p className="truncate text-xs text-muted-foreground">
+          <div className="mt-1 flex min-w-0 items-center justify-between gap-2">
+            <p className="min-w-0 truncate text-xs text-muted-foreground">
               {metaParts || "—"}
             </p>
             <span
@@ -290,6 +331,27 @@ function TaskListItem({
   );
 }
 
+function TaskDetailRow({
+  label,
+  children,
+  valueClassName,
+}: {
+  label: string;
+  children: ReactNode;
+  valueClassName?: string;
+}) {
+  return (
+    <div className="grid grid-cols-[128px_minmax(0,1fr)] border-b border-border/35 last:border-b-0">
+      <div className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        {label}
+      </div>
+      <div className={cn("min-w-0 px-4 py-3 text-sm text-foreground", valueClassName)}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
 // ---------------------------------------------------------------------------
 // TaskDetail
 // ---------------------------------------------------------------------------
@@ -299,24 +361,54 @@ function TaskDetail({
   updatingId,
   deletingId,
   onUpdateStatus,
+  onUpdateTask,
   onDelete,
   onBack,
+  projects,
+  projectsLoading,
 }: {
   task: TasksRow;
   updatingId: string | null;
   deletingId: string | null;
   onUpdateStatus: (id: string, status: string) => void;
+  onUpdateTask: (id: string, patch: TaskPatch, localPatch?: Partial<TasksRow>) => void;
   onDelete: (id: string) => void;
   onBack?: () => void;
+  projects: ProjectOption[];
+  projectsLoading: boolean;
 }) {
   const ds = toDisplayStatus(task.status);
   const sourceLabel = getTaskSourceLabel(task);
   const sourceTitle = getTaskSourceTitle(task);
   const sourceTarget = getTaskSourceTarget(task);
+  const category = getTaskCategory(task);
   const priority = (task.priority ?? "").toLowerCase();
   const priorityMeta = PRIORITY_META[priority];
   const overdue = isOverdue(task.due_date);
   const { confirm: confirmDelete, ConfirmDialog } = useConfirm();
+  const sourceLinkLabel = sourceTitle || sourceTarget?.href || sourceLabel;
+  const extractionSourceLabel = formatAuditLabel(task.extraction_source);
+  const extractionModelLabel = task.extraction_model ?? "Untracked";
+  const extractionPromptLabel = task.extraction_prompt_version ?? "Untracked";
+  const taskProjectId = task.project_id ?? task.project_ids?.[0] ?? null;
+  const selectedProjectValue = taskProjectId ? String(taskProjectId) : "__none__";
+  const taskFeedbackSnapshot = {
+    name: task.description || task.title || "Untitled task",
+    assignee: task.assignee_name || task.assignee_email,
+    dueDate: task.due_date,
+    priority: task.priority ?? "medium",
+    notes: task.assigned_by ? `Assigned by ${task.assigned_by}` : null,
+    projectId: taskProjectId,
+    source: sourceLabel,
+    generatedBy: task.extraction_model,
+  };
+  const createdLabel = task.created_at
+    ? new Date(task.created_at).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })
+    : "Not set";
 
   const statusOptions = [
     { value: "open", label: "Open" },
@@ -325,10 +417,19 @@ function TaskDetail({
     { value: "cancelled", label: "Cancelled" },
   ];
 
+  async function handleDelete() {
+    const ok = await confirmDelete({
+      description: "Delete this task? This cannot be undone.",
+      variant: "destructive",
+      confirmLabel: "Delete",
+    });
+    if (ok && task.id) onDelete(task.id);
+  }
+
   return (
     <>
       {ConfirmDialog}
-      <div className="mx-auto max-w-2xl px-6 py-7">
+      <div className="mx-auto max-w-3xl px-6 py-7">
 
         {/* Mobile back button */}
         {onBack && (
@@ -345,180 +446,250 @@ function TaskDetail({
         )}
 
         {/* Hero: task description */}
-        <div className="mb-5">
-          <p className="text-[15px] font-medium leading-relaxed text-foreground">
+        <div className="mb-6 flex items-start gap-3">
+          <p className="min-w-0 flex-1 text-[15px] font-medium leading-relaxed text-foreground">
             {task.description || task.title || "Untitled task"}
           </p>
-        </div>
-
-        {/* Action bar: status + priority badge + source + delete */}
-        <div className="mb-6 flex flex-wrap items-center gap-2">
-          {/* Status dropdown */}
-          <Select
-            value={task.status ?? "open"}
-            onValueChange={(value) => task.id && onUpdateStatus(task.id, value)}
-            disabled={updatingId === task.id}
-          >
-            <SelectTrigger
-              className={cn(
-                "h-8 w-auto min-w-[110px] border px-3 text-xs font-medium",
-                STATUS_SELECT_CLASSES[ds],
-              )}
-            >
-              {updatingId === task.id ? (
-                <Loader2 className="h-3 w-3 animate-spin" />
-              ) : (
-                <SelectValue />
-              )}
-            </SelectTrigger>
-            <SelectContent>
-              {statusOptions.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value} className="text-xs">
-                  {opt.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          {/* Priority badge */}
-          {priorityMeta && (
-            <span
-              className={cn(
-                "inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium",
-                priorityMeta.badge,
-              )}
-            >
-              <div className={cn("h-1.5 w-1.5 rounded-full", priorityMeta.dot)} />
-              {priorityMeta.label}
-            </span>
-          )}
-
-          {/* Push rest to right */}
-          <div className="ml-auto flex items-center gap-1.5">
-            {sourceTarget && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
               <Button
-                size="sm"
-                variant="outline"
-                className="h-8 gap-1.5 border-border/60 text-xs"
-                onClick={() => {
-                  if (sourceTarget.external) {
-                    window.open(sourceTarget.href, "_blank", "noopener,noreferrer");
-                  } else {
-                    window.location.href = sourceTarget.href;
-                  }
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                className="mt-0.5 shrink-0 text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                disabled={deletingId === task.id}
+                aria-label="Task actions"
+              >
+                {deletingId === task.id ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <MoreVertical className="h-4 w-4" />
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-44">
+              <DropdownMenuItem
+                variant="destructive"
+                disabled={deletingId === task.id}
+                onSelect={() => {
+                  void handleDelete();
                 }}
               >
-                <ArrowUpRight className="h-3.5 w-3.5" />
-                View source
-              </Button>
-            )}
-            <Button
-              size="icon-sm"
-              variant="ghost"
-              className="h-8 w-8 text-muted-foreground hover:bg-red-50 hover:text-red-500"
-              disabled={deletingId === task.id}
-              onClick={async () => {
-                const ok = await confirmDelete({
-                  description: "Delete this task? This cannot be undone.",
-                  variant: "destructive",
-                  confirmLabel: "Delete",
-                });
-                if (ok && task.id) onDelete(task.id);
-              }}
-            >
-              {deletingId === task.id ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Trash2 className="h-3.5 w-3.5" />
-              )}
-            </Button>
-          </div>
+                <Trash2 className="h-4 w-4" />
+                Delete task
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
-        {/* Info card: all metadata without duplication */}
-        <div className="divide-y divide-border/30 rounded-lg bg-muted/50">
-
-          {/* Assigned to */}
-          {(task.assignee_name || task.assignee_email) && (
-            <div className="flex items-center gap-3 px-4 py-3">
-              <span className="w-20 shrink-0 text-xs font-medium text-muted-foreground">Assigned to</span>
-              <div className="flex min-w-0 flex-1 items-center gap-2">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
-                  {getInitials(task.assignee_name, task.assignee_email)}
-                </span>
-                <div className="min-w-0">
-                  <p className="truncate text-sm text-foreground">
+        {/* Task metadata table */}
+        <div className="overflow-hidden border-y border-border/40">
+          <div>
+            <TaskDetailRow label="Assigned">
+              {(task.assignee_name || task.assignee_email) ? (
+                <div className="flex min-w-0 items-baseline gap-2">
+                  <span className="truncate text-sm text-foreground">
                     {task.assignee_name ?? task.assignee_email}
-                  </p>
+                  </span>
                   {task.assignee_name && task.assignee_email && (
-                    <p className="truncate text-xs text-muted-foreground">{task.assignee_email}</p>
+                    <span className="min-w-0 truncate text-sm text-muted-foreground">
+                      {task.assignee_email}
+                    </span>
                   )}
                 </div>
-                {task.assigned_by && (
-                  <span className="ml-auto shrink-0 text-xs text-muted-foreground">
-                    via {task.assigned_by}
+              ) : (
+                <span className="text-muted-foreground">Unassigned</span>
+              )}
+            </TaskDetailRow>
+
+            <TaskDetailRow label="Created">{createdLabel}</TaskDetailRow>
+
+            <TaskDetailRow label="Due">
+              <div className="flex min-w-0 flex-col gap-2">
+                <div className="flex min-w-0 items-center gap-2">
+                  <CalendarDays className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <Input
+                    type="date"
+                    value={task.due_date ?? ""}
+                    onChange={(event) => {
+                      if (!task.id) return;
+                      const dueDate = event.target.value || null;
+                      onUpdateTask(task.id, { due_date: dueDate }, { due_date: dueDate });
+                    }}
+                    disabled={updatingId === task.id}
+                    className="h-8 max-w-44"
+                    aria-label="Task due date"
+                  />
+                </div>
+                {task.due_date ? (
+                  <span
+                    className={cn(
+                      "text-xs",
+                      overdue && ds !== "done"
+                        ? "font-medium text-red-600"
+                        : "text-muted-foreground",
+                    )}
+                  >
+                    {format(new Date(task.due_date), "MMMM d, yyyy")}
+                    {overdue && ds !== "done" && (
+                      <span className="ml-2 font-normal text-red-500">overdue</span>
+                    )}
                   </span>
+                ) : (
+                  <span className="text-xs text-muted-foreground">No due date set</span>
                 )}
               </div>
-            </div>
-          )}
+            </TaskDetailRow>
 
-          {/* Due date */}
-          {task.due_date && (
-            <div className="flex items-center gap-3 px-4 py-3">
-              <span className="w-20 shrink-0 text-xs font-medium text-muted-foreground">Due date</span>
-              <span
-                className={cn(
-                  "text-sm",
-                  overdue && ds !== "done"
-                    ? "font-medium text-red-600"
-                    : "text-foreground",
+            <TaskDetailRow label="Project">
+              <div className="flex min-w-0 flex-col gap-2">
+                <div className="flex min-w-0 items-center gap-2">
+                  <FolderOpen className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <Select
+                    value={selectedProjectValue}
+                    onValueChange={(value) => {
+                      if (!task.id) return;
+                      if (value === "__none__") {
+                        onUpdateTask(
+                          task.id,
+                          { project_id: null },
+                          { project_id: null, project_ids: [], project_name: null },
+                        );
+                        return;
+                      }
+
+                      const projectId = Number.parseInt(value, 10);
+                      const project = projects.find((item) => item.id === projectId);
+                      onUpdateTask(
+                        task.id,
+                        { project_id: projectId },
+                        {
+                          project_id: projectId,
+                          project_ids: [projectId],
+                          project_name: project ? projectOptionLabel(project) : task.project_name,
+                        },
+                      );
+                    }}
+                    disabled={updatingId === task.id || projectsLoading}
+                  >
+                    <SelectTrigger className="h-8 max-w-md">
+                      <SelectValue placeholder={projectsLoading ? "Loading projects..." : "Select project"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">No project</SelectItem>
+                      {projects.map((project) => (
+                        <SelectItem key={project.id} value={String(project.id)}>
+                          {projectOptionLabel(project)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {task.project_name ? (
+                  <span className="block truncate text-xs text-muted-foreground">
+                    Linked to {task.project_name}
+                  </span>
+                ) : (
+                  <span className="text-xs text-muted-foreground">No project linked</span>
                 )}
+              </div>
+            </TaskDetailRow>
+
+            <TaskDetailRow label="Category">{category}</TaskDetailRow>
+
+            <TaskDetailRow label="Priority">
+              <span className="inline-flex items-center gap-2 text-foreground">
+                {priorityMeta && (
+                  <span className={cn("h-1.5 w-1.5 rounded-full", priorityMeta.dot)} />
+                )}
+                {formatPriorityLabel(task.priority)}
+              </span>
+            </TaskDetailRow>
+
+            <TaskDetailRow label="Status" valueClassName="py-2">
+              <Select
+                value={task.status ?? "open"}
+                onValueChange={(value) => task.id && onUpdateStatus(task.id, value)}
+                disabled={updatingId === task.id}
               >
-                {format(new Date(task.due_date), "MMMM d, yyyy")}
-                {overdue && ds !== "done" && (
-                  <span className="ml-2 text-xs font-normal text-red-500">overdue</span>
+                <SelectTrigger
+                  className={cn(
+                    "h-8 w-full max-w-48 justify-between border-0 bg-transparent px-0 text-sm font-medium shadow-none hover:bg-transparent focus:ring-0 focus:ring-offset-0",
+                    STATUS_SELECT_CLASSES[ds],
+                  )}
+                >
+                  {updatingId === task.id ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <SelectValue />
+                  )}
+                </SelectTrigger>
+                <SelectContent>
+                  {statusOptions.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value} className="text-sm">
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </TaskDetailRow>
+
+            <TaskDetailRow label="Source">
+              <div className="flex min-w-0 flex-col gap-1">
+                <span className="text-foreground">{sourceLabel}</span>
+                {sourceTarget ? (
+                  <a
+                    href={sourceTarget.href}
+                    target={sourceTarget.external ? "_blank" : undefined}
+                    rel={sourceTarget.external ? "noopener noreferrer" : undefined}
+                    className="inline-flex min-w-0 items-center gap-2 text-muted-foreground underline-offset-4 hover:text-primary hover:underline"
+                  >
+                    <ArrowUpRight className="h-3.5 w-3.5 shrink-0" />
+                    <span className="truncate">{sourceLinkLabel}</span>
+                  </a>
+                ) : (
+                  <span className="truncate text-muted-foreground">
+                    {sourceLinkLabel || "No source link"}
+                  </span>
                 )}
-              </span>
-            </div>
-          )}
+                {task.assigned_by && (
+                  <span className="text-xs text-muted-foreground">via {task.assigned_by}</span>
+                )}
+              </div>
+            </TaskDetailRow>
 
-          {/* Project */}
-          {task.project_name && (
-            <div className="flex items-center gap-3 px-4 py-3">
-              <span className="w-20 shrink-0 text-xs font-medium text-muted-foreground">Project</span>
-              <span className="text-sm text-foreground">{task.project_name}</span>
-            </div>
-          )}
-
-          {/* Source */}
-          <div className="flex items-start gap-3 px-4 py-3">
-            <span className="w-20 shrink-0 pt-0.5 text-xs font-medium text-muted-foreground">From</span>
-            <div className="min-w-0">
-              <span className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                {sourceLabel}
-              </span>
-              {sourceTitle && (
-                <p className="mt-1 text-sm text-foreground leading-snug">
-                  {sourceTitle}
-                </p>
+            <TaskDetailRow label="Context">
+              {task.source_context ? (
+                <blockquote className="whitespace-pre-wrap border-l-2 border-border pl-3 text-sm leading-relaxed text-foreground">
+                  {task.source_context}
+                </blockquote>
+              ) : (
+                <span className="text-muted-foreground">
+                  No source excerpt was captured for this task.
+                </span>
               )}
-            </div>
-          </div>
+            </TaskDetailRow>
 
-          {/* Created */}
-          {task.created_at && (
-            <div className="flex items-center gap-3 px-4 py-3">
-              <span className="w-20 shrink-0 text-xs font-medium text-muted-foreground">Created</span>
-              <span className="text-sm text-muted-foreground">
-                {new Date(task.created_at).toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                  year: "numeric",
-                })}
-              </span>
-            </div>
-          )}
+            <TaskDetailRow label="Generated">
+              <div className="flex min-w-0 flex-col gap-1">
+                <span className="text-foreground">{extractionSourceLabel}</span>
+                <span className="truncate text-xs text-muted-foreground">
+                  {extractionModelLabel} · {extractionPromptLabel}
+                </span>
+              </div>
+            </TaskDetailRow>
+
+            {task.id && (
+              <TaskDetailRow label="Training">
+                <TaskFeedbackButtons
+                  projectId={taskProjectId}
+                  taskId={task.id}
+                  taskSnapshot={taskFeedbackSnapshot}
+                />
+              </TaskDetailRow>
+            )}
+
+          </div>
         </div>
       </div>
     </>
@@ -553,6 +724,8 @@ function EmptyDetail({
       <p className="mb-6 max-w-xs text-xs text-muted-foreground leading-relaxed">
         {scope === "mine"
           ? "Tasks assigned to you from meetings, emails, and documents appear here."
+          : scope === "brandon"
+            ? "Tasks assigned by Brandon, assigned to Brandon, or mentioning Brandon appear here for review."
           : "All tasks across every team member and project appear here."}
       </p>
       {!loading && total > 0 && (
@@ -595,6 +768,8 @@ export default function TasksPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [mobileShowDetail, setMobileShowDetail] = useState(false);
   const [focusedIndex, setFocusedIndex] = useState(0);
+  const [projects, setProjects] = useState<ProjectOption[]>([]);
+  const [projectsLoading, setProjectsLoading] = useState(true);
 
   const listPanelRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -621,6 +796,36 @@ export default function TasksPage() {
 
   // Refetch whenever scope changes
   useEffect(() => { fetchItems(); }, [fetchItems]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchProjects() {
+      setProjectsLoading(true);
+      try {
+        const result = await apiFetch<{ data?: ProjectOption[] }>("/api/projects?limit=250&archived=false", {
+          cache: "no-store",
+        });
+        if (!cancelled) {
+          setProjects(result.data ?? []);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          toast.error(err instanceof Error ? err.message : "Failed to load projects");
+        }
+      } finally {
+        if (!cancelled) {
+          setProjectsLoading(false);
+        }
+      }
+    }
+
+    void fetchProjects();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // When scope changes reset selection and status filter
   const handleScopeChange = useCallback((nextScope: Scope) => {
@@ -695,21 +900,25 @@ export default function TasksPage() {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [filteredItems, focusedIndex]);
 
-  // ---- Update status ----
-  async function updateStatus(id: string, status: string) {
+  // ---- Update task fields ----
+  async function updateTask(id: string, patch: TaskPatch, localPatch: Partial<TasksRow> = patch) {
     setUpdatingId(id);
     try {
       await apiFetch(`/api/tasks/${id}`, {
         method: "PATCH",
-        body: JSON.stringify({ status }),
+        body: JSON.stringify(patch),
       });
-      toast.success(`Marked as ${status}`);
-      setItems((prev) => prev.map((t) => (t.id === id ? { ...t, status } : t)));
+      toast.success("Task updated");
+      setItems((prev) => prev.map((t) => (t.id === id ? { ...t, ...localPatch } : t)));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to update status");
+      toast.error(err instanceof Error ? err.message : "Failed to update task");
     } finally {
       setUpdatingId(null);
     }
+  }
+
+  async function updateStatus(id: string, status: string) {
+    await updateTask(id, { status }, { status });
   }
 
   // ---- Delete ----
@@ -751,22 +960,26 @@ export default function TasksPage() {
       title="Tasks"
       showHeader={false}
       className="px-0! py-0!"
-      contentClassName="space-y-0 pt-0 pb-0"
+      contentClassName="space-y-0 overflow-hidden pt-0 pb-0"
       fillHeight
     >
-      <div ref={containerRef} className="flex h-full min-h-0">
+      <div
+        ref={containerRef}
+        data-task-split-view
+        className="flex h-[calc(100dvh-4rem)] min-h-0 overflow-hidden"
+      >
 
         {/* ── Left: task list ── */}
         <div
           ref={listPanelRef}
           className={cn(
-            "flex flex-col border-r border-border/40 bg-background overflow-hidden",
+            "flex h-full min-w-0 flex-col overflow-hidden border-r border-border/40 bg-background lg:w-[var(--tasks-left-pct)]",
             mobileShowDetail ? "hidden lg:flex" : "flex",
             "w-full lg:shrink-0",
           )}
-          style={{ width: `${leftPct}%` }}
+          style={{ "--tasks-left-pct": `${leftPct}%` } as CSSProperties}
         >
-          {/* Scope tabs — My Tasks / All Tasks (admin-only second tab) + item count */}
+          {/* Scope tabs — My Tasks / Brandon Review / All Tasks (admin-only broad scopes) */}
           {(!profileLoading) && (
             <div className="border-b border-border/40 px-3 py-2">
               <Tabs
@@ -781,49 +994,62 @@ export default function TasksPage() {
                     My Tasks
                   </TabsTrigger>
                   {isAdmin && (
-                    <TabsTrigger
-                      value="all"
-                      className="h-6 flex-1 rounded-sm px-2 text-xs font-medium data-[state=active]:bg-background data-[state=active]:shadow-xs data-[state=inactive]:text-muted-foreground"
-                    >
-                      All Tasks
-                    </TabsTrigger>
+                    <>
+                      <TabsTrigger
+                        value="brandon"
+                        className="h-6 flex-1 rounded-sm px-2 text-xs font-medium data-[state=active]:bg-background data-[state=active]:shadow-xs data-[state=inactive]:text-muted-foreground"
+                      >
+                        Brandon
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="all"
+                        className="h-6 flex-1 rounded-sm px-2 text-xs font-medium data-[state=active]:bg-background data-[state=active]:shadow-xs data-[state=inactive]:text-muted-foreground"
+                      >
+                        All Tasks
+                      </TabsTrigger>
+                    </>
                   )}
                 </TabsList>
               </Tabs>
             </div>
           )}
 
-          {/* Status filter tabs */}
-          <div className="border-b border-border/40 px-3 py-2">
-            <Tabs
-              value={filter}
-              onValueChange={(v) => {
-                setFilter(v as StatusFilter);
-                setSelectedId(null);
-                setMobileShowDetail(false);
-              }}
-            >
-              <TabsList className="h-7 w-full gap-0 rounded-md bg-muted/60 p-0.5">
-                {STATUS_FILTERS.map((f) => (
-                  <TabsTrigger
-                    key={f.value}
-                    value={f.value}
-                    className="h-6 flex-1 rounded-sm px-2 text-xs font-medium data-[state=active]:bg-background data-[state=active]:shadow-xs data-[state=inactive]:text-muted-foreground"
-                  >
-                    {f.label}
-                    {f.value === "open" && !loading && openCount > 0 && (
-                      <span className="ml-1.5 rounded-full bg-primary/15 px-1.5 text-[10px] font-semibold text-primary">
-                        {openCount}
-                      </span>
-                    )}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </Tabs>
+          {/* Status filter — link-style tabs */}
+          <div className="border-b border-border/40 px-3">
+            <div className="flex">
+              {STATUS_FILTERS.map((f) => (
+                <Button
+                  key={f.value}
+                  type="button"
+                  variant="ghost"
+                  onClick={() => {
+                    setFilter(f.value as StatusFilter);
+                    setSelectedId(null);
+                    setMobileShowDetail(false);
+                  }}
+                  className={cn(
+                    "h-auto flex-1 rounded-none border-b-2 py-2.5 text-xs font-medium transition-colors hover:bg-transparent",
+                    filter === f.value
+                      ? "border-primary text-foreground"
+                      : "border-transparent text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {f.label}
+                  {f.value === "open" && !loading && openCount > 0 && (
+                    <span className="rounded-full bg-primary/15 px-1.5 text-[10px] font-semibold text-primary">
+                      {openCount}
+                    </span>
+                  )}
+                </Button>
+              ))}
+            </div>
           </div>
 
           {/* List */}
-          <div className="flex-1 overflow-y-auto">
+          <div
+            data-task-list-scroll
+            className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain pt-1"
+          >
             {loading && (
               <div className="flex items-center justify-center py-20">
                 <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary/20 border-t-primary" />
@@ -868,7 +1094,10 @@ export default function TasksPage() {
         </div>
 
         {/* ── Right: detail panel (desktop) ── */}
-        <div className="hidden flex-1 overflow-y-auto bg-muted/20 lg:block">
+        <div
+          data-task-detail-panel
+          className="hidden h-full min-w-0 flex-1 overflow-y-auto overscroll-contain bg-muted/20 lg:block"
+        >
           {!selected ? (
             <EmptyDetail total={total} openCount={openCount} doneCount={doneCount} loading={loading} scope={scope} />
           ) : (
@@ -877,21 +1106,27 @@ export default function TasksPage() {
               updatingId={updatingId}
               deletingId={deletingId}
               onUpdateStatus={updateStatus}
+              onUpdateTask={updateTask}
               onDelete={deleteItem}
+              projects={projects}
+              projectsLoading={projectsLoading}
             />
           )}
         </div>
 
         {/* ── Mobile: full-screen detail ── */}
         {mobileShowDetail && selected && (
-          <div className="flex flex-1 flex-col overflow-y-auto bg-background lg:hidden">
+          <div className="flex h-full flex-1 flex-col overflow-y-auto overscroll-contain bg-background lg:hidden">
             <TaskDetail
               task={selected}
               updatingId={updatingId}
               deletingId={deletingId}
               onUpdateStatus={updateStatus}
+              onUpdateTask={updateTask}
               onDelete={deleteItem}
               onBack={() => setMobileShowDetail(false)}
+              projects={projects}
+              projectsLoading={projectsLoading}
             />
           </div>
         )}

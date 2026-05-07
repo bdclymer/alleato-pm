@@ -106,16 +106,16 @@ export function BoardCard({ item, readonly, settings = DEFAULT_CARD_VIEW_SETTING
           <MorphingDialogTrigger
             {...(!readonly ? attributes : {})}
             {...(!readonly ? listeners : {})}
-            style={{ borderRadius: "10px" }}
+            style={{ borderRadius: "8px" }}
             className={cn(
-              "w-full text-left bg-background select-none block overflow-hidden",
-              "shadow-xs transition-shadow duration-200 hover:shadow-sm",
+              "block w-full overflow-hidden border border-border/60 bg-background text-left select-none",
+              "shadow-xs transition-[border-color,box-shadow] duration-200 hover:border-border hover:shadow-sm",
               !readonly && "cursor-pointer"
             )}
           >
             {/* Cover image */}
             {settings.showCover && item.screenshot_url && (
-              <div className="h-48 w-full overflow-hidden">
+              <div className="h-28 w-full overflow-hidden border-b border-border/50 bg-muted/40">
                 <img
                   src={item.screenshot_url}
                   alt="Card cover"

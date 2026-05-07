@@ -9,6 +9,10 @@ import { Button } from "@/components/ui/button";
 import { SectionHeader } from "@/components/ds/section-header";
 import { EmptyState } from "@/components/ds/empty-state";
 import { apiFetch } from "@/lib/api-client";
+import {
+  getTaskFeedbackReasonLabel,
+  summarizeTaskFeedbackReasonCategories,
+} from "@/lib/ai/task-feedback-types";
 import type { Database } from "@/types/database.types";
 
 type AiTaskFeedbackRow = Database["public"]["Tables"]["ai_task_feedback"]["Row"];
@@ -33,6 +37,10 @@ function getTaskSnapshot(row: AiTaskFeedbackRow): TaskSnapshot {
   };
 }
 
+function getReasonCategoryLabel(category: string | null): string | null {
+  return getTaskFeedbackReasonLabel(category);
+}
+
 function timeAgo(dateStr: string): string {
   try {
     return formatDistanceToNow(new Date(dateStr), { addSuffix: true });
@@ -47,6 +55,16 @@ export function TaskTrainingClient({ goodFeedback, badFeedback }: TaskTrainingCl
       Object.fromEntries(goodFeedback.map((row) => [row.id, row.promoted ?? false]))
   );
   const [promoting, setPromoting] = useState<Record<string, boolean>>({});
+  const reasonSummaries = summarizeTaskFeedbackReasonCategories(
+    badFeedback.map((row) => row.reason_category),
+  );
+  const learningCoverageCount = badFeedback.filter(
+    (row) => row.learning_id,
+  ).length;
+  const learningCoverage =
+    badFeedback.length > 0
+      ? Math.round((learningCoverageCount / badFeedback.length) * 100)
+      : 0;
 
   async function togglePromoted(id: string) {
     const current = promotedState[id] ?? false;
@@ -167,47 +185,86 @@ export function TaskTrainingClient({ goodFeedback, badFeedback }: TaskTrainingCl
             description="When users mark AI-generated tasks as unhelpful, they will appear here."
           />
         ) : (
-          <div className="space-y-2">
-            {badFeedback.map((row) => {
-              const snap = getTaskSnapshot(row);
-              const hasLearning = !!row.learning_id;
-
-              return (
-                <div
-                  key={row.id}
-                  className="flex items-center justify-between bg-muted/40 rounded-lg px-4 py-3"
-                >
-                  <div className="min-w-0 flex-1 space-y-0.5">
-                    <p
-                      className="truncate text-sm font-medium text-foreground"
-                      title={snap.name}
-                    >
-                      {snap.name}
-                    </p>
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                      {row.reason && (
-                        <span className="italic">&ldquo;{row.reason}&rdquo;</span>
-                      )}
-                      <span>{timeAgo(row.created_at)}</span>
+          <div className="space-y-6">
+            <section className="space-y-3">
+              <div className="flex items-center justify-between gap-4">
+                <h3 className="text-sm font-semibold text-foreground">
+                  Feedback reasons
+                </h3>
+                <span className="text-xs text-muted-foreground">
+                  {learningCoverage}% converted to learnings
+                </span>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                {reasonSummaries.map((summary) => (
+                  <div
+                    key={summary.category}
+                    className="rounded-lg bg-muted/40 px-3 py-2"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="truncate text-sm font-medium text-foreground">
+                        {summary.label}
+                      </span>
+                      <span className="text-sm font-semibold text-foreground">
+                        {summary.count}
+                      </span>
+                    </div>
+                    <div className="mt-1 text-xs text-muted-foreground">
+                      {summary.percentage}% of bad feedback
                     </div>
                   </div>
+                ))}
+              </div>
+            </section>
 
-                  <div className="ml-4 shrink-0 flex items-center gap-1.5 text-xs text-muted-foreground">
-                    {hasLearning ? (
-                      <>
-                        <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
-                        <span className="text-primary">Learning extracted</span>
-                      </>
-                    ) : (
-                      <>
-                        <XCircle className="h-3.5 w-3.5" />
-                        <span>No learning yet</span>
-                      </>
-                    )}
+            <div className="space-y-2">
+              {badFeedback.map((row) => {
+                const snap = getTaskSnapshot(row);
+                const hasLearning = !!row.learning_id;
+                const reasonCategoryLabel = getReasonCategoryLabel(
+                  row.reason_category,
+                );
+
+                return (
+                  <div
+                    key={row.id}
+                    className="flex items-center justify-between bg-muted/40 rounded-lg px-4 py-3"
+                  >
+                    <div className="min-w-0 flex-1 space-y-0.5">
+                      <p
+                        className="truncate text-sm font-medium text-foreground"
+                        title={snap.name}
+                      >
+                        {snap.name}
+                      </p>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        {reasonCategoryLabel && (
+                          <span>{reasonCategoryLabel}</span>
+                        )}
+                        {row.reason && (
+                          <span className="italic">&ldquo;{row.reason}&rdquo;</span>
+                        )}
+                        <span>{timeAgo(row.created_at)}</span>
+                      </div>
+                    </div>
+
+                    <div className="ml-4 shrink-0 flex items-center gap-1.5 text-xs text-muted-foreground">
+                      {hasLearning ? (
+                        <>
+                          <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
+                          <span className="text-primary">Learning extracted</span>
+                        </>
+                      ) : (
+                        <>
+                          <XCircle className="h-3.5 w-3.5" />
+                          <span>No learning yet</span>
+                        </>
+                      )}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         )}
       </TabsContent>

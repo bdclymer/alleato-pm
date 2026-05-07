@@ -2594,11 +2594,13 @@ export type Database = {
       ai_task_feedback: {
         Row: {
           created_at: string
+          generated_task_id: string | null
           id: string
           learning_id: string | null
           project_id: number | null
           promoted: boolean
           reason: string | null
+          reason_category: string | null
           session_id: string | null
           signal: string
           task_id: string | null
@@ -2607,11 +2609,13 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          generated_task_id?: string | null
           id?: string
           learning_id?: string | null
           project_id?: number | null
           promoted?: boolean
           reason?: string | null
+          reason_category?: string | null
           session_id?: string | null
           signal: string
           task_id?: string | null
@@ -2620,11 +2624,13 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          generated_task_id?: string | null
           id?: string
           learning_id?: string | null
           project_id?: number | null
           promoted?: boolean
           reason?: string | null
+          reason_category?: string | null
           session_id?: string | null
           signal?: string
           task_id?: string | null
@@ -2632,6 +2638,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "ai_task_feedback_generated_task_id_fkey"
+            columns: ["generated_task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "ai_task_feedback_project_id_fkey"
             columns: ["project_id"]
@@ -27469,11 +27482,16 @@ export type Database = {
           assigned_by: string | null
           assignee_email: string | null
           assignee_name: string | null
+          assignee_person_id: string | null
           client_id: number | null
           created_at: string
           description: string
           due_date: string | null
           embedding: unknown
+          extraction_metadata: Json
+          extraction_model: string | null
+          extraction_prompt_version: string | null
+          extraction_source: string | null
           file_name: string | null
           id: string
           metadata_id: string
@@ -27491,11 +27509,16 @@ export type Database = {
           assigned_by?: string | null
           assignee_email?: string | null
           assignee_name?: string | null
+          assignee_person_id?: string | null
           client_id?: number | null
           created_at?: string
           description: string
           due_date?: string | null
           embedding?: unknown
+          extraction_metadata?: Json
+          extraction_model?: string | null
+          extraction_prompt_version?: string | null
+          extraction_source?: string | null
           file_name?: string | null
           id?: string
           metadata_id: string
@@ -27513,11 +27536,16 @@ export type Database = {
           assigned_by?: string | null
           assignee_email?: string | null
           assignee_name?: string | null
+          assignee_person_id?: string | null
           client_id?: number | null
           created_at?: string
           description?: string
           due_date?: string | null
           embedding?: unknown
+          extraction_metadata?: Json
+          extraction_model?: string | null
+          extraction_prompt_version?: string | null
+          extraction_source?: string | null
           file_name?: string | null
           id?: string
           metadata_id?: string
@@ -27532,6 +27560,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "tasks_assignee_person_id_fkey"
+            columns: ["assignee_person_id"]
+            isOneToOne: false
+            referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "tasks_metadata_id_fkey"
             columns: ["metadata_id"]

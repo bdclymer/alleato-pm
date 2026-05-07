@@ -124,7 +124,7 @@ export function ProductBoardClient({ readonly }: ProductBoardClientProps) {
   }
 
   const viewToggle = (
-    <div className="flex items-center rounded-lg bg-muted p-0.5">
+    <div className="inline-flex shrink-0 items-center rounded-lg bg-muted p-0.5">
       <Button
         variant="ghost"
         size="sm"
@@ -157,7 +157,7 @@ export function ProductBoardClient({ readonly }: ProductBoardClientProps) {
   );
 
   const toolbar = (
-    <div className="flex items-center gap-1">
+    <div className="flex flex-wrap items-center gap-2">
       {viewToggle}
       <div className="flex-1" />
       <ExpandableSearch
@@ -194,9 +194,9 @@ export function ProductBoardClient({ readonly }: ProductBoardClientProps) {
     return (
       <div className="flex flex-col gap-4">
         {toolbar}
-        <div className="grid grid-cols-4 gap-4 pb-6">
+        <div className="grid grid-flow-col auto-cols-[minmax(17rem,1fr)] gap-4 overflow-x-auto pb-6 lg:grid-flow-row lg:grid-cols-4">
           {BOARD_STATUSES.map((status) => (
-            <div key={status} className="animate-pulse rounded-2xl bg-muted/60 h-64" />
+            <div key={status} className="h-64 animate-pulse rounded-lg bg-muted/50" />
           ))}
         </div>
       </div>
@@ -228,7 +228,7 @@ export function ProductBoardClient({ readonly }: ProductBoardClientProps) {
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="grid grid-cols-4 gap-4 pb-6">
+        <div className="grid grid-flow-col auto-cols-[minmax(17rem,1fr)] gap-4 overflow-x-auto pb-6 lg:grid-flow-row lg:grid-cols-4">
           {BOARD_STATUSES.map((status) => (
             <BoardColumn
               key={status}

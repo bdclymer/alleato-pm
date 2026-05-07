@@ -306,7 +306,12 @@ export default function ProcoreDocsPage() {
     <PageShell
       variant="content"
       title="Procore Documentation"
-      eyebrow={<><Sparkles className="h-3 w-3" /> AI-powered documentation</>}
+      eyebrow={
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/10 px-2.5 py-0.5 text-[11px] font-medium text-primary">
+          <Sparkles className="h-3 w-3" />
+          AI-powered documentation
+        </span>
+      }
       description="Guides and reference for using Procore to manage projects, track costs, and collaborate with your construction teams."
       actions={
         <Button onClick={() => setChatOpen(true)} className="h-9 gap-2">

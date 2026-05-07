@@ -18,6 +18,25 @@ type CreateOperationalToolsOptions = {
   pinnedProjectId?: number;
 };
 
+type RecentEmailDirection = "mailbox" | "to" | "from" | "to_or_from";
+
+type RecentEmailRow = {
+  id: number;
+  subject: string;
+  from_name: string | null;
+  from_email: string | null;
+  to_list: string[] | null;
+  cc_list: string[] | null;
+  received_at: string | null;
+  mailbox_user_id: string;
+  body_text: string | null;
+  has_attachments: boolean | null;
+  project_id: number | null;
+  web_link: string | null;
+  graph_message_id: string;
+  conversation_id: string | null;
+};
+
 function withTrace<TInput extends Record<string, unknown>, TResult>(
   name: string,
   options: CreateOperationalToolsOptions,
@@ -29,6 +48,136 @@ function withTrace<TInput extends Record<string, unknown>, TResult>(
     execute,
     "This operational knowledge source failed during retrieval. Explain the gap plainly and use other available sources before asking for more detail.",
   );
+}
+
+function normalizeEmail(value: string | null | undefined): string | null {
+  const normalized = value?.trim().toLowerCase();
+  if (!normalized) return null;
+  const match = normalized.match(/[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/);
+  return match?.[0] ?? null;
+}
+
+function includesEmail(values: string[] | null | undefined, email: string): boolean {
+  return Array.isArray(values) && values.some((value) => normalizeEmail(value) === email);
+}
+
+function getTimeZoneOffsetMs(date: Date, timeZone: string): number {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    hour12: false,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  }).formatToParts(date);
+  const lookup = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  const hour = lookup.hour === "24" ? "00" : lookup.hour;
+  const asUtc = Date.UTC(
+    Number(lookup.year),
+    Number(lookup.month) - 1,
+    Number(lookup.day),
+    Number(hour),
+    Number(lookup.minute),
+    Number(lookup.second),
+  );
+  return asUtc - date.getTime();
+}
+
+function startOfBusinessDay(daysBack: number, timeZone: string): Date {
+  const now = new Date();
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(now);
+  const lookup = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  const localMidnightGuess = Date.UTC(
+    Number(lookup.year),
+    Number(lookup.month) - 1,
+    Number(lookup.day) - daysBack,
+    0,
+    0,
+    0,
+  );
+  const guessDate = new Date(localMidnightGuess);
+  return new Date(localMidnightGuess - getTimeZoneOffsetMs(guessDate, timeZone));
+}
+
+function emailMatchesDirection(
+  row: RecentEmailRow,
+  participantEmail: string,
+  direction: RecentEmailDirection,
+): boolean {
+  if (direction === "mailbox") {
+    return normalizeEmail(row.mailbox_user_id) === participantEmail;
+  }
+
+  const sentByParticipant = normalizeEmail(row.from_email) === participantEmail;
+  const sentToParticipant =
+    includesEmail(row.to_list, participantEmail) || includesEmail(row.cc_list, participantEmail);
+
+  if (direction === "from") return sentByParticipant;
+  if (direction === "to") return sentToParticipant;
+  return sentByParticipant || sentToParticipant || normalizeEmail(row.mailbox_user_id) === participantEmail;
+}
+
+function groupRecentEmailsByThread(rows: RecentEmailRow[], limit: number) {
+  const groups = new Map<string, RecentEmailRow[]>();
+  for (const row of rows) {
+    const key = row.conversation_id ?? row.graph_message_id ?? String(row.id);
+    const group = groups.get(key) ?? [];
+    group.push(row);
+    groups.set(key, group);
+  }
+
+  return Array.from(groups.entries())
+    .map(([threadKey, groupRows]) => {
+      const sorted = groupRows.sort((a, b) => {
+        const aTime = a.received_at ? Date.parse(a.received_at) : 0;
+        const bTime = b.received_at ? Date.parse(b.received_at) : 0;
+        return bTime - aTime;
+      });
+      const latest = sorted[0];
+      const senders = Array.from(
+        new Set(sorted.map((row) => normalizeEmail(row.from_email)).filter((email): email is string => Boolean(email))),
+      );
+      const recipients = Array.from(
+        new Set(
+          sorted
+            .flatMap((row) => [...(row.to_list ?? []), ...(row.cc_list ?? [])])
+            .map((email) => normalizeEmail(email))
+            .filter((email): email is string => Boolean(email)),
+        ),
+      );
+
+      return {
+        threadKey,
+        messageCount: sorted.length,
+        latestSubject: latest.subject,
+        latestReceivedAt: latest.received_at,
+        mailbox: latest.mailbox_user_id,
+        senders,
+        recipients,
+        latestPreview: latest.body_text
+          ? latest.body_text.slice(0, 280).replace(/\s+/g, " ").trim()
+          : null,
+        hasAttachments: sorted.some((row) => row.has_attachments === true),
+        projectIds: Array.from(
+          new Set(sorted.map((row) => row.project_id).filter((id): id is number => typeof id === "number")),
+        ),
+        webLinks: sorted.map((row) => row.web_link).filter((link): link is string => Boolean(link)),
+        messageIds: sorted.map((row) => row.id),
+      };
+    })
+    .sort((a, b) => {
+      const aTime = a.latestReceivedAt ? Date.parse(a.latestReceivedAt) : 0;
+      const bTime = b.latestReceivedAt ? Date.parse(b.latestReceivedAt) : 0;
+      return bTime - aTime;
+    })
+    .slice(0, limit);
 }
 
 // ---------------------------------------------------------------------------
@@ -2369,8 +2518,10 @@ export function createOperationalTools(
         "'what emails did I receive today?', 'show me emails from this week', " +
         "'any emails received yesterday?', 'how many emails came in today?'. " +
         "This is a structured date query — NOT a semantic/topic search. " +
-        "Queries all synced mailboxes. Returns subject, sender, recipients, date received, and a short preview. " +
-        "Always summarize results as a list with sender and date.",
+        "By default, queries the signed-in user's synced mailbox so 'my emails today' does not spill into other mailboxes. " +
+        "Returns consolidated conversation/thread groups first, with message counts, senders, recipients, dates, and previews. " +
+        "Use participantEmail plus direction='to' or direction='from' only when the user explicitly asks for emails to/from a person. " +
+        "Always summarize results by thread, not as a raw individual-message dump.",
       inputSchema: z.object({
         daysBack: z
           .number()
@@ -2383,37 +2534,92 @@ export function createOperationalTools(
           .string()
           .optional()
           .describe(
-            "Optional: filter to a specific mailbox email address (e.g. 'brandon@alleatogroup.com'). Omit to see all synced mailboxes.",
+            "Optional: filter to a specific synced mailbox email address. Omit for the signed-in user's mailbox.",
           ),
+        participantEmail: z
+          .string()
+          .optional()
+          .describe("Optional participant email for questions like emails to Brandon or from Brandon."),
+        direction: z
+          .enum(["mailbox", "to", "from", "to_or_from"])
+          .optional()
+          .default("mailbox")
+          .describe(
+            "mailbox = messages in the mailbox; to/from filters by participantEmail. Use 'to' for emails addressed to the person.",
+          ),
+        timeZone: z
+          .string()
+          .optional()
+          .default("America/New_York")
+          .describe("Business timezone for interpreting 'today'. Default America/New_York."),
+        groupByThread: z
+          .boolean()
+          .optional()
+          .default(true)
+          .describe("Return consolidated conversation groups instead of individual messages. Default true."),
         limit: z
           .number()
           .optional()
           .default(50)
-          .describe("Max emails to return. Default 50."),
+          .describe("Max thread groups or emails to return. Default 50."),
       }),
       execute: withTrace(
         "getRecentEmails",
         options,
-        async ({ daysBack = 1, mailboxFilter, limit = 50 }) => {
+        async ({
+          daysBack = 1,
+          mailboxFilter,
+          participantEmail,
+          direction = "mailbox",
+          timeZone = "America/New_York",
+          groupByThread = true,
+          limit = 50,
+        }) => {
           const access = await requireAdminForCommunications("Email");
           if (!access.ok) return { error: access.error };
 
-          const since = new Date();
-          since.setDate(since.getDate() - daysBack);
-          since.setHours(0, 0, 0, 0);
+          const normalizedMailboxFilter = normalizeEmail(mailboxFilter);
+          const normalizedParticipantEmail = normalizeEmail(participantEmail);
+          let currentUserEmail: string | null = null;
+
+          if (!normalizedMailboxFilter && !normalizedParticipantEmail) {
+            const { data: userData, error: userError } = await supabase.auth.admin.getUserById(userId);
+            if (userError) {
+              return { error: `Could not resolve the signed-in user's email: ${userError.message}` };
+            }
+            currentUserEmail = normalizeEmail(userData.user?.email);
+          }
+
+          const effectiveParticipantEmail =
+            normalizedParticipantEmail ?? normalizedMailboxFilter ?? currentUserEmail;
+          const effectiveDirection: RecentEmailDirection = normalizedParticipantEmail
+            ? direction
+            : "mailbox";
+
+          if (!effectiveParticipantEmail) {
+            return {
+              error:
+                "Could not resolve a mailbox or participant email for this email lookup. Ask for a specific mailbox or sign in with a synced mailbox account.",
+            };
+          }
+
+          const safeDaysBack = Number.isFinite(daysBack) && daysBack >= 0 ? Math.floor(daysBack) : 1;
+          const safeLimit = Number.isFinite(limit) && limit > 0 ? Math.min(Math.floor(limit), 100) : 50;
+          const since = startOfBusinessDay(safeDaysBack, timeZone || "America/New_York");
+          const fetchLimit = Math.min(Math.max(safeLimit * 6, 100), 600);
 
           let query = supabase
             .from("outlook_email_intake")
             .select(
-              "id, subject, from_name, from_email, to_list, cc_list, received_at, mailbox_user_id, body_text, has_attachments, project_id, web_link",
+              "id, subject, from_name, from_email, to_list, cc_list, received_at, mailbox_user_id, body_text, has_attachments, project_id, web_link, graph_message_id, conversation_id",
             )
             .is("deleted_at", null)
             .gte("received_at", since.toISOString())
             .order("received_at", { ascending: false })
-            .limit(limit);
+            .limit(fetchLimit);
 
-          if (mailboxFilter) {
-            query = query.eq("mailbox_user_id", mailboxFilter);
+          if (effectiveDirection === "mailbox") {
+            query = query.eq("mailbox_user_id", effectiveParticipantEmail);
           }
 
           const [emailResult, syncStateResult] = await Promise.all([
@@ -2430,22 +2636,31 @@ export function createOperationalTools(
             return { error: `Failed to fetch emails: ${emailResult.error.message}` };
           }
 
-          const data = emailResult.data;
+          const data = ((emailResult.data ?? []) as RecentEmailRow[]).filter((row) =>
+            emailMatchesDirection(row, effectiveParticipantEmail, effectiveDirection),
+          );
           const lastSyncedAt = syncStateResult.data?.last_sync_at ?? null;
           const dataCutoffNote = lastSyncedAt
             ? `Data is current as of ${new Date(lastSyncedAt).toLocaleString("en-US", { timeZone: "America/Chicago", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} CT (syncs run hourly). Emails received after that time won't appear here yet.`
             : "Sync time unknown — emails received since the last sync may not appear.";
 
-          if (!data || data.length === 0) {
-            const rangeLabel = daysBack === 0 ? "today" : `the last ${daysBack} day${daysBack === 1 ? "" : "s"}`;
+          if (data.length === 0) {
+            const rangeLabel = safeDaysBack === 0 ? "today" : `the last ${safeDaysBack} day${safeDaysBack === 1 ? "" : "s"}`;
             return {
               emails: [],
-              summary: `No emails received ${rangeLabel}${mailboxFilter ? ` for ${mailboxFilter}` : ""}.`,
+              threads: [],
+              summary: `No emails received ${rangeLabel} for ${effectiveParticipantEmail} (${effectiveDirection}).`,
               dataCutoffNote,
+              appliedFilter: {
+                email: effectiveParticipantEmail,
+                direction: effectiveDirection,
+                since: since.toISOString(),
+                timeZone,
+              },
             };
           }
 
-          const emails = data.map((e) => ({
+          const emails = data.slice(0, safeLimit).map((e) => ({
             subject: e.subject,
             from: e.from_name ? `${e.from_name} <${e.from_email}>` : (e.from_email ?? "Unknown"),
             to: Array.isArray(e.to_list) ? e.to_list.join(", ") : e.to_list,
@@ -2457,12 +2672,23 @@ export function createOperationalTools(
             webLink: e.web_link,
           }));
 
-          const rangeLabel = daysBack === 0 ? "today" : `the last ${daysBack} day${daysBack === 1 ? "" : "s"}`;
+          const threads = groupByThread ? groupRecentEmailsByThread(data, safeLimit) : [];
+          const rangeLabel = safeDaysBack === 0 ? "today" : `the last ${safeDaysBack} day${safeDaysBack === 1 ? "" : "s"}`;
           return {
             emails,
-            count: emails.length,
-            summary: `Found ${emails.length} email${emails.length === 1 ? "" : "s"} received ${rangeLabel}${mailboxFilter ? ` for ${mailboxFilter}` : ""}.`,
+            threads,
+            count: data.length,
+            threadCount: groupByThread ? threads.length : undefined,
+            summary: groupByThread
+              ? `Found ${data.length} email${data.length === 1 ? "" : "s"} in ${threads.length} thread${threads.length === 1 ? "" : "s"} received ${rangeLabel} for ${effectiveParticipantEmail} (${effectiveDirection}).`
+              : `Found ${data.length} email${data.length === 1 ? "" : "s"} received ${rangeLabel} for ${effectiveParticipantEmail} (${effectiveDirection}).`,
             dataCutoffNote,
+            appliedFilter: {
+              email: effectiveParticipantEmail,
+              direction: effectiveDirection,
+              since: since.toISOString(),
+              timeZone,
+            },
           };
         },
       ),

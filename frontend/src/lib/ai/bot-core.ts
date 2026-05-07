@@ -30,6 +30,10 @@ import {
   type AgentLearningUsageSummary,
 } from "@/lib/ai/services/agent-learning-service";
 import {
+  buildTaskGenerationTrainingBlock,
+  shouldLoadTaskTrainingContext,
+} from "@/lib/ai/services/task-training-service";
+import {
   listArtifacts,
   buildWorkspaceContextBlock,
 } from "@/lib/ai/services/workspace-artifact-service";
@@ -199,6 +203,24 @@ export async function assembleSystemPrompt(options: {
         totalUsed: 0,
         learnings: [],
       });
+    }
+  }
+
+  if (shouldLoadTaskTrainingContext(messageText)) {
+    try {
+      const taskTrainingBlock = await buildTaskGenerationTrainingBlock({
+        projectId: selectedProjectId ?? null,
+      });
+
+      if (taskTrainingBlock) {
+        systemPrompt = `${taskTrainingBlock}\n\n---\n\n${systemPrompt}`;
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unknown task training error";
+      contextHealth.push(
+        `Task generation feedback context could not be loaded: ${message}`,
+      );
     }
   }
 

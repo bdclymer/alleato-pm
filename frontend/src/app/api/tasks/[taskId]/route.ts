@@ -7,8 +7,18 @@ import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
 
 const PatchBodySchema = z.object({
-  status: z.string().min(1),
-});
+  status: z.string().min(1).optional(),
+  due_date: z
+    .union([z.string().regex(/^\d{4}-\d{2}-\d{2}$/), z.literal(""), z.null()])
+    .optional(),
+  project_id: z.union([z.coerce.number().int().positive(), z.null()]).optional(),
+}).refine(
+  (body) =>
+    body.status !== undefined ||
+    body.due_date !== undefined ||
+    body.project_id !== undefined,
+  { message: "At least one task field is required." },
+);
 
 export const PATCH = withApiGuardrails(
   "tasks/[taskId]#PATCH",
@@ -30,9 +40,32 @@ export const PATCH = withApiGuardrails(
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "tasks/[taskId]#PATCH", message: "Authentication required." });
     }
 
+    const updates: {
+      status?: string;
+      due_date?: string | null;
+      project_id?: number | null;
+      project_ids?: number[];
+      updated_at: string;
+    } = {
+      updated_at: new Date().toISOString(),
+    };
+
+    if (parsed.data.status !== undefined) {
+      updates.status = parsed.data.status;
+    }
+
+    if (parsed.data.due_date !== undefined) {
+      updates.due_date = parsed.data.due_date === "" ? null : parsed.data.due_date;
+    }
+
+    if (parsed.data.project_id !== undefined) {
+      updates.project_id = parsed.data.project_id;
+      updates.project_ids = parsed.data.project_id === null ? [] : [parsed.data.project_id];
+    }
+
     const { data, error } = await supabase
       .from("tasks")
-      .update({ status: parsed.data.status, updated_at: new Date().toISOString() })
+      .update(updates)
       .eq("id", taskId)
       .select()
       .single();

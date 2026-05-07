@@ -4,18 +4,30 @@ import { useState } from "react";
 import { Loader2, ThumbsDown, ThumbsUp } from "lucide-react";
 import { toast } from "sonner";
 import { useTaskFeedback } from "@/hooks/use-task-feedback";
-import type { TaskSnapshot } from "@/lib/ai/services/task-training-service";
+import {
+  TASK_FEEDBACK_REASON_LABELS,
+  TASK_FEEDBACK_REASON_CATEGORIES,
+  type TaskFeedbackReasonCategory,
+  type TaskSnapshot,
+} from "@/lib/ai/task-feedback-types";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
 interface TaskFeedbackButtonsProps {
-  projectId: number;
+  projectId?: number | null;
   taskId?: string | null;
   taskSnapshot: TaskSnapshot;
   sessionId?: string | null;
@@ -37,6 +49,8 @@ export function TaskFeedbackButtons({
   });
 
   const [badReasonOpen, setBadReasonOpen] = useState(false);
+  const [badReasonCategory, setBadReasonCategory] =
+    useState<TaskFeedbackReasonCategory | null>(null);
   const [badReason, setBadReason] = useState("");
 
   if (signal !== null) {
@@ -57,12 +71,22 @@ export function TaskFeedbackButtons({
   };
 
   const handleBadConfirm = async () => {
+    if (!badReasonCategory) {
+      toast.error("Choose what was wrong with this task");
+      return;
+    }
+
     setBadReasonOpen(false);
     try {
-      await submitFeedback("bad", badReason.trim() || undefined);
+      await submitFeedback(
+        "bad",
+        badReason.trim() || undefined,
+        badReasonCategory,
+      );
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to record feedback");
     }
+    setBadReasonCategory(null);
     setBadReason("");
   };
 
@@ -99,10 +123,27 @@ export function TaskFeedbackButtons({
           <p className="mb-2 text-sm font-medium">
             What&apos;s wrong with this task?
           </p>
+          <Select
+            value={badReasonCategory ?? undefined}
+            onValueChange={(value) =>
+              setBadReasonCategory(value as TaskFeedbackReasonCategory)
+            }
+          >
+            <SelectTrigger className="mb-2 h-8">
+              <SelectValue placeholder="Choose a reason" />
+            </SelectTrigger>
+            <SelectContent>
+              {TASK_FEEDBACK_REASON_CATEGORIES.map((category) => (
+                <SelectItem key={category} value={category}>
+                  {TASK_FEEDBACK_REASON_LABELS[category]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Textarea
             value={badReason}
             onChange={(e) => setBadReason(e.target.value)}
-            placeholder="Too vague, wrong assignee, already exists... (optional)"
+            placeholder="Add detail for the next version... (optional)"
             className="mb-2 min-h-16 resize-none"
           />
           <div className="flex justify-end gap-2">
@@ -111,12 +152,17 @@ export function TaskFeedbackButtons({
               size="sm"
               onClick={() => {
                 setBadReasonOpen(false);
+                setBadReasonCategory(null);
                 setBadReason("");
               }}
             >
               Cancel
             </Button>
-            <Button size="sm" onClick={handleBadConfirm}>
+            <Button
+              size="sm"
+              onClick={handleBadConfirm}
+              disabled={!badReasonCategory}
+            >
               Submit
             </Button>
           </div>

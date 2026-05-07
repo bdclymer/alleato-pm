@@ -228,7 +228,11 @@ export function PageHeader({
             {/* Page Title */}
             {eyebrow ? (
               <div className="mb-2">
-                <Eyebrow>{eyebrow}</Eyebrow>
+                {typeof eyebrow === "string" ? (
+                  <Eyebrow>{eyebrow}</Eyebrow>
+                ) : (
+                  eyebrow
+                )}
               </div>
             ) : null}
             {titleContent ? (

@@ -10,12 +10,14 @@ import {
   recordTaskFeedback,
   promoteTaskFeedback,
   demoteTaskFeedback,
+  TASK_FEEDBACK_REASON_CATEGORIES,
 } from "@/lib/ai/services/task-training-service";
 
 const postBodySchema = z.object({
-  projectId: z.number().int().positive(),
+  projectId: z.number().int().positive().nullable().optional(),
   taskId: z.string().uuid().nullable().optional(),
   signal: z.enum(["good", "bad"]),
+  reasonCategory: z.enum(TASK_FEEDBACK_REASON_CATEGORIES).nullable().optional(),
   reason: z.string().max(1000).nullable().optional(),
   taskSnapshot: z.object({
     name: z.string().min(1).max(500),
@@ -23,7 +25,9 @@ const postBodySchema = z.object({
     dueDate: z.string().nullable().optional(),
     priority: z.string().max(50),
     notes: z.string().max(2000).nullable().optional(),
-    projectId: z.number(),
+    projectId: z.number().int().positive().nullable().optional(),
+    source: z.string().max(100).nullable().optional(),
+    generatedBy: z.string().max(200).nullable().optional(),
   }),
   sessionId: z.string().nullable().optional(),
 });
@@ -63,7 +67,15 @@ export const POST = withApiGuardrails(
       });
     }
 
-    const { projectId, taskId, signal, reason, taskSnapshot, sessionId } =
+    const {
+      projectId,
+      taskId,
+      signal,
+      reasonCategory,
+      reason,
+      taskSnapshot,
+      sessionId,
+    } =
       parsed.data;
 
     try {
@@ -72,6 +84,7 @@ export const POST = withApiGuardrails(
         projectId,
         taskId,
         signal,
+        reasonCategory,
         reason,
         taskSnapshot,
         sessionId,

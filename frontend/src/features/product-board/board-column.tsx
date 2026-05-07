@@ -15,10 +15,10 @@ import type { CardViewSettings } from "./card-view-settings";
 import { DEFAULT_CARD_VIEW_SETTINGS } from "./card-view-settings";
 
 const COLUMN_BG: Record<BoardStatus, string> = {
-  submitted: "bg-muted/50",
-  planned: "bg-violet-50/60 dark:bg-violet-950/20",
-  in_progress: "bg-amber-50/60 dark:bg-amber-950/20",
-  shipped: "bg-emerald-50/60 dark:bg-emerald-950/20",
+  submitted: "bg-muted/35",
+  planned: "bg-muted/35",
+  in_progress: "bg-muted/35",
+  shipped: "bg-muted/35",
 };
 
 const COUNT_PILL: Record<BoardStatus, string> = {
@@ -130,7 +130,7 @@ export function BoardColumn({ status, label, items, allItems, readonly, cardSett
       <div
         ref={setNodeRef}
         className={cn(
-          "flex min-h-24 flex-col gap-2 rounded-2xl p-2 transition-colors duration-150",
+          "flex min-h-[18rem] flex-col gap-2 rounded-lg p-2 transition-colors duration-150",
           COLUMN_BG[status],
           isOver && "ring-2 ring-primary/40 ring-offset-1"
         )}

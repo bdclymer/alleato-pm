@@ -2,12 +2,15 @@
 
 import { useState, useCallback } from "react";
 import { apiFetch } from "@/lib/api-client";
-import type { TaskSnapshot } from "@/lib/ai/services/task-training-service";
+import type {
+  TaskFeedbackReasonCategory,
+  TaskSnapshot,
+} from "@/lib/ai/task-feedback-types";
 
 export type FeedbackSignal = "good" | "bad";
 
 interface UseTaskFeedbackOptions {
-  projectId: number;
+  projectId?: number | null;
   taskId?: string | null;
   taskSnapshot: TaskSnapshot;
   sessionId?: string | null;
@@ -16,7 +19,11 @@ interface UseTaskFeedbackOptions {
 interface UseTaskFeedbackReturn {
   signal: FeedbackSignal | null;
   isSubmitting: boolean;
-  submitFeedback: (signal: FeedbackSignal, reason?: string) => Promise<void>;
+  submitFeedback: (
+    signal: FeedbackSignal,
+    reason?: string,
+    reasonCategory?: TaskFeedbackReasonCategory | null,
+  ) => Promise<void>;
 }
 
 export function useTaskFeedback(options: UseTaskFeedbackOptions): UseTaskFeedbackReturn {
@@ -24,7 +31,11 @@ export function useTaskFeedback(options: UseTaskFeedbackOptions): UseTaskFeedbac
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const submitFeedback = useCallback(
-    async (newSignal: FeedbackSignal, reason?: string) => {
+    async (
+      newSignal: FeedbackSignal,
+      reason?: string,
+      reasonCategory?: TaskFeedbackReasonCategory | null,
+    ) => {
       if (isSubmitting) return;
       setIsSubmitting(true);
       try {
@@ -34,6 +45,7 @@ export function useTaskFeedback(options: UseTaskFeedbackOptions): UseTaskFeedbac
             projectId: options.projectId,
             taskId: options.taskId ?? null,
             signal: newSignal,
+            reasonCategory: reasonCategory ?? null,
             reason: reason ?? null,
             taskSnapshot: options.taskSnapshot,
             sessionId: options.sessionId ?? null,

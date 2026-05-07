@@ -73,10 +73,8 @@ import {
   synthesizeAdvisorResponse,
   synthesizeMissingPacketResponse,
 } from "@/lib/ai/intelligence/advisor-synthesis";
-import {
-  generateBrandonDailyUpdate,
-  type BrandonDailyUpdatePacket,
-} from "@/lib/executive/brandon-daily-update";
+import type { BrandonDailyUpdatePacket } from "@/lib/executive/brandon-daily-update";
+import { getExecutiveBriefingDashboard } from "@/lib/executive/executive-briefing-workflow";
 import { buildBrandonDailyUpdateWidget } from "@/lib/executive/brandon-daily-update-widget";
 import { buildAssistantWidgetsFromPrompt } from "@/lib/ai/assistant-widgets";
 
@@ -2827,7 +2825,7 @@ export const POST = withApiGuardrails(
             status: "loading",
           });
 
-          const packet = await generateBrandonDailyUpdate({ windowDays: 2 });
+          const packet = (await getExecutiveBriefingDashboard({ windowDays: 2 })).draft.packet;
           const widget = buildBrandonDailyUpdateWidget(packet);
           const dataPart: PersistedDataPart = {
             type: "data-brandon-daily-update-widget",
@@ -2845,9 +2843,10 @@ export const POST = withApiGuardrails(
           await writeTextResponse(writer, textId, content);
 
           toolTrace.push({
-            tool: "generateBrandonDailyUpdateWidget",
+            tool: "loadBrandonDailyUpdateWidget",
             input: {
               windowDays: 2,
+              sourceOfTruth: "daily_recaps.recap_kind=executive_briefing",
             },
             output: {
               needsBrandonCount: packet.sections.needsBrandon.length,

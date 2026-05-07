@@ -5,8 +5,12 @@ import { ProductBoardClient } from "@/features/product-board/product-board-clien
 
 export default function ProductBoardPage() {
   return (
-    <PageShell variant="dashboard" title="Product Board">
-      <div className="mt-4">
+    <PageShell
+      variant="dashboard"
+      title="Product Board"
+      contentClassName="space-y-6 pt-4"
+    >
+      <div className="min-w-0">
         <ProductBoardClient />
       </div>
     </PageShell>
