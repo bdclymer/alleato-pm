@@ -112,6 +112,8 @@ async function getTeamsRecipientFirstName(userId: string) {
     .select("display_name")
     .eq("platform", "teams")
     .eq("supabase_user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(1)
     .maybeSingle();
 
   if (error) {
