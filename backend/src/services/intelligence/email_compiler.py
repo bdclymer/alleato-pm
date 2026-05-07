@@ -36,8 +36,11 @@ from .compiler import (
     write_source_signal_candidate,
 )
 from .prompts import build_email_extraction_messages
+from ..task_assignees import TaskAssigneeResolver
 
 logger = logging.getLogger(__name__)
+
+TASK_EXTRACTION_PROMPT_VERSION = "email_compiler.tasks.v2.gpt-5.5"
 
 MIN_COMPILER_CHARS = 200
 AUTO_ASSIGN_CONFIDENCE = 0.85
@@ -630,19 +633,23 @@ def write_tasks(
     head_doc_id: str,
     tasks: List[Dict[str, Any]],
     project_id: Optional[int],
+    extraction_model: str = COMPILER_MODEL_DEFAULT,
 ) -> int:
     rows: List[Dict[str, Any]] = []
     project_ids = [int(project_id)] if project_id else []
+    resolver = TaskAssigneeResolver(supabase)
     for task in tasks:
         description = _clean_text(task.get("task_text") or task.get("description"))
         owner = _clean_text(task.get("owner"))
         if not description or not owner or task.get("needs_review") or _to_float(task.get("confidence")) < 0.7:
             continue
+        assignee = resolver.resolve(owner, task.get("owner_email") or task.get("assignee_email"))
         rows.append(
             {
                 "metadata_id": head_doc_id,
                 "description": description,
-                "assignee_name": owner,
+                **assignee.row_values(),
+                "assigned_by": _clean_text(task.get("assigned_by")),
                 "due_date": _valid_due_date(task.get("due_date")),
                 "priority": task.get("priority") or "medium",
                 "status": "open",
@@ -650,6 +657,15 @@ def write_tasks(
                 "file_name": task.get("source_message_id"),
                 "project_id": int(project_id) if project_id else None,
                 "project_ids": project_ids,
+                "extraction_source": "email_compiler",
+                "extraction_model": extraction_model,
+                "extraction_prompt_version": TASK_EXTRACTION_PROMPT_VERSION,
+                "extraction_metadata": {
+                    "source_message_id": task.get("source_message_id"),
+                    "confidence": _to_float(task.get("confidence")),
+                    "needs_review": bool(task.get("needs_review")),
+                    **assignee.metadata(),
+                },
             }
         )
     if not rows:
@@ -1050,6 +1066,7 @@ def compile_thread(
             head_doc_id,
             _as_list(extracted.get("tasks")),
             assigned_project_id,
+            selected_model,
         )
         packet_result = write_packet_first_signals(
             supabase,

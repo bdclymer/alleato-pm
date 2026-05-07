@@ -4,7 +4,7 @@ Task extraction service — pulls action items from meetings, emails, and Teams 
 Reads from document_metadata filtered to communication types (meeting, email,
 teams_dm, teams_dm_conversation, teams_message). Skips interview/test records
 and documents that have already been processed within the current window.
-Uses gpt-4o-mini via the existing LLM provider config (AI Gateway or direct).
+Uses GPT-5.5 via the existing LLM provider config (AI Gateway or direct).
 
 Called by scheduler.py on a daily cron (replacing the old Vercel cron route).
 """
@@ -19,8 +19,12 @@ from typing import Any
 from openai import OpenAI
 
 from .supabase_helpers import get_supabase_client
+from .task_assignees import TaskAssigneeResolver, clean_text
 
 logger = logging.getLogger(__name__)
+
+TASK_EXTRACTION_MODEL = "gpt-5.5"
+TASK_EXTRACTION_PROMPT_VERSION = "task_extraction.v2.gpt-5.5"
 
 # Source types that can contain action items.
 TASK_SOURCE_TYPES = (
@@ -54,16 +58,17 @@ Source text:
 {text}"""
 
 
-def _openai_client() -> OpenAI:
+def _openai_client() -> tuple[OpenAI, str, str]:
     gateway_key = os.getenv("AI_GATEWAY_API_KEY")
     if gateway_key:
-        return OpenAI(
-            api_key=gateway_key,
-            base_url="https://ai-gateway.vercel.sh/v1",
+        return (
+            OpenAI(api_key=gateway_key, base_url="https://ai-gateway.vercel.sh/v1"),
+            f"openai/{TASK_EXTRACTION_MODEL}",
+            "AI Gateway",
         )
     openai_key = os.getenv("OPENAI_API_KEY")
     if openai_key:
-        return OpenAI(api_key=openai_key)
+        return OpenAI(api_key=openai_key), TASK_EXTRACTION_MODEL, "OpenAI direct"
     raise RuntimeError("AI_GATEWAY_API_KEY or OPENAI_API_KEY is required")
 
 
@@ -90,7 +95,7 @@ def _build_text(doc: dict[str, Any]) -> str:
     return "\n\n".join(parts)
 
 
-def _extract_tasks(doc: dict[str, Any], client: OpenAI) -> list[dict[str, Any]]:
+def _extract_tasks(doc: dict[str, Any], client: OpenAI, model: str) -> list[dict[str, Any]]:
     text = _build_text(doc)
     if not text or len(text) < 80:
         return []
@@ -101,7 +106,7 @@ def _extract_tasks(doc: dict[str, Any], client: OpenAI) -> list[dict[str, Any]]:
     )
     try:
         resp = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model=model,
             messages=[{"role": "user", "content": prompt}],
             temperature=0,
             max_tokens=800,
@@ -126,7 +131,7 @@ def run_task_extraction(window_days: int = 2) -> dict[str, Any]:
         Summary dict with docs_found, docs_processed, inserted, skipped, errors.
     """
     client_db = get_supabase_client()
-    client_ai = _openai_client()
+    client_ai, model_id, provider_name = _openai_client()
 
     since = (datetime.now(timezone.utc) - timedelta(days=window_days)).isoformat()
 
@@ -180,6 +185,7 @@ def run_task_extraction(window_days: int = 2) -> dict[str, Any]:
     skipped = 0
     errors = 0
     docs_processed = 0
+    resolver = TaskAssigneeResolver(client_db)
 
     for doc in docs:
         doc_id = doc.get("id")
@@ -189,7 +195,7 @@ def run_task_extraction(window_days: int = 2) -> dict[str, Any]:
             skipped += 1
             continue
 
-        tasks = _extract_tasks(doc, client_ai)
+        tasks = _extract_tasks(doc, client_ai, model_id)
         docs_processed += 1
 
         if not tasks:
@@ -201,24 +207,29 @@ def run_task_extraction(window_days: int = 2) -> dict[str, Any]:
                 skipped += 1
                 continue
 
-            def _nullable(val: Any) -> Any:
-                """Coerce LLM string 'null' / '' to Python None."""
-                if val is None or str(val).lower() in ("null", "none", ""):
-                    return None
-                return val
-
+            assignee = resolver.resolve(task.get("assignee_name"), task.get("assignee_email"))
             row = {
-                "title": _nullable(task.get("title")),
-                "description": _nullable(task.get("description")) or _nullable(task.get("title")),
-                "assignee_name": _nullable(task.get("assignee_name")),
-                "assignee_email": _nullable(task.get("assignee_email")),
-                "due_date": _nullable(task.get("due_date")),
-                "priority": _nullable(task.get("priority")),
-                "assigned_by": _nullable(task.get("assigned_by")),
+                "title": clean_text(task.get("title")),
+                "description": clean_text(task.get("description")) or clean_text(task.get("title")),
+                **assignee.row_values(),
+                "due_date": clean_text(task.get("due_date")),
+                "priority": clean_text(task.get("priority")),
+                "assigned_by": clean_text(task.get("assigned_by")),
                 "status": "open",
                 "source_system": doc.get("source_system") or doc.get("type") or "unknown",
                 "metadata_id": doc_id,
                 "project_id": doc.get("project_id"),
+                "extraction_source": "scheduled_task_extraction",
+                "extraction_model": TASK_EXTRACTION_MODEL,
+                "extraction_prompt_version": TASK_EXTRACTION_PROMPT_VERSION,
+                "extraction_metadata": {
+                    "provider": provider_name,
+                    "model_id": model_id,
+                    "source_type": doc.get("type"),
+                    "source_title": doc.get("title"),
+                    "window_days": window_days,
+                    **assignee.metadata(),
+                },
             }
 
             insert_result = client_db.table("tasks").insert(row).execute()

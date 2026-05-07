@@ -11,7 +11,7 @@ from typing import Optional
 from supabase import Client
 
 from .outlook import sync_outlook_emails
-from .teams import sync_teams_channel, get_all_teams_and_channels, get_user_chats, sync_teams_chat, ChatReadPermissionError
+from .teams import sync_teams_channel, get_all_teams_and_channels, sync_user_chat_messages, ChatReadPermissionError
 from .onedrive import sync_onedrive_folder, sync_sharepoint_folder
 from .client import get_graph_client
 from .embed import embed_pending_graph_documents
@@ -191,43 +191,40 @@ def run_graph_sync(supabase: Client) -> dict:
             for e in os.environ.get("MICROSOFT_SYNC_USERS", "").split(",")
             if e.strip()
         ]
-        seen_chat_ids: set[str] = set()  # deduplicate chats shared by multiple users
         for user_email in dm_users:
             try:
-                chats = get_user_chats(user_email)
-                for chat in chats:
-                    chat_id = chat["id"]
-                    if chat_id in seen_chat_ids:
-                        continue
-                    seen_chat_ids.add(chat_id)
-                    resource_id = f"chat:{chat_id}"
-                    resource_name = f"Teams DM: {chat['display_name']}"
-                    try:
-                        # Use last_sync_at as cutoff timestamp (stored in delta_token field)
-                        since_iso = _get_delta_token(supabase, "teams_chat", resource_id)
-                        count, new_ts = sync_teams_chat(
-                            supabase,
-                            chat_id,
-                            chat["display_name"],
-                            chat["member_names"],
-                            since_iso,
-                        )
-                        _save_sync_state(supabase, "teams_chat", resource_id, resource_name, new_ts, count)
-                        summary["teams_dm"] += count
-                    except Exception as e:
-                        err = f"Teams DM sync failed for {resource_name}: {e}"
-                        logger.error(f"[GraphSync] {err}", exc_info=True)
-                        summary["errors"].append(err)
-                        _save_sync_state(supabase, "teams_chat", resource_id, resource_name, "", 0, "error", str(e))
+                resource_id = f"user:{user_email}"
+                resource_name = f"Teams DM export: {user_email}"
+                since_iso = _get_delta_token(supabase, "teams_chat_export", resource_id)
+                count, new_ts = sync_user_chat_messages(supabase, user_email, since_iso)
+                _save_sync_state(
+                    supabase,
+                    "teams_chat_export",
+                    resource_id,
+                    resource_name,
+                    new_ts,
+                    count,
+                )
+                summary["teams_dm"] += count
             except ChatReadPermissionError as e:
                 err = f"Teams DM sync skipped — Chat.Read.All admin consent required in Azure AD: {e}"
                 logger.error(f"[GraphSync] {err}")
                 summary["errors"].append(err)
                 break  # All users share the same tenant; no point retrying others
             except Exception as e:
-                err = f"Teams DM chat listing failed for {user_email}: {e}"
-                logger.error(f"[GraphSync] {err}")
+                err = f"Teams DM export failed for {user_email}: {e}"
+                logger.error(f"[GraphSync] {err}", exc_info=True)
                 summary["errors"].append(err)
+                _save_sync_state(
+                    supabase,
+                    "teams_chat_export",
+                    f"user:{user_email}",
+                    f"Teams DM export: {user_email}",
+                    "",
+                    0,
+                    "error",
+                    str(e),
+                )
 
     # ── OneDrive ─────────────────────────────────────────────────────────────
     sync_onedrive = os.environ.get("GRAPH_SYNC_ONEDRIVE", "true").lower() == "true"
