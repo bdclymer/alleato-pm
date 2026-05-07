@@ -155,10 +155,10 @@ function formatDuration(minutes: number | null) {
 
 const columns: ColumnConfig[] = [
   { id: "title", label: "Title", alwaysVisible: true },
+  { id: "project", label: "Project", defaultVisible: true },
   { id: "source_system", label: "Source", defaultVisible: true },
   { id: "date", label: "Date", defaultVisible: true },
   { id: "status", label: "Status", defaultVisible: true },
-  { id: "project", label: "Project", defaultVisible: true },
   { id: "duration_minutes", label: "Duration", defaultVisible: true },
   { id: "tags", label: "Tags", defaultVisible: true },
   { id: "file_name", label: "File Name", defaultVisible: false },
@@ -196,34 +196,6 @@ function buildTableColumns(
     },
     {
       ...columns[1],
-      render: (item) => (
-        <CellText value={item.source_system ?? item.source} muted />
-      ),
-      csvValue: (item) => item.source_system ?? item.source ?? "",
-      sortValue: (item) => item.source_system ?? item.source ?? "",
-      sortable: true,
-    },
-    {
-      ...columns[2],
-      render: (item) => <TableDateValue value={item.date} />,
-      csvValue: (item) => item.date ?? "",
-      sortValue: (item) => (item.date ? new Date(item.date).getTime() : 0),
-      sortable: true,
-    },
-    {
-      ...columns[3],
-      render: (item) =>
-        item.status ? (
-          <StatusBadge status={item.status} />
-        ) : (
-          <CellText value={null} muted />
-        ),
-      csvValue: (item) => item.status ?? "",
-      sortValue: (item) => item.status ?? "",
-      sortable: true,
-    },
-    {
-      ...columns[4],
       render: (item) => <CellText value={item.project} muted />,
       csvValue: (item) => item.project ?? "",
       sortValue: (item) => item.project ?? "",
@@ -239,6 +211,34 @@ function buildTableColumns(
           onProjectEdit={onProjectEdit}
         />
       ),
+    },
+    {
+      ...columns[2],
+      render: (item) => (
+        <CellText value={item.source_system ?? item.source} muted />
+      ),
+      csvValue: (item) => item.source_system ?? item.source ?? "",
+      sortValue: (item) => item.source_system ?? item.source ?? "",
+      sortable: true,
+    },
+    {
+      ...columns[3],
+      render: (item) => <TableDateValue value={item.date} />,
+      csvValue: (item) => item.date ?? "",
+      sortValue: (item) => (item.date ? new Date(item.date).getTime() : 0),
+      sortable: true,
+    },
+    {
+      ...columns[4],
+      render: (item) =>
+        item.status ? (
+          <StatusBadge status={item.status} />
+        ) : (
+          <CellText value={null} muted />
+        ),
+      csvValue: (item) => item.status ?? "",
+      sortValue: (item) => item.status ?? "",
+      sortable: true,
     },
     {
       ...columns[5],

@@ -112,7 +112,18 @@ export function useUnifiedTableState({
     const stored = window.localStorage.getItem(`${entityKey}:visibleColumns`);
     if (!stored) return defaults.visibleColumns ?? [];
     try {
-      return JSON.parse(stored) as string[];
+      const storedColumns = JSON.parse(stored) as string[];
+      const defaultColumns = defaults.visibleColumns ?? [];
+      if (!defaultColumns.length) return storedColumns;
+
+      const storedSet = new Set(storedColumns);
+      const orderedStoredColumns = defaultColumns.filter((id) =>
+        storedSet.has(id),
+      );
+      const storedOnlyColumns = storedColumns.filter(
+        (id) => !defaultColumns.includes(id),
+      );
+      return [...orderedStoredColumns, ...storedOnlyColumns];
     } catch {
       return defaults.visibleColumns ?? [];
     }

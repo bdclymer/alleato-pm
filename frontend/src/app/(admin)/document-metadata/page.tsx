@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { PageShell } from "@/components/layout";
+import { DEFAULT_PROJECT_PHASE_FILTER } from "@/lib/portfolio/projects-page-filters";
 import { createClient } from "@/lib/supabase/server";
 import { DocumentMetadataClient } from "./document-metadata-client";
 
@@ -18,6 +19,8 @@ export default async function DocumentMetadataPage() {
     supabase
       .from("projects")
       .select("id, name")
+      .ilike("phase", DEFAULT_PROJECT_PHASE_FILTER)
+      .eq("archived", false)
       .order("name", { ascending: true }),
   ]);
 
