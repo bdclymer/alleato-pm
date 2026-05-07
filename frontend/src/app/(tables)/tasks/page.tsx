@@ -73,7 +73,7 @@ import {
 // ---------------------------------------------------------------------------
 
 type Scope = "mine" | "all" | "brandon";
-type StatusFilter = "open" | "done" | "all";
+type StatusFilter = "open" | "done";
 type DisplayStatus = "open" | "in_progress" | "done";
 type TaskPatch = {
   description?: string;
@@ -118,7 +118,6 @@ const TASK_PRIORITY_OPTIONS = [
 const STATUS_FILTERS: { value: StatusFilter; label: string }[] = [
   { value: "open", label: "Open" },
   { value: "done", label: "Done" },
-  { value: "all", label: "All" },
 ];
 
 const DONE_STATUSES = new Set(["complete", "closed", "done", "cancelled"]);
@@ -1342,8 +1341,7 @@ export default function TasksPage() {
     return items.filter((item) => {
       const ds = toDisplayStatus(item.status);
       if (filter === "open") return ds === "open" || ds === "in_progress";
-      if (filter === "done") return ds === "done";
-      return true;
+      return ds === "done";
     });
   }, [items, filter]);
 
@@ -1658,22 +1656,17 @@ export default function TasksPage() {
             <Tabs
               value={filter}
               onValueChange={(value) => {
-                if (value === "open" || value === "done" || value === "all") {
+                if (value === "open" || value === "done") {
                   setFilter(value);
                   setSelectedId(null);
                   setMobileShowDetail(false);
                 }
               }}
             >
-              <TabsList className="w-full">
+              <TabsList>
                 {STATUS_FILTERS.map((tab) => (
                   <TabsTrigger key={tab.value} value={tab.value}>
                     {tab.label}
-                    {tab.value === "open" && !loading && openCount > 0 && (
-                      <span className="ml-1 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">
-                        {openCount}
-                      </span>
-                    )}
                   </TabsTrigger>
                 ))}
               </TabsList>
@@ -1794,7 +1787,7 @@ export default function TasksPage() {
                   {filter === "open" && scope === "mine" ? "All caught up" : "Nothing here"}
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  No {filter === "all" ? "" : filter + " "}tasks
+                  No {filter} tasks
                   {scope === "mine" ? " assigned to you" : ""}.
                 </p>
               </div>
