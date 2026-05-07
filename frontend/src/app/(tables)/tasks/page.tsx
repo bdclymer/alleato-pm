@@ -164,9 +164,16 @@ function isOverdue(dueDateStr: string | null): boolean {
   return new Date(dueDateStr).getTime() < Date.now();
 }
 
-const TASK_LIST_MIN_WIDTH = "68rem";
+function formatShortDate(value: string | null): string {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return format(date, "MMM d, yyyy");
+}
+
+const TASK_LIST_MIN_WIDTH = "76rem";
 const TASK_LIST_GRID_TEMPLATE =
-  "44px minmax(18rem, 1.7fr) minmax(9rem, 0.8fr) minmax(7rem, 0.6fr) minmax(7rem, 0.6fr) minmax(8rem, 0.7fr) minmax(7rem, 0.55fr)";
+  "44px minmax(18rem, 1.7fr) minmax(9rem, 0.8fr) minmax(7rem, 0.6fr) minmax(7rem, 0.6fr) minmax(7rem, 0.6fr) minmax(8rem, 0.7fr) minmax(7rem, 0.55fr)";
 const TASK_LIST_PINNED_TASK_LEFT = "44px";
 
 function TaskListHeader({
@@ -206,6 +213,7 @@ function TaskListHeader({
       </div>
       <div className="px-2">Assigned</div>
       <div className="px-2">Source</div>
+      <div className="px-2">Source date</div>
       <div className="px-2">Date assigned</div>
       <div className="px-2">Assigned by</div>
       <div className="px-2">Priority</div>
@@ -615,7 +623,8 @@ function TaskListItem({
   const priorityLabel = item.priority ? formatPriorityLabel(item.priority) : "—";
   const isDone = ds === "done";
   const assignedBy = item.assigned_by ?? "—";
-  const assignedDate = item.created_at ? format(new Date(item.created_at), "MMM d, yyyy") : "—";
+  const assignedDate = formatShortDate(item.created_at);
+  const sourceDate = formatShortDate(item.source_date);
   const assignedTo = item.assignee_name ?? item.assignee_email ?? "Unassigned";
   const pinnedCellClassName = isSelected
     ? "bg-accent"
@@ -681,6 +690,9 @@ function TaskListItem({
       </div>
       <div className="min-w-0 truncate px-2 text-xs text-muted-foreground" title={sourceLabel}>
         {sourceLabel || "—"}
+      </div>
+      <div className="min-w-0 truncate px-2 text-xs text-muted-foreground" title={sourceDate}>
+        {sourceDate}
       </div>
       <div className="min-w-0 truncate px-2 text-xs text-muted-foreground" title={assignedDate}>
         {assignedDate}
@@ -804,6 +816,13 @@ function TaskDetail({
   };
   const createdLabel = task.created_at
     ? new Date(task.created_at).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })
+    : "Not set";
+  const sourceDateLabel = task.source_date
+    ? new Date(task.source_date).toLocaleDateString("en-US", {
         month: "short",
         day: "numeric",
         year: "numeric",
@@ -994,6 +1013,8 @@ function TaskDetail({
             </TaskDetailRow>
 
             <TaskDetailRow label="Created">{createdLabel}</TaskDetailRow>
+
+            <TaskDetailRow label="Source date">{sourceDateLabel}</TaskDetailRow>
 
             <TaskDetailRow label="Due">
               <div className="flex min-w-0 flex-col gap-2">
