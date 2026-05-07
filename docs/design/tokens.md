@@ -3,7 +3,7 @@
 All styling uses these tokens. **No hex codes. No arbitrary values. No hardcoded colors.**
 
 > **Philosophy:** Tonal elevation replaces borders. Background shift = visual separation.
-> Cards sit on `bg-background` (#FAF8F9 brand off-white), surfaces use `bg-card` (#FFFFFF true white).
+> Pages sit on `bg-background` (#FFFFFF), and surfaces use `bg-card` (#FFFFFF true white).
 > The ~3% lightness difference IS the border. Use actual borders sparingly.
 
 ## Colors
@@ -12,7 +12,7 @@ All styling uses these tokens. **No hex codes. No arbitrary values. No hardcoded
 
 | Token | Usage | Light | Dark |
 |-------|-------|-------|------|
-| `bg-background` | Page background | #FAF8F9 (brand off-white) | #151518 |
+| `bg-background` | Page background | #FFFFFF (white) | #151518 |
 | `bg-card` | Card surfaces, elevated content | #FFFFFF (true white) | #1F1F24 |
 | `bg-muted` | Subtle background (hover, zebra rows) | #F4F2F0 | #272730 |
 | `bg-muted/30` | Very subtle tint | — | — |
@@ -318,7 +318,7 @@ These are defined in `globals.css` — never use the raw values, always use the 
 |-------|-------------|-----------------|-------------|
 | `primary` | `--primary` | `29 71% 52%` | Alleato brand orange (#DB802D) |
 | `ring` | `--ring` | `29 71% 52%` | Matches primary (#DB802D) |
-| `background` | `--background` | `330 17% 98%` | Brand off-white (#FAF8F9) |
+| `background` | `--background` | `0 0% 100%` | White (#FFFFFF) |
 | `card` | `--card` | `0 0% 100%` | True white (#FFFFFF) |
 | `muted` | `--muted` | `30 18% 95%` | Warm neutral (#F4F2F0) |
 | `accent` | `--accent` | `29 84% 95%` | Subtle orange tint (#FDF2E8) |

@@ -51,7 +51,7 @@
     --brand-orange-100: 28 83% 91%;
 
     /* Neutral scale */
-    --neutral-50:  330 17% 98%;
+    --neutral-50:  0 0% 100%;
     --neutral-100: 30 18% 95%;
     --neutral-200: 240 5% 91%;
     --neutral-300: 0 0% 90%;
@@ -83,7 +83,7 @@
        ================================================================ */
 
     /* Core Surface Colors */
-    --background: var(--neutral-50);
+    --background: 0 0% 100%;
     --foreground: var(--neutral-900);
     --card: 0 0% 100%;
     --card-foreground: var(--neutral-900);
@@ -91,7 +91,7 @@
     --popover-foreground: var(--neutral-900);
     --surface-alt: var(--neutral-50);
     --surface-soft: var(--neutral-100);
-    --right-sidebar-bg: var(--neutral-50);
+    --right-sidebar-bg: 0 0% 100%;
 
     /* Primary Accent — Alleato brand orange */
     --primary: var(--brand-orange-500);
@@ -450,6 +450,7 @@
 
   body {
     @apply bg-background text-foreground overflow-x-hidden;
+    background-color: hsl(var(--background));
     font-family: var(--font-sans);
     font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
     -webkit-font-smoothing: antialiased;
@@ -549,6 +550,26 @@
   textarea:disabled,
   select:disabled {
     @apply bg-muted;
+  }
+
+  input[data-auth-input="true"] {
+    background-color: hsl(var(--primary-foreground) / 0.15);
+    color: hsl(var(--primary-foreground));
+    -webkit-text-fill-color: hsl(var(--primary-foreground));
+    caret-color: hsl(var(--primary-foreground));
+  }
+
+  input[data-auth-input="true"]::placeholder {
+    color: hsl(var(--primary-foreground) / 0.48);
+    -webkit-text-fill-color: hsl(var(--primary-foreground) / 0.48);
+  }
+
+  input[data-auth-input="true"]:focus {
+    background-color: hsl(var(--primary-foreground) / 0.18);
+  }
+
+  input[data-auth-input="true"]:disabled {
+    background-color: hsl(var(--primary-foreground) / 0.1);
   }
 }
 

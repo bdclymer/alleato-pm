@@ -3,7 +3,7 @@
 
 This document tells you EXACTLY which Tailwind classes to use. Do not freestyle. Do not improvise. Copy these patterns verbatim.
 
-**Tech stack context**: Next.js App Router, React 19, TypeScript, Tailwind CSS, shadcn/ui components. The accent color is Alleato brand orange (`hsl(29, 71%, 52%)` / #DB802D), mapped to `--primary` in globals.css. Background is brand off-white (#FAF8F9), cards are true white (#FFFFFF). **Tonal elevation replaces borders — the subtle lightness difference IS the visual separator.**
+**Tech stack context**: Next.js App Router, React 19, TypeScript, Tailwind CSS, shadcn/ui components. The accent color is Alleato brand orange (`hsl(29, 71%, 52%)` / #DB802D), mapped to `--primary` in globals.css. Background is white (#FFFFFF), and card/surface elements are also true white unless a localized component needs tonal separation.
 
 ---
 
@@ -198,7 +198,7 @@ Do not wrap every row or every section in its own bordered card.
 - Floating elements (dropdowns, dialogs) — use `bg-popover rounded-lg shadow-sm` (shadow only for floating)
 - Isolated action items (pricing tiers) — use `bg-card rounded-lg p-6`
 
-**Card styling has changed:** Cards no longer use `border border-border`. The `bg-card` (#FFFFFF) sits on `bg-background` (#FAF8F9) — the tonal shift IS the border. Only add explicit borders when accessibility requires it (form inputs, table headers).
+**Card styling has changed:** Cards no longer use `border border-border` by default. With the app background now white, use whitespace and localized component structure first; only add explicit borders when accessibility or a bounded component requires it (form inputs, table headers).
 
 ---
 

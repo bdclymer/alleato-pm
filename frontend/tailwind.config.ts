@@ -12,7 +12,7 @@ const tailwindScrollbarHide =
  * Design system tokens mapped from CSS variables in globals.css.
  * Key changes from v1:
  * - Primary color: Alleato orange (#DB802D) with white button text
- * - Background: brand off-white (#FAF8F9) with true-white cards
+ * - Background: white with true-white cards
  * - Shadows: minimal (only shadow-sm on floating elements)
  * - Typography: Inter with OpenType, tighter headings
  * - Animations: spring physics, Superhuman timing

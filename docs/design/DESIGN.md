@@ -86,7 +86,7 @@ contentClassName?: string
 
 ```css
 /* Backgrounds */
-bg-background        /* Page background (#FAF8F9 light / #151518 dark) */
+bg-background        /* Page background (#FFFFFF light / #151518 dark) */
 bg-card              /* Card/surface (#FFFFFF light / #1F1F24 dark) */
 bg-muted             /* Subtle section background (#F4F2F0 light / #272730 dark) */
 bg-muted/50          /* Very subtle tint */

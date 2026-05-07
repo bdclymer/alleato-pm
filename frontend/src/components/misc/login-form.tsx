@@ -107,9 +107,10 @@ export function LoginForm({
             placeholder="Enter your email address"
             required
             disabled={isLoading}
+            data-auth-input="true"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="h-16 rounded-md border-0 bg-primary-foreground/24 px-5 text-base font-medium text-primary-foreground shadow-none placeholder:text-primary-foreground/48 focus-visible:bg-primary-foreground/30 focus-visible:ring-2 focus-visible:ring-primary-foreground/20"
+            className="h-16 rounded-md border-0 bg-primary-foreground/15 px-5 text-base font-medium text-primary-foreground shadow-none placeholder:text-primary-foreground/48 focus-visible:bg-primary-foreground/18 focus-visible:ring-2 focus-visible:ring-primary-foreground/20"
           />
         </div>
 
@@ -127,9 +128,10 @@ export function LoginForm({
             placeholder="Enter your password"
             required
             disabled={isLoading}
+            data-auth-input="true"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="h-16 rounded-md border-0 bg-primary-foreground/24 px-5 text-base font-medium text-primary-foreground shadow-none placeholder:text-primary-foreground/48 focus-visible:bg-primary-foreground/30 focus-visible:ring-2 focus-visible:ring-primary-foreground/20"
+            className="h-16 rounded-md border-0 bg-primary-foreground/15 px-5 text-base font-medium text-primary-foreground shadow-none placeholder:text-primary-foreground/48 focus-visible:bg-primary-foreground/18 focus-visible:ring-2 focus-visible:ring-primary-foreground/20"
           />
         </div>
 
