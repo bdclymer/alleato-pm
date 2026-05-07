@@ -1690,10 +1690,9 @@ export default function TasksPage() {
   return (
     <>
       <PageShell
-        variant="dashboard"
+        variant="table"
         title="Tasks"
         showHeader={false}
-        className="px-0! py-0!"
         contentClassName="space-y-0 overflow-hidden pt-0 pb-0"
         fillHeight
       >
