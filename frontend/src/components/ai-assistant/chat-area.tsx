@@ -2087,7 +2087,7 @@ export function ChatArea({
                       key={msg.id}
                       from="user"
                     >
-                      <MessageContent className="user-message-enter rounded-[1.4rem] border border-border/60 bg-background px-4 py-3 shadow-sm sm:px-5">
+                      <MessageContent className="user-message-enter rounded-[1.4rem] bg-background px-4 py-3 sm:px-5">
                         {imageParts.length > 0 && (
                           <div className="mb-2 flex flex-wrap gap-2">
                             {imageParts.map((image) => (
