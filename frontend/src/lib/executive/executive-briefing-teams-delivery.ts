@@ -15,8 +15,7 @@ export type ExecutiveBriefingTeamsSendResult =
       ok: true;
       status: "sent";
       draftId: string;
-      userId: string;
-      recipientName: string | null;
+      recipients: Array<{ userId: string; recipientName: string | null }>;
       itemCount: number;
     }
   | {
@@ -87,22 +86,25 @@ export function formatExecutiveBriefingTeamsMessage(
   return lines.join("\n");
 }
 
-async function resolveTeamsTargetUserId(userId?: string | null) {
-  if (userId) return userId;
+async function resolveAllTeamsUserIds(singleUserId?: string | null): Promise<string[]> {
+  if (singleUserId) return [singleUserId];
 
   const supabase = createServiceClient();
   const { data, error } = await supabase
     .from("teams_conversation_refs")
     .select("supabase_user_id")
-    .order("last_seen_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    .order("last_seen_at", { ascending: false });
 
   if (error) {
-    throw new Error(`Failed to resolve Teams-linked user: ${error.message}`);
+    throw new Error(`Failed to resolve Teams-linked users: ${error.message}`);
   }
 
-  return data?.supabase_user_id ?? null;
+  // Deduplicate — a user may have multiple conversation refs
+  const seen = new Set<string>();
+  for (const row of data ?? []) {
+    if (row.supabase_user_id) seen.add(row.supabase_user_id);
+  }
+  return Array.from(seen);
 }
 
 async function getTeamsRecipientFirstName(userId: string) {
@@ -129,30 +131,38 @@ export async function sendApprovedExecutiveBriefingToTeams(
     userId?: string | null;
   } = {},
 ): Promise<ExecutiveBriefingTeamsSendResult> {
-  const targetUserId = await resolveTeamsTargetUserId(options.userId);
+  const targetUserIds = await resolveAllTeamsUserIds(options.userId);
 
-  if (!targetUserId) {
+  if (targetUserIds.length === 0) {
     return {
       ok: false,
       status: "blocked",
       reason:
-        "No Teams-linked user found. Pass userId or have the recipient message the Teams bot once.",
+        "No Teams-linked users found. Have recipients message the Teams bot once to register.",
       userId: null,
     };
   }
 
+  // Generate the brief once, then fan out to all recipients
   const { draft } = await regenerateExecutiveBriefingDraft({
     windowDays: DEFAULT_EXECUTIVE_WINDOW_DAYS,
   });
 
-  const firstName = await getTeamsRecipientFirstName(targetUserId);
   const itemCount =
     draft.packet.sections.needsBrandon.length +
     draft.packet.sections.waitingOnOthers.length +
     draft.packet.sections.importantUpdates.length;
 
-  const message = formatExecutiveBriefingTeamsMessage(draft.packet, firstName);
-  await sendProactiveMessage(targetUserId, message);
+  const recipients: Array<{ userId: string; recipientName: string | null }> = [];
+
+  await Promise.all(
+    targetUserIds.map(async (userId) => {
+      const firstName = await getTeamsRecipientFirstName(userId);
+      const message = formatExecutiveBriefingTeamsMessage(draft.packet, firstName);
+      await sendProactiveMessage(userId, message);
+      recipients.push({ userId, recipientName: firstName });
+    }),
+  );
 
   const supabase = createServiceClient();
   const { error } = await supabase
@@ -171,8 +181,7 @@ export async function sendApprovedExecutiveBriefingToTeams(
     ok: true,
     status: "sent",
     draftId: draft.id,
-    userId: targetUserId,
-    recipientName: firstName,
+    recipients,
     itemCount,
   };
 }
