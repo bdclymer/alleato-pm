@@ -317,9 +317,14 @@ async def run_fireflies_pipeline_backlog_job(
             result.get("failed", 0),
         )
         if result.get("failed", 0):
+            failed_results = [
+                item
+                for item in result.get("results", [])
+                if item.get("status") == "failed"
+            ]
             logger.warning(
                 "[Scheduler] Fireflies pipeline backlog failures: %s",
-                result.get("results", [])[:5],
+                failed_results[:5],
             )
     except Exception as e:
         logger.warning(
