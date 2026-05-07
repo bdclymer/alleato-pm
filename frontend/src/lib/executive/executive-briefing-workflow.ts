@@ -338,8 +338,8 @@ export async function regenerateExecutiveBriefingDraft(options?: {
         ?.count ?? 0,
     project_count: projectCount(packet),
     briefing_packet: packet as unknown as Json,
-    workflow_status: "draft",
-    approved_at: null,
+    workflow_status: "approved",
+    approved_at: new Date().toISOString(),
     approved_by: null,
     approval_notes: null,
     model_used: (

@@ -7,7 +7,7 @@ import {
 } from "@/lib/executive/brandon-daily-update";
 import {
   CEO_EXECUTIVE_BRIEFING_RECAP_KIND,
-  getExecutiveBriefingDashboard,
+  regenerateExecutiveBriefingDraft,
 } from "@/lib/executive/executive-briefing-workflow";
 
 export type ExecutiveBriefingTeamsSendResult =
@@ -141,21 +141,9 @@ export async function sendApprovedExecutiveBriefingToTeams(
     };
   }
 
-  const dashboard = await getExecutiveBriefingDashboard({
+  const { draft } = await regenerateExecutiveBriefingDraft({
     windowDays: DEFAULT_EXECUTIVE_WINDOW_DAYS,
   });
-  const { draft } = dashboard;
-
-  if (draft.workflowStatus !== "approved") {
-    return {
-      ok: false,
-      status: "skipped",
-      reason: "Executive briefing draft is not approved.",
-      draftId: draft.id,
-      workflowStatus: draft.workflowStatus,
-      userId: targetUserId,
-    };
-  }
 
   const firstName = await getTeamsRecipientFirstName(targetUserId);
   const itemCount =
