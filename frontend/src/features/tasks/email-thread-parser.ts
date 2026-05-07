@@ -7,6 +7,18 @@ export type EmailThreadMessage = {
   body: string;
 };
 
+export type TeamsConversationMessage = {
+  date: string;
+  author: string;
+  body: string;
+};
+
+export type TeamsConversation = {
+  title: string;
+  date: string | null;
+  messages: TeamsConversationMessage[];
+};
+
 type ParsedContextField = {
   value: string;
   bodyStart: number;
@@ -112,6 +124,35 @@ export function cleanMessageBody(value: string): string {
     .replace(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi, "")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+export function parseTeamsConversation(text: string): TeamsConversation | null {
+  const headerMatch = text.match(/^\[Teams Direct Message Conversation:\s*([^\]]+)](?:\s+Date:\s*([0-9-]+))?/i);
+  if (!headerMatch) return null;
+
+  const messages: TeamsConversationMessage[] = [];
+  const messagePattern = /\[message:\d+]\s*\[([0-9-]+\s+[0-9:]+)]\s*([^:]+):\s*([\s\S]*?)(?=\s*\[message:\d+]\s*\[[0-9-]+\s+[0-9:]+]|\s*$)/g;
+  let match: RegExpExecArray | null;
+
+  while ((match = messagePattern.exec(text)) !== null) {
+    const body = match[3]
+      .replace(/\s+/g, " ")
+      .trim();
+
+    if (!body) continue;
+
+    messages.push({
+      date: match[1].trim(),
+      author: match[2].trim(),
+      body,
+    });
+  }
+
+  return {
+    title: headerMatch[1].trim(),
+    date: headerMatch[2]?.trim() ?? null,
+    messages,
+  };
 }
 
 export function extractContextBody(text: string): string {

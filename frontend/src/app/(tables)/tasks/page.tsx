@@ -61,9 +61,11 @@ import {
 } from "@/features/tasks/task-utils";
 import {
   type EmailThreadMessage,
+  type TeamsConversationMessage,
   cleanSourceContextText,
   extractContextBody,
   parseEmailThread,
+  parseTeamsConversation,
 } from "@/features/tasks/email-thread-parser";
 
 // ---------------------------------------------------------------------------
@@ -254,6 +256,32 @@ function formatContextDate(value: string | null): string | null {
   });
 }
 
+function formatTeamsMessageTime(value: string): string {
+  const date = new Date(value.replace(" ", "T"));
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+function formatTeamsConversationDate(value: string): string {
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return formatContextDate(value) ?? value;
+
+  return new Date(
+    Number(match[1]),
+    Number(match[2]) - 1,
+    Number(match[3]),
+  ).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
 function splitContextParagraphs(value: string): string[] {
   const normalized = value
     .replace(/\s+/g, " ")
@@ -287,6 +315,28 @@ function splitContextParagraphs(value: string): string[] {
 
   if (current) paragraphs.push(current);
   return paragraphs.length > 0 ? paragraphs : [normalized];
+}
+
+function TeamsMessageRow({ message }: { message: TeamsConversationMessage }) {
+  return (
+    <article className="grid gap-2 border-b border-border/30 py-3 last:border-b-0 sm:grid-cols-[128px_minmax(0,1fr)]">
+      <div className="min-w-0 space-y-0.5">
+        <div className="truncate text-xs font-semibold text-foreground">
+          {message.author}
+        </div>
+        <time className="block text-[11px] leading-4 text-muted-foreground">
+          {formatTeamsMessageTime(message.date)}
+        </time>
+      </div>
+      <div className="min-w-0 text-xs leading-5 text-foreground">
+        {splitContextParagraphs(message.body).map((paragraph, index) => (
+          <p key={`${message.date}-${index}`} className="break-words">
+            {paragraph}
+          </p>
+        ))}
+      </div>
+    </article>
+  );
 }
 
 function ContextBody({ value, collapsedChars = COLLAPSED_CONTEXT_CHARS }: { value: string; collapsedChars?: number }) {
@@ -357,6 +407,30 @@ function MessageCard({ message }: { message: EmailThreadMessage }) {
 
 function SourceContextBlock({ value }: { value: string }) {
   const text = cleanSourceContextText(value);
+  const teamsConversation = parseTeamsConversation(text);
+
+  if (teamsConversation && teamsConversation.messages.length > 0) {
+    return (
+      <div className="w-full rounded-md bg-muted/20 px-4 py-4">
+        <div className="mb-2 flex min-w-0 flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+          <div className="min-w-0 truncate text-xs font-semibold text-foreground">
+            Teams: {teamsConversation.title}
+          </div>
+          {teamsConversation.date && (
+            <time className="shrink-0 text-[11px] font-medium text-muted-foreground">
+              {formatTeamsConversationDate(teamsConversation.date)}
+            </time>
+          )}
+        </div>
+        <div className="divide-y-0">
+          {teamsConversation.messages.map((message) => (
+            <TeamsMessageRow key={`${message.date}-${message.author}`} message={message} />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   const messages = parseEmailThread(text);
 
   if (messages.length > 1) {

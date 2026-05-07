@@ -2,6 +2,7 @@ import {
   cleanSourceContextText,
   extractContextBody,
   parseEmailThread,
+  parseTeamsConversation,
 } from "../email-thread-parser";
 
 const permitPendingThread = `
@@ -96,5 +97,33 @@ describe("email thread parser", () => {
     expect(message.body).toBe("@Jazmin Gaona is in charge of managing licenses.");
     expect(message.body).not.toContain("bclymer@alleatogroup.com");
     expect(message.body).not.toContain("Mobile");
+  });
+
+  it("parses Teams direct message transcripts without exposing message ids", () => {
+    const conversation = parseTeamsConversation(
+      cleanSourceContextText(`
+        [Teams Direct Message Conversation: Westfield Collective] Date: 2026-01-02
+        [message:1767366433099] [2026-01-02 15:07:13] Jesse Dawson: thats awesome, its been in the 50s a couple days here
+        [message:1767365771301] [2026-01-02 14:56:11] Brandon Clymer: Make sure to get a date for when the fake windows will be installed
+      `),
+    );
+
+    expect(conversation).toMatchObject({
+      title: "Westfield Collective",
+      date: "2026-01-02",
+    });
+    expect(conversation?.messages).toEqual([
+      {
+        date: "2026-01-02 15:07:13",
+        author: "Jesse Dawson",
+        body: "thats awesome, its been in the 50s a couple days here",
+      },
+      {
+        date: "2026-01-02 14:56:11",
+        author: "Brandon Clymer",
+        body: "Make sure to get a date for when the fake windows will be installed",
+      },
+    ]);
+    expect(conversation?.messages.map((message) => message.body).join(" ")).not.toContain("message:");
   });
 });
