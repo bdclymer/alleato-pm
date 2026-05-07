@@ -46,7 +46,12 @@ as $$
       (select count(*) from public.document_metadata
        where type = 'teams_dm_conversation'
          and source_metadata -> 'teams_compiler' ->> 'compiled_at' is null
-         and coalesce(status, '') not in ('error', 'skipped_low_content')),
+         and status in ('raw_ingested', 'embedded')
+         and (overview is null or overview = '')),
+    'rows_uncompiled_total',
+      (select count(*) from public.document_metadata
+       where type = 'teams_dm_conversation'
+         and source_metadata -> 'teams_compiler' ->> 'compiled_at' is null),
     'last_successful_run',
       (select max((source_metadata -> 'teams_compiler' ->> 'compiled_at')::timestamptz)
        from public.document_metadata

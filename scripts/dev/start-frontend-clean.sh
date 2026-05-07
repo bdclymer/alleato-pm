@@ -67,6 +67,6 @@ fi
 cd "$FRONTEND_DIR"
 rm -rf .next
 echo "$$" > "$PID_FILE"
-# Cap Node.js heap at 4GB to prevent macOS from killing the process under memory pressure
-export NODE_OPTIONS='--max-old-space-size=4096'
+# Cap Node.js heap at 6GB; --experimental-vm-modules reduces per-module overhead
+export NODE_OPTIONS='--max-old-space-size=6144'
 exec npx next dev

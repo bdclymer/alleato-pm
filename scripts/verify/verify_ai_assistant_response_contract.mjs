@@ -47,12 +47,15 @@ const checks = [
   },
   {
     file: files.route,
-    description: "chat route uses deterministic executive briefing retrieval without slow optional synthesis",
+    description: "chat route uses deterministic executive briefing retrieval and persisted Brandon daily brief drafts",
     test: (content) =>
       content.includes("generateSourceGroundedSynthesis") &&
       content.includes('model: getLanguageModel("openai/gpt-4.1")') &&
       content.includes("sourceGroundedSynthesisFallback") &&
       content.includes("createDeterministicProjectBriefing") &&
+      content.includes("getExecutiveBriefingDashboard") &&
+      content.includes("loadBrandonDailyUpdateWidget") &&
+      content.includes("daily_recaps.recap_kind=executive_briefing") &&
       content.includes("ExecutiveBriefingRetrievalPacket") &&
       content.includes("formatExecutiveBriefingRetrievalContext") &&
       content.includes("formatExecutiveRecentSignals") &&
@@ -64,7 +67,8 @@ const checks = [
       content.includes("Sources Checked") &&
       !content.includes("source-grounded synthesis exceeded the fast briefing budget") &&
       !content.includes("reason: \"deterministic broad briefing path\"") &&
-      content.includes("const modelTools = shouldEnableStreamingModelTools(providerDecision)") &&
+      content.includes("shouldEnableStreamingModelTools(providerDecision)") &&
+      content.includes("streamingModelToolsEnabled") &&
       content.includes("tools: modelTools") &&
       content.includes("availableToolNames"),
   },
