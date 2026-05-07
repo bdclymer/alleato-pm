@@ -3359,6 +3359,290 @@ export type Database = {
         }
         Relationships: []
       }
+      app_error_events: {
+        Row: {
+          action: string | null
+          app_version: string | null
+          browser_metadata: Json
+          component_stack: string | null
+          context: Json
+          created_at: string
+          error_code: string | null
+          error_message: string
+          fingerprint: string
+          group_id: string | null
+          id: string
+          page_path: string | null
+          page_url: string | null
+          project_id: number | null
+          release_sha: string | null
+          request_id: string | null
+          route: string | null
+          severity: string
+          source: string
+          stack: string | null
+          status_code: number | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action?: string | null
+          app_version?: string | null
+          browser_metadata?: Json
+          component_stack?: string | null
+          context?: Json
+          created_at?: string
+          error_code?: string | null
+          error_message: string
+          fingerprint: string
+          group_id?: string | null
+          id?: string
+          page_path?: string | null
+          page_url?: string | null
+          project_id?: number | null
+          release_sha?: string | null
+          request_id?: string | null
+          route?: string | null
+          severity?: string
+          source: string
+          stack?: string | null
+          status_code?: number | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string | null
+          app_version?: string | null
+          browser_metadata?: Json
+          component_stack?: string | null
+          context?: Json
+          created_at?: string
+          error_code?: string | null
+          error_message?: string
+          fingerprint?: string
+          group_id?: string | null
+          id?: string
+          page_path?: string | null
+          page_url?: string | null
+          project_id?: number | null
+          release_sha?: string | null
+          request_id?: string | null
+          route?: string | null
+          severity?: string
+          source?: string
+          stack?: string | null
+          status_code?: number | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "app_error_events_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "app_error_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "app_error_events_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "app_error_events_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "app_error_events_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "app_error_events_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "app_error_events_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "app_error_events_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "app_error_events_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "app_error_events_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      app_error_groups: {
+        Row: {
+          affected_project_count: number
+          affected_user_count: number
+          created_at: string
+          event_count: number
+          first_seen_at: string
+          id: string
+          last_seen_at: string
+          latest_action: string | null
+          latest_error_code: string | null
+          latest_event_id: string | null
+          latest_message: string
+          latest_project_id: number | null
+          latest_request_id: string | null
+          latest_route: string | null
+          latest_user_id: string | null
+          linear_issue_id: string | null
+          linear_issue_url: string | null
+          metadata: Json
+          severity: string
+          signature: string
+          source: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          affected_project_count?: number
+          affected_user_count?: number
+          created_at?: string
+          event_count?: number
+          first_seen_at?: string
+          id?: string
+          last_seen_at?: string
+          latest_action?: string | null
+          latest_error_code?: string | null
+          latest_event_id?: string | null
+          latest_message: string
+          latest_project_id?: number | null
+          latest_request_id?: string | null
+          latest_route?: string | null
+          latest_user_id?: string | null
+          linear_issue_id?: string | null
+          linear_issue_url?: string | null
+          metadata?: Json
+          severity?: string
+          signature: string
+          source: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          affected_project_count?: number
+          affected_user_count?: number
+          created_at?: string
+          event_count?: number
+          first_seen_at?: string
+          id?: string
+          last_seen_at?: string
+          latest_action?: string | null
+          latest_error_code?: string | null
+          latest_event_id?: string | null
+          latest_message?: string
+          latest_project_id?: number | null
+          latest_request_id?: string | null
+          latest_route?: string | null
+          latest_user_id?: string | null
+          linear_issue_id?: string | null
+          linear_issue_url?: string | null
+          metadata?: Json
+          severity?: string
+          signature?: string
+          source?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "app_error_groups_latest_event_fkey"
+            columns: ["latest_event_id"]
+            isOneToOne: false
+            referencedRelation: "app_error_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "app_error_groups_latest_project_id_fkey"
+            columns: ["latest_project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "app_error_groups_latest_project_id_fkey"
+            columns: ["latest_project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "app_error_groups_latest_project_id_fkey"
+            columns: ["latest_project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "app_error_groups_latest_project_id_fkey"
+            columns: ["latest_project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "app_error_groups_latest_project_id_fkey"
+            columns: ["latest_project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "app_error_groups_latest_project_id_fkey"
+            columns: ["latest_project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "app_error_groups_latest_project_id_fkey"
+            columns: ["latest_project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "app_error_groups_latest_user_id_fkey"
+            columns: ["latest_user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       app_pages: {
         Row: {
           category: string | null
@@ -24990,6 +25274,8 @@ export type Database = {
       }
       schedule_tasks: {
         Row: {
+          assignee: string | null
+          assignee_person_id: string | null
           constraint_date: string | null
           constraint_type: string | null
           created_at: string | null
@@ -25000,6 +25286,7 @@ export type Database = {
           name: string
           parent_task_id: string | null
           percent_complete: number | null
+          priority: string
           project_id: number
           sort_order: number | null
           start_date: string | null
@@ -25008,6 +25295,8 @@ export type Database = {
           wbs_code: string | null
         }
         Insert: {
+          assignee?: string | null
+          assignee_person_id?: string | null
           constraint_date?: string | null
           constraint_type?: string | null
           created_at?: string | null
@@ -25018,6 +25307,7 @@ export type Database = {
           name: string
           parent_task_id?: string | null
           percent_complete?: number | null
+          priority?: string
           project_id: number
           sort_order?: number | null
           start_date?: string | null
@@ -25026,6 +25316,8 @@ export type Database = {
           wbs_code?: string | null
         }
         Update: {
+          assignee?: string | null
+          assignee_person_id?: string | null
           constraint_date?: string | null
           constraint_type?: string | null
           created_at?: string | null
@@ -25036,6 +25328,7 @@ export type Database = {
           name?: string
           parent_task_id?: string | null
           percent_complete?: number | null
+          priority?: string
           project_id?: number
           sort_order?: number | null
           start_date?: string | null
@@ -25044,6 +25337,13 @@ export type Database = {
           wbs_code?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "schedule_tasks_assignee_person_id_fkey"
+            columns: ["assignee_person_id"]
+            isOneToOne: false
+            referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "schedule_tasks_parent_task_id_fkey"
             columns: ["parent_task_id"]
@@ -28659,6 +28959,116 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      system_alerts: {
+        Row: {
+          alert_key: string
+          category: string
+          code: string
+          created_at: string
+          first_seen_at: string
+          id: string
+          last_seen_at: string
+          message: string
+          metadata: Json
+          project_id: number | null
+          resolved_at: string | null
+          resource_id: string
+          severity: string
+          source: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          alert_key: string
+          category: string
+          code: string
+          created_at?: string
+          first_seen_at?: string
+          id?: string
+          last_seen_at?: string
+          message: string
+          metadata?: Json
+          project_id?: number | null
+          resolved_at?: string | null
+          resource_id?: string
+          severity?: string
+          source: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          alert_key?: string
+          category?: string
+          code?: string
+          created_at?: string
+          first_seen_at?: string
+          id?: string
+          last_seen_at?: string
+          message?: string
+          metadata?: Json
+          project_id?: number | null
+          resolved_at?: string | null
+          resource_id?: string
+          severity?: string
+          source?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "system_alerts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "system_alerts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "system_alerts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "system_alerts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "system_alerts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "system_alerts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "system_alerts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       table_metadata: {
         Row: {
@@ -34667,6 +35077,7 @@ export type Database = {
         Args: { page: Database["public"]["Tables"]["qa_page_audit"]["Row"] }
         Returns: string
       }
+      record_app_error_event: { Args: { payload: Json }; Returns: string }
       refresh_budget_rollup:
         | {
             Args: { p_project_id?: number }

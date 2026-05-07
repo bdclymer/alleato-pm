@@ -1,7 +1,9 @@
 import {
   identityLooksLikeBrandon,
   isDailyBriefCritiqueRequest,
+  isExecutiveBriefingMetadataQuestion,
   isPersonalDailyBriefRequest,
+  isPersonalTaskRegisterRequest,
 } from "../personal-daily-brief";
 
 describe("personal daily brief routing", () => {
@@ -14,6 +16,19 @@ describe("personal daily brief routing", () => {
   it("does not treat generic project updates as personal daily briefs", () => {
     expect(isPersonalDailyBriefRequest("give me the Westfield project update")).toBe(false);
     expect(isPersonalDailyBriefRequest("daily log status for project 760")).toBe(false);
+  });
+
+  it("detects personal task register prompts without replaying the daily brief", () => {
+    expect(isPersonalTaskRegisterRequest("what are my tasks")).toBe(true);
+    expect(isPersonalTaskRegisterRequest("show my task list")).toBe(true);
+    expect(isPersonalTaskRegisterRequest("what needs my attention today?")).toBe(false);
+  });
+
+  it("detects follow-up questions about executive briefing generation metadata", () => {
+    expect(isExecutiveBriefingMetadataQuestion("When was this regenerated?")).toBe(true);
+    expect(isExecutiveBriefingMetadataQuestion("what time was the briefing report generated")).toBe(true);
+    expect(isExecutiveBriefingMetadataQuestion("is this daily operating brief current?")).toBe(true);
+    expect(isExecutiveBriefingMetadataQuestion("which project is this about?")).toBe(false);
   });
 
   it("does not replay the daily brief when the user is critiquing the brief format", () => {

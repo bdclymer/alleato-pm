@@ -419,6 +419,73 @@ Checks:
 
 ## First Implementation Order
 
+## Implemented Retrieval Learning Loop
+
+The first completed loop is retrieval learning. It does not retrain a model. It captures which sources/chunks helped or hurt assistant answers, promotes repeated patterns into reviewable candidates, and applies bounded ranking hints only after admin approval.
+
+### Implemented Data Model
+
+| Table | Role |
+|---|---|
+| `ai_feedback_events` | Normalized audit stream for review, apply, pause, resume, and supersede actions. |
+| `ai_retrieval_feedback` | Source/chunk retrieval traces from assistant tool output. |
+| `ai_learning_promotions` | Review ledger for candidate, approved, rejected, applied, and superseded learnings. |
+| `ai_retrieval_weights` | Active/paused/superseded retrieval ranking hints consumed by semantic search. |
+
+### Implemented Admin Surface
+
+Route: `/ai-learning-promotions`
+
+The page includes:
+
+- status tabs for candidate, approved, applied, rejected, and superseded promotions
+- metrics for candidates, approvals, applied learnings, active/paused weights, superseded promotions, and audit activity
+- Generate action for retrieval promotion scans
+- approve/reject controls
+- impact preview for retrieval-weight promotions
+- apply, pause, resume, and supersede controls
+- learning activity feed backed by `ai_feedback_events`
+
+### Implemented Flow
+
+```text
+assistant semantic search
+-> retrieval traces are written to ai_retrieval_feedback
+-> admin runs promotion scan
+-> repeated helpful/problem signals create ai_learning_promotions candidates
+-> admin approves/rejects
+-> approved retrieval weights can be previewed
+-> admin applies promotion
+-> ai_retrieval_weights row becomes active
+-> semanticSearch applies bounded ranking multiplier
+-> admin can pause, resume, or supersede
+-> every lifecycle action writes ai_feedback_events
+```
+
+### Current Safety Rules
+
+- No ranking hint is active until admin approval and apply.
+- Candidate generation requires repeated grouped signals.
+- Boosts require repeated helpful/cited/used signals without problem signals.
+- Problem candidates come from repeated unhelpful, wrong-project, stale, or unsupported outcomes.
+- Multipliers are bounded between `0.65` and `1.5`.
+- Paused and superseded weights are ignored by semantic search.
+- Lifecycle actions are auditable in `ai_feedback_events`.
+
+### Current Verification
+
+- route conflict check
+- focused ESLint
+- focused TypeScript filtering for touched self-learning files
+- unit guardrail for retrieval-weight scoring behavior
+
+### Remaining Gaps
+
+- Browser-level smoke test for generate -> approve -> preview -> apply -> pause/resume.
+- Live semantic-search replay preview.
+- Destination writers for `agent_learnings`, `ai_memories`, task examples, and attribution rules.
+- Packet/card feedback loop.
+
 1. Add `ai_feedback_events`, `ai_learning_promotions`, and `ai_retrieval_feedback`.
 2. Add `frontend/src/lib/ai/services/feedback-event-service.ts`.
 3. Wire assistant thumbs, task feedback, and packet/card feedback into normalized events.

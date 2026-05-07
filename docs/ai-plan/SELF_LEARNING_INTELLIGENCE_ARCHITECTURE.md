@@ -526,6 +526,99 @@ Checks:
 
 ## First Implementation Order
 
+## Implemented Lifecycle: Retrieval Learning
+
+The first complete self-learning loop is now the retrieval learning loop. It is intentionally narrow: it learns source/chunk ranking preferences from observed retrieval outcomes, routes them through admin review, and applies bounded ranking hints only after approval.
+
+### Implemented Tables
+
+| Table | Implemented role |
+|---|---|
+| `ai_feedback_events` | Append-only normalized audit stream for assistant feedback, task feedback, promotion review, retrieval weight application, and retrieval weight controls. |
+| `ai_retrieval_feedback` | Source/chunk-level retrieval traces from assistant tool output, including query text, rank, score, citation/use flags, and outcome. |
+| `ai_learning_promotions` | Candidate/approved/rejected/applied/superseded review ledger for learnings before they affect behavior. |
+| `ai_retrieval_weights` | Active/paused/superseded retrieval ranking hints created only from approved retrieval-weight promotions. |
+
+### Implemented Services And Routes
+
+| Surface | Path | Role |
+|---|---|---|
+| Shared feedback service | `frontend/src/lib/ai/services/feedback-event-service.ts` | Writes normalized feedback events, retrieval feedback, promotion candidates, retrieval weights, impact previews, and lifecycle audit events. |
+| Scoring helper | `frontend/src/lib/ai/retrieval/retrieval-weight-scoring.ts` | Pure scoring helpers for query signatures and bounded retrieval-weight multipliers. |
+| AI assistant feedback | `frontend/src/app/api/ai-assistant/feedback/route.ts` | Normalizes assistant feedback into `ai_feedback_events`. |
+| AI assistant chat | `frontend/src/app/api/ai-assistant/chat/route.ts` | Persists retrieval feedback from tool traces before assistant message storage. |
+| Promotion review API | `frontend/src/app/api/admin/ai-learning-promotions/route.ts` | Loads promotions, approves/rejects candidates, applies approved retrieval weights, and pauses/resumes/supersedes applied weights. |
+| Candidate generator | `frontend/src/app/api/admin/ai-learning-promotions/run/route.ts` | Scans recent `ai_retrieval_feedback` and creates retrieval-weight promotion candidates. |
+| Impact preview | `frontend/src/app/api/admin/ai-learning-promotions/preview/route.ts` | Estimates before/after ranking impact for a retrieval-weight promotion using stored retrieval feedback. |
+| Activity feed | `frontend/src/app/api/admin/ai-learning-promotions/activity/route.ts` | Returns normalized learning-control and review audit events. |
+| Metrics endpoint | `frontend/src/app/api/admin/ai-learning-promotions/stats/route.ts` | Counts promotion status, retrieval-weight status, and learning activity events. |
+| Admin UI | `frontend/src/app/(admin)/ai-learning-promotions/*` | Review queue, metrics strip, impact preview, lifecycle controls, and activity feed. |
+
+### Implemented Review Flow
+
+```text
+assistant semantic search
+-> tool trace captures source document/chunk IDs
+-> chat persistence writes ai_retrieval_feedback
+-> admin runs promotion scan
+-> generator groups repeated helpful/problem signals by tool, project, source, and query signature
+-> candidate is written to ai_learning_promotions
+-> admin approves or rejects candidate
+-> approved retrieval_weight can be previewed
+-> admin applies promotion
+-> ai_retrieval_weights row becomes active
+-> semanticSearch multiplies matching candidate scores with a bounded 0.65x-1.5x multiplier
+-> admin can pause, resume, or supersede the weight
+-> every review/control action writes ai_feedback_events
+```
+
+### Promotion Rules Now Enforced
+
+- No retrieval ranking hint is active until an admin approves and applies it.
+- Retrieval-weight candidates are generated only from repeated grouped signals.
+- Boosts require repeated helpful/cited/used retrieval signals without problem signals.
+- Down-rank review candidates require repeated unhelpful, wrong-project, stale, or unsupported outcomes.
+- Multipliers are bounded between `0.65` and `1.5` so learning cannot dominate semantic similarity.
+- Paused and superseded weights are not consumed by semantic search.
+- Review, apply, pause, resume, and supersede actions are audit events in `ai_feedback_events`.
+
+### Admin Surface
+
+The dedicated review surface is `/ai-learning-promotions`.
+
+It includes:
+
+- status tabs for candidate, approved, applied, rejected, and superseded promotions
+- metrics for candidate, approved, applied, active weights, paused weights, superseded promotions, and audit activity
+- Generate action for candidate scans
+- approve/reject controls for candidates
+- impact preview for retrieval-weight promotions
+- apply controls for approved retrieval-weight promotions
+- pause/resume/supersede controls for applied retrieval weights
+- activity feed sourced from `ai_feedback_events`
+
+### Verification Coverage
+
+Current focused verification for this loop:
+
+- `npm run check:routes`
+- focused ESLint over the self-learning API/UI/service files
+- focused TypeScript filter over touched self-learning files
+- `npm run test:unit -- --runTestsByPath src/lib/ai/retrieval/__tests__/retrieval-weight-scoring.test.ts --runInBand`
+
+Current test guardrail:
+
+- query signature normalization
+- source/chunk weight matching
+- bounded multiplier behavior
+
+### Remaining Gaps
+
+- No browser-level smoke test yet for generate -> approve -> preview -> apply -> pause/resume.
+- Impact preview is based on stored retrieval feedback, not a live semantic-search replay.
+- Destination writers for `agent_learnings`, `ai_memories`, positive task examples, and attribution rules remain future slices.
+- Packet/card feedback has not yet been wired into the normalized event and promotion system.
+
 ### Slice 1: Unified Feedback Events
 
 Build:

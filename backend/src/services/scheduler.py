@@ -6,6 +6,8 @@ Currently registered jobs:
   - Daily digest: 6 PM daily, aggregates meetings into executive briefing
   - Acumatica financial sync: daily incremental ERP import into Supabase
   - Microsoft Graph sync: periodic incremental sync of Outlook/Teams/OneDrive
+  - Microsoft Graph embedding: periodic vectorization of pending Graph documents
+  - AI intelligence compiler: periodic drain of source and packet queue rows
   - Task extraction: daily, extracts action items from meetings/emails/Teams messages
 
 Future jobs (Phase 2+):
@@ -139,6 +141,27 @@ def init_scheduler() -> None:
             "[Scheduler] Microsoft Graph sync every %d min",
             graph_interval_minutes,
         )
+
+        if os.getenv("GRAPH_EMBEDDING_ENABLED", "true").lower() not in ("0", "false", "no"):
+            graph_embedding_interval_minutes = max(
+                1,
+                int(os.getenv("GRAPH_EMBEDDING_INTERVAL_MINUTES", "5")),
+            )
+            graph_embedding_limit = max(1, int(os.getenv("GRAPH_EMBEDDING_LIMIT", "100")))
+            scheduler.add_job(
+                run_graph_embedding_job,
+                IntervalTrigger(minutes=graph_embedding_interval_minutes),
+                id="graph_embedding",
+                name="Microsoft Graph Pending Embedding",
+                replace_existing=True,
+                max_instances=1,
+                kwargs={"limit": graph_embedding_limit},
+            )
+            logger.info(
+                "[Scheduler] Microsoft Graph embedding every %d min (limit=%d)",
+                graph_embedding_interval_minutes,
+                graph_embedding_limit,
+            )
     else:
         if graph_has_creds:
             logger.warning(
@@ -306,15 +329,15 @@ def _run_acumatica_financial_sync():
 
 
 async def run_graph_sync_job() -> None:
-    """Scheduled job: incrementally sync Outlook, Teams, and OneDrive via Microsoft Graph."""
+    """Scheduled job: fetch changed Outlook, Teams, and OneDrive rows via Microsoft Graph."""
     import asyncio
 
-    logger.info("[Scheduler] Running Microsoft Graph sync job")
+    logger.info("[Scheduler] Running Microsoft Graph fetch-only sync job")
     try:
         loop = asyncio.get_event_loop()
         result = await loop.run_in_executor(None, _run_graph_sync)
         logger.info(
-            "[Scheduler] Microsoft Graph sync complete: %d total synced (outlook=%d, teams=%d, onedrive=%d)",
+            "[Scheduler] Microsoft Graph fetch-only sync complete: %d total synced (outlook=%d, teams=%d, onedrive=%d)",
             result.get("total_synced", 0),
             result.get("outlook", 0),
             result.get("teams", 0),
@@ -359,15 +382,53 @@ async def run_intelligence_compiler_job(
         logger.warning("[Scheduler] Intelligence compiler failed (will retry): %s", e, exc_info=True)
 
 
+async def run_graph_embedding_job(limit: int = 100) -> None:
+    """Scheduled job: vectorize pending Graph document rows without fetching new source data."""
+    import asyncio
+
+    logger.info("[Scheduler] Running Microsoft Graph embedding job (limit=%d)", limit)
+    try:
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(None, _run_graph_embedding, limit)
+        logger.info("[Scheduler] Microsoft Graph embedding complete: %s", result)
+        if result.get("errors"):
+            logger.warning("[Scheduler] Graph embedding reported errors: %s", result)
+    except Exception as e:
+        logger.warning("[Scheduler] Graph embedding failed (will retry): %s", e, exc_info=True)
+
+
 def _run_graph_sync():
-    """Synchronous wrapper for Microsoft Graph sync."""
+    """Synchronous wrapper for Microsoft Graph fetch-only sync."""
     from .supabase_helpers import get_supabase_client
     from .integrations.microsoft_graph.sync import run_graph_sync
 
     client = get_supabase_client()
-    result = run_graph_sync(client)
+    run_inline_embedding = os.getenv("GRAPH_SYNC_RUN_EMBEDDING_INLINE", "false").lower() in (
+        "1",
+        "true",
+        "yes",
+    )
+    run_inline_compiler = os.getenv("GRAPH_SYNC_RUN_COMPILER_INLINE", "false").lower() in (
+        "1",
+        "true",
+        "yes",
+    )
+    result = run_graph_sync(
+        client,
+        run_embedding=run_inline_embedding,
+        run_teams_compiler=run_inline_compiler,
+    )
     result["project_backfill"] = _maybe_run_comm_project_backfill(client)
     return result
+
+
+def _run_graph_embedding(limit: int = 100) -> dict:
+    """Synchronous wrapper for pending Microsoft Graph vectorization work."""
+    from .supabase_helpers import get_supabase_client
+    from .integrations.microsoft_graph.embed import embed_pending_graph_documents
+
+    client = get_supabase_client()
+    return embed_pending_graph_documents(client, limit=limit)
 
 
 def _run_intelligence_compiler(

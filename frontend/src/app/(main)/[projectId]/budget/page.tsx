@@ -90,6 +90,7 @@ function BudgetTableSkeleton() {
   return (
     <div className="rounded-lg border bg-background shadow-sm overflow-hidden">
       {/* Table header skeleton */}
+      {/* eslint-disable-next-line design-system/require-info-alert -- table skeleton row, not a user-facing callout */}
       <div className="flex items-center gap-2 px-4 py-4 border-b bg-muted/50">
         <Skeleton className="h-4 w-4" />
         <Skeleton className="h-4 w-24" />
@@ -112,6 +113,7 @@ function BudgetTableSkeleton() {
         </div>
       ))}
       {/* Grand total row skeleton */}
+      {/* eslint-disable-next-line design-system/require-info-alert -- table skeleton total row, not a user-facing callout */}
       <div className="flex items-center gap-2 px-4 py-4 bg-muted/30 border-t">
         <Skeleton className="h-5 w-20" />
         <Skeleton className="h-5 w-28 ml-auto" />
@@ -1029,10 +1031,11 @@ function BudgetPageContent() {
             />
           </div>
         ) : (
-          <div className="flex min-w-0 flex-1">
+          <div className="flex min-w-0 flex-1 -mx-4 sm:-mx-6 lg:-mx-8">
             <div className="min-w-0 flex-1">
               {/* Selection action bar */}
               {selectedIds.length > 0 && (
+                /* eslint-disable-next-line design-system/require-info-alert -- selection action bar with destructive control, not an informational callout */
                 <div className="flex items-center gap-4 px-4 py-2 mb-4 bg-primary/5 border border-primary/20 rounded-lg">
                   <span className="text-sm text-primary font-medium">
                     {selectedIds.length} item(s) selected

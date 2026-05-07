@@ -38,6 +38,7 @@ import {
 } from "@/lib/permissions-shared";
 import {
   formatProjectCount,
+  getProjectRoleTemplates,
   type GranularOverrideEffect,
   type UserAccessSummary,
 } from "../_lib/user-access-data";
@@ -579,10 +580,12 @@ function RoleSelect({
   templates: PermissionTemplate[];
   onValueChange: (templateId: string) => void;
 }) {
+  const roleTemplates = getProjectRoleTemplates(templates);
+
   return (
     <Select
       value={value ?? "none"}
-      disabled={disabled}
+      disabled={disabled || roleTemplates.length === 0}
       onValueChange={(templateId) => {
         if (templateId === "none") return;
         onValueChange(templateId);
@@ -595,7 +598,7 @@ function RoleSelect({
         <SelectItem value="none" disabled>
           No role
         </SelectItem>
-        {templates.map((template) => (
+        {roleTemplates.map((template) => (
           <SelectItem key={template.id} value={template.id}>
             {template.name}
             {template.is_system ? " (System)" : ""}

@@ -252,6 +252,45 @@ export function createActionTools(
     return { ok: true, projectId: effectiveProjectId };
   }
 
+  async function resolveScheduleTaskAssignee(
+    assignee?: string,
+  ): Promise<{ assignee: string | null; assigneePersonId: string | null }> {
+    const trimmed = assignee?.trim() || null;
+    if (!trimmed) return { assignee: null, assigneePersonId: null };
+
+    const normalized = trimmed.toLowerCase();
+    const { data, error } = await supabase
+      .from("people")
+      .select("id,first_name,last_name,email")
+      .limit(2000);
+
+    if (error) {
+      throw new Error(`Failed to resolve schedule task assignee: ${error.message}`);
+    }
+
+    const matches = (data ?? []).filter((person) => {
+      const fullName = [person.first_name, person.last_name]
+        .filter(Boolean)
+        .join(" ")
+        .trim()
+        .toLowerCase();
+      const email = person.email?.trim().toLowerCase() ?? "";
+      const firstName = person.first_name?.trim().toLowerCase() ?? "";
+      const lastName = person.last_name?.trim().toLowerCase() ?? "";
+
+      return (
+        email === normalized ||
+        fullName === normalized ||
+        (normalized.length >= 3 && (firstName === normalized || lastName === normalized))
+      );
+    });
+
+    return {
+      assignee: trimmed,
+      assigneePersonId: matches.length === 1 ? matches[0].id : null,
+    };
+  }
+
   function needsConfirmedWriteApproval(input: { confirmed?: boolean }): boolean {
     return input.confirmed === true;
   }
@@ -668,6 +707,7 @@ export function createActionTools(
         const { projectId, name, assignee, dueDate, notes, priority, confirmed } = input;
         const access = await enforceProjectWriteAccess(projectId);
         if (!access.ok) return { success: false, error: access.error };
+        const resolvedAssignee = await resolveScheduleTaskAssignee(assignee);
 
         if (!confirmed) {
           let fewShotBlock = "";
@@ -687,7 +727,8 @@ export function createActionTools(
                 name: notes ? `${name} — ${notes}` : name,
                 status: "not_started",
                 finish_date: dueDate ?? null,
-                assignee: assignee ?? null,
+                assignee: resolvedAssignee.assignee,
+                assignee_person_id: resolvedAssignee.assigneePersonId,
                 priority,
               },
             },
@@ -706,7 +747,8 @@ export function createActionTools(
             status: "not_started",
             percent_complete: 0,
             finish_date: dueDate ?? null,
-            assignee: assignee ?? null,
+            assignee: resolvedAssignee.assignee,
+            assignee_person_id: resolvedAssignee.assigneePersonId,
             priority,
             updated_at: new Date().toISOString(),
           })

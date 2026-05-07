@@ -4,6 +4,8 @@ import { getErrorCatalogEntry } from "@/lib/guardrails/error-catalog";
 import { asGuardrailError, GuardrailError } from "@/lib/guardrails/errors";
 import { validateEnvVars } from "@/lib/guardrails/env";
 import { getOrCreateRequestId, logEvent, notifyOnError } from "@/lib/guardrails/observability";
+import { recordAppErrorEvent } from "@/lib/app-error-telemetry";
+import { getApiRouteUser } from "@/lib/supabase/server";
 
 export interface ErrorEnvelope {
   success: false;
@@ -32,6 +34,12 @@ type WrappedHandler<TParams = RouteParams> = (
 ) => Promise<Response>;
 
 let runtimeEnvValidated = false;
+
+function projectIdFromPath(pathname: string): number | null {
+  const firstSegment = pathname.split("/").filter(Boolean)[0];
+  const parsed = Number.parseInt(firstSegment ?? "", 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
 
 function ensureRuntimeEnv(where: string): void {
   if (runtimeEnvValidated) return;
@@ -125,6 +133,32 @@ export function withApiGuardrails<TParams = RouteParams>(
           retryable: error.safeToRetry,
         },
       });
+
+      if (where !== "/api/app-error-events#POST") {
+        const user = await getApiRouteUser();
+        await recordAppErrorEvent({
+          source: "api",
+          severity: error.severity ?? catalog.alertSeverity,
+          userId: user?.id ?? null,
+          projectId: projectIdFromPath(request.nextUrl.pathname),
+          pageUrl: request.url,
+          pagePath: request.nextUrl.pathname,
+          route: request.nextUrl.pathname,
+          action: `${request.method} ${where}`,
+          errorCode: error.code,
+          errorMessage: error.message,
+          stack: rawError instanceof Error ? rawError.stack : undefined,
+          requestId,
+          statusCode: error.status ?? catalog.httpStatus,
+          userAgent: request.headers.get("user-agent"),
+          releaseSha: process.env.VERCEL_GIT_COMMIT_SHA,
+          context: {
+            where,
+            retryable: error.safeToRetry,
+            details: error.details,
+          },
+        });
+      }
 
       await notifyOnError({
         severity: error.severity ?? catalog.alertSeverity,

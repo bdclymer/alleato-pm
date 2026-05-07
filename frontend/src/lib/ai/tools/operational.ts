@@ -10,20 +10,13 @@ import {
   type MemoryType,
   type MemoryVisibility,
 } from "@/lib/ai/services/ai-memory-service";
+import {
+  normalizeRetrievalWeightQuerySignature,
+  retrievalWeightMultiplierForItem,
+  type RetrievalWeightScoringRow,
+} from "@/lib/ai/retrieval/retrieval-weight-scoring";
 
 type AnyRow = Record<string, unknown>;
-
-type RetrievalWeightRow = {
-  id: string;
-  project_id: number | null;
-  tool_name: string;
-  source_document_id: string | null;
-  source_chunk_id: string | null;
-  query_signature: string;
-  action: "boost" | "downrank_review";
-  weight_multiplier: number;
-  confidence: number;
-};
 
 type CreateOperationalToolsOptions = {
   onTrace?: (trace: ToolTracePayload) => void;
@@ -62,18 +55,6 @@ function withTrace<TInput extends Record<string, unknown>, TResult>(
   );
 }
 
-function normalizeRetrievalWeightQuerySignature(value: string): string {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim()
-    .split(" ")
-    .filter((word) => word.length > 2)
-    .slice(0, 10)
-    .join(" ");
-}
-
 async function loadActiveRetrievalWeights({
   supabase,
   toolName,
@@ -84,7 +65,7 @@ async function loadActiveRetrievalWeights({
   toolName: string;
   query: string;
   projectId?: number;
-}): Promise<RetrievalWeightRow[]> {
+}): Promise<RetrievalWeightScoringRow[]> {
   const querySignature = normalizeRetrievalWeightQuerySignature(query);
   if (!querySignature) return [];
 
@@ -102,41 +83,9 @@ async function loadActiveRetrievalWeights({
     throw new Error(`Failed to load retrieval weights for ${toolName}: ${error.message}`);
   }
 
-  return ((data ?? []) as RetrievalWeightRow[]).filter((weight) =>
+  return ((data ?? []) as RetrievalWeightScoringRow[]).filter((weight) =>
     weight.project_id === null || weight.project_id === (projectId ?? null),
   );
-}
-
-function retrievalWeightMultiplierForItem(
-  item: {
-    sourceDocumentId: string | null;
-    sourceChunkId: string | null;
-  },
-  weights: RetrievalWeightRow[],
-): { multiplier: number; weightIds: string[] } {
-  const matching = weights.filter((weight) => {
-    if (weight.source_chunk_id && item.sourceChunkId) {
-      return weight.source_chunk_id === item.sourceChunkId;
-    }
-    if (weight.source_document_id && item.sourceDocumentId) {
-      return weight.source_document_id === item.sourceDocumentId;
-    }
-    return false;
-  });
-
-  if (matching.length === 0) {
-    return { multiplier: 1, weightIds: [] };
-  }
-
-  const multiplier = matching.reduce((current, weight) => {
-    const bounded = Math.min(1.5, Math.max(0.65, Number(weight.weight_multiplier) || 1));
-    return current * bounded;
-  }, 1);
-
-  return {
-    multiplier: Math.min(1.5, Math.max(0.65, multiplier)),
-    weightIds: matching.map((weight) => weight.id),
-  };
 }
 
 function normalizeEmail(value: string | null | undefined): string | null {

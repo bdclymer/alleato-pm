@@ -4,6 +4,7 @@ import * as React from "react";
 import {
   ColumnDef,
   ColumnSizingState,
+  VisibilityState,
   flexRender,
   getCoreRowModel,
   useReactTable,
@@ -11,7 +12,7 @@ import {
   ExpandedState,
   RowSelectionState,
 } from "@tanstack/react-table";
-import { ChevronRight, ChevronDown, X, Check, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { ChevronRight, ChevronDown, X, Check, MoreHorizontal, Pencil, Trash2, Columns3 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -26,12 +27,16 @@ import { cn } from "@/lib/utils";
 import {
   Tooltip,
   TooltipContent,
+  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -198,7 +203,7 @@ function TruncatedHeaderLabel({ text }: { text: string }) {
   const label = (
     <div
       ref={labelRef}
-      className="truncate whitespace-nowrap text-center text-[11px] leading-tight"
+      className="truncate whitespace-nowrap text-left text-xs leading-tight"
     >
       {text}
     </div>
@@ -237,7 +242,7 @@ function ColumnHeader({ lines, columnKey }: ColumnHeaderProps) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div className="cursor-help whitespace-nowrap text-center text-[11px] leading-tight text-foreground transition-colors hover:text-foreground">
+        <div className="cursor-help whitespace-nowrap text-left text-xs leading-tight text-foreground transition-colors hover:text-foreground">
           {labelText}
         </div>
       </TooltipTrigger>
@@ -449,6 +454,24 @@ function getDepthPadding(depth: number) {
   return depthPaddingClasses[index];
 }
 
+const columnLabels: Record<string, string> = {
+  description: "Description",
+  originalBudgetAmount: "Original Budget",
+  budgetModifications: "Budget Mods",
+  approvedCOs: "Approved COs",
+  revisedBudget: "Revised Budget",
+  pendingChanges: "Pending COs",
+  jobToDateCostDetail: "JTD Cost Detail",
+  projectedBudget: "Projected Budget",
+  committedCosts: "Committed Costs",
+  directCosts: "Direct Costs",
+  pendingCostChanges: "Pending Cost Changes",
+  projectedCosts: "Projected Costs",
+  forecastToComplete: "Forecast To Complete",
+  estimatedCostAtCompletion: "Est. Cost at Completion",
+  projectedOverUnder: "Projected +/-",
+};
+
 export function BudgetTable({
   data,
   grandTotals,
@@ -472,6 +495,7 @@ export function BudgetTable({
   const [expanded, setExpanded] = React.useState<ExpandedState>({});
   const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
   const [columnSizing, setColumnSizing] = React.useState<ColumnSizingState>({});
+  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
   // Use prop if provided, otherwise use internal state
   const [showInlineCreateInternal, setShowInlineCreateInternal] = React.useState(false);
   const showInlineCreate = onShowInlineCreateChange ? showInlineCreateProp : showInlineCreateInternal;
@@ -669,7 +693,7 @@ export function BudgetTable({
     {
       accessorKey: "budgetModifications",
       header: () => (
-        <ColumnHeader columnKey="budgetModifications" lines={["mods"]} />
+        <ColumnHeader columnKey="budgetModifications" lines={["Budget Mods"]} />
       ),
       cell: ({ row }) => {
         const hasChildren = Boolean(
@@ -719,7 +743,7 @@ export function BudgetTable({
     {
       accessorKey: "revisedBudget",
       header: () => (
-        <ColumnHeader columnKey="revisedBudget" lines={["revised"]} />
+        <ColumnHeader columnKey="revisedBudget" lines={["Revised Budget"]} />
       ),
       cell: ({ row }) => {
         const hasChildren = Boolean(
@@ -733,6 +757,84 @@ export function BudgetTable({
               "edit line items",
               onEditLineItem ? () => onEditLineItem(row.original) : undefined
             )}
+          />
+        );
+      },
+      size: 130,
+    },
+    {
+      accessorKey: "pendingChanges",
+      header: () => (
+        <ColumnHeader
+          columnKey="pendingChanges"
+          lines={["Pending COs"]}
+        />
+      ),
+      cell: ({ row }) => {
+        const hasChildren = Boolean(
+          row.original.children && row.original.children.length > 0);
+        return (
+          <EditableCurrencyCell
+            value={row.getValue("pendingChanges")}
+            hasChildren={hasChildren}
+            onEdit={createSafeClickHandler(
+              isLocked,
+              "view pending changes",
+              onPendingChangesClick
+                ? () => onPendingChangesClick(row.original)
+                : undefined
+            )}
+            editable={true}
+          />
+        );
+      },
+      size: 110,
+    },
+    {
+      accessorKey: "projectedBudget",
+      header: () => (
+        <ColumnHeader
+          columnKey="projectedBudget"
+          lines={["Projected Budget"]}
+        />
+      ),
+      cell: ({ row }) => {
+        const hasChildren = Boolean(
+          row.original.children && row.original.children.length > 0);
+        return (
+          <EditableCurrencyCell
+            value={row.getValue("projectedBudget")}
+            hasChildren={hasChildren}
+            onEdit={createSafeClickHandler(
+              isLocked,
+              "edit line items",
+              onEditLineItem ? () => onEditLineItem(row.original) : undefined
+            )}
+          />
+        );
+      },
+      size: 130,
+    },
+    {
+      accessorKey: "committedCosts",
+      header: () => (
+        <ColumnHeader columnKey="committedCosts" lines={["Committed Costs"]} />
+      ),
+      cell: ({ row }) => {
+        const hasChildren = Boolean(
+          row.original.children && row.original.children.length > 0);
+        return (
+          <EditableCurrencyCell
+            value={row.getValue("committedCosts")}
+            hasChildren={hasChildren}
+            onEdit={createSafeClickHandler(
+              isLocked,
+              "view committed costs",
+              onCommittedCostsClick
+                ? () => onCommittedCostsClick(row.original)
+                : undefined
+            )}
+            editable={true}
           />
         );
       },
@@ -792,89 +894,11 @@ export function BudgetTable({
       size: 120,
     },
     {
-      accessorKey: "pendingChanges",
-      header: () => (
-        <ColumnHeader
-          columnKey="pendingChanges"
-          lines={["pending"]}
-        />
-      ),
-      cell: ({ row }) => {
-        const hasChildren = Boolean(
-          row.original.children && row.original.children.length > 0);
-        return (
-          <EditableCurrencyCell
-            value={row.getValue("pendingChanges")}
-            hasChildren={hasChildren}
-            onEdit={createSafeClickHandler(
-              isLocked,
-              "view pending changes",
-              onPendingChangesClick
-                ? () => onPendingChangesClick(row.original)
-                : undefined
-            )}
-            editable={true}
-          />
-        );
-      },
-      size: 110,
-    },
-    {
-      accessorKey: "projectedBudget",
-      header: () => (
-        <ColumnHeader
-          columnKey="projectedBudget"
-          lines={["Proj.", "Budget"]}
-        />
-      ),
-      cell: ({ row }) => {
-        const hasChildren = Boolean(
-          row.original.children && row.original.children.length > 0);
-        return (
-          <EditableCurrencyCell
-            value={row.getValue("projectedBudget")}
-            hasChildren={hasChildren}
-            onEdit={createSafeClickHandler(
-              isLocked,
-              "edit line items",
-              onEditLineItem ? () => onEditLineItem(row.original) : undefined
-            )}
-          />
-        );
-      },
-      size: 130,
-    },
-    {
-      accessorKey: "committedCosts",
-      header: () => (
-        <ColumnHeader columnKey="committedCosts" lines={["committed"]} />
-      ),
-      cell: ({ row }) => {
-        const hasChildren = Boolean(
-          row.original.children && row.original.children.length > 0);
-        return (
-          <EditableCurrencyCell
-            value={row.getValue("committedCosts")}
-            hasChildren={hasChildren}
-            onEdit={createSafeClickHandler(
-              isLocked,
-              "view committed costs",
-              onCommittedCostsClick
-                ? () => onCommittedCostsClick(row.original)
-                : undefined
-            )}
-            editable={true}
-          />
-        );
-      },
-      size: 130,
-    },
-    {
       accessorKey: "pendingCostChanges",
       header: () => (
         <ColumnHeader
           columnKey="pendingCostChanges"
-          lines={["pending", "changes"]}
+          lines={["Pending Cost Changes"]}
         />
       ),
       cell: ({ row }) => {
@@ -900,7 +924,7 @@ export function BudgetTable({
     {
       accessorKey: "projectedCosts",
       header: () => (
-        <ColumnHeader columnKey="projectedCosts" lines={["Proj. Costs"]} />
+        <ColumnHeader columnKey="projectedCosts" lines={["Projected Costs"]} />
       ),
       cell: ({ row }) => {
         const hasChildren = Boolean(
@@ -924,7 +948,7 @@ export function BudgetTable({
       header: () => (
         <ColumnHeader
           columnKey="forecastToComplete"
-          lines={["forecast"]}
+          lines={["Forecast To Complete"]}
         />
       ),
       cell: ({ row }) => {
@@ -952,7 +976,7 @@ export function BudgetTable({
       header: () => (
         <ColumnHeader
           columnKey="estimatedCostAtCompletion"
-          lines={["Est. Total Cost"]}
+          lines={["Est. Cost at Completion"]}
         />
       ),
       cell: ({ row }) => {
@@ -977,7 +1001,7 @@ export function BudgetTable({
       header: () => (
         <ColumnHeader
           columnKey="projectedOverUnder"
-          lines={["Proj. +/-"]}
+          lines={["Projected +/-"]}
         />
       ),
       cell: ({ row }) => {
@@ -1090,10 +1114,12 @@ export function BudgetTable({
       expanded,
       rowSelection,
       columnSizing,
+      columnVisibility,
     },
     onExpandedChange: setExpanded,
     onRowSelectionChange: setRowSelection,
     onColumnSizingChange: setColumnSizing,
+    onColumnVisibilityChange: setColumnVisibility,
     columnResizeMode: "onChange",
     enableColumnResizing: true,
     defaultColumn: {
@@ -1421,6 +1447,44 @@ export function BudgetTable({
       </div>
 
       <div className="hidden min-h-0 flex-1 flex-col sm:flex">
+      {/* Column visibility toolbar */}
+      <div className="flex justify-end px-4 pb-2 sm:px-6 lg:px-8">
+        <DropdownMenu>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
+                    aria-label="Toggle columns"
+                  >
+                    <Columns3 className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+              </TooltipTrigger>
+              <TooltipContent>Select which columns to display</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel>Columns</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {table.getAllLeafColumns()
+              .filter((col) => col.id !== "select" && col.id !== "actions")
+              .map((col) => (
+                <DropdownMenuCheckboxItem
+                  key={col.id}
+                  checked={col.getIsVisible()}
+                  onSelect={(e) => e.preventDefault()}
+                  onCheckedChange={() => col.toggleVisibility()}
+                >
+                  {columnLabels[col.id] ?? col.id}
+                </DropdownMenuCheckboxItem>
+              ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
       {/* Horizontal scroll container — allows the wide budget table to scroll on mobile */}
       <div
         ref={bodyScrollRef}
@@ -1440,7 +1504,7 @@ export function BudgetTable({
                       <TableHead
                         key={header.id}
                         className={cn(
-                          "relative bg-background py-2 text-center text-[11px] font-semibold text-foreground",
+                          "relative bg-background py-2 text-left text-xs font-semibold text-foreground capitalize tracking-normal",
                           header.column.id === "select"
                             ? "pl-2 pr-1"
                             : "px-1.5",

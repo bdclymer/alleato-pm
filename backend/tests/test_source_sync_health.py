@@ -2,6 +2,7 @@ from datetime import datetime, timedelta, timezone
 
 from src.services.health.source_sync_health import (
     get_source_sync_health,
+    persist_source_sync_alerts,
     record_sync_run,
 )
 
@@ -29,6 +30,20 @@ class _TableQuery:
         self.payload = payload
         return self
 
+    def upsert(self, payload, **_kwargs):
+        self.action = "upsert"
+        self.payload = payload
+        return self
+
+    def update(self, payload):
+        self.action = "update"
+        self.payload = payload
+        return self
+
+    def eq(self, key, value):
+        self.rows = [row for row in self.rows if row.get(key) == value]
+        return self
+
     def order(self, key, desc=False):
         self.rows = sorted(self.rows, key=lambda row: row.get(key) or "", reverse=desc)
         return self
@@ -44,6 +59,23 @@ class _TableQuery:
             row.setdefault("id", self.db.next_id(self.table_name))
             table.append(row)
             return _Result([row])
+        if self.action == "upsert":
+            for row in table:
+                if row.get("alert_key") == self.payload.get("alert_key"):
+                    row.update(self.payload)
+                    return _Result([dict(row)])
+            row = dict(self.payload)
+            row.setdefault("id", self.db.next_id(self.table_name))
+            table.append(row)
+            return _Result([row])
+        if self.action == "update":
+            updated = []
+            matching_ids = {id(row) for row in self.rows}
+            for row in table:
+                if id(row) in matching_ids:
+                    row.update(self.payload)
+                    updated.append(dict(row))
+            return _Result(updated)
         rows = self.rows[: self.limit_count] if self.limit_count is not None else self.rows
         return _Result([dict(row) for row in rows])
 
@@ -72,6 +104,7 @@ def _seed_empty_tables(supabase):
         "tasks",
         "source_sync_health_snapshots",
         "graph_subscriptions",
+        "system_alerts",
     ]:
         supabase.tables.setdefault(table, [])
 
@@ -174,3 +207,30 @@ def test_get_source_sync_health_reports_task_extraction_freshness():
     assert task_source["status"] == "healthy"
     assert task_source["itemsSynced"] == 1
     assert health["pipeline"]["tasksBySourceSystem"]["fireflies"] == 1
+
+
+def test_persist_source_sync_alerts_upserts_and_resolves():
+    supabase = _FakeSupabase()
+    _seed_empty_tables(supabase)
+
+    first = persist_source_sync_alerts(
+        supabase,
+        [
+            {
+                "severity": "warning",
+                "code": "embedding_backlog",
+                "source": "vectorization",
+                "resourceId": "document_chunks",
+                "message": "Backlog detected.",
+                "detectedAt": "2026-05-07T00:00:00+00:00",
+            }
+        ],
+    )
+    second = persist_source_sync_alerts(supabase, [])
+
+    assert first == {"upserted": 1, "resolved": 0}
+    assert second == {"upserted": 0, "resolved": 1}
+    alert = supabase.tables["system_alerts"][0]
+    assert alert["alert_key"] == "source_sync:embedding_backlog:vectorization:document_chunks"
+    assert alert["status"] == "resolved"
+    assert alert["resolved_at"]

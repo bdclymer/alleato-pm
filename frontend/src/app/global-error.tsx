@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { reportErrorObject } from "@/lib/app-error-reporter";
 
 function isChunkLoadError(error: Error): boolean {
   const msg = error.message.toLowerCase();
@@ -22,6 +24,12 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
+    reportErrorObject(error, {
+      severity: isChunkLoadError(error) ? "medium" : "critical",
+      action: "global_error_boundary",
+      route: window.location.pathname,
+    });
+
     // Auto-reload on chunk errors (deployment cache mismatch)
     if (isChunkLoadError(error)) {
       try {
@@ -44,42 +52,33 @@ export default function GlobalError({
   return (
     <html>
       <body>
-        <div className="flex h-screen flex-col items-center justify-center gap-4 p-8"
-             style={{ fontFamily: "system-ui, sans-serif" }}>
-          <div style={{
-            width: 64, height: 64, borderRadius: "50%",
-            background: isChunk ? "rgba(99, 102, 241, 0.1)" : "rgba(239, 68, 68, 0.1)",
-            display: "flex", alignItems: "center", justifyContent: "center"
-          }}>
-            <span style={{ fontSize: 28 }}>{isChunk ? "🔄" : "⚠️"}</span>
+        <div className="flex h-screen flex-col items-center justify-center gap-4 p-8 font-sans">
+          <div className={isChunk
+            ? "flex h-16 w-16 items-center justify-center rounded-full bg-primary/10"
+            : "flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10"}
+          >
+            <span className="text-3xl">{isChunk ? "🔄" : "⚠️"}</span>
           </div>
-          <h2 style={{ fontSize: 20, fontWeight: 600, margin: 0 }}>
+          <h2 className="m-0 text-xl font-semibold text-foreground">
             {isChunk ? "New version available" : "Something went wrong"}
           </h2>
-          <p style={{ color: "#6b7280", textAlign: "center", maxWidth: 400 }}>
+          <p className="max-w-md text-center text-muted-foreground">
             {isChunk
               ? "The app has been updated. Click refresh to load the latest version."
               : error.message || "A critical error occurred. Please try again."}
           </p>
-          <div style={{ display: "flex", gap: 12 }}>
-            <button
+          <div className="flex gap-3">
+            <Button
               onClick={() => isChunk ? window.location.reload() : reset()}
-              style={{
-                padding: "8px 16px", borderRadius: 6, border: "none", cursor: "pointer",
-                background: "#6366f1", color: "white", fontWeight: 500
-              }}
             >
               {isChunk ? "Refresh Now" : "Try Again"}
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="outline"
               onClick={() => (window.location.href = "/")}
-              style={{
-                padding: "8px 16px", borderRadius: 6, border: "1px solid #d1d5db",
-                cursor: "pointer", background: "white", fontWeight: 500
-              }}
             >
               Go Home
-            </button>
+            </Button>
           </div>
         </div>
       </body>

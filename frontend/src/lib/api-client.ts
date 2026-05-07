@@ -103,6 +103,33 @@ function getApiErrorMessage(status: number, body: ApiErrorBody): string {
   );
 }
 
+function reportApiFailure(url: string, status: number, body: ApiErrorBody): void {
+  if (typeof window === "undefined" || url.includes("/api/app-error-events")) {
+    return;
+  }
+
+  void import("@/lib/app-error-reporter")
+    .then(({ reportBrowserError }) => {
+      reportBrowserError({
+        source: "client",
+        severity: status >= 500 ? "high" : "medium",
+        route: url,
+        action: "api_fetch",
+        errorCode: body.error_code ?? `HTTP_${status}`,
+        errorMessage: getApiErrorMessage(status, body),
+        requestId: body.request_id,
+        statusCode: status,
+        context: {
+          where_it_failed: body.where_it_failed,
+          details: body.details,
+        },
+      });
+    })
+    .catch(() => {
+      // Telemetry must never affect the caller's error handling path.
+    });
+}
+
 /**
  * Fetch wrapper that guarantees meaningful error messages.
  *
@@ -216,6 +243,7 @@ async function performApiFetch<T>(
     };
   }
 
+  reportApiFailure(url, response.status, body);
   throw new ApiError(response.status, body);
 }
 
@@ -262,6 +290,7 @@ export async function apiFetchBlob(
     };
   }
 
+  reportApiFailure(url, response.status, body);
   throw new ApiError(response.status, body);
 }
 

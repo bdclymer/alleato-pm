@@ -5,10 +5,11 @@ import { parseJsonBody, withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import {
   applyRetrievalWeightPromotion,
+  recordAiFeedbackEvent,
   updateRetrievalWeightStatus,
 } from "@/lib/ai/services/feedback-event-service";
-import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { requireAiLearningPromotionsAdmin } from "./_shared";
 
 const reviewSchema = z.object({
   promotionId: z.string().uuid(),
@@ -16,46 +17,10 @@ const reviewSchema = z.object({
   reviewNotes: z.string().trim().max(2000).optional(),
 });
 
-async function requireAdminUser(where: string) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
-
-  if (userError || !user) {
-    throw new GuardrailError({
-      code: "AUTH_EXPIRED",
-      where,
-      message: "Sign in before reviewing AI learning promotions.",
-      status: 401,
-      details: userError?.message,
-    });
-  }
-
-  const { data: profile, error: profileError } = await supabase
-    .from("user_profiles")
-    .select("is_admin")
-    .eq("id", user.id)
-    .single();
-
-  if (profileError || !profile?.is_admin) {
-    throw new GuardrailError({
-      code: "FORBIDDEN",
-      where,
-      message: "Admin access is required to review AI learning promotions.",
-      status: 403,
-      details: profileError?.message,
-    });
-  }
-
-  return user;
-}
-
 export const GET = withApiGuardrails(
   "api.admin.ai-learning-promotions.GET",
   async ({ request }) => {
-    await requireAdminUser("api.admin.ai-learning-promotions.GET");
+    await requireAiLearningPromotionsAdmin("api.admin.ai-learning-promotions.GET");
 
     const status = request.nextUrl.searchParams.get("status") ?? "candidate";
     const limit = Math.min(
@@ -117,7 +82,7 @@ export const GET = withApiGuardrails(
 export const POST = withApiGuardrails(
   "api.admin.ai-learning-promotions.POST",
   async ({ request }) => {
-    const user = await requireAdminUser("api.admin.ai-learning-promotions.POST");
+    const user = await requireAiLearningPromotionsAdmin("api.admin.ai-learning-promotions.POST");
     const body = await parseJsonBody(
       request,
       reviewSchema,
@@ -128,6 +93,8 @@ export const POST = withApiGuardrails(
     if (body.action === "apply") {
       const result = await applyRetrievalWeightPromotion({
         promotionId: body.promotionId,
+        reviewedBy: user.id,
+        reviewNotes: body.reviewNotes,
       });
 
       return NextResponse.json({
@@ -165,7 +132,9 @@ export const POST = withApiGuardrails(
 
     const { data: promotion, error: promotionError } = await serviceSupabase
       .from("ai_learning_promotions")
-      .select("id, status")
+      .select(
+        "id, status, project_id, promotion_type, proposed_learning, confidence, risk_level",
+      )
       .eq("id", body.promotionId)
       .single();
 
@@ -210,6 +179,44 @@ export const POST = withApiGuardrails(
         details: updateError?.message,
       });
     }
+
+    await recordAiFeedbackEvent({
+      userId: user.id,
+      projectId: promotion.project_id,
+      sourceTable: "ai_learning_promotions",
+      sourceRecordId: promotion.id,
+      eventType: "learning_promotion_reviewed",
+      eventFamily:
+        promotion.promotion_type === "retrieval_weight"
+          ? "retrieval"
+          : "workflow_outcome",
+      surface: "admin_ai_learning_promotions",
+      subjectType: "ai_learning_promotion",
+      subjectId: promotion.id,
+      signal: body.action === "approve" ? "accepted" : "needs_review",
+      reasonCategory: `learning_promotion_${body.action}`,
+      freeText: body.reviewNotes ?? null,
+      beforeSnapshot: {
+        status: promotion.status,
+        confidence: promotion.confidence,
+        riskLevel: promotion.risk_level,
+      },
+      afterSnapshot: {
+        status: updated.status,
+        confidence: updated.confidence,
+        riskLevel: updated.risk_level,
+      },
+      sourceContext: {
+        promotionId: promotion.id,
+        promotionType: promotion.promotion_type,
+        proposedLearning: promotion.proposed_learning,
+      },
+      metadata: {
+        action: body.action,
+        previousStatus: promotion.status,
+        newStatus: updated.status,
+      },
+    });
 
     return NextResponse.json({ ok: true, action: body.action, promotion: updated });
   },

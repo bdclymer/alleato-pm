@@ -2,6 +2,7 @@
 
 import { Component, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
+import { reportBrowserError } from "@/lib/app-error-reporter";
 
 /**
  * ChunkLoadErrorRecovery
@@ -66,6 +67,13 @@ export class ChunkLoadErrorRecovery extends Component<Props, State> {
   private globalHandler = (event: ErrorEvent) => {
     if (isChunkLoadError(event.error) && shouldAutoReload()) {
       event.preventDefault();
+      reportBrowserError({
+        severity: "medium",
+        action: "chunk_error_global",
+        errorCode: "CHUNK_LOAD_ERROR",
+        errorMessage: event.error instanceof Error ? event.error.message : event.message,
+        stack: event.error instanceof Error ? event.error.stack : undefined,
+      });
       markReload();
       window.location.reload();
     }
@@ -74,6 +82,13 @@ export class ChunkLoadErrorRecovery extends Component<Props, State> {
   private rejectionHandler = (event: PromiseRejectionEvent) => {
     if (isChunkLoadError(event.reason) && shouldAutoReload()) {
       event.preventDefault();
+      reportBrowserError({
+        severity: "medium",
+        action: "chunk_error_rejection",
+        errorCode: "CHUNK_LOAD_ERROR",
+        errorMessage: event.reason instanceof Error ? event.reason.message : String(event.reason),
+        stack: event.reason instanceof Error ? event.reason.stack : undefined,
+      });
       markReload();
       window.location.reload();
     }
@@ -99,6 +114,13 @@ export class ChunkLoadErrorRecovery extends Component<Props, State> {
 
   componentDidCatch(error: Error) {
     if (isChunkLoadError(error) && shouldAutoReload()) {
+      reportBrowserError({
+        severity: "medium",
+        action: "chunk_error_boundary",
+        errorCode: "CHUNK_LOAD_ERROR",
+        errorMessage: error.message,
+        stack: error.stack,
+      });
       markReload();
       window.location.reload();
       return;

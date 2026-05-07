@@ -41,6 +41,11 @@ def _iso(value: Optional[datetime]) -> Optional[str]:
     return value.isoformat() if value else None
 
 
+def _single_row(response: Any) -> Optional[Dict[str, Any]]:
+    data = getattr(response, "data", None) or []
+    return data[0] if data else None
+
+
 def _parse_datetime(value: Any) -> Optional[datetime]:
     if not value:
         return None
@@ -266,10 +271,18 @@ def detect_source_sync_alerts(
                 reason = f"Last sync is {source['staleMinutes']} minutes old."
             if not reason:
                 reason = "No successful sync timestamp is available."
+            if source.get("lastErrorMessage"):
+                code = "source_sync_error"
+            elif source.get("staleMinutes") is not None:
+                code = "source_sync_stale"
+            elif source["source"] == "task_extraction":
+                code = "task_extraction_stale"
+            else:
+                code = f"source_sync_{source['status']}"
             alerts.append(
                 {
                     "severity": severity,
-                    "code": f"source_sync_{source['status']}",
+                    "code": code,
                     "source": source["source"],
                     "resourceId": source["resourceId"],
                     "message": f"{source['resourceName']}: {reason}",
@@ -307,7 +320,118 @@ def detect_source_sync_alerts(
             }
         )
 
+    failed_packet_jobs = pipeline.get("packetJobsByStatus", {}).get("failed", 0)
+    if failed_packet_jobs >= FAILED_JOB_WARNING:
+        alerts.append(
+            {
+                "severity": "warning",
+                "code": "packet_refresh_failed",
+                "source": "intelligence_compiler",
+                "resourceId": "packet_refresh_jobs",
+                "message": f"{failed_packet_jobs} packet refresh job(s) failed.",
+                "detectedAt": _iso(now),
+            }
+        )
+
+    graph_subscription_statuses = pipeline.get("graphSubscriptionsByStatus", {})
+    removed_subscriptions = graph_subscription_statuses.get("removed", 0) + graph_subscription_statuses.get("missed", 0)
+    if removed_subscriptions:
+        alerts.append(
+            {
+                "severity": "critical",
+                "code": "graph_subscription_removed",
+                "source": "microsoft_graph",
+                "resourceId": "graph_subscriptions",
+                "message": f"{removed_subscriptions} Graph subscription(s) were removed or missed notifications.",
+                "detectedAt": _iso(now),
+            }
+        )
+    expiring_subscriptions = graph_subscription_statuses.get("renewal_due", 0)
+    if expiring_subscriptions:
+        alerts.append(
+            {
+                "severity": "warning",
+                "code": "graph_subscription_expiring",
+                "source": "microsoft_graph",
+                "resourceId": "graph_subscriptions",
+                "message": f"{expiring_subscriptions} Graph subscription(s) require renewal or reauthorization.",
+                "detectedAt": _iso(now),
+            }
+        )
+
     return alerts
+
+
+def _alert_key(alert: Dict[str, Any]) -> str:
+    return "source_sync:{code}:{source}:{resource}".format(
+        code=str(alert.get("code") or "unknown"),
+        source=str(alert.get("source") or "unknown"),
+        resource=str(alert.get("resourceId") or ""),
+    )
+
+
+def _alert_severity(alert: Dict[str, Any]) -> str:
+    severity = str(alert.get("severity") or "warning").lower()
+    return severity if severity in {"info", "warning", "critical"} else "warning"
+
+
+def persist_source_sync_alerts(supabase: Any, alerts: Sequence[Dict[str, Any]]) -> Dict[str, int]:
+    """Upsert active source-sync alerts and resolve alerts that disappeared."""
+    now = _utcnow().isoformat()
+    active_keys = {_alert_key(alert) for alert in alerts}
+    upserted = 0
+    resolved = 0
+
+    for alert in alerts:
+        alert_key = _alert_key(alert)
+        payload = {
+            "alert_key": alert_key,
+            "category": "source_sync",
+            "code": str(alert.get("code") or "source_sync_alert"),
+            "severity": _alert_severity(alert),
+            "source": str(alert.get("source") or "unknown"),
+            "resource_id": str(alert.get("resourceId") or ""),
+            "title": str(alert.get("code") or "Source sync alert").replace("_", " ").title(),
+            "message": str(alert.get("message") or "Source sync alert detected."),
+            "status": "active",
+            "last_seen_at": now,
+            "resolved_at": None,
+            "metadata": {
+                "detected_at": alert.get("detectedAt"),
+                "source": alert,
+            },
+        }
+        existing = _single_row(
+            supabase.table("system_alerts")
+            .select("id,first_seen_at")
+            .eq("alert_key", alert_key)
+            .limit(1)
+            .execute()
+        )
+        if existing and existing.get("first_seen_at"):
+            payload["first_seen_at"] = existing["first_seen_at"]
+        else:
+            payload["first_seen_at"] = now
+        supabase.table("system_alerts").upsert(payload, on_conflict="alert_key").execute()
+        upserted += 1
+
+    existing_active = (
+        supabase.table("system_alerts")
+        .select("id,alert_key")
+        .eq("category", "source_sync")
+        .eq("status", "active")
+        .limit(1000)
+        .execute()
+    )
+    for row in existing_active.data or []:
+        if row.get("alert_key") in active_keys:
+            continue
+        supabase.table("system_alerts").update(
+            {"status": "resolved", "resolved_at": now, "last_seen_at": now}
+        ).eq("id", row["id"]).execute()
+        resolved += 1
+
+    return {"upserted": upserted, "resolved": resolved}
 
 
 def _document_health(

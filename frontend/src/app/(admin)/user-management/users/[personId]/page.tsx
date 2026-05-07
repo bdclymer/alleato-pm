@@ -7,9 +7,9 @@ import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 
 import {
-  fetchAllTemplates,
   fetchTemplates,
   fetchUsers,
+  getProjectRoleTemplates,
   toAccessSummary,
   type GranularOverrideEffect,
 } from "../../_lib/user-access-data";
@@ -30,9 +30,9 @@ export default function PermissionUserDetailPage() {
     retry: false,
   });
 
-  const allTemplatesQuery = useQuery({
-    queryKey: ["permission-templates", "all"],
-    queryFn: fetchAllTemplates,
+  const projectTemplatesQuery = useQuery({
+    queryKey: ["permission-templates", "project"],
+    queryFn: () => fetchTemplates("project"),
   });
 
   const companyTemplatesQuery = useQuery({
@@ -128,7 +128,7 @@ export default function PermissionUserDetailPage() {
 
   const isLoading =
     usersQuery.isLoading ||
-    allTemplatesQuery.isLoading ||
+    projectTemplatesQuery.isLoading ||
     companyTemplatesQuery.isLoading;
   const pageTitle = usersQuery.isError
     ? "Unable to load user"
@@ -174,9 +174,9 @@ export default function PermissionUserDetailPage() {
       ) : user ? (
         <UserAccessPanel
           user={user}
-          templates={(allTemplatesQuery.data ?? []).filter((template) => template.scope !== "company")}
+          templates={getProjectRoleTemplates(projectTemplatesQuery.data ?? [])}
           companyTemplates={companyTemplatesQuery.data ?? []}
-          isTemplatesLoading={allTemplatesQuery.isLoading}
+          isTemplatesLoading={projectTemplatesQuery.isLoading}
           isAssignmentSaving={assignMutation.isPending}
           isCompanyTemplateSaving={companyTemplateMutation.isPending}
           isGranularOverrideSaving={granularOverrideMutation.isPending}

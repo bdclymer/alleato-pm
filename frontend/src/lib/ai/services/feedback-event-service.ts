@@ -179,6 +179,8 @@ export interface GenerateRetrievalPromotionCandidatesResult {
 
 export interface ApplyRetrievalWeightPromotionParams {
   promotionId: string;
+  reviewedBy?: string | null;
+  reviewNotes?: string | null;
 }
 
 export interface ApplyRetrievalWeightPromotionResult {
@@ -198,6 +200,38 @@ export interface UpdateRetrievalWeightStatusParams {
 export interface UpdateRetrievalWeightStatusResult {
   promotion: AiLearningPromotionRow;
   retrievalWeight: AiRetrievalWeightRow;
+}
+
+export interface RetrievalWeightImpactPreviewRow {
+  retrievalFeedbackId: string;
+  sourceDocumentId: string | null;
+  sourceChunkId: string | null;
+  outcome: AiRetrievalOutcome;
+  cited: boolean;
+  usedInAnswer: boolean;
+  originalScore: number;
+  adjustedScore: number;
+  originalRank: number;
+  adjustedRank: number;
+  matchedPromotionSource: boolean;
+}
+
+export interface PreviewRetrievalWeightPromotionImpactParams {
+  promotionId: string;
+  limit?: number;
+}
+
+export interface PreviewRetrievalWeightPromotionImpactResult {
+  promotion: AiLearningPromotionRow;
+  multiplier: number;
+  inspectedRows: number;
+  matchingRows: number;
+  beforeTop: RetrievalWeightImpactPreviewRow[];
+  afterTop: RetrievalWeightImpactPreviewRow[];
+  matchedRankChange: {
+    beforeBestRank: number | null;
+    afterBestRank: number | null;
+  };
 }
 
 const UUID_PATTERN =
@@ -503,6 +537,35 @@ function optionalLearningString(
   return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
+function learningSourceMatchesRetrievalFeedback(
+  learning: Record<string, unknown>,
+  row: AiRetrievalFeedbackRow,
+): boolean {
+  const sourceChunkId = optionalLearningString(learning, "sourceChunkId");
+  const sourceDocumentId = optionalLearningString(learning, "sourceDocumentId");
+  if (sourceChunkId && row.source_chunk_id) {
+    return sourceChunkId === row.source_chunk_id;
+  }
+  if (sourceDocumentId && row.source_document_id) {
+    return sourceDocumentId === row.source_document_id;
+  }
+  return false;
+}
+
+function normalizeRetrievalOutcome(value: string): AiRetrievalOutcome {
+  if (
+    value === "helpful" ||
+    value === "unhelpful" ||
+    value === "wrong_project" ||
+    value === "stale" ||
+    value === "unsupported" ||
+    value === "unknown"
+  ) {
+    return value;
+  }
+  return "unknown";
+}
+
 function retrievalWeightMultiplier(action: string, confidence: number): number {
   if (action === "boost") {
     return Math.round((1 + Math.min(0.5, confidence * 0.5)) * 100) / 100;
@@ -515,6 +578,14 @@ function retrievalWeightMultiplier(action: string, confidence: number): number {
     "validate",
     `Unsupported retrieval weight action: ${action}`,
   );
+}
+
+function retrievalWeightStatusSignal(
+  status: AiRetrievalWeightStatus,
+): AiFeedbackSignal {
+  if (status === "active") return "accepted";
+  if (status === "paused") return "needs_review";
+  return "stale";
 }
 
 function normalizeQuerySignature(value: string): string {
@@ -863,9 +934,184 @@ export async function applyRetrievalWeightPromotion(
     );
   }
 
+  await recordAiFeedbackEvent({
+    userId: params.reviewedBy,
+    projectId: promotion.project_id,
+    sourceTable: "ai_learning_promotions",
+    sourceRecordId: promotion.id,
+    eventType: "retrieval_weight_applied",
+    eventFamily: "retrieval",
+    surface: "admin_ai_learning_promotions",
+    subjectType: "ai_retrieval_weight",
+    subjectId: retrievalWeight.id,
+    signal: "accepted",
+    reasonCategory: "retrieval_weight_apply",
+    freeText: params.reviewNotes ?? null,
+    beforeSnapshot: {
+      status: promotion.status,
+      destinationTable: promotion.destination_table,
+      destinationRecordId: promotion.destination_record_id,
+    },
+    afterSnapshot: {
+      status: updatedPromotion.status,
+      destinationTable: updatedPromotion.destination_table,
+      destinationRecordId: updatedPromotion.destination_record_id,
+      retrievalWeightStatus: retrievalWeight.status,
+      weightMultiplier: retrievalWeight.weight_multiplier,
+    },
+    sourceContext: {
+      promotionId: promotion.id,
+      promotionType: promotion.promotion_type,
+      proposedLearning: promotion.proposed_learning,
+    },
+    metadata: {
+      action: "apply",
+      retrievalWeightId: retrievalWeight.id,
+      previousStatus: promotion.status,
+      newStatus: updatedPromotion.status,
+    },
+  });
+
   return {
     promotion: updatedPromotion,
     retrievalWeight,
+  };
+}
+
+export async function previewRetrievalWeightPromotionImpact(
+  params: PreviewRetrievalWeightPromotionImpactParams,
+): Promise<PreviewRetrievalWeightPromotionImpactResult> {
+  const supabase = createServiceClient();
+  const promotionId = optionalUuid(
+    params.promotionId,
+    "promotionId",
+    "ai_learning_promotions",
+  );
+
+  if (!promotionId) {
+    throw new AiFeedbackEventError(
+      "ai_learning_promotions",
+      "validate",
+      "promotionId is required",
+    );
+  }
+
+  const { data: promotion, error: promotionError } = await supabase
+    .from("ai_learning_promotions")
+    .select("*")
+    .eq("id", promotionId)
+    .single();
+
+  if (promotionError || !promotion) {
+    throw new AiFeedbackEventError(
+      "ai_learning_promotions",
+      "select",
+      promotionError?.message ?? "promotion was not found",
+    );
+  }
+
+  if (promotion.promotion_type !== "retrieval_weight") {
+    throw new AiFeedbackEventError(
+      "ai_learning_promotions",
+      "validate",
+      `Only retrieval_weight promotions can be previewed by this reader. Received: ${promotion.promotion_type}`,
+    );
+  }
+
+  const learning = jsonRecord(promotion.proposed_learning);
+  const action = requiredLearningString(learning, "action");
+  const toolName = requiredLearningString(learning, "toolName");
+  const querySignature = requiredLearningString(learning, "querySignature");
+  const multiplier = retrievalWeightMultiplier(action, promotion.confidence);
+  const previewLimit = Math.min(25, Math.max(5, params.limit ?? 10));
+
+  let query = supabase
+    .from("ai_retrieval_feedback")
+    .select("*")
+    .eq("tool_name", toolName)
+    .order("created_at", { ascending: false })
+    .limit(500);
+
+  if (promotion.project_id !== null) {
+    query = query.eq("project_id", promotion.project_id);
+  }
+
+  const { data: rows, error } = await query;
+  if (error) {
+    throw new AiFeedbackEventError(
+      "ai_retrieval_feedback",
+      "select",
+      error.message,
+    );
+  }
+
+  const relevantRows = (rows ?? []).filter(
+    (row) => normalizeQuerySignature(row.query_text) === querySignature,
+  );
+  const scoredRows = relevantRows.map((row) => {
+    const originalScore = typeof row.score === "number" ? row.score : 0;
+    const matchedPromotionSource = learningSourceMatchesRetrievalFeedback(learning, row);
+    return {
+      row,
+      originalScore,
+      adjustedScore: matchedPromotionSource
+        ? originalScore * multiplier
+        : originalScore,
+      matchedPromotionSource,
+    };
+  });
+
+  const beforeSorted = [...scoredRows].sort(
+    (a, b) => b.originalScore - a.originalScore,
+  );
+  const afterSorted = [...scoredRows].sort(
+    (a, b) => b.adjustedScore - a.adjustedScore,
+  );
+  const originalRankById = new Map(
+    beforeSorted.map((item, index) => [item.row.id, index + 1]),
+  );
+  const adjustedRankById = new Map(
+    afterSorted.map((item, index) => [item.row.id, index + 1]),
+  );
+
+  const toPreviewRow = (
+    item: (typeof scoredRows)[number],
+  ): RetrievalWeightImpactPreviewRow => ({
+    retrievalFeedbackId: item.row.id,
+    sourceDocumentId: item.row.source_document_id,
+    sourceChunkId: item.row.source_chunk_id,
+    outcome: normalizeRetrievalOutcome(item.row.outcome),
+    cited: item.row.cited,
+    usedInAnswer: item.row.used_in_answer,
+    originalScore: item.originalScore,
+    adjustedScore: item.adjustedScore,
+    originalRank: originalRankById.get(item.row.id) ?? 0,
+    adjustedRank: adjustedRankById.get(item.row.id) ?? 0,
+    matchedPromotionSource: item.matchedPromotionSource,
+  });
+
+  const matchedBeforeRanks = scoredRows
+    .filter((item) => item.matchedPromotionSource)
+    .map((item) => originalRankById.get(item.row.id))
+    .filter((rank): rank is number => typeof rank === "number");
+  const matchedAfterRanks = scoredRows
+    .filter((item) => item.matchedPromotionSource)
+    .map((item) => adjustedRankById.get(item.row.id))
+    .filter((rank): rank is number => typeof rank === "number");
+
+  return {
+    promotion,
+    multiplier,
+    inspectedRows: rows?.length ?? 0,
+    matchingRows: relevantRows.length,
+    beforeTop: beforeSorted.slice(0, previewLimit).map(toPreviewRow),
+    afterTop: afterSorted.slice(0, previewLimit).map(toPreviewRow),
+    matchedRankChange: {
+      beforeBestRank:
+        matchedBeforeRanks.length > 0 ? Math.min(...matchedBeforeRanks) : null,
+      afterBestRank:
+        matchedAfterRanks.length > 0 ? Math.min(...matchedAfterRanks) : null,
+    },
   };
 }
 
@@ -917,6 +1163,21 @@ export async function updateRetrievalWeightStatus(
     );
   }
 
+  const { data: previousRetrievalWeight, error: previousWeightError } =
+    await supabase
+      .from("ai_retrieval_weights")
+      .select("*")
+      .eq("promotion_id", promotion.id)
+      .single();
+
+  if (previousWeightError || !previousRetrievalWeight) {
+    throw new AiFeedbackEventError(
+      "ai_retrieval_weights",
+      "select",
+      previousWeightError?.message ?? "retrieval weight was not found",
+    );
+  }
+
   const { data: retrievalWeight, error: weightError } = await supabase
     .from("ai_retrieval_weights")
     .update({
@@ -959,6 +1220,42 @@ export async function updateRetrievalWeightStatus(
       updateError?.message ?? "promotion status update returned no row",
     );
   }
+
+  await recordAiFeedbackEvent({
+    userId: params.reviewedBy,
+    projectId: promotion.project_id,
+    sourceTable: "ai_learning_promotions",
+    sourceRecordId: promotion.id,
+    eventType: "retrieval_weight_status_changed",
+    eventFamily: "retrieval",
+    surface: "admin_ai_learning_promotions",
+    subjectType: "ai_retrieval_weight",
+    subjectId: retrievalWeight.id,
+    signal: retrievalWeightStatusSignal(params.status),
+    reasonCategory: "retrieval_weight_control",
+    freeText: params.reviewNotes ?? null,
+    beforeSnapshot: {
+      status: previousRetrievalWeight.status,
+      promotionStatus: promotion.status,
+      weightMultiplier: previousRetrievalWeight.weight_multiplier,
+    },
+    afterSnapshot: {
+      status: retrievalWeight.status,
+      promotionStatus: updatedPromotion.status,
+      weightMultiplier: retrievalWeight.weight_multiplier,
+    },
+    sourceContext: {
+      promotionId: promotion.id,
+      promotionType: promotion.promotion_type,
+      proposedLearning: promotion.proposed_learning,
+    },
+    metadata: {
+      action: params.status,
+      retrievalWeightId: retrievalWeight.id,
+      previousStatus: previousRetrievalWeight.status,
+      newStatus: retrievalWeight.status,
+    },
+  });
 
   return {
     promotion: updatedPromotion,
