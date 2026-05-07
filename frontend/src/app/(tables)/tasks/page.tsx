@@ -971,6 +971,16 @@ function TaskDetail({
         {/* Task metadata table */}
         <div className="overflow-hidden border-y border-border/40">
           <div>
+            {task.id && (
+              <TaskDetailRow label="Training">
+                <TaskFeedbackButtons
+                  projectId={taskProjectId}
+                  taskId={task.id}
+                  taskSnapshot={taskFeedbackSnapshot}
+                />
+              </TaskDetailRow>
+            )}
+
             <TaskDetailRow label="Assigned">
               {task.assignee_name ? (
                 <div className="flex min-w-0 items-baseline gap-2">
@@ -1201,16 +1211,6 @@ function TaskDetail({
                 </span>
               </div>
             </TaskDetailRow>
-
-            {task.id && (
-              <TaskDetailRow label="Training">
-                <TaskFeedbackButtons
-                  projectId={taskProjectId}
-                  taskId={task.id}
-                  taskSnapshot={taskFeedbackSnapshot}
-                />
-              </TaskDetailRow>
-            )}
 
           </div>
         </div>
