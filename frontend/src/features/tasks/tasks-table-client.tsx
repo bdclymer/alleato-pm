@@ -183,6 +183,7 @@ export function TasksTableClient({
         (item.assignee_name ?? "").toLowerCase().includes(searchTerm) ||
         (item.project_name ?? "").toLowerCase().includes(searchTerm) ||
         (item.assignee_email ?? "").toLowerCase().includes(searchTerm) ||
+        (item.source_date ?? "").toLowerCase().includes(searchTerm) ||
         getTaskSourceLabel(item).toLowerCase().includes(searchTerm) ||
         getTaskSourceTitle(item).toLowerCase().includes(searchTerm)
       );
@@ -306,6 +307,7 @@ export function TasksTableClient({
       "Assigned User",
       "Source",
       "Created From",
+      "Source Date",
       "Assignee Email",
       "Due Date",
       "Priority",
@@ -317,6 +319,7 @@ export function TasksTableClient({
       task.assignee_name || "",
       getTaskSourceLabel(task),
       getTaskSourceTitle(task),
+      task.source_date ? format(new Date(task.source_date), "yyyy-MM-dd") : "",
       task.assignee_email || "",
       task.due_date ? format(new Date(task.due_date), "yyyy-MM-dd") : "",
       task.priority || "",
