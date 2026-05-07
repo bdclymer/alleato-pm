@@ -1,5 +1,6 @@
 import { createServiceClient } from "@/lib/supabase/service";
 import { upsertAgentLearning } from "@/lib/ai/services/agent-learning-service";
+import { recordAiFeedbackEvent } from "@/lib/ai/services/feedback-event-service";
 import type { Database } from "@/types/database.types";
 import { logger } from "@/lib/logger";
 import {
@@ -151,6 +152,31 @@ export async function recordTaskFeedback(
   if (error || !data) {
     throw new Error(`Failed to record task feedback: ${error?.message ?? "no data returned"}`);
   }
+
+  await recordAiFeedbackEvent({
+    userId: params.userId,
+    projectId: params.projectId ?? null,
+    sessionId: params.sessionId ?? null,
+    sourceTable: "ai_task_feedback",
+    sourceRecordId: data.id,
+    eventType: "task_feedback_recorded",
+    eventFamily: "task_generation",
+    surface: "ai_task_feedback",
+    subjectType: "generated_task",
+    subjectId: params.taskId ?? data.id,
+    signal: params.signal === "good" ? "positive" : "negative",
+    reasonCategory: params.reasonCategory ?? null,
+    freeText: params.reason ?? null,
+    afterSnapshot: params.taskSnapshot as unknown as Database["public"]["Tables"]["ai_feedback_events"]["Insert"]["after_snapshot"],
+    metadata: {
+      taskFeedbackId: data.id,
+      generatedTaskId: params.taskId ?? null,
+      taskId: params.taskId ?? null,
+      signal: params.signal,
+      reasonCategory: params.reasonCategory ?? null,
+      visibility: "team",
+    },
+  });
 
   if (params.signal === "bad") {
     extractBadTaskLearning({

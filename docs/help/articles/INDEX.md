@@ -93,6 +93,7 @@ Every published article, grouped by category.
 | [Proactive AI Alerts](/docs/ai-proactive-alerts) | Daily automated flags for budget variance, overdue RFIs, late tasks, stale change events. |
 | [Knowledge Base](/docs/knowledge-base) | Save lessons learned, policies, and vendor notes for the AI to use. |
 | [AI Memory](/docs/ai-memory) | Facts and preferences the AI remembers about you across sessions. |
+| [Self-Learning Intelligence Architecture](/docs/self-learning-intelligence-architecture) | Internal implementation blueprint for AI feedback loops, promotion rules, retrieval scoring, and packet-first learning. |
 
 ## Project Management
 

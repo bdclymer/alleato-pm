@@ -90,6 +90,9 @@ const config = {
           subtle: "hsl(var(--muted-subtle))",
           foreground: "hsl(var(--muted-foreground))",
         },
+        neutral: {
+          150: "hsl(var(--neutral-150))",
+        },
 
         accent: {
           DEFAULT: "hsl(var(--accent))",

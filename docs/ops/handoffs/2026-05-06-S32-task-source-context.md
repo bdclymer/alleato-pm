@@ -12,6 +12,8 @@
    - /Users/meganharrison/Documents/alleato-pm/frontend/src/app/api/tasks/route.ts
    - /Users/meganharrison/Documents/alleato-pm/frontend/src/app/api/tasks/[taskId]/route.ts
    - /Users/meganharrison/Documents/alleato-pm/frontend/src/features/tasks/task-utils.ts
+   - /Users/meganharrison/Documents/alleato-pm/frontend/src/features/tasks/email-thread-parser.ts
+   - /Users/meganharrison/Documents/alleato-pm/frontend/src/features/tasks/__tests__/email-thread-parser.test.ts
    - /Users/meganharrison/Documents/alleato-pm/frontend/src/app/(tables)/tasks/page.tsx
    - /Users/meganharrison/Documents/alleato-pm/frontend/src/components/ai/TaskFeedbackButtons.tsx
    - /Users/meganharrison/Documents/alleato-pm/frontend/src/hooks/use-task-feedback.ts
@@ -27,7 +29,15 @@
    - PASS: `npm run linear:codex:check -- docs/ops/handoffs/2026-05-06-S32-task-source-context.md`
    - FAIL (unrelated repo debt): `npx tsc --noEmit --pretty false` reports existing errors outside task-owned files, including nullable `params`/`searchParams` route debt and unrelated admin/AI-chat typing issues.
    - PASS: agent-browser opened `http://localhost:3000/tasks`, loaded all-task list, selected a task, and verified source context, source link, due-date control, and project select render.
-8) Evidence artifacts (screenshot/video/report/log paths): tests/agent-browser-runs/2026-05-06-S32-task-source-context/tasks-source-context.png
+   - PASS: `npx eslint 'src/app/(tables)/tasks/page.tsx'`
+   - PASS: `git diff --check -- 'frontend/src/app/(tables)/tasks/page.tsx'`
+   - PASS: agent-browser opened `http://localhost:3000/tasks`, selected the Permit Pending email task, and verified the thread parser renders Latest plus Earlier 1-4 collapsible email sections.
+   - PASS: `npx jest --runInBand --runTestsByPath src/features/tasks/__tests__/email-thread-parser.test.ts`
+   - PASS: `npx eslint 'src/app/(tables)/tasks/page.tsx' 'src/features/tasks/email-thread-parser.ts' 'src/features/tasks/__tests__/email-thread-parser.test.ts'`
+   - PASS: `git diff --check -- 'frontend/src/app/(tables)/tasks/page.tsx' 'frontend/src/features/tasks/email-thread-parser.ts' 'frontend/src/features/tasks/__tests__/email-thread-parser.test.ts' 'docs/ops/handoffs/2026-05-06-S32-task-source-context.md'`
+8) Evidence artifacts (screenshot/video/report/log paths):
+   - tests/agent-browser-runs/2026-05-06-S32-task-source-context/tasks-source-context.png
+   - tests/agent-browser-runs/2026-05-06-S32-task-source-context/tasks-source-context-email-thread-parser.png
 9) Top 3 findings (frontend-visible issues first):
    - Task detail page showed source title/link metadata but not the actual email/Teams/source excerpt.
    - Task detail page only edited status even though due date/project fields already exist in the task table.
@@ -39,7 +49,7 @@
 ## Linear Updates
 
 - Kickoff comment: Posted to AAI-333 on 2026-05-07 with scope, owned paths, and initial typegen evidence.
-- Milestone comments: Pending.
+- Milestone comments: Posted thread-parser update to AAI-333 on 2026-05-07 with screenshot and targeted check evidence.
 - Completion/blocker comment: Posted to AAI-333 on 2026-05-07 with implementation summary, command evidence, screenshot path, and unrelated TypeScript debt note.
 
 ## Current Status
@@ -47,6 +57,8 @@
 Done:
 - Task API includes bounded source context from `document_metadata` communication fields.
 - Task detail displays the source excerpt inline with the source link.
+- Email source context is parsed into collapsible thread sections, with the latest message expanded and prior replies/forwards collapsed.
+- Email-thread parsing is covered by a focused Jest regression test for Outlook-style replies/forwards and non-thread fallback text.
 - Task detail supports editing due date and linking/unlinking a project through the existing task PATCH route.
 - Project task server loader selects the same context fields for project-scoped task tables.
 - Client/server feedback types were split so task feedback no longer imports server-only `node:crypto` into the browser bundle.
@@ -69,6 +81,7 @@ Leader review of AAI-333 evidence and acceptance/rework disposition.
 
 ```bash
 npx eslint 'src/app/(tables)/tasks/page.tsx' 'src/app/api/tasks/route.ts' 'src/app/api/tasks/[taskId]/route.ts' 'src/features/tasks/task-utils.ts' 'src/app/(main)/[projectId]/tasks/page.tsx' 'src/components/ai/TaskFeedbackButtons.tsx' 'src/hooks/use-task-feedback.ts' 'src/lib/ai/services/task-training-service.ts' 'src/lib/ai/task-feedback-types.ts'
+npx jest --runInBand --runTestsByPath src/features/tasks/__tests__/email-thread-parser.test.ts
 npm run check:routes
 npm run linear:codex:check -- docs/ops/handoffs/2026-05-06-S32-task-source-context.md
 ```
@@ -77,4 +90,7 @@ npm run linear:codex:check -- docs/ops/handoffs/2026-05-06-S32-task-source-conte
 
 - Supabase type generation completed before DB-backed edits.
 - Browser evidence: `tests/agent-browser-runs/2026-05-06-S32-task-source-context/tasks-source-context.png`.
+- Browser evidence: `tests/agent-browser-runs/2026-05-06-S32-task-source-context/tasks-source-context-email-thread-parser.png`.
 - Detail panel verified with source text containing `Context`, Outlook source link href, due date input, and project select.
+- Thread parser verified with the Permit Pending task showing `Latest`, `Earlier 1`, `Earlier 2`, `Earlier 3`, and `Earlier 4` sections.
+- Jest parser regression covers splitting 5 Outlook-style messages, stripping headers from the latest body, and single-message fallback.

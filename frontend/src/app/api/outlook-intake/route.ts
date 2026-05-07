@@ -25,6 +25,9 @@ interface OutlookIntakeRow {
   document_metadata_id: string | null;
   conversation_id: string | null;
   subject: string;
+  body: string | null;
+  body_html: string | null;
+  body_text: string | null;
   from_name: string | null;
   from_email: string | null;
   to_list: string[] | null;
@@ -96,6 +99,9 @@ export const GET = withApiGuardrails("outlook-intake#GET", async ({ request }) =
         document_metadata_id,
         conversation_id,
         subject,
+        body,
+        body_html,
+        body_text,
         from_name,
         from_email,
         to_list,
@@ -125,6 +131,8 @@ export const GET = withApiGuardrails("outlook-intake#GET", async ({ request }) =
 
   if (matchStatus) {
     query = query.eq("match_status", matchStatus);
+  } else {
+    query = query.neq("match_status", "ignored");
   }
 
   if (unassigned) {
@@ -188,6 +196,9 @@ export const GET = withApiGuardrails("outlook-intake#GET", async ({ request }) =
       : null,
     conversationId: row.conversation_id,
     subject: row.subject,
+    body: row.body,
+    bodyHtml: row.body_html,
+    bodyText: row.body_text,
     fromName: row.from_name,
     fromEmail: row.from_email,
     toList: row.to_list ?? [],

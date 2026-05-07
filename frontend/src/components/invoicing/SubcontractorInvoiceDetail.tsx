@@ -523,7 +523,7 @@ export function SubcontractorInvoiceDetail({
     >
       <PageTabs
         variant="inline"
-        className="border-b border-border"
+        className=""
         tabs={[
           {
             label: "Summary",

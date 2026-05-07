@@ -96,7 +96,6 @@ import {
   FolderIcon,
   CheckIcon,
   XIcon,
-  SparkleIcon,
   LinkIcon,
   EraserIcon,
   ClipboardPasteIcon,
@@ -118,7 +117,6 @@ import {
 } from "./trace-panel";
 import { CrossSourceTimeline } from "./cross-source-timeline";
 import { formatStructuredMeetingList, stripMarkdownForSpeech } from "./chat-formatting";
-import { AnimatedOrb } from "./animated-orb";
 import { AudioWaveform } from "./audio-waveform";
 import { BrandonDailyUpdateWidgetCard } from "./brandon-daily-update-widget-card";
 import type { BrandonDailyUpdatePacket } from "@/lib/executive/brandon-daily-update";
@@ -542,20 +540,6 @@ async function prepareMessageWithReadableAttachments(
   };
 }
 
-// ─── Assistant Avatar ───────────────────────────────────────────────
-
-function AssistantAvatar({ councilMode }: { councilMode?: boolean }) {
-  return (
-    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-background shadow-sm ring-1 ring-border/50">
-      {councilMode ? (
-        <SparkleIcon className="absolute h-3.5 w-3.5 text-primary" />
-      ) : (
-        <AnimatedOrb size={32} />
-      )}
-    </div>
-  );
-}
-
 function AssistantActionList() {
   return (
     <section aria-label="Assistant actions" className="border-y border-border/70 py-5 text-left">
@@ -815,8 +799,7 @@ function StreamingIndicator({
   const isSuccess = liveStatus?.status === "success";
 
   return (
-    <div className="flex items-start gap-3">
-      <AssistantAvatar councilMode={councilMode} />
+    <div className="flex items-start">
       <Message from="assistant">
         <MessageContent>
           <div className="flex items-center gap-2.5 py-1 text-sm text-muted-foreground">
@@ -1679,7 +1662,7 @@ export function ChatArea({
     [messages, isStreaming],
   );
   const composerIconButtonClass =
-    "h-7 w-7 rounded-full bg-muted/60 text-muted-foreground shadow-none hover:bg-muted hover:text-foreground sm:h-8 sm:w-8";
+    "h-7 w-7 rounded-full bg-transparent text-muted-foreground shadow-none hover:bg-transparent hover:text-foreground sm:h-8 sm:w-8";
 
   // Shared prompt input element
   const promptInputEl = (
@@ -1689,7 +1672,7 @@ export function ChatArea({
       isLoading={isStreaming}
       onSubmit={handleSubmit}
       className={cn(
-        "overflow-hidden rounded-2xl border-0 bg-background shadow-sm ring-1 ring-border/70 transition-all focus-within:ring-2 focus-within:ring-primary/15",
+        "overflow-hidden rounded-2xl border-0 bg-transparent shadow-[0_10px_40px_-28px_rgb(15_23_42/0.45)] ring-1 ring-border/70 transition-all focus-within:ring-2 focus-within:ring-primary/15",
         hasMessages ? "px-3 py-2 sm:px-4" : "px-4 py-4 sm:px-5",
       )}
     >
@@ -1781,7 +1764,7 @@ export function ChatArea({
               size="icon-sm"
               className={cn(
                 composerIconButtonClass,
-                isRecording && "bg-primary/10 text-primary",
+                isRecording && "text-primary hover:text-primary",
               )}
               onClick={toggleRecording}
               aria-label={isRecording ? "Stop voice input" : "Start voice input"}
@@ -1815,7 +1798,7 @@ export function ChatArea({
                       size="icon-sm"
                       className={cn(
                         composerIconButtonClass,
-                        selectedProject && "bg-primary/10 text-primary hover:bg-primary/15",
+                        selectedProject && "text-primary hover:text-primary",
                       )}
                       aria-label="Select project context"
                     >
@@ -1888,7 +1871,7 @@ export function ChatArea({
               onClick={handleCouncilToggle}
               className={cn(
                 composerIconButtonClass,
-                councilMode && "bg-primary/10 text-primary hover:bg-primary/15",
+                councilMode && "text-primary hover:text-primary",
               )}
               aria-label={councilMode ? "Turn off council mode" : "Turn on council mode"}
             >
@@ -1952,10 +1935,11 @@ export function ChatArea({
           <PromptInputAction tooltip={isStreaming ? "Stop" : "Send"}>
             <Button
               size="icon"
-              variant={input.trim() ? "default" : "ghost"}
+              variant="ghost"
               className={cn(
-                "relative h-7 w-7 rounded-full sm:h-8 sm:w-8",
-                isStreaming && "bg-muted hover:bg-muted/80",
+                "relative h-7 w-7 rounded-full bg-transparent text-muted-foreground shadow-none hover:bg-transparent hover:text-foreground sm:h-8 sm:w-8",
+                input.trim() && "text-foreground",
+                isStreaming && "text-foreground/60 hover:text-foreground/60",
               )}
               disabled={!input.trim() && !uploadedFiles?.length && !isStreaming}
               onClick={isStreaming ? onStop : handleSubmit}
@@ -1975,13 +1959,13 @@ export function ChatArea({
   return (
     <div className="relative flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background">
       {!hasMessages && !isLoadingMessages ? (
-        <div className="flex min-h-0 flex-1 pb-36 md:pb-40">
+        <div className="flex min-h-0 flex-1 pb-6 md:pb-8">
           <WelcomeScreen onSelectPrompt={(prompt) => onSubmit(prompt)} />
         </div>
       ) : (
         <>
           <Conversation className="min-h-0">
-            <ConversationContent className="mx-auto w-full max-w-4xl px-4 pb-36 pt-6 md:px-6 md:pb-40 md:pt-8">
+            <ConversationContent className="mx-auto w-full max-w-3xl px-0 pb-6 pt-6 md:pb-8 md:pt-8">
               {messages.map((msg, msgIndex) => {
                 const text = getMessageText(msg);
                 const isAssistant = msg.role === "assistant";
@@ -2018,8 +2002,7 @@ export function ChatArea({
                 if (isAssistant && !text.trim() && hasToolInvocations(msg)) {
                   if (toolParts.length > 0) {
                     return (
-                      <div key={msg.id} className="flex items-start gap-3">
-                        <AssistantAvatar councilMode={councilMode} />
+                      <div key={msg.id} className="flex items-start">
                         <Message from="assistant">
                           <MessageContent>
                             {toolParts.length > 1 ? (
@@ -2087,7 +2070,7 @@ export function ChatArea({
                       key={msg.id}
                       from="user"
                     >
-                      <MessageContent className="user-message-enter rounded-[1.4rem] bg-background px-4 py-3 sm:px-5">
+                      <MessageContent className="user-message-enter rounded-[1.65rem] bg-neutral-150 px-3 py-1.5 text-foreground">
                         {imageParts.length > 0 && (
                           <div className="mb-2 flex flex-wrap gap-2">
                             {imageParts.map((image) => (
@@ -2114,8 +2097,7 @@ export function ChatArea({
 
                 // Assistant messages — left-aligned with avatar
                 return (
-                  <div key={msg.id} className="flex items-start gap-3">
-                    <AssistantAvatar councilMode={councilMode} />
+                  <div key={msg.id} className="flex items-start">
                     <div className="flex min-w-0 flex-1 flex-col gap-2">
                       <Message from="assistant">
                         <MessageContent className="px-1 py-1 sm:px-2">
@@ -2352,12 +2334,13 @@ export function ChatArea({
                 </div>
               )}
             </ConversationContent>
-            <ConversationScrollButton className="bottom-28 md:bottom-28" />
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-32 bg-gradient-to-t from-background/80 via-background/35 to-transparent" />
+            <ConversationScrollButton className="bottom-4 z-20 md:bottom-6" />
           </Conversation>
         </>
       )}
 
-      <div className="absolute inset-x-0 bottom-0 z-20 shrink-0 px-3 pb-[calc(2rem+env(safe-area-inset-bottom))] pt-2 md:px-4">
+      <div className="z-20 shrink-0 px-3 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-0 md:px-4">
         <div className="mx-auto w-full max-w-3xl">
           {promptInputEl}
         </div>

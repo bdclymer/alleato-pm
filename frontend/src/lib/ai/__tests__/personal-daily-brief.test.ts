@@ -1,5 +1,6 @@
 import {
   identityLooksLikeBrandon,
+  isDailyBriefCritiqueRequest,
   isPersonalDailyBriefRequest,
 } from "../personal-daily-brief";
 
@@ -13,6 +14,15 @@ describe("personal daily brief routing", () => {
   it("does not treat generic project updates as personal daily briefs", () => {
     expect(isPersonalDailyBriefRequest("give me the Westfield project update")).toBe(false);
     expect(isPersonalDailyBriefRequest("daily log status for project 760")).toBe(false);
+  });
+
+  it("does not replay the daily brief when the user is critiquing the brief format", () => {
+    const prompt =
+      "I still think the format or the way the daily brief is structured is not very clear or confusing, but I can't really pinpoint why or what needs to change. What do you think?";
+
+    expect(isDailyBriefCritiqueRequest(prompt)).toBe(true);
+    expect(isPersonalDailyBriefRequest(prompt)).toBe(false);
+    expect(isDailyBriefCritiqueRequest("The Brandon daily update format is confusing. What should change?")).toBe(true);
   });
 
   it("matches Brandon from profile, person, or email identity", () => {

@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function EmailsPage() {
   return (
-    <PageShell variant="table" title="Emails" showHeader={false} contentClassName="pt-0">
+    <PageShell variant="table" title="Emails">
       <Suspense>
         <EmailSyncClient />
       </Suspense>

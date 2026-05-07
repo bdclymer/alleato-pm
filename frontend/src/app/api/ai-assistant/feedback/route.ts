@@ -3,6 +3,8 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { ingestThumbsFeedbackLearning } from "@/lib/ai/services/agent-learning-service";
+import { recordAiFeedbackEvent } from "@/lib/ai/services/feedback-event-service";
+import { toSessionUuid } from "@/lib/ai/session-id";
 import { logger } from "@/lib/logger";
 
 /**
@@ -30,24 +32,58 @@ export const POST = withApiGuardrails("/api/ai-assistant/feedback#POST", async (
   }
 
   const supabase = createServiceClient();
+  const sessionUuid = toSessionUuid(sessionId);
 
-  const { error } = await supabase.from("chat_history").insert({
-    session_id: sessionId,
-    user_id: user.id,
-    role: "system",
-    content: `[feedback:${feedback}]`,
-    metadata: {
-      type: "feedback",
-      feedback,
+  const { data, error } = await supabase
+    .from("chat_history")
+    .insert({
+      session_id: sessionUuid,
+      user_id: user.id,
+      role: "system",
+      content: `[feedback:${feedback}]`,
+      metadata: {
+        type: "feedback",
+        feedback,
+        messageId: messageId ?? null,
+        messageContent: messageContent?.slice(0, 500) ?? null,
+        originalSessionId: sessionId,
+        timestamp: new Date().toISOString(),
+      },
+    })
+    .select("id")
+    .single();
+
+  if (error || !data) {
+    throw new GuardrailError({
+      code: "INTERNAL_ERROR",
+      where: "/api/ai-assistant/feedback#POST",
+      message: error?.message ?? "Feedback chat_history insert returned no row.",
+    });
+  }
+
+  await recordAiFeedbackEvent({
+    userId: user.id,
+    sessionId: sessionUuid,
+    sourceTable: "chat_history",
+    sourceRecordId: data.id,
+    eventType: "assistant_feedback_recorded",
+    eventFamily: "assistant_response",
+    surface: "ai_assistant",
+    subjectType: "assistant_message",
+    subjectId: messageId ?? null,
+    signal: feedback === "up" ? "positive" : "negative",
+    freeText: messageContent?.slice(0, 1000) ?? null,
+    sourceContext: {
       messageId: messageId ?? null,
       messageContent: messageContent?.slice(0, 500) ?? null,
-      timestamp: new Date().toISOString(),
+    },
+    metadata: {
+      feedback,
+      chatHistoryId: data.id,
+      originalSessionId: sessionId,
+      visibility: "team",
     },
   });
-
-  if (error) {
-    throw new GuardrailError({ code: "INTERNAL_ERROR", where: "/api/ai-assistant/feedback#POST", message: error.message });
-  }
 
   try {
     await ingestThumbsFeedbackLearning({ sessionId, feedback, messageContent });

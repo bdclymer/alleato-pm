@@ -28,6 +28,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import type { ProjectEmail } from "@/hooks/use-emails";
+import {
+  EmailDetailSheet,
+  projectEmailToDetailRecord,
+} from "@/features/emails/email-detail-sheet";
 
 interface WorkspaceTab {
   label: string;
@@ -431,6 +435,16 @@ export function ProjectEmailsWorkspace({
     [selectedEmail],
   );
 
+  const selectedEmailDetail = React.useMemo(
+    () => (selectedEmail ? projectEmailToDetailRecord(selectedEmail) : null),
+    [selectedEmail],
+  );
+
+  const handleSelectEmail = React.useCallback((email: ProjectEmail) => {
+    setSelectedEmailId(email.id);
+    setIsDetailsPanelOpen(true);
+  }, []);
+
   return (
     <div className="relative flex min-h-[calc(100dvh-8.5rem)] flex-col">
       <div className="grid min-h-0 flex-1 grid-cols-1 xl:grid-cols-[22rem_minmax(0,1fr)] 2xl:grid-cols-[22rem_minmax(0,1fr)_20rem]">
@@ -551,7 +565,7 @@ export function ProjectEmailsWorkspace({
                     key={email.id}
                     email={email}
                     isActive={selectedEmail?.id === email.id}
-                    onSelect={() => setSelectedEmailId(email.id)}
+                    onSelect={() => handleSelectEmail(email)}
                   />
                 ))}
               </motion.div>
@@ -596,7 +610,7 @@ export function ProjectEmailsWorkspace({
                         variant="ghost"
                         size="icon"
                         onClick={() => setIsDetailsPanelOpen(true)}
-                        aria-label="Open details panel"
+                        aria-label="Open email content panel"
                         className="hidden h-9 w-9 rounded-full text-muted-foreground xl:inline-flex 2xl:hidden"
                       >
                         <MixerHorizontalIcon className="h-4 w-4" />
@@ -723,35 +737,37 @@ export function ProjectEmailsWorkspace({
         </div>
       </div>
 
-      <AnimatePresence>
-        {isDetailsPanelOpen ? (
-          <>
-            <motion.button
-              type="button"
-              aria-label="Close details panel overlay"
-              className="fixed inset-0 z-40 hidden bg-foreground/10 xl:block 2xl:hidden"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsDetailsPanelOpen(false)}
-            />
-            <motion.div
-              initial={{ opacity: 0, x: 24 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 24 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-              className="fixed inset-y-0 right-0 z-50 hidden w-80 border-l border-border/70 bg-background xl:block 2xl:hidden"
-            >
-              <EmailDetailsPanel
-                selectedEmail={selectedEmail}
-                primaryContact={primaryContact}
-                contextItems={contextItems}
-                onClose={() => setIsDetailsPanelOpen(false)}
-              />
-            </motion.div>
-          </>
-        ) : null}
-      </AnimatePresence>
+      <EmailDetailSheet
+        email={selectedEmailDetail}
+        open={isDetailsPanelOpen}
+        onOpenChange={setIsDetailsPanelOpen}
+        actions={
+          selectedEmail ? (
+            <div className="flex items-center gap-1">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => onEdit(selectedEmail)}
+                aria-label="Edit email"
+                className="h-8 w-8"
+              >
+                <Pencil1Icon className="h-4 w-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => onDelete(selectedEmail)}
+                aria-label="Delete email"
+                className="h-8 w-8 text-destructive hover:text-destructive"
+              >
+                <TrashIcon className="h-4 w-4" />
+              </Button>
+            </div>
+          ) : null
+        }
+      />
     </div>
   );
 }

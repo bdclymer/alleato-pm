@@ -3,7 +3,8 @@ export type AssistantWidgetKind =
   | "create_task"
   | "create_event"
   | "project_action_preview"
-  | "decision_packet";
+  | "decision_packet"
+  | "feature_request_packet";
 
 export type AssistantWidgetField = {
   label: string;
@@ -73,7 +74,8 @@ export type AssistantWidgetPayload =
   | CreateTaskWidgetPayload
   | CreateEventWidgetPayload
   | ProjectActionPreviewWidgetPayload
-  | DecisionPacketWidgetPayload;
+  | DecisionPacketWidgetPayload
+  | import("@/lib/feature-requests/types").FeatureRequestPacketWidgetPayload;
 
 export type AssistantWidgetDataPart = {
   type: "data-assistant-widget";
@@ -275,6 +277,7 @@ export function isAssistantWidgetPayload(
       "create_event",
       "project_action_preview",
       "decision_packet",
+      "feature_request_packet",
     ].includes(record.type)
   );
 }

@@ -15,6 +15,7 @@ export interface ProjectEmail {
   subject: string;
   body: string | null;
   body_html: string | null;
+  body_text?: string | null;
   from_name: string | null;
   from_email: string | null;
   to_list: string[] | null;

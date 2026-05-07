@@ -1801,7 +1801,7 @@ export function UnifiedTablePage<T>({
               {isSidePanelOpen && (
                 <aside
                   className={cn(
-                    "hidden lg:flex lg:flex-col bg-card relative",
+                    "hidden lg:flex lg:flex-col bg-card relative min-h-[calc(100dvh-6rem)]",
                     panelSticky
                       ? "lg:sticky lg:top-12 lg:max-h-[calc(100dvh-3rem)]"
                       : "lg:relative lg:max-h-none",
@@ -1811,12 +1811,14 @@ export function UnifiedTablePage<T>({
                 >
                   {panelResizable && (
                     <div
-                      className="absolute left-0 top-0 h-full w-1.5 cursor-col-resize select-none z-10 hover:bg-primary/20 active:bg-primary/30 transition-colors"
+                      className="absolute left-0 top-0 h-full w-3 cursor-col-resize select-none z-10 group"
                       onMouseDown={handlePanelResizeStart}
                       aria-hidden="true"
-                    />
+                    >
+                      <div className="absolute left-0 top-0 h-full w-px bg-border group-hover:bg-primary/50 group-active:bg-primary transition-colors" />
+                    </div>
                   )}
-                  <div className="flex-1 flex flex-col min-h-0 px-4">
+                  <div className="flex-1 flex flex-col min-h-0 pl-4 pr-4">
                     {sidePanel.content}
                   </div>
                 </aside>

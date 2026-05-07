@@ -177,6 +177,12 @@ const sections: AdminSection[] = [
         icon: BrainCircuit,
       },
       {
+        label: "AI Learning Promotions",
+        href: "/ai-learning-promotions",
+        description: "Review, approve, and apply retrieval learning candidates",
+        icon: BrainCircuit,
+      },
+      {
         label: "Docs",
         href: "/docs",
         description: "Internal project documentation",

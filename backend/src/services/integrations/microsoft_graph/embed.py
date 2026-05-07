@@ -13,6 +13,7 @@ import hashlib
 import logging
 import os
 import re
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
@@ -309,6 +310,7 @@ def embed_pending_graph_documents(supabase_client, limit: int = 100) -> Dict[str
 
     Returns summary dict.
     """
+    started_at = datetime.now(timezone.utc)
     try:
         resp = (
             supabase_client.from_("document_metadata")
@@ -321,10 +323,24 @@ def embed_pending_graph_documents(supabase_client, limit: int = 100) -> Dict[str
         docs = resp.data or []
     except Exception as e:
         logger.error("[GraphEmbed] Failed to query pending docs: %s", e)
+        _record_graph_embed_run(
+            supabase_client,
+            started_at=started_at,
+            status="failed",
+            items_failed=1,
+            error_message=str(e),
+            metadata={"limit": limit, "stage": "query_pending"},
+        )
         return {"embedded": 0, "errors": 1}
 
     if not docs:
         logger.info("[GraphEmbed] No pending microsoft_graph documents to embed")
+        _record_graph_embed_run(
+            supabase_client,
+            started_at=started_at,
+            status="succeeded",
+            metadata={"limit": limit, "pending": 0},
+        )
         return {"embedded": 0, "errors": 0}
 
     logger.info("[GraphEmbed] Processing %d pending microsoft_graph documents", len(docs))
@@ -347,9 +363,56 @@ def embed_pending_graph_documents(supabase_client, limit: int = 100) -> Dict[str
         "[GraphEmbed] Done — %d docs embedded (%d total chunks, %d errors). By category: %s",
         len(docs) - errors, total_chunks, errors, by_category,
     )
-    return {
+    result = {
         "embedded": len(docs) - errors,
         "total_chunks": total_chunks,
         "errors": errors,
         "by_category": by_category,
     }
+    _record_graph_embed_run(
+        supabase_client,
+        started_at=started_at,
+        status="failed" if errors == len(docs) else "warning" if errors else "succeeded",
+        items_seen=len(docs),
+        items_synced=result["embedded"],
+        items_created=total_chunks,
+        items_failed=errors,
+        error_message=f"{errors} graph documents failed embedding" if errors else None,
+        metadata={"limit": limit, **result},
+    )
+    return result
+
+
+def _record_graph_embed_run(
+    supabase_client,
+    *,
+    started_at: datetime,
+    status: str,
+    items_seen: int = 0,
+    items_synced: int = 0,
+    items_created: int = 0,
+    items_failed: int = 0,
+    error_message: Optional[str] = None,
+    metadata: Optional[Dict[str, Any]] = None,
+) -> None:
+    try:
+        from src.services.health.source_sync_health import record_sync_run
+
+        record_sync_run(
+            supabase_client,
+            source="microsoft_graph",
+            resource_id="graph_embed",
+            resource_name="Microsoft Graph embedding",
+            stage="vectorization",
+            status=status,
+            started_at=started_at,
+            finished_at=datetime.now(timezone.utc),
+            items_seen=items_seen,
+            items_synced=items_synced,
+            items_created=items_created,
+            items_failed=items_failed,
+            error_message=error_message,
+            metadata=metadata or {},
+        )
+    except Exception as exc:
+        logger.warning("[GraphEmbed] Could not record source_sync_runs row: %s", exc)

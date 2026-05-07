@@ -147,6 +147,13 @@ class FirefliesRecentSyncRequest(BaseModel):
     write_markdown_dir: Optional[str] = None
 
 
+class GraphSyncRequest(BaseModel):
+    run_embedding: bool = True
+    run_teams_compiler: bool = True
+    embed_limit: int = 1000
+    teams_compiler_batch_size: int = 25
+
+
 def get_rag_store() -> SupabaseRagStore:
     return SupabaseRagStore()
 
@@ -520,7 +527,7 @@ async def graph_embed_endpoint(
 
 @app.post("/api/graph/sync", tags=["Ingestion"], summary="Trigger Microsoft Graph sync (Outlook / Teams / OneDrive)")
 async def graph_sync_endpoint(
-    background_tasks: BackgroundTasks,
+    payload: Optional[GraphSyncRequest] = None,
     _: None = Depends(require_admin_api_key),
 ) -> Dict[str, Any]:
     """Manually trigger a Microsoft Graph incremental sync.
@@ -550,9 +557,18 @@ async def graph_sync_endpoint(
         )
 
     client = get_supabase_client()
+    options = payload or GraphSyncRequest()
+    embed_limit = max(1, min(int(options.embed_limit or 1000), 1000))
+    teams_compiler_batch_size = max(1, min(int(options.teams_compiler_batch_size or 25), 100))
 
     def _run():
-        return run_graph_sync(client)
+        return run_graph_sync(
+            client,
+            run_embedding=options.run_embedding,
+            run_teams_compiler=options.run_teams_compiler,
+            embed_limit=embed_limit,
+            teams_compiler_batch_size=teams_compiler_batch_size,
+        )
 
     import asyncio
     loop = asyncio.get_event_loop()
@@ -734,6 +750,56 @@ async def get_intelligence_compiler_health(
         raise HTTPException(
             status_code=500,
             detail=f"Intelligence compiler status query failed: {exc}",
+        ) from exc
+
+
+@app.get("/api/health/source-sync", tags=["Health"], summary="Source sync and intelligence health")
+async def get_source_sync_health_status(
+    _: None = Depends(require_admin_api_key),
+) -> Dict[str, Any]:
+    """Return sync freshness, vectorization, task extraction, compiler, and packet health."""
+    try:
+        from src.services.health.source_sync_health import get_source_sync_health
+        from src.services.supabase_helpers import get_supabase_client
+
+        client = get_supabase_client()
+        return get_source_sync_health(client)
+    except Exception as exc:
+        logger.error("[SourceSyncHealthAPI] status failed: %s", exc, exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Source sync health query failed: {exc}",
+        ) from exc
+
+
+@app.post("/api/health/source-sync/recompute", tags=["Health"], summary="Recompute source sync health")
+async def recompute_source_sync_health_status(
+    _: None = Depends(require_admin_api_key),
+) -> Dict[str, Any]:
+    """Recompute source sync health from current source, vector, task, and packet tables."""
+    try:
+        from src.services.health.source_sync_health import (
+            get_source_sync_health,
+            update_source_health_snapshot,
+        )
+        from src.services.supabase_helpers import get_supabase_client
+
+        client = get_supabase_client()
+        health = get_source_sync_health(client)
+        updated = 0
+        for source in health.get("sources", []):
+            update_source_health_snapshot(client, source)
+            updated += 1
+        return {
+            "status": "completed",
+            "updatedSnapshots": updated,
+            "health": health,
+        }
+    except Exception as exc:
+        logger.error("[SourceSyncHealthAPI] recompute failed: %s", exc, exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Source sync health recompute failed: {exc}",
         ) from exc
 
 

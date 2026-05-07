@@ -10,7 +10,7 @@ import re
 import sys
 import unicodedata
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
 from uuid import NAMESPACE_URL, uuid4, uuid5
@@ -528,7 +528,15 @@ class FirefliesIngestionPipeline:
         The markdown is generated from Fireflies transcript + summary schema fields,
         then passed through the native ingestion path to ensure parser compatibility.
         """
+        started_at = datetime.now(timezone.utc)
         if not self._fireflies_api_key:
+            self._record_fireflies_sync_run(
+                started_at=started_at,
+                status="failed",
+                items_failed=1,
+                error_message="FIREFLIES_API_KEY is required for Fireflies sync",
+                metadata={"limit": limit, "dry_run": dry_run},
+            )
             raise RuntimeError("FIREFLIES_API_KEY is required for Fireflies sync")
 
         target_limit = max(1, min(limit, 100))
@@ -616,13 +624,72 @@ class FirefliesIngestionPipeline:
                     }
                 )
 
-        return {
+        result = {
             "requested": target_limit,
             "found": len(summaries),
             "processed": len(results),
             "error_count": sum(1 for r in results if "error" in r),
             "results": results,
         }
+        error_count = int(result["error_count"])
+        skipped_count = sum(1 for row in results if row.get("skipped"))
+        self._record_fireflies_sync_run(
+            started_at=started_at,
+            status="failed" if error_count == len(results) and results else "warning" if error_count else "succeeded",
+            items_seen=len(summaries),
+            items_synced=int(result["processed"]) - error_count - skipped_count,
+            items_skipped=skipped_count,
+            items_failed=error_count,
+            error_message=f"{error_count} Fireflies transcripts failed" if error_count else None,
+            metadata={
+                "requested": target_limit,
+                "found": len(summaries),
+                "dry_run": dry_run,
+                "project_id": project_id,
+            },
+        )
+        return result
+
+    def _record_fireflies_sync_run(
+        self,
+        *,
+        started_at: datetime,
+        status: str,
+        items_seen: int = 0,
+        items_synced: int = 0,
+        items_skipped: int = 0,
+        items_failed: int = 0,
+        error_message: Optional[str] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        try:
+            from src.services.health.source_sync_health import record_sync_run
+        except Exception:
+            try:
+                from services.health.source_sync_health import record_sync_run  # type: ignore
+            except Exception as exc:
+                logger.warning("[FirefliesIngestion] Could not import source sync ledger: %s", exc)
+                return
+
+        try:
+            record_sync_run(
+                self.store._client,
+                source="fireflies",
+                resource_id="recent_transcripts",
+                resource_name="Fireflies recent transcripts",
+                stage="source_sync",
+                status=status,
+                started_at=started_at,
+                finished_at=datetime.now(timezone.utc),
+                items_seen=items_seen,
+                items_synced=items_synced,
+                items_skipped=items_skipped,
+                items_failed=items_failed,
+                error_message=error_message,
+                metadata=metadata or {},
+            )
+        except Exception as exc:
+            logger.warning("[FirefliesIngestion] Could not record source_sync_runs row: %s", exc)
 
     @staticmethod
     def _sanitize_storage_name(value: str) -> str:

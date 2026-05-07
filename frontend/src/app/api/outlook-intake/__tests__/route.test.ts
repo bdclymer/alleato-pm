@@ -21,6 +21,7 @@ interface QueryResult {
 interface QueryBuilderMock {
   select: jest.Mock;
   eq: jest.Mock;
+  neq: jest.Mock;
   in: jest.Mock;
   is: jest.Mock;
   order: jest.Mock;
@@ -32,6 +33,7 @@ function createQueryBuilder(result: QueryResult): QueryBuilderMock {
   const builder = {
     select: jest.fn().mockReturnThis(),
     eq: jest.fn().mockReturnThis(),
+    neq: jest.fn().mockReturnThis(),
     in: jest.fn().mockReturnThis(),
     is: jest.fn().mockReturnThis(),
     order: jest.fn().mockReturnThis(),
@@ -146,5 +148,85 @@ describe("/api/outlook-intake", () => {
 
     const intakeSelect = intakeBuilder.select.mock.calls[0]?.[0] ?? "";
     expect(intakeSelect).not.toMatch(/\bdocument_metadata\s*\(/);
+  });
+
+  it("excludes ignored intake rows from the default list", async () => {
+    const intakeBuilder = createQueryBuilder({
+      data: [],
+      error: null,
+    });
+    const builders: Record<string, QueryBuilderMock[]> = {
+      user_profiles: [
+        createQueryBuilder({
+          data: { is_admin: true },
+          error: null,
+        }),
+      ],
+      outlook_email_intake: [intakeBuilder],
+      document_metadata: [],
+    };
+
+    const supabase = {
+      from: jest.fn((table: string) => {
+        const builder = builders[table]?.shift();
+        if (!builder) {
+          throw new Error(`Unexpected query for table: ${table}`);
+        }
+        return builder;
+      }),
+    };
+
+    createClientMock.mockResolvedValue(
+      supabase as unknown as Awaited<ReturnType<typeof createClient>>,
+    );
+
+    const response = await GET(
+      new NextRequest("http://localhost/api/outlook-intake"),
+      { params: Promise.resolve({}) },
+    );
+
+    expect(response.status).toBe(200);
+    expect(intakeBuilder.neq).toHaveBeenCalledWith("match_status", "ignored");
+    expect(intakeBuilder.eq).not.toHaveBeenCalledWith("match_status", expect.any(String));
+  });
+
+  it("allows explicitly filtering to ignored intake rows", async () => {
+    const intakeBuilder = createQueryBuilder({
+      data: [],
+      error: null,
+    });
+    const builders: Record<string, QueryBuilderMock[]> = {
+      user_profiles: [
+        createQueryBuilder({
+          data: { is_admin: true },
+          error: null,
+        }),
+      ],
+      outlook_email_intake: [intakeBuilder],
+      document_metadata: [],
+    };
+
+    const supabase = {
+      from: jest.fn((table: string) => {
+        const builder = builders[table]?.shift();
+        if (!builder) {
+          throw new Error(`Unexpected query for table: ${table}`);
+        }
+        return builder;
+      }),
+    };
+
+    createClientMock.mockResolvedValue(
+      supabase as unknown as Awaited<ReturnType<typeof createClient>>,
+    );
+
+    const response = await GET(
+      new NextRequest("http://localhost/api/outlook-intake?match_status=ignored"),
+      { params: Promise.resolve({}) },
+    );
+
+    expect(response.status).toBe(200);
+    expect(intakeBuilder.eq).toHaveBeenCalledWith("match_status", "ignored");
+    expect(intakeBuilder.neq).not.toHaveBeenCalledWith("match_status", "ignored");
   });
 });

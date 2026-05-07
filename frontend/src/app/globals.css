@@ -52,7 +52,8 @@
 
     /* Neutral scale */
     --neutral-50:  0 0% 100%;
-    --neutral-100: 30 18% 95%;
+    --neutral-100: 0 0% 95%;
+    --neutral-150: 0 0% 93%;
     --neutral-200: 240 5% 91%;
     --neutral-300: 0 0% 90%;
     --neutral-400: 0 0% 72%;

@@ -42,29 +42,29 @@ function Section({
   items: BrandonBriefItem[];
 }) {
   return (
-    <section className="space-y-3">
+    <section className="space-y-2">
       <div className="flex items-center justify-between gap-3">
         <SectionRuleHeading label={title} className="mb-0 pb-0" />
         <Badge variant="outline">{items.length}</Badge>
       </div>
       {items.length > 0 ? (
-        <div className="space-y-2">
+        <div className="divide-y divide-border">
           {items.map((item) => (
             <article
               key={`${item.sourceId ?? item.title}-${item.date}`}
-              className="rounded-xl border border-border bg-background px-4 py-3"
+              className="py-4 first:pt-2 last:pb-0"
             >
-              <div className="flex flex-wrap items-start gap-2">
-                <div className="min-w-0 flex-1">
-                  <div className="text-sm font-semibold text-foreground">{item.title}</div>
-                  <div className="mt-1 text-xs text-muted-foreground">
-                    {[item.project, item.source, item.date].filter(Boolean).join(" • ")}
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0 space-y-1">
+                  <div className="text-sm font-semibold leading-5 text-foreground">{item.title}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {[item.project, item.date].filter(Boolean).join(" • ")}
                   </div>
                 </div>
                 {item.status ? (
                   <span
                     className={cn(
-                      "inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium",
+                      "inline-flex w-fit items-center rounded-full border px-2 py-0.5 text-[11px] font-medium",
                       toneStyles[item.tone ?? "neutral"],
                     )}
                   >
@@ -72,25 +72,27 @@ function Section({
                   </span>
                 ) : null}
               </div>
-              <p className="mt-2 text-sm leading-6 text-foreground">{item.summary}</p>
-              {item.bullets.length > 0 ? (
-                <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
-                  {item.bullets.slice(0, 2).map((bullet) => (
-                    <li key={bullet} className="flex gap-2">
-                      <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-muted-foreground" />
-                      <span>{bullet}</span>
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
               {item.recommendedAction ? (
-                <div className="mt-2 text-sm text-muted-foreground">
-                  <span className="font-medium text-foreground">Recommended move:</span>{" "}
-                  {item.recommendedAction}
+                <div className="mt-3 border-l-2 border-foreground/20 pl-3 text-sm leading-6 text-foreground">
+                  <span className="font-medium">Next move: </span>
+                  <span>{item.recommendedAction}</span>
+                </div>
+              ) : null}
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.summary}</p>
+              {item.bullets.length > 0 ? (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {item.bullets.slice(0, 2).map((bullet) => (
+                    <span
+                      key={bullet}
+                      className="inline-flex max-w-full rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground"
+                    >
+                      {bullet}
+                    </span>
+                  ))}
                 </div>
               ) : null}
               {(Array.isArray(item.citations) && item.citations.length > 0) || item.sourceUrl ? (
-                <div className="mt-3 space-y-1">
+                <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
                   {(Array.isArray(item.citations) && item.citations.length > 0
                     ? item.citations
                     : [{
@@ -101,10 +103,10 @@ function Section({
                         evidence: item.evidence,
                         date: item.date,
                       }]
-                  ).map((citation, idx) => (
+                  ).slice(0, 3).map((citation, idx) => (
                     <div
                       key={`${citation.sourceId ?? citation.sourceUrl ?? citation.sourceDetail}-${idx}`}
-                      className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground"
+                      className="flex min-w-0 flex-wrap items-center gap-1"
                     >
                       <span className="font-medium text-foreground">{citation.source}</span>
                       {citation.sourceDetail ? <span>· {citation.sourceDetail}</span> : null}
@@ -121,6 +123,9 @@ function Section({
                       ) : null}
                     </div>
                   ))}
+                  {Array.isArray(item.citations) && item.citations.length > 3 ? (
+                    <span>{item.citations.length - 3} more source(s)</span>
+                  ) : null}
                 </div>
               ) : null}
             </article>
@@ -140,8 +145,10 @@ export function BrandonDailyUpdateWidgetCard({
 }: {
   packet: BrandonDailyUpdatePacket;
 }) {
+  const firstAction = packet.sections.needsBrandon[0] ?? packet.sections.waitingOnOthers[0] ?? null;
+
   return (
-    <div className="mb-4 rounded-2xl border border-border bg-muted/20 p-4 sm:p-5">
+    <div className="mb-4 rounded-lg border border-border bg-background p-4 sm:p-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <div className="text-base font-semibold text-foreground">Daily update for Brandon</div>
@@ -161,28 +168,44 @@ export function BrandonDailyUpdateWidgetCard({
         </Link>
       </div>
 
-      <div className="mt-4 grid gap-2 sm:grid-cols-3">
-        <div className="rounded-xl border border-border bg-background px-4 py-3">
+      {firstAction ? (
+        <div className="mt-4 border-l-2 border-red-600/50 pl-3">
+          <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Start here
+          </div>
+          <div className="mt-1 text-sm font-semibold leading-5 text-foreground">
+            {firstAction.title}
+          </div>
+          {firstAction.recommendedAction ? (
+            <p className="mt-1 text-sm leading-6 text-muted-foreground">
+              {firstAction.recommendedAction}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+
+      <div className="mt-4 grid grid-cols-3 divide-x divide-border rounded-md bg-muted/40">
+        <div className="px-3 py-2">
           <div className={cn("text-lg font-semibold", metricTone(packet.sections.needsBrandon.length, "danger"))}>
             {packet.sections.needsBrandon.length}
           </div>
-          <div className="text-sm text-muted-foreground">Needs Brandon</div>
+          <div className="text-xs text-muted-foreground">Needs Brandon</div>
         </div>
-        <div className="rounded-xl border border-border bg-background px-4 py-3">
+        <div className="px-3 py-2">
           <div className={cn("text-lg font-semibold", metricTone(packet.sections.waitingOnOthers.length, "warning"))}>
             {packet.sections.waitingOnOthers.length}
           </div>
-          <div className="text-sm text-muted-foreground">Waiting on others</div>
+          <div className="text-xs text-muted-foreground">Waiting</div>
         </div>
-        <div className="rounded-xl border border-border bg-background px-4 py-3">
+        <div className="px-3 py-2">
           <div className={cn("text-lg font-semibold", metricTone(packet.sections.importantUpdates.length, "info"))}>
             {packet.sections.importantUpdates.length}
           </div>
-          <div className="text-sm text-muted-foreground">Critical updates</div>
+          <div className="text-xs text-muted-foreground">Updates</div>
         </div>
       </div>
 
-      <div className="mt-5 space-y-5">
+      <div className="mt-5 space-y-6">
         <Section title="Action items for him" items={packet.sections.needsBrandon} />
         <Section title="Things he is waiting on" items={packet.sections.waitingOnOthers} />
         <Section title="Critical business updates" items={packet.sections.importantUpdates} />

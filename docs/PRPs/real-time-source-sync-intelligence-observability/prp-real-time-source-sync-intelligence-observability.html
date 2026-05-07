@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Real-Time Source Sync And Intelligence Observability PRP</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f8fafc;
+      --fg: #111827;
+      --muted: #667085;
+      --line: #d0d5dd;
+      --panel: #ffffff;
+      --accent: #2563eb;
+      --code: #0f172a;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b1020;
+        --fg: #f8fafc;
+        --muted: #a5b4c8;
+        --line: #263248;
+        --panel: #111827;
+        --accent: #60a5fa;
+        --code: #e5e7eb;
+      }
+    }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--fg);
+      font: 15px/1.6 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    main {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 48px 24px 72px;
+    }
+    h1, h2, h3 {
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+    h1 {
+      font-size: 36px;
+      margin: 0 0 8px;
+    }
+    h2 {
+      font-size: 24px;
+      margin-top: 40px;
+      padding-top: 24px;
+      border-top: 1px solid var(--line);
+    }
+    h3 {
+      font-size: 18px;
+      margin-top: 28px;
+    }
+    .meta {
+      color: var(--muted);
+      margin-bottom: 28px;
+    }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px 20px;
+      margin: 20px 0;
+    }
+    code {
+      color: var(--code);
+      background: color-mix(in srgb, var(--line) 28%, transparent);
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-size: 0.92em;
+    }
+    pre {
+      overflow: auto;
+      background: #0f172a;
+      color: #e5e7eb;
+      padding: 16px;
+      border-radius: 8px;
+    }
+    pre code {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+    }
+    a {
+      color: var(--accent);
+    }
+    li {
+      margin: 5px 0;
+    }
+    .toc a {
+      display: block;
+      padding: 4px 0;
+      text-decoration: none;
+    }
+    @media print {
+      body { background: white; color: black; }
+      main { max-width: none; padding: 24px; }
+      .panel { border-color: #ccc; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Real-Time Source Sync And Intelligence Observability PRP</h1>
+    <p class="meta">Date: 2026-05-07 · Status: Implementation PRP · Confidence: 8.5/10</p>
+
+    <section class="panel toc">
+      <strong>Table of Contents</strong>
+      <a href="#goal">Goal</a>
+      <a href="#architecture">Recommended Architecture</a>
+      <a href="#outcomes">Required Outcome</a>
+      <a href="#repo">Current Repo Architecture</a>
+      <a href="#docs">External Documentation</a>
+      <a href="#schema">Database Schema</a>
+      <a href="#pitfalls">Known Pitfalls</a>
+      <a href="#tasks">Implementation Tasks</a>
+      <a href="#validation">Validation Gates</a>
+    </section>
+
+    <h2 id="goal">Goal</h2>
+    <p>Build a reliable, near-real-time ingestion and observability system for meeting transcripts, Outlook emails, email attachments, Teams messages, OneDrive/SharePoint documents, extracted tasks, vectorized chunks, source intelligence jobs, and project intelligence packets.</p>
+    <p>The intended product outcome is fresh AI Assistant project intelligence with clear sync, vectorization, compiler, task, packet, and error visibility.</p>
+
+    <h2 id="architecture">Recommended Architecture</h2>
+    <pre><code>Source change from Microsoft Graph / Fireflies
+  -> public webhook or bounded poll trigger
+  -> source event ledger / sync state update
+  -> backend queue job
+  -> source-specific delta fetch or transcript fetch
+  -> document_metadata / project_documents / attachment rows
+  -> parse / text extraction / project attribution
+  -> document_chunks + embedding status
+  -> task extraction + source_signal_candidates
+  -> insight_cards + packet_refresh_jobs
+  -> intelligence_packets
+  -> AI Assistant packet-first answers + exact source lookup
+  -> admin health dashboard + alerts</code></pre>
+    <p>Use webhooks and delta sync to wake the backend. Use cron for renewal and reconciliation. Do not run heavy sync or vector work inside Vercel request paths.</p>
+
+    <h2 id="outcomes">Required Outcome</h2>
+    <ul>
+      <li>One admin page shows last sync, last success, last error, backlog, vectorization, compiler, task extraction, and packet freshness.</li>
+      <li>Every source has durable state and alertable failures.</li>
+      <li>AI Assistant can explain stale or missing evidence by stage instead of silently returning thin answers.</li>
+    </ul>
+
+    <h2 id="repo">Current Repo Architecture</h2>
+    <ul>
+      <li>Graph sync: <code>backend/src/api/main.py</code> and <code>backend/src/services/integrations/microsoft_graph/sync.py</code>.</li>
+      <li>Fireflies: <code>backend/src/services/ingestion/fireflies_pipeline.py</code>.</li>
+      <li>Vectorization: <code>backend/src/services/integrations/microsoft_graph/embed.py</code> and pipeline embedder services.</li>
+      <li>Task extraction: <code>backend/src/services/task_extraction.py</code>.</li>
+      <li>Compiler: <code>backend/src/services/intelligence/compiler.py</code>.</li>
+      <li>Admin compiler UI: <code>frontend/src/components/ai-intelligence/intelligence-compiler-health-panel.tsx</code>.</li>
+      <li>Assistant: <code>frontend/src/app/api/ai-assistant/chat/route.ts</code> and <code>frontend/src/lib/ai/intelligence/packet-service.ts</code>.</li>
+    </ul>
+
+    <h2 id="docs">External Documentation</h2>
+    <ul>
+      <li><a href="https://learn.microsoft.com/en-us/graph/change-notifications-overview">Microsoft Graph change notifications</a></li>
+      <li><a href="https://learn.microsoft.com/en-us/graph/change-notifications-delivery-webhooks">Microsoft Graph webhook delivery</a></li>
+      <li><a href="https://learn.microsoft.com/en-us/graph/change-notifications-lifecycle-events">Microsoft Graph lifecycle notifications</a></li>
+      <li><a href="https://learn.microsoft.com/en-us/graph/throttling">Microsoft Graph throttling</a></li>
+      <li><a href="https://learn.microsoft.com/en-us/graph/api/message-delta?view=graph-rest-1.0">Outlook message delta</a></li>
+      <li><a href="https://learn.microsoft.com/en-us/graph/api/chatmessage-delta?view=graph-rest-1.0">Teams chatMessage delta</a></li>
+      <li><a href="https://learn.microsoft.com/en-us/graph/api/driveitem-delta?view=graph-rest-1.0">driveItem delta</a></li>
+      <li><a href="https://vercel.com/docs/cron-jobs/usage-and-pricing">Vercel Cron Jobs</a></li>
+      <li><a href="https://vercel.com/docs/functions/limitations">Vercel Function limits</a></li>
+    </ul>
+
+    <h2 id="schema">Database Schema</h2>
+    <p>Supabase types were regenerated with:</p>
+    <pre><code>npx supabase gen types typescript --project-id "lgveqfnpkxvzbnnwuled" --schema public &gt; frontend/src/types/database.types.ts</code></pre>
+    <p>Critical FK rules: <code>projects.id</code> is <code>number</code>/<code>integer</code>; <code>people.id</code> is UUID/string; <code>document_metadata.id</code> is UUID/string; <code>document_chunks.chunk_id</code> is the chunk identifier.</p>
+    <p>Primary existing tables: <code>graph_sync_state</code>, <code>document_metadata</code>, <code>document_chunks</code>, <code>fireflies_ingestion_jobs</code>, <code>source_intelligence_jobs</code>, <code>source_signal_candidates</code>, <code>packet_refresh_jobs</code>, <code>intelligence_packets</code>, <code>insight_cards</code>, <code>project_documents</code>, and <code>tasks</code>.</p>
+    <p>Recommended additive schema: <code>source_sync_runs</code>, <code>source_sync_health_snapshots</code>, and <code>graph_subscriptions</code>.</p>
+
+    <h2 id="pitfalls">Known Pitfalls</h2>
+    <ul>
+      <li>Never create UUID <code>project_id</code> columns.</li>
+      <li>Never add generic <code>[id]</code> app routes.</li>
+      <li>Never use Vercel cron as the worker for heavy processing.</li>
+      <li>Never claim verification without command output or browser artifacts.</li>
+      <li>Never hide configured provider/source failures behind fallback success.</li>
+    </ul>
+
+    <h2 id="tasks">Implementation Tasks</h2>
+    <ol>
+      <li>Capture baseline health and schema evidence.</li>
+      <li>Add read-only source health schema and backend aggregation.</li>
+      <li>Add admin source-sync control plane.</li>
+      <li>Decouple Graph source sync from embedding and compiler work.</li>
+      <li>Add Microsoft Graph webhook/subscription/delta lifecycle handling.</li>
+      <li>Add task extraction provenance and freshness.</li>
+      <li>Add assistant health-aware source and packet explanations.</li>
+      <li>Add alerts for stale sync, embedding backlog, compiler backlog, packet failures, and attribution backlog.</li>
+    </ol>
+
+    <h2 id="validation">Validation Gates</h2>
+    <pre><code>npm run db:types
+npm run check:routes
+cd frontend && npm run typecheck -- --pretty false
+node scripts/verify/verify_graph_embedding_contract.mjs
+node scripts/verify/verify_ai_intelligence_compiler_health.mjs
+npm run rag:verify:source-specific
+npm run rag:verify:assistant-routing
+npm run verify:browser</code></pre>
+
+    <p>Full source document: <code>prp-real-time-source-sync-intelligence-observability.md</code></p>
+  </main>
+</body>
+</html>

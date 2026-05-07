@@ -13,6 +13,18 @@ import {
 
 type AnyRow = Record<string, unknown>;
 
+type RetrievalWeightRow = {
+  id: string;
+  project_id: number | null;
+  tool_name: string;
+  source_document_id: string | null;
+  source_chunk_id: string | null;
+  query_signature: string;
+  action: "boost" | "downrank_review";
+  weight_multiplier: number;
+  confidence: number;
+};
+
 type CreateOperationalToolsOptions = {
   onTrace?: (trace: ToolTracePayload) => void;
   pinnedProjectId?: number;
@@ -48,6 +60,83 @@ function withTrace<TInput extends Record<string, unknown>, TResult>(
     execute,
     "This operational knowledge source failed during retrieval. Explain the gap plainly and use other available sources before asking for more detail.",
   );
+}
+
+function normalizeRetrievalWeightQuerySignature(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .split(" ")
+    .filter((word) => word.length > 2)
+    .slice(0, 10)
+    .join(" ");
+}
+
+async function loadActiveRetrievalWeights({
+  supabase,
+  toolName,
+  query,
+  projectId,
+}: {
+  supabase: ReturnType<typeof createServiceClient>;
+  toolName: string;
+  query: string;
+  projectId?: number;
+}): Promise<RetrievalWeightRow[]> {
+  const querySignature = normalizeRetrievalWeightQuerySignature(query);
+  if (!querySignature) return [];
+
+  const { data, error } = await supabase
+    .from("ai_retrieval_weights")
+    .select(
+      "id, project_id, tool_name, source_document_id, source_chunk_id, query_signature, action, weight_multiplier, confidence",
+    )
+    .eq("status", "active")
+    .eq("tool_name", toolName)
+    .eq("query_signature", querySignature)
+    .limit(50);
+
+  if (error) {
+    throw new Error(`Failed to load retrieval weights for ${toolName}: ${error.message}`);
+  }
+
+  return ((data ?? []) as RetrievalWeightRow[]).filter((weight) =>
+    weight.project_id === null || weight.project_id === (projectId ?? null),
+  );
+}
+
+function retrievalWeightMultiplierForItem(
+  item: {
+    sourceDocumentId: string | null;
+    sourceChunkId: string | null;
+  },
+  weights: RetrievalWeightRow[],
+): { multiplier: number; weightIds: string[] } {
+  const matching = weights.filter((weight) => {
+    if (weight.source_chunk_id && item.sourceChunkId) {
+      return weight.source_chunk_id === item.sourceChunkId;
+    }
+    if (weight.source_document_id && item.sourceDocumentId) {
+      return weight.source_document_id === item.sourceDocumentId;
+    }
+    return false;
+  });
+
+  if (matching.length === 0) {
+    return { multiplier: 1, weightIds: [] };
+  }
+
+  const multiplier = matching.reduce((current, weight) => {
+    const bounded = Math.min(1.5, Math.max(0.65, Number(weight.weight_multiplier) || 1));
+    return current * bounded;
+  }, 1);
+
+  return {
+    multiplier: Math.min(1.5, Math.max(0.65, multiplier)),
+    weightIds: matching.map((weight) => weight.id),
+  };
 }
 
 function normalizeEmail(value: string | null | undefined): string | null {
@@ -1268,6 +1357,8 @@ export function createOperationalTools(
               key: string;
               sourceTable: string;
               recordId: string;
+              sourceDocumentId: string | null;
+              sourceChunkId: string | null;
               content: string;
               similarity: number;
               projectIds: number[];
@@ -1283,6 +1374,8 @@ export function createOperationalTools(
                 key: `${sourceTable}:${recordId}`,
                 sourceTable,
                 recordId,
+                sourceDocumentId: null,
+                sourceChunkId: null,
                 content: String(row.content ?? row.description ?? ""),
                 similarity,
                 projectIds: Array.isArray(row.project_ids)
@@ -1316,6 +1409,8 @@ export function createOperationalTools(
                 key: `knowledge_base:${kbId}`,
                 sourceTable: "knowledge_base",
                 recordId: kbId,
+                sourceDocumentId: null,
+                sourceChunkId: null,
                 content: `[${String(row.category ?? "general")}] ${String(row.title ?? "")}: ${String(row.content ?? "")}`,
                 similarity,
                 projectIds: typeof row.project_id === "number" ? [row.project_id] : [],
@@ -1345,6 +1440,8 @@ export function createOperationalTools(
                 key: `doc_chunk:${String(row.chunk_id ?? row.document_id ?? "")}`,
                 sourceTable: srcType,
                 recordId: String(row.document_id ?? ""),
+                sourceDocumentId: typeof row.document_id === "string" ? row.document_id : null,
+                sourceChunkId: typeof row.chunk_id === "string" ? row.chunk_id : null,
                 content: String(row.chunk_text ?? ""),
                 similarity,
                 projectIds: typeof row.doc_project_id === "number" ? [row.doc_project_id] : [],
@@ -1457,15 +1554,41 @@ export function createOperationalTools(
               return 0;
             };
 
+            const activeRetrievalWeights = await loadActiveRetrievalWeights({
+              supabase,
+              toolName: "semanticSearch",
+              query,
+              projectId: resolvedProjectId,
+            });
+
             // Pre-sort by blended score, take top 20 candidates for reranking
             const candidates = (stitchedItems as (typeof merged)[number][])
-              .map((item) => ({
-                ...item,
-                finalScore:
+              .map((item) => {
+                const retrievalWeight = retrievalWeightMultiplierForItem(
+                  item,
+                  activeRetrievalWeights,
+                );
+                const baseScore =
                   item.similarity * similarityWeight +
                   recencyScore(item.createdAt) * recencyWeight +
-                  sourceBoost(item.sourceTable),
-              }))
+                  sourceBoost(item.sourceTable);
+                const metadata =
+                  retrievalWeight.weightIds.length > 0
+                    ? {
+                        ...(item.metadata ?? {}),
+                        retrievalWeight: {
+                          multiplier: retrievalWeight.multiplier,
+                          weightIds: retrievalWeight.weightIds,
+                        },
+                      }
+                    : item.metadata;
+
+                return {
+                  ...item,
+                  metadata,
+                  finalScore: baseScore * retrievalWeight.multiplier,
+                };
+              })
               .sort((a, b) => b.finalScore - a.finalScore)
               .slice(0, 20);
 
@@ -1533,6 +1656,8 @@ export function createOperationalTools(
                 content: r.content.substring(0, r.sourceTable === "meeting_transcript" ? 5000 : 2500),
                 sourceTable: r.sourceTable,
                 recordId: r.recordId,
+                sourceDocumentId: r.sourceDocumentId,
+                sourceChunkId: r.sourceChunkId,
                 similarity: r.similarity,
                 finalScore: Math.round(r.finalScore * 1000) / 1000,
                 projectIds: r.projectIds,
@@ -1542,6 +1667,7 @@ export function createOperationalTools(
               retrievalBreakdown: {
                 knowledgeMatches: knowledgeRows.length,
                 externalChunkMatches: chunkRows.length,
+                activeRetrievalWeights: activeRetrievalWeights.length,
                 usedProjectFilter: Boolean(resolvedProjectId),
                 filteredAdminOnlySources: allowAdminCommsSources
                   ? []
@@ -2975,6 +3101,8 @@ async function searchDocumentChunksByCategory({
         type: r.doc_type,
         projectId: r.doc_project_id,
         documentId: r.document_id,
+        sourceDocumentId: r.document_id,
+        sourceChunkId: r.chunk_id,
         chunkIndex: r.chunk_index,
         // Pre-formatted citation for the model to use directly
         citation: formatCitation(sourceLabel, r),
@@ -3108,6 +3236,8 @@ async function searchDocumentChunksByCategoryFallback({
       type: doc?.type ?? null,
       projectId: doc?.project_id ?? null,
       documentId: String(chunk.document_id ?? ""),
+      sourceDocumentId: String(chunk.document_id ?? ""),
+      sourceChunkId: String(chunk.chunk_id ?? ""),
       chunkIndex: typeof chunk.chunk_index === "number" ? chunk.chunk_index : null,
       citation: formatCitation(sourceLabel, {
         doc_title: typeof doc?.title === "string" ? doc.title : null,

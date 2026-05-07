@@ -19,7 +19,7 @@ export default function NotFound() {
           justify-content: center;
           position: relative;
           overflow: hidden;
-          background-color: hsl(240 6% 9%);
+          background-color: hsl(24 15% 7%);
           color: hsl(0 0% 98%);
         }
 
@@ -29,10 +29,10 @@ export default function NotFound() {
           position: absolute;
           inset: 0;
           background-image:
-            linear-gradient(hsl(260 37% 59% / 0.06) 1px, transparent 1px),
-            linear-gradient(90deg, hsl(260 37% 59% / 0.06) 1px, transparent 1px),
-            linear-gradient(hsl(260 37% 59% / 0.03) 1px, transparent 1px),
-            linear-gradient(90deg, hsl(260 37% 59% / 0.03) 1px, transparent 1px);
+            linear-gradient(hsl(29 71% 52% / 0.07) 1px, transparent 1px),
+            linear-gradient(90deg, hsl(29 71% 52% / 0.07) 1px, transparent 1px),
+            linear-gradient(hsl(29 71% 52% / 0.035) 1px, transparent 1px),
+            linear-gradient(90deg, hsl(29 71% 52% / 0.035) 1px, transparent 1px);
           background-size: 80px 80px, 80px 80px, 16px 16px, 16px 16px;
           pointer-events: none;
         }
@@ -42,7 +42,7 @@ export default function NotFound() {
           content: "";
           position: absolute;
           inset: 0;
-          background: radial-gradient(ellipse 80% 70% at 50% 50%, transparent 30%, hsl(240 6% 9% / 0.85) 100%);
+          background: radial-gradient(ellipse 80% 70% at 50% 50%, transparent 30%, hsl(24 15% 7% / 0.88) 100%);
           pointer-events: none;
         }
 
@@ -73,8 +73,8 @@ export default function NotFound() {
           width: 52px;
           height: 52px;
           border-radius: 14px;
-          background: hsl(260 37% 59% / 0.15);
-          border: 1px solid hsl(260 37% 59% / 0.25);
+          background: hsl(29 71% 52% / 0.15);
+          border: 1px solid hsl(29 71% 52% / 0.3);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -88,12 +88,11 @@ export default function NotFound() {
           line-height: 1;
           letter-spacing: -0.04em;
           margin-bottom: 1.5rem;
-          /* Outlined purple with a light fill */
           background: linear-gradient(
             160deg,
-            hsl(260 50% 78%) 0%,
-            hsl(260 37% 59%) 50%,
-            hsl(245 58% 52%) 100%
+            hsl(29 90% 72%) 0%,
+            hsl(29 71% 52%) 50%,
+            hsl(26 70% 36%) 100%
           );
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
@@ -137,7 +136,7 @@ export default function NotFound() {
           align-items: center;
           gap: 0.5rem;
           font-size: 0.75rem;
-          color: hsl(240 4% 30%);
+          color: hsl(29 20% 35%);
           letter-spacing: 0.08em;
           text-transform: uppercase;
           white-space: nowrap;
@@ -149,7 +148,7 @@ export default function NotFound() {
           content: "";
           width: 40px;
           height: 1px;
-          background: hsl(240 6% 20%);
+          background: hsl(29 20% 20%);
         }
 
         /* Corner registration marks — blueprint aesthetic */
@@ -157,13 +156,13 @@ export default function NotFound() {
           position: absolute;
           width: 20px;
           height: 20px;
-          opacity: 0.25;
+          opacity: 0.3;
         }
         .nf-mark::before,
         .nf-mark::after {
           content: "";
           position: absolute;
-          background: hsl(260 37% 59%);
+          background: hsl(29 71% 52%);
         }
         .nf-mark::before { width: 1px; height: 100%; left: 0; top: 0; }
         .nf-mark::after  { width: 100%; height: 1px; left: 0; top: 0; }
@@ -175,12 +174,12 @@ export default function NotFound() {
 
         /* Dark button override for this dark page */
         .nf-btn-secondary {
-          background: hsl(240 6% 15%) !important;
-          border-color: hsl(240 6% 22%) !important;
+          background: hsl(24 10% 13%) !important;
+          border-color: hsl(24 10% 20%) !important;
           color: hsl(0 0% 80%) !important;
         }
         .nf-btn-secondary:hover {
-          background: hsl(240 6% 18%) !important;
+          background: hsl(24 10% 17%) !important;
           color: hsl(0 0% 96%) !important;
         }
       `}</style>
@@ -194,7 +193,7 @@ export default function NotFound() {
 
         <div className="nf-container">
           <div className="nf-hat">
-            <HardHat size={24} color="hsl(260 50% 70%)" />
+            <HardHat size={24} color="hsl(29 71% 62%)" />
           </div>
 
           <div className="nf-code">404</div>

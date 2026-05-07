@@ -41,6 +41,10 @@ import {
   renderEmailRowActions,
 } from "@/features/emails/emails-table-config";
 import { EmailComposeDialog } from "@/features/emails/email-compose-dialog";
+import {
+  EmailDetailPanel,
+  projectEmailToDetailRecord,
+} from "@/features/emails/email-detail-sheet";
 import { ProjectEmailsWorkspace } from "@/features/emails/project-emails-workspace";
 import { EmailAttachmentsClient } from "../email-attachments/email-attachments-client";
 
@@ -154,6 +158,7 @@ export function EmailsClient({
   const [editingEmail, setEditingEmail] = React.useState<ProjectEmail | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [emailToDelete, setEmailToDelete] = React.useState<ProjectEmail | null>(null);
+  const [selectedEmail, setSelectedEmail] = React.useState<ProjectEmail | null>(null);
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = React.useState(false);
   const [isBulkDeleting, setIsBulkDeleting] = React.useState(false);
 
@@ -256,10 +261,8 @@ export function EmailsClient({
     tableState.setPage(1);
   };
 
-  const handleRowClick = (item: ProjectEmail) => {
-    if (noWriteActions) return;
-    setEditingEmail(item);
-    setComposeOpen(true);
+  const handleOpenEmail = (item: ProjectEmail) => {
+    setSelectedEmail(item);
   };
 
   const handleEdit = (item: ProjectEmail) => {
@@ -490,7 +493,8 @@ export function EmailsClient({
         table={{
           columns: tableColumns,
           getRowId: (item) => String(item.id),
-          onRowClick: noWriteActions ? undefined : handleRowClick,
+          activeRowId: selectedEmail ? String(selectedEmail.id) : null,
+          onRowClick: handleOpenEmail,
           rowActions: (item) =>
             noWriteActions
               ? null
@@ -516,8 +520,8 @@ export function EmailsClient({
           onSelectRow: handleSelectRow,
         }}
         views={{
-          card: (item) => renderEmailCard(item, handleRowClick),
-          list: (item) => renderEmailList(item, handleRowClick),
+          card: (item) => renderEmailCard(item, handleOpenEmail),
+          list: (item) => renderEmailList(item, handleOpenEmail),
         }}
         emptyState={{
           title: "No emails found",
@@ -557,6 +561,35 @@ export function EmailsClient({
             tableState.setPage(1);
           },
         }}
+        sidePanel={
+          selectedEmail
+            ? {
+                content: (
+                  <EmailDetailPanel
+                    email={projectEmailToDetailRecord(selectedEmail)}
+                    onClose={() => setSelectedEmail(null)}
+                    actions={
+                      !noWriteActions ? (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEdit(selectedEmail)}
+                        >
+                          Edit
+                        </Button>
+                      ) : null
+                    }
+                  />
+                ),
+                variant: "wide",
+                defaultWidth: 560,
+                minWidth: 440,
+                storageKey: isGlobal ? "global-email-detail" : "project-email-detail",
+                onClose: () => setSelectedEmail(null),
+              }
+            : undefined
+        }
       />
 
       {projectId ? (

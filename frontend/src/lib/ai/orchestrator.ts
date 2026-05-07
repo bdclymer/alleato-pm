@@ -33,6 +33,10 @@ import {
   type ActionToolsOptions,
 } from "@/lib/ai/tools/action-tools";
 import {
+  createFeatureRequestTools,
+  type FeatureRequestToolsOptions,
+} from "@/lib/ai/tools/feature-request-tools";
+import {
   createProgressReportTools,
   type ProgressReportToolsOptions,
 } from "@/lib/ai/tools/progress-report-tools";
@@ -60,6 +64,7 @@ import type {
 type StrategistToolOptions = CreateProjectToolsOptions &
   CreateWebSearchToolsOptions &
   ActionToolsOptions &
+  FeatureRequestToolsOptions &
   ProgressReportToolsOptions &
   CreateStructuredOutputToolsOptions;
 
@@ -730,6 +735,7 @@ export function createStrategistTools(
   // general questions without routing to a specialist
   const baseTools = createProjectTools(userId, options);
   const actionTools = createActionTools(userId, options);
+  const featureRequestTools = createFeatureRequestTools(userId, options);
   const progressReportTools = createProgressReportTools(userId, options);
   const workspaceTools = createWorkspaceTools(userId, { onTrace: options.onTrace });
   const webSearchTools = createWebSearchTools(options);
@@ -749,6 +755,7 @@ export function createStrategistTools(
     ...webSearchTools,
     ...structuredOutputTools,
     ...actionTools,
+    ...featureRequestTools,
     ...progressReportTools,
     ...workspaceTools,
     ...documentIntelligenceTools,

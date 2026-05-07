@@ -17,6 +17,9 @@ type SourceMeta = Pick<
   | "fireflies_link"
   | "meeting_link"
   | "project_id"
+  | "date"
+  | "captured_at"
+  | "created_at"
   | "content"
   | "raw_text"
   | "summary"
@@ -54,6 +57,7 @@ export interface TasksRow {
   file_name: string | null;
   source_title: string | null;
   source_type: string | null;
+  source_date: string | null;
   source_url: string | null;
   source_web_url: string | null;
   fireflies_link: string | null;
@@ -168,6 +172,10 @@ function buildTaskSourceContext(task: JoinedTaskRow): string | null {
   return excerptAroundNeedle(sourceText, [task.description, task.title]);
 }
 
+function sourceDateFromMetadata(metadata: SourceMeta | null | undefined): string | null {
+  return metadata?.date ?? metadata?.captured_at ?? metadata?.created_at ?? null;
+}
+
 export function mapTaskRow(task: JoinedTaskRow): TasksRow {
   return {
     id: task.id ?? null,
@@ -193,6 +201,7 @@ export function mapTaskRow(task: JoinedTaskRow): TasksRow {
     file_name: nullableText(task.file_name),
     source_title: task.document_metadata?.title ?? null,
     source_type: task.document_metadata?.type ?? null,
+    source_date: sourceDateFromMetadata(task.document_metadata),
     source_url: task.document_metadata?.url ?? task.document_metadata?.source ?? null,
     source_web_url: task.document_metadata?.source_web_url ?? null,
     fireflies_link: task.document_metadata?.fireflies_link ?? null,

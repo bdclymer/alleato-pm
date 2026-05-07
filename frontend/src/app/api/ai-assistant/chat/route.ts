@@ -45,6 +45,11 @@ import {
   type ResponseQuality,
 } from "@/lib/ai/score-response-quality";
 import {
+  recordRetrievalFeedbackBatch,
+  type AiRetrievalOutcome,
+  type RecordRetrievalFeedbackParams,
+} from "@/lib/ai/services/feedback-event-service";
+import {
   detectSourceSpecificRagRequest,
   detectSourceLookupRecentTeamsRequest,
   type SourceSpecificRagKind,
@@ -62,6 +67,7 @@ import {
 } from "@/lib/ai/intent-router";
 import {
   identityLooksLikeBrandon,
+  isDailyBriefCritiqueRequest,
   isPersonalDailyBriefRequest,
   type SignedInBriefIdentity,
 } from "@/lib/ai/personal-daily-brief";
@@ -76,7 +82,16 @@ import {
 import type { BrandonDailyUpdatePacket } from "@/lib/executive/brandon-daily-update";
 import { getExecutiveBriefingDashboard } from "@/lib/executive/executive-briefing-workflow";
 import { buildBrandonDailyUpdateWidget } from "@/lib/executive/brandon-daily-update-widget";
-import { buildAssistantWidgetsFromPrompt } from "@/lib/ai/assistant-widgets";
+import {
+  buildAssistantWidgetsFromPrompt,
+  type AssistantWidgetPayload,
+} from "@/lib/ai/assistant-widgets";
+import {
+  buildFeatureRequestPacketWidget,
+  captureFeatureRequestFromChat,
+  getFeatureRequestDetail,
+  shouldCaptureFeatureRequest,
+} from "@/lib/feature-requests/server";
 
 export const maxDuration = 120;
 
@@ -123,8 +138,13 @@ type SemanticSearchResult = {
   content?: unknown;
   sourceTable?: unknown;
   recordId?: unknown;
+  sourceDocumentId?: unknown;
+  sourceChunkId?: unknown;
+  documentId?: unknown;
+  chunkIndex?: unknown;
   similarity?: unknown;
   finalScore?: unknown;
+  projectIds?: unknown;
   metadata?: unknown;
   createdAt?: unknown;
 };
@@ -373,7 +393,7 @@ function writeStrategistStatus(
 
 function writeAssistantWidgetParts(
   writer: UIMessageStreamWriter<UIMessage>,
-  widgets: ReturnType<typeof buildAssistantWidgetsFromPrompt>,
+  widgets: AssistantWidgetPayload[],
 ): PersistedDataPart[] {
   const dataParts = widgets.map((widget): PersistedDataPart => ({
     type: "data-assistant-widget",
@@ -1663,6 +1683,7 @@ type SourceSpecificRagRow = {
   date: string | null;
   created_at: string | null;
   content: string | null;
+  project_id: number | null;
 };
 
 type SourceSpecificRagAnswer = {
@@ -1952,11 +1973,13 @@ async function buildSourceSpecificRagAnswer(params: {
         rowCount: rows.length,
         rows: rows.map((row) => ({
           id: row.id,
+          documentId: row.id,
           title: row.title,
           date: row.date,
           source: row.source,
           category: row.category,
           type: row.type,
+          projectId: row.project_id,
         })),
       },
       timestamp: new Date().toISOString(),
@@ -2451,6 +2474,7 @@ async function persistAssistantMessage(params: {
   projectBriefingSnapshot?: ProjectBriefingSnapshot | null;
   executiveBriefingRetrieval?: ExecutiveBriefingRetrievalPacket | null;
   providerDecision: AssistantToolCallingDecision;
+  selectedProjectId?: number;
   dataParts?: PersistedDataPart[];
 }) {
   const {
@@ -2469,8 +2493,17 @@ async function persistAssistantMessage(params: {
     projectBriefingSnapshot,
     executiveBriefingRetrieval,
     providerDecision,
+    selectedProjectId,
     dataParts,
   } = params;
+
+  await persistRetrievalFeedbackFromToolTrace({
+    userId,
+    sessionId,
+    selectedProjectId,
+    content,
+    toolTrace,
+  });
 
   await supabase.from("chat_history").insert({
     session_id: sessionId,
@@ -2527,6 +2560,249 @@ async function persistAssistantMessage(params: {
       }),
     ),
   });
+}
+
+const RETRIEVAL_TOOL_NAMES = new Set([
+  "semanticSearch",
+  "sourceSpecificRagRetrieval",
+  "searchMeetingsByTopic",
+  "searchEmails",
+  "searchTeamsMessages",
+  "searchExternalDocuments",
+]);
+
+const DOCUMENT_SOURCE_TABLES = new Set([
+  "document",
+  "email",
+  "meeting",
+  "meeting_summary",
+  "meeting_transcript",
+  "onedrive",
+  "teams_channel",
+  "teams_dm",
+  "teams_message",
+]);
+
+function asString(value: unknown): string | null {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function asFiniteNumber(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+function textIncludes(haystack: string, needle: string | null | undefined): boolean {
+  if (!needle?.trim()) return false;
+  return haystack.includes(needle.trim().toLowerCase());
+}
+
+function normalizeRetrievalQuery(trace: Record<string, unknown>): string | null {
+  const input = asRecord(trace.input);
+  return (
+    asString(input.query) ??
+    asString(input.topic) ??
+    asString(input.searchQuery) ??
+    asString(input.label) ??
+    asString(input.kind)
+  );
+}
+
+function normalizeRetrievalProjectId(
+  fallbackProjectId: number | undefined,
+  trace: Record<string, unknown>,
+  result?: Record<string, unknown>,
+): number | null {
+  const input = asRecord(trace.input);
+  const projectId =
+    asFiniteNumber(result?.projectId) ??
+    asFiniteNumber(result?.project_id) ??
+    asFiniteNumber(input.projectId) ??
+    fallbackProjectId ??
+    null;
+  return projectId;
+}
+
+function normalizeSourceDocumentId(result: Record<string, unknown>): string | null {
+  const explicit =
+    asString(result.sourceDocumentId) ??
+    asString(result.documentId) ??
+    asString(result.document_id);
+  if (explicit) return explicit;
+
+  const sourceTable = asString(result.sourceTable);
+  const recordId = asString(result.recordId) ?? asString(result.id);
+  if (sourceTable && DOCUMENT_SOURCE_TABLES.has(sourceTable) && recordId) {
+    return recordId;
+  }
+
+  return null;
+}
+
+function normalizeSourceChunkId(result: Record<string, unknown>, documentId: string | null): string | null {
+  const explicit =
+    asString(result.sourceChunkId) ??
+    asString(result.chunkId) ??
+    asString(result.chunk_id);
+  if (explicit) return explicit;
+
+  const chunkIndex = asFiniteNumber(result.chunkIndex) ?? asFiniteNumber(result.chunk_index);
+  return documentId && chunkIndex !== null ? `${documentId}:${chunkIndex}` : null;
+}
+
+function retrievalResultCitation(result: Record<string, unknown>): string | null {
+  const citation = asString(result.citation) ?? asString(result.sourceRef);
+  if (citation) return citation;
+
+  const sourceTable = asString(result.sourceTable);
+  const recordId = asString(result.recordId);
+  return sourceTable && recordId ? `[Source: ${sourceTable} ${recordId}]` : null;
+}
+
+function retrievalResultWasUsed(result: Record<string, unknown>, normalizedContent: string): {
+  cited: boolean;
+  usedInAnswer: boolean;
+} {
+  const citation = retrievalResultCitation(result);
+  const documentId = normalizeSourceDocumentId(result);
+  const title = asString(result.title) ?? asString(asRecord(result.metadata).title);
+  const id = asString(result.id) ?? asString(result.recordId);
+
+  const cited =
+    textIncludes(normalizedContent, citation) ||
+    textIncludes(normalizedContent, documentId) ||
+    textIncludes(normalizedContent, id);
+  const usedInAnswer = cited || textIncludes(normalizedContent, title);
+  return { cited, usedInAnswer };
+}
+
+function retrievalOutcomeForUsage(params: {
+  cited: boolean;
+  usedInAnswer: boolean;
+  hasError: boolean;
+  noResults: boolean;
+}): AiRetrievalOutcome {
+  if (params.hasError) return "unsupported";
+  if (params.noResults) return "unknown";
+  if (params.cited || params.usedInAnswer) return "helpful";
+  return "unknown";
+}
+
+function retrievalRowsFromTrace(params: {
+  trace: Record<string, unknown>;
+  userId: string;
+  sessionId: string;
+  selectedProjectId?: number;
+  normalizedContent: string;
+}): RecordRetrievalFeedbackParams[] {
+  const { trace, userId, sessionId, selectedProjectId, normalizedContent } = params;
+  const toolName = asString(trace.tool);
+  if (!toolName || !RETRIEVAL_TOOL_NAMES.has(toolName)) return [];
+
+  const queryText = normalizeRetrievalQuery(trace);
+  if (!queryText) return [];
+
+  const output = asRecord(trace.output);
+  const hasError =
+    Boolean(trace.error) ||
+    typeof output.error === "string" ||
+    output.blocked === true;
+  const rawResults = Array.isArray(output.results)
+    ? output.results.filter(
+        (result): result is Record<string, unknown> =>
+          Boolean(result) && typeof result === "object" && !Array.isArray(result),
+      )
+    : Array.isArray(output.rows)
+      ? output.rows.filter(
+          (result): result is Record<string, unknown> =>
+            Boolean(result) && typeof result === "object" && !Array.isArray(result),
+        )
+      : [];
+
+  if (rawResults.length === 0) {
+    return [{
+      userId,
+      sessionId,
+      projectId: normalizeRetrievalProjectId(selectedProjectId, trace),
+      toolName,
+      queryText,
+      outcome: retrievalOutcomeForUsage({
+        cited: false,
+        usedInAnswer: false,
+        hasError,
+        noResults: true,
+      }),
+      metadata: {
+        noResults: true,
+        error: asString(trace.error) ?? asString(output.error),
+        message: asString(output.message),
+        traceTimestamp: asString(trace.timestamp),
+      },
+    }];
+  }
+
+  return rawResults.slice(0, 12).map((result, index) => {
+    const documentId =
+      normalizeSourceDocumentId(result) ??
+      (toolName === "searchMeetingsByTopic" ? asString(result.id) : null);
+    const chunkId = normalizeSourceChunkId(result, documentId);
+    const usage = retrievalResultWasUsed(result, normalizedContent);
+    const sourceTable = asString(result.sourceTable) ?? asString(result.source) ?? asString(result.category);
+    const recordId = asString(result.recordId) ?? asString(result.id);
+    const score =
+      asFiniteNumber(result.finalScore) ??
+      asFiniteNumber(result.similarity) ??
+      asFiniteNumber(result.score);
+
+    return {
+      userId,
+      sessionId,
+      projectId: normalizeRetrievalProjectId(selectedProjectId, trace, result),
+      toolName,
+      queryText,
+      sourceDocumentId: documentId,
+      sourceChunkId: chunkId,
+      rank: index + 1,
+      score,
+      cited: usage.cited,
+      usedInAnswer: usage.usedInAnswer,
+      outcome: retrievalOutcomeForUsage({
+        cited: usage.cited,
+        usedInAnswer: usage.usedInAnswer,
+        hasError,
+        noResults: false,
+      }),
+      metadata: {
+        sourceTable,
+        recordId,
+        title: asString(result.title) ?? asString(asRecord(result.metadata).title),
+        date: asString(result.date) ?? asString(result.createdAt),
+        citation: retrievalResultCitation(result),
+        resultCount: asFiniteNumber(output.resultCount) ?? asFiniteNumber(output.totalResults),
+        traceTimestamp: asString(trace.timestamp),
+      },
+    };
+  });
+}
+
+async function persistRetrievalFeedbackFromToolTrace(params: {
+  userId: string;
+  sessionId: string;
+  selectedProjectId?: number;
+  content: string;
+  toolTrace: Array<Record<string, unknown>>;
+}) {
+  const normalizedContent = params.content.toLowerCase();
+  const rows = params.toolTrace.flatMap((trace) =>
+    retrievalRowsFromTrace({
+      trace,
+      userId: params.userId,
+      sessionId: params.sessionId,
+      selectedProjectId: params.selectedProjectId,
+      normalizedContent,
+    }),
+  );
+
+  await recordRetrievalFeedbackBatch(rows);
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -2713,6 +2989,19 @@ export const POST = withApiGuardrails(
       output: intentPlannerDecision,
       timestamp: new Date().toISOString(),
     });
+    const dailyBriefCritiqueRequest = isDailyBriefCritiqueRequest(lastUserContent);
+    if (dailyBriefCritiqueRequest) {
+      toolTrace.push({
+        tool: "dailyBriefCritiqueGuard",
+        input: {
+          message: lastUserContent.slice(0, 240),
+        },
+        output: {
+          suppressedBrandonDailyUpdateWidget: true,
+        },
+        timestamp: new Date().toISOString(),
+      });
+    }
     const personalDailyBriefRequest = isPersonalDailyBriefRequest(lastUserContent);
     const signedInBriefIdentity = personalDailyBriefRequest
       ? await loadSignedInBriefIdentity({
@@ -2722,8 +3011,9 @@ export const POST = withApiGuardrails(
         })
       : null;
     const brandonDailyUpdateWidgetRequest =
-      isBrandonDailyUpdateWidgetRequest(lastUserContent) ||
-      signedInBriefIdentity?.isBrandon === true;
+      !dailyBriefCritiqueRequest &&
+      (isBrandonDailyUpdateWidgetRequest(lastUserContent) ||
+        signedInBriefIdentity?.isBrandon === true);
     if (personalDailyBriefRequest) {
       toolTrace.push({
         tool: "personalDailyBriefRouter",
@@ -2780,12 +3070,67 @@ export const POST = withApiGuardrails(
           systemPrompt = `${formatExecutiveBriefPacketContext(executivePagePacket)}\n\n---\n\n${systemPrompt}`;
         }
 
-        const assistantWidgetDataParts = writeAssistantWidgetParts(
-          writer,
-          buildAssistantWidgetsFromPrompt({
+        const plannedWidgets: AssistantWidgetPayload[] = [
+          ...buildAssistantWidgetsFromPrompt({
             prompt: lastUserContent,
             selectedProjectId,
           }),
+        ];
+
+        if (shouldCaptureFeatureRequest(lastUserContent)) {
+          try {
+            const featureRequest = await captureFeatureRequestFromChat({
+              rawRequest: lastUserContent,
+              requesterName: (user.email ?? "").toLowerCase().includes("brandon")
+                ? "Brandon"
+                : user.email ?? "Stakeholder",
+              requesterUserId: user.id,
+              selectedProjectId: selectedProjectId ?? null,
+              sourceSessionId: sessionId,
+              sourceMessageId: lastUserMessage?.id ?? null,
+            });
+            const detail = await getFeatureRequestDetail(featureRequest.id);
+            plannedWidgets.push(
+              buildFeatureRequestPacketWidget({
+                request: featureRequest,
+                latestPlan: detail?.latestPlan ?? null,
+              }),
+            );
+            toolTrace.push({
+              tool: "featureRequestPacketRouter",
+              input: {
+                selectedProjectId: selectedProjectId ?? null,
+                message: lastUserContent.slice(0, 240),
+              },
+              output: {
+                requestId: featureRequest.id,
+                status: featureRequest.status,
+                readyForBuild: featureRequest.ready_for_build,
+                missingRequirements: featureRequest.readiness_missing_requirements,
+              },
+              timestamp: new Date().toISOString(),
+            });
+          } catch (featureRequestError) {
+            const errorMessage =
+              featureRequestError instanceof Error
+                ? featureRequestError.message
+                : String(featureRequestError);
+            toolTrace.push({
+              tool: "featureRequestPacketRouter",
+              input: {
+                selectedProjectId: selectedProjectId ?? null,
+                message: lastUserContent.slice(0, 240),
+              },
+              error: errorMessage,
+              timestamp: new Date().toISOString(),
+            });
+            throw new Error(`Feature request packet capture failed: ${errorMessage}`);
+          }
+        }
+
+        const assistantWidgetDataParts = writeAssistantWidgetParts(
+          writer,
+          plannedWidgets,
         );
         if (assistantWidgetDataParts.length > 0) {
           toolTrace.push({
@@ -2879,6 +3224,7 @@ export const POST = withApiGuardrails(
             projectBriefingSnapshot,
             executiveBriefingRetrieval,
             providerDecision,
+            selectedProjectId,
             dataParts: [...assistantWidgetDataParts, dataPart],
           });
 
@@ -2949,6 +3295,7 @@ export const POST = withApiGuardrails(
             projectBriefingSnapshot,
             executiveBriefingRetrieval,
             providerDecision,
+            selectedProjectId,
             dataParts: assistantWidgetDataParts,
           });
 
@@ -3221,6 +3568,7 @@ export const POST = withApiGuardrails(
             projectBriefingSnapshot,
             executiveBriefingRetrieval,
             providerDecision,
+            selectedProjectId,
             dataParts: assistantWidgetDataParts,
           });
 
@@ -3728,6 +4076,7 @@ export const POST = withApiGuardrails(
             projectBriefingSnapshot,
             executiveBriefingRetrieval,
             providerDecision,
+            selectedProjectId,
             dataParts: assistantWidgetDataParts,
           });
 
@@ -4051,6 +4400,7 @@ export const POST = withApiGuardrails(
           }),
           projectBriefingSnapshot,
           executiveBriefingRetrieval,
+          selectedProjectId,
           dataParts: assistantWidgetDataParts,
         });
 

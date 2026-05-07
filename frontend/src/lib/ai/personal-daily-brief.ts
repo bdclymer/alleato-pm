@@ -6,7 +6,38 @@ export type SignedInBriefIdentity = {
   personEmail: string | null;
 };
 
+export function isDailyBriefCritiqueRequest(message: string): boolean {
+  const normalized = message.toLowerCase();
+  const mentionsBrief = [
+    "daily brief",
+    "daily briefing",
+    "daily update",
+    "executive brief",
+    "executive briefing",
+    "brandon daily update",
+  ].some((phrase) => normalized.includes(phrase));
+
+  if (!mentionsBrief) return false;
+
+  return [
+    "format",
+    "structured",
+    "structure",
+    "confusing",
+    "not clear",
+    "unclear",
+    "hard to read",
+    "what do you think",
+    "what needs to change",
+    "how should this change",
+    "improve",
+    "redesign",
+  ].some((phrase) => normalized.includes(phrase));
+}
+
 export function isPersonalDailyBriefRequest(message: string): boolean {
+  if (isDailyBriefCritiqueRequest(message)) return false;
+
   const normalized = message.toLowerCase();
   const asksForBrief = [
     "daily brief",
