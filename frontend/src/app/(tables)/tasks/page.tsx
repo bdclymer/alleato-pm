@@ -558,7 +558,7 @@ function TaskListItem({
   const assignedTo = item.assignee_name ?? item.assignee_email ?? "Unassigned";
   const pinnedCellClassName = isSelected
     ? "bg-accent"
-    : "bg-background group-hover:bg-accent";
+    : "bg-background group-hover:bg-neutral-100";
 
   return (
     <div
@@ -576,7 +576,7 @@ function TaskListItem({
         "group grid cursor-pointer items-center border-b border-border/30 text-sm transition-colors",
         isSelected
           ? "bg-accent"
-          : "hover:bg-accent",
+          : "hover:bg-neutral-100",
       )}
       style={{
         gridTemplateColumns: TASK_LIST_GRID_TEMPLATE,
