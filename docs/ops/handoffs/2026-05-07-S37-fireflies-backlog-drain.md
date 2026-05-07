@@ -6,7 +6,7 @@
 2) Task ID: AAI-339
 3) Linear issue: AAI-339
 4) Linear URL: https://linear.app/megankharrison/issue/AAI-339/execute-real-time-source-sync-and-intelligence-observability-prp
-5) Current status: Pending Review
+5) Current status: Deployed to main
 6) Files changed (absolute paths):
    - `/Users/meganharrison/.codex/worktrees/source-sync-remediation-clean/backend/src/services/scheduler.py`
    - `/Users/meganharrison/.codex/worktrees/source-sync-remediation-clean/backend/tests/test_scheduler_graph_jobs.py`
@@ -18,29 +18,36 @@
    - Live read-only count before bounded drain: `done|8572`, `embedded|14`, `error|3985`, `raw_ingested|24341` after one proof run.
    - `PYTHONPATH=backend python - <<'PY' ... _run_fireflies_pipeline_backlog(limit=1, stale_minutes=120)` — pass; matched 1, processed 1, failed 0, moved metadata `8614cd93-dd4f-53b0-8b02-87fb9b61274c` from `raw_ingested` through pipeline status `done`.
    - `npm run rag:verify:meetings` — expected fail after proof run; raw backlog now 24341, done count 8572, recent summary embedding coverage still 14/84.
+   - Direct push to `main` — pass; `54ed2a3e1` added scheduled backlog drain, `43d41c619` fixed failure-only warning logging.
+   - Render deploy `dep-d7uid67avr4c73cn9c80` — pass; live on commit `43d41c619cf6559b312dd29c6c3af68b1390bcac`, finished `2026-05-07T23:58:19.175495Z`.
+   - `curl -fsS https://alleato-backend-3mmq.onrender.com/health` — pass; healthy at `2026-05-07T23:58:30Z`, AI Gateway/OpenAI/Supabase configured.
+   - Production scheduler first interval — pass with surfaced failures; Fireflies backlog matched 10, processed 8, failed 2; Graph embedding succeeded; intelligence compiler claimed 2 and succeeded 2.
 8) Evidence artifacts (screenshot/video/report/log paths):
    - Live drain output in this session: `{'status': 'ok', 'limit': 1, 'stale_minutes': 120, 'matched': 1, 'processed': 1, 'failed': 0, 'results': [{'fireflies_id': '8614cd93-dd4f-53b0-8b02-87fb9b61274c', 'metadata_id': '8614cd93-dd4f-53b0-8b02-87fb9b61274c', 'status': 'processed', 'pipeline_status': 'done', 'previous_stage': 'raw_ingested'}]}`
    - Meeting verifier output in this session: 1575 total meetings, 1422 embedded summaries, 84 recent meetings, 14 recent embedded summaries, 25298/25298 embedded chunks, 24341 raw_ingested jobs, 3985 error jobs.
+   - Production ledger row: `fireflies/vectorization/failed`, `items_seen=10`, `items_synced=8`, `items_failed=2`, `created_at=2026-05-07 23:55:00+00`.
+   - Production ledger row: `microsoft_graph/vectorization/succeeded`, `items_seen=0`, `items_synced=0`, `items_failed=0`, `created_at=2026-05-07 23:53:41+00`.
+   - Production ledger row: `intelligence_compiler/intelligence_compile/succeeded`, `items_seen=2`, `items_synced=2`, `items_failed=0`, `created_at=2026-05-07 23:48:49+00`.
 9) Top 3 findings (frontend-visible issues first):
    - The source-sync page is accurately surfacing a real backlog, but the prior implementation had no automatic scheduled drain for stale Fireflies pipeline rows.
    - A bounded live drain proves the normal full pipeline can advance at least one stale row from `raw_ingested` to `done`.
    - Meeting health still fails because the backlog is large; deploy cadence and batch sizing are now the next operational levers.
-10) Recommended next action (one line): Deploy the Fireflies backlog scheduler, tune `FIREFLIES_PIPELINE_BACKLOG_LIMIT`, and monitor `npm run rag:verify:meetings` until recent summary embedding coverage reaches the threshold.
+10) Recommended next action (one line): Build the user-facing stuck-items/last-sync view on top of `source_sync_runs` and add file-type-aware handling for image-only Fireflies backlog rows.
 11) Handoff file path: docs/ops/handoffs/2026-05-07-S37-fireflies-backlog-drain.md
 12) Migration ledger evidence: No new migration in this slice.
 
 ## Linear Updates
 
 - Kickoff/milestone comment: Posted comment `2e5574e7-0623-4233-a50a-56a0758666e7`.
-- Completion/blocker comment: TBD
+- Completion/blocker comment: Posted direct-main deployment updates before this final handoff refresh.
 
 ## Current Status
 
-Implemented a scheduled Fireflies pipeline backlog drain in `backend/src/services/scheduler.py`. The scheduler now registers `fireflies_pipeline_backlog` by default, every 10 minutes, capped by `FIREFLIES_PIPELINE_BACKLOG_LIMIT` and `FIREFLIES_PIPELINE_BACKLOG_STALE_MINUTES`. It processes stale `raw_ingested` rows and retryable provider/quota failures through the normal `run_full_pipeline` path, records a `source_sync_runs` row using stage `vectorization`, and logs failures loudly.
+Implemented and deployed a scheduled Fireflies pipeline backlog drain in `backend/src/services/scheduler.py`. The scheduler now registers `fireflies_pipeline_backlog` by default, every 10 minutes, capped by `FIREFLIES_PIPELINE_BACKLOG_LIMIT` and `FIREFLIES_PIPELINE_BACKLOG_STALE_MINUTES`. It processes stale `raw_ingested` rows and retryable provider/quota failures through the normal `run_full_pipeline` path, records a `source_sync_runs` row using stage `vectorization`, and logs failures loudly. Production also required setting `FIREFLIES_API_KEY` and `ACUMATICA_FINANCIAL_SYNC_ENABLED=false` on Render so unrelated scheduler validation stopped blocking Microsoft/Fireflies/intelligence jobs.
 
 ## Exact Next Step
 
-Push this remediation branch, deploy it to Render, then start with a conservative `FIREFLIES_PIPELINE_BACKLOG_LIMIT=10` and increase only after provider and DB latency are stable.
+Continue monitoring `source_sync_runs` and scheduler logs. The first production interval proved the drain works and exposed two image-only failures: `standard-beach-court-dimensions.jpg` and `Mech Screening Picture.png`.
 
 ## Known Pitfalls
 
@@ -48,6 +55,7 @@ Push this remediation branch, deploy it to Render, then start with a conservativ
 - Many old `raw_ingested` rows may represent generic documents, not only meetings; they still use the same `fireflies_ingestion_jobs` queue.
 - One local live run needed the main repo `.env` because the clean worktree does not have an `.env` file.
 - The meeting verifier still fails until enough recent rows receive `summary_embedding`; one processed row is proof of mechanism, not completion of backlog.
+- The first production backlog run found image-only files that cannot be processed by the current text extractor; those should become explicit stuck-file UI rows rather than invisible pipeline failures.
 
 ## Resume Commands
 
