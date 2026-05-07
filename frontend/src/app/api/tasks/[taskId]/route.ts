@@ -18,6 +18,7 @@ const PatchBodySchema = z.object({
     .optional(),
   project_id: z.union([z.coerce.number().int().positive(), z.null()]).optional(),
   category: z.union([z.string().trim().min(1), z.null()]).optional(),
+  priority: z.union([z.string().trim().min(1), z.null()]).optional(),
   assignee_user_id: z.union([z.string().uuid(), z.null()]).optional(),
 }).refine(
   (body) =>
@@ -26,6 +27,7 @@ const PatchBodySchema = z.object({
     body.due_date !== undefined ||
     body.project_id !== undefined ||
     body.category !== undefined ||
+    body.priority !== undefined ||
     body.assignee_user_id !== undefined,
   { message: "At least one task field is required." },
 );
@@ -130,6 +132,7 @@ export const PATCH = withApiGuardrails(
       due_date?: string | null;
       project_id?: number | null;
       project_ids?: number[];
+      priority?: string | null;
       assignee_person_id?: string | null;
       assignee_email?: string | null;
       assignee_name?: string | null;
@@ -154,6 +157,10 @@ export const PATCH = withApiGuardrails(
     if (parsed.data.project_id !== undefined) {
       updates.project_id = parsed.data.project_id;
       updates.project_ids = parsed.data.project_id === null ? [] : [parsed.data.project_id];
+    }
+
+    if (parsed.data.priority !== undefined) {
+      updates.priority = parsed.data.priority;
     }
 
     if (parsed.data.assignee_user_id !== undefined) {

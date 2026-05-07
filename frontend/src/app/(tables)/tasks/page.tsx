@@ -27,12 +27,6 @@ import { format } from "date-fns";
 import { PageShell, PageTabs } from "@/components/layout";
 import { TaskFeedbackButtons } from "@/components/ai/TaskFeedbackButtons";
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -51,6 +45,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
@@ -84,6 +79,7 @@ type TaskPatch = {
   due_date?: string | null;
   project_id?: number | null;
   category?: string | null;
+  priority?: string | null;
   assignee_user_id?: string | null;
 };
 
@@ -108,6 +104,13 @@ const DEFAULT_TASK_CATEGORIES = [
   "Estimating",
   "General",
   "Operations",
+];
+
+const TASK_PRIORITY_OPTIONS = [
+  { value: "__none__", label: "Not set" },
+  { value: "low", label: "Low" },
+  { value: "medium", label: "Medium" },
+  { value: "high", label: "High" },
 ];
 
 const STATUS_FILTERS: { value: StatusFilter; label: string }[] = [
@@ -159,6 +162,7 @@ function isOverdue(dueDateStr: string | null): boolean {
 const TASK_LIST_MIN_WIDTH = "68rem";
 const TASK_LIST_GRID_TEMPLATE =
   "44px minmax(18rem, 1.7fr) minmax(9rem, 0.8fr) minmax(7rem, 0.6fr) minmax(7rem, 0.6fr) minmax(8rem, 0.7fr) minmax(7rem, 0.55fr)";
+const TASK_LIST_PINNED_TASK_LEFT = "44px";
 
 function TaskListHeader({
   allVisibleSelected,
@@ -175,13 +179,13 @@ function TaskListHeader({
 }) {
   return (
     <div
-      className="sticky top-0 z-10 grid items-center border-b border-border/40 bg-background text-[11px] font-medium uppercase tracking-wide text-muted-foreground"
+      className="sticky top-0 z-40 grid items-center border-b border-border/40 bg-background text-[11px] font-medium uppercase tracking-wide text-muted-foreground"
       style={{
         gridTemplateColumns: TASK_LIST_GRID_TEMPLATE,
         minWidth: TASK_LIST_MIN_WIDTH,
       }}
     >
-      <div className="sticky left-0 z-20 flex h-9 items-center justify-center bg-background">
+      <div className="sticky left-0 z-50 flex h-9 items-center justify-center bg-background">
         <Checkbox
           checked={allVisibleSelected ? true : someVisibleSelected ? "indeterminate" : false}
           onCheckedChange={(value) => onToggleVisibleSelection(value === true)}
@@ -189,7 +193,12 @@ function TaskListHeader({
           aria-label="Select visible tasks"
         />
       </div>
-      <div className="px-2">Task</div>
+      <div
+        className="sticky z-40 h-9 border-r border-border/40 bg-background px-2 leading-9"
+        style={{ left: TASK_LIST_PINNED_TASK_LEFT }}
+      >
+        Task
+      </div>
       <div className="px-2">Assigned</div>
       <div className="px-2">Source</div>
       <div className="px-2">Date assigned</div>
@@ -232,6 +241,54 @@ function userOptionLabel(user: UserOption): string {
 
 const COLLAPSED_CONTEXT_CHARS = 1800;
 
+function formatContextDate(value: string | null): string | null {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+function splitContextParagraphs(value: string): string[] {
+  const normalized = value
+    .replace(/\s+/g, " ")
+    .replace(/\s([,.;:!?])/g, "$1")
+    .trim();
+
+  if (!normalized) return [];
+
+  const sentences = normalized
+    .split(/(?<=[.!?])\s+(?=(?:[A-Z@]|\d|Thanks|Thank you|Please|Who|See|Let|Can|I|We)\b)/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  const paragraphs: string[] = [];
+  let current = "";
+
+  sentences.forEach((sentence) => {
+    if (!current) {
+      current = sentence;
+      return;
+    }
+
+    if ((current.length + sentence.length) > 360) {
+      paragraphs.push(current);
+      current = sentence;
+      return;
+    }
+
+    current = `${current} ${sentence}`;
+  });
+
+  if (current) paragraphs.push(current);
+  return paragraphs.length > 0 ? paragraphs : [normalized];
+}
+
 function ContextBody({ value, collapsedChars = COLLAPSED_CONTEXT_CHARS }: { value: string; collapsedChars?: number }) {
   const [expanded, setExpanded] = useState(false);
   const isLong = value.length > collapsedChars;
@@ -242,8 +299,12 @@ function ContextBody({ value, collapsedChars = COLLAPSED_CONTEXT_CHARS }: { valu
 
   return (
     <div className="space-y-2">
-      <div className="max-w-none whitespace-pre-wrap break-words text-sm leading-7 text-foreground">
-        {visibleBody}
+      <div className="space-y-2.5 text-xs leading-5 text-foreground">
+        {splitContextParagraphs(visibleBody).map((paragraph, index) => (
+          <p key={`${paragraph.slice(0, 24)}-${index}`} className="break-words">
+            {paragraph}
+          </p>
+        ))}
       </div>
       {isLong && (
         <Button
@@ -260,21 +321,37 @@ function ContextBody({ value, collapsedChars = COLLAPSED_CONTEXT_CHARS }: { valu
   );
 }
 
-function MessageSummary({ message, index }: { message: EmailThreadMessage; index: number }) {
+function MessageCard({ message }: { message: EmailThreadMessage }) {
+  const sentLabel = formatContextDate(message.date);
+
   return (
-    <div className="min-w-0 space-y-1">
-      <div className="flex min-w-0 items-center gap-2">
-        <span className="shrink-0 text-xs font-medium text-muted-foreground">
-          {index === 0 ? "Latest" : `Earlier ${index}`}
-        </span>
-        <span className="min-w-0 truncate text-sm font-medium text-foreground">
+    <article className="space-y-3 border-b border-border/35 py-4 last:border-b-0 last:pb-0 first:pt-0">
+      <div className="flex min-w-0 flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+        <div className="min-w-0 truncate text-xs font-semibold text-foreground">
           {message.subject ?? message.from ?? "Email message"}
-        </span>
+        </div>
+        {sentLabel && (
+          <time className="shrink-0 text-[11px] font-medium text-muted-foreground">
+            {sentLabel}
+          </time>
+        )}
       </div>
-      <div className="min-w-0 truncate text-xs text-muted-foreground">
-        {[message.from, message.date].filter(Boolean).join(" · ")}
+      <div className="grid gap-1 text-[11px] leading-4 text-muted-foreground sm:grid-cols-[56px_minmax(0,1fr)]">
+        {message.from && (
+          <>
+            <span className="font-medium uppercase tracking-wide">From</span>
+            <span className="min-w-0 truncate">{message.from}</span>
+          </>
+        )}
+        {message.to && (
+          <>
+            <span className="font-medium uppercase tracking-wide">To</span>
+            <span className="min-w-0 truncate">{message.to}</span>
+          </>
+        )}
       </div>
-    </div>
+      <ContextBody value={message.body} collapsedChars={900} />
+    </article>
   );
 }
 
@@ -283,25 +360,12 @@ function SourceContextBlock({ value }: { value: string }) {
   const messages = parseEmailThread(text);
 
   if (messages.length > 1) {
-    const defaultValue = messages[0]?.id;
-
     return (
-      <Accordion type="single" collapsible defaultValue={defaultValue} className="space-y-2">
+      <div className="w-full rounded-md bg-muted/20 px-4 py-4">
         {messages.map((message, index) => (
-          <AccordionItem
-            key={message.id}
-            value={message.id}
-            className="rounded-md border border-border/60 bg-background px-3"
-          >
-            <AccordionTrigger className="py-3 hover:no-underline">
-              <MessageSummary message={message} index={index} />
-            </AccordionTrigger>
-            <AccordionContent className="pb-3">
-              <ContextBody value={message.body} collapsedChars={index === 0 ? 1600 : 900} />
-            </AccordionContent>
-          </AccordionItem>
+          <MessageCard key={`${message.subject ?? "message"}-${message.date ?? index}`} message={message} />
         ))}
-      </Accordion>
+      </div>
     );
   }
 
@@ -309,7 +373,7 @@ function SourceContextBlock({ value }: { value: string }) {
   const body = (message?.body ?? extractContextBody(text)) || text;
 
   return (
-    <div className="space-y-2">
+    <div className="w-full rounded-md bg-muted/20 px-4 py-4">
       <ContextBody value={body} />
     </div>
   );
@@ -418,6 +482,9 @@ function TaskListItem({
   const assignedBy = item.assigned_by ?? "—";
   const assignedDate = item.created_at ? format(new Date(item.created_at), "MMM d, yyyy") : "—";
   const assignedTo = item.assignee_name ?? item.assignee_email ?? "Unassigned";
+  const pinnedCellClassName = isSelected
+    ? "bg-accent"
+    : "bg-background group-hover:bg-accent";
 
   return (
     <div
@@ -434,8 +501,8 @@ function TaskListItem({
       className={cn(
         "group grid cursor-pointer items-center border-b border-border/30 text-sm transition-colors",
         isSelected
-          ? "bg-primary/[0.04]"
-          : "hover:bg-muted/40",
+          ? "bg-accent"
+          : "hover:bg-accent",
       )}
       style={{
         gridTemplateColumns: TASK_LIST_GRID_TEMPLATE,
@@ -444,8 +511,8 @@ function TaskListItem({
     >
       <div
         className={cn(
-          "sticky left-0 z-10 flex min-h-12 items-center justify-center",
-          isSelected ? "bg-primary/[0.04]" : "bg-background group-hover:bg-muted/40",
+          "sticky left-0 z-20 flex min-h-12 self-stretch items-center justify-center",
+          pinnedCellClassName,
         )}
       >
         <Checkbox
@@ -455,7 +522,13 @@ function TaskListItem({
           aria-label={`Select ${item.description || item.title || "task"}`}
         />
       </div>
-      <div className="flex min-w-0 items-start gap-2 px-2 py-2.5">
+      <div
+        className={cn(
+          "sticky z-10 flex min-h-12 min-w-0 self-stretch items-start gap-2 overflow-hidden border-r border-border/30 px-2 py-2.5",
+          pinnedCellClassName,
+        )}
+        style={{ left: TASK_LIST_PINNED_TASK_LEFT }}
+      >
         <div className="min-w-0 flex-1 overflow-hidden">
           <p
             className={cn(
@@ -494,21 +567,51 @@ function TaskDetailRow({
   label,
   children,
   valueClassName,
+  align = "center",
 }: {
   label: string;
   children: ReactNode;
   valueClassName?: string;
+  align?: "center" | "start";
 }) {
   return (
     <div className="grid grid-cols-[128px_minmax(0,1fr)] border-b border-border/35 last:border-b-0">
-      <div className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+      <div
+        className={cn(
+          "flex min-h-12 pr-4 text-xs font-medium uppercase tracking-wide text-muted-foreground",
+          align === "center" ? "items-center py-2" : "items-start py-3",
+        )}
+      >
         {label}
       </div>
-      <div className={cn("min-w-0 px-4 py-3 text-sm text-foreground", valueClassName)}>
+      <div
+        className={cn(
+          "flex min-h-12 min-w-0 text-sm text-foreground",
+          align === "center" ? "items-center py-2" : "items-start py-3",
+          valueClassName,
+        )}
+      >
         {children}
       </div>
     </div>
   );
+}
+
+function updateTaskCategoryLocally(task: TasksRow, category: string | null): TasksRow {
+  const metadata =
+    typeof task.extraction_metadata === "object" &&
+    task.extraction_metadata !== null &&
+    !Array.isArray(task.extraction_metadata)
+      ? { ...(task.extraction_metadata as Record<string, unknown>) }
+      : {};
+
+  if (category) {
+    metadata.task_category = category;
+  } else {
+    delete metadata.task_category;
+  }
+
+  return { ...task, extraction_metadata: metadata };
 }
 
 // ---------------------------------------------------------------------------
@@ -543,8 +646,6 @@ function TaskDetail({
   const sourceTitle = getTaskSourceTitle(task);
   const sourceTarget = getTaskSourceTarget(task);
   const category = getTaskCategory(task);
-  const priority = (task.priority ?? "").toLowerCase();
-  const priorityMeta = PRIORITY_META[priority];
   const overdue = isOverdue(task.due_date);
   const { confirm: confirmDelete, ConfirmDialog } = useConfirm();
   const sourceLinkLabel = sourceTitle || sourceTarget?.href || sourceLabel;
@@ -553,6 +654,8 @@ function TaskDetail({
   const extractionPromptLabel = task.extraction_prompt_version ?? "Untracked";
   const taskProjectId = task.project_id ?? task.project_ids?.[0] ?? null;
   const selectedProjectValue = taskProjectId ? String(taskProjectId) : "__none__";
+  const selectedCategoryValue = category || "__none__";
+  const selectedPriorityValue = task.priority?.trim().toLowerCase() || "__none__";
   const taskFeedbackSnapshot = {
     name: task.description || task.title || "Untitled task",
     assignee: task.assignee_name || task.assignee_email,
@@ -717,16 +820,11 @@ function TaskDetail({
         <div className="overflow-hidden border-y border-border/40">
           <div>
             <TaskDetailRow label="Assigned">
-              {(task.assignee_name || task.assignee_email) ? (
+              {task.assignee_name ? (
                 <div className="flex min-w-0 items-baseline gap-2">
                   <span className="truncate text-sm text-foreground">
-                    {task.assignee_name ?? task.assignee_email}
+                    {task.assignee_name}
                   </span>
-                  {task.assignee_name && task.assignee_email && (
-                    <span className="min-w-0 truncate text-sm text-muted-foreground">
-                      {task.assignee_email}
-                    </span>
-                  )}
                 </div>
               ) : (
                 <span className="text-muted-foreground">Unassigned</span>
@@ -811,18 +909,71 @@ function TaskDetail({
               </div>
             </TaskDetailRow>
 
-            <TaskDetailRow label="Category">{category}</TaskDetailRow>
-
-            <TaskDetailRow label="Priority">
-              <span className="inline-flex items-center gap-2 text-foreground">
-                {priorityMeta && (
-                  <span className={cn("h-1.5 w-1.5 rounded-full", priorityMeta.dot)} />
-                )}
-                {formatPriorityLabel(task.priority)}
-              </span>
+            <TaskDetailRow label="Category">
+              <Select
+                value={selectedCategoryValue}
+                onValueChange={(value) => {
+                  if (!task.id) return;
+                  const nextCategory = value === "__none__" ? null : value;
+                  onUpdateTask(
+                    task.id,
+                    { category: nextCategory },
+                    updateTaskCategoryLocally(task, nextCategory),
+                  );
+                }}
+                disabled={updatingId === task.id}
+              >
+                <SelectTrigger className="h-8 w-full max-w-56 justify-between border-border/60 bg-background px-3 text-sm shadow-none">
+                  {updatingId === task.id ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <SelectValue />
+                  )}
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">Not set</SelectItem>
+                  {DEFAULT_TASK_CATEGORIES.map((option) => (
+                    <SelectItem key={option} value={option}>
+                      {option}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </TaskDetailRow>
 
-            <TaskDetailRow label="Status" valueClassName="py-2">
+            <TaskDetailRow label="Priority">
+              <Select
+                value={selectedPriorityValue}
+                onValueChange={(value) => {
+                  if (!task.id) return;
+                  const nextPriority = value === "__none__" ? null : value;
+                  onUpdateTask(task.id, { priority: nextPriority }, { priority: nextPriority });
+                }}
+                disabled={updatingId === task.id}
+              >
+                <SelectTrigger className="h-8 w-full max-w-56 justify-between border-border/60 bg-background px-3 text-sm shadow-none">
+                  {updatingId === task.id ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <SelectValue />
+                  )}
+                </SelectTrigger>
+                <SelectContent>
+                  {TASK_PRIORITY_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      <span className="inline-flex items-center gap-2">
+                        {option.value !== "__none__" && PRIORITY_META[option.value] && (
+                          <span className={cn("h-1.5 w-1.5 rounded-full", PRIORITY_META[option.value].dot)} />
+                        )}
+                        {option.label}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </TaskDetailRow>
+
+            <TaskDetailRow label="Status">
               <Select
                 value={task.status ?? "open"}
                 onValueChange={(value) => task.id && onUpdateStatus(task.id, value)}
@@ -830,7 +981,7 @@ function TaskDetail({
               >
                 <SelectTrigger
                   className={cn(
-                    "h-8 w-full max-w-48 justify-between border-0 bg-transparent px-0 text-sm font-medium shadow-none hover:bg-transparent focus:ring-0 focus:ring-offset-0",
+                    "h-8 w-full max-w-56 justify-between border-border/60 bg-background px-3 text-sm shadow-none",
                     STATUS_SELECT_CLASSES[ds],
                   )}
                 >
@@ -880,7 +1031,7 @@ function TaskDetail({
               </div>
             </TaskDetailRow>
 
-            <TaskDetailRow label="Context">
+            <TaskDetailRow label="Context" align="start" valueClassName="w-full">
               {task.source_context ? (
                 <SourceContextBlock value={task.source_context} />
               ) : (
@@ -891,9 +1042,9 @@ function TaskDetail({
             </TaskDetailRow>
 
             <TaskDetailRow label="Generated">
-              <div className="flex min-w-0 flex-col gap-1">
-                <span className="text-foreground">{extractionSourceLabel}</span>
-                <span className="truncate text-xs text-muted-foreground">
+              <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1">
+                <span className="shrink-0 text-foreground">{extractionSourceLabel}</span>
+                <span className="min-w-0 truncate text-xs text-muted-foreground">
                   {extractionModelLabel} · {extractionPromptLabel}
                 </span>
               </div>
@@ -1231,23 +1382,6 @@ export default function TasksPage() {
     await updateTask(id, { status }, { status });
   }
 
-  function updateTaskCategoryLocally(task: TasksRow, category: string | null): TasksRow {
-    const metadata =
-      typeof task.extraction_metadata === "object" &&
-      task.extraction_metadata !== null &&
-      !Array.isArray(task.extraction_metadata)
-        ? { ...(task.extraction_metadata as Record<string, unknown>) }
-        : {};
-
-    if (category) {
-      metadata.task_category = category;
-    } else {
-      delete metadata.task_category;
-    }
-
-    return { ...task, extraction_metadata: metadata };
-  }
-
   function toggleTaskSelection(id: string, checked: boolean) {
     setSelectedTaskIds((current) => {
       if (checked) {
@@ -1413,13 +1547,13 @@ export default function TasksPage() {
         fillHeight
       >
       <div className="flex h-[calc(100dvh-4rem)] min-h-0 flex-col overflow-hidden">
-        <div className="border-b border-border/40 bg-background px-6 pt-4">
+        <div className="bg-background pt-4">
           <h1 className="text-xl font-semibold text-foreground">Tasks</h1>
           {!profileLoading && (
             <PageTabs
               tabs={scopeTabs}
               variant="inline"
-              className="-mr-1 mb-0 mt-2 w-[calc(100vw-0.25rem)] min-w-0 sm:mr-0 sm:w-full md:flex-1"
+              className="mb-0 mt-2 w-full min-w-0 md:flex-1"
               onTabClick={(href) => {
                 const nextScope = new URL(href, "http://local").searchParams.get("scope");
                 if (nextScope === "mine" || nextScope === "brandon" || nextScope === "all") {
@@ -1445,35 +1579,31 @@ export default function TasksPage() {
           )}
           style={{ "--tasks-left-pct": `${leftPct}%` } as CSSProperties}
         >
-          {/* Status filter — link-style tabs */}
-          <div className="border-b border-border/40 px-3">
-            <div className="flex">
-              {STATUS_FILTERS.map((f) => (
-                <Button
-                  key={f.value}
-                  type="button"
-                  variant="ghost"
-                  onClick={() => {
-                    setFilter(f.value as StatusFilter);
-                    setSelectedId(null);
-                    setMobileShowDetail(false);
-                  }}
-                  className={cn(
-                    "h-auto flex-1 rounded-none border-b-2 py-2.5 text-xs font-medium transition-colors hover:bg-transparent",
-                    filter === f.value
-                      ? "border-primary text-foreground"
-                      : "border-transparent text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  {f.label}
-                  {f.value === "open" && !loading && openCount > 0 && (
-                    <span className="rounded-full bg-primary/15 px-1.5 text-[10px] font-semibold text-primary">
-                      {openCount}
-                    </span>
-                  )}
-                </Button>
-              ))}
-            </div>
+          {/* Status filter */}
+          <div className="py-2 pr-2">
+            <Tabs
+              value={filter}
+              onValueChange={(value) => {
+                if (value === "open" || value === "done" || value === "all") {
+                  setFilter(value);
+                  setSelectedId(null);
+                  setMobileShowDetail(false);
+                }
+              }}
+            >
+              <TabsList className="w-full">
+                {STATUS_FILTERS.map((tab) => (
+                  <TabsTrigger key={tab.value} value={tab.value}>
+                    {tab.label}
+                    {tab.value === "open" && !loading && openCount > 0 && (
+                      <span className="ml-1 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">
+                        {openCount}
+                      </span>
+                    )}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
           </div>
 
           {selectedTaskIds.length > 0 && (

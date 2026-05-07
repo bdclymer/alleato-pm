@@ -86,17 +86,39 @@ function findEmailMessageStarts(text: string): number[] {
 
 export function cleanRecipientField(value: string | null): string | null {
   if (!value) return null;
-  return value.length > 260 ? `${value.slice(0, 260).trim()}...` : value.trim();
+  const names = value
+    .split(/[;,]\s*/)
+    .map((part) => cleanContactLabel(part))
+    .filter(Boolean);
+  const cleaned = names.length > 0 ? names.join(", ") : cleanContactLabel(value);
+  return cleaned.length > 180 ? `${cleaned.slice(0, 180).trim()}...` : cleaned.trim();
+}
+
+export function cleanContactLabel(value: string | null): string {
+  if (!value) return "";
+  return value
+    .replace(/<[^>]+>/g, "")
+    .replace(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi, "")
+    .replace(/^["']|["']$/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+export function cleanMessageBody(value: string): string {
+  return value
+    .replace(/\b(?:Thank You|Thank you|Thanks|Regards|Best),?\s+[\s\S]*$/i, "")
+    .replace(/\b(?:Mobile|Phone|Email|Web)\s*:?.*$/i, "")
+    .replace(/\s*\|\s*/g, " ")
+    .replace(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi, "")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 export function extractContextBody(text: string): string {
   const fields = parseContextFields(text);
   const bodyStart = Math.max(0, ...Array.from(fields.values()).map((field) => field.bodyStart));
 
-  return text
-    .slice(bodyStart)
-    .replace(/\s+/g, " ")
-    .trim();
+  return cleanMessageBody(text.slice(bodyStart));
 }
 
 export function parseEmailThread(text: string): EmailThreadMessage[] {
@@ -109,13 +131,10 @@ export function parseEmailThread(text: string): EmailThreadMessage[] {
       const fields = parseContextFields(chunk);
       const subject = fields.get("subject")?.value ?? null;
       const date = fields.get("date")?.value ?? fields.get("sent")?.value ?? null;
-      const from = fields.get("from")?.value ?? null;
+      const from = cleanContactLabel(fields.get("from")?.value ?? null) || null;
       const to = cleanRecipientField(fields.get("to")?.value ?? null);
       const bodyStart = Math.max(0, ...Array.from(fields.values()).map((field) => field.bodyStart));
-      const body = chunk
-        .slice(bodyStart)
-        .replace(/\s+/g, " ")
-        .trim();
+      const body = cleanMessageBody(chunk.slice(bodyStart));
 
       return {
         id: `message-${index}`,

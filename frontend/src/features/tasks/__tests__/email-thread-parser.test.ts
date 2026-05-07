@@ -46,13 +46,13 @@ describe("email thread parser", () => {
     ]);
     expect(messages[0]).toMatchObject({
       date: "2026-04-29T21:44:17Z",
-      from: "Brandon Clymer <bclymer@alleatogroup.com>",
-      to: "Jesse Dawson <jdawson@alleatogroup.com>, Ashley Ortiz <aortiz@alleatogroup.com>, Jazmin Gaona <jgaona@alleatogroup.com>",
+      from: "Brandon Clymer",
+      to: "Jesse Dawson, Ashley Ortiz, Jazmin Gaona",
       body: "@Jazmin Gaona is in charge of managing licenses.",
     });
     expect(messages[4]).toMatchObject({
       date: "Wednesday, April 29, 2026 10:37 AM",
-      from: "Contractors <CONTRACTORS@indy.gov>",
+      from: "Contractors",
       body: "Hello, We need license information.",
     });
   });
@@ -78,5 +78,23 @@ describe("email thread parser", () => {
     );
 
     expect(body).toBe("Please follow up on the permit this afternoon.");
+  });
+
+  it("removes email signatures and contact footer noise from message bodies", () => {
+    const [message] = parseEmailThread(
+      cleanSourceContextText(`
+        Subject: Re: Permit Pending
+        From: Brandon Clymer <bclymer@alleatogroup.com>
+        To: Jazmin Gaona <jgaona@alleatogroup.com>
+        @Jazmin Gaona is in charge of managing licenses.
+        Thank You
+        Brandon Clymer CEO at Alleato Group Mobile 317.760.0088 | Email bclymer@alleatogroup.com
+        Web www.alleatogroup.com
+      `),
+    );
+
+    expect(message.body).toBe("@Jazmin Gaona is in charge of managing licenses.");
+    expect(message.body).not.toContain("bclymer@alleatogroup.com");
+    expect(message.body).not.toContain("Mobile");
   });
 });
