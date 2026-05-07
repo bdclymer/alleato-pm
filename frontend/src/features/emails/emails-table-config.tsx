@@ -1,6 +1,5 @@
 import * as React from "react";
 import type { ReactElement } from "react";
-import Link from "next/link";
 import { MoreHorizontal, Paperclip, Pencil, Star, Trash2 } from "lucide-react";
 
 import { StatusBadge } from "@/components/ds";
@@ -15,6 +14,12 @@ import type {
   ColumnConfig,
   FilterConfig,
   TableColumn,
+} from "@/components/tables/unified";
+import {
+  CellDate,
+  CellLink,
+  CellText,
+  TruncatedCell,
 } from "@/components/tables/unified";
 import type { ProjectEmail } from "@/hooks/use-emails";
 
@@ -96,22 +101,14 @@ export function buildEmailTableColumns(options?: {
     {
       ...emailColumns[0],
       width: 300,
-      render: (item) => (
-        <span className="font-medium text-foreground">
-          {item.subject || "-"}
-        </span>
-      ),
+      render: (item) => <TruncatedCell value={item.subject} maxWidth={280} />,
       csvValue: (item) => item.subject ?? "",
       sortValue: (item) => item.subject ?? "",
     },
     {
       ...emailColumns[1],
       width: 180,
-      render: (item) => (
-        <span className="text-muted-foreground">
-          {item.from_name || item.from_email || "-"}
-        </span>
-      ),
+      render: (item) => <CellText value={item.from_name || item.from_email} muted />,
       csvValue: (item) => item.from_name || item.from_email || "",
       sortValue: (item) => item.from_name || item.from_email || "",
     },
@@ -119,9 +116,7 @@ export function buildEmailTableColumns(options?: {
       ...emailColumns[2],
       width: 220,
       render: (item) => (
-        <span className="text-muted-foreground truncate">
-          {formatRecipients(item.to_list)}
-        </span>
+        <TruncatedCell value={formatRecipients(item.to_list)} maxWidth={200} />
       ),
       csvValue: (item) => formatRecipients(item.to_list),
       sortValue: (item) => formatRecipients(item.to_list),
@@ -136,11 +131,7 @@ export function buildEmailTableColumns(options?: {
     {
       ...emailColumns[4],
       width: 180,
-      render: (item) => (
-        <span className="text-muted-foreground">
-          {formatDate(item.sent_at || item.created_at)}
-        </span>
-      ),
+      render: (item) => <CellDate value={item.sent_at || item.created_at} showTime />,
       csvValue: (item) => item.sent_at || item.created_at || "",
       sortValue: (item) => sortValueForDate(item.sent_at || item.created_at),
     },
@@ -151,7 +142,7 @@ export function buildEmailTableColumns(options?: {
         item.has_attachments ? (
           <Paperclip className="h-4 w-4 text-muted-foreground" />
         ) : (
-          <span className="text-muted-foreground">-</span>
+          <CellText value={null} muted />
         ),
       csvValue: (item) => (item.has_attachments ? "Yes" : "No"),
       sortValue: (item) => (item.has_attachments ? 1 : 0),
@@ -163,7 +154,7 @@ export function buildEmailTableColumns(options?: {
         item.is_starred ? (
           <Star className="h-4 w-4 fill-current text-status-warning" />
         ) : (
-          <span className="text-muted-foreground">-</span>
+          <CellText value={null} muted />
         ),
       csvValue: (item) => (item.is_starred ? "Yes" : "No"),
       sortValue: (item) => (item.is_starred ? 1 : 0),
@@ -178,13 +169,7 @@ export function buildEmailTableColumns(options?: {
       width: 220,
       sortable: true,
       render: (item) => (
-        <Link
-          href={`/${item.project_id}/emails`}
-          className="font-medium text-foreground hover:underline"
-          data-row-interactive="true"
-        >
-          {projectLabel(item)}
-        </Link>
+        <CellLink value={projectLabel(item)} href={`/${item.project_id}/emails`} />
       ),
       csvValue: projectLabel,
       sortValue: projectLabel,

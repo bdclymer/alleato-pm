@@ -233,7 +233,7 @@ export function ViewSwitcher({
 
   return (
     <Tabs value={currentView} onValueChange={(value) => onViewChange(value as ViewMode)}>
-      <TabsList className="h-10 bg-primary/10 border-0 sm:h-8">
+      <TabsList className="h-10 sm:h-8">
         {filteredViews.map((view) => (
             <TabsTrigger
               key={view.mode}

@@ -234,7 +234,7 @@ export function TableAvatarUsers({
             </AvatarGroup>
           </div>
         </TooltipTrigger>
-        <TooltipContent className="max-w-[320px]">
+        <TooltipContent className="max-w-80">
           <div className="space-y-1">
             <p className="text-xs font-semibold">Participants ({users.length})</p>
             <ul className="space-y-1">
@@ -319,6 +319,38 @@ export function CellText({
   return (
     <span className={cn(muted ? "text-muted-foreground" : undefined, className)}>
       {display}
+    </span>
+  );
+}
+
+interface CellStackTextProps {
+  primary: string | null | undefined;
+  secondary?: string | null | undefined;
+  icon?: React.ReactNode;
+  emptyLabel?: string;
+}
+
+/** Two-line text cell for table rows that need supporting metadata. */
+export function CellStackText({
+  primary,
+  secondary,
+  icon,
+  emptyLabel = "—",
+}: CellStackTextProps): React.ReactElement {
+  const display = primary?.trim() || emptyLabel;
+  const support = secondary?.trim();
+
+  return (
+    <span className="flex min-w-0 items-center gap-2">
+      {icon ? (
+        <span className="shrink-0 text-muted-foreground">{icon}</span>
+      ) : null}
+      <span className="min-w-0">
+        <span className="block truncate">{display}</span>
+        {support ? (
+          <span className="block truncate text-muted-foreground">{support}</span>
+        ) : null}
+      </span>
     </span>
   );
 }
@@ -483,7 +515,7 @@ export function TruncatedCell({
   const [isTruncated, setIsTruncated] = React.useState(false);
 
   // display and maxWidth change the rendered layout, so both are valid deps
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   React.useLayoutEffect(() => {
     const el = spanRef.current;
     if (el) {
@@ -495,7 +527,7 @@ export function TruncatedCell({
     return <span className="text-muted-foreground">{emptyLabel}</span>;
   }
 
-  /* eslint-disable react/forbid-dom-props */
+   
   const span = (
     <span
       ref={spanRef}
@@ -505,7 +537,7 @@ export function TruncatedCell({
       {display}
     </span>
   );
-  /* eslint-enable react/forbid-dom-props */
+   
 
   if (!isTruncated) return span;
 
@@ -516,7 +548,7 @@ export function TruncatedCell({
         <TooltipContent
           side="top"
           align="start"
-          className="max-w-[480px] border bg-popover px-3 py-2 text-popover-foreground shadow-sm"
+          className="max-w-lg border bg-popover px-3 py-2 text-popover-foreground shadow-sm"
         >
           <p className="text-xs leading-relaxed whitespace-pre-wrap">
             {display}

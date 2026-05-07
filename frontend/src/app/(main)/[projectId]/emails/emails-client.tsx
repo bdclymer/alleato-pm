@@ -50,8 +50,18 @@ const EMPTY_FILTERS: Record<string, FilterValue> = {
 
 type FilterState = Record<string, FilterValue>;
 
+interface EmailClientTab {
+  label: string;
+  href: string;
+  count?: number;
+  isActive?: boolean;
+  testId?: string;
+  countTestId?: string;
+}
+
 interface EmailsClientProps {
   embedded?: boolean;
+  navigationTabs?: EmailClientTab[];
   projectId?: number;
   scope?: "project" | "global";
   source?: EmailSource;
@@ -59,6 +69,7 @@ interface EmailsClientProps {
 
 export function EmailsClient({
   projectId,
+  navigationTabs,
   scope = "project",
   source = "app",
   embedded = false,
@@ -79,7 +90,7 @@ export function EmailsClient({
     : isOutlook
       ? `/${projectId}/outlook-emails`
       : `/${projectId}/emails`;
-  const tabs = isOutlook
+  const outlookTabs = isOutlook
     ? [
         {
           label: "Outlook Emails",
@@ -93,6 +104,7 @@ export function EmailsClient({
         },
       ]
     : undefined;
+  const tabs = navigationTabs ?? outlookTabs;
   const title = isOutlook ? "Outlook Emails" : "Emails";
   const description = isOutlook
     ? isGlobal
@@ -441,7 +453,7 @@ export function EmailsClient({
             </Button>
           ),
         }}
-        tabs={embedded ? undefined : tabs}
+        tabs={embedded && !navigationTabs ? undefined : tabs}
         layout={{
           fullBleedTable: false,
           containerPadding: !embedded,

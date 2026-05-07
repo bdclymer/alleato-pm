@@ -34,6 +34,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  CellDate,
+  CellLink,
+  CellNumber,
+  CellStackText,
+  CellText,
+  TruncatedCell,
   UnifiedTablePage,
   useUnifiedTableState,
   type TableColumn,
@@ -386,6 +392,8 @@ function TypeSelectCell({
       disabled={saving}
     >
       <SelectTrigger
+        // DESIGN-SYSTEM EXCEPTION: inline taxonomy editing is an interactive table cell.
+        // Move to a shared EditableSelectCell primitive before adding this pattern elsewhere.
         className="h-7 w-36 text-xs"
         data-row-interactive="true"
         aria-label="Attachment type"
@@ -440,6 +448,8 @@ function CategorySelectCell({
       disabled={saving}
     >
       <SelectTrigger
+        // DESIGN-SYSTEM EXCEPTION: inline taxonomy editing is an interactive table cell.
+        // Move to a shared EditableSelectCell primitive before adding this pattern elsewhere.
         className="h-7 w-40 text-xs"
         data-row-interactive="true"
         aria-label="Attachment category"
@@ -541,17 +551,11 @@ export function EmailAttachmentsClient({
         alwaysVisible: true,
         sortValue: (item) => item.fileName,
         render: (item) => (
-          <div className="flex min-w-0 items-center gap-2">
-            <Paperclip className="size-4 shrink-0 text-muted-foreground" />
-            <div className="min-w-0">
-              <div className="truncate font-medium text-foreground">
-                {item.fileName}
-              </div>
-              <div className="truncate text-xs text-muted-foreground">
-                {item.contentType || "Unknown type"}
-              </div>
-            </div>
-          </div>
+          <CellStackText
+            primary={item.fileName}
+            secondary={item.contentType || "Unknown type"}
+            icon={<Paperclip className="size-4" />}
+          />
         ),
       },
       {
@@ -585,11 +589,7 @@ export function EmailAttachmentsClient({
         label: "Preview",
         render: (item) => {
           if (!isPreviewableAttachment(item)) {
-            return (
-              <span className="text-sm text-muted-foreground">
-                No preview
-              </span>
-            );
+            return <CellText value="No preview" muted />;
           }
 
           return (
@@ -598,6 +598,8 @@ export function EmailAttachmentsClient({
               size="sm"
               data-row-interactive="true"
               onClick={() => setPreviewAttachment(item)}
+              // DESIGN-SYSTEM EXCEPTION: attachment thumbnails need fixed media dimensions inside a table cell.
+              // Keep this exception local until thumbnail table cells become a shared primitive.
               className="h-16 w-24 overflow-hidden bg-background p-0"
               aria-label={`Preview ${item.fileName}`}
             >
@@ -611,7 +613,7 @@ export function EmailAttachmentsClient({
         label: "Email",
         sortable: true,
         sortValue: (item) => item.email?.subject ?? "",
-        render: (item) => item.email?.subject || "No subject",
+        render: (item) => <TruncatedCell value={item.email?.subject || "No subject"} maxWidth={220} />,
       },
       ...(isGlobal
         ? [
@@ -622,15 +624,9 @@ export function EmailAttachmentsClient({
               sortValue: projectLabel,
               render: (item: EmailAttachment) =>
                 item.project?.id ? (
-                  <Link
-                    href={`/${item.project.id}/emails`}
-                    className="font-medium text-foreground hover:underline"
-                    data-row-interactive="true"
-                  >
-                    {projectLabel(item)}
-                  </Link>
+                  <CellLink value={projectLabel(item)} href={`/${item.project.id}/emails`} />
                 ) : (
-                  projectLabel(item)
+                  <CellText value={projectLabel(item)} />
                 ),
             } satisfies TableColumn<EmailAttachment>,
           ]
@@ -641,16 +637,10 @@ export function EmailAttachmentsClient({
         sortable: true,
         sortValue: senderLabel,
         render: (item) => (
-          <div className="min-w-0">
-            <div className="truncate text-sm">
-              {item.email?.fromName || item.email?.fromEmail || "Unknown sender"}
-            </div>
-            {item.email?.fromName && item.email.fromEmail ? (
-              <div className="truncate text-xs text-muted-foreground">
-                {item.email.fromEmail}
-              </div>
-            ) : null}
-          </div>
+          <CellStackText
+            primary={item.email?.fromName || item.email?.fromEmail || "Unknown sender"}
+            secondary={item.email?.fromName ? item.email.fromEmail : null}
+          />
         ),
       },
       {
@@ -658,14 +648,14 @@ export function EmailAttachmentsClient({
         label: "Received",
         sortable: true,
         sortValue: (item) => receivedAt(item) ?? "",
-        render: (item) => formatDate(receivedAt(item)),
+        render: (item) => <CellDate value={receivedAt(item)} showTime />,
       },
       {
         id: "size",
         label: "Size",
         sortable: true,
         sortValue: (item) => item.fileSize ?? 0,
-        render: (item) => formatBytes(item.fileSize),
+        render: (item) => <CellText value={formatBytes(item.fileSize)} muted />,
       },
       {
         id: "text",
@@ -674,8 +664,8 @@ export function EmailAttachmentsClient({
         sortValue: (item) => item.textLength,
         render: (item) =>
           item.textLength > 0
-            ? `${item.textLength.toLocaleString()} chars`
-            : "No text",
+            ? <CellNumber value={item.textLength} muted />
+            : <CellText value="No text" muted />,
       },
     ];
 
@@ -849,7 +839,8 @@ export function EmailAttachmentsClient({
     <>
       <UnifiedTablePage
         header={{
-          title,
+          title: tabs ? "" : title,
+          variant: tabs ? "compact" : undefined,
           actions: tabs ? undefined : (
             <Button variant="outline" size="sm" asChild>
               <Link href={projectId ? `/${projectId}/emails` : "/emails"}>
