@@ -68,7 +68,7 @@ async function main() {
   }
 
   const exitCode = await new Promise((resolve, reject) => {
-    activeChild = spawn("pnpm", ["exec", "next", "build"], {
+    activeChild = spawn("pnpm", ["exec", "next", "build", "--turbopack"], {
       cwd: frontendRoot,
       env: {
         ...process.env,
