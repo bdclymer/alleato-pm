@@ -1,9 +1,9 @@
-# Design Tokens — Superhuman-Inspired v2
+# Design Tokens — Alleato Brand / Superhuman-Inspired v2
 
 All styling uses these tokens. **No hex codes. No arbitrary values. No hardcoded colors.**
 
 > **Philosophy:** Tonal elevation replaces borders. Background shift = visual separation.
-> Cards sit on `bg-background` (#F6F6F8 off-white), surfaces use `bg-card` (#FFFFFF true white).
+> Cards sit on `bg-background` (#FAF8F9 brand off-white), surfaces use `bg-card` (#FFFFFF true white).
 > The ~3% lightness difference IS the border. Use actual borders sparingly.
 
 ## Colors
@@ -12,13 +12,13 @@ All styling uses these tokens. **No hex codes. No arbitrary values. No hardcoded
 
 | Token | Usage | Light | Dark |
 |-------|-------|-------|------|
-| `bg-background` | Page background | #F6F6F8 (warm off-white) | #151518 |
+| `bg-background` | Page background | #FAF8F9 (brand off-white) | #151518 |
 | `bg-card` | Card surfaces, elevated content | #FFFFFF (true white) | #1F1F24 |
-| `bg-muted` | Subtle background (hover, zebra rows) | #F1F1F4 | #272730 |
+| `bg-muted` | Subtle background (hover, zebra rows) | #F4F2F0 | #272730 |
 | `bg-muted/30` | Very subtle tint | — | — |
-| `bg-accent` | Interactive hover, active sidebar item | #EDEDFA (indigo tint) | #2C2C35 |
+| `bg-accent` | Interactive hover, active sidebar item | #FDF2E8 (brand orange tint) | #462714 |
 | `bg-popover` | Popover/dropdown/modal surfaces | #FFFFFF | #2C2C35 |
-| `bg-primary` | Primary buttons, active states | #5856D6 (indigo-purple) | #7B79E5 |
+| `bg-primary` | Primary buttons, active states | #DB802D (brand orange) | #F59A43 |
 | `bg-secondary` | Secondary buttons | #F1F1F4 | #272730 |
 | `bg-destructive` | Delete/danger actions | #DC2626 | #DC2626 |
 
@@ -26,12 +26,12 @@ All styling uses these tokens. **No hex codes. No arbitrary values. No hardcoded
 
 | Token | Usage | Light | Dark |
 |-------|-------|-------|------|
-| `text-foreground` | Primary text (headings, body) | #1D1D22 | #EBEBEB |
-| `text-muted-foreground` | Secondary text (descriptions, labels) | #6F7075 (~60%) | #A6A6A6 (~65%) |
-| `text-primary` | Links, active navigation, brand accent | #5856D6 | #7B79E5 |
+| `text-foreground` | Primary text (headings, body) | #101018 | #EBEBEB |
+| `text-muted-foreground` | Secondary text (descriptions, labels) | #606161 (~38%) | #A6A6A6 (~65%) |
+| `text-primary` | Links, active navigation, brand accent | #DB802D | #F59A43 |
 | `text-destructive` | Error text, destructive actions | #DC2626 | — |
-| `text-card-foreground` | Text on card surfaces | #1D1D22 | #EBEBEB |
-| `text-popover-foreground` | Text in popovers | #1D1D22 | #EBEBEB |
+| `text-card-foreground` | Text on card surfaces | #101018 | #EBEBEB |
+| `text-popover-foreground` | Text in popovers | #101018 | #EBEBEB |
 
 ### Borders
 
@@ -40,7 +40,7 @@ All styling uses these tokens. **No hex codes. No arbitrary values. No hardcoded
 | `border-border` | Default borders (use sparingly!) | #E6E6EC | #2E2E38 |
 | `border-border/50` | Half-opacity for very subtle dividers | — | — |
 | `border-input` | Form input borders | #E6E6EC | #2E2E38 |
-| `border-ring` | Focus ring color | #5856D6 | #7B79E5 |
+| `border-ring` | Focus ring color | #DB802D | #F59A43 |
 
 > **Border philosophy:** Most cards should NOT have borders. Use tonal elevation
 > (`bg-card` on `bg-background`) instead. Only use borders for:
@@ -65,7 +65,7 @@ Use these for status indicators, badges, and alerts. **Use `StatusBadge` compone
 bg-white, bg-black                    → use bg-background, bg-card, text-foreground
 text-gray-*, bg-gray-*, border-gray-* → use semantic tokens above
 text-neutral-*, bg-neutral-*          → use semantic tokens above
-bg-orange-*, text-orange-*            → use bg-primary, text-primary (indigo-purple)
+bg-orange-*, text-orange-*            → use bg-primary, text-primary (Alleato brand orange)
 #[hex], rgb(), rgba()                 → use Tailwind tokens
 bg-[#...], text-[#...]               → use design system tokens
 ```
@@ -316,14 +316,14 @@ These are defined in `globals.css` — never use the raw values, always use the 
 
 | Token | CSS Variable | Light Mode Value | Resolves To |
 |-------|-------------|-----------------|-------------|
-| `primary` | `--primary` | `245 58% 52%` | Indigo-purple (#5856D6) |
-| `ring` | `--ring` | `245 58% 52%` | Matches primary (#5856D6) |
-| `background` | `--background` | `240 5% 97%` | Warm off-white (#F6F6F8) |
+| `primary` | `--primary` | `29 71% 52%` | Alleato brand orange (#DB802D) |
+| `ring` | `--ring` | `29 71% 52%` | Matches primary (#DB802D) |
+| `background` | `--background` | `330 17% 98%` | Brand off-white (#FAF8F9) |
 | `card` | `--card` | `0 0% 100%` | True white (#FFFFFF) |
-| `muted` | `--muted` | `240 5% 95%` | Light cool gray (#F1F1F4) |
-| `accent` | `--accent` | `245 40% 94%` | Subtle indigo (#EDEDFA) |
-| `foreground` | `--foreground` | `240 6% 12%` | Near-black (#1D1D22) |
-| `muted-foreground` | `--muted-foreground` | `240 4% 46%` | Mid-gray (#6F7075) |
+| `muted` | `--muted` | `30 18% 95%` | Warm neutral (#F4F2F0) |
+| `accent` | `--accent` | `29 84% 95%` | Subtle orange tint (#FDF2E8) |
+| `foreground` | `--foreground` | `240 20% 8%` | Brand black (#101018) |
+| `muted-foreground` | `--muted-foreground` | `180 1% 38%` | Brand gray (#606161) |
 | `destructive` | `--destructive` | `0 72% 51%` | Red (#DC2626) |
 | `border` | `--border` | `240 5% 91%` | Cool border (#E6E6EC) |
 
@@ -337,7 +337,7 @@ These are defined in `globals.css` — never use the raw values, always use the 
 | `popover` | `240 5% 18%` | #2C2C35 (closest/floating) |
 | `foreground` | `0 0% 92%` | #EBEBEB (not pure white) |
 | `muted-foreground` | `0 0% 65%` | #A6A6A6 |
-| `primary` | `245 58% 62%` | #7B79E5 (lighter for dark bg) |
+| `primary` | `29 90% 61%` | #F59A43 (lighter for dark bg) |
 | `border` | `240 5% 19%` | #2E2E38 |
 
 > **Dark mode principle:** No pure black (#000) or pure white (#FFF).

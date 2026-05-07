@@ -7,12 +7,12 @@ const tailwindScrollbarHide =
   tailwindScrollbarHideModule.default ?? tailwindScrollbarHideModule;
 
 /**
- * Tailwind CSS Configuration — Superhuman-inspired v2
+ * Tailwind CSS Configuration — Alleato brand / Superhuman-inspired v2
  *
  * Design system tokens mapped from CSS variables in globals.css.
  * Key changes from v1:
- * - Primary color: indigo-purple (#5856D6) replaces Procore orange
- * - Background: warm off-white (#F6F6F8) with true-white cards
+ * - Primary color: Alleato orange (#DB802D) with white button text
+ * - Background: brand off-white (#FAF8F9) with true-white cards
  * - Shadows: minimal (only shadow-sm on floating elements)
  * - Typography: Inter with OpenType, tighter headings
  * - Animations: spring physics, Superhuman timing
@@ -29,7 +29,7 @@ const config = {
   theme: {
     extend: {
       /* =================================================================
-         COLOR SYSTEM — Superhuman-inspired tokens
+         COLOR SYSTEM — Alleato brand semantic tokens
          ================================================================= */
       colors: {
         /* Vristo template colors — used by (dashboard) route components */
@@ -48,7 +48,7 @@ const config = {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
 
-        /* Brand Colors (Procore heritage — demoted from primary) */
+        /* Brand Colors */
         brand: {
           DEFAULT: "hsl(var(--brand))",
           hover: "hsl(var(--brand-hover))",

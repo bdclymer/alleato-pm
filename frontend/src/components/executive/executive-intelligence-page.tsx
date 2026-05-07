@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import Image from "next/image";
 import type { LucideIcon } from "lucide-react";
 import {
   Activity,
@@ -14,7 +14,6 @@ import {
   Lightbulb,
   MessageSquareText,
   Network,
-  Send,
   ShieldAlert,
   Sparkles,
   Workflow,
@@ -22,19 +21,8 @@ import {
 import { SectionRuleHeading } from "@/components/layout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import {
-  classifyExecutiveQuery,
-  type AgentRoute,
-} from "@/lib/executive/executive-intelligence-routing";
+import { type AgentRoute } from "@/lib/executive/executive-intelligence-routing";
 
 type ExecutiveAgent = {
   route: AgentRoute;
@@ -47,10 +35,6 @@ type ExecutiveAgent = {
   accentClassName: string;
 };
 
-type RoutedResponse = {
-  route: AgentRoute;
-  query: string;
-};
 
 const EXECUTIVE_AGENTS: ExecutiveAgent[] = [
   {
@@ -178,13 +162,6 @@ const EXECUTIVE_AGENTS: ExecutiveAgent[] = [
   },
 ];
 
-const EXECUTIVE_PROMPTS = [
-  "What needs leadership attention this week?",
-  "What are our biggest financial risks?",
-  "Which projects are falling behind?",
-  "What decisions were made recently?",
-  "What repeated problems should become SOPs?",
-];
 
 const LEADERSHIP_ALERTS = [
   {
@@ -268,65 +245,12 @@ const FUTURE_DATA_SOURCES = [
   "fireflies_ingestion_jobs",
 ];
 
-const RESPONSE_PREVIEWS: Record<AgentRoute, string> = {
-  strategic_advisor:
-    "I would synthesize meetings, project health, financial signals, decisions, risks, and open tasks into a leadership-priority brief with recommended next actions.",
-  cfo:
-    "I would review WIP, budget movement, invoices, commitments, change orders, and profitability signals to isolate margin pressure and cash exposure.",
-  project_intelligence:
-    "I would compare current status, blockers, schedules, decisions, and meeting history to explain what changed and what needs a project-level decision.",
-  risk_accountability:
-    "I would scan stale tasks, overdue commitments, repeated risk language, and missing owners to produce an accountability list with clear follow-up paths.",
-  operations_improvement:
-    "I would group recurring issues, bottlenecks, handoff failures, and SOP candidates into process improvements that can be assigned and measured.",
-  meeting_intelligence:
-    "I would inspect Fireflies transcripts, summaries, decisions, risks, and action items to answer from meeting memory with source-ready context.",
-};
-
-const AGENT_BY_ROUTE = new Map(EXECUTIVE_AGENTS.map((agent) => [agent.route, agent]));
 
 export function ExecutiveIntelligencePage() {
-  const [query, setQuery] = useState(EXECUTIVE_PROMPTS[0]);
-  const [selectedRoute, setSelectedRoute] = useState<AgentRoute | "auto">("auto");
-  const [response, setResponse] = useState<RoutedResponse | null>({
-    route: "strategic_advisor",
-    query: EXECUTIVE_PROMPTS[0],
-  });
-
-  const previewRoute = useMemo(() => {
-    if (selectedRoute !== "auto") return selectedRoute;
-    return classifyExecutiveQuery(query);
-  }, [query, selectedRoute]);
-
-  const previewAgent = AGENT_BY_ROUTE.get(previewRoute) ?? EXECUTIVE_AGENTS[0];
-  const responseAgent = response
-    ? AGENT_BY_ROUTE.get(response.route) ?? EXECUTIVE_AGENTS[0]
-    : previewAgent;
-
-  const submitQuery = () => {
-    const trimmed = query.trim();
-    if (!trimmed) return;
-
-    setResponse({
-      route: selectedRoute === "auto" ? classifyExecutiveQuery(trimmed) : selectedRoute,
-      query: trimmed,
-    });
-  };
-
   return (
     <>
       <HeroCommandCenter />
       <AgentTeamOverview />
-      <AskExecutiveTeam
-        query={query}
-        selectedRoute={selectedRoute}
-        previewAgent={previewAgent}
-        response={response}
-        responseAgent={responseAgent}
-        onQueryChange={setQuery}
-        onSelectedRouteChange={setSelectedRoute}
-        onSubmit={submitQuery}
-      />
       <LeadershipAlerts />
       <CompanyBrainActivity />
     </>
@@ -335,45 +259,35 @@ export function ExecutiveIntelligencePage() {
 
 function HeroCommandCenter() {
   return (
-    <section className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
-      <div className="space-y-6">
+    <section className="space-y-8">
+      <div className="space-y-4">
         <div className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
           <Network className="h-4 w-4" />
           Executive command center
         </div>
-        <div className="space-y-4">
-          <h1 className="max-w-3xl text-4xl font-semibold tracking-normal text-foreground md:text-5xl">
-            Alleato Executive Intelligence System
-          </h1>
-          <p className="max-w-2xl text-base leading-7 text-muted-foreground md:text-lg">
-            A strategic AI command center that turns meetings, financials,
-            projects, and decisions into real-time executive insight.
-          </p>
-        </div>
-        <div className="grid gap-3 sm:grid-cols-3">
-          <SignalMetric label="Signals watched" value="8" />
-          <SignalMetric label="Specialist modes" value="6" />
-          <SignalMetric label="Orchestrator" value="1" />
-        </div>
+        <h1 className="max-w-3xl text-4xl font-semibold tracking-normal text-foreground md:text-5xl">
+          Alleato Executive Intelligence System
+        </h1>
+        <p className="max-w-2xl text-base leading-7 text-muted-foreground md:text-lg">
+          A strategic AI command center that turns meetings, financials,
+          projects, and decisions into real-time executive insight.
+        </p>
       </div>
 
-      <div className="bg-muted/25 p-4 md:p-6">
-        <ExecutiveNetworkMap />
+      <div className="flex items-center justify-center">
+        <Image
+          src="/images/company-brain.png"
+          alt="Company Brain — AI Intelligence Engine diagram showing chaotic inputs transformed into structured executive outputs"
+          width={900}
+          height={700}
+          className="w-full max-w-3xl object-contain"
+          priority
+        />
       </div>
     </section>
   );
 }
 
-function SignalMetric({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="min-w-0 border-l border-border pl-4">
-      <div className="text-2xl font-semibold text-foreground">{value}</div>
-      <div className="mt-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-        {label}
-      </div>
-    </div>
-  );
-}
 
 function ExecutiveNetworkMap() {
   const cfo = EXECUTIVE_AGENTS.find((agent) => agent.route === "cfo")!;
@@ -524,145 +438,6 @@ function AgentOverviewBlock({ agent }: { agent: ExecutiveAgent }) {
   );
 }
 
-function AskExecutiveTeam({
-  query,
-  selectedRoute,
-  previewAgent,
-  response,
-  responseAgent,
-  onQueryChange,
-  onSelectedRouteChange,
-  onSubmit,
-}: {
-  query: string;
-  selectedRoute: AgentRoute | "auto";
-  previewAgent: ExecutiveAgent;
-  response: RoutedResponse | null;
-  responseAgent: ExecutiveAgent;
-  onQueryChange: (value: string) => void;
-  onSelectedRouteChange: (value: AgentRoute | "auto") => void;
-  onSubmit: () => void;
-}) {
-  const ResponseIcon = responseAgent.icon;
-
-  return (
-    <section className="grid gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
-      <div className="space-y-5">
-        <SectionIntro
-          eyebrow="Ask the executive team"
-          title="Route a leadership question"
-          description="Mocked for now. The selector and query classifier are ready to become the frontend contract for live assistant routing."
-        />
-
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <label htmlFor="executive-query" className="sr-only">
-              Executive intelligence question
-            </label>
-            <Textarea
-              id="executive-query"
-              value={query}
-              onChange={(event) => onQueryChange(event.target.value)}
-              placeholder="Ask about leadership attention, risk, WIP, project blockers, recent decisions, or SOP opportunities."
-              className="min-h-32 resize-none"
-            />
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
-            <Select
-              value={selectedRoute}
-              onValueChange={(value) => onSelectedRouteChange(value as AgentRoute | "auto")}
-            >
-              <SelectTrigger className="h-11">
-                <SelectValue placeholder="Auto route" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="auto">Auto route by query</SelectItem>
-                {EXECUTIVE_AGENTS.map((agent) => (
-                  <SelectItem key={agent.route} value={agent.route}>
-                    {agent.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Button type="button" className="h-11 gap-2" onClick={onSubmit} disabled={!query.trim()}>
-              <Send className="h-4 w-4" />
-              Ask team
-            </Button>
-          </div>
-
-          <div className="space-y-2">
-            <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Suggested prompts
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {EXECUTIVE_PROMPTS.map((prompt) => (
-                <Button
-                  key={prompt}
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-auto min-h-9 whitespace-normal text-left"
-                  onClick={() => onQueryChange(prompt)}
-                >
-                  {prompt}
-                </Button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="rounded-lg border bg-background p-5">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Response preview
-            </div>
-            <div className="mt-2 text-lg font-semibold text-foreground">
-              {response ? responseAgent.name : "Ready to route"}
-            </div>
-          </div>
-          <Badge variant="outline" className="shrink-0">
-            {selectedRoute === "auto" ? `Auto: ${previewAgent.shortName}` : previewAgent.shortName}
-          </Badge>
-        </div>
-
-        <div className="mt-6 space-y-5">
-          <div className="flex gap-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-muted">
-              <ResponseIcon className={cn("h-5 w-5", responseAgent.accentClassName)} />
-            </span>
-            <div className="min-w-0 space-y-2">
-              <p className="text-sm font-medium text-foreground">
-                {response?.query ?? "Enter a question to preview the routed specialist mode."}
-              </p>
-              <p className="text-sm leading-6 text-muted-foreground">
-                {RESPONSE_PREVIEWS[responseAgent.route]}
-              </p>
-            </div>
-          </div>
-
-          <div className="divide-y rounded-md bg-muted/30">
-            <PreviewRow label="Current backend shape" value="Single orchestrator with specialist modes" />
-            <PreviewRow label="Route key" value={responseAgent.route} />
-            <PreviewRow label="Integration status" value="Mock UI, backend-ready contract" />
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function PreviewRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="grid gap-1 px-4 py-3 text-sm sm:grid-cols-[11rem_minmax(0,1fr)]">
-      <div className="font-medium text-muted-foreground">{label}</div>
-      <div className="min-w-0 break-words text-foreground">{value}</div>
-    </div>
-  );
-}
 
 function LeadershipAlerts() {
   return (

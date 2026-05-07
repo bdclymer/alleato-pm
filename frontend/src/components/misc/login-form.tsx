@@ -2,13 +2,6 @@
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
@@ -93,69 +86,90 @@ export function LoginForm({
   };
 
   return (
-    <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl">Login</CardTitle>
-          <CardDescription>
-            Enter your email below to login to your account
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleLogin} data-dev-autofill-disabled="true">
-            <div className="flex flex-col gap-6">
-              <div className="grid gap-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  placeholder="m@example.com"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
-              <div className="grid gap-2">
-                <div className="flex items-center">
-                  <Label htmlFor="password">Password</Label>
-                  <Link
-                    href="/auth/forgot-password"
-                    className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
-                  >
-                    Forgot your password?
-                  </Link>
-                </div>
-                <PasswordInput
-                  id="password"
-                  name="password"
-                  autoComplete="current-password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </div>
-              {error && <p className="text-sm text-destructive">{error}</p>}
-              {successMessage && (
-                <p className="text-sm text-success">{successMessage}</p>
-              )}
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Logging in..." : "Login"}
-              </Button>
-            </div>
-            <div className="mt-4 text-center text-sm">
-              Don&apos;t have an account?{" "}
-              <Link
-                href="/auth/sign-up"
-                className="underline underline-offset-4"
-              >
-                Sign up
-              </Link>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+    <div className={cn("w-full", className)} {...props}>
+      <form
+        onSubmit={handleLogin}
+        className="w-full space-y-6"
+        data-dev-autofill-disabled="true"
+      >
+        <div className="space-y-3">
+          <Label
+            htmlFor="email"
+            className="text-base font-medium text-primary-foreground/64"
+          >
+            Email Address
+          </Label>
+          <Input
+            id="email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            placeholder="Enter your email address"
+            required
+            disabled={isLoading}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="h-16 rounded-md border-0 bg-primary-foreground/24 px-5 text-base font-medium text-primary-foreground shadow-none placeholder:text-primary-foreground/48 focus-visible:bg-primary-foreground/30 focus-visible:ring-2 focus-visible:ring-primary-foreground/20"
+          />
+        </div>
+
+        <div className="space-y-3">
+          <Label
+            htmlFor="password"
+            className="text-base font-medium text-primary-foreground/64"
+          >
+            Password
+          </Label>
+          <PasswordInput
+            id="password"
+            name="password"
+            autoComplete="current-password"
+            placeholder="Enter your password"
+            required
+            disabled={isLoading}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="h-16 rounded-md border-0 bg-primary-foreground/24 px-5 text-base font-medium text-primary-foreground shadow-none placeholder:text-primary-foreground/48 focus-visible:bg-primary-foreground/30 focus-visible:ring-2 focus-visible:ring-primary-foreground/20"
+          />
+        </div>
+
+        {error && (
+          <p role="alert" className="text-sm font-medium text-primary">
+            {error}
+          </p>
+        )}
+        {successMessage && (
+          <p role="status" className="text-sm font-medium text-green-200">
+            {successMessage}
+          </p>
+        )}
+
+        <Button
+          type="submit"
+          className="h-16 w-full rounded-md bg-primary text-base font-semibold text-primary-foreground shadow-none hover:bg-primary/90 focus-visible:ring-primary/40"
+          disabled={isLoading}
+        >
+          {isLoading ? "Signing in..." : "Sign in"}
+        </Button>
+
+        <div className="space-y-4 pt-6 text-center text-sm text-primary-foreground/52">
+          <Link
+            href="/auth/forgot-password"
+            className="block underline-offset-4 transition-colors hover:text-primary-foreground/70 hover:underline"
+          >
+            Forgot your password?
+          </Link>
+          <p>
+            Don&apos;t have an account?{" "}
+            <Link
+              href="/auth/sign-up"
+              className="underline-offset-4 transition-colors hover:text-primary-foreground/70 hover:underline"
+            >
+              Sign up
+            </Link>
+          </p>
+        </div>
+      </form>
     </div>
   );
 }
