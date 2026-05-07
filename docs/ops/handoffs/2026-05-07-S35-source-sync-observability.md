@@ -17,6 +17,7 @@
    - `/Users/meganharrison/Documents/alleato-pm/backend/src/services/task_extraction.py`
    - `/Users/meganharrison/Documents/alleato-pm/backend/src/services/intelligence/compiler.py`
    - `/Users/meganharrison/Documents/alleato-pm/backend/tests/test_source_sync_health.py`
+   - `/Users/meganharrison/Documents/alleato-pm/backend/tests/test_graph_sync_options.py`
    - `/Users/meganharrison/Documents/alleato-pm/frontend/src/app/api/admin/source-sync/_shared.ts`
    - `/Users/meganharrison/Documents/alleato-pm/frontend/src/app/api/admin/source-sync/status/route.ts`
    - `/Users/meganharrison/Documents/alleato-pm/frontend/src/app/api/admin/source-sync/recompute/route.ts`
@@ -29,6 +30,7 @@
 7) Commands run and outcome (pass/fail counts):
    - `npx supabase gen types typescript --project-id "lgveqfnpkxvzbnnwuled" --schema public > frontend/src/types/database.types.ts` — pass
    - `python -m pytest backend/tests/test_source_sync_health.py` — pass, 3 passed
+   - `python -m pytest backend/tests/test_source_sync_health.py backend/tests/test_graph_sync_options.py` — pass, 4 passed
    - `python -m py_compile backend/src/services/integrations/microsoft_graph/sync.py backend/src/services/integrations/microsoft_graph/embed.py backend/src/services/ingestion/fireflies_pipeline.py backend/src/services/task_extraction.py backend/src/services/intelligence/compiler.py backend/src/services/health/source_sync_health.py` — pass
    - `npm run check:routes` — pass
    - `npm run db:migrations:verify-applied -- supabase/migrations/20260507160000_source_sync_health_observability.sql` — initial fail before apply, pass after exact apply and ledger repair
@@ -39,6 +41,7 @@
    - `python - <<'PY' ... update_source_health_snapshot(...)` — pass; upserted one live snapshot
    - `cd frontend && npm run typecheck -- --pretty false` — fail, existing repo-wide type debt unrelated to source-sync files
    - `cd frontend && npx tsc --noEmit --pretty false 2>&1 | rg "source-sync|source_sync|source-sync-health|SourceSync"` — pass by no matches; no source-sync type errors reported
+   - `cd frontend && npx tsc --noEmit --pretty false 2>&1 | rg "source-sync|source_sync|source-sync-health|SourceSync|graph-sync"` — pass by no matches; no source-sync/graph-sync type errors reported
 8) Evidence artifacts (screenshot/video/report/log paths):
    - Migration ledger: command output in this session, `Supabase migration ledger check passed: 20260507160000`
    - Live DB table existence: `source_sync_runs|source_sync_health_snapshots|graph_subscriptions`
@@ -47,7 +50,7 @@
    - Source and compiler observability are fragmented; current compiler health does not expose source freshness or per-source lag.
    - Graph sync currently combines sync, embedding, and compiler work in one path, increasing timeout/blast-radius risk.
    - OneDrive/SharePoint source rows do not feed packet compilation as consistently as Outlook/Teams.
-10) Recommended next action (one line): Add Graph webhook/delta subscription lifecycle and assistant health awareness now that the control plane and producer run ledger are wired.
+10) Recommended next action (one line): Add Graph webhook/delta subscription lifecycle and assistant health awareness now that source fetch is split from heavy processing.
 11) Handoff file path: docs/ops/handoffs/2026-05-07-S35-source-sync-observability.md
 12) Migration ledger evidence: `npm run db:migrations:verify-applied -- supabase/migrations/20260507160000_source_sync_health_observability.sql` passed for `20260507160000`.
 
@@ -59,7 +62,7 @@
 
 ## Current Status
 
-Second implementation slice complete. Source sync health schema, backend read model, FastAPI endpoints, admin API proxy, admin page, focused backend tests, producer run-ledger wiring, and safe manual source actions are in place. Migration `20260507160000` was applied to the linked Supabase remote and ledger-verified.
+Third implementation slice complete. Source sync health schema, backend read model, FastAPI endpoints, admin API proxy, admin page, focused backend tests, producer run-ledger wiring, safe manual source actions, and fetch-only Graph sync options are in place. Migration `20260507160000` was applied to the linked Supabase remote and ledger-verified.
 
 ## Exact Next Step
 
@@ -73,7 +76,7 @@ Add Graph webhook/delta subscription lifecycle and assistant health awareness.
 - Existing worktree contains unrelated edits; avoid reverting or overwriting them.
 - Existing `session-board.md` contains historical conflict markers outside this session's appended S35 row.
 - Full frontend typecheck is blocked by existing broad repo debt; targeted source-sync grep found no source-sync errors.
-- Manual Graph sync remains a long blocking backend call until Phase 3 decouples sync from embedding/compiler work.
+- Admin Graph sync now skips embedding/compiler by default, but webhook notifications still need a proper queue/lifecycle layer.
 
 ## Resume Commands
 
@@ -94,3 +97,4 @@ npm run db:migrations:verify-applied -- supabase/migrations/20260507160000_sourc
 - Admin page: `frontend/src/app/(admin)/source-sync/page.tsx`
 - Source health component: `frontend/src/components/ai-intelligence/source-sync-health-panel.tsx`
 - Producer wiring: `backend/src/services/integrations/microsoft_graph/sync.py`, `backend/src/services/integrations/microsoft_graph/embed.py`, `backend/src/services/ingestion/fireflies_pipeline.py`, `backend/src/services/task_extraction.py`, `backend/src/services/intelligence/compiler.py`
+- Graph phase guardrail: `backend/tests/test_graph_sync_options.py`
