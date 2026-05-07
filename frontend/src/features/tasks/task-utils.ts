@@ -67,6 +67,10 @@ export interface TasksRow {
   extraction_metadata: unknown;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
 function titleCase(value: string): string {
   return value
     .split(" ")
@@ -105,6 +109,10 @@ function textFromJsonish(value: unknown): string | null {
   }
 }
 
+const SOURCE_CONTEXT_FALLBACK_CHARS = 5000;
+const SOURCE_CONTEXT_BEFORE_MATCH_CHARS = 800;
+const SOURCE_CONTEXT_AFTER_MATCH_CHARS = 4200;
+
 function excerptAroundNeedle(sourceText: string | null, needles: Array<string | null | undefined>): string | null {
   if (!sourceText) return null;
   const text = compactText(sourceText);
@@ -129,11 +137,13 @@ function excerptAroundNeedle(sourceText: string | null, needles: Array<string | 
   }
 
   if (matchIndex < 0) {
-    return text.length > 900 ? `${text.slice(0, 900).trim()}...` : text;
+    return text.length > SOURCE_CONTEXT_FALLBACK_CHARS
+      ? `${text.slice(0, SOURCE_CONTEXT_FALLBACK_CHARS).trim()}...`
+      : text;
   }
 
-  const start = Math.max(0, matchIndex - 240);
-  const end = Math.min(text.length, matchIndex + 660);
+  const start = Math.max(0, matchIndex - SOURCE_CONTEXT_BEFORE_MATCH_CHARS);
+  const end = Math.min(text.length, matchIndex + SOURCE_CONTEXT_AFTER_MATCH_CHARS);
   const prefix = start > 0 ? "... " : "";
   const suffix = end < text.length ? " ..." : "";
   return `${prefix}${text.slice(start, end).trim()}${suffix}`;
@@ -235,8 +245,16 @@ export function getTaskCategory(
     | "source_type"
     | "source_system"
     | "file_name"
+    | "extraction_metadata"
   >,
 ): string {
+  if (isRecord(task.extraction_metadata)) {
+    const explicitCategory = task.extraction_metadata.task_category;
+    if (typeof explicitCategory === "string" && explicitCategory.trim()) {
+      return explicitCategory.trim();
+    }
+  }
+
   const normalized = [
     task.description,
     task.title,

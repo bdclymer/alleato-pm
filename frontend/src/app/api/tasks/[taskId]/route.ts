@@ -4,21 +4,105 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { apiErrorResponse } from "@/lib/api-error";
+import type { Json } from "@/types/database.types";
+
+type JsonRecord = { [key: string]: Json | undefined };
 
 const PatchBodySchema = z.object({
+  description: z.string().trim().min(1).optional(),
   status: z.string().min(1).optional(),
   due_date: z
     .union([z.string().regex(/^\d{4}-\d{2}-\d{2}$/), z.literal(""), z.null()])
     .optional(),
   project_id: z.union([z.coerce.number().int().positive(), z.null()]).optional(),
+  category: z.union([z.string().trim().min(1), z.null()]).optional(),
+  assignee_user_id: z.union([z.string().uuid(), z.null()]).optional(),
 }).refine(
   (body) =>
+    body.description !== undefined ||
     body.status !== undefined ||
     body.due_date !== undefined ||
-    body.project_id !== undefined,
+    body.project_id !== undefined ||
+    body.category !== undefined ||
+    body.assignee_user_id !== undefined,
   { message: "At least one task field is required." },
 );
+
+function toJsonRecord(value: unknown): JsonRecord {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+    ? { ...(value as JsonRecord) }
+    : {};
+}
+
+async function resolveAssignee(userId: string | null) {
+  if (userId === null) {
+    return {
+      assignee_person_id: null,
+      assignee_email: null,
+      assignee_name: null,
+    };
+  }
+
+  const serviceClient = createServiceClient();
+  const { data: profile, error: profileError } = await serviceClient
+    .from("user_profiles")
+    .select("id, email, full_name")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (profileError || !profile) {
+    throw new GuardrailError({
+      code: "VALIDATION_ERROR",
+      where: "tasks/[taskId]#PATCH",
+      message: "Selected assignee was not found.",
+      details: { reason: profileError?.message, userId },
+      cause: profileError ?? undefined,
+    });
+  }
+
+  const { data: personByAuthId, error: authPersonError } = await serviceClient
+    .from("people")
+    .select("id")
+    .eq("auth_user_id", userId)
+    .maybeSingle();
+
+  if (authPersonError) {
+    throw new GuardrailError({
+      code: "INTERNAL_ERROR",
+      where: "tasks/[taskId]#PATCH",
+      message: "Failed to resolve assignee directory record.",
+      details: { reason: authPersonError.message, userId },
+      cause: authPersonError,
+    });
+  }
+
+  const { data: personByEmail, error: emailPersonError } =
+    !personByAuthId && profile.email
+      ? await serviceClient
+          .from("people")
+          .select("id")
+          .ilike("email", profile.email)
+          .maybeSingle()
+      : { data: null, error: null };
+
+  if (emailPersonError) {
+    throw new GuardrailError({
+      code: "INTERNAL_ERROR",
+      where: "tasks/[taskId]#PATCH",
+      message: "Failed to resolve assignee email directory record.",
+      details: { reason: emailPersonError.message, userId },
+      cause: emailPersonError,
+    });
+  }
+
+  return {
+    assignee_person_id: personByAuthId?.id ?? personByEmail?.id ?? null,
+    assignee_email: profile.email ?? null,
+    assignee_name: profile.full_name ?? profile.email ?? null,
+  };
+}
 
 export const PATCH = withApiGuardrails(
   "tasks/[taskId]#PATCH",
@@ -41,10 +125,15 @@ export const PATCH = withApiGuardrails(
     }
 
     const updates: {
+      description?: string;
       status?: string;
       due_date?: string | null;
       project_id?: number | null;
       project_ids?: number[];
+      assignee_person_id?: string | null;
+      assignee_email?: string | null;
+      assignee_name?: string | null;
+      extraction_metadata?: JsonRecord;
       updated_at: string;
     } = {
       updated_at: new Date().toISOString(),
@@ -54,6 +143,10 @@ export const PATCH = withApiGuardrails(
       updates.status = parsed.data.status;
     }
 
+    if (parsed.data.description !== undefined) {
+      updates.description = parsed.data.description;
+    }
+
     if (parsed.data.due_date !== undefined) {
       updates.due_date = parsed.data.due_date === "" ? null : parsed.data.due_date;
     }
@@ -61,6 +154,30 @@ export const PATCH = withApiGuardrails(
     if (parsed.data.project_id !== undefined) {
       updates.project_id = parsed.data.project_id;
       updates.project_ids = parsed.data.project_id === null ? [] : [parsed.data.project_id];
+    }
+
+    if (parsed.data.assignee_user_id !== undefined) {
+      Object.assign(updates, await resolveAssignee(parsed.data.assignee_user_id));
+    }
+
+    if (parsed.data.category !== undefined) {
+      const { data: currentTask, error: currentTaskError } = await supabase
+        .from("tasks")
+        .select("extraction_metadata")
+        .eq("id", taskId)
+        .maybeSingle();
+
+      if (currentTaskError) {
+        return apiErrorResponse(currentTaskError);
+      }
+
+      const metadata = toJsonRecord(currentTask?.extraction_metadata);
+      if (parsed.data.category === null) {
+        delete metadata.task_category;
+      } else {
+        metadata.task_category = parsed.data.category;
+      }
+      updates.extraction_metadata = metadata;
     }
 
     const { data, error } = await supabase

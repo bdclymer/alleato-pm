@@ -11,20 +11,39 @@ import type { CSSProperties, ReactNode } from "react";
 import {
   ArrowLeft,
   ArrowUpRight,
-  CalendarDays,
   CheckCircle2,
+  CheckSquare2,
   ClipboardList,
-  FolderOpen,
   Loader2,
   MoreVertical,
+  Tag,
   Trash2,
+  UserRound,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
-import { PageShell } from "@/components/layout";
+import { PageShell, PageTabs } from "@/components/layout";
 import { TaskFeedbackButtons } from "@/components/ai/TaskFeedbackButtons";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,8 +51,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { apiFetch } from "@/lib/api-client";
 import { useConfirm } from "@/hooks/use-confirm";
@@ -45,6 +64,12 @@ import {
   getTaskSourceTitle,
   getTaskSourceTarget,
 } from "@/features/tasks/task-utils";
+import {
+  type EmailThreadMessage,
+  cleanSourceContextText,
+  extractContextBody,
+  parseEmailThread,
+} from "@/features/tasks/email-thread-parser";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -54,9 +79,12 @@ type Scope = "mine" | "all" | "brandon";
 type StatusFilter = "open" | "done" | "all";
 type DisplayStatus = "open" | "in_progress" | "done";
 type TaskPatch = {
+  description?: string;
   status?: string;
   due_date?: string | null;
   project_id?: number | null;
+  category?: string | null;
+  assignee_user_id?: string | null;
 };
 
 type ProjectOption = {
@@ -65,6 +93,22 @@ type ProjectOption = {
   project_number?: string | null;
   "job number"?: string | null;
 };
+
+type UserOption = {
+  id: string;
+  email?: string | null;
+  full_name?: string | null;
+  person_id?: string | null;
+};
+
+const DEFAULT_TASK_CATEGORIES = [
+  "Accounting",
+  "Compliance",
+  "Design",
+  "Estimating",
+  "General",
+  "Operations",
+];
 
 const STATUS_FILTERS: { value: StatusFilter; label: string }[] = [
   { value: "open", label: "Open" },
@@ -91,21 +135,6 @@ function toDisplayStatus(status: string | null): DisplayStatus {
   return "open";
 }
 
-function relativeTime(dateStr: string | null): string | null {
-  if (!dateStr) return null;
-  const now = Date.now();
-  const then = new Date(dateStr).getTime();
-  const diffMs = now - then;
-  const diffMin = Math.floor(diffMs / 60_000);
-  if (diffMin < 1) return "just now";
-  if (diffMin < 60) return `${diffMin}m ago`;
-  const diffH = Math.floor(diffMin / 60);
-  if (diffH < 24) return `${diffH}h ago`;
-  const diffD = Math.floor(diffH / 24);
-  if (diffD < 30) return `${diffD}d ago`;
-  return new Date(dateStr).toLocaleDateString("en-US", { month: "short", day: "numeric" });
-}
-
 function getSavedPanelPct(): number {
   if (typeof window === "undefined") return PANEL_DEFAULT_PCT;
   try {
@@ -125,6 +154,54 @@ function getSavedPanelPct(): number {
 function isOverdue(dueDateStr: string | null): boolean {
   if (!dueDateStr) return false;
   return new Date(dueDateStr).getTime() < Date.now();
+}
+
+const TASK_LIST_MIN_WIDTH = "68rem";
+const TASK_LIST_GRID_TEMPLATE =
+  "44px minmax(18rem, 1.7fr) minmax(9rem, 0.8fr) minmax(7rem, 0.6fr) minmax(7rem, 0.6fr) minmax(8rem, 0.7fr) minmax(7rem, 0.55fr)";
+
+function TaskListHeader({
+  allVisibleSelected,
+  someVisibleSelected,
+  visibleTaskIds,
+  selectedTaskIds,
+  onToggleVisibleSelection,
+}: {
+  allVisibleSelected: boolean;
+  someVisibleSelected: boolean;
+  visibleTaskIds: string[];
+  selectedTaskIds: string[];
+  onToggleVisibleSelection: (checked: boolean) => void;
+}) {
+  return (
+    <div
+      className="sticky top-0 z-10 grid items-center border-b border-border/40 bg-background text-[11px] font-medium uppercase tracking-wide text-muted-foreground"
+      style={{
+        gridTemplateColumns: TASK_LIST_GRID_TEMPLATE,
+        minWidth: TASK_LIST_MIN_WIDTH,
+      }}
+    >
+      <div className="sticky left-0 z-20 flex h-9 items-center justify-center bg-background">
+        <Checkbox
+          checked={allVisibleSelected ? true : someVisibleSelected ? "indeterminate" : false}
+          onCheckedChange={(value) => onToggleVisibleSelection(value === true)}
+          disabled={visibleTaskIds.length === 0}
+          aria-label="Select visible tasks"
+        />
+      </div>
+      <div className="px-2">Task</div>
+      <div className="px-2">Assigned</div>
+      <div className="px-2">Source</div>
+      <div className="px-2">Date assigned</div>
+      <div className="px-2">Assigned by</div>
+      <div className="px-2">Priority</div>
+      <span className="sr-only">
+        {selectedTaskIds.length > 0
+          ? `${selectedTaskIds.length} selected`
+          : "No tasks selected"}
+      </span>
+    </div>
+  );
 }
 
 function formatPriorityLabel(priority: string | null): string {
@@ -149,15 +226,98 @@ function projectOptionLabel(project: ProjectOption): string {
     : project.name ?? `Project ${project.id}`;
 }
 
+function userOptionLabel(user: UserOption): string {
+  return user.full_name || user.email || "Unnamed user";
+}
+
+const COLLAPSED_CONTEXT_CHARS = 1800;
+
+function ContextBody({ value, collapsedChars = COLLAPSED_CONTEXT_CHARS }: { value: string; collapsedChars?: number }) {
+  const [expanded, setExpanded] = useState(false);
+  const isLong = value.length > collapsedChars;
+  const visibleBody =
+    !isLong || expanded
+      ? value
+      : `${value.slice(0, collapsedChars).trim()}...`;
+
+  return (
+    <div className="space-y-2">
+      <div className="max-w-none whitespace-pre-wrap break-words text-sm leading-7 text-foreground">
+        {visibleBody}
+      </div>
+      {isLong && (
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="h-auto px-0 text-xs text-muted-foreground hover:bg-transparent hover:text-foreground"
+          onClick={() => setExpanded((current) => !current)}
+        >
+          {expanded ? "Show less" : "Show full message"}
+        </Button>
+      )}
+    </div>
+  );
+}
+
+function MessageSummary({ message, index }: { message: EmailThreadMessage; index: number }) {
+  return (
+    <div className="min-w-0 space-y-1">
+      <div className="flex min-w-0 items-center gap-2">
+        <span className="shrink-0 text-xs font-medium text-muted-foreground">
+          {index === 0 ? "Latest" : `Earlier ${index}`}
+        </span>
+        <span className="min-w-0 truncate text-sm font-medium text-foreground">
+          {message.subject ?? message.from ?? "Email message"}
+        </span>
+      </div>
+      <div className="min-w-0 truncate text-xs text-muted-foreground">
+        {[message.from, message.date].filter(Boolean).join(" · ")}
+      </div>
+    </div>
+  );
+}
+
+function SourceContextBlock({ value }: { value: string }) {
+  const text = cleanSourceContextText(value);
+  const messages = parseEmailThread(text);
+
+  if (messages.length > 1) {
+    const defaultValue = messages[0]?.id;
+
+    return (
+      <Accordion type="single" collapsible defaultValue={defaultValue} className="space-y-2">
+        {messages.map((message, index) => (
+          <AccordionItem
+            key={message.id}
+            value={message.id}
+            className="rounded-md border border-border/60 bg-background px-3"
+          >
+            <AccordionTrigger className="py-3 hover:no-underline">
+              <MessageSummary message={message} index={index} />
+            </AccordionTrigger>
+            <AccordionContent className="pb-3">
+              <ContextBody value={message.body} collapsedChars={index === 0 ? 1600 : 900} />
+            </AccordionContent>
+          </AccordionItem>
+        ))}
+      </Accordion>
+    );
+  }
+
+  const message = messages[0];
+  const body = (message?.body ?? extractContextBody(text)) || text;
+
+  return (
+    <div className="space-y-2">
+      <ContextBody value={body} />
+    </div>
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Visual tokens
 // ---------------------------------------------------------------------------
-
-const STATUS_DOT: Record<DisplayStatus, string> = {
-  open: "bg-amber-400",
-  in_progress: "bg-blue-400",
-  done: "bg-emerald-400",
-};
 
 const STATUS_SELECT_CLASSES: Record<DisplayStatus, string> = {
   done: "text-emerald-700 dark:text-emerald-400",
@@ -239,95 +399,94 @@ function useResizablePanel(containerRef: React.RefObject<HTMLDivElement | null>)
 function TaskListItem({
   item,
   isSelected,
+  isChecked,
   onClick,
+  onCheckedChange,
 }: {
   item: TasksRow;
   isSelected: boolean;
+  isChecked: boolean;
   onClick: () => void;
+  onCheckedChange: (checked: boolean) => void;
 }) {
   const ds = toDisplayStatus(item.status);
   const sourceLabel = getTaskSourceLabel(item);
   const priority = (item.priority ?? "").toLowerCase();
   const priorityMeta = PRIORITY_META[priority];
-  const overdue = isOverdue(item.due_date);
+  const priorityLabel = item.priority ? formatPriorityLabel(item.priority) : "—";
   const isDone = ds === "done";
-
-  // One clean meta line: Assignee · Source (no badge pills)
-  const metaParts = [
-    item.assignee_name ?? null,
-    sourceLabel && sourceLabel !== "Unknown" ? sourceLabel : null,
-  ]
-    .filter(Boolean)
-    .join(" · ");
-
-  // Right-side label: show overdue date if applicable, else relative time
-  const rightLabel =
-    overdue && !isDone && item.due_date
-      ? `Due ${format(new Date(item.due_date), "MMM d")}`
-      : relativeTime(item.created_at);
+  const assignedBy = item.assigned_by ?? "—";
+  const assignedDate = item.created_at ? format(new Date(item.created_at), "MMM d, yyyy") : "—";
+  const assignedTo = item.assignee_name ?? item.assignee_email ?? "Unassigned";
 
   return (
-    <Button
-      type="button"
-      variant="ghost"
+    <div
+      role="button"
+      tabIndex={0}
       data-task-item
       onClick={onClick}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onClick();
+        }
+      }}
       className={cn(
-        "relative h-auto w-full min-w-0 justify-start overflow-hidden whitespace-normal rounded-none border-b border-border/30 py-3 pl-4 pr-3 text-left transition-colors",
+        "group grid cursor-pointer items-center border-b border-border/30 text-sm transition-colors",
         isSelected
-          ? "bg-primary/[0.04] shadow-[inset_3px_0_0_hsl(var(--primary))]"
+          ? "bg-primary/[0.04]"
           : "hover:bg-muted/40",
       )}
+      style={{
+        gridTemplateColumns: TASK_LIST_GRID_TEMPLATE,
+        minWidth: TASK_LIST_MIN_WIDTH,
+      }}
     >
-      <div className="flex w-full min-w-0 items-start gap-3">
-        {/* Status dot */}
-        <div
-          className={cn(
-            "mt-[6px] h-2 w-2 shrink-0 rounded-full ring-2 ring-background",
-            STATUS_DOT[ds],
-            isDone && "opacity-50",
-          )}
+      <div
+        className={cn(
+          "sticky left-0 z-10 flex min-h-12 items-center justify-center",
+          isSelected ? "bg-primary/[0.04]" : "bg-background group-hover:bg-muted/40",
+        )}
+      >
+        <Checkbox
+          checked={isChecked}
+          onCheckedChange={(value) => onCheckedChange(value === true)}
+          onClick={(event) => event.stopPropagation()}
+          aria-label={`Select ${item.description || item.title || "task"}`}
         />
-
-        {/* Main content */}
+      </div>
+      <div className="flex min-w-0 items-start gap-2 px-2 py-2.5">
         <div className="min-w-0 flex-1 overflow-hidden">
-          {/* Title row */}
-          <div className="flex min-w-0 items-start justify-between gap-2">
-            <p
-              className={cn(
-                "min-w-0 break-words line-clamp-2 text-sm leading-snug",
-                isSelected ? "font-medium text-foreground" : "text-foreground/90",
-                isDone && "text-muted-foreground line-through decoration-muted-foreground/40",
-              )}
-            >
-              {item.description || item.title || "Untitled task"}
-            </p>
-            {/* Priority dot (subtle, no pill) */}
-            {priorityMeta && !isDone && (
-              <div
-                className={cn("mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full", priorityMeta.dot)}
-                title={priorityMeta.label}
-              />
+          <p
+            className={cn(
+              "line-clamp-2 min-w-0 text-xs leading-snug",
+              isSelected ? "font-medium text-foreground" : "text-foreground/90",
+              isDone && "text-muted-foreground line-through decoration-muted-foreground/40",
             )}
-          </div>
-
-          {/* Meta row */}
-          <div className="mt-1 flex min-w-0 items-center justify-between gap-2">
-            <p className="min-w-0 truncate text-xs text-muted-foreground">
-              {metaParts || "—"}
-            </p>
-            <span
-              className={cn(
-                "shrink-0 text-xs",
-                overdue && !isDone ? "font-medium text-red-500" : "text-muted-foreground/60",
-              )}
-            >
-              {rightLabel ?? "—"}
-            </span>
-          </div>
+          >
+            {item.description || item.title || "Untitled task"}
+          </p>
         </div>
       </div>
-    </Button>
+      <div className="min-w-0 truncate px-2 text-xs text-foreground" title={assignedTo}>
+        {assignedTo}
+      </div>
+      <div className="min-w-0 truncate px-2 text-xs text-muted-foreground" title={sourceLabel}>
+        {sourceLabel || "—"}
+      </div>
+      <div className="min-w-0 truncate px-2 text-xs text-muted-foreground" title={assignedDate}>
+        {assignedDate}
+      </div>
+      <div className="min-w-0 truncate px-2 text-xs text-muted-foreground" title={assignedBy}>
+        {assignedBy}
+      </div>
+      <div className="min-w-0 truncate px-2 text-xs text-muted-foreground" title={priorityLabel}>
+        <span className="inline-flex min-w-0 items-center gap-1.5">
+          {priorityMeta && <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", priorityMeta.dot)} />}
+          <span className="truncate">{priorityLabel}</span>
+        </span>
+      </div>
+    </div>
   );
 }
 
@@ -371,12 +530,14 @@ function TaskDetail({
   updatingId: string | null;
   deletingId: string | null;
   onUpdateStatus: (id: string, status: string) => void;
-  onUpdateTask: (id: string, patch: TaskPatch, localPatch?: Partial<TasksRow>) => void;
+  onUpdateTask: (id: string, patch: TaskPatch, localPatch?: Partial<TasksRow>) => Promise<boolean> | boolean;
   onDelete: (id: string) => void;
   onBack?: () => void;
   projects: ProjectOption[];
   projectsLoading: boolean;
 }) {
+  const [isEditingText, setIsEditingText] = useState(false);
+  const [taskTextDraft, setTaskTextDraft] = useState(task.description || task.title || "");
   const ds = toDisplayStatus(task.status);
   const sourceLabel = getTaskSourceLabel(task);
   const sourceTitle = getTaskSourceTitle(task);
@@ -417,6 +578,12 @@ function TaskDetail({
     { value: "cancelled", label: "Cancelled" },
   ];
 
+  useEffect(() => {
+    if (!isEditingText) {
+      setTaskTextDraft(task.description || task.title || "");
+    }
+  }, [isEditingText, task.description, task.title]);
+
   async function handleDelete() {
     const ok = await confirmDelete({
       description: "Delete this task? This cannot be undone.",
@@ -424,6 +591,19 @@ function TaskDetail({
       confirmLabel: "Delete",
     });
     if (ok && task.id) onDelete(task.id);
+  }
+
+  async function handleSaveTaskText() {
+    if (!task.id) return;
+    const description = taskTextDraft.trim();
+    if (!description) {
+      toast.error("Task text is required");
+      return;
+    }
+
+    const updated = await onUpdateTask(task.id, { description }, { description });
+    if (!updated) return;
+    setIsEditingText(false);
   }
 
   return (
@@ -447,9 +627,60 @@ function TaskDetail({
 
         {/* Hero: task description */}
         <div className="mb-6 flex items-start gap-3">
-          <p className="min-w-0 flex-1 text-[15px] font-medium leading-relaxed text-foreground">
-            {task.description || task.title || "Untitled task"}
-          </p>
+          <div className="min-w-0 flex-1">
+            {isEditingText ? (
+              <div className="space-y-2">
+                <Textarea
+                  value={taskTextDraft}
+                  onChange={(event) => setTaskTextDraft(event.target.value)}
+                  disabled={updatingId === task.id}
+                  className="min-h-28 resize-y text-[15px] leading-relaxed"
+                  aria-label="Task text"
+                />
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => {
+                      void handleSaveTaskText();
+                    }}
+                    disabled={updatingId === task.id}
+                  >
+                    {updatingId === task.id && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                    Save
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setTaskTextDraft(task.description || task.title || "");
+                      setIsEditingText(false);
+                    }}
+                    disabled={updatingId === task.id}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <p className="text-[15px] font-medium leading-relaxed text-foreground">
+                  {task.description || task.title || "Untitled task"}
+                </p>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-auto px-0 py-0 text-xs text-muted-foreground hover:bg-transparent hover:text-foreground"
+                  onClick={() => setIsEditingText(true)}
+                  disabled={updatingId === task.id}
+                >
+                  Edit task text
+                </Button>
+              </div>
+            )}
+          </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -506,21 +737,18 @@ function TaskDetail({
 
             <TaskDetailRow label="Due">
               <div className="flex min-w-0 flex-col gap-2">
-                <div className="flex min-w-0 items-center gap-2">
-                  <CalendarDays className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  <Input
-                    type="date"
-                    value={task.due_date ?? ""}
-                    onChange={(event) => {
-                      if (!task.id) return;
-                      const dueDate = event.target.value || null;
-                      onUpdateTask(task.id, { due_date: dueDate }, { due_date: dueDate });
-                    }}
-                    disabled={updatingId === task.id}
-                    className="h-8 max-w-44"
-                    aria-label="Task due date"
-                  />
-                </div>
+                <Input
+                  type="date"
+                  value={task.due_date ?? ""}
+                  onChange={(event) => {
+                    if (!task.id) return;
+                    const dueDate = event.target.value || null;
+                    onUpdateTask(task.id, { due_date: dueDate }, { due_date: dueDate });
+                  }}
+                  disabled={updatingId === task.id}
+                  className="h-8 max-w-44"
+                  aria-label="Task due date"
+                />
                 {task.due_date ? (
                   <span
                     className={cn(
@@ -535,63 +763,51 @@ function TaskDetail({
                       <span className="ml-2 font-normal text-red-500">overdue</span>
                     )}
                   </span>
-                ) : (
-                  <span className="text-xs text-muted-foreground">No due date set</span>
-                )}
+                ) : null}
               </div>
             </TaskDetailRow>
 
             <TaskDetailRow label="Project">
               <div className="flex min-w-0 flex-col gap-2">
-                <div className="flex min-w-0 items-center gap-2">
-                  <FolderOpen className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  <Select
-                    value={selectedProjectValue}
-                    onValueChange={(value) => {
-                      if (!task.id) return;
-                      if (value === "__none__") {
-                        onUpdateTask(
-                          task.id,
-                          { project_id: null },
-                          { project_id: null, project_ids: [], project_name: null },
-                        );
-                        return;
-                      }
-
-                      const projectId = Number.parseInt(value, 10);
-                      const project = projects.find((item) => item.id === projectId);
+                <Select
+                  value={selectedProjectValue}
+                  onValueChange={(value) => {
+                    if (!task.id) return;
+                    if (value === "__none__") {
                       onUpdateTask(
                         task.id,
-                        { project_id: projectId },
-                        {
-                          project_id: projectId,
-                          project_ids: [projectId],
-                          project_name: project ? projectOptionLabel(project) : task.project_name,
-                        },
+                        { project_id: null },
+                        { project_id: null, project_ids: [], project_name: null },
                       );
-                    }}
-                    disabled={updatingId === task.id || projectsLoading}
-                  >
-                    <SelectTrigger className="h-8 max-w-md">
-                      <SelectValue placeholder={projectsLoading ? "Loading projects..." : "Select project"} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="__none__">No project</SelectItem>
-                      {projects.map((project) => (
-                        <SelectItem key={project.id} value={String(project.id)}>
-                          {projectOptionLabel(project)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                {task.project_name ? (
-                  <span className="block truncate text-xs text-muted-foreground">
-                    Linked to {task.project_name}
-                  </span>
-                ) : (
-                  <span className="text-xs text-muted-foreground">No project linked</span>
-                )}
+                      return;
+                    }
+
+                    const projectId = Number.parseInt(value, 10);
+                    const project = projects.find((item) => item.id === projectId);
+                    onUpdateTask(
+                      task.id,
+                      { project_id: projectId },
+                      {
+                        project_id: projectId,
+                        project_ids: [projectId],
+                        project_name: project ? projectOptionLabel(project) : task.project_name,
+                      },
+                    );
+                  }}
+                  disabled={updatingId === task.id || projectsLoading}
+                >
+                  <SelectTrigger className="h-8 max-w-md">
+                    <SelectValue placeholder={projectsLoading ? "Loading projects..." : "Select project"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">No project</SelectItem>
+                    {projects.map((project) => (
+                      <SelectItem key={project.id} value={String(project.id)}>
+                        {projectOptionLabel(project)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </TaskDetailRow>
 
@@ -636,33 +852,37 @@ function TaskDetail({
 
             <TaskDetailRow label="Source">
               <div className="flex min-w-0 flex-col gap-1">
-                <span className="text-foreground">{sourceLabel}</span>
                 {sourceTarget ? (
                   <a
                     href={sourceTarget.href}
                     target={sourceTarget.external ? "_blank" : undefined}
                     rel={sourceTarget.external ? "noopener noreferrer" : undefined}
-                    className="inline-flex min-w-0 items-center gap-2 text-muted-foreground underline-offset-4 hover:text-primary hover:underline"
+                    className="inline-flex min-w-0 items-center gap-2 text-foreground underline-offset-4 hover:text-primary hover:underline"
                   >
                     <ArrowUpRight className="h-3.5 w-3.5 shrink-0" />
                     <span className="truncate">{sourceLinkLabel}</span>
+                    {task.assigned_by && (
+                      <span className="shrink-0 text-xs text-muted-foreground">
+                        via {task.assigned_by}
+                      </span>
+                    )}
                   </a>
                 ) : (
-                  <span className="truncate text-muted-foreground">
-                    {sourceLinkLabel || "No source link"}
+                  <span className="inline-flex min-w-0 items-center gap-2 text-foreground">
+                    <span className="truncate">{sourceLinkLabel || "No source link"}</span>
+                    {task.assigned_by && (
+                      <span className="shrink-0 text-xs text-muted-foreground">
+                        via {task.assigned_by}
+                      </span>
+                    )}
                   </span>
-                )}
-                {task.assigned_by && (
-                  <span className="text-xs text-muted-foreground">via {task.assigned_by}</span>
                 )}
               </div>
             </TaskDetailRow>
 
             <TaskDetailRow label="Context">
               {task.source_context ? (
-                <blockquote className="whitespace-pre-wrap border-l-2 border-border pl-3 text-sm leading-relaxed text-foreground">
-                  {task.source_context}
-                </blockquote>
+                <SourceContextBlock value={task.source_context} />
               ) : (
                 <span className="text-muted-foreground">
                   No source excerpt was captured for this task.
@@ -766,10 +986,18 @@ export default function TasksPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
+  const [bulkCategory, setBulkCategory] = useState("__no_change__");
+  const [bulkAssigneeUserId, setBulkAssigneeUserId] = useState("__no_change__");
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
+  const [bulkUpdating, setBulkUpdating] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
   const [mobileShowDetail, setMobileShowDetail] = useState(false);
   const [focusedIndex, setFocusedIndex] = useState(0);
   const [projects, setProjects] = useState<ProjectOption[]>([]);
   const [projectsLoading, setProjectsLoading] = useState(true);
+  const [users, setUsers] = useState<UserOption[]>([]);
+  const [usersLoading, setUsersLoading] = useState(true);
 
   const listPanelRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -827,13 +1055,62 @@ export default function TasksPage() {
     };
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchUsers() {
+      setUsersLoading(true);
+      try {
+        const result = await apiFetch<{ users?: UserOption[] }>("/api/users", {
+          cache: "no-store",
+        });
+        if (!cancelled) {
+          setUsers(result.users ?? []);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          toast.error(err instanceof Error ? err.message : "Failed to load users");
+        }
+      } finally {
+        if (!cancelled) {
+          setUsersLoading(false);
+        }
+      }
+    }
+
+    void fetchUsers();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   // When scope changes reset selection and status filter
   const handleScopeChange = useCallback((nextScope: Scope) => {
     setScope(nextScope);
     setSelectedId(null);
+    setSelectedTaskIds([]);
     setFilter("open");
     setMobileShowDetail(false);
   }, []);
+
+  const scopeTabs = useMemo(
+    () =>
+      [
+        { label: "My Tasks", href: "/tasks?scope=mine", scope: "mine" as const },
+        ...(isAdmin
+          ? [
+              { label: "Brandon", href: "/tasks?scope=brandon", scope: "brandon" as const },
+              { label: "All Tasks", href: "/tasks?scope=all", scope: "all" as const },
+            ]
+          : []),
+      ].map((tab) => ({
+        label: tab.label,
+        href: tab.href,
+        isActive: scope === tab.scope,
+      })),
+    [isAdmin, scope],
+  );
 
   // ---- Filtered list ----
   const filteredItems = useMemo(() => {
@@ -844,6 +1121,37 @@ export default function TasksPage() {
       return true;
     });
   }, [items, filter]);
+
+  const visibleTaskIds = useMemo(
+    () => filteredItems.map((item) => item.id).filter((id): id is string => Boolean(id)),
+    [filteredItems],
+  );
+
+  const selectedVisibleCount = useMemo(
+    () => visibleTaskIds.filter((id) => selectedTaskIds.includes(id)).length,
+    [selectedTaskIds, visibleTaskIds],
+  );
+
+  const allVisibleSelected =
+    visibleTaskIds.length > 0 && selectedVisibleCount === visibleTaskIds.length;
+  const someVisibleSelected =
+    selectedVisibleCount > 0 && selectedVisibleCount < visibleTaskIds.length;
+
+  const categoryOptions = useMemo(
+    () =>
+      Array.from(
+        new Set([
+          ...DEFAULT_TASK_CATEGORIES,
+          ...items.map((item) => getTaskCategory(item)).filter(Boolean),
+        ]),
+      ).sort((left, right) => left.localeCompare(right)),
+    [items],
+  );
+
+  useEffect(() => {
+    const liveIds = new Set(items.map((item) => item.id).filter(Boolean));
+    setSelectedTaskIds((current) => current.filter((id) => liveIds.has(id)));
+  }, [items]);
 
   // ---- Auto-select first item ----
   useEffect(() => {
@@ -910,8 +1218,10 @@ export default function TasksPage() {
       });
       toast.success("Task updated");
       setItems((prev) => prev.map((t) => (t.id === id ? { ...t, ...localPatch } : t)));
+      return true;
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to update task");
+      return false;
     } finally {
       setUpdatingId(null);
     }
@@ -919,6 +1229,116 @@ export default function TasksPage() {
 
   async function updateStatus(id: string, status: string) {
     await updateTask(id, { status }, { status });
+  }
+
+  function updateTaskCategoryLocally(task: TasksRow, category: string | null): TasksRow {
+    const metadata =
+      typeof task.extraction_metadata === "object" &&
+      task.extraction_metadata !== null &&
+      !Array.isArray(task.extraction_metadata)
+        ? { ...(task.extraction_metadata as Record<string, unknown>) }
+        : {};
+
+    if (category) {
+      metadata.task_category = category;
+    } else {
+      delete metadata.task_category;
+    }
+
+    return { ...task, extraction_metadata: metadata };
+  }
+
+  function toggleTaskSelection(id: string, checked: boolean) {
+    setSelectedTaskIds((current) => {
+      if (checked) {
+        return current.includes(id) ? current : [...current, id];
+      }
+      return current.filter((taskId) => taskId !== id);
+    });
+  }
+
+  function toggleVisibleSelection(checked: boolean) {
+    setSelectedTaskIds((current) => {
+      if (!checked) {
+        return current.filter((id) => !visibleTaskIds.includes(id));
+      }
+
+      return Array.from(new Set([...current, ...visibleTaskIds]));
+    });
+  }
+
+  async function applyBulkEdit() {
+    if (selectedTaskIds.length === 0) return;
+
+    const payload: {
+      task_ids: string[];
+      category?: string | null;
+      assignee_user_id?: string | null;
+    } = { task_ids: selectedTaskIds };
+
+    const selectedUser =
+      bulkAssigneeUserId !== "__no_change__" && bulkAssigneeUserId !== "__unassigned__"
+        ? users.find((user) => user.id === bulkAssigneeUserId)
+        : null;
+
+    if (bulkCategory === "__clear__") {
+      payload.category = null;
+    } else if (bulkCategory !== "__no_change__") {
+      payload.category = bulkCategory;
+    }
+
+    if (bulkAssigneeUserId === "__unassigned__") {
+      payload.assignee_user_id = null;
+    } else if (bulkAssigneeUserId !== "__no_change__") {
+      payload.assignee_user_id = bulkAssigneeUserId;
+    }
+
+    if (payload.category === undefined && payload.assignee_user_id === undefined) {
+      toast.error("Choose a category or assignee before applying bulk edits");
+      return;
+    }
+
+    setBulkUpdating(true);
+    try {
+      await apiFetch("/api/tasks/bulk", {
+        method: "PATCH",
+        body: JSON.stringify(payload),
+      });
+
+      setItems((current) =>
+        current.map((task) => {
+          if (!task.id || !selectedTaskIds.includes(task.id)) return task;
+
+          let nextTask = task;
+          if (payload.category !== undefined) {
+            nextTask = updateTaskCategoryLocally(nextTask, payload.category);
+          }
+
+          if (payload.assignee_user_id !== undefined) {
+            nextTask = {
+              ...nextTask,
+              assignee_person_id: selectedUser?.person_id ?? null,
+              assignee_email: selectedUser?.email ?? null,
+              assignee_name:
+                payload.assignee_user_id === null
+                  ? null
+                  : selectedUser
+                    ? userOptionLabel(selectedUser)
+                    : nextTask.assignee_name,
+            };
+          }
+
+          return nextTask;
+        }),
+      );
+      setBulkCategory("__no_change__");
+      setBulkAssigneeUserId("__no_change__");
+      toast.success(`Updated ${selectedTaskIds.length} selected task${selectedTaskIds.length === 1 ? "" : "s"}`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to update selected tasks");
+    } finally {
+      setBulkUpdating(false);
+    }
   }
 
   // ---- Delete ----
@@ -931,12 +1351,40 @@ export default function TasksPage() {
         setSelectedId(null);
         setMobileShowDetail(false);
       }
+      setSelectedTaskIds((current) => current.filter((taskId) => taskId !== id));
       setItems((prev) => prev.filter((t) => t.id !== id));
       setTotal((prev) => prev - 1);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to delete task");
     } finally {
       setDeletingId(null);
+    }
+  }
+
+  async function deleteSelectedItems() {
+    if (selectedTaskIds.length === 0) return;
+
+    setBulkDeleting(true);
+    try {
+      await apiFetch("/api/tasks/bulk", {
+        method: "DELETE",
+        body: JSON.stringify({ task_ids: selectedTaskIds }),
+      });
+
+      const selectedSet = new Set(selectedTaskIds);
+      setItems((prev) => prev.filter((task) => !task.id || !selectedSet.has(task.id)));
+      setTotal((prev) => Math.max(0, prev - selectedSet.size));
+      if (selectedId && selectedSet.has(selectedId)) {
+        setSelectedId(null);
+        setMobileShowDetail(false);
+      }
+      setSelectedTaskIds([]);
+      toast.success(`Deleted ${selectedSet.size} selected task${selectedSet.size === 1 ? "" : "s"}`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to delete selected tasks");
+    } finally {
+      setBulkDeleting(false);
+      setBulkDeleteDialogOpen(false);
     }
   }
 
@@ -955,19 +1403,37 @@ export default function TasksPage() {
   );
 
   return (
-    <PageShell
-      variant="dashboard"
-      title="Tasks"
-      showHeader={false}
-      className="px-0! py-0!"
-      contentClassName="space-y-0 overflow-hidden pt-0 pb-0"
-      fillHeight
-    >
-      <div
-        ref={containerRef}
-        data-task-split-view
-        className="flex h-[calc(100dvh-4rem)] min-h-0 overflow-hidden"
+    <>
+      <PageShell
+        variant="dashboard"
+        title="Tasks"
+        showHeader={false}
+        className="px-0! py-0!"
+        contentClassName="space-y-0 overflow-hidden pt-0 pb-0"
+        fillHeight
       >
+      <div className="flex h-[calc(100dvh-4rem)] min-h-0 flex-col overflow-hidden">
+        <div className="border-b border-border/40 bg-background px-6 pt-4">
+          <h1 className="text-xl font-semibold text-foreground">Tasks</h1>
+          {!profileLoading && (
+            <PageTabs
+              tabs={scopeTabs}
+              variant="inline"
+              className="-mr-1 mb-0 mt-2 w-[calc(100vw-0.25rem)] min-w-0 sm:mr-0 sm:w-full md:flex-1"
+              onTabClick={(href) => {
+                const nextScope = new URL(href, "http://local").searchParams.get("scope");
+                if (nextScope === "mine" || nextScope === "brandon" || nextScope === "all") {
+                  handleScopeChange(nextScope);
+                }
+              }}
+            />
+          )}
+        </div>
+        <div
+          ref={containerRef}
+          data-task-split-view
+          className="flex min-h-0 flex-1 overflow-hidden"
+        >
 
         {/* ── Left: task list ── */}
         <div
@@ -979,41 +1445,6 @@ export default function TasksPage() {
           )}
           style={{ "--tasks-left-pct": `${leftPct}%` } as CSSProperties}
         >
-          {/* Scope tabs — My Tasks / Brandon Review / All Tasks (admin-only broad scopes) */}
-          {(!profileLoading) && (
-            <div className="border-b border-border/40 px-3 py-2">
-              <Tabs
-                value={scope}
-                onValueChange={(v) => handleScopeChange(v as Scope)}
-              >
-                <TabsList className="h-7 w-full gap-0 rounded-md bg-muted/60 p-0.5">
-                  <TabsTrigger
-                    value="mine"
-                    className="h-6 flex-1 rounded-sm px-2 text-xs font-medium data-[state=active]:bg-background data-[state=active]:shadow-xs data-[state=inactive]:text-muted-foreground"
-                  >
-                    My Tasks
-                  </TabsTrigger>
-                  {isAdmin && (
-                    <>
-                      <TabsTrigger
-                        value="brandon"
-                        className="h-6 flex-1 rounded-sm px-2 text-xs font-medium data-[state=active]:bg-background data-[state=active]:shadow-xs data-[state=inactive]:text-muted-foreground"
-                      >
-                        Brandon
-                      </TabsTrigger>
-                      <TabsTrigger
-                        value="all"
-                        className="h-6 flex-1 rounded-sm px-2 text-xs font-medium data-[state=active]:bg-background data-[state=active]:shadow-xs data-[state=inactive]:text-muted-foreground"
-                      >
-                        All Tasks
-                      </TabsTrigger>
-                    </>
-                  )}
-                </TabsList>
-              </Tabs>
-            </div>
-          )}
-
           {/* Status filter — link-style tabs */}
           <div className="border-b border-border/40 px-3">
             <div className="flex">
@@ -1045,11 +1476,107 @@ export default function TasksPage() {
             </div>
           </div>
 
+          {selectedTaskIds.length > 0 && (
+            <div className="border-b border-border/40 px-3 py-2">
+              <div className="flex min-h-9 flex-wrap items-center justify-between gap-2">
+                <span className="text-xs text-muted-foreground">
+                  {selectedTaskIds.length} selected
+                </span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedTaskIds([])}
+                  className="h-8 gap-1.5 px-2 text-xs text-muted-foreground"
+                >
+                  <X className="h-3.5 w-3.5" />
+                  Clear
+                </Button>
+              </div>
+
+              <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+                <Select value={bulkCategory} onValueChange={setBulkCategory}>
+                  <SelectTrigger className="h-8 w-full gap-2 sm:w-44">
+                    <Tag className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                    <SelectValue placeholder="Category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__no_change__">Category unchanged</SelectItem>
+                    <SelectItem value="__clear__">Clear category</SelectItem>
+                    {categoryOptions.map((category) => (
+                      <SelectItem key={category} value={category}>
+                        {category}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select
+                  value={bulkAssigneeUserId}
+                  onValueChange={setBulkAssigneeUserId}
+                  disabled={usersLoading}
+                >
+                  <SelectTrigger className="h-8 w-full gap-2 sm:w-56">
+                    <UserRound className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                    <SelectValue placeholder={usersLoading ? "Loading users..." : "Assign user"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__no_change__">Assignee unchanged</SelectItem>
+                    <SelectItem value="__unassigned__">Unassigned</SelectItem>
+                    {users.map((user) => (
+                      <SelectItem key={user.id} value={user.id}>
+                        {userOptionLabel(user)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <div className="flex items-center gap-2 sm:ml-auto">
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={applyBulkEdit}
+                    disabled={bulkUpdating}
+                    className="h-8 gap-1.5"
+                  >
+                    {bulkUpdating ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <CheckSquare2 className="h-3.5 w-3.5" />
+                    )}
+                    Apply
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => setBulkDeleteDialogOpen(true)}
+                    disabled={bulkDeleting}
+                    className="h-8 gap-1.5"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    Delete
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* List */}
           <div
             data-task-list-scroll
-            className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain pt-1"
+            className="flex-1 overflow-auto overscroll-contain"
           >
+            {!loading && filteredItems.length > 0 && (
+              <TaskListHeader
+                allVisibleSelected={allVisibleSelected}
+                someVisibleSelected={someVisibleSelected}
+                visibleTaskIds={visibleTaskIds}
+                selectedTaskIds={selectedTaskIds}
+                onToggleVisibleSelection={toggleVisibleSelection}
+              />
+            )}
+
             {loading && (
               <div className="flex items-center justify-center py-20">
                 <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary/20 border-t-primary" />
@@ -1075,7 +1602,9 @@ export default function TasksPage() {
                   key={item.id}
                   item={item}
                   isSelected={selectedId === item.id}
+                  isChecked={item.id ? selectedTaskIds.includes(item.id) : false}
                   onClick={() => item.id && selectItem(item.id)}
+                  onCheckedChange={(checked) => item.id && toggleTaskSelection(item.id, checked)}
                 />
               ))}
           </div>
@@ -1130,7 +1659,31 @@ export default function TasksPage() {
             />
           </div>
         )}
+        </div>
       </div>
-    </PageShell>
+      </PageShell>
+
+      <AlertDialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete selected tasks</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete {selectedTaskIds.length} selected task
+              {selectedTaskIds.length === 1 ? "" : "s"}.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={bulkDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={deleteSelectedItems}
+              disabled={bulkDeleting || selectedTaskIds.length === 0}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {bulkDeleting ? "Deleting..." : "Delete selected"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
