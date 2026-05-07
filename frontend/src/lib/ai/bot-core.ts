@@ -181,9 +181,11 @@ export async function assembleSystemPrompt(options: {
       const recentBlock = buildRecentConversationsBlock(recentSummaries);
 
       const workspaceBlock = buildWorkspaceContextBlock(activeArtifacts);
+      // Append after the static strategist prompt — static content first is
+      // required for OpenAI's prefix-based automatic prompt caching.
       const contextParts = [recentBlock, memoryBlock, learningBlock, workspaceBlock].filter(Boolean);
       if (contextParts.length > 0) {
-        systemPrompt = contextParts.join("\n\n") + "\n\n---\n\n" + systemPrompt;
+        systemPrompt = systemPrompt + "\n\n---\n\n" + contextParts.join("\n\n");
       }
     } catch (error) {
       const message =
@@ -213,7 +215,7 @@ export async function assembleSystemPrompt(options: {
       });
 
       if (taskTrainingBlock) {
-        systemPrompt = `${taskTrainingBlock}\n\n---\n\n${systemPrompt}`;
+        systemPrompt = systemPrompt + `\n\n---\n\n${taskTrainingBlock}`;
       }
     } catch (error) {
       const message =

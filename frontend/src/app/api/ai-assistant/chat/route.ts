@@ -3720,12 +3720,12 @@ export const POST = withApiGuardrails(
         if (sourceHealthRequested) {
           const sourceHealth = await getAssistantSourceHealthContext("source_status_request");
           if (sourceHealth) {
-            systemPrompt = `${sourceHealth.promptInjection}\n\n---\n\n${systemPrompt}`;
+            systemPrompt = systemPrompt + `\n\n---\n\n${sourceHealth.promptInjection}`;
           }
         }
 
         if (executivePagePacket) {
-          systemPrompt = `${formatExecutiveBriefPacketContext(executivePagePacket)}\n\n---\n\n${systemPrompt}`;
+          systemPrompt = systemPrompt + `\n\n---\n\n${formatExecutiveBriefPacketContext(executivePagePacket)}`;
         }
 
         if (isExecutiveBriefingMetadataQuestion(lastUserContent)) {
@@ -4245,12 +4245,12 @@ export const POST = withApiGuardrails(
           // case 05-recent-emails for the dogfood failure that surfaced this.
           const sourceLookupHeader = `# Source Lookup Results\n\nThe user is asking for what was said / what happened in source channels (meetings, Teams, email, documents). I ran source retrieval before synthesis. If a Recent Teams Window is present, treat it as the current primary evidence and use older semantic matches only as secondary pattern context. Read the sources carefully, extract the actual commitments / issues / decisions / sentiment the user is asking about, and synthesize a useful answer with specific quotes or paraphrased points and source citations. Do NOT just list the source previews verbatim — that's what we used to do and it wasn't useful. If the sources don't actually contain what the user asked about, say so honestly.`;
           systemPrompt = [
+            systemPrompt,
+            "---",
             sourceLookupHeader,
             sourceLookupHealth?.promptInjection,
             recentTeamsContext,
             sourceLookupContext,
-            "---",
-            systemPrompt,
           ].filter((part): part is string => Boolean(part?.trim())).join("\n\n");
 
           writeStrategistStatus(writer, {
@@ -4488,7 +4488,7 @@ export const POST = withApiGuardrails(
               ? `# Current Project Intelligence Packet\n\nA pre-rendered intelligence packet for **${resolvedTarget.slug ?? resolvedTarget.id}** is available below. Use it as your primary evidence. Layer your own analysis, recommendations, and follow-up questions on top. Call additional tools (semanticSearch, getProjectBriefingSnapshot, financial tools, etc.) when the user's question goes beyond what the packet covers or when more recent data would help.`
               : `# Project Intelligence Packet (Missing)\n\nNo current intelligence packet exists for **${resolvedTarget.slug ?? resolvedTarget.id}**. Acknowledge this briefly, then proceed by calling the appropriate tools (semanticSearch, getProjectBriefingSnapshot, financial tools, etc.) to gather evidence and answer the user.`;
 
-            systemPrompt = `${packetContextHeader}\n\n${packetContent}\n\n---\n\n${systemPrompt}`;
+            systemPrompt = systemPrompt + `\n\n---\n\n${packetContextHeader}\n\n${packetContent}`;
 
             writeStrategistStatus(writer, {
               stage: "knowledge",
@@ -4515,13 +4515,13 @@ export const POST = withApiGuardrails(
 
             const snapshotContext = formatProjectBriefingSnapshotContext(projectBriefingSnapshot);
             if (snapshotContext) {
-              systemPrompt = `${snapshotContext}\n\n---\n\n${systemPrompt}`;
+              systemPrompt = systemPrompt + `\n\n---\n\n${snapshotContext}`;
             }
 
             const executiveRetrievalContext =
               formatExecutiveBriefingRetrievalContext(executiveBriefingRetrieval);
             if (executiveRetrievalContext) {
-              systemPrompt = `${executiveRetrievalContext}\n\n---\n\n${systemPrompt}`;
+              systemPrompt = systemPrompt + `\n\n---\n\n${executiveRetrievalContext}`;
             }
 
             toolTrace.push(
@@ -4585,14 +4585,14 @@ export const POST = withApiGuardrails(
             selectedProjectId,
           });
           toolTrace.push(preflight.trace);
-          systemPrompt = `${preflight.promptInjection}\n\n---\n\n${systemPrompt}`;
+          systemPrompt = systemPrompt + `\n\n---\n\n${preflight.promptInjection}`;
 
           const sourceHealth =
             shouldUsePacketFirstIntent(assistantIntent) || forceBusinessRetrieval || sourceHealthRequested
               ? await getAssistantSourceHealthContext("project_intelligence_context")
               : null;
           if (sourceHealth) {
-            systemPrompt = `${sourceHealth.promptInjection}\n\n---\n\n${systemPrompt}`;
+            systemPrompt = systemPrompt + `\n\n---\n\n${sourceHealth.promptInjection}`;
           }
 
           const projectId = selectedProjectId ?? preflight.primaryProjectId ?? undefined;
@@ -4633,7 +4633,7 @@ export const POST = withApiGuardrails(
               projectBriefingSnapshot = snapshotOutput as ProjectBriefingSnapshot;
               const snapshotContext = formatProjectBriefingSnapshotContext(projectBriefingSnapshot);
               if (snapshotContext) {
-                systemPrompt = `${snapshotContext}\n\n---\n\n${systemPrompt}`;
+                systemPrompt = systemPrompt + `\n\n---\n\n${snapshotContext}`;
               }
               writeStrategistStatus(writer, {
                 stage: "snapshot",
@@ -4704,7 +4704,7 @@ export const POST = withApiGuardrails(
               ? formatRetrievedSourceContext(deterministicRetrieval)
               : null;
             if (retrievedContext) {
-              systemPrompt = `${retrievedContext}\n\n---\n\n${systemPrompt}`;
+              systemPrompt = systemPrompt + `\n\n---\n\n${retrievedContext}`;
             }
           } else {
             toolTrace.push({
@@ -4813,7 +4813,7 @@ export const POST = withApiGuardrails(
           const executiveRetrievalContext =
             formatExecutiveBriefingRetrievalContext(executiveBriefingRetrieval);
           if (executiveRetrievalContext) {
-            systemPrompt = `${executiveRetrievalContext}\n\n---\n\n${systemPrompt}`;
+            systemPrompt = systemPrompt + `\n\n---\n\n${executiveRetrievalContext}`;
           }
 
           const loadedExecutiveSources = executiveSourceResults.filter(
