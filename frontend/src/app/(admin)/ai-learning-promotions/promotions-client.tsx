@@ -1,7 +1,16 @@
 "use client";
 
 import * as React from "react";
-import { Check, ChevronDown, ChevronRight, RefreshCw, X } from "lucide-react";
+import {
+  Ban,
+  Check,
+  ChevronDown,
+  ChevronRight,
+  PauseCircle,
+  Play,
+  RefreshCw,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { SectionRuleHeading } from "@/components/layout";
@@ -20,7 +29,18 @@ import { apiFetch } from "@/lib/api-client";
 import type { Database, Json } from "@/types/database.types";
 
 type AiLearningPromotionRow = Database["public"]["Tables"]["ai_learning_promotions"]["Row"];
-type PromotionStatus = "candidate" | "approved" | "applied" | "rejected";
+type AiRetrievalWeightRow = Database["public"]["Tables"]["ai_retrieval_weights"]["Row"];
+type AiLearningPromotionWithWeight = AiLearningPromotionRow & {
+  retrievalWeight?: AiRetrievalWeightRow | null;
+};
+type PromotionStatus = "candidate" | "approved" | "applied" | "rejected" | "superseded";
+type PromotionAction =
+  | "approve"
+  | "reject"
+  | "apply"
+  | "pause"
+  | "resume"
+  | "supersede";
 
 type PromotionLearning = {
   action?: string;
@@ -91,7 +111,8 @@ interface AiLearningPromotionsClientProps {
 export function AiLearningPromotionsClient({
   initialPromotions,
 }: AiLearningPromotionsClientProps) {
-  const [promotions, setPromotions] = React.useState(initialPromotions);
+  const [promotions, setPromotions] =
+    React.useState<AiLearningPromotionWithWeight[]>(initialPromotions);
   const [status, setStatus] = React.useState<PromotionStatus>("candidate");
   const [loading, setLoading] = React.useState(false);
   const [busyId, setBusyId] = React.useState<string | null>(null);
@@ -144,7 +165,7 @@ export function AiLearningPromotionsClient({
   }, [loadPromotions]);
 
   const reviewPromotion = React.useCallback(
-    async (promotionId: string, action: "approve" | "reject" | "apply") => {
+    async (promotionId: string, action: PromotionAction) => {
       setBusyId(promotionId);
       try {
         await apiFetch("/api/admin/ai-learning-promotions", {
@@ -152,13 +173,19 @@ export function AiLearningPromotionsClient({
           headers: { "content-type": "application/json" },
           body: JSON.stringify({ promotionId, action }),
         });
-        setPromotions((prev) => prev.filter((promotion) => promotion.id !== promotionId));
+        await loadPromotions();
         toast.success(
           action === "approve"
             ? "Promotion approved"
             : action === "apply"
               ? "Promotion applied"
-              : "Promotion rejected",
+              : action === "pause"
+                ? "Retrieval weight paused"
+                : action === "resume"
+                  ? "Retrieval weight resumed"
+                  : action === "supersede"
+                    ? "Retrieval weight superseded"
+                    : "Promotion rejected",
         );
       } catch (error) {
         toast.error("Review action failed", {
@@ -168,7 +195,7 @@ export function AiLearningPromotionsClient({
         setBusyId(null);
       }
     },
-    [],
+    [loadPromotions],
   );
 
   return (
@@ -201,6 +228,7 @@ export function AiLearningPromotionsClient({
           <TabsTrigger value="approved">Approved</TabsTrigger>
           <TabsTrigger value="applied">Applied</TabsTrigger>
           <TabsTrigger value="rejected">Rejected</TabsTrigger>
+          <TabsTrigger value="superseded">Superseded</TabsTrigger>
         </TabsList>
       </Tabs>
 
@@ -231,6 +259,7 @@ export function AiLearningPromotionsClient({
             ) : (
               promotions.map((promotion) => {
                 const learning = readLearning(promotion.proposed_learning);
+                const retrievalWeight = promotion.retrievalWeight ?? null;
                 const isExpanded = expandedId === promotion.id;
                 const disabled = busyId === promotion.id;
 
@@ -253,9 +282,12 @@ export function AiLearningPromotionsClient({
                             </div>
                             <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                               <span>{formatDate(promotion.created_at)}</span>
-                              {promotion.project_id && <Badge variant="outline">Project {promotion.project_id}</Badge>}
-                              <Badge variant="secondary">{actionLabel(learning.action)}</Badge>
-                            </div>
+                          {promotion.project_id && <Badge variant="outline">Project {promotion.project_id}</Badge>}
+                          <Badge variant="secondary">{actionLabel(learning.action)}</Badge>
+                          {retrievalWeight && (
+                            <Badge variant="outline">{retrievalWeight.status}</Badge>
+                          )}
+                        </div>
                             {learning.rationale && (
                               <p className="line-clamp-2 text-xs text-muted-foreground">
                                 {learning.rationale}
@@ -320,6 +352,28 @@ export function AiLearningPromotionsClient({
                               Apply
                             </Button>
                           )}
+                          {promotion.status === "applied" && retrievalWeight?.status === "active" && (
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              disabled={disabled}
+                              aria-label="Pause retrieval weight"
+                              onClick={() => void reviewPromotion(promotion.id, "pause")}
+                            >
+                              <PauseCircle className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {promotion.status === "applied" && retrievalWeight?.status === "paused" && (
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              disabled={disabled}
+                              aria-label="Resume retrieval weight"
+                              onClick={() => void reviewPromotion(promotion.id, "resume")}
+                            >
+                              <Play className="h-4 w-4" />
+                            </Button>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -344,6 +398,26 @@ export function AiLearningPromotionsClient({
                                   {learning.sourceChunkId ?? learning.sourceDocumentId ?? "No source id"}
                                 </dd>
                               </div>
+                              {retrievalWeight && (
+                                <>
+                                  <div>
+                                    <dt className="text-xs font-medium uppercase text-muted-foreground">
+                                      Retrieval weight
+                                    </dt>
+                                    <dd className="mt-1 text-foreground">
+                                      {retrievalWeight.weight_multiplier}x, {retrievalWeight.status}
+                                    </dd>
+                                  </div>
+                                  <div>
+                                    <dt className="text-xs font-medium uppercase text-muted-foreground">
+                                      Destination
+                                    </dt>
+                                    <dd className="mt-1 break-all text-foreground">
+                                      {retrievalWeight.id}
+                                    </dd>
+                                  </div>
+                                </>
+                              )}
                             </dl>
                             <pre className="max-h-72 overflow-auto rounded-md bg-muted p-3 text-xs text-foreground">
                               {JSON.stringify(promotion.proposed_learning, null, 2)}
@@ -381,6 +455,50 @@ export function AiLearningPromotionsClient({
                                 >
                                   Apply retrieval weight
                                 </Button>
+                              )}
+                              {promotion.status === "applied" && retrievalWeight?.status === "active" && (
+                                <>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={disabled}
+                                    onClick={() => void reviewPromotion(promotion.id, "pause")}
+                                  >
+                                    <PauseCircle className="mr-1.5 h-3.5 w-3.5" />
+                                    Pause
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={disabled}
+                                    onClick={() => void reviewPromotion(promotion.id, "supersede")}
+                                  >
+                                    <Ban className="mr-1.5 h-3.5 w-3.5" />
+                                    Supersede
+                                  </Button>
+                                </>
+                              )}
+                              {promotion.status === "applied" && retrievalWeight?.status === "paused" && (
+                                <>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={disabled}
+                                    onClick={() => void reviewPromotion(promotion.id, "resume")}
+                                  >
+                                    <Play className="mr-1.5 h-3.5 w-3.5" />
+                                    Resume
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={disabled}
+                                    onClick={() => void reviewPromotion(promotion.id, "supersede")}
+                                  >
+                                    <Ban className="mr-1.5 h-3.5 w-3.5" />
+                                    Supersede
+                                  </Button>
+                                </>
                               )}
                             </div>
                           </div>

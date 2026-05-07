@@ -4,9 +4,9 @@ Source PRP: `docs/PRPs/real-time-source-sync-intelligence-observability/prp-real
 
 ## Progress Summary
 
-- Status: Phase 1 producer wiring and Phase 2 manual actions implemented
+- Status: Phase 1 producer wiring, Phase 2 manual actions, and Phase 3 Graph phase options implemented
 - Current phase: Source health read model and run ledger wiring live; webhook/subscription lifecycle and assistant health awareness remain
-- Last updated: 2026-05-07 15:45 UTC
+- Last updated: 2026-05-07 16:58 UTC
 - Confidence score: 8.5/10
 - Required first implementation slice: read-only health aggregation before webhook changes
 
@@ -57,14 +57,14 @@ Source PRP: `docs/PRPs/real-time-source-sync-intelligence-observability/prp-real
 
 ## Phase 3: Decouple Graph Sync From Heavy Processing
 
-- [ ] Add options to `run_graph_sync()` for fetch-only/enqueue/embed/compile behavior.
-- [ ] Keep source sync bounded and observable.
+- [x] Add options to `run_graph_sync()` for fetch-only/enqueue/embed/compile behavior.
+- [x] Keep source sync bounded and observable.
 - [ ] Move embedding work to explicit pending-embedding worker path.
 - [ ] Move compiler work to explicit compiler queue path.
 - [ ] Ensure Outlook enqueues source intelligence without blocking sync.
 - [ ] Ensure Teams channel/DM enqueues source intelligence without blocking sync.
 - [ ] Ensure OneDrive/SharePoint source rows enqueue source intelligence when project-relevant.
-- [ ] Keep `frontend/src/app/api/cron/graph-sync/route.ts` as trigger-only.
+- [x] Keep `frontend/src/app/api/cron/graph-sync/route.ts` as trigger-only.
 - [ ] Run `node scripts/verify/verify_graph_embedding_contract.mjs`.
 - [ ] Run `node scripts/verify/verify_ai_intelligence_compiler_health.mjs`.
 
@@ -152,3 +152,5 @@ Source PRP: `docs/PRPs/real-time-source-sync-intelligence-observability/prp-real
 - Wired source run ledger recording into Microsoft Graph source sync, Graph embedding, Fireflies recent transcript sync, scheduled task extraction, and intelligence compiler batches.
 - Added `/api/admin/source-sync/graph-sync` and `/api/admin/source-sync/graph-embed` admin proxies plus `/source-sync` buttons for Graph sync, embed pending, and compiler run.
 - Focused validation after producer wiring: `python -m pytest backend/tests/test_source_sync_health.py` passed, touched Python modules compiled, `npm run check:routes` passed, and targeted TypeScript grep found no source-sync errors.
+- Added `run_graph_sync()` phase options so source fetch can run without embedding or Teams compiler work in the same call; scheduled cron keeps full default behavior while the admin Graph sync action now sends fetch-only options.
+- Added `backend/tests/test_graph_sync_options.py` to guard against fetch-only Graph sync accidentally running heavy embedding/compiler phases.
