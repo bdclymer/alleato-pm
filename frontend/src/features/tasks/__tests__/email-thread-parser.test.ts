@@ -2,6 +2,7 @@ import {
   cleanSourceContextText,
   extractContextBody,
   parseEmailThread,
+  parseMeetingContext,
   parseTeamsConversation,
 } from "../email-thread-parser";
 
@@ -125,5 +126,33 @@ describe("email thread parser", () => {
       },
     ]);
     expect(conversation?.messages.map((message) => message.body).join(" ")).not.toContain("message:");
+  });
+
+  it("parses meeting summaries into readable sections and labeled items", () => {
+    const meeting = parseMeetingContext(
+      cleanSourceContextText(`
+        Date:** April 13th; signing won't impact project timeline; long lead items to start post-signing.
+        - **Steel Ordering Urgency:** Early orders are crucial; permit submission due mid-May; construction expected mid-June.
+        - **Cost Adjustments on Electrical Scope:** Original $1.7 million estimate revised.
+        ## Gist The meeting focused on contract finalization and project scheduling.
+        ## Short Summary During the meeting, the team confirmed the contract close date for April 13th.
+      `),
+    );
+
+    expect(meeting?.sections[0]).toMatchObject({ title: "Highlights" });
+    expect(meeting?.sections[0].items[0]).toEqual({
+      label: "Date",
+      body: "April 13th; signing won't impact project timeline; long lead items to start post-signing.",
+    });
+    expect(meeting?.sections[0].items[1]).toEqual({
+      label: "Steel Ordering Urgency",
+      body: "Early orders are crucial; permit submission due mid-May; construction expected mid-June.",
+    });
+    expect(meeting?.sections.find((section) => section.title === "Gist")?.body).toBe(
+      "The meeting focused on contract finalization and project scheduling.",
+    );
+    expect(meeting?.sections.find((section) => section.title === "Short Summary")?.body).toContain(
+      "contract close date",
+    );
   });
 });

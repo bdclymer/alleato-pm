@@ -62,10 +62,13 @@ import {
 } from "@/features/tasks/task-utils";
 import {
   type EmailThreadMessage,
+  type MeetingContextItem,
+  type MeetingContextSection,
   type TeamsConversationMessage,
   cleanSourceContextText,
   extractContextBody,
   parseEmailThread,
+  parseMeetingContext,
   parseTeamsConversation,
 } from "@/features/tasks/email-thread-parser";
 
@@ -339,6 +342,49 @@ function TeamsMessageRow({ message }: { message: TeamsConversationMessage }) {
   );
 }
 
+function MeetingContextItemRow({ item }: { item: MeetingContextItem }) {
+  return (
+    <div className="grid gap-1 border-b border-border/30 py-3 last:border-b-0 sm:grid-cols-[150px_minmax(0,1fr)]">
+      <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+        {item.label}
+      </div>
+      <div className="min-w-0 space-y-2 text-xs leading-5 text-foreground">
+        {splitContextParagraphs(item.body).map((paragraph, index) => (
+          <p key={`${item.label}-${index}`} className="break-words">
+            {paragraph}
+          </p>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function MeetingContextSectionBlock({ section }: { section: MeetingContextSection }) {
+  return (
+    <section className="space-y-3 border-b border-border/35 py-4 first:pt-0 last:border-b-0 last:pb-0">
+      <div className="text-xs font-semibold text-foreground">
+        {section.title}
+      </div>
+      {section.body && (
+        <div className="space-y-2 text-xs leading-5 text-foreground">
+          {splitContextParagraphs(section.body).map((paragraph, index) => (
+            <p key={`${section.title}-${index}`} className="break-words">
+              {paragraph}
+            </p>
+          ))}
+        </div>
+      )}
+      {section.items.length > 0 && (
+        <div>
+          {section.items.map((item) => (
+            <MeetingContextItemRow key={`${section.title}-${item.label}`} item={item} />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
 function ContextBody({ value, collapsedChars = COLLAPSED_CONTEXT_CHARS }: { value: string; collapsedChars?: number }) {
   const [expanded, setExpanded] = useState(false);
   const isLong = value.length > collapsedChars;
@@ -427,6 +473,21 @@ function SourceContextBlock({ value }: { value: string }) {
             <TeamsMessageRow key={`${message.date}-${message.author}`} message={message} />
           ))}
         </div>
+      </div>
+    );
+  }
+
+  const meetingContext = parseMeetingContext(text);
+
+  if (meetingContext && meetingContext.sections.length > 0) {
+    return (
+      <div className="w-full rounded-md bg-muted/20 px-4 py-4">
+        {meetingContext.sections.map((section, index) => (
+          <MeetingContextSectionBlock
+            key={`${section.title}-${index}`}
+            section={section}
+          />
+        ))}
       </div>
     );
   }

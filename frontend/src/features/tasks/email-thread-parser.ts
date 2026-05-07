@@ -19,6 +19,21 @@ export type TeamsConversation = {
   messages: TeamsConversationMessage[];
 };
 
+export type MeetingContextItem = {
+  label: string;
+  body: string;
+};
+
+export type MeetingContextSection = {
+  title: string;
+  body: string | null;
+  items: MeetingContextItem[];
+};
+
+export type MeetingContext = {
+  sections: MeetingContextSection[];
+};
+
 type ParsedContextField = {
   value: string;
   bodyStart: number;
@@ -153,6 +168,108 @@ export function parseTeamsConversation(text: string): TeamsConversation | null {
     date: headerMatch[2]?.trim() ?? null,
     messages,
   };
+}
+
+function cleanMarkdownText(value: string): string {
+  return value
+    .replace(/^\{\}\s*/, "")
+    .replace(/^#\s*/, "")
+    .replace(/\*\*/g, "")
+    .replace(/^[-\s]+/, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function parseMeetingItems(value: string): { items: MeetingContextItem[]; body: string | null } {
+  const markerPattern = /(?:^|\s+-\s+)(?:\*\*)?([A-Z][^:*#]{1,80}):(?:\*\*)?\s*/g;
+  const matches = Array.from(value.matchAll(markerPattern));
+
+  if (matches.length === 0) {
+    return {
+      items: [],
+      body: cleanMarkdownText(value) || null,
+    };
+  }
+
+  const items = matches
+    .map((match, index) => {
+      const bodyStart = (match.index ?? 0) + match[0].length;
+      const bodyEnd = matches[index + 1]?.index ?? value.length;
+
+      return {
+        label: cleanMarkdownText(match[1]),
+        body: cleanMarkdownText(value.slice(bodyStart, bodyEnd)),
+      };
+    })
+    .filter((item) => item.label && item.body);
+
+  const firstMarkerIndex = matches[0]?.index ?? 0;
+  const body = cleanMarkdownText(value.slice(0, firstMarkerIndex));
+
+  return {
+    items,
+    body: body || null,
+  };
+}
+
+export function parseMeetingContext(text: string): MeetingContext | null {
+  const normalized = cleanSourceContextText(text)
+    .replace(/^\{\}\s*/, "")
+    .replace(/^#\s*/, "")
+    .replace(/\s+Duration:\s*.*?(?=\s+(?:Participants|Summary|Gist|Short Summary|Action Items|Next Steps|Key Points|Decisions|Risks|Keywords)\b|$)/i, " ")
+    .replace(/\s+Participants:\s*.*?(?=\s+(?:Summary|Gist|Short Summary|Action Items|Next Steps|Key Points|Decisions|Risks|Keywords)\b|$)/i, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  const headingPattern = /(?:^|\s+)(?:##\s*)?(Short Summary|Action Items|Next Steps|Key Points|Decisions|Summary|Risks|Gist|Keywords)\b/g;
+  const headingMatches = Array.from(normalized.matchAll(headingPattern));
+
+  if (headingMatches.length === 0 && !/(?:^|\s+-\s+)(?:\*\*)?[A-Z][^:*#]{1,80}:\*\*/.test(normalized)) {
+    return null;
+  }
+
+  const sections: MeetingContextSection[] = [];
+
+  if (headingMatches.length === 0) {
+    const parsed = parseMeetingItems(normalized);
+
+    return parsed.body || parsed.items.length > 0
+      ? { sections: [{ title: "Highlights", body: parsed.body, items: parsed.items }] }
+      : null;
+  }
+
+  const firstHeadingIndex = headingMatches[0]?.index ?? 0;
+  const rawPrefix = normalized.slice(0, firstHeadingIndex);
+  const prefix = cleanMarkdownText(rawPrefix);
+
+  if (prefix && /(?:^|\s+-\s+)(?:\*\*)?[A-Z][^:*#]{1,80}:\*\*/.test(rawPrefix)) {
+    const parsed = parseMeetingItems(rawPrefix);
+
+    if (parsed.body || parsed.items.length > 0) {
+      sections.push({
+        title: "Highlights",
+        body: parsed.body,
+        items: parsed.items,
+      });
+    }
+  }
+
+  headingMatches.forEach((match, index) => {
+    const title = cleanMarkdownText(match[1]);
+    const contentStart = (match.index ?? 0) + match[0].length;
+    const contentEnd = headingMatches[index + 1]?.index ?? normalized.length;
+    const parsed = parseMeetingItems(normalized.slice(contentStart, contentEnd));
+
+    if (parsed.body || parsed.items.length > 0) {
+      sections.push({
+        title,
+        body: parsed.body,
+        items: parsed.items,
+      });
+    }
+  });
+
+  return sections.length > 0 ? { sections } : null;
 }
 
 export function extractContextBody(text: string): string {
