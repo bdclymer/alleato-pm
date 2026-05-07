@@ -16,6 +16,7 @@ import {
   ClipboardList,
   Loader2,
   MoreVertical,
+  Pencil,
   Tag,
   Trash2,
   UserRound,
@@ -714,6 +715,7 @@ function TaskDetail({
 }) {
   const [isEditingText, setIsEditingText] = useState(false);
   const [taskTextDraft, setTaskTextDraft] = useState(task.description || task.title || "");
+  const taskTextInputRef = useRef<HTMLTextAreaElement | null>(null);
   const ds = toDisplayStatus(task.status);
   const sourceLabel = getTaskSourceLabel(task);
   const sourceTitle = getTaskSourceTitle(task);
@@ -759,6 +761,12 @@ function TaskDetail({
       setTaskTextDraft(task.description || task.title || "");
     }
   }, [isEditingText, task.description, task.title]);
+
+  useEffect(() => {
+    if (!isEditingText) return;
+    taskTextInputRef.current?.focus();
+    taskTextInputRef.current?.select();
+  }, [isEditingText]);
 
   async function handleDelete() {
     const ok = await confirmDelete({
@@ -807,10 +815,21 @@ function TaskDetail({
             {isEditingText ? (
               <div className="space-y-2">
                 <Textarea
+                  ref={taskTextInputRef}
                   value={taskTextDraft}
                   onChange={(event) => setTaskTextDraft(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Escape") {
+                      setTaskTextDraft(task.description || task.title || "");
+                      setIsEditingText(false);
+                    }
+                    if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+                      event.preventDefault();
+                      void handleSaveTaskText();
+                    }
+                  }}
                   disabled={updatingId === task.id}
-                  className="min-h-28 resize-y text-[15px] leading-relaxed"
+                  className="min-h-24 resize-y text-[15px] font-medium leading-relaxed"
                   aria-label="Task text"
                 />
                 <div className="flex items-center gap-2">
@@ -840,19 +859,18 @@ function TaskDetail({
                 </div>
               </div>
             ) : (
-              <div className="space-y-2">
-                <p className="text-[15px] font-medium leading-relaxed text-foreground">
-                  {task.description || task.title || "Untitled task"}
-                </p>
+              <div>
                 <Button
                   type="button"
                   variant="ghost"
-                  size="sm"
-                  className="h-auto px-0 py-0 text-xs text-muted-foreground hover:bg-transparent hover:text-foreground"
                   onClick={() => setIsEditingText(true)}
                   disabled={updatingId === task.id}
+                  className="group -ml-2 h-auto w-full justify-start gap-2 px-2 py-1.5 text-left hover:bg-muted/50"
                 >
-                  Edit task text
+                  <span className="min-w-0 flex-1 text-[15px] font-medium leading-relaxed text-foreground">
+                    {task.description || task.title || "Untitled task"}
+                  </span>
+                  <Pencil className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100" />
                 </Button>
               </div>
             )}
