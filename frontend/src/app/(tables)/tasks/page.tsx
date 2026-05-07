@@ -926,9 +926,9 @@ function TaskDetail({
                   variant="ghost"
                   onClick={() => setIsEditingText(true)}
                   disabled={updatingId === task.id}
-                  className="group -ml-2 h-auto w-full justify-start gap-2 px-2 py-1.5 text-left hover:bg-muted/50"
+                  className="group -ml-2 h-auto w-full min-w-0 items-start justify-start gap-2 whitespace-normal px-2 py-1.5 text-left hover:bg-muted/50"
                 >
-                  <span className="min-w-0 flex-1 text-[15px] font-medium leading-relaxed text-foreground">
+                  <span className="min-w-0 flex-1 break-words text-[15px] font-medium leading-relaxed text-foreground">
                     {task.description || task.title || "Untitled task"}
                   </span>
                   <Pencil className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100" />
