@@ -26,6 +26,9 @@ node scripts/check-no-new-any.mjs
 echo "2f) New unsafe frontend pattern gate"
 node scripts/check-no-new-unsafe-patterns.mjs
 
+echo "2f.1) Existing silent/fallback debt report"
+npm run audit:silent-fallbacks -- --output docs/reports/silent-fallback-debt-latest.md
+
 echo "2g) New unvalidated request.json() debt gate"
 node scripts/check-zod-coverage.mjs
 

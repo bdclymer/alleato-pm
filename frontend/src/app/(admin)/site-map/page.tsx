@@ -35,6 +35,7 @@ import {
   type TableColumn,
 } from "@/components/tables/unified";
 import { deriveParent, staticRoutes, type SitemapRoute } from "@/lib/sitemap-utils";
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 
 // ── Audit status ─────────────────────────────────────────────────────────────
 
@@ -64,7 +65,13 @@ function loadAuditState(): Record<string, AuditStatus> {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     return raw ? (JSON.parse(raw) as Record<string, AuditStatus>) : {};
-  } catch {
+  } catch (error) {
+    reportNonCriticalFailure({
+      area: "site-map",
+      operation: "load-audit-state",
+      error,
+      userVisibleFallback: "Site-map audit statuses could not be restored.",
+    });
     return {};
   }
 }
@@ -72,7 +79,14 @@ function loadAuditState(): Record<string, AuditStatus> {
 function saveAuditState(state: Record<string, AuditStatus>) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  } catch {}
+  } catch (error) {
+    reportNonCriticalFailure({
+      area: "site-map",
+      operation: "save-audit-state",
+      error,
+      userVisibleFallback: "Site-map audit status was not saved locally.",
+    });
+  }
 }
 
 function loadNotesState(): Record<string, string> {
@@ -80,7 +94,13 @@ function loadNotesState(): Record<string, string> {
   try {
     const raw = localStorage.getItem(NOTES_STORAGE_KEY);
     return raw ? (JSON.parse(raw) as Record<string, string>) : {};
-  } catch {
+  } catch (error) {
+    reportNonCriticalFailure({
+      area: "site-map",
+      operation: "load-notes-state",
+      error,
+      userVisibleFallback: "Site-map notes could not be restored.",
+    });
     return {};
   }
 }
@@ -88,7 +108,14 @@ function loadNotesState(): Record<string, string> {
 function saveNotesState(state: Record<string, string>) {
   try {
     localStorage.setItem(NOTES_STORAGE_KEY, JSON.stringify(state));
-  } catch {}
+  } catch (error) {
+    reportNonCriticalFailure({
+      area: "site-map",
+      operation: "save-notes-state",
+      error,
+      userVisibleFallback: "Site-map notes were not saved locally.",
+    });
+  }
 }
 
 // ── Group-by types ────────────────────────────────────────────────────────────

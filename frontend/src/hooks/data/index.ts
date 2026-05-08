@@ -16,7 +16,6 @@ export {
 export { useProjects, type Project, type ProjectOption } from "../use-projects";
 export {
   useCostCodes,
-  CSI_DIVISIONS,
   type CostCode,
   type CostCodeOption,
 } from "../use-cost-codes";

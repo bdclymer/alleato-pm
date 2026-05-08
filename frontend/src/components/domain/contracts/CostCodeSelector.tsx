@@ -33,7 +33,6 @@ export function CostCodeSelector({
 }: CostCodeSelectorProps) {
   const [open, setOpen] = React.useState(false);
 
-  // Fetch cost codes from Supabase (with CSI fallback if database is empty)
   const { costCodes, isLoading } = useCostCodes();
 
   const selectedCode = costCodes.find((cc) => cc.id === value);

@@ -1,7 +1,10 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
+import type { Database } from "@/types/database.types";
 import { useCallback, useEffect, useState } from "react";
+
+type CostCodeRow = Database["public"]["Tables"]["cost_codes"]["Row"];
 
 export interface CostCode {
   id: string;
@@ -20,33 +23,6 @@ export interface CostCodeOption {
   description: string;
 }
 
-// Standard CSI MasterFormat divisions for fallback/seeding
-export const CSI_DIVISIONS = [
-  { code: "01", name: "General Requirements" },
-  { code: "02", name: "Existing Conditions" },
-  { code: "03", name: "Concrete" },
-  { code: "04", name: "Masonry" },
-  { code: "05", name: "Metals" },
-  { code: "06", name: "Wood, Plastics, and Composites" },
-  { code: "07", name: "Thermal and Moisture Protection" },
-  { code: "08", name: "Openings" },
-  { code: "09", name: "Finishes" },
-  { code: "10", name: "Specialties" },
-  { code: "11", name: "Equipment" },
-  { code: "12", name: "Furnishings" },
-  { code: "13", name: "Special Construction" },
-  { code: "14", name: "Conveying Equipment" },
-  { code: "21", name: "Fire Suppression" },
-  { code: "22", name: "Plumbing" },
-  { code: "23", name: "HVAC" },
-  { code: "26", name: "Electrical" },
-  { code: "27", name: "Communications" },
-  { code: "28", name: "Electronic Safety and Security" },
-  { code: "31", name: "Earthwork" },
-  { code: "32", name: "Exterior Improvements" },
-  { code: "33", name: "Utilities" },
-];
-
 interface UseCostCodesOptions {
   // Filter cost codes by search term
   search?: string;
@@ -56,8 +32,6 @@ interface UseCostCodesOptions {
   limit?: number;
   // Whether to auto-fetch on mount
   enabled?: boolean;
-  // Use standard CSI divisions as fallback if no DB records
-  useFallback?: boolean;
 }
 
 interface UseCostCodesReturn {
@@ -69,9 +43,23 @@ interface UseCostCodesReturn {
   createCostCode: (costCode: Partial<CostCode>) => Promise<CostCode | null>;
 }
 
+function mapCostCodeRow(row: CostCodeRow): CostCode {
+  return {
+    id: row.id,
+    title: row.title,
+    description: row.title,
+    division_id: row.division_id,
+    division_title: row.division_title,
+    status: row.status,
+    created_at: row.created_at ?? "",
+  };
+}
+
 /**
- * Hook for fetching cost codes from Supabase
- * Falls back to standard CSI divisions if database is empty
+ * Hook for fetching cost codes from Supabase.
+ *
+ * Empty results and query failures must remain visible to callers. Do not add
+ * synthetic cost-code rows here: forms depend on real database IDs.
  */
 export function useCostCodes(
   options: UseCostCodesOptions = {},
@@ -81,7 +69,6 @@ export function useCostCodes(
     status,
     limit = 100,
     enabled = true,
-    useFallback = true,
   } = options;
   const [costCodes, setCostCodes] = useState<CostCode[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -115,43 +102,16 @@ export function useCostCodes(
         throw new Error(queryError.message);
       }
 
-      // If no cost codes found and fallback enabled, use CSI divisions
-      if ((!data || data.length === 0) && useFallback) {
-        const fallbackCodes: CostCode[] = CSI_DIVISIONS.map((div) => ({
-          id: `${div.code}-000`,
-          title: div.name,
-          description: div.name,
-          division_id: div.code,
-          division_title: div.name,
-          status: "active",
-          created_at: new Date().toISOString(),
-        }));
-        setCostCodes(fallbackCodes);
-      } else {
-        setCostCodes((data || []) as unknown as CostCode[]);
-      }
+      setCostCodes((data || []).map(mapCostCodeRow));
     } catch (err) {
       setError(
         err instanceof Error ? err : new Error("Failed to fetch cost codes"),
       );
-
-      // Use fallback on error if enabled
-      if (useFallback) {
-        const fallbackCodes: CostCode[] = CSI_DIVISIONS.map((div) => ({
-          id: `${div.code}-000`,
-          title: div.name,
-          description: div.name,
-          division_id: div.code,
-          division_title: div.name,
-          status: "active",
-          created_at: new Date().toISOString(),
-        }));
-        setCostCodes(fallbackCodes);
-      }
+      setCostCodes([]);
     } finally {
       setIsLoading(false);
     }
-  }, [search, status, limit, enabled, useFallback]);
+  }, [search, status, limit, enabled]);
 
   useEffect(() => {
     fetchCostCodes();
@@ -179,7 +139,7 @@ export function useCostCodes(
 
         // Refetch to update the list
         await fetchCostCodes();
-        return data as unknown as CostCode;
+        return mapCostCodeRow(data);
       } catch (err) {
         setError(
           err instanceof Error ? err : new Error("Failed to create cost code"),

@@ -74,6 +74,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { getColumnPinningStyle } from "@/lib/data-table";
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import { cn } from "@/lib/utils";
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -168,7 +169,14 @@ function useLocalStorage<T>(key: string, defaultValue: T): [T, (v: T) => void] {
     try {
       const stored = localStorage.getItem(key);
       return stored !== null ? (JSON.parse(stored) as T) : defaultValue;
-    } catch {
+    } catch (error) {
+      reportNonCriticalFailure({
+        area: "alleato-data-table",
+        operation: "load-local-storage-state",
+        error,
+        userVisibleFallback: "Saved table preferences could not be restored.",
+        metadata: { key },
+      });
       return defaultValue;
     }
   });
@@ -178,7 +186,15 @@ function useLocalStorage<T>(key: string, defaultValue: T): [T, (v: T) => void] {
       setValue(v);
       try {
         localStorage.setItem(key, JSON.stringify(v));
-      } catch {}
+      } catch (error) {
+        reportNonCriticalFailure({
+          area: "alleato-data-table",
+          operation: "save-local-storage-state",
+          error,
+          userVisibleFallback: "Saved table preferences were not updated.",
+          metadata: { key },
+        });
+      }
     },
     [key],
   );
@@ -568,7 +584,15 @@ export function AleatoDataTable<TData>({
       table.setColumnOrder(next);
       try {
         localStorage.setItem(`alleato-${storageKey}-col-order`, JSON.stringify(next));
-      } catch {}
+      } catch (error) {
+        reportNonCriticalFailure({
+          area: "alleato-data-table",
+          operation: "save-column-order",
+          error,
+          userVisibleFallback: "Column order was not saved locally.",
+          metadata: { storageKey },
+        });
+      }
     },
     [table, columnIds, storageKey],
   );

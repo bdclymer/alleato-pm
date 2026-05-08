@@ -31,6 +31,7 @@
     "db:types": "npx supabase gen types typescript --project-id lgveqfnpkxvzbnnwuled --schema public > frontend/src/types/database.types.ts && npm run devtools:sync-schema-fk",
     "db:types:check": "node scripts/check-db-types-current.mjs",
     "guardrails:db-type-overrides": "node scripts/audits/check-no-manual-db-type-overrides.mjs",
+    "audit:silent-fallbacks": "node scripts/audits/audit-silent-fallback-debt.mjs",
     "db:audit": "cd frontend && npm run audit:db && npm run audit:db:mappers && npm run audit:db:fk-types && npm run audit:db:ambiguous-embeds",
     "db:push": "supabase db push && npm run db:types",
     "db:migrations:verify-applied": "node scripts/ops/check-supabase-migration-ledger.mjs",

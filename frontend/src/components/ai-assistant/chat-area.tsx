@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { apiFetch, apiFetchBlob } from "@/lib/api-client";
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import { cn } from "@/lib/utils";
 import {
   AI_ASSISTANT_MODELS,
@@ -1590,8 +1591,15 @@ export function ChatArea({
             feedback: type,
             messageContent: messageContent?.slice(0, 500),
           }),
-        }).catch(() => {
-          // Silent fail — feedback is best-effort
+        }).catch((error: unknown) => {
+          reportNonCriticalFailure({
+            area: "ai-assistant",
+            operation: "persist-message-feedback",
+            error,
+            userVisibleFallback:
+              "Feedback was not saved, but the chat remains available.",
+            metadata: { sessionId, feedback: type },
+          });
         });
       }
     },

@@ -30,6 +30,16 @@ const addedLineMatchers = [
     re: /eslint-disable|@ts-ignore|@ts-expect-error/,
     message: "Do not add suppressions without a documented guardrail-approved exception.",
   },
+  {
+    name: "hard-coded data fallback",
+    re: /\b(useFallback|fallbackData|mockData|dummyData|sampleData|hardcodedData|hardCodedData)\b|mock data|dummy data|sample data|hard[- ]coded data/i,
+    message: "Do not add hard-coded data or synthetic fallback data. Surface the real data failure instead.",
+  },
+  {
+    name: "silent best-effort failure",
+    re: /silent|silently|best-effort|best effort|fail silently/i,
+    message: "Do not add silent/best-effort failure paths. Report, throw, or show a degraded state.",
+  },
 ];
 
 function run(cmd) {
@@ -115,6 +125,42 @@ export function findSilentCatchBlocks(source) {
   return violations;
 }
 
+export function findSyntheticDataFallbacks(source) {
+  const violations = [];
+  const patterns = [
+    {
+      re: /\buseFallback\b\s*[?:=]/g,
+      preview: "useFallback option",
+    },
+    {
+      re: /\bfallbackData\b\s*[?:=]/g,
+      preview: "fallbackData option",
+    },
+    {
+      re: /\b(?:mock|dummy|sample)(?:Data|Rows|Items|Records)\b\s*[=:]/gi,
+      preview: "mock/dummy/sample data assignment",
+    },
+    {
+      re: /\b(?:mock|dummy|sample) data\b/gi,
+      preview: "mock/dummy/sample data wording",
+    },
+    {
+      re: /\bhard[- ]coded data\b/gi,
+      preview: "hard-coded data wording",
+    },
+  ];
+
+  for (const pattern of patterns) {
+    let match;
+    while ((match = pattern.re.exec(source)) !== null) {
+      const line = source.slice(0, match.index).split("\n").length;
+      violations.push({ line, preview: pattern.preview });
+    }
+  }
+
+  return violations;
+}
+
 function findAddedLineViolations(file, addedLines) {
   const violations = [];
   for (const line of addedLines) {
@@ -148,6 +194,14 @@ export function buildUnsafePatternReport(files = getCandidateFiles()) {
         kind: "silent catch",
         message: "Catch blocks must fail loudly via structured reporting, user-visible state, or rethrow.",
         preview: `${catchViolation.preview} near line ${catchViolation.line}`,
+      });
+    }
+    for (const fallbackViolation of findSyntheticDataFallbacks(source)) {
+      violations.push({
+        file,
+        kind: "synthetic data fallback",
+        message: "Hard-coded fallback/mock/sample data is not allowed in app code. Use real data or fail loudly.",
+        preview: `${fallbackViolation.preview} near line ${fallbackViolation.line}`,
       });
     }
   }

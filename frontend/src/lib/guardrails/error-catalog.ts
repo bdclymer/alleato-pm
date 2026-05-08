@@ -137,6 +137,15 @@ export const ERROR_CATALOG: Record<string, ErrorCatalogEntry> = {
     httpStatus: 500,
     safeToRetry: false,
   },
+  NOT_IMPLEMENTED: {
+    code: "NOT_IMPLEMENTED",
+    humanMessage: "This action is not wired to a real implementation.",
+    typicalCause: "A route or UI action was added before the backing workflow existed.",
+    preventionRule: "Do not return success for placeholder behavior; ship the implementation or block explicitly.",
+    alertSeverity: "high",
+    httpStatus: 501,
+    safeToRetry: false,
+  },
 };
 
 export function getErrorCatalogEntry(code: string): ErrorCatalogEntry {

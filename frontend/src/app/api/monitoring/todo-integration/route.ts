@@ -1,10 +1,10 @@
-import { withApiGuardrails } from "@/lib/guardrails/api";
+import { parseJsonBody, withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
 import { createClient } from "@/lib/supabase/server";
-import { logger } from "@/lib/logger";
+import { z } from "zod";
 
 /**
  * TodoWrite integration endpoint
@@ -30,9 +30,27 @@ interface TodoUpdate {
   notes?: string;
 }
 
-/**
- * GET: Retrieve all todos (mock data for now)
- */
+const createTodoSchema = z.object({
+  content: z.string().trim().min(1),
+  priority: z.enum(["high", "medium", "low"]).default("medium"),
+  initiative: z.string().trim().min(1).optional(),
+  assignee: z.string().trim().min(1).optional(),
+});
+
+const updateTodoSchema = z.object({
+  id: z.string().trim().min(1),
+  status: z.enum(["pending", "in-progress", "completed"]),
+  notes: z.string().trim().min(1).optional(),
+});
+
+const requestSchema = z.discriminatedUnion("action", [
+  z.object({ action: z.literal("create"), todo: createTodoSchema }),
+  z.object({ action: z.literal("update"), update: updateTodoSchema }),
+  z.object({ action: z.literal("trigger_verification"), todoId: z.string().trim().min(1) }),
+]);
+
+type CreateTodoInput = z.infer<typeof createTodoSchema>;
+
 export const GET = withApiGuardrails(
   "monitoring/todo-integration#GET",
   async () => {
@@ -42,8 +60,6 @@ export const GET = withApiGuardrails(
     if (authError || !user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "monitoring/todo-integration#GET", message: "Authentication required." });
     }
-    // In a real implementation, this would integrate with your TodoWrite system
-    // For now, we'll return mock data based on the monitoring system
     const projectRoot = process.cwd().replace("/frontend", "");
     const monitoringPath = path.join(
       projectRoot,
@@ -69,7 +85,11 @@ export const POST = withApiGuardrails(
     if (authError || !user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "monitoring/todo-integration#POST", message: "Authentication required." });
     }
-    const body = await request.json();
+    const body = await parseJsonBody(
+      request,
+      requestSchema,
+      "monitoring/todo-integration#POST",
+    );
 
     if (body.action === "create") {
       return await createTodo(body.todo);
@@ -79,7 +99,12 @@ export const POST = withApiGuardrails(
       return await triggerVerification(body.todoId);
     }
 
-    return NextResponse.json({ error: "Invalid action" }, { status: 400 });
+    throw new GuardrailError({
+      code: "INVALID_PAYLOAD",
+      where: "monitoring/todo-integration#POST",
+      message: "Unsupported todo action.",
+      status: 400,
+    });
     },
 );
 
@@ -125,160 +150,120 @@ function extractTodosFromMonitoring(content: string): TodoItem[] {
 /**
  * Create new todo
  */
-async function createTodo(todo: Partial<TodoItem>) {
-  try {
-    // In a real implementation, this would integrate with your TodoWrite system
-    // For now, we'll add it to a monitoring section
-    const newTodo: TodoItem = {
-      id: `todo-${Date.now()}`,
-      content: todo.content || "New task",
-      status: "pending",
-      priority: todo.priority || "medium",
-      initiative: todo.initiative,
-      assignee: todo.assignee,
-      created: new Date().toISOString(),
-      updated: new Date().toISOString(),
-    };
+async function createTodo(todo: CreateTodoInput) {
+  const newTodo: TodoItem = {
+    id: `todo-${Date.now()}`,
+    content: todo.content,
+    status: "pending",
+    priority: todo.priority,
+    initiative: todo.initiative,
+    assignee: todo.assignee,
+    created: new Date().toISOString(),
+    updated: new Date().toISOString(),
+  };
 
-    // Update monitoring file
-    await updateMonitoringWithTodo(newTodo, "create");
+  await updateMonitoringWithTodo(newTodo, "create");
 
-    return NextResponse.json({ todo: newTodo });
-  } catch (error) {
-    return NextResponse.json(
-      { error: "Failed to create todo" },
-      { status: 500 },
-    );
-  }
+  return NextResponse.json({ todo: newTodo });
 }
 
 /**
  * Update existing todo
  */
 async function updateTodo(update: TodoUpdate) {
-  try {
-    // Trigger verification if marked as completed
-    if (update.status === "completed") {
-      await triggerVerificationProcess(update.id, update.notes);
-    }
-
-    // Update monitoring file
-    await updateMonitoringWithTodo(update, "update");
-
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    return NextResponse.json(
-      { error: "Failed to update todo" },
-      { status: 500 },
-    );
+  if (update.status === "completed") {
+    await triggerVerificationProcess(update.id, update.notes);
   }
+
+  await updateMonitoringWithTodo(update, "update");
+
+  return NextResponse.json({ success: true });
 }
 
 /**
  * Trigger verification for a todo
  */
-async function triggerVerification(todoId: string) {
-  try {
-    // This would integrate with your verification system
-    // In a real implementation, this would call your verification scripts
-    // For now, we'll just log it
-
-    return NextResponse.json({
-      success: true,
-      message: "Verification triggered",
-      todoId,
-    });
-  } catch (error) {
-    return NextResponse.json(
-      { error: "Failed to trigger verification" },
-      { status: 500 },
-    );
-  }
+async function triggerVerification(todoId: string): Promise<Response> {
+  throw new GuardrailError({
+    code: "NOT_IMPLEMENTED",
+    where: "monitoring/todo-integration#triggerVerification",
+    message: `Todo verification is not wired to an executable verification runner for ${todoId}.`,
+    status: 501,
+  });
 }
 
 /**
  * Trigger verification process
  */
 async function triggerVerificationProcess(todoId: string, notes?: string) {
-  try {
-    const projectRoot = process.cwd().replace("/frontend", "");
-    const scriptPath = path.join(
-      projectRoot,
-      "scripts/monitoring/check-completion.cjs",
-    );
-
-    // Create a simple verification trigger
-    const todoData = {
-      id: todoId,
-      content: notes || "Task completion",
-      priority: "medium",
-    };
-
-    // In a production environment, you'd spawn the verification script
-    // For demo purposes, we'll just log this
-    // exec(`node ${scriptPath} "${JSON.stringify(todoData)}"`);
-  } catch (error) {
-    logger.error({ msg: "Failed to trigger auto-verification:", error: error instanceof Error ? error.message : String(error) });
-    // Intentionally swallowed: auto-verification is optional
-  }
+  const projectRoot = process.cwd().replace("/frontend", "");
+  const scriptPath = path.join(projectRoot, "scripts/monitoring/check-completion.cjs");
+  await fs.access(scriptPath);
+  throw new GuardrailError({
+    code: "NOT_IMPLEMENTED",
+    where: "monitoring/todo-integration#triggerVerificationProcess",
+    message: "Todo completion verification script exists but is not wired for API execution.",
+    status: 501,
+    details: { todoId, notesProvided: Boolean(notes) },
+  });
 }
 
 /**
  * Update monitoring file with todo changes
  */
 async function updateMonitoringWithTodo(
-  todo: any,
+  todo: Pick<TodoItem, "content"> | TodoUpdate,
   action: "create" | "update",
 ) {
-  try {
-    const projectRoot = process.cwd().replace("/frontend", "");
-    const monitoringPath = path.join(
-      projectRoot,
-      "documentation/1-project-mgmt/PROJECT_MONITORING.md",
-    );
+  const projectRoot = process.cwd().replace("/frontend", "");
+  const monitoringPath = path.join(
+    projectRoot,
+    "documentation/1-project-mgmt/PROJECT_MONITORING.md",
+  );
 
-    let content = await fs.readFile(monitoringPath, "utf-8");
+  let content = await fs.readFile(monitoringPath, "utf-8");
 
-    // Add activity log entry
-    const timestamp = new Date().toLocaleString("en-US", {
-      timeZone: "America/New_York",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    });
-    const todayDate = new Date().toISOString().split("T")[0];
-    const logEntry = `- **${timestamp}** - [dashboard] Todo ${action}d: ${todo.content || "Task"}`;
+  const timestamp = new Date().toLocaleString("en-US", {
+    timeZone: "America/New_York",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  const todayDate = new Date().toISOString().split("T")[0];
+  const todoDescription = "content" in todo ? todo.content : todo.id;
+  const logEntry = `- **${timestamp}** - [dashboard] Todo ${action}d: ${todoDescription}`;
 
-    // Find and update the activity log section
-    const dateHeader = `### ${todayDate}`;
+  const dateHeader = `### ${todayDate}`;
 
-    if (content.includes(dateHeader)) {
-      const dateIndex = content.indexOf(dateHeader);
-      const nextHeaderIndex = content.indexOf("\n### ", dateIndex + 1);
-      const insertIndex =
-        nextHeaderIndex === -1 ? content.length : nextHeaderIndex;
+  if (content.includes(dateHeader)) {
+    const dateIndex = content.indexOf(dateHeader);
+    const nextHeaderIndex = content.indexOf("\n### ", dateIndex + 1);
+    const insertIndex =
+      nextHeaderIndex === -1 ? content.length : nextHeaderIndex;
 
-      content =
-        content.slice(0, insertIndex).trimEnd() +
-        `\n${logEntry}` +
-        content.slice(insertIndex);
-    } else {
-      // Add new date section
-      const activityLogIndex = content.indexOf("## 🔄 RECENT ACTIVITY LOG");
-      if (activityLogIndex !== -1) {
-        const insertIndex = content.indexOf("\n\n", activityLogIndex) + 2;
-        content =
-          content.slice(0, insertIndex) +
-          `${dateHeader}\n${logEntry}\n\n` +
-          content.slice(insertIndex);
-      }
+    content =
+      content.slice(0, insertIndex).trimEnd() +
+      `\n${logEntry}` +
+      content.slice(insertIndex);
+  } else {
+    const activityLogIndex = content.indexOf("## 🔄 RECENT ACTIVITY LOG");
+    if (activityLogIndex === -1) {
+      throw new GuardrailError({
+        code: "SCHEMA_MISMATCH",
+        where: "monitoring/todo-integration#updateMonitoringWithTodo",
+        message: "Monitoring file is missing the RECENT ACTIVITY LOG section.",
+        status: 500,
+        details: { monitoringPath },
+      });
     }
-
-    await fs.writeFile(monitoringPath, content);
-  } catch (error) {
-    logger.error({ msg: "Failed to update monitoring file:", error: error instanceof Error ? error.message : String(error) });
-    // Intentionally swallowed: monitoring file updates are non-critical
+    const insertIndex = content.indexOf("\n\n", activityLogIndex) + 2;
+    content =
+      content.slice(0, insertIndex) +
+      `${dateHeader}\n${logEntry}\n\n` +
+      content.slice(insertIndex);
   }
+
+  await fs.writeFile(monitoringPath, content);
 }

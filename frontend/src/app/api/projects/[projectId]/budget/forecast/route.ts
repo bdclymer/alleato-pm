@@ -376,12 +376,19 @@ export const POST = withApiGuardrails(
       .delete()
       .eq("budget_line_id", budgetLineId);
 
-    // If the table doesn't exist yet there is nothing to delete — skip silently.
-    // Only propagate unexpected errors (e.g. RLS, network).
-    if (
-      deleteDetailItemsError &&
-      !isMissingTableError(deleteDetailItemsError, "budget_forecast_line_items")
-    ) {
+    if (deleteDetailItemsError) {
+      if (isMissingTableError(deleteDetailItemsError, "budget_forecast_line_items")) {
+        throw new GuardrailError({
+          code: "DB_MIGRATION_MISMATCH",
+          where: "projects/[projectId]/budget/forecast#POST",
+          message:
+            "Budget forecast detail table is missing from the runtime database.",
+          details: {
+            table: "budget_forecast_line_items",
+            originalError: deleteDetailItemsError,
+          },
+        });
+      }
       throw deleteDetailItemsError;
     }
 

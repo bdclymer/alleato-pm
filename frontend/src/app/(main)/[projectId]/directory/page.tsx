@@ -66,6 +66,7 @@ import { usePermissionTemplates } from "@/hooks/use-permissions";
 import { createClient } from "@/lib/supabase/client";
 import { apiFetch, ApiError } from "@/lib/api-client";
 import { filterProjectMembers } from "@/lib/directory/project-members";
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import { useConfirm } from "@/hooks/use-confirm";
 import { cn } from "@/lib/utils";
 import {
@@ -1673,7 +1674,6 @@ export default function ProjectDirectoryPage() {
     .map((v) => v.companies?.id)
     .filter(Boolean) as string[];
 
-  // Silently sync companies from contracts/commitments on mount
   React.useEffect(() => {
     if (!projectId) return;
     apiFetch<{ added: number }>(
@@ -1683,7 +1683,16 @@ export default function ProjectDirectoryPage() {
       .then((result: { added: number } | null) => {
         if (result && result.added > 0) refetchCompanies();
       })
-      .catch(() => {/* silent — sync is best-effort */});
+      .catch((error: unknown) => {
+        reportNonCriticalFailure({
+          area: "project-directory",
+          operation: "sync-companies-from-contracts",
+          error,
+          userVisibleFallback:
+            "Project companies may be stale until contract company sync succeeds.",
+          metadata: { projectId },
+        });
+      });
    
   }, [projectId]);
 

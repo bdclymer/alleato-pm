@@ -90,7 +90,6 @@ export function ScheduleOfValuesTab({
   // Fetch cost codes for budget code selection — need high limit to cover all divisions
   const { options: costCodeOptions, isLoading: costCodesLoading } = useCostCodes({
     enabled: true,
-    useFallback: true,
     limit: 1000,
   });
 

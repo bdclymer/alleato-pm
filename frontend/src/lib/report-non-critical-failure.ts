@@ -19,15 +19,42 @@ export function reportNonCriticalFailure({
   userVisibleFallback,
   metadata,
 }: NonCriticalFailureContext) {
-  console.warn(
-    JSON.stringify({
-      event: "non_critical_failure",
-      timestamp: new Date().toISOString(),
-      area,
-      operation,
-      user_visible_fallback: userVisibleFallback,
-      error: errorMessage(error),
-      metadata,
-    }),
-  );
+  const message = errorMessage(error);
+  const payload = {
+    event: "non_critical_failure",
+    timestamp: new Date().toISOString(),
+    area,
+    operation,
+    user_visible_fallback: userVisibleFallback,
+    error: message,
+    metadata,
+  };
+
+  console.warn(JSON.stringify(payload));
+
+  if (typeof window === "undefined") return;
+
+  void import("@/lib/app-error-reporter")
+    .then(({ reportBrowserError }) => {
+      reportBrowserError({
+        source: "client",
+        severity: "medium",
+        route: window.location.pathname,
+        action: `${area}:${operation}`,
+        errorCode: "NON_CRITICAL_FAILURE",
+        errorMessage: message,
+        context: {
+          userVisibleFallback,
+          metadata,
+        },
+      });
+    })
+    .catch(() => {
+      console.warn(
+        JSON.stringify({
+          ...payload,
+          event: "non_critical_failure_telemetry_failed",
+        }),
+      );
+    });
 }

@@ -47,6 +47,7 @@ import type { ProjectRole } from "@/hooks/use-project-roles";
 import type { Database } from "@/types/database.types";
 import type { Project as PortfolioProject } from "@/types/portfolio";
 import { cn } from "@/lib/utils";
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import { EmptyState } from "@/components/ds";
 import { Skeleton } from "@/components/ui/skeleton";
 import { buildToolUrl, isActivePath, sidebarNavGroups } from "@/lib/navigation-config";
@@ -289,8 +290,15 @@ function DirectorySubSection({
         }
         const { data } = await query;
         if (!cancelled) setAvailablePeople(data || []);
-      } catch {
-        // silently fail
+      } catch (error) {
+        reportNonCriticalFailure({
+          area: "project-home",
+          operation: "load-available-people",
+          error,
+          userVisibleFallback:
+            "People lookup is unavailable, so team assignment options may be incomplete.",
+          metadata: { personTypeFilter },
+        });
       } finally {
         if (!cancelled) setPeopleLoading(false);
       }
