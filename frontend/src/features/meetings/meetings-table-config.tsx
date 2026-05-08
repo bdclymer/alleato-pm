@@ -3,14 +3,7 @@ import * as React from "react";
 import { ArrowUpRight, FileText, Pencil, Trash2, Zap } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
+import { SearchableSelect } from "@/components/forms/SearchableSelect";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -57,6 +50,11 @@ export interface EditContext {
     valueOverride?: string;
     move?: "next" | "prev";
   }) => Promise<void>;
+  handleInlineFieldSave: (
+    meeting: Meeting,
+    field: EditableField,
+    value: string,
+  ) => Promise<void>;
   handleInlineCancel: () => void;
 }
 
@@ -258,12 +256,18 @@ function EditableCellWrapper({
   if (isEditing) {
     return <>{children}</>;
   }
+  const handleEditIntent = (event: React.MouseEvent) => {
+    event.preventDefault();
+    onClickToEdit(event);
+  };
+
   return (
     <Button
       type="button"
       variant="ghost"
       className="flex h-auto min-h-7 w-full cursor-pointer items-center justify-start rounded px-1 -mx-1 text-left font-normal transition-colors hover:bg-accent/20"
-      onClick={onClickToEdit}
+      onMouseDown={handleEditIntent}
+      onClick={handleEditIntent}
     >
       {displayContent}
     </Button>
@@ -352,94 +356,6 @@ function InlineDateInput({
       title="Edit date"
       className="h-7 w-auto border-0 bg-accent/25 px-2 text-sm text-foreground focus-visible:ring-1"
     />
-  );
-}
-
-function InlineProjectSelect({
-  value,
-  projectOptions,
-  onSave,
-  onCancel,
-}: {
-  value: string;
-  projectOptions: Array<{ value: string; label: string }>;
-  onSave: (v: string, move?: "next" | "prev") => void;
-  onCancel: () => void;
-}) {
-  const wrapperRef = React.useRef<HTMLDivElement | null>(null);
-
-  const selectedLabel =
-    projectOptions.find((option) => option.value === value)?.label ||
-    value ||
-    "No project";
-
-  React.useEffect(() => {
-    const handlePointerDown = (event: PointerEvent) => {
-      if (!wrapperRef.current?.contains(event.target as Node)) {
-        onCancel();
-      }
-    };
-
-    document.addEventListener("pointerdown", handlePointerDown);
-    return () => document.removeEventListener("pointerdown", handlePointerDown);
-  }, [onCancel]);
-
-  return (
-    <div
-      ref={wrapperRef}
-      className="relative inline-block"
-      onClick={(e) => e.stopPropagation()}
-      onKeyDown={(e) => {
-        if (e.key === "Escape") {
-          e.preventDefault();
-          onCancel();
-          return;
-        }
-        if (e.key === "Tab") {
-          e.preventDefault();
-          onSave(value, e.shiftKey ? "prev" : "next");
-        }
-      }}
-    >
-      <Button
-        type="button"
-        variant="ghost"
-        aria-label="Select project"
-        title="Select project"
-        className="h-7 min-w-40 max-w-72 justify-start border-0 bg-accent/25 px-2 text-left text-sm font-normal text-foreground focus-visible:ring-1"
-      >
-        <span className="truncate">{selectedLabel}</span>
-      </Button>
-      <div className="absolute left-0 top-8 z-50 w-80 overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-sm">
-        <Command>
-          <CommandInput autoFocus placeholder="Search projects..." />
-          <CommandList className="max-h-72 overflow-y-auto">
-            <CommandEmpty>No projects found.</CommandEmpty>
-            <CommandGroup>
-              <CommandItem
-                value="No project"
-                onSelect={() => {
-                  onSave("");
-                }}
-              >
-                <span className="italic text-muted-foreground">No project</span>
-              </CommandItem>
-              {projectOptions.map((opt) => (
-                <CommandItem
-                  key={opt.value}
-                  value={opt.label}
-                  onSelect={() => {
-                    onSave(opt.value);
-                  }}
-                >
-                  <span className="truncate">{opt.label}</span>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </div>
-    </div>
   );
 }
 
@@ -558,35 +474,30 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
     {
       ...meetingColumns[1],
       render: (item) => {
-        const isEditing =
-          editContext?.editingCell?.meetingId === item.id &&
-          editContext?.editingCell?.field === "project";
         const projectName = item.project?.trim();
 
         return (
-          <EditableCellWrapper
-            isEditing={Boolean(isEditing)}
-            displayContent={
-              projectName ? (
-                <span className="text-xs text-muted-foreground">{projectName}</span>
-              ) : (
-                <span className="text-xs text-muted-foreground">No project</span>
-              )
-            }
-            onClickToEdit={(e) => {
-              e.stopPropagation();
-              editContext?.handleCellClick(item, "project");
-            }}
-          >
-            <InlineProjectSelect
-              value={editContext?.editingValue ?? ""}
-              projectOptions={editContext?.projectOptions ?? []}
-              onSave={(v, move) =>
-                editContext?.handleInlineSave({ valueOverride: v, move })
-              }
-              onCancel={() => editContext?.handleInlineCancel()}
+          <div className="w-72" onClick={(event) => event.stopPropagation()}>
+            <SearchableSelect
+              options={[
+                { value: "__none__", label: "No project" },
+                ...(editContext?.projectOptions ?? []),
+              ]}
+              value={projectName || "__none__"}
+              onValueChange={(nextValue) => {
+                void editContext?.handleInlineFieldSave(
+                  item,
+                  "project",
+                  nextValue === "__none__" ? "" : nextValue,
+                );
+              }}
+              placeholder="No project"
+              searchPlaceholder="Search projects..."
+              emptyMessage="No projects found."
+              className="space-y-0"
+              triggerClassName="h-7 border-0 bg-transparent px-1 text-xs font-normal text-muted-foreground hover:bg-accent/20 focus-visible:ring-1"
             />
-          </EditableCellWrapper>
+          </div>
         );
       },
       csvValue: (item) => item.project ?? "",

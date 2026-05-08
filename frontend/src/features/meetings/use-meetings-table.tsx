@@ -415,40 +415,17 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
     setEditingValue(initialValue);
   };
 
-  const handleInlineSave = async (options?: {
-    valueOverride?: string;
-    move?: "next" | "prev";
-  }) => {
-    if (!editingCell) return;
-    const { meetingId, field } = editingCell;
-
-    let saveValue: string | null =
-      options?.valueOverride !== undefined ? options.valueOverride : editingValue;
+  const saveInlineField = async (
+    meetingId: string,
+    field: EditableField,
+    rawValue: string | null,
+  ) => {
+    let saveValue = rawValue;
     if (!saveValue) saveValue = null;
 
     // Convert YYYY-MM-DD to full ISO string for date fields
     if (field === "date" && saveValue) {
       saveValue = new Date(`${saveValue}T12:00:00`).toISOString();
-    }
-
-    // Close editing state immediately so UX feels snappy
-    setEditingCell(null);
-    setEditingValue("");
-
-    if (options?.move) {
-      const currentIndex = EDITABLE_FIELD_ORDER.indexOf(field);
-      const nextIndex = options.move === "next" ? currentIndex + 1 : currentIndex - 1;
-      const nextField = EDITABLE_FIELD_ORDER[nextIndex];
-      if (nextField) {
-        const nextMeeting = meetings.find((meeting) => meeting.id === meetingId);
-        if (nextMeeting) {
-          const nextValue = getInitialFieldValue(nextMeeting, nextField);
-          window.requestAnimationFrame(() => {
-            setEditingCell({ meetingId, field: nextField });
-            setEditingValue(nextValue);
-          });
-        }
-      }
     }
 
     try {
@@ -488,6 +465,48 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
     }
   };
 
+  const handleInlineFieldSave = async (
+    meeting: Meeting,
+    field: EditableField,
+    value: string,
+  ) => {
+    await saveInlineField(meeting.id, field, value);
+  };
+
+  const handleInlineSave = async (options?: {
+    valueOverride?: string;
+    move?: "next" | "prev";
+  }) => {
+    if (!editingCell) return;
+    const { meetingId, field } = editingCell;
+
+    let saveValue: string | null =
+      options?.valueOverride !== undefined ? options.valueOverride : editingValue;
+    if (!saveValue) saveValue = null;
+
+    // Close editing state immediately so UX feels snappy
+    setEditingCell(null);
+    setEditingValue("");
+
+    if (options?.move) {
+      const currentIndex = EDITABLE_FIELD_ORDER.indexOf(field);
+      const nextIndex = options.move === "next" ? currentIndex + 1 : currentIndex - 1;
+      const nextField = EDITABLE_FIELD_ORDER[nextIndex];
+      if (nextField) {
+        const nextMeeting = meetings.find((meeting) => meeting.id === meetingId);
+        if (nextMeeting) {
+          const nextValue = getInitialFieldValue(nextMeeting, nextField);
+          window.requestAnimationFrame(() => {
+            setEditingCell({ meetingId, field: nextField });
+            setEditingValue(nextValue);
+          });
+        }
+      }
+    }
+
+    await saveInlineField(meetingId, field, saveValue);
+  };
+
   const handleInlineCancel = () => {
     setEditingCell(null);
     setEditingValue("");
@@ -503,6 +522,7 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
     handleCellClick,
     setEditingValue,
     handleInlineSave,
+    handleInlineFieldSave,
     handleInlineCancel,
   };
 

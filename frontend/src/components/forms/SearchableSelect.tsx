@@ -125,7 +125,7 @@ export function SearchableSelect({
               </div>
 
               {/* Options List */}
-              <div className="max-h-[300px] overflow-y-auto">
+              <div className="max-h-72 overflow-y-auto">
                 {filteredOptions.length === 0 ? (
                   <div className="py-6 text-center text-sm text-muted-foreground">
                     {emptyMessage}
