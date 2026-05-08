@@ -591,7 +591,7 @@ export function MeetingDetailContent({
                   {segments.map((segment, index) => (
                     <div
                       key={segment.id}
-                      className="space-y-1.5 border-l-2 border-border pl-4"
+                      className="space-y-2 border-l-2 border-border pl-4"
                     >
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-medium text-muted-foreground">
@@ -603,9 +603,7 @@ export function MeetingDetailContent({
                         </h3>
                       </div>
                       {segment.summary && (
-                        <p className="text-sm leading-relaxed text-muted-foreground">
-                          {segment.summary}
-                        </p>
+                        <FirefliesSectionContent value={segment.summary} />
                       )}
                     </div>
                   ))}
