@@ -61,7 +61,7 @@ interface DocumentsClientProps {
 export function DocumentsClient({ projectId }: DocumentsClientProps): ReactElement {
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const searchParams = (useSearchParams() ?? new URLSearchParams()) as NonNullable<ReturnType<typeof useSearchParams>>;
   const numericProjectId = Number(projectId);
 
   // Fetch documents

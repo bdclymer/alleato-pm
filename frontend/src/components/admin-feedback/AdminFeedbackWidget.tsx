@@ -31,13 +31,13 @@ import { apiFetch } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Modal as Dialog,
+  ModalContent as DialogContent,
+  ModalDescription as DialogDescription,
+  ModalFooter as DialogFooter,
+  ModalHeader as DialogHeader,
+  ModalTitle as DialogTitle,
+} from "@/components/ui/unified-modal";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -142,7 +142,7 @@ function mapFeedbackTypeToRequestType(
   }
 
   if (feedbackType === "Wishlist") {
-    return "change_request";
+    return "feature_request";
   }
 
   return "question";
@@ -383,7 +383,7 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
     };
   }, [isSelecting]);
 
-  if (isLoading || isMobile || isImmersiveChatRoute) {
+  if (isLoading || isImmersiveChatRoute) {
     return null;
   }
 
@@ -519,7 +519,7 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
         />
       )}
 
-      {showLauncher && (
+      {showLauncher && !isMobile && (
         <div
           {...feedbackTargetProps("admin.feedback-widget")}
           {...{ [ADMIN_FEEDBACK_OVERLAY_ATTRIBUTE]: "true" }}
@@ -691,7 +691,7 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
                     <Label>Screenshot</Label>
                   </div>
                   <div className="flex items-center gap-1">
-                    <input
+                    <Input
                       ref={fileInputRef}
                       type="file"
                       accept="image/*"
@@ -752,7 +752,7 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
                 {screenshotDataUrl && (
                   <div className="w-full max-w-sm overflow-hidden rounded shadow-sm">
                     <div className="aspect-video">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      { }
                       <img
                         src={screenshotDataUrl}
                         alt="Selected area screenshot"

@@ -1,9 +1,20 @@
 "use client";
 
-import { useId, useState } from "react";
-import { useFormStatus } from "react-dom";
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { createExecutiveTaskDraftAction } from "@/app/(main)/actions/executive-briefing-actions";
+import { InfoAlert } from "@/components/ds/InfoAlert";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -11,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 
 export type ExecutiveTaskAssigneeOption = {
   id: string;
@@ -18,14 +30,22 @@ export type ExecutiveTaskAssigneeOption = {
   email: string | null;
 };
 
-function PendingSubmitButton({ disabled }: { disabled?: boolean }) {
-  const { pending } = useFormStatus();
+const TASK_STATUSES = [
+  { value: "open", label: "Open" },
+  { value: "in_progress", label: "In progress" },
+  { value: "blocked", label: "Blocked" },
+  { value: "done", label: "Done" },
+  { value: "cancelled", label: "Cancelled" },
+] as const;
 
-  return (
-    <Button size="sm" type="submit" disabled={disabled || pending}>
-      {pending ? "Creating..." : "Create task"}
-    </Button>
-  );
+const TASK_PRIORITIES = [
+  { value: "high", label: "High" },
+  { value: "medium", label: "Medium" },
+  { value: "low", label: "Low" },
+] as const;
+
+function normalizeTaskDescription(value: string) {
+  return value.replace(/\s+/g, " ").trim();
 }
 
 export function ExecutiveTaskDraftForm({
@@ -41,58 +61,190 @@ export function ExecutiveTaskDraftForm({
   employees: ExecutiveTaskAssigneeOption[];
   hasMatchingTask: boolean;
 }) {
-  const selectId = useId();
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const [taskTitle, setTaskTitle] = useState(title);
+  const [taskDescription, setTaskDescription] = useState(
+    normalizeTaskDescription(description),
+  );
   const [assigneePersonId, setAssigneePersonId] = useState<string>("");
+  const [priority, setPriority] = useState("high");
+  const [status, setStatus] = useState("open");
+  const [dueDate, setDueDate] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
-  if (!sourceId) {
-    return (
-      <div className="rounded-xl border border-dashed border-border px-3 py-2 text-xs text-muted-foreground">
-        This item does not have a direct source record, so a task cannot be drafted from it yet.
-      </div>
-    );
-  }
+  if (!sourceId) return null;
 
   if (hasMatchingTask) {
     return (
-      <div className="rounded-xl border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
-        A matching task is already in flight for this source. Review the existing task below before
-        creating another one.
-      </div>
+      <span className="text-xs text-muted-foreground">
+        Task already in flight
+      </span>
     );
   }
 
+  const submitTask = () => {
+    const trimmedTitle = taskTitle.trim();
+    const trimmedDescription = normalizeTaskDescription(taskDescription);
+
+    if (!trimmedTitle || !trimmedDescription) {
+      setError("Task title and description are required.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.set("sourceId", sourceId);
+    formData.set("title", trimmedTitle);
+    formData.set("description", trimmedDescription);
+    formData.set("assigneePersonId", assigneePersonId);
+    formData.set("priority", priority);
+    formData.set("status", status);
+    formData.set("dueDate", dueDate);
+
+    setError(null);
+    startTransition(async () => {
+      try {
+        await createExecutiveTaskDraftAction(formData);
+        setOpen(false);
+        router.refresh();
+      } catch (caught) {
+        setError(
+          caught instanceof Error
+            ? caught.message
+            : "Failed to create executive task.",
+        );
+      }
+    });
+  };
+
   return (
-    <form action={createExecutiveTaskDraftAction} className="space-y-3 rounded-xl border border-border bg-muted/20 p-3">
-      <input type="hidden" name="sourceId" value={sourceId} />
-      <input type="hidden" name="title" value={title} />
-      <input type="hidden" name="description" value={description} />
-      <input type="hidden" name="assigneePersonId" value={assigneePersonId} />
+    <>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="h-8 rounded-md px-3 text-xs"
+        onClick={() => {
+          setError(null);
+          setOpen(true);
+        }}
+      >
+        Create task
+      </Button>
 
-      <div className="space-y-1">
-        <label htmlFor={selectId} className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-          Assign to
-        </label>
-        <Select value={assigneePersonId || "__unassigned"} onValueChange={(value) => setAssigneePersonId(value === "__unassigned" ? "" : value)}>
-          <SelectTrigger id={selectId} className="h-9 bg-background">
-            <SelectValue placeholder="Choose employee" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="__unassigned">Unassigned draft</SelectItem>
-            {employees.map((employee) => (
-              <SelectItem key={employee.id} value={employee.id}>
-                {employee.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent size="form">
+          <DialogHeader>
+            <DialogTitle>Create executive task</DialogTitle>
+            <DialogDescription>
+              Edit the task before it is added to the task list.
+            </DialogDescription>
+          </DialogHeader>
 
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-xs text-muted-foreground">
-          Draft task from the recommended move on this executive item.
-        </p>
-        <PendingSubmitButton />
-      </div>
-    </form>
+          <div className="grid gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="executive-task-title">Title</Label>
+              <Input
+                id="executive-task-title"
+                value={taskTitle}
+                onChange={(event) => setTaskTitle(event.target.value)}
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="executive-task-description">Description</Label>
+              <Textarea
+                id="executive-task-description"
+                value={taskDescription}
+                onChange={(event) => setTaskDescription(event.target.value)}
+                rows={5}
+              />
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-2">
+                <Label>Assignee</Label>
+                <Select
+                  value={assigneePersonId || "__unassigned"}
+                  onValueChange={(value) =>
+                    setAssigneePersonId(value === "__unassigned" ? "" : value)
+                  }
+                >
+                  <SelectTrigger className="bg-background">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__unassigned">Unassigned</SelectItem>
+                    {employees.map((employee) => (
+                      <SelectItem key={employee.id} value={employee.id}>
+                        {employee.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="executive-task-due-date">Due date</Label>
+                <Input
+                  id="executive-task-due-date"
+                  type="date"
+                  value={dueDate}
+                  onChange={(event) => setDueDate(event.target.value)}
+                />
+              </div>
+
+              <div className="grid gap-2">
+                <Label>Priority</Label>
+                <Select value={priority} onValueChange={setPriority}>
+                  <SelectTrigger className="bg-background">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TASK_PRIORITIES.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid gap-2">
+                <Label>Status</Label>
+                <Select value={status} onValueChange={setStatus}>
+                  <SelectTrigger className="bg-background">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TASK_STATUSES.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {error && <InfoAlert variant="error">{error}</InfoAlert>}
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button type="button" onClick={submitTask} disabled={isPending}>
+              {isPending ? "Creating..." : "Create task"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

@@ -1,21 +1,30 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Download, Edit, Loader2, Mail, Plus, Save, Sparkles, Trash2, X } from "lucide-react";
+import Link from "next/link";
+import { Download, Edit, ExternalLink, Loader2, Mail, Plus, Save, Sparkles, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
-import { SectionRuleHeading } from "@/components/layout/spacing";
+import {
+  ContentSectionStack,
+  DetailPanel,
+  SectionRuleHeading,
+  SummaryValueRow,
+} from "@/components/layout";
+import { InfoAlert } from "@/components/ds/InfoAlert";
+import { StatusBadge } from "@/components/ds/status-badge";
 import { Markdown } from "@/components/misc/markdown";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { apiFetch } from "@/lib/api-client";
 import {
   useProgressReport,
   useUpdateProgressReport,
 } from "@/hooks/use-progress-reports";
+import { useProjectTitle } from "@/hooks/useProjectTitle";
 import { formatProgressReportDate } from "@/lib/progress-reports/date-format";
 import type {
   ProgressReportContact,
@@ -46,17 +55,6 @@ interface AiGeneratedSections {
   past_week_highlights: string;
   upcoming_week_activities: string;
   open_items: string;
-}
-
-function statusVariant(status: ProgressReportStatus) {
-  switch (status) {
-    case "sent":
-      return "default";
-    case "ready":
-      return "secondary";
-    default:
-      return "outline";
-  }
 }
 
 function normalizeReportMarkdown(value: string): string {
@@ -126,6 +124,74 @@ function ContactList({ contacts }: { contacts: ProgressReportContact[] }) {
   );
 }
 
+function PhotoGrid({
+  photos,
+  selectedPhotoIds,
+  selectedPhotos,
+  onToggle,
+  onCaption,
+}: {
+  photos: ProgressReportPhotoRecord[];
+  selectedPhotoIds: Set<number>;
+  selectedPhotos: Array<{ project_photo_id: number; caption: string | null }>;
+  onToggle: (photo: ProgressReportPhotoRecord) => void;
+  onCaption: (photoId: number, caption: string) => void;
+}) {
+  return (
+    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      {photos.map((photo) => {
+        const selected = selectedPhotoIds.has(photo.id);
+        const selectedEntry = selectedPhotos.find((e) => e.project_photo_id === photo.id);
+        return (
+          <div
+            key={photo.id}
+            className={`rounded-xl p-3 transition-colors ${selected ? "bg-primary/5 ring-1 ring-primary/30" : "bg-muted/30"}`}
+          >
+            <Button
+              type="button"
+              variant="ghost"
+              className="h-auto w-full justify-start p-0 text-left hover:bg-transparent"
+              onClick={() => onToggle(photo)}
+            >
+              <div className="aspect-[4/3] overflow-hidden rounded-lg bg-muted">
+                <img
+                  src={photo.file_url}
+                  alt={photo.title}
+                  className="h-full w-full object-cover"
+                />
+              </div>
+              <div className="mt-3 flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="truncate text-sm font-medium text-foreground">{photo.title}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {formatProgressReportDate(photo.date_taken ?? photo.created_at)}
+                  </div>
+                </div>
+                <span
+                  className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${selected ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
+                >
+                  {selected ? "In report" : "Add"}
+                </span>
+              </div>
+            </Button>
+            {selected && selectedEntry !== undefined ? (
+              <div className="mt-3 space-y-1.5">
+                <Label htmlFor={`photo-caption-${photo.id}`} className="text-xs">Caption</Label>
+                <Input
+                  id={`photo-caption-${photo.id}`}
+                  value={selectedEntry.caption ?? ""}
+                  onChange={(event) => onCaption(photo.id, event.target.value)}
+                  placeholder="Add a caption…"
+                />
+              </div>
+            ) : null}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export function ProgressReportEditor({
   projectId,
   reportId,
@@ -141,6 +207,8 @@ export function ProgressReportEditor({
   const [isSending, setIsSending] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+
+  useProjectTitle(draft?.title ?? "Progress Report");
 
   useEffect(() => {
     if (!reportQuery.data) return;
@@ -170,6 +238,46 @@ export function ProgressReportEditor({
     () => new Set(draft?.selectedPhotos.map((photo) => photo.project_photo_id) ?? []),
     [draft?.selectedPhotos],
   );
+
+  const availablePhotos = reportQuery.data?.availablePhotos;
+
+  const weekPhotos = useMemo(() => {
+    if (!draft || !availablePhotos) return [];
+    return availablePhotos.filter((photo) => {
+      const dateStr = photo.date_taken ?? photo.created_at;
+      if (!dateStr) return false;
+      const d = dateStr.slice(0, 10);
+      return d >= draft.week_start && d <= draft.week_end;
+    });
+  }, [availablePhotos, draft?.week_start, draft?.week_end]);
+
+  const unselectedWeekPhotos = useMemo(
+    () => weekPhotos.filter((photo) => !selectedPhotoIds.has(photo.id)),
+    [weekPhotos, selectedPhotoIds],
+  );
+
+  const otherPhotos = useMemo(() => {
+    if (!availablePhotos) return [];
+    const weekIds = new Set(weekPhotos.map((p) => p.id));
+    return availablePhotos.filter((photo) => !weekIds.has(photo.id));
+  }, [availablePhotos, weekPhotos]);
+
+  function addAllWeekPhotos() {
+    setDraft((current) => {
+      if (!current) return current;
+      const toAdd = weekPhotos.filter(
+        (photo) => !current.selectedPhotos.some((s) => s.project_photo_id === photo.id),
+      );
+      if (toAdd.length === 0) return current;
+      return {
+        ...current,
+        selectedPhotos: [
+          ...current.selectedPhotos,
+          ...toAdd.map((photo) => ({ project_photo_id: photo.id, caption: photo.title })),
+        ],
+      };
+    });
+  }
 
   function updateField<K extends keyof EditorState>(key: K, value: EditorState[K]) {
     setDraft((current) => (current ? { ...current, [key]: value } : current));
@@ -336,13 +444,12 @@ export function ProgressReportEditor({
     }
   }
 
+  // ── Loading ──
   if (reportQuery.isLoading || !draft || !reportQuery.data) {
     return (
-      <div className="space-y-6 py-8">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          Loading progress report…
-        </div>
+      <div className="space-y-6">
+        <Skeleton className="h-8 w-64" />
+        <Skeleton className="h-48 w-full" />
       </div>
     );
   }
@@ -353,538 +460,696 @@ export function ProgressReportEditor({
     selectedPhotoIds.has(photo.project_photo_id),
   );
 
-  if (!isEditing) {
+  const weekRange = `${formatProgressReportDate(draft.week_start)} – ${formatProgressReportDate(draft.week_end)}`;
+
+  // ── Edit mode ──
+  if (isEditing) {
     return (
-      <div className="space-y-10">
-        <section className="flex flex-wrap items-center justify-between gap-4">
+      <div className="space-y-8">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <SectionRuleHeading label={draft.title} className="mb-2" />
-            <p className="text-sm text-muted-foreground">
-              Week of {formatProgressReportDate(draft.week_start)} to{" "}
-              {formatProgressReportDate(draft.week_end)}
-            </p>
+            <p className="text-sm font-medium text-foreground">{draft.title}</p>
+            <p className="text-xs text-muted-foreground">{weekRange}</p>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge variant={statusVariant(draft.status)}>{draft.status}</Badge>
+          <div className="flex items-center gap-2">
             <Button
               size="sm"
               variant="outline"
-              className="gap-2"
-              onClick={() => setIsEditing(true)}
+              onClick={() => void handleAiGenerate()}
+              disabled={isGenerating || updateMutation.isPending}
             >
-              <Edit className="h-4 w-4" />
-              Edit
+              {isGenerating ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Sparkles className="h-4 w-4" />
+              )}
+              {isGenerating ? "Generating…" : "AI Generate"}
             </Button>
-            <a href={`/api/projects/${projectId}/progress-reports/${reportId}/pdf`} className="inline-flex">
-              <Button variant="outline" size="sm" className="gap-2">
-                <Download className="h-4 w-4" />
-                Download PDF
-              </Button>
-            </a>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                const { report: currentReport, selectedPhotos: currentSelectedPhotos } = detail;
+                setDraft({
+                  title: currentReport.title,
+                  status: currentReport.status,
+                  week_start: currentReport.week_start,
+                  week_end: currentReport.week_end,
+                  construction_start_date: currentReport.construction_start_date,
+                  scheduled_completion_date: currentReport.scheduled_completion_date,
+                  past_week_highlights: currentReport.past_week_highlights,
+                  upcoming_week_activities: currentReport.upcoming_week_activities,
+                  open_items: currentReport.open_items,
+                  weather_days_lost: currentReport.weather_days_lost,
+                  contacts: currentReport.contacts.length > 0 ? currentReport.contacts : [],
+                  client_recipients: currentReport.client_recipients,
+                  selectedPhotos: currentSelectedPhotos.map((photo) => ({
+                    project_photo_id: photo.project_photo_id,
+                    caption: photo.caption,
+                  })),
+                });
+                setEmailRecipientsInput(currentReport.client_recipients.join(", "));
+                setIsEditing(false);
+              }}
+            >
+              <X className="h-4 w-4" />
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => void handleSave()}
+              disabled={updateMutation.isPending}
+            >
+              {updateMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4" />
+              )}
+              Save
+            </Button>
           </div>
-        </section>
+        </div>
 
-        <section className="grid gap-4 border-y border-border py-5 md:grid-cols-2">
-          <div>
-            <div className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-              Construction Start Date
+        <div className="space-y-10">
+          <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <div className="space-y-2">
+              <Label htmlFor="report-title">Report title</Label>
+              <Input
+                id="report-title"
+                value={draft.title}
+                onChange={(event) => updateField("title", event.target.value)}
+              />
             </div>
-            <div className="mt-1 text-sm font-medium text-foreground">
-              {formatProgressReportDate(draft.construction_start_date)}
+            <div className="space-y-2">
+              <Label htmlFor="week-start">Week start</Label>
+              <Input
+                id="week-start"
+                type="date"
+                value={draft.week_start}
+                onChange={(event) => updateField("week_start", event.target.value)}
+              />
             </div>
-          </div>
-          <div>
-            <div className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-              Scheduled Completion
+            <div className="space-y-2">
+              <Label htmlFor="week-end">Week end</Label>
+              <Input
+                id="week-end"
+                type="date"
+                value={draft.week_end}
+                onChange={(event) => updateField("week_end", event.target.value)}
+              />
             </div>
-            <div className="mt-1 text-sm font-medium text-foreground">
-              {formatProgressReportDate(draft.scheduled_completion_date)}
+            <div className="space-y-2">
+              <Label>Status</Label>
+              <Select
+                value={draft.status}
+                onValueChange={(value) => updateField("status", value as ProgressReportStatus)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="ready">Ready</SelectItem>
+                  <SelectItem value="sent">Sent</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-          </div>
-          <div className="md:col-span-2">
-            <div className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-              Project Team Contacts
+            <div className="space-y-2">
+              <Label htmlFor="construction-start">Construction start</Label>
+              <Input
+                id="construction-start"
+                type="date"
+                value={draft.construction_start_date ?? ""}
+                onChange={(event) =>
+                  updateField("construction_start_date", event.target.value || null)
+                }
+              />
             </div>
-            <ContactList contacts={draft.contacts.slice(0, 6)} />
-          </div>
-        </section>
-
-        <div className="mx-auto max-w-3xl space-y-10">
-          <ReportMarkdownSection
-            title="1. Past Week's Highlights"
-            value={draft.past_week_highlights}
-            empty="No past week highlights added yet."
-          />
-          <ReportMarkdownSection
-            title="2. Upcoming Week's Activities"
-            value={draft.upcoming_week_activities}
-            empty="No upcoming activities added yet."
-          />
-          <ReportMarkdownSection
-            title="3. Open Items"
-            value={draft.open_items}
-            empty="No open items added yet."
-          />
-
-          <section className="space-y-3">
-            <SectionRuleHeading label="4. Days Lost Due to Weather This Week" className="mb-2" />
-            <p className="text-sm font-medium text-foreground">
-              {draft.weather_days_lost} day{draft.weather_days_lost === 1 ? "" : "s"}
-            </p>
+            <div className="space-y-2">
+              <Label htmlFor="scheduled-completion">Scheduled completion</Label>
+              <Input
+                id="scheduled-completion"
+                type="date"
+                value={draft.scheduled_completion_date ?? ""}
+                onChange={(event) =>
+                  updateField("scheduled_completion_date", event.target.value || null)
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="weather-days">Weather days lost</Label>
+              <Input
+                id="weather-days"
+                type="number"
+                min={0}
+                value={draft.weather_days_lost}
+                onChange={(event) =>
+                  updateField("weather_days_lost", Number.parseInt(event.target.value || "0", 10))
+                }
+              />
+            </div>
           </section>
 
-          <section className="space-y-3">
-            <SectionRuleHeading label="5. Progress Mark-up / Photos" className="mb-2" />
-            {selectedPhotos.length > 0 ? (
-              <div className="grid gap-4 md:grid-cols-2">
-                {selectedPhotos.map((selection) => (
-                  <figure key={selection.id} className="space-y-2">
-                    <div className="aspect-[4/3] overflow-hidden rounded-md bg-muted">
-                      <img
-                        src={selection.photo.file_url}
-                        alt={selection.photo.title}
-                        className="h-full w-full object-cover"
-                      />
-                    </div>
-                    <figcaption className="text-sm">
-                      <div className="font-medium text-foreground">
-                        {selection.caption || selection.photo.title}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        {formatProgressReportDate(selection.photo.date_taken ?? selection.photo.created_at)}
-                      </div>
-                    </figcaption>
-                  </figure>
-                ))}
+          <section className="grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(320px,0.9fr)]">
+            <div className="space-y-8">
+              <div className="space-y-2">
+                <Label htmlFor="highlights">Past week&apos;s highlights</Label>
+                <Textarea
+                  id="highlights"
+                  rows={8}
+                  value={draft.past_week_highlights}
+                  onChange={(event) => updateField("past_week_highlights", event.target.value)}
+                />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="upcoming">Upcoming week&apos;s activities</Label>
+                <Textarea
+                  id="upcoming"
+                  rows={8}
+                  value={draft.upcoming_week_activities}
+                  onChange={(event) => updateField("upcoming_week_activities", event.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="open-items">Open items</Label>
+                <Textarea
+                  id="open-items"
+                  rows={7}
+                  value={draft.open_items}
+                  onChange={(event) => updateField("open_items", event.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-8">
+              <div className="space-y-4 rounded-xl bg-muted/40 px-5 py-4">
+                <div>
+                  <SectionRuleHeading label="Client delivery" className="mb-2" />
+                  <p className="text-sm text-muted-foreground">
+                    Save recipient defaults here, then email the generated PDF directly from the report.
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="client-recipients">Recipients</Label>
+                  <Input
+                    id="client-recipients"
+                    placeholder="client@example.com, pm@example.com"
+                    value={emailRecipientsInput}
+                    onChange={(event) => setEmailRecipientsInput(event.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email-note">Optional note</Label>
+                  <Textarea
+                    id="email-note"
+                    rows={4}
+                    value={emailNote}
+                    onChange={(event) => setEmailNote(event.target.value)}
+                  />
+                </div>
+                {draft.status === "draft" && (
+                  <InfoAlert variant="warning">
+                    Set the report status to <strong>Ready</strong> before emailing. Draft reports cannot be sent to clients.
+                  </InfoAlert>
+                )}
+                <Button
+                  className="w-full gap-2"
+                  onClick={() => void handleSendEmail()}
+                  disabled={isSending || draft.status === "draft"}
+                >
+                  {isSending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Mail className="h-4 w-4" />
+                  )}
+                  Email PDF
+                </Button>
+              </div>
+
+              <div className="space-y-4 rounded-xl bg-muted/40 px-5 py-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <SectionRuleHeading label="Project Team" className="mb-2" />
+                    <p className="text-sm text-muted-foreground">
+                      These show in the report footer.
+                    </p>
+                  </div>
+                  <Button size="sm" variant="outline" className="gap-2" onClick={addContact}>
+                    <Plus className="h-4 w-4" />
+                    Add contact
+                  </Button>
+                </div>
+
+                {draft.contacts.length > 0 ? (
+                  <div className="space-y-3">
+                    {draft.contacts.map((contact, index) => (
+                      <div key={`${contact.email}-${index}`} className="grid gap-3 rounded-lg bg-background px-3 py-3">
+                        <div className="flex justify-end">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-8 w-8"
+                            onClick={() => removeContact(index)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        <Input
+                          placeholder="Role"
+                          value={contact.role}
+                          onChange={(event) => updateContact(index, "role", event.target.value)}
+                        />
+                        <Input
+                          placeholder="Name"
+                          value={contact.name}
+                          onChange={(event) => updateContact(index, "name", event.target.value)}
+                        />
+                        <Input
+                          placeholder="Email"
+                          value={contact.email}
+                          onChange={(event) => updateContact(index, "email", event.target.value)}
+                        />
+                        <Input
+                          placeholder="Phone"
+                          value={contact.phone}
+                          onChange={(event) => updateContact(index, "phone", event.target.value)}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-sm text-muted-foreground">
+                    No contacts added yet.
+                  </div>
+                )}
+              </div>
+            </div>
+          </section>
+
+          <section className="space-y-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <SectionRuleHeading label="Photos" className="mb-2" />
+                <p className="text-sm text-muted-foreground">
+                  Choose which project photos appear in the PDF. Click to add or remove; edit captions on selected photos.
+                </p>
+              </div>
+              {unselectedWeekPhotos.length > 0 && (
+                <Button size="sm" variant="outline" className="gap-2 shrink-0" onClick={addAllWeekPhotos}>
+                  <Plus className="h-4 w-4" />
+                  Add all from this week ({unselectedWeekPhotos.length})
+                </Button>
+              )}
+            </div>
+
+            {(availablePhotos ?? []).length === 0 ? (
+              <p className="text-sm text-muted-foreground">No photos uploaded for this project yet.</p>
             ) : (
-              <p className="text-sm text-muted-foreground">No progress photos selected yet.</p>
+              <div className="space-y-6">
+                {weekPhotos.length > 0 && (
+                  <div className="space-y-3">
+                    <div className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                      This week — {formatProgressReportDate(draft.week_start)} to {formatProgressReportDate(draft.week_end)} ({weekPhotos.length})
+                    </div>
+                    <PhotoGrid
+                      photos={weekPhotos}
+                      selectedPhotoIds={selectedPhotoIds}
+                      selectedPhotos={draft.selectedPhotos}
+                      onToggle={togglePhoto}
+                      onCaption={updatePhotoCaption}
+                    />
+                  </div>
+                )}
+                {otherPhotos.length > 0 && (
+                  <div className="space-y-3">
+                    {weekPhotos.length > 0 && (
+                      <div className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                        Other recent photos ({otherPhotos.length})
+                      </div>
+                    )}
+                    <PhotoGrid
+                      photos={otherPhotos}
+                      selectedPhotoIds={selectedPhotoIds}
+                      selectedPhotos={draft.selectedPhotos}
+                      onToggle={togglePhoto}
+                      onCaption={updatePhotoCaption}
+                    />
+                  </div>
+                )}
+              </div>
             )}
           </section>
 
-          <section className="space-y-3">
-            <SectionRuleHeading label="Project Contacts" className="mb-2" />
-            <ContactList contacts={draft.contacts} />
+          <section className="space-y-2">
+            <SectionRuleHeading label="Sources used to generate this draft" className="mb-3" />
+            <p className="text-sm text-muted-foreground">
+              These records were used to populate the report. Click any link to verify the source.
+            </p>
+            <div className="grid gap-6 xl:grid-cols-3">
+              <div className="rounded-xl bg-muted/30 px-4 py-4">
+                <div className="mb-3 flex items-center justify-between">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Meetings</span>
+                  <Link
+                    href={`/${projectId}/meetings`}
+                    className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                    target="_blank"
+                  >
+                    View all
+                    <ExternalLink className="h-3 w-3" />
+                  </Link>
+                </div>
+                {report?.source_snapshot.meetings.length ? (
+                  <ul className="space-y-3 text-sm">
+                    {report.source_snapshot.meetings.map((meeting) => (
+                      <li key={meeting.id}>
+                        <Link
+                          href={`/${projectId}/meetings/${meeting.id}`}
+                          className="font-medium text-foreground hover:text-primary hover:underline"
+                          target="_blank"
+                        >
+                          {meeting.title}
+                        </Link>
+                        <div className="text-xs text-muted-foreground">
+                          {formatProgressReportDate(meeting.date, "MMM d, yyyy", "No date")}
+                        </div>
+                        {meeting.summary ? (
+                          <div className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{meeting.summary}</div>
+                        ) : null}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No meeting sources were captured for this draft.</p>
+                )}
+              </div>
+
+              <div className="rounded-xl bg-muted/30 px-4 py-4">
+                <div className="mb-3 flex items-center justify-between">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Emails</span>
+                  <Link
+                    href={`/${projectId}/emails`}
+                    className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                    target="_blank"
+                  >
+                    View all
+                    <ExternalLink className="h-3 w-3" />
+                  </Link>
+                </div>
+                {report?.source_snapshot.emails.length ? (
+                  <ul className="space-y-3 text-sm">
+                    {report.source_snapshot.emails.map((email) => (
+                      <li key={email.id}>
+                        <div className="font-medium text-foreground">{email.subject}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {formatProgressReportDate(email.date, "MMM d, yyyy", "No date")}
+                        </div>
+                        {email.preview ? (
+                          <div className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{email.preview}</div>
+                        ) : null}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No email sources were captured for this draft.</p>
+                )}
+              </div>
+
+              <div className="rounded-xl bg-muted/30 px-4 py-4">
+                <div className="mb-3 flex items-center justify-between">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Photos</span>
+                  <span className="text-xs text-muted-foreground">
+                    {report?.source_snapshot.photos.length ?? 0} in snapshot
+                  </span>
+                </div>
+                {report?.source_snapshot.photos.length ? (
+                  <div className="grid grid-cols-3 gap-2">
+                    {report.source_snapshot.photos.map((photo) => (
+                      <a
+                        key={photo.id}
+                        href={photo.file_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title={photo.title}
+                        className="group relative aspect-square overflow-hidden rounded-lg bg-muted"
+                      >
+                        { }
+                        <img
+                          src={photo.file_url}
+                          alt={photo.title}
+                          className="h-full w-full object-cover transition-opacity group-hover:opacity-75"
+                        />
+                        <div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/50 to-transparent opacity-0 transition-opacity group-hover:opacity-100">
+                          <p className="truncate px-1.5 pb-1 text-[10px] text-primary-foreground">{photo.title}</p>
+                        </div>
+                      </a>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No photos were captured for this draft.</p>
+                )}
+                {report?.source_snapshot.generatedAt && (
+                  <p className="mt-3 text-xs text-muted-foreground">
+                    Draft generated {formatProgressReportDate(report.source_snapshot.generatedAt, "MMM d, yyyy h:mm a")}
+                  </p>
+                )}
+              </div>
+            </div>
           </section>
         </div>
       </div>
     );
   }
 
+  // ── View mode ──
   return (
-    <div className="space-y-10">
-      <section className="flex flex-wrap items-center justify-between gap-4">
+    <ContentSectionStack>
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <SectionRuleHeading label={draft.title} className="mb-2" />
-          <p className="text-sm text-muted-foreground">
-            Week of {formatProgressReportDate(draft.week_start)} to{" "}
-            {formatProgressReportDate(draft.week_end)}
-          </p>
+          <p className="text-sm font-medium text-foreground">{draft.title}</p>
+          <p className="text-xs text-muted-foreground">{weekRange}</p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge variant={statusVariant(draft.status)}>{draft.status}</Badge>
+        <div className="flex items-center gap-2">
+          <StatusBadge status={draft.status} />
           <Button
             size="sm"
             variant="outline"
-            className="gap-2"
-            onClick={() => void handleAiGenerate()}
-            disabled={isGenerating || updateMutation.isPending}
+            onClick={() => setIsEditing(true)}
           >
-            {isGenerating ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Sparkles className="h-4 w-4" />
-            )}
-            {isGenerating ? "Generating…" : "AI Generate"}
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            className="gap-2"
-            onClick={() => {
-              const { report: currentReport, selectedPhotos: currentSelectedPhotos } = detail;
-              setDraft({
-                title: currentReport.title,
-                status: currentReport.status,
-                week_start: currentReport.week_start,
-                week_end: currentReport.week_end,
-                construction_start_date: currentReport.construction_start_date,
-                scheduled_completion_date: currentReport.scheduled_completion_date,
-                past_week_highlights: currentReport.past_week_highlights,
-                upcoming_week_activities: currentReport.upcoming_week_activities,
-                open_items: currentReport.open_items,
-                weather_days_lost: currentReport.weather_days_lost,
-                contacts: currentReport.contacts.length > 0 ? currentReport.contacts : [],
-                client_recipients: currentReport.client_recipients,
-                selectedPhotos: currentSelectedPhotos.map((photo) => ({
-                  project_photo_id: photo.project_photo_id,
-                  caption: photo.caption,
-                })),
-              });
-              setEmailRecipientsInput(currentReport.client_recipients.join(", "));
-              setIsEditing(false);
-            }}
-          >
-            <X className="h-4 w-4" />
-            Cancel
+            <Edit className="mr-1.5 h-4 w-4" />
+            Edit
           </Button>
           <a href={`/api/projects/${projectId}/progress-reports/${reportId}/pdf`} className="inline-flex">
-            <Button variant="outline" size="sm" className="gap-2">
-              <Download className="h-4 w-4" />
+            <Button variant="outline" size="sm">
+              <Download className="mr-1.5 h-4 w-4" />
               Download PDF
             </Button>
           </a>
-          <Button
-            size="sm"
-            variant="outline"
-            className="gap-2"
-            onClick={() => void handleSave()}
-            disabled={updateMutation.isPending}
-          >
-            {updateMutation.isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Save className="h-4 w-4" />
-            )}
-            Save
-          </Button>
         </div>
-      </section>
+      </div>
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <div className="space-y-2">
-          <Label htmlFor="report-title">Report title</Label>
-          <Input
-            id="report-title"
-            value={draft.title}
-            onChange={(event) => updateField("title", event.target.value)}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="week-start">Week start</Label>
-          <Input
-            id="week-start"
-            type="date"
-            value={draft.week_start}
-            onChange={(event) => updateField("week_start", event.target.value)}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="week-end">Week end</Label>
-          <Input
-            id="week-end"
-            type="date"
-            value={draft.week_end}
-            onChange={(event) => updateField("week_end", event.target.value)}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label>Status</Label>
-          <Select
-            value={draft.status}
-            onValueChange={(value) => updateField("status", value as ProgressReportStatus)}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="draft">Draft</SelectItem>
-              <SelectItem value="ready">Ready</SelectItem>
-              <SelectItem value="sent">Sent</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="construction-start">Construction start</Label>
-          <Input
-            id="construction-start"
-            type="date"
-            value={draft.construction_start_date ?? ""}
-            onChange={(event) =>
-              updateField("construction_start_date", event.target.value || null)
-            }
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="scheduled-completion">Scheduled completion</Label>
-          <Input
-            id="scheduled-completion"
-            type="date"
-            value={draft.scheduled_completion_date ?? ""}
-            onChange={(event) =>
-              updateField("scheduled_completion_date", event.target.value || null)
-            }
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="weather-days">Weather days lost</Label>
-          <Input
-            id="weather-days"
-            type="number"
-            min={0}
-            value={draft.weather_days_lost}
-            onChange={(event) =>
-              updateField("weather_days_lost", Number.parseInt(event.target.value || "0", 10))
-            }
-          />
-        </div>
-      </section>
-
-      <section className="grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(320px,0.9fr)]">
-        <div className="space-y-8">
-          <div className="space-y-2">
-            <Label htmlFor="highlights">Past week&apos;s highlights</Label>
-            <Textarea
-              id="highlights"
-              rows={8}
+      <div className="grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(300px,380px)]">
+        <div className="space-y-0">
+          <DetailPanel className="space-y-8">
+            <ReportMarkdownSection
+              title="Past Week's Highlights"
               value={draft.past_week_highlights}
-              onChange={(event) => updateField("past_week_highlights", event.target.value)}
+              empty="No past week highlights added yet."
             />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="upcoming">Upcoming week&apos;s activities</Label>
-            <Textarea
-              id="upcoming"
-              rows={8}
+            <ReportMarkdownSection
+              title="Upcoming Week's Activities"
               value={draft.upcoming_week_activities}
-              onChange={(event) => updateField("upcoming_week_activities", event.target.value)}
+              empty="No upcoming activities added yet."
             />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="open-items">Open items</Label>
-            <Textarea
-              id="open-items"
-              rows={7}
+            <ReportMarkdownSection
+              title="Open Items"
               value={draft.open_items}
-              onChange={(event) => updateField("open_items", event.target.value)}
+              empty="No open items added yet."
             />
-          </div>
+            <section className="space-y-3">
+              <SectionRuleHeading label="Days Lost Due to Weather" className="mb-2" />
+              <p className="text-sm font-medium text-foreground">
+                {draft.weather_days_lost} day{draft.weather_days_lost === 1 ? "" : "s"}
+              </p>
+            </section>
+
+            {(selectedPhotos.length > 0 || unselectedWeekPhotos.length > 0) && (
+              <section className="space-y-3">
+                <SectionRuleHeading label="Progress Photos" className="mb-2" />
+                {selectedPhotos.length > 0 && (
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {selectedPhotos.map((selection) => (
+                      <figure key={selection.id} className="space-y-2">
+                        <div className="aspect-[4/3] overflow-hidden rounded-md bg-muted">
+                          <img
+                            src={selection.photo.file_url}
+                            alt={selection.photo.title}
+                            className="h-full w-full object-cover"
+                          />
+                        </div>
+                        <figcaption className="text-sm">
+                          <div className="font-medium text-foreground">
+                            {selection.caption || selection.photo.title}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {formatProgressReportDate(selection.photo.date_taken ?? selection.photo.created_at)}
+                          </div>
+                        </figcaption>
+                      </figure>
+                    ))}
+                  </div>
+                )}
+                {unselectedWeekPhotos.length > 0 && (
+                  <InfoAlert variant="info">
+                    <span className="flex items-center justify-between gap-3">
+                      <span>{unselectedWeekPhotos.length} photo{unselectedWeekPhotos.length === 1 ? "" : "s"} from this week not yet included in the report.</span>
+                      <Button size="sm" variant="outline" onClick={() => setIsEditing(true)}>Add Photos</Button>
+                    </span>
+                  </InfoAlert>
+                )}
+              </section>
+            )}
+
+          </DetailPanel>
         </div>
 
-        <div className="space-y-8">
-          <div className="space-y-4 rounded-xl bg-muted/40 px-5 py-4">
-            <div>
-              <SectionRuleHeading label="Client delivery" className="mb-2" />
-              <p className="text-sm text-muted-foreground">
-                Save recipient defaults here, then email the generated PDF directly from the report.
-              </p>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="client-recipients">Recipients</Label>
-              <Input
-                id="client-recipients"
-                placeholder="client@example.com, pm@example.com"
-                value={emailRecipientsInput}
-                onChange={(event) => setEmailRecipientsInput(event.target.value)}
+        <aside className="space-y-6">
+          <DetailPanel>
+            <SectionRuleHeading label="Details" className="mb-6 pb-0" />
+            <dl className="space-y-3 text-sm">
+              <SummaryValueRow
+                label="Construction Start"
+                value={formatProgressReportDate(draft.construction_start_date) || "—"}
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email-note">Optional note</Label>
-              <Textarea
-                id="email-note"
-                rows={4}
-                value={emailNote}
-                onChange={(event) => setEmailNote(event.target.value)}
+              <SummaryValueRow
+                label="Scheduled Substantial Completion Date"
+                value={formatProgressReportDate(draft.scheduled_completion_date) || "—"}
               />
-            </div>
-            <Button
-              className="w-full gap-2"
-              onClick={() => void handleSendEmail()}
-              disabled={isSending}
-            >
-              {isSending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Mail className="h-4 w-4" />
-              )}
-              Email PDF
-            </Button>
-          </div>
+              <SummaryValueRow
+                label="Week End"
+                value={formatProgressReportDate(draft.week_end)}
+              />
+              <SummaryValueRow
+                label="Week Start"
+                value={formatProgressReportDate(draft.week_start)}
+              />
+              <SummaryValueRow
+                label="Days Lost due to Weather"
+                value={String(draft.weather_days_lost)}
+              />
+            </dl>
+          </DetailPanel>
 
-          <div className="space-y-4 rounded-xl bg-muted/40 px-5 py-4">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <SectionRuleHeading label="Project contacts" className="mb-2" />
-                <p className="text-sm text-muted-foreground">
-                  These show in the report footer.
-                </p>
-              </div>
-              <Button size="sm" variant="outline" className="gap-2" onClick={addContact}>
-                <Plus className="h-4 w-4" />
-                Add contact
+          <DetailPanel>
+            <div className="mb-4 flex items-center justify-between gap-2">
+              <SectionRuleHeading label="Project Team" className="pb-0" />
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 w-7 p-0"
+                onClick={() => setIsEditing(true)}
+              >
+                <Edit className="h-3.5 w-3.5" />
               </Button>
             </div>
-
             {draft.contacts.length > 0 ? (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {draft.contacts.map((contact, index) => (
-                  <div key={`${contact.email}-${index}`} className="grid gap-3 rounded-lg bg-background px-3 py-3">
-                    <div className="flex justify-end">
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-8 w-8"
-                        onClick={() => removeContact(index)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                  <div key={`${contact.email}-${index}`} className="space-y-0.5">
+                    {contact.role ? (
+                      <div className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                        {contact.role}
+                      </div>
+                    ) : null}
+                    <div className="text-sm font-medium text-foreground">
+                      {contact.name || "Unnamed"}
                     </div>
-                    <Input
-                      placeholder="Role"
-                      value={contact.role}
-                      onChange={(event) => updateContact(index, "role", event.target.value)}
-                    />
-                    <Input
-                      placeholder="Name"
-                      value={contact.name}
-                      onChange={(event) => updateContact(index, "name", event.target.value)}
-                    />
-                    <Input
-                      placeholder="Email"
-                      value={contact.email}
-                      onChange={(event) => updateContact(index, "email", event.target.value)}
-                    />
-                    <Input
-                      placeholder="Phone"
-                      value={contact.phone}
-                      onChange={(event) => updateContact(index, "phone", event.target.value)}
-                    />
+                    {contact.email ? (
+                      <div className="text-xs text-muted-foreground">{contact.email}</div>
+                    ) : null}
+                    {contact.phone ? (
+                      <div className="text-xs text-muted-foreground">{contact.phone}</div>
+                    ) : null}
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="text-sm text-muted-foreground">
-                No contacts added yet.
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
-
-      <section className="space-y-4">
-        <div>
-          <SectionRuleHeading label="Photos" className="mb-2" />
-          <p className="text-sm text-muted-foreground">
-            Choose which uploaded project photos appear in the PDF. Selected photos stay editable and can be captioned.
-          </p>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {detail.availablePhotos.map((photo) => {
-            const selected = selectedPhotoIds.has(photo.id);
-            const selectedEntry = draft.selectedPhotos.find(
-              (entry) => entry.project_photo_id === photo.id,
-            );
-
-            return (
-              <div
-                key={photo.id}
-                className={`rounded-xl p-3 transition-colors ${selected ? "bg-primary/5 ring-1 ring-primary/30" : "bg-muted/30"}`}
+              <Button
+                size="sm"
+                variant="outline"
+                className="w-full gap-1.5"
+                onClick={() => setIsEditing(true)}
               >
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="h-auto w-full justify-start p-0 text-left hover:bg-transparent"
-                  onClick={() => togglePhoto(photo)}
-                >
-                  <div className="aspect-[4/3] overflow-hidden rounded-lg bg-muted">
-                    <img
-                      src={photo.file_url}
-                      alt={photo.title}
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
-                  <div className="mt-3 flex items-start justify-between gap-3">
-                    <div>
-                      <div className="text-sm font-medium text-foreground">{photo.title}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {formatProgressReportDate(photo.date_taken ?? photo.created_at)}
+                <Plus className="h-3.5 w-3.5" />
+                Add team members
+              </Button>
+            )}
+          </DetailPanel>
+
+          {reportQuery.data.report.source_snapshot && (
+            (() => {
+              const snap = reportQuery.data.report.source_snapshot;
+              const hasSources = snap.meetings.length > 0 || snap.emails.length > 0;
+              if (!hasSources) return null;
+              return (
+                <DetailPanel>
+                  <SectionRuleHeading label="AI Sources" className="mb-4 pb-0" />
+                  <p className="mb-4 text-xs text-muted-foreground">
+                    Content generated {formatProgressReportDate(snap.generatedAt, "MMM d, yyyy")} from:
+                  </p>
+                  <div className="space-y-4">
+                    {snap.meetings.length > 0 && (
+                      <div className="space-y-2">
+                        <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                          Meetings ({snap.meetings.length})
+                        </p>
+                        <ul className="space-y-2">
+                          {snap.meetings.map((meeting) => (
+                            <li key={meeting.id}>
+                              <Link
+                                href={`/${projectId}/meetings/${meeting.id}`}
+                                className="group flex items-start gap-1.5 text-sm text-foreground hover:text-primary"
+                              >
+                                <ExternalLink className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground group-hover:text-primary" />
+                                <span className="min-w-0">
+                                  <span className="line-clamp-2 font-medium">{meeting.title}</span>
+                                  {meeting.date && (
+                                    <span className="block text-xs text-muted-foreground">
+                                      {formatProgressReportDate(meeting.date)}
+                                    </span>
+                                  )}
+                                </span>
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
                       </div>
-                    </div>
-                    <Badge variant={selected ? "default" : "outline"}>
-                      {selected ? "Selected" : "Available"}
-                    </Badge>
+                    )}
+                    {snap.emails.length > 0 && (
+                      <div className="space-y-2">
+                        <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                          Emails ({snap.emails.length})
+                        </p>
+                        <ul className="space-y-2">
+                          {snap.emails.map((email) => (
+                            <li key={email.id} className="text-sm">
+                              <p className="line-clamp-2 font-medium text-foreground">{email.subject}</p>
+                              {email.date && (
+                                <p className="text-xs text-muted-foreground">
+                                  {formatProgressReportDate(email.date)}
+                                </p>
+                              )}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
                   </div>
-                </Button>
-
-                {selected && selectedEntry ? (
-                  <div className="mt-3 space-y-2">
-                    <Label htmlFor={`photo-caption-${photo.id}`}>Caption</Label>
-                    <Input
-                      id={`photo-caption-${photo.id}`}
-                      value={selectedEntry.caption ?? ""}
-                      onChange={(event) =>
-                        updatePhotoCaption(photo.id, event.target.value)
-                      }
-                    />
-                  </div>
-                ) : null}
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
-      <section className="grid gap-6 xl:grid-cols-3">
-        <div className="rounded-xl bg-muted/30 px-4 py-4">
-          <SectionRuleHeading label="Meeting sources" className="mb-3" />
-          <ul className="space-y-3 text-sm">
-            {report?.source_snapshot.meetings.length ? (
-              report.source_snapshot.meetings.map((meeting) => (
-                <li key={meeting.id}>
-                  <div className="font-medium text-foreground">{meeting.title}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {formatProgressReportDate(meeting.date, "MMM d, yyyy", "No date")}
-                  </div>
-                  {meeting.summary ? (
-                    <div className="mt-1 text-muted-foreground">{meeting.summary}</div>
-                  ) : null}
-                </li>
-              ))
-            ) : (
-              <li className="text-muted-foreground">No meeting sources were captured for this draft.</li>
-            )}
-          </ul>
-        </div>
-
-        <div className="rounded-xl bg-muted/30 px-4 py-4">
-          <SectionRuleHeading label="Email sources" className="mb-3" />
-          <ul className="space-y-3 text-sm">
-            {report?.source_snapshot.emails.length ? (
-              report.source_snapshot.emails.map((email) => (
-                <li key={email.id}>
-                  <div className="font-medium text-foreground">{email.subject}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {formatProgressReportDate(email.date, "MMM d, yyyy", "No date")}
-                  </div>
-                  {email.preview ? (
-                    <div className="mt-1 text-muted-foreground">{email.preview}</div>
-                  ) : null}
-                </li>
-              ))
-            ) : (
-              <li className="text-muted-foreground">No email sources were captured for this draft.</li>
-            )}
-          </ul>
-        </div>
-
-        <div className="rounded-xl bg-muted/30 px-4 py-4">
-          <SectionRuleHeading label="Draft provenance" className="mb-3" />
-          <div className="space-y-3 text-sm text-muted-foreground">
-            <div>
-              Generated:{" "}
-              {report?.source_snapshot.generatedAt
-                ? formatProgressReportDate(report.source_snapshot.generatedAt, "MMM d, yyyy h:mm a")
-                : "Unknown"}
-            </div>
-            <div>Strategy: {report?.source_snapshot.strategy ?? "Unknown"}</div>
-            <div>
-              Photos in snapshot: {report?.source_snapshot.photos.length ?? 0}
-            </div>
-          </div>
-        </div>
-      </section>
-    </div>
+                </DetailPanel>
+              );
+            })()
+          )}
+        </aside>
+      </div>
+    </ContentSectionStack>
   );
 }

@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import {
   TableDateValue,
   TableRowActionsMenu,
-  TableStatusDot,
   TableTagBadge,
   type TableColumn,
   type FilterConfig,
@@ -26,6 +25,7 @@ export const tasksColumns: ColumnConfig[] = [
   { id: "project_name", label: "Project Name", defaultVisible: true },
   { id: "source_system", label: "Source", defaultVisible: true },
   { id: "source_record", label: "Created From", defaultVisible: true },
+  { id: "source_date", label: "Source Date", defaultVisible: true },
   { id: "assignee_email", label: "Assignee Email", defaultVisible: false },
   { id: "created_at", label: "Created Date", defaultVisible: true },
   { id: "due_date", label: "Due Date", defaultVisible: true },
@@ -83,9 +83,8 @@ export function buildTasksTableColumns(projectId?: string | null): TableColumn<T
           ...column,
           render: (item) => (
             <div className="flex max-w-xl min-w-0 items-center gap-2" title={item.description ?? ""}>
-              <TableStatusDot status={item.status} />
               <span className="text-sm font-medium text-foreground truncate">
-                {item.description || "Untitled Task"}
+                {item.title || item.description || "Untitled Task"}
               </span>
             </div>
           ),
@@ -170,6 +169,13 @@ export function buildTasksTableColumns(projectId?: string | null): TableColumn<T
           sortValue: (item) => item.assignee_email ?? "",
           sortable: true,
         };
+      case "source_date":
+        return {
+          ...column,
+          render: (item) => <TableDateValue value={item.source_date} />,
+          sortValue: (item) => item.source_date ?? "",
+          sortable: true,
+        };
       case "due_date":
         return {
           ...column,
@@ -244,18 +250,20 @@ export function renderTasksCard(
       className="h-auto w-full flex-col items-start justify-start rounded-lg border border-border bg-background p-4 text-left font-normal hover:bg-muted/50"
     >
       <div className="flex items-center gap-2">
-        <TableStatusDot status={item.status} />
-        <p className="max-w-64 truncate text-sm font-medium">{item.description || "Untitled Task"}</p>
+        <p className="max-w-64 truncate text-sm font-medium">{item.title || item.description || "Untitled Task"}</p>
       </div>
       {item.project_name && (
         <p className="max-w-60 truncate text-xs text-muted-foreground/70">{item.project_name}</p>
       )}
-      <div className="flex items-center justify-between pt-2">
+      <div className="flex w-full items-center justify-between gap-3 pt-2">
         <TableTagBadge
           label={item.priority}
           variant={item.priority?.toLowerCase().includes("high") ? "default" : "secondary"}
         />
-        <TableDateValue value={item.due_date} />
+        <div className="flex shrink-0 items-center gap-2">
+          <TableDateValue value={item.source_date} />
+          <TableDateValue value={item.due_date} />
+        </div>
       </div>
     </Button>
   );
@@ -275,8 +283,7 @@ export function renderTasksList(
     >
       <div className="space-y-1">
         <div className="flex items-center gap-2">
-          <TableStatusDot status={item.status} />
-          <span className="max-w-64 truncate text-sm font-medium">{item.description || "Untitled Task"}</span>
+          <span className="max-w-64 truncate text-sm font-medium">{item.title || item.description || "Untitled Task"}</span>
         </div>
         {item.project_name && (
           <span className="max-w-56 truncate text-xs text-muted-foreground/70">{item.project_name}</span>
@@ -287,6 +294,7 @@ export function renderTasksList(
           label={item.priority}
           variant={item.priority?.toLowerCase().includes("high") ? "default" : "secondary"}
         />
+        <TableDateValue value={item.source_date} />
         <TableDateValue value={item.due_date} />
       </div>
     </Button>

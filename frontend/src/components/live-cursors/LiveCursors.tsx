@@ -1,6 +1,6 @@
 "use client";
 
-import { Cursor } from "@/components/cursor";
+import { Cursor } from "@/components/misc/cursor";
 import { useCurrentUserName } from "@/hooks/use-current-user-name";
 import { useRealtimeCursors } from "@/hooks/use-realtime-cursors";
 import { useLiveCursorsEnabled } from "@/hooks/use-live-cursors-enabled";

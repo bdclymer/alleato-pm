@@ -7,6 +7,7 @@ import {
   CheckCircle2Icon,
   ClipboardIcon,
   FileTextIcon,
+  GitBranchIcon,
   MailIcon,
   SendIcon,
   ShieldCheckIcon,
@@ -30,6 +31,7 @@ import type {
   DraftEmailWidgetPayload,
   ProjectActionPreviewWidgetPayload,
 } from "@/lib/ai/assistant-widgets";
+import type { FeatureRequestPacketWidgetPayload } from "@/lib/feature-requests/types";
 
 type SourceItem = {
   document_id?: string;
@@ -425,6 +427,77 @@ function DecisionPacketWidget({
   );
 }
 
+function FeatureRequestPacketWidget({
+  widget,
+  onSubmit,
+}: {
+  widget: FeatureRequestPacketWidgetPayload;
+  onSubmit: (message: string) => void;
+}) {
+  return (
+    <WidgetShell
+      eyebrow="Request packet"
+      title={widget.title}
+      icon={<GitBranchIcon className="h-4 w-4" />}
+      actions={
+        <Badge variant={widget.readyForBuild ? "default" : "outline"}>
+          {widget.readinessLabel}
+        </Badge>
+      }
+    >
+      <div className="grid gap-2 text-sm text-foreground">
+        <div className="flex items-center justify-between gap-3 border-b border-border/60 pb-2">
+          <span className="text-muted-foreground">Status</span>
+          <span className="font-medium">{widget.status.replaceAll("_", " ")}</span>
+        </div>
+        <div className="flex items-center justify-between gap-3 border-b border-border/60 pb-2">
+          <span className="text-muted-foreground">Acceptance criteria</span>
+          <span className="font-medium">{widget.acceptanceCriteriaCount}</span>
+        </div>
+        <div className="flex items-center justify-between gap-3 border-b border-border/60 pb-2">
+          <span className="text-muted-foreground">Open questions</span>
+          <span className="font-medium">{widget.openQuestions.length}</span>
+        </div>
+        <div className="flex items-center justify-between gap-3 border-b border-border/60 pb-2">
+          <span className="text-muted-foreground">Linear</span>
+          <span className="font-medium">{(widget.linearSyncStatus ?? "not_started").replaceAll("_", " ")}</span>
+        </div>
+      </div>
+      {widget.openQuestions.length > 0 ? (
+        <div>
+          <div className="text-xs font-medium text-muted-foreground">Clarify next</div>
+          <ul className="mt-1 space-y-1 text-sm text-foreground">
+            {widget.openQuestions.slice(0, 3).map((question) => (
+              <li key={question} className="flex gap-2">
+                <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-muted-foreground" />
+                <span>{question}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+      <div className="flex flex-wrap gap-2">
+        <Button size="sm" asChild>
+          <Link href={widget.detailHref}>
+            <FileTextIcon className="h-4 w-4" />
+            Open packet
+          </Link>
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() =>
+            onSubmit(`Generate the implementation plan, Linear issue draft, Linear sub-issue drafts, and Claude Code handoff for feature request ${widget.requestId}.`)
+          }
+        >
+          <GitBranchIcon className="h-4 w-4" />
+          Build handoff
+        </Button>
+      </div>
+    </WidgetShell>
+  );
+}
+
 function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" ? (value as Record<string, unknown>) : {};
 }
@@ -537,6 +610,8 @@ export function AssistantWidgetRenderer(props: AssistantWidgetRendererProps) {
       );
     case "decision_packet":
       return <DecisionPacketWidget widget={props.widget} onSubmit={props.onSubmit} />;
+    case "feature_request_packet":
+      return <FeatureRequestPacketWidget widget={props.widget} onSubmit={props.onSubmit} />;
     default:
       return null;
   }

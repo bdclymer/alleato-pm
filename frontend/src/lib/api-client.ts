@@ -103,6 +103,33 @@ function getApiErrorMessage(status: number, body: ApiErrorBody): string {
   );
 }
 
+function reportApiFailure(url: string, status: number, body: ApiErrorBody): void {
+  if (typeof window === "undefined" || url.includes("/api/app-error-events")) {
+    return;
+  }
+
+  void import("@/lib/app-error-reporter")
+    .then(({ reportBrowserError }) => {
+      reportBrowserError({
+        source: "client",
+        severity: status >= 500 ? "high" : "medium",
+        route: url,
+        action: "api_fetch",
+        errorCode: body.error_code ?? `HTTP_${status}`,
+        errorMessage: getApiErrorMessage(status, body),
+        requestId: body.request_id,
+        statusCode: status,
+        context: {
+          where_it_failed: body.where_it_failed,
+          details: body.details,
+        },
+      });
+    })
+    .catch(() => {
+      // Telemetry must never affect the caller's error handling path.
+    });
+}
+
 /**
  * Fetch wrapper that guarantees meaningful error messages.
  *
@@ -216,6 +243,7 @@ async function performApiFetch<T>(
     };
   }
 
+  reportApiFailure(url, response.status, body);
   throw new ApiError(response.status, body);
 }
 
@@ -262,7 +290,31 @@ export async function apiFetchBlob(
     };
   }
 
+  reportApiFailure(url, response.status, body);
   throw new ApiError(response.status, body);
+}
+
+/**
+ * Raw fetch wrapper for endpoints that return non-standard HTTP status codes
+ * (e.g. 207 Multi-Status for bulk operations). Returns the raw Response so the
+ * caller can inspect status codes that apiFetch would otherwise throw on.
+ *
+ * Only use this when the endpoint intentionally returns a non-2xx/non-204 status
+ * as part of its normal protocol. For everything else, use apiFetch.
+ */
+export async function apiFetchRaw(
+  url: string,
+  init?: RequestInit,
+): Promise<Response> {
+  const headers = new Headers(init?.headers);
+  if (!(init?.body instanceof FormData) && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
+  return fetch(url, {
+    ...init,
+    credentials: init?.credentials ?? "same-origin",
+    headers,
+  });
 }
 
 /**

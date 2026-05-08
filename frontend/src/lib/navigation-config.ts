@@ -21,6 +21,7 @@ import {
   FolderOpen,
   Hammer,
   Home,
+  Kanban,
   LayoutDashboard,
   Lock,
   Mail,
@@ -106,8 +107,6 @@ export const projectManagementTools: NavigationTool[] = [
   { name: "RFIs", path: "rfis", icon: MessageCircle, requiresProject: true, module: "rfis" },
   { name: "Submittals", path: "submittals", icon: Package, requiresProject: true, module: "submittals" },
   { name: "Transmittals", path: "transmittals", icon: Mail, requiresProject: true, module: "documents" },
-  { name: "Emails", path: "emails", icon: Mail, requiresProject: true, module: "documents" },
-  { name: "Outlook Emails", path: "outlook-emails", icon: Mail, requiresProject: true, module: "documents" },
   { name: "Photos", path: "photos", icon: Camera, requiresProject: true, module: "documents" },
   { name: "Drawings", path: "drawings", icon: FileImage, requiresProject: true, module: "documents" },
   { name: "Specifications", path: "specifications", icon: BookOpen, requiresProject: true, module: "documents" },
@@ -141,12 +140,14 @@ export const subcontractorTools: NavigationTool[] = [
 export const adminTools: NavigationTool[] = [
   { name: "Actions", path: "/actions", icon: Wrench, requiresProject: false, adminOnly: true },
   { name: "Settings", path: "/settings", icon: Settings, requiresProject: false },
+  { name: "Database Tables", path: "/database", icon: Table, requiresProject: false, adminOnly: true },
   { name: "What's New", path: "/updates", icon: TrendingUp, requiresProject: false },
   { name: "Documentation", path: "/docs", icon: MessageCircle, requiresProject: false },
   { name: "Procore Docs", path: "/procore-docs", icon: BookOpen, requiresProject: false },
   { name: "Document Pipeline", path: "/admin/documents/pipeline", icon: FolderOpen, requiresProject: false, adminOnly: true },
   { name: "AI Compiler Health", path: "/intelligence-compiler", icon: BrainCircuit, requiresProject: false, adminOnly: true },
   { name: "Project Attribution", path: "/project-attribution", icon: Brain, requiresProject: false, adminOnly: true },
+  { name: "Task Training", path: "/task-training", icon: Brain, requiresProject: false, adminOnly: true },
   { name: "Knowledge Sources", path: "/knowledge/manage", icon: BookOpen, requiresProject: false, adminOnly: true },
   // AI SDK DevTools — only visible in development (http://localhost:4983)
   ...(process.env.NODE_ENV === "development"
@@ -253,10 +254,9 @@ export const sidebarNavGroups: SidebarNavGroup[] = [
     label: "Company",
     icon: Building2,
     tools: [
-      { name: "Project Intelligence", path: "intelligence", icon: Brain, requiresProject: true },
+      { name: "AI Strategist", path: "/ai-assistant", icon: Brain, requiresProject: false },
       { name: "Company Directory", path: "directory/companies", icon: Building2, requiresProject: false, module: "directory" },
-      { name: "Progress Reports", path: "progress-reports", icon: FileText, requiresProject: false },
-      { name: "Outlook Emails", path: "/outlook-emails", icon: Mail, requiresProject: false },
+      { name: "Progress Reports", path: "progress-reports", icon: FileText, requiresProject: true, module: "documents" as PermissionModule },
       {
         name: "Meetings",
         path: "meetings",
@@ -273,9 +273,10 @@ export const sidebarNavGroups: SidebarNavGroup[] = [
       },
       { name: "Meetings", path: "meetings", icon: Calendar, requiresProject: true },
       { name: "Documents", path: "documents", icon: FolderOpen, requiresProject: true, module: "documents" },
+      { name: "Files", path: "/files", icon: FolderOpen, requiresProject: false },
       { name: "Knowledge Base", path: "/knowledge", icon: Brain, requiresProject: false },
+      { name: "Docs", path: "/docs", icon: BookOpen, requiresProject: false },
       { name: "Knowledge Sources", path: "/knowledge/manage", icon: BookOpen, requiresProject: false, adminOnly: true },
-      { name: "AI Strategist", path: "/ai-assistant", icon: Brain, requiresProject: false },
     ],
   },
   {
@@ -295,6 +296,7 @@ export const sidebarNavGroups: SidebarNavGroup[] = [
       { name: "Executive Dashboard", path: "/executive", icon: LayoutDashboard, requiresProject: false, adminOnly: true },
       { name: "Financial Insights", path: "/financial-insights", icon: TrendingUp, requiresProject: false, adminOnly: true },
       { name: "Intelligence Planning", path: "/intelligence-planning", icon: Brain, requiresProject: false, adminOnly: true },
+      { name: "Emails", path: "/emails", icon: Mail, requiresProject: false, adminOnly: true },
     ],
   },
 ];
@@ -440,13 +442,40 @@ export const headerNavGroups: HeaderNavGroup[] = [
         module: "documents",
       },
       {
-        name: "Outlook Emails",
-        path: "outlook-emails",
+        name: "Project Directory",
+        path: "directory",
         requiresProject: true,
-        icon: Mail,
-        description: "Microsoft Outlook synced emails",
-        module: "documents",
+        icon: Users,
+        description: "Project people and companies",
+        module: "directory",
       },
+      {
+        name: "Project Tasks",
+        path: "tasks",
+        requiresProject: true,
+        icon: CheckCircle,
+        description: "Project task board",
+      },
+    ],
+    subGroups: [
+      {
+        label: "Scheduling",
+        toolNames: ["Schedule", "Meetings", "Daily Log", "Punch List"],
+      },
+      {
+        label: "Correspondence",
+        toolNames: ["RFIs", "Submittals", "Transmittals", "Emails"],
+      },
+      {
+        label: "Project",
+        toolNames: ["Project Directory", "Project Tasks"],
+      },
+    ],
+  },
+  {
+    id: "documents",
+    label: "Documents",
+    tools: [
       {
         name: "Photos",
         path: "photos",
@@ -479,63 +508,12 @@ export const headerNavGroups: HeaderNavGroup[] = [
         description: "Project files and documents",
         module: "documents",
       },
-    ],
-    subGroups: [
       {
-        label: "Scheduling",
-        toolNames: ["Schedule", "Meetings", "Daily Log", "Punch List"],
-      },
-      {
-        label: "Correspondence",
-        toolNames: ["RFIs", "Submittals", "Transmittals", "Emails", "Outlook Emails"],
-      },
-      {
-        label: "Documents",
-        toolNames: ["Photos", "Drawings", "Specifications", "Documents"],
-      },
-    ],
-  },
-  {
-    id: "project",
-    label: "Project",
-    tools: [
-      {
-        name: "Project Directory",
-        path: "directory",
+        name: "Progress Reports",
+        path: "progress-reports",
         requiresProject: true,
-        icon: Users,
-        description: "Project people and companies",
-        module: "directory",
-      },
-      {
-        name: "Project Tasks",
-        path: "tasks",
-        requiresProject: true,
-        icon: CheckCircle,
-        description: "Project task board",
-      },
-      {
-        name: "Project Intelligence",
-        path: "intelligence",
-        requiresProject: true,
-        icon: Brain,
-        description: "Compiled project intelligence, risks, and evidence",
-      },
-      {
-        name: "Manage Users",
-        path: "user-management",
-        requiresProject: true,
-        icon: Lock,
-        description: "Project users, roles, and access",
-        module: "directory",
-        requiredPermission: "admin",
-      },
-      {
-        name: "Project Settings",
-        path: "settings",
-        requiresProject: true,
-        icon: Settings,
-        description: "Project configuration",
+        icon: FileText,
+        description: "Weekly client reports for this project",
       },
     ],
   },
@@ -543,6 +521,13 @@ export const headerNavGroups: HeaderNavGroup[] = [
     id: "company",
     label: "Company",
     tools: [
+      {
+        name: "AI Strategist",
+        path: "ai-assistant",
+        requiresProject: false,
+        icon: Bot,
+        description: "AI-powered project guidance",
+      },
       {
         name: "Projects",
         path: "",
@@ -559,13 +544,6 @@ export const headerNavGroups: HeaderNavGroup[] = [
         module: "directory",
       },
       {
-        name: "User Management",
-        path: "user-management",
-        requiresProject: false,
-        icon: Lock,
-        description: "Users, roles, and access",
-      },
-      {
         name: "Settings",
         path: "settings/account",
         requiresProject: false,
@@ -578,13 +556,6 @@ export const headerNavGroups: HeaderNavGroup[] = [
         requiresProject: false,
         icon: Users,
         description: "Company-wide meetings and segments",
-      },
-      {
-        name: "Progress Reports",
-        path: "progress-reports",
-        requiresProject: false,
-        icon: FileText,
-        description: "Weekly client reports across all projects",
       },
       {
         name: "Tasks",
@@ -601,11 +572,11 @@ export const headerNavGroups: HeaderNavGroup[] = [
         description: "Team knowledge, insights, and lessons learned",
       },
       {
-        name: "AI Strategist",
-        path: "ai-assistant",
+        name: "Documents",
+        path: "files",
         requiresProject: false,
-        icon: Bot,
-        description: "AI-powered project guidance",
+        icon: FolderOpen,
+        description: "Company files and documents",
       },
     ],
   },
@@ -644,6 +615,14 @@ export const adminSettingsTools: HeaderNavigationTool[] = [
     icon: MessageCircle,
     description: "User feedback and requests",
     adminOnly: true,
+  },
+  {
+    name: "Product Board",
+    path: "/product-board",
+    requiresProject: false,
+    icon: Kanban,
+    description: "Feature request kanban board",
+    adminOnly: false,
   },
   {
     name: "Annotation Inbox",

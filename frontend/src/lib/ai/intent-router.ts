@@ -49,7 +49,10 @@ export function classifyAssistantIntent(message: string): AssistantIntent {
     return "decision_lookup";
   }
 
-  if (/\b(follow[- ]?up|missed|task|todo|next action|owner)\b/i.test(text)) {
+  if (
+    /\b(follow[- ]?up|missed|task|tasks|todo|to-do|next action|owner|action item|open item|on my plate|what do i need|what should i|what's open|what is open)\b/i.test(text) ||
+    /\b(what are my|show me my|give me my)\b.{0,30}\b(tasks?|items?|actions?|todos?)\b/i.test(text)
+  ) {
     return "task_followup";
   }
 

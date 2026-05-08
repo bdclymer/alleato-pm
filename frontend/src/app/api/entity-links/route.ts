@@ -12,7 +12,8 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
+import { apiErrorResponse } from "@/lib/api-error";
+import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import {
   getLinkSpecsForEntity,
   getLinkSpec,
@@ -124,7 +125,11 @@ export async function GET(request: Request) {
       );
     }
 
-    const { entityType, entityId, projectId } = parsed.data;
+    const {
+      entityType,
+      entityId,
+      projectId: numericProjectId,
+    } = parsed.data;
     const supabase = await createClient();
     const dynamicSupabase = supabase as unknown as DynamicTableClient;
 
@@ -137,7 +142,7 @@ export async function GET(request: Request) {
           .from(spec.table)
           .select("id, link_type, note, created_at, " + spec.targetColumn)
           .eq(spec.sourceColumn, entityId)
-          .eq("project_id", projectId);
+          .eq("project_id", numericProjectId);
 
         if (error) {
           throw new Error(`Failed to query ${spec.table}: ${error.message}`);
@@ -168,7 +173,7 @@ export async function GET(request: Request) {
       const { data: targets } = await dynamicSupabase
         .from(sourceTable)
         .select(`id, ${titleColumn}`)
-        .in("id", targetIds);
+        .in("id", targetIds as (string | number)[]);
 
       const targetMap = new Map<string | number, string>();
       for (const t of targets ?? []) {
@@ -215,6 +220,14 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    const user = await getApiRouteUser();
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error_code: "AUTH_EXPIRED", error_message: "Unauthorized" },
+        { status: 401 },
+      );
+    }
+
     let body: unknown;
     try {
       body = await request.json();
@@ -230,8 +243,15 @@ export async function POST(request: Request) {
       );
     }
 
-    const { sourceType, sourceId, targetType, targetId, projectId, linkType, note } =
-      parsed.data;
+    const {
+      sourceType,
+      sourceId,
+      targetType,
+      targetId,
+      projectId: numericProjectId,
+      linkType,
+      note,
+    } = parsed.data;
 
     const spec = getLinkSpec(sourceType, targetType);
     if (!spec) {
@@ -249,7 +269,7 @@ export async function POST(request: Request) {
     // Determine which ID goes to which column
     // spec.sourceColumn always maps to the entity provided as sourceType
     const insertPayload: Record<string, unknown> = {
-      project_id: projectId,
+      project_id: numericProjectId,
       link_type: linkType,
       note: note ?? null,
     };
@@ -288,10 +308,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ id: (data as { id: string }).id }, { status: 201 });
   } catch (err) {
     console.error("[entity-links POST] unhandled error:", err);
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Internal server error" },
-      { status: 500 },
-    );
+    return apiErrorResponse(err);
   }
 }
 

@@ -401,6 +401,33 @@ import { createServiceClient } from "@/lib/supabase/service";
 
 **Guardrail:** `scripts/check-server-prerender-safety.mjs` and `scripts/check-no-module-level-server-init.mjs` run in the predeploy gate and fail the build if either pattern is detected.
 
+### 18. UI Signal-to-Noise Gate
+
+This application handles complex, data-dense content. The goal is to **communicate more with less**. Every visual element must justify its presence — if removing it loses no information, remove it.
+
+The principle: when an icon alone conveys the same information as a heading + description + icon + text label, choose the icon. Same signal, a fraction of the noise. With data-heavy UIs, the job is to simplify the complex — not to make the simple more complex.
+
+**Before adding any UI element, ask: does this earn its place?**
+
+| About to add... | Ask first... |
+|-----------------|--------------|
+| Text label next to an icon | Does the icon + `title` tooltip communicate the same thing? If yes, drop the label. |
+| Helper text or description below an input | Is the input self-explanatory? If yes, drop the description. |
+| Section heading in a sidebar or dense panel | Does the control directly below it already communicate its purpose? If yes, drop the heading. |
+| A border around a section | Does this border create meaningful structure, or just visual separation? Use spacing and typography hierarchy instead. |
+| Multiple stacked option buttons | Can this be a `<Select>`? Prefer the control that uses one line, not three. |
+
+**Concrete rules that apply everywhere:**
+- A date input does not need a "Set date" button explaining what it does
+- An upvote button with a thumbs-up icon does not need a "Support" heading above it
+- A destructive action button communicates danger through its styling — a "Danger" heading is redundant
+- Three stacked priority buttons should be a `<Select>` — one line replaces three
+- Edit affordances in dense panels should be icon-only (`MoreVertical`) placed inline with the section title, not a full-width labeled button below it
+
+**Borders:** The default answer is no border. Use one only when it defines a structural boundary that cannot be expressed with spacing or a background tint. Decorative separators between adjacent sidebar sections are almost always wrong.
+
+**The test:** A well-designed panel is legible without any labels or headings — the controls communicate their own purpose. If you need text to explain what a control does, redesign the control.
+
 ---
 
 ## Behavioral Rules

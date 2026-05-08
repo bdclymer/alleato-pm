@@ -171,7 +171,7 @@ function ContactCombobox({
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
         <Command shouldFilter={false}>
           <CommandInput
             placeholder="Search contacts…"
@@ -181,8 +181,9 @@ function ContactCombobox({
           <CommandList>
             <CommandEmpty>
               {search ? (
-                <button
-                  className="w-full px-3 py-2 text-left text-sm hover:bg-muted"
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start px-3 py-2 text-sm"
                   onClick={() => {
                     onChange(search);
                     onOpenChange(false);
@@ -190,7 +191,7 @@ function ContactCombobox({
                   }}
                 >
                   Use &ldquo;{search}&rdquo;
-                </button>
+                </Button>
               ) : (
                 "No contacts found."
               )}
@@ -271,7 +272,7 @@ function CommitmentCombobox({
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
         <Command shouldFilter={false}>
           <CommandInput
             placeholder="Search commitments…"
@@ -620,7 +621,7 @@ export default function NewCommitmentCOPage() {
                   {changeEvents.map((ce) => (
                     <div
                       key={ce.id}
-                      className="flex items-center gap-3 rounded-md bg-muted/50 px-3 py-2 text-sm"
+                      className="flex items-center gap-3 rounded-md border border-border px-3 py-2 text-sm"
                     >
                       <span className="font-medium text-foreground">
                         {ce.number ? `CE ${ce.number}` : "CE"}

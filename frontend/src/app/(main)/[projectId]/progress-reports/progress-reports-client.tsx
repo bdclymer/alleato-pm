@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { useCreateProgressReport, useProgressReports } from "@/hooks/use-progress-reports";
 import { formatProgressReportDate } from "@/lib/progress-reports/date-format";
 
+
 function statusVariant(status: string) {
   switch (status) {
     case "sent":
@@ -72,22 +73,19 @@ export function ProgressReportsClient({ projectId }: { projectId: number }) {
                 <Link
                   key={report.id}
                   href={`/${projectId}/progress-reports/${report.id}`}
-                  className="block rounded-xl border border-border bg-background p-4 transition-colors hover:border-foreground/20"
+                  className="block overflow-hidden rounded-xl border border-border bg-background p-4 transition-colors hover:border-foreground/20"
                 >
-                  <div className="flex flex-wrap items-start justify-between gap-4">
-                    <div className="space-y-2">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <div className="text-sm font-semibold text-foreground">{report.title}</div>
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0 flex-1 space-y-2">
+                      <div className="flex min-w-0 items-center gap-2">
+                        <div className="truncate text-sm font-semibold text-foreground">{report.title}</div>
                         <Badge variant={statusVariant(report.status)}>{report.status}</Badge>
                       </div>
-                      <div className="text-sm text-muted-foreground">
+                      <div className="truncate text-sm text-muted-foreground">
                         Week of{" "}
                         {formatProgressReportDate(report.week_start)} to{" "}
                         {formatProgressReportDate(report.week_end)}
                       </div>
-                      <p className="line-clamp-2 text-sm text-foreground">
-                        {report.past_week_highlights || "No highlights added yet."}
-                      </p>
                     </div>
 
                     <div className="flex items-center gap-4 text-xs text-muted-foreground">

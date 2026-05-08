@@ -8,7 +8,9 @@ The Brandon Daily Update is an executive operating brief generated from recent c
 2. What is waiting on another person, vendor, client, or internal team?
 3. What broader business signal is worth seeing today?
 
-The current surface is a review and approval page, not an automatic send. The output should be useful enough to send later, but it must remain gated until the evidence and writing quality are consistently trustworthy.
+The current source of truth is the persisted executive briefing draft in `daily_recaps` where `recap_kind = executive_briefing`. The older backend daily digest is a legacy meeting recap stored as `recap_kind = meeting_digest`; it should not be treated as the CEO operating brief.
+
+The main surface is a review and approval page. Teams delivery exists as both an explicit send endpoint and a weekday cron endpoint, and both paths send approved drafts only.
 
 ## Primary Entry Points
 
@@ -17,6 +19,9 @@ The current surface is a review and approval page, not an automatic send. The ou
 - Draft and follow-up workflow: `frontend/src/lib/executive/executive-briefing-workflow.ts`
 - Server actions: `frontend/src/app/(main)/actions/executive-briefing-actions.ts`
 - API route: `frontend/src/app/api/executive/brandon-daily-update/route.ts`
+- Teams send route: `frontend/src/app/api/executive/daily-brief/send-teams/route.ts`
+- Approved-only Teams cron route: `frontend/src/app/api/cron/executive-daily-brief/route.ts`
+- Teams delivery helper: `frontend/src/lib/executive/executive-briefing-teams-delivery.ts`
 - Source activity component: `frontend/src/components/executive/executive-source-activity.tsx`
 - Database migration: `supabase/migrations/20260502013000_executive_briefing_workflow.sql`
 - Follow-up migration adjustment: `supabase/migrations/20260502014500_executive_briefing_workflow_followup.sql`
@@ -30,10 +35,11 @@ http://localhost:3000/executive
 Manual API route:
 
 ```text
-http://localhost:3000/api/executive/brandon-daily-update?days=2
+http://localhost:3000/api/executive/brandon-daily-update?days=3
+http://localhost:3000/api/executive/brandon-daily-update?days=3&fresh=true
 ```
 
-The API route requires an authenticated user session.
+The API route requires an authenticated user session. By default it returns the persisted draft for the day. Use `fresh=true` only when a caller intentionally wants to regenerate and save a new draft.
 
 ## Data Flow
 
@@ -48,7 +54,7 @@ High-level flow:
 
 ```text
 /executive page
-  -> getExecutiveBriefingDashboard({ windowDays: 2 })
+  -> getExecutiveBriefingDashboard({ windowDays: 3 })
     -> load today's executive briefing draft from daily_recaps
     -> if no draft exists, regenerateExecutiveBriefingDraft()
       -> generateBrandonDailyUpdate()
@@ -57,7 +63,9 @@ High-level flow:
         -> load document_metadata attribution
         -> rank, filter, dedupe
         -> synthesize sections with LLM
+        -> record source-health warnings
         -> normalize relative dates
+        -> suppress unsupported rows instead of filling fake defaults
       -> save packet to daily_recaps.briefing_packet
       -> upsert executive_briefing_follow_ups
     -> load open follow-ups
@@ -191,6 +199,8 @@ Each surfaced item should keep:
 ## Synthesis Step
 
 The first implementation surfaced raw RAG excerpts, which produced unclear and sometimes truncated text. The current implementation adds a synthesis pass in `synthesizeSections()`.
+
+The default synthesis model is `gpt-5.5`, set by `DEFAULT_EXECUTIVE_BRIEFING_SYNTHESIS_MODEL` in `frontend/src/lib/executive/brandon-daily-update.ts`. Override it with `EXECUTIVE_BRIEFING_SYNTHESIS_MODEL` only when the CEO brief intentionally needs a different model.
 
 The synthesis model receives the retrieved candidate payload and returns JSON with:
 
@@ -399,14 +409,15 @@ waitingOnOthers -> Unblock Your People
 importantUpdates -> Business Signal
 ```
 
-The page is intentionally framed as a review and approval surface. It is not currently an automatic delivery endpoint.
+The page is intentionally framed as a review and approval surface. It is not an automatic delivery endpoint; use the Teams send route for explicit delivery.
 
 ## API Route
 
 The API route is:
 
 ```text
-GET /api/executive/brandon-daily-update?days=2
+GET /api/executive/brandon-daily-update?days=3
+GET /api/executive/brandon-daily-update?days=3&fresh=true
 ```
 
 Behavior:
@@ -414,12 +425,43 @@ Behavior:
 - requires an authenticated user
 - reads `days` from the query string
 - clamps `days` from 1 to 14
-- calls `generateBrandonDailyUpdate({ windowDays })`
-- returns the packet as JSON
+- default: calls `getExecutiveBriefingDashboard({ windowDays })` and returns the persisted draft packet as JSON
+- with `fresh=true`: calls `regenerateExecutiveBriefingDraft({ windowDays })`, saves the new draft, and returns the new packet as JSON
 
-This route currently bypasses the persisted draft workflow and generates a fresh packet.
+Use the default behavior for inspection of the current reviewed draft. Use `fresh=true` only for deliberate regeneration.
 
-Use the page flow for review and approval. Use the API route for manual inspection or future automation experiments.
+The widget route at `/api/executive/brandon-daily-update/widget` still returns a packet plus a widget payload for assistant/UI embedding.
+
+## Teams Delivery Route
+
+The Teams send route is:
+
+```text
+POST /api/executive/daily-brief/send-teams
+```
+
+Behavior:
+
+- authorizes with `CRON_SECRET` bearer auth or an active Supabase session
+- resolves the target Teams-linked user from the request body or latest Teams conversation reference
+- calls `getExecutiveBriefingDashboard({ windowDays: DEFAULT_EXECUTIVE_WINDOW_DAYS })`
+- skips delivery unless `workflow_status = approved`
+- formats the persisted draft packet into a conversational Teams message
+- sends through `sendProactiveMessage()`
+- marks the `daily_recaps` executive briefing row as `sent_teams = true`
+
+The weekday cron route is:
+
+```text
+GET|POST /api/cron/executive-daily-brief
+```
+
+Behavior:
+
+- authorizes with `CRON_SECRET` bearer auth
+- uses the same approved-only delivery helper as the manual Teams route
+- returns `status: "skipped"` without sending when the current draft is still `draft`
+- is scheduled in `frontend/vercel.json` as `0 11 * * 1-5`
 
 ## Failure And Trust Rules
 
@@ -434,6 +476,9 @@ Trust requirements for surfaced items:
 - synthesized item is specific enough to be useful
 - relative dates include calendar dates
 - stale broad knowledge does not outrank recent communication and meeting evidence
+- fake defaults are not allowed: no invented project label, source title, recipient name, evidence text, or source date
+- unsupported rows are suppressed and recorded as `Source health warning` notes instead of being padded with fallback copy
+- source-health warnings are visible in `retrievalNotes` when email, Teams, fallback document, or source-coverage queries fail
 
 The page currently shows an automation rule panel:
 
@@ -445,12 +490,10 @@ Missing source attribution, stale timestamps, or blank evidence should suppress 
 
 - The generator still has seeded query specs rather than a learned or configurable strategy.
 - `search_all_knowledge` is intentionally not leading the retrieval path because it previously surfaced stale high-similarity results.
-- The API route generates a fresh packet instead of returning the persisted draft.
 - Date normalization handles next weekdays and next-week phrases, but not all relative date phrases.
 - Source coverage can show zero email or Teams items if the current filtered hits do not pass confidence and recency thresholds.
 - The follow-up fingerprint includes title and recommended action, so large wording changes can create a new follow-up instead of updating an existing one.
-- The page is approved manually, but there is no scheduled send yet.
-- There is no delivery integration to email, Teams, or another channel yet.
+- Weekday Teams delivery is wired to approved-only drafts, but the exact delivery time should be revisited if Vercel cron UTC timing needs seasonal Eastern-time adjustment.
 
 ## How To Tune The Brief
 
@@ -481,7 +524,7 @@ cd frontend
 set -a
 source ../.env
 set +a
-npm exec -- tsx -e "import { generateBrandonDailyUpdate } from './src/lib/executive/brandon-daily-update'; generateBrandonDailyUpdate({ windowDays: 2 }).then((packet) => console.log(JSON.stringify({ counts: { critical: packet.sections.needsBrandon.length, unblocks: packet.sections.waitingOnOthers.length, signals: packet.sections.importantUpdates.length }, generatedAt: packet.generatedAt }, null, 2))).catch((error) => { console.error(error); process.exit(1); });"
+npm exec -- tsx -e "import { generateBrandonDailyUpdate } from './src/lib/executive/brandon-daily-update'; generateBrandonDailyUpdate({ windowDays: 3 }).then((packet) => console.log(JSON.stringify({ counts: { critical: packet.sections.needsBrandon.length, unblocks: packet.sections.waitingOnOthers.length, signals: packet.sections.importantUpdates.length }, generatedAt: packet.generatedAt, notes: packet.retrievalNotes }, null, 2))).catch((error) => { console.error(error); process.exit(1); });"
 ```
 
 Browser verification:
@@ -508,7 +551,7 @@ Recommended path before sending this automatically:
 2. Require manual approval on `/executive`.
 3. Store approved packets in `daily_recaps`.
 4. Use only approved drafts for delivery.
-5. Add delivery fields for recipient, channel, sent timestamp, and send result.
-6. Add a scheduled job that sends only if `workflow_status = approved`.
+5. Use the existing Teams send route for approved/manual delivery.
+6. Use `/api/cron/executive-daily-brief` for scheduled delivery; it sends only if `workflow_status = approved`.
 
-The current design deliberately separates generation from delivery so a weak draft cannot silently reach Brandon.
+The current design should keep generation separate from delivery so a weak draft cannot silently reach Brandon.

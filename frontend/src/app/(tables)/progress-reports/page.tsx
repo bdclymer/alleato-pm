@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Download, ExternalLink } from "lucide-react";
+import { Download, ExternalLink, MoreVertical, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import {
   usePathname,
@@ -19,14 +19,26 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ConfirmDeleteDialog } from "@/components/ds/ConfirmDeleteDialog";
+import {
   buildProgressReportTableColumns,
   progressReportColumns,
   progressReportDefaultVisibleColumns,
   progressReportFilters,
   statusVariant,
 } from "@/features/progress-reports/progress-reports-table-config";
-import { useAllProgressReports } from "@/hooks/use-progress-reports";
+import {
+  useAllProgressReports,
+  useDeleteProgressReport,
+} from "@/hooks/use-progress-reports";
 import type { ProgressReportAllListItem } from "@/lib/progress-reports/types";
+import { apiFetch } from "@/lib/api-client";
+import { toast } from "sonner";
 
 type ReportFilterState = Record<string, FilterValue>;
 
@@ -126,6 +138,13 @@ export default function AllProgressReportsPage() {
     rawSearchParams ?? (new URLSearchParams() as unknown as ReadonlyURLSearchParams);
   const reportsQuery = useAllProgressReports();
   const reports = reportsQuery.data?.reports ?? [];
+  const deleteMutation = useDeleteProgressReport();
+
+  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
+  const [reportToDelete, setReportToDelete] = React.useState<ProgressReportAllListItem | null>(null);
+  const [isDeleting, setIsDeleting] = React.useState(false);
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = React.useState(false);
+  const [isBulkDeleting, setIsBulkDeleting] = React.useState(false);
 
   const tableState = useUnifiedTableState({
     entityKey: "all-progress-reports",
@@ -186,114 +205,250 @@ export default function AllProgressReportsPage() {
     router.push(`/${report.project.id}/progress-reports/${report.id}`);
   };
 
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      tableState.setSelectedIds(sortedReports.map((r) => r.id));
+    } else {
+      tableState.setSelectedIds([]);
+    }
+  };
+
+  const handleSelectRow = (id: string, checked: boolean) => {
+    if (checked) {
+      tableState.setSelectedIds((prev) => [...prev, id]);
+    } else {
+      tableState.setSelectedIds((prev) => prev.filter((itemId) => itemId !== id));
+    }
+  };
+
+  const handleDeleteSingle = async () => {
+    if (!reportToDelete) return;
+    setIsDeleting(true);
+    try {
+      await deleteMutation.mutateAsync({
+        projectId: reportToDelete.project.id,
+        reportId: reportToDelete.id,
+      });
+      toast.success("Progress report deleted");
+      setDeleteDialogOpen(false);
+      setReportToDelete(null);
+    } catch {
+      // Error toast handled by mutation
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleBulkDeleteConfirm = async () => {
+    const ids = tableState.selectedIds;
+    if (ids.length === 0) return;
+
+    setIsBulkDeleting(true);
+    const reportMap = new Map(reports.map((r) => [r.id, r]));
+    const failures: string[] = [];
+
+    for (const id of ids) {
+      const report = reportMap.get(id);
+      if (!report) continue;
+      try {
+        await apiFetch(
+          `/api/projects/${report.project.id}/progress-reports/${id}`,
+          { method: "DELETE" },
+        );
+      } catch (err) {
+        failures.push(
+          `${report.title}: ${err instanceof Error ? err.message : "Failed to delete"}`,
+        );
+      }
+    }
+
+    const successCount = ids.length - failures.length;
+    if (successCount > 0) {
+      await reportsQuery.refetch();
+      tableState.setSelectedIds([]);
+    }
+
+    if (failures.length > 0) {
+      toast.error(`${failures.length} report${failures.length === 1 ? "" : "s"} could not be deleted`, {
+        description: failures[0],
+      });
+    } else {
+      toast.success(`${successCount} report${successCount === 1 ? "" : "s"} deleted`);
+    }
+
+    setIsBulkDeleting(false);
+    setBulkDeleteDialogOpen(false);
+  };
+
   return (
-    <UnifiedTablePage
-      header={{
-        title: "Progress Reports",
-        description: "Weekly client progress reports across all projects.",
-      }}
-      toolbar={{
-        totalItems: reports.length,
-        filteredItems: filteredReports.length,
-        selectedCount: 0,
-        searchValue: tableState.searchInput,
-        onSearchChange: tableState.setSearchInput,
-        searchPlaceholder: "Search reports, projects, clients, or open items...",
-        currentView: tableState.currentView,
-        onViewChange: (view) => {
-          tableState.setCurrentView(view);
-          tableState.setSearchParams({ view });
-        },
-        enabledViews: ["table", "list"],
-        filters: progressReportFilters,
-        activeFilters,
-        onFilterChange: handleFilterChange,
-        onClearFilters: () => handleFilterChange(EMPTY_FILTERS),
-        columns: progressReportColumns,
-        visibleColumns: tableState.visibleColumns,
-        onColumnVisibilityChange: tableState.setVisibleColumns,
-        onExport: () => exportReports(sortedReports),
-      }}
-      data={{
-        items: pagedReports,
-        isLoading: reportsQuery.isLoading,
-        isFetching: reportsQuery.isFetching,
-        error: reportsQuery.error ?? undefined,
-      }}
-      table={{
-        columns: tableColumns,
-        getRowId: (report) => report.id,
-        onRowClick: handleOpenReport,
-        rowActions: (report) => (
-          <Button size="icon" variant="ghost" asChild aria-label="Download report PDF">
-            <a
-              href={`/api/projects/${report.project.id}/progress-reports/${report.id}/pdf`}
-              onClick={(event) => event.stopPropagation()}
+    <>
+      <UnifiedTablePage
+        header={{
+          title: "Progress Reports",
+          description: "Weekly client progress reports across all projects.",
+        }}
+        toolbar={{
+          totalItems: reports.length,
+          filteredItems: filteredReports.length,
+          selectedCount: tableState.selectedIds.length,
+          searchValue: tableState.searchInput,
+          onSearchChange: tableState.setSearchInput,
+          searchPlaceholder: "Search reports, projects, clients, or open items...",
+          currentView: tableState.currentView,
+          onViewChange: (view) => {
+            tableState.setCurrentView(view);
+            tableState.setSearchParams({ view });
+          },
+          enabledViews: ["table", "list"],
+          filters: progressReportFilters,
+          activeFilters,
+          onFilterChange: handleFilterChange,
+          onClearFilters: () => handleFilterChange(EMPTY_FILTERS),
+          columns: progressReportColumns,
+          visibleColumns: tableState.visibleColumns,
+          onColumnVisibilityChange: tableState.setVisibleColumns,
+          onExport: () => exportReports(sortedReports),
+          onBulkDelete:
+            tableState.selectedIds.length > 0
+              ? () => setBulkDeleteDialogOpen(true)
+              : undefined,
+        }}
+        data={{
+          items: pagedReports,
+          isLoading: reportsQuery.isLoading,
+          isFetching: reportsQuery.isFetching,
+          error: reportsQuery.error ?? undefined,
+        }}
+        table={{
+          columns: tableColumns,
+          getRowId: (report) => report.id,
+          onRowClick: handleOpenReport,
+          rowActions: (report) => (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  aria-label="Row actions"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                  <a
+                    href={`/api/projects/${report.project.id}/progress-reports/${report.id}/pdf`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="flex items-center gap-2"
+                  >
+                    <Download className="h-4 w-4" />
+                    Download PDF
+                  </a>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-destructive focus:text-destructive"
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    setReportToDelete(report);
+                    setDeleteDialogOpen(true);
+                  }}
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ),
+        }}
+        selection={{
+          selectedIds: tableState.selectedIds,
+          onSelectAll: handleSelectAll,
+          onSelectRow: handleSelectRow,
+        }}
+        sorting={{
+          sortBy: tableState.sortBy,
+          sortDirection: tableState.sortDirection,
+          onSortChange: (sortBy, direction) => {
+            tableState.setSortBy(sortBy);
+            tableState.setSortDirection(direction);
+            tableState.setSearchParams({ sort: sortBy, sort_dir: direction, page: "1" });
+            tableState.setPage(1);
+          },
+        }}
+        views={{
+          list: (report) => (
+            <div
+              className="flex cursor-pointer items-center justify-between border-b px-4 py-3 transition-colors hover:bg-muted/50"
+              onClick={() => handleOpenReport(report)}
             >
-              <Download className="h-4 w-4" />
-            </a>
-          </Button>
-        ),
-      }}
-      sorting={{
-        sortBy: tableState.sortBy,
-        sortDirection: tableState.sortDirection,
-        onSortChange: (sortBy, direction) => {
-          tableState.setSortBy(sortBy);
-          tableState.setSortDirection(direction);
-          tableState.setSearchParams({ sort: sortBy, sort_dir: direction, page: "1" });
-          tableState.setPage(1);
-        },
-      }}
-      views={{
-        list: (report) => (
-          <div
-            className="flex cursor-pointer items-center justify-between border-b px-4 py-3 transition-colors hover:bg-muted/50"
-            onClick={() => handleOpenReport(report)}
-          >
-            <div className="min-w-0 space-y-1">
-              <div className="truncate text-sm font-medium">{report.title}</div>
-              <div className="truncate text-xs text-muted-foreground">
-                {[
-                  report.project.project_number ?? report.project.job_number,
-                  report.project.name ?? `Project #${report.project.id}`,
-                  `${report.week_start} to ${report.week_end}`,
-                ]
-                  .filter(Boolean)
-                  .join(" · ")}
+              <div className="min-w-0 space-y-1">
+                <div className="truncate text-sm font-medium">{report.title}</div>
+                <div className="truncate text-xs text-muted-foreground">
+                  {[
+                    report.project.project_number ?? report.project.job_number,
+                    report.project.name ?? `Project #${report.project.id}`,
+                    `${report.week_start} to ${report.week_end}`,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </div>
               </div>
+              <Badge variant={statusVariant(report.status)}>{report.status}</Badge>
             </div>
-            <Badge variant={statusVariant(report.status)}>{report.status}</Badge>
-          </div>
-        ),
-      }}
-      emptyState={{
-        title: "No progress reports",
-        description: "Weekly report drafts created inside projects will appear here.",
-        filteredDescription: "No progress reports match your search or filters.",
-        isFiltered,
-        action: (
-          <Button asChild size="sm" variant="outline">
-            <Link href="/">
-              Open Projects
-              <ExternalLink className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
-        ),
-      }}
-      pagination={{
-        page: tableState.page,
-        totalPages,
-        perPage: tableState.perPage,
-        onPageChange: tableState.setPage,
-        onPerPageChange: (value) => {
-          tableState.setPerPage(Number(value));
-          tableState.setPage(1);
-        },
-      }}
-      features={{
-        enableInlineEditing: false,
-      }}
-    />
+          ),
+        }}
+        emptyState={{
+          title: "No progress reports",
+          description: "Weekly report drafts created inside projects will appear here.",
+          filteredDescription: "No progress reports match your search or filters.",
+          isFiltered,
+          action: (
+            <Button asChild size="sm" variant="outline">
+              <Link href="/">
+                Open Projects
+                <ExternalLink className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          ),
+        }}
+        pagination={{
+          page: tableState.page,
+          totalPages,
+          perPage: tableState.perPage,
+          onPageChange: tableState.setPage,
+          onPerPageChange: (value) => {
+            tableState.setPerPage(Number(value));
+            tableState.setPage(1);
+          },
+        }}
+        features={{
+          enableInlineEditing: false,
+        }}
+      />
+
+      <ConfirmDeleteDialog
+        open={deleteDialogOpen}
+        onOpenChange={(open) => {
+          setDeleteDialogOpen(open);
+          if (!open) setReportToDelete(null);
+        }}
+        title={`Delete "${reportToDelete?.title ?? "this report"}"?`}
+        description="This will permanently delete the report and its photo selections. This action cannot be undone."
+        confirmLabel="Delete Report"
+        onConfirm={handleDeleteSingle}
+        isDeleting={isDeleting}
+      />
+
+      <ConfirmDeleteDialog
+        open={bulkDeleteDialogOpen}
+        onOpenChange={setBulkDeleteDialogOpen}
+        title={`Delete ${tableState.selectedIds.length} report${tableState.selectedIds.length === 1 ? "" : "s"}?`}
+        description="This will permanently delete the selected reports and their photo selections. This action cannot be undone."
+        confirmLabel={`Delete ${tableState.selectedIds.length} Report${tableState.selectedIds.length === 1 ? "" : "s"}`}
+        onConfirm={handleBulkDeleteConfirm}
+        isDeleting={isBulkDeleting}
+      />
+    </>
   );
 }

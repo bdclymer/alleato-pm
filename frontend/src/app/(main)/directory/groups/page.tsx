@@ -316,9 +316,9 @@ function GroupPreviewPane({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function DistributionGroupsPage(): ReactElement {
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "";
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = (useSearchParams() ?? new URLSearchParams()) as NonNullable<ReturnType<typeof useSearchParams>>;
 
   // Project selector
   const [projectId, setProjectId] = React.useState("1");

@@ -85,6 +85,7 @@ export const POST = withApiGuardrails(
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
+        requestId: "",
         where: "/api/settings/telegram/register-webhook",
         timeoutMs: 10_000,
         retries: 1,
@@ -117,7 +118,7 @@ export const GET = withApiGuardrails(
 
     const data = await fetchWithGuardrails(
       `https://api.telegram.org/bot${token}/getWebhookInfo`,
-      { where: "/api/settings/telegram/register-webhook#GET", timeoutMs: 8_000, retries: 0 },
+      { requestId: "", where: "/api/settings/telegram/register-webhook#GET", timeoutMs: 8_000, retries: 0 },
     );
 
     return NextResponse.json({ registered: !!(data as { result?: { url?: string } }).result?.url, info: data });

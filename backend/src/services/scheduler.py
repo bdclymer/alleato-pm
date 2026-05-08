@@ -3,9 +3,13 @@ Scheduled analysis engine — runs periodic jobs via APScheduler.
 
 Currently registered jobs:
   - Fireflies sync: every 15 min, fetches new transcripts and ingests via pipeline
+  - Fireflies pipeline backlog: periodic drain of stale raw_ingested/provider-error jobs
   - Daily digest: 6 PM daily, aggregates meetings into executive briefing
   - Acumatica financial sync: daily incremental ERP import into Supabase
   - Microsoft Graph sync: periodic incremental sync of Outlook/Teams/OneDrive
+  - Microsoft Graph embedding: periodic vectorization of pending Graph documents
+  - AI intelligence compiler: periodic drain of source and packet queue rows
+  - Task extraction: daily, extracts action items from meetings/emails/Teams messages
 
 Future jobs (Phase 2+):
   - Project health scoring
@@ -16,6 +20,7 @@ from __future__ import annotations
 
 import logging
 import os
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -25,6 +30,46 @@ from apscheduler.triggers.interval import IntervalTrigger
 logger = logging.getLogger(__name__)
 
 scheduler: Optional[AsyncIOScheduler] = None
+
+FIREFLIES_RETRYABLE_ERROR_MARKERS = (
+    "quota",
+    "provider",
+    "embedding failed",
+    "rate limit",
+    "429",
+    "ai gateway",
+    "openai",
+)
+
+NON_VECTORIZABLE_ERROR_PREFIX = "NON_VECTORIZABLE"
+TEXT_COMPATIBLE_EXTENSIONS = {
+    ".csv",
+    ".doc",
+    ".docx",
+    ".md",
+    ".pdf",
+    ".txt",
+    ".tsv",
+    ".xls",
+    ".xlsx",
+}
+NON_TEXT_EXTENSIONS = {
+    ".bmp",
+    ".gif",
+    ".heic",
+    ".jpeg",
+    ".jpg",
+    ".mov",
+    ".mp3",
+    ".mp4",
+    ".png",
+    ".svg",
+    ".tif",
+    ".tiff",
+    ".wav",
+    ".webp",
+    ".zip",
+}
 
 
 class ConfigurationError(RuntimeError):
@@ -86,6 +131,32 @@ def init_scheduler() -> None:
             sync_interval_minutes, sync_limit,
         )
 
+    if os.getenv("FIREFLIES_PIPELINE_BACKLOG_ENABLED", "true").lower() not in ("0", "false", "no"):
+        backlog_interval_minutes = max(
+            5,
+            int(os.getenv("FIREFLIES_PIPELINE_BACKLOG_INTERVAL_MINUTES", "10")),
+        )
+        backlog_limit = max(1, int(os.getenv("FIREFLIES_PIPELINE_BACKLOG_LIMIT", "10")))
+        backlog_stale_minutes = max(
+            1,
+            int(os.getenv("FIREFLIES_PIPELINE_BACKLOG_STALE_MINUTES", "120")),
+        )
+        scheduler.add_job(
+            run_fireflies_pipeline_backlog_job,
+            IntervalTrigger(minutes=backlog_interval_minutes),
+            id="fireflies_pipeline_backlog",
+            name="Fireflies Pipeline Backlog Drain",
+            replace_existing=True,
+            max_instances=1,
+            kwargs={"limit": backlog_limit, "stale_minutes": backlog_stale_minutes},
+        )
+        logger.info(
+            "[Scheduler] Fireflies pipeline backlog every %d min (limit=%d stale_minutes=%d)",
+            backlog_interval_minutes,
+            backlog_limit,
+            backlog_stale_minutes,
+        )
+
     # Daily digest at 6 PM (configurable via env)
     digest_hour = int(os.getenv("DAILY_DIGEST_HOUR", "18"))
     digest_minute = int(os.getenv("DAILY_DIGEST_MINUTE", "0"))
@@ -138,6 +209,27 @@ def init_scheduler() -> None:
             "[Scheduler] Microsoft Graph sync every %d min",
             graph_interval_minutes,
         )
+
+        if os.getenv("GRAPH_EMBEDDING_ENABLED", "true").lower() not in ("0", "false", "no"):
+            graph_embedding_interval_minutes = max(
+                1,
+                int(os.getenv("GRAPH_EMBEDDING_INTERVAL_MINUTES", "5")),
+            )
+            graph_embedding_limit = max(1, int(os.getenv("GRAPH_EMBEDDING_LIMIT", "100")))
+            scheduler.add_job(
+                run_graph_embedding_job,
+                IntervalTrigger(minutes=graph_embedding_interval_minutes),
+                id="graph_embedding",
+                name="Microsoft Graph Pending Embedding",
+                replace_existing=True,
+                max_instances=1,
+                kwargs={"limit": graph_embedding_limit},
+            )
+            logger.info(
+                "[Scheduler] Microsoft Graph embedding every %d min (limit=%d)",
+                graph_embedding_interval_minutes,
+                graph_embedding_limit,
+            )
     else:
         if graph_has_creds:
             logger.warning(
@@ -174,6 +266,24 @@ def init_scheduler() -> None:
             max_processing_time_ms,
         )
 
+    # Task extraction — daily at 7 AM UTC (configurable via TASK_EXTRACTION_CRON)
+    task_extraction_cron = os.getenv("TASK_EXTRACTION_CRON", "0 7 * * *")
+    task_extraction_window = max(1, int(os.getenv("TASK_EXTRACTION_WINDOW_DAYS", "2")))
+    if os.getenv("TASK_EXTRACTION_ENABLED", "true").lower() not in ("0", "false", "no"):
+        scheduler.add_job(
+            run_task_extraction_job,
+            CronTrigger.from_crontab(task_extraction_cron),
+            id="task_extraction",
+            name="Task Extraction (meetings / emails / Teams)",
+            replace_existing=True,
+            max_instances=1,
+            kwargs={"window_days": task_extraction_window},
+        )
+        logger.info(
+            "[Scheduler] Task extraction cron: %s (window=%d days)",
+            task_extraction_cron, task_extraction_window,
+        )
+
     scheduler.start()
     logger.info(
         "[Scheduler] Started — daily digest at %02d:%02d",
@@ -208,6 +318,51 @@ async def run_fireflies_sync_job(limit: int = 10) -> None:
             scheduler.remove_job("fireflies_sync")
     except Exception as e:
         logger.warning("[Scheduler] Fireflies sync failed (will retry): %s", e, exc_info=True)
+
+
+async def run_fireflies_pipeline_backlog_job(
+    limit: int = 10,
+    stale_minutes: int = 120,
+) -> None:
+    """Scheduled job: drain stale Fireflies pipeline rows left after ingestion."""
+    import asyncio
+
+    logger.info(
+        "[Scheduler] Running Fireflies pipeline backlog drain (limit=%d stale_minutes=%d)",
+        limit,
+        stale_minutes,
+    )
+    try:
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(
+            None,
+            _run_fireflies_pipeline_backlog,
+            limit,
+            stale_minutes,
+        )
+        logger.info(
+            "[Scheduler] Fireflies pipeline backlog complete: matched=%d processed=%d skipped=%d failed=%d",
+            result.get("matched", 0),
+            result.get("processed", 0),
+            result.get("skipped", 0),
+            result.get("failed", 0),
+        )
+        if result.get("failed", 0):
+            failed_results = [
+                item
+                for item in result.get("results", [])
+                if item.get("status") == "failed"
+            ]
+            logger.warning(
+                "[Scheduler] Fireflies pipeline backlog failures: %s",
+                failed_results[:5],
+            )
+    except Exception as e:
+        logger.warning(
+            "[Scheduler] Fireflies pipeline backlog failed (will retry): %s",
+            e,
+            exc_info=True,
+        )
 
 
 async def run_daily_digest_job() -> None:
@@ -273,6 +428,320 @@ def _run_fireflies_sync(limit: int = 10):
     return result
 
 
+def _is_retryable_fireflies_error(error_message: Optional[str]) -> bool:
+    if not error_message:
+        return False
+    normalized = error_message.lower()
+    return any(marker in normalized for marker in FIREFLIES_RETRYABLE_ERROR_MARKERS)
+
+
+def _parse_scheduler_datetime(value: Optional[str]) -> Optional[datetime]:
+    if not value:
+        return None
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
+
+
+def _find_fireflies_pipeline_backlog_jobs(
+    supabase,
+    *,
+    limit: int,
+    stale_minutes: int,
+) -> list[dict]:
+    cutoff = datetime.now(timezone.utc) - timedelta(minutes=stale_minutes)
+    raw_response = (
+        supabase.table("fireflies_ingestion_jobs")
+        .select("fireflies_id, metadata_id, stage, error_message, created_at, updated_at")
+        .eq("stage", "raw_ingested")
+        .neq("metadata_id", "")
+        .order("updated_at", desc=False)
+        .limit(limit * 10)
+        .execute()
+    )
+    error_response = (
+        supabase.table("fireflies_ingestion_jobs")
+        .select("fireflies_id, metadata_id, stage, error_message, created_at, updated_at")
+        .eq("stage", "error")
+        .neq("metadata_id", "")
+        .order("updated_at", desc=False)
+        .limit(limit * 10)
+        .execute()
+    )
+    rows = [*(raw_response.data or []), *(error_response.data or [])]
+    jobs: list[dict] = []
+    for row in rows:
+        if not row.get("metadata_id"):
+            continue
+        changed_at = _parse_scheduler_datetime(row.get("updated_at")) or _parse_scheduler_datetime(
+            row.get("created_at")
+        )
+        if changed_at and changed_at > cutoff:
+            continue
+        stage = row.get("stage")
+        error_message = row.get("error_message")
+        if stage == "raw_ingested" and not error_message:
+            jobs.append(row)
+        elif stage == "error" and _is_retryable_fireflies_error(error_message):
+            jobs.append(row)
+        if len(jobs) >= limit:
+            break
+    return jobs
+
+
+def _run_fireflies_full_pipeline(metadata_id: str) -> dict:
+    from .pipeline import run_full_pipeline
+
+    return run_full_pipeline(metadata_id=metadata_id)
+
+
+def _file_extension(*values: Optional[str]) -> str:
+    for value in values:
+        if not value or "." not in value:
+            continue
+        suffix = value.rsplit(".", 1)[-1].strip().lower()
+        if suffix:
+            return f".{suffix.split('?', 1)[0].split('#', 1)[0]}"
+    return ""
+
+
+def _classify_non_vectorizable_fireflies_item(client, metadata_id: str) -> Optional[dict]:
+    """Return a non-vectorizable reason before expensive pipeline work starts."""
+    try:
+        response = (
+            client.table("document_metadata")
+            .select("*")
+            .eq("id", metadata_id)
+            .single()
+            .execute()
+        )
+    except Exception:
+        return None
+
+    metadata = response.data or {}
+    if not metadata:
+        return None
+
+    title = metadata.get("title") or ""
+    file_name = metadata.get("file_name") or title
+    file_path = metadata.get("file_path") or ""
+    url = metadata.get("url") or ""
+    category = str(metadata.get("category") or "").lower()
+    doc_type = str(metadata.get("type") or "").lower()
+    content = (metadata.get("content") or metadata.get("raw_text") or "").strip()
+    extension = _file_extension(file_name, file_path, url)
+
+    if (
+        extension in NON_TEXT_EXTENSIONS
+        or category in {"image", "photo", "video", "audio"}
+        or doc_type.startswith(("image/", "video/", "audio/"))
+    ):
+        label = file_name or title or metadata_id
+        return {
+            "code": "unsupported_file_type",
+            "message": (
+                f"{NON_VECTORIZABLE_ERROR_PREFIX}: Cannot extract searchable text from "
+                f"{label}. Upload an OCR/text/PDF/DOCX version or keep it as a reference-only source."
+            ),
+            "metadata": {
+                "extension": extension or None,
+                "category": category or None,
+                "type": doc_type or None,
+            },
+        }
+
+    is_financial = category in {"financial", "financial_document", "budget", "estimate"} or extension in {
+        ".csv",
+        ".tsv",
+        ".xls",
+        ".xlsx",
+    }
+    if is_financial and not file_path:
+        return {
+            "code": "missing_file_path",
+            "message": (
+                f"{NON_VECTORIZABLE_ERROR_PREFIX}: Financial/tabular document is missing "
+                "document_metadata.file_path, so the parser cannot download the source file."
+            ),
+            "metadata": {
+                "extension": extension or None,
+                "category": category or None,
+                "type": doc_type or None,
+            },
+        }
+
+    if extension and extension not in TEXT_COMPATIBLE_EXTENSIONS and not content:
+        return {
+            "code": "unsupported_file_extension",
+            "message": (
+                f"{NON_VECTORIZABLE_ERROR_PREFIX}: Unsupported source file extension "
+                f"{extension}; no inline text content is available to vectorize."
+            ),
+            "metadata": {
+                "extension": extension,
+                "category": category or None,
+                "type": doc_type or None,
+            },
+        }
+
+    return None
+
+
+def _mark_fireflies_item_non_vectorizable(
+    client,
+    *,
+    metadata_id: str,
+    reason: dict,
+) -> None:
+    error_message = str(reason.get("message") or NON_VECTORIZABLE_ERROR_PREFIX)[:500]
+    client.table("fireflies_ingestion_jobs").update(
+        {"stage": "error", "error_message": error_message}
+    ).eq("metadata_id", metadata_id).execute()
+    try:
+        client.table("document_metadata").update(
+            {
+                "status": "not_vectorizable",
+                "overview": error_message,
+            }
+        ).eq("id", metadata_id).execute()
+    except Exception:
+        logger.warning(
+            "[Scheduler] Could not mark document_metadata non-vectorizable for %s",
+            metadata_id,
+            exc_info=True,
+        )
+
+
+def _record_fireflies_backlog_run(client, result: dict) -> None:
+    try:
+        from .health.source_sync_health import record_sync_run
+
+        failed = result.get("failed", 0)
+        skipped = result.get("skipped", 0)
+        record_sync_run(
+            client,
+            source="fireflies",
+            resource_id="fireflies_ingestion_jobs",
+            resource_name="Fireflies pipeline backlog",
+            stage="vectorization",
+            status="failed" if failed else "warning" if skipped else "succeeded",
+            items_seen=result.get("matched", 0),
+            items_synced=result.get("processed", 0),
+            items_skipped=skipped,
+            items_failed=failed,
+            error_code=(
+                "FIREFLIES_BACKLOG_FAILURE"
+                if failed
+                else "FIREFLIES_BACKLOG_NON_VECTORIZABLE"
+                if skipped
+                else None
+            ),
+            error_message=(
+                f"{failed} Fireflies backlog jobs failed"
+                if failed
+                else f"{skipped} Fireflies backlog jobs marked non-vectorizable"
+                if skipped
+                else None
+            ),
+            metadata={
+                "limit": result.get("limit"),
+                "stale_minutes": result.get("stale_minutes"),
+                "results": result.get("results", [])[:20],
+            },
+        )
+    except Exception:
+        logger.warning(
+            "[Scheduler] Failed to record Fireflies backlog source_sync_run",
+            exc_info=True,
+        )
+
+
+def _run_fireflies_pipeline_backlog(limit: int = 10, stale_minutes: int = 120) -> dict:
+    """Drain stale Fireflies jobs through the normal full pipeline."""
+    from .supabase_helpers import get_supabase_client
+
+    client = get_supabase_client()
+    jobs = _find_fireflies_pipeline_backlog_jobs(
+        client,
+        limit=limit,
+        stale_minutes=stale_minutes,
+    )
+    result = {
+        "status": "ok",
+        "limit": limit,
+        "stale_minutes": stale_minutes,
+        "matched": len(jobs),
+        "processed": 0,
+        "skipped": 0,
+        "failed": 0,
+        "results": [],
+    }
+    if not jobs:
+        _record_fireflies_backlog_run(client, result)
+        return result
+
+    for job in jobs:
+        metadata_id = job.get("metadata_id")
+        fireflies_id = job.get("fireflies_id")
+        try:
+            non_vectorizable = _classify_non_vectorizable_fireflies_item(client, metadata_id)
+            if non_vectorizable:
+                _mark_fireflies_item_non_vectorizable(
+                    client,
+                    metadata_id=metadata_id,
+                    reason=non_vectorizable,
+                )
+                result["skipped"] += 1
+                result["results"].append(
+                    {
+                        "fireflies_id": fireflies_id,
+                        "metadata_id": metadata_id,
+                        "status": "skipped",
+                        "skip_code": non_vectorizable.get("code"),
+                        "previous_stage": job.get("stage"),
+                        "error": non_vectorizable.get("message"),
+                    }
+                )
+                continue
+            pipeline_result = _run_fireflies_full_pipeline(metadata_id)
+            result["processed"] += 1
+            result["results"].append(
+                {
+                    "fireflies_id": fireflies_id,
+                    "metadata_id": metadata_id,
+                    "status": "processed",
+                    "pipeline_status": pipeline_result.get("status"),
+                    "previous_stage": job.get("stage"),
+                }
+            )
+        except Exception as exc:
+            result["failed"] += 1
+            logger.error(
+                "[Scheduler] Fireflies backlog job failed metadata_id=%s fireflies_id=%s: %s",
+                metadata_id,
+                fireflies_id,
+                exc,
+                exc_info=True,
+            )
+            result["results"].append(
+                {
+                    "fireflies_id": fireflies_id,
+                    "metadata_id": metadata_id,
+                    "status": "failed",
+                    "previous_stage": job.get("stage"),
+                    "error": str(exc)[:500],
+                }
+            )
+
+    result["status"] = "failed" if result["failed"] else "warning" if result["skipped"] else "ok"
+    _record_fireflies_backlog_run(client, result)
+    return result
+
+
 def _run_digest_sync():
     """Synchronous wrapper for daily digest generation."""
     from .daily_digest import run_daily_digest
@@ -287,15 +756,15 @@ def _run_acumatica_financial_sync():
 
 
 async def run_graph_sync_job() -> None:
-    """Scheduled job: incrementally sync Outlook, Teams, and OneDrive via Microsoft Graph."""
+    """Scheduled job: fetch changed Outlook, Teams, and OneDrive rows via Microsoft Graph."""
     import asyncio
 
-    logger.info("[Scheduler] Running Microsoft Graph sync job")
+    logger.info("[Scheduler] Running Microsoft Graph fetch-only sync job")
     try:
         loop = asyncio.get_event_loop()
         result = await loop.run_in_executor(None, _run_graph_sync)
         logger.info(
-            "[Scheduler] Microsoft Graph sync complete: %d total synced (outlook=%d, teams=%d, onedrive=%d)",
+            "[Scheduler] Microsoft Graph fetch-only sync complete: %d total synced (outlook=%d, teams=%d, onedrive=%d)",
             result.get("total_synced", 0),
             result.get("outlook", 0),
             result.get("teams", 0),
@@ -340,15 +809,53 @@ async def run_intelligence_compiler_job(
         logger.warning("[Scheduler] Intelligence compiler failed (will retry): %s", e, exc_info=True)
 
 
+async def run_graph_embedding_job(limit: int = 100) -> None:
+    """Scheduled job: vectorize pending Graph document rows without fetching new source data."""
+    import asyncio
+
+    logger.info("[Scheduler] Running Microsoft Graph embedding job (limit=%d)", limit)
+    try:
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(None, _run_graph_embedding, limit)
+        logger.info("[Scheduler] Microsoft Graph embedding complete: %s", result)
+        if result.get("errors"):
+            logger.warning("[Scheduler] Graph embedding reported errors: %s", result)
+    except Exception as e:
+        logger.warning("[Scheduler] Graph embedding failed (will retry): %s", e, exc_info=True)
+
+
 def _run_graph_sync():
-    """Synchronous wrapper for Microsoft Graph sync."""
+    """Synchronous wrapper for Microsoft Graph fetch-only sync."""
     from .supabase_helpers import get_supabase_client
     from .integrations.microsoft_graph.sync import run_graph_sync
 
     client = get_supabase_client()
-    result = run_graph_sync(client)
+    run_inline_embedding = os.getenv("GRAPH_SYNC_RUN_EMBEDDING_INLINE", "false").lower() in (
+        "1",
+        "true",
+        "yes",
+    )
+    run_inline_compiler = os.getenv("GRAPH_SYNC_RUN_COMPILER_INLINE", "false").lower() in (
+        "1",
+        "true",
+        "yes",
+    )
+    result = run_graph_sync(
+        client,
+        run_embedding=run_inline_embedding,
+        run_teams_compiler=run_inline_compiler,
+    )
     result["project_backfill"] = _maybe_run_comm_project_backfill(client)
     return result
+
+
+def _run_graph_embedding(limit: int = 100) -> dict:
+    """Synchronous wrapper for pending Microsoft Graph vectorization work."""
+    from .supabase_helpers import get_supabase_client
+    from .integrations.microsoft_graph.embed import embed_pending_graph_documents
+
+    client = get_supabase_client()
+    return embed_pending_graph_documents(client, limit=limit)
 
 
 def _run_intelligence_compiler(
@@ -367,6 +874,34 @@ def _run_intelligence_compiler(
         packet_limit=packet_limit,
         max_processing_time_ms=max_processing_time_ms,
     )
+
+
+async def run_task_extraction_job(window_days: int = 2) -> None:
+    """Scheduled job: extract action items from recent meetings, emails, and Teams messages."""
+    import asyncio
+
+    logger.info("[Scheduler] Running task extraction job (window=%d days)", window_days)
+    try:
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(None, _run_task_extraction, window_days)
+        logger.info(
+            "[Scheduler] Task extraction complete: docs_found=%d processed=%d inserted=%d skipped=%d errors=%d",
+            result.get("docs_found", 0),
+            result.get("docs_processed", 0),
+            result.get("inserted", 0),
+            result.get("skipped", 0),
+            result.get("errors", 0),
+        )
+        if result.get("errors", 0) > 0:
+            logger.warning("[Scheduler] Task extraction had %d insert errors", result["errors"])
+    except Exception as e:
+        logger.warning("[Scheduler] Task extraction failed (will retry): %s", e, exc_info=True)
+
+
+def _run_task_extraction(window_days: int = 2) -> dict:
+    """Synchronous wrapper for task extraction."""
+    from .task_extraction import run_task_extraction
+    return run_task_extraction(window_days=window_days)
 
 
 def _maybe_run_comm_project_backfill(client) -> dict:

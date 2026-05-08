@@ -42,17 +42,29 @@ module.exports = {
       return {};
     }
 
-    const isHiddenInput = (node) =>
-      node.attributes.some(
-        (attr) =>
-          attr.type === 'JSXAttribute' &&
-          attr.name &&
-          attr.name.type === 'JSXIdentifier' &&
-          attr.name.name === 'type' &&
-          attr.value &&
-          attr.value.type === 'Literal' &&
-          attr.value.value === 'hidden',
+    const getAttrValue = (node, attrName) => {
+      const attr = node.attributes.find(
+        (a) =>
+          a.type === 'JSXAttribute' &&
+          a.name &&
+          a.name.type === 'JSXIdentifier' &&
+          a.name.name === attrName,
       );
+      if (!attr || !attr.value) return null;
+      if (attr.value.type === 'Literal') return attr.value.value;
+      return null;
+    };
+
+    const isHiddenInput = (node) => getAttrValue(node, 'type') === 'hidden';
+
+    // <input type="file" className="hidden"> is a legitimate browser file picker
+    // trigger pattern — it cannot be replaced by a DS Input component.
+    const isHiddenFileInput = (node) => {
+      const type = getAttrValue(node, 'type');
+      if (type !== 'file') return false;
+      const cls = getAttrValue(node, 'className');
+      return cls != null && /\bhidden\b/.test(cls);
+    };
 
     return {
       JSXOpeningElement(node) {
@@ -60,6 +72,7 @@ module.exports = {
 
         if (node.name.name === 'input') {
           if (isHiddenInput(node)) return;
+          if (isHiddenFileInput(node)) return;
           context.report({ node, messageId: 'rawInput' });
           return;
         }

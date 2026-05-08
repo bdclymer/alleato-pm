@@ -29,7 +29,16 @@ import {
   getRelevantAgentLearnings,
   type AgentLearningUsageSummary,
 } from "@/lib/ai/services/agent-learning-service";
+import {
+  buildTaskGenerationTrainingBlock,
+  shouldLoadTaskTrainingContext,
+} from "@/lib/ai/services/task-training-service";
+import {
+  listArtifacts,
+  buildWorkspaceContextBlock,
+} from "@/lib/ai/services/workspace-artifact-service";
 import { createServiceClient } from "@/lib/supabase/service";
+import { toSessionUuid } from "@/lib/ai/session-id";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -113,11 +122,19 @@ export async function assembleSystemPrompt(options: {
   // Inject user memories
   if (messageText) {
     try {
-      const [{ preferences, relevant, team, errors: memoryErrors }, recentSummaries] =
+      const [{ preferences, relevant, team, errors: memoryErrors }, recentSummaries, activeArtifacts] =
         await Promise.all([
           getMemoriesForSession({ userId, firstMessage: messageText }),
           isFirstTurn && sessionId
             ? getRecentConversationSummaries(userId, sessionId, 3)
+            : Promise.resolve([]),
+          isFirstTurn
+            ? listArtifacts({
+                userId,
+                projectId: selectedProjectId ?? null,
+                status: "draft",
+                limit: 5,
+              }).catch(() => [])
             : Promise.resolve([]),
         ]);
       if (memoryErrors.length > 0) {
@@ -163,9 +180,12 @@ export async function assembleSystemPrompt(options: {
       });
       const recentBlock = buildRecentConversationsBlock(recentSummaries);
 
-      const contextParts = [recentBlock, memoryBlock, learningBlock].filter(Boolean);
+      const workspaceBlock = buildWorkspaceContextBlock(activeArtifacts);
+      // Append after the static strategist prompt — static content first is
+      // required for OpenAI's prefix-based automatic prompt caching.
+      const contextParts = [recentBlock, memoryBlock, learningBlock, workspaceBlock].filter(Boolean);
       if (contextParts.length > 0) {
-        systemPrompt = contextParts.join("\n\n") + "\n\n---\n\n" + systemPrompt;
+        systemPrompt = systemPrompt + "\n\n---\n\n" + contextParts.join("\n\n");
       }
     } catch (error) {
       const message =
@@ -185,6 +205,24 @@ export async function assembleSystemPrompt(options: {
         totalUsed: 0,
         learnings: [],
       });
+    }
+  }
+
+  if (shouldLoadTaskTrainingContext(messageText)) {
+    try {
+      const taskTrainingBlock = await buildTaskGenerationTrainingBlock({
+        projectId: selectedProjectId ?? null,
+      });
+
+      if (taskTrainingBlock) {
+        systemPrompt = systemPrompt + `\n\n---\n\n${taskTrainingBlock}`;
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unknown task training error";
+      contextHealth.push(
+        `Task generation feedback context could not be loaded: ${message}`,
+      );
     }
   }
 
@@ -391,13 +429,27 @@ export async function persistChatMessage(params: {
   metadata?: Record<string, unknown>;
 }): Promise<void> {
   const supabase = createServiceClient();
-  await (supabase.from("chat_history") as any).insert({
-    session_id: params.sessionId,
+  const sessionUuid = toSessionUuid(params.sessionId);
+  const { error } = await (supabase.from("chat_history") as any).insert({
+    session_id: sessionUuid,
     user_id: params.userId,
     role: params.role,
     content: params.content,
     ...(params.metadata ? { metadata: params.metadata } : {}),
   });
+  if (error) {
+    console.error("[persistChatMessage] insert failed", {
+      error: error.message,
+      code: (error as { code?: string }).code,
+      hint: (error as { hint?: string }).hint,
+      sessionId: params.sessionId,
+      sessionUuid,
+      userId: params.userId,
+      role: params.role,
+      platform: params.metadata?.platform,
+    });
+    throw new Error(`persistChatMessage failed: ${error.message}`);
+  }
 }
 
 // ---------------------------------------------------------------------------

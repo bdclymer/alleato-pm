@@ -5,7 +5,7 @@ import { PageShell } from "@/components/layout";
 import { MembersTab } from "../admin/_components/members-tab";
 
 export default function ProjectPermissionsPage() {
-  const { projectId } = useParams<{ projectId: string }>();
+  const { projectId } = useParams<{ projectId: string }>() ?? { projectId: "" };
 
   return (
     <PageShell

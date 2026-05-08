@@ -48,11 +48,11 @@
     }
 
     body {
-        @apply bg-[#fafafa] font-nunito;
+        @apply bg-background font-nunito;
     }
 
     body.dark {
-        @apply bg-[#060818];
+        @apply bg-background;
     }
 
     /* Panel */

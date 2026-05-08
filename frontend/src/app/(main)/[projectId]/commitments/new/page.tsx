@@ -6,6 +6,7 @@ import {
   CreatePurchaseOrderForm,
   CreateSubcontractForm,
 } from "@/components/domain/contracts";
+import { apiFetchRaw } from "@/lib/api-client";
 import { PageShell } from "@/components/layout";
 import type { CreatePurchaseOrderInput } from "@/lib/schemas/create-purchase-order-schema";
 import type { CreateSubcontractInput } from "@/lib/schemas/create-subcontract-schema";
@@ -94,7 +95,7 @@ export default function NewCommitmentPage() {
     for (const file of files) {
       const formData = new FormData();
       formData.append("file", file);
-      const uploadResponse = await fetch(
+      const uploadResponse = await apiFetchRaw(
         `/api/commitments/${commitmentId}/attachments`,
         {
           method: "POST",
@@ -123,7 +124,7 @@ export default function NewCommitmentPage() {
     );
 
     try {
-      const response = await fetch(`/api/projects/${projectId}/subcontracts`, {
+      const response = await apiFetchRaw(`/api/projects/${projectId}/subcontracts`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -196,7 +197,7 @@ export default function NewCommitmentPage() {
     );
 
     try {
-      const response = await fetch(`/api/projects/${projectId}/purchase-orders`, {
+      const response = await apiFetchRaw(`/api/projects/${projectId}/purchase-orders`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

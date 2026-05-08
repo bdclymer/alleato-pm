@@ -219,6 +219,8 @@ const ENDPOINTS = [
   ["GET", "/api/ai-assistant/usage-stats", "AI usage stats", [200, 401]],
   ["GET", "/api/ai-assistant/conversations", "AI conversations", [200, 401]],
   ["GET", "/api/ai-assistant/memories", "AI memories", [200, 401]],
+  // POST with a nonexistent project_id must NOT 500 — memory should save with project_id=null
+  ["POST", "/api/ai-assistant/memories", "AI memories write (bad projectId must not 500)", [200, 400, 401, 422]],
   ["GET", "/api/ai-assistant/timeline", "AI timeline", [200, 401]],
 
   // Admin

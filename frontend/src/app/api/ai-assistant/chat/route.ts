@@ -46,6 +46,11 @@ import {
   type ResponseQuality,
 } from "@/lib/ai/score-response-quality";
 import {
+  recordRetrievalFeedbackBatch,
+  type AiRetrievalOutcome,
+  type RecordRetrievalFeedbackParams,
+} from "@/lib/ai/services/feedback-event-service";
+import {
   detectSourceSpecificRagRequest,
   detectSourceLookupRecentTeamsRequest,
   type SourceSpecificRagKind,
@@ -62,19 +67,41 @@ import {
   type AssistantIntent,
 } from "@/lib/ai/intent-router";
 import {
+  identityLooksLikeBrandon,
+  isDailyBriefCritiqueRequest,
+  isExecutiveBriefingMetadataQuestion,
+  isPersonalDailyBriefRequest,
+  isPersonalTaskRegisterRequest,
+  type SignedInBriefIdentity,
+} from "@/lib/ai/personal-daily-brief";
+import {
   loadCurrentIntelligencePacket,
   resolveIntelligenceTarget,
 } from "@/lib/ai/intelligence/packet-service";
 import {
+  loadAssistantSourceHealthContext,
+  shouldAttachAssistantSourceHealth,
+  type AssistantSourceHealthContext,
+  type AssistantSourceHealthMetadata,
+  type AssistantSourceHealthReason,
+} from "@/lib/ai/source-health";
+import {
   synthesizeAdvisorResponse,
   synthesizeMissingPacketResponse,
 } from "@/lib/ai/intelligence/advisor-synthesis";
-import {
-  generateBrandonDailyUpdate,
-  type BrandonDailyUpdatePacket,
-} from "@/lib/executive/brandon-daily-update";
+import type { BrandonDailyUpdatePacket } from "@/lib/executive/brandon-daily-update";
+import { getExecutiveBriefingDashboard } from "@/lib/executive/executive-briefing-workflow";
 import { buildBrandonDailyUpdateWidget } from "@/lib/executive/brandon-daily-update-widget";
-import { buildAssistantWidgetsFromPrompt } from "@/lib/ai/assistant-widgets";
+import {
+  buildAssistantWidgetsFromPrompt,
+  type AssistantWidgetPayload,
+} from "@/lib/ai/assistant-widgets";
+import {
+  buildFeatureRequestPacketWidget,
+  captureFeatureRequestFromChat,
+  getFeatureRequestDetail,
+  shouldCaptureFeatureRequest,
+} from "@/lib/feature-requests/server";
 
 export const maxDuration = 120;
 
@@ -121,8 +148,13 @@ type SemanticSearchResult = {
   content?: unknown;
   sourceTable?: unknown;
   recordId?: unknown;
+  sourceDocumentId?: unknown;
+  sourceChunkId?: unknown;
+  documentId?: unknown;
+  chunkIndex?: unknown;
   similarity?: unknown;
   finalScore?: unknown;
+  projectIds?: unknown;
   metadata?: unknown;
   createdAt?: unknown;
 };
@@ -184,6 +216,602 @@ function formatExecutiveBriefPacketContext(packet: BrandonDailyUpdatePacket): st
     "",
     JSON.stringify(packet, null, 2),
   ].join("\n");
+}
+
+function formatBriefTimestamp(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZoneName: "short",
+  }).format(date);
+}
+
+type ExecutiveBriefingMetadataAnswer = {
+  content: string;
+  traceOutput: Record<string, unknown>;
+};
+
+type PersonTaskIdentity = {
+  personId: string | null;
+  displayName: string;
+  names: string[];
+  emails: string[];
+};
+
+type PersonalTaskItem = {
+  id: string;
+  title: string;
+  detail?: string | null;
+  dueDate?: string | null;
+  status?: string | null;
+  priority?: string | null;
+  projectId?: number | null;
+  projectLabel?: string | null;
+  source: "tasks" | "schedule_tasks" | "executive_briefing_follow_ups" | "executive_brief_packet";
+  sourceLabel: string;
+  confidence: "verified" | "matched" | "briefing";
+  sourceDate?: string | null;
+  recommendedAction?: string | null;
+};
+
+type PersonalTaskRegister = {
+  identity: PersonTaskIdentity;
+  verifiedTasks: PersonalTaskItem[];
+  scheduleTasks: PersonalTaskItem[];
+  briefingTasks: PersonalTaskItem[];
+  sourceErrors: string[];
+  checkedSources: string[];
+};
+
+function createExecutiveBriefingMetadataAnswer(params: {
+  packet: BrandonDailyUpdatePacket;
+  row?: Record<string, unknown> | null;
+}): ExecutiveBriefingMetadataAnswer {
+  const generatedAt = formatBriefTimestamp(params.packet.generatedAt);
+  const createdAt = formatBriefTimestamp(asString(params.row?.created_at));
+  const approvedAt = formatBriefTimestamp(asString(params.row?.approved_at));
+  const sentAt = formatBriefTimestamp(asString(params.row?.sent_at));
+  const status = asString(params.row?.workflow_status);
+  const recapDate = asString(params.row?.recap_date);
+
+  const lines = [
+    generatedAt
+      ? `The daily operating brief was generated ${generatedAt}.`
+      : "I found the daily operating brief packet, but its generated timestamp was not readable.",
+  ];
+
+  const details = [
+    createdAt ? `Record created: ${createdAt}` : null,
+    approvedAt ? `Approved: ${approvedAt}` : null,
+    sentAt ? `Sent: ${sentAt}` : null,
+    status ? `Workflow status: ${status}` : null,
+    recapDate ? `Briefing date: ${recapDate}` : null,
+  ].filter((detail): detail is string => Boolean(detail));
+
+  if (details.length > 0) {
+    lines.push("", ...details.map((detail) => `- ${detail}`));
+  }
+
+  lines.push(
+    "",
+    "Source: the executive briefing packet and `daily_recaps.recap_kind=executive_briefing`.",
+  );
+
+  return {
+    content: lines.join("\n"),
+    traceOutput: {
+      packetGeneratedAt: params.packet.generatedAt,
+      recordCreatedAt: asString(params.row?.created_at),
+      approvedAt: asString(params.row?.approved_at),
+      sentAt: asString(params.row?.sent_at),
+      workflowStatus: status,
+      recapDate,
+      sourceOfTruth: "daily_recaps.recap_kind=executive_briefing",
+    },
+  };
+}
+
+async function loadLatestExecutiveBriefingMetadataAnswer(params: {
+  supabase: ReturnType<typeof createServiceClient>;
+  packet: BrandonDailyUpdatePacket | null;
+}): Promise<ExecutiveBriefingMetadataAnswer | null> {
+  if (params.packet) {
+    return createExecutiveBriefingMetadataAnswer({ packet: params.packet });
+  }
+
+  const { data, error } = await params.supabase
+    .from("daily_recaps")
+    .select("id,recap_date,created_at,approved_at,sent_at,workflow_status,briefing_packet")
+    .eq("recap_kind", "executive_briefing")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(`Failed to load latest executive briefing metadata: ${error.message}`);
+  }
+
+  const row = data as Record<string, unknown> | null;
+  const packet = isBrandonDailyUpdatePacket(row?.briefing_packet)
+    ? row.briefing_packet
+    : null;
+
+  if (!packet) return null;
+
+  return createExecutiveBriefingMetadataAnswer({ packet, row });
+}
+
+function normalizeIdentityValue(value: string | null | undefined): string | null {
+  const normalized = value?.trim().toLowerCase();
+  return normalized || null;
+}
+
+function displayPersonName(row: Record<string, unknown> | null): string | null {
+  if (!row) return null;
+  return [asString(row.first_name), asString(row.last_name)]
+    .filter((part): part is string => Boolean(part))
+    .join(" ")
+    .trim() || null;
+}
+
+function uniqStrings(values: Array<string | null | undefined>): string[] {
+  return Array.from(
+    new Set(
+      values
+        .map((value) => value?.trim())
+        .filter((value): value is string => Boolean(value)),
+    ),
+  );
+}
+
+function readableErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (error && typeof error === "object") {
+    const record = error as Record<string, unknown>;
+    return (
+      asString(record.message) ??
+      asString(record.details) ??
+      asString(record.hint) ??
+      JSON.stringify(record)
+    );
+  }
+  return String(error);
+}
+
+async function loadPersonTaskIdentity(params: {
+  supabase: ReturnType<typeof createServiceClient>;
+  userId: string;
+  userEmail?: string | null;
+}): Promise<PersonTaskIdentity> {
+  const normalizedUserEmail = normalizeIdentityValue(params.userEmail);
+  const [profileResult, authLinkResult, personByAuthResult] = await Promise.all([
+    params.supabase
+      .from("user_profiles")
+      .select("full_name,email")
+      .eq("id", params.userId)
+      .maybeSingle(),
+    params.supabase
+      .from("users_auth")
+      .select("person_id")
+      .eq("auth_user_id", params.userId)
+      .maybeSingle(),
+    params.supabase
+      .from("people")
+      .select("id,first_name,last_name,email")
+      .eq("auth_user_id", params.userId)
+      .maybeSingle(),
+  ]);
+
+  if (profileResult.error) {
+    throw new Error(`Failed to load current user's profile: ${profileResult.error.message}`);
+  }
+  if (authLinkResult.error) {
+    throw new Error(`Failed to load current user's auth-person link: ${authLinkResult.error.message}`);
+  }
+  if (personByAuthResult.error) {
+    throw new Error(`Failed to load current user's person record: ${personByAuthResult.error.message}`);
+  }
+
+  let person = personByAuthResult.data as Record<string, unknown> | null;
+  const personId = asString(
+    (authLinkResult.data as Record<string, unknown> | null)?.person_id,
+  );
+
+  if (!person && personId) {
+    const { data, error } = await params.supabase
+      .from("people")
+      .select("id,first_name,last_name,email")
+      .eq("id", personId)
+      .maybeSingle();
+    if (error) {
+      throw new Error(`Failed to resolve current user's person record: ${error.message}`);
+    }
+    person = data as Record<string, unknown> | null;
+  }
+
+  if (!person && normalizedUserEmail) {
+    const { data, error } = await params.supabase
+      .from("people")
+      .select("id,first_name,last_name,email")
+      .ilike("email", normalizedUserEmail)
+      .maybeSingle();
+    if (error) {
+      throw new Error(`Failed to resolve current user's person email: ${error.message}`);
+    }
+    person = data as Record<string, unknown> | null;
+  }
+
+  const profileRecord = profileResult.data as Record<string, unknown> | null;
+  const resolvedPersonId = asString(person?.id) ?? personId;
+  const personName = displayPersonName(person);
+  const profileName = asString(profileRecord?.full_name);
+  const emails = uniqStrings([
+    asString(person?.email),
+    asString(profileRecord?.email),
+    params.userEmail,
+  ]);
+  const names = uniqStrings([
+    personName,
+    profileName,
+    ...emails.map((email) => email.split("@")[0]?.replace(/[._-]+/g, " ")),
+  ]);
+
+  return {
+    personId: resolvedPersonId,
+    displayName: personName ?? profileName ?? emails[0] ?? "you",
+    names,
+    emails,
+  };
+}
+
+function isOpenTaskStatus(status: unknown): boolean {
+  const normalized = String(status ?? "").trim().toLowerCase();
+  return ![
+    "closed",
+    "complete",
+    "completed",
+    "done",
+    "cancelled",
+    "canceled",
+    "resolved",
+    "void",
+    "rejected",
+  ].includes(normalized);
+}
+
+function rowMatchesIdentity(row: Record<string, unknown>, identity: PersonTaskIdentity): boolean {
+  const assigneeName = normalizeIdentityValue(asString(row.assignee_name) ?? asString(row.assignee));
+  const assigneeEmail = normalizeIdentityValue(asString(row.assignee_email));
+  const owner = normalizeIdentityValue(asString(row.owner));
+  const haystack = [assigneeName, assigneeEmail, owner]
+    .filter((value): value is string => Boolean(value))
+    .join(" ");
+
+  if (identity.personId && asString(row.assignee_person_id) === identity.personId) return true;
+  if (identity.emails.some((email) => haystack.includes(email.toLowerCase()))) return true;
+  return identity.names.some((name) => {
+    const normalizedName = normalizeIdentityValue(name);
+    return Boolean(normalizedName && haystack.includes(normalizedName));
+  });
+}
+
+function dedupeTaskItems(items: PersonalTaskItem[]): PersonalTaskItem[] {
+  const seen = new Set<string>();
+  return items.filter((item) => {
+    const key = `${item.source}:${item.id}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+async function loadProjectLabels(
+  supabase: ReturnType<typeof createServiceClient>,
+  projectIds: number[],
+): Promise<Map<number, string>> {
+  const uniqueProjectIds = Array.from(new Set(projectIds.filter(Number.isFinite)));
+  if (uniqueProjectIds.length === 0) return new Map();
+
+  const { data, error } = await supabase
+    .from("projects")
+    .select("id,name")
+    .in("id", uniqueProjectIds)
+    .limit(200);
+
+  if (error) {
+    throw new Error(`Failed to load project names for task register: ${error.message}`);
+  }
+
+  return new Map(
+    (data ?? [])
+      .filter((row) => typeof row.id === "number")
+      .map((row) => [row.id as number, asString(row.name) ?? `Project ${row.id}`]),
+  );
+}
+
+function formatTaskLine(item: PersonalTaskItem): string {
+  const due = item.dueDate ? ` | Due: ${item.dueDate}` : "";
+  const project = item.projectLabel ? ` | Project: ${item.projectLabel}` : "";
+  const status = item.status ? ` | Status: ${item.status}` : "";
+  const action = item.recommendedAction ? ` | Move: ${item.recommendedAction}` : "";
+  return `- **${item.title}**${project}${due}${status}${action} [${item.sourceLabel}]`;
+}
+
+function createPersonalTaskRegisterAnswer(register: PersonalTaskRegister): {
+  content: string;
+  traceOutput: Record<string, unknown>;
+} {
+  const total =
+    register.verifiedTasks.length +
+    register.scheduleTasks.length +
+    register.briefingTasks.length;
+  const lines = [
+    `I checked the task register for ${register.identity.displayName}.`,
+    "",
+  ];
+
+  if (register.verifiedTasks.length > 0) {
+    lines.push(
+      `**Verified Assigned Tasks** (${register.verifiedTasks.length})`,
+      ...register.verifiedTasks.slice(0, 12).map(formatTaskLine),
+      "",
+    );
+  }
+
+  if (register.scheduleTasks.length > 0) {
+    lines.push(
+      `**Schedule Tasks With Matching Assignee Text** (${register.scheduleTasks.length})`,
+      ...register.scheduleTasks.slice(0, 8).map(formatTaskLine),
+      "",
+    );
+  }
+
+  if (register.briefingTasks.length > 0) {
+    lines.push(
+      `**Executive Briefing Action Items** (${register.briefingTasks.length})`,
+      ...register.briefingTasks.slice(0, 8).map(formatTaskLine),
+      "",
+    );
+  }
+
+  if (total === 0) {
+    lines.push(
+      "I did not find any open task rows directly assigned to you in the checked task sources.",
+      "",
+    );
+  }
+
+  if (register.sourceErrors.length > 0) {
+    lines.push(
+      "**Data Gaps**",
+      ...register.sourceErrors.map((error) => `- ${error}`),
+      "",
+    );
+  }
+
+  lines.push(
+    "**Sources Checked**",
+    ...register.checkedSources.map((source) => `- ${source}`),
+  );
+
+  return {
+    content: lines.join("\n").trim(),
+    traceOutput: {
+      personId: register.identity.personId,
+      displayName: register.identity.displayName,
+      verifiedTaskCount: register.verifiedTasks.length,
+      scheduleTaskCount: register.scheduleTasks.length,
+      briefingTaskCount: register.briefingTasks.length,
+      sourceErrors: register.sourceErrors,
+      checkedSources: register.checkedSources,
+    },
+  };
+}
+
+async function loadPersonalTaskRegister(params: {
+  supabase: ReturnType<typeof createServiceClient>;
+  userId: string;
+  userEmail?: string | null;
+  packet: BrandonDailyUpdatePacket | null;
+}): Promise<PersonalTaskRegister> {
+  const identity = await loadPersonTaskIdentity(params);
+  const sourceErrors: string[] = [];
+  const checkedSources = [
+    "tasks.assignee_person_id / assignee_email / assignee_name",
+    "schedule_tasks.assignee text",
+    "executive_briefing_follow_ups.owner",
+  ];
+  if (params.packet) checkedSources.push("current executive brief packet");
+
+  const taskRows: Record<string, unknown>[] = [];
+
+  if (identity.personId) {
+    const { data, error } = await params.supabase
+      .from("tasks")
+      .select(
+        "id,title,description,status,due_date,priority,project_id,project_ids,assignee_name,assignee_email,assignee_person_id,source_system,created_at,updated_at,file_name,extraction_source",
+      )
+      .eq("assignee_person_id", identity.personId)
+      .limit(100);
+    if (error) {
+      throw new Error(`Verified task lookup failed by person id: ${error.message}`);
+    }
+    taskRows.push(...((data ?? []) as Record<string, unknown>[]));
+  }
+
+  for (const email of identity.emails.slice(0, 3)) {
+    const { data, error } = await params.supabase
+      .from("tasks")
+      .select(
+        "id,title,description,status,due_date,priority,project_id,project_ids,assignee_name,assignee_email,assignee_person_id,source_system,created_at,updated_at,file_name,extraction_source",
+      )
+      .ilike("assignee_email", email)
+      .limit(100);
+    if (error) {
+      throw new Error(`Verified task lookup failed by email: ${error.message}`);
+    }
+    taskRows.push(...((data ?? []) as Record<string, unknown>[]));
+  }
+
+  for (const name of identity.names.slice(0, 3)) {
+    const { data, error } = await params.supabase
+      .from("tasks")
+      .select(
+        "id,title,description,status,due_date,priority,project_id,project_ids,assignee_name,assignee_email,assignee_person_id,source_system,created_at,updated_at,file_name,extraction_source",
+      )
+      .ilike("assignee_name", `%${name}%`)
+      .limit(100);
+    if (error) {
+      throw new Error(`Verified task lookup failed by assignee name: ${error.message}`);
+    }
+    taskRows.push(...((data ?? []) as Record<string, unknown>[]));
+  }
+
+  const verifiedRows = Array.from(
+    new Map(
+      taskRows
+        .filter((row) => isOpenTaskStatus(row.status))
+        .filter((row) => rowMatchesIdentity(row, identity))
+        .map((row) => [asString(row.id) ?? `${row.metadata_id}:${row.description}`, row]),
+    ).values(),
+  ).slice(0, 30);
+
+  let scheduleRows: Record<string, unknown>[] = [];
+  try {
+    const { data, error } = await params.supabase
+      .from("schedule_tasks")
+      .select(
+        "id,name,status,finish_date,project_id,updated_at,created_at,percent_complete,assignee,priority",
+      )
+      .limit(250);
+    if (error) throw error;
+    scheduleRows = ((data ?? []) as Record<string, unknown>[])
+      .filter((row) => isOpenTaskStatus(row.status))
+      .filter((row) => Number(row.percent_complete ?? 0) < 100)
+      .filter((row) => rowMatchesIdentity(row, identity))
+      .slice(0, 20);
+  } catch (error) {
+    sourceErrors.push(
+      `Schedule task assignee lookup failed: ${readableErrorMessage(error)}`,
+    );
+  }
+
+  let followUpRows: Record<string, unknown>[] = [];
+  try {
+    const { data, error } = await params.supabase
+      .from("executive_briefing_follow_ups")
+      .select(
+        "id,title,summary,state,status,section,owner,project_label,recommended_action,source_date,source_detail,updated_at,last_seen_at",
+      )
+      .eq("state", "open")
+      .limit(100);
+    if (error) throw error;
+    followUpRows = ((data ?? []) as Record<string, unknown>[])
+      .filter((row) => rowMatchesIdentity(row, identity))
+      .slice(0, 20);
+  } catch (error) {
+    sourceErrors.push(
+      `Executive briefing follow-up lookup failed: ${readableErrorMessage(error)}`,
+    );
+  }
+
+  const packetTasks: PersonalTaskItem[] = params.packet
+    ? params.packet.sections.needsBrandon.slice(0, 8).map((item, index) => ({
+        id: item.sourceId ?? `packet-needs-brandon-${index}`,
+        title: item.title,
+        detail: item.summary,
+        dueDate: item.date,
+        status: item.status,
+        priority: item.tone,
+        projectId: null,
+        projectLabel: item.project,
+        source: "executive_brief_packet" as const,
+        sourceLabel: "current executive brief packet",
+        confidence: "briefing" as const,
+        sourceDate: item.date,
+        recommendedAction: item.recommendedAction,
+      }))
+    : [];
+
+  const projectIds = [
+    ...verifiedRows.map((row) => Number(row.project_id)).filter(Number.isFinite),
+    ...scheduleRows.map((row) => Number(row.project_id)).filter(Number.isFinite),
+    ...packetTasks.map((item) => Number(item.projectId)).filter(Number.isFinite),
+  ];
+  const projectLabels = await loadProjectLabels(params.supabase, projectIds);
+
+  const verifiedTasks = dedupeTaskItems(
+    verifiedRows.map((row) => {
+      const projectId = typeof row.project_id === "number" ? row.project_id : null;
+      return {
+        id: asString(row.id) ?? crypto.randomUUID(),
+        title: asString(row.title) ?? asString(row.description)?.slice(0, 120) ?? "Untitled task",
+        detail: asString(row.description),
+        dueDate: asString(row.due_date),
+        status: asString(row.status),
+        priority: asString(row.priority),
+        projectId,
+        projectLabel: projectId ? projectLabels.get(projectId) ?? `Project ${projectId}` : null,
+        source: "tasks" as const,
+        sourceLabel: "verified tasks table",
+        confidence: "verified" as const,
+        sourceDate: asString(row.updated_at) ?? asString(row.created_at),
+      };
+    }),
+  );
+
+  const scheduleTasks = dedupeTaskItems(
+    scheduleRows.map((row) => {
+      const projectId = typeof row.project_id === "number" ? row.project_id : null;
+      return {
+        id: asString(row.id) ?? crypto.randomUUID(),
+        title: asString(row.name) ?? "Untitled schedule task",
+        dueDate: asString(row.finish_date),
+        status: asString(row.status),
+        priority: asString(row.priority),
+        projectId,
+        projectLabel: projectId ? projectLabels.get(projectId) ?? `Project ${projectId}` : null,
+        source: "schedule_tasks" as const,
+        sourceLabel: "schedule task assignee text",
+        confidence: "matched" as const,
+        sourceDate: asString(row.updated_at) ?? asString(row.created_at),
+      };
+    }),
+  );
+
+  const briefingFollowUps = followUpRows.map((row) => ({
+    id: asString(row.id) ?? crypto.randomUUID(),
+    title: asString(row.title) ?? "Executive briefing follow-up",
+    detail: asString(row.summary),
+    dueDate: asString(row.source_date),
+    status: asString(row.status) ?? asString(row.state),
+    projectLabel: asString(row.project_label),
+    source: "executive_briefing_follow_ups" as const,
+    sourceLabel: "open executive briefing follow-up",
+    confidence: "matched" as const,
+    sourceDate: asString(row.last_seen_at) ?? asString(row.updated_at),
+    recommendedAction: asString(row.recommended_action),
+  }));
+
+  const briefingTasks = dedupeTaskItems([...briefingFollowUps, ...packetTasks]);
+
+  return {
+    identity,
+    verifiedTasks,
+    scheduleTasks,
+    briefingTasks,
+    sourceErrors,
+    checkedSources,
+  };
 }
 
 type SourceHealthStatus = "ok" | "warning" | "error" | "unknown";
@@ -336,6 +964,11 @@ async function planAssistantIntent(params: {
         `Deterministic fallback intent: ${params.deterministicIntent}`,
         `Source-specific RAG kind: ${params.sourceSpecificRagKind ?? "none"}`,
       ].join("\n"),
+      experimental_telemetry: {
+        isEnabled: process.env.PHOENIX_TRACING === "true",
+        functionId: "intent-planner",
+        metadata: { modelId: params.activeModel },
+      },
     }),
     7000,
     "intent planner timed out",
@@ -366,7 +999,7 @@ function writeStrategistStatus(
 
 function writeAssistantWidgetParts(
   writer: UIMessageStreamWriter<UIMessage>,
-  widgets: ReturnType<typeof buildAssistantWidgetsFromPrompt>,
+  widgets: AssistantWidgetPayload[],
 ): PersistedDataPart[] {
   const dataParts = widgets.map((widget): PersistedDataPart => ({
     type: "data-assistant-widget",
@@ -785,6 +1418,66 @@ function isBrandonDailyUpdateWidgetRequest(message: string): boolean {
   ].some((phrase) => normalized.includes(phrase));
 }
 
+async function loadSignedInBriefIdentity(params: {
+  supabase: ReturnType<typeof createServiceClient>;
+  userId: string;
+  userEmail?: string | null;
+}): Promise<SignedInBriefIdentity> {
+  const normalizedUserEmail = params.userEmail?.trim().toLowerCase() || null;
+  const [profileResult, authLinkResult, personByAuthResult] = await Promise.all([
+    params.supabase
+      .from("user_profiles")
+      .select("full_name,email")
+      .eq("id", params.userId)
+      .maybeSingle(),
+    params.supabase
+      .from("users_auth")
+      .select("person_id")
+      .eq("auth_user_id", params.userId)
+      .maybeSingle(),
+    params.supabase
+      .from("people")
+      .select("first_name,last_name,email")
+      .eq("auth_user_id", params.userId)
+      .maybeSingle(),
+  ]);
+
+  let person = personByAuthResult.data;
+  const personId = authLinkResult.data?.person_id;
+  if (!person && personId) {
+    const { data } = await params.supabase
+      .from("people")
+      .select("first_name,last_name,email")
+      .eq("id", personId)
+      .maybeSingle();
+    person = data;
+  }
+
+  if (!person && normalizedUserEmail) {
+    const { data } = await params.supabase
+      .from("people")
+      .select("first_name,last_name,email")
+      .ilike("email", normalizedUserEmail)
+      .maybeSingle();
+    person = data;
+  }
+
+  const personName = person
+    ? [person.first_name, person.last_name].filter(Boolean).join(" ").trim() || null
+    : null;
+  const identity = {
+    profileName: profileResult.data?.full_name ?? null,
+    profileEmail: profileResult.data?.email ?? normalizedUserEmail,
+    personName,
+    personEmail: person?.email ?? null,
+  };
+
+  return {
+    ...identity,
+    isBrandon: identityLooksLikeBrandon(identity),
+  };
+}
+
 function createBrandonDailyUpdateSummary(packet: BrandonDailyUpdatePacket): string {
   const needsBrandon = packet.sections.needsBrandon[0];
   const waitingOnOthers = packet.sections.waitingOnOthers[0];
@@ -1176,6 +1869,11 @@ async function generateSourceGroundedSynthesis(params: {
       maxOutputTokens: 1_000,
       timeout: {
         totalMs: 45_000,
+      },
+      experimental_telemetry: {
+        isEnabled: process.env.PHOENIX_TRACING === "true",
+        functionId: "executive-briefing-synthesis",
+        metadata: { modelId: "openai/gpt-4.1" },
       },
     });
 
@@ -1591,6 +2289,7 @@ type SourceSpecificRagRow = {
   date: string | null;
   created_at: string | null;
   content: string | null;
+  project_id: number | null;
 };
 
 type SourceSpecificRagAnswer = {
@@ -1714,6 +2413,26 @@ function formatSourceSpecificRagContent(
     "",
     "**Next Step**",
     "- Use this same source-specific check as a regression gate so generic source questions cannot fall back to tool discovery only.",
+  ].join("\n");
+}
+
+function appendSourceHealthSummary(
+  content: string,
+  sourceHealth: AssistantSourceHealthContext | null,
+): string {
+  if (!sourceHealth) return content;
+  const { metadata } = sourceHealth;
+  const alertLines = metadata.alerts.slice(0, 4).map((alert) => {
+    return `- ${alert.severity} ${alert.code}: ${alert.message}`;
+  });
+  return [
+    content,
+    "",
+    "**Current Source Health**",
+    `- Overall status: ${metadata.overallStatus}`,
+    `- Likely gap if evidence is missing: ${metadata.missingStage ?? "none detected"}`,
+    `- Backlog: ${metadata.counts.unembedded} unembedded, ${metadata.counts.uncompiled} uncompiled`,
+    ...alertLines,
   ].join("\n");
 }
 
@@ -1880,11 +2599,13 @@ async function buildSourceSpecificRagAnswer(params: {
         rowCount: rows.length,
         rows: rows.map((row) => ({
           id: row.id,
+          documentId: row.id,
           title: row.title,
           date: row.date,
           source: row.source,
           category: row.category,
           type: row.type,
+          projectId: row.project_id,
         })),
       },
       timestamp: new Date().toISOString(),
@@ -2341,6 +3062,11 @@ async function generateRecoveryResponse(params: {
           ].join("\n\n"),
         },
       ],
+      experimental_telemetry: {
+        isEnabled: process.env.PHOENIX_TRACING === "true",
+        functionId: "recovery-response",
+        metadata: { modelId: "openai/gpt-4.1" },
+      },
     });
 
     return result.text.trim() || fallback;
@@ -2366,6 +3092,7 @@ async function persistAssistantMessage(params: {
     inputTokens: number | undefined;
     outputTokens: number | undefined;
     totalTokens: number | undefined;
+    cachedInputTokens?: number | undefined;
   };
   responseQuality: ResponseQuality;
   councilMode?: boolean;
@@ -2374,7 +3101,9 @@ async function persistAssistantMessage(params: {
   projectBriefingSnapshot?: ProjectBriefingSnapshot | null;
   executiveBriefingRetrieval?: ExecutiveBriefingRetrievalPacket | null;
   providerDecision: AssistantToolCallingDecision;
+  selectedProjectId?: number;
   dataParts?: PersistedDataPart[];
+  sourceHealth?: AssistantSourceHealthMetadata | null;
 }) {
   const {
     supabase,
@@ -2392,8 +3121,18 @@ async function persistAssistantMessage(params: {
     projectBriefingSnapshot,
     executiveBriefingRetrieval,
     providerDecision,
+    selectedProjectId,
     dataParts,
+    sourceHealth,
   } = params;
+
+  await persistRetrievalFeedbackFromToolTrace({
+    userId,
+    sessionId,
+    selectedProjectId,
+    content,
+    toolTrace,
+  });
 
   await supabase.from("chat_history").insert({
     session_id: sessionId,
@@ -2440,16 +3179,270 @@ async function persistAssistantMessage(params: {
               inputTokens: totalUsage.inputTokens ?? 0,
               outputTokens: totalUsage.outputTokens ?? 0,
               totalTokens: totalUsage.totalTokens ?? 0,
+              cachedInputTokens: totalUsage.cachedInputTokens ?? 0,
+              cacheHitRatio:
+                totalUsage.inputTokens && totalUsage.inputTokens > 0
+                  ? Number(
+                      (
+                        (totalUsage.cachedInputTokens ?? 0) /
+                        totalUsage.inputTokens
+                      ).toFixed(3),
+                    )
+                  : 0,
             }
           : null,
         response_quality: responseQuality,
         loop_diagnostic: loopDiagnostic ?? null,
         project_briefing_snapshot: projectBriefingSnapshot ?? null,
         executive_briefing_retrieval: executiveBriefingRetrieval ?? null,
+        source_health: sourceHealth ?? null,
         data_parts: dataParts ?? [],
       }),
     ),
   });
+}
+
+const RETRIEVAL_TOOL_NAMES = new Set([
+  "semanticSearch",
+  "sourceSpecificRagRetrieval",
+  "searchMeetingsByTopic",
+  "searchEmails",
+  "searchTeamsMessages",
+  "searchExternalDocuments",
+]);
+
+const DOCUMENT_SOURCE_TABLES = new Set([
+  "document",
+  "email",
+  "meeting",
+  "meeting_summary",
+  "meeting_transcript",
+  "onedrive",
+  "teams_channel",
+  "teams_dm",
+  "teams_message",
+]);
+
+function asString(value: unknown): string | null {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function asFiniteNumber(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+function textIncludes(haystack: string, needle: string | null | undefined): boolean {
+  if (!needle?.trim()) return false;
+  return haystack.includes(needle.trim().toLowerCase());
+}
+
+function normalizeRetrievalQuery(trace: Record<string, unknown>): string | null {
+  const input = asRecord(trace.input);
+  return (
+    asString(input.query) ??
+    asString(input.topic) ??
+    asString(input.searchQuery) ??
+    asString(input.label) ??
+    asString(input.kind)
+  );
+}
+
+function normalizeRetrievalProjectId(
+  fallbackProjectId: number | undefined,
+  trace: Record<string, unknown>,
+  result?: Record<string, unknown>,
+): number | null {
+  const input = asRecord(trace.input);
+  const projectId =
+    asFiniteNumber(result?.projectId) ??
+    asFiniteNumber(result?.project_id) ??
+    asFiniteNumber(input.projectId) ??
+    fallbackProjectId ??
+    null;
+  return projectId;
+}
+
+function normalizeSourceDocumentId(result: Record<string, unknown>): string | null {
+  const explicit =
+    asString(result.sourceDocumentId) ??
+    asString(result.documentId) ??
+    asString(result.document_id);
+  if (explicit) return explicit;
+
+  const sourceTable = asString(result.sourceTable);
+  const recordId = asString(result.recordId) ?? asString(result.id);
+  if (sourceTable && DOCUMENT_SOURCE_TABLES.has(sourceTable) && recordId) {
+    return recordId;
+  }
+
+  return null;
+}
+
+function normalizeSourceChunkId(result: Record<string, unknown>, documentId: string | null): string | null {
+  const explicit =
+    asString(result.sourceChunkId) ??
+    asString(result.chunkId) ??
+    asString(result.chunk_id);
+  if (explicit) return explicit;
+
+  const chunkIndex = asFiniteNumber(result.chunkIndex) ?? asFiniteNumber(result.chunk_index);
+  return documentId && chunkIndex !== null ? `${documentId}:${chunkIndex}` : null;
+}
+
+function retrievalResultCitation(result: Record<string, unknown>): string | null {
+  const citation = asString(result.citation) ?? asString(result.sourceRef);
+  if (citation) return citation;
+
+  const sourceTable = asString(result.sourceTable);
+  const recordId = asString(result.recordId);
+  return sourceTable && recordId ? `[Source: ${sourceTable} ${recordId}]` : null;
+}
+
+function retrievalResultWasUsed(result: Record<string, unknown>, normalizedContent: string): {
+  cited: boolean;
+  usedInAnswer: boolean;
+} {
+  const citation = retrievalResultCitation(result);
+  const documentId = normalizeSourceDocumentId(result);
+  const title = asString(result.title) ?? asString(asRecord(result.metadata).title);
+  const id = asString(result.id) ?? asString(result.recordId);
+
+  const cited =
+    textIncludes(normalizedContent, citation) ||
+    textIncludes(normalizedContent, documentId) ||
+    textIncludes(normalizedContent, id);
+  const usedInAnswer = cited || textIncludes(normalizedContent, title);
+  return { cited, usedInAnswer };
+}
+
+function retrievalOutcomeForUsage(params: {
+  cited: boolean;
+  usedInAnswer: boolean;
+  hasError: boolean;
+  noResults: boolean;
+}): AiRetrievalOutcome {
+  if (params.hasError) return "unsupported";
+  if (params.noResults) return "unknown";
+  if (params.cited || params.usedInAnswer) return "helpful";
+  return "unknown";
+}
+
+function retrievalRowsFromTrace(params: {
+  trace: Record<string, unknown>;
+  userId: string;
+  sessionId: string;
+  selectedProjectId?: number;
+  normalizedContent: string;
+}): RecordRetrievalFeedbackParams[] {
+  const { trace, userId, sessionId, selectedProjectId, normalizedContent } = params;
+  const toolName = asString(trace.tool);
+  if (!toolName || !RETRIEVAL_TOOL_NAMES.has(toolName)) return [];
+
+  const queryText = normalizeRetrievalQuery(trace);
+  if (!queryText) return [];
+
+  const output = asRecord(trace.output);
+  const hasError =
+    Boolean(trace.error) ||
+    typeof output.error === "string" ||
+    output.blocked === true;
+  const rawResults = Array.isArray(output.results)
+    ? output.results.filter(
+        (result): result is Record<string, unknown> =>
+          Boolean(result) && typeof result === "object" && !Array.isArray(result),
+      )
+    : Array.isArray(output.rows)
+      ? output.rows.filter(
+          (result): result is Record<string, unknown> =>
+            Boolean(result) && typeof result === "object" && !Array.isArray(result),
+        )
+      : [];
+
+  if (rawResults.length === 0) {
+    return [{
+      userId,
+      sessionId,
+      projectId: normalizeRetrievalProjectId(selectedProjectId, trace),
+      toolName,
+      queryText,
+      outcome: retrievalOutcomeForUsage({
+        cited: false,
+        usedInAnswer: false,
+        hasError,
+        noResults: true,
+      }),
+      metadata: {
+        noResults: true,
+        error: asString(trace.error) ?? asString(output.error),
+        message: asString(output.message),
+        traceTimestamp: asString(trace.timestamp),
+      },
+    }];
+  }
+
+  return rawResults.slice(0, 12).map((result, index) => {
+    const documentId =
+      normalizeSourceDocumentId(result) ??
+      (toolName === "searchMeetingsByTopic" ? asString(result.id) : null);
+    const chunkId = normalizeSourceChunkId(result, documentId);
+    const usage = retrievalResultWasUsed(result, normalizedContent);
+    const sourceTable = asString(result.sourceTable) ?? asString(result.source) ?? asString(result.category);
+    const recordId = asString(result.recordId) ?? asString(result.id);
+    const score =
+      asFiniteNumber(result.finalScore) ??
+      asFiniteNumber(result.similarity) ??
+      asFiniteNumber(result.score);
+
+    return {
+      userId,
+      sessionId,
+      projectId: normalizeRetrievalProjectId(selectedProjectId, trace, result),
+      toolName,
+      queryText,
+      sourceDocumentId: documentId,
+      sourceChunkId: chunkId,
+      rank: index + 1,
+      score,
+      cited: usage.cited,
+      usedInAnswer: usage.usedInAnswer,
+      outcome: retrievalOutcomeForUsage({
+        cited: usage.cited,
+        usedInAnswer: usage.usedInAnswer,
+        hasError,
+        noResults: false,
+      }),
+      metadata: {
+        sourceTable,
+        recordId,
+        title: asString(result.title) ?? asString(asRecord(result.metadata).title),
+        date: asString(result.date) ?? asString(result.createdAt),
+        citation: retrievalResultCitation(result),
+        resultCount: asFiniteNumber(output.resultCount) ?? asFiniteNumber(output.totalResults),
+        traceTimestamp: asString(trace.timestamp),
+      },
+    };
+  });
+}
+
+async function persistRetrievalFeedbackFromToolTrace(params: {
+  userId: string;
+  sessionId: string;
+  selectedProjectId?: number;
+  content: string;
+  toolTrace: Array<Record<string, unknown>>;
+}) {
+  const normalizedContent = params.content.toLowerCase();
+  const rows = params.toolTrace.flatMap((trace) =>
+    retrievalRowsFromTrace({
+      trace,
+      userId: params.userId,
+      sessionId: params.sessionId,
+      selectedProjectId: params.selectedProjectId,
+      normalizedContent,
+    }),
+  );
+
+  await recordRetrievalFeedbackBatch(rows);
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -2648,7 +3641,49 @@ export const POST = withApiGuardrails(
       output: intentPlannerDecision,
       timestamp: new Date().toISOString(),
     });
-    const brandonDailyUpdateWidgetRequest = isBrandonDailyUpdateWidgetRequest(lastUserContent);
+    const dailyBriefCritiqueRequest = isDailyBriefCritiqueRequest(lastUserContent);
+    if (dailyBriefCritiqueRequest) {
+      toolTrace.push({
+        tool: "dailyBriefCritiqueGuard",
+        input: {
+          message: lastUserContent.slice(0, 240),
+        },
+        output: {
+          suppressedBrandonDailyUpdateWidget: true,
+        },
+        timestamp: new Date().toISOString(),
+      });
+    }
+    const personalDailyBriefRequest = isPersonalDailyBriefRequest(lastUserContent);
+    const personalTaskRegisterRequest = isPersonalTaskRegisterRequest(lastUserContent);
+    const signedInBriefIdentity = personalDailyBriefRequest
+      ? await loadSignedInBriefIdentity({
+          supabase,
+          userId: user.id,
+          userEmail: user.email,
+        })
+      : null;
+    const brandonDailyUpdateWidgetRequest =
+      !dailyBriefCritiqueRequest &&
+      (isBrandonDailyUpdateWidgetRequest(lastUserContent) ||
+        signedInBriefIdentity?.isBrandon === true);
+    if (personalDailyBriefRequest) {
+      toolTrace.push({
+        tool: "personalDailyBriefRouter",
+        input: {
+          message: lastUserContent,
+          userId: user.id,
+        },
+        output: {
+          routedToBrandonDailyUpdate: signedInBriefIdentity?.isBrandon === true,
+          profileName: signedInBriefIdentity?.profileName ?? null,
+          profileEmail: signedInBriefIdentity?.profileEmail ?? null,
+          personName: signedInBriefIdentity?.personName ?? null,
+          personEmail: signedInBriefIdentity?.personEmail ?? null,
+        },
+        timestamp: new Date().toISOString(),
+      });
+    }
     const forceBusinessRetrieval =
       shouldForceBusinessRetrieval(lastUserContent) ||
       actionFollowUpResponse ||
@@ -2660,6 +3695,29 @@ export const POST = withApiGuardrails(
     let deterministicRetrieval: SemanticSearchOutput | null = null;
     let projectBriefingSnapshot: ProjectBriefingSnapshot | null = null;
     let executiveBriefingRetrieval: ExecutiveBriefingRetrievalPacket | null = null;
+    let assistantSourceHealthContext: AssistantSourceHealthContext | null = null;
+    const sourceHealthRequested = shouldAttachAssistantSourceHealth(lastUserContent);
+    const getAssistantSourceHealthContext = async (
+      reason: AssistantSourceHealthReason,
+    ): Promise<AssistantSourceHealthContext | null> => {
+      if (assistantSourceHealthContext) return assistantSourceHealthContext;
+      try {
+        assistantSourceHealthContext = await loadAssistantSourceHealthContext({
+          supabase,
+          reason,
+        });
+        toolTrace.push(assistantSourceHealthContext.trace);
+        return assistantSourceHealthContext;
+      } catch (error) {
+        toolTrace.push({
+          tool: "assistantSourceHealth",
+          input: { reason },
+          error: error instanceof Error ? error.message : String(error),
+          timestamp: new Date().toISOString(),
+        });
+        return null;
+      }
+    };
     const stream = createUIMessageStream({
       originalMessages: messages,
       execute: async ({ writer }) => {
@@ -2683,17 +3741,221 @@ export const POST = withApiGuardrails(
             learningUsage = usage;
           },
         });
+        if (sourceHealthRequested) {
+          const sourceHealth = await getAssistantSourceHealthContext("source_status_request");
+          if (sourceHealth) {
+            systemPrompt = systemPrompt + `\n\n---\n\n${sourceHealth.promptInjection}`;
+          }
+        }
 
         if (executivePagePacket) {
-          systemPrompt = `${formatExecutiveBriefPacketContext(executivePagePacket)}\n\n---\n\n${systemPrompt}`;
+          systemPrompt = systemPrompt + `\n\n---\n\n${formatExecutiveBriefPacketContext(executivePagePacket)}`;
+        }
+
+        if (isExecutiveBriefingMetadataQuestion(lastUserContent)) {
+          writeStrategistStatus(writer, {
+            stage: "knowledge",
+            message: "Checking executive briefing generation metadata",
+            status: "loading",
+          });
+
+          const metadataAnswer = await loadLatestExecutiveBriefingMetadataAnswer({
+            supabase,
+            packet: executivePagePacket,
+          });
+
+          const content =
+            metadataAnswer?.content ??
+            "I could not find a stored executive briefing packet to timestamp. Source checked: `daily_recaps.recap_kind=executive_briefing`.";
+
+          toolTrace.push({
+            tool: "executiveBriefingMetadataLookup",
+            input: {
+              message: lastUserContent.slice(0, 240),
+              hadExecutivePagePacket: Boolean(executivePagePacket),
+            },
+            output:
+              metadataAnswer?.traceOutput ?? {
+                foundPacket: false,
+                sourceOfTruth: "daily_recaps.recap_kind=executive_briefing",
+              },
+            timestamp: new Date().toISOString(),
+          });
+
+          const responseQuality = scoreResponseQuality({
+            toolTrace,
+            content,
+          });
+          await persistAssistantMessage({
+            supabase,
+            sessionId,
+            userId: user.id,
+            content,
+            toolTrace,
+            memoryUsage,
+            learningUsage,
+            totalUsage: undefined,
+            responseQuality,
+            councilMode,
+            modelId: activeModel,
+            loopDiagnostic: buildLoopDiagnostic({
+              stepStarts: stepStartDiagnostics,
+              steps: stepDiagnostics,
+            }),
+            projectBriefingSnapshot,
+            executiveBriefingRetrieval,
+            providerDecision,
+            selectedProjectId,
+            sourceHealth: assistantSourceHealthContext?.metadata ?? null,
+          });
+
+          await supabase
+            .from("conversations")
+            .update({ last_message_at: new Date().toISOString() })
+            .eq("session_id", sessionId)
+            .eq("user_id", user.id);
+
+          await writeTextResponse(
+            writer,
+            "strategist-executive-briefing-metadata",
+            content,
+          );
+          writeStrategistStatus(writer, {
+            stage: "complete",
+            message: "Executive briefing timestamp found",
+            status: "success",
+          });
+          return;
+        }
+
+        if (personalTaskRegisterRequest) {
+          writeStrategistStatus(writer, {
+            stage: "knowledge",
+            message: "Checking your assigned task sources",
+            status: "loading",
+          });
+
+          const register = await loadPersonalTaskRegister({
+            supabase,
+            userId: user.id,
+            userEmail: user.email,
+            packet: executivePagePacket,
+          });
+          const { content, traceOutput } = createPersonalTaskRegisterAnswer(register);
+
+          toolTrace.push({
+            tool: "getMyTasks",
+            input: {
+              message: lastUserContent.slice(0, 240),
+              hadExecutivePagePacket: Boolean(executivePagePacket),
+            },
+            output: traceOutput,
+            timestamp: new Date().toISOString(),
+          });
+
+          const responseQuality = scoreResponseQuality({
+            toolTrace,
+            content,
+          });
+          await persistAssistantMessage({
+            supabase,
+            sessionId,
+            userId: user.id,
+            content,
+            toolTrace,
+            memoryUsage,
+            learningUsage,
+            totalUsage: undefined,
+            responseQuality,
+            councilMode,
+            modelId: activeModel,
+            loopDiagnostic: buildLoopDiagnostic({
+              stepStarts: stepStartDiagnostics,
+              steps: stepDiagnostics,
+            }),
+            projectBriefingSnapshot,
+            executiveBriefingRetrieval,
+            providerDecision,
+            selectedProjectId,
+            sourceHealth: assistantSourceHealthContext?.metadata ?? null,
+          });
+
+          await supabase
+            .from("conversations")
+            .update({ last_message_at: new Date().toISOString() })
+            .eq("session_id", sessionId)
+            .eq("user_id", user.id);
+
+          await writeTextResponse(writer, "strategist-my-tasks", content);
+          writeStrategistStatus(writer, {
+            stage: "complete",
+            message: "Task register checked",
+            status: "success",
+          });
+          return;
+        }
+
+        const plannedWidgets: AssistantWidgetPayload[] = [
+          ...buildAssistantWidgetsFromPrompt({
+            prompt: lastUserContent,
+            selectedProjectId,
+          }),
+        ];
+
+        if (shouldCaptureFeatureRequest(lastUserContent)) {
+          try {
+            const featureRequest = await captureFeatureRequestFromChat({
+              rawRequest: lastUserContent,
+              requesterName: (user.email ?? "").toLowerCase().includes("brandon")
+                ? "Brandon"
+                : user.email ?? "Stakeholder",
+              requesterUserId: user.id,
+              selectedProjectId: selectedProjectId ?? null,
+              sourceSessionId: sessionId,
+              sourceMessageId: lastUserMessage?.id ?? null,
+            });
+            const detail = await getFeatureRequestDetail(featureRequest.id);
+            plannedWidgets.push(
+              buildFeatureRequestPacketWidget({
+                request: featureRequest,
+                latestPlan: detail?.latestPlan ?? null,
+              }),
+            );
+            toolTrace.push({
+              tool: "featureRequestPacketRouter",
+              input: {
+                selectedProjectId: selectedProjectId ?? null,
+                message: lastUserContent.slice(0, 240),
+              },
+              output: {
+                requestId: featureRequest.id,
+                status: featureRequest.status,
+                readyForBuild: featureRequest.ready_for_build,
+                missingRequirements: featureRequest.readiness_missing_requirements,
+              },
+              timestamp: new Date().toISOString(),
+            });
+          } catch (featureRequestError) {
+            const errorMessage =
+              featureRequestError instanceof Error
+                ? featureRequestError.message
+                : String(featureRequestError);
+            toolTrace.push({
+              tool: "featureRequestPacketRouter",
+              input: {
+                selectedProjectId: selectedProjectId ?? null,
+                message: lastUserContent.slice(0, 240),
+              },
+              error: errorMessage,
+              timestamp: new Date().toISOString(),
+            });
+            throw new Error(`Feature request packet capture failed: ${errorMessage}`);
+          }
         }
 
         const assistantWidgetDataParts = writeAssistantWidgetParts(
           writer,
-          buildAssistantWidgetsFromPrompt({
-            prompt: lastUserContent,
-            selectedProjectId,
-          }),
+          plannedWidgets,
         );
         if (assistantWidgetDataParts.length > 0) {
           toolTrace.push({
@@ -2733,7 +3995,7 @@ export const POST = withApiGuardrails(
             status: "loading",
           });
 
-          const packet = await generateBrandonDailyUpdate({ windowDays: 2 });
+          const packet = (await getExecutiveBriefingDashboard({ windowDays: 2 })).draft.packet;
           const widget = buildBrandonDailyUpdateWidget(packet);
           const dataPart: PersistedDataPart = {
             type: "data-brandon-daily-update-widget",
@@ -2751,9 +4013,10 @@ export const POST = withApiGuardrails(
           await writeTextResponse(writer, textId, content);
 
           toolTrace.push({
-            tool: "generateBrandonDailyUpdateWidget",
+            tool: "loadBrandonDailyUpdateWidget",
             input: {
               windowDays: 2,
+              sourceOfTruth: "daily_recaps.recap_kind=executive_briefing",
             },
             output: {
               needsBrandonCount: packet.sections.needsBrandon.length,
@@ -2786,7 +4049,9 @@ export const POST = withApiGuardrails(
             projectBriefingSnapshot,
             executiveBriefingRetrieval,
             providerDecision,
+            selectedProjectId,
             dataParts: [...assistantWidgetDataParts, dataPart],
+            sourceHealth: assistantSourceHealthContext?.metadata ?? null,
           });
 
           await supabase
@@ -2819,6 +4084,18 @@ export const POST = withApiGuardrails(
             scope,
           });
           toolTrace.push(sourceSpecificAnswer.trace);
+          const directSourceHealth =
+            sourceSpecificAnswer.rows.length === 0 || sourceHealthRequested
+              ? await getAssistantSourceHealthContext(
+                  sourceSpecificAnswer.rows.length === 0
+                    ? "empty_source_lookup"
+                    : "source_status_request",
+                )
+              : null;
+          const directSourceSpecificContent = appendSourceHealthSummary(
+            sourceSpecificAnswer.content,
+            directSourceHealth,
+          );
 
           writeStrategistStatus(writer, {
             stage: "synthesis",
@@ -2827,11 +4104,11 @@ export const POST = withApiGuardrails(
           });
 
           const textId = "strategist-source-specific-rag";
-          await writeTextResponse(writer, textId, sourceSpecificAnswer.content);
+          await writeTextResponse(writer, textId, directSourceSpecificContent);
 
           const responseQuality = scoreResponseQuality({
             toolTrace,
-            content: sourceSpecificAnswer.content,
+            content: directSourceSpecificContent,
           });
           // TODO(P2): wire meta-commentary retry for the source-specific path here.
           // The general path retry is implemented at ~line 2714. This path is low-risk
@@ -2841,7 +4118,7 @@ export const POST = withApiGuardrails(
             supabase,
             sessionId,
             userId: user.id,
-            content: sourceSpecificAnswer.content,
+            content: directSourceSpecificContent,
             toolTrace,
             memoryUsage,
             learningUsage,
@@ -2856,7 +4133,9 @@ export const POST = withApiGuardrails(
             projectBriefingSnapshot,
             executiveBriefingRetrieval,
             providerDecision,
+            selectedProjectId,
             dataParts: assistantWidgetDataParts,
+            sourceHealth: assistantSourceHealthContext?.metadata ?? null,
           });
 
           await supabase
@@ -2907,11 +4186,11 @@ export const POST = withApiGuardrails(
               semanticSearchTool.execute({
                 query: lastUserContent,
                 projectId: selectedProjectId,
-                matchCount: 8,
-                threshold: 0.2,
-                skipRerank: true,
+                matchCount: 12,
+                threshold: 0.5,
+                skipRerank: false,
               }),
-              12_000,
+              18_000,
               "semanticSearch timed out during source lookup retrieval",
             );
 
@@ -2921,9 +4200,9 @@ export const POST = withApiGuardrails(
                 input: {
                   query: lastUserContent,
                   projectId: selectedProjectId ?? null,
-                  matchCount: 8,
-                  threshold: 0.2,
-                  skipRerank: true,
+                  matchCount: 12,
+                  threshold: 0.5,
+                  skipRerank: false,
                 },
                 error: searchOutput.error,
                 timestamp: new Date().toISOString(),
@@ -2947,6 +4226,17 @@ export const POST = withApiGuardrails(
             output: sourceLookupOutput,
             userMessage: lastUserContent,
           });
+          const sourceLookupResultCount = sourceLookupOutput?.results?.length ?? 0;
+          const sourceLookupHealth =
+            sourceLookupResultCount === 0 || sourceLookupResultCount <= 2 || sourceHealthRequested
+              ? await getAssistantSourceHealthContext(
+                  sourceLookupResultCount === 0
+                    ? "empty_source_lookup"
+                    : sourceLookupResultCount <= 2
+                      ? "low_source_lookup"
+                      : "source_status_request",
+                )
+              : null;
           toolTrace.push({
             tool: "sourceLookupIntentRouter",
             input: {
@@ -2955,7 +4245,7 @@ export const POST = withApiGuardrails(
               selectedProjectId: selectedProjectId ?? null,
             },
             output: {
-              resultCount: sourceLookupOutput?.results?.length ?? 0,
+              resultCount: sourceLookupResultCount,
               recentTeamsWindow: sourceLookupRecentTeamsRequest
                 ? {
                     startDate: sourceLookupRecentTeamsRequest.startDate ?? null,
@@ -2979,11 +4269,12 @@ export const POST = withApiGuardrails(
           // case 05-recent-emails for the dogfood failure that surfaced this.
           const sourceLookupHeader = `# Source Lookup Results\n\nThe user is asking for what was said / what happened in source channels (meetings, Teams, email, documents). I ran source retrieval before synthesis. If a Recent Teams Window is present, treat it as the current primary evidence and use older semantic matches only as secondary pattern context. Read the sources carefully, extract the actual commitments / issues / decisions / sentiment the user is asking about, and synthesize a useful answer with specific quotes or paraphrased points and source citations. Do NOT just list the source previews verbatim — that's what we used to do and it wasn't useful. If the sources don't actually contain what the user asked about, say so honestly.`;
           systemPrompt = [
+            systemPrompt,
+            "---",
             sourceLookupHeader,
+            sourceLookupHealth?.promptInjection,
             recentTeamsContext,
             sourceLookupContext,
-            "---",
-            systemPrompt,
           ].filter((part): part is string => Boolean(part?.trim())).join("\n\n");
 
           writeStrategistStatus(writer, {
@@ -3128,7 +4419,9 @@ export const POST = withApiGuardrails(
             projectBriefingSnapshot,
             executiveBriefingRetrieval,
             providerDecision,
+            selectedProjectId,
             dataParts: assistantWidgetDataParts,
+            sourceHealth: assistantSourceHealthContext?.metadata ?? null,
           });
 
           await supabase
@@ -3164,10 +4457,21 @@ export const POST = withApiGuardrails(
               supabase,
             });
 
-            const packetContent = intelligencePacket
+            // Freshness gate: discard packets older than 7 days so the model
+            // is not anchored to months-old pre-rendered summaries. A stale
+            // packet is worse than no packet — it injects confident-sounding
+            // outdated context that the model trusts over tool results.
+            const PACKET_MAX_AGE_DAYS = 7;
+            const packetAgeMs = intelligencePacket?.generatedAt
+              ? Date.now() - new Date(intelligencePacket.generatedAt).getTime()
+              : Infinity;
+            const packetIsStale = packetAgeMs > PACKET_MAX_AGE_DAYS * 24 * 60 * 60 * 1000;
+            const usablePacket = packetIsStale ? null : intelligencePacket;
+
+            const packetContent = usablePacket
               ? synthesizeAdvisorResponse({
                   target: resolvedTarget,
-                  packet: intelligencePacket,
+                  packet: usablePacket,
                   intent: assistantIntent,
                   query: lastUserContent,
                 })
@@ -3190,9 +4494,10 @@ export const POST = withApiGuardrails(
                   projectId: resolvedTarget.projectId,
                   source: resolvedTarget.source,
                 },
-                packetId: intelligencePacket?.id ?? null,
-                freshnessStatus: intelligencePacket?.freshnessStatus ?? "missing",
-                cardCount: intelligencePacket?.cards.length ?? 0,
+                packetId: usablePacket?.id ?? null,
+                freshnessStatus: usablePacket?.freshnessStatus ?? (packetIsStale ? "stale_discarded" : "missing"),
+                packetAgeDays: packetAgeMs === Infinity ? null : Math.round(packetAgeMs / (24 * 60 * 60 * 1000)),
+                cardCount: usablePacket?.cards.length ?? 0,
                 mode: "additive-context",
               },
               timestamp: new Date().toISOString(),
@@ -3203,11 +4508,11 @@ export const POST = withApiGuardrails(
             // context so the strategist (streamText below) can layer commentary,
             // recommendations, and follow-ups on top — and still call tools to
             // fill gaps. See docs/ai-plan/evals/EVAL-SUITE-FIRST-RUN-FINDINGS-2026-05-02.md.
-            const packetContextHeader = intelligencePacket
+            const packetContextHeader = usablePacket
               ? `# Current Project Intelligence Packet\n\nA pre-rendered intelligence packet for **${resolvedTarget.slug ?? resolvedTarget.id}** is available below. Use it as your primary evidence. Layer your own analysis, recommendations, and follow-up questions on top. Call additional tools (semanticSearch, getProjectBriefingSnapshot, financial tools, etc.) when the user's question goes beyond what the packet covers or when more recent data would help.`
               : `# Project Intelligence Packet (Missing)\n\nNo current intelligence packet exists for **${resolvedTarget.slug ?? resolvedTarget.id}**. Acknowledge this briefly, then proceed by calling the appropriate tools (semanticSearch, getProjectBriefingSnapshot, financial tools, etc.) to gather evidence and answer the user.`;
 
-            systemPrompt = `${packetContextHeader}\n\n${packetContent}\n\n---\n\n${systemPrompt}`;
+            systemPrompt = systemPrompt + `\n\n---\n\n${packetContextHeader}\n\n${packetContent}`;
 
             writeStrategistStatus(writer, {
               stage: "knowledge",
@@ -3234,13 +4539,13 @@ export const POST = withApiGuardrails(
 
             const snapshotContext = formatProjectBriefingSnapshotContext(projectBriefingSnapshot);
             if (snapshotContext) {
-              systemPrompt = `${snapshotContext}\n\n---\n\n${systemPrompt}`;
+              systemPrompt = systemPrompt + `\n\n---\n\n${snapshotContext}`;
             }
 
             const executiveRetrievalContext =
               formatExecutiveBriefingRetrievalContext(executiveBriefingRetrieval);
             if (executiveRetrievalContext) {
-              systemPrompt = `${executiveRetrievalContext}\n\n---\n\n${systemPrompt}`;
+              systemPrompt = systemPrompt + `\n\n---\n\n${executiveRetrievalContext}`;
             }
 
             toolTrace.push(
@@ -3304,11 +4609,15 @@ export const POST = withApiGuardrails(
             selectedProjectId,
           });
           toolTrace.push(preflight.trace);
-          systemPrompt = `${preflight.promptInjection}\n\n---\n\n${systemPrompt}`;
+          systemPrompt = systemPrompt + `\n\n---\n\n${preflight.promptInjection}`;
 
-          const sourceHealth = await buildSourceHealthPreflight(supabase);
-          toolTrace.push(sourceHealth.trace);
-          systemPrompt = `${sourceHealth.promptInjection}\n\n---\n\n${systemPrompt}`;
+          const sourceHealth =
+            shouldUsePacketFirstIntent(assistantIntent) || forceBusinessRetrieval || sourceHealthRequested
+              ? await getAssistantSourceHealthContext("project_intelligence_context")
+              : null;
+          if (sourceHealth) {
+            systemPrompt = systemPrompt + `\n\n---\n\n${sourceHealth.promptInjection}`;
+          }
 
           const projectId = selectedProjectId ?? preflight.primaryProjectId ?? undefined;
           const semanticSearchTool = (tools as Record<string, ExecutableTool>).semanticSearch;
@@ -3348,7 +4657,7 @@ export const POST = withApiGuardrails(
               projectBriefingSnapshot = snapshotOutput as ProjectBriefingSnapshot;
               const snapshotContext = formatProjectBriefingSnapshotContext(projectBriefingSnapshot);
               if (snapshotContext) {
-                systemPrompt = `${snapshotContext}\n\n---\n\n${systemPrompt}`;
+                systemPrompt = systemPrompt + `\n\n---\n\n${snapshotContext}`;
               }
               writeStrategistStatus(writer, {
                 stage: "snapshot",
@@ -3380,11 +4689,11 @@ export const POST = withApiGuardrails(
                   ? `${priorProjectName} - ${lastUserContent}`
                   : lastUserContent,
                 projectId,
-                matchCount: 8,
-                threshold: 0.2,
-                skipRerank: true,
+                matchCount: 12,
+                threshold: 0.5,
+                skipRerank: false,
               }),
-              12_000,
+              18_000,
               "semanticSearch pre-retrieval timed out during strategist retrieval",
             );
 
@@ -3419,7 +4728,7 @@ export const POST = withApiGuardrails(
               ? formatRetrievedSourceContext(deterministicRetrieval)
               : null;
             if (retrievedContext) {
-              systemPrompt = `${retrievedContext}\n\n---\n\n${systemPrompt}`;
+              systemPrompt = systemPrompt + `\n\n---\n\n${retrievedContext}`;
             }
           } else {
             toolTrace.push({
@@ -3528,7 +4837,7 @@ export const POST = withApiGuardrails(
           const executiveRetrievalContext =
             formatExecutiveBriefingRetrievalContext(executiveBriefingRetrieval);
           if (executiveRetrievalContext) {
-            systemPrompt = `${executiveRetrievalContext}\n\n---\n\n${systemPrompt}`;
+            systemPrompt = systemPrompt + `\n\n---\n\n${executiveRetrievalContext}`;
           }
 
           const loadedExecutiveSources = executiveSourceResults.filter(
@@ -3623,7 +4932,9 @@ export const POST = withApiGuardrails(
             projectBriefingSnapshot,
             executiveBriefingRetrieval,
             providerDecision,
+            selectedProjectId,
             dataParts: assistantWidgetDataParts,
+            sourceHealth: assistantSourceHealthContext?.metadata ?? null,
           });
 
           await supabase
@@ -3650,6 +4961,62 @@ export const POST = withApiGuardrails(
           return;
         }
 
+        // Universal semanticSearch floor: every assistant turn that hasn't
+        // already pulled retrieval context (general_conversation, strategy_brainstorm,
+        // implementation_planning, app_help) gets one lightweight RAG pass before
+        // streaming. Prevents the "I don't have that" cold-answer failure mode
+        // when the deterministic intent paths don't fire. ~150ms cost, eliminates
+        // the gap where the model answers from training data alone.
+        if (!deterministicRetrieval && lastUserContent.trim().length > 0) {
+          const floorSemanticSearchTool = (tools as Record<string, ExecutableTool>)
+            .semanticSearch;
+          if (floorSemanticSearchTool?.execute) {
+            try {
+              const floorOutput = await withTimeout(
+                floorSemanticSearchTool.execute({
+                  query: lastUserContent,
+                  projectId: selectedProjectId,
+                  matchCount: 6,
+                  threshold: 0.6,
+                  skipRerank: true,
+                }),
+                8_000,
+                "universal semanticSearch floor timed out",
+              );
+              if (!isTimeoutResult(floorOutput)) {
+                const floorRetrieval = normalizeSemanticSearchOutput(floorOutput);
+                const floorContext = floorRetrieval
+                  ? formatRetrievedSourceContext(floorRetrieval)
+                  : null;
+                if (floorContext && (floorRetrieval?.results ?? []).length > 0) {
+                  systemPrompt = systemPrompt + `\n\n---\n\n${floorContext}`;
+                  deterministicRetrieval = floorRetrieval;
+                  toolTrace.push({
+                    tool: "semanticSearchFloor",
+                    input: { query: lastUserContent, intent: assistantIntent },
+                    output: { resultCount: (floorRetrieval?.results ?? []).length },
+                    timestamp: new Date().toISOString(),
+                  });
+                }
+              } else {
+                toolTrace.push({
+                  tool: "semanticSearchFloor",
+                  input: { query: lastUserContent, intent: assistantIntent },
+                  error: floorOutput.error,
+                  timestamp: new Date().toISOString(),
+                });
+              }
+            } catch (error) {
+              toolTrace.push({
+                tool: "semanticSearchFloor",
+                input: { query: lastUserContent, intent: assistantIntent },
+                error: error instanceof Error ? error.message : String(error),
+                timestamp: new Date().toISOString(),
+              });
+            }
+          }
+        }
+
         const streamingModelToolsEnabled = shouldEnableStreamingModelTools(providerDecision);
         const modelTools = streamingModelToolsEnabled ? (tools as ToolSet) : undefined;
         toolTrace.push({
@@ -3673,9 +5040,17 @@ export const POST = withApiGuardrails(
             timeout: {
               totalMs: 90_000,
               stepMs: 45_000,
-              chunkMs: 20_000,
+              chunkMs: 45_000,
             },
             stopWhen: stepCountIs(10),
+            experimental_telemetry: {
+              isEnabled: process.env.PHOENIX_TRACING === "true",
+              functionId: "ai-assistant-chat",
+              metadata: {
+                intent: assistantIntent ?? "unknown",
+                modelId: activeModel,
+              },
+            },
             onError: ({ error }) => {
               streamErrorMessage =
                 error instanceof Error ? error.message : String(error);
@@ -3730,6 +5105,23 @@ export const POST = withApiGuardrails(
         try {
           content = (await result.text).trim();
           totalUsage = await result.totalUsage;
+          // Cache observability: log every turn so we can verify the prompt
+          // prefix fix is producing OpenAI cache hits. Look for cacheHitRatio
+          // > 0 on turn 2+ of any session. If it stays 0, the static prefix
+          // is being polluted somewhere upstream.
+          if (totalUsage) {
+            const cached = totalUsage.cachedInputTokens ?? 0;
+            const input = totalUsage.inputTokens ?? 0;
+            const ratio = input > 0 ? cached / input : 0;
+            console.info("[chat/route] cache stats", {
+              sessionId,
+              modelId: activeModel,
+              inputTokens: input,
+              cachedInputTokens: cached,
+              cacheHitRatio: Number(ratio.toFixed(3)),
+              outputTokens: totalUsage.outputTokens ?? 0,
+            });
+          }
         } catch (streamError) {
           const errorMessage = streamError instanceof Error ? streamError.message : String(streamError);
           streamErrorMessage = streamErrorMessage ?? errorMessage;
@@ -3778,6 +5170,11 @@ export const POST = withApiGuardrails(
                 system: systemPrompt,
                 messages: modelMessages,
                 maxOutputTokens: 1500,
+                experimental_telemetry: {
+                  isEnabled: process.env.PHOENIX_TRACING === "true",
+                  functionId: "no-tool-retry",
+                  metadata: { primaryModel: activeModel, retryModel: "openai/gpt-4.1" },
+                },
               });
               noToolRetryContent = retryResult.text.trim() || null;
               toolTrace.push({
@@ -3828,6 +5225,11 @@ export const POST = withApiGuardrails(
                   system: systemPrompt,
                   messages: modelMessages,
                   maxOutputTokens: 1500,
+                  experimental_telemetry: {
+                    isEnabled: process.env.PHOENIX_TRACING === "true",
+                    functionId: "meta-commentary-retry",
+                    metadata: { primaryModel: activeModel, retryModel: "openai/gpt-4.1" },
+                  },
                 }),
                 15_000,
                 "metaCommentaryRetry timed out after 15 s",
@@ -3928,7 +5330,9 @@ export const POST = withApiGuardrails(
           }),
           projectBriefingSnapshot,
           executiveBriefingRetrieval,
+          selectedProjectId,
           dataParts: assistantWidgetDataParts,
+          sourceHealth: assistantSourceHealthContext?.metadata ?? null,
         });
 
         // Update conversation timestamp — scope to user to prevent cross-user update

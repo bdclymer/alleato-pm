@@ -29,8 +29,9 @@ from typing import Any, Dict, List, Optional
 from src.services.env_loader import load_env
 load_env()
 
-from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Query
+from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel
 try:
     from openai import OpenAI
@@ -145,6 +146,18 @@ class FirefliesRecentSyncRequest(BaseModel):
     project_id: Optional[int] = None
     dry_run: bool = False
     write_markdown_dir: Optional[str] = None
+
+
+class GraphSyncRequest(BaseModel):
+    run_embedding: bool = True
+    run_teams_compiler: bool = True
+    embed_limit: int = 1000
+    teams_compiler_batch_size: int = 25
+
+
+class GraphSubscriptionReconcileRequest(BaseModel):
+    renew_within_hours: int = 6
+    expiration_hours: int = 48
 
 
 def get_rag_store() -> SupabaseRagStore:
@@ -500,9 +513,27 @@ def ingest_recent_fireflies_endpoint(
     )
 
 
+@app.post("/api/graph/embed", tags=["Ingestion"], summary="Embed all pending Microsoft Graph documents (no sync)")
+async def graph_embed_endpoint(
+    _: None = Depends(require_admin_api_key),
+    limit: int = 1000,
+) -> Dict[str, Any]:
+    """Vectorize pending document_metadata rows (status raw_ingested/segmented/compiled).
+    Does not fetch new data from Graph — use /api/graph/sync for that.
+    Safe to call frequently. Idempotent."""
+    from src.services.supabase_helpers import get_supabase_client
+    from src.services.integrations.microsoft_graph.embed import embed_pending_graph_documents
+    import asyncio
+    client = get_supabase_client()
+    result = await asyncio.get_event_loop().run_in_executor(
+        None, lambda: embed_pending_graph_documents(client, limit=limit)
+    )
+    return result
+
+
 @app.post("/api/graph/sync", tags=["Ingestion"], summary="Trigger Microsoft Graph sync (Outlook / Teams / OneDrive)")
 async def graph_sync_endpoint(
-    background_tasks: BackgroundTasks,
+    payload: Optional[GraphSyncRequest] = None,
     _: None = Depends(require_admin_api_key),
 ) -> Dict[str, Any]:
     """Manually trigger a Microsoft Graph incremental sync.
@@ -532,14 +563,131 @@ async def graph_sync_endpoint(
         )
 
     client = get_supabase_client()
+    options = payload or GraphSyncRequest()
+    embed_limit = max(1, min(int(options.embed_limit or 1000), 1000))
+    teams_compiler_batch_size = max(1, min(int(options.teams_compiler_batch_size or 25), 100))
 
     def _run():
-        return run_graph_sync(client)
+        return run_graph_sync(
+            client,
+            run_embedding=options.run_embedding,
+            run_teams_compiler=options.run_teams_compiler,
+            embed_limit=embed_limit,
+            teams_compiler_batch_size=teams_compiler_batch_size,
+        )
 
     import asyncio
     loop = asyncio.get_event_loop()
     result = await loop.run_in_executor(None, _run)
     return result
+
+
+@app.post(
+    "/api/graph/webhooks/notifications",
+    tags=["Ingestion"],
+    summary="Receive Microsoft Graph change notifications",
+)
+async def graph_webhook_notifications_endpoint(
+    request: Request,
+    validationToken: Optional[str] = Query(default=None),
+) -> Any:
+    """Accept Microsoft Graph webhook validation and change notifications.
+
+    Graph validation requires a 200 response with the raw validation token as
+    text/plain. Real notifications are accepted quickly and recorded into the
+    source sync run ledger for follow-on delta work.
+    """
+    if validationToken is not None:
+        return PlainTextResponse(validationToken, status_code=200)
+
+    try:
+        payload = await request.json()
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail="Malformed Graph webhook JSON payload") from exc
+
+    if not isinstance(payload, dict):
+        raise HTTPException(status_code=400, detail="Graph webhook payload must be a JSON object")
+
+    try:
+        from src.services.integrations.microsoft_graph.webhooks import (
+            GraphWebhookAuthError,
+            handle_graph_notifications,
+        )
+        from src.services.supabase_helpers import get_supabase_client
+
+        client = get_supabase_client()
+        result = handle_graph_notifications(client, payload)
+        return result
+    except GraphWebhookAuthError as exc:
+        logger.warning("[GraphWebhook] rejected notification: %s", exc)
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+    except Exception as exc:
+        logger.error("[GraphWebhook] notification handling failed: %s", exc, exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Graph webhook handling failed: {exc}") from exc
+
+
+@app.post(
+    "/api/graph/webhooks/lifecycle",
+    tags=["Ingestion"],
+    summary="Receive Microsoft Graph subscription lifecycle notifications",
+)
+async def graph_webhook_lifecycle_endpoint(
+    request: Request,
+    validationToken: Optional[str] = Query(default=None),
+) -> Any:
+    """Accept Graph lifecycle validation and mark subscription action-required states."""
+    if validationToken is not None:
+        return PlainTextResponse(validationToken, status_code=200)
+
+    try:
+        payload = await request.json()
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail="Malformed Graph lifecycle JSON payload") from exc
+
+    if not isinstance(payload, dict):
+        raise HTTPException(status_code=400, detail="Graph lifecycle payload must be a JSON object")
+
+    try:
+        from src.services.integrations.microsoft_graph.webhooks import (
+            GraphWebhookAuthError,
+            handle_graph_lifecycle_notifications,
+        )
+        from src.services.supabase_helpers import get_supabase_client
+
+        client = get_supabase_client()
+        return handle_graph_lifecycle_notifications(client, payload)
+    except GraphWebhookAuthError as exc:
+        logger.warning("[GraphWebhook] rejected lifecycle notification: %s", exc)
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+    except Exception as exc:
+        logger.error("[GraphWebhook] lifecycle handling failed: %s", exc, exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Graph lifecycle handling failed: {exc}") from exc
+
+
+@app.post(
+    "/api/graph/subscriptions/reconcile",
+    tags=["Ingestion"],
+    summary="Create or renew Microsoft Graph subscriptions",
+)
+async def graph_subscriptions_reconcile_endpoint(
+    payload: Optional[GraphSubscriptionReconcileRequest] = None,
+    _: None = Depends(require_admin_api_key),
+) -> Dict[str, Any]:
+    """Ensure configured Microsoft Graph subscriptions exist and are fresh."""
+    try:
+        from src.services.integrations.microsoft_graph.subscriptions import ensure_subscriptions
+        from src.services.supabase_helpers import get_supabase_client
+
+        options = payload or GraphSubscriptionReconcileRequest()
+        client = get_supabase_client()
+        return ensure_subscriptions(
+            client,
+            renew_within_hours=max(1, min(int(options.renew_within_hours or 6), 24)),
+            expiration_hours=max(1, min(int(options.expiration_hours or 48), 48)),
+        )
+    except Exception as exc:
+        logger.error("[GraphSubscriptions] reconcile failed: %s", exc, exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Graph subscription reconcile failed: {exc}") from exc
 
 
 class PipelineProcessRequest(BaseModel):
@@ -716,6 +864,59 @@ async def get_intelligence_compiler_health(
         raise HTTPException(
             status_code=500,
             detail=f"Intelligence compiler status query failed: {exc}",
+        ) from exc
+
+
+@app.get("/api/health/source-sync", tags=["Health"], summary="Source sync and intelligence health")
+async def get_source_sync_health_status(
+    _: None = Depends(require_admin_api_key),
+) -> Dict[str, Any]:
+    """Return sync freshness, vectorization, task extraction, compiler, and packet health."""
+    try:
+        from src.services.health.source_sync_health import get_source_sync_health
+        from src.services.supabase_helpers import get_supabase_client
+
+        client = get_supabase_client()
+        return get_source_sync_health(client)
+    except Exception as exc:
+        logger.error("[SourceSyncHealthAPI] status failed: %s", exc, exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Source sync health query failed: {exc}",
+        ) from exc
+
+
+@app.post("/api/health/source-sync/recompute", tags=["Health"], summary="Recompute source sync health")
+async def recompute_source_sync_health_status(
+    _: None = Depends(require_admin_api_key),
+) -> Dict[str, Any]:
+    """Recompute source sync health from current source, vector, task, and packet tables."""
+    try:
+        from src.services.health.source_sync_health import (
+            get_source_sync_health,
+            persist_source_sync_alerts,
+            update_source_health_snapshot,
+        )
+        from src.services.supabase_helpers import get_supabase_client
+
+        client = get_supabase_client()
+        health = get_source_sync_health(client)
+        updated = 0
+        for source in health.get("sources", []):
+            update_source_health_snapshot(client, source)
+            updated += 1
+        routed_alerts = persist_source_sync_alerts(client, health.get("alerts", []))
+        return {
+            "status": "completed",
+            "updatedSnapshots": updated,
+            "routedAlerts": routed_alerts,
+            "health": health,
+        }
+    except Exception as exc:
+        logger.error("[SourceSyncHealthAPI] recompute failed: %s", exc, exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Source sync health recompute failed: {exc}",
         ) from exc
 
 

@@ -19,6 +19,9 @@ import {
   DEFAULT_AI_ASSISTANT_MODEL,
   type AiAssistantModelId,
 } from "@/lib/ai/assistant-models";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { MessageSquareIcon } from "lucide-react";
 import { ConversationSidebar } from "./conversation-sidebar";
 import { ChatArea, type ResponseQuality } from "./chat-area";
 import type { AssistantTraceDiagnostics, ToolTraceItem } from "./trace-panel";
@@ -235,6 +238,11 @@ function ChatWithSession({
   const selectedModelRef = useRef(selectedModel);
   selectedModelRef.current = selectedModel;
 
+  // Tracks whether to skip the next initialMessages → setMessages sync.
+  // Set true in onFinish so that the post-stream DB reload doesn't replace
+  // the correct live useChat messages with the freshly-fetched DB copy.
+  const skipNextMessagesSync = useRef(false);
+
   const {
     messages,
     setMessages,
@@ -265,6 +273,7 @@ function ChatWithSession({
       },
     }),
     onFinish: () => {
+      skipNextMessagesSync.current = true;
       setLiveStatus(null);
       onFinishMessage(sessionIdRef.current);
     },
@@ -286,12 +295,16 @@ function ChatWithSession({
     }
   }, [pendingFirstFiles, pendingFirstMessage, sendMessage]);
 
-  // Sync initial messages when they change (conversation switch)
+  // Sync initial messages when they change (conversation switch).
+  // Skip when skipNextMessagesSync is set — see ref declaration above.
   const prevInitialRef = useRef(initialMessages);
   useEffect(() => {
     if (prevInitialRef.current !== initialMessages) {
       prevInitialRef.current = initialMessages;
-      setMessages(initialMessages);
+      if (!skipNextMessagesSync.current) {
+        setMessages(initialMessages);
+      }
+      skipNextMessagesSync.current = false;
     }
   }, [initialMessages, setMessages]);
 
@@ -362,7 +375,12 @@ export function RagChatPage() {
   >({});
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [noSessionInput, setNoSessionInput] = useState("");
+  // Optimistic user message shown while a new conversation is being created
+  const [optimisticUserMessage, setOptimisticUserMessage] = useState<string | null>(null);
+  // Tracks the last effective session id so we only clear the optimistic message once per session transition
+  const prevEffectiveSessionIdRef = useRef<string | null>(null);
   const [councilMode, setCouncilMode] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
   const [selectedModel, setSelectedModel] = useState<AiAssistantModelId>(
     DEFAULT_AI_ASSISTANT_MODEL,
@@ -417,6 +435,14 @@ export function RagChatPage() {
   }, [activeSessionId, loadSessionMessages]);
 
   const effectiveSessionId = activeSessionId || pendingSessionId;
+
+  // Clear optimistic message once ChatWithSession takes over so it doesn't double-render
+  useEffect(() => {
+    if (effectiveSessionId && effectiveSessionId !== prevEffectiveSessionIdRef.current) {
+      prevEffectiveSessionIdRef.current = effectiveSessionId;
+      setOptimisticUserMessage(null);
+    }
+  }, [effectiveSessionId]);
   const handleFinishMessage = useCallback((sessionId: string) => {
     queryClient.invalidateQueries({ queryKey: ["rag-conversations"] });
     setPendingSessionId(null);
@@ -483,6 +509,8 @@ export function RagChatPage() {
   // Handle first message in a new conversation
   const handleFirstMessage = useCallback(
     async (message: string, files?: FileList) => {
+      // Show the user message immediately — don't wait for the API call
+      setOptimisticUserMessage(message);
       const title = message.substring(0, 50);
       try {
         const result = await createConversation.mutateAsync(title);
@@ -492,7 +520,8 @@ export function RagChatPage() {
         setPendingFirstFiles(files);
         router.push(`/ai-assistant?session=${sessionId}`, { scroll: false });
       } catch {
-        // Creation failed — don't proceed
+        // Creation failed — clear the optimistic message
+        setOptimisticUserMessage(null);
       }
     },
     [createConversation, router],
@@ -504,11 +533,30 @@ export function RagChatPage() {
         conversations={conversations}
         activeSessionId={effectiveSessionId}
         isLoading={isLoadingConvos}
+        open={historyOpen}
+        onOpenChange={setHistoryOpen}
         onSelectConversation={handleSelectConversation}
         onNewChat={handleNewChat}
         onRename={handleRename}
         onDelete={handleDelete}
       />
+      <div className="fixed right-10 top-20 z-30">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-12 w-12 rounded-full bg-muted/50 text-foreground shadow-none hover:bg-muted"
+              onClick={() => setHistoryOpen(true)}
+            >
+              <MessageSquareIcon className="h-4 w-4" />
+              <span className="sr-only">Chat history</span>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent sideOffset={6}>Chat history</TooltipContent>
+        </Tooltip>
+      </div>
       <div className="min-h-0 flex-1">
         {effectiveSessionId ? (
           <ChatWithSession
@@ -533,13 +581,23 @@ export function RagChatPage() {
           />
         ) : (
           <ChatArea
-            messages={[]}
+            messages={
+              optimisticUserMessage
+                ? [
+                    {
+                      id: "optimistic-user",
+                      role: "user" as const,
+                      parts: [{ type: "text" as const, text: optimisticUserMessage }],
+                    },
+                  ]
+                : []
+            }
             toolTracesByMessageId={{}}
             responseQualityByMessageId={{}}
             traceDiagnosticsByMessageId={{}}
             liveStatus={null}
             isLoadingMessages={false}
-            isStreaming={false}
+            isStreaming={createConversation.isPending}
             input={noSessionInput}
             councilMode={councilMode}
             onCouncilModeChange={setCouncilMode}

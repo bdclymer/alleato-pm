@@ -1555,10 +1555,12 @@ export function createProjectTools(
 
     getActionItemsAndInsights: tool({
       description:
-        "Get priority action items from recent meetings, unresolved AI-surfaced " +
+        "Get open tasks, priority action items from recent meetings, unresolved AI-surfaced " +
         "insights, and overdue RFIs. This is the PRIMARY tool for understanding " +
-        "what needs attention NOW. Meeting action items are the richest data source. " +
-        "Use when asked about what needs attention, what's urgent, or to-do items.",
+        "what needs attention NOW and what action items are outstanding. " +
+        "Use when asked: 'what are my tasks', 'what do I need to do', 'what should I be working on', " +
+        "'show me my action items', 'what's on my plate', 'what's open', 'what's urgent', " +
+        "'what needs attention', or any question about to-do items, open items, or follow-ups.",
       inputSchema: z.object({
         projectId: z
           .number()
@@ -1589,7 +1591,11 @@ export function createProjectTools(
           .order("created_at", { ascending: false })
           .limit((maxResults ?? 20) * 3); // fetch extra to account for JS-side resolved filter
 
-        const { data: insightRows } = await insightQuery;
+        const sourceErrors: string[] = [];
+        const { data: insightRows, error: insightError } = await insightQuery;
+        if (insightError) {
+          sourceErrors.push(`ai_insights lookup failed: ${insightError.message}`);
+        }
         // Filter unresolved in JS — handles boolean false, integer 0, and null
         const insights = ((insightRows ?? []) as AnyRow[]).filter((row) => {
           const r = row.resolved;
@@ -1604,7 +1610,10 @@ export function createProjectTools(
           .or("type.eq.meeting,category.eq.meeting")
           .order("date", { ascending: false })
           .limit(Math.max(20, (maxResults ?? 20) * 2));
-        const { data: docRows } = await docQuery;
+        const { data: docRows, error: docError } = await docQuery;
+        if (docError) {
+          sourceErrors.push(`meeting action item lookup failed: ${docError.message}`);
+        }
         const docs = ((docRows ?? []) as AnyRow[]).filter(
           (d) => d.summary || d.overview || d.action_items || d.bullet_points,
         );
@@ -1618,8 +1627,36 @@ export function createProjectTools(
           .lt("due_date", now)
           .order("due_date", { ascending: true })
           .limit(10);
-        const { data: rfiRows } = await rfiQuery;
+        const { data: rfiRows, error: rfiError } = await rfiQuery;
+        if (rfiError) {
+          sourceErrors.push(`overdue RFI lookup failed: ${rfiError.message}`);
+        }
         const overdueRFIs = (rfiRows ?? []) as AnyRow[];
+
+        // Query the tasks table directly — these are AI-extracted action items
+        // from meetings/emails that have been compiled into trackable records
+        const tasksQuery = supabase
+          .from("tasks")
+          .select("id, title, description, status, priority, due_date, assignee_name, assignee_email, source_system, project_id")
+          .in("project_id", scopedProjectIds)
+          .neq("status", "completed")
+          .order("due_date", { ascending: true, nullsFirst: false })
+          .limit(maxResults ?? 20);
+        const { data: taskRows, error: tasksError } = await tasksQuery;
+        if (tasksError) {
+          sourceErrors.push(`tasks lookup failed: ${tasksError.message}`);
+        }
+        const openTasks = ((taskRows ?? []) as AnyRow[]).map((t) => ({
+          id: t.id,
+          title: t.title ?? t.description?.substring(0, 100),
+          description: t.description,
+          status: t.status,
+          priority: t.priority,
+          dueDate: t.due_date,
+          assignee: t.assignee_name ?? t.assignee_email,
+          sourceSystem: t.source_system,
+          overdue: t.due_date ? t.due_date < now : false,
+        }));
 
         const structuredActionItems = docs
           .flatMap((d) => {
@@ -1683,6 +1720,7 @@ export function createProjectTools(
 
         return {
           sourceRef: "[Source: Action Items & Insights]",
+          openTasks,
           priorityItems: prioritizedInsights,
           structuredActionItems: prioritizedMeetingActions,
           unresolvedInsights: insights.map((i) => ({
@@ -1710,10 +1748,14 @@ export function createProjectTools(
             ballInCourt: r.ball_in_court,
           })),
           summary: {
+            openTaskCount: openTasks.length,
+            overdueTaskCount: openTasks.filter((t) => t.overdue).length,
             insightCount: insights.length,
             structuredActionItemCount: structuredActionItems.length,
             overdueRFICount: overdueRFIs.length,
+            sourceErrorCount: sourceErrors.length,
           },
+          sourceErrors,
         };
         },
       ),

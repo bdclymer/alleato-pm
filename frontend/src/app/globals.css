@@ -42,33 +42,30 @@
        Changing a primitive here propagates everywhere instantly.
        ================================================================ */
 
-    /* Purple scale (primary brand) */
-    --purple-300: 260 50% 78%;
-    --purple-400: 260 45% 68%;
-    --purple-500: 260 37% 59%;
-    --purple-600: 260 37% 50%;
-    --purple-700: 260 37% 40%;
-
-    /* Indigo scale (dark-mode primary) */
-    --indigo-400: 245 58% 70%;
-    --indigo-500: 245 58% 62%;
-    --indigo-600: 245 58% 52%;
+    /* Alleato brand scale */
+    --brand-orange-400: 29 90% 61%;
+    --brand-orange-500: 29 71% 52%;
+    --brand-orange-600: 28 69% 45%;
+    --brand-orange-700: 26 70% 36%;
+    --brand-orange-50: 29 84% 95%;
+    --brand-orange-100: 28 83% 91%;
 
     /* Neutral scale */
-    --neutral-50:  0 0% 98%;
-    --neutral-100: 240 5% 96%;
+    --neutral-50:  0 0% 100%;
+    --neutral-100: 0 0% 95%;
+    --neutral-150: 0 0% 93%;
     --neutral-200: 240 5% 91%;
     --neutral-300: 0 0% 90%;
-    --neutral-400: 240 4% 70%;
+    --neutral-400: 0 0% 72%;
     --neutral-500: 240 4% 54%;
-    --neutral-600: 240 4% 40%;
+    --neutral-600: 180 1% 38%;
     --neutral-700: 240 6% 25%;
-    --neutral-800: 240 6% 15%;
-    --neutral-900: 240 6% 9%;
+    --neutral-800: 0 0% 20%;
+    --neutral-900: 240 20% 8%;
 
     /* Carbon scale (dark surfaces) */
     --carbon-800: 240 5% 13%;
-    --carbon-900: 240 6% 9%;
+    --carbon-900: 240 20% 8%;
 
     /* Semantic status primitives */
     --green-500:  152 69% 37%;
@@ -78,9 +75,9 @@
     --red-600:    0 72% 42%;
     --blue-500:   217 91% 60%;
 
-    /* Orange (Procore brand) */
-    --orange-500: 29 71% 52%;
-    --orange-600: 29 71% 45%;
+    /* Legacy orange aliases */
+    --orange-500: var(--brand-orange-500);
+    --orange-600: var(--brand-orange-600);
 
     /* ================================================================
        SNOW THEME (Light) — Superhuman-inspired v2
@@ -88,49 +85,49 @@
 
     /* Core Surface Colors */
     --background: 0 0% 100%;
-    --foreground: 240 6% 12%;
+    --foreground: var(--neutral-900);
     --card: 0 0% 100%;
-    --card-foreground: 240 6% 12%;
+    --card-foreground: var(--neutral-900);
     --popover: 0 0% 100%;
-    --popover-foreground: 240 6% 12%;
-    --surface-alt: 216 100% 99%;
-    --surface-soft: 230 43% 97%;
-    --right-sidebar-bg: 210 100% 99%;
+    --popover-foreground: var(--neutral-900);
+    --surface-alt: var(--neutral-50);
+    --surface-soft: var(--neutral-100);
+    --right-sidebar-bg: 0 0% 100%;
 
-    /* Primary Accent — Soft purple */
-    --primary: 260 37% 59%;
+    /* Primary Accent — Alleato brand orange */
+    --primary: var(--brand-orange-500);
     --primary-foreground: 0 0% 100%;
 
     /* Secondary */
-    --secondary: 240 5% 95%;
-    --secondary-foreground: 240 6% 12%;
+    --secondary: var(--neutral-100);
+    --secondary-foreground: var(--neutral-900);
 
     /* Muted */
-    --muted: 260 30% 97%;
-    --muted-subtle: 240 5% 97%;
-    --muted-foreground: 240 4% 40%;
-    --heading-label: 240 6% 25%;
+    --muted: var(--neutral-100);
+    --muted-subtle: var(--neutral-50);
+    --muted-foreground: var(--neutral-600);
+    --heading-label: var(--neutral-800);
 
     /* Accent */
-    --accent: 260 30% 95%;
-    --accent-foreground: 260 37% 45%;
-    --light: 260 15% 95.5%;
+    --accent: var(--brand-orange-50);
+    --accent-foreground: var(--brand-orange-700);
+    --light: var(--brand-orange-50);
 
     /* Destructive */
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
     /* Structural */
-    --border: 0 0% 90%;
-    --input: 0 0% 90%;
-    --ring: 260 37% 59%;
-    --schedule-view-active: 260 37% 59%;
+    --border: var(--neutral-300);
+    --input: var(--neutral-300);
+    --ring: var(--brand-orange-500);
+    --schedule-view-active: var(--brand-orange-500);
 
     /* Chart Colors */
-    --chart-1: 260 37% 59%;
+    --chart-1: var(--brand-orange-500);
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
-    --chart-4: 38 92% 50%;
+    --chart-4: 29 92% 53%;
     --chart-5: 152 69% 37%;
 
     /* Border Radius */
@@ -168,9 +165,9 @@
     --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
     --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 
-    /* Procore Brand Colors */
-    --procore-orange: 29 71% 52%;
-    --procore-orange-hover: 29 71% 45%;
+    /* Procore / Alleato Brand Colors */
+    --procore-orange: var(--brand-orange-500);
+    --procore-orange-hover: var(--brand-orange-600);
     --procore-header: 180 1% 38%;
     --procore-header-text: 0 0% 100%;
     --procore-info-bg: 214 95% 93%;
@@ -178,15 +175,15 @@
     --procore-negative: 0 84% 60%;
 
     /* Brand — used for Procore integration badges only */
-    --brand: 29 71% 52%;
-    --brand-hover: 29 71% 45%;
-    --brand-light: 29 71% 95%;
+    --brand: var(--brand-orange-500);
+    --brand-hover: var(--brand-orange-600);
+    --brand-light: var(--brand-orange-50);
 
     /* Third-party integration brand colors */
     --integration-telegram: #229ED9;
 
     /* Surface Colors */
-    --surface-inverse: 240 6% 12%;
+    --surface-inverse: var(--neutral-900);
     --surface-elevated: 0 0% 100%;
 
     /* Semantic Status Colors */
@@ -199,12 +196,12 @@
     /* Sidebar */
     --sidebar: hsl(0 0% 100%);
     --sidebar-foreground: hsl(240 6% 25%);
-    --sidebar-primary: hsl(260 37% 59%);
+    --sidebar-primary: hsl(var(--brand-orange-500));
     --sidebar-primary-foreground: hsl(0 0% 100%);
-    --sidebar-accent: hsl(260 30% 95%);
-    --sidebar-accent-foreground: hsl(260 37% 45%);
+    --sidebar-accent: hsl(var(--brand-orange-50));
+    --sidebar-accent-foreground: hsl(var(--brand-orange-700));
     --sidebar-border: hsl(240 5% 91%);
-    --sidebar-ring: hsl(260 37% 59%);
+    --sidebar-ring: hsl(var(--brand-orange-500));
 
     /* Chat UI */
     --chat-bg: 240 6% 7%;
@@ -213,8 +210,8 @@
     --chat-border: 240 5% 20%;
     --chat-text: 0 0% 95%;
     --chat-muted: 0 0% 60%;
-    --chat-accent: 245 58% 52%;
-    --chat-accent-2: 245 58% 62%;
+    --chat-accent: var(--brand-orange-500);
+    --chat-accent-2: 29 92% 53%;
     --chat-hover: 240 5% 15%;
 
     /* Premium Shadows */
@@ -288,8 +285,8 @@
     --popover: 240 5% 18%;
     --popover-foreground: 0 0% 92%;
     --surface-soft: 240 5% 18%;
-    --right-sidebar-bg: 210 100% 99%;
-    --primary: 245 58% 62%;
+    --right-sidebar-bg: 240 6% 9%;
+    --primary: 29 90% 61%;
     --primary-foreground: 0 0% 100%;
     --secondary: 240 5% 16%;
     --secondary-foreground: 0 0% 92%;
@@ -297,25 +294,25 @@
     --muted-subtle: 240 5% 12%;
     --muted-foreground: 0 0% 58%;
     --heading-label: 0 0% 72%;
-    --accent: 245 30% 20%;
-    --accent-foreground: 245 58% 75%;
-    --light: 245 15% 60%;
+    --accent: 28 69% 16%;
+    --accent-foreground: 29 90% 72%;
+    --light: 28 69% 18%;
     --destructive: 0 62% 40%;
     --destructive-foreground: 0 0% 98%;
     --border: 240 5% 19%;
     --input: 240 5% 19%;
-    --ring: 245 58% 62%;
-    --schedule-view-active: 260 37% 59%;
+    --ring: 29 90% 61%;
+    --schedule-view-active: 29 90% 61%;
 
-    --chart-1: 245 58% 62%;
+    --chart-1: 29 90% 61%;
     --chart-2: 160 60% 45%;
     --chart-3: 38 80% 55%;
-    --chart-4: 280 65% 60%;
+    --chart-4: 29 92% 53%;
     --chart-5: 152 60% 50%;
 
-    --brand: 29 71% 58%;
-    --brand-hover: 29 71% 65%;
-    --brand-light: 29 71% 15%;
+    --brand: 29 90% 61%;
+    --brand-hover: 29 92% 68%;
+    --brand-light: 28 69% 16%;
 
     --surface-inverse: 0 0% 92%;
     --surface-elevated: 240 5% 18%;
@@ -328,12 +325,12 @@
 
     --sidebar: hsl(240 6% 9%);
     --sidebar-foreground: hsl(0 0% 85%);
-    --sidebar-primary: hsl(260 37% 65%);
+    --sidebar-primary: hsl(29 90% 61%);
     --sidebar-primary-foreground: hsl(0 0% 100%);
-    --sidebar-accent: hsl(260 30% 20%);
+    --sidebar-accent: hsl(28 69% 16%);
     --sidebar-accent-foreground: hsl(0 0% 92%);
     --sidebar-border: hsl(240 5% 19%);
-    --sidebar-ring: hsl(245 58% 62%);
+    --sidebar-ring: hsl(29 90% 61%);
   }
 }
 
@@ -454,6 +451,7 @@
 
   body {
     @apply bg-background text-foreground overflow-x-hidden;
+    background-color: hsl(var(--background));
     font-family: var(--font-sans);
     font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
     -webkit-font-smoothing: antialiased;
@@ -553,6 +551,26 @@
   textarea:disabled,
   select:disabled {
     @apply bg-muted;
+  }
+
+  input[data-auth-input="true"] {
+    background-color: hsl(var(--primary-foreground) / 0.15);
+    color: hsl(var(--primary-foreground));
+    -webkit-text-fill-color: hsl(var(--primary-foreground));
+    caret-color: hsl(var(--primary-foreground));
+  }
+
+  input[data-auth-input="true"]::placeholder {
+    color: hsl(var(--primary-foreground) / 0.48);
+    -webkit-text-fill-color: hsl(var(--primary-foreground) / 0.48);
+  }
+
+  input[data-auth-input="true"]:focus {
+    background-color: hsl(var(--primary-foreground) / 0.18);
+  }
+
+  input[data-auth-input="true"]:disabled {
+    background-color: hsl(var(--primary-foreground) / 0.1);
   }
 }
 

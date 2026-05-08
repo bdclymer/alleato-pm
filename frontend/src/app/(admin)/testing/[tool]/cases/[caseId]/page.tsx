@@ -9,7 +9,7 @@ import type { TestCase } from "../../../_components/types";
 // Read-only test case detail. Typography-first — no cards, hairline
 // dividers separate sections.
 export default function CaseDetailPage() {
-  const params = useParams<{ tool: string; caseId: string }>();
+  const params = useParams<{ tool: string; caseId: string }>()!;
   const router = useRouter();
   const [testCase, setTestCase] = useState<TestCase | null>(null);
   const [loading, setLoading] = useState(true);

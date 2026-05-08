@@ -11,6 +11,7 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { apiErrorResponse } from "@/lib/api-error";
 import { createClient } from "@/lib/supabase/server";
 import {
   ENTITY_SOURCE_TABLE,
@@ -93,7 +94,11 @@ export async function GET(request: Request) {
       );
     }
 
-    const { targetType, projectId, q } = parsed.data;
+    const {
+      targetType,
+      projectId: numericProjectId,
+      q,
+    } = parsed.data;
     const supabase = await createClient();
     const dynamicSupabase = supabase as unknown as DynamicTableClient;
     const sourceTable = ENTITY_SOURCE_TABLE[targetType];
@@ -107,7 +112,7 @@ export async function GET(request: Request) {
       .limit(20);
 
     // All Tier-1 entity tables have a project_id column
-    query = query.eq("project_id", projectId);
+    query = query.eq("project_id", numericProjectId);
 
     query = query.ilike(titleColumn, `%${q}%`);
 
@@ -131,9 +136,6 @@ export async function GET(request: Request) {
     return NextResponse.json({ results });
   } catch (err) {
     console.error("[entity-links search] unhandled error:", err);
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Internal server error" },
-      { status: 500 },
-    );
+    return apiErrorResponse(err);
   }
 }

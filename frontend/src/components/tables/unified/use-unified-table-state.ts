@@ -8,8 +8,8 @@ export type FilterValue = string | number | boolean | string[] | null | undefine
 
 export interface UnifiedTableStateOptions {
   entityKey: string;
-  searchParams: ReadonlyURLSearchParams;
-  pathname: string;
+  searchParams: ReadonlyURLSearchParams | null;
+  pathname: string | null;
   router: { replace: (url: string) => void };
   defaults: {
     view: ViewMode;
@@ -50,11 +50,13 @@ export interface UnifiedTableState {
 
 export function useUnifiedTableState({
   entityKey,
-  searchParams,
-  pathname,
+  searchParams: searchParamsRaw,
+  pathname: pathnameRaw,
   router,
   defaults,
 }: UnifiedTableStateOptions): UnifiedTableState {
+  const searchParams = searchParamsRaw ?? new URLSearchParams();
+  const pathname = pathnameRaw ?? "";
   const allowedViews = React.useMemo<ViewMode[]>(
     () =>
       defaults.allowedViews && defaults.allowedViews.length > 0
@@ -110,7 +112,18 @@ export function useUnifiedTableState({
     const stored = window.localStorage.getItem(`${entityKey}:visibleColumns`);
     if (!stored) return defaults.visibleColumns ?? [];
     try {
-      return JSON.parse(stored) as string[];
+      const storedColumns = JSON.parse(stored) as string[];
+      const defaultColumns = defaults.visibleColumns ?? [];
+      if (!defaultColumns.length) return storedColumns;
+
+      const storedSet = new Set(storedColumns);
+      const orderedStoredColumns = defaultColumns.filter((id) =>
+        storedSet.has(id),
+      );
+      const storedOnlyColumns = storedColumns.filter(
+        (id) => !defaultColumns.includes(id),
+      );
+      return [...orderedStoredColumns, ...storedOnlyColumns];
     } catch {
       return defaults.visibleColumns ?? [];
     }

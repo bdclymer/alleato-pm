@@ -7,7 +7,7 @@ import { z } from "zod"
 import { ArrowLeft } from "lucide-react"
 import { toast } from "sonner"
 
-import { PageContainer, PageHeader, FormContainer } from "@/components/layout"
+import { PageContainer, PageHeader, FormContainer, PageShell } from "@/components/layout"
 import { Button } from "@/components/ui/button"
 import { Form } from "@/components/ui/form"
 
@@ -151,6 +151,7 @@ export default function StandardFormPage() {
   }
 
   return (
+    <PageShell variant="form" title="Create New Item">
     <PageContainer>
       <PageHeader
         title="Create New Item"
@@ -376,5 +377,6 @@ export default function StandardFormPage() {
         </Form>
       </FormContainer>
     </PageContainer>
+    </PageShell>
   )
 }

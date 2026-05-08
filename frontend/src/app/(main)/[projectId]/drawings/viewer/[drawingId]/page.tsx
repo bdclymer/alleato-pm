@@ -217,7 +217,7 @@ function LinkPin({
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function DrawingViewerPage() {
-  const params = useParams();
+  const params = useParams() ?? {};
   const router = useRouter();
   const projectId = params.projectId as string;
   const drawingId = params.drawingId as string;

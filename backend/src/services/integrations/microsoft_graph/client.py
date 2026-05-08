@@ -90,6 +90,29 @@ class GraphClient:
         url = path if path.startswith("https://") else f"{GRAPH_BASE}{path}"
         return self._get_with_retry(url, params)
 
+    def post(self, path: str, payload: dict) -> dict:
+        """POST JSON to Graph API. `path` can be full URL or relative path."""
+        url = path if path.startswith("https://") else f"{GRAPH_BASE}{path}"
+        headers = {"Authorization": f"Bearer {self._get_token()}"}
+        resp = httpx.post(url, headers=headers, json=payload, timeout=90)
+        resp.raise_for_status()
+        return resp.json() if resp.content else {}
+
+    def patch(self, path: str, payload: dict) -> dict:
+        """PATCH JSON to Graph API. `path` can be full URL or relative path."""
+        url = path if path.startswith("https://") else f"{GRAPH_BASE}{path}"
+        headers = {"Authorization": f"Bearer {self._get_token()}"}
+        resp = httpx.patch(url, headers=headers, json=payload, timeout=90)
+        resp.raise_for_status()
+        return resp.json() if resp.content else {}
+
+    def delete(self, path: str) -> None:
+        """DELETE a Graph API resource. `path` can be full URL or relative path."""
+        url = path if path.startswith("https://") else f"{GRAPH_BASE}{path}"
+        headers = {"Authorization": f"Bearer {self._get_token()}"}
+        resp = httpx.delete(url, headers=headers, timeout=90)
+        resp.raise_for_status()
+
     def get_all_pages(self, path: str, params: Optional[dict] = None) -> list[dict]:
         """Fetch all pages following @odata.nextLink."""
         results = []

@@ -304,11 +304,16 @@ export function UnifiedTablePage<T>({
     enableVirtualization: features?.enableVirtualization ?? false,
     enableInlineEditing: features?.enableInlineEditing ?? false,
   };
-  const selectedIds = selection?.selectedIds ?? [];
-  const hasSelectionApi = Boolean(selection);
-  const handleSelectAll = selection?.onSelectAll ?? (() => undefined);
-  const handleSelectRow = selection?.onSelectRow ?? (() => undefined);
-  const hasRowSelection = resolvedFeatures.enableRowSelection && hasSelectionApi;
+  // Internal selection state — used when the parent does not supply a selection prop
+  const [internalSelectedIds, setInternalSelectedIds] = React.useState<string[]>([]);
+  const selectedIds = selection?.selectedIds ?? internalSelectedIds;
+  const handleSelectAll = selection?.onSelectAll ?? ((checked: boolean) => {
+    setInternalSelectedIds(checked ? data.items.map((item) => table.getRowId(item)) : []);
+  });
+  const handleSelectRow = selection?.onSelectRow ?? ((id: string, checked: boolean) => {
+    setInternalSelectedIds((prev) => checked ? (prev.includes(id) ? prev : [...prev, id]) : prev.filter((i) => i !== id));
+  });
+  const hasRowSelection = resolvedFeatures.enableRowSelection;
   const hasRowActions = resolvedFeatures.enableRowActions && Boolean(table.rowActions || table.onDelete);
 
   // Built-in delete confirmation dialog state
@@ -328,12 +333,42 @@ export function UnifiedTablePage<T>({
     setItemToDelete(null);
   }, [itemToDelete, table]);
 
+  // ── Internal view state ──────────────────────────────────────────────────────
+  // UnifiedTablePage owns view state internally so individual pages never need
+  // to wire currentView / onViewChange — the view switcher always works.
+  // If the parent does manage view state (e.g. persisting to URL), calling
+  // onViewChange still propagates the value upward, and the parent's
+  // toolbar.currentView is honoured as the initial value and on external changes.
+  const [internalView, setInternalView] = React.useState<ViewMode>(toolbar.currentView);
+  // Sync when the parent drives a view change from outside (e.g. URL navigation)
+  React.useEffect(() => {
+    setInternalView(toolbar.currentView);
+  }, [toolbar.currentView]);
+
+  const activeView = internalView;
+
+  const handleViewChange = React.useCallback((view: ViewMode) => {
+    setInternalView(view);
+    toolbar.onViewChange(view);
+  }, [toolbar]);
+
+  // Derive available views from what renderers are actually provided.
+  // Honour an explicit override from the caller; otherwise auto-include
+  // "card" / "list" only when the views prop supplies renderers.
+  const effectiveEnabledViews: ViewMode[] = React.useMemo(() => {
+    if (toolbar.enabledViews && toolbar.enabledViews.length > 0) return toolbar.enabledViews;
+    const derived: ViewMode[] = ["table"];
+    if (views?.card) derived.push("card");
+    if (views?.list) derived.push("list");
+    return derived;
+  }, [toolbar.enabledViews, views?.card, views?.list]);
+
   const canRenderCardView =
-    resolvedFeatures.enableViews && toolbar.currentView === "card" && Boolean(views?.card);
+    resolvedFeatures.enableViews && activeView === "card" && Boolean(views?.card);
   const canRenderListView =
-    resolvedFeatures.enableViews && toolbar.currentView === "list" && Boolean(views?.list);
+    resolvedFeatures.enableViews && activeView === "list" && Boolean(views?.list);
   const shouldRenderTableView =
-    toolbar.currentView === "table" || (!canRenderCardView && !canRenderListView);
+    activeView === "table" || (!canRenderCardView && !canRenderListView);
   const isFullBleedTable = layout?.fullBleedTable ?? false;
   const removeTableFrame = layout?.removeTableFrame ?? false;
   const plainFooterTotals = layout?.plainFooterTotals ?? false;
@@ -984,9 +1019,9 @@ export function UnifiedTablePage<T>({
       searchValue={toolbar.searchValue}
       onSearchChange={toolbar.onSearchChange}
       searchPlaceholder={toolbar.searchPlaceholder}
-      currentView={toolbar.currentView}
-      onViewChange={toolbar.onViewChange}
-      enabledViews={toolbar.enabledViews}
+      currentView={activeView}
+      onViewChange={handleViewChange}
+      enabledViews={effectiveEnabledViews}
       filters={toolbar.filters}
       activeFilters={activeFilters}
       onFilterChange={handleFilterChange}
@@ -1766,7 +1801,7 @@ export function UnifiedTablePage<T>({
               {isSidePanelOpen && (
                 <aside
                   className={cn(
-                    "hidden lg:flex lg:flex-col bg-card relative",
+                    "hidden lg:flex lg:flex-col bg-card relative min-h-[calc(100dvh-6rem)]",
                     panelSticky
                       ? "lg:sticky lg:top-12 lg:max-h-[calc(100dvh-3rem)]"
                       : "lg:relative lg:max-h-none",
@@ -1776,12 +1811,14 @@ export function UnifiedTablePage<T>({
                 >
                   {panelResizable && (
                     <div
-                      className="absolute left-0 top-0 h-full w-1.5 cursor-col-resize select-none z-10 hover:bg-primary/20 active:bg-primary/30 transition-colors"
+                      className="absolute left-0 top-0 h-full w-3 cursor-col-resize select-none z-10 group"
                       onMouseDown={handlePanelResizeStart}
                       aria-hidden="true"
-                    />
+                    >
+                      <div className="absolute left-0 top-0 h-full w-px bg-border group-hover:bg-primary/50 group-active:bg-primary transition-colors" />
+                    </div>
                   )}
-                  <div className="flex-1 flex flex-col min-h-0 px-4">
+                  <div className="flex-1 flex flex-col min-h-0 pl-4 pr-4">
                     {sidePanel.content}
                   </div>
                 </aside>

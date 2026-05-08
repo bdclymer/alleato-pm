@@ -86,9 +86,9 @@ contentClassName?: string
 
 ```css
 /* Backgrounds */
-bg-background        /* Page background (#F6F6F8 light / #151518 dark) */
+bg-background        /* Page background (#FFFFFF light / #151518 dark) */
 bg-card              /* Card/surface (#FFFFFF light / #1F1F24 dark) */
-bg-muted             /* Subtle section background (#F1F1F4 light / #272730 dark) */
+bg-muted             /* Subtle section background (#F4F2F0 light / #272730 dark) */
 bg-muted/50          /* Very subtle tint */
 bg-accent            /* Hover/interactive (#EDEDFA light / #2C2C35 dark) */
 
@@ -102,8 +102,8 @@ border-border         /* Standard border */
 border-border/50      /* Subtle border */
 
 /* Primary / Brand */
-bg-primary            /* Primary button background (#5856D6 light / #7B79E5 dark) */
-text-primary-foreground /* Text on primary buttons */
+bg-primary            /* Primary button background (#DB802D light / #F59A43 dark) */
+text-primary-foreground /* White text on primary buttons */
 
 /* Status — ONLY for status display, never decoration */
 bg-green-50 text-green-600    /* Active / Approved */

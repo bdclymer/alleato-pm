@@ -645,6 +645,35 @@ export default function AccountingDashboardPage() {
         ]}
       />
 
+      <section className="space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-sm font-semibold text-foreground">
+            Accounting reports
+          </h2>
+        </div>
+        <div className="divide-y divide-border rounded-md border border-border bg-background">
+          <Link
+            href="/accounting/wip"
+            className="flex min-h-14 items-center justify-between gap-4 px-4 py-3 transition-colors hover:bg-muted/40"
+          >
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+                <ClipboardList className="h-4 w-4" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-sm font-medium text-foreground">
+                  WIP Report
+                </div>
+                <div className="truncate text-xs text-muted-foreground">
+                  Contract value, earned revenue, billing position, and forecast margin by project
+                </div>
+              </div>
+            </div>
+            <ExternalLink className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+          </Link>
+        </div>
+      </section>
+
       {/* ── AR by Project Chart ── */}
       <div className="grid gap-6 md:grid-cols-2">
         <Card>

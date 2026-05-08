@@ -1519,6 +1519,7 @@ def run_intelligence_compiler_batch(
 ) -> Dict[str, Any]:
     """Process queued source compiler and packet refresh jobs in a bounded batch."""
     started = time.monotonic()
+    run_started_at = datetime.now(timezone.utc)
     source_limit = max(0, min(int(source_limit or 0), 100))
     packet_limit = max(0, min(int(packet_limit or 0), 100))
     stats: Dict[str, Any] = {
@@ -1586,7 +1587,64 @@ def run_intelligence_compiler_batch(
                 mark_packet_refresh_failed(supabase, job_id, str(exc), retryable=False)
 
     stats["processing_time_ms"] = int((time.monotonic() - started) * 1000)
+    _record_intelligence_compiler_run(
+        supabase,
+        started_at=run_started_at,
+        stats=stats,
+        compiler_version=compiler_version,
+        source_limit=source_limit,
+        packet_limit=packet_limit,
+        max_processing_time_ms=max_processing_time_ms,
+    )
     return stats
+
+
+def _record_intelligence_compiler_run(
+    supabase: Any,
+    *,
+    started_at: datetime,
+    stats: Dict[str, Any],
+    compiler_version: str,
+    source_limit: int,
+    packet_limit: int,
+    max_processing_time_ms: Optional[int],
+) -> None:
+    try:
+        from src.services.health.source_sync_health import record_sync_run
+
+        failed = int(stats.get("source_jobs_failed", 0) or 0) + int(stats.get("packet_jobs_failed", 0) or 0)
+        succeeded = int(stats.get("source_jobs_succeeded", 0) or 0) + int(stats.get("packet_jobs_succeeded", 0) or 0)
+        claimed = int(stats.get("source_jobs_claimed", 0) or 0) + int(stats.get("packet_jobs_claimed", 0) or 0)
+        status = "failed" if failed and failed >= claimed and claimed else "warning" if failed or stats.get("timed_out") else "succeeded"
+        record_sync_run(
+            supabase,
+            source="intelligence_compiler",
+            resource_id="source_and_packet_queues",
+            resource_name="AI intelligence compiler",
+            stage="intelligence_compile",
+            status=status,
+            started_at=started_at,
+            finished_at=datetime.now(timezone.utc),
+            items_seen=claimed,
+            items_synced=succeeded,
+            items_failed=failed,
+            error_message=(
+                f"{failed} compiler jobs failed"
+                if failed
+                else "Compiler run hit processing time limit"
+                if stats.get("timed_out")
+                else None
+            ),
+            metadata={
+                "compiler_version": compiler_version,
+                "source_limit": source_limit,
+                "packet_limit": packet_limit,
+                "max_processing_time_ms": max_processing_time_ms,
+                **stats,
+            },
+        )
+    except Exception as exc:
+        logger.warning("[IntelligenceCompiler] Could not record source_sync_runs row: %s", exc)
 
 
 def process_source_document(

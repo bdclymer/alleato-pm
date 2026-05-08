@@ -129,9 +129,11 @@ export function KpiBlock({
 export function KpiRow({
   metrics,
   size = "medium",
+  bare = false,
 }: {
   metrics: KpiBlockProps[];
   size?: "small" | "medium" | "large";
+  bare?: boolean;
 }) {
   const itemPadding = {
     small: "p-3",
@@ -139,30 +141,36 @@ export function KpiRow({
     large: "p-5 px-6",
   }[size];
 
+  const grid = (
+    <div
+      className={cn(
+        "grid grid-cols-1 gap-px bg-border",
+        size !== "large" && "sm:grid-cols-2",
+        size === "large" && "sm:grid-cols-2 xl:grid-cols-4",
+        metrics.length === 6 && size !== "large" && "xl:grid-cols-3",
+        metrics.length === 5 && size !== "large" && "xl:grid-cols-5",
+        metrics.length === 4 && size !== "large" && "xl:grid-cols-4",
+        metrics.length === 3 && size !== "large" && "xl:grid-cols-3",
+        metrics.length <= 2 && size !== "large" && "sm:grid-cols-2"
+      )}
+    >
+      {metrics.map((metric, i) => (
+        <div
+          key={i}
+          className={cn("min-w-0 bg-card", itemPadding)}
+        >
+          <KpiBlock {...metric} size={metric.size ?? size} />
+        </div>
+      ))}
+    </div>
+  );
+
+  if (bare) return grid;
+
   return (
     /* eslint-disable-next-line design-system/no-design-violations -- KPI bento container uses intentional shared border */
     <div className="overflow-hidden rounded-lg border border-border bg-card">
-      <div
-        className={cn(
-          "grid grid-cols-1 gap-px bg-border",
-          size !== "large" && "sm:grid-cols-2",
-          size === "large" && "sm:grid-cols-2 xl:grid-cols-4",
-          metrics.length === 6 && size !== "large" && "xl:grid-cols-3",
-          metrics.length === 5 && size !== "large" && "xl:grid-cols-5",
-          metrics.length === 4 && size !== "large" && "xl:grid-cols-4",
-          metrics.length === 3 && size !== "large" && "xl:grid-cols-3",
-          metrics.length <= 2 && size !== "large" && "sm:grid-cols-2"
-        )}
-      >
-        {metrics.map((metric, i) => (
-          <div
-            key={i}
-            className={cn("min-w-0 bg-card", itemPadding)}
-          >
-            <KpiBlock {...metric} size={metric.size ?? size} />
-          </div>
-        ))}
-      </div>
+      {grid}
     </div>
   );
 }

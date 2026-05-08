@@ -10,12 +10,36 @@ import {
   type MemoryType,
   type MemoryVisibility,
 } from "@/lib/ai/services/ai-memory-service";
+import {
+  normalizeRetrievalWeightQuerySignature,
+  retrievalWeightMultiplierForItem,
+  type RetrievalWeightScoringRow,
+} from "@/lib/ai/retrieval/retrieval-weight-scoring";
 
 type AnyRow = Record<string, unknown>;
 
 type CreateOperationalToolsOptions = {
   onTrace?: (trace: ToolTracePayload) => void;
   pinnedProjectId?: number;
+};
+
+type RecentEmailDirection = "mailbox" | "to" | "from" | "to_or_from";
+
+type RecentEmailRow = {
+  id: number;
+  subject: string;
+  from_name: string | null;
+  from_email: string | null;
+  to_list: string[] | null;
+  cc_list: string[] | null;
+  received_at: string | null;
+  mailbox_user_id: string;
+  body_text: string | null;
+  has_attachments: boolean | null;
+  project_id: number | null;
+  web_link: string | null;
+  graph_message_id: string;
+  conversation_id: string | null;
 };
 
 function withTrace<TInput extends Record<string, unknown>, TResult>(
@@ -29,6 +53,169 @@ function withTrace<TInput extends Record<string, unknown>, TResult>(
     execute,
     "This operational knowledge source failed during retrieval. Explain the gap plainly and use other available sources before asking for more detail.",
   );
+}
+
+async function loadActiveRetrievalWeights({
+  supabase,
+  toolName,
+  query,
+  projectId,
+}: {
+  supabase: ReturnType<typeof createServiceClient>;
+  toolName: string;
+  query: string;
+  projectId?: number;
+}): Promise<RetrievalWeightScoringRow[]> {
+  const querySignature = normalizeRetrievalWeightQuerySignature(query);
+  if (!querySignature) return [];
+
+  const { data, error } = await supabase
+    .from("ai_retrieval_weights")
+    .select(
+      "id, project_id, tool_name, source_document_id, source_chunk_id, query_signature, action, weight_multiplier, confidence",
+    )
+    .eq("status", "active")
+    .eq("tool_name", toolName)
+    .eq("query_signature", querySignature)
+    .limit(50);
+
+  if (error) {
+    throw new Error(`Failed to load retrieval weights for ${toolName}: ${error.message}`);
+  }
+
+  return ((data ?? []) as RetrievalWeightScoringRow[]).filter((weight) =>
+    weight.project_id === null || weight.project_id === (projectId ?? null),
+  );
+}
+
+function normalizeEmail(value: string | null | undefined): string | null {
+  const normalized = value?.trim().toLowerCase();
+  if (!normalized) return null;
+  const match = normalized.match(/[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/);
+  return match?.[0] ?? null;
+}
+
+function includesEmail(values: string[] | null | undefined, email: string): boolean {
+  return Array.isArray(values) && values.some((value) => normalizeEmail(value) === email);
+}
+
+function getTimeZoneOffsetMs(date: Date, timeZone: string): number {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    hour12: false,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  }).formatToParts(date);
+  const lookup = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  const hour = lookup.hour === "24" ? "00" : lookup.hour;
+  const asUtc = Date.UTC(
+    Number(lookup.year),
+    Number(lookup.month) - 1,
+    Number(lookup.day),
+    Number(hour),
+    Number(lookup.minute),
+    Number(lookup.second),
+  );
+  return asUtc - date.getTime();
+}
+
+function startOfBusinessDay(daysBack: number, timeZone: string): Date {
+  const now = new Date();
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(now);
+  const lookup = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  const localMidnightGuess = Date.UTC(
+    Number(lookup.year),
+    Number(lookup.month) - 1,
+    Number(lookup.day) - daysBack,
+    0,
+    0,
+    0,
+  );
+  const guessDate = new Date(localMidnightGuess);
+  return new Date(localMidnightGuess - getTimeZoneOffsetMs(guessDate, timeZone));
+}
+
+function emailMatchesDirection(
+  row: RecentEmailRow,
+  participantEmail: string,
+  direction: RecentEmailDirection,
+): boolean {
+  if (direction === "mailbox") {
+    return normalizeEmail(row.mailbox_user_id) === participantEmail;
+  }
+
+  const sentByParticipant = normalizeEmail(row.from_email) === participantEmail;
+  const sentToParticipant =
+    includesEmail(row.to_list, participantEmail) || includesEmail(row.cc_list, participantEmail);
+
+  if (direction === "from") return sentByParticipant;
+  if (direction === "to") return sentToParticipant;
+  return sentByParticipant || sentToParticipant || normalizeEmail(row.mailbox_user_id) === participantEmail;
+}
+
+function groupRecentEmailsByThread(rows: RecentEmailRow[], limit: number) {
+  const groups = new Map<string, RecentEmailRow[]>();
+  for (const row of rows) {
+    const key = row.conversation_id ?? row.graph_message_id ?? String(row.id);
+    const group = groups.get(key) ?? [];
+    group.push(row);
+    groups.set(key, group);
+  }
+
+  return Array.from(groups.entries())
+    .map(([threadKey, groupRows]) => {
+      const sorted = groupRows.sort((a, b) => {
+        const aTime = a.received_at ? Date.parse(a.received_at) : 0;
+        const bTime = b.received_at ? Date.parse(b.received_at) : 0;
+        return bTime - aTime;
+      });
+      const latest = sorted[0];
+      const senders = Array.from(
+        new Set(sorted.map((row) => normalizeEmail(row.from_email)).filter((email): email is string => Boolean(email))),
+      );
+      const recipients = Array.from(
+        new Set(
+          sorted
+            .flatMap((row) => [...(row.to_list ?? []), ...(row.cc_list ?? [])])
+            .map((email) => normalizeEmail(email))
+            .filter((email): email is string => Boolean(email)),
+        ),
+      );
+
+      return {
+        threadKey,
+        messageCount: sorted.length,
+        latestSubject: latest.subject,
+        latestReceivedAt: latest.received_at,
+        mailbox: latest.mailbox_user_id,
+        senders,
+        recipients,
+        latestPreview: latest.body_text
+          ? latest.body_text.slice(0, 280).replace(/\s+/g, " ").trim()
+          : null,
+        hasAttachments: sorted.some((row) => row.has_attachments === true),
+        projectIds: Array.from(
+          new Set(sorted.map((row) => row.project_id).filter((id): id is number => typeof id === "number")),
+        ),
+        webLinks: sorted.map((row) => row.web_link).filter((link): link is string => Boolean(link)),
+        messageIds: sorted.map((row) => row.id),
+      };
+    })
+    .sort((a, b) => {
+      const aTime = a.latestReceivedAt ? Date.parse(a.latestReceivedAt) : 0;
+      const bTime = b.latestReceivedAt ? Date.parse(b.latestReceivedAt) : 0;
+      return bTime - aTime;
+    })
+    .slice(0, limit);
 }
 
 // ---------------------------------------------------------------------------
@@ -1119,6 +1306,8 @@ export function createOperationalTools(
               key: string;
               sourceTable: string;
               recordId: string;
+              sourceDocumentId: string | null;
+              sourceChunkId: string | null;
               content: string;
               similarity: number;
               projectIds: number[];
@@ -1134,6 +1323,8 @@ export function createOperationalTools(
                 key: `${sourceTable}:${recordId}`,
                 sourceTable,
                 recordId,
+                sourceDocumentId: null,
+                sourceChunkId: null,
                 content: String(row.content ?? row.description ?? ""),
                 similarity,
                 projectIds: Array.isArray(row.project_ids)
@@ -1167,6 +1358,8 @@ export function createOperationalTools(
                 key: `knowledge_base:${kbId}`,
                 sourceTable: "knowledge_base",
                 recordId: kbId,
+                sourceDocumentId: null,
+                sourceChunkId: null,
                 content: `[${String(row.category ?? "general")}] ${String(row.title ?? "")}: ${String(row.content ?? "")}`,
                 similarity,
                 projectIds: typeof row.project_id === "number" ? [row.project_id] : [],
@@ -1196,6 +1389,8 @@ export function createOperationalTools(
                 key: `doc_chunk:${String(row.chunk_id ?? row.document_id ?? "")}`,
                 sourceTable: srcType,
                 recordId: String(row.document_id ?? ""),
+                sourceDocumentId: typeof row.document_id === "string" ? row.document_id : null,
+                sourceChunkId: typeof row.chunk_id === "string" ? row.chunk_id : null,
                 content: String(row.chunk_text ?? ""),
                 similarity,
                 projectIds: typeof row.doc_project_id === "number" ? [row.doc_project_id] : [],
@@ -1308,15 +1503,41 @@ export function createOperationalTools(
               return 0;
             };
 
+            const activeRetrievalWeights = await loadActiveRetrievalWeights({
+              supabase,
+              toolName: "semanticSearch",
+              query,
+              projectId: resolvedProjectId,
+            });
+
             // Pre-sort by blended score, take top 20 candidates for reranking
             const candidates = (stitchedItems as (typeof merged)[number][])
-              .map((item) => ({
-                ...item,
-                finalScore:
+              .map((item) => {
+                const retrievalWeight = retrievalWeightMultiplierForItem(
+                  item,
+                  activeRetrievalWeights,
+                );
+                const baseScore =
                   item.similarity * similarityWeight +
                   recencyScore(item.createdAt) * recencyWeight +
-                  sourceBoost(item.sourceTable),
-              }))
+                  sourceBoost(item.sourceTable);
+                const metadata =
+                  retrievalWeight.weightIds.length > 0
+                    ? {
+                        ...(item.metadata ?? {}),
+                        retrievalWeight: {
+                          multiplier: retrievalWeight.multiplier,
+                          weightIds: retrievalWeight.weightIds,
+                        },
+                      }
+                    : item.metadata;
+
+                return {
+                  ...item,
+                  metadata,
+                  finalScore: baseScore * retrievalWeight.multiplier,
+                };
+              })
               .sort((a, b) => b.finalScore - a.finalScore)
               .slice(0, 20);
 
@@ -1384,6 +1605,8 @@ export function createOperationalTools(
                 content: r.content.substring(0, r.sourceTable === "meeting_transcript" ? 5000 : 2500),
                 sourceTable: r.sourceTable,
                 recordId: r.recordId,
+                sourceDocumentId: r.sourceDocumentId,
+                sourceChunkId: r.sourceChunkId,
                 similarity: r.similarity,
                 finalScore: Math.round(r.finalScore * 1000) / 1000,
                 projectIds: r.projectIds,
@@ -1393,6 +1616,7 @@ export function createOperationalTools(
               retrievalBreakdown: {
                 knowledgeMatches: knowledgeRows.length,
                 externalChunkMatches: chunkRows.length,
+                activeRetrievalWeights: activeRetrievalWeights.length,
                 usedProjectFilter: Boolean(resolvedProjectId),
                 filteredAdminOnlySources: allowAdminCommsSources
                   ? []
@@ -1500,57 +1724,13 @@ export function createOperationalTools(
               };
             }
 
-            // Fetch knowledge articles
-            let query = supabase
-              .from("company_knowledge")
-              .select("*")
-              .eq("is_active", true)
-              .eq("approval_status", "approved")
-              .neq("visibility", "admin_only")
-              .eq("ai_searchable", true)
-              .order("updated_at", { ascending: false })
-              .limit(20);
-
-            if (category !== "all") {
-              query = query.eq("category", category);
-            }
-
-            if (searchQuery) {
-              query = query.or(
-                `title.ilike.%${searchQuery}%,content.ilike.%${searchQuery}%`,
-              );
-            }
-
-            const { data: articles } = await query;
-
-            const articleList = ((articles ?? []) as unknown as AnyRow[]).map(
-              (a) => ({
-                sourceLabel: "Company Knowledge Base",
-                knowledgeType: "company_knowledge",
-                sourceRoute: "/knowledge",
-                id: a.id,
-                category: a.category,
-                title: a.title,
-                content: (a.content as string)?.substring(0, 800),
-                tags: a.tags,
-                source: a.source,
-                visibility: a.visibility,
-                approvalStatus: a.approval_status,
-                aiSearchable: a.ai_searchable,
-                updatedAt: a.updated_at,
-              }),
-            );
-
-            const hasProfile = profile !== null;
-            const isEmpty = !hasProfile && articleList.length === 0;
-
+            // company_knowledge table has been dropped
             return {
-              profile: category === "all" ? profile : undefined,
-              articles: articleList,
-              articleCount: articleList.length,
-              message: isEmpty
-                ? "No company knowledge found. The admin should add company profile data and knowledge articles."
-                : `Found company profile${hasProfile ? " ✓" : " (empty)"} and ${articleList.length} knowledge article(s).`,
+              profile,
+              articles: [],
+              message: profile
+                ? "Company profile loaded. Knowledge base articles are not available."
+                : "Company knowledge base is not available.",
             };
           } catch (err) {
             const msg = err instanceof Error ? err.message : "Unknown error";
@@ -1982,57 +2162,11 @@ export function createOperationalTools(
       execute: withTrace(
         "saveToKnowledgeBase",
         options,
-        async ({ title, content, category, tags, source }) => {
-          try {
-            const scope = await guardrails.getScope();
-            const isAdminSave = scope.isAdmin;
-            // Generate embedding so the entry is searchable via semantic search.
-            // company_knowledge.embedding is halfvec(3072) — use text-embedding-3-large at 3072 dims.
-            const openaiClient = getOpenAI();
-            const embedding = await generateEmbedding(
-              openaiClient,
-              `${title}\n\n${content}`.substring(0, 8000),
-              EMBEDDING.LARGE,
-            );
-
-            const { data, error } = await supabase
-              .from("company_knowledge")
-              .insert({
-                title,
-                content,
-                category,
-                tags: tags ?? [],
-                source: source ?? "AI Assistant",
-                author_id: userId,
-                is_active: true,
-                approval_status: isAdminSave ? "approved" : "draft",
-                visibility: "internal",
-                ai_searchable: isAdminSave,
-                approved_at: isAdminSave ? new Date().toISOString() : null,
-                approved_by: isAdminSave ? userId : null,
-                embedding,
-              })
-              .select("id, title, category, tags, approval_status, visibility, ai_searchable")
-              .single();
-
-            if (error) return { error: `Failed to save knowledge: ${error.message}` };
-
-            return {
-              success: true,
-              savedEntry: {
-                ...data,
-                sourceLabel: "Company Knowledge Base",
-                knowledgeType: "company_knowledge",
-                sourceRoute: "/knowledge",
-              },
-              message: isAdminSave
-                ? `Knowledge saved: "${title}" (${category}). This is approved and searchable in the AI assistant.`
-                : `Knowledge saved as a draft: "${title}" (${category}). An admin needs to approve it before it becomes searchable in the AI assistant.`,
-            };
-          } catch (err) {
-            const msg = err instanceof Error ? err.message : "Unknown error";
-            return { error: `Failed to save knowledge: ${msg}` };
-          }
+        async ({ title, category }) => {
+          // company_knowledge table has been dropped
+          return {
+            error: `Knowledge base is not available. The "${title}" entry (${category}) could not be saved.`,
+          };
         },
       ),
     }),
@@ -2118,6 +2252,7 @@ export function createOperationalTools(
                 stakeholders_affected: stakeholders ?? [],
                 financial_impact: financialImpact ?? null,
                 status: "active",
+                approval_status: "draft",
               })
               .select("id, title, insight_type, severity, project_name")
               .single();
@@ -2127,7 +2262,7 @@ export function createOperationalTools(
             return {
               success: true,
               savedInsight: data,
-              message: `Insight saved: "${title}" (${insightType}, ${severity}). ${resolvedProjectName ? `Linked to project: ${resolvedProjectName}.` : ""} This is now visible in project dashboards and AI analysis.`,
+              message: `Insight saved as draft: "${title}" (${insightType}, ${severity}). ${resolvedProjectName ? `Linked to project: ${resolvedProjectName}.` : ""} A team member must approve it before it appears in AI analysis and search results.`,
             };
           } catch (err) {
             const msg = err instanceof Error ? err.message : "Unknown error";
@@ -2448,16 +2583,203 @@ export function createOperationalTools(
     }),
 
     // -----------------------------------------------------------------
-    // 16. searchEmails — Outlook emails via Microsoft Graph
+    // 16. getRecentEmails — Date-based email retrieval from Outlook intake
+    // -----------------------------------------------------------------
+
+    getRecentEmails: tool({
+      description:
+        "Get a list of Outlook emails received within a specific date range. " +
+        "Use this when the user asks a time-based question about emails: " +
+        "'what emails did I receive today?', 'show me emails from this week', " +
+        "'any emails received yesterday?', 'how many emails came in today?'. " +
+        "This is a structured date query — NOT a semantic/topic search. " +
+        "By default, queries the signed-in user's synced mailbox so 'my emails today' does not spill into other mailboxes. " +
+        "Returns consolidated conversation/thread groups first, with message counts, senders, recipients, dates, and previews. " +
+        "Use participantEmail plus direction='to' or direction='from' only when the user explicitly asks for emails to/from a person. " +
+        "Always summarize results by thread, not as a raw individual-message dump.",
+      inputSchema: z.object({
+        daysBack: z
+          .number()
+          .optional()
+          .default(1)
+          .describe(
+            "How many days back to look. 0 = today only, 1 = yesterday through now, 7 = last 7 days. Default 1.",
+          ),
+        mailboxFilter: z
+          .string()
+          .optional()
+          .describe(
+            "Optional: filter to a specific synced mailbox email address. Omit for the signed-in user's mailbox.",
+          ),
+        participantEmail: z
+          .string()
+          .optional()
+          .describe("Optional participant email for questions like emails to Brandon or from Brandon."),
+        direction: z
+          .enum(["mailbox", "to", "from", "to_or_from"])
+          .optional()
+          .default("mailbox")
+          .describe(
+            "mailbox = messages in the mailbox; to/from filters by participantEmail. Use 'to' for emails addressed to the person.",
+          ),
+        timeZone: z
+          .string()
+          .optional()
+          .default("America/New_York")
+          .describe("Business timezone for interpreting 'today'. Default America/New_York."),
+        groupByThread: z
+          .boolean()
+          .optional()
+          .default(true)
+          .describe("Return consolidated conversation groups instead of individual messages. Default true."),
+        limit: z
+          .number()
+          .optional()
+          .default(50)
+          .describe("Max thread groups or emails to return. Default 50."),
+      }),
+      execute: withTrace(
+        "getRecentEmails",
+        options,
+        async ({
+          daysBack = 1,
+          mailboxFilter,
+          participantEmail,
+          direction = "mailbox",
+          timeZone = "America/New_York",
+          groupByThread = true,
+          limit = 50,
+        }) => {
+          const access = await requireAdminForCommunications("Email");
+          if (!access.ok) return { error: access.error };
+
+          const normalizedMailboxFilter = normalizeEmail(mailboxFilter);
+          const normalizedParticipantEmail = normalizeEmail(participantEmail);
+          let currentUserEmail: string | null = null;
+
+          if (!normalizedMailboxFilter && !normalizedParticipantEmail) {
+            const { data: userData, error: userError } = await supabase.auth.admin.getUserById(userId);
+            if (userError) {
+              return { error: `Could not resolve the signed-in user's email: ${userError.message}` };
+            }
+            currentUserEmail = normalizeEmail(userData.user?.email);
+          }
+
+          const effectiveParticipantEmail =
+            normalizedParticipantEmail ?? normalizedMailboxFilter ?? currentUserEmail;
+          const effectiveDirection: RecentEmailDirection = normalizedParticipantEmail
+            ? direction
+            : "mailbox";
+
+          if (!effectiveParticipantEmail) {
+            return {
+              error:
+                "Could not resolve a mailbox or participant email for this email lookup. Ask for a specific mailbox or sign in with a synced mailbox account.",
+            };
+          }
+
+          const safeDaysBack = Number.isFinite(daysBack) && daysBack >= 0 ? Math.floor(daysBack) : 1;
+          const safeLimit = Number.isFinite(limit) && limit > 0 ? Math.min(Math.floor(limit), 100) : 50;
+          const since = startOfBusinessDay(safeDaysBack, timeZone || "America/New_York");
+          const fetchLimit = Math.min(Math.max(safeLimit * 6, 100), 600);
+
+          let query = supabase
+            .from("outlook_email_intake")
+            .select(
+              "id, subject, from_name, from_email, to_list, cc_list, received_at, mailbox_user_id, body_text, has_attachments, project_id, web_link, graph_message_id, conversation_id",
+            )
+            .is("deleted_at", null)
+            .gte("received_at", since.toISOString())
+            .order("received_at", { ascending: false })
+            .limit(fetchLimit);
+
+          if (effectiveDirection === "mailbox") {
+            query = query.eq("mailbox_user_id", effectiveParticipantEmail);
+          }
+
+          const [emailResult, syncStateResult] = await Promise.all([
+            query,
+            supabase
+              .from("graph_sync_state")
+              .select("last_sync_at")
+              .order("last_sync_at", { ascending: false })
+              .limit(1)
+              .maybeSingle(),
+          ]);
+
+          if (emailResult.error) {
+            return { error: `Failed to fetch emails: ${emailResult.error.message}` };
+          }
+
+          const data = ((emailResult.data ?? []) as RecentEmailRow[]).filter((row) =>
+            emailMatchesDirection(row, effectiveParticipantEmail, effectiveDirection),
+          );
+          const lastSyncedAt = syncStateResult.data?.last_sync_at ?? null;
+          const dataCutoffNote = lastSyncedAt
+            ? `Data is current as of ${new Date(lastSyncedAt).toLocaleString("en-US", { timeZone: "America/Chicago", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} CT (syncs run hourly). Emails received after that time won't appear here yet.`
+            : "Sync time unknown — emails received since the last sync may not appear.";
+
+          if (data.length === 0) {
+            const rangeLabel = safeDaysBack === 0 ? "today" : `the last ${safeDaysBack} day${safeDaysBack === 1 ? "" : "s"}`;
+            return {
+              emails: [],
+              threads: [],
+              summary: `No emails received ${rangeLabel} for ${effectiveParticipantEmail} (${effectiveDirection}).`,
+              dataCutoffNote,
+              appliedFilter: {
+                email: effectiveParticipantEmail,
+                direction: effectiveDirection,
+                since: since.toISOString(),
+                timeZone,
+              },
+            };
+          }
+
+          const emails = data.slice(0, safeLimit).map((e) => ({
+            subject: e.subject,
+            from: e.from_name ? `${e.from_name} <${e.from_email}>` : (e.from_email ?? "Unknown"),
+            to: Array.isArray(e.to_list) ? e.to_list.join(", ") : e.to_list,
+            receivedAt: e.received_at,
+            mailbox: e.mailbox_user_id,
+            preview: e.body_text ? e.body_text.slice(0, 200).replace(/\s+/g, " ").trim() : null,
+            hasAttachments: e.has_attachments,
+            projectId: e.project_id,
+            webLink: e.web_link,
+          }));
+
+          const threads = groupByThread ? groupRecentEmailsByThread(data, safeLimit) : [];
+          const rangeLabel = safeDaysBack === 0 ? "today" : `the last ${safeDaysBack} day${safeDaysBack === 1 ? "" : "s"}`;
+          return {
+            emails,
+            threads,
+            count: data.length,
+            threadCount: groupByThread ? threads.length : undefined,
+            summary: groupByThread
+              ? `Found ${data.length} email${data.length === 1 ? "" : "s"} in ${threads.length} thread${threads.length === 1 ? "" : "s"} received ${rangeLabel} for ${effectiveParticipantEmail} (${effectiveDirection}).`
+              : `Found ${data.length} email${data.length === 1 ? "" : "s"} received ${rangeLabel} for ${effectiveParticipantEmail} (${effectiveDirection}).`,
+            dataCutoffNote,
+            appliedFilter: {
+              email: effectiveParticipantEmail,
+              direction: effectiveDirection,
+              since: since.toISOString(),
+              timeZone,
+            },
+          };
+        },
+      ),
+    }),
+
+    // -----------------------------------------------------------------
+    // 17. searchEmails — Semantic topic search across Outlook email content
     // -----------------------------------------------------------------
 
     searchEmails: tool({
       description:
-        "Search Outlook email threads synced from Microsoft 365. " +
-        "Use this when the user asks about emails, email conversations, " +
-        "messages sent or received about a topic, or when they want to " +
-        "know what was communicated via email (e.g. 'any emails about the permit delay?', " +
-        "'what did we send to the GC about change orders?'). " +
+        "Semantic search across Outlook email content synced from Microsoft 365. " +
+        "Use this when the user asks about a TOPIC in emails — not a date range. " +
+        "Examples: 'any emails about the permit delay?', 'what did we send to the GC about change orders?', " +
+        "'find emails mentioning the subcontractor dispute'. " +
+        "For date-based questions ('what emails today?', 'show me this week's emails'), use getRecentEmails instead. " +
         "Returns email subject, sender/recipients, date, and relevant content. " +
         "Always cite results as 'email from [participants] on [date]'.",
       inputSchema: z.object({
@@ -2629,13 +2951,18 @@ async function searchDocumentChunksByCategory({
             ? filterProjectId
             : scope.pinnedProjectId ?? null,
         match_count: matchCount,
-        match_threshold: 0.25,
+        match_threshold: 0.45,
       },
     );
 
     if (error) {
       const message = (error as { message: string }).message;
-      if (message.includes("structure of query does not match function result type")) {
+      const isTimeout = message.includes("canceling statement due to statement timeout") ||
+        message.includes("statement timeout");
+      if (
+        message.includes("structure of query does not match function result type") ||
+        isTimeout
+      ) {
         return searchDocumentChunksByCategoryFallback({
           supabase,
           query,
@@ -2644,7 +2971,9 @@ async function searchDocumentChunksByCategory({
           sourceLabel,
           scope,
           filterProjectId,
-          rpcError: message,
+          rpcError: isTimeout
+            ? `vector search timed out — returning keyword-matched results instead`
+            : message,
         });
       }
 
@@ -2721,6 +3050,8 @@ async function searchDocumentChunksByCategory({
         type: r.doc_type,
         projectId: r.doc_project_id,
         documentId: r.document_id,
+        sourceDocumentId: r.document_id,
+        sourceChunkId: r.chunk_id,
         chunkIndex: r.chunk_index,
         // Pre-formatted citation for the model to use directly
         citation: formatCitation(sourceLabel, r),
@@ -2854,6 +3185,8 @@ async function searchDocumentChunksByCategoryFallback({
       type: doc?.type ?? null,
       projectId: doc?.project_id ?? null,
       documentId: String(chunk.document_id ?? ""),
+      sourceDocumentId: String(chunk.document_id ?? ""),
+      sourceChunkId: String(chunk.chunk_id ?? ""),
       chunkIndex: typeof chunk.chunk_index === "number" ? chunk.chunk_index : null,
       citation: formatCitation(sourceLabel, {
         doc_title: typeof doc?.title === "string" ? doc.title : null,

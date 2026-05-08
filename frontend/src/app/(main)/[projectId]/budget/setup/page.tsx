@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { PageShell } from "@/components/layout";
 import { BudgetLineItemTable } from "@/components/budget/BudgetLineItemTable";
 import { createClient } from "@/lib/supabase/client";
+import { apiFetch } from "@/lib/api-client";
 import { CreateBudgetCodeModal } from "./components";
 import {
   type BudgetLineItem,
@@ -225,17 +226,11 @@ export default function BudgetSetupPage() {
         };
       });
 
-      const response = await fetch(`/api/projects/${projectId}/budget`, {
+      await apiFetch(`/api/projects/${projectId}/budget`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ lineItems: formattedLineItems }),
       });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || "Failed to create budget lines");
-      }
 
       toast.success(`Successfully created ${lineItems.length} budget line(s)`);
       router.push(`/${projectId}/budget`);

@@ -10,8 +10,8 @@ export default function Page() {
   return (
     <PageShell
       variant="dashboard"
-      title="Executive Intelligence"
-      description="A command-center view of Alleato's executive AI system."
+      title=""
+      showHeader={false}
       contentClassName="space-y-12"
     >
       <ExecutiveIntelligencePage />

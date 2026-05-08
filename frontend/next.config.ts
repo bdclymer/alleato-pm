@@ -29,7 +29,7 @@ const nextConfig: NextConfig = {
   experimental: {
     webpackMemoryOptimizations: true,
     serverSourceMaps: false,
-    // Prevent webpack from barrel-importing entire icon/component libraries.
+    // Prevent webpack/turbopack from barrel-importing entire icon/component libraries.
     // Without this, lucide-react (511 icons), @tabler/icons-react (3000+ icons),
     // and react-icons cause the webpack worker to OOM on Vercel's 8 GB build machines.
     optimizePackageImports: [
@@ -61,6 +61,16 @@ const nextConfig: NextConfig = {
       "@codemirror/theme-one-dark",
       "@liveblocks/client",
     ],
+    turbo: {
+      // Turbopack equivalent of the webpack pdfjs-dist alias below.
+      // react-pdf's non-minified 5.x ESM entry redeclares webpack's internal export
+      // variable; the minified build avoids this.
+      // NOTE: Turbopack does not support absolute filesystem paths in resolveAlias —
+      // use a bare module specifier instead (pnpm hoists pdfjs-dist to the top level).
+      resolveAlias: {
+        "pdfjs-dist": "pdfjs-dist/build/pdf.min.mjs",
+      },
+    },
   },
   serverExternalPackages: [
     // AI/ML packages — large module graphs, server-only, never in client bundles.
@@ -74,21 +84,31 @@ const nextConfig: NextConfig = {
     "@mermaid-js/parser",
     "mermaid",
     "@streamdown/mermaid",
-    // Headless browser — too large to bundle
+    // Headless browser — binary path breaks when webpack bundles these
     "puppeteer",
+    "puppeteer-core",
+    "@sparticuz/chromium",
+    // Microsoft Teams Bot Framework — native Node.js modules, heavy dep graph
+    "@chat-adapter/teams",
+    "botbuilder",
+    "botframework-connector",
+    "@azure/identity",
+    "chat",
+    "@chat-adapter/state-memory",
     // Heavy doc/API packages only used in specific admin routes
     "redoc",
     "swagger-ui-dist",
     "xlsx",
+    // OpenTelemetry + Phoenix tracing — native Node.js modules, never in client bundles
+    "@opentelemetry/sdk-node",
+    "@opentelemetry/exporter-trace-otlp-http",
+    "@arizeai/openinference-instrumentation-openai",
   ],
   webpack: (config) => {
-    // Limit webpack worker parallelism to prevent OOM on Vercel's 8 GB build machines.
-    // Default is (cpuCount - 1) workers; at 2 cores that's already 1, but explicit cap
-    // prevents memory spikes when multiple heavy modules compile simultaneously.
-    config.parallelism = 1;
-
     // react-pdf imports bare `pdfjs-dist`, whose non-minified 5.x ESM entry redeclares
     // webpack's internal export variable and crashes the drawing viewer in dev.
+    // Production builds use Turbopack (--turbopack flag); this alias applies to local
+    // dev and any non-Turbopack builds. Turbopack equivalent: experimental.turbo.resolveAlias.
     config.resolve.alias = {
       ...config.resolve.alias,
       "pdfjs-dist$": pdfjsBrowserEntry,

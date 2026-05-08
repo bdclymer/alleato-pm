@@ -17,6 +17,15 @@ type SourceMeta = Pick<
   | "fireflies_link"
   | "meeting_link"
   | "project_id"
+  | "date"
+  | "captured_at"
+  | "created_at"
+  | "content"
+  | "raw_text"
+  | "summary"
+  | "action_items"
+  | "bullet_points"
+  | "notes"
 >;
 
 export type JoinedTaskRow = TaskTableRow & {
@@ -30,6 +39,7 @@ export interface TasksRow {
   segment_id: string | null;
   source_chunk_id: string | null;
   description: string | null;
+  assignee_person_id: string | null;
   assignee_name: string | null;
   assignee_email: string | null;
   meeting_title: string | null;
@@ -47,10 +57,22 @@ export interface TasksRow {
   file_name: string | null;
   source_title: string | null;
   source_type: string | null;
+  source_date: string | null;
   source_url: string | null;
   source_web_url: string | null;
   fireflies_link: string | null;
   meeting_link: string | null;
+  source_context: string | null;
+  title: string | null;
+  assigned_by: string | null;
+  extraction_source: string | null;
+  extraction_model: string | null;
+  extraction_prompt_version: string | null;
+  extraction_metadata: unknown;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 function titleCase(value: string): string {
@@ -67,34 +89,130 @@ function humanizeToken(value: string | null | undefined): string | null {
   return normalized ? titleCase(normalized) : null;
 }
 
+function nullableText(value: string | null | undefined): string | null {
+  if (value == null) return null;
+  const normalized = value.trim();
+  if (!normalized || normalized.toLowerCase() === "null" || normalized.toLowerCase() === "none") {
+    return null;
+  }
+  return normalized;
+}
+
+function compactText(value: string): string {
+  return value.replace(/\s+/g, " ").trim();
+}
+
+function textFromJsonish(value: unknown): string | null {
+  if (typeof value === "string") return nullableText(value);
+  if (value == null) return null;
+
+  try {
+    return nullableText(JSON.stringify(value));
+  } catch {
+    return null;
+  }
+}
+
+const SOURCE_CONTEXT_FALLBACK_CHARS = 5000;
+const SOURCE_CONTEXT_BEFORE_MATCH_CHARS = 800;
+const SOURCE_CONTEXT_AFTER_MATCH_CHARS = 4200;
+
+function excerptAroundNeedle(sourceText: string | null, needles: Array<string | null | undefined>): string | null {
+  if (!sourceText) return null;
+  const text = compactText(sourceText);
+  if (!text) return null;
+
+  const normalized = text.toLowerCase();
+  const meaningfulNeedles = needles
+    .map((needle) => compactText(needle ?? ""))
+    .filter((needle) => needle.length >= 12)
+    .sort((left, right) => right.length - left.length);
+
+  let matchIndex = -1;
+  for (const needle of meaningfulNeedles) {
+    matchIndex = normalized.indexOf(needle.toLowerCase());
+    if (matchIndex >= 0) break;
+
+    const firstWords = needle.split(" ").filter(Boolean).slice(0, 6).join(" ");
+    if (firstWords.length >= 12) {
+      matchIndex = normalized.indexOf(firstWords.toLowerCase());
+      if (matchIndex >= 0) break;
+    }
+  }
+
+  if (matchIndex < 0) {
+    return text.length > SOURCE_CONTEXT_FALLBACK_CHARS
+      ? `${text.slice(0, SOURCE_CONTEXT_FALLBACK_CHARS).trim()}...`
+      : text;
+  }
+
+  const start = Math.max(0, matchIndex - SOURCE_CONTEXT_BEFORE_MATCH_CHARS);
+  const end = Math.min(text.length, matchIndex + SOURCE_CONTEXT_AFTER_MATCH_CHARS);
+  const prefix = start > 0 ? "... " : "";
+  const suffix = end < text.length ? " ..." : "";
+  return `${prefix}${text.slice(start, end).trim()}${suffix}`;
+}
+
+function buildTaskSourceContext(task: JoinedTaskRow): string | null {
+  const metadata = task.document_metadata;
+  if (!metadata) return null;
+
+  const sourceText = [
+    metadata.action_items,
+    metadata.summary,
+    metadata.bullet_points,
+    metadata.content,
+    metadata.raw_text,
+    metadata.notes,
+  ]
+    .map(textFromJsonish)
+    .filter((value): value is string => Boolean(value))
+    .join("\n\n");
+
+  return excerptAroundNeedle(sourceText, [task.description, task.title]);
+}
+
+function sourceDateFromMetadata(metadata: SourceMeta | null | undefined): string | null {
+  return metadata?.date ?? metadata?.captured_at ?? metadata?.created_at ?? null;
+}
+
 export function mapTaskRow(task: JoinedTaskRow): TasksRow {
   return {
     id: task.id ?? null,
     metadata_id: task.metadata_id ?? null,
     segment_id: task.segment_id ?? null,
     source_chunk_id: task.source_chunk_id ?? null,
-    description: task.description ?? null,
-    assignee_name: task.assignee_name ?? null,
-    assignee_email: task.assignee_email ?? null,
+    description: nullableText(task.description),
+    assignee_person_id: task.assignee_person_id ?? null,
+    assignee_name: nullableText(task.assignee_name),
+    assignee_email: nullableText(task.assignee_email),
     meeting_title: task.document_metadata?.title ?? null,
     project_id: task.project_id ?? task.document_metadata?.project_id ?? null,
     project_name: task.projects?.name ?? null,
     client_id: task.client_id ?? null,
     due_date: task.due_date ?? null,
-    priority: task.priority ?? null,
-    status: task.status ?? null,
-    source_system: task.source_system ?? task.document_metadata?.source_system ?? null,
+    priority: nullableText(task.priority),
+    status: nullableText(task.status),
+    source_system: nullableText(task.source_system) ?? nullableText(task.document_metadata?.source_system),
     embedding: task.embedding ?? null,
     created_at: task.created_at ?? null,
     updated_at: task.updated_at ?? null,
     project_ids: task.project_ids ?? null,
-    file_name: task.file_name ?? null,
+    file_name: nullableText(task.file_name),
     source_title: task.document_metadata?.title ?? null,
     source_type: task.document_metadata?.type ?? null,
+    source_date: sourceDateFromMetadata(task.document_metadata),
     source_url: task.document_metadata?.url ?? task.document_metadata?.source ?? null,
     source_web_url: task.document_metadata?.source_web_url ?? null,
     fireflies_link: task.document_metadata?.fireflies_link ?? null,
     meeting_link: task.document_metadata?.meeting_link ?? null,
+    source_context: buildTaskSourceContext(task),
+    title: nullableText(task.title),
+    assigned_by: nullableText(task.assigned_by),
+    extraction_source: nullableText(task.extraction_source),
+    extraction_model: nullableText(task.extraction_model),
+    extraction_prompt_version: nullableText(task.extraction_prompt_version),
+    extraction_metadata: task.extraction_metadata ?? null,
   };
 }
 
@@ -125,6 +243,64 @@ export function getTaskSourceTitle(
     task.file_name ??
     (task.metadata_id ? `Source ${task.metadata_id}` : "Source record")
   );
+}
+
+export function getTaskCategory(
+  task: Pick<
+    TasksRow,
+    | "description"
+    | "title"
+    | "source_title"
+    | "source_type"
+    | "source_system"
+    | "file_name"
+    | "extraction_metadata"
+  >,
+): string {
+  if (isRecord(task.extraction_metadata)) {
+    const explicitCategory = task.extraction_metadata.task_category;
+    if (typeof explicitCategory === "string" && explicitCategory.trim()) {
+      return explicitCategory.trim();
+    }
+  }
+
+  const normalized = [
+    task.description,
+    task.title,
+    task.source_title,
+    task.source_type,
+    task.source_system,
+    task.file_name,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  if (
+    /\b(acumatica|accounting|invoice|invoices|payment|payments|payroll|retainage|transaction|transactions|bank|chase|amex|cash flow|deposit|deposits|check|checks|coded|coding)\b/.test(
+      normalized,
+    )
+  ) {
+    return "Accounting";
+  }
+
+  if (/\b(permit|coi|insurance|contract|certificate|signature|w9)\b/.test(normalized)) {
+    return "Compliance";
+  }
+
+  if (/\b(pricing|proposal|quote|estimate|cost|budget|sov|change order|co\b)\b/.test(normalized)) {
+    return "Estimating";
+  }
+
+  if (/\b(drawing|drawings|design|submittal|submittals|shop drawing)\b/.test(normalized)) {
+    return "Design";
+  }
+
+  if (/\b(schedule|install|installation|onsite|site|delivery|field|labor)\b/.test(normalized)) {
+    return "Operations";
+  }
+
+  return "General";
 }
 
 export function getTaskSourceTarget(

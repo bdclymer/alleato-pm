@@ -6,6 +6,7 @@ import { useParams, usePathname, useRouter, useSearchParams } from "next/navigat
 import { ArrowUpRight, Plus } from "lucide-react";
 import { toast } from "sonner";
 
+import { apiFetch } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import { useConfirmationDialog } from "@/components/common/ConfirmationDialog";
 import {
@@ -214,14 +215,10 @@ export default function CommitmentPcosPage(): ReactElement {
     (item: CommitmentPco) => {
       deleteDialog.confirm(async () => {
         try {
-          const response = await fetch(
+          await apiFetch(
             `/api/projects/${projectId}/commitment-pcos/${item.id}`,
             { method: "DELETE" },
           );
-          if (!response.ok) {
-            const body = await response.json().catch(() => ({}));
-            throw new Error(body.error || "Failed to delete PCO");
-          }
           toast.success("PCO deleted");
           fetchPcos();
         } catch (err) {
@@ -236,14 +233,10 @@ export default function CommitmentPcosPage(): ReactElement {
     (item: CommitmentPco) => {
       promoteDialog.confirm(async () => {
         try {
-          const response = await fetch(
+          await apiFetch(
             `/api/projects/${projectId}/commitment-pcos/${item.id}/promote`,
             { method: "POST" },
           );
-          if (!response.ok) {
-            const body = await response.json().catch(() => ({}));
-            throw new Error(body.error || "Failed to promote PCO");
-          }
           toast.success("PCO promoted to Change Order");
           fetchPcos();
         } catch (err) {
@@ -264,16 +257,12 @@ export default function CommitmentPcosPage(): ReactElement {
     bulkDeleteDialog.confirm(async () => {
       try {
         const results = await Promise.allSettled(
-          selectedIds.map(async (id) => {
-            const response = await fetch(
+          selectedIds.map((id) =>
+            apiFetch(
               `/api/projects/${projectId}/commitment-pcos/${id}`,
               { method: "DELETE" },
-            );
-            if (!response.ok) {
-              const body = await response.json().catch(() => ({}));
-              throw new Error(body.error || `Failed to delete PCO ${id}`);
-            }
-          }),
+            ),
+          ),
         );
 
         const failed = results.filter(
@@ -312,20 +301,16 @@ export default function CommitmentPcosPage(): ReactElement {
 
     bulkPromoteDialog.confirm(async () => {
       try {
-        const response = await fetch(
+        const body = await apiFetch(
           `/api/projects/${projectId}/commitment-pcos/promote-bulk`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ pco_ids: selectedIds }),
           },
-        );
-        const body = await response.json().catch(() => ({}));
-        if (!response.ok) {
-          throw new Error(body.error || "Failed to promote selected PCOs");
-        }
+        ) as { message?: string };
 
-        toast.success(body.message || "Selected PCOs promoted");
+        toast.success((body as { message?: string }).message || "Selected PCOs promoted");
         tableState.setSelectedIds([]);
         fetchPcos();
       } catch (err) {

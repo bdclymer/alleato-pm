@@ -31,12 +31,17 @@ const DesignViolationOverlay = dynamic(
   () => import("@/components/dev/design-violation-overlay").then((mod) => mod.DesignViolationOverlay),
   { ssr: false },
 );
+const AppErrorTelemetryProvider = dynamic(
+  () => import("@/components/providers/app-error-telemetry-provider").then((mod) => mod.AppErrorTelemetryProvider),
+  { ssr: false },
+);
 
 const ENABLE_DEV_BRIDGE = process.env.NEXT_PUBLIC_ENABLE_DEV_BRIDGE === "true";
 
 export function RootClientWidgets() {
   return (
     <Suspense fallback={null}>
+      <AppErrorTelemetryProvider />
       <AskAlleatoRoot />
       <AdminFeedbackWidget showLauncher={false} />
       {process.env.NODE_ENV === "development" && (

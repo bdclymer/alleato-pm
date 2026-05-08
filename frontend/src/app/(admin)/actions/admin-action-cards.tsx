@@ -21,6 +21,10 @@ import {
   FlaskConical,
   Bug,
   Zap,
+  Brain,
+  Flag,
+  FileText,
+  MessageSquare,
 } from "lucide-react";
 
 // ── Status badge ──────────────────────────────────────────────────────────────
@@ -341,13 +345,278 @@ function RegenerateBriefCard() {
   );
 }
 
+// ── 5. Intelligence compiler ──────────────────────────────────────────────────
+
+function IntelligenceCompilerCard() {
+  const [status, setStatus] = React.useState<ActionStatus>("idle");
+  const [message, setMessage] = React.useState("");
+  const [sourceLimit, setSourceLimit] = React.useState("5");
+  const [packetLimit, setPacketLimit] = React.useState("5");
+
+  const run = async () => {
+    setStatus("running");
+    setMessage("Running intelligence compiler…");
+    try {
+      const data = await apiFetch<{ message?: string }>("/api/admin/intelligence-compiler/run", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sourceLimit: Number(sourceLimit),
+          packetLimit: Number(packetLimit),
+          dryRun: false,
+          background: true,
+        }),
+      });
+      setStatus("success");
+      setMessage(data.message ?? "Compiler started. Check /admin/intelligence-compiler for status.");
+    } catch (e) {
+      setStatus("error");
+      setMessage(e instanceof Error ? e.message : "Compiler failed.");
+    }
+  };
+
+  return (
+    <ActionCard
+      title="Intelligence Compiler"
+      badge="AI"
+      icon={Brain}
+      description="Generate AI intelligence packets for the executive dashboard. Runs on-demand — not scheduled."
+    >
+      <div className="flex items-center gap-2">
+        <Select value={sourceLimit} onValueChange={setSourceLimit}>
+          <SelectTrigger size="sm" className="flex-1">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="3">3 sources</SelectItem>
+            <SelectItem value="5">5 sources (default)</SelectItem>
+            <SelectItem value="10">10 sources</SelectItem>
+            <SelectItem value="25">25 sources</SelectItem>
+          </SelectContent>
+        </Select>
+        <Button size="sm" onClick={run} disabled={status === "running"}>
+          {status === "running" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Brain className="h-3.5 w-3.5" />}
+          Run
+        </Button>
+      </div>
+      <StatusBadge status={status} message={message} />
+    </ActionCard>
+  );
+}
+
+// ── 6. Daily flags ────────────────────────────────────────────────────────────
+
+function DailyFlagsCard() {
+  const [status, setStatus] = React.useState<ActionStatus>("idle");
+  const [message, setMessage] = React.useState("");
+
+  const run = async () => {
+    setStatus("running");
+    setMessage("Scanning all projects for flags…");
+    try {
+      const data = await apiFetch<{ message?: string; stats?: Record<string, number> }>(
+        "/api/admin/cron/daily-flags",
+        { method: "POST" },
+      );
+      const stats = data.stats
+        ? ` (${Object.entries(data.stats)
+            .map(([k, v]) => `${v} ${k}`)
+            .join(", ")})`
+        : "";
+      setStatus("success");
+      setMessage(data.message ?? `Flags generated.${stats}`);
+    } catch (e) {
+      setStatus("error");
+      setMessage(e instanceof Error ? e.message : "Failed.");
+    }
+  };
+
+  return (
+    <ActionCard
+      title="Daily Flags"
+      badge="Cron"
+      icon={Flag}
+      description="Scan all active projects for budget variances >10%, past-due RFIs, late tasks, and stale change events. Runs automatically at 6am UTC."
+    >
+      <Button size="sm" onClick={run} disabled={status === "running"} className="w-full">
+        {status === "running" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Flag className="h-3.5 w-3.5" />}
+        Run Now
+      </Button>
+      <StatusBadge status={status} message={message} />
+    </ActionCard>
+  );
+}
+
+// ── 7. Progress report drafts ─────────────────────────────────────────────────
+
+function ProgressReportDraftsCard() {
+  const [status, setStatus] = React.useState<ActionStatus>("idle");
+  const [message, setMessage] = React.useState("");
+
+  const run = async () => {
+    setStatus("running");
+    setMessage("Creating progress report drafts…");
+    try {
+      const data = await apiFetch<{ message?: string }>("/api/admin/cron/progress-reports", {
+        method: "POST",
+      });
+      setStatus("success");
+      setMessage(data.message ?? "Draft reports created for all active projects.");
+    } catch (e) {
+      setStatus("error");
+      setMessage(e instanceof Error ? e.message : "Failed.");
+    }
+  };
+
+  return (
+    <ActionCard
+      title="Progress Report Drafts"
+      badge="Cron"
+      icon={FileText}
+      description="Auto-create a draft progress report for every active project missing one this week. Safe to re-run — idempotent. Runs automatically every Monday."
+    >
+      <Button size="sm" onClick={run} disabled={status === "running"} className="w-full">
+        {status === "running" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-3.5 w-3.5" />}
+        Run Now
+      </Button>
+      <StatusBadge status={status} message={message} />
+    </ActionCard>
+  );
+}
+
+// ── Seed Teams conversation (admin-connect a user) ───────────────────────────
+
+function SeedTeamsConversationCard() {
+  const [status, setStatus] = React.useState<ActionStatus>("idle");
+  const [message, setMessage] = React.useState("");
+  const [email, setEmail] = React.useState("");
+  const [aadObjectId, setAadObjectId] = React.useState("");
+  const [needsAadId, setNeedsAadId] = React.useState(false);
+
+  const run = async () => {
+    if (!email.trim()) return;
+    setStatus("running");
+    setNeedsAadId(false);
+    setMessage("Creating Teams conversation…");
+
+    try {
+      const body: Record<string, string> = { email: email.trim() };
+      if (aadObjectId.trim()) body.aadObjectId = aadObjectId.trim();
+
+      const data = await apiFetch<{ displayName?: string; needsAadObjectId?: boolean; error?: string }>(
+        "/api/admin/teams/seed-conversation",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        },
+      );
+
+      setStatus("success");
+      setMessage(`Connected! Archon can now message ${data.displayName ?? email} proactively.`);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Failed.";
+      if (msg.includes("aadObjectId") || msg.includes("AAD")) {
+        setNeedsAadId(true);
+      }
+      setStatus("error");
+      setMessage(msg);
+    }
+  };
+
+  return (
+    <ActionCard
+      title="Connect Teams Account"
+      badge="Teams"
+      icon={MessageSquare}
+      description="Manually link a user's Teams account so the Archon bot can send them proactive messages — no action required from the user. Tries Graph API automatically; falls back to manual AAD Object ID."
+    >
+      <div className="space-y-2">
+        <Input
+          placeholder="Email (e.g. brandon@company.com)"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="h-8 text-sm"
+        />
+        {(needsAadId || aadObjectId) && (
+          <Input
+            placeholder="AAD Object ID (from Azure portal → Users)"
+            value={aadObjectId}
+            onChange={(e) => setAadObjectId(e.target.value)}
+            className="h-8 font-mono text-xs"
+          />
+        )}
+        <Button
+          size="sm"
+          onClick={run}
+          disabled={status === "running" || !email.trim()}
+          className="w-full"
+        >
+          {status === "running" ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <MessageSquare className="h-3.5 w-3.5" />
+          )}
+          Connect
+        </Button>
+      </div>
+      <StatusBadge status={status} message={message} />
+    </ActionCard>
+  );
+}
+
+// ── Send executive brief to Teams ────────────────────────────────────────────
+
+function SendBriefToTeamsCard() {
+  const [status, setStatus] = React.useState<ActionStatus>("idle");
+  const [message, setMessage] = React.useState("");
+
+  const run = async () => {
+    setStatus("running");
+    setMessage("Generating brief and sending to Teams…");
+    try {
+      const data = await apiFetch<{ recipientName?: string; itemCount?: number }>(
+        "/api/executive/daily-brief/send-teams",
+        { method: "POST" },
+      );
+      setStatus("success");
+      setMessage(
+        `Sent to ${data.recipientName ?? "recipient"} — ${data.itemCount ?? 0} item${(data.itemCount ?? 0) === 1 ? "" : "s"} in the brief.`,
+      );
+    } catch (e) {
+      setStatus("error");
+      setMessage(e instanceof Error ? e.message : "Failed to send.");
+    }
+  };
+
+  return (
+    <ActionCard
+      title="Send Brief to Teams"
+      badge="Teams"
+      icon={MessageSquare}
+      description="Deliver today's executive operating brief as a conversational Teams message via the Archon bot. Uses the cached brief if already generated today."
+    >
+      <Button size="sm" onClick={run} disabled={status === "running"} className="w-full">
+        {status === "running" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <MessageSquare className="h-3.5 w-3.5" />}
+        Send Now
+      </Button>
+      <StatusBadge status={status} message={message} />
+    </ActionCard>
+  );
+}
+
 // ── Main export ───────────────────────────────────────────────────────────────
 
 export function AdminActionCards() {
   return (
     <>
+      <SeedTeamsConversationCard />
+      <SendBriefToTeamsCard />
       <RegenerateBriefCard />
       <AccountingSyncCard />
+      <IntelligenceCompilerCard />
+      <DailyFlagsCard />
+      <ProgressReportDraftsCard />
       <RagEvalCard />
       <ProcoreCrawlCard />
     </>

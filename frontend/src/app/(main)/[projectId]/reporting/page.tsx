@@ -5,7 +5,7 @@ import { PageShell } from "@/components/layout";
 import { Card } from "@/components/ui/card";
 
 export default function ProjectReportingPage() {
-  const params = useParams();
+  const params = useParams() ?? {};
   const projectId = params.projectId as string;
 
   return (

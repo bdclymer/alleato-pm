@@ -136,7 +136,7 @@ async function redeemTelegramLinkCode(
     .from("user_profiles")
     .select("full_name, first_name")
     .eq("id", row.user_id)
-    .maybeSingle();
+    .maybeSingle() as unknown as { data: { full_name?: string | null; first_name?: string | null } | null };
 
   const displayName =
     profile?.full_name ?? profile?.first_name ?? telegramUsername ?? "there";
@@ -222,7 +222,7 @@ bot.onDirectMessage(async (thread, message) => {
 
   const text = message.text?.trim() ?? "";
   const telegramChatId = message.author?.userId ?? "unknown";
-  const telegramUsername = message.author?.displayName;
+  const telegramUsername = (message.author as unknown as { displayName?: string })?.displayName;
 
   // /start <code> — account linking
   if (text.startsWith("/start ") || text.startsWith("/link ")) {

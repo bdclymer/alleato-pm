@@ -8,11 +8,7 @@ export default async function ProgressReportDetailPage({
 }) {
   const { projectId, reportId } = await params;
   return (
-    <PageShell
-      variant="detailWide"
-      title="Progress Report"
-      description="Review the weekly client report, then edit only when changes are needed."
-    >
+    <PageShell variant="detailWide" title="Progress Report">
       <ProgressReportEditor
         projectId={Number.parseInt(projectId, 10)}
         reportId={reportId}

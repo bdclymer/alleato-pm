@@ -69,6 +69,8 @@
     "rag:sharepoint:dry-run": "python3 scripts/ingestion/sharepoint_project_folder_dry_run.py",
     "rag:sharepoint:import-rfis": "node scripts/ingestion/import_sharepoint_rfis_from_documents.mjs",
     "rag:backfill:meeting-chunks": "node scripts/backfill-recent-meeting-chunks.mjs",
+    "tasks:extract-brandon": "node scripts/backfill-brandon-tasks.mjs",
+    "tasks:extract-brandon:dry": "node scripts/backfill-brandon-tasks.mjs --dry-run",
     "rag:verify:financial": "bash -lc 'PY=python3; [ -x backend/.venv/bin/python ] && PY=backend/.venv/bin/python; $PY scripts/verify/verify_financial_numeric_retrieval.py --project-id ${RAG_VERIFY_PROJECT_ID:-43}'",
     "rag:verify:financial:fallback": "bash -lc 'PY=python3; [ -x backend/.venv/bin/python ] && PY=backend/.venv/bin/python; $PY scripts/verify/verify_financial_fallback_retrieval.py --project-id ${RAG_VERIFY_PROJECT_ID:-43}'",
     "rag:verify:meetings": "node scripts/verify/verify_meeting_vectorization_health.mjs",

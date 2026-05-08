@@ -84,6 +84,27 @@ export async function fetchAllTemplates(): Promise<PermissionTemplate[]> {
   return data;
 }
 
+function normalizeTemplateName(name: string): string {
+  return name.trim().replace(/\s+/g, " ").toLowerCase();
+}
+
+export function getProjectRoleTemplates(templates: PermissionTemplate[]): PermissionTemplate[] {
+  const seen = new Set<string>();
+  const roleTemplates: PermissionTemplate[] = [];
+
+  for (const template of templates) {
+    if (template.scope === "company") continue;
+
+    const normalizedName = normalizeTemplateName(template.name);
+    if (seen.has(normalizedName)) continue;
+
+    seen.add(normalizedName);
+    roleTemplates.push(template);
+  }
+
+  return roleTemplates;
+}
+
 export async function fetchUsers(access?: PermissionUsersAccess): Promise<PermissionUsersResponse> {
   const suffix = access ? `?access=${access}` : "";
   return apiFetch<PermissionUsersResponse>(`/api/permissions/users${suffix}`);

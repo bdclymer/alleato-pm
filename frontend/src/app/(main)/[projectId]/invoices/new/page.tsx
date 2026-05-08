@@ -180,8 +180,8 @@ const toPaymentApplicationStatus = (
 
 export default function NewInvoicePage() {
   const router = useRouter();
-  const params = useParams();
-  const searchParams = useSearchParams();
+  const params = useParams() ?? {};
+  const searchParams = useSearchParams() ?? new URLSearchParams();
   const projectId = params.projectId as string;
   const parsedProjectId = Number.parseInt(projectId, 10);
 

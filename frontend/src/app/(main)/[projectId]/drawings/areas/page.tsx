@@ -15,7 +15,7 @@ import { useConfirm } from "@/hooks/use-confirm";
 import type { DrawingAreaWithCount, DrawingAreaFormData } from "@/types/drawings.types";
 
 export default function DrawingAreasPage() {
-  const params = useParams();
+  const params = useParams() ?? {};
   const router = useRouter();
   const projectId = params.projectId as string;
 

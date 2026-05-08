@@ -306,7 +306,7 @@ export default function ProjectChangeEventsPage(): ReactElement {
           throw new Error("Selected change event could not be found.");
         }
 
-        const response = await fetch(`/api/projects/${projectId}/change-events/rfqs`, {
+        const payload = await apiFetch(`/api/projects/${projectId}/change-events/rfqs`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -320,15 +320,6 @@ export default function ProjectChangeEventsPage(): ReactElement {
           }),
         });
 
-        const payload = await response.json().catch(() => null);
-        if (!response.ok) {
-          const apiMessage =
-            payload && typeof payload === "object" && "error" in payload
-              ? String(payload.error)
-              : "Failed to create RFQ";
-          throw new Error(apiMessage);
-        }
-
         const rfqNumber =
           payload &&
           typeof payload === "object" &&
@@ -336,7 +327,7 @@ export default function ProjectChangeEventsPage(): ReactElement {
           payload.data &&
           typeof payload.data === "object" &&
           "rfq_number" in payload.data
-            ? String(payload.data.rfq_number)
+            ? String((payload.data as Record<string, unknown>).rfq_number)
             : null;
 
         toast.success(rfqNumber ? `RFQ ${rfqNumber} sent successfully` : "RFQ sent successfully");

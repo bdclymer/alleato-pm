@@ -4,8 +4,9 @@ Fetches channel messages/threads and direct messages (chats) from Teams via Micr
 """
 import hashlib
 import logging
+import os
 import re
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from ...intelligence.compiler import process_source_document_to_packet
@@ -277,7 +278,7 @@ def get_all_teams_and_channels(supabase_client) -> list[dict]:
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Direct Messages (Chats)
-# Uses /users/{user}/chats and /chats/{chatId}/messages/delta
+# Primary path uses /users/{user}/chats/getAllMessages.
 # Requires: Chat.Read.All (application permission)
 # Optional: ChatMember.Read.All for member names (graceful fallback if absent)
 # ─────────────────────────────────────────────────────────────────────────────
@@ -316,11 +317,57 @@ def _chat_display_name(chat: dict) -> tuple[str, list[str]]:
     return display, member_signals or member_names
 
 
+def _fallback_chat_display_name(chat_id: str) -> str:
+    return chat_id[:12] if chat_id else "Unknown Teams DM"
+
+
+def _sender_signals(message: dict) -> list[str]:
+    from_field = message.get("from") or {}
+    if not isinstance(from_field, dict):
+        return []
+    signals: list[str] = []
+    user_field = from_field.get("user") or {}
+    if isinstance(user_field, dict):
+        signals.extend(_user_identity_signals(user_field))
+    app_field = from_field.get("application") or {}
+    if isinstance(app_field, dict) and app_field.get("displayName"):
+        signals.append(str(app_field["displayName"]).strip())
+    return [signal for signal in signals if signal]
+
+
+def _export_since_iso(since_iso: Optional[str]) -> str:
+    def normalize(value: str) -> str:
+        try:
+            parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        except ValueError:
+            return value
+        return parsed.astimezone(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
+
+    if since_iso:
+        return normalize(since_iso)
+    configured_since = os.environ.get("TEAMS_DM_EXPORT_SINCE")
+    if configured_since:
+        return normalize(configured_since)
+    lookback_days = max(1, int(os.environ.get("TEAMS_DM_EXPORT_INITIAL_LOOKBACK_DAYS", "7")))
+    return (datetime.now(timezone.utc) - timedelta(days=lookback_days)).isoformat(timespec="milliseconds").replace("+00:00", "Z")
+
+
+def _now_graph_iso() -> str:
+    return datetime.now(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
+
+
+class ChatReadPermissionError(Exception):
+    """Raised when Chat.Read.All admin consent is missing (HTTP 403 from /users/{user}/chats)."""
+
+
 def get_user_chats(user_email: str) -> list[dict]:
     """
     List all oneOnOne and group chats for a user.
     Returns list of dicts with keys: id, chatType, display_name, member_names.
-    Requires Chat.Read.All. Member names require ChatMember.Read.All (optional).
+    Requires Chat.Read.All (application permission + admin consent in Azure AD).
+    Member names require ChatMember.Read.All (optional — graceful fallback).
+
+    Raises ChatReadPermissionError if Chat.Read.All admin consent is missing.
     """
     graph = get_graph_client()
     chats = []
@@ -345,9 +392,22 @@ def get_user_chats(user_email: str) -> list[dict]:
             logger.info(f"[Teams DM] Found {len(chats)} chats for {user_email}")
             return chats
         except Exception as e:
-            if "members" in params.get("$expand", "") and any(code in str(e) for code in ("400", "403", "Forbidden", "Bad Request")):
+            e_str = str(e)
+            is_403 = any(code in e_str for code in ("403", "Forbidden"))
+
+            # Member expansion 403/400 → retry without expansion (ChatMember.Read.All missing)
+            if "members" in params.get("$expand", "") and (is_403 or "400" in e_str or "Bad Request" in e_str):
                 logger.warning(f"[Teams DM] Member expansion not supported — retrying without it")
                 continue
+
+            # Base chats endpoint 403 → Chat.Read.All admin consent not granted
+            if is_403:
+                raise ChatReadPermissionError(
+                    f"Chat.Read.All admin consent missing for tenant — "
+                    f"grant consent in Azure AD > App registrations > API permissions. "
+                    f"User: {user_email}. Original error: {e_str}"
+                ) from e
+
             logger.error(f"[Teams DM] Failed to list chats for {user_email}: {e}")
             raise
 
@@ -524,4 +584,88 @@ def sync_teams_chat(
 
     if synced:
         logger.info(f"[Teams DM] Synced {synced} messages from '{chat_display_name}'")
+    return synced, latest_ts
+
+
+def sync_user_chat_messages(
+    supabase_client,
+    user_email: str,
+    since_iso: Optional[str] = None,
+) -> tuple[int, str]:
+    """
+    Sync Teams chat messages visible to a user via the export endpoint.
+
+    This avoids tenant-mismatch failures from /chats/{chatId}/messages for
+    federated/external chats while preserving the existing grouped daily
+    document shape used by embedding and the Teams compiler.
+    """
+    graph = get_graph_client()
+    if not graph.is_configured():
+        return 0, since_iso or ""
+
+    chat_labels: dict[str, tuple[str, list[str]]] = {}
+    try:
+        for chat in get_user_chats(user_email):
+            chat_labels[chat["id"]] = (chat["display_name"], chat["member_names"])
+    except ChatReadPermissionError:
+        raise
+    except Exception as exc:
+        logger.warning("[Teams DM Export] Could not prefetch chat labels for %s: %s", user_email, exc)
+
+    since_filter = _export_since_iso(since_iso)
+    until_filter = _now_graph_iso()
+    page_size = max(1, min(int(os.environ.get("TEAMS_DM_EXPORT_PAGE_SIZE", "50")), 50))
+    max_pages = max(1, int(os.environ.get("TEAMS_DM_EXPORT_MAX_PAGES", "20")))
+    filter_expr = f"lastModifiedDateTime gt {since_filter} and lastModifiedDateTime lt {until_filter}"
+    url: Optional[str] = f"{graph.GRAPH_BASE}/users/{user_email}/chats/getAllMessages"
+    params: Optional[dict] = {"$top": str(page_size), "$filter": filter_expr}
+    items: list[dict] = []
+    pages_fetched = 0
+
+    while url and pages_fetched < max_pages:
+        data = graph.get(url, params if pages_fetched == 0 else None)
+        items.extend(data.get("value", []))
+        pages_fetched += 1
+        url = data.get("@odata.nextLink")
+
+    synced = 0
+    latest_ts = since_filter
+    for msg in sorted(items, key=lambda item: item.get("createdDateTime") or ""):
+        chat_id = msg.get("chatId") or ""
+        if not chat_id:
+            continue
+        display_name, member_names = chat_labels.get(
+            chat_id,
+            (_fallback_chat_display_name(chat_id), []),
+        )
+        member_signals = sorted(set(member_names + _sender_signals(msg) + [user_email]))
+        try:
+            _process_chat_message(
+                supabase_client,
+                msg,
+                chat_id,
+                display_name,
+                member_signals,
+            )
+            synced += 1
+        except _AlreadyIngested:
+            pass
+        except Exception as exc:
+            logger.warning("[Teams DM Export] Skipping message %s: %s", msg.get("id"), exc)
+
+        modified = msg.get("lastModifiedDateTime") or msg.get("createdDateTime") or ""
+        if modified and modified > latest_ts:
+            latest_ts = modified
+
+    if url is None and latest_ts < until_filter:
+        latest_ts = until_filter
+
+    logger.info(
+        "[Teams DM Export] Synced %d messages for %s from %s to %s across %d fetched pages",
+        synced,
+        user_email,
+        since_filter,
+        until_filter,
+        pages_fetched,
+    )
     return synced, latest_ts

@@ -41,6 +41,10 @@ import {
   renderEmailRowActions,
 } from "@/features/emails/emails-table-config";
 import { EmailComposeDialog } from "@/features/emails/email-compose-dialog";
+import {
+  EmailDetailPanel,
+  projectEmailToDetailRecord,
+} from "@/features/emails/email-detail-sheet";
 import { ProjectEmailsWorkspace } from "@/features/emails/project-emails-workspace";
 import { EmailAttachmentsClient } from "../email-attachments/email-attachments-client";
 
@@ -50,7 +54,18 @@ const EMPTY_FILTERS: Record<string, FilterValue> = {
 
 type FilterState = Record<string, FilterValue>;
 
+interface EmailClientTab {
+  label: string;
+  href: string;
+  count?: number;
+  isActive?: boolean;
+  testId?: string;
+  countTestId?: string;
+}
+
 interface EmailsClientProps {
+  embedded?: boolean;
+  navigationTabs?: EmailClientTab[];
   projectId?: number;
   scope?: "project" | "global";
   source?: EmailSource;
@@ -58,12 +73,14 @@ interface EmailsClientProps {
 
 export function EmailsClient({
   projectId,
+  navigationTabs,
   scope = "project",
   source = "app",
+  embedded = false,
 }: EmailsClientProps): ReactElement {
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const searchParams = (useSearchParams() ?? new URLSearchParams()) as NonNullable<ReturnType<typeof useSearchParams>>;
   const isGlobal = scope === "global" || !projectId;
   const isOutlook = source === "outlook";
   const activeTab =
@@ -77,7 +94,7 @@ export function EmailsClient({
     : isOutlook
       ? `/${projectId}/outlook-emails`
       : `/${projectId}/emails`;
-  const tabs = isOutlook
+  const outlookTabs = isOutlook
     ? [
         {
           label: "Outlook Emails",
@@ -91,6 +108,7 @@ export function EmailsClient({
         },
       ]
     : undefined;
+  const tabs = navigationTabs ?? outlookTabs;
   const title = isOutlook ? "Outlook Emails" : "Emails";
   const description = isOutlook
     ? isGlobal
@@ -99,7 +117,9 @@ export function EmailsClient({
     : isGlobal
       ? "Application and Resend emails across projects."
       : undefined;
+  // Outlook emails can be bulk-deleted from our system even though they can't be edited
   const noWriteActions = isGlobal || isOutlook;
+  const allowBulkDelete = !isGlobal;
   const initialStatus = searchParams.get("status") ?? "";
   const initialFilters: FilterState = {
     status: initialStatus || undefined,
@@ -138,6 +158,7 @@ export function EmailsClient({
   const [editingEmail, setEditingEmail] = React.useState<ProjectEmail | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [emailToDelete, setEmailToDelete] = React.useState<ProjectEmail | null>(null);
+  const [selectedEmail, setSelectedEmail] = React.useState<ProjectEmail | null>(null);
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = React.useState(false);
   const [isBulkDeleting, setIsBulkDeleting] = React.useState(false);
 
@@ -240,10 +261,8 @@ export function EmailsClient({
     tableState.setPage(1);
   };
 
-  const handleRowClick = (item: ProjectEmail) => {
-    if (noWriteActions) return;
-    setEditingEmail(item);
-    setComposeOpen(true);
+  const handleOpenEmail = (item: ProjectEmail) => {
+    setSelectedEmail(item);
   };
 
   const handleEdit = (item: ProjectEmail) => {
@@ -420,7 +439,7 @@ export function EmailsClient({
   return (
     <>
       <UnifiedTablePage
-        header={{
+        header={embedded ? { title: "" } : {
           title,
           description,
           actions: noWriteActions ? undefined : (
@@ -437,9 +456,10 @@ export function EmailsClient({
             </Button>
           ),
         }}
-        tabs={tabs}
+        tabs={embedded && !navigationTabs ? undefined : tabs}
         layout={{
           fullBleedTable: false,
+          containerPadding: !embedded,
         }}
         toolbar={{
           totalItems,
@@ -461,7 +481,7 @@ export function EmailsClient({
           visibleColumns: tableState.visibleColumns,
           onColumnVisibilityChange: tableState.setVisibleColumns,
           onExport: handleExport,
-          onBulkDelete: !noWriteActions && tableState.selectedIds.length > 0
+          onBulkDelete: allowBulkDelete && tableState.selectedIds.length > 0
             ? () => setBulkDeleteDialogOpen(true)
             : undefined,
         }}
@@ -473,7 +493,8 @@ export function EmailsClient({
         table={{
           columns: tableColumns,
           getRowId: (item) => String(item.id),
-          onRowClick: noWriteActions ? undefined : handleRowClick,
+          activeRowId: selectedEmail ? String(selectedEmail.id) : null,
+          onRowClick: handleOpenEmail,
           rowActions: (item) =>
             noWriteActions
               ? null
@@ -493,18 +514,14 @@ export function EmailsClient({
             tableState.setPage(1);
           },
         }}
-        selection={
-          isGlobal
-            ? undefined
-            : {
-                selectedIds: tableState.selectedIds,
-                onSelectAll: handleSelectAll,
-                onSelectRow: handleSelectRow,
-              }
-        }
+        selection={{
+          selectedIds: tableState.selectedIds,
+          onSelectAll: handleSelectAll,
+          onSelectRow: handleSelectRow,
+        }}
         views={{
-          card: (item) => renderEmailCard(item, handleRowClick),
-          list: (item) => renderEmailList(item, handleRowClick),
+          card: (item) => renderEmailCard(item, handleOpenEmail),
+          list: (item) => renderEmailList(item, handleOpenEmail),
         }}
         emptyState={{
           title: "No emails found",
@@ -544,6 +561,35 @@ export function EmailsClient({
             tableState.setPage(1);
           },
         }}
+        sidePanel={
+          selectedEmail
+            ? {
+                content: (
+                  <EmailDetailPanel
+                    email={projectEmailToDetailRecord(selectedEmail)}
+                    onClose={() => setSelectedEmail(null)}
+                    actions={
+                      !noWriteActions ? (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEdit(selectedEmail)}
+                        >
+                          Edit
+                        </Button>
+                      ) : null
+                    }
+                  />
+                ),
+                variant: "wide",
+                defaultWidth: 560,
+                minWidth: 440,
+                storageKey: isGlobal ? "global-email-detail" : "project-email-detail",
+                onClose: () => setSelectedEmail(null),
+              }
+            : undefined
+        }
       />
 
       {projectId ? (

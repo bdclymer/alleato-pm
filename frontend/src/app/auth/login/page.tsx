@@ -1,5 +1,4 @@
 import Image from "next/image";
-import Link from "next/link";
 
 import { LoginForm } from "@/components/misc/login-form";
 import { validateCallbackUrl } from "@/lib/validation/callback-url";
@@ -15,36 +14,35 @@ export default async function LoginPage({
   const redirectTo = validateCallbackUrl(params.callbackUrl);
 
   return (
-    <div className="grid min-h-svh lg:grid-cols-2">
-      <div className="flex flex-col gap-4 p-6 md:p-10">
-        <div className="flex justify-center gap-2 md:justify-start">
-          <Link href="/" className="flex items-center gap-2 font-medium">
-            <Image
-              src="/Alleato Favicon.png"
-              alt="Alleato"
-              width={32}
-              height={32}
-              className="object-contain"
-            />
-            <span className="text-xl font-semibold">Alleato</span>
-          </Link>
+    <main className="relative flex min-h-svh overflow-hidden bg-surface-inverse text-primary-foreground">
+      <Image
+        src="/images/auth/login-commercial-construction.jpg"
+        alt=""
+        fill
+        sizes="100vw"
+        className="object-cover opacity-34 saturate-0"
+        priority
+      />
+      <div className="absolute inset-0 bg-surface-inverse/80" />
+
+      <div className="relative z-10 mx-auto flex min-h-svh w-full max-w-md flex-col items-center justify-center px-6 py-10 sm:px-8">
+        <div className="flex w-full flex-col items-center">
+          <Image
+            src="/Alleato-Group-Logo_Light.png"
+            alt="Alleato Group"
+            width={320}
+            height={69}
+            className="mb-14 h-auto w-80 max-w-full object-contain"
+            priority
+          />
+
+          <LoginForm redirectTo={redirectTo} />
         </div>
-        <div className="flex flex-1 items-center justify-center">
-          <div className="w-full max-w-xs">
-            <LoginForm redirectTo={redirectTo} />
-          </div>
-        </div>
+
+        <p className="absolute bottom-6 left-1/2 w-full -translate-x-1/2 px-6 text-center text-xs text-primary-foreground/32">
+          All rights reserved
+        </p>
       </div>
-      <div className="bg-muted relative hidden lg:block">
-        <Image
-          src="/alleato-group.jpg"
-          alt="Alleato Group"
-          fill
-          sizes="(min-width: 1024px) 50vw, 100vw"
-          className="object-cover"
-          priority
-        />
-      </div>
-    </div>
+    </main>
   );
 }

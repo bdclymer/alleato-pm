@@ -96,7 +96,7 @@ function buildMetricTile(label: string, count: number, color: string): WidgetNod
 }
 
 function buildItemRow(item: BrandonBriefItem, index: number): WidgetNode {
-  const facts = [item.project, item.source, item.date].filter(Boolean).join(" • ");
+  const sourceFacts = [item.source, item.date].filter(Boolean).join(" • ");
   const bulletText = item.bullets
     .filter(Boolean)
     .slice(0, 2)
@@ -117,6 +117,34 @@ function buildItemRow(item: BrandonBriefItem, index: number): WidgetNode {
           {
             type: "Row",
             gap: 2,
+            align: "center",
+            children: [
+              {
+                type: "Badge",
+                label: item.project,
+                color: "secondary",
+                variant: "soft",
+                size: "sm",
+              },
+              ...(item.status
+                ? [
+                    {
+                      type: "Spacer",
+                    },
+                    {
+                      type: "Badge",
+                      label: item.status,
+                      color: toneToBadgeColor(item.tone),
+                      variant: "soft",
+                      size: "sm",
+                    },
+                  ]
+                : []),
+            ],
+          },
+          {
+            type: "Row",
+            gap: 2,
             align: "start",
             children: [
               {
@@ -133,22 +161,11 @@ function buildItemRow(item: BrandonBriefItem, index: number): WidgetNode {
                   },
                   {
                     type: "Caption",
-                    value: facts,
+                    value: sourceFacts,
                     color: "secondary",
                   },
                 ],
               },
-              ...(item.status
-                ? [
-                    {
-                      type: "Badge",
-                      label: item.status,
-                      color: toneToBadgeColor(item.tone),
-                      variant: "soft",
-                      size: "sm",
-                    },
-                  ]
-                : []),
             ],
           },
           {

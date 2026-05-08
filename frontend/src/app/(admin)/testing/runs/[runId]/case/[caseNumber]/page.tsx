@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { PageShell } from "@/components/layout";
 
 // The active-case subroute redirects back to the run view; the run view
 // already supports per-case navigation via its cursor. This exists so
@@ -12,5 +13,9 @@ export default function RunnerCasePage() {
   useEffect(() => {
     router.replace(`/testing/runs/${params.runId}`);
   }, [router, params.runId]);
-  return null;
+  return (
+    <PageShell variant="content" title="Redirecting…">
+      {null}
+    </PageShell>
+  );
 }

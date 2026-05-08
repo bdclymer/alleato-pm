@@ -117,21 +117,22 @@ export default function ToolPage() {
       {/* Single toolbar row: tabs + expandable search + count */}
       <div className="flex items-center gap-3">
         {/* Suite-type toggle */}
-        <div className="flex items-center gap-1 rounded-full bg-muted p-1">
+        <div className="flex items-center gap-1 rounded-full border border-border p-1">
           {(["smoke", "feature"] as const).map((t) => (
-            <button
+            <Button
               key={t}
               type="button"
+              variant="ghost"
               onClick={() => switchType(t)}
               className={cn(
-                "rounded-full px-4 py-1.5 text-xs font-medium transition-colors",
+                "rounded-full px-4 py-1.5 h-auto text-xs font-medium transition-colors",
                 suiteType === t
                   ? "bg-background text-foreground shadow-xs"
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
               {t === "smoke" ? "Smoke tests" : "Feature tests"}
-            </button>
+            </Button>
           ))}
         </div>
 
@@ -148,8 +149,10 @@ export default function ToolPage() {
                 className="h-8 w-48 text-xs"
               />
             )}
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="icon"
               onClick={() => {
                 if (searchOpen) {
                   setSearch("");
@@ -158,10 +161,10 @@ export default function ToolPage() {
                   setSearchOpen(true);
                 }
               }}
-              className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              className="h-8 w-8 rounded-full text-muted-foreground"
             >
               {searchOpen ? <X className="h-3.5 w-3.5" /> : <Search className="h-3.5 w-3.5" />}
-            </button>
+            </Button>
           </div>
 
           <p className="text-xs text-muted-foreground whitespace-nowrap">

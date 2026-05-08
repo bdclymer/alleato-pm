@@ -38,6 +38,7 @@ import {
 } from "@/lib/permissions-shared";
 import {
   formatProjectCount,
+  getProjectRoleTemplates,
   type GranularOverrideEffect,
   type UserAccessSummary,
 } from "../_lib/user-access-data";
@@ -86,25 +87,9 @@ export function UserAccessPanel({
 
   return (
     <div className="space-y-8">
-      <section className="space-y-5">
-        <div className="border-b border-border pb-6">
-          <div className="flex min-w-0 items-start gap-4">
-            <UserAvatar user={user} size="lg" />
-            <div className="min-w-0 space-y-3">
-              <div className="min-w-0">
-                <h2 className="truncate text-xl font-semibold text-foreground">
-                  {user.fullName}
-                </h2>
-                <p className="mt-1 truncate text-sm text-muted-foreground">
-                  {user.email || "No email on file"}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <KpiRow
+      <KpiRow
           size="small"
+          bare
           metrics={[
             {
               label: "Access mode",
@@ -136,7 +121,6 @@ export function UserAccessPanel({
             },
           ]}
         />
-      </section>
 
       <section className="grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
         <div className="space-y-4">
@@ -171,12 +155,12 @@ export function UserAccessPanel({
           </div>
         </div>
 
-        <div className="space-y-4">
+        <div>
           <SectionRuleHeading
             label="Identity"
             icon={<UserRound className="h-4 w-4" />}
           />
-          <dl className="grid gap-3 text-sm sm:grid-cols-2">
+          <div className="grid gap-3 text-sm sm:grid-cols-2">
             <IdentityField label="Email" value={user.email || "No email"} />
             <IdentityField label="Person ID" value={user.personId} monospace />
             <IdentityField
@@ -186,7 +170,7 @@ export function UserAccessPanel({
               missing={!user.authUserId}
             />
             <IdentityField label="Primary role" value={user.primaryTemplateName} />
-          </dl>
+          </div>
         </div>
       </section>
 
@@ -272,8 +256,8 @@ function IdentityField({
 }) {
   return (
     <div className="min-w-0 border-t border-border/70 pt-3">
-      <dt className="text-xs text-muted-foreground">{label}</dt>
-      <dd
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p
         className={cn(
           "mt-1 truncate text-sm font-medium text-foreground",
           monospace && "font-mono text-xs",
@@ -281,7 +265,7 @@ function IdentityField({
         )}
       >
         {value}
-      </dd>
+      </p>
     </div>
   );
 }
@@ -596,10 +580,12 @@ function RoleSelect({
   templates: PermissionTemplate[];
   onValueChange: (templateId: string) => void;
 }) {
+  const roleTemplates = getProjectRoleTemplates(templates);
+
   return (
     <Select
       value={value ?? "none"}
-      disabled={disabled}
+      disabled={disabled || roleTemplates.length === 0}
       onValueChange={(templateId) => {
         if (templateId === "none") return;
         onValueChange(templateId);
@@ -612,7 +598,7 @@ function RoleSelect({
         <SelectItem value="none" disabled>
           No role
         </SelectItem>
-        {templates.map((template) => (
+        {roleTemplates.map((template) => (
           <SelectItem key={template.id} value={template.id}>
             {template.name}
             {template.is_system ? " (System)" : ""}

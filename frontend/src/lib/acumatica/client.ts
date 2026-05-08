@@ -169,6 +169,7 @@ class AcumaticaClient {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
       redirect: "manual",
+      signal: AbortSignal.timeout(15_000),
     });
 
     if (res.status !== 204) {
@@ -264,6 +265,7 @@ class AcumaticaClient {
         Cookie: cookies,
         Accept: "application/json",
       },
+      signal: AbortSignal.timeout(60_000),
     });
 
     if (res.status === 401 || res.status === 403) {
@@ -276,6 +278,7 @@ class AcumaticaClient {
           Cookie: freshCookies,
           Accept: "application/json",
         },
+        signal: AbortSignal.timeout(60_000),
       });
 
       if (!retryRes.ok) {

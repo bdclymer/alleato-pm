@@ -27,7 +27,7 @@ const VIEW_LABELS = {
 
 export function ViewSwitcher({ currentView, enabledViews }: ViewSwitcherProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams() ?? new URLSearchParams();
   const [isPending, startTransition] = useTransition();
 
   const handleViewChange = useCallback(

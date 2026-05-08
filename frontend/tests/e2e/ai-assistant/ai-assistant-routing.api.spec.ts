@@ -188,6 +188,34 @@ test.describe("AI assistant intent and tool routing", () => {
     expect(asRecord(report.metadata.response_quality).sourceQuality).toBe("high");
   });
 
+  test("answers executive briefing metadata follow-ups without asking for a project", async () => {
+    const report = await runChatPrompt(
+      apiContext,
+      "briefing-metadata",
+      "When was this regenerated?",
+    );
+
+    expect(report.content).toContain("daily operating brief");
+    expect(report.content).toContain("daily_recaps.recap_kind=executive_briefing");
+    expect(report.content).not.toContain("Which project?");
+    expect(report.content).not.toContain("give me the project name");
+    expect(toolNames(report.metadata)).toContain("executiveBriefingMetadataLookup");
+  });
+
+  test("answers personal task prompts from task sources instead of inferred reconstruction", async () => {
+    const report = await runChatPrompt(
+      apiContext,
+      "my-tasks",
+      "What are my tasks?",
+    );
+
+    expect(report.content).toContain("Sources Checked");
+    expect(report.content).toContain("tasks.assignee_person_id");
+    expect(report.content).not.toContain("likely current tasks");
+    expect(report.content).not.toContain("pretty good reconstruction");
+    expect(toolNames(report.metadata)).toContain("getMyTasks");
+  });
+
   test("returns a source-grounded Westfield briefing without streaming tool fallback", async () => {
     const report = await runChatPrompt(
       apiContext,

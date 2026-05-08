@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Controller, useForm, type Path } from "react-hook-form";
+import { Controller, useForm, type Path, type Resolver } from "react-hook-form";
 import { Settings } from "lucide-react";
 import { EmptyState } from "@/components/ds";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -70,7 +70,7 @@ export default function CreateProjectPage() {
 
 function CreateProjectForm() {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams() ?? new URLSearchParams();
   const isOnboardingTestProject = searchParams.get("testProject") === "1";
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fileResetKey, setFileResetKey] = useState(0);
@@ -81,7 +81,7 @@ function CreateProjectForm() {
   } | null>(null);
 
   const form = useForm<CreateProjectFormValues>({
-    resolver: zodResolver(createProjectSchema) as ReturnType<typeof zodResolver>,
+    resolver: zodResolver(createProjectSchema) as Resolver<CreateProjectFormValues>,
     defaultValues: {
       ...defaultValues,
       test_project: isOnboardingTestProject || defaultValues.test_project,

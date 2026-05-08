@@ -709,7 +709,7 @@ export function AleatoDataTable<TData>({
 
   const enabledViews: ViewMode[] = [
     "table",
-    ...(hasGridView ? (["grid"] as ViewMode[]) : []),
+    ...(hasGridView ? (["card"] as ViewMode[]) : []),
     ...(hasListView ? (["list"] as ViewMode[]) : []),
   ];
 

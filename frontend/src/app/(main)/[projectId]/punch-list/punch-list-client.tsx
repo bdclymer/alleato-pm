@@ -187,7 +187,7 @@ function buildPunchColumns(projectId: number, router: ReturnType<typeof useRoute
 export function PunchListClient({ projectId }: PunchListClientProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = (useSearchParams() ?? new URLSearchParams()) as NonNullable<ReturnType<typeof useSearchParams>>;
   const activeTab = searchParams.get("tab") || "items";
   const isRecycleBin = activeTab === "recycle-bin";
   const isMyItems = activeTab === "my-items";

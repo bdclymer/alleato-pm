@@ -4,6 +4,7 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import {
+  deleteProgressReport,
   getProgressReportDetail,
   listProjectTeamContacts,
   mergeProgressReportContacts,
@@ -108,5 +109,28 @@ export const PUT = withApiGuardrails(
         contacts: mergeProgressReportContacts(projectTeamContacts, detail.report.contacts),
       },
     });
+  },
+);
+
+export const DELETE = withApiGuardrails(
+  "projects/[projectId]/progress-reports/[reportId]#DELETE",
+  async ({ params }) => {
+    const user = await getApiRouteUser();
+    if (!user) {
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "projects/[projectId]/progress-reports/[reportId]#DELETE",
+        message: "Authentication required.",
+      });
+    }
+
+    const { projectId, reportId } = await params;
+    const numericProjectId = Number.parseInt(projectId, 10);
+    if (!Number.isFinite(numericProjectId)) {
+      return NextResponse.json({ error: "Invalid project ID" }, { status: 400 });
+    }
+
+    await deleteProgressReport(numericProjectId, reportId);
+    return NextResponse.json({ success: true });
   },
 );

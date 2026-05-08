@@ -14,6 +14,8 @@ interface EmailAttachmentRow {
   extracted_text: string | null;
   graph_attachment_id: string | null;
   checksum_sha256: string | null;
+  attachment_type: string | null;
+  attachment_category: string | null;
   project_emails: {
     id: number;
     project_id: number;
@@ -86,6 +88,8 @@ export const GET = withApiGuardrails("email-attachments#GET", async () => {
         extracted_text,
         graph_attachment_id,
         checksum_sha256,
+        attachment_type,
+        attachment_category,
         project_emails!inner (
           id,
           project_id,
@@ -126,6 +130,8 @@ export const GET = withApiGuardrails("email-attachments#GET", async () => {
       textLength: attachment.extracted_text?.length ?? 0,
       graphAttachmentId: attachment.graph_attachment_id,
       checksumSha256: attachment.checksum_sha256,
+      attachmentType: attachment.attachment_type,
+      attachmentCategory: attachment.attachment_category,
       project: attachment.project_emails?.projects
         ? {
             id: attachment.project_emails.projects.id,

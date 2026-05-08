@@ -110,6 +110,33 @@ export const ERROR_CATALOG: Record<string, ErrorCatalogEntry> = {
     httpStatus: 403,
     safeToRetry: false,
   },
+  VALIDATION_ERROR: {
+    code: "VALIDATION_ERROR",
+    humanMessage: "Request validation failed.",
+    typicalCause: "Required field is missing or value failed type/range validation.",
+    preventionRule: "Validate all required fields at the API entry point before processing.",
+    alertSeverity: "low",
+    httpStatus: 400,
+    safeToRetry: false,
+  },
+  NOT_FOUND: {
+    code: "NOT_FOUND",
+    humanMessage: "The requested resource was not found.",
+    typicalCause: "Record ID does not exist, was deleted, or belongs to a different user.",
+    preventionRule: "Verify resource existence before returning and scope queries to the authenticated user.",
+    alertSeverity: "low",
+    httpStatus: 404,
+    safeToRetry: false,
+  },
+  DB_ERROR: {
+    code: "DB_ERROR",
+    humanMessage: "Database operation failed.",
+    typicalCause: "Constraint violation, connection error, or unexpected DB response.",
+    preventionRule: "Validate data before mutations and monitor DB health metrics.",
+    alertSeverity: "high",
+    httpStatus: 500,
+    safeToRetry: false,
+  },
 };
 
 export function getErrorCatalogEntry(code: string): ErrorCatalogEntry {

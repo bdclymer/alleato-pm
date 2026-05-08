@@ -33,13 +33,19 @@ import {
   type ActionToolsOptions,
 } from "@/lib/ai/tools/action-tools";
 import {
+  createFeatureRequestTools,
+  type FeatureRequestToolsOptions,
+} from "@/lib/ai/tools/feature-request-tools";
+import {
   createProgressReportTools,
   type ProgressReportToolsOptions,
 } from "@/lib/ai/tools/progress-report-tools";
+import { createWorkspaceTools } from "@/lib/ai/tools/workspace-tools";
 import {
   createStructuredOutputTools,
   type CreateStructuredOutputToolsOptions,
 } from "@/lib/ai/tools/structured-output";
+import { createDocumentIntelligenceTools } from "@/lib/ai/tools/document-intelligence";
 import { strategistSystemPrompt } from "@/lib/ai/agents/strategist";
 import { soul } from "@/lib/ai/soul";
 import { identity } from "@/lib/ai/identity";
@@ -58,6 +64,7 @@ import type {
 type StrategistToolOptions = CreateProjectToolsOptions &
   CreateWebSearchToolsOptions &
   ActionToolsOptions &
+  FeatureRequestToolsOptions &
   ProgressReportToolsOptions &
   CreateStructuredOutputToolsOptions;
 
@@ -583,9 +590,24 @@ export async function consultAgent(
       stopWhen: stepCountIs(5),
     });
 
-    const result = await agent.generate({
+    const SUB_AGENT_TIMEOUT_MS = Number(
+      process.env.SUB_AGENT_TIMEOUT_MS ?? 15_000,
+    );
+    const generatePromise = agent.generate({
       messages: [{ role: "user", content: userMessage }],
     });
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(
+        () =>
+          reject(
+            new Error(
+              `Sub-agent ${agentId} exceeded ${SUB_AGENT_TIMEOUT_MS}ms timeout`,
+            ),
+          ),
+        SUB_AGENT_TIMEOUT_MS,
+      );
+    });
+    const result = await Promise.race([generatePromise, timeoutPromise]);
 
     // Extract which tools were called from the steps
     for (const step of result.steps) {
@@ -713,11 +735,12 @@ export function createStrategistTools(
   // general questions without routing to a specialist
   const baseTools = createProjectTools(userId, options);
   const actionTools = createActionTools(userId, options);
+  const featureRequestTools = createFeatureRequestTools(userId, options);
   const progressReportTools = createProgressReportTools(userId, options);
-  // Web search tools — available to Strategist for external research
-  // (competitive questions, market intel, industry trends)
+  const workspaceTools = createWorkspaceTools(userId, { onTrace: options.onTrace });
   const webSearchTools = createWebSearchTools(options);
   const structuredOutputTools = createStructuredOutputTools(options);
+  const documentIntelligenceTools = createDocumentIntelligenceTools(userId, options);
   // Do not expose risk-dedicated tools directly to the Strategist.
   // This forces portfolio/project risk questions through consultCFO,
   // where the specialist prompt requires risk-specific workflows.
@@ -729,11 +752,13 @@ export function createStrategistTools(
   } = baseTools;
 
   return {
-    // Web search — available directly to the Strategist for external research
     ...webSearchTools,
     ...structuredOutputTools,
     ...actionTools,
+    ...featureRequestTools,
     ...progressReportTools,
+    ...workspaceTools,
+    ...documentIntelligenceTools,
     // The Strategist's specialist consultation tools
     consultCFO: makeConsultTool(
       "cfo",

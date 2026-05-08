@@ -39,7 +39,7 @@ import {
   type KpiBlockProps,
 } from "@/components/ds";
 import { ContentSectionStack } from "@/components/layout";
-import { RealtimeCursors } from "@/components/realtime-cursors";
+import { RealtimeCursors } from "@/components/realtime/realtime-cursors";
 import { EditProjectSidebar } from "@/components/project/edit-project-sidebar";
 import type { Database } from "@/types/database.types";
 

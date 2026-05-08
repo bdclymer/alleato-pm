@@ -27,6 +27,7 @@ TEAMS_COMPILER_JSON_SCHEMA = """
     {
       "task_text": "string",
       "owner": "string|null",
+      "assigned_by": "string|null",
       "due_date": "YYYY-MM-DD|null",
       "source_message_id": "string",
       "confidence": 0.0,
@@ -98,6 +99,7 @@ RULES:
 - Do not invent dates, owners, project IDs, costs, or decisions.
 - Prefer fewer high-quality outputs over noisy extraction.
 - OWNER RULE: Set `owner` to the exact sender name from the message where the commitment was made (the `sender` field before the colon in each message line). If "Glenn Ducharme: I'll send the contract today", owner is "Glenn Ducharme". Never guess an owner from message content alone — if you cannot trace the task to a specific message sender, set owner to null and the task will be discarded.
+- ASSIGNED-BY RULE: When one person clearly directs another person to do work, set `assigned_by` to the sender who gave the direction. If the task is a self-commitment, set `assigned_by` to null.
 
 JSON SCHEMA:
 {TEAMS_COMPILER_JSON_SCHEMA}
@@ -148,6 +150,7 @@ RULES:
   little or nothing.
 - Identify internal Alleato initiatives by name: "Alleato AI", "JobPlanner", "Financial workflow".
 - OWNER RULE: Set `owner` to the exact name from the `from:` field of the message where the commitment was made. If the delimiter says "from: Glenn Ducharme <g@alleato.com>" and Glenn wrote "I'll submit the RFI Monday", owner is "Glenn Ducharme". Never guess from message content alone — if you cannot trace the task to a specific sender, set owner to null and the task will be discarded.
+- ASSIGNED-BY RULE: When one person clearly directs another person to do work, set `assigned_by` to the sender who gave the direction. If the task is a self-commitment, set `assigned_by` to null.
 
 JSON SCHEMA:
 {TEAMS_COMPILER_JSON_SCHEMA}

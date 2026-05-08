@@ -101,7 +101,7 @@ export async function fetchBackendCompiler(
       cache: "no-store",
     },
     {
-      timeoutMs: path === "run" ? 60_000 : 10_000,
+      timeoutMs: path === "run" ? 60_000 : 25_000,
       maxRetries: path === "run" ? 0 : 1,
       backoffMs: 250,
     },

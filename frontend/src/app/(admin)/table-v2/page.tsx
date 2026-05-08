@@ -13,6 +13,7 @@ import { CompanyFormDialog } from "@/components/domain/companies/CompanyFormDial
 import { PageHeader } from "@/components/layout/page-header-unified";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageTabs } from "@/components/layout/PageTabs";
+import { PageShell } from "@/components/layout";
 import { Text } from "@/components/ds/text";
 import {
   GenericEditableTable,
@@ -212,7 +213,7 @@ export default function DirectoryCompaniesPage() {
   }
 
   return (
-    <>
+    <PageShell variant="table" title="Company Directory">
       <PageHeader
         title="Company Directory"
         description="Manage companies, clients, contacts, users, and employees across your organization"
@@ -303,6 +304,6 @@ export default function DirectoryCompaniesPage() {
         company={editingCompany}
         onSuccess={handleDialogSuccess}
       />
-    </>
+    </PageShell>
   );
 }

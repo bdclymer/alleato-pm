@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Download, FileText, ImageIcon, Mail, Paperclip } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,29 @@ import {
   ModalTitle,
 } from "@/components/ui/unified-modal";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  CellDate,
+  CellLink,
+  CellNumber,
+  CellStackText,
+  CellText,
+  TruncatedCell,
   UnifiedTablePage,
   useUnifiedTableState,
   type TableColumn,
@@ -44,6 +67,28 @@ const PdfPage = dynamic(
   { ssr: false },
 );
 
+export const ATTACHMENT_TYPES = [
+  "Drawings",
+  "Submittal",
+  "Invoice",
+  "RFI",
+  "Contract",
+  "Specifications",
+  "Photos",
+  "Correspondence",
+  "Report",
+  "Other",
+] as const;
+
+export const ATTACHMENT_CATEGORIES = [
+  "Project Documents",
+  "Financial",
+  "Correspondence",
+  "Legal",
+  "Technical",
+  "Other",
+] as const;
+
 interface EmailAttachment {
   id: number;
   emailId: number;
@@ -55,6 +100,8 @@ interface EmailAttachment {
   textLength: number;
   graphAttachmentId: string | null;
   checksumSha256: string | null;
+  attachmentType: string | null;
+  attachmentCategory: string | null;
   project: {
     id: number;
     name: string | null;
@@ -87,18 +134,20 @@ interface EmailAttachmentsClientProps {
 
 const attachmentColumns = [
   { id: "fileName", label: "File", defaultVisible: true, alwaysVisible: true },
+  { id: "type", label: "Type", defaultVisible: true },
+  { id: "category", label: "Category", defaultVisible: true },
   { id: "preview", label: "Preview", defaultVisible: true },
   { id: "email", label: "Email", defaultVisible: true },
-  { id: "sender", label: "Sender", defaultVisible: true },
+  { id: "sender", label: "From", defaultVisible: true },
   { id: "received", label: "Received", defaultVisible: true },
   { id: "size", label: "Size", defaultVisible: true },
-  { id: "text", label: "Text", defaultVisible: true },
+  { id: "text", label: "Text", defaultVisible: false },
 ];
 
 const globalAttachmentColumns = [
-  ...attachmentColumns.slice(0, 3),
+  ...attachmentColumns.slice(0, 5),
   { id: "project", label: "Project", defaultVisible: true },
-  ...attachmentColumns.slice(3),
+  ...attachmentColumns.slice(5),
 ];
 
 function formatBytes(value: number | null): string {
@@ -152,6 +201,13 @@ function attachmentUrl(projectId: number | undefined, attachmentId: number): str
     return `/api/projects/${projectId}/email-attachments/${attachmentId}/download`;
   }
   return `/api/email-attachments/${attachmentId}/download`;
+}
+
+function patchUrl(projectId: number | undefined, attachmentId: number): string {
+  if (projectId) {
+    return `/api/projects/${projectId}/email-attachments/${attachmentId}`;
+  }
+  return `/api/email-attachments/${attachmentId}`;
 }
 
 function previewUrl(projectId: number | undefined, attachmentId: number): string {
@@ -302,6 +358,118 @@ function projectLabel(attachment: EmailAttachment): string {
   return projectId ? `Project ${projectId}` : "Unknown project";
 }
 
+function TypeSelectCell({
+  attachment,
+  projectId,
+  onUpdate,
+}: {
+  attachment: EmailAttachment;
+  projectId?: number;
+  onUpdate: (id: number, field: "attachmentType" | "attachmentCategory", value: string | null) => void;
+}) {
+  const [saving, setSaving] = React.useState(false);
+
+  const handleChange = async (value: string) => {
+    const next = value === "__clear__" ? null : value;
+    setSaving(true);
+    try {
+      await apiFetch(patchUrl(projectId, attachment.id), {
+        method: "PATCH",
+        body: JSON.stringify({ attachmentType: next }),
+      });
+      onUpdate(attachment.id, "attachmentType", next);
+    } catch {
+      toast.error("Failed to update type");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Select
+      value={attachment.attachmentType ?? ""}
+      onValueChange={handleChange}
+      disabled={saving}
+    >
+      <SelectTrigger
+        // DESIGN-SYSTEM EXCEPTION: inline taxonomy editing is an interactive table cell.
+        // Move to a shared EditableSelectCell primitive before adding this pattern elsewhere.
+        className="h-7 w-36 text-xs"
+        data-row-interactive="true"
+        aria-label="Attachment type"
+      >
+        <SelectValue placeholder="Set type..." />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="__clear__" className="text-muted-foreground">
+          — clear —
+        </SelectItem>
+        {ATTACHMENT_TYPES.map((t) => (
+          <SelectItem key={t} value={t}>
+            {t}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
+function CategorySelectCell({
+  attachment,
+  projectId,
+  onUpdate,
+}: {
+  attachment: EmailAttachment;
+  projectId?: number;
+  onUpdate: (id: number, field: "attachmentType" | "attachmentCategory", value: string | null) => void;
+}) {
+  const [saving, setSaving] = React.useState(false);
+
+  const handleChange = async (value: string) => {
+    const next = value === "__clear__" ? null : value;
+    setSaving(true);
+    try {
+      await apiFetch(patchUrl(projectId, attachment.id), {
+        method: "PATCH",
+        body: JSON.stringify({ attachmentCategory: next }),
+      });
+      onUpdate(attachment.id, "attachmentCategory", next);
+    } catch {
+      toast.error("Failed to update category");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Select
+      value={attachment.attachmentCategory ?? ""}
+      onValueChange={handleChange}
+      disabled={saving}
+    >
+      <SelectTrigger
+        // DESIGN-SYSTEM EXCEPTION: inline taxonomy editing is an interactive table cell.
+        // Move to a shared EditableSelectCell primitive before adding this pattern elsewhere.
+        className="h-7 w-40 text-xs"
+        data-row-interactive="true"
+        aria-label="Attachment category"
+      >
+        <SelectValue placeholder="Set category..." />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="__clear__" className="text-muted-foreground">
+          — clear —
+        </SelectItem>
+        {ATTACHMENT_CATEGORIES.map((c) => (
+          <SelectItem key={c} value={c}>
+            {c}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
 export function EmailAttachmentsClient({
   projectId,
   scope = "project",
@@ -311,10 +479,16 @@ export function EmailAttachmentsClient({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
   const isGlobal = scope === "global" || !projectId;
   const columnsConfig = isGlobal ? globalAttachmentColumns : attachmentColumns;
+
+  const queryKey = [isGlobal ? "email-attachments-global" : "email-attachments", projectId];
+
   const [previewAttachment, setPreviewAttachment] =
     React.useState<EmailAttachment | null>(null);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = React.useState(false);
+  const [isBulkDeleting, setIsBulkDeleting] = React.useState(false);
 
   const tableState = useUnifiedTableState({
     entityKey: isGlobal ? "email-attachments-global" : "email-attachments",
@@ -328,7 +502,9 @@ export function EmailAttachmentsClient({
       search: "",
       sortBy: "received",
       sortDirection: "desc",
-      visibleColumns: columnsConfig.map((column) => column.id),
+      visibleColumns: columnsConfig
+        .filter((c) => c.defaultVisible !== false)
+        .map((c) => c.id),
       filters: {},
     },
   });
@@ -338,7 +514,7 @@ export function EmailAttachmentsClient({
     isLoading,
     error,
   } = useQuery<EmailAttachment[]>({
-    queryKey: [isGlobal ? "email-attachments-global" : "email-attachments", projectId],
+    queryKey,
     queryFn: ({ signal }) =>
       apiFetch<EmailAttachment[]>(
         isGlobal
@@ -352,10 +528,19 @@ export function EmailAttachmentsClient({
   React.useEffect(() => {
     if (tableState.visibleColumns.length === 0) {
       tableState.setVisibleColumns(
-        columnsConfig.map((column) => column.id),
+        columnsConfig.filter((c) => c.defaultVisible !== false).map((c) => c.id),
       );
     }
   }, [columnsConfig, tableState.visibleColumns.length, tableState.setVisibleColumns]);
+
+  const handleFieldUpdate = React.useCallback(
+    (id: number, field: "attachmentType" | "attachmentCategory", value: string | null) => {
+      queryClient.setQueryData<EmailAttachment[]>(queryKey, (prev) =>
+        prev?.map((a) => (a.id === id ? { ...a, [field]: value } : a)) ?? [],
+      );
+    },
+    [queryClient, queryKey.join(",")],
+  );
 
   const columns = React.useMemo<TableColumn<EmailAttachment>[]>(() => {
     const baseColumns: TableColumn<EmailAttachment>[] = [
@@ -366,17 +551,37 @@ export function EmailAttachmentsClient({
         alwaysVisible: true,
         sortValue: (item) => item.fileName,
         render: (item) => (
-          <div className="flex min-w-0 items-center gap-2">
-            <Paperclip className="size-4 shrink-0 text-muted-foreground" />
-            <div className="min-w-0">
-              <div className="truncate font-medium text-foreground">
-                {item.fileName}
-              </div>
-              <div className="truncate text-xs text-muted-foreground">
-                {item.contentType || "Unknown type"}
-              </div>
-            </div>
-          </div>
+          <CellStackText
+            primary={item.fileName}
+            secondary={item.contentType || "Unknown type"}
+            icon={<Paperclip className="size-4" />}
+          />
+        ),
+      },
+      {
+        id: "type",
+        label: "Type",
+        sortable: true,
+        sortValue: (item) => item.attachmentType ?? "",
+        render: (item) => (
+          <TypeSelectCell
+            attachment={item}
+            projectId={isGlobal ? undefined : projectId}
+            onUpdate={handleFieldUpdate}
+          />
+        ),
+      },
+      {
+        id: "category",
+        label: "Category",
+        sortable: true,
+        sortValue: (item) => item.attachmentCategory ?? "",
+        render: (item) => (
+          <CategorySelectCell
+            attachment={item}
+            projectId={isGlobal ? undefined : projectId}
+            onUpdate={handleFieldUpdate}
+          />
         ),
       },
       {
@@ -384,11 +589,7 @@ export function EmailAttachmentsClient({
         label: "Preview",
         render: (item) => {
           if (!isPreviewableAttachment(item)) {
-            return (
-              <span className="text-sm text-muted-foreground">
-                No preview
-              </span>
-            );
+            return <CellText value="No preview" muted />;
           }
 
           return (
@@ -397,10 +598,12 @@ export function EmailAttachmentsClient({
               size="sm"
               data-row-interactive="true"
               onClick={() => setPreviewAttachment(item)}
+              // DESIGN-SYSTEM EXCEPTION: attachment thumbnails need fixed media dimensions inside a table cell.
+              // Keep this exception local until thumbnail table cells become a shared primitive.
               className="h-16 w-24 overflow-hidden bg-background p-0"
               aria-label={`Preview ${item.fileName}`}
             >
-              <AttachmentPreviewThumbnail attachment={item} projectId={projectId} />
+              <AttachmentPreviewThumbnail attachment={item} projectId={isGlobal ? undefined : projectId} />
             </Button>
           );
         },
@@ -410,7 +613,7 @@ export function EmailAttachmentsClient({
         label: "Email",
         sortable: true,
         sortValue: (item) => item.email?.subject ?? "",
-        render: (item) => item.email?.subject || "No subject",
+        render: (item) => <TruncatedCell value={item.email?.subject || "No subject"} maxWidth={220} />,
       },
       ...(isGlobal
         ? [
@@ -421,39 +624,38 @@ export function EmailAttachmentsClient({
               sortValue: projectLabel,
               render: (item: EmailAttachment) =>
                 item.project?.id ? (
-                  <Link
-                    href={`/${item.project.id}/emails`}
-                    className="font-medium text-foreground hover:underline"
-                    data-row-interactive="true"
-                  >
-                    {projectLabel(item)}
-                  </Link>
+                  <CellLink value={projectLabel(item)} href={`/${item.project.id}/emails`} />
                 ) : (
-                  projectLabel(item)
+                  <CellText value={projectLabel(item)} />
                 ),
             } satisfies TableColumn<EmailAttachment>,
           ]
         : []),
       {
         id: "sender",
-        label: "Sender",
+        label: "From",
         sortable: true,
         sortValue: senderLabel,
-        render: senderLabel,
+        render: (item) => (
+          <CellStackText
+            primary={item.email?.fromName || item.email?.fromEmail || "Unknown sender"}
+            secondary={item.email?.fromName ? item.email.fromEmail : null}
+          />
+        ),
       },
       {
         id: "received",
         label: "Received",
         sortable: true,
         sortValue: (item) => receivedAt(item) ?? "",
-        render: (item) => formatDate(receivedAt(item)),
+        render: (item) => <CellDate value={receivedAt(item)} showTime />,
       },
       {
         id: "size",
         label: "Size",
         sortable: true,
         sortValue: (item) => item.fileSize ?? 0,
-        render: (item) => formatBytes(item.fileSize),
+        render: (item) => <CellText value={formatBytes(item.fileSize)} muted />,
       },
       {
         id: "text",
@@ -462,13 +664,13 @@ export function EmailAttachmentsClient({
         sortValue: (item) => item.textLength,
         render: (item) =>
           item.textLength > 0
-            ? `${item.textLength.toLocaleString()} chars`
-            : "No text",
+            ? <CellNumber value={item.textLength} muted />
+            : <CellText value="No text" muted />,
       },
     ];
 
     return baseColumns;
-  }, [isGlobal, projectId]);
+  }, [isGlobal, projectId, handleFieldUpdate]);
 
   const searchTerm = tableState.debouncedSearch.trim().toLowerCase();
   const filteredAttachments = React.useMemo(() => {
@@ -481,6 +683,8 @@ export function EmailAttachmentsClient({
         attachment.email?.subject ?? "",
         projectLabel(attachment),
         senderLabel(attachment),
+        attachment.attachmentType ?? "",
+        attachment.attachmentCategory ?? "",
       ].some((value) => value.toLowerCase().includes(searchTerm)),
     );
   }, [attachments, searchTerm]);
@@ -528,6 +732,57 @@ export function EmailAttachmentsClient({
     }
   }, [tableState, totalPages]);
 
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      tableState.setSelectedIds(pagedAttachments.map((item) => String(item.id)));
+    } else {
+      tableState.setSelectedIds([]);
+    }
+  };
+
+  const handleSelectRow = (id: string, checked: boolean) => {
+    if (checked) {
+      tableState.setSelectedIds((prev) => [...prev, id]);
+    } else {
+      tableState.setSelectedIds((prev) => prev.filter((x) => x !== id));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    const ids = tableState.selectedIds;
+    if (ids.length === 0) return;
+
+    setIsBulkDeleting(true);
+    const errors: string[] = [];
+
+    for (const id of ids) {
+      try {
+        await apiFetch(
+          isGlobal
+            ? `/api/email-attachments/${id}`
+            : `/api/projects/${projectId}/email-attachments/${id}`,
+          { method: "DELETE" },
+        );
+      } catch {
+        errors.push(id);
+      }
+    }
+
+    tableState.setSelectedIds([]);
+    await queryClient.invalidateQueries({ queryKey });
+
+    if (errors.length > 0) {
+      toast.error(`${ids.length - errors.length} deleted, ${errors.length} failed`);
+    } else {
+      toast.success(
+        `${ids.length} attachment${ids.length === 1 ? "" : "s"} deleted`,
+      );
+    }
+
+    setIsBulkDeleting(false);
+    setBulkDeleteOpen(false);
+  };
+
   const handleExport = () => {
     if (filteredAttachments.length === 0) {
       toast.info("No attachments to export");
@@ -537,6 +792,8 @@ export function EmailAttachmentsClient({
     const rows = filteredAttachments.map((attachment) => {
       const baseValues = [
         attachment.fileName,
+        attachment.attachmentType ?? "",
+        attachment.attachmentCategory ?? "",
         attachment.email?.subject ?? "",
         senderLabel(attachment),
         formatDate(receivedAt(attachment)),
@@ -547,6 +804,8 @@ export function EmailAttachmentsClient({
       return (isGlobal
         ? [
             attachment.fileName,
+            attachment.attachmentType ?? "",
+            attachment.attachmentCategory ?? "",
             attachment.email?.subject ?? "",
             projectLabel(attachment),
             senderLabel(attachment),
@@ -559,10 +818,11 @@ export function EmailAttachmentsClient({
         .map((value) => JSON.stringify(value))
         .join(",");
     });
+
     const csv = [
       isGlobal
-        ? "File,Email,Project,Sender,Received,Size,Text Length"
-        : "File,Email,Sender,Received,Size,Text Length",
+        ? "File,Type,Category,Email,Project,From,Received,Size,Text Length"
+        : "File,Type,Category,Email,From,Received,Size,Text Length",
       ...rows,
     ].join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
@@ -579,7 +839,8 @@ export function EmailAttachmentsClient({
     <>
       <UnifiedTablePage
         header={{
-          title,
+          title: tabs ? "" : title,
+          variant: tabs ? "compact" : undefined,
           actions: tabs ? undefined : (
             <Button variant="outline" size="sm" asChild>
               <Link href={projectId ? `/${projectId}/emails` : "/emails"}>
@@ -593,7 +854,7 @@ export function EmailAttachmentsClient({
         toolbar={{
           totalItems,
           filteredItems: totalItems,
-          selectedCount: 0,
+          selectedCount: tableState.selectedIds.length,
           searchValue: tableState.searchInput,
           onSearchChange: tableState.setSearchInput,
           searchPlaceholder: "Search attachments...",
@@ -607,6 +868,10 @@ export function EmailAttachmentsClient({
           visibleColumns: tableState.visibleColumns,
           onColumnVisibilityChange: tableState.setVisibleColumns,
           onExport: handleExport,
+          onBulkDelete:
+            tableState.selectedIds.length > 0
+              ? () => setBulkDeleteOpen(true)
+              : undefined,
         }}
         data={{
           items: pagedAttachments,
@@ -641,6 +906,11 @@ export function EmailAttachmentsClient({
             tableState.setPage(1);
           },
         }}
+        selection={{
+          selectedIds: tableState.selectedIds,
+          onSelectAll: handleSelectAll,
+          onSelectRow: handleSelectRow,
+        }}
         emptyState={{
           title: "No email attachments found",
           description: "No synced Outlook attachments are stored for this project yet.",
@@ -670,8 +940,8 @@ export function EmailAttachmentsClient({
         features={{
           enableViews: false,
           enableFilters: false,
-          enableBulkDelete: false,
-          enableRowSelection: false,
+          enableBulkDelete: true,
+          enableRowSelection: true,
           enableRowReorder: false,
           enableInlineEditing: false,
         }}
@@ -709,6 +979,37 @@ export function EmailAttachmentsClient({
           ) : null}
         </ModalContent>
       </Modal>
+
+      <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Delete {tableState.selectedIds.length} Attachment
+              {tableState.selectedIds.length === 1 ? "" : "s"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete{" "}
+              <strong>{tableState.selectedIds.length}</strong> selected
+              attachment{tableState.selectedIds.length === 1 ? "" : "s"}?
+              <br />
+              <br />
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isBulkDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleBulkDelete}
+              disabled={isBulkDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isBulkDeleting
+                ? "Deleting..."
+                : `Delete ${tableState.selectedIds.length} Attachment${tableState.selectedIds.length === 1 ? "" : "s"}`}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

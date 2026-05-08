@@ -3,16 +3,16 @@
 import React from "react";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { toast } from "sonner";
-import { createClient } from "@/lib/supabase/client";
+import { apiFetch } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Modal,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  ModalTitle,
+} from "@/components/ui/unified-modal";
 import {
   Popover,
   PopoverContent,
@@ -33,11 +33,51 @@ import type { ProjectRole } from "@/hooks/use-project-roles";
 
 export interface PersonOption {
   id: string;
-  first_name: string;
-  last_name: string;
+  first_name: string | null;
+  last_name: string | null;
   email: string | null;
   job_title: string | null;
   company_name: string | null;
+}
+
+interface DirectoryPeopleResponse {
+  data?: Array<{
+    id: string;
+    first_name: string | null;
+    last_name: string | null;
+    email?: string | null;
+    job_title?: string | null;
+    company?: { name?: string | null } | null;
+  }>;
+}
+
+const WRAPPED_VALUE_PATTERN = /^[\s"'\[(]+|[\s"'\])]+$/g;
+
+function cleanPersonText(value: string | null | undefined): string {
+  const trimmed = value?.trim() ?? "";
+  if (!trimmed) return "";
+
+  try {
+    const parsed = JSON.parse(trimmed) as unknown;
+    if (Array.isArray(parsed)) {
+      return cleanPersonText(parsed.find((item) => typeof item === "string") as string | undefined);
+    }
+  } catch {
+    // Some imported rows store email-only names as "(email)" instead of JSON.
+  }
+
+  return trimmed.replace(WRAPPED_VALUE_PATTERN, "").trim();
+}
+
+function getPersonDisplayName(person: PersonOption): string {
+  const firstName = cleanPersonText(person.first_name);
+  const lastName = cleanPersonText(person.last_name);
+  const email = cleanPersonText(person.email);
+  const name = [firstName, lastName].filter(Boolean).join(" ").trim();
+
+  if (!name) return email || "Unnamed person";
+  if (email && name.toLowerCase() === email.toLowerCase()) return email;
+  return name;
 }
 
 // ── MemberCombobox ─────────────────────────────────────────────────────────────
@@ -61,36 +101,55 @@ export function MemberCombobox({
           <ChevronsUpDown className="shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-full p-0" align="start">
+      <PopoverContent
+        className="w-[var(--radix-popover-trigger-width)] overflow-hidden p-0"
+        align="start"
+        sideOffset={8}
+        style={{
+          maxHeight: "min(28rem, var(--radix-popover-content-available-height))",
+        }}
+      >
         <Command>
           <CommandInput placeholder="Search people..." />
-          <CommandList>
+          <CommandList
+            className="overscroll-contain"
+            style={{
+              maxHeight: "min(22rem, calc(var(--radix-popover-content-available-height) - 3rem))",
+            }}
+          >
             <CommandEmpty>No people found.</CommandEmpty>
             <CommandGroup>
-              {people.map((person) => (
-                <CommandItem
-                  key={person.id}
-                  value={`${person.first_name} ${person.last_name} ${person.email ?? ""}`}
-                  onSelect={() => onSelect(person.id)}
-                >
-                  <Check
-                    className={cn(
-                      "mr-2 h-4 w-4",
-                      selectedIds.includes(person.id) ? "opacity-100" : "opacity-0"
-                    )}
-                  />
-                  <div className="flex flex-col">
-                    <span className="text-sm">
-                      {person.first_name} {person.last_name}
-                    </span>
-                    {(person.job_title || person.company_name) && (
-                      <span className="text-xs text-muted-foreground">
-                        {[person.job_title, person.company_name].filter(Boolean).join(" · ")}
-                      </span>
-                    )}
-                  </div>
-                </CommandItem>
-              ))}
+              {people.map((person) => {
+                const displayName = getPersonDisplayName(person);
+                const companyName = cleanPersonText(person.company_name);
+                const jobTitle = cleanPersonText(person.job_title);
+                const email = cleanPersonText(person.email);
+                const meta = [jobTitle, companyName].filter(Boolean).join(" · ");
+
+                return (
+                  <CommandItem
+                    key={person.id}
+                    value={`${displayName} ${email} ${meta}`}
+                    onSelect={() => onSelect(person.id)}
+                    className="min-h-11"
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        selectedIds.includes(person.id) ? "opacity-100" : "opacity-0"
+                      )}
+                    />
+                    <div className="min-w-0 flex flex-col">
+                      <span className="truncate text-sm">{displayName}</span>
+                      {meta && (
+                        <span className="truncate text-xs text-muted-foreground">
+                          {meta}
+                        </span>
+                      )}
+                    </div>
+                  </CommandItem>
+                );
+              })}
             </CommandGroup>
           </CommandList>
         </Command>
@@ -122,25 +181,40 @@ export function AssignMemberDialog({
     if (!open || !role) return;
     setSelectedIds(role.members.map((m) => m.person_id));
 
-    const supabase = createClient();
-    supabase
-      .from("people")
-      .select("id, first_name, last_name, email, job_title, company:companies(name)")
-      .order("first_name")
-      .then(({ data }) => {
-        if (data) {
-          setPeople(
-            data.map((p) => ({
-              id: p.id,
-              first_name: p.first_name,
-              last_name: p.last_name,
-              email: p.email,
-              job_title: p.job_title,
-              company_name: (p.company as { name?: string } | null)?.name ?? null,
-            }))
-          );
-        }
-      });
+    const loadProjectPeople = async () => {
+      try {
+        const params = new URLSearchParams({
+          type: "all",
+          status: "active",
+          page: "1",
+          per_page: "1000",
+          sort: "last_name,first_name",
+        });
+        const result = await apiFetch<DirectoryPeopleResponse>(
+          `/api/projects/${projectId}/directory/people?${params}`,
+        );
+
+        setPeople(
+          (result.data || []).map((p) => ({
+            id: p.id,
+            first_name: p.first_name,
+            last_name: p.last_name,
+            email: p.email ?? null,
+            job_title: p.job_title ?? null,
+            company_name: p.company?.name ?? null,
+          })),
+        );
+      } catch (error) {
+        setPeople([]);
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Failed to load project members",
+        );
+      }
+    };
+
+    void loadProjectPeople();
   }, [open, role, projectId]);
 
   const toggle = (id: string) =>
@@ -152,24 +226,6 @@ export function AssignMemberDialog({
     if (!role) return;
     setSaving(true);
     try {
-      const supabase = createClient();
-      const projectIdNum = parseInt(projectId, 10);
-      for (const personId of selectedIds) {
-        const { data: existing } = await supabase
-          .from("project_directory_memberships")
-          .select("id")
-          .eq("project_id", projectIdNum)
-          .eq("person_id", personId)
-          .eq("status", "active")
-          .maybeSingle();
-
-        if (!existing) {
-          await supabase.from("project_directory_memberships").upsert(
-            { project_id: projectIdNum, person_id: personId, status: "active" },
-            { onConflict: "project_id,person_id" }
-          );
-        }
-      }
       await onSave(role.id, selectedIds);
       toast.success("Role assignment updated");
       onOpenChange(false);
@@ -181,11 +237,11 @@ export function AssignMemberDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg w-[95vw]">
-        <DialogHeader>
-          <DialogTitle>Assign Members — {role?.role_name}</DialogTitle>
-        </DialogHeader>
+    <Modal open={open} onOpenChange={onOpenChange}>
+      <ModalContent size="lg">
+        <ModalHeader>
+          <ModalTitle>Assign Members — {role?.role_name}</ModalTitle>
+        </ModalHeader>
         <div className="py-2">
           <MemberCombobox people={people} selectedIds={selectedIds} onSelect={toggle} />
           {selectedIds.length > 0 && (
@@ -195,7 +251,7 @@ export function AssignMemberDialog({
                 if (!p) return null;
                 return (
                   <Badge key={id} variant="secondary" className="gap-1">
-                    {p.first_name} {p.last_name}
+                    {getPersonDisplayName(p)}
                     <Button
                       variant="ghost"
                       size="sm"
@@ -210,15 +266,15 @@ export function AssignMemberDialog({
             </div>
           )}
         </div>
-        <DialogFooter>
+        <ModalFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
           <Button onClick={handleSave} disabled={saving}>
             {saving ? "Saving..." : "Save"}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </ModalFooter>
+      </ModalContent>
+    </Modal>
   );
 }

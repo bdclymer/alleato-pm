@@ -145,8 +145,9 @@ export interface UseMeetingsTableResult {
 
 export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string): UseMeetingsTableResult {
   const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const pathname = usePathname() ?? "";
+  const rawSearchParams = useSearchParams();
+  const searchParams = rawSearchParams ?? new URLSearchParams();
 
   const [meetings, setMeetings] = React.useState<Meeting[]>(initialMeetings);
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
@@ -182,7 +183,7 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
 
   const tableState = useUnifiedTableState({
     entityKey: projectId ? `meetings-${projectId}` : "meetings",
-    searchParams,
+    searchParams: rawSearchParams,
     pathname,
     router,
     defaults: {

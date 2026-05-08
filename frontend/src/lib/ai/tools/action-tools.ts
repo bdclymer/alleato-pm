@@ -8,9 +8,17 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { createHash } from "crypto";
+import type { Json } from "@/types/database.types";
 import { createServiceClient } from "@/lib/supabase/service";
 import { createToolGuardrails } from "./guardrails";
 import { type ToolTracePayload, getOpenAI, withWriteTrace } from "./tool-utils";
+import { buildAdminFeedbackTitle } from "@/lib/admin-feedback/title";
+import { createGitHubIssue } from "@/lib/admin-feedback/github";
+import { matchFeedbackToTool } from "@/lib/admin-feedback/tool-matcher";
+import { resolveToolContext, contextToAgentPayload } from "@/lib/admin-feedback/context-resolver";
+import { ingestAdminFeedbackLearning } from "@/lib/ai/services/agent-learning-service";
+import { sendProactiveMessage } from "@/lib/bot/teams-chat";
+import { buildTaskFewShotBlock } from "@/lib/ai/services/task-training-service";
 
 export type ActionToolsOptions = {
   onTrace?: (trace: ToolTracePayload) => void;
@@ -242,6 +250,45 @@ export function createActionTools(
     }
 
     return { ok: true, projectId: effectiveProjectId };
+  }
+
+  async function resolveScheduleTaskAssignee(
+    assignee?: string,
+  ): Promise<{ assignee: string | null; assigneePersonId: string | null }> {
+    const trimmed = assignee?.trim() || null;
+    if (!trimmed) return { assignee: null, assigneePersonId: null };
+
+    const normalized = trimmed.toLowerCase();
+    const { data, error } = await supabase
+      .from("people")
+      .select("id,first_name,last_name,email")
+      .limit(2000);
+
+    if (error) {
+      throw new Error(`Failed to resolve schedule task assignee: ${error.message}`);
+    }
+
+    const matches = (data ?? []).filter((person) => {
+      const fullName = [person.first_name, person.last_name]
+        .filter(Boolean)
+        .join(" ")
+        .trim()
+        .toLowerCase();
+      const email = person.email?.trim().toLowerCase() ?? "";
+      const firstName = person.first_name?.trim().toLowerCase() ?? "";
+      const lastName = person.last_name?.trim().toLowerCase() ?? "";
+
+      return (
+        email === normalized ||
+        fullName === normalized ||
+        (normalized.length >= 3 && (firstName === normalized || lastName === normalized))
+      );
+    });
+
+    return {
+      assignee: trimmed,
+      assigneePersonId: matches.length === 1 ? matches[0].id : null,
+    };
   }
 
   function needsConfirmedWriteApproval(input: { confirmed?: boolean }): boolean {
@@ -660,11 +707,19 @@ export function createActionTools(
         const { projectId, name, assignee, dueDate, notes, priority, confirmed } = input;
         const access = await enforceProjectWriteAccess(projectId);
         if (!access.ok) return { success: false, error: access.error };
+        const resolvedAssignee = await resolveScheduleTaskAssignee(assignee);
 
         if (!confirmed) {
+          let fewShotBlock = "";
+          try {
+            fewShotBlock = await buildTaskFewShotBlock(projectId);
+          } catch {
+            // non-critical
+          }
+
           return {
             action: "preview",
-            message: "Here's the task I'll create. Reply **confirm** to proceed.",
+            message: `Here's the task I'll create. Reply **confirm** to proceed.${fewShotBlock}`,
             preview: {
               table: "schedule_tasks",
               fields: {
@@ -672,7 +727,8 @@ export function createActionTools(
                 name: notes ? `${name} — ${notes}` : name,
                 status: "not_started",
                 finish_date: dueDate ?? null,
-                assignee: assignee ?? null,
+                assignee: resolvedAssignee.assignee,
+                assignee_person_id: resolvedAssignee.assigneePersonId,
                 priority,
               },
             },
@@ -691,6 +747,9 @@ export function createActionTools(
             status: "not_started",
             percent_complete: 0,
             finish_date: dueDate ?? null,
+            assignee: resolvedAssignee.assignee,
+            assignee_person_id: resolvedAssignee.assigneePersonId,
+            priority,
             updated_at: new Date().toISOString(),
           })
           .select("id, name, status")
@@ -1819,6 +1878,452 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
           response: responseOut,
         });
         return responseOut;
+      }),
+    }),
+
+    // -------------------------------------------------------------------------
+    // TIER 1 — Feedback / bug / feature request submission
+    // -------------------------------------------------------------------------
+
+    submitFeedback: tool({
+      description:
+        "Submit a bug report or feature request on behalf of the user — identical to " +
+        "submitting the feedback form in the app. Use when the user says 'report a bug', " +
+        "'something is broken', 'submit a feature request', 'I have a suggestion', " +
+        "'can you log this issue', or describes a problem or improvement idea they want tracked. " +
+        "Always show a preview and ask for confirmation before submitting.",
+      inputSchema: z.object({
+        type: z
+          .enum(["bug", "feature_request"])
+          .describe("'bug' for broken behaviour, 'feature_request' for new functionality or improvements"),
+        title: z
+          .string()
+          .optional()
+          .describe("Short title — auto-generated from description if omitted"),
+        description: z
+          .string()
+          .describe("Full description of the bug or feature request — be as specific as possible"),
+        severity: z
+          .enum(["low", "medium", "high"])
+          .default("medium")
+          .describe("Impact level: 'low' = minor inconvenience, 'medium' = workflow blocked, 'high' = data loss or major blocker"),
+        projectId: z
+          .number()
+          .optional()
+          .describe("Project ID if the issue is specific to one project"),
+        pagePath: z
+          .string()
+          .optional()
+          .describe("The page or section where the issue occurs, e.g. '/budget' or 'Commitments'"),
+        confirmed: z.boolean().default(false),
+        idempotencyKey: z.string().optional(),
+      }),
+      needsApproval: needsConfirmedWriteApproval,
+      execute: withWriteTrace("submitFeedback", options, async (input) => {
+        const { type, title, description, severity, projectId, pagePath, confirmed } = input;
+
+        const requestType = type === "feature_request" ? "feature_request" : "bug";
+        const resolvedPath = pagePath ?? "/ai-assistant";
+        const resolvedTitle = buildAdminFeedbackTitle({
+          providedTitle: title,
+          requestType,
+          comment: description,
+        });
+
+        if (!confirmed) {
+          return {
+            action: "preview",
+            message: "Here's the feedback I'll submit on your behalf. Reply **confirm** to proceed.",
+            preview: {
+              type: type === "feature_request" ? "Feature Request" : "Bug Report",
+              title: resolvedTitle,
+              description,
+              severity,
+              pagePath: resolvedPath,
+              projectId: projectId ?? null,
+            },
+          };
+        }
+
+        const idempotencyKey = resolveIdempotencyKey("submitFeedback", input);
+        const replay = await getReplayResponse("submitFeedback", idempotencyKey);
+        if (replay) return replay;
+
+        const supabaseLocal = createServiceClient();
+        const feedbackId = crypto.randomUUID();
+
+        const { error: insertError } = await supabaseLocal
+          .from("admin_feedback_items")
+          .insert({
+            id: feedbackId,
+            created_by: userId,
+            title: resolvedTitle,
+            comment: description,
+            page_url: resolvedPath,
+            page_path: resolvedPath,
+            page_title: null,
+            request_type: requestType,
+            board_status: type === "feature_request" ? "submitted" : "submitted",
+            severity,
+            status: "open",
+            target_selector: "ai-assistant-chat",
+            target_id: null,
+            target_tag: null,
+            target_text: null,
+            dom_path: null,
+            target_rect: null,
+            screenshot_path: null,
+            screenshot_url: null,
+            project_id: projectId ?? null,
+            metadata: { source: "ai_assistant", submitted_by_ai: true },
+          });
+
+        if (insertError) {
+          const failure = { success: false, error: insertError.message };
+          await recordWriteAudit({
+            toolName: "submitFeedback",
+            idempotencyKey,
+            projectId: projectId ?? null,
+            input,
+            status: "error",
+            response: failure,
+          });
+          return failure;
+        }
+
+        // Run side effects: tool matching, GitHub issue, learning ingestion
+        let githubIssueNumber: number | null = null;
+        let githubIssueUrl: string | null = null;
+
+        try {
+          const matchedTool = await matchFeedbackToTool(
+            resolvedTitle,
+            description,
+            resolvedPath,
+            resolvedPath,
+          );
+
+          let toolContext = null;
+          if (matchedTool) {
+            const resolved = await resolveToolContext(matchedTool);
+            toolContext = resolved;
+            const agentPayload = resolved ? contextToAgentPayload(resolved) : null;
+            await supabaseLocal
+              .from("admin_feedback_items")
+              .update({
+                tool_id: matchedTool.id,
+                agent_context: agentPayload as Json,
+              })
+              .eq("id", feedbackId);
+          }
+
+          const githubIssue = await createGitHubIssue({
+            title: resolvedTitle,
+            comment: description,
+            pageUrl: resolvedPath,
+            pagePath: resolvedPath,
+            pageTitle: null,
+            requestType,
+            severity,
+            targetId: null,
+            targetSelector: "ai-assistant-chat",
+            targetTag: null,
+            targetText: null,
+            domPath: null,
+            screenshotUrl: null,
+            projectId: projectId ?? null,
+            metadata: { source: "ai_assistant", submitted_by_ai: true },
+            toolContext,
+          });
+
+          if (githubIssue) {
+            githubIssueNumber = githubIssue.number;
+            githubIssueUrl = githubIssue.url;
+            await supabaseLocal
+              .from("admin_feedback_items")
+              .update({
+                github_issue_number: githubIssue.number,
+                github_issue_url: githubIssue.url,
+                github_issue_state: githubIssue.state,
+                status: "submitted",
+              })
+              .eq("id", feedbackId);
+          }
+
+          await ingestAdminFeedbackLearning({
+            feedbackItemId: feedbackId,
+            title: resolvedTitle,
+            comment: description,
+            pagePath: resolvedPath,
+            projectId: projectId ?? null,
+            status: "candidate",
+          });
+        } catch {
+          // Side effects are non-fatal — the feedback record is already saved
+        }
+
+        const response = {
+          success: true,
+          message: githubIssueUrl
+            ? `${type === "feature_request" ? "Feature request" : "Bug report"} **"${resolvedTitle}"** submitted and GitHub issue [#${githubIssueNumber}](${githubIssueUrl}) created.`
+            : `${type === "feature_request" ? "Feature request" : "Bug report"} **"${resolvedTitle}"** submitted successfully.`,
+          feedbackId,
+          githubIssueNumber,
+          githubIssueUrl,
+          tip: type === "feature_request"
+            ? "You can track this on the Product Board at /product-board."
+            : "You can track this in the Admin Feedback inbox.",
+        };
+        await recordWriteAudit({
+          toolName: "submitFeedback",
+          idempotencyKey,
+          projectId: projectId ?? null,
+          input,
+          status: "success",
+          response,
+        });
+        return response;
+      }),
+    }),
+
+    // -------------------------------------------------------------------------
+    // TIER 1 — Add item to Product Board
+    // -------------------------------------------------------------------------
+
+    addBoardItem: tool({
+      description:
+        "Add a feature idea, initiative, or product improvement directly to the Product Board " +
+        "kanban. Use when the user says 'add this to the board', 'put this on the product board', " +
+        "'log this as a feature idea', 'add to planned', 'add to in progress', or wants to track " +
+        "a product idea with a specific status column. " +
+        "Always show a preview and ask for confirmation before writing.",
+      inputSchema: z.object({
+        title: z.string().describe("Short, clear title for the board card"),
+        description: z.string().describe("Full description — context, goals, acceptance criteria"),
+        board_status: z
+          .enum(["submitted", "in_review", "planned", "in_progress", "shipped"])
+          .default("submitted")
+          .describe(
+            "Which column to place the card in: " +
+            "'submitted' = new idea, 'in_review' = being evaluated, " +
+            "'planned' = confirmed for roadmap, 'in_progress' = actively being built, " +
+            "'shipped' = done"
+          ),
+        severity: z
+          .enum(["low", "medium", "high"])
+          .default("medium")
+          .describe("Priority: low / medium / high"),
+        confirmed: z.boolean().default(false),
+        idempotencyKey: z.string().optional(),
+      }),
+      needsApproval: needsConfirmedWriteApproval,
+      execute: withWriteTrace("addBoardItem", options, async (input) => {
+        const { title, description, board_status, severity, confirmed } = input;
+
+        if (!confirmed) {
+          return {
+            action: "preview",
+            message: "Here's the board card I'll create. Reply **confirm** to add it.",
+            preview: {
+              title,
+              description,
+              column: board_status,
+              priority: severity,
+              board: "/product-board",
+            },
+          };
+        }
+
+        const idempotencyKey = resolveIdempotencyKey("addBoardItem", input);
+        const replay = await getReplayResponse("addBoardItem", idempotencyKey);
+        if (replay) return replay;
+
+        const supabaseLocal = createServiceClient();
+        const itemId = crypto.randomUUID();
+
+        const { error } = await supabaseLocal.from("admin_feedback_items").insert({
+          id: itemId,
+          created_by: userId,
+          title,
+          comment: description,
+          page_url: "/ai-assistant",
+          page_path: "/ai-assistant",
+          page_title: "AI Assistant",
+          request_type: "feature_request",
+          board_status,
+          severity,
+          status: "open",
+          target_selector: "ai-assistant-chat",
+          target_id: null,
+          target_tag: null,
+          target_text: null,
+          dom_path: null,
+          target_rect: null,
+          screenshot_path: null,
+          screenshot_url: null,
+          project_id: null,
+          metadata: { source: "ai_assistant", submitted_by_ai: true },
+        });
+
+        if (error) {
+          const failure = { success: false, error: error.message };
+          await recordWriteAudit({
+            toolName: "addBoardItem",
+            idempotencyKey,
+            projectId: null,
+            input,
+            status: "error",
+            response: failure,
+          });
+          return failure;
+        }
+
+        const response = {
+          success: true,
+          message: `**"${title}"** added to the **${board_status.replace(/_/g, " ")}** column on the [Product Board](/product-board).`,
+          itemId,
+          board_status,
+        };
+        await recordWriteAudit({
+          toolName: "addBoardItem",
+          idempotencyKey,
+          projectId: null,
+          input,
+          status: "success",
+          response,
+        });
+        return response;
+      }),
+    }),
+
+    // -------------------------------------------------------------------------
+    // TIER 1 — Send Teams message
+    // -------------------------------------------------------------------------
+
+    sendTeamsMessage: tool({
+      description:
+        "Send a direct Teams message to a person via the Archon bot. Use when the user says " +
+        "'send [person] a Teams message', 'message [person] on Teams', 'follow up with [person] about [topic]', " +
+        "'ping [person]', or describes wanting to communicate with a team member via Teams. " +
+        "Look up the person by name first, then preview the message before sending. " +
+        "The recipient must have linked their Alleato account to Teams (messaged the Archon bot before).",
+      inputSchema: z.object({
+        recipientName: z.string().describe("Full name or first name of the person to message"),
+        recipientEmail: z.string().optional().describe("Email address if known — helps with exact lookup"),
+        message: z.string().describe("The message text to send — write it as if you are sending it directly"),
+        confirmed: z.boolean().default(false).describe("Set to true only after user confirms the preview"),
+        idempotencyKey: z.string().optional(),
+      }),
+      needsApproval: needsConfirmedWriteApproval,
+      execute: withWriteTrace("sendTeamsMessage", options, async (input) => {
+        const { recipientName, recipientEmail, message, confirmed } = input;
+
+        // Resolve person → user_profiles ID
+        const query = supabase
+          .from("people")
+          .select("id, first_name, last_name, email")
+          .limit(5);
+
+        if (recipientEmail) {
+          query.ilike("email", recipientEmail);
+        } else {
+          // Try first+last split
+          const parts = recipientName.trim().split(/\s+/);
+          if (parts.length >= 2) {
+            query.ilike("first_name", `%${parts[0]}%`).ilike("last_name", `%${parts[parts.length - 1]}%`);
+          } else {
+            query.or(`first_name.ilike.%${parts[0]}%,last_name.ilike.%${parts[0]}%`);
+          }
+        }
+
+        const { data: people, error: peopleError } = await query;
+
+        if (peopleError) {
+          return { success: false, error: `Failed to look up recipient: ${peopleError.message}` };
+        }
+
+        if (!people || people.length === 0) {
+          return {
+            success: false,
+            error: `No person found matching "${recipientName}". Check the name and try again.`,
+          };
+        }
+
+        // Match to a Supabase user via email
+        const emails = people.map((p) => p.email).filter(Boolean) as string[];
+        const { data: userProfiles } = await supabase
+          .from("user_profiles")
+          .select("id, email")
+          .in("email", emails)
+          .limit(5);
+
+        const userProfileMap = new Map((userProfiles ?? []).map((u) => [u.email, u.id]));
+        const matchedPerson = people.find((p) => p.email && userProfileMap.has(p.email));
+        const supabaseUserId = matchedPerson?.email ? userProfileMap.get(matchedPerson.email) ?? null : null;
+
+        if (!supabaseUserId) {
+          return {
+            success: false,
+            error:
+              `Found ${people[0].first_name} ${people[0].last_name} in the directory but they don't have an Alleato login. ` +
+              "They need an account and must have messaged the Archon bot in Teams to receive messages.",
+          };
+        }
+
+        // Check Teams conversation ref exists
+        const { data: ref } = await supabase
+          .from("teams_conversation_refs")
+          .select("supabase_user_id")
+          .eq("supabase_user_id", supabaseUserId)
+          .maybeSingle();
+
+        if (!ref) {
+          const name = [matchedPerson?.first_name, matchedPerson?.last_name].filter(Boolean).join(" ");
+          return {
+            success: false,
+            error:
+              `${name} hasn't linked their Teams account yet — they need to message the Archon bot in Teams at least once before they can receive proactive messages.`,
+          };
+        }
+
+        const recipientFullName = [matchedPerson?.first_name, matchedPerson?.last_name]
+          .filter(Boolean)
+          .join(" ");
+
+        if (!confirmed) {
+          return {
+            action: "preview",
+            message: `I'll send this Teams message to **${recipientFullName}**. Reply **confirm** to send.`,
+            preview: {
+              recipient: recipientFullName,
+              recipientEmail: matchedPerson?.email,
+              platform: "Microsoft Teams",
+              message,
+            },
+          };
+        }
+
+        const idempotencyKey = resolveIdempotencyKey("sendTeamsMessage", input);
+        const replay = await getReplayResponse("sendTeamsMessage", idempotencyKey);
+        if (replay) return replay;
+
+        await sendProactiveMessage(supabaseUserId, message);
+
+        const response = {
+          success: true,
+          message: `Teams message sent to **${recipientFullName}**.`,
+          recipient: recipientFullName,
+          recipientEmail: matchedPerson?.email,
+        };
+        await recordWriteAudit({
+          toolName: "sendTeamsMessage",
+          idempotencyKey,
+          projectId: null,
+          input,
+          status: "success",
+          response,
+        });
+        return response;
       }),
     }),
 

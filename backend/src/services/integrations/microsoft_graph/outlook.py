@@ -28,6 +28,76 @@ logger = logging.getLogger(__name__)
 
 COMPANY_DOMAINS = [d.strip() for d in os.environ.get("COMPANY_EMAIL_DOMAINS", "alleatogroup.com").split(",")]
 MIN_BODY_CHARS = 50  # Skip very short emails (auto-replies, etc.)
+
+# ── Noise / spam filter constants ─────────────────────────────────────────────
+# Sender address substrings that indicate automated/marketing mail.
+_NOISE_SENDER_PATTERNS: tuple[str, ...] = (
+    "noreply", "no-reply", "donotreply", "do-not-reply",
+    "notifications@", "notification@", "alerts@", "alert@",
+    "newsletter@", "news@", "updates@", "update@",
+    "marketing@", "promo@", "promotions@", "offers@",
+    "mailer@", "bounce@", "campaigns@", "reply@",
+    "support@sendgrid", "mail.linkedin.com", "e.linkedin.com",
+    "@facebookmail.com", "@twitter.com", "@amazonses.com",
+    "@bounce.", "@em.", "@email.", "@mail.", "@news.",
+)
+
+# Subject substrings that strongly indicate non-business noise.
+_NOISE_SUBJECT_PATTERNS: tuple[str, ...] = (
+    "unsubscribe",
+    "newsletter",
+    "out of office",
+    "automatic reply",
+    "auto reply",
+    "autoreply",
+    "delivery status notification",
+    "delivery failure",
+    "undelivered mail",
+    "mailer-daemon",
+    "your password",
+    "verify your email",
+    "confirm your email",
+    "email confirmation",
+    "account confirmation",
+    "welcome to ",
+    "thanks for signing up",
+    "you've been invited to",
+    "you have been invited to",
+)
+
+# Subject substrings that indicate marketing / promotional email.
+_PROMO_SUBJECT_PATTERNS: tuple[str, ...] = (
+    "% off",
+    "% discount",
+    "free shipping",
+    "shop now",
+    "buy now",
+    "sale ends",
+    "limited time",
+    "earn points",
+    "exclusive deal",
+    "special offer",
+    "don't miss",
+    "act now",
+    "last chance",
+    "flash sale",
+)
+
+# Body preview substrings that confirm noise (only checked when other signals present).
+_NOISE_BODY_PATTERNS: tuple[str, ...] = (
+    "to unsubscribe",
+    "click here to unsubscribe",
+    "manage your email preferences",
+    "manage your preferences",
+    "update your preferences",
+    "email preferences",
+    "opt out",
+    "view in browser",
+    "view this email in your browser",
+    "you're receiving this because",
+    "you received this email because",
+    "this email was sent to",
+)
 EMAIL_BODY_MAX_CHARS = 8000
 MAX_ATTACHMENT_BYTES = int(os.environ.get("OUTLOOK_ATTACHMENT_MAX_BYTES", str(50 * 1024 * 1024)))
 MAX_ATTACHMENTS_PER_EMAIL = int(os.environ.get("OUTLOOK_MAX_ATTACHMENTS_PER_EMAIL", "25"))
@@ -217,26 +287,76 @@ def _strip_quoted_email_history(text: str) -> str:
     return re.sub(r"\s+", " ", " ".join(lines)).strip()
 
 
-def _is_relevant_email(msg: dict, project_keywords: list[str]) -> bool:
-    """Return True if this email is worth indexing."""
+def _has_list_unsubscribe_header(msg: dict) -> bool:
+    """Return True if the email has a List-Unsubscribe header (newsletter / mailing list)."""
+    headers = msg.get("internetMessageHeaders") or []
+    return any(
+        h.get("name", "").lower() == "list-unsubscribe"
+        for h in headers
+        if isinstance(h, dict)
+    )
+
+
+def _is_noise_email(msg: dict) -> bool:
+    """Return True if this email is noise and should be skipped entirely.
+
+    Noise = newsletters, marketing, auto-replies, delivery failures, and social
+    media notifications. These are never worth storing or embedding.
+
+    When this returns True the caller should skip ALL database writes for the
+    message (outlook_email_intake, project_emails, document_metadata).
+    """
+    sender_addr = (msg.get("from", {}).get("emailAddress", {}).get("address", "") or "").lower()
     subject = (msg.get("subject") or "").lower()
     preview = (msg.get("bodyPreview") or "").lower()
 
-    # Skip calendar items
-    if msg.get("categories") and any("calendar" in c.lower() for c in msg["categories"]):
-        return False
+    # 1. List-Unsubscribe header is the single most reliable signal.
+    if _has_list_unsubscribe_header(msg):
+        logger.debug("[Outlook] Skipping noise (List-Unsubscribe): %s", msg.get("subject"))
+        return True
 
-    # Skip automated/noreply
-    sender_addr = msg.get("from", {}).get("emailAddress", {}).get("address", "")
-    if any(skip in sender_addr.lower() for skip in ["noreply", "no-reply", "donotreply", "notifications@", "alerts@"]):
-        return False
+    # 2. Sender address matches a known automated/marketing pattern.
+    if any(pat in sender_addr for pat in _NOISE_SENDER_PATTERNS):
+        logger.debug("[Outlook] Skipping noise (sender pattern '%s'): %s", sender_addr, msg.get("subject"))
+        return True
+
+    # 3. Subject clearly indicates noise.
+    if any(pat in subject for pat in _NOISE_SUBJECT_PATTERNS):
+        logger.debug("[Outlook] Skipping noise (subject pattern): %s", msg.get("subject"))
+        return True
+
+    # 4. Subject is promotional AND body confirms it's marketing.
+    if any(pat in subject for pat in _PROMO_SUBJECT_PATTERNS):
+        if any(pat in preview for pat in _NOISE_BODY_PATTERNS):
+            logger.debug("[Outlook] Skipping noise (promo subject + unsubscribe body): %s", msg.get("subject"))
+            return True
+
+    # 5. Body preview alone is a strong unsubscribe signal even without subject match.
+    #    Require two body signals to avoid false positives on real emails that happen
+    #    to mention "unsubscribe" once.
+    body_hits = sum(1 for pat in _NOISE_BODY_PATTERNS if pat in preview)
+    if body_hits >= 2:
+        logger.debug("[Outlook] Skipping noise (multiple body patterns): %s", msg.get("subject"))
+        return True
+
+    return False
+
+
+def _is_relevant_email(msg: dict, project_keywords: list[str]) -> bool:
+    """Return True if this email is worth indexing for RAG.
+
+    Assumes _is_noise_email() has already returned False.
+    Keeps emails that mention a project keyword OR have an external participant.
+    """
+    subject = (msg.get("subject") or "").lower()
+    preview = (msg.get("bodyPreview") or "").lower()
 
     # Keep if any project keyword appears in subject or preview
     combined = subject + " " + preview
     if any(kw.lower() in combined for kw in project_keywords):
         return True
 
-    # Keep if has external recipients (communications with owners/subs)
+    # Keep if has external recipients (communications with owners/subs/clients)
     recipients = msg.get("toRecipients", []) + msg.get("ccRecipients", [])
     for r in recipients:
         addr = r.get("emailAddress", {}).get("address", "")
@@ -1070,6 +1190,7 @@ def sync_outlook_emails(
         "webLink",
         "internetMessageId",
         "conversationId",
+        "internetMessageHeaders",  # Used for List-Unsubscribe noise detection
     ])
     date_filter = f"&$filter=receivedDateTime ge {since_date}T00:00:00Z" if since_date else ""
     folders = [
@@ -1135,6 +1256,12 @@ def sync_outlook_emails(
         doc_id = f"outlook_{msg_id}"
 
         participants = _message_participants(msg, sender_name, sender_addr)
+
+        # Gate 1: skip noise entirely — no DB writes at all.
+        if _is_noise_email(msg):
+            logger.debug("[Outlook] Noise email skipped: %s", subject)
+            continue
+
         should_index_for_rag = _is_relevant_email(msg, project_keywords) and len(body_text) >= MIN_BODY_CHARS
 
         try:

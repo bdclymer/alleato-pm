@@ -123,14 +123,13 @@ const OPERATIONS_TOOLS = [
   "Submittals",
   "Transmittals",
   "Emails",
-  "Outlook Emails",
+  "Project Directory",
+  "Project Tasks",
 ];
 
-const FILES_TOOLS = ["Photos", "Drawings", "Specifications", "Documents"];
+const FILES_TOOLS = ["Photos", "Drawings", "Specifications", "Documents", "Progress Reports"];
 
-const PROJECT_TOOLS = ["Project Directory", "Project Tasks", "Project Settings"];
-
-const COMPANY_TOOLS = ["Projects", "Company Directory", "Progress Reports", "User Management", "360 Reporting", "AI Strategist"];
+const COMPANY_TOOLS = ["Projects", "Company Directory", "Tasks", "Documents", "AI Strategist"];
 
 export function ToolsDropdownContent(props: ToolsDropdownProps) {
   // Collect all tools from all groups into a flat lookup
@@ -191,16 +190,10 @@ export function ToolsDropdownContent(props: ToolsDropdownProps) {
           <div className="space-y-0.5">{renderColumn(OPERATIONS_TOOLS)}</div>
         </div>
 
-        {/* Files */}
+        {/* Documents */}
         <div className="shrink-0">
-          <SectionHeader label="Files" />
+          <SectionHeader label="Documents" />
           <div className="space-y-0.5">{renderColumn(FILES_TOOLS)}</div>
-        </div>
-
-        {/* Project */}
-        <div className="shrink-0">
-          <SectionHeader label="Project" />
-          <div className="space-y-0.5">{renderColumn(PROJECT_TOOLS)}</div>
         </div>
 
         {/* Company */}

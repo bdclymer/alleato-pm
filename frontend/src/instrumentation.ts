@@ -6,9 +6,47 @@
  * alert webhook is absent in deployed runtimes so operators know alerts are
  * suppressed. Local development intentionally stays quiet unless an alertable
  * error actually occurs.
+ *
+ * Phoenix tracing: set PHOENIX_TRACING=true in .env.local, then run:
+ *   pip install arize-phoenix && python -m phoenix.server.main
+ *   open http://localhost:6006
  */
 export async function register() {
   if (process.env.NEXT_RUNTIME === "nodejs") {
+    // ---------------------------------------------------------------------------
+    // Phoenix / OpenTelemetry tracing (local debugging only)
+    // Enable with: PHOENIX_TRACING=true in .env.local
+    // ---------------------------------------------------------------------------
+    if (process.env.PHOENIX_TRACING === "true") {
+      const { NodeSDK } = await import("@opentelemetry/sdk-node");
+      const { OTLPTraceExporter } = await import(
+        "@opentelemetry/exporter-trace-otlp-http"
+      );
+      const { OpenAIInstrumentation } = await import(
+        "@arizeai/openinference-instrumentation-openai"
+      );
+
+      const sdk = new NodeSDK({
+        traceExporter: new OTLPTraceExporter({
+          url:
+            process.env.PHOENIX_ENDPOINT ??
+            "http://localhost:4318/v1/traces",
+        }),
+        instrumentations: [
+          new OpenAIInstrumentation({
+            // Capture prompt/completion text so you can see exactly what
+            // was sent to the model and what came back.
+            enrich: true,
+          }),
+        ],
+      });
+
+      sdk.start();
+      console.log(
+        "[instrumentation] Phoenix tracing enabled → http://localhost:6006",
+      );
+    }
+
     const { validateEnvVars } = await import("@/lib/guardrails/env");
 
     validateEnvVars("instrumentation/startup", [

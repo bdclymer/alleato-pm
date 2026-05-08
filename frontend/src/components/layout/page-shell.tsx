@@ -52,6 +52,9 @@ export interface PageShellProps {
   onExportCSV?: () => void;
   onExportPDF?: () => void;
 
+  // Breadcrumbs (shown above the title)
+  breadcrumbs?: { label: string; href?: string }[];
+
   // Back navigation (form variant)
   onBack?: () => void;
   backLabel?: string;
@@ -87,6 +90,7 @@ export function PageShell({
   showExportButton,
   onExportCSV,
   onExportPDF,
+  breadcrumbs,
   onBack,
   backLabel = "Back",
   description,
@@ -153,6 +157,7 @@ export function PageShell({
       actions={resolvedActions}
       statusBadge={statusBadge}
       tabs={tabs}
+      breadcrumbs={breadcrumbs}
       showExportButton={showExportButton}
       onExportCSV={onExportCSV}
       onExportPDF={onExportPDF}

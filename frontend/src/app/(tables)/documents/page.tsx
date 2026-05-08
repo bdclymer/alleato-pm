@@ -7,7 +7,7 @@ import { Upload } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
-import { Dropzone, DropzoneContent, DropzoneEmptyState } from "@/components/dropzone";
+import { Dropzone, DropzoneContent, DropzoneEmptyState } from "@/components/misc/dropzone";
 import {
   UnifiedTablePage,
   useUnifiedTableState,
@@ -15,13 +15,13 @@ import {
 } from "@/components/tables/unified";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Modal as Dialog,
+  ModalContent as DialogContent,
+  ModalDescription as DialogDescription,
+  ModalFooter as DialogFooter,
+  ModalHeader as DialogHeader,
+  ModalTitle as DialogTitle,
+} from "@/components/ui/unified-modal";
 import {
   Select,
   SelectContent,

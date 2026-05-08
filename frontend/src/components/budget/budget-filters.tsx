@@ -71,14 +71,12 @@ export function BudgetFilters({
           <TooltipTrigger asChild>
             <DropdownMenuTrigger asChild>
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
                 aria-label="View options"
-                title="View options"
-                className="h-9 gap-2 px-3"
+                className="relative h-8 w-8 rounded-md p-0 text-muted-foreground hover:text-foreground"
               >
-                <SlidersHorizontal />
-                <span className="hidden text-sm sm:inline">View</span>
+                <SlidersHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
           </TooltipTrigger>

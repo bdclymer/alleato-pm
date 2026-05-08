@@ -260,14 +260,57 @@ export function buildChangeEventHtml(
 </html>`;
 }
 
+/**
+ * Renders HTML to a PDF buffer using puppeteer-core.
+ *
+ * In production (Vercel/Lambda) we use @sparticuz/chromium which ships a
+ * pre-built headless binary for Linux serverless environments.
+ *
+ * In local development we point puppeteer-core at the system Chrome
+ * installation so the Linux-only @sparticuz binary isn't needed.
+ */
 export async function renderPdfFromHtml(html: string): Promise<Buffer> {
-  const { chromium } = await import("playwright");
-  const browser = await chromium.launch({ headless: true });
+  const puppeteer = await import("puppeteer-core");
+  const isProduction = process.env.NODE_ENV === "production" || process.env.VERCEL === "1";
+
+  let executablePath: string;
+  let args: string[];
+
+  if (isProduction) {
+    const chromium = (await import("@sparticuz/chromium")).default;
+    executablePath = await chromium.executablePath();
+    args = chromium.args;
+  } else {
+    // Use local system Chrome on macOS/Windows dev machines.
+    const localPaths = [
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+      "/usr/bin/google-chrome",
+      "/usr/bin/chromium-browser",
+      "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+    ];
+    const fs = await import("fs");
+    const found = localPaths.find((p) => fs.existsSync(p));
+    if (!found) {
+      throw new Error(
+        "PDF generation requires Google Chrome locally. Install Chrome or set NODE_ENV=production to use the serverless binary.",
+      );
+    }
+    executablePath = found;
+    args = ["--no-sandbox", "--disable-setuid-sandbox"];
+  }
+
+  const browser = await puppeteer.default.launch({
+    executablePath,
+    args,
+    headless: true,
+  });
 
   try {
     const page = await browser.newPage();
-    await page.setViewportSize({ width: 1280, height: 900 });
-    await page.setContent(html, { waitUntil: "networkidle" });
+    await page.setViewport({ width: 1280, height: 900 });
+    await page.setContent(html, { waitUntil: "networkidle0" });
+
+    // Wait for any lazy-loading images to settle before printing.
     await page.evaluate(async () => {
       const pendingImages = Array.from(document.images).filter(
         (image) => !image.complete,

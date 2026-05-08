@@ -79,6 +79,25 @@ function ProcoreReferenceToggle() {
   );
 }
 
+function AiChatButton() {
+  const pathname = usePathname();
+  const isActive = pathname === "/ai-assistant" || pathname?.startsWith("/ai-assistant/");
+  return (
+    <Link
+      href="/ai-assistant"
+      aria-label="AI Assistant"
+      className={cn(
+        "inline-flex h-8 w-8 items-center justify-center rounded-md transition-colors",
+        isActive
+          ? "bg-primary/10 text-primary hover:bg-primary/20"
+          : "text-muted-foreground hover:bg-accent hover:text-foreground",
+      )}
+    >
+      <Sparkles className="h-4 w-4" />
+    </Link>
+  );
+}
+
 function SidebarToggleButton() {
   const { state, toggleSidebar } = useSidebar();
   const isExpanded = state === "expanded";
@@ -293,6 +312,7 @@ export function SiteHeader() {
           <React.Suspense fallback={null}>
             <LiveAvatarStack />
           </React.Suspense>
+          <AiChatButton />
           <Link
             href="/feedback-inbox"
             className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
@@ -419,13 +439,14 @@ function MobileNavOverlay({
   return (
     <div
       className={cn(
-        "fixed inset-0 z-50 md:hidden bg-background transition-all duration-300 ease-out",
+        "fixed inset-0 z-50 md:hidden bg-background transition-all duration-300 ease-out flex flex-col",
         open
           ? "opacity-100 translate-y-0"
           : "opacity-0 translate-y-4 pointer-events-none",
       )}
     >
-      <div className="flex h-14 items-center justify-between px-4">
+      {/* Header */}
+      <div className="flex h-14 shrink-0 items-center justify-between px-4">
         <Image
           src="/Alleato-Group-Logo_Dark.png"
           alt="Alleato"
@@ -446,23 +467,8 @@ function MobileNavOverlay({
         </Button>
       </div>
 
-      {/* Project selector */}
-      <div className="flex justify-center px-4 pb-3 pt-1 [&_.project-selector-trigger]:!border-0 [&_.project-selector-trigger]:justify-center">
-        <ProjectSelector
-          projectId={projectId}
-          currentProject={currentProject}
-          projects={projects}
-          loadingProjects={loadingProjects}
-          onFetchProjects={onFetchProjects}
-          onProjectSelect={(id) => {
-            onProjectSelect(id);
-            onClose();
-          }}
-          onViewAll={onClose}
-        />
-      </div>
-
-      <nav className="h-[calc(100svh-3.5rem-56px-80px)] overflow-y-auto px-6 pt-8 pb-4 flex flex-col items-center gap-10">
+      {/* Nav — fills remaining space */}
+      <nav className="flex-1 overflow-y-auto px-6 pt-8 pb-4 flex flex-col items-center gap-10">
         {groups.map((group) => (
           <div
             key={group.id}
@@ -511,16 +517,32 @@ function MobileNavOverlay({
         ))}
       </nav>
 
-      {/* User avatar footer */}
-      <div className="absolute bottom-0 left-0 right-0 border-t border-border/50 bg-background px-4 py-3">
-        <HeaderUserMenu
-          user={user}
-          projectId={projectId}
-          activeToolName={activeToolName}
-          permissions={permissions}
-          isAppAdmin={isAppAdmin}
-          userType={userType}
-        />
+      {/* Bottom: project selector + user menu */}
+      <div className="shrink-0 border-t border-border/50 bg-background">
+        <div className="flex justify-center px-4 pt-3 pb-2 [&_.project-selector-trigger]:!border-0 [&_.project-selector-trigger]:justify-center">
+          <ProjectSelector
+            projectId={projectId}
+            currentProject={currentProject}
+            projects={projects}
+            loadingProjects={loadingProjects}
+            onFetchProjects={onFetchProjects}
+            onProjectSelect={(id) => {
+              onProjectSelect(id);
+              onClose();
+            }}
+            onViewAll={onClose}
+          />
+        </div>
+        <div className="px-4 pb-3">
+          <HeaderUserMenu
+            user={user}
+            projectId={projectId}
+            activeToolName={activeToolName}
+            permissions={permissions}
+            isAppAdmin={isAppAdmin}
+            userType={userType}
+          />
+        </div>
       </div>
     </div>
   );

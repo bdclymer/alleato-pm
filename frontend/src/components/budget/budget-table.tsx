@@ -4,6 +4,7 @@ import * as React from "react";
 import {
   ColumnDef,
   ColumnSizingState,
+  VisibilityState,
   flexRender,
   getCoreRowModel,
   useReactTable,
@@ -11,7 +12,7 @@ import {
   ExpandedState,
   RowSelectionState,
 } from "@tanstack/react-table";
-import { ChevronRight, ChevronDown, X, Check, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { ChevronRight, ChevronDown, X, Check, MoreHorizontal, Pencil, Trash2, Columns3 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -26,12 +27,16 @@ import { cn } from "@/lib/utils";
 import {
   Tooltip,
   TooltipContent,
+  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -198,7 +203,7 @@ function TruncatedHeaderLabel({ text }: { text: string }) {
   const label = (
     <div
       ref={labelRef}
-      className="truncate whitespace-nowrap text-center text-[11px] leading-tight"
+      className="truncate whitespace-nowrap text-left text-xs leading-tight"
     >
       {text}
     </div>
@@ -237,7 +242,7 @@ function ColumnHeader({ lines, columnKey }: ColumnHeaderProps) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div className="cursor-help whitespace-nowrap text-center text-[11px] leading-tight text-foreground transition-colors hover:text-foreground">
+        <div className="cursor-help whitespace-nowrap text-left text-xs leading-tight text-foreground transition-colors hover:text-foreground">
           {labelText}
         </div>
       </TooltipTrigger>
@@ -449,6 +454,47 @@ function getDepthPadding(depth: number) {
   return depthPaddingClasses[index];
 }
 
+const columnLabels: Record<string, string> = {
+  description: "Description",
+  originalBudgetAmount: "Original Budget",
+  budgetModifications: "Budget Mods",
+  approvedCOs: "Approved COs",
+  revisedBudget: "Revised Budget",
+  pendingChanges: "Pending COs",
+  jobToDateCostDetail: "JTD Cost Detail",
+  projectedBudget: "Projected Budget",
+  committedCosts: "Committed Costs",
+  directCosts: "Direct Costs",
+  pendingCostChanges: "Pending Cost Changes",
+  projectedCosts: "Projected Costs",
+  forecastToComplete: "Forecast To Complete",
+  estimatedCostAtCompletion: "Est. Cost at Completion",
+  projectedOverUnder: "Projected +/-",
+};
+
+const budgetGrandTotalColumnKeys = new Set<keyof BudgetGrandTotals>([
+  "originalBudgetAmount",
+  "budgetModifications",
+  "approvedCOs",
+  "revisedBudget",
+  "pendingChanges",
+  "projectedBudget",
+  "committedCosts",
+  "jobToDateCostDetail",
+  "directCosts",
+  "pendingCostChanges",
+  "projectedCosts",
+  "forecastToComplete",
+  "estimatedCostAtCompletion",
+  "projectedOverUnder",
+]);
+
+function isBudgetGrandTotalColumn(
+  columnId: string,
+): columnId is keyof BudgetGrandTotals {
+  return budgetGrandTotalColumnKeys.has(columnId as keyof BudgetGrandTotals);
+}
+
 export function BudgetTable({
   data,
   grandTotals,
@@ -472,6 +518,7 @@ export function BudgetTable({
   const [expanded, setExpanded] = React.useState<ExpandedState>({});
   const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
   const [columnSizing, setColumnSizing] = React.useState<ColumnSizingState>({});
+  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
   // Use prop if provided, otherwise use internal state
   const [showInlineCreateInternal, setShowInlineCreateInternal] = React.useState(false);
   const showInlineCreate = onShowInlineCreateChange ? showInlineCreateProp : showInlineCreateInternal;
@@ -669,7 +716,7 @@ export function BudgetTable({
     {
       accessorKey: "budgetModifications",
       header: () => (
-        <ColumnHeader columnKey="budgetModifications" lines={["mods"]} />
+        <ColumnHeader columnKey="budgetModifications" lines={["Budget Mods"]} />
       ),
       cell: ({ row }) => {
         const hasChildren = Boolean(
@@ -719,7 +766,7 @@ export function BudgetTable({
     {
       accessorKey: "revisedBudget",
       header: () => (
-        <ColumnHeader columnKey="revisedBudget" lines={["revised"]} />
+        <ColumnHeader columnKey="revisedBudget" lines={["Revised Budget"]} />
       ),
       cell: ({ row }) => {
         const hasChildren = Boolean(
@@ -733,6 +780,84 @@ export function BudgetTable({
               "edit line items",
               onEditLineItem ? () => onEditLineItem(row.original) : undefined
             )}
+          />
+        );
+      },
+      size: 130,
+    },
+    {
+      accessorKey: "pendingChanges",
+      header: () => (
+        <ColumnHeader
+          columnKey="pendingChanges"
+          lines={["Pending COs"]}
+        />
+      ),
+      cell: ({ row }) => {
+        const hasChildren = Boolean(
+          row.original.children && row.original.children.length > 0);
+        return (
+          <EditableCurrencyCell
+            value={row.getValue("pendingChanges")}
+            hasChildren={hasChildren}
+            onEdit={createSafeClickHandler(
+              isLocked,
+              "view pending changes",
+              onPendingChangesClick
+                ? () => onPendingChangesClick(row.original)
+                : undefined
+            )}
+            editable={true}
+          />
+        );
+      },
+      size: 110,
+    },
+    {
+      accessorKey: "projectedBudget",
+      header: () => (
+        <ColumnHeader
+          columnKey="projectedBudget"
+          lines={["Projected Budget"]}
+        />
+      ),
+      cell: ({ row }) => {
+        const hasChildren = Boolean(
+          row.original.children && row.original.children.length > 0);
+        return (
+          <EditableCurrencyCell
+            value={row.getValue("projectedBudget")}
+            hasChildren={hasChildren}
+            onEdit={createSafeClickHandler(
+              isLocked,
+              "edit line items",
+              onEditLineItem ? () => onEditLineItem(row.original) : undefined
+            )}
+          />
+        );
+      },
+      size: 130,
+    },
+    {
+      accessorKey: "committedCosts",
+      header: () => (
+        <ColumnHeader columnKey="committedCosts" lines={["Committed Costs"]} />
+      ),
+      cell: ({ row }) => {
+        const hasChildren = Boolean(
+          row.original.children && row.original.children.length > 0);
+        return (
+          <EditableCurrencyCell
+            value={row.getValue("committedCosts")}
+            hasChildren={hasChildren}
+            onEdit={createSafeClickHandler(
+              isLocked,
+              "view committed costs",
+              onCommittedCostsClick
+                ? () => onCommittedCostsClick(row.original)
+                : undefined
+            )}
+            editable={true}
           />
         );
       },
@@ -792,89 +917,11 @@ export function BudgetTable({
       size: 120,
     },
     {
-      accessorKey: "pendingChanges",
-      header: () => (
-        <ColumnHeader
-          columnKey="pendingChanges"
-          lines={["pending"]}
-        />
-      ),
-      cell: ({ row }) => {
-        const hasChildren = Boolean(
-          row.original.children && row.original.children.length > 0);
-        return (
-          <EditableCurrencyCell
-            value={row.getValue("pendingChanges")}
-            hasChildren={hasChildren}
-            onEdit={createSafeClickHandler(
-              isLocked,
-              "view pending changes",
-              onPendingChangesClick
-                ? () => onPendingChangesClick(row.original)
-                : undefined
-            )}
-            editable={true}
-          />
-        );
-      },
-      size: 110,
-    },
-    {
-      accessorKey: "projectedBudget",
-      header: () => (
-        <ColumnHeader
-          columnKey="projectedBudget"
-          lines={["Proj.", "Budget"]}
-        />
-      ),
-      cell: ({ row }) => {
-        const hasChildren = Boolean(
-          row.original.children && row.original.children.length > 0);
-        return (
-          <EditableCurrencyCell
-            value={row.getValue("projectedBudget")}
-            hasChildren={hasChildren}
-            onEdit={createSafeClickHandler(
-              isLocked,
-              "edit line items",
-              onEditLineItem ? () => onEditLineItem(row.original) : undefined
-            )}
-          />
-        );
-      },
-      size: 130,
-    },
-    {
-      accessorKey: "committedCosts",
-      header: () => (
-        <ColumnHeader columnKey="committedCosts" lines={["committed"]} />
-      ),
-      cell: ({ row }) => {
-        const hasChildren = Boolean(
-          row.original.children && row.original.children.length > 0);
-        return (
-          <EditableCurrencyCell
-            value={row.getValue("committedCosts")}
-            hasChildren={hasChildren}
-            onEdit={createSafeClickHandler(
-              isLocked,
-              "view committed costs",
-              onCommittedCostsClick
-                ? () => onCommittedCostsClick(row.original)
-                : undefined
-            )}
-            editable={true}
-          />
-        );
-      },
-      size: 130,
-    },
-    {
       accessorKey: "pendingCostChanges",
       header: () => (
         <ColumnHeader
           columnKey="pendingCostChanges"
-          lines={["pending", "changes"]}
+          lines={["Pending Cost Changes"]}
         />
       ),
       cell: ({ row }) => {
@@ -900,7 +947,7 @@ export function BudgetTable({
     {
       accessorKey: "projectedCosts",
       header: () => (
-        <ColumnHeader columnKey="projectedCosts" lines={["Proj. Costs"]} />
+        <ColumnHeader columnKey="projectedCosts" lines={["Projected Costs"]} />
       ),
       cell: ({ row }) => {
         const hasChildren = Boolean(
@@ -924,7 +971,7 @@ export function BudgetTable({
       header: () => (
         <ColumnHeader
           columnKey="forecastToComplete"
-          lines={["forecast"]}
+          lines={["Forecast To Complete"]}
         />
       ),
       cell: ({ row }) => {
@@ -952,7 +999,7 @@ export function BudgetTable({
       header: () => (
         <ColumnHeader
           columnKey="estimatedCostAtCompletion"
-          lines={["Est. Total Cost"]}
+          lines={["Est. Cost at Completion"]}
         />
       ),
       cell: ({ row }) => {
@@ -977,7 +1024,7 @@ export function BudgetTable({
       header: () => (
         <ColumnHeader
           columnKey="projectedOverUnder"
-          lines={["Proj. +/-"]}
+          lines={["Projected +/-"]}
         />
       ),
       cell: ({ row }) => {
@@ -1090,10 +1137,12 @@ export function BudgetTable({
       expanded,
       rowSelection,
       columnSizing,
+      columnVisibility,
     },
     onExpandedChange: setExpanded,
     onRowSelectionChange: setRowSelection,
     onColumnSizingChange: setColumnSizing,
+    onColumnVisibilityChange: setColumnVisibility,
     columnResizeMode: "onChange",
     enableColumnResizing: true,
     defaultColumn: {
@@ -1138,6 +1187,38 @@ export function BudgetTable({
     const column = table.getColumn(columnId);
     const width = column?.getSize();
     return width ? { width: `${width}px`, minWidth: `${width}px` } : undefined;
+  };
+
+  const renderGrandTotalFooterCell = (columnId: string) => {
+    const isUtilityColumn = columnId === "select" || columnId === "actions";
+    const isDescriptionColumn = columnId === "description";
+    const columnTotal = isBudgetGrandTotalColumn(columnId)
+      ? grandTotals[columnId]
+      : null;
+
+    return (
+      <td
+        key={columnId}
+        className={cn(
+          "py-4 text-sm",
+          columnId === "select" ? "pl-2 pr-1" : "px-2",
+          isDescriptionColumn && "font-semibold text-foreground",
+        )}
+        style={getColumnSizeStyle(columnId)}
+      >
+        {isDescriptionColumn ? (
+          "Grand Totals"
+        ) : columnTotal !== null ? (
+          <div className="text-right">
+            <CurrencyCell value={columnTotal} />
+          </div>
+        ) : isUtilityColumn ? null : (
+          <span className="sr-only">
+            No total for {columnLabels[columnId] ?? columnId}
+          </span>
+        )}
+      </td>
+    );
   };
 
   const syncHorizontalScroll = (
@@ -1421,6 +1502,44 @@ export function BudgetTable({
       </div>
 
       <div className="hidden min-h-0 flex-1 flex-col sm:flex">
+      {/* Column visibility toolbar */}
+      <div className="flex justify-end px-4 pb-2 sm:px-6 lg:px-8">
+        <DropdownMenu>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
+                    aria-label="Toggle columns"
+                  >
+                    <Columns3 className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+              </TooltipTrigger>
+              <TooltipContent>Select which columns to display</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel>Columns</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {table.getAllLeafColumns()
+              .filter((col) => col.id !== "select" && col.id !== "actions")
+              .map((col) => (
+                <DropdownMenuCheckboxItem
+                  key={col.id}
+                  checked={col.getIsVisible()}
+                  onSelect={(e) => e.preventDefault()}
+                  onCheckedChange={() => col.toggleVisibility()}
+                >
+                  {columnLabels[col.id] ?? col.id}
+                </DropdownMenuCheckboxItem>
+              ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
       {/* Horizontal scroll container — allows the wide budget table to scroll on mobile */}
       <div
         ref={bodyScrollRef}
@@ -1440,7 +1559,7 @@ export function BudgetTable({
                       <TableHead
                         key={header.id}
                         className={cn(
-                          "relative bg-background py-2 text-center text-[11px] font-semibold text-foreground",
+                          "relative bg-background py-2 text-left text-xs font-semibold text-foreground capitalize tracking-normal",
                           header.column.id === "select"
                             ? "pl-2 pr-1"
                             : "px-1.5",
@@ -1654,128 +1773,9 @@ export function BudgetTable({
           >
             <TableFooter className="bg-muted/50 border-t">
               <tr className="bg-muted/50 hover:bg-muted/50 transition-colors">
-                <td className="py-4 pl-2 pr-1" style={getColumnSizeStyle("select")} />
-                <td
-                  className="py-4 px-2 text-sm font-semibold text-foreground"
-                  style={getColumnSizeStyle("description")}
-                >
-                  Grand Totals
-                </td>
-                <td
-                  className="py-4 px-2 text-sm"
-                  style={getColumnSizeStyle("originalBudgetAmount")}
-                >
-                  <div className="text-right">
-                    <CurrencyCell value={grandTotals.originalBudgetAmount} />
-                  </div>
-                </td>
-                <td
-                  className="py-4 px-2 text-sm"
-                  style={getColumnSizeStyle("budgetModifications")}
-                >
-                  <div className="text-right">
-                    <CurrencyCell value={grandTotals.budgetModifications} />
-                  </div>
-                </td>
-                <td
-                  className="py-4 px-2 text-sm"
-                  style={getColumnSizeStyle("approvedCOs")}
-                >
-                  <div className="text-right">
-                    <CurrencyCell value={grandTotals.approvedCOs} />
-                  </div>
-                </td>
-                <td
-                  className="py-4 px-2 text-sm"
-                  style={getColumnSizeStyle("revisedBudget")}
-                >
-                  <div className="text-right">
-                    <CurrencyCell value={grandTotals.revisedBudget} />
-                  </div>
-                </td>
-                <td
-                  className="py-4 px-2 text-sm"
-                  style={getColumnSizeStyle("jobToDateCostDetail")}
-                >
-                  <div className="text-right">
-                    <CurrencyCell value={grandTotals.jobToDateCostDetail} />
-                  </div>
-                </td>
-                <td
-                  className="py-4 px-2 text-sm"
-                  style={getColumnSizeStyle("directCosts")}
-                >
-                  <div className="text-right">
-                    <CurrencyCell value={grandTotals.directCosts} />
-                  </div>
-                </td>
-                <td
-                  className="py-4 px-2 text-sm"
-                  style={getColumnSizeStyle("pendingChanges")}
-                >
-                  <div className="text-right">
-                    <CurrencyCell value={grandTotals.pendingChanges} />
-                  </div>
-                </td>
-                <td
-                  className="py-4 px-2 text-sm"
-                  style={getColumnSizeStyle("projectedBudget")}
-                >
-                  <div className="text-right">
-                    <CurrencyCell value={grandTotals.projectedBudget} />
-                  </div>
-                </td>
-                <td
-                  className="py-4 px-2 text-sm"
-                  style={getColumnSizeStyle("committedCosts")}
-                >
-                  <div className="text-right">
-                    <CurrencyCell value={grandTotals.committedCosts} />
-                  </div>
-                </td>
-                <td
-                  className="py-4 px-2 text-sm"
-                  style={getColumnSizeStyle("pendingCostChanges")}
-                >
-                  <div className="text-right">
-                    <CurrencyCell value={grandTotals.pendingCostChanges} />
-                  </div>
-                </td>
-                <td
-                  className="py-4 px-2 text-sm"
-                  style={getColumnSizeStyle("projectedCosts")}
-                >
-                  <div className="text-right">
-                    <CurrencyCell value={grandTotals.projectedCosts} />
-                  </div>
-                </td>
-                <td
-                  className="py-4 px-2 text-sm"
-                  style={getColumnSizeStyle("forecastToComplete")}
-                >
-                  <div className="text-right">
-                    <CurrencyCell value={grandTotals.forecastToComplete} />
-                  </div>
-                </td>
-                <td
-                  className="py-4 px-2 text-sm"
-                  style={getColumnSizeStyle("estimatedCostAtCompletion")}
-                >
-                  <div className="text-right">
-                    <CurrencyCell
-                      value={grandTotals.estimatedCostAtCompletion}
-                    />
-                  </div>
-                </td>
-                <td
-                  className="py-4 px-2 text-sm"
-                  style={getColumnSizeStyle("projectedOverUnder")}
-                >
-                  <div className="text-right">
-                    <CurrencyCell value={grandTotals.projectedOverUnder} />
-                  </div>
-                </td>
-                <td className="py-4 px-2 text-sm" style={getColumnSizeStyle("actions")} />
+                {table.getVisibleLeafColumns().map((column) =>
+                  renderGrandTotalFooterCell(column.id),
+                )}
               </tr>
             </TableFooter>
           </table>
