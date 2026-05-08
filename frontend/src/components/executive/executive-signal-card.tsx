@@ -45,12 +45,19 @@ function displayProjectLabel(value: string) {
 function DetailBlock({
   label,
   children,
+  stacked = false,
 }: {
   label: string;
   children: ReactNode;
+  stacked?: boolean;
 }) {
   return (
-    <div className="grid gap-2 border-t border-border/60 py-4 first:border-t-0 first:pt-0 md:grid-cols-[132px_1fr]">
+    <div
+      className={cn(
+        "grid gap-2 border-t border-border/60 py-4 first:border-t-0 first:pt-0",
+        !stacked && "md:grid-cols-[132px_1fr]",
+      )}
+    >
       <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
         {label}
       </div>
@@ -267,7 +274,7 @@ export function ExecutiveSignalCard({
               </DetailBlock>
             )}
 
-            <DetailBlock label="Tasks">
+            <DetailBlock label="Tasks" stacked>
               <div className="space-y-4">
                 {relatedTasks.length > 0 && (
                   <ExecutiveRelatedTaskTable
