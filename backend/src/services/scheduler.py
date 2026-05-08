@@ -41,6 +41,36 @@ FIREFLIES_RETRYABLE_ERROR_MARKERS = (
     "openai",
 )
 
+NON_VECTORIZABLE_ERROR_PREFIX = "NON_VECTORIZABLE"
+TEXT_COMPATIBLE_EXTENSIONS = {
+    ".csv",
+    ".doc",
+    ".docx",
+    ".md",
+    ".pdf",
+    ".txt",
+    ".tsv",
+    ".xls",
+    ".xlsx",
+}
+NON_TEXT_EXTENSIONS = {
+    ".bmp",
+    ".gif",
+    ".heic",
+    ".jpeg",
+    ".jpg",
+    ".mov",
+    ".mp3",
+    ".mp4",
+    ".png",
+    ".svg",
+    ".tif",
+    ".tiff",
+    ".wav",
+    ".webp",
+    ".zip",
+}
+
 
 class ConfigurationError(RuntimeError):
     """Raised when a required env var is absent at scheduler start-up.
@@ -311,9 +341,10 @@ async def run_fireflies_pipeline_backlog_job(
             stale_minutes,
         )
         logger.info(
-            "[Scheduler] Fireflies pipeline backlog complete: matched=%d processed=%d failed=%d",
+            "[Scheduler] Fireflies pipeline backlog complete: matched=%d processed=%d skipped=%d failed=%d",
             result.get("matched", 0),
             result.get("processed", 0),
+            result.get("skipped", 0),
             result.get("failed", 0),
         )
         if result.get("failed", 0):
@@ -468,23 +499,154 @@ def _run_fireflies_full_pipeline(metadata_id: str) -> dict:
     return run_full_pipeline(metadata_id=metadata_id)
 
 
+def _file_extension(*values: Optional[str]) -> str:
+    for value in values:
+        if not value or "." not in value:
+            continue
+        suffix = value.rsplit(".", 1)[-1].strip().lower()
+        if suffix:
+            return f".{suffix.split('?', 1)[0].split('#', 1)[0]}"
+    return ""
+
+
+def _classify_non_vectorizable_fireflies_item(client, metadata_id: str) -> Optional[dict]:
+    """Return a non-vectorizable reason before expensive pipeline work starts."""
+    try:
+        response = (
+            client.table("document_metadata")
+            .select("*")
+            .eq("id", metadata_id)
+            .single()
+            .execute()
+        )
+    except Exception:
+        return None
+
+    metadata = response.data or {}
+    if not metadata:
+        return None
+
+    title = metadata.get("title") or ""
+    file_name = metadata.get("file_name") or title
+    file_path = metadata.get("file_path") or ""
+    url = metadata.get("url") or ""
+    category = str(metadata.get("category") or "").lower()
+    doc_type = str(metadata.get("type") or "").lower()
+    content = (metadata.get("content") or metadata.get("raw_text") or "").strip()
+    extension = _file_extension(file_name, file_path, url)
+
+    if (
+        extension in NON_TEXT_EXTENSIONS
+        or category in {"image", "photo", "video", "audio"}
+        or doc_type.startswith(("image/", "video/", "audio/"))
+    ):
+        label = file_name or title or metadata_id
+        return {
+            "code": "unsupported_file_type",
+            "message": (
+                f"{NON_VECTORIZABLE_ERROR_PREFIX}: Cannot extract searchable text from "
+                f"{label}. Upload an OCR/text/PDF/DOCX version or keep it as a reference-only source."
+            ),
+            "metadata": {
+                "extension": extension or None,
+                "category": category or None,
+                "type": doc_type or None,
+            },
+        }
+
+    is_financial = category in {"financial", "financial_document", "budget", "estimate"} or extension in {
+        ".csv",
+        ".tsv",
+        ".xls",
+        ".xlsx",
+    }
+    if is_financial and not file_path:
+        return {
+            "code": "missing_file_path",
+            "message": (
+                f"{NON_VECTORIZABLE_ERROR_PREFIX}: Financial/tabular document is missing "
+                "document_metadata.file_path, so the parser cannot download the source file."
+            ),
+            "metadata": {
+                "extension": extension or None,
+                "category": category or None,
+                "type": doc_type or None,
+            },
+        }
+
+    if extension and extension not in TEXT_COMPATIBLE_EXTENSIONS and not content:
+        return {
+            "code": "unsupported_file_extension",
+            "message": (
+                f"{NON_VECTORIZABLE_ERROR_PREFIX}: Unsupported source file extension "
+                f"{extension}; no inline text content is available to vectorize."
+            ),
+            "metadata": {
+                "extension": extension,
+                "category": category or None,
+                "type": doc_type or None,
+            },
+        }
+
+    return None
+
+
+def _mark_fireflies_item_non_vectorizable(
+    client,
+    *,
+    metadata_id: str,
+    reason: dict,
+) -> None:
+    error_message = str(reason.get("message") or NON_VECTORIZABLE_ERROR_PREFIX)[:500]
+    client.table("fireflies_ingestion_jobs").update(
+        {"stage": "error", "error_message": error_message}
+    ).eq("metadata_id", metadata_id).execute()
+    try:
+        client.table("document_metadata").update(
+            {
+                "status": "not_vectorizable",
+                "overview": error_message,
+            }
+        ).eq("id", metadata_id).execute()
+    except Exception:
+        logger.warning(
+            "[Scheduler] Could not mark document_metadata non-vectorizable for %s",
+            metadata_id,
+            exc_info=True,
+        )
+
+
 def _record_fireflies_backlog_run(client, result: dict) -> None:
     try:
         from .health.source_sync_health import record_sync_run
 
         failed = result.get("failed", 0)
+        skipped = result.get("skipped", 0)
         record_sync_run(
             client,
             source="fireflies",
             resource_id="fireflies_ingestion_jobs",
             resource_name="Fireflies pipeline backlog",
             stage="vectorization",
-            status="failed" if failed else "succeeded",
+            status="failed" if failed else "warning" if skipped else "succeeded",
             items_seen=result.get("matched", 0),
             items_synced=result.get("processed", 0),
+            items_skipped=skipped,
             items_failed=failed,
-            error_code="FIREFLIES_BACKLOG_FAILURE" if failed else None,
-            error_message=f"{failed} Fireflies backlog jobs failed" if failed else None,
+            error_code=(
+                "FIREFLIES_BACKLOG_FAILURE"
+                if failed
+                else "FIREFLIES_BACKLOG_NON_VECTORIZABLE"
+                if skipped
+                else None
+            ),
+            error_message=(
+                f"{failed} Fireflies backlog jobs failed"
+                if failed
+                else f"{skipped} Fireflies backlog jobs marked non-vectorizable"
+                if skipped
+                else None
+            ),
             metadata={
                 "limit": result.get("limit"),
                 "stale_minutes": result.get("stale_minutes"),
@@ -514,6 +676,7 @@ def _run_fireflies_pipeline_backlog(limit: int = 10, stale_minutes: int = 120) -
         "stale_minutes": stale_minutes,
         "matched": len(jobs),
         "processed": 0,
+        "skipped": 0,
         "failed": 0,
         "results": [],
     }
@@ -525,6 +688,25 @@ def _run_fireflies_pipeline_backlog(limit: int = 10, stale_minutes: int = 120) -
         metadata_id = job.get("metadata_id")
         fireflies_id = job.get("fireflies_id")
         try:
+            non_vectorizable = _classify_non_vectorizable_fireflies_item(client, metadata_id)
+            if non_vectorizable:
+                _mark_fireflies_item_non_vectorizable(
+                    client,
+                    metadata_id=metadata_id,
+                    reason=non_vectorizable,
+                )
+                result["skipped"] += 1
+                result["results"].append(
+                    {
+                        "fireflies_id": fireflies_id,
+                        "metadata_id": metadata_id,
+                        "status": "skipped",
+                        "skip_code": non_vectorizable.get("code"),
+                        "previous_stage": job.get("stage"),
+                        "error": non_vectorizable.get("message"),
+                    }
+                )
+                continue
             pipeline_result = _run_fireflies_full_pipeline(metadata_id)
             result["processed"] += 1
             result["results"].append(
@@ -555,7 +737,7 @@ def _run_fireflies_pipeline_backlog(limit: int = 10, stale_minutes: int = 120) -
                 }
             )
 
-    result["status"] = "failed" if result["failed"] else "ok"
+    result["status"] = "failed" if result["failed"] else "warning" if result["skipped"] else "ok"
     _record_fireflies_backlog_run(client, result)
     return result
 

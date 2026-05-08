@@ -137,6 +137,67 @@ def test_fireflies_backlog_drain_processes_retryable_jobs(monkeypatch):
     assert recorded[0][1]["matched"] == 2
 
 
+def test_fireflies_backlog_marks_non_vectorizable_items_without_pipeline(monkeypatch):
+    client = object()
+    marked = []
+    recorded = []
+    jobs = [
+        {
+            "fireflies_id": "ff-image",
+            "metadata_id": "doc-image",
+            "stage": "raw_ingested",
+            "error_message": None,
+        }
+    ]
+
+    monkeypatch.setattr(
+        "src.services.supabase_helpers.get_supabase_client",
+        lambda: client,
+    )
+    monkeypatch.setattr(
+        scheduler,
+        "_find_fireflies_pipeline_backlog_jobs",
+        lambda supabase_client, *, limit, stale_minutes: jobs,
+    )
+    monkeypatch.setattr(
+        scheduler,
+        "_classify_non_vectorizable_fireflies_item",
+        lambda supabase_client, metadata_id: {
+            "code": "unsupported_file_type",
+            "message": "NON_VECTORIZABLE: Cannot extract searchable text from image.png.",
+            "metadata": {"extension": ".png"},
+        },
+    )
+    monkeypatch.setattr(
+        scheduler,
+        "_mark_fireflies_item_non_vectorizable",
+        lambda supabase_client, *, metadata_id, reason: marked.append(
+            (supabase_client, metadata_id, reason["code"])
+        ),
+    )
+    monkeypatch.setattr(
+        scheduler,
+        "_run_fireflies_full_pipeline",
+        lambda metadata_id: (_ for _ in ()).throw(AssertionError("pipeline should not run")),
+    )
+    monkeypatch.setattr(
+        scheduler,
+        "_record_fireflies_backlog_run",
+        lambda supabase_client, result: recorded.append((supabase_client, result)),
+    )
+
+    result = scheduler._run_fireflies_pipeline_backlog(limit=10, stale_minutes=120)
+
+    assert marked == [(client, "doc-image", "unsupported_file_type")]
+    assert result["matched"] == 1
+    assert result["processed"] == 0
+    assert result["skipped"] == 1
+    assert result["failed"] == 0
+    assert result["status"] == "warning"
+    assert result["results"][0]["status"] == "skipped"
+    assert recorded[0][1]["skipped"] == 1
+
+
 def test_fireflies_backlog_retry_filter_only_allows_provider_failures():
     assert scheduler._is_retryable_fireflies_error("OpenAI quota exceeded")
     assert scheduler._is_retryable_fireflies_error("Fireflies embedding failed across all providers")

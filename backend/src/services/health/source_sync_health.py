@@ -539,16 +539,18 @@ def _stuck_item_rows(
 
         metadata_id = str(job.get("metadata_id") or "")
         document = document_by_id.get(metadata_id, {})
+        error_message = job.get("error_message")
+        is_non_vectorizable = isinstance(error_message, str) and error_message.startswith("NON_VECTORIZABLE")
         stuck.append(
             {
                 "source": "fireflies",
                 "resourceId": metadata_id or str(job.get("fireflies_id") or ""),
                 "resourceName": document.get("title") or job.get("fireflies_id") or metadata_id or "Fireflies item",
                 "stage": stage,
-                "status": "failed" if stage == "error" else "stale",
+                "status": "not_vectorizable" if is_non_vectorizable else "failed" if stage == "error" else "stale",
                 "ageMinutes": age,
                 "lastAttemptAt": job.get("last_attempt_at") or job.get("updated_at"),
-                "errorMessage": job.get("error_message"),
+                "errorMessage": error_message,
                 "metadata": {
                     "firefliesId": job.get("fireflies_id"),
                     "metadataId": metadata_id or None,

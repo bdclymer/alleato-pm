@@ -28,6 +28,7 @@
    - Production scheduler first interval — pass with surfaced failures; Fireflies backlog matched 10, processed 8, failed 2; Graph embedding succeeded; intelligence compiler claimed 2 and succeeded 2.
    - `python -m pytest backend/tests/test_source_sync_health.py backend/tests/test_scheduler_graph_jobs.py` — pass, 9 passed.
    - `python -m py_compile backend/src/services/health/source_sync_health.py backend/src/services/scheduler.py` — pass.
+   - `python -m pytest backend/tests/test_scheduler_graph_jobs.py backend/tests/test_source_sync_health.py` — pass after non-vectorizable classifier, 10 passed.
    - `npm run check:routes` — pass.
    - `npx eslint src/components/ai-intelligence/source-sync-health-panel.tsx src/app/api/admin/source-sync/status/route.ts` — pass.
    - `cd frontend && npm run typecheck` — fail on unrelated existing TypeScript debt outside this source-sync slice.
@@ -42,7 +43,7 @@
    - The source-sync page is accurately surfacing a real backlog, but the prior implementation had no automatic scheduled drain for stale Fireflies pipeline rows.
    - A bounded live drain proves the normal full pipeline can advance at least one stale row from `raw_ingested` to `done`.
    - Meeting health still fails because the backlog is large; deploy cadence and batch sizing are now the next operational levers.
-10) Recommended next action (one line): Deploy the source-sync UI visibility extension, then add file-type-aware handling for image-only/financial parser Fireflies backlog rows.
+10) Recommended next action (one line): Deploy the non-vectorizable Fireflies classifier, then add admin retry/mark-reference-only actions for stuck rows.
 11) Handoff file path: docs/ops/handoffs/2026-05-07-S37-fireflies-backlog-drain.md
 12) Migration ledger evidence: No new migration in this slice.
 
@@ -58,6 +59,7 @@ Implemented and deployed a scheduled Fireflies pipeline backlog drain in `backen
 ## Exact Next Step
 
 Deploy the source-sync UI visibility extension, then continue monitoring `source_sync_runs` and scheduler logs. The first production interval proved the drain works and exposed two image-only failures: `standard-beach-court-dimensions.jpg` and `Mech Screening Picture.png`. The updated health function also shows additional financial parser stuck rows that should be handled explicitly.
+The next code slice adds a scheduler preflight classifier so unsupported binary/image/audio/video/archive files and financial/tabular rows missing `document_metadata.file_path` are marked `NON_VECTORIZABLE`, counted as skipped in `source_sync_runs`, and removed from expensive retry loops.
 
 ## Known Pitfalls
 
