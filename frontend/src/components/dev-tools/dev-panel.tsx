@@ -28,8 +28,8 @@ interface HealthCheck {
 export function DevPanel() {
   const [healthChecks, setHealthChecks] = useState<HealthCheck[]>([])
   const [isChecking, setIsChecking] = useState(false)
-  const params = useParams()
-  const pathname = usePathname()
+  const params = useParams()!
+  const pathname = usePathname()!
   const supabase = createClient()
 
   // Only show in development

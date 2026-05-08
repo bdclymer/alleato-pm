@@ -54,7 +54,7 @@ export function AppHeader({
   user,
   onProjectChange,
 }: AppHeaderProps) {
-  const pathname = usePathname();
+  const pathname = usePathname()!;
 
   return (
     <header

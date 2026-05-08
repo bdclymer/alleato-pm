@@ -41,7 +41,7 @@ export function TableView({
   currentDir,
 }: TableViewProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams()!;
   const [isPending, startTransition] = useTransition();
 
   const handleSort = useCallback(

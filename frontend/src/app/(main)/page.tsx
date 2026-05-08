@@ -410,8 +410,8 @@ function ProjectListItem({
 
 export default function PortfolioPage() {
   const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const pathname = usePathname()!;
+  const searchParams = useSearchParams()!;
   const { confirm, ConfirmDialog } = useConfirm();
   const [projects, setProjects] = React.useState<Project[]>([]);
   const [isAdmin, setIsAdmin] = React.useState(false);

@@ -498,10 +498,10 @@ function PackageManageDialog({
 // ---------------------------------------------------------------------------
 
 export default function SubmittalsPage(): ReactElement {
-  const params = useParams<{ projectId: string }>();
-  const pathname = usePathname();
+  const params = useParams<{ projectId: string }>()!;
+  const pathname = usePathname()!;
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams()!;
   const qc = useQueryClient();
 
   const projectId = parseInt(params.projectId ?? "", 10);

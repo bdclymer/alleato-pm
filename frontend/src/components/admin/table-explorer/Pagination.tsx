@@ -31,7 +31,7 @@ export function Pagination({
   currentPage,
 }: PaginationProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams()!;
   const [isPending, startTransition] = useTransition();
 
   const totalPages = Math.ceil(totalCount / pageSize);

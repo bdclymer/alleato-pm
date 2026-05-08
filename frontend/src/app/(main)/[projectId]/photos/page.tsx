@@ -57,7 +57,7 @@ import {
 import { cn } from "@/lib/utils";
 
 export default function ProjectPhotosPage() {
-  const params = useParams<{ projectId: string }>();
+  const params = useParams<{ projectId: string }>()!;
   const projectId = parseInt(params.projectId, 10);
 
   const [search, setSearch] = useState("");

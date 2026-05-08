@@ -43,7 +43,7 @@ import { useSpecificationRevisions, useDeleteRevision, useSetCurrentRevision } f
 import type { SpecificationWithAreas, RevisionListResponse } from "@/types/specifications.types";
 
 export default function SpecificationDetailPage() {
-  const params = useParams();
+  const params = useParams()!;
   const router = useRouter();
   const projectId = params.projectId as string;
   const sectionId = params.sectionId as string;

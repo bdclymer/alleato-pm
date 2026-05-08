@@ -187,8 +187,8 @@ export function EnhancedDevPanel({ variant = "sidebar" }: EnhancedDevPanelProps)
   const [columnMappings, setColumnMappings] = useState<ColumnMappingRow[]>([])
   const [detectedTableName, setDetectedTableName] = useState<string>("Unknown")
   const [detectedPrimaryId, setDetectedPrimaryId] = useState<string>("N/A")
-  const params = useParams()
-  const pathname = usePathname()
+  const params = useParams()!
+  const pathname = usePathname()!
   const supabase = createClient()
 
   // Listen for console errors

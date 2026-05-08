@@ -757,7 +757,7 @@ function AiWidget({ projectId }: { projectId: number }) {
 }
 
 function ProjectToolsSidebar({ projectId }: { projectId: number }) {
-  const pathname = usePathname();
+  const pathname = usePathname()!;
 
   const groupedTools = React.useMemo(
     () =>

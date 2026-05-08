@@ -49,7 +49,7 @@ interface ContractWithLineItems {
 
 export default function ProjectSOVPage() {
   const router = useRouter();
-  const params = useParams();
+  const params = useParams()!;
   const projectId = params.projectId as string;
   useProjectTitle("Schedule of Values");
 

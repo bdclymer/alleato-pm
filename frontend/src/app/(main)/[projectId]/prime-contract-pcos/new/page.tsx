@@ -142,8 +142,8 @@ type CoLinkMode = "none" | "existing" | "create_new";
 
 export default function NewPrimeContractPcoPage() {
   const router = useRouter();
-  const params = useParams();
-  const searchParams = useSearchParams();
+  const params = useParams()!;
+  const searchParams = useSearchParams()!;
   const projectId = params.projectId as string;
   const contractIdFromRoute =
     typeof params.contractId === "string" ? params.contractId : null;

@@ -150,8 +150,8 @@ async function copyClaudeContext(feature: string | null) {
 export function ProcoreReferencePanel() {
   const open    = useProcorePanelStore((s) => s.open);
   const setOpen = useProcorePanelStore((s) => s.setOpen);
-  const pathname = usePathname();
-  const params   = useParams() as Record<string, string | string[] | undefined>;
+  const pathname = usePathname()!;
+  const params   = useParams()! as Record<string, string | string[] | undefined>;
 
   const [activeTab, setActiveTab]                   = React.useState<TabId>("screenshots");
   const [screenshotExpanded, setScreenshotExpanded] = React.useState(false);

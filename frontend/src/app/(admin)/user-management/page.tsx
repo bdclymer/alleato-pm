@@ -194,8 +194,8 @@ function getTemplateSortValue(template: PermissionTemplate, sortBy: string) {
 export default function PermissionsAdminPage() {
   const qc = useQueryClient();
   const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const pathname = usePathname()!;
+  const searchParams = useSearchParams()!;
   const tabParam = searchParams.get("tab");
   const activeTab: PermissionsTab =
     tabParam === "company-templates"

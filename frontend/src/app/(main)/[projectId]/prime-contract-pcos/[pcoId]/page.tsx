@@ -158,7 +158,7 @@ function formatDateTime(dateValue: string | null | undefined): string {
 
 export default function PrimeContractPcoDetailPage() {
   const router = useRouter();
-  const params = useParams();
+  const params = useParams()!;
   const projectId = parseInt(params.projectId as string, 10);
   const pcoId = params.pcoId as string;
   const contractIdFromRoute =

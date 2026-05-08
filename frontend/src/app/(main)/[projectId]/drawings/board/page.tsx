@@ -73,7 +73,7 @@ const columnConfig: Record<string, Omit<BoardColumn, "items">> = {
 };
 
 export default function DrawingsBoardPage() {
-  const params = useParams();
+  const params = useParams()!;
   const projectId = params.projectId as string;
 
   const { data: drawingsResponse, isLoading } = useDrawings(projectId);

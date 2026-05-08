@@ -145,7 +145,7 @@ type SaveResponse =
 // =============================================================================
 
 export default function StandardFormPage() {
-  const params = useParams();
+  const params = useParams()!;
   const router = useRouter();
   const projectId = params.projectId as string;
 

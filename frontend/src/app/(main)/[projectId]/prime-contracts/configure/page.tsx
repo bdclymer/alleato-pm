@@ -28,7 +28,7 @@ interface PrimeContractSettings {
 }
 
 export default function PrimeContractsConfigurePage() {
-  const params = useParams();
+  const params = useParams()!;
   const projectId = params.projectId as string;
 
   const [settings, setSettings] = useState<PrimeContractSettings | null>(null);

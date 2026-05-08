@@ -77,7 +77,7 @@ export function DesignViolationOverlay() {
 }
 
 function DesignViolationOverlayContent() {
-  const pathname = usePathname();
+  const pathname = usePathname()!;
   const isMobile = useIsMobile();
   const [menu, setMenu] = useState<ContextMenu>(null);
   const [selected, setSelected] = useState<ViolationType[]>([]);

@@ -82,9 +82,9 @@ const STATUS_FILTERS: FilterConfig[] = [
 ];
 
 export function EstimatesTypeClient({ estimateType, typeSlug, estimates }: Props) {
-  const pathname = usePathname();
+  const pathname = usePathname()!;
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams()!;
 
   const typeLabel = EstimateTypeLabels[estimateType];
 

@@ -29,7 +29,7 @@ import { PCOSidebar } from "@/components/domain/pcos/PCOSidebar";
 
 export default function PCODetailPage() {
   const router = useRouter();
-  const params = useParams();
+  const params = useParams()!;
   const projectId = params.projectId as string;
   const pcoId = params.pcoId as string;
 

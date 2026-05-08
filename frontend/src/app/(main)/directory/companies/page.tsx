@@ -343,9 +343,9 @@ function CompanyPreviewPane({
 }
 
 export default function GlobalCompanyDirectoryPage(): ReactElement {
-  const pathname = usePathname();
+  const pathname = usePathname()!;
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams()!;
   const isClientsRoute =
     pathname === "/directory/clients" || pathname.endsWith("/directory/clients");
   const forcedCompanyType = isClientsRoute ? "client" : undefined;

@@ -23,7 +23,7 @@ interface MenuProps {
 }
 
 export function Menu({ isOpen, projectId, onLinkClick }: MenuProps) {
-  const pathname = usePathname();
+  const pathname = usePathname()!;
   const menuList = getMenuList(pathname, projectId);
 
   return (

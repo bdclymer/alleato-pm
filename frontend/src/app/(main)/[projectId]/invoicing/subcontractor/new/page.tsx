@@ -94,8 +94,8 @@ interface CommitmentOption {
 
 export default function NewSubcontractorInvoicePage() {
   const router = useRouter();
-  const params = useParams();
-  const searchParams = useSearchParams();
+  const params = useParams()!;
+  const searchParams = useSearchParams()!;
   const projectId = params.projectId as string;
 
   // URL-provided commitment context (from commitment detail page)

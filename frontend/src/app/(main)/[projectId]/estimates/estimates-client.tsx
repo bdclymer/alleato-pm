@@ -47,9 +47,9 @@ export function EstimatesClient({
   projectId,
   estimates,
 }: EstimatesClientProps): ReactElement {
-  const pathname = usePathname();
+  const pathname = usePathname()!;
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams()!;
 
   const tableState = useUnifiedTableState({
     entityKey: "estimates",

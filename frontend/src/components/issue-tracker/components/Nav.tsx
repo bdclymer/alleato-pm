@@ -18,7 +18,7 @@ import { MyIssuesIcon } from "@/components/issue-tracker/icons/MyIssuesIcon";
 
 export function Nav() {
   const { isOpen, toggleInbox } = useInbox();
-  const pathname = usePathname();
+  const pathname = usePathname()!;
   const [creating, setCreating] = useState(false);
 
   return (

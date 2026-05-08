@@ -99,7 +99,7 @@ type FormData = z.infer<typeof schema>;
 
 export default function NewPrimeContractCOPage() {
   const router = useRouter();
-  const params = useParams();
+  const params = useParams()!;
   const projectId = params.projectId as string;
   const [isSubmitting, setIsSubmitting] = useState(false);
 

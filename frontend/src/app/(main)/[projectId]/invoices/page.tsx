@@ -215,10 +215,10 @@ function buildBillingPeriodColumns(
 }
 
 export default function ProjectInvoicesPage(): ReactElement {
-  const params = useParams<{ projectId: string }>();
-  const pathname = usePathname();
+  const params = useParams<{ projectId: string }>()!;
+  const pathname = usePathname()!;
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams()!;
   const projectId = params.projectId ?? "";
 
   const activeTab = (searchParams.get("tab") ?? "owner") as TabKey;

@@ -220,7 +220,7 @@ function BulkActionBar({
 // =============================================================================
 
 export default function ProjectSchedulePage() {
-  const params = useParams();
+  const params = useParams()!;
   const projectId = params.projectId as string;
 
   // State

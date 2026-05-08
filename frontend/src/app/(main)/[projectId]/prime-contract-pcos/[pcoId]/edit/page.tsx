@@ -127,7 +127,7 @@ function toFormData(pco: PrimeContractPcoResponse): PrimeContractPcoFormData {
 // Prime contract PCO edit page for updating General form fields.
 export default function EditPrimeContractPcoPage() {
   const router = useRouter();
-  const params = useParams<{ projectId: string; pcoId: string; contractId?: string }>();
+  const params = useParams<{ projectId: string; pcoId: string; contractId?: string }>()!;
 
   const projectId = params.projectId;
   const pcoId = params.pcoId;

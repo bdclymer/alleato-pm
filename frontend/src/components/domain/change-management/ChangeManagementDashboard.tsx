@@ -522,7 +522,7 @@ function DashboardSkeleton() {
 // =============================================================================
 
 export function ChangeManagementDashboard() {
-  const { projectId } = useParams<{ projectId: string }>();
+  const { projectId } = useParams<{ projectId: string }>()!;
   const { isLoading, metrics, stages, recentActivity } =
     useChangeManagement(projectId);
 

@@ -393,8 +393,8 @@ import {
 ${filterStateType}
 export default function ${Pascal}Page() {
   const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const pathname = usePathname()!;
+  const searchParams = useSearchParams()!;
 
   const [data, setData] = React.useState<${Pascal}Row[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);

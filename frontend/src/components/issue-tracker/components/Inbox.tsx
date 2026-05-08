@@ -124,7 +124,7 @@ function SmallInboxNotification({
 }: {
   inboxNotification: InboxNotificationData;
 }) {
-  const params = useParams();
+  const params = useParams()!;
   const thread = useInboxNotificationThread(inboxNotification.id);
   const { info, error, isLoading } = useRoomInfo(
     inboxNotification?.roomId || ""
