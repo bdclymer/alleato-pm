@@ -82,32 +82,28 @@ function toIsoDate(value: string | null | undefined): string {
   return value.split("T")[0];
 }
 
-function mapOutboundCommitmentStatus(status: string | null | undefined): string {
-  const normalized = (status ?? "").toLowerCase();
-  if (normalized === "executed" || normalized === "approved" || normalized === "closed") {
-    return "Open";
-  }
-  if (normalized === "void" || normalized === "cancelled" || normalized === "canceled") {
-    return "Canceled";
-  }
-  return "On Hold";
-}
+type StatusEntity = "commitment" | "primeCo" | "invoice";
 
-function mapOutboundPrimeCoStatus(status: string | null | undefined): string {
-  const normalized = (status ?? "").toLowerCase();
-  if (normalized === "approved" || normalized === "executed" || normalized === "closed") {
-    return "Open";
-  }
-  if (normalized === "rejected" || normalized === "void") {
-    return "Canceled";
-  }
-  return "On Hold";
-}
+const STATUS_MAP: Record<StatusEntity, Array<[string[], string]>> = {
+  commitment: [
+    [["executed", "approved", "closed"], "Open"],
+    [["void", "cancelled", "canceled"], "Canceled"],
+  ],
+  primeCo: [
+    [["approved", "executed", "closed"], "Open"],
+    [["rejected", "void"], "Canceled"],
+  ],
+  invoice: [
+    [["approved", "paid"], "Released"],
+    [["submitted"], "Balanced"],
+  ],
+};
 
-function mapOutboundInvoiceStatus(status: string | null | undefined): string {
+function mapOutboundStatus(status: string | null | undefined, entity: StatusEntity): string {
   const normalized = (status ?? "").toLowerCase();
-  if (normalized === "approved" || normalized === "paid") return "Released";
-  if (normalized === "submitted") return "Balanced";
+  for (const [triggers, output] of STATUS_MAP[entity]) {
+    if (triggers.includes(normalized)) return output;
+  }
   return "On Hold";
 }
 
@@ -306,7 +302,7 @@ export async function exportCommitmentsToAcumatica(
       Description: acuField(sc.description ?? sc.title ?? sc.contract_number),
       Date: acuField(toIsoDate(sc.contract_date)),
       Status: acuField(
-        mapOutboundCommitmentStatus(sc.executed ? "executed" : sc.status),
+        mapOutboundStatus(sc.executed ? "executed" : sc.status, "commitment"),
       ),
       Details: details,
     };
@@ -382,7 +378,7 @@ export async function exportCommitmentsToAcumatica(
       Date: acuField(toIsoDate(po.contract_date)),
       PromisedOn: acuField(toIsoDate(po.delivery_date)),
       Status: acuField(
-        mapOutboundCommitmentStatus(po.executed ? "executed" : po.status),
+        mapOutboundStatus(po.executed ? "executed" : po.status, "commitment"),
       ),
       Details: details,
     };
@@ -647,7 +643,7 @@ export async function exportChangeOrdersToAcumatica(
       ChangeDate: acuField(toIsoDate(co.submitted_at)),
       RevenueBudgetChangeTotal: acuField(co.total_amount ?? 0),
       CommitmentsChangeTotal: acuField(0),
-      Status: acuField(mapOutboundPrimeCoStatus(co.status)),
+      Status: acuField(mapOutboundStatus(co.status, "primeCo")),
     };
 
     try {
@@ -714,7 +710,7 @@ export async function exportChangeOrdersToAcumatica(
       ChangeDate: acuField(toIsoDate(co.requested_date)),
       RevenueBudgetChangeTotal: acuField(0),
       CommitmentsChangeTotal: acuField(co.amount ?? 0),
-      Status: acuField(mapOutboundPrimeCoStatus(co.status)),
+      Status: acuField(mapOutboundStatus(co.status, "primeCo")),
     };
 
     try {
@@ -989,7 +985,7 @@ export async function exportPaymentApplicationsToAcumatica(
       DueDate: acuField(toIsoDate(application.period_to ?? application.period_from ?? undefined)),
       Description: acuField(description),
       Amount: acuField(grossAmount),
-      Status: acuField(mapOutboundInvoiceStatus(application.status)),
+      Status: acuField(mapOutboundStatus(application.status, "invoice")),
       ...(netAmount > 0
         ? {
             Details: [
@@ -1195,7 +1191,7 @@ export async function exportOwnerInvoicesToAcumatica(
       DueDate: acuField(toIsoDate(invoice.due_date ?? invoice.period_end)),
       Description: acuField(`Owner Invoice ${invoice.invoice_number ?? referenceNbr}`),
       Amount: acuField(invoice.gross_amount ?? invoice.net_amount ?? 0),
-      Status: acuField(mapOutboundInvoiceStatus(invoice.status)),
+      Status: acuField(mapOutboundStatus(invoice.status, "invoice")),
       Details: details,
     };
 
@@ -1423,7 +1419,7 @@ export async function exportSubcontractorInvoiceToAcumatica(
     DueDate: acuField(toIsoDate(invoice.period_end ?? invoice.billing_date ?? invoice.period_start)),
     Description: acuField(description),
     Amount: acuField(billAmount),
-    Status: acuField(mapOutboundInvoiceStatus(invoice.status)),
+    Status: acuField(mapOutboundStatus(invoice.status, "invoice")),
     Details: billLines,
   };
 

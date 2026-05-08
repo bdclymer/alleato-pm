@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   extractProjectId,
@@ -40,25 +40,6 @@ interface UseHeaderNavReturn {
   fetchProjects: () => void;
   handleProjectSelect: (projectId: number) => void;
 }
-
-const meetingTitleCache = new Map<string, string>();
-const globalMeetingTitleCache = new Map<string, string>();
-const primeContractTitleCache = new Map<string, string>();
-const companyTitleCache = new Map<string, string>();
-const vendorTitleCache = new Map<string, string>();
-const contactTitleCache = new Map<string, string>();
-const commitmentTitleCache = new Map<string, string>();
-const primePcoTitleCache = new Map<string, string>();
-const changeEventTitleCache = new Map<string, string>();
-const primeCoTitleCache = new Map<string, string>();
-const commitmentCoTitleCache = new Map<string, string>();
-const invoiceTitleCache = new Map<string, string>();
-const rfiTitleCache = new Map<string, string>();
-const submittalTitleCache = new Map<string, string>();
-const subcontractorInvoiceTitleCache = new Map<string, { commitmentLabel: string; invoiceLabel: string }>();
-const drawingTitleCache = new Map<string, string>();
-const testRunTitleCache = new Map<string, string>();
-const progressReportTitleCache = new Map<string, string>();
 
 const TABLE_ROUTE_ALIASES: Record<string, string> = {
   tasks: "tasks",
@@ -106,6 +87,26 @@ export function useHeaderNav(): UseHeaderNavReturn {
   const [drawingTitle, setDrawingTitle] = useState<string | null>(null);
   const [testRunTitle, setTestRunTitle] = useState<string | null>(null);
   const [progressReportTitle, setProgressReportTitle] = useState<string | null>(null);
+
+  // Title caches scoped to this component instance — cleared on unmount
+  const meetingTitleCache = useRef(new Map<string, string>()).current;
+  const globalMeetingTitleCache = useRef(new Map<string, string>()).current;
+  const primeContractTitleCache = useRef(new Map<string, string>()).current;
+  const companyTitleCache = useRef(new Map<string, string>()).current;
+  const vendorTitleCache = useRef(new Map<string, string>()).current;
+  const contactTitleCache = useRef(new Map<string, string>()).current;
+  const commitmentTitleCache = useRef(new Map<string, string>()).current;
+  const primePcoTitleCache = useRef(new Map<string, string>()).current;
+  const changeEventTitleCache = useRef(new Map<string, string>()).current;
+  const primeCoTitleCache = useRef(new Map<string, string>()).current;
+  const commitmentCoTitleCache = useRef(new Map<string, string>()).current;
+  const invoiceTitleCache = useRef(new Map<string, string>()).current;
+  const rfiTitleCache = useRef(new Map<string, string>()).current;
+  const submittalTitleCache = useRef(new Map<string, string>()).current;
+  const subcontractorInvoiceTitleCache = useRef(new Map<string, { commitmentLabel: string; invoiceLabel: string }>()).current;
+  const drawingTitleCache = useRef(new Map<string, string>()).current;
+  const testRunTitleCache = useRef(new Map<string, string>()).current;
+  const progressReportTitleCache = useRef(new Map<string, string>()).current;
 
   // Extract project ID from URL path or query parameters
   const projectId = useMemo(() => {

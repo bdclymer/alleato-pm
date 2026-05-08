@@ -72,7 +72,7 @@ type MirrorRow = Record<string, unknown> & {
 // ---------------------------------------------------------------------------
 
  
-interface EntityConfig<TFlat = any> {
+interface EntityConfig<TFlat> {
   /** Acumatica API entity name (e.g. "Customer", "Bill"). */
   entityName: string;
   /** Supabase mirror table name (e.g. "acumatica_customers"). */
@@ -500,7 +500,7 @@ const projectBudgetConfig: EntityConfig<FlatProjectBudget> = {
 // ---------------------------------------------------------------------------
 
 /** All entity configs in tier order. */
-const ALL_CONFIGS: EntityConfig[] = [
+const ALL_CONFIGS = [
   customerConfig,
   accountConfig,
   projectConfig,
@@ -815,7 +815,7 @@ export async function syncMirrorTier(
 
   for (const config of configs) {
     const result = await syncMirrorEntity(
-      config,
+      config as EntityConfig<{ LastModifiedDateTime?: string }>,
       options,
       supabase,
     );
