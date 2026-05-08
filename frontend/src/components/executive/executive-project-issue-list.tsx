@@ -128,14 +128,11 @@ function ProjectIssueGroupSection({
   return (
     <section className="space-y-3">
       <div className="flex flex-col gap-2 border-b border-border pb-3 md:flex-row md:items-end md:justify-between">
-        <div className="min-w-0 space-y-1">
-          <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-            <FolderOpen className="h-4 w-4 text-muted-foreground" />
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 text-sm font-semibold text-primary">
+            <FolderOpen className="h-4 w-4" />
             <span className="truncate">{group.label}</span>
           </div>
-          <p className="text-xs leading-5 text-muted-foreground">
-            {group.entries.length} open issue{group.entries.length === 1 ? "" : "s"} with source-backed context.
-          </p>
         </div>
         {group.unlinked && (
           <span className="text-xs font-medium text-destructive">
