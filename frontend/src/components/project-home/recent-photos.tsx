@@ -1,113 +1,29 @@
 "use client";
 
 import * as React from "react";
-import { Camera, Calendar, User, Download, Maximize2 } from "lucide-react";
+import { Camera, Calendar, User, Download, Maximize2, MapPin } from "lucide-react";
 import { format } from "date-fns";
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-
-interface ProjectPhoto {
-  id: string;
-  url: string;
-  thumbnailUrl?: string;
-  title: string;
-  description?: string;
-  dateTaken: Date;
-  uploadedBy: string;
-  tags?: string[];
-  location?: string;
-}
+import { EmptyState } from "@/components/ds";
+import { usePhotos, type PhotoSummary } from "@/hooks/use-photos";
 
 interface RecentPhotosProps {
   projectId: string;
 }
 
 export function RecentPhotos({ projectId }: RecentPhotosProps) {
-  const [selectedPhoto, setSelectedPhoto] = React.useState<ProjectPhoto | null>(
+  const numericProjectId = Number(projectId);
+  const photosQuery = usePhotos(numericProjectId);
+  const photos = React.useMemo(
+    () => (photosQuery.data ?? []).slice(0, 6),
+    [photosQuery.data],
+  );
+  const [selectedPhoto, setSelectedPhoto] = React.useState<PhotoSummary | null>(
     null,
   );
-
-  // Mock data - in production this would come from Supabase storage
-  const mockPhotos: ProjectPhoto[] = [
-    {
-      id: "1",
-      url: "https://images.unsplash.com/photo-1541888946425-d81bb19240f5",
-      thumbnailUrl:
-        "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=300&h=200&fit=crop",
-      title: "Foundation Pour - West Wing",
-      description:
-        "Concrete foundation being poured for the west wing of the building",
-      dateTaken: new Date("2024-03-18"),
-      uploadedBy: "John Smith",
-      tags: ["foundation", "concrete", "west-wing"],
-      location: "West Wing - Grid A-5",
-    },
-    {
-      id: "2",
-      url: "https://images.unsplash.com/photo-1504307651254-35680f356dfd",
-      thumbnailUrl:
-        "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=300&h=200&fit=crop",
-      title: "Steel Frame Installation",
-      description: "Steel beams being installed on the second floor",
-      dateTaken: new Date("2024-03-17"),
-      uploadedBy: "Jane Doe",
-      tags: ["steel", "framing", "structural"],
-      location: "Level 2 - Grid B-3",
-    },
-    {
-      id: "3",
-      url: "https://images.unsplash.com/photo-1503387762-592deb58ef4e",
-      thumbnailUrl:
-        "https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=300&h=200&fit=crop",
-      title: "Site Overview - March Update",
-      description:
-        "Aerial view of the construction site showing overall progress",
-      dateTaken: new Date("2024-03-16"),
-      uploadedBy: "Mike Johnson",
-      tags: ["aerial", "overview", "progress"],
-      location: "Full Site",
-    },
-    {
-      id: "4",
-      url: "https://images.unsplash.com/photo-1581094794329-c8112c4e5190",
-      thumbnailUrl:
-        "https://images.unsplash.com/photo-1581094794329-c8112c4e5190?w=300&h=200&fit=crop",
-      title: "MEP Rough-In Progress",
-      description:
-        "Mechanical, electrical, and plumbing installation in progress",
-      dateTaken: new Date("2024-03-15"),
-      uploadedBy: "Sarah Wilson",
-      tags: ["MEP", "electrical", "plumbing"],
-      location: "Level 1 - North Side",
-    },
-    {
-      id: "5",
-      url: "https://images.unsplash.com/photo-1486175060817-5663aacc6655",
-      thumbnailUrl:
-        "https://images.unsplash.com/photo-1486175060817-5663aacc6655?w=300&h=200&fit=crop",
-      title: "Safety Inspection Documentation",
-      description:
-        "Weekly safety inspection showing compliance with regulations",
-      dateTaken: new Date("2024-03-14"),
-      uploadedBy: "Tom Brown",
-      tags: ["safety", "inspection", "compliance"],
-      location: "Main Entrance",
-    },
-    {
-      id: "6",
-      url: "https://images.unsplash.com/photo-1574482620811-1aa16ffe3c82",
-      thumbnailUrl:
-        "https://images.unsplash.com/photo-1574482620811-1aa16ffe3c82?w=300&h=200&fit=crop",
-      title: "Material Delivery",
-      description: "Steel beam delivery for phase 2 construction",
-      dateTaken: new Date("2024-03-13"),
-      uploadedBy: "Lisa Chen",
-      tags: ["delivery", "materials", "steel"],
-      location: "Storage Area A",
-    },
-  ];
 
   return (
     <div className="space-y-4">
@@ -124,7 +40,26 @@ export function RecentPhotos({ projectId }: RecentPhotosProps) {
 
       {/* Photo Grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        {mockPhotos.map((photo) => (
+        {photosQuery.isLoading ? (
+          <p className="col-span-full text-sm text-muted-foreground">
+            Loading photos...
+          </p>
+        ) : photosQuery.error ? (
+          <EmptyState
+            className="col-span-full"
+            icon={<Camera />}
+            title="Photos could not be loaded"
+            description={photosQuery.error.message}
+          />
+        ) : photos.length === 0 ? (
+          <EmptyState
+            className="col-span-full"
+            icon={<Camera />}
+            title="No recent photos"
+            description="Uploaded project photos will appear here."
+          />
+        ) : (
+          photos.map((photo) => (
           <Dialog key={photo.id}>
             <DialogTrigger asChild>
               <div
@@ -134,7 +69,7 @@ export function RecentPhotos({ projectId }: RecentPhotosProps) {
                 {/* Photo Thumbnail */}
                 <div className="aspect-[4/3] relative bg-muted">
                   <Image
-                    src={photo.thumbnailUrl || photo.url}
+                    src={photo.file_url}
                     alt={photo.title}
                     fill
                     className="object-cover group-hover:scale-105 transition-transform"
@@ -156,16 +91,23 @@ export function RecentPhotos({ projectId }: RecentPhotosProps) {
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <div className="flex items-center gap-1">
                       <Calendar className="w-3 h-3" />
-                      <span>{format(photo.dateTaken, "MMM d")}</span>
+                      <span>
+                        {photo.date_taken
+                          ? format(new Date(photo.date_taken), "MMM d")
+                          : "No date"}
+                      </span>
                     </div>
                     <div className="flex items-center gap-1">
                       <User className="w-3 h-3" />
-                      <span className="truncate">{photo.uploadedBy}</span>
+                      <span className="truncate">
+                        {photo.uploaded_by ?? "Unknown"}
+                      </span>
                     </div>
                   </div>
                   {photo.location && (
-                    <p className="text-xs text-foreground truncate">
-                      📍 {photo.location}
+                    <p className="flex items-center gap-1 text-xs text-foreground truncate">
+                      <MapPin className="h-3 w-3 shrink-0" />
+                      <span className="truncate">{photo.location}</span>
                     </p>
                   )}
                 </div>
@@ -179,7 +121,7 @@ export function RecentPhotos({ projectId }: RecentPhotosProps) {
                   {/* Full Image */}
                   <div className="relative aspect-[16/10] bg-muted rounded-lg overflow-hidden">
                     <Image
-                      src={selectedPhoto.url}
+                      src={selectedPhoto.file_url}
                       alt={selectedPhoto.title}
                       fill
                       className="object-contain"
@@ -205,13 +147,15 @@ export function RecentPhotos({ projectId }: RecentPhotosProps) {
                       <div>
                         <p className="text-muted-foreground">Date Taken</p>
                         <p className="font-medium">
-                          {format(selectedPhoto.dateTaken, "MMM d, yyyy")}
+                          {selectedPhoto.date_taken
+                            ? format(new Date(selectedPhoto.date_taken), "MMM d, yyyy")
+                            : "Not recorded"}
                         </p>
                       </div>
                       <div>
                         <p className="text-muted-foreground">Uploaded By</p>
                         <p className="font-medium">
-                          {selectedPhoto.uploadedBy}
+                          {selectedPhoto.uploaded_by ?? "Unknown"}
                         </p>
                       </div>
                       {selectedPhoto.location && (
@@ -254,7 +198,8 @@ export function RecentPhotos({ projectId }: RecentPhotosProps) {
               )}
             </DialogContent>
           </Dialog>
-        ))}
+          ))
+        )}
       </div>
 
       {/* View All Link */}

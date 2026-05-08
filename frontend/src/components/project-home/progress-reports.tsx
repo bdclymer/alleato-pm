@@ -1,18 +1,14 @@
 "use client";
 
 import * as React from "react";
-import { FileText, Download, Calendar, TrendingUp } from "lucide-react";
+import { FileText, Download, Calendar } from "lucide-react";
 import { format } from "date-fns";
 import Link from "next/link";
+import { EmptyState } from "@/components/ds";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { useProgressReports } from "@/hooks/use-progress-reports";
 
 interface ProgressReport {
   id: string;
@@ -20,7 +16,6 @@ interface ProgressReport {
   date: Date;
   type: "weekly" | "monthly" | "daily";
   status: "draft" | "published";
-  completionPercentage: number;
   keyHighlights?: string[];
   author: string;
 }
@@ -30,51 +25,21 @@ interface ProgressReportsProps {
 }
 
 export function ProgressReports({ projectId }: ProgressReportsProps) {
-  // Mock data - in production this would come from Supabase
-  const mockReports: ProgressReport[] = [
-    {
-      id: "1",
-      title: "Week 12 Progress Report",
-      date: new Date("2024-03-15"),
-      type: "weekly",
-      status: "published",
-      completionPercentage: 78,
-      keyHighlights: [
-        "Foundation work completed",
-        "Steel structure 60% complete",
-        "MEP installation started",
-      ],
-      author: "John Smith",
-    },
-    {
-      id: "2",
-      title: "February Monthly Report",
-      date: new Date("2024-02-29"),
-      type: "monthly",
-      status: "published",
-      completionPercentage: 65,
-      keyHighlights: [
-        "Sitework completed ahead of schedule",
-        "Resolved permitting issues",
-        "Material deliveries on track",
-      ],
-      author: "Jane Doe",
-    },
-    {
-      id: "3",
-      title: "Daily Progress - March 18",
-      date: new Date("2024-03-18"),
-      type: "daily",
-      status: "draft",
-      completionPercentage: 80,
-      keyHighlights: [
-        "Concrete pour completed for Level 2",
-        "15 workers on site",
-        "Weather delay expected tomorrow",
-      ],
-      author: "Mike Johnson",
-    },
-  ];
+  const numericProjectId = Number(projectId);
+  const reportsQuery = useProgressReports(numericProjectId);
+  const reports: ProgressReport[] =
+    reportsQuery.data?.reports.map((report) => ({
+      id: report.id,
+      title: report.title,
+      date: new Date(report.week_end),
+      type: report.report_type,
+      status: report.status === "sent" ? "published" : "draft",
+      keyHighlights: report.past_week_highlights
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean),
+      author: report.created_by ?? "Unknown",
+    })) ?? [];
 
   const getTypeColor = (type: string) => {
     switch (type) {
@@ -110,7 +75,22 @@ export function ProgressReports({ projectId }: ProgressReportsProps) {
 
       {/* Reports List */}
       <div className="space-y-4">
-        {mockReports.map((report) => (
+        {reportsQuery.isLoading ? (
+          <p className="text-sm text-muted-foreground">Loading reports...</p>
+        ) : reportsQuery.error ? (
+          <EmptyState
+            icon={<FileText />}
+            title="Progress reports could not be loaded"
+            description={reportsQuery.error.message}
+          />
+        ) : reports.length === 0 ? (
+          <EmptyState
+            icon={<FileText />}
+            title="No progress reports"
+            description="Progress reports will appear here after they are created for this project."
+          />
+        ) : (
+          reports.map((report) => (
           <Card key={report.id} className="hover:shadow-xs transition-shadow">
             <CardContent className="p-4">
               <div className="flex items-start justify-between">
@@ -139,19 +119,7 @@ export function ProgressReports({ projectId }: ProgressReportsProps) {
                       <Calendar className="w-3 h-3" />
                       <span>{format(report.date, "MMM d, yyyy")}</span>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <TrendingUp className="w-3 h-3" />
-                      <span>{report.completionPercentage}% Complete</span>
-                    </div>
                     <span>by {report.author}</span>
-                  </div>
-
-                  {/* Progress Bar */}
-                  <div className="w-full bg-muted rounded-full h-2 mb-4">
-                    <div
-                      className="bg-info h-2 rounded-full transition-all"
-                      style={{ width: `${report.completionPercentage}%` }}
-                    />
                   </div>
 
                   {/* Key Highlights */}
@@ -192,7 +160,8 @@ export function ProgressReports({ projectId }: ProgressReportsProps) {
               </div>
             </CardContent>
           </Card>
-        ))}
+          ))
+        )}
       </div>
 
       {/* View All Link */}

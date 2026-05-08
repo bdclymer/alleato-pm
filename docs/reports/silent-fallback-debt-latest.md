@@ -4,10 +4,10 @@ This report identifies app-code patterns that can hide broken data paths or runt
 
 ## Summary
 
-- Critical: 146
-- High: 39
+- Critical: 139
+- High: 40
 - Medium: 41
-- Total: 226
+- Total: 220
 
 ## Required Policy
 
@@ -53,8 +53,6 @@ This report identifies app-code patterns that can hide broken data paths or runt
 | CRITICAL | `silent-catch` | `frontend/src/app/(main)/[projectId]/rfis/new/page.tsx:49` | } catch { | Add structured reporting or rethrow with a typed error. |
 | CRITICAL | `silent-catch` | `frontend/src/app/(main)/[projectId]/specifications/[sectionId]/page.tsx:66` | } catch (error) { | Add structured reporting or rethrow with a typed error. |
 | CRITICAL | `silent-catch` | `frontend/src/app/(main)/[projectId]/specifications/[sectionId]/page.tsx:75` | } catch (error) { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `synthetic-data` | `frontend/src/app/(main)/billing-periods/page.tsx:11` | * mock data without project context. Now it redirects users so they can access | Remove synthetic data and make the route/component show real empty/error state. |
-| CRITICAL | `synthetic-data` | `frontend/src/app/(main)/settings/audit/page.tsx:43` | // Mock data | Remove synthetic data and make the route/component show real empty/error state. |
 | CRITICAL | `silent-catch` | `frontend/src/app/(main)/settings/integrations/teams-link-panel.tsx:42` | } catch { | Add structured reporting or rethrow with a typed error. |
 | CRITICAL | `silent-catch` | `frontend/src/app/(main)/settings/integrations/telegram-link-panel.tsx:46` | } catch { | Add structured reporting or rethrow with a typed error. |
 | CRITICAL | `silent-catch` | `frontend/src/app/(tables)/documents/page.tsx:259` | } catch { | Add structured reporting or rethrow with a typed error. |
@@ -71,8 +69,6 @@ This report identifies app-code patterns that can hide broken data paths or runt
 | CRITICAL | `silent-catch` | `frontend/src/app/api/dev-panel/spec/[feature]/route.ts:40` | } catch { | Add structured reporting or rethrow with a typed error. |
 | CRITICAL | `silent-catch` | `frontend/src/app/api/dev-panel/spec/[feature]/route.ts:51` | } catch { | Add structured reporting or rethrow with a typed error. |
 | CRITICAL | `silent-catch` | `frontend/src/app/api/dev/annotate/route.ts:55` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `silent-catch` | `frontend/src/app/api/dev/schema/route.ts:72` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `synthetic-data` | `frontend/src/app/api/dev/schema/route.ts:286` | // Infer column types from sample data | Remove synthetic data and make the route/component show real empty/error state. |
 | CRITICAL | `silent-catch` | `frontend/src/app/api/dev/violations/route.ts:43` | } catch { /* non-fatal */ } | Add structured reporting or rethrow with a typed error. |
 | CRITICAL | `silent-catch` | `frontend/src/app/api/liveblocks-auth/route.ts:55` | } catch { | Add structured reporting or rethrow with a typed error. |
 | CRITICAL | `silent-catch` | `frontend/src/app/api/liveblocks/webhook/route.ts:153` | } catch { /* enrichment is best-effort */ } | Add structured reporting or rethrow with a typed error. |
@@ -137,9 +133,6 @@ This report identifies app-code patterns that can hide broken data paths or runt
 | CRITICAL | `silent-catch` | `frontend/src/components/header/use-header-nav.ts:1515` | } catch { | Add structured reporting or rethrow with a typed error. |
 | CRITICAL | `silent-catch` | `frontend/src/components/meetings/create-meeting-dialog.tsx:95` | } catch { | Add structured reporting or rethrow with a typed error. |
 | CRITICAL | `silent-catch` | `frontend/src/components/meetings/meeting-detail-content.tsx:216` | } catch { | Add structured reporting or rethrow with a typed error. |
-| CRITICAL | `synthetic-data` | `frontend/src/components/project-home/progress-reports.tsx:33` | // Mock data - in production this would come from Supabase | Remove synthetic data and make the route/component show real empty/error state. |
-| CRITICAL | `synthetic-data` | `frontend/src/components/project-home/project-stats-cards.tsx:36` | // Mock data - in production this would come from Supabase | Remove synthetic data and make the route/component show real empty/error state. |
-| CRITICAL | `synthetic-data` | `frontend/src/components/project-home/recent-photos.tsx:32` | // Mock data - in production this would come from Supabase storage | Remove synthetic data and make the route/component show real empty/error state. |
 | CRITICAL | `silent-catch` | `frontend/src/components/project-setup-wizard/budget-setup.tsx:250` | } catch { | Add structured reporting or rethrow with a typed error. |
 | CRITICAL | `silent-catch` | `frontend/src/components/project/create-project-dev-config.tsx:68` | } catch { | Add structured reporting or rethrow with a typed error. |
 | CRITICAL | `silent-catch` | `frontend/src/components/providers/chunk-error-recovery.tsx:51` | } catch { | Add structured reporting or rethrow with a typed error. |
@@ -197,10 +190,11 @@ This report identifies app-code patterns that can hide broken data paths or runt
 | HIGH | `silent-language` | `frontend/src/lib/ai/agents/chro.ts:170` | - NEVER ask the user for a project ID — use projectName to resolve silently. | Replace hidden failure path with telemetry and user-visible degraded state. |
 | HIGH | `silent-language` | `frontend/src/lib/ai/agents/coo.ts:214` | - NEVER ask the user for a project ID — use projectName to resolve silently. | Replace hidden failure path with telemetry and user-visible degraded state. |
 | HIGH | `silent-language` | `frontend/src/lib/ai/agents/cro.ts:184` | - NEVER ask the user for a project ID — use projectName to resolve silently. | Replace hidden failure path with telemetry and user-visible degraded state. |
-| HIGH | `silent-language` | `frontend/src/lib/ai/agents/strategist.ts:325` | - **Never ask for IDs.** Users think in names. Use \`findProject\` or \`projectName\` parameters to resolve names to IDs silently. | Replace hidden failure path with telemetry and user-visible degraded state. |
-| HIGH | `silent-language` | `frontend/src/lib/ai/agents/strategist.ts:361` | - NEVER ask the user for a project ID, meeting ID, or any internal identifier. Resolve names to IDs using your tools silently. | Replace hidden failure path with telemetry and user-visible degraded state. |
-| HIGH | `silent-language` | `frontend/src/lib/ai/agents/strategist.ts:363` | - NEVER fail silently on search. If one search method fails, try another (keyword → semantic → broader terms). Only report failure after exhausting options. | Replace hidden failure path with telemetry and user-visible degraded state. |
+| HIGH | `silent-language` | `frontend/src/lib/ai/agents/strategist.ts:327` | - **Never ask for IDs.** Users think in names. Use \`findProject\` or \`projectName\` parameters to resolve names to IDs silently. | Replace hidden failure path with telemetry and user-visible degraded state. |
+| HIGH | `silent-language` | `frontend/src/lib/ai/agents/strategist.ts:363` | - NEVER ask the user for a project ID, meeting ID, or any internal identifier. Resolve names to IDs using your tools silently. | Replace hidden failure path with telemetry and user-visible degraded state. |
+| HIGH | `silent-language` | `frontend/src/lib/ai/agents/strategist.ts:365` | - NEVER fail silently on search. If one search method fails, try another (keyword → semantic → broader terms). Only report failure after exhausting options. | Replace hidden failure path with telemetry and user-visible degraded state. |
 | HIGH | `silent-language` | `frontend/src/lib/ai/agents/vpbd.ts:175` | - NEVER ask the user for a project ID — use projectName or phase filters to resolve silently. | Replace hidden failure path with telemetry and user-visible degraded state. |
+| HIGH | `silent-language` | `frontend/src/lib/ai/orchestrator.ts:587` | // Rule 1: do not silently swallow. Log and proceed with empty history | Replace hidden failure path with telemetry and user-visible degraded state. |
 | HIGH | `silent-language` | `frontend/src/lib/ai/providers.ts:42` | // Package not installed — skip silently | Replace hidden failure path with telemetry and user-visible degraded state. |
 | HIGH | `silent-language` | `frontend/src/lib/ai/session-id.ts:12` | *   the uuid type check, every insert silently rejects, and zero bot | Replace hidden failure path with telemetry and user-visible degraded state. |
 | HIGH | `silent-language` | `frontend/src/lib/auto-sitemap-utils.ts:192` | // Intentionally swallowed: individual file errors should not stop sitemap generation | Replace hidden failure path with telemetry and user-visible degraded state. |

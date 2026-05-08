@@ -58,6 +58,8 @@ export const GET = withApiGuardrails(
   }
 
   try {
+    let rpcFailure: string | null = null;
+
     // Query information_schema for all public tables via dev RPC helper.
     try {
       const data = await getPublicTables(supabase);
@@ -69,8 +71,11 @@ export const GET = withApiGuardrails(
           note: `Found ${tables.length} accessible tables.`,
         });
       }
-    } catch {
-      // fall through to next strategy
+    } catch (error) {
+      rpcFailure =
+        error instanceof Error
+          ? error.message
+          : "Unknown dev RPC table discovery failure.";
     }
 
     // Fallback: query the Postgres catalog through the runtime table helper
@@ -90,7 +95,9 @@ export const GET = withApiGuardrails(
       return NextResponse.json({
         tables,
         count: tables.length,
-        note: `Found ${tables.length} accessible tables.`,
+        note: rpcFailure
+          ? `Found ${tables.length} accessible tables after dev RPC failed: ${rpcFailure}`
+          : `Found ${tables.length} accessible tables.`,
       });
     }
 
@@ -102,7 +109,9 @@ export const GET = withApiGuardrails(
       note:
         knownTables.length === 0
           ? "No tables found. Check Supabase connection and RLS policies."
-          : `Found ${knownTables.length} accessible tables (via probing).`,
+          : rpcFailure
+            ? `Found ${knownTables.length} accessible tables via probing after dev RPC failed: ${rpcFailure}`
+            : `Found ${knownTables.length} accessible tables (via probing).`,
     });
   } catch (error) {
     return apiErrorResponse(error);
@@ -283,7 +292,7 @@ export const POST = withApiGuardrails(
       });
     }
 
-    // Infer column types from sample data
+    // Infer column types from the first returned row.
     const columns = Object.keys(sampleRow).map((key) => {
       const value = (sampleRow as Record<string, unknown>)[key];
       let inferredType: "text" | "date" | "badge" | "number" | "email" =

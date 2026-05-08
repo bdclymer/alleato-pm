@@ -7,9 +7,8 @@ import { useRouter } from "next/navigation";
  * Global /billing-periods page — redirects to the project list.
  *
  * Billing periods are project-scoped and live under
- * /[projectId]/invoices?tab=billing-periods. This global page previously showed
- * mock data without project context. Now it redirects users so they can access
- * billing periods from within a project.
+ * /[projectId]/invoices?tab=billing-periods. This global page redirects users
+ * so they can access billing periods from within a project.
  */
 export default function BillingPeriodsRedirectPage() {
   const router = useRouter();

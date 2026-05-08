@@ -39,78 +39,7 @@ interface AuditEvent {
   date: string;
 }
 
-// ---------------------------------------------------------------------------
-// Mock data
-// ---------------------------------------------------------------------------
-
-const AUDIT_EVENTS: AuditEvent[] = [
-  {
-    id: "1",
-    actor: "Brian Clymer",
-    actorInitials: "BC",
-    action: "member_invited",
-    target: "mliu@subcontractor.com",
-    detail: "Viewer",
-    timestamp: "10:42 AM",
-    date: "Today",
-  },
-  {
-    id: "2",
-    actor: "Megan Harrison",
-    actorInitials: "MH",
-    action: "integration_connected",
-    target: "Procore",
-    timestamp: "9:15 AM",
-    date: "Today",
-  },
-  {
-    id: "3",
-    actor: "Brian Clymer",
-    actorInitials: "BC",
-    action: "role_changed",
-    target: "Amanda Reyes",
-    detail: "Project Manager → Admin",
-    timestamp: "4:30 PM",
-    date: "Mar 4, 2026",
-  },
-  {
-    id: "4",
-    actor: "Megan Harrison",
-    actorInitials: "MH",
-    action: "settings_changed",
-    target: "Two-factor authentication",
-    detail: "Enabled",
-    timestamp: "2:12 PM",
-    date: "Mar 4, 2026",
-  },
-  {
-    id: "5",
-    actor: "Brian Clymer",
-    actorInitials: "BC",
-    action: "integration_disconnected",
-    target: "Slack",
-    timestamp: "11:00 AM",
-    date: "Mar 3, 2026",
-  },
-  {
-    id: "6",
-    actor: "Chris Wade",
-    actorInitials: "CW",
-    action: "project_created",
-    target: "Midtown Office Renovation",
-    timestamp: "8:45 AM",
-    date: "Mar 3, 2026",
-  },
-  {
-    id: "7",
-    actor: "Brian Clymer",
-    actorInitials: "BC",
-    action: "member_removed",
-    target: "jsmith@oldcontractor.com",
-    timestamp: "3:00 PM",
-    date: "Mar 1, 2026",
-  },
-];
+const AUDIT_EVENTS: AuditEvent[] = [];
 
 // ---------------------------------------------------------------------------
 // Action metadata
