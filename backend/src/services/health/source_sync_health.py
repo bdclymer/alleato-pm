@@ -272,6 +272,48 @@ def record_sync_run(
     return dict(rows[0]) if rows else payload
 
 
+def update_sync_run(
+    supabase: Any,
+    run_id: str,
+    *,
+    status: str,
+    finished_at: Optional[datetime] = None,
+    items_seen: Optional[int] = None,
+    items_synced: Optional[int] = None,
+    items_created: Optional[int] = None,
+    items_updated: Optional[int] = None,
+    items_skipped: Optional[int] = None,
+    items_failed: Optional[int] = None,
+    error_code: Optional[str] = None,
+    error_message: Optional[str] = None,
+    metadata: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    payload: Dict[str, Any] = {
+        "status": status,
+        "finished_at": _iso(finished_at or _utcnow()),
+    }
+    for key, value in {
+        "items_seen": items_seen,
+        "items_synced": items_synced,
+        "items_created": items_created,
+        "items_updated": items_updated,
+        "items_skipped": items_skipped,
+        "items_failed": items_failed,
+    }.items():
+        if value is not None:
+            payload[key] = value
+    if error_code is not None:
+        payload["error_code"] = error_code
+    if error_message is not None:
+        payload["error_message"] = error_message
+    if metadata is not None:
+        payload["metadata"] = metadata
+
+    response = supabase.table("source_sync_runs").update(payload).eq("id", run_id).execute()
+    rows = response.data or []
+    return dict(rows[0]) if rows else payload
+
+
 def update_source_health_snapshot(
     supabase: Any,
     source_health: Dict[str, Any],

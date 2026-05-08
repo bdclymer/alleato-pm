@@ -4,6 +4,7 @@ from src.services.health.source_sync_health import (
     get_source_sync_health,
     persist_source_sync_alerts,
     record_sync_run,
+    update_sync_run,
 )
 
 
@@ -131,6 +132,39 @@ def test_record_sync_run_writes_loud_run_ledger_row():
     assert row["status"] == "failed"
     assert row["items_failed"] == 1
     assert row["error_message"] == "Graph returned 429."
+    assert len(supabase.tables["source_sync_runs"]) == 1
+
+
+def test_update_sync_run_finishes_existing_running_row():
+    supabase = _FakeSupabase()
+    started = datetime.now(timezone.utc)
+    row = record_sync_run(
+        supabase,
+        source="fireflies",
+        resource_id="fireflies_ingestion_jobs",
+        stage="vectorization",
+        status="running",
+        started_at=started,
+        items_seen=10,
+    )
+
+    updated = update_sync_run(
+        supabase,
+        row["id"],
+        status="warning",
+        items_seen=10,
+        items_synced=8,
+        items_skipped=2,
+        items_failed=0,
+        error_code="FIREFLIES_BACKLOG_NON_VECTORIZABLE",
+        error_message="2 Fireflies backlog jobs marked non-vectorizable",
+    )
+
+    assert updated["id"] == row["id"]
+    assert updated["status"] == "warning"
+    assert updated["items_synced"] == 8
+    assert updated["items_skipped"] == 2
+    assert updated["finished_at"]
     assert len(supabase.tables["source_sync_runs"]) == 1
 
 

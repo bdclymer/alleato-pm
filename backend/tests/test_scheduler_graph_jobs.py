@@ -122,6 +122,11 @@ def test_fireflies_backlog_drain_processes_retryable_jobs(monkeypatch):
     )
     monkeypatch.setattr(
         scheduler,
+        "_start_fireflies_backlog_run",
+        lambda supabase_client, result: "run-1",
+    )
+    monkeypatch.setattr(
+        scheduler,
         "_record_fireflies_backlog_run",
         lambda supabase_client, result: recorded.append((supabase_client, result)),
     )
@@ -133,6 +138,7 @@ def test_fireflies_backlog_drain_processes_retryable_jobs(monkeypatch):
     assert result["processed"] == 2
     assert result["failed"] == 0
     assert result["status"] == "ok"
+    assert result["run_id"] == "run-1"
     assert recorded[0][0] is client
     assert recorded[0][1]["matched"] == 2
 
@@ -182,6 +188,11 @@ def test_fireflies_backlog_marks_non_vectorizable_items_without_pipeline(monkeyp
     )
     monkeypatch.setattr(
         scheduler,
+        "_start_fireflies_backlog_run",
+        lambda supabase_client, result: "run-2",
+    )
+    monkeypatch.setattr(
+        scheduler,
         "_record_fireflies_backlog_run",
         lambda supabase_client, result: recorded.append((supabase_client, result)),
     )
@@ -194,6 +205,7 @@ def test_fireflies_backlog_marks_non_vectorizable_items_without_pipeline(monkeyp
     assert result["skipped"] == 1
     assert result["failed"] == 0
     assert result["status"] == "warning"
+    assert result["run_id"] == "run-2"
     assert result["results"][0]["status"] == "skipped"
     assert recorded[0][1]["skipped"] == 1
 

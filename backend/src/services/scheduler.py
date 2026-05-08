@@ -618,46 +618,92 @@ def _mark_fireflies_item_non_vectorizable(
 
 def _record_fireflies_backlog_run(client, result: dict) -> None:
     try:
-        from .health.source_sync_health import record_sync_run
+        from .health.source_sync_health import record_sync_run, update_sync_run
 
         failed = result.get("failed", 0)
         skipped = result.get("skipped", 0)
-        record_sync_run(
-            client,
-            source="fireflies",
-            resource_id="fireflies_ingestion_jobs",
-            resource_name="Fireflies pipeline backlog",
-            stage="vectorization",
-            status="failed" if failed else "warning" if skipped else "succeeded",
-            items_seen=result.get("matched", 0),
-            items_synced=result.get("processed", 0),
-            items_skipped=skipped,
-            items_failed=failed,
-            error_code=(
-                "FIREFLIES_BACKLOG_FAILURE"
-                if failed
-                else "FIREFLIES_BACKLOG_NON_VECTORIZABLE"
-                if skipped
-                else None
-            ),
-            error_message=(
-                f"{failed} Fireflies backlog jobs failed"
-                if failed
-                else f"{skipped} Fireflies backlog jobs marked non-vectorizable"
-                if skipped
-                else None
-            ),
-            metadata={
-                "limit": result.get("limit"),
-                "stale_minutes": result.get("stale_minutes"),
-                "results": result.get("results", [])[:20],
-            },
+        status = "failed" if failed else "warning" if skipped else "succeeded"
+        error_code = (
+            "FIREFLIES_BACKLOG_FAILURE"
+            if failed
+            else "FIREFLIES_BACKLOG_NON_VECTORIZABLE"
+            if skipped
+            else None
         )
+        error_message = (
+            f"{failed} Fireflies backlog jobs failed"
+            if failed
+            else f"{skipped} Fireflies backlog jobs marked non-vectorizable"
+            if skipped
+            else None
+        )
+        metadata = {
+            "limit": result.get("limit"),
+            "stale_minutes": result.get("stale_minutes"),
+            "results": result.get("results", [])[:20],
+        }
+        run_id = result.get("run_id")
+        if run_id:
+            update_sync_run(
+                client,
+                run_id,
+                status=status,
+                items_seen=result.get("matched", 0),
+                items_synced=result.get("processed", 0),
+                items_skipped=skipped,
+                items_failed=failed,
+                error_code=error_code,
+                error_message=error_message,
+                metadata=metadata,
+            )
+        else:
+            record_sync_run(
+                client,
+                source="fireflies",
+                resource_id="fireflies_ingestion_jobs",
+                resource_name="Fireflies pipeline backlog",
+                stage="vectorization",
+                status=status,
+                items_seen=result.get("matched", 0),
+                items_synced=result.get("processed", 0),
+                items_skipped=skipped,
+                items_failed=failed,
+                error_code=error_code,
+                error_message=error_message,
+                metadata=metadata,
+            )
     except Exception:
         logger.warning(
             "[Scheduler] Failed to record Fireflies backlog source_sync_run",
             exc_info=True,
         )
+
+
+def _start_fireflies_backlog_run(client, result: dict) -> Optional[str]:
+    try:
+        from .health.source_sync_health import record_sync_run
+
+        row = record_sync_run(
+            client,
+            source="fireflies",
+            resource_id="fireflies_ingestion_jobs",
+            resource_name="Fireflies pipeline backlog",
+            stage="vectorization",
+            status="running",
+            items_seen=result.get("matched", 0),
+            metadata={
+                "limit": result.get("limit"),
+                "stale_minutes": result.get("stale_minutes"),
+                "message": "Fireflies backlog drain started.",
+            },
+        )
+        return row.get("id")
+    except Exception:
+        logger.warning(
+            "[Scheduler] Failed to record Fireflies backlog start row",
+            exc_info=True,
+        )
+        return None
 
 
 def _run_fireflies_pipeline_backlog(limit: int = 10, stale_minutes: int = 120) -> dict:
@@ -680,6 +726,7 @@ def _run_fireflies_pipeline_backlog(limit: int = 10, stale_minutes: int = 120) -
         "failed": 0,
         "results": [],
     }
+    result["run_id"] = _start_fireflies_backlog_run(client, result)
     if not jobs:
         _record_fireflies_backlog_run(client, result)
         return result
