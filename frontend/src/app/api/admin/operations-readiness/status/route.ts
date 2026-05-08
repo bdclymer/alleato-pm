@@ -91,6 +91,14 @@ type DailyBriefPacket = {
   sourceCoverage?: Array<{ status?: string; warning?: string }>;
 };
 
+type SourceSyncStatus = z.infer<typeof SourceSyncStatusSchema>;
+type CompilerStatus = z.infer<typeof CompilerStatusSchema>;
+
+const SOURCE_HEALTH_DOCUMENT_LIMIT = 2500;
+const SOURCE_HEALTH_CHUNK_LIMIT = 5000;
+const SOURCE_HEALTH_JOB_LIMIT = 5000;
+const STALE_SYNC_MINUTES = 120;
+
 function formatCount(value: number | null | undefined): string {
   return typeof value === "number" ? value.toLocaleString() : "0";
 }
@@ -124,6 +132,255 @@ function firstMeaningfulError(status: z.infer<typeof SourceSyncStatusSchema>) {
 
 function totalStatus(map: Record<string, number>, statuses: string[]) {
   return statuses.reduce((total, status) => total + (map[status] ?? 0), 0);
+}
+
+function countByStatus(rows: Array<{ status: string | null }>): Record<string, number> {
+  return rows.reduce<Record<string, number>>((counts, row) => {
+    const status = row.status || "unknown";
+    counts[status] = (counts[status] ?? 0) + 1;
+    return counts;
+  }, {});
+}
+
+function parseDate(value: string | null | undefined): Date | null {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function ageMinutes(value: string | null | undefined, now: Date): number | null {
+  const date = parseDate(value);
+  if (!date) return null;
+  return Math.max(0, Math.floor((now.getTime() - date.getTime()) / 60_000));
+}
+
+async function countTable(table: "tasks" | "insight_cards" | "intelligence_packets") {
+  const supabase = createServiceClient();
+  const { count, error } = await supabase
+    .from(table)
+    .select("id", { count: "exact", head: true });
+
+  if (error) throw new Error(`Failed to count ${table}: ${error.message}`);
+  return count ?? 0;
+}
+
+async function countCurrentPackets() {
+  const supabase = createServiceClient();
+  const { count, error } = await supabase
+    .from("intelligence_packets")
+    .select("id", { count: "exact", head: true })
+    .eq("packet_type", "current");
+
+  if (error) throw new Error(`Failed to count current intelligence packets: ${error.message}`);
+  return count ?? 0;
+}
+
+async function countSignalCandidates(status: string, confidence?: string) {
+  const supabase = createServiceClient();
+  let query = supabase
+    .from("source_signal_candidates")
+    .select("id", { count: "exact", head: true })
+    .eq("status", status);
+
+  if (confidence) query = query.eq("confidence", confidence);
+
+  const { count, error } = await query;
+  if (error) throw new Error(`Failed to count signal candidates: ${error.message}`);
+  return count ?? 0;
+}
+
+async function loadSourceFallbackStatus(now: Date): Promise<SourceSyncStatus> {
+  const supabase = createServiceClient();
+  const [
+    documentsResult,
+    chunksResult,
+    sourceJobsResult,
+    graphStatesResult,
+    recentRunsResult,
+    totalTasks,
+  ] = await Promise.all([
+    supabase
+      .from("document_metadata")
+      .select("id,source,source_system,category,type,status,captured_at,date,created_at,source_last_modified_at")
+      .limit(SOURCE_HEALTH_DOCUMENT_LIMIT),
+    supabase
+      .from("document_chunks")
+      .select("document_id")
+      .limit(SOURCE_HEALTH_CHUNK_LIMIT),
+    supabase
+      .from("source_intelligence_jobs")
+      .select("status,source_document_id")
+      .limit(SOURCE_HEALTH_JOB_LIMIT),
+    supabase
+      .from("graph_sync_state")
+      .select("source,resource_id,resource_name,last_sync_at,sync_status,error_message,items_synced,updated_at")
+      .order("last_sync_at", { ascending: true }),
+    supabase
+      .from("source_sync_runs")
+      .select("source,stage,status,resource_name,finished_at,error_code,error_message")
+      .order("started_at", { ascending: false })
+      .limit(20),
+    countTable("tasks"),
+  ]);
+
+  if (documentsResult.error) {
+    throw new Error(`Failed to load source documents: ${documentsResult.error.message}`);
+  }
+  if (chunksResult.error) {
+    throw new Error(`Failed to load source chunks: ${chunksResult.error.message}`);
+  }
+  if (sourceJobsResult.error) {
+    throw new Error(`Failed to load source intelligence jobs: ${sourceJobsResult.error.message}`);
+  }
+  if (graphStatesResult.error) {
+    throw new Error(`Failed to load graph sync state: ${graphStatesResult.error.message}`);
+  }
+  if (recentRunsResult.error) {
+    throw new Error(`Failed to load source sync runs: ${recentRunsResult.error.message}`);
+  }
+
+  const chunkDocumentIds = new Set(
+    (chunksResult.data ?? []).map((row) => row.document_id).filter(Boolean),
+  );
+  const compiledDocumentIds = new Set(
+    (sourceJobsResult.data ?? [])
+      .filter((row) => row.status === "succeeded" || row.status === "skipped")
+      .map((row) => row.source_document_id)
+      .filter(Boolean),
+  );
+  const documents = documentsResult.data ?? [];
+  const unembedded = documents.filter((row) => !chunkDocumentIds.has(row.id)).length;
+  const uncompiled = documents.filter((row) => !compiledDocumentIds.has(row.id)).length;
+  const staleGraphStates = (graphStatesResult.data ?? [])
+    .map((row) => ({
+      ...row,
+      staleMinutes: ageMinutes(row.last_sync_at, now),
+    }))
+    .filter((row) => row.error_message || row.staleMinutes === null || row.staleMinutes > STALE_SYNC_MINUTES);
+  const primaryGraphIssue = staleGraphStates[0];
+  const alerts: SourceSyncStatus["alerts"] = [];
+
+  if (primaryGraphIssue) {
+    alerts.push({
+      severity: primaryGraphIssue.error_message ? "critical" : "warning",
+      code: primaryGraphIssue.error_message ? "source_sync_error" : "source_sync_stale",
+      source: primaryGraphIssue.source ?? "microsoft_graph",
+      resourceId: primaryGraphIssue.resource_id ?? "default",
+      message: `${primaryGraphIssue.resource_name ?? primaryGraphIssue.source ?? "Microsoft Graph"}: ${
+        primaryGraphIssue.error_message ??
+        (primaryGraphIssue.staleMinutes === null
+          ? "No successful sync timestamp is available."
+          : `Last sync is ${primaryGraphIssue.staleMinutes} minutes old.`)
+      }`,
+      detectedAt: now.toISOString(),
+    });
+  }
+
+  if (unembedded > 0) {
+    alerts.push({
+      severity: "warning",
+      code: "embedding_backlog",
+      source: "vectorization",
+      resourceId: "document_metadata",
+      message: `${unembedded} synced item(s) are missing searchable chunks.`,
+      detectedAt: now.toISOString(),
+    });
+  }
+
+  if (uncompiled > 0) {
+    alerts.push({
+      severity: "warning",
+      code: "compiler_backlog",
+      source: "intelligence_compiler",
+      resourceId: "source_intelligence_jobs",
+      message: `${uncompiled} synced item(s) are not represented in project intelligence packets.`,
+      detectedAt: now.toISOString(),
+    });
+  }
+
+  return {
+    status: alerts.length > 0 ? "degraded" : "healthy",
+    healthy: alerts.length === 0,
+    generatedAt: now.toISOString(),
+    counts: {
+      alerts: alerts.length,
+      documents: documents.length,
+      chunks: chunksResult.data?.length ?? 0,
+      unembedded,
+      uncompiled,
+      tasks: totalTasks,
+      stuckItems: 0,
+    },
+    alerts,
+    recentRuns: (recentRunsResult.data ?? []).map((run) => ({
+      source: run.source ?? "unknown",
+      stage: run.stage ?? "unknown",
+      status: run.status ?? "unknown",
+      resourceName: run.resource_name,
+      finishedAt: run.finished_at,
+      errorCode: run.error_code,
+      errorMessage: run.error_message,
+    })),
+  };
+}
+
+async function loadCompilerFallbackStatus(now: Date): Promise<CompilerStatus> {
+  const supabase = createServiceClient();
+  const [
+    sourceJobsResult,
+    packetJobsResult,
+    insightCards,
+    currentPackets,
+    highConfidenceUnpromoted,
+  ] = await Promise.all([
+    supabase
+      .from("source_intelligence_jobs")
+      .select("status")
+      .limit(SOURCE_HEALTH_JOB_LIMIT),
+    supabase
+      .from("packet_refresh_jobs")
+      .select("status")
+      .limit(SOURCE_HEALTH_JOB_LIMIT),
+    countTable("insight_cards"),
+    countCurrentPackets(),
+    countSignalCandidates("candidate", "high"),
+  ]);
+
+  if (sourceJobsResult.error) {
+    throw new Error(`Failed to load source intelligence jobs: ${sourceJobsResult.error.message}`);
+  }
+  if (packetJobsResult.error) {
+    throw new Error(`Failed to load packet refresh jobs: ${packetJobsResult.error.message}`);
+  }
+
+  const sourceJobsByStatus = countByStatus(sourceJobsResult.data ?? []);
+  const packetJobsByStatus = countByStatus(packetJobsResult.data ?? []);
+  const sourceFailed = totalStatus(sourceJobsByStatus, ["failed", "error"]);
+  const packetFailed = totalStatus(packetJobsByStatus, ["failed", "error"]);
+  const sourceActive = totalStatus(sourceJobsByStatus, ["queued", "running"]);
+  const packetActive = totalStatus(packetJobsByStatus, ["queued", "running"]);
+  const unhealthyChecks: Record<string, number> = {};
+
+  if (sourceFailed > 0) unhealthyChecks.sourceFailed = sourceFailed;
+  if (packetFailed > 0) unhealthyChecks.packetFailed = packetFailed;
+  if (sourceActive > 0) unhealthyChecks.sourceActive = sourceActive;
+  if (packetActive > 0) unhealthyChecks.packetActive = packetActive;
+  if (highConfidenceUnpromoted > 0) {
+    unhealthyChecks.highConfidenceUnpromoted = highConfidenceUnpromoted;
+  }
+
+  return {
+    status: Object.keys(unhealthyChecks).length > 0 ? "unhealthy" : "healthy",
+    healthy: Object.keys(unhealthyChecks).length === 0,
+    counts: {
+      sourceJobsByStatus,
+      packetJobsByStatus,
+      insightCards,
+      currentPackets,
+    },
+    unhealthyChecks,
+    generatedAt: now.toISOString(),
+  };
 }
 
 function packetItemCount(packet: DailyBriefPacket | null): number {
@@ -199,7 +456,7 @@ export const GET = withApiGuardrails(
     const generatedAt = now.toISOString();
     const since24h = new Date(now.getTime() - 86_400_000).toISOString();
 
-    const [sourceResult, compilerResult, newTasks, updatedTasks, dailyBrief] =
+    const [rawSourceResult, rawCompilerResult, newTasks, updatedTasks, dailyBrief] =
       await Promise.all([
         fetchJson(
           requestId,
@@ -231,6 +488,17 @@ export const GET = withApiGuardrails(
         countTasksSince(since24h, "updated_at"),
         loadLatestDailyBrief(),
       ]);
+
+    const sourceResult = "error" in rawSourceResult
+      ? await loadSourceFallbackStatus(now).catch((error) => ({
+          error: error instanceof Error ? error.message : rawSourceResult.error,
+        }))
+      : rawSourceResult;
+    const compilerResult = "error" in rawCompilerResult
+      ? await loadCompilerFallbackStatus(now).catch((error) => ({
+          error: error instanceof Error ? error.message : rawCompilerResult.error,
+        }))
+      : rawCompilerResult;
 
     const sourceUnavailable = "error" in sourceResult;
     const compilerUnavailable = "error" in compilerResult;
