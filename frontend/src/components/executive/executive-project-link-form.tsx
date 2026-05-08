@@ -91,7 +91,7 @@ export function ExecutiveProjectLinkForm({
           className="h-8 gap-2 rounded-md px-3 text-xs"
           disabled={isPending}
         >
-          <span className="max-w-44 truncate">
+          <span className="max-w-72 truncate">
             {isPending
               ? "Linking..."
               : selectedProject

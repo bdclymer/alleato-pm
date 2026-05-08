@@ -254,45 +254,26 @@ export function ExecutiveSignalCard({
         <div className="px-5 pb-5">
           <div className="border-t border-border/70 pt-4">
             <DetailBlock label="Project">
-              {isUnlinkedProject ? (
-                <div className="space-y-3">
-                  <span className="font-medium text-destructive">
-                    {projectLabel}
-                  </span>
-                  <ExecutiveProjectLinkForm
-                    sourceId={item.sourceId}
-                    projects={projects}
-                    currentProjectId={currentProjectId}
-                    label="Link project"
-                  />
-                </div>
+              {item.sourceId ? (
+                <ExecutiveProjectLinkForm
+                  sourceId={item.sourceId}
+                  projects={projects}
+                  currentProjectId={currentProjectId}
+                  label={projectLabel}
+                />
               ) : projectHref ? (
-                <div className="flex flex-wrap items-center gap-3">
-                  <a
-                    href={projectHref}
-                    className="font-medium text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground"
-                  >
-                    {projectLabel}
-                  </a>
-                  <ExecutiveProjectLinkForm
-                    sourceId={item.sourceId}
-                    projects={projects}
-                    currentProjectId={currentProjectId}
-                    label="Change project"
-                  />
-                </div>
+                <a
+                  href={projectHref}
+                  className="font-medium text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground"
+                >
+                  {projectLabel}
+                </a>
               ) : (
-                <div className="flex flex-wrap items-center gap-3">
+                <>
                   <span className="font-medium text-foreground">
                     {projectLabel}
                   </span>
-                  <ExecutiveProjectLinkForm
-                    sourceId={item.sourceId}
-                    projects={projects}
-                    currentProjectId={currentProjectId}
-                    label="Change project"
-                  />
-                </div>
+                </>
               )}
             </DetailBlock>
 
