@@ -251,12 +251,14 @@ function EditableCellWrapper({
     return <>{children}</>;
   }
   return (
-    <div
-      className="inline-flex min-h-7 cursor-pointer items-center rounded px-1 -mx-1 transition-colors hover:bg-accent/20"
+    <Button
+      type="button"
+      variant="ghost"
+      className="flex h-auto min-h-7 w-full cursor-pointer items-center justify-start rounded px-1 -mx-1 text-left font-normal transition-colors hover:bg-accent/20"
       onClick={onClickToEdit}
     >
       {displayContent}
-    </div>
+    </Button>
   );
 }
 
