@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 
 const frontendRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const manifestPath = path.join(frontendRoot, "scripts/build/nonprod-routes.json");
+const restoreScript = path.join(frontendRoot, "scripts/build/restore-nonprod-routes.mjs");
 const stateDir = path.join(frontendRoot, ".next-nonprod-routes");
 const statePath = path.join(stateDir, "disabled-routes.json");
 const nextDir = path.join(frontendRoot, ".next");
@@ -134,8 +135,12 @@ const disabled = [];
 stopLocalNextDevWriters();
 
 if (existsSync(statePath)) {
-  console.log("[build] non-production routes are already disabled; skipping");
-  process.exit(0);
+  console.warn("[build] Found existing non-production route disable state; restoring before starting a fresh build");
+  execFileSync(process.execPath, [restoreScript], {
+    cwd: frontendRoot,
+    env: process.env,
+    stdio: "inherit",
+  });
 }
 
 mkdirSync(stateDir, { recursive: true });

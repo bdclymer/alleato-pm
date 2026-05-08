@@ -5,13 +5,14 @@ import { getPublicTables } from "@/lib/supabase/dev-rpc";
 import { listRuntimeTableRowsWhereEqual } from "@/lib/supabase/runtime-table";
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 interface RuntimeHeadQueryClient {
   from: (tableName: string) => {
     select: (
       selectedColumns: string,
       options?: { count?: "exact"; head?: boolean },
-    ) => Promise<{ error: { message: string } | null }>;
+    ) => PromiseLike<{ error: { message: string } | null }>;
   };
 }
 
@@ -19,7 +20,7 @@ interface RuntimeSingleRowClient {
   from: (tableName: string) => {
     select: (selectedColumns: string) => {
       limit: (count: number) => {
-        maybeSingle: () => Promise<{
+        maybeSingle: () => PromiseLike<{
           data: Record<string, unknown> | null;
           error: { message: string } | null;
         }>;
@@ -27,14 +28,21 @@ interface RuntimeSingleRowClient {
     };
   };
 }
-import type { SupabaseClient } from "@supabase/supabase-js";
 
 function runtimeHeadQueryClient(client: SupabaseClient): RuntimeHeadQueryClient {
-  return client as RuntimeHeadQueryClient;
+  return {
+    from(tableName) {
+      return client.from(tableName) as ReturnType<RuntimeHeadQueryClient["from"]>;
+    },
+  };
 }
 
 function runtimeSingleRowClient(client: SupabaseClient): RuntimeSingleRowClient {
-  return client as RuntimeSingleRowClient;
+  return {
+    from(tableName) {
+      return client.from(tableName) as ReturnType<RuntimeSingleRowClient["from"]>;
+    },
+  };
 }
 
 /**

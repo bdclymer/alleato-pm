@@ -3,14 +3,13 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
-import { ChevronDown } from "lucide-react";
+import { CalendarDays, ChevronDown, FileText, ListChecks } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   ExecutiveProjectLinkForm,
@@ -23,8 +22,6 @@ import {
 import type { BrandonBriefItem } from "@/lib/executive/brandon-daily-update";
 import { resolveExecutiveFollowUpAction } from "@/app/(main)/actions/executive-briefing-actions";
 
-type Tone = NonNullable<BrandonBriefItem["tone"]>;
-
 export type ExecutiveRelatedTask = {
   id: string;
   description: string;
@@ -36,32 +33,16 @@ export type ExecutiveRelatedTask = {
   projectName: string | null;
 };
 
-const toneClass: Record<Tone, string> = {
-  risk: "text-destructive",
-  watch: "text-status-warning",
-  good: "text-status-success",
-  neutral: "text-muted-foreground",
-};
-
-const toneDotClass: Record<Tone, string> = {
-  risk: "bg-destructive",
-  watch: "bg-status-warning",
-  good: "bg-status-success",
-  neutral: "bg-muted-foreground",
-};
-
-const toneLabel: Record<Tone, string> = {
-  risk: "Risk",
-  watch: "Watch",
-  good: "Good",
-  neutral: "Update",
-};
-
 function contextPreview(value: string | null | undefined) {
   if (!value) return null;
   const normalized = value.replace(/\s+/g, " ").trim();
   if (!normalized) return null;
   return normalized.length > 520 ? `${normalized.slice(0, 520).trim()}...` : normalized;
+}
+
+function displayProjectLabel(value: string) {
+  const label = value.replace(/\s+/g, " ").trim() || "No project linked";
+  return label.replace(/^\d{2,5}\s*[-:]?\s+/, "").trim() || label;
 }
 
 function DetailBlock({
@@ -147,7 +128,6 @@ export function ExecutiveSignalCard({
   const [rawEvidenceOpen, setRawEvidenceOpen] = useState(false);
   const [isResolving, startResolveTransition] = useTransition();
   const router = useRouter();
-  const tone = item.tone ?? "neutral";
   const primaryEvidence = item.evidence ?? item.citations[0]?.evidence;
   const visibleContext = contextPreview(primaryEvidence);
   const evidenceCitations = item.citations.filter((citation) =>
@@ -159,7 +139,7 @@ export function ExecutiveSignalCard({
       ? packetEvidenceFacts
       : item.bullets.filter(Boolean).slice(0, 6);
   const citationCount = item.citations.length;
-  const projectLabel = item.project.trim() || "No project linked";
+  const projectLabel = displayProjectLabel(item.project);
   const resolveFollowUp = () => {
     if (!followUpId) return;
     const formData = new FormData();
@@ -174,31 +154,10 @@ export function ExecutiveSignalCard({
     <Collapsible
       open={open}
       onOpenChange={setOpen}
-      className="rounded-lg border border-border bg-background"
+      className="bg-background"
     >
-      <CollapsibleTrigger className="group flex w-full items-start gap-4 p-5 text-left outline-none transition-colors hover:bg-muted/30 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-        <span
-          className={cn(
-            "mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full",
-            toneDotClass[tone],
-          )}
-        />
-
+      <CollapsibleTrigger className="group flex w-full items-start gap-4 py-5 text-left outline-none transition-colors hover:text-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
         <div className="min-w-0 flex-1 space-y-2">
-          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-            <span className={cn("font-semibold", toneClass[tone])}>
-              {toneLabel[tone]}
-            </span>
-            {actionLabel && (
-              <Badge
-                variant="secondary"
-                className="h-5 rounded-md px-1.5 text-[11px] font-normal"
-              >
-                {actionLabel}
-              </Badge>
-            )}
-          </div>
-
           <div className="text-base font-semibold leading-snug text-foreground">
             {item.title}
           </div>
@@ -207,19 +166,20 @@ export function ExecutiveSignalCard({
             {item.summary}
           </p>
 
-          {visibleContext && (
-            <div className="max-w-3xl rounded-md bg-muted/30 px-3 py-2 text-sm leading-6 text-foreground">
-              <span className="font-medium">Context: </span>
-              <span className="text-muted-foreground">{visibleContext}</span>
-            </div>
-          )}
-
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-            <span>{item.source}</span>
-            <span>{item.date}</span>
-            <span>
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 pt-1 text-xs font-medium text-muted-foreground">
+            <span className="inline-flex items-center gap-2">
+              <CalendarDays className="h-3.5 w-3.5" />
+              {item.date}
+            </span>
+            <span className="inline-flex items-center gap-2">
+              <FileText className="h-3.5 w-3.5" />
+              {item.source}
+            </span>
+            <span className="inline-flex items-center gap-2">
+              <ListChecks className="h-3.5 w-3.5" />
               {citationCount} source{citationCount === 1 ? "" : "s"}
             </span>
+            {actionLabel && <span>{actionLabel}</span>}
             {relatedTasks.length > 0 && (
               <span>
                 {relatedTasks.length} related task
@@ -241,8 +201,14 @@ export function ExecutiveSignalCard({
       </CollapsibleTrigger>
 
       <CollapsibleContent>
-        <div className="px-5 pb-5">
-          <div className="border-t border-border/70 pt-4">
+        <div className="pb-6">
+          <div className="border-t border-border/60 pt-4">
+            {visibleContext && (
+              <DetailBlock label="Context">
+                {visibleContext}
+              </DetailBlock>
+            )}
+
             <DetailBlock label="Project">
               {item.sourceId ? (
                 <ExecutiveProjectLinkForm

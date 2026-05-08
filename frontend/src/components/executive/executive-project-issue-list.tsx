@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { FolderOpen } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ChevronDown, FolderOpen } from "lucide-react";
 import { EmptyState, InfoAlert } from "@/components/ds";
 import {
   ExecutiveSignalCard,
@@ -17,7 +17,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import type { BrandonBriefItem } from "@/lib/executive/brandon-daily-update";
+import { cn } from "@/lib/utils";
 
 export type ExecutiveProjectIssueEntry = {
   id: string;
@@ -39,6 +45,11 @@ type ProjectIssueGroup = {
 
 function normalizeProjectLabel(value: string) {
   return value.replace(/\s+/g, " ").trim() || "No project linked";
+}
+
+function displayProjectLabel(value: string) {
+  const label = normalizeProjectLabel(value);
+  return label.replace(/^\d{2,5}\s*[-:]?\s+/, "").trim() || label;
 }
 
 function projectGroupKey(value: string) {
@@ -105,7 +116,7 @@ function ProjectFilterRow({
             <SelectItem value="all">All projects with issues</SelectItem>
             {groups.map((group) => (
               <SelectItem key={group.key} value={group.key}>
-                {group.label} ({group.entries.length})
+                {displayProjectLabel(group.label)} ({group.entries.length})
               </SelectItem>
             ))}
           </SelectContent>
@@ -122,26 +133,40 @@ function ProjectIssueGroupSection({
   projects,
 }: {
   group: ProjectIssueGroup;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   employees: ExecutiveTaskAssigneeOption[];
   projects: ExecutiveProjectOption[];
 }) {
   return (
-    <section className="space-y-3">
-      <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+    <Collapsible
+      open={open}
+      onOpenChange={onOpenChange}
+      className="border-t border-border/70 first:border-t-0"
+    >
+      <CollapsibleTrigger className="group flex w-full items-center justify-between gap-4 py-4 text-left outline-none transition-colors hover:text-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
         <div className="min-w-0">
-          <div className="flex items-center gap-2 text-sm font-semibold text-primary">
-            <FolderOpen className="h-4 w-4" />
-            <span className="truncate">{group.label}</span>
+          <div className="flex min-w-0 items-center gap-2 text-sm font-semibold text-primary">
+            <FolderOpen className="h-4 w-4 shrink-0" />
+            <span className="truncate">{displayProjectLabel(group.label)}</span>
+            {group.unlinked && (
+              <span className="shrink-0 text-xs font-medium text-destructive">
+                Project link required
+              </span>
+            )}
           </div>
         </div>
-        {group.unlinked && (
-          <span className="text-xs font-medium text-destructive">
-            Project link required
-          </span>
-        )}
-      </div>
 
-      <div className="space-y-3">
+        <ChevronDown
+          className={cn(
+            "h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200",
+            open && "rotate-180",
+          )}
+        />
+      </CollapsibleTrigger>
+
+      <CollapsibleContent className="pb-6">
+        <div className="divide-y divide-border/70">
         {group.entries.map((entry) => (
           <ExecutiveSignalCard
             key={entry.id}
@@ -156,8 +181,9 @@ function ProjectIssueGroupSection({
             projects={projects}
           />
         ))}
-      </div>
-    </section>
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
   );
 }
 
@@ -176,9 +202,23 @@ export function ExecutiveProjectIssueList({
     selectedProjectKey === "all"
       ? groups
       : groups.filter((group) => group.key === selectedProjectKey);
+  const [openGroupKey, setOpenGroupKey] = useState<string | null>(
+    groups[0]?.key ?? null,
+  );
   const unlinkedCount = entries.filter((entry) =>
     isUnlinkedProject(entry.item.project),
   ).length;
+
+  useEffect(() => {
+    if (visibleGroups.length === 0) {
+      setOpenGroupKey(null);
+      return;
+    }
+
+    if (!openGroupKey || !visibleGroups.some((group) => group.key === openGroupKey)) {
+      setOpenGroupKey(visibleGroups[0]?.key ?? null);
+    }
+  }, [openGroupKey, visibleGroups]);
 
   if (entries.length === 0) {
     return (
@@ -209,11 +249,15 @@ export function ExecutiveProjectIssueList({
         </InfoAlert>
       )}
 
-      <div className="space-y-8">
+      <div>
         {visibleGroups.map((group) => (
           <ProjectIssueGroupSection
             key={group.key}
             group={group}
+            open={openGroupKey === group.key}
+            onOpenChange={(nextOpen) =>
+              setOpenGroupKey(nextOpen ? group.key : null)
+            }
             employees={employees}
             projects={projects}
           />
