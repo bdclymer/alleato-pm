@@ -3091,6 +3091,7 @@ async function persistAssistantMessage(params: {
     inputTokens: number | undefined;
     outputTokens: number | undefined;
     totalTokens: number | undefined;
+    cachedInputTokens?: number | undefined;
   };
   responseQuality: ResponseQuality;
   councilMode?: boolean;
@@ -3177,6 +3178,16 @@ async function persistAssistantMessage(params: {
               inputTokens: totalUsage.inputTokens ?? 0,
               outputTokens: totalUsage.outputTokens ?? 0,
               totalTokens: totalUsage.totalTokens ?? 0,
+              cachedInputTokens: totalUsage.cachedInputTokens ?? 0,
+              cacheHitRatio:
+                totalUsage.inputTokens && totalUsage.inputTokens > 0
+                  ? Number(
+                      (
+                        (totalUsage.cachedInputTokens ?? 0) /
+                        totalUsage.inputTokens
+                      ).toFixed(3),
+                    )
+                  : 0,
             }
           : null,
         response_quality: responseQuality,
@@ -4937,6 +4948,62 @@ export const POST = withApiGuardrails(
           return;
         }
 
+        // Universal semanticSearch floor: every assistant turn that hasn't
+        // already pulled retrieval context (general_conversation, strategy_brainstorm,
+        // implementation_planning, app_help) gets one lightweight RAG pass before
+        // streaming. Prevents the "I don't have that" cold-answer failure mode
+        // when the deterministic intent paths don't fire. ~150ms cost, eliminates
+        // the gap where the model answers from training data alone.
+        if (!deterministicRetrieval && lastUserContent.trim().length > 0) {
+          const floorSemanticSearchTool = (tools as Record<string, ExecutableTool>)
+            .semanticSearch;
+          if (floorSemanticSearchTool?.execute) {
+            try {
+              const floorOutput = await withTimeout(
+                floorSemanticSearchTool.execute({
+                  query: lastUserContent,
+                  projectId: selectedProjectId,
+                  matchCount: 6,
+                  threshold: 0.6,
+                  skipRerank: true,
+                }),
+                8_000,
+                "universal semanticSearch floor timed out",
+              );
+              if (!isTimeoutResult(floorOutput)) {
+                const floorRetrieval = normalizeSemanticSearchOutput(floorOutput);
+                const floorContext = floorRetrieval
+                  ? formatRetrievedSourceContext(floorRetrieval)
+                  : null;
+                if (floorContext && (floorRetrieval?.results ?? []).length > 0) {
+                  systemPrompt = systemPrompt + `\n\n---\n\n${floorContext}`;
+                  deterministicRetrieval = floorRetrieval;
+                  toolTrace.push({
+                    tool: "semanticSearchFloor",
+                    input: { query: lastUserContent, intent: assistantIntent },
+                    output: { resultCount: (floorRetrieval?.results ?? []).length },
+                    timestamp: new Date().toISOString(),
+                  });
+                }
+              } else {
+                toolTrace.push({
+                  tool: "semanticSearchFloor",
+                  input: { query: lastUserContent, intent: assistantIntent },
+                  error: floorOutput.error,
+                  timestamp: new Date().toISOString(),
+                });
+              }
+            } catch (error) {
+              toolTrace.push({
+                tool: "semanticSearchFloor",
+                input: { query: lastUserContent, intent: assistantIntent },
+                error: error instanceof Error ? error.message : String(error),
+                timestamp: new Date().toISOString(),
+              });
+            }
+          }
+        }
+
         const streamingModelToolsEnabled = shouldEnableStreamingModelTools(providerDecision);
         const modelTools = streamingModelToolsEnabled ? (tools as ToolSet) : undefined;
         toolTrace.push({
@@ -5025,6 +5092,23 @@ export const POST = withApiGuardrails(
         try {
           content = (await result.text).trim();
           totalUsage = await result.totalUsage;
+          // Cache observability: log every turn so we can verify the prompt
+          // prefix fix is producing OpenAI cache hits. Look for cacheHitRatio
+          // > 0 on turn 2+ of any session. If it stays 0, the static prefix
+          // is being polluted somewhere upstream.
+          if (totalUsage) {
+            const cached = totalUsage.cachedInputTokens ?? 0;
+            const input = totalUsage.inputTokens ?? 0;
+            const ratio = input > 0 ? cached / input : 0;
+            console.info("[chat/route] cache stats", {
+              sessionId,
+              modelId: activeModel,
+              inputTokens: input,
+              cachedInputTokens: cached,
+              cacheHitRatio: Number(ratio.toFixed(3)),
+              outputTokens: totalUsage.outputTokens ?? 0,
+            });
+          }
         } catch (streamError) {
           const errorMessage = streamError instanceof Error ? streamError.message : String(streamError);
           streamErrorMessage = streamErrorMessage ?? errorMessage;
