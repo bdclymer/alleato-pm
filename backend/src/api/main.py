@@ -59,6 +59,18 @@ _intelligence_compiler_semaphore = threading.BoundedSemaphore(
 )
 
 
+def _public_backend_error(prefix: str, exc: Exception) -> str:
+    message = str(exc)
+    lowered = message.lower()
+    if "cloudflare" in lowered or "error code 521" in lowered or "code': 521" in lowered:
+        return f"{prefix}: Supabase is unavailable (Cloudflare 521 Web server is down)."
+    if "error code 522" in lowered or "code': 522" in lowered:
+        return f"{prefix}: Supabase timed out (Cloudflare 522 Connection timed out)."
+    compact = re.sub(r"<[^>]+>", " ", message)
+    compact = re.sub(r"\s+", " ", compact).strip()
+    return f"{prefix}: {compact[:500]}"
+
+
 def _run_pipeline_limited(metadata_id: str) -> None:
     """Run pipeline with bounded in-process concurrency to prevent DB overload."""
     logger.info(
@@ -882,7 +894,7 @@ async def get_source_sync_health_status(
         logger.error("[SourceSyncHealthAPI] status failed: %s", exc, exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Source sync health query failed: {exc}",
+            detail=_public_backend_error("Source sync health query failed", exc),
         ) from exc
 
 
@@ -927,7 +939,7 @@ async def recompute_source_sync_health_status(
         logger.error("[SourceSyncHealthAPI] recompute failed: %s", exc, exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Source sync health recompute failed: {exc}",
+            detail=_public_backend_error("Source sync health recompute failed", exc),
         ) from exc
 
 
