@@ -1,4 +1,5 @@
 import {
+  consumeStream,
   convertToModelMessages,
   createUIMessageStream,
   createUIMessageStreamResponse,
@@ -3133,7 +3134,7 @@ async function persistAssistantMessage(params: {
     toolTrace,
   });
 
-  await supabase.from("chat_history").insert({
+  const { error } = await supabase.from("chat_history").insert({
     session_id: sessionId,
     user_id: userId,
     role: "assistant",
@@ -3199,6 +3200,18 @@ async function persistAssistantMessage(params: {
       }),
     ),
   });
+
+  if (error) {
+    console.error("[ai-assistant/chat] assistant persistence failed", {
+      sessionId,
+      userId,
+      code: error.code,
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+    });
+    throw new Error(`Failed to persist assistant response: ${error.message}`);
+  }
 }
 
 const RETRIEVAL_TOOL_NAMES = new Set([
@@ -5354,6 +5367,9 @@ export const POST = withApiGuardrails(
     // Zero impact on user-facing latency.
     after(() => runPostResponseTasks(sessionId, user.id));
 
-    return createUIMessageStreamResponse({ stream });
+    return createUIMessageStreamResponse({
+      stream,
+      consumeSseStream: consumeStream,
+    });
   },
 );
