@@ -4,6 +4,10 @@ import { z } from "zod";
 import { parseJsonBody, withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import {
+  applyAgentPreventionPromotion,
+  applyAttributionRulePromotion,
+  applyMemoryPromotion,
+  applyPositiveTaskExamplePromotion,
   applyRetrievalWeightPromotion,
   recordAiFeedbackEvent,
   updateRetrievalWeightStatus,
@@ -91,17 +95,106 @@ export const POST = withApiGuardrails(
     const serviceSupabase = createServiceClient();
 
     if (body.action === "apply") {
-      const result = await applyRetrievalWeightPromotion({
-        promotionId: body.promotionId,
-        reviewedBy: user.id,
-        reviewNotes: body.reviewNotes,
-      });
+      const { data: promotion, error: promotionError } = await serviceSupabase
+        .from("ai_learning_promotions")
+        .select("id, promotion_type")
+        .eq("id", body.promotionId)
+        .single();
 
-      return NextResponse.json({
-        ok: true,
-        action: body.action,
-        promotion: result.promotion,
-        retrievalWeight: result.retrievalWeight,
+      if (promotionError || !promotion) {
+        throw new GuardrailError({
+          code: "ROUTE_BINDING_MISSING",
+          where: "api.admin.ai-learning-promotions.POST",
+          message: "AI learning promotion was not found.",
+          status: 404,
+          details: promotionError?.message,
+        });
+      }
+
+      if (promotion.promotion_type === "retrieval_weight") {
+        const result = await applyRetrievalWeightPromotion({
+          promotionId: body.promotionId,
+          reviewedBy: user.id,
+          reviewNotes: body.reviewNotes,
+        });
+
+        return NextResponse.json({
+          ok: true,
+          action: body.action,
+          promotion: result.promotion,
+          retrievalWeight: result.retrievalWeight,
+        });
+      }
+
+      if (promotion.promotion_type === "agent_prevention_prompt") {
+        const result = await applyAgentPreventionPromotion({
+          promotionId: body.promotionId,
+          reviewedBy: user.id,
+          reviewNotes: body.reviewNotes,
+        });
+
+        return NextResponse.json({
+          ok: true,
+          action: body.action,
+          promotion: result.promotion,
+          agentLearning: result.agentLearning,
+        });
+      }
+
+      if (promotion.promotion_type === "positive_task_example") {
+        const result = await applyPositiveTaskExamplePromotion({
+          promotionId: body.promotionId,
+          reviewedBy: user.id,
+          reviewNotes: body.reviewNotes,
+        });
+
+        return NextResponse.json({
+          ok: true,
+          action: body.action,
+          promotion: result.promotion,
+          taskFeedback: result.taskFeedback,
+        });
+      }
+
+      if (
+        promotion.promotion_type === "user_preference" ||
+        promotion.promotion_type === "project_lesson"
+      ) {
+        const result = await applyMemoryPromotion({
+          promotionId: body.promotionId,
+          reviewedBy: user.id,
+          reviewNotes: body.reviewNotes,
+        });
+
+        return NextResponse.json({
+          ok: true,
+          action: body.action,
+          promotion: result.promotion,
+          memory: result.memory,
+        });
+      }
+
+      if (promotion.promotion_type === "attribution_rule") {
+        const result = await applyAttributionRulePromotion({
+          promotionId: body.promotionId,
+          reviewedBy: user.id,
+          reviewNotes: body.reviewNotes,
+        });
+
+        return NextResponse.json({
+          ok: true,
+          action: body.action,
+          promotion: result.promotion,
+          attributionCandidate: result.attributionCandidate,
+        });
+      }
+
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: "api.admin.ai-learning-promotions.POST",
+        message: "This AI learning promotion type does not have an apply writer yet.",
+        status: 409,
+        details: { promotionType: promotion.promotion_type },
       });
     }
 

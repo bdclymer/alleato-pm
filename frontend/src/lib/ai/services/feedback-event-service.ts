@@ -1,5 +1,14 @@
 import { createServiceClient } from "@/lib/supabase/service";
 import { toSessionUuid } from "@/lib/ai/session-id";
+import {
+  upsertAgentLearning,
+  type AgentLearning,
+} from "@/lib/ai/services/agent-learning-service";
+import {
+  writeMemory,
+  type MemoryType,
+  type MemoryVisibility,
+} from "@/lib/ai/services/ai-memory-service";
 import type { Database, Json } from "@/types/database.types";
 
 type Tables = Database["public"]["Tables"];
@@ -12,6 +21,13 @@ export type AiRetrievalFeedbackRow = Tables["ai_retrieval_feedback"]["Row"];
 export type AiRetrievalFeedbackInsert = Tables["ai_retrieval_feedback"]["Insert"];
 export type AiRetrievalWeightRow = Tables["ai_retrieval_weights"]["Row"];
 export type AiRetrievalWeightInsert = Tables["ai_retrieval_weights"]["Insert"];
+export type AiTaskFeedbackRow = Tables["ai_task_feedback"]["Row"];
+export type IntelligenceReviewRow = Tables["intelligence_reviews"]["Row"];
+export type IntelligenceReviewInsert = Tables["intelligence_reviews"]["Insert"];
+export type DocumentAttributionCandidateRow =
+  Tables["document_attribution_candidates"]["Row"];
+export type DocumentAttributionCandidateInsert =
+  Tables["document_attribution_candidates"]["Insert"];
 
 export type AiFeedbackEventFamily =
   | "retrieval"
@@ -147,6 +163,25 @@ export interface RecordRetrievalFeedbackParams {
   metadata?: Json;
 }
 
+export type PacketCardFeedbackSignal = "useful" | "wrong" | "stale";
+
+export interface RecordPacketCardFeedbackParams {
+  userId: string;
+  projectId?: number | null;
+  sessionId?: string | null;
+  insightCardId: string;
+  signal: PacketCardFeedbackSignal;
+  reason?: string | null;
+  correction?: string | null;
+  cardSnapshot?: Json;
+  metadata?: Json;
+}
+
+export interface RecordPacketCardFeedbackResult {
+  review: IntelligenceReviewRow;
+  event: AiFeedbackEventRow;
+}
+
 export interface GenerateRetrievalPromotionCandidatesParams {
   windowDays?: number;
   minHelpfulSignals?: number;
@@ -177,6 +212,33 @@ export interface GenerateRetrievalPromotionCandidatesResult {
   candidates: RetrievalPromotionCandidatePreview[];
 }
 
+export interface GenerateTaskPromotionCandidatesParams {
+  windowDays?: number;
+  limit?: number;
+  dryRun?: boolean;
+}
+
+export interface TaskPromotionCandidatePreview {
+  signature: string;
+  promotionType: Extract<AiLearningPromotionType, "positive_task_example">;
+  projectId: number | null;
+  confidence: number;
+  riskLevel: AiLearningRiskLevel;
+  destinationTable: "ai_task_feedback";
+  destinationRecordId: string;
+  sourceEventIds: string[];
+  proposedLearning: Json;
+}
+
+export interface GenerateTaskPromotionCandidatesResult {
+  inspectedRows: number;
+  candidatesFound: number;
+  candidatesCreated: number;
+  candidatesSkipped: number;
+  dryRun: boolean;
+  candidates: TaskPromotionCandidatePreview[];
+}
+
 export interface ApplyRetrievalWeightPromotionParams {
   promotionId: string;
   reviewedBy?: string | null;
@@ -186,6 +248,53 @@ export interface ApplyRetrievalWeightPromotionParams {
 export interface ApplyRetrievalWeightPromotionResult {
   promotion: AiLearningPromotionRow;
   retrievalWeight: AiRetrievalWeightRow;
+}
+
+export interface ApplyAgentPreventionPromotionParams {
+  promotionId: string;
+  reviewedBy?: string | null;
+  reviewNotes?: string | null;
+}
+
+export interface ApplyAgentPreventionPromotionResult {
+  promotion: AiLearningPromotionRow;
+  agentLearning: AgentLearning;
+}
+
+export interface ApplyPositiveTaskExamplePromotionParams {
+  promotionId: string;
+  reviewedBy?: string | null;
+  reviewNotes?: string | null;
+}
+
+export interface ApplyPositiveTaskExamplePromotionResult {
+  promotion: AiLearningPromotionRow;
+  taskFeedback: AiTaskFeedbackRow;
+}
+
+export interface ApplyMemoryPromotionParams {
+  promotionId: string;
+  reviewedBy: string;
+  reviewNotes?: string | null;
+}
+
+export interface ApplyMemoryPromotionResult {
+  promotion: AiLearningPromotionRow;
+  memory: {
+    id: string;
+    action: "created" | "updated";
+  };
+}
+
+export interface ApplyAttributionRulePromotionParams {
+  promotionId: string;
+  reviewedBy?: string | null;
+  reviewNotes?: string | null;
+}
+
+export interface ApplyAttributionRulePromotionResult {
+  promotion: AiLearningPromotionRow;
+  attributionCandidate: DocumentAttributionCandidateRow;
 }
 
 export type AiRetrievalWeightStatus = "active" | "paused" | "superseded";
@@ -510,6 +619,121 @@ export async function recordRetrievalFeedbackBatch(
   return data;
 }
 
+function packetCardFeedbackEventSignal(
+  signal: PacketCardFeedbackSignal,
+): AiFeedbackSignal {
+  if (signal === "useful") return "positive";
+  if (signal === "stale") return "stale";
+  return "negative";
+}
+
+function packetCardReviewReason(params: {
+  signal: PacketCardFeedbackSignal;
+  reason?: string | null;
+  correction?: string | null;
+}): string {
+  const parts = [
+    `packet_card_${params.signal}`,
+    params.reason?.trim() ? `Reason: ${params.reason.trim()}` : null,
+    params.correction?.trim() ? `Correction: ${params.correction.trim()}` : null,
+  ].filter((part): part is string => Boolean(part));
+  return parts.join("\n");
+}
+
+export async function recordPacketCardFeedback(
+  params: RecordPacketCardFeedbackParams,
+): Promise<RecordPacketCardFeedbackResult> {
+  const supabase = createServiceClient();
+  const insightCardId = optionalUuid(
+    params.insightCardId,
+    "insightCardId",
+    "intelligence_reviews",
+  );
+
+  if (!insightCardId) {
+    throw new AiFeedbackEventError(
+      "intelligence_reviews",
+      "validate",
+      "insightCardId is required",
+    );
+  }
+
+  const proposedValue: Json = {
+    signal: params.signal,
+    reason: params.reason ?? null,
+    correction: params.correction ?? null,
+    cardSnapshot: normalizeJson(params.cardSnapshot),
+    metadata: normalizeJson(params.metadata),
+  };
+  const reviewPayload: IntelligenceReviewInsert = {
+    review_type: "packet_card_feedback",
+    status: params.signal === "useful" ? "approved" : "open",
+    insight_card_id: insightCardId,
+    review_reason: packetCardReviewReason(params),
+    proposed_value: proposedValue,
+    reviewed_value:
+      params.signal === "useful"
+        ? {
+            acceptedPositiveSignal: true,
+            signal: params.signal,
+          }
+        : null,
+    reviewed_by:
+      params.signal === "useful"
+        ? optionalUuid(params.userId, "userId", "intelligence_reviews")
+        : null,
+    reviewed_at: params.signal === "useful" ? new Date().toISOString() : null,
+  };
+
+  const { data: review, error: reviewError } = await supabase
+    .from("intelligence_reviews")
+    .insert(reviewPayload)
+    .select("*")
+    .single();
+
+  if (reviewError || !review) {
+    throw new AiFeedbackEventError(
+      "intelligence_reviews",
+      "insert",
+      reviewError?.message ?? "insert returned no row",
+    );
+  }
+
+  const event = await recordAiFeedbackEvent({
+    userId: params.userId,
+    projectId: params.projectId ?? null,
+    sessionId: params.sessionId ?? null,
+    sourceTable: "intelligence_reviews",
+    sourceRecordId: review.id,
+    eventType: "packet_card_feedback_recorded",
+    eventFamily: "packet_quality",
+    surface: "project_intelligence",
+    subjectType: "insight_card",
+    subjectId: insightCardId,
+    signal: packetCardFeedbackEventSignal(params.signal),
+    reasonCategory: `packet_card_${params.signal}`,
+    freeText: params.correction ?? params.reason ?? null,
+    afterSnapshot: normalizeJson(params.cardSnapshot),
+    sourceContext: {
+      reviewId: review.id,
+      reviewStatus: review.status,
+      signal: params.signal,
+      proposedValue,
+    },
+    metadata: {
+      reviewId: review.id,
+      signal: params.signal,
+      visibility: "team",
+      ...(jsonRecord(params.metadata ?? null)),
+    },
+  });
+
+  return {
+    review,
+    event,
+  };
+}
+
 function jsonRecord(value: Json | null): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value)
     ? (value as Record<string, unknown>)
@@ -525,7 +749,7 @@ function requiredLearningString(
   throw new AiFeedbackEventError(
     "ai_learning_promotions",
     "validate",
-    `retrieval_weight promotion proposed_learning.${fieldName} is required`,
+    `promotion proposed_learning.${fieldName} is required`,
   );
 }
 
@@ -535,6 +759,81 @@ function optionalLearningString(
 ): string | null {
   const value = learning[fieldName];
   return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function optionalLearningNumber(
+  learning: Record<string, unknown>,
+  fieldName: string,
+): number | null {
+  const value = learning[fieldName];
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+function optionalLearningStringArray(
+  learning: Record<string, unknown>,
+  fieldName: string,
+): string[] {
+  const value = learning[fieldName];
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string" && item.trim().length > 0)
+    : [];
+}
+
+function appendAttributionApprovedTag(tags: string | null): string {
+  const values = String(tags ?? "")
+    .split(",")
+    .map((tag) => tag.trim())
+    .filter(Boolean);
+  if (!values.includes("project_backfill:admin_approved")) {
+    values.push("project_backfill:admin_approved");
+  }
+  return values.join(",");
+}
+
+function agentLearningSource(
+  learning: Record<string, unknown>,
+): "thumbs_down" | "admin_feedback" | "eval_failure" {
+  const source = learning.source;
+  if (
+    source === "thumbs_down" ||
+    source === "admin_feedback" ||
+    source === "eval_failure"
+  ) {
+    return source;
+  }
+  return "admin_feedback";
+}
+
+function memoryTypeFromPromotion(
+  promotion: AiLearningPromotionRow,
+  learning: Record<string, unknown>,
+): MemoryType {
+  const type = learning.type;
+  if (
+    type === "fact" ||
+    type === "preference" ||
+    type === "lesson" ||
+    type === "commitment" ||
+    type === "context"
+  ) {
+    return type;
+  }
+  if (promotion.promotion_type === "user_preference") return "preference";
+  if (promotion.promotion_type === "project_lesson") return "lesson";
+  throw new AiFeedbackEventError(
+    "ai_learning_promotions",
+    "validate",
+    `Promotion type ${promotion.promotion_type} cannot be written as memory`,
+  );
+}
+
+function memoryVisibilityFromLearning(
+  learning: Record<string, unknown>,
+  memoryType: MemoryType,
+): MemoryVisibility {
+  const visibility = learning.visibility;
+  if (visibility === "private" || visibility === "team") return visibility;
+  return memoryType === "fact" || memoryType === "lesson" ? "team" : "private";
 }
 
 function learningSourceMatchesRetrievalFeedback(
@@ -664,6 +963,171 @@ async function existingPromotionSignatures(
       .map((row) => jsonRecord(row.proposed_learning).signature)
       .filter((signature): signature is string => typeof signature === "string"),
   );
+}
+
+async function existingPromotionSignaturesForType(
+  supabase: ReturnType<typeof createServiceClient>,
+  promotionType: AiLearningPromotionType,
+): Promise<Set<string>> {
+  const { data, error } = await supabase
+    .from("ai_learning_promotions")
+    .select("proposed_learning")
+    .eq("promotion_type", promotionType)
+    .in("status", ["candidate", "approved", "applied"]);
+
+  if (error) {
+    throw new AiFeedbackEventError(
+      "ai_learning_promotions",
+      "select",
+      error.message,
+    );
+  }
+
+  return new Set(
+    (data ?? [])
+      .map((row) => jsonRecord(row.proposed_learning).signature)
+      .filter((signature): signature is string => typeof signature === "string"),
+  );
+}
+
+function taskSnapshotRecord(row: AiTaskFeedbackRow): Record<string, unknown> {
+  return jsonRecord(row.task_snapshot);
+}
+
+function taskPromotionSignature(row: AiTaskFeedbackRow): string {
+  const snapshot = taskSnapshotRecord(row);
+  const name = optionalLearningString(snapshot, "name") ?? "";
+  const priority = optionalLearningString(snapshot, "priority") ?? "";
+  return [
+    "positive_task_example",
+    row.project_id ?? "global",
+    normalizeQuerySignature(name),
+    priority.toLowerCase(),
+    row.id,
+  ].join("|");
+}
+
+function taskPromotionTitle(row: AiTaskFeedbackRow): string {
+  const snapshot = taskSnapshotRecord(row);
+  const name = optionalLearningString(snapshot, "name") ?? "AI-generated task";
+  return `Promote task example: ${name.slice(0, 120)}`;
+}
+
+export async function generateTaskPromotionCandidates(
+  params: GenerateTaskPromotionCandidatesParams = {},
+): Promise<GenerateTaskPromotionCandidatesResult> {
+  const windowDays = Math.min(90, Math.max(1, params.windowDays ?? 30));
+  const limit = Math.min(100, Math.max(1, params.limit ?? 25));
+  const dryRun = params.dryRun ?? false;
+  const since = new Date(Date.now() - windowDays * 24 * 60 * 60 * 1000).toISOString();
+  const supabase = createServiceClient();
+
+  const { data, error } = await supabase
+    .from("ai_task_feedback")
+    .select("*")
+    .eq("signal", "good")
+    .eq("promoted", false)
+    .gte("created_at", since)
+    .order("created_at", { ascending: false })
+    .limit(1_000);
+
+  if (error) {
+    throw new AiFeedbackEventError(
+      "ai_task_feedback",
+      "select",
+      error.message,
+    );
+  }
+
+  const rows = (data ?? []) as AiTaskFeedbackRow[];
+  const existingSignatures = await existingPromotionSignaturesForType(
+    supabase,
+    "positive_task_example",
+  );
+  const candidates: TaskPromotionCandidatePreview[] = [];
+
+  for (const row of rows) {
+    if (candidates.length >= limit) break;
+
+    const snapshot = taskSnapshotRecord(row);
+    const name = optionalLearningString(snapshot, "name");
+    const priority = optionalLearningString(snapshot, "priority");
+    if (!name || !priority) continue;
+
+    const signature = taskPromotionSignature(row);
+    if (existingSignatures.has(signature)) continue;
+
+    const proposedLearning: Json = {
+      signature,
+      ruleKind: "positive_task_example",
+      title: taskPromotionTitle(row),
+      feedbackId: row.id,
+      taskSnapshot: row.task_snapshot,
+      reason: row.reason,
+      reasonCategory: row.reason_category,
+      rationale:
+        "User marked this generated task as good. After admin review, it can be used as a bounded few-shot task-quality example.",
+    };
+
+    candidates.push({
+      signature,
+      promotionType: "positive_task_example",
+      projectId: row.project_id,
+      confidence: 0.78,
+      riskLevel: "low",
+      destinationTable: "ai_task_feedback",
+      destinationRecordId: row.id,
+      sourceEventIds: [row.id],
+      proposedLearning,
+    });
+  }
+
+  if (dryRun || candidates.length === 0) {
+    return {
+      inspectedRows: rows.length,
+      candidatesFound: candidates.length,
+      candidatesCreated: 0,
+      candidatesSkipped: candidates.length,
+      dryRun,
+      candidates,
+    };
+  }
+
+  const payload: AiLearningPromotionInsert[] = candidates.map((candidate) => ({
+    status: "candidate",
+    promotion_type: candidate.promotionType,
+    project_id: candidate.projectId,
+    target_id: null,
+    source_event_ids: candidate.sourceEventIds,
+    destination_table: candidate.destinationTable,
+    destination_record_id: candidate.destinationRecordId,
+    confidence: candidate.confidence,
+    risk_level: candidate.riskLevel,
+    proposed_learning: candidate.proposedLearning,
+    review_notes: null,
+  }));
+
+  const { data: created, error: insertError } = await supabase
+    .from("ai_learning_promotions")
+    .insert(payload)
+    .select("*");
+
+  if (insertError || !created) {
+    throw new AiFeedbackEventError(
+      "ai_learning_promotions",
+      "insert_batch",
+      insertError?.message ?? "batch insert returned no rows",
+    );
+  }
+
+  return {
+    inspectedRows: rows.length,
+    candidatesFound: candidates.length,
+    candidatesCreated: created.length,
+    candidatesSkipped: candidates.length - created.length,
+    dryRun,
+    candidates,
+  };
 }
 
 export async function generateRetrievalPromotionCandidates(
@@ -1112,6 +1576,656 @@ export async function previewRetrievalWeightPromotionImpact(
       afterBestRank:
         matchedAfterRanks.length > 0 ? Math.min(...matchedAfterRanks) : null,
     },
+  };
+}
+
+export async function applyAgentPreventionPromotion(
+  params: ApplyAgentPreventionPromotionParams,
+): Promise<ApplyAgentPreventionPromotionResult> {
+  const supabase = createServiceClient();
+  const promotionId = optionalUuid(
+    params.promotionId,
+    "promotionId",
+    "ai_learning_promotions",
+  );
+
+  if (!promotionId) {
+    throw new AiFeedbackEventError(
+      "ai_learning_promotions",
+      "validate",
+      "promotionId is required",
+    );
+  }
+
+  const { data: promotion, error: promotionError } = await supabase
+    .from("ai_learning_promotions")
+    .select("*")
+    .eq("id", promotionId)
+    .single();
+
+  if (promotionError || !promotion) {
+    throw new AiFeedbackEventError(
+      "ai_learning_promotions",
+      "select",
+      promotionError?.message ?? "promotion was not found",
+    );
+  }
+
+  if (promotion.promotion_type !== "agent_prevention_prompt") {
+    throw new AiFeedbackEventError(
+      "ai_learning_promotions",
+      "validate",
+      `Only agent_prevention_prompt promotions can be applied by this writer. Received: ${promotion.promotion_type}`,
+    );
+  }
+
+  if (promotion.status !== "approved") {
+    throw new AiFeedbackEventError(
+      "ai_learning_promotions",
+      "validate",
+      `Only approved agent_prevention_prompt promotions can be applied. Received: ${promotion.status}`,
+    );
+  }
+
+  const learning = jsonRecord(promotion.proposed_learning);
+  const agentLearning = await upsertAgentLearning({
+    title: requiredLearningString(learning, "title"),
+    source: agentLearningSource(learning),
+    status: "active",
+    problemSignature: requiredLearningString(learning, "problemSignature"),
+    symptoms: requiredLearningString(learning, "symptoms"),
+    rootCause: optionalLearningString(learning, "rootCause"),
+    fixPattern: optionalLearningString(learning, "fixPattern"),
+    preventionPrompt: requiredLearningString(learning, "preventionPrompt"),
+    scopeTags: optionalLearningStringArray(learning, "scopeTags"),
+    pagePath: optionalLearningString(learning, "pagePath"),
+    toolId: optionalLearningNumber(learning, "toolId"),
+    projectId: promotion.project_id,
+    confidence: promotion.confidence,
+    evidence: {
+      promotionId: promotion.id,
+      sourceEventIds: promotion.source_event_ids,
+      proposedLearning: promotion.proposed_learning,
+      reviewNotes: params.reviewNotes ?? null,
+    },
+  });
+
+  if (!agentLearning) {
+    throw new AiFeedbackEventError(
+      "agent_learnings",
+      "upsert",
+      "agent learning destination writer returned no row",
+    );
+  }
+
+  const { data: updatedPromotion, error: updateError } = await supabase
+    .from("ai_learning_promotions")
+    .update({
+      status: "applied",
+      destination_table: "agent_learnings",
+      destination_record_id: agentLearning.id,
+    })
+    .eq("id", promotion.id)
+    .select("*")
+    .single();
+
+  if (updateError || !updatedPromotion) {
+    throw new AiFeedbackEventError(
+      "ai_learning_promotions",
+      "update",
+      updateError?.message ?? "promotion status update returned no row",
+    );
+  }
+
+  await recordAiFeedbackEvent({
+    userId: params.reviewedBy,
+    projectId: promotion.project_id,
+    sourceTable: "ai_learning_promotions",
+    sourceRecordId: promotion.id,
+    eventType: "agent_prevention_prompt_applied",
+    eventFamily: "eval_failure",
+    surface: "admin_ai_learning_promotions",
+    subjectType: "agent_learning",
+    subjectId: agentLearning.id,
+    signal: "accepted",
+    reasonCategory: "agent_prevention_prompt_apply",
+    freeText: params.reviewNotes ?? null,
+    beforeSnapshot: {
+      status: promotion.status,
+      destinationTable: promotion.destination_table,
+      destinationRecordId: promotion.destination_record_id,
+    },
+    afterSnapshot: {
+      status: updatedPromotion.status,
+      destinationTable: updatedPromotion.destination_table,
+      destinationRecordId: updatedPromotion.destination_record_id,
+      agentLearningStatus: agentLearning.status,
+      occurrences: agentLearning.occurrences,
+    },
+    sourceContext: {
+      promotionId: promotion.id,
+      promotionType: promotion.promotion_type,
+      proposedLearning: promotion.proposed_learning,
+    },
+    metadata: {
+      action: "apply",
+      agentLearningId: agentLearning.id,
+      previousStatus: promotion.status,
+      newStatus: updatedPromotion.status,
+    },
+  });
+
+  return {
+    promotion: updatedPromotion,
+    agentLearning,
+  };
+}
+
+export async function applyPositiveTaskExamplePromotion(
+  params: ApplyPositiveTaskExamplePromotionParams,
+): Promise<ApplyPositiveTaskExamplePromotionResult> {
+  const supabase = createServiceClient();
+  const promotionId = optionalUuid(
+    params.promotionId,
+    "promotionId",
+    "ai_learning_promotions",
+  );
+
+  if (!promotionId) {
+    throw new AiFeedbackEventError(
+      "ai_learning_promotions",
+      "validate",
+      "promotionId is required",
+    );
+  }
+
+  const { data: promotion, error: promotionError } = await supabase
+    .from("ai_learning_promotions")
+    .select("*")
+    .eq("id", promotionId)
+    .single();
+
+  if (promotionError || !promotion) {
+    throw new AiFeedbackEventError(
+      "ai_learning_promotions",
+      "select",
+      promotionError?.message ?? "promotion was not found",
+    );
+  }
+
+  if (promotion.promotion_type !== "positive_task_example") {
+    throw new AiFeedbackEventError(
+      "ai_learning_promotions",
+      "validate",
+      `Only positive_task_example promotions can be applied by this writer. Received: ${promotion.promotion_type}`,
+    );
+  }
+
+  if (promotion.status !== "approved") {
+    throw new AiFeedbackEventError(
+      "ai_learning_promotions",
+      "validate",
+      `Only approved positive_task_example promotions can be applied. Received: ${promotion.status}`,
+    );
+  }
+
+  const learning = jsonRecord(promotion.proposed_learning);
+  const feedbackId = requiredLearningString(learning, "feedbackId");
+  const { data: taskFeedback, error: feedbackError } = await supabase
+    .from("ai_task_feedback")
+    .update({ promoted: true })
+    .eq("id", feedbackId)
+    .eq("signal", "good")
+    .select("*")
+    .single();
+
+  if (feedbackError || !taskFeedback) {
+    throw new AiFeedbackEventError(
+      "ai_task_feedback",
+      "update",
+      feedbackError?.message ?? "task feedback promotion update returned no row",
+    );
+  }
+
+  const { data: updatedPromotion, error: updateError } = await supabase
+    .from("ai_learning_promotions")
+    .update({
+      status: "applied",
+      destination_table: "ai_task_feedback",
+      destination_record_id: taskFeedback.id,
+    })
+    .eq("id", promotion.id)
+    .select("*")
+    .single();
+
+  if (updateError || !updatedPromotion) {
+    throw new AiFeedbackEventError(
+      "ai_learning_promotions",
+      "update",
+      updateError?.message ?? "promotion status update returned no row",
+    );
+  }
+
+  await recordAiFeedbackEvent({
+    userId: params.reviewedBy,
+    projectId: promotion.project_id,
+    sourceTable: "ai_learning_promotions",
+    sourceRecordId: promotion.id,
+    eventType: "positive_task_example_applied",
+    eventFamily: "task_generation",
+    surface: "admin_ai_learning_promotions",
+    subjectType: "ai_task_feedback",
+    subjectId: taskFeedback.id,
+    signal: "accepted",
+    reasonCategory: "positive_task_example_apply",
+    freeText: params.reviewNotes ?? null,
+    beforeSnapshot: {
+      status: promotion.status,
+      destinationTable: promotion.destination_table,
+      destinationRecordId: promotion.destination_record_id,
+    },
+    afterSnapshot: {
+      status: updatedPromotion.status,
+      destinationTable: updatedPromotion.destination_table,
+      destinationRecordId: updatedPromotion.destination_record_id,
+      promoted: taskFeedback.promoted,
+    },
+    sourceContext: {
+      promotionId: promotion.id,
+      promotionType: promotion.promotion_type,
+      proposedLearning: promotion.proposed_learning,
+    },
+    metadata: {
+      action: "apply",
+      taskFeedbackId: taskFeedback.id,
+      previousStatus: promotion.status,
+      newStatus: updatedPromotion.status,
+    },
+  });
+
+  return {
+    promotion: updatedPromotion,
+    taskFeedback: taskFeedback as AiTaskFeedbackRow,
+  };
+}
+
+export async function applyMemoryPromotion(
+  params: ApplyMemoryPromotionParams,
+): Promise<ApplyMemoryPromotionResult> {
+  const supabase = createServiceClient();
+  const promotionId = optionalUuid(
+    params.promotionId,
+    "promotionId",
+    "ai_learning_promotions",
+  );
+  const reviewedBy = optionalUuid(
+    params.reviewedBy,
+    "reviewedBy",
+    "ai_learning_promotions",
+  );
+
+  if (!promotionId) {
+    throw new AiFeedbackEventError(
+      "ai_learning_promotions",
+      "validate",
+      "promotionId is required",
+    );
+  }
+  if (!reviewedBy) {
+    throw new AiFeedbackEventError(
+      "ai_learning_promotions",
+      "validate",
+      "reviewedBy is required",
+    );
+  }
+
+  const { data: promotion, error: promotionError } = await supabase
+    .from("ai_learning_promotions")
+    .select("*")
+    .eq("id", promotionId)
+    .single();
+
+  if (promotionError || !promotion) {
+    throw new AiFeedbackEventError(
+      "ai_learning_promotions",
+      "select",
+      promotionError?.message ?? "promotion was not found",
+    );
+  }
+
+  if (
+    promotion.promotion_type !== "user_preference" &&
+    promotion.promotion_type !== "project_lesson"
+  ) {
+    throw new AiFeedbackEventError(
+      "ai_learning_promotions",
+      "validate",
+      `Only memory promotions can be applied by this writer. Received: ${promotion.promotion_type}`,
+    );
+  }
+
+  if (promotion.status !== "approved") {
+    throw new AiFeedbackEventError(
+      "ai_learning_promotions",
+      "validate",
+      `Only approved memory promotions can be applied. Received: ${promotion.status}`,
+    );
+  }
+
+  const learning = jsonRecord(promotion.proposed_learning);
+  const memoryType = memoryTypeFromPromotion(promotion, learning);
+  const memoryResult = await writeMemory({
+    userId: reviewedBy,
+    type: memoryType,
+    content: requiredLearningString(learning, "content"),
+    projectId: promotion.project_id,
+    confidence: promotion.confidence,
+    importance: optionalLearningNumber(learning, "importance") ?? 0.7,
+    source: "manual",
+    visibility: memoryVisibilityFromLearning(learning, memoryType),
+  });
+
+  if ("error" in memoryResult) {
+    throw new AiFeedbackEventError(
+      "ai_memories",
+      "write",
+      memoryResult.error,
+    );
+  }
+
+  const { data: updatedPromotion, error: updateError } = await supabase
+    .from("ai_learning_promotions")
+    .update({
+      status: "applied",
+      destination_table: "ai_memories",
+      destination_record_id: memoryResult.id,
+    })
+    .eq("id", promotion.id)
+    .select("*")
+    .single();
+
+  if (updateError || !updatedPromotion) {
+    throw new AiFeedbackEventError(
+      "ai_learning_promotions",
+      "update",
+      updateError?.message ?? "promotion status update returned no row",
+    );
+  }
+
+  await recordAiFeedbackEvent({
+    userId: reviewedBy,
+    projectId: promotion.project_id,
+    sourceTable: "ai_learning_promotions",
+    sourceRecordId: promotion.id,
+    eventType: "memory_promotion_applied",
+    eventFamily:
+      promotion.promotion_type === "user_preference"
+        ? "user_preference"
+        : "workflow_outcome",
+    surface: "admin_ai_learning_promotions",
+    subjectType: "ai_memory",
+    subjectId: memoryResult.id,
+    signal: "accepted",
+    reasonCategory: `${promotion.promotion_type}_apply`,
+    freeText: params.reviewNotes ?? null,
+    beforeSnapshot: {
+      status: promotion.status,
+      destinationTable: promotion.destination_table,
+      destinationRecordId: promotion.destination_record_id,
+    },
+    afterSnapshot: {
+      status: updatedPromotion.status,
+      destinationTable: updatedPromotion.destination_table,
+      destinationRecordId: updatedPromotion.destination_record_id,
+      memoryAction: memoryResult.action,
+      memoryType,
+    },
+    sourceContext: {
+      promotionId: promotion.id,
+      promotionType: promotion.promotion_type,
+      proposedLearning: promotion.proposed_learning,
+    },
+    metadata: {
+      action: "apply",
+      memoryId: memoryResult.id,
+      memoryAction: memoryResult.action,
+      previousStatus: promotion.status,
+      newStatus: updatedPromotion.status,
+    },
+  });
+
+  return {
+    promotion: updatedPromotion,
+    memory: memoryResult,
+  };
+}
+
+export async function applyAttributionRulePromotion(
+  params: ApplyAttributionRulePromotionParams,
+): Promise<ApplyAttributionRulePromotionResult> {
+  const supabase = createServiceClient();
+  const promotionId = optionalUuid(
+    params.promotionId,
+    "promotionId",
+    "ai_learning_promotions",
+  );
+
+  if (!promotionId) {
+    throw new AiFeedbackEventError(
+      "ai_learning_promotions",
+      "validate",
+      "promotionId is required",
+    );
+  }
+
+  const { data: promotion, error: promotionError } = await supabase
+    .from("ai_learning_promotions")
+    .select("*")
+    .eq("id", promotionId)
+    .single();
+
+  if (promotionError || !promotion) {
+    throw new AiFeedbackEventError(
+      "ai_learning_promotions",
+      "select",
+      promotionError?.message ?? "promotion was not found",
+    );
+  }
+
+  if (promotion.promotion_type !== "attribution_rule") {
+    throw new AiFeedbackEventError(
+      "ai_learning_promotions",
+      "validate",
+      `Only attribution_rule promotions can be applied by this writer. Received: ${promotion.promotion_type}`,
+    );
+  }
+
+  if (promotion.status !== "approved") {
+    throw new AiFeedbackEventError(
+      "ai_learning_promotions",
+      "validate",
+      `Only approved attribution_rule promotions can be applied. Received: ${promotion.status}`,
+    );
+  }
+
+  const learning = jsonRecord(promotion.proposed_learning);
+  const candidateId = optionalLearningString(learning, "candidateId");
+  const reviewedBy = optionalUuid(
+    params.reviewedBy,
+    "reviewedBy",
+    "document_attribution_candidates",
+  );
+
+  let attributionCandidate: DocumentAttributionCandidateRow;
+  if (candidateId) {
+    const { data: candidate, error: candidateError } = await supabase
+      .from("document_attribution_candidates")
+      .update({
+        status: "approved",
+        reviewed_by: reviewedBy,
+        reviewed_at: new Date().toISOString(),
+      })
+      .eq("id", candidateId)
+      .select("*")
+      .single();
+
+    if (candidateError || !candidate) {
+      throw new AiFeedbackEventError(
+        "document_attribution_candidates",
+        "update",
+        candidateError?.message ?? "candidate approval returned no row",
+      );
+    }
+    attributionCandidate = candidate as DocumentAttributionCandidateRow;
+  } else {
+    const sourceDocumentId = requiredLearningString(learning, "sourceDocumentId");
+    const candidateProjectId = optionalLearningNumber(learning, "candidateProjectId");
+    if (!candidateProjectId) {
+      throw new AiFeedbackEventError(
+        "document_attribution_candidates",
+        "validate",
+        "proposed_learning.candidateProjectId is required when candidateId is absent",
+      );
+    }
+
+    const payload: DocumentAttributionCandidateInsert = {
+      source_document_id: sourceDocumentId,
+      candidate_project_id: candidateProjectId,
+      candidate_project_name: optionalLearningString(learning, "candidateProjectName"),
+      confidence: clampConfidence(promotion.confidence),
+      confidence_label: optionalLearningString(learning, "confidenceLabel"),
+      attribution_method:
+        optionalLearningString(learning, "attributionMethod") ??
+        "ai_learning_promotion",
+      evidence_terms: optionalLearningStringArray(learning, "evidenceTerms"),
+      matched_fields: optionalLearningStringArray(learning, "matchedFields"),
+      evidence: normalizeJson(learning.evidence as Json | undefined),
+      reasoning: optionalLearningString(learning, "reasoning"),
+      status: "approved",
+      reviewed_by: reviewedBy,
+      reviewed_at: new Date().toISOString(),
+      compiler_version: optionalLearningString(learning, "compilerVersion"),
+    };
+
+    const { data: candidate, error: candidateError } = await supabase
+      .from("document_attribution_candidates")
+      .insert(payload)
+      .select("*")
+      .single();
+
+    if (candidateError || !candidate) {
+      throw new AiFeedbackEventError(
+        "document_attribution_candidates",
+        "insert",
+        candidateError?.message ?? "candidate insert returned no row",
+      );
+    }
+    attributionCandidate = candidate as DocumentAttributionCandidateRow;
+  }
+
+  if (!attributionCandidate.candidate_project_id) {
+    throw new AiFeedbackEventError(
+      "document_attribution_candidates",
+      "validate",
+      "approved attribution candidate has no project id",
+    );
+  }
+
+  const { data: document, error: documentError } = await supabase
+    .from("document_metadata")
+    .select("id, tags, project_id, project")
+    .eq("id", attributionCandidate.source_document_id)
+    .single();
+
+  if (documentError || !document) {
+    throw new AiFeedbackEventError(
+      "document_metadata",
+      "select",
+      documentError?.message ?? "linked source document was not found",
+    );
+  }
+
+  const { error: documentUpdateError } = await supabase
+    .from("document_metadata")
+    .update({
+      project_id: attributionCandidate.candidate_project_id,
+      project: attributionCandidate.candidate_project_name,
+      tags: appendAttributionApprovedTag(document.tags),
+    })
+    .eq("id", attributionCandidate.source_document_id);
+
+  if (documentUpdateError) {
+    throw new AiFeedbackEventError(
+      "document_metadata",
+      "update",
+      documentUpdateError.message,
+    );
+  }
+
+  const { data: updatedPromotion, error: updateError } = await supabase
+    .from("ai_learning_promotions")
+    .update({
+      status: "applied",
+      destination_table: "document_attribution_candidates",
+      destination_record_id: attributionCandidate.id,
+    })
+    .eq("id", promotion.id)
+    .select("*")
+    .single();
+
+  if (updateError || !updatedPromotion) {
+    throw new AiFeedbackEventError(
+      "ai_learning_promotions",
+      "update",
+      updateError?.message ?? "promotion status update returned no row",
+    );
+  }
+
+  await recordAiFeedbackEvent({
+    userId: params.reviewedBy,
+    projectId: Number(attributionCandidate.candidate_project_id),
+    sourceTable: "ai_learning_promotions",
+    sourceRecordId: promotion.id,
+    eventType: "attribution_rule_applied",
+    eventFamily: "attribution",
+    surface: "admin_ai_learning_promotions",
+    subjectType: "document_attribution_candidate",
+    subjectId: attributionCandidate.id,
+    signal: "accepted",
+    reasonCategory: "attribution_rule_apply",
+    freeText: params.reviewNotes ?? null,
+    beforeSnapshot: {
+      status: promotion.status,
+      destinationTable: promotion.destination_table,
+      destinationRecordId: promotion.destination_record_id,
+      documentProjectId: document.project_id,
+      documentProject: document.project,
+    },
+    afterSnapshot: {
+      status: updatedPromotion.status,
+      destinationTable: updatedPromotion.destination_table,
+      destinationRecordId: updatedPromotion.destination_record_id,
+      documentProjectId: attributionCandidate.candidate_project_id,
+      documentProject: attributionCandidate.candidate_project_name,
+    },
+    sourceContext: {
+      promotionId: promotion.id,
+      promotionType: promotion.promotion_type,
+      proposedLearning: promotion.proposed_learning,
+      sourceDocumentId: attributionCandidate.source_document_id,
+    },
+    metadata: {
+      action: "apply",
+      attributionCandidateId: attributionCandidate.id,
+      sourceDocumentId: attributionCandidate.source_document_id,
+      previousStatus: promotion.status,
+      newStatus: updatedPromotion.status,
+    },
+  });
+
+  return {
+    promotion: updatedPromotion,
+    attributionCandidate,
   };
 }
 

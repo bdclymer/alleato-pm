@@ -86,6 +86,14 @@ type PromotionLearning = {
   sourceDocumentId?: string | null;
   sourceChunkId?: string | null;
   querySignature?: string;
+  problemSignature?: string;
+  preventionPrompt?: string;
+  content?: string;
+  visibility?: string;
+  sourceDocumentId?: string | null;
+  candidateProjectName?: string | null;
+  pagePath?: string | null;
+  taskSnapshot?: Record<string, unknown> | null;
   rationale?: string;
   signalCounts?: {
     helpful?: number;
@@ -113,6 +121,18 @@ function readLearning(value: Json): PromotionLearning {
       typeof record.sourceChunkId === "string" ? record.sourceChunkId : null,
     querySignature:
       typeof record.querySignature === "string" ? record.querySignature : undefined,
+    problemSignature:
+      typeof record.problemSignature === "string" ? record.problemSignature : undefined,
+    preventionPrompt:
+      typeof record.preventionPrompt === "string" ? record.preventionPrompt : undefined,
+    content: typeof record.content === "string" ? record.content : undefined,
+    visibility: typeof record.visibility === "string" ? record.visibility : undefined,
+    candidateProjectName:
+      typeof record.candidateProjectName === "string"
+        ? record.candidateProjectName
+        : null,
+    pagePath: typeof record.pagePath === "string" ? record.pagePath : null,
+    taskSnapshot: jsonObject(record.taskSnapshot as Json),
     rationale: typeof record.rationale === "string" ? record.rationale : undefined,
     signalCounts: {
       helpful: typeof signalCounts.helpful === "number" ? signalCounts.helpful : undefined,
@@ -149,6 +169,58 @@ function actionLabel(action?: string) {
   if (action === "boost") return "Boost";
   if (action === "downrank_review") return "Review down-rank";
   return action ?? "Review";
+}
+
+function canApplyPromotion(promotion: AiLearningPromotionRow) {
+  return (
+    promotion.promotion_type === "retrieval_weight" ||
+    promotion.promotion_type === "agent_prevention_prompt" ||
+    promotion.promotion_type === "positive_task_example" ||
+    promotion.promotion_type === "user_preference" ||
+    promotion.promotion_type === "project_lesson" ||
+    promotion.promotion_type === "attribution_rule"
+  );
+}
+
+function applyPromotionLabel(promotion: AiLearningPromotionRow) {
+  if (promotion.promotion_type === "retrieval_weight") return "Apply retrieval weight";
+  if (promotion.promotion_type === "agent_prevention_prompt") {
+    return "Apply prevention learning";
+  }
+  if (promotion.promotion_type === "positive_task_example") {
+    return "Apply task example";
+  }
+  if (promotion.promotion_type === "user_preference") return "Apply preference";
+  if (promotion.promotion_type === "project_lesson") return "Apply lesson";
+  if (promotion.promotion_type === "attribution_rule") return "Apply attribution";
+  return "Apply";
+}
+
+function promotionHelpText(promotion: AiLearningPromotionRow) {
+  if (promotion.promotion_type === "retrieval_weight") {
+    return "Approved retrieval-weight promotions can be applied into active retrieval ranking hints.";
+  }
+  if (promotion.promotion_type === "agent_prevention_prompt") {
+    return "Approved prevention prompts can be applied into active agent learnings used by the AI assistant.";
+  }
+  if (promotion.promotion_type === "positive_task_example") {
+    return "Approved task examples can be applied into the promoted examples used by task generation.";
+  }
+  if (promotion.promotion_type === "user_preference") {
+    return "Approved preferences can be applied into scoped AI memory for future assistant context.";
+  }
+  if (promotion.promotion_type === "project_lesson") {
+    return "Approved project lessons can be applied into team-visible AI memory for future assistant context.";
+  }
+  if (promotion.promotion_type === "attribution_rule") {
+    return "Approved attribution rules assign the linked source document to the reviewed project and audit the correction.";
+  }
+  return "This promotion type can be reviewed now and applied after its destination writer exists.";
+}
+
+function taskSnapshotLabel(learning: PromotionLearning, key: string): string | null {
+  const value = learning.taskSnapshot?.[key];
+  return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
 function eventStatus(value: Json, key: "status" | "promotionStatus") {
@@ -520,10 +592,10 @@ export function AiLearningPromotionsClient({
                           {promotion.status === "approved" && (
                             <Button
                               size="sm"
-                              disabled={disabled || promotion.promotion_type !== "retrieval_weight"}
+                              disabled={disabled || !canApplyPromotion(promotion)}
                               onClick={() => void reviewPromotion(promotion.id, "apply")}
                             >
-                              Apply
+                              {applyPromotionLabel(promotion)}
                             </Button>
                           )}
                           {promotion.status === "applied" && retrievalWeight?.status === "active" && (
@@ -558,20 +630,75 @@ export function AiLearningPromotionsClient({
                             <dl className="grid gap-3 text-sm md:grid-cols-2">
                               <div>
                                 <dt className="text-xs font-medium uppercase text-muted-foreground">
-                                  Query signature
+                                  {promotion.promotion_type === "retrieval_weight"
+                                    ? "Query signature"
+                                    : promotion.promotion_type === "positive_task_example"
+                                      ? "Task example"
+                                      : promotion.promotion_type === "user_preference" ||
+                                          promotion.promotion_type === "project_lesson"
+                                        ? "Memory"
+                                        : promotion.promotion_type === "attribution_rule"
+                                          ? "Source document"
+                                    : "Problem signature"}
                                 </dt>
                                 <dd className="mt-1 text-foreground">
-                                  {learning.querySignature ?? "No query signature"}
+                                  {promotion.promotion_type === "retrieval_weight"
+                                    ? learning.querySignature ?? "No query signature"
+                                    : promotion.promotion_type === "positive_task_example"
+                                      ? taskSnapshotLabel(learning, "name") ??
+                                        "No task name"
+                                      : promotion.promotion_type === "user_preference" ||
+                                          promotion.promotion_type === "project_lesson"
+                                        ? learning.content ?? "No memory content"
+                                        : promotion.promotion_type === "attribution_rule"
+                                          ? learning.sourceDocumentId ?? "No source document"
+                                    : learning.problemSignature ?? "No problem signature"}
                                 </dd>
                               </div>
                               <div>
                                 <dt className="text-xs font-medium uppercase text-muted-foreground">
-                                  Source
+                                  {promotion.promotion_type === "retrieval_weight"
+                                    ? "Source"
+                                    : promotion.promotion_type === "positive_task_example"
+                                      ? "Example detail"
+                                      : promotion.promotion_type === "user_preference" ||
+                                          promotion.promotion_type === "project_lesson"
+                                        ? "Visibility"
+                                        : promotion.promotion_type === "attribution_rule"
+                                          ? "Candidate project"
+                                    : "Scope"}
                                 </dt>
                                 <dd className="mt-1 break-all text-foreground">
-                                  {learning.sourceChunkId ?? learning.sourceDocumentId ?? "No source id"}
+                                  {promotion.promotion_type === "retrieval_weight"
+                                    ? learning.sourceChunkId ??
+                                      learning.sourceDocumentId ??
+                                      "No source id"
+                                    : promotion.promotion_type === "positive_task_example"
+                                      ? [
+                                          taskSnapshotLabel(learning, "priority"),
+                                          taskSnapshotLabel(learning, "assignee"),
+                                          taskSnapshotLabel(learning, "dueDate"),
+                                        ]
+                                          .filter(Boolean)
+                                          .join(" · ") || "No example detail"
+                                    : promotion.promotion_type === "user_preference" ||
+                                        promotion.promotion_type === "project_lesson"
+                                      ? learning.visibility ?? "Default"
+                                    : promotion.promotion_type === "attribution_rule"
+                                      ? learning.candidateProjectName ?? "No candidate project"
+                                    : learning.pagePath ?? learning.toolName ?? "Global"}
                                 </dd>
                               </div>
+                              {promotion.promotion_type === "agent_prevention_prompt" && (
+                                <div className="md:col-span-2">
+                                  <dt className="text-xs font-medium uppercase text-muted-foreground">
+                                    Prevention prompt
+                                  </dt>
+                                  <dd className="mt-1 text-foreground">
+                                    {learning.preventionPrompt ?? "No prevention prompt"}
+                                  </dd>
+                                </div>
+                              )}
                               {retrievalWeight && (
                                 <>
                                   <div>
@@ -598,17 +725,19 @@ export function AiLearningPromotionsClient({
                             </pre>
                             <div className="flex items-center gap-3 pt-1">
                               <span className="text-xs text-muted-foreground">
-                                Approved retrieval-weight promotions can be applied into active retrieval ranking hints.
+                                {promotionHelpText(promotion)}
                               </span>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                disabled={previewDisabled}
-                                onClick={() => void loadImpactPreview(promotion.id)}
-                              >
-                                <Eye className="mr-1.5 h-3.5 w-3.5" />
-                                Preview impact
-                              </Button>
+                              {promotion.promotion_type === "retrieval_weight" && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  disabled={previewDisabled}
+                                  onClick={() => void loadImpactPreview(promotion.id)}
+                                >
+                                  <Eye className="mr-1.5 h-3.5 w-3.5" />
+                                  Preview impact
+                                </Button>
+                              )}
                               {promotion.status === "candidate" && (
                                 <>
                                   <Button
@@ -633,10 +762,10 @@ export function AiLearningPromotionsClient({
                               {promotion.status === "approved" && (
                                 <Button
                                   size="sm"
-                                  disabled={disabled || promotion.promotion_type !== "retrieval_weight"}
+                                  disabled={disabled || !canApplyPromotion(promotion)}
                                   onClick={() => void reviewPromotion(promotion.id, "apply")}
                                 >
-                                  Apply retrieval weight
+                                  {applyPromotionLabel(promotion)}
                                 </Button>
                               )}
                               {promotion.status === "applied" && retrievalWeight?.status === "active" && (
